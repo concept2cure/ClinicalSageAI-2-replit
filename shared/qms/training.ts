@@ -1,0 +1,99 @@
+/** Shared wire contract for the existing Quality register's personal attestation. */
+import { z } from 'zod';
+
+const id = z.number().int().positive().max(2_147_483_647);
+const digest = z.string().regex(/^[a-f0-9]{64}$/);
+const version = z.string().trim().min(1).max(20);
+const timestamp = z.string().datetime({ offset: true });
+
+export const QMS_TRAINING_DECLARATION = 'I have read and understood this released revision.';
+export const QMS_TRAINABLE_DOCUMENT_TYPES = ['sop', 'wi', 'manual', 'policy', 'protocol', 'curriculum'] as const;
+
+/** A trainee cannot supply another actor, a score, a trainer or a signature method. */
+export const qmsTrainingAcknowledgementInputSchema = z.object({
+  documentVersion: version,
+  contentDigest: digest,
+  understood: z.literal(true),
+  method: z.literal('attestation'),
+}).strict();
+
+/** Draft text uses the existing editor and PATCH route; blank bodies stay drafts. */
+export const qmsControlledTextInputSchema = z.object({
+  controlledText: z.object({
+    documentVersion: version,
+    contentDigest: digest,
+    sections: z.array(z.object({
+      key: z.string().trim().min(1).max(80),
+      label: z.string().trim().min(1).max(200),
+      body: z.string().max(200_000),
+      order: z.number().int().nonnegative().optional(),
+      hint: z.string().max(500).optional(),
+    }).strict()).min(1).max(100).superRefine((sections, ctx) => {
+      if (new Set(sections.map(section => section.key)).size !== sections.length) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Each controlled section needs a distinct key.' });
+      }
+      if (sections.reduce((size, section) => size + section.body.length, 0) > 2_000_000) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Controlled text exceeds the supported size.' });
+      }
+    }),
+  }).strict(),
+  reason: z.string().trim().min(8).max(2000),
+}).strict();
+
+export const qmsTrainingAcknowledgementSchema = z.object({
+  id,
+  documentId: id,
+  userId: id,
+  documentVersion: version,
+  contentDigest: digest,
+  acknowledgedAt: timestamp,
+  expiresAt: timestamp.nullable(),
+  method: z.literal('attestation'),
+});
+
+export const qmsTrainingSectionSchema = z.object({
+  key: z.string().min(1),
+  label: z.string().min(1),
+  body: z.string().min(1).refine(value => value.trim().length > 0, 'Controlled text must not be blank.'),
+});
+
+/** Added to meta.training on GET /api/mdx/qms/documents/:id; data stays intact. */
+export const qmsTrainingContextSchema = z.object({
+  documentId: id,
+  docNumber: z.string().min(1),
+  title: z.string().min(1),
+  documentVersion: version,
+  status: z.enum(['draft', 'in_review', 'effective', 'superseded', 'retired']),
+  contentDigest: digest.nullable(),
+  eligible: z.boolean(),
+  canEditControlledText: z.boolean().default(false),
+  unavailableReason: z.string().min(1).nullable(),
+  sections: z.array(qmsTrainingSectionSchema),
+  acknowledgement: qmsTrainingAcknowledgementSchema.nullable(),
+}).superRefine((value, ctx) => {
+  if (value.eligible && (value.status !== 'effective' || !value.contentDigest || !value.sections.length || value.unavailableReason !== null)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Eligible training requires verified readable release content.' });
+  }
+  const ack = value.acknowledgement;
+  if (ack && (ack.documentId !== value.documentId || ack.documentVersion !== value.documentVersion || ack.contentDigest !== value.contentDigest)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'The acknowledgement must cover this document revision.' });
+  }
+});
+
+export const qmsTrainingAcknowledgementResponseSchema = z.object({
+  data: qmsTrainingAcknowledgementSchema,
+  meta: z.object({
+    alreadyAcknowledged: z.boolean().optional(),
+    auditTrail: z.object({ persisted: z.literal(true), chained: z.literal(true) }).optional(),
+  }),
+}).superRefine((value, ctx) => {
+  if (value.meta.alreadyAcknowledged !== true && !value.meta.auditTrail) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'A new acknowledgement must confirm its chained audit record.' });
+  }
+});
+
+export type QmsTrainingAcknowledgementInput = z.infer<typeof qmsTrainingAcknowledgementInputSchema>;
+export type QmsTrainingAcknowledgement = z.infer<typeof qmsTrainingAcknowledgementSchema>;
+export type QmsTrainingContext = z.infer<typeof qmsTrainingContextSchema>;
+export type QmsTrainingSection = z.infer<typeof qmsTrainingSectionSchema>;
+export type QmsControlledTextInput = z.infer<typeof qmsControlledTextInputSchema>;

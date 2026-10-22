@@ -1,0 +1,23 @@
+Source log: create-recovery-post-sync-build.log
+SHA-256: 0f80d146eeca3ea724155653341bcc548c0c98990118b9c942bce82713b499f3
+Selected output; repetitive logs omitted.
+
+
+> concept2cure-riai@1.0.0 build
+> vite build && node scripts/build-server.mjs
+
+vite v6.4.3 building for production...
+../dist/public/assets/vendor-react-DB-cnGoS.js                  194.30 kB
+../dist/public/assets/DocumentWorkbench-BQB-7XpC.js             236.83 kB
+../dist/public/assets/CmcModule-bHBD_UY3.js                     245.42 kB
+../dist/public/assets/MdxSurfaceHost-BXcS3sM7.js                417.41 kB
+../dist/public/assets/V2App-BaC1IWr7.js                         423.59 kB
+../dist/public/assets/vendor-tiptap-B43J1vOg.js                 468.12 kB
+../dist/public/assets/vendor-sentry-u-u7uAma.js                 567.53 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 41.70s
+✅ Server build complete → dist/index.js

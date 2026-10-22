@@ -1,3 +1,4 @@
+import { readOnlyToolRefusal } from './read-only-turn.js';
 /**
  * AnA Tool Executor — Agentic Orchestration Loop
  *
@@ -14,7 +15,14 @@
  * - Literature search services
  */
 
+import { toBiostatsInput as mapToBiostatsInput } from '../ana-biostats/request-input.js';
+import type { RequestSqlClient } from '../../db/requestDb.js';
+import { admitAnaProjectScope, AnaProjectScopeError } from './project-scope-admission';
+import { ProgramReadAccessError } from '../c2c/current-program-access';
+import { SchedulePreservationConflict } from '../projects/schedule-of-events/preservation';
+import type { ScheduleExecutionContext } from '../projects/schedule-of-events';
 import { isGovernedContentWriteTool } from './governed-write-tools.js';
+import { critiqueSavedDocument } from './saved-document-critique';
 import { frameToolOutput } from './tool-output-frame.js';
 import { buildToolRefusal, toolAuthorizationOf } from './tool-authorization.js';
 import { registeredToolTier } from './governed-tool-gate.js';
@@ -183,7 +191,7 @@ import {
   runAgenticToolLoop,
   resolveMaxRounds,
   resolveRoundExtension,
-  capToolResultForModel,
+  assertToolResultBodyBudget,
   budgetToolResultsForModel,
   buildAdaptationNote,
   mapWithConcurrency,
@@ -200,6 +208,8 @@ import {
 } from './agentic-loop.js';
 import {
   readReceiptContext,
+  guardReadResultsForHandoff,
+  withdrawSourceReadResult,
   settleReadReceipts,
   type DeferredReadReceipts,
   type ReadReceiptContext,
@@ -213,6 +223,7 @@ import {
 } from './agentic-tool-dispatch.js';
 import { modelCallRefusal } from '../ai-gateway/model-call-scope.js';
 import { registerAgenticWorkflowHandlers } from './agentic-workflow-tools.js';
+import { interviewClientType } from './intelligence-questions/client-segment.js';
 import { HIDDEN_APP_TOOLS, anaCapabilityInLaunchScope } from './ana-launch-scope';
 import { launchScopeEnforced } from '../entitlements/launch-scope';
 import { registerBiotechProgramHandlers } from './biotech-program.js';
@@ -234,6 +245,8 @@ import {
   workspaceFileName,
   workspacePathOrRefusal,
 } from './document-workspace.js';
+import { NOTIFICATION_CATEGORIES } from '../../../shared/constants/notifications.js';
+import { IVDR_CLASSES } from '../../../shared/regulatory/device-class.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool Handler Registry
@@ -246,6 +259,8 @@ import {
  * submission-twin, precedent-engine) read from this.
  */
 export interface ToolContext {
+  /** Set by the server from the current user turn, never from tool input. */
+  readOnly?: boolean;
   /**
    * The model whose response produced this tool call, as the gateway reported
    * it. A tool that stores model-authored text in a governed record refuses
@@ -288,6 +303,10 @@ export interface ToolContext {
   modelCalls?: 'refuse';
   organizationId?: number | null;
   userId?: number | null;
+  /** Client segment used to scope the intelligence-flow catalog. */
+  clientType?: string | null;
+  /** Server-supplied request executor. Never populated from model/browser input. */
+  sqlClient?: RequestSqlClient;
   projectId?: number | null;
   /**
    * Aborted when the person stops the run.
@@ -491,6 +510,8 @@ function preHandlerRefusal(
       }),
     };
   }
+  const readOnlyRefusal = readOnlyToolRefusal(name, input, ctx?.readOnly === true);
+  if (readOnlyRefusal) return { code: readOnlyRefusal.error, result: JSON.stringify(readOnlyRefusal) };
   if ((ctx?.agentDepth ?? 0) >= 1 && toolAuthorizationOf(name, input).class !== 'read') {
     return {
       code: 'SUB_AGENT_READ_ONLY',
@@ -946,8 +967,11 @@ registerToolHandler('project_knowledge_search_multi', async (input, ctx) => {
 // cold: latest thread working-memory summary + most important project/client
 // atoms (query-independent) + AnA's own recent lessons for this org/project.
 registerToolHandler('recall_session_context', async (input, ctx) => {
-  if (!ctx?.organizationId) {
-    return JSON.stringify({ error: 'recall_session_context requires tenant context (organizationId).' });
+  if (!ctx?.organizationId || !Number.isSafeInteger(ctx.userId) || !ctx.userId || ctx.userId <= 0) {
+    return JSON.stringify({ code: 'PROJECT_ACTOR_REQUIRED', error: 'recall_session_context requires a current tenant actor.' });
+  }
+  if (!ctx.sqlClient) {
+    return JSON.stringify({ code: 'REQUEST_DB_CONTEXT_REQUIRED', error: 'recall_session_context requires its server-provided database context.' });
   }
   const threadId = typeof input.thread_id === 'string' && input.thread_id.trim() ? input.thread_id.trim() : undefined;
   const atomLimit =
@@ -956,8 +980,11 @@ registerToolHandler('recall_session_context', async (input, ctx) => {
   try {
     const { buildSessionBootstrapContext } = await import('../ana-session-bootstrap.js');
     const context = await buildSessionBootstrapContext({
+      db: ctx.sqlClient,
       organizationId: ctx.organizationId,
+      userId: ctx.userId,
       projectId: ctx.projectId ?? undefined,
+      projectRef: ctx.projectRef,
       threadId,
       atomLimit,
     });
@@ -1296,6 +1323,7 @@ registerToolHandler('run_submission_premortem', async (input, ctx) => {
       severity: m.pattern.severity,
       matchedText: m.matchedText,
       matchConfidence: m.matchConfidence,
+      matchConfidenceBasis: m.matchConfidenceBasis,
       reviewerQuestion: m.pattern.reviewerQuestion,
       regulatoryBasis: m.pattern.regulatoryBasis,
       remediation: m.pattern.remediation,
@@ -1395,6 +1423,7 @@ registerToolHandler('assemble_crl_premortem_artifact', async (input, ctx) => {
       severity: m.pattern.severity,
       matchedText: m.matchedText,
       matchConfidence: m.matchConfidence,
+      matchConfidenceBasis: m.matchConfidenceBasis,
       reviewerQuestion: m.pattern.reviewerQuestion,
       regulatoryBasis: m.pattern.regulatoryBasis,
       remediation: m.pattern.remediation,
@@ -1656,7 +1685,9 @@ registerToolHandler('scan_regulatory_deficiencies', async (input) => {
       category: m.pattern.category,
       severity: m.pattern.severity,
       matchedText: m.matchedText,
+      // 2026-10-15: was the pattern's seed value (80-95), printed as if measured.
       matchConfidence: m.matchConfidence,
+      matchConfidenceBasis: m.matchConfidenceBasis,
       reviewerQuestion: m.pattern.reviewerQuestion,
       regulatoryBasis: m.pattern.regulatoryBasis,
       remediation: m.pattern.remediation,
@@ -1713,7 +1744,7 @@ registerToolHandler('search_large_document', async (input, ctx) => {
     const { extractDocumentText } = await import('../ocr/extractDocumentText.js');
     const { searchWithinText, extractHeadingOutline } = await import('./document-search-core.js');
 
-    const file = await loadUploadedFile(fileId, ctx?.organizationId);
+    const file = await loadUploadedFile(fileId, ctx?.organizationId, { userId: ctx?.userId });
     const extracted = await extractDocumentText(file.buffer, file.mimeType, file.fileName);
     const text = extracted.text ?? '';
     if (!text.trim()) {
@@ -1767,6 +1798,10 @@ registerToolHandler('remember_document_in_project', async (input, ctx) => {
   const userId = ctx.userId ?? 0;
 
   try {
+    const { getPool } = await import('../../db.js');
+    const { admitAnaProjectScope } = await import('./project-scope-admission.js');
+    await admitAnaProjectScope(getPool(), { organizationId: ctx.organizationId, userId,
+      projectId: ctx.projectId, projectRef: ctx.projectRef });
     const { loadUploadedFile } = await import('./uploaded-file-access.js');
     const { getProjectIntelligence, ingestProjectDocument } = await import(
       '../client-intelligence-memory.js'
@@ -1781,7 +1816,7 @@ registerToolHandler('remember_document_in_project', async (input, ctx) => {
       });
     }
 
-    const file = await loadUploadedFile(fileId, ctx.organizationId);
+    const file = await loadUploadedFile(fileId, ctx.organizationId, { userId: ctx.userId });
     const result = await ingestProjectDocument(
       profile.id,
       ctx.projectId,
@@ -1795,17 +1830,24 @@ registerToolHandler('remember_document_in_project', async (input, ctx) => {
       userId
     );
 
+    const n = result.memoryEntriesCreated;
+    const entries = `${n} entr${n === 1 ? 'y' : 'ies'}`;
     return JSON.stringify({
       ok: result.status === 'completed',
       fileName: result.fileName,
-      memoryEntriesCreated: result.memoryEntriesCreated,
+      memoryEntriesCreated: n,
+      memoryEntriesEmbedded: result.memoryEntriesEmbedded,
       tokenCount: result.tokenCount,
+      // An unreadable file now fails in the service and lands in the first
+      // branch. 2026-10-15: this said "(N entries embedded)" whether or not any
+      // embedding was written.
       message:
-        result.status === 'completed'
-          ? `Remembered ${result.fileName} into project memory (${result.memoryEntriesCreated} entr${
-              result.memoryEntriesCreated === 1 ? 'y' : 'ies'
-            } embedded). It will be surfaced automatically in future sessions.`
-          : `Could not remember ${result.fileName}: ${result.error ?? 'ingestion failed'}.`,
+        result.status !== 'completed'
+          ? `Could not remember ${result.fileName}: ${result.error ?? 'ingestion failed'}.`
+          : n > 0 && result.memoryEntriesEmbedded === n
+            ? `Remembered ${result.fileName} into project memory (${entries} embedded). It will be surfaced automatically in future sessions.`
+            : `Remembered ${result.fileName} into project memory (${entries} stored, ${result.memoryEntriesEmbedded} embedded). ` +
+              'An entry without an embedding is not found by semantic recall until it is re-embedded.',
     });
   } catch (err) {
     return JSON.stringify({
@@ -1877,89 +1919,138 @@ registerToolHandler('summarize_onboarding_readiness', async (_input, ctx) => {
   return readiness.summary;
 });
 
-// Search Device Adverse Events — live FDA MAUDE via openFDA passthrough.
-registerToolHandler('search_device_adverse_events', async (input) => {
-  const maxResults = Math.min((input.max_results as number) || 50, 100);
-  try {
-    const reports = await fdaMaudeClient.searchDeviceReports({
-      productCode: (input.product_code as string) || '',
-      deviceName: (input.device_name as string) || '',
-      manufacturer: (input.manufacturer as string) || '',
-      dateFrom: (input.date_from as string) || '',
-      dateTo: (input.date_to as string) || '',
-      limit: maxResults,
-    });
-    const analysis = fdaMaudeClient.analyzeMaudeData(reports);
-    const total = Number(analysis?.total_reports) || 0;
-    const subject = (input.device_name as string) || (input.product_code as string) || 'the device';
-    const provenance = [
-      buildProvenance({
-        sourceId: 'openfda',
-        citation: { title: `MAUDE device adverse-event signal for ${subject} (${total} reports)`, identifier: null, url: null },
-        query: subject,
-        confidence: total > 0 ? 'moderate' : null,
-        extraCaveats: [
-          'MAUDE is passive surveillance — reports are unverified, subject to reporting bias, and do not establish causality or rates.',
-        ],
-      }),
-    ];
-    return JSON.stringify({
-      source: 'FDA MAUDE (openFDA)',
-      summary: analysis,
-      sample: Array.isArray(reports) ? reports.slice(0, 15) : [],
-      provenance,
-    });
-  } catch (e) {
-    return JSON.stringify({
-      source: 'FDA MAUDE (openFDA)',
-      error: e instanceof Error ? e.message : 'MAUDE search failed',
-      summary: { total_reports: 0 },
-      sample: [],
-    });
-  }
-});
+// Search Device Adverse Events / Drug Adverse Events — live FDA MAUDE and
+// FAERS through the openFDA passthrough. One runner: the two registers differ
+// only in their client, their wording and which inputs name the subject.
+/**
+ * An openFDA register (FAERS, MAUDE) that could not be searched. Both handlers
+ * used to answer a failed request as a search that found nothing, "(0
+ * reports)", so AnA told the person a product had no reported adverse events
+ * when the register had not been reached. A failure carries no counts.
+ */
+function openFdaUnavailable(source: string, register: string, reason: string): string {
+  return JSON.stringify({
+    source,
+    status: 'unavailable',
+    error:
+      `${register} could not be searched (${reason}). No reports were retrieved, so this is not ` +
+      'a finding of zero adverse events: say the search could not run.',
+  });
+}
 
-// Search Drug Adverse Events — live FDA FAERS via openFDA passthrough.
-registerToolHandler('search_drug_adverse_events', async (input) => {
-  const maxResults = Math.min((input.max_results as number) || 50, 100);
+/** Whether an openFDA search names anything to search for; the clients return an empty result when it does not. */
+function hasOpenFdaCriteria(input: Record<string, unknown>, keys: readonly string[]): boolean {
+  return keys.some(k => typeof input[k] === 'string' && (input[k] as string).trim() !== '');
+}
+
+/** The first of `keys` the model filled, or `fallback` — what the citation calls the subject. */
+function openFdaSubject(input: Record<string, unknown>, keys: readonly string[], fallback: string): string {
+  for (const k of keys) {
+    const v = input[k];
+    if (typeof v === 'string' && v.trim()) return v;
+  }
+  return fallback;
+}
+
+interface OpenFdaRegister {
+  /** How the answer names the source, e.g. 'FDA FAERS (openFDA)'. */
+  source: string;
+  /** How a refusal names the register, e.g. 'FAERS'. */
+  register: string;
+  /** Inputs that name something to search for; none filled is a refusal, not a blank query. */
+  criteria: readonly string[];
+  /** The refusal when none is filled. */
+  needs: string;
+  /** Inputs that name the subject, best first, and what to call it when none is given. */
+  subjectKeys: readonly string[];
+  subjectFallback: string;
+  /** The citation's opening, e.g. 'FAERS adverse-event signal'. */
+  signal: string;
+  /** What the register's data cannot establish. */
+  caveat: string;
+  search: (input: Record<string, unknown>, limit: number) => Promise<any>;
+  analyze: (reports: any) => any;
+}
+
+async function runOpenFdaSearch(input: Record<string, unknown>, reg: OpenFdaRegister): Promise<string> {
+  if (!hasOpenFdaCriteria(input, reg.criteria)) {
+    return JSON.stringify({ source: reg.source, status: 'needs_parameters', message: reg.needs });
+  }
   try {
-    const reports = await fdaFaersClient.searchAdverseEvents({
-      productNdc: (input.product_ndc as string) || '',
-      productName: (input.product_name as string) || '',
-      manufacturer: (input.manufacturer as string) || '',
-      dateFrom: (input.date_from as string) || '',
-      dateTo: (input.date_to as string) || '',
-      limit: maxResults,
-    });
-    const analysis = fdaFaersClient.analyzeFaersData(reports);
+    const limit = Math.min((input.max_results as number) || 50, 100);
+    const reports = await reg.search(input, limit);
+    // A client may report a failed request in the body rather than throwing.
+    if (reports?.error) return openFdaUnavailable(reg.source, reg.register, String(reports.error));
+    const analysis = reg.analyze(reports);
     const total = Number(analysis?.total_reports) || 0;
-    const subject = (input.product_name as string) || (input.product_ndc as string) || 'the product';
-    const provenance = [
-      buildProvenance({
-        sourceId: 'openfda',
-        citation: { title: `FAERS adverse-event signal for ${subject} (${total} reports)`, identifier: null, url: null },
-        query: subject,
-        confidence: total > 0 ? 'moderate' : null,
-        extraCaveats: [
-          'FAERS is spontaneous reporting — counts have no denominator and do not establish causality, incidence, or rates.',
-        ],
-      }),
-    ];
+    const subject = openFdaSubject(input, reg.subjectKeys, reg.subjectFallback);
     return JSON.stringify({
-      source: 'FDA FAERS (openFDA)',
+      source: reg.source,
       summary: analysis,
       sample: Array.isArray(reports) ? reports.slice(0, 15) : [],
-      provenance,
+      provenance: [
+        buildProvenance({
+          sourceId: 'openfda',
+          citation: { title: `${reg.signal} for ${subject} (${total} reports)`, identifier: null, url: null },
+          query: subject,
+          confidence: total > 0 ? 'moderate' : null,
+          extraCaveats: [reg.caveat],
+        }),
+      ],
     });
   } catch (e) {
-    return JSON.stringify({
-      source: 'FDA FAERS (openFDA)',
-      error: e instanceof Error ? e.message : 'FAERS search failed',
-      summary: { total_reports: 0 },
-      sample: [],
-    });
+    return openFdaUnavailable(reg.source, reg.register, e instanceof Error ? e.message : 'the request failed');
   }
-});
+}
+
+const str = (v: unknown): string => (typeof v === 'string' ? v : '');
+
+const MAUDE_REGISTER: OpenFdaRegister = {
+  source: 'FDA MAUDE (openFDA)',
+  register: 'MAUDE',
+  criteria: ['product_code', 'device_name', 'manufacturer', 'date_from', 'date_to'],
+  needs: 'Name a device (device_name or product_code), a manufacturer or a date range to search MAUDE.',
+  subjectKeys: ['device_name', 'product_code'],
+  subjectFallback: 'the device',
+  signal: 'MAUDE device adverse-event signal',
+  caveat:
+    'MAUDE is passive surveillance — reports are unverified, subject to reporting bias, and do not establish causality or rates.',
+  search: (input, limit) =>
+    fdaMaudeClient.searchDeviceReports({
+      productCode: str(input.product_code),
+      deviceName: str(input.device_name),
+      manufacturer: str(input.manufacturer),
+      dateFrom: str(input.date_from),
+      dateTo: str(input.date_to),
+      limit,
+    }),
+  analyze: reports => fdaMaudeClient.analyzeMaudeData(reports),
+};
+
+const FAERS_REGISTER: OpenFdaRegister = {
+  source: 'FDA FAERS (openFDA)',
+  register: 'FAERS',
+  criteria: ['product_ndc', 'product_name', 'manufacturer', 'date_from', 'date_to'],
+  needs: 'Name a product (product_name or product_ndc), a manufacturer or a date range to search FAERS.',
+  subjectKeys: ['product_name', 'product_ndc'],
+  subjectFallback: 'the product',
+  signal: 'FAERS adverse-event signal',
+  caveat:
+    'FAERS is spontaneous reporting — counts have no denominator and do not establish causality, incidence, or rates.',
+  search: (input, limit) =>
+    fdaFaersClient.searchAdverseEvents({
+      productNdc: str(input.product_ndc),
+      productName: str(input.product_name),
+      manufacturer: str(input.manufacturer),
+      dateFrom: str(input.date_from),
+      dateTo: str(input.date_to),
+      limit,
+    }),
+  analyze: reports => fdaFaersClient.analyzeFaersData(reports),
+};
+
+registerToolHandler('search_device_adverse_events', input => runOpenFdaSearch(input, MAUDE_REGISTER));
+registerToolHandler('search_drug_adverse_events', input => runOpenFdaSearch(input, FAERS_REGISTER));
 
 // Search Literature — live PubMed via the governed E-utilities client.
 registerToolHandler('search_literature', async (input) => {
@@ -2572,13 +2663,42 @@ registerToolHandler('scan_project_risks', async (input, ctx) => {
 // kept current with amendments/health reviews, and re-baselined via goals.
 // Milestones reuse project_workflow_stages; proactive tasks reuse project_tasks;
 // alerts reuse the notification service. All operations are org+project scoped.
-function scheduleToolContext(ctx?: ToolContext): { organizationId: number; projectId: number } | null {
-  const organizationId = ctx?.organizationId ? Number(ctx.organizationId) : null;
-  const projectId = ctx?.projectId ? Number(ctx.projectId) : null;
-  if (!organizationId || Number.isNaN(organizationId) || !projectId || Number.isNaN(projectId)) {
-    return null;
+function scheduleIdentity(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0 && value <= 2_147_483_647;
+}
+
+async function scheduleToolContext(ctx?: ToolContext): Promise<{
+  organizationId: number; projectId: number; execution: ScheduleExecutionContext;
+} | null> {
+  // Capture server-authored primitives before asynchronous admission. A prompt
+  // field or mutable conversation context must not replace the admitted actor.
+  const organizationId = ctx?.organizationId;
+  const actorUserId = ctx?.userId;
+  const executor = ctx?.sqlClient;
+  const projectId = ctx?.projectId;
+  const projectRef = ctx?.projectRef;
+  if (!scheduleIdentity(organizationId) || !scheduleIdentity(actorUserId) ||
+      !executor || typeof executor.query !== 'function') return null;
+  const admitted = await admitAnaProjectScope(executor, {
+    organizationId, userId: actorUserId, projectId, projectRef,
+  });
+  if (!scheduleIdentity(admitted.projectId)) return null;
+  return { organizationId, projectId: admitted.projectId, execution: { actorUserId, executor } };
+}
+
+function scheduleToolFailure(error: unknown, operation: string): string {
+  if (error instanceof AnaProjectScopeError || error instanceof ProgramReadAccessError) {
+    return JSON.stringify({ source: 'AnA Schedule of Events', error: error.message, code: error.code, status: error.status });
   }
-  return { organizationId, projectId };
+  if (error instanceof SchedulePreservationConflict) {
+    return JSON.stringify({ source: 'AnA Schedule of Events', error: error.message, code: error.code, status: 409 });
+  }
+  // A failed COMMIT may have been applied. Do not assert rollback or expose SQL.
+  return JSON.stringify({ source: 'AnA Schedule of Events', error: `${operation} could not be confirmed. Refresh the schedule before making another change.` });
+}
+
+function missingScheduleContext(): string {
+  return JSON.stringify({ source: 'AnA Schedule of Events', error: 'An active organization and project are required, with a current actor and request database context.' });
 }
 
 function parseScheduleDate(value: unknown): Date | null {
@@ -2588,14 +2708,10 @@ function parseScheduleDate(value: unknown): Date | null {
 }
 
 registerToolHandler('generate_schedule_of_events', async (input, ctx) => {
-  const scope = scheduleToolContext(ctx);
-  if (!scope) {
-    return JSON.stringify({
-      source: 'AnA Schedule of Events',
-      error: 'An active organization and project are required to generate a schedule.',
-    });
-  }
+  const reason = gatedReason(input);
   try {
+    const scope = await scheduleToolContext(ctx);
+    if (!scope) return missingScheduleContext();
     const { generateProjectSchedule } = await import('../projects/schedule-of-events');
     const projectType =
       (typeof input.project_type === 'string' && input.project_type.trim()) || ctx?.projectType || null;
@@ -2615,83 +2731,47 @@ registerToolHandler('generate_schedule_of_events', async (input, ctx) => {
       baselineDate: parseScheduleDate(input.baseline_date),
       targetDate: parseScheduleDate(input.target_date),
       goals,
+      reason,
       triggeredBy: 'ana_user',
       createdByAna: true,
-    });
-    return JSON.stringify({
-      source: 'AnA Schedule of Events',
-      plan: view.plan,
-      milestones: view.milestones,
-      goals: view.goals,
-      health: view.health,
-    });
-  } catch (e) {
-    return JSON.stringify({
-      source: 'AnA Schedule of Events',
-      error: `Schedule generation failed: ${e instanceof Error ? e.message : String(e)}`,
-    });
-  }
+    }, scope.execution);
+    return JSON.stringify({ source: 'AnA Schedule of Events', plan: view.plan, milestones: view.milestones, goals: view.goals, health: view.health });
+  } catch (error) { return scheduleToolFailure(error, 'Schedule generation'); }
 });
 
 registerToolHandler('amend_schedule_of_events', async (input, ctx) => {
-  const scope = scheduleToolContext(ctx);
-  if (!scope) {
-    return JSON.stringify({ source: 'AnA Schedule of Events', error: 'An active organization and project are required.' });
-  }
   const milestoneKey = typeof input.milestone_key === 'string' ? input.milestone_key.trim() : '';
-  if (!milestoneKey) {
-    return JSON.stringify({ source: 'AnA Schedule of Events', error: 'milestone_key is required.' });
-  }
+  if (!milestoneKey) return JSON.stringify({ source: 'AnA Schedule of Events', error: 'milestone_key is required.' });
   try {
+    const scope = await scheduleToolContext(ctx);
+    if (!scope) return missingScheduleContext();
     const { amendMilestone } = await import('../projects/schedule-of-events');
     const result = await amendMilestone({
-      orgId: scope.organizationId,
-      projectId: scope.projectId,
-      milestoneKey,
+      orgId: scope.organizationId, projectId: scope.projectId, milestoneKey,
       newTargetDate: parseScheduleDate(input.new_target_date),
       status: typeof input.status === 'string' ? (input.status as any) : undefined,
       progress: typeof input.progress === 'number' ? input.progress : undefined,
       note: typeof input.note === 'string' ? input.note : undefined,
-      triggeredBy: 'ana_user',
-      createdByAna: true,
-    });
+      triggeredBy: 'ana_user', createdByAna: true,
+    }, scope.execution);
     return JSON.stringify({ source: 'AnA Schedule of Events', ...result });
-  } catch (e) {
-    return JSON.stringify({
-      source: 'AnA Schedule of Events',
-      error: `Amendment failed: ${e instanceof Error ? e.message : String(e)}`,
-    });
-  }
+  } catch (error) { return scheduleToolFailure(error, 'Schedule amendment'); }
 });
 
 registerToolHandler('review_schedule_of_events_health', async (input, ctx) => {
-  const scope = scheduleToolContext(ctx);
-  if (!scope) {
-    return JSON.stringify({ source: 'AnA Schedule of Events', error: 'An active organization and project are required.' });
-  }
   try {
+    const scope = await scheduleToolContext(ctx);
+    if (!scope) return missingScheduleContext();
     const { reviewScheduleHealth } = await import('../projects/schedule-of-events');
     const apply = input.apply === undefined ? true : !!input.apply;
     const result = await reviewScheduleHealth({
-      orgId: scope.organizationId,
-      projectId: scope.projectId,
-      apply,
-      triggeredBy: 'ana_user',
-    });
+      orgId: scope.organizationId, projectId: scope.projectId, apply, triggeredBy: 'ana_user',
+    }, scope.execution);
     return JSON.stringify({ source: 'AnA Schedule of Events', ...result });
-  } catch (e) {
-    return JSON.stringify({
-      source: 'AnA Schedule of Events',
-      error: `Health review failed: ${e instanceof Error ? e.message : String(e)}`,
-    });
-  }
+  } catch (error) { return scheduleToolFailure(error, 'Schedule review'); }
 });
 
 registerToolHandler('reset_project_goals', async (input, ctx) => {
-  const scope = scheduleToolContext(ctx);
-  if (!scope) {
-    return JSON.stringify({ source: 'AnA Schedule of Events', error: 'An active organization and project are required.' });
-  }
   const rationale = typeof input.rationale === 'string' ? input.rationale.trim() : '';
   const goals = Array.isArray(input.goals)
     ? (input.goals as Array<Record<string, unknown>>).map((g) => ({
@@ -2702,26 +2782,17 @@ registerToolHandler('reset_project_goals', async (input, ctx) => {
         metric: typeof g.metric === 'string' ? g.metric : null,
       })).filter((g) => g.title)
     : [];
-  if (goals.length === 0 || !rationale) {
-    return JSON.stringify({ source: 'AnA Schedule of Events', error: 'At least one goal and a rationale are required.' });
-  }
+  if (goals.length === 0 || !rationale) return JSON.stringify({ source: 'AnA Schedule of Events', error: 'goals and rationale are required.' });
   try {
+    const scope = await scheduleToolContext(ctx);
+    if (!scope) return missingScheduleContext();
     const { resetProjectGoals } = await import('../projects/schedule-of-events');
     const result = await resetProjectGoals({
-      orgId: scope.organizationId,
-      projectId: scope.projectId,
-      goals,
-      rationale,
-      triggeredBy: 'ana_user',
-      createdByAna: true,
-    });
+      orgId: scope.organizationId, projectId: scope.projectId, goals, rationale,
+      triggeredBy: 'ana_user', createdByAna: true,
+    }, scope.execution);
     return JSON.stringify({ source: 'AnA Schedule of Events', ...result });
-  } catch (e) {
-    return JSON.stringify({
-      source: 'AnA Schedule of Events',
-      error: `Goal reset failed: ${e instanceof Error ? e.message : String(e)}`,
-    });
-  }
+  } catch (error) { return scheduleToolFailure(error, 'Goal reset'); }
 });
 
 // Session briefing — tenant-scoped reconciliation of overdue/due-soon deadlines
@@ -2951,14 +3022,11 @@ registerToolHandler('plan_orphan_drug_designation', async (input) => {
   });
 });
 
-// IND narrative-module authoring (CTD Module 2.5 / 2.7) — E11.
-// Pure orchestration: build the author_docx_native plan (title + content) from a
-// STRUCTURED source, derive required_strings for verify_docx_against_source from
-// the source's key facts/figures (section headers PLUS every figure value), and
-// emit the Part 11 honesty verdict (sample/not_assessed ⇒ non-sealable; a
-// missing/mistyped figure ⇒ verification fails ⇒ non-sealable). The actual
-// author_docx_native / verify_docx_against_source calls are driven by AnA in the
-// agentic loop using the content + required_strings this tool returns.
+// IND narrative-module planning (CTD Module 2.5 / 2.7) — E11.
+// Build a transcription scaffold from caller/model-supplied facts and check its
+// own text for the supported template headers and supplied figure values. This
+// does not author or verify a file, qualify study sources, or verify provenance;
+// the planning receipt is always non-sealable, including when labelled live.
 registerToolHandler('plan_ind_module_authoring', async (input) => {
   const moduleId = typeof input.module === 'string' ? input.module.trim() : '';
   if (!moduleId || !listIndModules().includes(moduleId)) {
@@ -3006,17 +3074,29 @@ registerToolHandler('plan_ind_module_authoring', async (input) => {
       content: plan.content,
       required_strings: plan.requiredStrings,
     },
-    verification,
+    verification: {
+      ...verification,
+      scope: 'plan_text_only',
+      artifactVerified: false,
+      sourceVerified: false,
+    },
     honesty: {
-      sealable: sealability.sealable,
+      sealable: false,
       provenance: plan.provenance,
-      blockers: sealability.blockers,
+      blockers: [
+        'Planning only: no authored file or independently verified project source evidence was checked. ' +
+          'Verify the actual governed artifact and its qualified sources before sealing.',
+        ...sealability.blockers,
+      ],
       sectionsWithoutFacts: plan.sectionsWithoutFacts,
     },
     note:
-      'Drive author_docx_native with author_docx_native.{title,content}, then verify_docx_against_source ' +
-      'with required_strings. required_strings include every source figure, so a missing or mistyped ' +
-      'figure fails verification and the draft is non-sealable. sample/not_assessed sources are never sealable.',
+      'This tool builds a transcription scaffold and checks only its supported template headers and ' +
+      'caller/model-supplied strings. The plan body\'s \'verified against the source\' wording means only ' +
+      'supplied-string self-consistency: no authored file, underlying study, source qualification, or ' +
+      'caller-declared provenance was independently verified. This planning receipt is always non-sealable. ' +
+      'Use author_docx_native with author_docx_native.{title,content}, then verify the actual governed artifact ' +
+      'and its qualified source evidence separately; required_strings alone do not establish source qualification.',
   });
 });
 
@@ -3912,16 +3992,15 @@ registerToolHandler('verify_revision', async (input) => {
   });
 });
 
-registerToolHandler('critique_document', async (input) => {
+registerToolHandler('critique_document', async (input, ctx) => {
+  if (input.document_id !== undefined) return critiqueSavedDocument(input, ctx);
   const sections = Array.isArray(input.sections) ? input.sections : [];
-  const clean = sections
-    .filter((s): s is { title: string; text: string } =>
-      !!s && typeof (s as any).title === 'string' && typeof (s as any).text === 'string')
-    .map((s) => ({ title: s.title, text: s.text }));
-  if (clean.length === 0) {
+  const valid = (s: unknown): s is { title: string; text: string } => !!s && typeof s === 'object' &&
+    'title' in s && typeof s.title === 'string' && 'text' in s && typeof s.text === 'string';
+  if (sections.length === 0 || !sections.every(valid)) {
     return JSON.stringify({ status: 'needs_parameters', message: 'sections[] with {title, text} is required' });
   }
-  const result = critiqueDocument(clean, {
+  const result = critiqueDocument(sections, {
     audience: precisionAudience(input.audience),
     documentType: typeof input.documentType === 'string' ? input.documentType : undefined,
     register: precisionRegister(input.register),
@@ -3929,6 +4008,7 @@ registerToolHandler('critique_document', async (input) => {
   return JSON.stringify({
     status: 'computed',
     engine: 'deterministic',
+    scope: 'provided_text',
     documentScore: result.documentScore,
     verdict: result.verdict,
     register: result.register,
@@ -3995,7 +4075,11 @@ registerToolHandler('describe_capabilities', async (_input, ctx) => {
         surfaceUsage: getToolSurfaceUsage(),
       },
       guidance:
-        'Only offer or attempt tools whose integration is configured. For configured:false entries, ' +
+        // 2026-10-15: did not say configured is not working; "configured" read as live.
+        'Only offer or attempt tools whose integration is configured. Reachability is \'unchecked\' for ' +
+        'every integration: configured means it can be tried, not that it works — never call one live or ' +
+        'connected; integrationSummary.live counts only ones a call has proved reachable. ' +
+        'For configured:false entries, ' +
         'tell the user what unlocks them (the `requires` field). configured:null means org context ' +
         'is needed to resolve — ask the user to open a project. Treat tools in execution.unhealthy ' +
         'as currently unreliable (warn + prefer alternatives until they recover). Tools in ' +
@@ -4838,7 +4922,7 @@ const isWorkbookFile = (mime: string, name: string) =>
 registerToolHandler('inspect_uploaded_document', async (input, ctx) => {
   try {
     const { loadUploadedFile } = await import('./uploaded-file-access.js');
-    const file = await loadUploadedFile(String(input.file_id ?? ''), ctx?.organizationId);
+    const file = await loadUploadedFile(String(input.file_id ?? ''), ctx?.organizationId, { userId: ctx?.userId });
     const base = { fileId: file.fileId, fileName: file.fileName, mimeType: file.mimeType, fileSize: file.fileSize };
 
     if (isPdfFile(file.mimeType, file.fileName)) {
@@ -4889,7 +4973,7 @@ registerToolHandler('inspect_uploaded_document', async (input, ctx) => {
 registerToolHandler('read_uploaded_document', async (input, ctx) => {
   try {
     const { loadUploadedFile } = await import('./uploaded-file-access.js');
-    const file = await loadUploadedFile(String(input.file_id ?? ''), ctx?.organizationId);
+    const file = await loadUploadedFile(String(input.file_id ?? ''), ctx?.organizationId, { userId: ctx?.userId });
     const languages = Array.isArray(input.languages)
       ? input.languages.filter((l): l is string => typeof l === 'string')
       : undefined;
@@ -4987,7 +5071,7 @@ registerToolHandler('read_uploaded_document', async (input, ctx) => {
 registerToolHandler('ocr_document_pages', async (input, ctx) => {
   try {
     const { loadUploadedFile } = await import('./uploaded-file-access.js');
-    const file = await loadUploadedFile(String(input.file_id ?? ''), ctx?.organizationId);
+    const file = await loadUploadedFile(String(input.file_id ?? ''), ctx?.organizationId, { userId: ctx?.userId });
     const { ocrService } = await import('../ocr/index.js');
     const languages = Array.isArray(input.languages)
       ? input.languages.filter((l): l is string => typeof l === 'string')
@@ -5056,6 +5140,8 @@ registerToolHandler('ocr_document_pages', async (input, ctx) => {
       pages: r.pageDetails.map((p) => ({
         page: p.page,
         confidence: Math.round(p.confidence),
+        // Rendered dpi: lower than requested where a page exceeds the pixel cap.
+        dpi: Math.round(p.dpi),
         text: p.text,
       })),
       note:
@@ -5072,7 +5158,7 @@ registerToolHandler('ocr_document_pages', async (input, ctx) => {
 registerToolHandler('read_spreadsheet', async (input, ctx) => {
   try {
     const { loadUploadedFile } = await import('./uploaded-file-access.js');
-    const file = await loadUploadedFile(String(input.file_id ?? ''), ctx?.organizationId);
+    const file = await loadUploadedFile(String(input.file_id ?? ''), ctx?.organizationId, { userId: ctx?.userId });
     if (!isWorkbookFile(file.mimeType, file.fileName)) {
       return JSON.stringify({
         error: `read_spreadsheet supports .xlsx and .csv; "${file.fileName}" (${file.mimeType}) is neither. Use read_uploaded_document instead.`,
@@ -5098,12 +5184,35 @@ registerToolHandler('read_spreadsheet', async (input, ctx) => {
   }
 });
 
+function spreadsheetProcessingReceipt(saved: import('./uploaded-file-access.js').DerivedUploadResult) {
+  if (!saved.processing) return undefined;
+  return {
+    ok: saved.processing.ok,
+    processed: saved.processing.processed,
+    status: saved.processing.status,
+    ...(saved.processing.reasonCode ? { reasonCode: saved.processing.reasonCode } : {}),
+  };
+}
+
+function spreadsheetCaptureMessage(saved: import('./uploaded-file-access.js').DerivedUploadResult) {
+  if (saved.captureStatus !== 'captured') {
+    return 'The edited copy remains a conversation upload; adopt it into a project before Vault filing. ';
+  }
+  const processing = saved.processing;
+  const readable = processing?.processed === true &&
+    (processing.status === 'completed' || processing.status === 'already_complete');
+  const processingMessage = readable ? 'Readable text is saved. ' :
+    processing ? 'This attempt did not confirm readable text; refresh the Data Room to see the current processing state. ' :
+    'Text processing has not been confirmed; refresh the Data Room to see its current state. ';
+  return 'The edited copy is captured in the open project’s Data Room. ' + processingMessage + 'Vault filing is a separate governed action. ';
+}
+
 // Edit Spreadsheet — apply cell edits, save as a NEW upload (original untouched).
 registerToolHandler('edit_spreadsheet', async (input, ctx) => {
   try {
     const { organizationId, userId, projectRef, projectId } = ctx ?? {};
     const { loadUploadedFile, saveDerivedUpload, sha256Hex } = await import('./uploaded-file-access.js');
-    const file = await loadUploadedFile(String(input.file_id ?? ''), organizationId);
+    const file = await loadUploadedFile(String(input.file_id ?? ''), organizationId, { userId: ctx?.userId });
     if (!isWorkbookFile(file.mimeType, file.fileName)) {
       return JSON.stringify({
         error: `edit_spreadsheet supports .xlsx and .csv; "${file.fileName}" (${file.mimeType}) is neither.`,
@@ -5164,11 +5273,12 @@ registerToolHandler('edit_spreadsheet', async (input, ctx) => {
       sourceSha256: sha256Hex(file.buffer),
       sourceId: saved.sourceId ?? null,
       captureStatus: saved.captureStatus,
+      processing: spreadsheetProcessingReceipt(saved),
       derivationAudit: saved.derivationAudit,
       scientificQualification: 'unassessed',
       formulaResults: 'not_recalculated',
       message: `Applied ${result.applied.length} edit(s) and saved the result as a new file (${saved.fileId}). The original upload is unchanged. ` +
-        (saved.captureStatus === 'captured' ? 'The edited copy is captured in the open project’s Data Room; extraction and Vault filing are still required. ' : 'The edited copy remains a conversation upload; adopt it into a project before Vault filing. ') +
+        spreadsheetCaptureMessage(saved) +
         'Formula results have not been recalculated, and scientific suitability has not been assessed.',
     });
   } catch (e) {
@@ -5274,60 +5384,45 @@ registerToolHandler('check_numerical_integrity', async (input: Record<string, un
 // Shared parser: map a raw tool-input record onto the engine's StatisticalInput
 // shape. Used by every biostats tool so they speak the same parameter language.
 function toBiostatsInput(input: Record<string, unknown>, ctx?: ToolContext): Record<string, unknown> {
-  const num = (v: unknown): number | undefined => {
-    if (v === undefined || v === null || v === '') return undefined;
-    const n = Number(v);
-    return Number.isFinite(n) ? n : undefined;
-  };
-  const str = (v: unknown): string | undefined =>
-    typeof v === 'string' && v.length > 0 ? v : undefined;
-
-  return {
-    clientTrack: str(input.clientTrack),
-    studyType: str(input.studyType),
-    objectiveType: str(input.objectiveType),
-    endpointType: str(input.endpointType),
-    effectSize: num(input.effectSize),
-    controlRate: num(input.controlRate),
-    treatmentRate: num(input.treatmentRate),
-    alpha: num(input.alpha),
-    powerTarget: num(input.powerTarget),
-    attritionRate: num(input.attritionRate),
-    allocationRatio: num(input.allocationRatio),
-    nonInferiorityMargin: num(input.nonInferiorityMargin),
-    equivalenceMargin: num(input.equivalenceMargin),
-    comparatorType: str(input.comparatorType),
-    numberOfGroups: num(input.numberOfGroups),
-    followUpDuration: num(input.followUpDuration),
-    interimAnalyses: num(input.interimAnalyses),
-    sensitivity: num(input.sensitivity),
-    specificity: num(input.specificity),
-    prevalence: num(input.prevalence),
-    aucTarget: num(input.aucTarget),
-    aucNull: num(input.aucNull),
-    agreementTarget: num(input.agreementTarget),
-    crossoverPeriods: num(input.crossoverPeriods),
-    withinSubjectCorrelation: num(input.withinSubjectCorrelation),
-    numberOfEndpoints: num(input.numberOfEndpoints),
-    multiplicityMethod: str(input.multiplicityMethod),
-    estimandStrategy: str(input.estimandStrategy),
-    missingDataMethod: str(input.missingDataMethod),
-    expectedMissingRate: num(input.expectedMissingRate),
-    regulatoryBody: str(input.regulatoryBody),
-    indication: str(input.indication),
-    phase: str(input.phase),
-    projectId: num(input.projectId) ?? (ctx?.projectId ?? undefined),
-  };
+  return mapToBiostatsInput(input, ctx?.projectId ?? null);
 }
 
 const NEEDS_PARAMS_MESSAGE =
   'The biostatistics engine could not compute — required parameters are missing or invalid. Ask the user for exactly the fields listed in errors, then call the tool again.';
 
+/**
+ * A refusal from the computation engine is not a failure of the tool.
+ *
+ * Since 2026-10-05 the engine throws `ComputationRefusal` rather than
+ * substituting a silent default: a hazard ratio of 0.5 for an effect ≥ 1, an
+ * 0.85 performance goal, a crossover correlation of 0.5. Reported as
+ * `{ error: "… failed: …" }` the assistant tells the user the computation
+ * broke, when what happened is that it needs one more input — so it is
+ * reported as `needs_parameters`, carrying the engine's own sentence and the
+ * field it names, which is what the user has to supply.
+ *
+ * Matched on `name`, not `instanceof`: the class is defined in the engine
+ * module, and these handlers reach it through a dynamic import.
+ */
+function biostatsRefusal(err: unknown): string | null {
+  const e = err as { name?: unknown; code?: unknown; message?: unknown; field?: unknown };
+  if (e?.name !== 'ComputationRefusal') return null;
+  return JSON.stringify({
+    status: 'needs_parameters',
+    engine: 'deterministic',
+    code: typeof e.code === 'string' ? e.code : 'missing_input',
+    field: typeof e.field === 'string' ? e.field : undefined,
+    message: typeof e.message === 'string' ? e.message : NEEDS_PARAMS_MESSAGE,
+    instruction:
+      'The engine refused to compute and said why. Ask the user for the field it names; do not estimate it, and do not report this as a failure.',
+  });
+}
+
 // Compute Sample Size — deterministic biostatistics engine (validated formulas)
 registerToolHandler('compute_sample_size', async (input: Record<string, unknown>, ctx) => {
   try {
     const { anaBiostatsOrchestrator } = await import('../ana-biostats/index.js');
-     
+
     const result = anaBiostatsOrchestrator.quickCompute(toBiostatsInput(input, ctx) as any);
 
     if (!result.validation.valid) {
@@ -5369,6 +5464,8 @@ registerToolHandler('compute_sample_size', async (input: Record<string, unknown>
         'Report these numbers verbatim. Do NOT recompute or round differently. State which assumptions were defaults (prefilledDefaults) so the user can override them.',
     });
   } catch (err: any) {
+    const refusal = biostatsRefusal(err);
+    if (refusal) return refusal;
     return JSON.stringify({ error: `Sample size computation failed: ${err?.message || 'unknown error'}` });
   }
 });
@@ -5377,7 +5474,7 @@ registerToolHandler('compute_sample_size', async (input: Record<string, unknown>
 registerToolHandler('compute_fih_dose', async (input: Record<string, unknown>) => {
   try {
     const { computeFirstInHumanDose } = await import('../preclinical/fih-dose-engine.js');
-     
+
     const result = computeFirstInHumanDose(input as any);
     return JSON.stringify({
       status: 'computed',
@@ -5403,7 +5500,7 @@ registerToolHandler('classify_tox_findings', async (input: Record<string, unknow
       return JSON.stringify({ status: 'needs_parameters', message: 'findings[] (organ + finding) is required.' });
     }
     const { classifyToxFindings } = await import('../preclinical/tox-findings-classifier.js');
-     
+
     const summary = classifyToxFindings(findings as any);
     return JSON.stringify({
       status: 'classified',
@@ -5431,7 +5528,7 @@ registerToolHandler('select_exposure_response_dose', async (input: Record<string
       normalized.exposuresByDose = map;
     }
     const { selectExposureResponseDose } = await import('../clinical-pharmacology/exposure-response-engine.js');
-     
+
     const result = selectExposureResponseDose(normalized as any);
     return JSON.stringify({
       status: 'computed',
@@ -5458,9 +5555,9 @@ registerToolHandler('draft_nonclinical_overview_m2_4', async (input: Record<stri
     }
     const { buildEnrichedM24 } = await import('../preclinical/nonclinical-m24-adapter.js');
     const { summary, toxProfile } = buildEnrichedM24({
-       
+
       studies: studies as any,
-       
+
       findings: input.findings as any,
       drugSubstanceName: input.drugSubstanceName as string | undefined,
       indication: input.indication as string | undefined,
@@ -5471,6 +5568,8 @@ registerToolHandler('draft_nonclinical_overview_m2_4', async (input: Record<stri
       sectionKey: summary.sectionKey,
       title: summary.title,
       content: summary.narrative,
+      // The builder's tables, which the narrative refers to (2026-10-15: dropped).
+      tables: summary.tables,
       completeness: summary.completeness,
       gaps: summary.gaps,
       toxProfile: toxProfile
@@ -5589,7 +5688,7 @@ registerToolHandler('list_platform_commands', async (input: Record<string, unkno
   try {
     const { COMMAND_REGISTRY } = await import('../ana-ri/command-executor.js');
     const q = typeof input.query === 'string' ? input.query.toLowerCase().trim() : '';
-     
+
     let list = COMMAND_REGISTRY as Array<any>;
     if (q) list = list.filter(c => `${c.name} ${c.description ?? ''}`.toLowerCase().includes(q));
     return JSON.stringify({
@@ -5617,7 +5716,7 @@ registerToolHandler('execute_platform_command', async (input: Record<string, unk
     }
     const params = input.params && typeof input.params === 'object' ? (input.params as Record<string, unknown>) : {};
     const { executeCommands, COMMAND_REGISTRY } = await import('../ana-ri/command-executor.js');
-     
+
     if (!(COMMAND_REGISTRY as Array<any>).some(c => c.name === command)) {
       return JSON.stringify({ status: 'unknown_command', message: `Unknown command "${command}". Call list_platform_commands to see the catalog.` });
     }
@@ -5628,7 +5727,7 @@ registerToolHandler('execute_platform_command', async (input: Record<string, unk
       // The model call that proposed this command, for its audit row.
       servingModel: ctx?.servingModel ?? null,
     };
-     
+
     const results = await executeCommands([{ command, params } as any], cmdCtx as any);
     const result = results[0];
     return JSON.stringify({
@@ -5654,7 +5753,7 @@ registerToolHandler('draft_nonclinical_summaries_m2_6', async (input: Record<str
       return JSON.stringify({ status: 'needs_parameters', message: 'studies[] is required to draft the M2.6 summaries.' });
     }
     const { buildM26NonclinicalSummaries } = await import('../preclinical/m26-nonclinical-summaries.js');
-     
+
     const r = buildM26NonclinicalSummaries(input as any);
     return JSON.stringify({
       status: 'drafted',
@@ -5677,7 +5776,7 @@ registerToolHandler('draft_nonclinical_summaries_m2_6', async (input: Record<str
 registerToolHandler('assess_nonclinical_safety', async (input: Record<string, unknown>) => {
   try {
     const { assessNonclinicalSafety } = await import('../preclinical/nonclinical-safety-assessment.js');
-     
+
     const a = assessNonclinicalSafety(input as any);
     return JSON.stringify({
       status: 'assessed',
@@ -5708,9 +5807,9 @@ registerToolHandler('assess_nonclinical_program', async (input: Record<string, u
     const { assessNonclinicalProgram } = await import('../preclinical/nonclinical-program-requirements.js');
     const present = Array.isArray(input.present) ? input.present : [];
     const result = assessNonclinicalProgram(
-       
+
       input as any,
-       
+
       present as any,
     );
     return JSON.stringify({
@@ -5731,7 +5830,7 @@ registerToolHandler('assess_nonclinical_program', async (input: Record<string, u
 registerToolHandler('assess_concentration_qtc', async (input: Record<string, unknown>) => {
   try {
     const { assessConcentrationQtc } = await import('../clinical-pharmacology/concentration-qtc.js');
-     
+
     const result = assessConcentrationQtc(input as any);
     return JSON.stringify({
       status: 'computed',
@@ -5759,7 +5858,7 @@ registerToolHandler('characterize_pk', async (input: Record<string, unknown>) =>
     const mod = await import('../clinical-pharmacology/pk-characterization.js');
     const result: Record<string, unknown> = { status: 'computed', engine: 'deterministic' };
     if (dp) {
-       
+
       result.doseProportionality = mod.assessDoseProportionality(dp as any);
     }
     if (acc) {
@@ -5780,7 +5879,7 @@ registerToolHandler('characterize_pk', async (input: Record<string, unknown>) =>
 registerToolHandler('assess_ddi_risk', async (input: Record<string, unknown>) => {
   try {
     const { assessDdiRisk } = await import('../clinical-pharmacology/ddi-static-model.js');
-     
+
     const result = assessDdiRisk(input as any);
     return JSON.stringify({
       status: 'computed',
@@ -5794,29 +5893,33 @@ registerToolHandler('assess_ddi_risk', async (input: Record<string, unknown>) =>
 });
 
 // Draft M2.7 Clinical Summary — deterministic composer
-registerToolHandler('draft_clinical_summary_m2_7', async (input: Record<string, unknown>) => {
+registerToolHandler('draft_clinical_summary_m2_7', async (input: Record<string, unknown>, ctx) => {
   try {
-    const csrs = input.csrs;
-    if (!Array.isArray(csrs) || csrs.length === 0) {
-      return JSON.stringify({ status: 'needs_parameters', message: 'csrs[] is required to draft the M2.7 summary.' });
-    }
+    // Rule 2: the figures come from the program's completed CSRs, never from
+    // the tool input the model writes (ana/module2-csr-inputs.ts).
+    const { loadModule2CsrInputs } = await import('./module2-csr-inputs.js');
+    const sourced = await loadModule2CsrInputs(input, ctx, '2.7');
+    if (!sourced.ok) return JSON.stringify(sourced);
     const { buildM27ClinicalSummary } = await import('../m2-summary-builders.js');
     const summary = buildM27ClinicalSummary({
-       
-      csrs: csrs as any,
+      csrs: sourced.csrs,
       indication: (input.indication as string) ?? '',
       investigationalProduct: (input.investigationalProduct as string) ?? '',
     });
     return JSON.stringify({
       status: 'drafted',
       engine: 'deterministic',
+      source: { csrBuildJobsForProject: sourced.projectId, studies: sourced.csrs.length },
+      ignoredSuppliedFigures: sourced.ignoredSuppliedFigures,
       sectionKey: summary.sectionKey,
       title: summary.title,
       content: summary.narrative,
+      // The tables the narrative refers to ("… tabulated below"); 2026-10-15: dropped.
+      tables: summary.tables,
       completeness: summary.completeness,
       gaps: summary.gaps,
       instruction:
-        'This is a draft the author promotes through the governed authoring flow. State the completeness and gaps honestly; do not invent studies or events.',
+        'This is a draft the author promotes through the governed authoring flow. Its figures are the program\'s CSR records. State the completeness and gaps honestly; do not add studies, events or figures.',
     });
   } catch (err: any) {
     return JSON.stringify({ error: `M2.7 summary drafting failed: ${err?.message || 'unknown error'}` });
@@ -5834,9 +5937,9 @@ registerToolHandler('compare_statistical_scenarios', async (input: Record<string
     }
     const meta = { userId: ctx?.userId ?? 0, organizationId: ctx?.organizationId ?? 0 };
     const result = await anaBiostatsOrchestrator.compareScenarios(
-       
+
       toBiostatsInput(a, ctx) as any,
-       
+
       toBiostatsInput(b, ctx) as any,
       meta,
     );
@@ -5859,6 +5962,8 @@ registerToolHandler('compare_statistical_scenarios', async (input: Record<string
       instruction: 'Report both scenarios\' engine-computed N and power and the recommendation verbatim.',
     });
   } catch (err: any) {
+    const refusal = biostatsRefusal(err);
+    if (refusal) return refusal;
     return JSON.stringify({ error: `Scenario comparison failed: ${err?.message || 'unknown error'}` });
   }
 });
@@ -5867,7 +5972,7 @@ registerToolHandler('compare_statistical_scenarios', async (input: Record<string
 registerToolHandler('assess_statistical_defensibility', async (input: Record<string, unknown>, ctx) => {
   try {
     const { anaBiostatsOrchestrator } = await import('../ana-biostats/index.js');
-     
+
     const result = anaBiostatsOrchestrator.quickCompute(toBiostatsInput(input, ctx) as any);
     if (!result.validation.valid) {
       return JSON.stringify({ status: 'needs_parameters', errors: result.validation.errors, message: NEEDS_PARAMS_MESSAGE });
@@ -5894,6 +5999,8 @@ registerToolHandler('assess_statistical_defensibility', async (input: Record<str
       instruction: 'Report the verdict, per-dimension scores and escalation reasons verbatim. Do not soften or invent scores.',
     });
   } catch (err: any) {
+    const refusal = biostatsRefusal(err);
+    if (refusal) return refusal;
     return JSON.stringify({ error: `Defensibility assessment failed: ${err?.message || 'unknown error'}` });
   }
 });
@@ -5931,7 +6038,7 @@ registerToolHandler('generate_statistical_document', async (input: Record<string
     if (!documentType) {
       return JSON.stringify({ error: 'generate_statistical_document requires a documentType.' });
     }
-     
+
     const result = anaBiostatsOrchestrator.quickCompute(toBiostatsInput(input, ctx) as any);
     if (!result.validation.valid) {
       return JSON.stringify({ status: 'needs_parameters', errors: result.validation.errors, message: NEEDS_PARAMS_MESSAGE });
@@ -5940,7 +6047,7 @@ registerToolHandler('generate_statistical_document', async (input: Record<string
       return JSON.stringify({ error: 'Engine did not return a complete computation; cannot generate the document.' });
     }
     const doc = documentGenerator.generate(
-       
+
       documentType as any,
       result.validation.normalizedInput,
       result.computation,
@@ -5965,22 +6072,38 @@ registerToolHandler('generate_statistical_document', async (input: Record<string
         'Present this as a DRAFT grounded in the deterministic engine. The numbers in the content are engine-computed — do not alter them. The user promotes it through the governed authoring flow; do not claim it is filed or approved.',
     });
   } catch (err: any) {
+    const refusal = biostatsRefusal(err);
+    if (refusal) return refusal;
     return JSON.stringify({ error: `Statistical document generation failed: ${err?.message || 'unknown error'}` });
   }
 });
 
+// Governed persistence is explicit in the native NDA/BLA controls; these tools
+// are pure deterministic computations and must not silently ignore a save request.
+function blaComputationSaveRefusal(input: Record<string, unknown>): string | null {
+  if (!['programId', 'program_id', 'persist', 'save'].some(key => Object.hasOwn(input, key))) return null;
+  return JSON.stringify({
+    error: 'BLA_PERSIST_REQUIRES_GOVERNED_UI', persisted: false,
+    message: 'Use the NDA/BLA assessment controls to save and sign an assessment when that capability is available to your organization. This computation tool cannot save it.',
+  });
+}
+const BLA_UNSAVED_DISCLOSURE = ' This is an unsaved computation. Saving and signing require the governed NDA/BLA assessment controls; do not describe this result as stored or signed.';
+
 // Assess Analytical Similarity — deterministic FDA Tier 1/2/3 engine (BLA)
 registerToolHandler('assess_analytical_similarity', async (input: Record<string, unknown>) => {
+  const saveRefusal = blaComputationSaveRefusal(input);
+  if (saveRefusal) return saveRefusal;
   try {
     const { assessAnalyticalSimilarity } = await import('../biologics/analytical-similarity.js');
-     
+
     const result = assessAnalyticalSimilarity(input as any);
     return JSON.stringify({
       status: 'computed',
       engine: 'deterministic',
       ...result,
+      persisted: false,
       instruction:
-        'Report the per-attribute verdicts, the overall conclusion, and the statistics verbatim. Do not recompute. Tier 1 uses EAC = ±1.5·σ_R with a 90% CI; Tier 2 a mean_R ± k·σ_R quality range.',
+        'Report the per-attribute verdicts, the overall conclusion, and the statistics verbatim. Do not recompute. Tier 1 uses EAC = ±1.5·σ_R with a 90% CI; Tier 2 a mean_R ± k·σ_R quality range.' + BLA_UNSAVED_DISCLOSURE,
     });
   } catch (err: any) {
     return JSON.stringify({ error: `Analytical similarity assessment failed: ${err?.message || 'unknown error'}` });
@@ -5989,16 +6112,19 @@ registerToolHandler('assess_analytical_similarity', async (input: Record<string,
 
 // Assess Comparability — deterministic ICH Q5E engine (BLA)
 registerToolHandler('assess_comparability', async (input: Record<string, unknown>) => {
+  const saveRefusal = blaComputationSaveRefusal(input);
+  if (saveRefusal) return saveRefusal;
   try {
     const { assessComparability } = await import('../biologics/comparability.js');
-     
+
     const result = assessComparability(input as any);
     return JSON.stringify({
       status: 'computed',
       engine: 'deterministic',
       ...result,
+      persisted: false,
       instruction:
-        'Report the per-attribute verdicts, the overall ICH Q5E conclusion, and the bridging recommendation (analytical-sufficient vs non-clinical/clinical) verbatim. Do not recompute.',
+        'Report the per-attribute verdicts, the overall ICH Q5E conclusion, and the bridging recommendation (analytical-sufficient vs non-clinical/clinical) verbatim. Do not recompute.' + BLA_UNSAVED_DISCLOSURE,
     });
   } catch (err: any) {
     return JSON.stringify({ error: `Comparability assessment failed: ${err?.message || 'unknown error'}` });
@@ -6007,16 +6133,19 @@ registerToolHandler('assess_comparability', async (input: Record<string, unknown
 
 // Assess Immunogenicity — deterministic ADA/NAb + risk engine (BLA)
 registerToolHandler('assess_immunogenicity', async (input: Record<string, unknown>) => {
+  const saveRefusal = blaComputationSaveRefusal(input);
+  if (saveRefusal) return saveRefusal;
   try {
     const { assessImmunogenicity } = await import('../biologics/immunogenicity.js');
-     
+
     const result = assessImmunogenicity(input as any);
     return JSON.stringify({
       status: 'computed',
       engine: 'deterministic',
       ...result,
+      persisted: false,
       instruction:
-        'Report each arm’s ADA/NAb incidence with its 95% CI, the comparative difference, and the overall risk tier with its rationale verbatim. Do not recompute.',
+        'Report each arm’s ADA/NAb incidence with its 95% CI, the comparative difference, and the overall risk tier with its rationale verbatim. Do not recompute.' + BLA_UNSAVED_DISCLOSURE,
     });
   } catch (err: any) {
     return JSON.stringify({ error: `Immunogenicity assessment failed: ${err?.message || 'unknown error'}` });
@@ -6025,27 +6154,31 @@ registerToolHandler('assess_immunogenicity', async (input: Record<string, unknow
 
 // Assess BLA Filing Risk — deterministic biologics RTF/CRL engine
 registerToolHandler('assess_bla_filing_risk', async (input: Record<string, unknown>) => {
+  const saveRefusal = blaComputationSaveRefusal(input);
+  if (saveRefusal) return saveRefusal;
   try {
     const { assessBlaFilingRisk } = await import('../biologics/regulatory-risk.js');
-     
+
     const result = assessBlaFilingRisk(input as any);
     return JSON.stringify({
       status: 'computed',
       engine: 'deterministic',
       ...result,
+      persisted: false,
       instruction:
-        'Report the RTF and CRL risk bands, the triggered findings with their citations and mitigations, and the filing blockers verbatim. Do not invent triggers beyond those returned.',
+        'Report the RTF and CRL risk bands, the triggered findings with their citations and mitigations, and the filing blockers verbatim. Do not invent triggers beyond those returned.' + BLA_UNSAVED_DISCLOSURE,
     });
   } catch (err: any) {
     return JSON.stringify({ error: `BLA filing-risk assessment failed: ${err?.message || 'unknown error'}` });
   }
 });
 
+
 // Generate SOP — deterministic GxP SOP generator (region-aware)
 registerToolHandler('generate_sop', async (input: Record<string, unknown>) => {
   try {
     const { generateSop } = await import('../sop-generator.js');
-     
+
     const result = generateSop(input as any);
     return JSON.stringify({
       status: 'generated',
@@ -6091,7 +6224,7 @@ registerToolHandler('review_sop_requirements', async (input: Record<string, unkn
 registerToolHandler('resolve_submission_plan', async (input: Record<string, unknown>) => {
   try {
     const { resolveSubmissionPlan, submissionCoverageMatrix } = await import('../regulatory/submission-resolver.js');
-     
+
     const plan = resolveSubmissionPlan(input as any);
     const coverage = submissionCoverageMatrix();
     return JSON.stringify({
@@ -6262,6 +6395,8 @@ registerToolHandler('reconcile_extracted_figures', async (input: Record<string, 
       ),
     });
   } catch (err: any) {
+    const refusal = biostatsRefusal(err);
+    if (refusal) return refusal;
     const message = err?.message || 'unknown error';
     if (isStatsParamError(message)) {
       return JSON.stringify({ status: 'needs_parameters', message });
@@ -6317,7 +6452,8 @@ registerToolHandler('list_governed_facts', async (input: Record<string, unknown>
         unit: f.unit,
         valueType: f.valueType,
         version: f.version,
-        confidence: f.confidence,
+        // 2026-10-15: unscored facts were stored at 0.5 / 1.0 and handed over as a score.
+        confidence: f.confidence ?? 'unscored',
       }));
     return JSON.stringify({
       status: 'computed',
@@ -6407,6 +6543,7 @@ registerToolHandler('scan_document_citations', async (input: Record<string, unkn
       summary: result.summary,
       citations: result.citations,
       unmatchedLabels: result.unmatchedLabels,
+      ...(result.auditTrail ? { auditTrail: result.auditTrail } : {}),
       instruction:
         'Report which governed values this document cites and, critically, any citation flagged divergent (its value no longer matches the governed value). If persisted, those citations are now tracked for future changes.',
     });
@@ -6476,6 +6613,7 @@ registerToolHandler('apply_fact_change', async (input: Record<string, unknown>, 
       driftCreated: result.driftCreated,
       claimsMarkedDrifted: result.claimsMarkedDrifted,
       cascadedClaims: result.cascadedClaims,
+      cascadePacketAuditReceipts: result.cascadePacketAuditReceipts,
       resolutionPlanId: result.resolutionPlanId,
       resolutionPlanSkippedReason: result.resolutionPlanSkippedReason,
       auditTrail: result.auditTrail,
@@ -6791,6 +6929,16 @@ registerToolHandler('get_predicate_defense_preview', async (input: Record<string
 // CAPA / complaint / MDR / vigilance (device post-market safety workstream)
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** A lost CAPA commit acknowledgement keeps its real recovery receipt on every tool door. */
+function capaToolFailure(tool: string, error: unknown): string {
+  const failure = error as { code?: unknown; message?: unknown; recovery?: unknown } | null;
+  if (failure?.code === 'CAPA_COMMIT_UNCONFIRMED') {
+    return JSON.stringify({ status: 'unconfirmed', error: 'CAPA_COMMIT_UNCONFIRMED', code: failure.code,
+      message: failure.message, recovery: failure.recovery });
+  }
+  return JSON.stringify({ error: `${tool} failed: ${failure?.message ?? 'unknown error'}` });
+}
+
 registerToolHandler('assess_mdr_reportability', async (input: Record<string, unknown>) => {
   try {
     const { classify } = await import('../capa-mdr/triageEngine.js');
@@ -6825,10 +6973,10 @@ registerToolHandler('triage_capa_mdr_queue', async (input: Record<string, unknow
       programId,
       openOnly: input.openOnly !== false,
       limit: typeof input.limit === 'number' ? input.limit : undefined,
-    });
+    }, { userId: Number(ctx?.userId) });
     return JSON.stringify({ status: 'computed', engine: 'capa_mdr', count: items.length, items });
-  } catch (err: any) {
-    return JSON.stringify({ error: `triage_capa_mdr_queue failed: ${err?.message ?? 'unknown error'}` });
+  } catch (err: unknown) {
+    return capaToolFailure('triage_capa_mdr_queue', err);
   }
 });
 
@@ -6845,10 +6993,10 @@ registerToolHandler('read_vigilance_timeline', async (input: Record<string, unkn
       entityId: typeof input.entityId === 'string' ? input.entityId : undefined,
       kind: typeof input.kind === 'string' ? (input.kind as any) : undefined,
       limit: typeof input.limit === 'number' ? input.limit : undefined,
-    });
+    }, { userId: Number(ctx?.userId) });
     return JSON.stringify({ status: 'computed', engine: 'capa_mdr', count: events.length, events });
-  } catch (err: any) {
-    return JSON.stringify({ error: `read_vigilance_timeline failed: ${err?.message ?? 'unknown error'}` });
+  } catch (err: unknown) {
+    return capaToolFailure('read_vigilance_timeline', err);
   }
 });
 
@@ -6862,6 +7010,18 @@ registerToolHandler('create_complaint', async (input: Record<string, unknown>, c
     return JSON.stringify({
       status: 'needs_parameters',
       message: 'programId, source, channel, a valid receivedAt (ISO date), and eventNarrative are required',
+    });
+  }
+  // Harm and severity are assessments the user makes, never assumed: the
+  // intake classification is computed from patientHarm, and an absent value
+  // used to be stored as 'none' and classified "no MDR".
+  const { HARM_LEVELS, SEVERITY_LEVELS } = await import('../../../shared/schema/capa-mdr.js');
+  if (!(HARM_LEVELS as readonly unknown[]).includes(input.patientHarm) || !(SEVERITY_LEVELS as readonly unknown[]).includes(input.severityAssessment)) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message:
+        `patientHarm (${HARM_LEVELS.join(', ')}) and severityAssessment (${SEVERITY_LEVELS.join(', ')}) are required — ` +
+        'ask the user; the reportability classification is computed from the harm, so it is never assumed',
     });
   }
   try {
@@ -6882,17 +7042,18 @@ registerToolHandler('create_complaint', async (input: Record<string, unknown>, c
       deviceUdiDi: typeof input.deviceUdiDi === 'string' ? input.deviceUdiDi : null,
       deviceLot: typeof input.deviceLot === 'string' ? input.deviceLot : null,
       createdBy: ctx?.userId != null ? String(ctx.userId) : null,
-    });
+    }, { userId: Number(ctx?.userId) });
     return JSON.stringify({
       status: 'created',
+      meta: { auditTrail: complaint.auditTrail },
       engine: 'capa_mdr',
       complaintId: complaint.id,
       complaintCode: (complaint as any).complaintCode,
       preliminaryClassification: (complaint as any).preliminaryClassification,
       instruction: 'Report the complaint code and the auto-computed preliminary reportability classification.',
     });
-  } catch (err: any) {
-    return JSON.stringify({ error: `create_complaint failed: ${err?.message ?? 'unknown error'}` });
+  } catch (err: unknown) {
+    return capaToolFailure('create_complaint', err);
   }
 });
 
@@ -6918,17 +7079,18 @@ registerToolHandler('open_device_capa', async (input: Record<string, unknown>, c
       assignedTo: typeof input.assignedTo === 'string' ? input.assignedTo : null,
       targetCloseDate: targetCloseDate && !Number.isNaN(targetCloseDate.getTime()) ? targetCloseDate : null,
       createdBy: ctx?.userId != null ? String(ctx.userId) : null,
-    });
+    }, { userId: Number(ctx?.userId) });
     return JSON.stringify({
       status: 'created',
+      meta: { auditTrail: capa.auditTrail },
       engine: 'capa_mdr',
       capaId: capa.id,
       capaCode: (capa as any).capaCode,
       state: (capa as any).state,
       instruction: 'Report the CAPA code and that it was opened. Offer to add actions or transition it.',
     });
-  } catch (err: any) {
-    return JSON.stringify({ error: `open_device_capa failed: ${err?.message ?? 'unknown error'}` });
+  } catch (err: unknown) {
+    return capaToolFailure('open_device_capa', err);
   }
 });
 
@@ -8065,105 +8227,11 @@ registerToolHandler('validate_docx', async (input, ctx) => {
   }
 });
 
-// Verify Docx Against Source — content-fidelity check (not just structure).
-// Extracts the built .docx text and (1) diffs it against the supplied source
-// text and (2) asserts each required string appears verbatim. This is the
-// audited "verify it against your text / confirm the base caption strings" step.
+// The existing verifier has one implementation; its complete result is captured
+// by the canonical turn recorder before the model's tool-result budget.
 registerToolHandler('verify_docx_against_source', async (input, ctx) => {
-  const inputDocxPath = typeof input.input_docx_path === 'string' ? input.input_docx_path : '';
-  if (!inputDocxPath) {
-    return JSON.stringify({ error: 'verify_docx_against_source requires input_docx_path (string).' });
-  }
-  if (!ctx?.organizationId) {
-    return JSON.stringify({ error: 'verify_docx_against_source requires tenant context (organizationId).' });
-  }
-  // INJ-PATH-002: the path is the model's. Open only the real path of a file
-  // in this tenant's own workspace, never the string it wrote.
-  const docx = workspacePathOrRefusal(inputDocxPath, 'input_docx_path', ctx.organizationId);
-  if (!docx.ok) return docx.refusal;
-
-  const expectedText = typeof input.expected_text === 'string' ? input.expected_text : '';
-  const requiredStrings = Array.isArray(input.required_strings)
-    ? input.required_strings.filter((s): s is string => typeof s === 'string' && s.length > 0)
-    : [];
-
-  if (!expectedText && requiredStrings.length === 0) {
-    return JSON.stringify({
-      error: 'verify_docx_against_source requires expected_text and/or a non-empty required_strings array.',
-    });
-  }
-
-  try {
-    const { promises: fs } = await import('fs');
-    const path = await import('path');
-    const { extractDocumentText } = await import('../ocr/index.js');
-
-    const buf = await fs.readFile(docx.path);
-    const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-    const extracted = await extractDocumentText(buf, DOCX_MIME, path.basename(docx.path));
-    const docText = extracted.text ?? '';
-
-    // (1) Required-string verbatim check (exact substring match).
-    const missingRequiredStrings = requiredStrings.filter((s) => !docText.includes(s));
-
-    // (2) Structural text diff against the supplied source, when provided.
-    let divergenceSummary: { added: number; removed: number; modified: number; unchanged: number } | undefined;
-    let additions = 0;
-    let deletions = 0;
-    if (expectedText) {
-      const { diffDocumentStructure } = await import('../document-analysis');
-      const d = diffDocumentStructure(expectedText, docText);
-      divergenceSummary = d.summary;
-      additions = d.flat.additions;
-      deletions = d.flat.deletions;
-    }
-
-    const ok = missingRequiredStrings.length === 0 && additions === 0 && deletions === 0;
-    /* `expected_text` is optional — the guard above accepts required_strings
-       alone, and that is the DESIGNED path for the labeling / ODD / IND-module
-       planners, whose required_strings are section headers only. When no source
-       is supplied the diff never runs, so `additions`/`deletions` stay at their
-       initialized 0 and `ok` collapses to "no required header is missing". The
-       success message nevertheless asserted BOTH that the document "reproduces
-       the source" AND that there is "no content divergence" — two claims about a
-       comparison that never happened, relayed verbatim by the model as the
-       verdict on a USPI/SmPC .docx. Say only what was actually checked. */
-    const sourceDiffPerformed = Boolean(expectedText);
-
-    return JSON.stringify({
-      ok,
-      docxPath: inputDocxPath,
-      extractionMethod: extracted.method,
-      docCharCount: docText.length,
-      requiredStringsChecked: requiredStrings.length,
-      missingRequiredStrings,
-      // False when no expected_text was supplied: the document was NOT compared
-      // against any source, so `ok` speaks only to the required strings.
-      sourceDiffPerformed,
-      // additions = lines in the document not in the source; deletions = source lines absent from the document.
-      divergence: sourceDiffPerformed ? { summary: divergenceSummary, additions, deletions } : undefined,
-      message: ok
-        ? sourceDiffPerformed
-          ? `Verified — document reproduces the source${
-              requiredStrings.length ? ` and all ${requiredStrings.length} required string(s)` : ''
-            }; no content divergence.`
-          : `Verified — all ${requiredStrings.length} required string(s) are present. No source text was supplied, so the document was NOT compared against a source: this is not a finding of "no content divergence".`
-        : `NOT verified — ${
-            missingRequiredStrings.length ? `${missingRequiredStrings.length} required string(s) missing` : ''
-          }${
-            missingRequiredStrings.length && sourceDiffPerformed ? '; ' : ''
-          }${sourceDiffPerformed ? `${additions} added / ${deletions} dropped line(s) vs. source` : ''}.`,
-      instruction: sourceDiffPerformed
-        ? 'Report the divergence counts as recorded.'
-        : 'Only the required strings were checked. Do NOT state that the document matches or reproduces a source, and do not claim there is no content divergence — no source was diffed.',
-    });
-  } catch (err) {
-    return JSON.stringify({
-      error: `verify_docx_against_source failed: ${
-        err instanceof Error ? err.message : String(err)
-      }. Verify the .docx path exists and is a readable Word document.`,
-    });
-  }
+  const { verifyDocxFidelity } = await import('./docx-fidelity.js');
+  return verifyDocxFidelity(input, ctx);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -8899,7 +8967,7 @@ registerToolHandler('classify_ivd_device', async (input, ctx) => {
   if (!deviceName) {
     return JSON.stringify({ error: 'device_name is required.' });
   }
-  if (!['A', 'B', 'C', 'D'].includes(ivdrClass)) {
+  if (!(IVDR_CLASSES as readonly string[]).includes(ivdrClass)) {
     return JSON.stringify({ error: 'ivdr_class must be A / B / C / D.' });
   }
   try {
@@ -9158,6 +9226,46 @@ function confinePackagerPaths(
   return { ok: true, sourcePaths, outputDir: anaScratchDir(organizationId, 'submissions') };
 }
 
+/**
+ * package_ectd_for_region's application number and applicant, from the record
+ * (package-identity.ts — the one reader export, compile and transmit use), or
+ * the refusal naming what is missing. Never from model input: 2026-10-08
+ * (P-27, Rule 2) the schema stopped offering application_id / sponsor_id /
+ * sponsor_name, and a call that still carries them is not read for them.
+ */
+async function recordedPackageIdentityOrRefusal(
+  programIdInput: unknown,
+  organizationId: number,
+  fda: boolean,
+): Promise<{ ok: true; identity: import('../ectd/package-identity').RecordedPackageIdentity } | { ok: false; refusal: string }> {
+  const programId = typeof programIdInput === 'string' ? programIdInput.trim() : '';
+  if (!programId) {
+    return {
+      ok: false,
+      refusal: JSON.stringify({
+        error:
+          'package_ectd_for_region needs program_id, the project this package is filed for: the application number and ' +
+          'the applicant are read from its record, never from this call. Nothing was built.',
+        code: 'PACKAGE_IDENTITY_MISSING',
+        retry: false,
+      }),
+    };
+  }
+  const [{ readRecordedPackageIdentity, packageIdentityRefusal }, { getPool }] = await Promise.all([
+    import('../ectd/package-identity.js'),
+    import('../../db.js'),
+  ]);
+  const identity = await readRecordedPackageIdentity(getPool(), organizationId, programId);
+  const missing = packageIdentityRefusal(identity, 'Nothing was built.', { fda });
+  if (missing) {
+    return {
+      ok: false,
+      refusal: JSON.stringify({ error: missing.message, code: missing.code, missing: missing.missing, retry: false }),
+    };
+  }
+  return { ok: true, identity };
+}
+
 registerToolHandler('package_ectd_for_region', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'package_ectd_for_region requires tenant context.' });
@@ -9187,10 +9295,16 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
   if (!paths.ok) return paths.refusal;
   const { sourcePaths, outputDir } = paths;
   try {
+    const recorded = await recordedPackageIdentityOrRefusal(input.program_id, ctx.organizationId, region === 'fda');
+    if (!recorded.ok) return recorded.refusal;
+    const identity = recorded.identity;
+    const applicationNumber = identity.applicationNumber as string;
+    const applicantName = identity.applicantName as string;
+    const { fdaContactsForPackageIdentity } = await import('../ectd/package-identity.js');
     const { packageEctdSubmission } = await import('../submission-gateways/index.js');
     const bundle = await packageEctdSubmission({
       region: region as any,
-      applicationId: String(input.application_id),
+      applicationId: applicationNumber,
       sequence:      String(input.sequence),
       submissionType: String(input.submission_type),
       /* `submission_type` on this tool means 'original | amendment | ...', so it
@@ -9198,10 +9312,10 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
          packager used to default to `fdaat1` — NDA — for every package this
          tool built. It now refuses, so the tool asks for it. */
       ...(typeof input.application_type === 'string' && input.application_type.trim()
-        ? { fda: { applicationType: input.application_type.trim() } }
+        ? { fda: { applicationType: input.application_type.trim(), ...(region === 'fda' ? { contacts: fdaContactsForPackageIdentity(identity) } : {}) } }
         : {}),
-      sponsorId:     String(input.sponsor_id),
-      sponsorName:   String(input.sponsor_name),
+      sponsorId:     region === 'fda' ? identity.applicantId as string : '',
+      sponsorName:   applicantName,
       productName:   String(input.product_name),
       // A delete's source_path is passed through as given, never dropped: the
       // packager refuses a delete that carries one, by name, instead of this
@@ -9216,6 +9330,13 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
         ...(typeof l.modified_file === 'string' && l.modified_file.trim()
           ? { modifiedFile: l.modified_file.trim() }
           : {}),
+        /* The study and the STF file-tag, carried as given. FDA validation 1789
+           refuses a Module 4/5 study file that no Study Tagging File references,
+           and the packager refuses the sequence; these are what satisfy it.
+           Nothing here infers either — an absent one stays absent, so the
+           refusal names the file instead of a guess being tagged. */
+        ...(typeof l.study_id === 'string' && l.study_id.trim() ? { studyId: l.study_id.trim() } : {}),
+        ...(typeof l.stf_file_tag === 'string' && l.stf_file_tag.trim() ? { stfFileTag: l.stf_file_tag.trim() } : {}),
       })),
       outputDir,
     });
@@ -9226,7 +9347,13 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
       sizeBytes:     bundle.sizeBytes,
       format:        bundle.format,
       displayName:   bundle.displayName,
-      message: `Packaged ${leaves.length} leaves into a ${region.toUpperCase()} eCTD zip.`,
+      // What the backbone names, as recorded — so the narration reports the record, not its input.
+      applicationNumber,
+      applicantName,
+      identitySource: 'record',
+      message:
+        `Packaged ${leaves.length} leaves into a ${region.toUpperCase()} eCTD zip for application ${applicationNumber} ` +
+        `(applicant ${applicantName}, from the record). The applicant's D-U-N-S is not yet recorded, so the backbone says it is unassigned.`,
     });
   } catch (err) {
     return JSON.stringify({
@@ -9276,10 +9403,14 @@ registerToolHandler('transmit_submission', async (input, ctx) => {
       `Transmitting to ${region.toUpperCase()} ${gateway} (${environment}) cannot be done from a conversation. ` +
       'Agency transmission is irreversible and requires a person: re-authentication, a recorded reason, ' +
       'the eCTD structural gate and a Part 11 governed signature.',
+    /* Transmit runs on the dispatched sequence since 2026-10-17: Gateway
+       transmittals is a read-only log, and the package transmit is refused in
+       production (FILING_SPINE F12; app audit 2026-10-17). */
     next_step: {
-      surface: 'Gateway transmittals',
-      endpoint: `POST /api/mdx/gateways/${region}/${gateway}/transmit`,
-      requires: ['reauth (password/TOTP)', 'reason (>= 8 characters)', 'bundle_path + bundle_sha256'],
+      surface: 'Submission Center',
+      where: 'the dispatched sequence, Dispatch tab, Transmit',
+      endpoint: 'POST /api/submissions/sequences/:id/transmit',
+      requires: ['a frozen, dispatched sequence', 'reauth (password/TOTP)', 'reason (>= 8 characters)', 'Part 11 signature'],
     },
     bundle: {
       path:      typeof input.bundle_path === 'string' ? input.bundle_path : null,
@@ -9345,7 +9476,12 @@ registerToolHandler('get_submission_ack', async (input, ctx) => {
       transmissionId:  ack.transmissionId,
       contentType:     ack.contentType,
       ackText:         ack.buffer.toString('utf8').slice(0, 4000),
+      // 'agency' only for the agency's own stored bytes (an FDA MDN); a
+      // 'platform-record' is this platform's summary and is no proof of receipt.
+      provenance:      ack.provenance,
+      // null when the transmittal recorded no acknowledgement time.
       receivedAt:      ack.receivedAt,
+      generatedAt:     ack.generatedAt ?? null,
     });
   } catch (err) {
     return JSON.stringify({
@@ -9507,7 +9643,9 @@ registerToolHandler('compute_lifecycle_operations', async (input, ctx) => {
       typeof input.prior_sequence_number === 'string' ? input.prior_sequence_number.trim() : '';
     const appNum =
       typeof input.application_number === 'string' ? input.application_number.trim() : '';
-    if (prior.length === 0 && priorSeq && appNum) {
+    // 2026-10-15: a prior named without application_number was skipped and every
+    // leaf came back `new`; the loader now refuses it, and a prior not on file.
+    if (prior.length === 0 && priorSeq) {
       if (!ctx?.organizationId) {
         return JSON.stringify({
           error: 'auto-loading a prior sequence requires tenant context (organizationId).',
@@ -9848,28 +9986,6 @@ registerToolHandler('explain_validation_findings', async (input, ctx) => {
     return JSON.stringify({ ok: true, ...((result as object) ?? {}) });
   } catch (err) {
     return JSON.stringify({ error: `explain_validation_findings failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as any)?.code });
-  }
-});
-
-registerToolHandler('cross_region_gap_analysis', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) {
-    return JSON.stringify({ error: 'cross_region_gap_analysis requires tenant context (organizationId and userId).' });
-  }
-  const sourceRegion = typeof input.source_region === 'string' ? input.source_region : '';
-  const targetRegions = Array.isArray(input.target_regions) ? (input.target_regions as string[]) : [];
-  const applicationType = typeof input.application_type === 'string' ? input.application_type : '';
-  if (!sourceRegion) return JSON.stringify({ error: 'source_region is required.' });
-  if (targetRegions.length === 0) return JSON.stringify({ error: 'target_regions (non-empty array) is required.' });
-  if (!applicationType) return JSON.stringify({ error: 'application_type is required.' });
-  try {
-    const { computeCrossRegionGap } = await import('../submission-ai/submission-ai-service.js');
-    const result = await computeCrossRegionGap(
-      { sourceRegion, targetRegions, applicationType, sectionsPresent: Array.isArray(input.sections_present) ? (input.sections_present as string[]) : undefined },
-      { organizationId: ctx.organizationId, userId: ctx.userId, submissionId: typeof input.submission_id === 'number' ? input.submission_id : undefined }
-    );
-    return JSON.stringify({ ok: true, ...((result as object) ?? {}) });
-  } catch (err) {
-    return JSON.stringify({ error: `cross_region_gap_analysis failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as any)?.code });
   }
 });
 
@@ -10247,7 +10363,10 @@ registerToolHandler('assess_device_evidence_structure', async (input) => {
     if (document === 'cer') {
       const m = await import('../market-specs/cer-structure.js');
       if (!present) return JSON.stringify({ ok: true, stages: m.CER_STAGES, sections: m.CER_SECTIONS });
-      return JSON.stringify({ ok: true, assessment: m.assessCerStructure(present, { equivalenceClaimed: input.equivalence_claimed === true }) });
+      // 2026-10-15: `=== true` read an omitted claim as "not claimed", so a CER with no
+      // Equivalence section came back ready. Unstated stays unstated; the engine names it.
+      const equivalenceClaimed = typeof input.equivalence_claimed === 'boolean' ? input.equivalence_claimed : undefined;
+      return JSON.stringify({ ok: true, assessment: m.assessCerStructure(present, { equivalenceClaimed }) });
     }
     if (document === 'rmf') {
       const m = await import('../market-specs/risk-management-structure.js');
@@ -10308,6 +10427,36 @@ registerToolHandler('get_biocompatibility_endpoints', async (input) => {
   }
 });
 
+/**
+ * The electrical and sterilization facts build_device_blueprint relays, as POST
+ * /device/blueprint relays them. 2026-10-15: the handler did not pass them on, so a
+ * powered or sterile device read "not applicable" for both modules. A stated fact
+ * that cannot be read is refused, naming it.
+ */
+function blueprintDeviceFacts(
+  input: Record<string, unknown>,
+  sterilizationMethodIds: readonly string[],
+): { electrical?: Record<string, unknown>; sterilization?: Record<string, unknown> } {
+  const group = (v: unknown, name: string): Record<string, unknown> | undefined => {
+    if (v === undefined || v === null) return undefined;
+    if (typeof v !== 'object' || Array.isArray(v)) throw new Error(`${name} must be an object of facts.`);
+    return v as Record<string, unknown>;
+  };
+  const electrical = group(input.electrical, 'electrical');
+  const sterilization = group(input.sterilization, 'sterilization');
+  const unreadable = Object.entries(electrical ?? {})
+    .filter(([, v]) => typeof v !== 'boolean')
+    .map(([k]) => `electrical.${k} must be true or false`);
+  if (sterilization && 'sterile' in sterilization && typeof sterilization.sterile !== 'boolean') {
+    unreadable.push('sterilization.sterile must be true or false');
+  }
+  if (sterilization && 'method' in sterilization && !sterilizationMethodIds.includes(String(sterilization.method))) {
+    unreadable.push(`sterilization.method '${String(sterilization.method)}' is not one of: ${sterilizationMethodIds.join(', ')}`);
+  }
+  if (unreadable.length > 0) throw new Error(`${unreadable.join('; ')}.`);
+  return { electrical, sterilization };
+}
+
 registerToolHandler('build_device_blueprint', async (input) => {
   // Orchestration of pure modules — no tenant context required.
   const TYPES = ['510k', 'de_novo', 'pma', 'mdr_td', 'ivdr_td'];
@@ -10317,13 +10466,19 @@ registerToolHandler('build_device_blueprint', async (input) => {
   try {
     const { buildDeviceBlueprint } = await import('../market-specs/device-blueprint.js');
     const { scorecardFromBlueprint } = await import('../market-specs/device-readiness-scorecard.js');
+    const { STERILIZATION_METHODS } = await import('../market-specs/sterilization.js');
+    const { electrical, sterilization } = blueprintDeviceFacts(input, [...STERILIZATION_METHODS.map((m) => m.id), 'unknown']);
     const blueprint = buildDeviceBlueprint({
       submissionType: input.submission_type as never,
       classification: (input.classification ?? undefined) as never,
       contact: (input.contact ?? undefined) as never,
       software: (input.software ?? undefined) as never,
+      electrical: electrical as never,
+      sterilization: sterilization as never,
       present: (input.present ?? undefined) as never,
-      equivalenceClaimed: input.equivalence_claimed === true,
+      // 2026-10-15: `=== true` read an omitted claim as "not claimed", so a CER with no
+      // Equivalence section came back ready. Unstated stays unstated; the engine names it.
+      equivalenceClaimed: typeof input.equivalence_claimed === 'boolean' ? input.equivalence_claimed : undefined,
     });
     return JSON.stringify({ ok: true, ...blueprint, scorecard: scorecardFromBlueprint(blueprint) });
   } catch (err) {
@@ -10466,7 +10621,9 @@ registerToolHandler('assess_stored_cer', async (input, ctx) => {
   if (!reportId) return JSON.stringify({ error: 'report_id is required.' });
   try {
     const { assessStoredCer } = await import('../market-specs/stored-cer-assessment.js');
-    const result = await assessStoredCer({ reportId, organizationId: ctx.organizationId, equivalenceClaimed: input.equivalence_claimed === true });
+    // 2026-10-15: `=== true` passed an omitted claim on as "not claimed". Unstated stays unstated.
+    const equivalenceClaimed = typeof input.equivalence_claimed === 'boolean' ? input.equivalence_claimed : undefined;
+    const result = await assessStoredCer({ reportId, organizationId: ctx.organizationId, equivalenceClaimed });
     return JSON.stringify({ ok: true, ...result });
   } catch (err) {
     return JSON.stringify({ error: `assess_stored_cer failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as { code?: string })?.code });
@@ -10501,12 +10658,7 @@ registerToolHandler('fire_notification', async (input, ctx) => {
   const category = typeof input.category === 'string' ? input.category : '';
   const severity = typeof input.severity === 'string' ? input.severity : '';
   const title    = typeof input.title === 'string' ? input.title.trim() : '';
-  const allowedCat = new Set([
-    'submission_status', 'validation_finding', 'q_sub_response', 'cdx_pairing',
-    'ldt_milestone_due', 'gateway_credential_expiring', 'ana_draft_pending',
-    'risk_residual_high', 'capa_due', 'study_deviation', 'enrollment_milestone',
-    'admin', 'system',
-  ]);
+  const allowedCat = new Set<string>(NOTIFICATION_CATEGORIES);
   if (!allowedCat.has(category)) {
     return JSON.stringify({ error: `category must be one of: ${Array.from(allowedCat).join(', ')}.` });
   }
@@ -10698,6 +10850,83 @@ registerToolHandler('add_disclosure_interest', async (input, ctx) => {
   }
 });
 
+/**
+ * A deterministic gate's non-critical verdict, in words that match it. The
+ * review handlers below said "passes the deterministic … gate (medium risk)" for
+ * results made medium by an open MAJOR finding, and "passes" for low ones that
+ * only mean the checks that ran found nothing (2026-10-15). Callers keep their
+ * own wording for 'high'.
+ */
+function gateVerdictMessage(gate: { riskLevel: string; findings: Array<{ severity: string }>; checksRun?: string[]; notAssessed?: string[] }): string {
+  const n = gate.findings.length;
+  const counts = ['critical', 'major', 'minor']
+    .map((s) => [s, gate.findings.filter((f) => f.severity === s).length] as const)
+    .filter(([, c]) => c > 0)
+    .map(([s, c]) => `${c} ${s}`)
+    .join(', ');
+  const found = n === 0 ? 'No findings' : `${n} finding${n === 1 ? '' : 's'} (${counts})`;
+  const ran = gate.checksRun?.length ? ` Checks run: ${gate.checksRun.join('; ')}.` : '';
+  const unassessed = gate.notAssessed?.length ? ` Not assessed: ${gate.notAssessed.join('; ')}.` : '';
+  if (gate.riskLevel === 'medium') return `${found}, risk medium — does not pass while a major finding is open.${ran}`;
+  if (gate.riskLevel === 'undetermined') return `${found} among the checks that ran; risk undetermined — does not pass while a check cannot run.${unassessed}${ran}`;
+  return `${found} among the checks run${n > 0 ? ', risk low' : ''}.${ran}`;
+}
+
+/** A yes/no answer as stated in tool input, or null when not stated — never coerced to false. */
+function statedBoolean(v: unknown): boolean | null {
+  return typeof v === 'boolean' ? v : null;
+}
+
+const NIH_GUIDELINES_SECTIONS = ['III-A', 'III-B', 'III-C', 'III-D', 'III-E', 'III-F', 'exempt', 'not_applicable'] as const;
+
+/** The NIH Guidelines section as stated, null when not stated, or a refusal outside the vocabulary. */
+function statedNihSection(v: unknown): { section: (typeof NIH_GUIDELINES_SECTIONS)[number] | null } | { error: string } {
+  if (v == null) return { section: null };
+  const section = NIH_GUIDELINES_SECTIONS.find((s) => s === v);
+  return section
+    ? { section }
+    : { error: `nih_guidelines_section must be one of ${NIH_GUIDELINES_SECTIONS.join(', ')}, or omitted while not yet determined.` };
+}
+
+function convenedReviewText(convened: boolean | null): string {
+  if (convened === null) return '; whether it needs convened IBC review is not determined: the NIH Guidelines section or the human-gene-transfer answer is not recorded';
+  return convened ? '; requires convened IBC review' : '';
+}
+
+const BIOSAFETY_LEVELS = ['BSL-1', 'BSL-2', 'BSL-3', 'BSL-4'] as const;
+
+/** The declared containment as stated, null when not stated, or a refusal outside BSL-1..4. */
+function statedBsl(v: unknown): { level: (typeof BIOSAFETY_LEVELS)[number] | null } | { error: string } {
+  if (v == null) return { level: null };
+  const level = BIOSAFETY_LEVELS.find((l) => l === v);
+  return level
+    ? { level }
+    : { error: `biosafety_level, when stated, must be a valid biosafety_level (${BIOSAFETY_LEVELS.join(', ')}); omit it while no level is declared.` };
+}
+
+/**
+ * An IACUC/IBC expiry, saying where the date came from. The review tools stated
+ * a date they computed from the approval date as the expiry, and never read the
+ * one on record (2026-10-15). "On record", not "set by the committee": rows
+ * approved before then hold a computed date that cannot be told apart.
+ */
+function expiryText(e: { expirationDate: string; expirationSource: 'recorded' | 'computed'; expired: boolean }, computedAs: string): string {
+  const whose = e.expirationSource === 'recorded' ? 'on record' : `computed as ${computedAs}; no expiration is on record`;
+  return `${e.expirationDate} (${whose})${e.expired ? ', expired' : ''}`;
+}
+
+type IacucReviewStatusShape =
+  | { undetermined: true; reason: string }
+  | { undetermined: false; expirationDate: string; expirationSource: 'recorded' | 'computed'; expired: boolean; annualReviewDue: boolean | null };
+
+function iacucReviewStatusText(rs: IacucReviewStatusShape): string {
+  if (rs.undetermined) return ` Review status: ${rs.reason}`;
+  const annual = rs.annualReviewDue === null
+    ? '; whether annual review is due is not determined: no approval date is recorded'
+    : rs.annualReviewDue ? '; annual review due' : '';
+  return ` Expiry: ${expiryText(rs, 'approval + 3 years')}${annual}.`;
+}
+
 registerToolHandler('review_financial_disclosure', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'review_financial_disclosure requires tenant context.' });
   const disclosureId = typeof input.disclosure_id === 'number' ? input.disclosure_id : NaN;
@@ -10714,7 +10943,7 @@ registerToolHandler('review_financial_disclosure', async (input, ctx) => {
       certifiable: gate.riskLevel !== 'high',
       message: gate.riskLevel === 'high'
         ? 'Critical 21 CFR 54 findings — cannot certify until resolved.'
-        : `Disclosure passes the deterministic gate (${gate.riskLevel} risk).`,
+        : `${gateVerdictMessage({ ...gate, checksRun: ['form type against the disclosable-interests flag', 'interest rows present or absent to match', 'disclosure period start and end (21 CFR 54.4)', 'each interest: type, description and bias-minimization steps'] })}${gate.riskLevel === 'medium' ? ' Certification is not blocked: only critical findings block it.' : ''}`,
     });
   } catch (err) {
     return JSON.stringify({ error: `review_financial_disclosure failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -10913,17 +11142,20 @@ registerToolHandler('review_iacuc_protocol', async (input, ctx) => {
   if (!Number.isInteger(protocolId)) return JSON.stringify({ error: 'protocol_id is required.' });
   const { getPool } = await import('../../db.js');
   const { getProtocolCompletenessInput } = await import('../iacuc/iacuc-service.js');
-  const { evaluateProtocolCompleteness, reviewStatus } = await import('../iacuc/iacuc-logic.js');
+  const { evaluateProtocolCompleteness, approvalReviewStatus } = await import('../iacuc/iacuc-logic.js');
   const client = await getPool().connect();
   try {
     const inp = await getProtocolCompletenessInput(client, ctx.organizationId, protocolId);
     const gate = evaluateProtocolCompleteness(inp);
-    const rs = reviewStatus(inp.approvalDate, new Date().toISOString().slice(0, 10));
+    // Undetermined without an approval date; reviewStatus said "not expired". The
+    // committee's recorded expiration wins over approval + 3 years (2026-10-15).
+    const rs = approvalReviewStatus(inp.approvalDate, new Date().toISOString().slice(0, 10), inp.expirationDate);
+    const review = iacucReviewStatusText(rs);
     return JSON.stringify({
-      ok: true, riskLevel: gate.riskLevel, findings: gate.findings, reviewStatus: rs,
-      message: gate.riskLevel === 'high'
+      ok: true, riskLevel: gate.riskLevel, findings: gate.findings, checksRun: gate.checksRun, reviewStatus: rs,
+      message: (gate.riskLevel === 'high'
         ? 'Critical IACUC findings (e.g. category-E justification) — resolve before committee review.'
-        : `Protocol passes the deterministic gate (${gate.riskLevel} risk).`,
+        : gateVerdictMessage(gate)) + review,
     });
   } catch (err) {
     return JSON.stringify({ error: `review_iacuc_protocol failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -10959,7 +11191,8 @@ registerToolHandler('create_irb_submission', async (input, ctx) => {
       protocolNumber, title, riskLevel: riskLevel as any,
       studyId: typeof input.study_id === 'number' ? input.study_id : null,
       submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
-      involvesVulnerablePopulations: input.involves_vulnerable_populations === true,
+      // Unstated stays NULL (not recorded); `=== true` stored it as "none involved" (2026-10-15).
+      involvesVulnerablePopulations: statedBoolean(input.involves_vulnerable_populations),
       vulnerablePopulationProtections: typeof input.vulnerable_population_protections === 'string' ? input.vulnerable_population_protections : null,
       isSingleIrb: input.is_single_irb === true,
       consentWaiverRequested: input.consent_waiver_requested === true,
@@ -11018,18 +11251,33 @@ registerToolHandler('review_irb_submission', async (input, ctx) => {
   const submissionId = typeof input.irb_submission_id === 'number' ? input.irb_submission_id : NaN;
   if (!Number.isInteger(submissionId)) return JSON.stringify({ error: 'irb_submission_id is required.' });
   const { getPool } = await import('../../db.js');
-  const { getCompletenessInput } = await import('../irb/irb-service.js');
-  const { evaluateIrbCompleteness, continuingReviewStatus } = await import('../irb/irb-logic.js');
+  const { getCompletenessInput, getLifecycleStatus } = await import('../irb/irb-service.js');
+  const { evaluateIrbCompleteness } = await import('../irb/irb-logic.js');
   const client = await getPool().connect();
   try {
     const inp = await getCompletenessInput(client, ctx.organizationId, submissionId);
     const gate = evaluateIrbCompleteness(inp);
-    const cr = continuingReviewStatus(inp.reviewType, inp.approvalDate, new Date().toISOString().slice(0, 10));
+    /* The three-valued lifecycle, as GET /api/irb/submissions/:id/completeness
+       serves it. continuingReviewStatus answered "not required, not expired"
+       for an unrecorded review type or approval date, and the message called
+       any non-critical result a pass of "the 45 CFR 46.111 gate" though four
+       checks ran (2026-10-15). */
+    const { status: lifecycle } = await getLifecycleStatus(ctx.organizationId, submissionId, new Date().toISOString().slice(0, 10));
+    const approval = {
+      not_approved: 'not approved', current: 'approval current', expiring_soon: 'approval expiring soon',
+      expired: 'approval expired', unknown: 'approval status undetermined',
+    }[lifecycle.approval];
+    const lifecycleText = ` Lifecycle: ${approval}`
+      + (lifecycle.expirationDate ? `, expiration ${lifecycle.expirationDate} (${lifecycle.expirationSource})` : '')
+      + `; continuing review ${lifecycle.continuingReview.replace(/_/g, ' ')}`
+      + (lifecycle.findings.length ? `; lifecycle findings ${lifecycle.findings.map((f) => f.code).join(', ')}` : '') + '.';
     return JSON.stringify({
-      ok: true, riskLevel: gate.riskLevel, findings: gate.findings, continuingReview: cr,
-      message: gate.riskLevel === 'high'
+      ok: true, riskLevel: gate.riskLevel, findings: gate.findings, checksRun: gate.checksRun, notAssessed: gate.notAssessed, lifecycle,
+      message: (gate.riskLevel === 'high'
         ? 'Critical IRB findings (e.g. consent or vulnerable-population safeguards) — resolve before approval.'
-        : `Submission passes the deterministic 45 CFR 46.111 gate (${gate.riskLevel} risk).`,
+        : gateVerdictMessage(gate))
+        + ' The other 45 CFR 46.111 criteria (risks minimized and reasonable, equitable selection, monitoring, privacy) are the board’s determinations and were not evaluated.'
+        + lifecycleText,
     });
   } catch (err) {
     return JSON.stringify({ error: `review_irb_submission failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -11048,10 +11296,17 @@ registerToolHandler('create_ibc_registration', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_ibc_registration requires tenant + user context.' });
   const registrationNumber = typeof input.registration_number === 'string' ? input.registration_number.trim() : '';
   const title = typeof input.title === 'string' ? input.title.trim() : '';
-  const biosafetyLevel = typeof input.biosafety_level === 'string' ? input.biosafety_level : '';
-  if (!registrationNumber || !title || !['BSL-1', 'BSL-2', 'BSL-3', 'BSL-4'].includes(biosafetyLevel)) {
-    return JSON.stringify({ error: 'registration_number, title, and a valid biosafety_level are required.' });
-  }
+  if (!registrationNumber || !title) return JSON.stringify({ error: 'registration_number and title are required.' });
+  // An unstated section, gene-transfer or recombinant-DNA answer, or containment
+  // level, stays NULL (not recorded). The answers were written as
+  // 'not_applicable' / false, so convened review read as not required, and a
+  // level had to be supplied to open a registration at all (2026-10-15).
+  const bsl = statedBsl(input.biosafety_level);
+  if ('error' in bsl) return JSON.stringify({ error: bsl.error });
+  const stated = statedNihSection(input.nih_guidelines_section);
+  if ('error' in stated) return JSON.stringify({ error: stated.error });
+  const section = stated.section;
+  const geneTransfer = statedBoolean(input.involves_human_gene_transfer);
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createRegistrationTx } = await import('../ibc/ibc-service.js');
@@ -11061,22 +11316,22 @@ registerToolHandler('create_ibc_registration', async (input, ctx) => {
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
-    const section = typeof input.nih_guidelines_section === 'string' ? input.nih_guidelines_section : 'not_applicable';
     const { id } = await createRegistrationTx(client, ctx.organizationId, ctx.userId, {
-      registrationNumber, title, biosafetyLevel: biosafetyLevel as any,
-      nihGuidelinesSection: section as any,
+      registrationNumber, title, biosafetyLevel: bsl.level,
+      nihGuidelinesSection: section,
       submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
-      involvesRecombinantDna: input.involves_recombinant_dna === true,
-      involvesHumanGeneTransfer: input.involves_human_gene_transfer === true,
+      involvesRecombinantDna: statedBoolean(input.involves_recombinant_dna),
+      involvesHumanGeneTransfer: geneTransfer,
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
       target: `ibc-registration:${id}`, reason,
-      payload: { biosafetyLevel }, domain: 'ibc', surface: 'ana',
+      payload: { biosafetyLevel: bsl.level }, domain: 'ibc', surface: 'ana',
     });
     await client.query('COMMIT');
-    const convened = requiresConvenedReview(section as any, input.involves_human_gene_transfer === true);
-    return JSON.stringify({ ok: true, id, requiresConvenedReview: convened, message: `Opened IBC registration "${title}" (id ${id}) at ${biosafetyLevel}${convened ? '; requires convened IBC review' : ''}.` });
+    const convened = requiresConvenedReview(section, geneTransfer);
+    const level = bsl.level ? `at ${bsl.level}` : 'with no containment level declared';
+    return JSON.stringify({ ok: true, id, requiresConvenedReview: convened, message: `Opened IBC registration "${title}" (id ${id}) ${level}${convenedReviewText(convened)}.` });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     return JSON.stringify({ error: `create_ibc_registration failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -11131,12 +11386,17 @@ registerToolHandler('review_ibc_registration', async (input, ctx) => {
   try {
     const inp = await getContainmentInput(client, ctx.organizationId, registrationId);
     const gate = evaluateContainment(inp);
-    const exp = registrationExpiration(inp.approvalDate, new Date().toISOString().slice(0, 10));
+    // highestRequiredBsl is null with no agents, and the expiry undetermined
+    // with no approval date; they were 'BSL-1' and "not expired". The
+    // committee's recorded expiration wins over approval + 1 year (2026-10-15).
+    const exp = registrationExpiration(inp.approvalDate, new Date().toISOString().slice(0, 10), inp.expirationDate);
+    const expiry = exp.undetermined ? ` Expiry: ${exp.reason}` : ` Expiry: ${expiryText(exp, 'approval + 1 year')}.`;
     return JSON.stringify({
-      ok: true, riskLevel: gate.riskLevel, findings: gate.findings, highestRequiredBsl: gate.highestRequiredBsl, expiration: exp,
-      message: gate.riskLevel === 'high'
+      ok: true, riskLevel: gate.riskLevel, findings: gate.findings, checksRun: gate.checksRun, notAssessed: gate.notAssessed,
+      highestRequiredBsl: gate.highestRequiredBsl, expiration: exp,
+      message: (gate.riskLevel === 'high'
         ? 'Critical biosafety finding (containment below the agents’ requirement) — resolve before approval.'
-        : `Registration passes the deterministic containment gate (${gate.riskLevel} risk).`,
+        : gateVerdictMessage(gate)) + expiry,
     });
   } catch (err) {
     return JSON.stringify({ error: `review_ibc_registration failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -12053,13 +12313,15 @@ registerToolHandler('create_protocol_document', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createProtocolDocumentTx } = await import('../protocol-development/protocol-development-service.js');
+  const { resolveOpenProgram } = await import('../c2c/program-access.js');
   const reason = gatedReason(input);
+  const programId = typeof input.program_id === 'string' ? input.program_id : await resolveOpenProgram(getPool(), ctx);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
     const { id, sectionsSeeded } = await createProtocolDocumentTx(client, ctx.organizationId, ctx.userId, {
-      protocolKind: protocolKind as any, title,
+      protocolKind: protocolKind as any, title, programId,
       protocolNumber: typeof input.protocol_number === 'string' ? input.protocol_number : null,
       designType: typeof input.design_type === 'string' ? input.design_type : null,
       phase: typeof input.phase === 'string' ? input.phase : null,
@@ -12328,10 +12590,17 @@ registerToolHandler('find_grant_opportunities', async (input, ctx) => {
       externalId: m.externalId, title: m.title, fitScore: m.fitScore, eligible: m.eligible,
       daysToDeadline: m.daysToDeadline, keywordHits: m.keywordHits, reasons: m.reasons,
     }));
-    const strong = result.matches.filter((m) => m.fitScore >= 70).length;
+    // 2026-10-15: this counted every fit >= 70 as strong, including results whose
+    // eligibility was never checked; the service counts only checked ones.
+    const strong = result.strongMatches;
+    const failedFetches = result.hydrationFailures > 0
+      ? ` ${result.hydrationFailures} of ${result.hydrationAttempted} Grants.gov detail fetches failed; those are scored on search fields only.`
+      : '';
     return JSON.stringify({
-      ok: true, scored: result.scored, strongMatches: strong, profileUsed: result.profileUsed, matches: top,
-      message: `Scored ${result.scored} Grants.gov opportunit${result.scored === 1 ? 'y' : 'ies'}; ${strong} strong fit(s) (>=70). Record promising ones with record_grant_opportunity.`,
+      ok: true, scored: result.scored, strongMatches: strong, eligibilityNotChecked: result.eligibilityNotChecked,
+      hydrationAttempted: result.hydrationAttempted, hydrationFailures: result.hydrationFailures,
+      profileUsed: result.profileUsed, matches: top,
+      message: `Scored ${result.scored} Grants.gov opportunit${result.scored === 1 ? 'y' : 'ies'}; ${strong} strong fit(s) (>=70, eligibility confirmed). Eligibility was not checked for ${result.eligibilityNotChecked} (eligible: null; each match's reasons say why).${failedFetches} Record promising ones with record_grant_opportunity.`,
     });
   } catch (err) {
     return JSON.stringify({ error: `find_grant_opportunities failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -12740,9 +13009,12 @@ registerToolHandler('review_grant_reporting', async (input, ctx) => {
     const { periodStart, periodEnd } = await getAwardPeriod(ctx.organizationId, awardId);
     const today = new Date().toISOString().slice(0, 10);
     const obligations = reportingObligations(periodStart, periodEnd);
+    const periodState = awardPeriodState(periodStart, periodEnd, today);
     return JSON.stringify({
-      ok: true, periodState: awardPeriodState(periodStart, periodEnd, today), obligations,
-      message: `${obligations.length} reporting obligation(s); award is ${awardPeriodState(periodStart, periodEnd, today).replace(/_/g, ' ')}.`,
+      ok: true, periodState, obligations,
+      message: `${obligations.length} reporting obligation(s); ` + (periodState === 'undetermined'
+        ? 'where the award sits in its period cannot be determined: its start or end date is not recorded.'
+        : `award is ${periodState.replace(/_/g, ' ')}.`),
     });
   } catch (err) {
     return JSON.stringify({ error: `review_grant_reporting failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -12889,8 +13161,9 @@ registerToolHandler('screen_subaward', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'screen_subaward requires tenant + user context.' });
   const subawardId = typeof input.subaward_id === 'number' ? input.subaward_id : NaN;
   const screenStatus = typeof input.screen_status === 'string' ? input.screen_status : '';
-  if (!Number.isInteger(subawardId) || !['cleared', 'excluded'].includes(screenStatus)) {
-    return JSON.stringify({ error: 'subaward_id and screen_status (cleared|excluded) are required. Use screen_restricted_party to perform the live SAM.gov lookup first.' });
+  const screenSource = typeof input.screen_source === 'string' ? input.screen_source.trim() : '';
+  if (!Number.isInteger(subawardId) || !['cleared', 'excluded'].includes(screenStatus) || !screenSource) {
+    return JSON.stringify({ error: 'subaward_id, screen_status (cleared|excluded) and screen_source (the lookup this result came from) are required. Use screen_restricted_party to perform the live SAM.gov lookup first.' });
   }
   const RISK = ['low', 'medium', 'high'];
   const { getPool } = await import('../../db.js');
@@ -12903,7 +13176,7 @@ registerToolHandler('screen_subaward', async (input, ctx) => {
     await setTenantContextTx(client, ctx.organizationId);
     await screenSubawardTx(client, ctx.organizationId, subawardId, {
       screenStatus: screenStatus as any,
-      screenSource: typeof input.screen_source === 'string' ? input.screen_source : 'sam_exclusions',
+      screenSource,
       riskLevel: typeof input.risk_level === 'string' && RISK.includes(input.risk_level) ? input.risk_level as any : null,
     });
     await recordGovernedAction(client, {
@@ -13060,9 +13333,11 @@ registerToolHandler('review_cost_share', async (input, ctx) => {
     const s = await getCostShareStatus(ctx.organizationId, awardId);
     return JSON.stringify({
       ok: true, ...s,
-      message: s.committed === 0
-        ? `No cost share committed for award ${awardId}.`
-        : `Cost share: ${s.contributed} of ${s.committed} met (${s.metPct}%)${s.met ? ' — fully met' : `, shortfall ${s.shortfall} (2 CFR 200.306)`}.`,
+      message: s.committed === null
+        ? `No cost-share commitment is recorded for award ${awardId}; whether cost share is met cannot be assessed.`
+        : s.committed === 0
+          ? `No cost share committed for award ${awardId}.`
+          : `Cost share: ${s.contributed} of ${s.committed} met (${s.metPct}%)${s.met ? ' — fully met' : `, shortfall ${s.shortfall} (2 CFR 200.306)`}.`,
     });
   } catch (err) {
     return JSON.stringify({ error: `review_cost_share failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -13216,21 +13491,35 @@ registerToolHandler('fulfill_regulatory_commitment', async (input, ctx) => {
   if (!Number.isInteger(commitmentId)) return JSON.stringify({ error: 'commitment_id is required.' });
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const { fulfillCommitmentTx } = await import('../ha-interactions/ha-service.js');
+  const { fulfillCommitmentTx, readCommitmentForFulfilment, ORG_LEVEL } = await import('../ha-interactions/ha-service.js');
+  const { fulfilmentRule } = await import('../ha-interactions/ha-logic.js');
   const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
+    /* P-41 (2026-10-19): a PMR, PMC or REMS is recorded fulfilled only by a
+       Part 11 signature naming what met it, and AnA cannot sign. The type is
+       read from the record, never taken from the model; for those three the
+       tool writes nothing and hands the act to the screen. */
+    const commitment = await readCommitmentForFulfilment(client, ctx.organizationId, commitmentId, ORG_LEVEL, { lock: true });
+    if (commitment && fulfilmentRule(commitment.commitmentType).signatureRequired) {
+      await client.query('ROLLBACK');
+      return refuseSignatureInChat(
+        'fulfill_regulatory_commitment',
+        `Recording a ${commitment.commitmentType.toUpperCase()} as fulfilled`,
+        'Communication, Meetings & commitments, where you name the sequence or document that met it and sign',
+      );
+    }
     const fulfilledDate = typeof input.fulfilled_date === 'string' ? input.fulfilled_date : null;
-    await fulfillCommitmentTx(client, ctx.organizationId, commitmentId, fulfilledDate);
+    const done = await fulfillCommitmentTx(client, ctx.organizationId, commitmentId, { fulfilledDate, evidence: null, userId: ctx.userId });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'resolve',
       target: `regulatory-commitment:${commitmentId}`, reason,
-      payload: { fulfilledDate }, domain: 'ha', surface: 'ana',
+      payload: { status: 'fulfilled', fulfilledDate: done.fulfilledDate }, domain: 'ha', surface: 'ana',
     });
     await client.query('COMMIT');
-    return JSON.stringify({ ok: true, id: commitmentId, message: `Marked commitment ${commitmentId} fulfilled.` });
+    return JSON.stringify({ ok: true, id: commitmentId, message: `Marked commitment ${commitmentId} fulfilled on ${done.fulfilledDate}.` });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     return JSON.stringify({ error: `fulfill_regulatory_commitment failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -13249,12 +13538,15 @@ registerToolHandler('review_ha_interaction', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     const r = await getInteractionReadinessInput(client, ctx.organizationId, interactionId);
-    const { ready, findings } = evaluateMeetingReadiness(r as any);
+    const { ready, findings, note } = evaluateMeetingReadiness(r as any);
+    const gaps = findings.filter((f) => f.severity !== 'minor');
     return JSON.stringify({
-      ok: true, ready, findings,
-      message: ready
-        ? `Interaction ${interactionId} is meeting-ready.`
-        : `Interaction ${interactionId} is NOT ready — ${findings.filter((f) => f.severity === 'critical').length} critical gap(s): ${findings.map((f) => f.message).join('; ')}`,
+      ok: true, ready, findings, note,
+      message: ready === null
+        ? `Interaction ${interactionId}: readiness not assessed — ${note}`
+        : ready
+          ? `Interaction ${interactionId} is meeting-ready.`
+          : `Interaction ${interactionId} is NOT ready — ${gaps.length} gap(s): ${gaps.map((f) => f.message).join('; ')}`,
     });
   } catch (err) {
     return JSON.stringify({ error: `review_ha_interaction failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -13271,11 +13563,13 @@ registerToolHandler('prepare_meeting_package', async (input, ctx) => {
   try {
     const p = await prepareMeetingPackage(ctx.organizationId, interactionId);
     return JSON.stringify({
-      ok: true, interactionId, ready: p.ready, findings: p.findings,
+      ok: true, interactionId, ready: p.ready, readinessNote: p.readinessNote, findings: p.findings,
       questionCount: p.questionCount, openQuestions: p.openQuestions, outstandingCommitments: p.outstandingCommitments, overdueCommitments: p.overdueCommitments, actions: p.actions,
-      message: p.ready
-        ? `${p.interactionType} meeting is ready — ${p.questionCount} question(s), ${p.outstandingCommitments} open commitment(s).`
-        : `${p.interactionType} meeting is NOT ready — ${p.actions.length} action(s): ${p.actions.slice(0, 4).join('; ')}${p.actions.length > 4 ? '…' : ''}`,
+      message: p.ready === null
+        ? `${p.interactionType} meeting readiness not assessed — ${p.readinessNote}`
+        : p.ready
+          ? `${p.interactionType} meeting is ready — ${p.questionCount} question(s), ${p.outstandingCommitments} open commitment(s).`
+          : `${p.interactionType} meeting is NOT ready — ${p.actions.length} action(s): ${p.actions.slice(0, 4).join('; ')}${p.actions.length > 4 ? '…' : ''}`,
     });
   } catch (err) {
     return JSON.stringify({ error: `prepare_meeting_package failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -13756,25 +14050,54 @@ registerToolHandler('review_tmf_completeness', async (input, ctx) => {
 // add_personnel_training is governed (surface 'ana').
 // ─────────────────────────────────────────────────────────────────────────────
 
-function rcProfile(input: Record<string, unknown>) {
-  return {
-    involvesHumanSubjects: input.involves_human_subjects === true,
-    involvesAnimals: input.involves_animals === true,
-    involvesRecombinantDNA: input.involves_recombinant_dna === true,
-    involvesHumanGeneTransfer: input.involves_human_gene_transfer === true,
-    fundingSource: (typeof input.funding_source === 'string' ? input.funding_source : 'other') as any,
-    region: (typeof input.region === 'string' ? input.region : 'us') as any,
-  };
+/* 2026-10-15: rcProfile read every omitted fact as false (funding_source as
+   'other', region as 'us') and took any string as a funding source, so a study
+   nobody described came back "Required committee approvals: none" and its gate
+   "cleared". An omitted fact is now not stated, a value outside the schema is
+   refused, and what an unstated fact could require is reported as not determined. */
+const RC_INPUT_KEYS = {
+  involvesHumanSubjects: 'involves_human_subjects',
+  involvesAnimals: 'involves_animals',
+  involvesRecombinantDNA: 'involves_recombinant_dna',
+  involvesHumanGeneTransfer: 'involves_human_gene_transfer',
+  fundingSource: 'funding_source',
+  region: 'region',
+} as const;
+type RcChecklist = import('../research-compliance/compliance-checklist.js').ComplianceChecklist;
+
+async function rcProfile(input: Record<string, unknown>) {
+  const { readActivityProfile } = await import('../research-compliance/compliance-checklist.js');
+  return readActivityProfile(input, RC_INPUT_KEYS);
+}
+
+function rcFacts(facts: RcChecklist['unstatedFacts']): string {
+  return facts.map((f) => RC_INPUT_KEYS[f]).join(', ');
+}
+
+/** 'none' only when no approval is required or undetermined. */
+function rcApprovals(c: Pick<RcChecklist, 'requiredApprovals' | 'undeterminedApprovals'>): string {
+  const parts = c.requiredApprovals.length ? [c.requiredApprovals.map((a) => a.committee).join(', ')] : [];
+  if (c.undeterminedApprovals.length) parts.push(`not determined: ${c.undeterminedApprovals.map((u) => `${u.committee} (${rcFacts(u.dependsOn)} not stated)`).join(', ')}`);
+  return parts.join('; ') || 'none';
+}
+
+/** '' when every training requirement is determined. */
+function rcUndeterminedTraining(c: Pick<RcChecklist, 'undeterminedTraining'>): string {
+  return c.undeterminedTraining.map((u) => `${u.trainingType} (${rcFacts(u.dependsOn)} not stated)`).join(', ');
 }
 
 registerToolHandler('run_compliance_checklist', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'run_compliance_checklist requires tenant context.' });
+  const read = await rcProfile(input);
+  if (!read.ok) return JSON.stringify({ error: read.error });
   const { resolveComplianceChecklist } = await import('../research-compliance/compliance-checklist.js');
-  const c = resolveComplianceChecklist(rcProfile(input));
-  const committees = c.requiredApprovals.map((a) => a.committee).join(', ') || 'none';
+  const c = resolveComplianceChecklist(read.profile);
+  const undetermined = rcUndeterminedTraining(c);
   return JSON.stringify({
-    ok: true, ruleVersion: c.ruleVersion, requiredApprovals: c.requiredApprovals, requiredTraining: c.requiredTraining, steps: c.steps,
-    message: `Required committee approvals: ${committees}; ${c.requiredTraining.length} training requirement(s).`,
+    ok: true, ruleVersion: c.ruleVersion, requiredApprovals: c.requiredApprovals, requiredTraining: c.requiredTraining,
+    undeterminedApprovals: c.undeterminedApprovals, undeterminedTraining: c.undeterminedTraining, notStated: c.unstatedFacts.map((f) => RC_INPUT_KEYS[f]),
+    steps: c.steps,
+    message: `Required committee approvals: ${rcApprovals(c)}; ${c.requiredTraining.length} training requirement(s)${undetermined ? `; training not determined: ${undetermined}` : ''}.`,
   });
 });
 
@@ -13815,16 +14138,25 @@ registerToolHandler('add_personnel_training', async (input, ctx) => {
 registerToolHandler('review_training_gate', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'review_training_gate requires tenant context.' });
   const personnelIds = Array.isArray(input.personnel_ids) ? input.personnel_ids.filter((n): n is number => typeof n === 'number') : [];
+  const read = await rcProfile(input);
+  if (!read.ok) return JSON.stringify({ error: read.error });
   const { resolveComplianceChecklist, evaluateTrainingGate } = await import('../research-compliance/compliance-checklist.js');
   const { loadRosterForGate } = await import('../research-compliance/roster-service.js');
   try {
-    const checklist = resolveComplianceChecklist(rcProfile(input));
+    const checklist = resolveComplianceChecklist(read.profile);
     const roster = await loadRosterForGate(ctx.organizationId, personnelIds);
     const today = new Date().toISOString().slice(0, 10);
-    const gate = evaluateTrainingGate(roster.personnel, checklist.requiredTraining, roster.records, today);
+    const gate = evaluateTrainingGate(roster.personnel, checklist.requiredTraining, roster.records, today, checklist.undeterminedTraining);
+    const undetermined = rcUndeterminedTraining(gate);
+    const notChecked = gate.personnelEvaluated === 0 && checklist.requiredTraining.length > 0 ? 'no personnel were named, so nobody was checked' : '';
     return JSON.stringify({
       ok: true, cleared: gate.cleared, missing: gate.missing, expiringSoon: gate.expiringSoon,
-      message: gate.cleared ? 'Training gate cleared — all required training is current.' : `Training gate BLOCKED — ${gate.missing.length} missing/expired requirement(s).`,
+      undeterminedTraining: gate.undeterminedTraining, notStated: checklist.unstatedFacts.map((f) => RC_INPUT_KEYS[f]),
+      message: gate.cleared === true
+        ? 'Training gate cleared — all required training is current.'
+        : gate.cleared === false
+          ? `Training gate BLOCKED — ${gate.missing.length} missing/expired requirement(s).${undetermined ? ` Training not determined: ${undetermined}.` : ''}`
+          : `Training gate not determined — ${[undetermined && `training not determined: ${undetermined}`, notChecked].filter(Boolean).join('; ')}. Not cleared.`,
     });
   } catch (err) {
     return JSON.stringify({ error: `review_training_gate failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -13981,19 +14313,26 @@ registerToolHandler('screen_restricted_party', async (input, ctx) => {
 registerToolHandler('assess_study_onboarding', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'assess_study_onboarding requires tenant context.' });
   const personnelIds = Array.isArray(input.personnel_ids) ? input.personnel_ids.filter((n): n is number => typeof n === 'number') : [];
+  const read = await rcProfile(input);
+  if (!read.ok) return JSON.stringify({ error: read.error });
   const { assessStudyOnboarding } = await import('../research-compliance/compliance-checklist.js');
   const { loadRosterForGate } = await import('../research-compliance/roster-service.js');
   try {
     const roster = await loadRosterForGate(ctx.organizationId, personnelIds);
     const today = new Date().toISOString().slice(0, 10);
-    const a = assessStudyOnboarding(rcProfile(input), roster.personnel, roster.records, today);
-    const committees = a.requiredApprovals.map((x) => x.committee).join(', ') || 'none';
+    const a = assessStudyOnboarding(read.profile, roster.personnel, roster.records, today);
+    const committees = rcApprovals(a);
+    const undetermined = rcUndeterminedTraining(a);
+    const notChecked = a.gate.personnelEvaluated === 0 && a.requiredTraining.length > 0 ? 'no personnel were named, so nobody was checked' : '';
     return JSON.stringify({
       ok: true, ruleVersion: a.ruleVersion, requiredApprovals: a.requiredApprovals, requiredTraining: a.requiredTraining,
+      undeterminedApprovals: a.undeterminedApprovals, undeterminedTraining: a.undeterminedTraining, notStated: a.unstatedFacts.map((f) => RC_INPUT_KEYS[f]),
       steps: a.steps, approvals: a.approvals, readyToSubmit: a.readyToSubmit, blockers: a.blockers,
-      message: a.readyToSubmit
+      message: a.readyToSubmit === true
         ? `Required approvals: ${committees}. Team training is current — ready to submit.`
-        : `Required approvals: ${committees}. NOT ready — ${a.blockers.length} blocker(s): ${a.blockers.slice(0, 4).join('; ')}${a.blockers.length > 4 ? '…' : ''}`,
+        : a.readyToSubmit === false
+          ? `Required approvals: ${committees}. NOT ready — ${a.blockers.length} blocker(s): ${a.blockers.slice(0, 4).join('; ')}${a.blockers.length > 4 ? '…' : ''}${undetermined ? ` Training not determined: ${undetermined}.` : ''}`
+          : `Required approvals: ${committees}. Readiness not determined${[undetermined && `training not determined: ${undetermined}`, notChecked].filter(Boolean).map((r) => ` — ${r}`).join('')}.`,
     });
   } catch (err) {
     return JSON.stringify({ error: `assess_study_onboarding failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -14216,57 +14555,49 @@ registerToolHandler('verify_memory_atom', async (input, ctx) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 
+function qmsDocumentCreateHeader(input: Record<string, unknown>) {
+  return {
+    docNumber: typeof input.doc_number === 'string' ? input.doc_number.trim() : '',
+    title: typeof input.title === 'string' ? input.title.trim() : '',
+    docType: typeof input.doc_type === 'string' ? input.doc_type : '',
+  };
+}
+
+function hasControlledTextAuthorship(input: Record<string, unknown>): boolean {
+  return Boolean(input.metadata && typeof input.metadata === 'object' &&
+    Object.prototype.hasOwnProperty.call(input.metadata, 'controlledTextAuthorship'));
+}
+
+/** Canonical Authoring context for the verified tool principal. No model/input identity is accepted. */
+async function qmsAuthoringContext(ctx: ToolContext) {
+  const { getPool } = await import('../../db.js');
+  const pool = getPool();
+  return { pool, tenantId: Number(ctx.organizationId), actor: { id: String(ctx.userId), email: null },
+    audit: { pool, tenantId: Number(ctx.organizationId), actorId: String(ctx.userId), actorEmail: 'unknown', actorRole: 'unknown', ipAddress: 'ana-tool', userAgent: 'ana-tool' } };
+}
+
 registerToolHandler('create_qms_document', async (input, ctx) => {
-  if (!ctx?.organizationId) return JSON.stringify({ error: 'create_qms_document requires tenant context.' });
-  if (!ctx.userId) return JSON.stringify({ error: 'create_qms_document requires user context — a controlled document cannot be created without an identified actor (21 CFR Part 11).' });
-  const docNumber = typeof input.doc_number === 'string' ? input.doc_number.trim() : '';
-  const title     = typeof input.title === 'string' ? input.title.trim() : '';
-  const docType   = typeof input.doc_type === 'string' ? input.doc_type : '';
+  if (!ctx?.organizationId || !ctx.userId) return JSON.stringify({ error: 'create_qms_document requires an identified organization member.' });
+  if (hasControlledTextAuthorship(input)) {
+    return JSON.stringify({ error: 'Controlled-text authorship is recorded by the server when the identified editor saves text; it cannot be supplied on creation.' });
+  }
+  const { docNumber, title, docType } = qmsDocumentCreateHeader(input);
   if (!docNumber || !title) return JSON.stringify({ error: 'doc_number and title are required.' });
-  if (!['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol'].includes(docType)) {
+  if (!['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol', 'curriculum'].includes(docType)) {
     return JSON.stringify({ error: 'doc_type invalid.' });
   }
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const reason = gatedReason(input);
-  const client = await getPool().connect();
+  const refusal = await editorRoleRefusal('create_qms_document', 'creating a controlled document', ctx);
+  if (refusal) return refusal;
   try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const { rows } = await client.query(
-      `INSERT INTO qms_documents (
-         organization_id, doc_number, title, doc_type, category, version, status,
-         author_id
-       ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,'1.0'),'draft',$7)
-       RETURNING id, doc_number, title, status`,
-      [
-        ctx.organizationId, docNumber, title, docType,
-        typeof input.category === 'string' ? input.category : null,
-        typeof input.version === 'string' ? input.version : null,
-        ctx.userId,
-      ],
-    );
-    await recordGovernedAction(client, {
-      orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
-      target: `qms-document:${rows[0].id}`,
-      reason,
-      payload: { kind: 'create', docNumber, title, docType, to: 'draft' },
-      domain: 'mdx', surface: 'ana',
+    const { createControlledQmsDocument } = await import('../qms/controlled-document-service.js');
+    const row = await createControlledQmsDocument(await qmsAuthoringContext(ctx), {
+      title, docType, docNumber,
+      programId: input.program_id, templateKey: input.template_key, category: input.category, reason,
     });
-    await client.query('COMMIT');
-    return JSON.stringify({
-      ok: true, ...rows[0],
-      message: `Created QMS document ${docNumber} (${docType}, draft).`,
-    });
-  } catch (err: unknown) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    const code = (err as { code?: string }).code;
-    if (code === '23505') return JSON.stringify({ error: 'A document with that number already exists.' });
-    return JSON.stringify({
-      error: `create_qms_document failed: ${err instanceof Error ? err.message : String(err)}`,
-    });
-  } finally {
-    client.release();
+    return JSON.stringify({ ok: true, ...row, message: `Created ${row.doc_number} with a canonical draft. Open it in Quality to author the procedure; review and a person's signature are still required.` });
+  } catch (err) {
+    return JSON.stringify({ error: `create_qms_document failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as {code?:string})?.code });
   }
 });
 
@@ -14297,57 +14628,21 @@ registerToolHandler('approve_qms_document', async () =>
    through resolveSignerOrgRole, and checked against GOVERNED_WRITE_ROLES — the
    set requireEditorAccess uses — before anything is opened. Never from input. */
 registerToolHandler('revise_qms_document', async (input, ctx) => {
-  if (!ctx?.organizationId) return JSON.stringify({ error: 'revise_qms_document requires tenant context.' });
-  if (!ctx.userId) return JSON.stringify({ error: 'revise_qms_document requires user context — a controlled revision cannot be opened without an identified actor (21 CFR Part 11).' });
+  if (!ctx?.organizationId || !ctx.userId) return JSON.stringify({ error: 'revise_qms_document requires an identified organization member.' });
   const refusal = await editorRoleRefusal('revise_qms_document', 'opening a controlled revision', ctx);
   if (refusal) return refusal;
   const id = typeof input.document_id === 'number' ? input.document_id : NaN;
-  if (!Number.isFinite(id)) return JSON.stringify({ error: 'document_id (number) is required.' });
+  if (!Number.isSafeInteger(id) || id <= 0) return JSON.stringify({ error: 'document_id (positive integer) is required.' });
   const reason = gatedReason(input);
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const client = await getPool().connect();
   try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const cur = await client.query<{ version: string }>(
-      `SELECT version FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-      [id, ctx.organizationId],
-    );
-    if (cur.rows.length === 0) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      return JSON.stringify({ error: `Document ${id} not found in this organization.` });
-    }
-    const m = /^(\d+)/.exec(String(cur.rows[0].version ?? '').trim());
-    const newVersion = `${(m ? parseInt(m[1], 10) : 1) + 1}.0`;
-    const { rows } = await client.query(
-      `UPDATE qms_documents
-          SET status = 'draft', version = $3, approver_id = NULL, approved_at = NULL,
-              metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
-                'lastRevision', jsonb_build_object('reason', $4::text, 'from', $5::text, 'at', NOW(), 'by', $6::int)),
-              updated_at = NOW()
-        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
-          AND status IN ('effective','superseded','retired','in_review')
-        RETURNING id, doc_number, version, status`,
-      [id, ctx.organizationId, newVersion, reason, cur.rows[0].version, ctx.userId],
-    );
-    if (rows.length === 0) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      return JSON.stringify({ error: 'Document cannot be revised from its current state.' });
-    }
-    await recordGovernedAction(client, {
-      orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
-      target: `qms-document:${id}`, reason,
-      payload: { kind: 'revise', from: cur.rows[0].version, to: newVersion, status: 'draft' },
-      domain: 'mdx', surface: 'ana',
-    });
-    await client.query('COMMIT');
-    return JSON.stringify({ ok: true, ...rows[0], message: `Opened revision of ${rows[0].doc_number} → v${newVersion} (draft).` });
+    const { reviseControlledQmsDocument } = await import('../qms/controlled-document-service.js');
+    const legacyBinding = typeof input.program_id === 'string'
+      ? { programId: input.program_id, templateKey: typeof input.template_key === 'string' ? input.template_key : undefined }
+      : undefined;
+    const row = await reviseControlledQmsDocument(await qmsAuthoringContext(ctx), id, reason, legacyBinding);
+    return JSON.stringify({ ok: true, ...row, message: `Opened revision of ${row.doc_number} → v${row.version}. The prior approved content remains immutable; this draft needs review and signature.` });
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    return JSON.stringify({ error: `revise_qms_document failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
+    return JSON.stringify({ error: `revise_qms_document failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as {code?:string})?.code });
   }
 });
 
@@ -14367,42 +14662,14 @@ registerToolHandler('retire_qms_document', async () =>
   ),
 );
 
-registerToolHandler('ack_training', async (input, ctx) => {
-  if (!ctx?.organizationId) return JSON.stringify({ error: 'ack_training requires tenant context.' });
-  if (!ctx.userId) return JSON.stringify({ error: 'ack_training requires user context.' });
-  const docId = typeof input.document_id === 'number' ? input.document_id : NaN;
-  if (!Number.isFinite(docId)) return JSON.stringify({ error: 'document_id (number) is required.' });
-  try {
-    const { getPool } = await import('../../db.js');
-    const doc = await getPool().query<{ version: string }>(
-      `SELECT version FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-      [docId, ctx.organizationId],
-    );
-    if (doc.rows.length === 0) {
-      return JSON.stringify({ error: `Document ${docId} not found in this organization.` });
-    }
-    const { rows } = await getPool().query(
-      `INSERT INTO qms_training_records (
-         organization_id, user_id, document_id, document_version,
-         acknowledgment_method, quiz_score, expires_at
-       ) VALUES ($1, $2, $3, $4, COALESCE($5,'attestation'), $6, NOW() + INTERVAL '365 days')
-       RETURNING id, document_version, expires_at`,
-      [
-        ctx.organizationId, ctx.userId, docId, doc.rows[0].version,
-        typeof input.method === 'string' ? input.method : null,
-        typeof input.quiz_score === 'number' ? Math.round(input.quiz_score) : null,
-      ],
-    );
-    return JSON.stringify({
-      ok: true, ...rows[0],
-      message: `Recorded training acknowledgment for document ${docId} version ${doc.rows[0].version}.`,
-    });
-  } catch (err) {
-    return JSON.stringify({
-      error: `ack_training failed: ${err instanceof Error ? err.message : String(err)}`,
-    });
-  }
-});
+// The authorization registry already refuses this tool. Keep the handler
+// non-writing too: the reachable replacement is Quality's personal reader and
+// POST /api/mdx/qms/documents/:id/training-ack, never an attestation by AnA.
+registerToolHandler('ack_training', async () => JSON.stringify({
+  error: 'NOT_AN_ANA_ACTION',
+  tool: 'ack_training',
+  message: 'Open the controlled document in Quality, read its released revision and choose Acknowledge this revision. Only you can make your personal read-and-understood attestation.',
+}));
 
 // ── Change control (ICH Q10 / Annex 15) — call the shared service so the tool
 //    inherits the controlled lifecycle, segregation-of-duties and validation the
@@ -14940,25 +15207,18 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
 
     /* Run detection. */
     const detected = await detectArchive(sourcePath);
-    let mappedCount = 0;
+    /* The REST import's own row builder (routes/mdx-imports.ts), storing the status
+       the detector gives each file. 2026-10-15: this handler kept its own INSERT and
+       derived status from mappingConfidence >= 0.5, so a filename suggestion was
+       stored 'pending' at mapping_confidence 0.00 with no rule id; it also never
+       set the job's skipped_count. */
+    const { IMPORT_FILE_INSERT_SQL, importFileParams } = await import('../../routes/mdx-imports.js');
     for (const f of detected.files) {
-      const status = f.detectedKind === 'leaf' && f.mappingConfidence >= 0.5 ? 'mapped'
-                   : f.detectedKind === 'leaf' ? 'pending'
-                   : 'skipped';
-      if (status === 'mapped') mappedCount++;
-      await getPool().query(
-        `INSERT INTO import_job_files (
-           import_job_id, organization_id, relative_path, file_name, size_bytes,
-           sha256, detected_kind, mapped_ctd_section, mapped_section_key,
-           mapped_artifact_kind, mapping_confidence, mapping_source, status
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
-        [
-          jobId, ctx.organizationId, f.relativePath, f.fileName, f.sizeBytes,
-          f.sha256, f.detectedKind, f.mappedCtdSection, f.mappedSectionKey,
-          f.mappedArtifactKind, f.mappingConfidence, f.mappingSource, status,
-        ],
-      );
+      await getPool().query(IMPORT_FILE_INSERT_SQL, importFileParams(jobId, ctx.organizationId, f));
     }
+    const mappedCount = detected.files.filter((f) => f.reviewStatus === 'mapped').length;
+    const suggestedCount = detected.files.filter((f) => f.reviewStatus === 'suggested').length;
+    const skippedCount = detected.files.filter((f) => f.reviewStatus === 'skipped').length;
     for (const fnd of detected.findings) {
       await getPool().query(
         `INSERT INTO import_job_findings (import_job_id, organization_id, severity, code, message, file_path)
@@ -14971,13 +15231,13 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
       `UPDATE import_jobs
           SET detected_format = $2, detected_region = $3,
               detected_application_id = $4, detected_sequence = $5, detected_sponsor = $6,
-              file_count = $7, mapped_count = $8,
-              error_count = $9, status = 'ready_for_review', updated_at = NOW()
+              file_count = $7, mapped_count = $8, skipped_count = $9,
+              error_count = $10, status = 'ready_for_review', updated_at = NOW()
         WHERE id = $1`,
       [
         jobId, detected.format, detected.region,
         detected.applicationId, detected.sequence, detected.sponsor,
-        detected.files.length, mappedCount, errorCount,
+        detected.files.length, mappedCount, skippedCount, errorCount,
       ],
     );
 
@@ -14988,8 +15248,17 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
       detectedRegion: detected.region,
       fileCount: detected.files.length,
       mappedCount,
+      suggestedCount,
+      skippedCount,
       errorCount,
-      message: `Detected ${detected.format} archive · ${detected.files.length} files (${mappedCount} mapped, ${errorCount} errors). Review then call approve_import.`,
+      message:
+        `Detected ${detected.format} archive · ${detected.files.length} files (${mappedCount} mapped by the archive's backbone, ` +
+        `${suggestedCount} suggested by filename pattern, ${errorCount} errors). ` +
+        (suggestedCount > 0
+          ? `${suggestedCount} suggested placement(s) need confirming: confirm each (override_import_mapping, status 'mapped') ` +
+            'or correct it; approve_import imports only mapped files. '
+          : '') +
+        'Review then call approve_import.',
     });
   } catch (err) {
     return JSON.stringify({
@@ -15051,80 +15320,25 @@ registerToolHandler('approve_import', async (input, ctx) => {
   if (!Number.isFinite(jobId) || !Number.isFinite(projectId)) {
     return JSON.stringify({ error: 'import_job_id and project_id (numbers) are required.' });
   }
+  /* The REST approve's own implementation (routes/mdx-imports.ts,
+     approveImportJob): one transaction with the job locked, the project proved
+     to be this organisation's, the confirmed files materialized, and the audit
+     row of who approved it. Until 2026-10-17 this handler kept its own copy
+     with none of those (document store consolidation step 3). */
   try {
     const { getPool } = await import('../../db.js');
-    const pool = getPool();
-    const own = await pool.query<{ status: string }>(
-      `SELECT status FROM import_jobs WHERE id = $1 AND organization_id = $2`,
-      [jobId, ctx.organizationId],
-    );
-    if (own.rows.length === 0) {
-      return JSON.stringify({ error: `Import job ${jobId} not found.` });
+    const { approveImportJob } = await import('../../routes/mdx-imports.js');
+    const outcome = await approveImportJob(getPool(), {
+      orgId: ctx.organizationId, userId: ctx.userId, jobId, projectId, backendService: 'ana/AnaToolExecutor:import',
+    });
+    if (outcome.kind === 'job_not_found') return JSON.stringify({ error: `Import job ${jobId} not found.` });
+    if (outcome.kind === 'project_not_found') return JSON.stringify({ error: `Project ${projectId} not found.` });
+    if (outcome.kind === 'not_ready') {
+      return JSON.stringify({ error: `Job is not in ready_for_review state (current: ${outcome.status}).` });
     }
-    if (own.rows[0].status !== 'ready_for_review') {
-      return JSON.stringify({ error: `Job is not in ready_for_review state (current: ${own.rows[0].status}).` });
-    }
-    const files = await pool.query<{
-      id: number; relative_path: string; file_name: string;
-      mapped_ctd_section: string | null; mapped_artifact_kind: string | null;
-      sha256: string | null;
-    }>(
-      `SELECT id, relative_path, file_name, mapped_ctd_section,
-              mapped_artifact_kind, sha256
-         FROM import_job_files
-        WHERE import_job_id = $1 AND status = 'mapped'`,
-      [jobId],
-    );
-    let createdCount = 0;
-    for (const f of files.rows) {
-      try {
-        const ins = await pool.query<{ id: number }>(
-          `INSERT INTO concept2cure_artifacts (
-             artifact_id, project_id, organization_id, type, category, title,
-             content, content_hash, ctd_section, status, created_by_id, metadata
-           ) VALUES ($1, $2, $3, 'imported', 'document', $4, '', $5, $6, 'draft', $7,
-             jsonb_build_object('importJobId', $8, 'sourcePath', $9, 'artifactKind', $10))
-           RETURNING id`,
-          [
-            `import-${jobId}-${f.id}`, projectId, ctx.organizationId,
-            f.mapped_artifact_kind ? `${f.mapped_artifact_kind.replace(/_/g, ' ')} — ${f.file_name}` : f.file_name,
-            f.sha256, f.mapped_ctd_section, ctx.userId,
-            jobId, f.relative_path, f.mapped_artifact_kind,
-          ],
-        );
-        await pool.query(
-          `UPDATE import_job_files SET artifact_id = $1, status = 'imported' WHERE id = $2`,
-          [ins.rows[0].id, f.id],
-        );
-        createdCount++;
-        // Uniform provenance: an imported file is a 'source_input' event — the
-        // artifact was born from an uploaded document. Best-effort so a
-        // provenance hiccup never fails the import.
-        try {
-          await recordArtifactProvenance(pool, {
-            artifactId: ins.rows[0].id,
-            organizationId: ctx.organizationId,
-            eventType: 'source_input',
-            eventAction: 'import',
-            actorId: ctx.userId,
-            details: { importJobId: jobId, sourcePath: f.relative_path, artifactKind: f.mapped_artifact_kind ?? null },
-            backendService: 'ana/AnaToolExecutor:import',
-          });
-        } catch { /* import provenance is best-effort */ }
-      } catch {
-        /* per-file error already swallowed; surface count below. */
-      }
-    }
-    await pool.query(
-      `UPDATE import_jobs
-          SET status = 'completed', approved_by = $2, approved_at = NOW(),
-              artifacts_created = $3, updated_at = NOW()
-        WHERE id = $1`,
-      [jobId, ctx.userId, createdCount],
-    );
     return JSON.stringify({
-      ok: true, jobId, artifactsCreated: createdCount,
-      message: `Imported ${createdCount} artifact(s) from job ${jobId} into project ${projectId}.`,
+      ok: true, jobId, artifactsCreated: outcome.created, auditTrail: outcome.auditTrail,
+      message: `Imported ${outcome.created} artifact(s) from job ${jobId} into project ${projectId}.`,
     });
   } catch (err) {
     return JSON.stringify({
@@ -15480,6 +15694,28 @@ registerToolHandler('draft_510k_substantial_equivalence', async (input) => {
   });
 });
 
+/** The program's artifacts for M2.5 citation suggestions, or why they could not be read. */
+async function readProgramArtifacts(
+  projectId: number | undefined,
+  organizationId: number | null | undefined,
+): Promise<{ rows: any[]; unavailable: string | null }> {
+  if (!projectId || !organizationId) return { rows: [], unavailable: null };
+  try {
+    const { getPool } = await import('../../db.js');
+    const { rows } = await getPool().query(
+      `SELECT artifact_id, title, ctd_section, type, status
+         FROM concept2cure_artifacts
+         WHERE project_id = $1 AND organization_id = $2 AND status != 'archived'
+         ORDER BY ctd_section
+         LIMIT 50`,
+      [projectId, organizationId]
+    );
+    return { rows, unavailable: null };
+  } catch {
+    return { rows: [], unavailable: "The program's artifacts could not be read, so none are suggested as citations." };
+  }
+}
+
 registerToolHandler('draft_clinical_overview_m2_5', async (input, ctx) => {
   const productName = input.product_name as string;
   const indication = input.indication as string;
@@ -15490,13 +15726,18 @@ registerToolHandler('draft_clinical_overview_m2_5', async (input, ctx) => {
     });
   }
 
-  // Data-driven mode: when clinical studies are supplied, compose the Clinical
-  // Overview through the same deterministic engine the submission package uses.
-  if (Array.isArray(input.csrs) && input.csrs.length > 0) {
+  // Data-driven mode: when the program has completed CSRs, compose the
+  // Clinical Overview from them through the deterministic engine the
+  // submission package uses. Rule 2: never from figures in the tool input,
+  // which the model writes (ana/module2-csr-inputs.ts).
+  const { loadModule2CsrInputs } = await import('./module2-csr-inputs.js');
+  const sourced = await loadModule2CsrInputs(input, ctx, '2.5');
+  if (!sourced.ok && sourced.ignoredSuppliedFigures) return JSON.stringify(sourced);
+  if (sourced.ok) {
     try {
       const { buildM25ClinicalOverview } = await import('../m2-summary-builders.js');
       const summary = buildM25ClinicalOverview({
-        csrs: input.csrs as any,
+        csrs: sourced.csrs,
         indication,
         investigationalProduct: productName,
         developmentRationale: typeof input.development_rationale === 'string' ? input.development_rationale : undefined,
@@ -15504,6 +15745,7 @@ registerToolHandler('draft_clinical_overview_m2_5', async (input, ctx) => {
       return JSON.stringify({
         status: 'drafted',
         engine: 'deterministic',
+        source: { csrBuildJobsForProject: sourced.projectId, studies: sourced.csrs.length },
         sectionKey: summary.sectionKey,
         title: summary.title,
         content: summary.narrative,
@@ -15518,27 +15760,12 @@ registerToolHandler('draft_clinical_overview_m2_5', async (input, ctx) => {
     }
   }
 
-  // Best-effort: pull project artifacts to suggest citations. Skip silently if
-  // tenant context is missing or DB is unavailable — the structure response
-  // is still useful without it.
-  let projectArtifacts: any[] = [];
-  if (projectId && ctx?.organizationId) {
-    try {
-      const { getPool } = await import('../../db.js');
-      const pool = getPool();
-      const { rows } = await pool.query(
-        `SELECT artifact_id, title, ctd_section, type, status
-           FROM concept2cure_artifacts
-           WHERE project_id = $1 AND organization_id = $2 AND status != 'archived'
-           ORDER BY ctd_section
-           LIMIT 50`,
-        [projectId, ctx.organizationId]
-      );
-      projectArtifacts = rows;
-    } catch {
-      /* best-effort — structure response stands without artifact list */
-    }
-  }
+  // Pull the program's artifacts to suggest citations. A failed read is
+  // reported as one, never as a program with no artifacts.
+  const { rows: projectArtifacts, unavailable: artifactsUnavailable } = await readProgramArtifacts(
+    projectId,
+    ctx?.organizationId,
+  );
 
   return JSON.stringify({
     structure: {
@@ -15588,10 +15815,71 @@ registerToolHandler('draft_clinical_overview_m2_5', async (input, ctx) => {
       ],
     },
     project_artifacts: projectArtifacts,
+    ...(artifactsUnavailable ? { project_artifacts_unavailable: artifactsUnavailable } : {}),
+    ...(!sourced.ok ? { clinical_data: { status: sourced.status, message: sourced.message } } : {}),
     next_step:
       'Use this outline to draft each subsection inline. The cite_from_module field in each section indicates which Module 2.7 summary should be referenced. If project_artifacts is populated, suggest specific artifact_ids to cite in each section based on their ctd_section values.',
   });
 });
+
+/** The model-facing handling note for a batch receipt. */
+function batchDraftInstruction(receipt: { failed: number; cancelled: number }): string {
+  return (
+    'These are generated first drafts, NOT saved documents. For a requested deliverable, use draft_authoring_document only with content from sections whose status is drafted, through its existing confirmation and qualification gates. Exclude cut-off sections marked DRAFT_TRUNCATED; they are failed and carry no usable draft content. Carry each drafted section sources[] receipt into sourceReferences so current source versions are rechecked and retained with the saved draft. Report saved only after it returns an authoringDocId. Preserve each saved ID; never rerun creation for a section already saved. Saving a draft is not approval or filing. A missing or unknown finish reason does not confirm completeness, and truncated: false is not a completeness certification. State completeness gaps honestly; do not present unknown values as established.' +
+    (receipt.failed > 0
+      ? ` ${receipt.failed} section(s) were not drafted; each carries its original requestIndex and reason. Repair and retry only failed retryIndices, preserving drafted sections. A cut-off section or one refused for size needs its content shortened or split before retrying.`
+      : '') +
+    (receipt.cancelled > 0
+      ? ` ${receipt.cancelled} section(s) were stopped by the person before drafting completed (cancelledIndices). Do not retry them unless the person asks again.`
+      : '')
+  );
+}
+
+/**
+ * Apply the recorded submission context and load each section's selected
+ * sources, in order, stopping between catalog operations. An already-started
+ * operation may finish; a load that settles after Stop is discarded.
+ */
+async function prepareBatchSections(
+  requests: Array<{ requestIndex: number; sectionType: string; instructions: string; submissionType?: string;
+    sourceContext?: import('./draft-project-sources.js').DraftSourceContext }>,
+  rawSections: unknown[],
+  submissionType: string | undefined,
+  ctx: ToolContext | undefined,
+  outcomes: Map<number, import('./batch-draft-result.js').BatchDraftFailure>,
+): Promise<void> {
+  const { loadDraftProjectSources } = await import('./draft-project-sources.js');
+  const { batchSectionRecord, cancelledDraft, isDraftCancellation, trustedSignal } = await import('./batch-draft-result.js');
+  const signal = trustedSignal(ctx?.signal);
+  const sourceFailure = (sectionType: string, error: unknown): import('./batch-draft-result.js').BatchDraftFailure =>
+    signal?.aborted && isDraftCancellation(error) ? cancelledDraft(sectionType)
+      : { sectionType, error: 'DRAFT_FAILED',
+        message: 'Selected project sources could not be loaded safely. Check the open project, source IDs, current versions and extraction status; retry this section only. No source-grounded draft was generated.' };
+  if (!signal?.aborted) {
+    const { applyRecordedDraftSubmissionContext } = await import('./draft-submission-context.js');
+    await applyRecordedDraftSubmissionContext(requests, submissionType, ctx);
+  }
+  for (const request of requests) {
+    if (outcomes.has(request.requestIndex)) continue;
+    let failure: import('./batch-draft-result.js').BatchDraftFailure | undefined;
+    try {
+      if (!signal?.aborted) {
+        // The section's own words choose each source's window (S5d).
+        request.sourceContext = await loadDraftProjectSources(batchSectionRecord(rawSections[request.requestIndex]).source_document_ids, ctx,
+          `${request.sectionType} ${request.instructions}`);
+      }
+    } catch (error) {
+      failure = sourceFailure(request.sectionType, error);
+    }
+    // Genuine source refusals keep their classification, even during Stop.
+    // A late successful load is discarded as stopped.
+    if (signal?.aborted && !failure) {
+      request.sourceContext = undefined;
+      failure = cancelledDraft(request.sectionType);
+    }
+    if (failure) outcomes.set(request.requestIndex, failure);
+  }
+}
 
 registerToolHandler('batch_draft_sections', async (input, ctx) => {
   // S2 — draft many sections in ONE parallel batch instead of one section per
@@ -15611,10 +15899,14 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
   const projectContext = (input.project_context && typeof input.project_context === 'object'
     ? (input.project_context as Record<string, unknown>)
     : undefined) as
-    | { deviceName?: string; deviceType?: string; indication?: string; predicateDevice?: string; classification?: string }
+    | { deviceName?: string; deviceType?: string; indication?: string; predicateDevice?: string; classification?: string; therapeuticArea?: string; modality?: string }
     | undefined;
 
-  const { batchDraftReceipt, batchSectionRecord } = await import('./batch-draft-result.js');
+  const { batchDraftReceipt, batchSectionRecord, cancelledDraft, trustedSignal } = await import('./batch-draft-result.js');
+  // Stop reaches the nested work, not only the outer race: no source is read
+  // and no section dispatched after it, and a read that settles after it is
+  // discarded (runOneTool documents why the race alone leaves work running).
+  const signal = trustedSignal(ctx?.signal);
   const requests = rawSections
     .map((s, requestIndex) => {
       const sec = batchSectionRecord(s);
@@ -15641,21 +15933,13 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
     return JSON.stringify({ ...batchDraftReceipt(rawSections, requests, []), error: 'each section requires section_type and instructions' });
   }
 
+  const sourceFailures = new Map<number, import('./batch-draft-result.js').BatchDraftFailure>();
   try {
     const { getAnaDraftingService } = await import('./AnaDocumentDraftingService.js');
-    const { loadDraftProjectSources } = await import('./draft-project-sources.js');
-    const sourceFailures = new Map<number, import('./batch-draft-result.js').BatchDraftFailure>();
-    for (const request of requests) {
-      try {
-        request.sourceContext = await loadDraftProjectSources(batchSectionRecord(rawSections[request.requestIndex]).source_document_ids, ctx);
-      } catch {
-        sourceFailures.set(request.requestIndex, { sectionType: request.sectionType, error: 'DRAFT_FAILED',
-          message: 'Selected project sources could not be loaded safely. Check the open project, source IDs, current versions and extraction status; retry this section only. No source-grounded draft was generated.' });
-      }
-    }
+    await prepareBatchSections(requests, rawSections, submissionType, ctx, sourceFailures);
     const service = getAnaDraftingService();
     const ready = requests.filter(r => !sourceFailures.has(r.requestIndex));
-    const generated = ready.length ? await service.batchDraft({ requests: ready, concurrency: 5 }) : [];
+    const generated = ready.length ? await service.batchDraft({ requests: ready, concurrency: 5, signal }) : [];
     let generatedIndex = 0;
     const results = requests.map(r => sourceFailures.get(r.requestIndex) ?? generated[generatedIndex++]);
     // A section that could not be drafted arrives as a failure result in its
@@ -15665,13 +15949,14 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
     return JSON.stringify({
       ...receipt,
       engine: 'framework-grade',
-      instruction:
-        'These are generated first drafts, NOT saved documents. For a requested deliverable, use draft_authoring_document with the successful section content through its existing confirmation and qualification gates. Carry each section sources[] receipt into sourceReferences so current source versions are rechecked and retained with the saved draft. Report saved only after it returns an authoringDocId. Preserve each saved ID; never rerun creation for a section already saved. Saving a draft is not approval or filing. State completeness gaps honestly; do not present unknown values as established.' +
-        (receipt.failed > 0
-          ? ` ${receipt.failed} section(s) were not drafted; each carries its original requestIndex and reason. Repair and retry only retryIndices, preserving successful drafts. A section refused for size needs its existing content shortened or split before retrying.`
-          : ''),
+      instruction: batchDraftInstruction(receipt),
     });
   } catch {
+    if (signal?.aborted) {
+      // Stopped: a fault after stop is reported as the stop, keeping any source refusal already recorded.
+      const results = requests.map(r => sourceFailures.get(r.requestIndex) ?? cancelledDraft(r.sectionType));
+      return JSON.stringify(batchDraftReceipt(rawSections, requests, results));
+    }
     return JSON.stringify({ ...batchDraftReceipt(rawSections, requests, []), error: 'Batch drafting failed. No documents were saved; the failed sections can be retried.' });
   }
 });
@@ -15842,6 +16127,17 @@ function drainOperatorTurns(queued: GatewayMessage[] | undefined): GatewayMessag
   return queued && queued.length > 0 ? queued.splice(0, queued.length) : [];
 }
 
+/** Format before notifying detached observers; this reports host staging only. */
+function stageToolResultsForModel(results: ToolResultEntry[], round: number,
+  observer: AgenticOptions['onToolResultsForModel']): string {
+  // Replans bypass executeTools. Check here too, and retain accepted body bytes.
+  assertToolResultBodyBudget(results);
+  const staged = results.map(tr => ({ ...tr }));
+  const content = staged.map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${frameToolOutput(tr.content)}`).join('\n\n');
+  if (observer) notifyObserver('onToolResultsForModel', () => observer(staged.map(entry => ({ ...entry })), round));
+  return content;
+}
+
 export interface AgenticOptions {
   /** Maximum tool-use rounds before forcing stop */
   maxRounds?: number;
@@ -15854,6 +16150,9 @@ export interface AgenticOptions {
   onStream?: StreamCallback;
   /** Called when a tool is executed */
   onToolExecution?: (toolName: string, input: Record<string, unknown>, result: string) => void;
+  /** Exact bodies staged by this host, after allocation and source guards.
+   * Detached observation only; not proof of provider delivery. */
+  onToolResultsForModel?: (entries: readonly Readonly<ToolResultEntry>[], round: number) => void;
   /** Tenant + thread context forwarded to each tool handler */
   toolContext?: ToolContext;
   /** Abort signal — when aborted, the loop stops before the next round (barge-in). */
@@ -16108,9 +16407,16 @@ export async function executeAgenticLoop(
     // goes whole or not at all, and its receipt is written only if it went
     // whole (read-receipts.ts).
     pendingAdaptationNote = buildAdaptationNote(roundFailures, calls.length);
-    const budgeted = budgetToolResultsForModel(entries, { wholeOrNothing: readReceipts });
-    await settleReadReceipts(entries, budgeted, readReceipts);
-    return budgeted;
+    const budgeted = budgetToolResultsForModel(entries, { wholeOrNothing: readReceipts, strictTotal: true });
+    const guarded = await guardReadResultsForHandoff(entries, budgeted, readReceipts, { signal });
+    const sourceReadIds = [...new Set([...readReceipts.keys(), ...entries.filter(e => e.name === 'read_project_document').map(e => e.tool_use_id)])];
+    await settleReadReceipts(entries, guarded, readReceipts, undefined, {
+      signal, onSourceRefused: () => sourceReadIds.forEach(id => withdrawSourceReadResult(guarded, id, { signal })),
+    });
+    // Guards/withdrawal can grow bodies. Refuse handoff without rewriting any
+    // receipt outcome; earlier tool work and host admission may already exist.
+    assertToolResultBodyBudget(guarded);
+    return guarded;
   };
 
   // Feed the latest tool results back and get the model's next turn. On the
@@ -16127,17 +16433,13 @@ export async function executeAgenticLoop(
     if (signal?.aborted) return { text: '', toolCalls: [] };
 
     loopMessages.push({ role: 'assistant', content: priorText || '' });
-    // Entries arrive pre-budgeted from executeTools (the cap here is a no-op
-    // safety net); the adaptation note rides the same user turn so a failed
+    // Stage accepted bodies exactly; the adaptation note rides the same user turn so a failed
     // round becomes a course correction instead of an identical retry.
     const adaptationSuffix = pendingAdaptationNote ? `\n\n${pendingAdaptationNote}` : '';
     pendingAdaptationNote = '';
     loopMessages.push({
       role: 'user',
-      content:
-        results
-          .map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${frameToolOutput(capToolResultForModel(tr.content))}`)
-          .join('\n\n') + adaptationSuffix,
+      content: stageToolResultsForModel(results, round, options?.onToolResultsForModel) + adaptationSuffix,
     });
 
     // Steers ride AFTER the tool results. See drainOperatorTurns.
@@ -16234,6 +16536,8 @@ async function runStatsTool(
       instruction: STATS_VERBATIM,
     });
   } catch (err: any) {
+    const refusal = biostatsRefusal(err);
+    if (refusal) return refusal;
     const message = err?.message || 'unknown error';
     if (isStatsParamError(message)) {
       return JSON.stringify({ status: 'needs_parameters', message });
@@ -17676,7 +17980,7 @@ registerToolHandler('get_submission_readiness_twin', async (input, ctx) => {
       agency,
       dashboard,
       instruction:
-        'Lead with the overall score, its trend, and the criteria met-vs-total. Then the ranked recommendations with their effort, because that is what the user acts on. Report per-module readiness where it is uneven rather than averaging it away. The predicted approval probability, review time and deficiency count are MODEL ESTIMATES from historical patterns — attribute them as such and never assert them as the likelihood of approval.',
+        'Lead with the overall score, its trend, and the criteria met-vs-total. Then the ranked recommendations with their effort, because that is what the user acts on. Report per-module readiness where it is uneven rather than averaging it away. approvalProbability is always null (no model exists); reviewTimeDays is the agency statutory clock (reviewClockBasis); unmetCriteriaCount counts criteria scored not met or partially met; trend "unknown" means fewer than two recorded scores. Never state a likelihood of approval.',
     });
   } catch (err: any) {
     // The program check THROWS when it could not run, rather than returning
@@ -18539,16 +18843,22 @@ registerToolHandler('compose_e2b_icsr', async (input: Record<string, unknown>, c
 // disagreeing across submission modules. Deterministic; no DB/network.
 registerToolHandler('reconcile_dossier_numbers', async (input: Record<string, unknown>) => {
   try {
-    const { reconcileDossierNumbers } = await import('./dossierReconciliation.js');
-    const result = reconcileDossierNumbers((input.documents as any) ?? []);
+    const { reconcileMinedFigures } = await import('../reconciliation/mined-figure-reconciler.js');
+    const result = reconcileMinedFigures((input.documents as any) ?? []);
     return JSON.stringify({
       status: 'computed',
       engine: 'deterministic',
       result,
+      /* The verdict is the engine's, which has distinguished "nothing compared" from "clean"
+         since 2026-09-28 (row 74). The deleted second implementation could not: it listed
+         every label it saw once as consistent, so a figure compared against nothing read as
+         agreeing. */
       instruction:
-        result.discrepancies.length > 0
-          ? 'Surface each discrepancy with its label, the conflicting values, and the snippet from each document so the user can resolve the source of truth. Do not guess which value is correct.'
-          : 'No cross-document numerical conflicts were found among the labeled figures scanned. State which labels were checked and found consistent.',
+        result.verdict === 'not_assessed'
+          ? `NOTHING was compared across documents (reason: ${result.notAssessedReason}). Say that plainly and do not report it as consistency: no conclusion about agreement is available. State how many figures were read (${result.figuresReconciled}) and that no quantity appeared in two places.`
+          : result.conflictCount > 0
+            ? 'Surface each conflict with its quantity, the distinct values and the documents that report each, so the user can resolve the source of truth. Do not guess which value is correct; where a consensus value is given, say it is the most-reported value, not the correct one.'
+            : `No cross-document conflict was found among the ${result.quantitiesCompared} quantity/quantities actually compared across two places. Name them, and do not imply anything about figures stated in only one document.`,
     });
   } catch (err: any) {
     const message = err?.message || 'unknown error';
@@ -19814,12 +20124,15 @@ registerToolHandler('plan_essential_documents', async (input: Record<string, unk
 // IVDR 2017/746, IMDRF. Deterministic.
 // ─────────────────────────────────────────────────────────────────────────────
 
-registerToolHandler('classify_medical_device', async (input: Record<string, unknown>) =>
-  runStatsTool('classify_medical_device', async () => {
-    const { classifyDevice } = await import('../medical-device/medical-device-knowledge.js');
-    return classifyDevice(input as any);
-  }, 'deterministic')
-);
+// 2026-10-15: this ran classifyDevice, a second classification engine that stated
+// US Class I and EU MDR Class I ("no notified body") from no device facts. It is
+// deleted; this tool is classify_device under a second name, so it runs that
+// handler (market-specs/device-classification.ts) rather than a copy of it.
+registerToolHandler('classify_medical_device', async (input, ctx) => {
+  const canonical = getToolHandler('classify_device');
+  if (!canonical) return JSON.stringify({ error: 'classify_medical_device failed: classify_device is not registered.' });
+  return canonical(input, ctx);
+});
 
 registerToolHandler('select_device_pathway', async (input: Record<string, unknown>) =>
   runStatsTool('select_device_pathway', async () => {
@@ -20074,7 +20387,7 @@ function intelligenceEngineContext(ctx?: ToolContext) {
     organizationId: ctx?.organizationId ?? null,
     userId: ctx?.userId ?? null,
     projectId: ctx?.projectId ? String(ctx.projectId) : null,
-    clientType: (ctx?.projectType === 'medtech' ? 'medtech' : ctx?.projectType === 'biotech' ? 'biotech' : 'pharma') as 'pharma' | 'biotech' | 'medtech',
+    clientType: interviewClientType(ctx?.clientType ?? ctx?.projectType),
   };
 }
 
@@ -20104,6 +20417,31 @@ registerToolHandler('start_intelligence_flow', async (input, ctx) => {
   if (!category) {
     return JSON.stringify({
       error: `No intelligence flow found for document type: "${documentType}". Use list_intelligence_flows to see available flows.`,
+    });
+  }
+
+  /* An interview whose answers reach no record is not offered where the
+     launch boundary is enforced (decision P-28, 2026-10-12).
+     `buildInterviewCommitPlan` produces entries for the CMC specification flow
+     and an EMPTY plan for every other category, so a protocol, CSR, 510(k),
+     CER, SOP, NDA or BLA interview could be started, answered to the end, and
+     commit nothing. Walking a person through that and then saving nothing is
+     an empty result standing in for a refusal. The list is the commit path's
+     own (services/cmc/interview-commit.ts), not a second one here.
+
+     Off the boundary — a development server — every flow stays available: the
+     engine and its question sets are what a person builds against. */
+  const { flowCommitsToRecord } = await import('../cmc/interview-commit.js');
+  const { launchScopeEnforced } = await import('../entitlements/launch-scope.js');
+  if (launchScopeEnforced() && !flowCommitsToRecord(category)) {
+    return JSON.stringify({
+      error:
+        `The "${documentType}" interview is not available in this release: its answers reach no record, so ` +
+        `completing it would save nothing. The interview that commits is the CMC specification flow, which ` +
+        `writes the drug substance, drug product, method, specification and stability registers. For a ` +
+        `protocol, a CSR, a 510(k), a CER or an SOP, author the document in Document editor & authoring.`,
+      flow: category,
+      commits: false,
     });
   }
 
@@ -20728,123 +21066,29 @@ registerToolHandler('get_tmf_view', async (input, ctx) => {
 // locked content; every query is org-scoped.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/* save_document_to_vault — the single-body form of draft_authoring_document
+   (document store consolidation step 2, docs/design/DOCUMENT_STORE_CONSOLIDATION.md,
+   2026-10-17). It used to INSERT a concept2cure_artifacts row; it now creates an
+   authoring draft through the same createDocumentFromDraft path, so there is one
+   way AnA creates a draft. The person's stated reason is the Part 11 CREATE row's
+   reason for change; lineage records AnA's machine draft. It never writes
+   vault.documents (P-30) and its reply says the draft is not filed in the Vault.
+   Artifact rows it wrote before stay readable through the artifact tools. */
 registerToolHandler('save_document_to_vault', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx.userId) return JSON.stringify({ error: 'save_document_to_vault requires tenant + user context.' });
-  const title = typeof input.title === 'string' ? input.title.trim() : '';
-  const content = typeof input.content === 'string' ? input.content : '';
+  const [{ getPool }, { saveDocumentToVaultTool }] = await Promise.all([
+    import('../../db.js'),
+    import('../authoring/authoring-draft-tool.js'),
+  ]);
   const reason = gatedReason(input);
-  if (!title) return JSON.stringify({ error: 'title (string) is required.' });
-  if (!content) return JSON.stringify({ error: 'content (string) is required.' });
-  /* concept2cure_artifacts.project_id is integer NOT NULL — the INSERT below
-     omitted it, so this tool failed on EVERY real call while its contract test
-     (mocked pool) stayed green. The explicit "AnA, file this" path must file
-     under a project or say plainly that it cannot; a vault document belonging
-     to no project is exactly the orphaned capture this platform must not
-     produce. */
-  const projectId =
-    typeof ctx.projectId === 'number' && Number.isFinite(ctx.projectId) && ctx.projectId > 0
-      ? ctx.projectId
-      : null;
-  if (!projectId) {
-    return JSON.stringify({
-      error:
-        'save_document_to_vault needs an open project — every vault document is filed under one. Open or select a project, then ask again.',
-    });
-  }
-  try {
-    const { getPool } = await import('../../db.js');
-    const { createHash, randomUUID } = await import('crypto');
-    const hash = createHash('sha256').update(content, 'utf8').digest('hex');
-    const externalId = `ana-doc-${randomUUID().slice(0, 12)}`;
-    const category = typeof input.category === 'string' && input.category.trim() ? input.category.trim() : 'document';
-    const ctd = typeof input.ctd_section === 'string' && input.ctd_section.trim() ? input.ctd_section.trim() : null;
-
-    const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-    const client = await getPool().connect();
-    try {
-      await client.query('BEGIN');
-      await setTenantContextTx(client, ctx.organizationId);
-      const ins = await client.query<{ id: number }>(
-        `INSERT INTO concept2cure_artifacts (
-           artifact_id, organization_id, project_id, type, category, title, content, content_hash,
-           ctd_section, status, version, created_by_id, metadata
-         ) VALUES ($1, $2, $3, 'document', $4, $5, $6, $7, $8, 'draft', 1, $9,
-           jsonb_build_object('source', 'ana_tool', 'reason', $10::text))
-         RETURNING id`,
-        [externalId, ctx.organizationId, projectId, category, title, content, hash, ctd, ctx.userId, reason],
-      );
-      await client.query(
-        `INSERT INTO concept2cure_artifact_versions
-           (artifact_id, organization_id, version, content, content_hash, change_description, created_by_id)
-         VALUES ($1, $2, 1, $3, $4, $5, $6)`,
-        [ins.rows[0].id, ctx.organizationId, content, hash, reason, ctx.userId],
-      );
-      /* Span lineage in the same transaction as the artifact + immutable version
-         (ledger L160, mirroring update_vault_document): save_document_to_vault
-         receives its content directly and carries no parked Data Room sources, so
-         every clause is the acting user's assertion. Recording it here closes the
-         one vault write that persisted regulated prose with NO span lineage at
-         all — a gap invisible to check-lineage-save-gate because it writes by
-         INSERT, which that guard's content-write discovery does not match. A
-         lineage gap rolls the whole document back. */
-      const { enforceAuthorLineage } = await import('../clinical-regulatory-evidence/lineage-gate.js');
-      /* AnA generated this content — the provenance row written just below
-         records eventAction 'ai_generate' — and no human has accepted it. It
-         is the machine's draft, requested by ctx.userId, asserted by nobody. */
-      await enforceAuthorLineage(
-        client,
-        ctx.organizationId,
-        { documentTable: 'concept2cure_artifacts', documentId: String(ins.rows[0].id) },
-        content,
-        String(ctx.userId),
-        { machineDraft: { authorId: ANA_MACHINE_AUTHOR_ID } },
-      );
-      // Uniform provenance: a vault document authored by AnA is a 'generation'
-      // event, in the same transaction as the artifact + version.
-      await recordArtifactProvenance(client, {
-        artifactId: ins.rows[0].id,
-        organizationId: ctx.organizationId,
-        eventType: 'generation',
-        eventAction: 'ai_generate',
-        actorId: ctx.userId,
-        details: { source: 'ana_tool', reason, ctdSection: ctd, version: 1 },
-        backendService: 'ana/AnaToolExecutor:save_document_to_vault',
-      });
-      // C2C-AUDIT-001: the Part 11 audit row is written on THIS client, inside
-      // the same transaction as the artifact + immutable version. It used to be
-      // a post-COMMIT `try { auditLog(...) } catch { /* never block on audit */ }`
-      // on a separate connection, so a failed audit left a committed regulated
-      // document with no §11.10(e) trail. Now the audit failing rolls the
-      // document back with it.
-      await recordGovernedAction(client, {
-        orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
-        target: `vault-document:${externalId}`, reason,
-        payload: { kind: 'create', title, category, ctdSection: ctd, contentHash: hash, to: 'draft', version: 1 },
-        domain: 'mdx', surface: 'ana',
-      });
-      await client.query('COMMIT');
-
-      return JSON.stringify({
-        ok: true, id: ins.rows[0].id, artifact_id: externalId, version: 1, content_hash: hash,
-        message: `Saved '${title}' to the vault as draft v1 (${content.length} chars, SHA-256 ${hash.slice(0, 12)}…).`,
-      });
-    } catch (err) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      throw err;
-    } finally {
-      client.release();
-    }
-  } catch (err) {
-    return JSON.stringify({ error: `save_document_to_vault failed: ${err instanceof Error ? err.message : String(err)}` });
-  }
+  return saveDocumentToVaultTool(getPool(), input, ctx, reason);
 });
 
 /* draft_authoring_document — an AnA-built document IS an authoring document
    (docs/design/ANA_DOCUMENT_CANVAS.md, WM 2026-09-21). The body lives in
    services/authoring/authoring-draft-tool.ts so it is testable through this
    handler without a model turn; it refuses verbatim without an open project,
-   exactly like save_document_to_vault above, and writes through the same
-   service POST /api/authoring/docs/from-draft uses. */
+   and writes through the same service POST /api/authoring/docs/from-draft uses
+   (save_document_to_vault above is its single-body form). */
 registerToolHandler('draft_authoring_document', async (input, ctx) => {
   const [{ getPool }, { draftAuthoringDocumentTool }] = await Promise.all([
     import('../../db.js'),
@@ -20901,8 +21145,8 @@ registerToolHandler('update_vault_document', async (input, ctx) => {
          vault tool carries no parked sources, so every clause is the acting
          user's assertion; a gap rolls the version back. */
       const { enforceAuthorLineage } = await import('../clinical-regulatory-evidence/lineage-gate.js');
-      /* Same as save_document_to_vault: AnA wrote the new version, nobody has
-         accepted it. The provenance row below records 'ai_generate'. */
+      /* AnA wrote the new version, nobody has accepted it. The provenance row
+         below records 'ai_generate'. */
       await enforceAuthorLineage(
         client,
         ctx.organizationId,
@@ -20921,7 +21165,8 @@ registerToolHandler('update_vault_document', async (input, ctx) => {
         details: { source: 'ana_tool', reason, version: nextVersion },
         backendService: 'ana/AnaToolExecutor:vault_update',
       });
-      // C2C-AUDIT-001: atomic Part 11 audit — see save_document_to_vault.
+      // C2C-AUDIT-001: the Part 11 audit row is written on THIS client, inside
+      // the version's transaction; a failed audit rolls the version back.
       await recordGovernedAction(client, {
         orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
         target: `vault-document:${doc.id}`, reason,
@@ -21132,14 +21377,21 @@ registerToolHandler('get_plan_usage', async (_input, ctx) => {
 registerToolHandler('get_billing_credits', async (_input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'get_billing_credits requires tenant context.' });
   try {
-    const { getCreditBalance, getCreditLedger, getAutoReload } = await import('../credit-ledger.js');
+    const { getCreditBalance, getCreditLedger, getAutoReload, getCreditCapabilities } = await import('../credit-ledger.js');
     const orgId = Number(ctx.organizationId);
     const [balanceCents, ledger, autoReload] = await Promise.all([
       getCreditBalance(orgId),
       getCreditLedger(orgId, 10),
       getAutoReload(orgId),
     ]);
-    return JSON.stringify({ ok: true, balanceCents, autoReload, recentLedger: ledger });
+    /* Nothing spends this balance: debitCredits (credit-ledger.ts) has no
+       caller, so it is not a usage meter (app audit 2026-10-17). Say so rather
+       than let a client read it as what they have used or have left. */
+    return JSON.stringify({
+      ok: true, balanceCents, autoReload, recentLedger: ledger, capabilities: getCreditCapabilities(),
+      metered: false,
+      note: 'Credits are not metered: nothing the platform does spends this balance, so it says nothing about usage. Usage is not limited by credits.',
+    });
   } catch (err) {
     return JSON.stringify({ error: `get_billing_credits failed: ${err instanceof Error ? err.message : String(err)}` });
   }
@@ -21150,7 +21402,20 @@ registerToolHandler('get_org_capabilities', async (_input, ctx) => {
   try {
     const { resolveCapabilities } = await import('../entitlements/resolver.js');
     const capabilities = await resolveCapabilities(Number(ctx.organizationId));
-    return JSON.stringify({ ok: true, ...capabilities });
+    // 2026-10-15: an unread layer used to arrive as tier 'standard' or [] with
+    // nothing saying so; each layer that was not read is now named.
+    const notRead = [
+      ...(capabilities.tierResolved ? [] : ['plan tier']),
+      ...(capabilities.togglesResolved ? [] : ['feature toggles']),
+      ...(capabilities.modulesResolved ? [] : ['module subscriptions']),
+    ];
+    return JSON.stringify({
+      ok: true, ...capabilities,
+      ...(notRead.length > 0 ? {
+        notRead,
+        note: `Could not be read: ${notRead.join(', ')}. Nothing unread is shown as granted; say it could not be read, not that it is absent or locked.`,
+      } : {}),
+    });
   } catch (err) {
     return JSON.stringify({ error: `get_org_capabilities failed: ${err instanceof Error ? err.message : String(err)}` });
   }
@@ -21191,19 +21456,27 @@ registerToolHandler('list_report_types', async (input, ctx) => {
     const segFiltered = filterTypesForSegment(typed, segments, persona)
       .filter((t: any) => Array.isArray(t.allowedScopes) && t.allowedScopes.includes(scope));
 
-    let tier: 'free' | 'standard' | 'professional' | 'enterprise' = 'standard';
-    try { tier = (await resolveCapabilities(orgId)).tier; } catch { /* default standard */ }
+    // 2026-10-15: a failed or unread plan used to become 'standard' here and
+    // every type's `entitled` was decided on it. An unread plan decides nothing.
+    let tier: 'free' | 'standard' | 'professional' | 'enterprise' | null = null;
+    try {
+      const caps = await resolveCapabilities(orgId);
+      if (caps.tierResolved !== false) tier = caps.tier;
+    } catch { /* plan not read: tier stays null */ }
 
     const types = segFiltered.map((t: any) => {
-      const d = decideReportEntitlement(t.typeId, t.family, tier);
+      // With tierResolved false the compatibility tier unlocks nothing.
+      const d = decideReportEntitlement(t.typeId, t.family, tier ?? 'standard', tier !== null);
       return {
         typeId: t.typeId, label: t.label, family: t.family,
-        entitled: d.entitled, requiredTier: d.requiredTier,
+        entitled: tier === null ? null : d.entitled, requiredTier: d.requiredTier,
       };
     });
     return JSON.stringify({
-      ok: true, scope, segments, tier, count: types.length, reportTypes: types,
-      note: 'Report types are already filtered to this org segment(s) and annotated with entitlement. AnA narrates these; it never invents a report type or a metric.',
+      ok: true, scope, segments, tier, tierResolved: tier !== null, count: types.length, reportTypes: types,
+      note: tier === null
+        ? 'Report types are already filtered to this org segment(s). The plan could not be read, so no type is shown as entitled or locked (entitled: null); say that rather than offering or refusing one. AnA narrates these; it never invents a report type or a metric.'
+        : 'Report types are already filtered to this org segment(s) and annotated with entitlement. AnA narrates these; it never invents a report type or a metric.',
     });
   } catch (err) {
     return JSON.stringify({ error: `list_report_types failed: ${err instanceof Error ? err.message : String(err)}` });

@@ -8,6 +8,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { renderReport, type RenderInput } from '../render';
+import { computeContentHash, extractProvenanceAtoms } from '../../sealing/seal';
 
 const AT = '2026-10-08T00:00:00.000Z';
 const notComputed = 'Submission readiness not computed: the project records no registry context (registryId or submissionType).';
@@ -32,6 +33,23 @@ const digest = (over: Partial<RenderInput> = {}): RenderInput => ({
 const text = (r: ReturnType<typeof renderReport>) => JSON.stringify(r.sections);
 
 describe('renderReport — readiness', () => {
+  it('renders all evaluated gaps, including required sections when no artifact is missing', () => {
+    const report = renderReport(digest({ summary: { regulatory: { missingArtifacts: [], gaps: [{ title: 'Module 3', severity: 'critical', message: 'Required section missing' }] } } }));
+    expect(text(report)).toContain('Required section missing');
+    expect(text(report)).not.toContain('No gaps detected');
+  });
+  it('does not claim an assessment from a legacy empty artifact list', () => {
+    const report = renderReport(digest({ summary: { regulatory: { missingArtifacts: [] } } }));
+    expect(text(report)).not.toContain('No gaps detected');
+    expect(text(report)).toContain('Gaps were not evaluated for this scope');
+  });
+  it('seals stored aggregate inputs and extracts rendered source atoms', () => {
+    const input = digest({ providers: [{ provider: 'submission_readiness', observedAt: AT, status: 'partial', atoms: [{ sourceTable: 'sections', recordId: 44, sourceField: 'status', transformation: 'calculation' }] }], summary: { regulatory: { readinessScore: 50, gaps: [] }, computedScope: 'project', provenance: { inputs: [{ id: 44, status: 'draft' }] } } });
+    const report = renderReport(input);
+    expect(extractProvenanceAtoms(report)).toContainEqual(expect.objectContaining({ sourceTable: 'sections', recordId: 44 }));
+    const changed = renderReport({ ...input, summary: { ...input.summary, provenance: { inputs: [{ id: 44, status: 'review' }] } } });
+    expect(computeContentHash(changed)).not.toBe(computeContentHash(report));
+  });
   it('states that readiness was not computed, and prints no confidence', () => {
     const r = renderReport(digest());
     const summary = r.sections[0];

@@ -40,11 +40,12 @@
  * @module server/services/vault/vault-ingest.service
  */
 
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { DEFAULT_RETENTION_YEARS } from '../../../shared/schema/vault';
 import { pool } from '../../db.js';
+import type { Queryable } from './document-catalog.service.js';
 import { createScopedLogger } from '../../utils/logger.js';
-import { assertUploadSafe, UploadSafetyError, type UploadOrigin } from '../../middleware/uploadSafety.js';
+import { assertUploadSafe, UploadSafetyError } from '../../middleware/uploadSafety.js';
 import { writeChainedAuditRow } from '../auditService.js';
 import { getStorageProvider } from '../storage/index.js';
 import {
@@ -53,8 +54,8 @@ import {
   refusalAfterDiscard,
   type StoredUpload,
 } from './vault-ingest-discard.js';
-import { vaultWriteRefusal } from './vault-write-authority.js';
-import { readRecordedVersion, reuploadChanges, reuploadDiffers, type ReuploadChange, type ReuploadDiffer } from './vault-reupload.js';
+import { ingestTargetRefusal, ingestSourceRefusal } from './vault-ingest-access.js';
+import { readRecordedVersion, reuploadChanges, reuploadDiffers } from './vault-reupload.js';
 import { checkInArgumentRefusal, currentVersionOfCode, inheritedPlacement, planCheckIn, recheckUnderLock } from './vault-version-checkin.js';
 import {
   classifyForFiling,
@@ -63,96 +64,15 @@ import {
   isFolderInView,
   folderLabel,
 } from './vault-filing.service.js';
-import { programInOrganization } from '../c2c/program-access';
+
+import type { VaultIngestArgs, VaultIngestResult } from './vault-ingest-types.js';
+export type { VaultIngestArgs, VaultIngestFiling, VaultIngestResult } from './vault-ingest-types.js';
 
 const logger = createScopedLogger('vault-ingest');
 
 function sha256Bytes(buf: Buffer): string {
   return createHash('sha256').update(buf).digest('hex');
 }
-
-/** Everything the governed ingest needs, independent of how it was requested. */
-export interface VaultIngestArgs {
-  organizationId: number | string | null | undefined;
-  userId: number | null;
-  programId: string;
-  documentCode: string;
-  documentTitle: string;
-  documentType: string;
-  version?: string;
-  classification?: string;
-  retentionPolicy?: string;
-  /**
-   * Check in the next version of an existing document (VR-08): the id of one of
-   * its versions. The server finds the current head, keeps its document code
-   * and filing, assigns the next version and links the predecessor
-   * (vault-version-checkin.ts). `version` and a filing are not accepted with it.
-   * Lineage is never taken from a caller any other way.
-   */
-  supersedesDocumentId?: string;
-  folderId?: string;
-  evidenceKind?: string;
-  ctdSection?: string;
-  fileBuffer: Buffer;
-  fileName: string;
-  mimeType: string;
-  /** Carried into the Part 11 audit row; a tool call has neither. */
-  ipAddress?: string;
-  userAgent?: string;
-  /**
-   * Where the bytes came from. Defaults to 'upload', which is every HTTP
-   * ingest — the route's schema has no such field, so nothing a client sends
-   * can reach it. 'platform-generated' is for bytes this process produced
-   * itself (the official FDA eSTAR retained after an export); see the Origin
-   * note in middleware/uploadSafety.
-   */
-  origin?: UploadOrigin;
-  /**
-   * The data-room capture these bytes were filed from (VR-11a, VR-16b). Named
-   * in the ingest's audit row, so the chain links the capture to the Vault
-   * document it became. Set only by vault-data-room-filing.ts.
-   */
-  dataRoomSourceId?: number;
-}
-
-export interface VaultIngestFiling {
-  view: string;
-  folderId: string | null;
-  folderLabel: string | null;
-  evidenceKind: string | null;
-  ctdSection: string | null;
-  placementStatus: string;
-  confidence: string | null;
-  rationale: string | null;
-  needsReview: boolean;
-}
-
-export type VaultIngestResult =
-  | {
-      ok: true;
-      document: {
-        id: string;
-        programId: string;
-        documentCode: string;
-        documentTitle: string;
-        documentType: string;
-        version: string;
-        fileName: string;
-        fileSize: number;
-        mimeType: string;
-        contentHash: string;
-        processingStatus: string;
-        hasExtractedText: boolean;
-        wordCount: number | null;
-        createdAt: string;
-        updatedAt: string;
-      };
-      filing: VaultIngestFiling;
-      /** Present when these bytes were already recorded here (vault-reupload.ts). */
-      reupload?: { unchanged: boolean; changes: ReuploadChange[]; differs: ReuploadDiffer[] };
-    }
-  /** VERSION_CONTENT_CONFLICT: the current version at that code, which a check-in adds to. */
-  | { ok: false; status: number; code: string; message: string; headDocumentId?: string; headVersion?: string };
 
 /**
  * Admit a document into the governed vault. Must be called inside the acting
@@ -182,20 +102,30 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
   }
   if (result.ok) {
     // A same-bytes retry leaves its own fresh copy unheld (vault-reupload.ts).
-    if (result.reupload) await discardUnrecordedBytes(stored);
+    if (!result.admission.created) await discardUnrecordedBytes(stored);
     return result;
   }
   return { ...result, message: refusalAfterDiscard(result.message, await discardUnrecordedBytes(stored)) };
+}
+
+/** A lost COMMIT or ROLLBACK acknowledgement cannot authorize byte deletion. */
+async function rollbackIngestOrRetainBytes(
+  client: Queryable, stored: StoredUpload, commitAttempted: boolean, error: unknown,
+): Promise<Extract<VaultIngestResult, { ok: false }> | null> {
+  const rollbackConfirmed = await client.query('ROLLBACK').then(() => true, () => false);
+  if (!commitAttempted && rollbackConfirmed) return null;
+  stored.committed = true;
+  logger.error('Vault ingest transaction outcome is unconfirmed; stored bytes retained', {
+    err: error instanceof Error ? error.message : String(error),
+  });
+  return { ok: false, status: 503, code: 'OUTCOME_UNKNOWN',
+    message: 'The Vault admission outcome could not be confirmed. Review the current Vault records before trying again.' };
 }
 
 async function admitVaultDocument(
   args: VaultIngestArgs,
   stored: StoredUpload,
 ): Promise<VaultIngestResult> {
-  // Role first, as requireEditorAccess orders it: a caller who may not write
-  // is told so before anything is stored, checked or disclosed.
-  const roleRefusal = vaultWriteRefusal();
-  if (roleRefusal) return roleRefusal;
   // A filing the uploader names is held to the vocabulary before any byte is
   // stored (VR-04). Only a named folder's kind and section are written; without
   // one the classifier's proposal is, so those are not the caller's to break.
@@ -217,20 +147,9 @@ async function admitVaultDocument(
     return { ok: false, status: 403, code: 'NO_ORG_CONTEXT',
       message: 'An authenticated organization context is required to ingest documents.' };
   }
-  try {
-    if (!(await programInOrganization(pool, args.programId, orgId))) {
-      logger.warn('Vault ingest denied: program not owned by caller organization', {
-        programId: args.programId,
-        orgId,
-      });
-      return { ok: false, status: 403, code: 'PROGRAM_FORBIDDEN',
-        message: 'Program not found or not owned by your organization.' };
-    }
-  } catch (ownErr: any) {
-    logger.error('Vault ingest program-ownership check failed', { err: ownErr?.message });
-    return { ok: false, status: 500, code: 'OWNERSHIP_CHECK_FAILED',
-      message: 'Could not verify program ownership.' };
-  }
+  const db = args.executor ?? pool;
+  const targetRefusal = await ingestTargetRefusal(db, args, orgId);
+  if (targetRefusal) return targetRefusal;
 
   const fileName = args.fileName || 'document';
   const mimeType = args.mimeType || 'application/octet-stream';
@@ -263,7 +182,7 @@ async function admitVaultDocument(
   // A check-in is planned before any byte is stored, so a refusal stores
   // nothing, and again under the head's row lock in the transaction below.
   const checkIn = args.supersedesDocumentId
-    ? await planCheckIn(pool, { organizationId: orgId, programId: args.programId, headId: args.supersedesDocumentId, contentHash })
+    ? await planCheckIn(db, { organizationId: orgId, programId: args.programId, headId: args.supersedesDocumentId, contentHash })
     : null;
   if (checkIn && !checkIn.ok) return checkIn;
   // What this version is recorded as: a check-in's are the server's.
@@ -306,6 +225,10 @@ async function admitVaultDocument(
   let storageVersionId: string;
   let storageProvider: string;
   let storageFileId: string;
+  const sourceRefusal = await ingestSourceRefusal(db, args, 'preview');
+  if (sourceRefusal) return sourceRefusal;
+  const currentTargetRefusal = await ingestTargetRefusal(db, args, orgId);
+  if (currentTargetRefusal) return currentTargetRefusal;
   try {
     const written = await getStorageProvider().put({
       orgId,
@@ -332,14 +255,11 @@ async function admitVaultDocument(
   /* `s3_key` carries the PROVIDER's own handle (`vault://{org}/{project}/{file}`)
      rather than a filesystem path, because the bytes are no longer at one.
 
-     It is not left NULL, for two reasons that only show up on a real database:
-       - the column is NOT NULL on a drizzle-push/baseline database
-         (migrations/0000_sweet_joseph.sql:6267), so a NULL here fails every
-         upload;
-       - migrations/20260821_vault_documents_canonical_shape.sql:131 runs
-         `UPDATE vault.documents SET s3_key = id::text WHERE s3_key IS NULL` and,
-         like every file in the set, re-runs on EVERY deploy — so a NULL would
-         be quietly replaced by a path that resolves to nothing on the next one.
+     It is not left NULL: the column is NOT NULL on a drizzle-push/baseline
+     database (migrations/0000_sweet_joseph.sql:6267), so a NULL here fails
+     every upload. (A second reason stood here until 2026-10-15: the canonical-
+     shape migration replaced every NULL s3_key with the row id on each deploy.
+     That backfill is removed; a row with no locator now keeps none.)
 
      Writing the old `uploads/...` path would have been the "record that lies"
      this path refuses above; the provider handle is simply where the bytes are,
@@ -403,16 +323,17 @@ async function admitVaultDocument(
     logger.warn('Vault ingest text extraction failed (non-fatal)', { err: extractErr?.message });
   }
 
-  // Catalog participation is a tenant-scoped rollout; resolved before the
-  // transaction (FeatureToggleService reads its own connection).
-  const { isDocumentCatalogEnabled, recordExtractionOutcome, buildExtractionOutcome } =
+  /* The catalog's extraction tier and the passage index are deterministic and
+     need no key, so every ingest records and builds them (D2, 2026-10-08:
+     "Vault search should not depend on … any key"). The one per-tenant choice
+     left is whether passages are also EMBEDDED, which sends their text to the
+     embedding provider: 'ana.vault_chunking'. Resolved before the transaction
+     (FeatureToggleService reads its own connection). */
+  const { recordExtractionOutcome, buildExtractionOutcome } =
     await import('./document-catalog.service.js');
-  const catalogEnabled = await isDocumentCatalogEnabled(orgId);
-  // Passage chunking rides on the catalog (its outcome ledger lives there).
   const { isVaultChunkingEnabled, chunkDocumentForIngest } =
     await import('./document-chunking.service.js');
-  const chunkingEnabled =
-    catalogEnabled && (await isVaultChunkingEnabled(orgId));
+  const embedPassages = await isVaultChunkingEnabled(orgId);
 
   /* ── Dossier filing ──────────────────────────────────────────────────────
      Every ingested document gets a PLACEMENT against the program's vault
@@ -481,9 +402,16 @@ async function admitVaultDocument(
      takes `FOR UPDATE` on the chain tip and deliberately does not manage its
      own BEGIN/COMMIT, so the audit entry and the document it describes commit
      together or not at all. */
-  const client = await pool.connect();
+  const client = await db.connect();
+  let commitAttempted = false;
   try {
     await client.query('BEGIN');
+    const currentRefusal = await ingestTargetRefusal(client, args, orgId, true) ??
+      await ingestSourceRefusal(client, args, 'commit');
+    if (currentRefusal) {
+      await client.query('ROLLBACK');
+      return currentRefusal;
+    }
     // A check-in holds its head's row lock from here to COMMIT: a concurrent
     // check-in waits, then finds this version and is refused, naming it.
     const stale = checkIn && (await recheckUnderLock(client, { organizationId: orgId, programId: args.programId, contentHash }, checkIn));
@@ -491,6 +419,9 @@ async function admitVaultDocument(
     // What is already recorded at this (program, code, version), locked: a
     // same-bytes retry is judged against it (vault-reupload.ts).
     const recorded = await readRecordedVersion(client, args.programId, documentCode, version);
+    // An empty pre-read can still race with another admission. Only the UUID
+    // returned by INSERT / ON CONFLICT proves whether this operation created it.
+    const candidateId = randomUUID();
     // retention_until — the clock starts at admission (P1-22; ADR-0014 §6): the
     // organisation's own period, or DEFAULT_RETENTION_YEARS ($30) when it has
     // set none, and the LATER of that and the named, active policy's date, so a
@@ -512,7 +443,7 @@ async function admitVaultDocument(
         placement_status, placement_confidence, placement_rationale,
         placed_by, placed_at,
         processing_status, created_by, organization_id,
-        storage_version_id, storage_provider
+        storage_version_id, storage_provider, id
       ) VALUES (
         $1, $2, $3, $4,
         $5, $6, $7, $8, $9, $10,
@@ -527,7 +458,7 @@ async function admitVaultDocument(
         $22, $23, $24,
         $25, CASE WHEN $25::integer IS NULL THEN NULL ELSE NOW() END,
         'PENDING', $26, $27,
-        $28, $29
+        $28, $29, $31
       )
       ON CONFLICT (program_id, document_code, version) DO UPDATE SET
         -- Title, type, classification and filing are not in this list: a
@@ -608,6 +539,7 @@ async function admitVaultDocument(
         storageVersionId,
         storageProvider,
         DEFAULT_RETENTION_YEARS,
+        candidateId,
       ],
     );
 
@@ -633,24 +565,22 @@ async function admitVaultDocument(
     }
 
     /* The catalog's extraction tier, in the SAME transaction as the document
-       row: when cataloging is on, a document cannot enter the corpus with
-       its extraction outcome unrecorded. An extraction failure is written AS
+       row: a document cannot enter the corpus with its extraction outcome
+       unrecorded. An extraction failure is written AS
        a failure with its reason — the state this catalog exists to make
        visible — and a re-upload with new bytes voids any prior comprehension
        (the service handles that in its upsert). */
-    if (catalogEnabled) {
-      await recordExtractionOutcome(client, {
-        documentId: String(doc.id),
-        contentHash,
-        outcome: buildExtractionOutcome({
-          text: extractedText,
-          method: extractionMethod,
-          confidence: extractionConfidence,
-          error: extractionError,
-        }),
-        pageCount,
-      });
-    }
+    await recordExtractionOutcome(client, {
+      documentId: String(doc.id),
+      contentHash,
+      outcome: buildExtractionOutcome({
+        text: extractedText,
+        method: extractionMethod,
+        confidence: extractionConfidence,
+        error: extractionError,
+      }),
+      pageCount,
+    });
 
     /* The Part 11 record of the ingestion. `writeChainedAuditRow`, not
        `auditService.logAction` — logAction runs on its own connection and
@@ -691,6 +621,7 @@ async function admitVaultDocument(
         storageKey: doc.s3_key,
         ...(recorded ? { changes } : {}),
         ...(args.dataRoomSourceId != null ? { dataRoomSource: { sourceId: args.dataRoomSourceId } } : {}),
+        ...(args.companyLegalSource ? { companyLegalSource: args.companyLegalSource } : {}),
         // A check-in names what it succeeds; its filing is the head's (above).
         ...(checkIn ? { lineage: { supersedes: checkIn.head.id, predecessorVersion: checkIn.head.version, filingKept: true } } : {}),
         /* WHERE the document was filed and WHO/WHAT decided — the audit
@@ -701,6 +632,10 @@ async function admitVaultDocument(
       },
     });
 
+    // Protect possibly held bytes before COMMIT: losing its acknowledgement
+    // cannot establish whether the row and audit committed.
+    commitAttempted = true;
+    stored.committed = true;
     await client.query('COMMIT');
     // Committed means a committed record holds THIS copy. A retry's record
     // keeps the copy it already names, and the wrapper removes this one.
@@ -713,9 +648,9 @@ async function admitVaultDocument(
        admission must not hinge on it) and awaited (the ledger row must be
        truthful by the time the response reports the ingest). A failure is
        recorded as chunk_failed with its reason, never thrown. */
-    if (chunkingEnabled && extractedText) {
+    if (extractedText) {
       const textForChunks: string = extractedText;
-      await chunkDocumentForIngest(String(doc.id), orgId, textForChunks, pageSpans);
+      await chunkDocumentForIngest(String(doc.id), orgId, textForChunks, pageSpans, { embed: embedPassages });
     }
 
     logger.info('Vault document ingested', {
@@ -728,6 +663,7 @@ async function admitVaultDocument(
 
     return {
       ok: true as const,
+      admission: { created: doc.id === candidateId },
       document: {
         id: doc.id,
         programId: args.programId,
@@ -760,11 +696,8 @@ async function admitVaultDocument(
        document row with it — deliberately: an ungoverned document in a
        governed vault is the outcome this route is being fixed to stop
        producing, so it must not be the outcome of a partial failure either. */
-    try {
-      await client.query('ROLLBACK');
-    } catch (rollbackErr: any) {
-      logger.error('Vault ingest rollback failed', { err: rollbackErr?.message });
-    }
+    const unconfirmed = await rollbackIngestOrRetainBytes(client, stored, commitAttempted, err);
+    if (unconfirmed) return unconfirmed;
     /* vault.documents carries a SECOND unique constraint that the ON CONFLICT
        clause does not target: idx_vault_documents_program_hash_unique on
        (program_id, content_hash), from db/migrations/044c_gcc_vault_schema.sql:106.

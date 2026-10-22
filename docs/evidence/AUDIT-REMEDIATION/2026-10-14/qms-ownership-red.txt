@@ -1,0 +1,161 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > refuses the whole creation if canonical creator ownership cannot persist
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > refuses the whole creation if canonical creator ownership cannot persist
+{
+  "timestamp": "2026-10-14T02:48:59.579Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > refuses the whole creation if canonical creator ownership cannot persist
+{
+  "timestamp": "2026-10-14T02:48:59.882Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T02:48:59.883Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > refuses the whole creation if canonical creator ownership cannot persist
+{
+  "timestamp": "2026-10-14T02:48:59.883Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > refuses the whole creation if canonical creator ownership cannot persist
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > refuses the whole creation if canonical creator ownership cannot persist
+{
+  "timestamp": "2026-10-14T02:49:00.129Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5acfe414-730b-49ac-b181-2fba318b3830 by unknown",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > refuses the whole creation if canonical creator ownership cannot persist
+{
+  "timestamp": "2026-10-14T02:49:00.134Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5acfe414-730b-49ac-b181-2fba318b3830 by unknown",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > refuses the whole creation if canonical creator ownership cannot persist
+{
+  "timestamp": "2026-10-14T02:49:00.140Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5acfe414-730b-49ac-b181-2fba318b3830 by unknown",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > refuses the whole creation if canonical creator ownership cannot persist
+{
+  "timestamp": "2026-10-14T02:49:00.144Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5acfe414-730b-49ac-b181-2fba318b3830 by unknown",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > refuses the whole creation if canonical creator ownership cannot persist
+{
+  "timestamp": "2026-10-14T02:49:00.150Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5acfe414-730b-49ac-b181-2fba318b3830 by unknown",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > refuses the whole creation if canonical creator ownership cannot persist
+{
+  "timestamp": "2026-10-14T02:49:00.155Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5acfe414-730b-49ac-b181-2fba318b3830 by unknown",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > refuses the whole creation if canonical creator ownership cannot persist
+{
+  "timestamp": "2026-10-14T02:49:00.159Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5acfe414-730b-49ac-b181-2fba318b3830 by unknown",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > refuses the whole creation if canonical creator ownership cannot persist
+{
+  "timestamp": "2026-10-14T02:49:00.167Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5acfe414-730b-49ac-b181-2fba318b3830 by unknown",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > refuses the whole creation if canonical creator ownership cannot persist
+{
+  "timestamp": "2026-10-14T02:49:00.172Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5acfe414-730b-49ac-b181-2fba318b3830 by unknown",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > refuses the whole creation if canonical creator ownership cannot persist
+{
+  "timestamp": "2026-10-14T02:49:00.178Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "5acfe414-730b-49ac-b181-2fba318b3830",
+    "error": "new row for relation \"doc_permissions\" violates check constraint \"permission_write_broken\""
+  }
+}
+
+ ↓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > writes the document AND its Part 11 audit row (previously wrote NO audit at all)
+ ↓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > FAILS CLOSED — a broken audit write rolls the document back
+ ↓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > rolls back register, editing copy, sections and both ledgers when canonical authoring audit fails after the QMS ledger was written
+ × server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > refuses the whole creation if canonical creator ownership cannot persist 725ms
+   → expected true not to be true // Object.is equality
+ ↓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > refuses without a verified actor (no anonymous controlled-document creation)
+ ↓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > approve_qms_document — AnA cannot make a document effective > writes nothing and hands the approval to the person
+ ↓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > revise_qms_document — controlled revision is audited atomically > bumps the version AND writes the audit row in one transaction
+ ↓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > revise_qms_document — controlled revision is audited atomically > FAILS CLOSED — a broken audit write rolls the revision back
+ ↓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > retire_qms_document — AnA cannot retire a controlled document > writes nothing and hands the retirement to the person
+ ↓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > save_document_to_vault — vault artifact + version + audit are one transaction > writes the artifact, its immutable version AND the audit row
+ ↓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > save_document_to_vault — vault artifact + version + audit are one transaction > REFUSES without a project — a vault document belonging to no project is an orphaned capture
+ ↓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > save_document_to_vault — vault artifact + version + audit are one transaction > FAILS CLOSED — a broken audit write rolls back the artifact AND its version
+ ↓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > update_vault_document — new regulated version is audited atomically > writes v2 AND the audit row
+ ↓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > update_vault_document — new regulated version is audited atomically > FAILS CLOSED — a broken audit write rolls the new version back
+ ↓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > identity is derived from the verified principal, never from tool input > ignores spoofed organization_id / user_id in the tool input
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > refuses the whole creation if canonical creator ownership cannot persist
+AssertionError: expected true not to be true // Object.is equality
+ ❯ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts:255:24
+    253|     await pglite.exec('ALTER TABLE doc_permissions ADD CONSTRAINT perm…
+    254|     const res = await call('create_qms_document',{doc_number:'SOP-NOGR…
+    255|     expect(res.ok).not.toBe(true);
+       |                        ^
+    256|     expect((await pglite.query('SELECT * FROM qms_documents')).rows).t…
+    257|     expect((await pglite.query('SELECT * FROM authoring_documents')).r…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 skipped (15)
+   Start at  02:48:49
+   Duration  10.32s (transform 5.62s, setup 95ms, import 7.21s, tests 2.73s, environment 0ms)
+

@@ -1,0 +1,42 @@
+[
+  {
+    "fingerprint": "14362ef006b728d8b9bc6247e05c644d0575c6df:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/final-integration/stream-fixtures/source-manifest.json:generic-api-key:97",
+    "manifest": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/final-integration/stream-fixtures/source-manifest.json",
+    "line": 97,
+    "commit": "14362ef006b728d8b9bc6247e05c644d0575c6df",
+    "source": "server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts",
+    "claimedSha256": "27320d5a910078c6db7df56ae79867eb41e91286ce27e7169bca9ed5131ea59f",
+    "actualSha256": "27320d5a910078c6db7df56ae79867eb41e91286ce27e7169bca9ed5131ea59f",
+    "matches": true
+  },
+  {
+    "fingerprint": "14362ef006b728d8b9bc6247e05c644d0575c6df:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/final-integration/stream-fixtures/source-manifest.json:generic-api-key:118",
+    "manifest": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/final-integration/stream-fixtures/source-manifest.json",
+    "line": 118,
+    "commit": "14362ef006b728d8b9bc6247e05c644d0575c6df",
+    "source": "server/services/c2c/current-program-access.ts",
+    "claimedSha256": "5e6fb22586636a2c02d68581cfc4365aff3ffbbfce931258e90f85cd4b916bee",
+    "actualSha256": "5e6fb22586636a2c02d68581cfc4365aff3ffbbfce931258e90f85cd4b916bee",
+    "matches": true
+  },
+  {
+    "fingerprint": "14362ef006b728d8b9bc6247e05c644d0575c6df:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/final-integration/stream-fixtures/source-manifest.json:generic-api-key:120",
+    "manifest": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/final-integration/stream-fixtures/source-manifest.json",
+    "line": 120,
+    "commit": "14362ef006b728d8b9bc6247e05c644d0575c6df",
+    "source": "server/services/clinical-regulatory-evidence/source-read-access.ts",
+    "claimedSha256": "e1b08a37a45704c68564d5f84b91a36af787a7773f6718ba4c43c91fcd039a68",
+    "actualSha256": "e1b08a37a45704c68564d5f84b91a36af787a7773f6718ba4c43c91fcd039a68",
+    "matches": true
+  },
+  {
+    "fingerprint": "14362ef006b728d8b9bc6247e05c644d0575c6df:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/final-integration/stream-fixtures/source-manifest.json:generic-api-key:121",
+    "manifest": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/final-integration/stream-fixtures/source-manifest.json",
+    "line": 121,
+    "commit": "14362ef006b728d8b9bc6247e05c644d0575c6df",
+    "source": "server/services/report-os/project-access.ts",
+    "claimedSha256": "43ed392aacb3493732a02bf6881e1728504bfc7a26e7bd647333644bf929ea58",
+    "actualSha256": "43ed392aacb3493732a02bf6881e1728504bfc7a26e7bd647333644bf929ea58",
+    "matches": true
+  }
+]

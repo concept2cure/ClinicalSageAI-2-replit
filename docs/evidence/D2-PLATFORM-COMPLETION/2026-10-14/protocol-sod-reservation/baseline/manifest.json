@@ -1,0 +1,92 @@
+{
+  "filedAtUtc": "2026-10-14T02:34:47.413492+00:00",
+  "headAtFiling": "14362ef006b728d8b9bc6247e05c644d0575c6df",
+  "branch": "concept2cure-v2",
+  "database": "platform_test",
+  "privateExactExecutedProbeSha256": "b2ed4b9a2c2387a63d6e6f1fb714aa8250c6a22cb574aabd5afc60acc7b1aace",
+  "publishedProbeSanitization": "Only synthetic QA credential literal externalized as a required private environment input; private exact executed source retained in /tmp.",
+  "sourcePins": {
+    "server/services/part11/governed-signature-ceremony.ts": {
+      "bytes": 12434,
+      "sha256": "006e3ff2c2c214eb0a2473483ef94105107b5e5d9fa91cf67702241ba7d1d674"
+    },
+    "server/services/protocol-development/protocol-signature.ts": {
+      "bytes": 1648,
+      "sha256": "703a4b65871e4158a9eb236e50a90c55ddfc552d0122ccd4dbbfa45e7c869392"
+    },
+    "server/services/protocol-development/protocol-development-service.ts": {
+      "bytes": 29730,
+      "sha256": "20aaa76622f857405ad6bcd591c2c7a5b6a8e9095f6c63fe5d8df7c4f2c6fbbd"
+    },
+    "server/routes/protocol-development.ts": {
+      "bytes": 31182,
+      "sha256": "477643afe1ab868e867b20d3cb353ffac02d20889593b0977b9cb251a475eed7"
+    },
+    "server/services/governance/separation-of-duties.ts": {
+      "bytes": 23176,
+      "sha256": "105544380fb9de141784d356f5f2f53dd19e81d83d351fd7e42c3fbbb4559c9d"
+    },
+    "server/services/part11/signature-persistence.ts": {
+      "bytes": 48363,
+      "sha256": "e82d1454f80bf541fdb90a6dd1a215ef024cbe56de0f9e89e96f76698d90f5e2"
+    },
+    "server/services/part11/governed-target-binders.ts": {
+      "bytes": 8970,
+      "sha256": "dbd7fe70a51a115eac07aa7ab26abdfec6acf9b46b05faa5947fee071be9465d"
+    },
+    "server/auth.ts": {
+      "bytes": 17638,
+      "sha256": "d8222cdfcb6c601d5d757fbf144fbeaa18535a3d611e60a7b0b35421d1238945"
+    },
+    "tests/db/protocol-finalization-concurrency.dbtest.ts": {
+      "bytes": 42617,
+      "sha256": "4fca47dbc7636d48602b9023fa637fcaaadf0486ba2acc196847d2bc533caf11"
+    },
+    "tests/setup.db.ts": {
+      "bytes": 8777,
+      "sha256": "d378e317a3570e7a172a33a2e798a55b53234536ae1483ef304407a7346135a3"
+    },
+    "vitest.db.config.ts": {
+      "bytes": 4073,
+      "sha256": "15ce1db161acd73245a29a5c4320ea055d17ca9b356f5cedeb2bf3ad2f75b49d"
+    }
+  },
+  "artifactPins": {
+    "barrier-audit.md": {
+      "bytes": 11504,
+      "sha256": "c459a8ee5d35f46ad38639c68309ec4de2711747b71ede29cfad0f8c70b357fb"
+    },
+    "database-qualification.json": {
+      "bytes": 808,
+      "sha256": "408b13b8cdb4c640198f9feaaa760d3cc475f49c746d0ac7ee207a489fa5b10b"
+    },
+    "native-baseline-red.txt": {
+      "bytes": 8029,
+      "sha256": "5f86f12503231875ac2163d9002c10e36e048fd22c5042118e319275135a7d73"
+    },
+    "native-baseline.config.mjs": {
+      "bytes": 657,
+      "sha256": "c870e370ae4214c0b4f19ac948c2a49ee168a640feb4a64ff4f3525a9fdb4137"
+    },
+    "native-sod-baseline.probe.ts": {
+      "bytes": 17153,
+      "sha256": "f7e4719d96cba32e3d6d397451cfb647cd42d38d7fdc708ed84dc29defc90897"
+    },
+    "observations.json": {
+      "bytes": 3752,
+      "sha256": "211569f2bd9db59a8f947ead8eb1c722f94d16adff3f01e7af15ea22b0d8bee2"
+    },
+    "retained-red-fixture-hash.py": {
+      "bytes": 2416,
+      "sha256": "2a71a62a8cb7c55d0ca6d777129f7dabc394aa86b08aa605c095c172010bdef0"
+    },
+    "retained-red-fixture.json": {
+      "bytes": 288,
+      "sha256": "0c5a8d989ec2e3a04b78bd237c092918aae3fb3a1e5310266141720aca39bf2a"
+    },
+    "run-native-baseline.py": {
+      "bytes": 1988,
+      "sha256": "0c2138bb55bc21015f09f06e2c5bed9cd0f855b7856c5cfc3bdf4a3603e7844d"
+    }
+  }
+}

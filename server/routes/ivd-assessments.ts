@@ -13,11 +13,18 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
+import { governedIvdWrite, IvdWriteRefusal } from '../services/regulatory/ivd-governed-write';
+import { ProgramRecordWriteRefusal } from '../services/c2c/governed-program-write';
+import { classifyIvdrAnnexVIII } from '../services/regulatory/ivdr-classification';
+import { buildFsn } from '../services/postmarket/report-authoring';
+import { IvdDraftStateRefusal } from '../services/regulatory/ivd-assessments.service';
 
 import { authenticateToken } from '../middleware/auth';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
-import { recordAuditRow, setAuditRowHeaders } from '../services/audit/audit-write-outcome';
+import { requestPgClient } from '../db/requestDb';
 import { corpusVersion } from '../services/ivd-knowledge/knowledge.service';
 import {
   saveAssessment, listAssessments, getAssessment, deleteAssessment,
@@ -27,16 +34,13 @@ import {
 
 const router = Router();
 router.use(authenticateToken);
+router.use(requireEditorAccessForWrites);
 
 function getOrgId(req: Request): number | null {
   const raw = (req as any).user?.organizationId;
   if (raw === undefined || raw === null) return null;
   const n = typeof raw === 'string' ? parseInt(raw, 10) : raw;
   return Number.isFinite(n) ? n : null;
-}
-function getUserId(req: Request): string | null {
-  const raw = (req as any).user?.id;
-  return raw === undefined || raw === null ? null : String(raw);
 }
 function q(req: Request, key: string): string | undefined {
   const v = req.query[key];
@@ -50,36 +54,9 @@ function pathParam(req: Request, key: string): string {
 }
 const logger = createScopedLogger('ivd-assessments');
 
-/*
- * Report a §11.10(e) audit outcome on a response whose body is a stored row.
- *
- * WO-16C #133. The three audit writes in this router were
- * `await auditService.logAction({…})` at statement position: awaited, and the
- * `AuditWriteResult` it resolved discarded. `logAction` does not reject when
- * persistence fails — an audit-trail outage must not break the action it
- * records — so discarding that value left a recorded save and an unrecorded one
- * answering byte-identically. All three now go through `recordAuditRow`, and
- * each carries its outcome out: `POST /` and `POST /documents` in these headers,
- * `DELETE /:id` in its own `{ ok: true }` body.
- *
- * Why headers for the two POSTs: both answer with the row the INSERT returned
- * (`RETURNING *`), which is the same representation `GET /`, `GET /:id` and
- * `GET /documents` hand back from a plain SELECT. A key added to the create
- * body would make one representation of a saved assessment carry a field the
- * list representation of the same row does not. Headers leave the row as it
- * was, and no status code changes.
- *
- * `X-Audit-Row-Persisted` is `'true'` or `'false'`; `X-Audit-Row-Code` is set
- * only on the failure arm and carries `recordAuditRow`'s stable code — never the
- * store's own error text, which stays in that helper's log line. Same header
- * pair as server/routes/device-projects.ts, server/routes/client-branding.ts,
- * the transparent proxy in server/routes/predicate-intelligence.ts and the 204
- * in server/routes/submissions.ts.
- *
- * The pair is written by the canonical `setAuditRowHeaders`
- * (server/services/audit/audit-write-outcome.ts), which replaced this file's
- * own copy.
- */
+/* Saves use the existing canonical writers on the request transaction. The
+   governed audit and row commit together; a failed audit rolls back the save.
+   Calculated previews are supplied by /api/ivd-lifecycle and remain unsaved. */
 
 /* This file kept a private `fail()` that put `Error.message` in the response as
    `detail` — the exact disclosure server/lib/api-response.ts documents having
@@ -103,107 +80,114 @@ router.get('/', async (req, res) => {
       assessmentType: q(req, 'type'),
       programId: q(req, 'program_id'),
       limit: limitRaw ? parseInt(limitRaw, 10) || undefined : undefined,
-    });
+    }, requestPgClient(req));
     res.json({ rows, count: rows.length });
   } catch (e) { serverError(res, logger, 'listing IVD assessments', e); }
 });
 
+function writeFailure(res: Response, error: unknown, action: string) {
+  if (error instanceof IvdWriteRefusal || error instanceof ProgramRecordWriteRefusal || error instanceof IvdDraftStateRefusal) {
+    return res.status(error.status).json({ error: { code: error.code, message: error.message } });
+  }
+  return serverError(res, logger, action, error);
+}
+
 router.post('/', async (req, res) => {
-  const orgId = orgGuard(req, res); if (orgId === null) return;
   const b = req.body ?? {};
-  if (!isAssessmentType(b.assessmentType)) {
-    return res.status(422).json({ error: `assessmentType must be one of: ${IVD_ASSESSMENT_TYPES.join(', ')}` });
-  }
-  if (b.result === undefined || b.result === null) {
-    return res.status(422).json({ error: 'result is required' });
-  }
+  if (!isAssessmentType(b.assessmentType)) return res.status(422).json({ error: `assessmentType must be one of: ${IVD_ASSESSMENT_TYPES.join(', ')}` });
+  if (!b.result || typeof b.result !== 'object') return res.status(422).json({ error: 'A saved result object is required' });
   try {
-    const row = await saveAssessment(orgId, {
-      assessmentType: b.assessmentType,
-      title: b.title ?? null,
-      inputs: b.inputs ?? {},
-      result: b.result,
-      verdict: b.verdict ?? null,
-      // Stamp the corpus version unless the caller supplied one.
-      corpusVersion: typeof b.corpusVersion === 'string' ? b.corpusVersion : corpusVersion(),
-      engineVersion: b.engineVersion ?? null,
-      createdBy: getUserId(req),
-      ...(typeof b.programId === 'string' ? { programId: b.programId } : {}),
-    } as any);
-    /* WO-16C #133. The assessment row is already committed by the `saveAssessment`
-       call above — `row` is what its INSERT returned, and the tenant can read it
-       back through `GET /:id` — so this is the §11.10(e) log BESIDE a completed
-       action, not the action itself. A lost audit row is therefore not a reason to
-       delete a saved assessment: the save stands and the caller is told, in
-       headers rather than in the row body (see `setAuditRowHeaders`). This handler
-       writes one audit row, so one outcome and one header pair. */
-    const auditTrail = await recordAuditRow({ tenantId: orgId, userId: getUserId(req) ?? undefined, action: 'ivd.assessment.save', resourceType: 'ivd_assessment', resourceId: row.id, details: { type: b.assessmentType } });
-    setAuditRowHeaders(res, auditTrail);
+    const result = b.assessmentType === 'ivdr_classification' ? classifyIvdrAnnexVIII(b.inputs ?? {}) : b.result;
+    const row = await governedIvdWrite(req, { programId: b.programId, reason: b.reason, command: 'create', kind: 'ivd-assessment' },
+      (client, orgId, actorId) => saveAssessment(orgId, { assessmentType: b.assessmentType, title: b.title ?? null,
+        inputs: b.inputs ?? {}, result, verdict: b.assessmentType === 'ivdr_classification' ? result.classification : b.verdict ?? null,
+        corpusVersion: corpusVersion(), engineVersion: b.assessmentType === 'ivdr_classification' ? 'ivdr-annex-viii-canonical' : null,
+        createdBy: String(actorId), programId: b.programId }, client));
+    res.setHeader('X-Audit-Row-Persisted', 'true'); res.status(201).json(row);
+  } catch (error) { writeFailure(res, error, 'saving the IVD assessment'); }
+});
+
+const ivdrFacts = z.object({
+  intendedPurpose: z.string().trim().min(1), deviceName: z.string().optional(),
+  isSelfTest: z.boolean(), isNearPatient: z.boolean(), isCompanionDiagnostic: z.boolean(), detectsTransmissibleAgent: z.boolean(),
+  bloodScreening: z.boolean(), detectsCancer: z.boolean(), prenatalScreening: z.boolean(), isGeneticTest: z.boolean(),
+  analytes: z.array(z.string()).optional(),
+}).strict();
+router.post('/classification', async (req, res) => {
+  const facts = ivdrFacts.safeParse(req.body?.facts);
+  if (!facts.success) return res.status(422).json({ error: { code: 'VALIDATION', message: 'Complete the intended-purpose facts explicitly.', details: facts.error.flatten() } });
+  try {
+    const result = classifyIvdrAnnexVIII(facts.data);
+    const b = req.body;
+    const row = await governedIvdWrite(req, { programId: b.programId, reason: b.reason, command: 'create', kind: 'ivd-assessment' },
+      (client, orgId, actorId) => saveAssessment(orgId, { assessmentType: 'ivdr_classification', title: b.title,
+        inputs: facts.data, result, verdict: result.classification, corpusVersion: corpusVersion(),
+        engineVersion: 'ivdr-annex-viii-canonical', createdBy: String(actorId), programId: b.programId }, client));
     res.status(201).json(row);
-  } catch (e) { serverError(res, logger, 'saving the IVD assessment', e); }
+  } catch (error) {
+    if ((error as { code?: string }).code === 'VALIDATION') return res.status(422).json({ error: { code: 'VALIDATION', message: error instanceof Error ? error.message : 'Missing IVDR facts.' } });
+    writeFailure(res, error, 'saving the IVD classification');
+  }
 });
 
 router.get('/documents', async (req, res) => {
   const orgId = orgGuard(req, res); if (orgId === null) return;
   try {
-    const rows = await listGeneratedDocuments(orgId, { docType: q(req, 'doc_type'), programId: q(req, 'program_id') });
+    const rows = await listGeneratedDocuments(orgId, { docType: q(req, 'doc_type'), programId: q(req, 'program_id') }, requestPgClient(req));
     res.json({ rows, count: rows.length });
   } catch (e) { serverError(res, logger, 'listing generated IVD documents', e); }
 });
 
 router.post('/documents', async (req, res) => {
-  const orgId = orgGuard(req, res); if (orgId === null) return;
   const b = req.body ?? {};
-  if (!isDocumentType(b.docType)) {
-    return res.status(422).json({ error: `docType must be one of: ${IVD_DOCUMENT_TYPES.join(', ')}` });
-  }
-  if (b.payload === undefined || b.payload === null) {
-    return res.status(422).json({ error: 'payload is required' });
-  }
+  if (!isDocumentType(b.docType)) return res.status(422).json({ error: `docType must be one of: ${IVD_DOCUMENT_TYPES.join(', ')}` });
+  if (!b.payload || typeof b.payload !== 'object') return res.status(422).json({ error: 'A saved document payload is required' });
   try {
-    const row = await saveGeneratedDocument(orgId, {
-      docType: b.docType, title: b.title ?? null, payload: b.payload,
-      status: b.status ?? 'draft', corpusVersion: corpusVersion(),
-      createdBy: getUserId(req), programId: typeof b.programId === 'string' ? b.programId : null,
-    });
-    /* WO-16C #133. The document row is already committed by `saveGeneratedDocument`
-       above — `row` is what its INSERT returned, and `GET /documents` lists it —
-       so this is the log BESIDE a completed action. The save stands and the caller
-       is told, in headers rather than in the row body (see `setAuditRowHeaders`).
-       One audit row here, so one outcome and one header pair. */
-    const auditTrail = await recordAuditRow({ tenantId: orgId, userId: getUserId(req) ?? undefined, action: 'ivd.document.save', resourceType: 'ivd_generated_document', resourceId: row.id, details: { docType: b.docType } });
-    setAuditRowHeaders(res, auditTrail);
+    const row = await governedIvdWrite(req, { programId: b.programId, reason: b.reason, command: 'create', kind: 'ivd-document' },
+      (client, orgId, actorId) => saveGeneratedDocument(orgId, { docType: b.docType, title: b.title ?? null, payload: b.payload,
+        status: b.status ?? 'draft', corpusVersion: corpusVersion(), createdBy: String(actorId), programId: b.programId }, client));
+    res.setHeader('X-Audit-Row-Persisted', 'true'); res.status(201).json(row);
+  } catch (error) { writeFailure(res, error, 'saving the generated IVD document'); }
+});
+
+const fsnFacts = z.object({ manufacturerName: z.string().trim().min(1), deviceName: z.string().trim().min(1),
+  affectedLots: z.array(z.string().trim().min(1)).min(1), actionType: z.enum(['recall','software_update','advisory','modification','return']),
+  reasonForAction: z.string().trim().min(1), riskToHealth: z.string().trim().min(1), recommendedUserAction: z.string().trim().min(1), contactDetails: z.string().trim().min(1),
+}).strict();
+router.post('/documents/fsn', async (req, res) => {
+  const facts = fsnFacts.safeParse(req.body?.facts);
+  if (!facts.success) return res.status(422).json({ error: { code: 'VALIDATION', message: 'Complete the Field Safety Notice facts.', details: facts.error.flatten() } });
+  try {
+    const built = buildFsn(facts.data);
+    if (!built.valid) return res.status(422).json({ error: { code: 'VALIDATION', message: 'The Field Safety Notice is incomplete.', missing: built.missing } });
+    const b = req.body;
+    const row = await governedIvdWrite(req, { programId: b.programId, reason: b.reason, command: 'create', kind: 'ivd-document' },
+      (client, orgId, actorId) => saveGeneratedDocument(orgId, { docType: 'fsn', title: b.title, payload: built.payload, status: 'draft',
+        corpusVersion: corpusVersion(), createdBy: String(actorId), programId: b.programId }, client));
     res.status(201).json(row);
-  } catch (e) { serverError(res, logger, 'saving the generated IVD document', e); }
+  } catch (error) { writeFailure(res, error, 'saving the Field Safety Notice'); }
 });
 
 router.get('/:id', async (req, res) => {
   const orgId = orgGuard(req, res); if (orgId === null) return;
   try {
-    const row = await getAssessment(orgId, pathParam(req, 'id'));
+    const row = await getAssessment(orgId, pathParam(req, 'id'), requestPgClient(req));
     if (!row) return res.status(404).json({ error: 'Assessment not found' });
     res.json(row);
   } catch (e) { serverError(res, logger, 'loading the IVD assessment', e); }
 });
 
 router.delete('/:id', async (req, res) => {
-  const orgId = orgGuard(req, res); if (orgId === null) return;
+  const b = req.body ?? {};
   try {
-    const ok = await deleteAssessment(orgId, pathParam(req, 'id'));
-    if (!ok) return res.status(404).json({ error: 'Assessment not found' });
-    /* WO-16C #133. The soft-delete is already committed: `deleteAssessment`
-       returned true only because its UPDATE set `deleted_at` on a matching row,
-       and every read in this file filters on `deleted_at IS NULL`, so the record
-       is already gone from the tenant's view. This is the log beside that
-       completed action, so a lost audit row does not un-delete it — the delete
-       stands and the caller is told. Worth stating plainly: `ivd_assessments` has
-       `deleted_at` but no `deleted_by`, so WHEN it was deleted survives in the
-       table and WHO deleted it exists only in this audit row. `auditTrail` goes
-       in the body here because this body is built by this handler rather than
-       read out of the table. One audit row, one `auditTrail` key. */
-    const auditTrail = await recordAuditRow({ tenantId: orgId, userId: getUserId(req) ?? undefined, action: 'ivd.assessment.delete', resourceType: 'ivd_assessment', resourceId: pathParam(req, 'id') });
-    res.json({ ok: true, auditTrail });
-  } catch (e) { serverError(res, logger, 'deleting the IVD assessment', e); }
+    await governedIvdWrite(req, { programId: b.programId, reason: b.reason, command: 'delete', kind: 'ivd-assessment' }, async (client, orgId) => {
+      const existing = await getAssessment(orgId, pathParam(req, 'id'), client);
+      if (!existing || existing.program_id !== b.programId) throw new IvdWriteRefusal(404, 'NOT_FOUND', 'Assessment not found in this program.');
+      if (!await deleteAssessment(orgId, pathParam(req, 'id'), client)) throw new IvdWriteRefusal(404, 'NOT_FOUND', 'Assessment not found.');
+      return { id: pathParam(req, 'id') };
+    });
+    res.json({ ok: true });
+  } catch (error) { writeFailure(res, error, 'deleting the IVD assessment'); }
 });
 
 export default router;

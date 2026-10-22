@@ -1,0 +1,160 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current version, not a better indexed predecessor > excludes a correctly hashed cataloged predecessor from hits AND counts, retaining its stored history
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current version, not a better indexed predecessor > excludes a correctly hashed cataloged predecessor from hits AND counts, retaining its stored history
+{
+  "timestamp": "2026-10-14T21:31:26.568Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current version, not a better indexed predecessor > excludes a correctly hashed cataloged predecessor from hits AND counts, retaining its stored history 1695ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current version, not a better indexed predecessor > reports no catalog current successor as unsearchable without returning the old summary 19ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current version, not a better indexed predecessor > reports extracted current successor as unsearchable without returning the old summary 14ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current version, not a better indexed predecessor > reports cataloged without embedding current successor as unsearchable without returning the old summary 12ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current version, not a better indexed predecessor > reports stale catalog current successor as unsearchable without returning the old summary 15ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current version, not a better indexed predecessor > ignores a deleted successor, making the surviving predecessor current under the canonical family rule 17ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — canonical legacy-family boundaries > does not hide an original under an invalid cross-program successor link 23ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — canonical legacy-family boundaries > does not hide an original under an invalid cross-organization successor link 13ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — canonical legacy-family boundaries > does not hide an original under an invalid cross-code successor link 29ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — canonical legacy-family boundaries > does not hide an original under an invalid unknown organization successor link 15ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — canonical legacy-family boundaries > does not hide an unrelated same-code document without a successor pointer 14ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current evidence remains organization/project scoped > isolates the open program, organization-wide search and a foreign program 42ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses revoked private-project admission and uses the transaction client 4ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > preserves a private input snapshot while connection acquisition yields 3ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses a stale session editor after the persisted membership becomes viewer 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses missing actor before catalog DML 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses wrong tenant before catalog DML 0ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses inactive membership before catalog DML 0ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed text at the locked source boundary 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed withdrawal at the locked source boundary 0ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed superseded at the locked source boundary 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed scope at the locked source boundary 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed hash at the locked source boundary 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses a key-data value not stated in the freshly locked text 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > does not replace a human-confirmed record 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > reserves catalog then documents before source admission and audits exact hashes 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > refuses zero-row vector writes without successful audit 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > refuses zero-row plain writes without successful audit 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > does not turn vector SQL 42501 into plain success 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > does not turn vector SQL 22P02 into plain success 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > permits only the missing vector type fallback and still obtains a row receipt 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > rolls back and reports no completion if chained audit fails 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > preserves legacy review semantics without inventing extraction or context acceptance 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > returns no catalog data for a document with conflicting recorded tenant ownership 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses changed extraction even when header revision and original bytes match 0ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses review after viewer and audits no decision 0ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses review after withdrawn and audits no decision 0ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses review after zero rows and audits no decision 0ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > preserves a historical human decision while disclosing withdrawn current use 1ms
+stderr | server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > refuses zero updated rows on the fallback path
+{
+  "timestamp": "2026-10-14T21:31:30.312Z",
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — attempting non-vector catalog write",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "err": "Embedding unavailable"
+  }
+}
+
+stderr | server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > preserves a successful one-row fallback completion
+{
+  "timestamp": "2026-10-14T21:31:30.316Z",
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — attempting non-vector catalog write",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "err": "Embedding unavailable"
+  }
+}
+
+ ✓ server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > refuses zero updated rows on the vector path 7ms
+ ✓ server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > refuses zero updated rows on the fallback path 3ms
+ ✓ server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > preserves a successful one-row vector completion 1ms
+ ✓ server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > preserves a successful one-row fallback completion 1ms
+ ✓ server/services/vault/__tests__/catalog-write-result.test.ts > the kind is the Vault vocabulary (S4) > refuses a kind outside it before reading anything 1ms
+stdout | server/services/vault/__tests__/catalog-document-access.test.ts
+{
+  "timestamp": "2026-10-14T21:31:31.076Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:31:31.077Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/catalog-document-access.test.ts
+{
+  "timestamp": "2026-10-14T21:31:31.077Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/catalog-document-access.test.ts
+[database] Database connection successful
+
+stderr | server/services/vault/__tests__/catalog-document-access.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/vault/__tests__/catalog-document-access.test.ts
+{
+  "timestamp": "2026-10-14T21:31:31.150Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/vault/__tests__/catalog-document-access.test.ts > interactive catalogue reads require current source-parent access > refuses a private source before any title, catalog or text query 4ms
+ ✓ server/services/vault/__tests__/catalog-document-access.test.ts > interactive catalogue reads require current source-parent access > allows a fresh viewer after source-parent admission on the same executor 3ms
+ ✓ server/services/vault/__tests__/catalog-document-access.test.ts > interactive catalogue reads require current source-parent access > refuses a missing actor rather than falling back to tenant-wide access 1ms
+ ✓ server/services/vault/__tests__/catalog-document-access.test.ts > interactive catalogue reads require current source-parent access > refuses an unavailable sharing check before content instead of returning an empty source 1ms
+ ✓ server/services/vault/__tests__/catalog-document-access.test.ts > interactive catalogue reads require current source-parent access > does not query source content for a different requested programme 0ms
+ ✓ server/services/vault/__tests__/catalog-document-access.test.ts > interactive catalogue reads require current source-parent access > refuses a permission change observed after reading, before returning private content 1ms
+ ✓ server/services/vault/__tests__/catalog-document-access.test.ts > interactive catalogue reads require current source-parent access > binds content to the admitted programme and retains current-only eligibility predicates 1ms
+ ✓ server/services/vault/__tests__/catalog-document-access.test.ts > interactive catalogue reads require current source-parent access > requires reconciliation for an unassigned recorded tenant only after current parent admission 0ms
+ ✓ server/services/vault/__tests__/catalog-document-access.test.ts > interactive catalogue reads require current source-parent access > does not disclose tenant reconciliation for a private source parent 1ms
+ ✓ server/services/vault/__tests__/catalog-placement-current-writer.test.ts > catalogue and placement writers verify current actor on their transaction > refuses a suggestion from a current viewer before catalogue metadata or a write 12ms
+ ✓ server/services/vault/__tests__/catalog-placement-current-writer.test.ts > catalogue and placement writers verify current actor on their transaction > returns a named permission refusal before suggestion metadata if the current parent is private 1ms
+ ✓ server/services/vault/__tests__/catalog-placement-current-writer.test.ts > catalogue and placement writers verify current actor on their transaction > checks a review using the current writer identity, despite absent cached request role 1ms
+ ✓ server/services/vault/__tests__/catalog-placement-current-writer.test.ts > catalogue and placement writers verify current actor on their transaction > checks placement using the current writer identity before reading private programme modality 6ms
+ ✓ server/services/vault/__tests__/catalog-placement-current-writer.test.ts > catalogue and placement writers verify current actor on their transaction > rolls back a suggestion when permission is revoked after its audited write 2ms
+ ✓ server/services/vault/__tests__/catalog-placement-current-writer.test.ts > catalogue and placement writers verify current actor on their transaction > allows a fresh member suggestion without relying on a cached request role 1ms
+ ✓ server/services/vault/__tests__/document-catalog-source-snapshot.test.ts > catalog exact private suggestion snapshot > pins exact extraction digest in the final writer handoff 7ms
+ ✓ server/services/vault/__tests__/document-catalog-source-snapshot.test.ts > catalog exact private suggestion snapshot > mutation during embedding cannot change checked fields or proposer 1ms
+ ✓ server/services/vault/__tests__/document-catalog-source-snapshot.test.ts > catalog exact private suggestion snapshot > mutation while source load waits cannot redefine the submitted candidate 1ms
+ ✓ server/services/vault/__tests__/document-catalog-source-snapshot.test.ts > catalog exact private suggestion snapshot > a locked-source refusal is returned without a successful catalog claim 0ms
+ ✓ server/services/vault/__tests__/document-catalog-source-snapshot.test.ts > catalog exact private suggestion snapshot > a locked value refusal preserves the exact unverified leaves 1ms
+ ✓ server/services/vault/__tests__/document-catalog-source-snapshot.test.ts > catalog exact private suggestion snapshot > a stale metadata undercount cannot make a partial actual-text read complete 1ms
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > refuses malformed document organization 7 without producing headers or fabricated totals 4ms
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > refuses malformed document organization null without producing headers or fabricated totals 1ms
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > refuses malformed document organization undefined without producing headers or fabricated totals 1ms
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > refuses a source with an invalid live program relationship: foreign_parent 0ms
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > refuses a source with an invalid live program relationship: deleted_parent 1ms
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > refuses a source with an invalid live program relationship: unidentified_parent 0ms
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > scopes recorded source and live parent before computing window totals 1ms
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > a verified empty query remains empty, while query failure remains visible 1ms
+ ✓ server/services/vault/__tests__/catalog-search-version.test.ts > semantic catalog source-version query contract > binds both counts and hits to the current version and project tenant 6ms
+ ✓ server/services/vault/__tests__/catalog-search-version.test.ts > semantic catalog source-version query contract > keeps provider failure unavailable rather than an empty current corpus 2ms
+ ✓ server/services/vault/__tests__/catalog-search-version.test.ts > semantic catalog source-version query contract > does not turn a database failure into no current matches 1ms
+ ✓ server/services/vault/__tests__/document-catalog-actor-access.test.ts > server-only catalog actor query filters > bounds a full-text selected source to authorized programs in SQL 2ms
+ ✓ server/services/vault/__tests__/document-catalog-actor-access.test.ts > server-only catalog actor query filters > an empty authorized program list cannot widen to all tenant sources 1ms
+ ✓ server/services/vault/__tests__/document-catalog-actor-access.test.ts > server-only catalog actor query filters > applies permitted programs before window totals and LIMIT 1ms
+ ✓ server/services/vault/__tests__/document-catalog-actor-access.test.ts > server-only catalog actor query filters > runs source listing on the supplied protected executor, never the global pool 1ms
+
+ Test Files  9 passed (9)
+      Tests  80 passed (80)
+   Start at  21:31:22
+   Duration  15.16s (transform 1.92s, setup 186ms, import 9.80s, tests 3.82s, environment 1ms)
+

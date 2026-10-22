@@ -1,0 +1,249 @@
+# MUTATION 2 the runtime role holds SELECT only on reg_questions (the grant ceiling)
+# File: scripts/db/provision-app-role.mjs
+# Replaced:
+#   -     { schema: 'public', name: 'reg_questions', ceiling: Object.freeze(['SELECT']) },
+# With: (nothing: the entry removed from APPEND_ONLY_TABLES)
+# Then deploy-migrate re-runs the grant recipe (step 4/5), so app_service gets back the blanket DML the ceiling withholds;
+# the dbtests run; the file is restored and ONE deploy-migrate takes the privileges away again.
+# What the converged dbtest shows: with the ceiling gone, INSERT reaches the trigger (P0001, the owner's guard), and
+# UPDATE … WHERE false and DELETE … WHERE false, which no row trigger ever meets, RUN.
+
+$ node scripts/db/deploy-migrate.mjs   (with the mutation)
+  ✓ 415/415 migration files applied
+  ✓ UPDATE, DELETE, TRUNCATE withheld on 34/34 append-only store(s) present: audit.tamper_proof_log, public.audit_logs, public.audit_log_archives, public.audit_events, public.electronic_signatures, public.ana_turn_reco
+▶ 5/5 Verify readiness contract (incl. grant audit for app_service)
+  grant audit: 1307/1307 application relations hold the recipe privileges for app_service; beyond the audit ceiling: 0
+✅ Schema migration complete — safe to roll services.
+app_service on reg_questions: SELECT=true INSERT=true UPDATE=true DELETE=true
+
+$ npx vitest run --config vitest.db.config.ts tests/db/cmc-agency-questions-converged.dbtest.ts tests/db/append-only-store-grants.dbtest.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-19T10:33:59.152Z","pid":11919,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-19T10:33:59.154Z","pid":11919,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-19T10:33:59.154Z","pid":11919,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/cmc-agency-questions-converged.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/cmc-agency-questions-converged.dbtest.ts
+[database] Database connection successful
+
+{"level":20,"time":"2026-10-19T10:34:02.375Z","pid":11919,"hostname":"vm","context":{"auditId":"audit_1792406042369_1c958461c5d9495f","action":"CREATE","entityType":"project","entityId":"proj_668"},"msg":"[concept2cure-api] Audit entry persisted"}
+(node:11919) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > the setting > runs as a role RLS applies to (not the owner, not BYPASSRLS) 5ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > a question is classified by CTD section on the letter, through the governed write > records a question with its section in the repository's one spelling, with the section in its ledger row 222ms
+{"level":20,"time":"2026-10-19T10:34:02.502Z","pid":11919,"hostname":"vm","context":{"auditId":"audit_1792406042499_31a5571e6d2321c0","action":"CREATE","entityType":"project","entityId":"proj_668"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-19T10:34:02.562Z","pid":11919,"hostname":"vm","context":{"auditId":"audit_1792406042558_afc189129ba80a94","action":"CREATE","entityType":"project","entityId":"proj_668"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > a question is classified by CTD section on the letter, through the governed write > refuses a section that is not a CTD code, and records nothing 50ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > a question is classified by CTD section on the letter, through the governed write > corrects a section with a reason, records from and to, and refuses what it should 422ms
+{"level":20,"time":"2026-10-19T10:34:02.978Z","pid":11919,"hostname":"vm","context":{"auditId":"audit_1792406042975_103409460fc225c3","action":"CREATE","entityType":"project","entityId":"proj_668"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > lists the Module 3 questions with the server's state and overdue, and an approved answer is never overdue 226ms
+{"level":20,"time":"2026-10-19T10:34:03.251Z","pid":11919,"hostname":"vm","context":{"auditId":"audit_1792406043247_78dae3a139deeb15","action":"CREATE","entityType":"project","entityId":"proj_668"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > counts from every row it read, and keeps the earlier CMC file out of the count 24ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > a Module 3 question on a letter the person may not see is neither listed nor counted; the letter is counted as withheld 143ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > refuses a module that is not one of the five 20ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > Module 3's view of the program (GET …/projects/:projectId/agency-questions) > another organisation's member is refused by project admission; the runtime role in their scope reads none of these rows 32ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > the earlier CMC question file is read-only, in the route and in the database > GET lists the organisation's rows as they are stored, with counts from the store 11ms
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > the earlier CMC question file is read-only, in the route and in the database > POST and PATCH answer 410 and change nothing 15ms
+ × tests/db/cmc-agency-questions-converged.dbtest.ts > the earlier CMC question file is read-only, in the route and in the database > the runtime role is refused INSERT, UPDATE and DELETE by the privilege, before any trigger, even WHERE false 23ms
+   → expected { insert: 'P0001', …(3) } to deeply equal { insert: '42501', …(3) }
+ ✓ tests/db/cmc-agency-questions-converged.dbtest.ts > the earlier CMC question file is read-only, in the route and in the database > the owner too is refused an INSERT and an UPDATE by the guard; DELETE is left for a purge door 12ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the stores exist on this database > every append-only store this file names is present (a missing one would make the rest vacuous) 2ms
+ × tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > withholds UPDATE, DELETE and TRUNCATE on every append-only store, and keeps SELECT and INSERT 10ms
+   → expected [ Array(1) ] to deeply equal []
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > electronic_signatures: the supersession columns stay updatable (revocation), the attested ones do not 1ms
+ × tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > the privilege refuses first: UPDATE/DELETE that reach no row, and TRUNCATE, are 42501 on every store 69ms
+   → expected [ …(2) ] to deeply equal []
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > the governed revocation statement still runs (its columns only) 2ms
+ × tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > a re-run of the recipe takes a hand GRANT of DELETE on audit_logs back 4ms
+   → expected [ 'public.audit_logs: DELETE', …(1) ] to deeply equal [ 'public.audit_logs: DELETE' ]
+ × tests/db/append-only-store-grants.dbtest.ts > the deploy grant audit (auditRuntimeRoleGrants → readiness contract, deploy-migrate 5/5) > reports the per-run role clean on every store: nothing beyond the ceiling, nothing denied 36ms
+   → expected [ { …(2) } ] to deeply equal []
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the deploy grant audit (auditRuntimeRoleGrants → readiness contract, deploy-migrate 5/5) > refuses a hand GRANT of DELETE, TRUNCATE or an attested column on a store, by name 44ms
+ × tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > holds no UPDATE, DELETE or TRUNCATE on any append-only store 2ms
+   → expected [ Array(1) ] to deeply equal []
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > as app_service, in its own tenant: DELETE and UPDATE of an audit row are refused by the privilege (42501), before the trigger 10ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > with the trigger out of the way (replica mode), app_service still cannot remove or rewrite an audit row 5ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > cannot append to the archive ledger itself: the forged row of DP-68 is refused by the privilege (42501) 2ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > the archive door still deletes for app_service, and records the batch in its ledger 6ms
+ × tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > the deploy grant audit agrees with the catalog for app_service: nothing beyond the ceiling on any store 18ms
+   → expected [] to deeply equal [ Array(1) ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > withholds UPDATE, DELETE and TRUNCATE on every append-only store, and keeps SELECT and INSERT
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "public.reg_questions: UPDATE,DELETE,INSERT",
++ ]
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:238:46
+    236| describe('the grant recipe (provisionAppServiceRole) on a per-run role…
+    237|   it('withholds UPDATE, DELETE and TRUNCATE on every append-only store…
+    238|     expect(await beyondCeiling(runtimeRole)).toEqual([]);
+       |                                              ^
+    239|     const held = await privileges(runtimeRole);
+    240|     for (const { store } of present) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > the privilege refuses first: UPDATE/DELETE that reach no row, and TRUNCATE, are 42501 on every store
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "UPDATE public.reg_questions SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.reg_questions WHERE false → ran (0 row(s))",
++ ]
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:255:49
+    253|
+    254|   it('the privilege refuses first: UPDATE/DELETE that reach no row, an…
+    255|     expect(await mutationAttempts(runtimePool)).toEqual([]);
+       |                                                 ^
+    256|   });
+    257|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > a re-run of the recipe takes a hand GRANT of DELETE on audit_logs back
+AssertionError: expected [ 'public.audit_logs: DELETE', …(1) ] to deeply equal [ 'public.audit_logs: DELETE' ]
+
+- Expected
++ Received
+
+  [
+    "public.audit_logs: DELETE",
++   "public.reg_questions: UPDATE,DELETE,INSERT",
+  ]
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:273:46
+    271|   it('a re-run of the recipe takes a hand GRANT of DELETE on audit_log…
+    272|     await owner.query(`GRANT DELETE ON public.audit_logs TO ${runtimeR…
+    273|     expect(await beyondCeiling(runtimeRole)).toEqual(['public.audit_lo…
+       |                                              ^
+    274|     await refreshRuntimeRoleGrants(owner, { role: runtimeRole });
+    275|     expect(await beyondCeiling(runtimeRole)).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > the deploy grant audit (auditRuntimeRoleGrants → readiness contract, deploy-migrate 5/5) > reports the per-run role clean on every store: nothing beyond the ceiling, nothing denied
+AssertionError: expected [ { …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "held": [
++       "DELETE",
++     ],
++     "relation": "public.audit_logs",
++   },
++ ]
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:283:43
+    281|     const audit = await auditRuntimeRoleGrants(owner, runtimeRole);
+    282|     const onStores = (r: { relation: string }) => (STORES as readonly …
+    283|     expect(audit.excess.filter(onStores)).toEqual([]);
+       |                                           ^
+    284|     expect(audit.denied.filter(onStores)).toEqual([]);
+    285|     expect(audit.ownedAppendOnly).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > holds no UPDATE, DELETE or TRUNCATE on any append-only store
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "public.reg_questions: UPDATE,DELETE,INSERT",
++ ]
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:315:43
+    313| describe(`${APP_ROLE}, as deploy-migrate step 4/5 leaves it`, () => {
+    314|   it('holds no UPDATE, DELETE or TRUNCATE on any append-only store', a…
+    315|     expect(await beyondCeiling(APP_ROLE)).toEqual([]);
+       |                                           ^
+    316|   });
+    317|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > the deploy grant audit agrees with the catalog for app_service: nothing beyond the ceiling on any store
+AssertionError: expected [] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+- [
+-   "public.reg_questions: UPDATE,DELETE,INSERT",
+- ]
++ []
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:381:22
+    379|       .map((e: { relation: string; held: string[] }) => `${e.relation}…
+    380|       .sort();
+    381|     expect(reported).toEqual(await beyondCeiling(APP_ROLE));
+       |                      ^
+    382|     expect(reported).toEqual([]);
+    383|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  tests/db/cmc-agency-questions-converged.dbtest.ts > the earlier CMC question file is read-only, in the route and in the database > the runtime role is refused INSERT, UPDATE and DELETE by the privilege, before any trigger, even WHERE false
+AssertionError: expected { insert: 'P0001', …(3) } to deeply equal { insert: '42501', …(3) }
+
+- Expected
++ Received
+
+  {
+-   "delete": "42501",
+-   "insert": "42501",
++   "delete": "ran (0 row(s))",
++   "insert": "P0001",
+    "read": "ran (4 row(s))",
+-   "update": "42501",
++   "update": "ran (0 row(s))",
+  }
+
+ ❯ tests/db/cmc-agency-questions-converged.dbtest.ts:402:18
+    400|     // All four at once, so a failure shows each statement's fate.
+    401|     const fate = Object.fromEntries(Object.entries(outcomes).map(([k, …
+    402|     expect(fate).toEqual({
+       |                  ^
+    403|       insert: INSUFFICIENT_PRIVILEGE,
+    404|       update: INSUFFICIENT_PRIVILEGE,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  7 failed | 20 passed (27)
+   Start at  10:33:56
+   Duration  7.36s (transform 2.83s, setup 124ms, import 328ms, tests 6.44s, environment 0ms)
+
+exit=1
+
+# Restored scripts/db/provision-app-role.mjs: sha256 c736aaa303dc9f86… before = c736aaa303dc9f86… after
+$ node scripts/db/deploy-migrate.mjs   (restored)
+  ✓ 415/415 migration files applied
+  ✓ UPDATE, DELETE, TRUNCATE withheld on 35/35 append-only store(s) present: audit.tamper_proof_log, public.audit_logs, public.audit_log_archives, public.audit_events, public.electronic_signatures, public.ana_turn_reco
+▶ 5/5 Verify readiness contract (incl. grant audit for app_service)
+  grant audit: 1307/1307 application relations hold the recipe privileges for app_service; beyond the audit ceiling: 0
+✅ Schema migration complete — safe to roll services.
+app_service on reg_questions: SELECT=true INSERT=false UPDATE=false DELETE=false

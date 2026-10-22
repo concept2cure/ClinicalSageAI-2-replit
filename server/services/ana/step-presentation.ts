@@ -28,8 +28,8 @@
  *
  * ── Tense ────────────────────────────────────────────────────────────────────
  * A finished step reads in the done form only when it succeeded. A step that
- * failed, was held back, or answered `ok: false` keeps the doing form beside
- * its status sentence: "Validated the eCTD package" over a validation that
+ * failed, was held back, or refused (`ok: false`, refusalOf) keeps the doing
+ * form beside its status sentence: "Validated the eCTD package" over a validation that
  * never completed would be a claim the record does not support.
  *
  * Pure except `resolveStepDocumentTitles`, which runs the one title query.
@@ -49,9 +49,21 @@ import {
   type StepTense,
 } from '@shared/ana/step-verbs';
 import { stepPresentationOf } from './tool-authorization.js';
+import { agentEndedByHoldExpiry, agentResultSummary } from './sub-agent-result.js';
+import { refusalOf } from './tool-trace.js';
+import type { ToolContext } from './AnaToolExecutor.js';
+import { requireProgramScopeStillCurrent } from '../c2c/current-program-access.js';
 
-/** How a step ended, as the stream knows it. */
-export type StepStatus = 'success' | 'error' | 'not_found' | 'cancelled' | 'not_run';
+/**
+ * How a step ended, as the stream knows it.
+ *
+ * 'incomplete' is a sub-agent (`run_agent`) that stopped before it finished its
+ * brief — at a budget (rounds, tokens, time) or at a step it kept repeating
+ * (row 74, S5). What it found is usable, so it is neither a success nor a
+ * failure, and the model is not told to try something else. Only that tool
+ * produces it.
+ */
+export type StepStatus = 'success' | 'error' | 'not_found' | 'cancelled' | 'not_run' | 'incomplete';
 
 export interface StepOutcome {
   status: StepStatus;
@@ -130,10 +142,14 @@ function parseResult(result: string | null | undefined): Record<string, unknown>
   }
 }
 
-/** Succeeded, and did not answer that it did not do the thing. */
-function finishedDone(outcome: StepOutcome | undefined, parsed: Record<string, unknown> | null): boolean {
+/**
+ * Succeeded, and did not answer that it did not do the thing: the one
+ * judgment of a refusal (tool-trace.ts refusalOf), so a check whose `ok` is
+ * its finding reads "Checked", and a refusal never reads done.
+ */
+function finishedDone(outcome: StepOutcome | undefined): boolean {
   if (!outcome || outcome.status !== 'success' || outcome.heldBack) return false;
-  return !(parsed && (parsed.ok === false || parsed.refused === true));
+  return !(outcome.result && refusalOf(outcome.result));
 }
 
 const plural = (n: number, one: string, many: string) => `${n.toLocaleString('en-US')} ${n === 1 ? one : many}`;
@@ -282,7 +298,7 @@ export function presentStep(
   const docId = stepDocumentId(entry, input);
   const title = docId ? cleanStepText(titles?.get(docId)) : null;
   const object = title ? `"${title}"` : entry.object;
-  const tense: StepTense = finishedDone(outcome, parsed) ? 'done' : 'doing';
+  const tense: StepTense = finishedDone(outcome) ? 'done' : 'doing';
   const previewed = previewOf(entry, input);
   const facts = inputFacts(previewed, title);
   if (parsed && outcome) facts.push(...resultFacts(tool, entry, parsed));
@@ -322,10 +338,28 @@ export function finishedStep(
   outcome: StepOutcome & { why?: string },
 ) {
   const p = presentStep(call.name, call.input ?? {}, titles, outcome);
-  const message = stepMessage(outcome.status, outcome.heldBack === true, outcome.why, p.doing);
+  // An agent says in its own words why it stopped: the sentence the live frame
+  // carries and the one a reopened turn reads come from the same result, so the
+  // two can never describe the step differently.
+  const why = agentWhy(outcome) ?? outcome.why;
+  const message = stepMessage(outcome.status, outcome.heldBack === true, why, p.doing);
   const usedModel = outcome.usedModel ?? null;
   const shown = { source: p.source, preview: p.preview, facts: p.facts, usedModel, ...(message ? { message } : {}) };
   return { label: p.label, doing: p.doing, message, frame: { label: p.label, ...shown }, trace: shown };
+}
+
+/**
+ * Why an agent step ended, from the agent's own result: the summary for a
+ * budget stop, and the pause ceiling where that, not a person, ended it.
+ * Null for every other step and status.
+ */
+function agentWhy(outcome: StepOutcome & { why?: string }): string | undefined {
+  if (!outcome.result) return undefined;
+  if (outcome.status === 'incomplete') return agentResultSummary(outcome.result);
+  if (outcome.status === 'cancelled' && agentEndedByHoldExpiry(outcome.result)) {
+    return 'the run stayed paused past its limit';
+  }
+  return undefined;
 }
 
 /**
@@ -333,6 +367,11 @@ export function finishedStep(
  * step's doing-form label; the sentence reads correctly after the fact, so the
  * live transcript and a reopened record say the same thing. Null for a step
  * that succeeded: it needs no sentence.
+ *
+ * `why` is the run's reason for a held step, and for an agent that stopped at
+ * a budget it is that agent's one-line summary (finishedStep reads it from the
+ * result). An incomplete step is NOT reported as a failure: what it found
+ * stands, and the next round is not told to work around it.
  */
 export function stepMessage(
   status: StepStatus,
@@ -348,8 +387,11 @@ export function stepMessage(
   }
   if (status === 'error') return `AnA couldn't finish ${step} and continued without it.`;
   if (status === 'not_found') return `${Step} isn't available here, so AnA continued without it.`;
-  if (status === 'cancelled') return `You stopped ${step} before it finished.`;
+  // A cancelled step is the person's Stop unless the caller says what else
+  // ended it: a pause nobody answered is not something they did.
+  if (status === 'cancelled') return why ? `${Step} was ended because ${why}.` : `You stopped ${step} before it finished.`;
   if (status === 'not_run') return `${Step} did not run because the turn stopped first.`;
+  if (status === 'incomplete') return `The agent's result is incomplete: ${why ?? step}.`;
   return null;
 }
 
@@ -367,22 +409,70 @@ export function stepUsedModel(
   return ranElsewhere ? null : false;
 }
 
-interface TitleScopeContext {
-  organizationId?: number | null;
-  projectId?: number | null;
-  projectRef?: string | null;
+type TitleScopeContext = Pick<ToolContext, 'organizationId' | 'userId' | 'projectId' | 'projectRef' | 'sqlClient'>;
+type TitleReadScope = Exclude<Awaited<ReturnType<typeof import('./catalog-scope.js').catalogScope>>, { error: string }>;
+
+interface TitleRow { id: string; document_title: string | null; organization_id: number; program_id: string; }
+interface TitleDeps {
+  query?: (sql: string, params: unknown[]) => Promise<{ rows: TitleRow[] }>;
+  scope?: (ctx: TitleScopeContext, orgId: number) => Promise<TitleReadScope | { error: string }>;
+  /** Explicit test seam for authority revalidation; never supplied by a model. */
+  revalidate?: (scope: import('./source-read-scope.js').AdmittedAnaSourceReadScope) => Promise<void>;
+  recheck?: typeof requireProgramScopeStillCurrent;
 }
 
-interface TitleDeps {
-  query?: (sql: string, params: unknown[]) => Promise<{ rows: Array<{ id: string; document_title: string | null }> }>;
-  scope?: (ctx: TitleScopeContext, orgId: number) => Promise<{ programId: string | null } | { error: string }>;
+function titleActorReady(ctx: TitleScopeContext): ctx is TitleScopeContext & { organizationId: number; userId: number } {
+  return Number.isSafeInteger(ctx.organizationId) && Number(ctx.organizationId) > 0 &&
+    Number.isSafeInteger(ctx.userId) && Number(ctx.userId) > 0;
+}
+function titleScopeMatches(scope: import('./source-read-scope.js').AdmittedAnaSourceReadScope, ctx: TitleScopeContext): boolean {
+  return Boolean(scope && scope.organizationId === ctx.organizationId && scope.userId === ctx.userId);
+}
+function titleReadScopeReady(scope: TitleReadScope, ctx: TitleScopeContext): boolean {
+  return Boolean(titleScopeMatches(scope.admittedScope, ctx) && scope.executor && scope.accessibleScope &&
+    scope.programId === scope.admittedScope.programId &&
+    scope.accessibleScope.actor.userId === scope.admittedScope.userId &&
+    scope.accessibleScope.actor.role === scope.admittedScope.role &&
+    scope.admittedScope.accessibleProgramIds.every(id => scope.accessibleScope.programIds.includes(id)));
+}
+function titleRowAllowed(row: TitleRow, orgId: number, programs: readonly string[], ids: readonly string[]): boolean {
+  return row.organization_id === orgId && programs.includes(row.program_id) && ids.includes(row.id);
+}
+
+async function titleQuery(ids: readonly string[], orgId: number, scope: TitleReadScope) {
+  const { vaultDataEligibleSql } = await import('../document-data-disposition/eligibility.js');
+  const programClause = scope.programId ? ' AND d.program_id = $4::uuid' : '';
+  const sql =
+    `SELECT d.id::text AS id, d.document_title, d.organization_id, d.program_id::text AS program_id FROM vault.documents d
+      WHERE d.id = ANY($1::uuid[]) AND d.organization_id=$2 AND d.program_id = ANY($3::uuid[])
+        AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}${programClause}
+        AND EXISTS (SELECT 1 FROM regulatory_programs rp WHERE rp.id = d.program_id AND rp.organization_id = $2 AND rp.deleted_at IS NULL)`;
+  const params = [ids, orgId, [...scope.admittedScope.accessibleProgramIds], ...(scope.programId ? [scope.programId] : [])];
+  return { sql, params };
+}
+
+async function currentTitleRows(ids: readonly string[], orgId: number, scope: TitleReadScope, deps: TitleDeps): Promise<TitleRow[]> {
+  // Keep both admissions on the request executor. The canonical source scope
+  // can be stricter after counting all anchors; the upstream grant cannot widen it.
+  const { revalidateAnaSourceReadScope } = await import('./source-read-scope.js');
+  const revalidate: NonNullable<TitleDeps['revalidate']> = deps.revalidate ??
+    (pinned => revalidateAnaSourceReadScope(scope.executor, pinned).then(() => undefined));
+  if (deps.query && (!deps.revalidate || !deps.recheck)) return [];
+  await revalidate(scope.admittedScope);
+  const { sql, params } = await titleQuery(ids, orgId, scope);
+  const { rows } = await (deps.query ?? ((text, values) => scope.executor.query(text, values)))(sql, params);
+  await (deps.recheck ?? requireProgramScopeStillCurrent)(scope.executor, {
+    organizationId: orgId, userId: scope.accessibleScope.actor.userId, programId: scope.programId,
+  }, scope.accessibleScope);
+  await revalidate(scope.admittedScope);
+  return rows as TitleRow[];
 }
 
 /**
  * The Vault titles of the round's documents, resolved before the steps are
  * announced so a read names its document from the start. One query, scoped the
- * way documentScopeRefusal scopes the handler: the organisation, and the open
- * project's program when one is open. A document of another project, another
+ * way the handler scopes its read: the current actor's accessible programmes,
+ * constrained to the open project when one is open. A document of another project, another
  * organisation, a deleted one or one whose data was removed gets no title, and
  * a scope that refuses (a project with no program) gets none at all.
  */
@@ -401,23 +491,18 @@ export async function resolveStepDocumentTitles(
         .filter((id): id is string => id !== null),
     ),
   ];
+  if (ids.length === 0 || !titleActorReady(ctx)) return new Map();
   const orgId = ctx.organizationId;
-  if (ids.length === 0 || !orgId) return new Map();
   try {
     const scope = await (deps.scope ?? defaultScope)(ctx, orgId);
     if ('error' in scope) return new Map();
-    const { vaultDataEligibleSql } = await import('../document-data-disposition/eligibility.js');
-    const programClause = scope.programId ? ' AND d.program_id = $3::uuid' : '';
-    const sql =
-      `SELECT d.id::text AS id, d.document_title FROM vault.documents d
-        WHERE d.id = ANY($1::uuid[]) AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}${programClause}
-          AND EXISTS (SELECT 1 FROM regulatory_programs rp WHERE rp.id = d.program_id AND rp.organization_id = $2)`;
-    const params = scope.programId ? [ids, orgId, scope.programId] : [ids, orgId];
-    const { rows } = await (deps.query ?? defaultQuery)(sql, params);
+    if (!titleReadScopeReady(scope, ctx)) return new Map();
+    const rows = await currentTitleRows(ids, orgId, scope, deps);
     const titles = new Map<string, string>();
     for (const row of rows) {
+      if (!titleRowAllowed(row, orgId, scope.admittedScope.accessibleProgramIds, ids)) return new Map();
       const title = cleanStepText(row.document_title);
-      if (title) titles.set(row.id, title);
+      if (title && typeof row.id === 'string') titles.set(row.id, title);
     }
     return titles;
   } catch {
@@ -428,10 +513,5 @@ export async function resolveStepDocumentTitles(
 
 async function defaultScope(ctx: TitleScopeContext, orgId: number) {
   const { catalogScope } = await import('./catalog-scope.js');
-  return catalogScope(ctx as never, orgId, null, 'read');
-}
-
-async function defaultQuery(sql: string, params: unknown[]) {
-  const { pool } = await import('../../db.js');
-  return pool.query(sql, params) as unknown as Promise<{ rows: Array<{ id: string; document_title: string | null }> }>;
+  return catalogScope(ctx, orgId, null, 'read');
 }

@@ -26,9 +26,9 @@
  *                    was obtained, samples are stored) that a filing gap check
  *                    cannot see.
  *
- * BASIS. Each row says whether its wording was read from the EUR-Lex text
- * (checked 2026-10-05 via search of eur-lex.europa.eu; the host is blocked for
- * direct fetch here) or is recall. See
+ * BASIS. Every row is recall: its note says whether its wording was seen in a
+ * search snippet of the EUR-Lex text (2026-10-05; the host is blocked for
+ * direct fetch here, so the text itself was not read) or is from memory. See
  * docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-ctis-annex-i-readiness-facts.md.
  *
  * PURE DATA: no DB, no network, no LLM.
@@ -77,7 +77,10 @@ export interface CtrAnnexIRow {
   basis: CtrAnnexIBasis;
 }
 
-const textBasis = (note: string): CtrAnnexIBasis => ({ url: CTR_536_2014_URL, confidence: 'regulator-text', note });
+// 2026-10-15: these rows were `regulator-text` (helper `textBasis`), but each was
+// read only in a WebSearch snippet of the EUR-Lex text, which is recall.
+const SEARCH_SNIPPET = 'Search snippet of the EUR-Lex text on 2026-10-05; the text itself was not read (egress blocked). Verbatim re-read owed.';
+const snippetBasis = (note: string): CtrAnnexIBasis => ({ url: CTR_536_2014_URL, confidence: 'recall', note: `${SEARCH_SNIPPET} ${note}` });
 const recallBasis = (note: string): CtrAnnexIBasis => ({ url: CTR_536_2014_URL, confidence: 'recall', note });
 
 const REQUIRED: CtrAnnexIRequirement = { kind: 'required' };
@@ -114,7 +117,7 @@ export const CTR_ANNEX_I: readonly CtrAnnexIRow[] = [
       reason: 'Annex I F: no documentation is needed where the IMP is authorised and not modified. Record not-applicable only in that case.',
     },
     ctisSlug: 'part-i.gmp-manufacturing', documentTypes: ['gmp', 'manufacturing_authorisation', 'qp_declaration'],
-    basis: textBasis(
+    basis: snippetBasis(
       'Annex I F: "No documentation needs to be submitted where the investigational medicinal product is authorised ' +
         'and is not modified, whether or not it is manufactured in the Union." Heading wording itself from recall.',
     ),
@@ -164,7 +167,7 @@ export const CTR_ANNEX_I: readonly CtrAnnexIRow[] = [
     letter: 'K', id: 'recruitment-arrangements', title: 'Recruitment arrangements', part: 'II', perMemberState: true,
     requirement: { kind: 'if-applicable', reason: 'Annex I K: a separate document is needed unless the recruitment procedures are described in the protocol.' },
     ctisSlug: 'part-ii.recruitment-arrangements', documentTypes: ['recruitment_arrangements'],
-    basis: textBasis(
+    basis: snippetBasis(
       'Annex I K "Recruitment arrangements (information per Member State concerned)": a separate document shall describe ' +
         'the procedures for inclusion of subjects and the first act of recruitment, unless described in the protocol.',
     ),
@@ -172,7 +175,7 @@ export const CTR_ANNEX_I: readonly CtrAnnexIRow[] = [
   {
     letter: 'L', id: 'subject-information-consent', title: 'Subject information, informed consent form and procedure', part: 'II', perMemberState: true,
     requirement: REQUIRED, ctisSlug: 'part-ii.subject-information', documentTypes: ['informed_consent', 'subject_information'],
-    basis: textBasis(
+    basis: snippetBasis(
       'Annex I L "Subject information, informed consent form and informed consent procedure (information per Member State concerned)".',
     ),
   },
@@ -184,13 +187,13 @@ export const CTR_ANNEX_I: readonly CtrAnnexIRow[] = [
   {
     letter: 'N', id: 'facilities-suitability', title: 'Suitability of the facilities', part: 'II', perMemberState: true,
     requirement: REQUIRED, ctisSlug: 'part-ii.facilities-suitability', documentTypes: ['facility_suitability'],
-    basis: textBasis('Annex I N "Suitability of the facilities (information per Member State concerned)" — heading only.'),
+    basis: snippetBasis('Annex I N "Suitability of the facilities (information per Member State concerned)" — heading only.'),
   },
   {
     letter: 'O', id: 'insurance', title: 'Proof of insurance cover or indemnification', part: 'II', perMemberState: true,
     requirement: { kind: 'if-applicable', reason: 'Annex I O: proof of insurance, a guarantee or a similar arrangement is submitted "if applicable".' },
     ctisSlug: 'part-ii.insurance', documentTypes: ['insurance'],
-    basis: textBasis(
+    basis: snippetBasis(
       'Annex I O "Proof of insurance cover or indemnification (information per Member State concerned)": proof of insurance, ' +
         'a guarantee, or a similar arrangement shall be submitted, if applicable.',
     ),
@@ -198,7 +201,7 @@ export const CTR_ANNEX_I: readonly CtrAnnexIRow[] = [
   {
     letter: 'P', id: 'financial-arrangements', title: 'Financial and other arrangements', part: 'II', perMemberState: true,
     requirement: REQUIRED, ctisSlug: 'part-ii.financial-arrangements', documentTypes: ['financial_arrangement', 'compensation'],
-    basis: textBasis(
+    basis: snippetBasis(
       'Annex I P "Financial and other arrangements (information per Member State concerned)": financing, financial transactions ' +
         'and compensation paid to subjects and investigator/site, and any other sponsor–site agreement.',
     ),
@@ -207,12 +210,12 @@ export const CTR_ANNEX_I: readonly CtrAnnexIRow[] = [
     letter: 'Q', id: 'fee-payment', title: 'Proof of payment of fee', part: 'II', perMemberState: true,
     requirement: { kind: 'if-applicable', reason: 'Annex I Q: proof of payment is submitted "if applicable". Which states charge a fee is recall, not modelled.' },
     ctisSlug: 'part-ii.fee-payment', documentTypes: ['fee_payment'],
-    basis: textBasis('Annex I Q "Proof of payment of fee (information per Member State concerned)": proof of payment shall be submitted, if applicable.'),
+    basis: snippetBasis('Annex I Q "Proof of payment of fee (information per Member State concerned)": proof of payment shall be submitted, if applicable.'),
   },
   {
     letter: 'R', id: 'data-protection', title: 'Proof that data will be processed in compliance with Union data-protection law', part: 'II', perMemberState: true,
     requirement: REQUIRED, ctisSlug: 'part-ii.data-protection', documentTypes: ['data_protection'],
-    basis: textBasis(
+    basis: snippetBasis(
       'Annex I R: a statement by the sponsor or his or her representative that data will be collected and processed in ' +
         'accordance with Directive 95/46/EC shall be provided (now read as Regulation (EU) 2016/679 — recall).',
     ),
@@ -221,7 +224,7 @@ export const CTR_ANNEX_I: readonly CtrAnnexIRow[] = [
     letter: 'Art 7(1)(h)', id: 'biological-samples', title: 'Collection, storage and future use of biological samples', part: 'II', perMemberState: true,
     requirement: { kind: 'conditional', reason: 'Only where the trial collects biological samples (Art 7(1)(h)).' },
     ctisSlug: 'part-ii.biological-samples', documentTypes: ['biological_samples'],
-    basis: textBasis(
+    basis: snippetBasis(
       'Article 7(1)(h): the Part II assessment covers compliance with the applicable rules for the collection, storage and ' +
         'future use of biological samples of the subject.',
     ),

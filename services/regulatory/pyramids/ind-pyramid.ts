@@ -1,5 +1,43 @@
 import type { BaseTask, SubmissionPyramid } from './types.js';
 import { buildPhase } from './types.js';
+import { soleModule1Placement, type DocumentRole } from '../../../shared/regulatory/regional-module1.js';
+import { e6r3Ref } from '../../../shared/regulatory/ich-e6r3.js';
+
+type Binding = NonNullable<BaseTask['documentBindings']>[number];
+
+/**
+ * A Module 1 binding, from the FDA record rather than from a number written here.
+ *
+ * Every Module 1 binding in this file stated its own section code and eight of the nine were
+ * wrong: the Investigator's Brochure at 5.3.5.4 — Module 5, which is where the CLINICAL STUDY
+ * REPORTS live, the failure `shared/regulatory/global-document-registry.ts:271` already names
+ * ("an M5 assignment puts it in the wrong backbone node and the sequence does not validate") —
+ * the cover letter at 1.1 (which is Forms), all three FDA transmittal forms at 1.2 (which is the
+ * Cover Letter), the general investigational plan at 1.3, and the environmental assessment at 1.2.
+ *
+ * Empty when the record holds no single node for the role: the task then carries no binding for
+ * it. A task with no placement is honest; a task pointing at the wrong backbone node is not.
+ */
+function m1Binding(role: DocumentRole, rest: Omit<Binding, 'ctdSection' | 'sectionTitle'> = { ectdLifecycleOp: 'new' }): Binding[] {
+  const p = soleModule1Placement(role, 'US', 'ind');
+  return p ? [{ ...rest, ctdSection: p.code, sectionTitle: p.title }] : [];
+}
+
+export const IB_BINDINGS: Binding[] = m1Binding('investigators_brochure', {
+  ectdLifecycleOp: 'new',
+  artifactTypes: ['investigator_brochure'],
+});
+
+/**
+ * The GCP guideline for an IB, in force. E6(R2) §7 is the superseded numbering for this content;
+ * E6(R3) reached Step 4 on 2025-01-06 and moved it to Appendix A (`shared/regulatory/ich-e6r3.ts`,
+ * `E6R2_TO_R3['7']`). An R2 section number given to a sponsor as the guideline in force is wrong,
+ * not merely dated.
+ */
+const IB_GUIDELINE = e6r3Ref({ kind: 'appendix', id: 'A' });
+
+/** GCP itself, with no section named. E6(R3) supersedes E6(R2) (Step 4, 2025-01-06). */
+const GCP = 'ICH E6(R3)';
 
 export function buildIndPyramid(): SubmissionPyramid {
   const phases: SubmissionPyramid['phases'] = [];
@@ -66,7 +104,7 @@ export function buildIndPyramid(): SubmissionPyramid {
       estimatedHours: 6,
       role: 'clinical_lead',
       risk: { severity: 'medium', probability: 0.2, impact: 'Protocol redesign if endpoints are misaligned', mitigations: ['Engage biostatistician early for endpoint strategy', 'Review FDA guidance for indication-specific endpoints'] },
-      guidance: { ichGuideline: 'ICH E6(R2), ICH E8(R1)', keyConsiderations: ['First-in-human study design must justify starting dose', 'Safety monitoring plan is critical for IND acceptance'] },
+      guidance: { ichGuideline: `${GCP}, ICH E8(R1)`, keyConsiderations: ['First-in-human study design must justify starting dose', 'Safety monitoring plan is critical for IND acceptance'] },
       timeline: { typicalStartWeek: 3, typicalDurationWeeks: 2 },
       deliverables: ['Clinical development plan outline', 'Phase 1 study synopsis'],
       crossSubmissionDeps: [{ targetSubmissionType: 'NDA', targetTaskId: 'phase6.csr_compilation', relationship: 'feeds_into', description: 'Phase 1 data from IND clinical plan feeds NDA Module 5' }],
@@ -91,7 +129,9 @@ export function buildIndPyramid(): SubmissionPyramid {
       guidance: { fdaGuidanceRef: 'Formal Meetings Between the FDA and Sponsors', cfrReference: '21 CFR 312.82' },
       timeline: { typicalStartWeek: 5, typicalDurationWeeks: 1, fdaMilestone: 'Pre-IND Meeting Request Submitted', regulatoryDeadlineDays: 60 },
       deliverables: ['Meeting request package'],
-      documentBindings: [{ ctdSection: '1.2', sectionTitle: 'Cover Letter / Meeting Request', ectdLifecycleOp: 'new' }],
+      /* One binding named two documents FDA files apart: the cover letter at 1.2 and the meeting
+         request at 1.6 Meetings. Two documents, two bindings. */
+      documentBindings: [...m1Binding('cover_letter'), ...m1Binding('meeting_information')],
     },
     {
       id: 'briefing_package',
@@ -315,7 +355,7 @@ export function buildIndPyramid(): SubmissionPyramid {
       name: 'Draft clinical protocol outline',
       estimatedHours: 6,
       role: 'clinical_lead',
-      guidance: { ichGuideline: 'ICH E6(R2)', keyConsiderations: ['Protocol must include adequate safety monitoring', 'Stopping rules for dose escalation studies'] },
+      guidance: { ichGuideline: GCP, keyConsiderations: ['Protocol must include adequate safety monitoring', 'Stopping rules for dose escalation studies'] },
       timeline: { typicalStartWeek: 24, typicalDurationWeeks: 2 },
       deliverables: ['Protocol outline / synopsis'],
       documentBindings: [{ ctdSection: '5.3.5', sectionTitle: 'Clinical Study Reports', ectdLifecycleOp: 'new' }],
@@ -366,11 +406,11 @@ export function buildIndPyramid(): SubmissionPyramid {
       estimatedHours: 16,
       role: 'medical_writer',
       critical: true,
-      risk: { severity: 'high', probability: 0.2, impact: 'Clinical hold if IB is incomplete or inconsistent with protocol', mitigations: ['Follow ICH E6(R2) Section 7 structure', 'Cross-reference all nonclinical and available clinical data'] },
-      guidance: { ichGuideline: 'ICH E6(R2) Section 7', cfrReference: '21 CFR 312.23(a)(5)', keyConsiderations: ['IB must include all relevant nonclinical and clinical data', 'Risk/benefit assessment required', 'Must be updated annually'] },
+      risk: { severity: 'high', probability: 0.2, impact: 'Clinical hold if IB is incomplete or inconsistent with protocol', mitigations: [`Follow ${IB_GUIDELINE} structure`, 'Cross-reference all nonclinical and available clinical data'] },
+      guidance: { ichGuideline: IB_GUIDELINE, cfrReference: '21 CFR 312.23(a)(5)', keyConsiderations: ['IB must include all relevant nonclinical and clinical data', 'Risk/benefit assessment required', 'Must be updated annually'] },
       timeline: { typicalStartWeek: 24, typicalDurationWeeks: 4 },
       deliverables: ["Investigator's Brochure"],
-      documentBindings: [{ ctdSection: '5.3.5.4', sectionTitle: "Investigator's Brochure", ectdLifecycleOp: 'new', artifactTypes: ['investigator_brochure'] }],
+      documentBindings: IB_BINDINGS,
       subTasks: [
         { id: 'ib_nonclinical', name: 'Nonclinical data summary for IB', estimatedHours: 4 },
         { id: 'ib_clinical', name: 'Clinical data summary for IB (if prior experience)', estimatedHours: 4 },
@@ -467,7 +507,7 @@ export function buildIndPyramid(): SubmissionPyramid {
       role: 'ra_lead',
       timeline: { typicalStartWeek: 34, typicalDurationWeeks: 1 },
       deliverables: ['IND cover letter'],
-      documentBindings: [{ ctdSection: '1.1', sectionTitle: 'Cover Letter', ectdLifecycleOp: 'new', artifactTypes: ['cover_letter'] }],
+      documentBindings: m1Binding('cover_letter', { ectdLifecycleOp: 'new', artifactTypes: ['cover_letter'] }),
     },
     {
       id: 'form_1571',
@@ -479,7 +519,7 @@ export function buildIndPyramid(): SubmissionPyramid {
       guidance: { cfrReference: '21 CFR 312.23(a)(1)', keyConsiderations: ['Form 1571 is the official IND application form', 'Must be signed by sponsor or authorized representative', 'Includes table of contents for the IND'] },
       timeline: { typicalStartWeek: 34, typicalDurationWeeks: 1 },
       deliverables: ['Completed FDA Form 1571'],
-      documentBindings: [{ ctdSection: '1.2', sectionTitle: 'FDA Form 1571', ectdLifecycleOp: 'new', artifactTypes: ['fda_form'] }],
+      documentBindings: m1Binding('application_form', { ectdLifecycleOp: 'new', artifactTypes: ['fda_form'] }),
     },
     {
       id: 'form_1572',
@@ -490,7 +530,7 @@ export function buildIndPyramid(): SubmissionPyramid {
       guidance: { cfrReference: '21 CFR 312.53', keyConsiderations: ['One Form 1572 per investigator site', 'Must list sub-investigators and IRB', 'Investigator commitments and qualifications'] },
       timeline: { typicalStartWeek: 34, typicalDurationWeeks: 1 },
       deliverables: ['Completed FDA Form 1572 (per site)'],
-      documentBindings: [{ ctdSection: '1.2', sectionTitle: 'FDA Form 1572', ectdLifecycleOp: 'new', artifactTypes: ['fda_form'] }],
+      documentBindings: m1Binding('application_form', { ectdLifecycleOp: 'new', artifactTypes: ['fda_form'] }),
     },
     {
       id: 'form_3674',
@@ -500,7 +540,7 @@ export function buildIndPyramid(): SubmissionPyramid {
       guidance: { cfrReference: '42 USC 282(j)', keyConsiderations: ['Certification of compliance with ClinicalTrials.gov registration', 'Required for applicable clinical trials under FDAAA 801'] },
       timeline: { typicalStartWeek: 35, typicalDurationWeeks: 1 },
       deliverables: ['Completed FDA Form 3674'],
-      documentBindings: [{ ctdSection: '1.2', sectionTitle: 'FDA Form 3674', ectdLifecycleOp: 'new', artifactTypes: ['fda_form'] }],
+      documentBindings: m1Binding('application_form', { ectdLifecycleOp: 'new', artifactTypes: ['fda_form'] }),
     },
     {
       id: 'general_plan',
@@ -510,7 +550,7 @@ export function buildIndPyramid(): SubmissionPyramid {
       guidance: { cfrReference: '21 CFR 312.23(a)(3)', keyConsiderations: ['Introductory statement: drug name, structure, pharmacological class, formulation, route', 'General investigational plan: rationale, indication, planned studies, anticipated risks'] },
       timeline: { typicalStartWeek: 34, typicalDurationWeeks: 2 },
       deliverables: ['Introductory statement', 'General investigational plan'],
-      documentBindings: [{ ctdSection: '1.3', sectionTitle: 'Introductory Statement and General Investigational Plan', ectdLifecycleOp: 'new' }],
+      documentBindings: m1Binding('general_investigational_plan'),
     },
     {
       id: 'toc',
@@ -528,7 +568,7 @@ export function buildIndPyramid(): SubmissionPyramid {
       guidance: { cfrReference: '21 CFR 25.31', keyConsiderations: ['Most drugs qualify for categorical exclusion', 'Claim under 21 CFR 25.31(a) for INDs'] },
       timeline: { typicalStartWeek: 35, typicalDurationWeeks: 1 },
       deliverables: ['Environmental assessment or categorical exclusion claim'],
-      documentBindings: [{ ctdSection: '1.2', sectionTitle: 'Environmental Assessment', ectdLifecycleOp: 'new' }],
+      documentBindings: m1Binding('environmental'),
     },
   ], phase6.completeId);
   phases.push(phase7.phase);

@@ -1,0 +1,51 @@
+{
+  "preparation_exit_code": 1,
+  "pendingAfter": 0,
+  "cachedDiagnosticFileCount": 1,
+  "diagnostics": [
+    {
+      "file": "../../../server/services/ana/__tests__/ind-module-tool.test.ts",
+      "diagnostics": [
+        [
+          {
+            "start": 10708,
+            "length": 24,
+            "messageText": "'schema.properties.module' is of type 'unknown'.",
+            "category": 1,
+            "code": 18046
+          },
+          {
+            "start": 10775,
+            "length": 28,
+            "messageText": "'schema.properties.provenance' is of type 'unknown'.",
+            "category": 1,
+            "code": 18046
+          },
+          {
+            "start": 10866,
+            "length": 28,
+            "messageText": "'schema.properties.provenance' is of type 'unknown'.",
+            "category": 1,
+            "code": 18046
+          },
+          {
+            "start": 10949,
+            "length": 28,
+            "messageText": "'schema.properties.provenance' is of type 'unknown'.",
+            "category": 1,
+            "code": 18046
+          },
+          {
+            "start": 11035,
+            "length": 23,
+            "messageText": "'schema.properties.facts' is of type 'unknown'.",
+            "category": 1,
+            "code": 18046
+          }
+        ]
+      ]
+    }
+  ],
+  "cause": "New test accessed schema properties typed unknown. No production diagnostic. Test corrected before final qualification.",
+  "purpose": "Native incremental preparation only, not a qualification verdict."
+}

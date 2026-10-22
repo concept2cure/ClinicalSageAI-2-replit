@@ -2192,4 +2192,3 @@ stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orche
       Tests  34 passed (34)
    Start at  16:04:12
    Duration  6.05s (transform 9.23s, setup 250ms, import 3.56s, tests 7.90s, environment 0ms)
-

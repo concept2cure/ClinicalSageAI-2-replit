@@ -1,0 +1,22 @@
+{
+  "reviews": [
+    {
+      "reviewer": "cancel_architecture",
+      "scope": "Three production files: source-operation boundaries, authority/identity, genuine failures, per-call signals and no-signal behavior",
+      "result": "No findings",
+      "timing": "Before equivalent local failure mapper refactor"
+    },
+    {
+      "reviewer": "cancel_tool_audit",
+      "scope": "Three production files, receipt/typed-cancellation/retry behavior, runtime import edges; mapper refactor rechecked",
+      "result": "No findings",
+      "timing": "Final production bytes"
+    }
+  ],
+  "finalReviewedProduction": {
+    "server/services/ana/draft-project-sources.ts": "36294c40d87b1b4adb417371efb5527e303f9f7211ad6bdd36044d5ae4c0f77e",
+    "server/services/ana/AnaDocumentDraftingService.ts": "d9469ce62904f7704003901f2f465ed639fedde6f7512310c8bab2461704bfe0",
+    "server/services/ana/AnaToolExecutor.ts": "5b19e8975186e99092a6a863daa2a5ec8e47d81f784203ca0ad7492d34a31e88"
+  },
+  "reviewType": "Read-only code inspection; no extra test/compiler runs"
+}

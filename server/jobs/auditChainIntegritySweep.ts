@@ -218,16 +218,32 @@ async function verifyAuditLogsStore(client: PoolClient): Promise<{
           firstFailure: integrity.chain.brokenAt?.id,
           reason: 'sha256_chain mismatch',
         };
-    const seals: AuditStoreVerdict = !integrity.seals.checked
-      ? { store: 'audit_logs.seals', status: 'unverifiable', reason: integrity.seals.reason }
-      : integrity.seals.valid
-        ? { store: 'audit_logs.seals', status: 'ok' }
-        : {
+    const s = integrity.seals;
+    const seals: AuditStoreVerdict = !s.checked
+      ? { store: 'audit_logs.seals', status: 'unverifiable', reason: s.reason }
+      : !s.valid
+        ? {
             store: 'audit_logs.seals',
             status: 'broken',
-            firstFailure: String(integrity.seals.brokenAt),
+            firstFailure: String(s.brokenAt),
             reason: 'hmac_seal does not verify',
-          };
+          }
+        : s.unsealedAfterSealed > 0
+          ? {
+              store: 'audit_logs.seals',
+              status: 'unverifiable',
+              rowsChecked: s.verified,
+              firstFailure: s.firstUnsealedAfterSealed ?? undefined,
+              reason: `${s.unsealedAfterSealed} row(s) written after sealing began carry no hmac_seal; their seals could not be verified`,
+            }
+          : {
+              store: 'audit_logs.seals',
+              status: 'ok',
+              rowsChecked: s.verified,
+              ...(s.unsealed > 0
+                ? { reason: `${s.unsealed} row(s) predate sealing and are covered by the sha256 chain only` }
+                : {}),
+            };
     const brokenAt = integrity.chain.brokenAt
       ? {
           id: integrity.chain.brokenAt.id,
@@ -311,14 +327,35 @@ async function verifyAuditEventsStore(client: PoolClient): Promise<AuditStoreVer
       };
     }
     const result = await verifyAuditEventsChainSeals(client);
-    return result.valid
-      ? { store: 'audit_events.seals', status: 'ok' }
-      : {
-          store: 'audit_events.seals',
-          status: 'broken',
-          firstFailure: String(result.brokenAt),
-          reason: 'hmac_seal does not verify',
-        };
+    if (!result.valid) {
+      return {
+        store: 'audit_events.seals',
+        status: 'broken',
+        firstFailure: String(result.brokenAt),
+        reason: 'hmac_seal does not verify',
+      };
+    }
+    // Rows exist and none is sealed: the audit_events seal writer has not
+    // shipped (migrations 20260617_audit_events_hmac_seal.sql), so nothing was
+    // verified. This read "ok" every day.
+    if (result.verified === 0 && result.unsealed > 0) {
+      return {
+        store: 'audit_events.seals',
+        status: 'unverifiable',
+        rowsChecked: 0,
+        reason: `none of the ${result.unsealed} chained rows carries an hmac_seal, so no seal was verified`,
+      };
+    }
+    if (result.unsealedAfterSealed > 0) {
+      return {
+        store: 'audit_events.seals',
+        status: 'unverifiable',
+        rowsChecked: result.verified,
+        firstFailure: result.firstUnsealedAfterSealed ?? undefined,
+        reason: `${result.unsealedAfterSealed} row(s) written after their organisation's sealing began carry no hmac_seal`,
+      };
+    }
+    return { store: 'audit_events.seals', status: 'ok', rowsChecked: result.verified };
   });
 
   return [linkage, seals];

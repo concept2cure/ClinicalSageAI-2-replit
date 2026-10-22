@@ -1,0 +1,86 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T20:05:57.915Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T20:05:57.916Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T20:05:57.917Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > refuses a private project before original bytes, conversion or authoring evidence are read or written
+{
+  "timestamp": "2026-10-13T20:06:05.162Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 84d267a1-1ddf-411d-8951-68d9ff737789 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > refuses a private project before original bytes, conversion or authoring evidence are read or written
+{
+  "timestamp": "2026-10-13T20:06:05.178Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 84d267a1-1ddf-411d-8951-68d9ff737789 by a***@canvas.example",
+  "context": {}
+}
+
+ × server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > refuses a private project before original bytes, conversion or authoring evidence are read or written 556ms
+   → {"success":true,"data":{"doc":{"id":"84d267a1-1ddf-411d-8951-68d9ff737789","title":"Custom IND input","module":"M3","product_code":"custom-ind-source-type","locale":"en-US","status":"draft","created_by":"3","template_id":null,"submitted_at":null,"current_workflow_id":null,"approved_at":null,"frozen_at":null,"locked_at":null,"locked_by":null,"version":null,"tenant_id":1,"created_at":"2026-10-13T20:06:05.119Z","updated_at":"2026-10-13T20:06:05.119Z","client_program_id":"11111111-1111-4111-8111-111111111111","c2c_document_id":"doc_ind_11111111","provenance":{"source":"import","note":"Revise the project source in the document editor","recordedAt":"2026-10-13T20:06:05.085Z","importSource":{"kind":"vault","id":"62bc5523-cae0-474b-8a6e-0d7139a9cb8b","programId":"11111111-1111-4111-8111-111111111111","title":"Custom IND input","fileName":"Custom IND input.docx","mimeType":"application/vnd.openxmlformats-officedocument.wordprocessingml.document","sha256":"01fb2552a6359745bd39c11fb57965d6f5435dabcceaa72568794aa1ef574bc5","documentType":"custom-ind-source-type","sectionCode":null,"conversion":"docx-structure","warnings":[],"reason":"Revise the project source in the document editor"}}},"sections":[{"id":"6ff54515-3b35-41ec-8b85-74b5e292f9db","doc_id":"84d267a1-1ddf-411d-8951-68d9ff737789","code":"3.2.S.4.1","title":"Specification","content":"<table><tbody><tr><td><p>Assay</p></td><td><p>99.2 %</p></td></tr></tbody></table><p><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==\" alt=\"\"></p>","order_index":0,"track_changes":false,"created_at":"2026-10-13T20:06:05.119Z","updated_at":"2026-10-13T20:06:05.119Z","tenant_id":1},{"id":"926de3f9-2bdc-4828-8d89-b59cbd8095e0","doc_id":"84d267a1-1ddf-411d-8951-68d9ff737789","code":"3.2.S.4.2","title":"Analytical methods","content":"<p>Record the method description from this exact source.</p>","order_index":1,"track_changes":false,"created_at":"2026-10-13T20:06:05.119Z","updated_at":"2026-10-13T20:06:05.119Z","tenant_id":1}],"origin":{"kind":"vault","id":"62bc5523-cae0-474b-8a6e-0d7139a9cb8b","programId":"11111111-1111-4111-8111-111111111111","title":"Custom IND input","fileName":"Custom IND input.docx","mimeType":"application/vnd.openxmlformats-officedocument.wordprocessingml.document","sha256":"01fb2552a6359745bd39c11fb57965d6f5435dabcceaa72568794aa1ef574bc5","documentType":"custom-ind-source-type","sectionCode":null,"conversion":"docx-structure"},"warnings":[],"reused":false}}: expected 201 to be 403 // Object.is equality
+ ↓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > creates the exact working copy using real verified bytes/native conversion, with source identity in every CREATE audit
+ ↓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > reuses the exact actor’s draft without replacing edited section content
+ ↓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > refuses source/project mismatches and foreign tenants without creating anything
+ ↓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > refuses changed stored bytes through the default Vault adapter, with no new authoring evidence
+ ↓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > requires a stated reason and an editor role
+ ↓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > imports a captured data-room source through the real tenant-checked upload byte reader
+ ↓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > rolls back document, section, revision and origin evidence together when a CREATE audit cannot be recorded
+ ↓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > serves the complete canonical IND library through the same authenticated authoring router
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > refuses a private project before original bytes, conversion or authoring evidence are read or written
+AssertionError: {"success":true,"data":{"doc":{"id":"84d267a1-1ddf-411d-8951-68d9ff737789","title":"Custom IND input","module":"M3","product_code":"custom-ind-source-type","locale":"en-US","status":"draft","created_by":"3","template_id":null,"submitted_at":null,"current_workflow_id":null,"approved_at":null,"frozen_at":null,"locked_at":null,"locked_by":null,"version":null,"tenant_id":1,"created_at":"2026-10-13T20:06:05.119Z","updated_at":"2026-10-13T20:06:05.119Z","client_program_id":"11111111-1111-4111-8111-111111111111","c2c_document_id":"doc_ind_11111111","provenance":{"source":"import","note":"Revise the project source in the document editor","recordedAt":"2026-10-13T20:06:05.085Z","importSource":{"kind":"vault","id":"62bc5523-cae0-474b-8a6e-0d7139a9cb8b","programId":"11111111-1111-4111-8111-111111111111","title":"Custom IND input","fileName":"Custom IND input.docx","mimeType":"application/vnd.openxmlformats-officedocument.wordprocessingml.document","sha256":"01fb2552a6359745bd39c11fb57965d6f5435dabcceaa72568794aa1ef574bc5","documentType":"custom-ind-source-type","sectionCode":null,"conversion":"docx-structure","warnings":[],"reason":"Revise the project source in the document editor"}}},"sections":[{"id":"6ff54515-3b35-41ec-8b85-74b5e292f9db","doc_id":"84d267a1-1ddf-411d-8951-68d9ff737789","code":"3.2.S.4.1","title":"Specification","content":"<table><tbody><tr><td><p>Assay</p></td><td><p>99.2 %</p></td></tr></tbody></table><p><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==\" alt=\"\"></p>","order_index":0,"track_changes":false,"created_at":"2026-10-13T20:06:05.119Z","updated_at":"2026-10-13T20:06:05.119Z","tenant_id":1},{"id":"926de3f9-2bdc-4828-8d89-b59cbd8095e0","doc_id":"84d267a1-1ddf-411d-8951-68d9ff737789","code":"3.2.S.4.2","title":"Analytical methods","content":"<p>Record the method description from this exact source.</p>","order_index":1,"track_changes":false,"created_at":"2026-10-13T20:06:05.119Z","updated_at":"2026-10-13T20:06:05.119Z","tenant_id":1}],"origin":{"kind":"vault","id":"62bc5523-cae0-474b-8a6e-0d7139a9cb8b","programId":"11111111-1111-4111-8111-111111111111","title":"Custom IND input","fileName":"Custom IND input.docx","mimeType":"application/vnd.openxmlformats-officedocument.wordprocessingml.document","sha256":"01fb2552a6359745bd39c11fb57965d6f5435dabcceaa72568794aa1ef574bc5","documentType":"custom-ind-source-type","sectionCode":null,"conversion":"docx-structure"},"warnings":[],"reused":false}}: expected 201 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 201
+
+ ❯ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts:109:62
+    107|     try {
+    108|       const response = await author(request(app).post('/api/authoring/…
+    109|       expect(response.status, JSON.stringify(response.body)).toBe(403);
+       |                                                              ^
+    110|       expect(response.body.error).toBe('PROJECT_PERMISSION_DENIED');
+    111|       expect(response.body.data).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)
+   Start at  20:05:46
+   Duration  18.27s (transform 7.97s, setup 217ms, import 1.97s, tests 15.66s, environment 0ms)

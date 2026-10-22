@@ -136,6 +136,8 @@ beforeAll(async () => {
       ADD COLUMN IF NOT EXISTS metadata JSONB, ADD COLUMN IF NOT EXISTS ectd_module_id INTEGER,
       ADD COLUMN IF NOT EXISTS module_name TEXT, ADD COLUMN IF NOT EXISTS embedding TEXT;
     INSERT INTO organizations (id, name) VALUES (${ORG}, 'Org') ON CONFLICT DO NOTHING;
+    CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT);
+    INSERT INTO users VALUES (3,'Filing reviewer','member@org.test');
   `);
   for (const m of MIGRATIONS) await h.pglite.exec(readFileSync(path.join(ROOT, m), 'utf8'));
   await h.pglite.exec(AUDIT_LOGS_PGLITE_DDL);
@@ -180,7 +182,8 @@ async function frozenDocument(docId: string, sectionId: string, text: string): P
 }
 
 const place = (docId: string) =>
-  request(app).post('/api/coauthor/documents').send({ moduleNumber: 'm3.2.p.5', sourceAuthoringDocId: docId });
+  // The stated reason a filing copy now requires (2026-10-08, filing-spine design review).
+  request(app).post('/api/coauthor/documents').send({ moduleNumber: 'm3.2.p.5', sourceAuthoringDocId: docId, changeReason: 'Placing this document into the filing' });
 const applyTemplate = (docId: string) =>
   request(app)
     .post(`/api/authoring/docs/${docId}/apply-template`)

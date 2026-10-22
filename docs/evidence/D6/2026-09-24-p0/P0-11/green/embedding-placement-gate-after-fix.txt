@@ -72,4 +72,3 @@ stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts >
       Tests  12 passed (12)
    Start at  01:22:17
    Duration  2.94s (transform 1.26s, setup 119ms, import 2.36s, tests 37ms, environment 0ms)
-

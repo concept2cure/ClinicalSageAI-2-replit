@@ -247,7 +247,6 @@ describe('a spreadsheet is read to its last value', () => {
     expect(r.lastRow).toBe(4);
   });
 });
-
 /** CSV supplies field text, not a client-approved type or scientific schema. */
 describe('CSV source values survive read/edit/save without inferred types', () => {
   const csv = Buffer.from([

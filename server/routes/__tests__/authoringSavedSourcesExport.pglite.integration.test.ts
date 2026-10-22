@@ -2,6 +2,8 @@
  * current-version/disposition SQL, XML renderer and export-history SQL. Auth
  * membership and audit persistence are explicit seams; no audit-HMAC/RLS PQ. */
 import { createHash, randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
@@ -20,6 +22,7 @@ vi.mock('../../db', () => ({
 }));
 vi.mock('../../middleware/orgMembership', () => ({
   enforceOrgMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
+  requireEditorAccess: (_req: unknown, _res: unknown, next: () => void) => next(),
   invalidateOrgMembershipCache: () => undefined,
 }));
 vi.mock('../../services/auditService', () => ({
@@ -40,6 +43,10 @@ let app: express.Express;
 
 beforeAll(async () => {
   harness = await createDispositionHarness();
+  // The shared disposition harness already owns export history. Controlled
+  // exports now inspect immutable CREATE receipts; apply the actual audit
+  // migration rather than stub that source-governance read or recreate stores.
+  await harness.pg.exec(readFileSync(path.resolve(__dirname, '../../../db/migrations/20260725_authoring_audit_trail.sql'), 'utf8'));
   await harness.pg.exec(`
     ALTER TABLE authoring_documents ADD COLUMN title text, ADD COLUMN module text,
       ADD COLUMN product_code text, ADD COLUMN locale text, ADD COLUMN created_at timestamptz DEFAULT now(),
@@ -52,18 +59,24 @@ beforeAll(async () => {
     CREATE TABLE authoring_signatures (doc_id uuid, tenant_id integer, signer_email text,
       signer_name text, meaning text, reason text, method text, content_hash text,
       covered_freeze_version text, pin_verified boolean, signed_at timestamptz DEFAULT now());
-    CREATE TABLE authoring_export_history (id uuid DEFAULT gen_random_uuid(), document_id uuid,
-      export_type text, doc_sha256 text, exported_by text, file_name text, file_size bigint,
-      metadata jsonb, tenant_id integer, exported_at timestamptz DEFAULT now());
-    ALTER TABLE vault.documents ADD COLUMN document_code text, ADD COLUMN document_type text,
+    ALTER TABLE vault.documents ADD COLUMN document_type text,
       ADD COLUMN file_name text, ADD COLUMN mime_type text, ADD COLUMN folder_id text,
-      ADD COLUMN evidence_kind text, ADD COLUMN ctd_section text, ADD COLUMN placement_status text;
+      ADD COLUMN evidence_kind text, ADD COLUMN ctd_section text,
+      -- As migrations/20260823_vault_document_placement.sql declares it: the
+      -- Vault document read (document-catalog-document.ts) refuses a NULL one.
+      ADD COLUMN placement_status text NOT NULL DEFAULT 'unfiled';
     ALTER TABLE vault.document_catalog ADD COLUMN catalog_status text DEFAULT 'extracted',
       ADD COLUMN extraction_method text DEFAULT 'pdf-text', ADD COLUMN extraction_confidence double precision,
-      ADD COLUMN extraction_error text, ADD COLUMN char_count integer, ADD COLUMN word_count integer,
+      -- char_count as migrations/20260905_document_catalog.sql declares it
+      -- (NOT NULL DEFAULT 0); the Vault document read refuses a NULL one.
+      ADD COLUMN extraction_error text, ADD COLUMN char_count integer NOT NULL DEFAULT 0, ADD COLUMN word_count integer,
       ADD COLUMN page_count integer, ADD COLUMN document_kind text, ADD COLUMN purpose text,
       ADD COLUMN summary text, ADD COLUMN cataloged_at timestamptz;
   `);
+  // The catalog's attribution columns (Data Room S4, 88ab56f67), which the
+  // Vault document read now selects: the real migration, as the other PGlite
+  // harnesses apply it.
+  await harness.pg.exec(readFileSync(path.resolve(__dirname, '../../../migrations/20261008e_document_catalog_attribution.sql'), 'utf8'));
   const query = async (sql: string, params?: unknown[]) => {
     h.sql.push(sql);
     // Isolated mutation proof of the actual old projection. The shared route

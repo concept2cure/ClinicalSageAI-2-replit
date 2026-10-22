@@ -1,0 +1,17 @@
+{
+  "baselineDatabase": "platform_test",
+  "actualCurrentDatabaseInRestrictedRuntime": "platform_test",
+  "runtimeRole": "app_service",
+  "originalOrg18Protocol9Signature12PresentInBaselineDatabase": false,
+  "org2User25AndMembershipPresentInBaselineDatabase": true,
+  "meaningOfCombinedPreservationHash": "Before/after equality verifies the actual present org2/user25 row and membership; absent org18/doc9/sig12 values do not prove preservation of those records.",
+  "subsequentReadOnlyPresenceCheck": {
+    "database": "platform_ci_native_recheck_20261013",
+    "protocol9InOrg18": true,
+    "signature12InOrg18": true,
+    "sectionCount": 13,
+    "comparativePreservationClaim": false
+  },
+  "mutationsIssuedToOriginalNativeDatabase": false,
+  "baselineIssuedConnectionsToOriginalNativeDatabase": false
+}

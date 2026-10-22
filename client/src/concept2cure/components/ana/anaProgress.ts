@@ -27,7 +27,6 @@
 import type {
   AnaChatMessage,
   AnaContextUsed,
-  AnaPlanChange,
   AnaPlanStep,
   AnaProgressPhase,
   AnaServedModel,
@@ -37,6 +36,7 @@ import type {
 } from './useAnaChat.types';
 import { isAnaRunPolicy, stepLabels } from '@shared/ana/run-policy';
 import { unknownStepLabel } from '@shared/ana/step-verbs';
+import { diffPlan } from '@shared/ana/plan-diff';
 
 /**
  * Phases the client itself observes (no server `status` event carries them).
@@ -103,15 +103,7 @@ export function closeProgress(
 }
 
 /** "57s", "1m 12s", "2h 05m". Whole seconds; a duration is never fractional here. */
-export function formatElapsed(ms: number): string {
-  const total = Math.max(0, Math.floor(ms / 1000));
-  const h = Math.floor(total / 3600);
-  const m = Math.floor((total % 3600) / 60);
-  const s = total % 60;
-  if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m`;
-  if (m > 0) return `${m}m ${String(s).padStart(2, '0')}s`;
-  return `${s}s`;
-}
+export { formatElapsed } from '@shared/ana/turn-timeline';
 
 /** "340 ms" under a second, "2.4s" above it. For a single tool step; the server's "Took" fact uses the same one. */
 export { formatStepDuration } from '@shared/ana/step-verbs';
@@ -231,34 +223,6 @@ export function readPlanSteps(raw: unknown): AnaPlanStep[] | null {
   return steps;
 }
 
-/**
- * The changes from one plan to the next, keyed by title (the tool asks for the
- * same titles on every call). A first plan is all `added`, marked `initial`,
- * so the transcript can say "Planned 5 steps" once rather than five times.
- */
-export function diffPlan(
-  prev: AnaPlanStep[] | undefined,
-  next: AnaPlanStep[],
-  at: number,
-  round?: number,
-): AnaPlanChange[] {
-  const before = new Map((prev ?? []).map((s) => [s.title.toLowerCase(), s]));
-  const initial = !prev || prev.length === 0;
-  const tag = { at, ...(round ? { round } : {}), ...(initial ? { initial: true } : {}) };
-  const changes: AnaPlanChange[] = [];
-  for (const s of next) {
-    const was = before.get(s.title.toLowerCase());
-    if (!was) changes.push({ kind: 'added', title: s.title, ...tag });
-    if (s.status !== was?.status) {
-      if (s.status === 'in_progress') changes.push({ kind: 'started', title: s.title, ...tag });
-      if (s.status === 'completed') changes.push({ kind: 'completed', title: s.title, ...tag });
-    }
-    before.delete(s.title.toLowerCase());
-  }
-  for (const gone of before.values()) changes.push({ kind: 'removed', title: gone.title, at, ...(round ? { round } : {}) });
-  return changes;
-}
-
 /** Apply a `plan` event to the turn it belongs to. A malformed payload changes nothing. */
 export function applyPlanEvent(
   m: AnaChatMessage,
@@ -355,6 +319,7 @@ const KNOWN_STOPPED_REASONS: ReadonlySet<string> = new Set<AnaStoppedReason>([
   'hold_expired',
   'hold_unavailable',
   'answer_cut_off',
+  'client_disconnected',
 ]);
 
 /** Labels that are non-empty strings (shared/ana/run-policy.ts), or undefined when there are none. */

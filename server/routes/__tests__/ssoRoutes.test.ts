@@ -40,6 +40,8 @@ vi.hoisted(() => {
       idpEntityId: 'https://orphan-idp.example.test',
       idpCertificate: 'MIIORPHANCERT',
     },
+    incomplete: { idpSsoUrl: '', idpEntityId: 'incomplete', idpCertificate: ' ' },
+    unsigned: { idpSsoUrl: 'https://unsigned.example.test/sso', idpEntityId: 'unsigned', idpCertificate: 'MIICERT', signRequests: true },
   });
 });
 
@@ -82,59 +84,8 @@ const dbState = vi.hoisted(() => ({
 }));
 
 vi.mock('../../db', async () => {
-  const { getTableName } = await import('drizzle-orm');
-  const { PgDialect } = await import('drizzle-orm/pg-core');
-  const dialect = new PgDialect();
-  const camel = (s: string) => s.replace(/_([a-z])/g, (_m, c: string) => c.toUpperCase());
-  const holds = (row: Record<string, unknown>, sql: string, params: unknown[]) => {
-    const re = /"[^"]+"\."([^"]+)"\s*=\s*\$(\d+)/g;
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(sql))) {
-      if (row[camel(m[1])] !== params[Number(m[2]) - 1]) return false;
-    }
-    return true;
-  };
-  const select = () => ({
-    from: (table: unknown) => {
-      const name = getTableName(table as never);
-      let rows = dbState.rows[name] ?? [];
-      const chain = {
-        where: (cond: unknown) => {
-          const q = dialect.sqlToQuery(cond as never);
-          dbState.selectWheres.push({ table: name, sql: q.sql, params: q.params });
-          rows = rows.filter(r => holds(r, q.sql, q.params));
-          return chain;
-        },
-        limit: async (n: number) => rows.slice(0, n),
-        then: (res: (v: unknown[]) => unknown, rej?: (e: unknown) => unknown) =>
-          Promise.resolve(rows).then(res, rej),
-      };
-      return chain;
-    },
-  });
-  const insert = (table: unknown) => ({
-    values: (v: Record<string, unknown>) => {
-      const name = getTableName(table as never);
-      const row = { id: dbState.nextId++, ...v };
-      dbState.inserts.push({ table: name, values: v });
-      (dbState.rows[name] ??= []).push(row);
-      return {
-        returning: async () => [row],
-        then: (res: (v: unknown[]) => unknown, rej?: (e: unknown) => unknown) =>
-          Promise.resolve([row]).then(res, rej),
-      };
-    },
-  });
-  const update = (table: unknown) => ({
-    set: (v: Record<string, unknown>) => ({
-      where: async () => {
-        dbState.updates.push({ table: getTableName(table as never), values: v });
-      },
-    }),
-  });
-  const db = { select, insert, update };
-  const pool = { query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }) };
-  return { db, pool, getPool: () => pool, getDb: () => db, query: pool.query };
+  const { createSsoDbFixture } = await import('./sso-db-fixture');
+  return createSsoDbFixture(dbState);
 });
 
 /**
@@ -169,6 +120,21 @@ vi.mock('../../services/saml-provider', async importOriginal => {
 const recordAuthEvent = vi.hoisted(() =>
   vi.fn(async (_entry: Record<string, unknown>): Promise<void> => undefined)
 );
+const secondFactor = vi.hoisted(() => ({
+  deliverable: true,
+  createEmailOtp: vi.fn(async () => '123456'),
+  sendLoginOtpEmail: vi.fn(async () => undefined),
+  openSession: vi.fn(async (_userId: unknown, settings?: { security?: { sessionTimeoutMinutes?: number } }) => ({ sid: 'saml-test-session', idl: (settings?.security?.sessionTimeoutMinutes ?? 60) * 60 })),
+}));
+vi.mock('../../services/emailOtpService', () => ({ createEmailOtp: secondFactor.createEmailOtp }));
+vi.mock('../../services/emailService', () => ({ sendLoginOtpEmail: secondFactor.sendLoginOtpEmail }));
+vi.mock('../../services/auth/login-code-delivery', () => ({
+  canDeliverLoginCode: () => secondFactor.deliverable,
+  LOGIN_CODE_UNDELIVERABLE_CODE: 'AUTH_OTP_UNDELIVERABLE',
+  LOGIN_CODE_UNDELIVERABLE_REASON: 'mfa_challenge_email_undeliverable',
+  LOGIN_CODE_UNDELIVERABLE_MESSAGE: 'We could not send your verification code.',
+}));
+vi.mock('../../services/session-inactivity', () => ({ openSession: secondFactor.openSession }));
 vi.mock('../../services/audit/auth-event-audit', () => ({
   recordAuthEvent,
   describeAuthEvent: () => '',
@@ -304,6 +270,70 @@ describe('SAML SSO — the organisation is the one that owns the matched IdP con
     dbState.rows.users = [];
     dbState.rows.organization_users = [];
     saml.validateResponse.mockReset();
+    secondFactor.deliverable = true;
+    secondFactor.sendLoginOtpEmail.mockReset().mockResolvedValue(undefined);
+  });
+
+  it('D07 configuration: one explicit configured slug is discoverable without secrets, directory or federation', async () => {
+    const res = await request(app).get('/api/auth/sso/saml/configuration?org=acme');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ success: true, provider: 'saml', organization: 'acme', configured: true });
+    expect(res.headers['cache-control']).toBe('no-store');
+    expect(saml.getAuthorizeUrl).not.toHaveBeenCalled();
+    expect(saml.validateResponse).not.toHaveBeenCalled();
+  });
+
+  it.each(['', '?org=../acme', '?org=acme&org=default'])('D07 configuration: missing or malformed slug %s refuses without default discovery', async query => {
+    const res = await request(app).get(`/api/auth/sso/saml/configuration${query}`);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('SAML_ORG_REQUIRED');
+  });
+
+  it.each(['globex', 'orphan', 'incomplete', 'unsigned'])('D07 configuration: unconfigured, orphan or incomplete %s refuses without another tenant fallback', async org => {
+    const res = await request(app).get(`/api/auth/sso/saml/configuration?org=${org}`);
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('SAML_NOT_CONFIGURED');
+    expect(saml.getAuthorizeUrl).not.toHaveBeenCalled();
+  });
+
+  it('D07 MFA: a verified assertion issues a tenant-bound authenticator challenge, never an access JWT or session', async () => {
+    dbState.rows.users = [{ ...alice, mfaEnabled: true, mfaMethod: 'totp' }];
+    dbState.rows.organization_users = [membership(alice.id, ACME_ORG, 'manager')];
+    saml.validateResponse.mockResolvedValue(assertion(alice.email));
+    const res = await callback('acme');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ success: true, mfaRequired: true, mfaMethods: [{ type: 'totp' }] });
+    expect(res.body.accessToken).toBeUndefined();
+    expect(jwt.decode(res.body.challengeId)).toMatchObject({ userId: '7', organizationId: '42', role: 'manager', type: 'mfa_challenge', provider: 'saml', sessionIndex: '_session_1' });
+    expect(secondFactor.openSession).not.toHaveBeenCalled();
+    expect(secondFactor.createEmailOtp).not.toHaveBeenCalled();
+    expect(secondFactor.sendLoginOtpEmail).not.toHaveBeenCalled();
+  });
+
+  it('D07 MFA: an unavailable email delivery refuses sign-in with no challenge or session', async () => {
+    dbState.rows.users = [alice];
+    dbState.rows.organization_users = [membership(alice.id, ACME_ORG, 'member')];
+    saml.validateResponse.mockResolvedValue(assertion(alice.email));
+    secondFactor.deliverable = false;
+    const res = await callback('acme');
+    expect(res.status).toBe(503);
+    expect(res.body.error.code).toBe('AUTH_OTP_UNDELIVERABLE');
+    expect(res.body.challengeId).toBeUndefined();
+    expect(res.body.accessToken).toBeUndefined();
+    expect(secondFactor.openSession).not.toHaveBeenCalled();
+    expect(secondFactor.createEmailOtp).not.toHaveBeenCalled();
+  });
+
+  it('D07 MFA: an email delivery failure refuses rather than claiming a sent code or opening a session', async () => {
+    dbState.rows.users = [alice];
+    dbState.rows.organization_users = [membership(alice.id, ACME_ORG, 'member')];
+    saml.validateResponse.mockResolvedValue(assertion(alice.email));
+    secondFactor.sendLoginOtpEmail.mockRejectedValueOnce(new Error('SMTP refused'));
+    const res = await callback('acme');
+    expect(res.status).toBe(503);
+    expect(res.body.error.code).toBe('AUTH_OTP_UNDELIVERABLE');
+    expect(res.body.challengeId).toBeUndefined();
+    expect(secondFactor.openSession).not.toHaveBeenCalled();
   });
 
   // ── 1. The env default IdP serves the default org only ───────────────────
@@ -369,17 +399,16 @@ describe('SAML SSO — the organisation is the one that owns the matched IdP con
     const res = await callback('acme');
 
     expect(res.status).toBe(200);
-    expect(res.body.user.organizationId).toBe(String(ACME_ORG));
-    expect(res.body.user.roles).toEqual(['manager']);
-    const claims = jwt.decode(res.body.accessToken) as Record<string, unknown>;
+    expect(res.body.mfaRequired).toBe(true);
+    const claims = jwt.decode(res.body.challengeId) as Record<string, unknown>;
     expect(claims.organizationId).toBe(String(ACME_ORG));
     expect(claims.role).toBe('manager');
     expect(claims.provider).toBe('saml');
     expect(events()).toContainEqual(
       expect.objectContaining({
-        action: 'user_login',
+        action: 'user_login_mfa_challenge',
         outcome: 'success',
-        reason: 'saml_sso',
+        reason: 'saml_mfa_challenge_email',
         userId: alice.id,
         tenantId: ACME_ORG,
         email: alice.email,
@@ -387,7 +416,7 @@ describe('SAML SSO — the organisation is the one that owns the matched IdP con
     );
   });
 
-  it("callback: the session carries the config organisation's idle window and session limit, not the platform defaults", async () => {
+  it("callback: first-factor proof defers session creation to the canonical MFA verifier, still bound to the config organization", async () => {
     dbState.rows.organizations = dbState.rows.organizations.map(o =>
       o.id === ACME_ORG ? { ...o, settings: { security: { sessionTimeoutMinutes: 30, maxConcurrentSessions: 2 } } } : o,
     );
@@ -398,11 +427,13 @@ describe('SAML SSO — the organisation is the one that owns the matched IdP con
     const res = await callback('acme');
 
     expect(res.status).toBe(200);
-    const claims = jwt.decode(res.body.accessToken) as Record<string, unknown>;
-    expect(claims.idl, "the SSO session ignored the tenant's idle window").toBe(30 * 60);
+    const claims = jwt.decode(res.body.challengeId) as Record<string, unknown>;
+    expect(claims.organizationId).toBe(String(ACME_ORG));
+    expect(claims.type).toBe('mfa_challenge');
+    expect(secondFactor.openSession).not.toHaveBeenCalled();
   });
 
-  it('callback: a return path rides in the fragment with the session, never in a query string (IAM-18 item 6)', async () => {
+  it('callback: a return path rides in the fragment with the challenge, never in a query string (IAM-18 item 6)', async () => {
     dbState.rows.users = [alice];
     dbState.rows.organization_users = [membership(alice.id, ACME_ORG, 'manager')];
     saml.validateResponse.mockResolvedValue(assertion(alice.email));
@@ -419,9 +450,11 @@ describe('SAML SSO — the organisation is the one that owns the matched IdP con
     expect(beforeHash).toBe('/concept2cure/login');
     expect(beforeHash, 'the token travelled in the query string').not.toMatch(/token=/);
     const params = new URLSearchParams(fragment);
-    const claims = jwt.decode(String(params.get('sso'))) as Record<string, unknown> | null;
+    expect(params.get('sso')).toBeNull();
+    const claims = jwt.decode(String(params.get('mfa'))) as Record<string, unknown> | null;
     expect(claims?.organizationId).toBe(String(ACME_ORG));
     expect(claims?.provider).toBe('saml');
+    expect(claims?.type).toBe('mfa_challenge');
     expect(params.get('returnTo')).toBe('/concept2cure/projects?tab=1');
     expect(params.get('provider')).toBe('saml');
   });
@@ -447,12 +480,12 @@ describe('SAML SSO — the organisation is the one that owns the matched IdP con
     const res = await callback('acme');
 
     expect(res.status).toBe(200);
-    expect(res.body.user.organizationId).toBe(String(ACME_ORG));
+    expect(jwt.decode(res.body.challengeId)).toMatchObject({ organizationId: String(ACME_ORG), type: 'mfa_challenge' });
     const memberships = dbState.inserts.filter(i => i.table === 'organization_users');
     expect(memberships).toHaveLength(1);
     expect(memberships[0].values).toMatchObject({ organizationId: ACME_ORG, role: 'member' });
     expect(events()).toContainEqual(
-      expect.objectContaining({ outcome: 'success', reason: 'saml_sso', tenantId: ACME_ORG })
+      expect.objectContaining({ outcome: 'success', reason: 'saml_mfa_challenge_email', tenantId: ACME_ORG })
     );
   });
 
@@ -471,7 +504,7 @@ describe('SAML SSO — the organisation is the one that owns the matched IdP con
 
     expect(res.status).toBe(200);
     expect(dbState.updates).toEqual([]);
-    expect(res.body.user.name).toBe('alice');
+    expect(dbState.rows.users[0].name).toBe('alice');
   });
 
   it('callback: an account that is not active is refused (403), with a failure event', async () => {

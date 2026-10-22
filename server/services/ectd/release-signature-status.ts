@@ -16,6 +16,22 @@
  * verification so there is ONE implementation of "does this signature still
  * bind its package" rather than a second, drifting copy.
  *
+ * ## …and why binding its package is not enough
+ *
+ * `resolveSignedPackageForExport` answers "does this signature still bind the
+ * package it was taken over", by recomputing the digest from the frozen
+ * snapshot. The dispatch transmits something else: the sequence's live
+ * `submission_leaves`. The orchestrator never writes those rows, so a verified
+ * orchestrator signature was being read as a release over content nobody had
+ * signed — leaves placed, replaced or withdrawn after signing included.
+ *
+ * So an orchestrator run clears this gate only when its signed leaf manifest IS
+ * this sequence's current manifest (`signed-manifest-covers-sequence.ts`). A
+ * signature over different content reports `unsigned`, not `invalid`: the
+ * signature is intact, it simply does not cover this sequence — and `unsigned`
+ * is the one verdict that falls through to the sequence spine, whose own digest
+ * binds those leaf rows, so the remedy stays one governed click away.
+ *
  * ## Why a submission can have several runs
  *
  * Re-running the orchestrator produces a new run. Only runs whose signature
@@ -34,6 +50,7 @@ import {
 } from './signed-package-export.js';
 import type { ReleaseSignatureVerdict } from './dispatch-gate.js';
 import { resolveSequenceReleaseSignature } from './sequence-release-signature.js';
+import { signedManifestCoversSequence } from './signed-manifest-covers-sequence.js';
 import { canonicalRegionOf } from '../../../shared/regulatory/region-identity.js';
 import { createScopedLogger } from '../../utils/logger.js';
 
@@ -212,10 +229,24 @@ async function resolveOrchestratorReleaseSignature(params: {
   organizationId: number;
   /** The eCTD sequence being assessed, e.g. '0001'. */
   sequenceNumber?: string | null;
+  /**
+   * `ectd_sequences.id` — the key the sequence's LIVE leaves are on.
+   *
+   * Needed because the orchestrator signs its own composed package and never
+   * writes `submission_leaves` (see signed-manifest-covers-sequence.ts), so
+   * matching `descriptor.sequenceNumber` establishes only that the signature
+   * NAMES this sequence. Whether it COVERS what would be transmitted is a
+   * question about these rows.
+   */
+  sequenceId?: number | null;
   /** That sequence's region, in any of the platform's vocabularies. */
   region?: string | null;
 }): Promise<ReleaseSignatureStatus> {
   const { submissionId, organizationId } = params;
+  const sequenceId =
+    typeof params.sequenceId === 'number' && Number.isFinite(params.sequenceId) && params.sequenceId > 0
+      ? params.sequenceId
+      : null;
   const sequenceNumber =
     typeof params.sequenceNumber === 'string' && params.sequenceNumber.trim() !== ''
       ? params.sequenceNumber.trim()
@@ -304,6 +335,8 @@ async function resolveOrchestratorReleaseSignature(params: {
   let signedOtherSequences = 0;
   /** Runs that signed this sequence NUMBER, but in another region. */
   let signedOtherRegions = 0;
+  /** Runs that signed this sequence, over a manifest it no longer holds. */
+  const signedOtherManifests: string[] = [];
 
   for (const runId of runIds) {
     const result = await resolveSignedPackageForExport({ runId, organizationId });
@@ -328,13 +361,52 @@ async function resolveOrchestratorReleaseSignature(params: {
         signedOtherRegions++;
         continue;
       }
+      /* THE signature binds what ships, or it is not this sequence's release.
+         resolveSignedPackageForExport verified the signature against its own
+         frozen snapshot; it does not — cannot — know what the sequence's
+         `submission_leaves` hold now, and those rows are what the dispatch
+         transmits. So ask. A signature over a manifest this sequence no
+         longer holds is skipped exactly as one over another sequence is: it
+         is not evidence about this package in either direction. */
+      if (sequenceId !== null) {
+        const coverage = await signedManifestCoversSequence({
+          signedLeaves: result.descriptor.leaves ?? [],
+          sequenceId,
+          submissionId,
+          organizationId,
+          region: region ?? signedRegion,
+          recordedPackageIdentity: result.descriptor.recordedPackageIdentity,
+        });
+        if ('unknown' in coverage) {
+          // Fail closed and say which half is unknown. An unreadable sequence
+          // is not a verified one, and it is not an unsigned one either.
+          return { verdict: 'undetermined', runId, detail: coverage.detail };
+        }
+        if (!coverage.covers) {
+          signedOtherManifests.push(`run ${runId}: ${coverage.detail}`);
+          continue;
+        }
+        return {
+          verdict: 'signed',
+          runId,
+          signatureId: result.descriptor.signatureId,
+          detail:
+            `verified against run ${runId} for sequence ${sequenceNumber ?? '(unnamed)'}; ` +
+            `its signed manifest is this sequence's ${coverage.leafCount} leaf/leaves ` +
+            `(${coverage.corroboratedLeaves} matched on their eCTD index-md5)`,
+        };
+      }
+
+      /* No sequence id: the live leaves cannot be addressed, so coverage was
+         not checked. The verdict says so rather than letting a clear answer
+         imply a check that did not run. */
       return {
         verdict: 'signed',
         runId,
         signatureId: result.descriptor.signatureId,
         detail: sequenceNumber
-          ? `verified against run ${runId} for sequence ${sequenceNumber}`
-          : `verified against run ${runId}`,
+          ? `verified against run ${runId} for sequence ${sequenceNumber}; no sequence id was supplied, so whether its signed manifest is still this sequence's content was not checked`
+          : `verified against run ${runId}; no sequence was named, so whether its signed manifest is still the sequence's content was not checked`,
       };
     }
 
@@ -360,6 +432,17 @@ async function resolveOrchestratorReleaseSignature(params: {
   // and "there is a signature, over a different sequence" send an operator to
   // completely different places, and the second one is the one that used to
   // clear this gate.
+  if (signedOtherManifests.length > 0) {
+    return {
+      verdict: 'unsigned',
+      detail:
+        `no release signature covers sequence ${sequenceNumber ?? '(unnamed)'} as it now stands — ` +
+        `${signedOtherManifests.length} run(s) signed it over different content. ` +
+        `${signedOtherManifests.join('; ')}. ` +
+        `Sign this sequence for release, which binds the leaf manifest that would be transmitted.`,
+    };
+  }
+
   if (signedOtherRegions > 0) {
     return {
       verdict: 'unsigned',
@@ -421,15 +504,22 @@ async function resolveOrchestratorReleaseSignature(params: {
  *
  * `sequenceId` is optional so a caller that has only the submission keeps
  * compiling; without it the second spine cannot be addressed at all (it is
- * keyed on the sequence, not the submission) and the orchestrator answer is
- * returned unchanged.
+ * keyed on the sequence, not the submission), the orchestrator signature's
+ * coverage of the live leaves cannot be checked either, and the orchestrator
+ * answer is returned unchanged — with a detail that names what was not
+ * checked.
  */
 export async function resolveReleaseSignatureStatus(params: {
   submissionId: number;
   organizationId: number;
   /** The eCTD sequence being assessed, e.g. '0001'. */
   sequenceNumber?: string | null;
-  /** `ectd_sequences.id` — the key the submissions spine's signature is on. */
+  /**
+   * `ectd_sequences.id` — the key the submissions spine's signature is on, and
+   * the key this sequence's live leaves are on. Without it neither the second
+   * spine nor the orchestrator signature's coverage of those leaves can be
+   * checked, and the detail string says so.
+   */
   sequenceId?: number | null;
   /** That sequence's region, in any of the platform's vocabularies. */
   region?: string | null;

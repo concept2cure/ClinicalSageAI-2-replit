@@ -63,9 +63,12 @@ WORKDIR /app
 # --no-install-recommends.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+      openssl \
       libreoffice-common \
       libreoffice-writer \
       fonts-liberation \
+      fonts-noto-core \
+      fonts-noto-cjk \
       ghostscript \
       ocrmypdf \
       tesseract-ocr \
@@ -94,22 +97,18 @@ RUN python3 -m venv /opt/docx-runtime && \
     rm /tmp/requirements.txt
 ENV ANA_DOCX_PYTHON=/opt/docx-runtime/bin/python
 
-# veraPDF, pinned. The veraPDF Consortium publishes the CLI as a self-contained
-# jar on Maven Central (org.verapdf.apps:cli — Main-Class
-# org.verapdf.apps.GreenfieldCliWrapper). The checksum is the value published
-# beside the artifact (cli-<version>.jar.sha256 on Maven Central), verified
-# against the downloaded bytes on 2026-09-20; a build whose download does not
-# match it FAILS rather than shipping an unverified validator. Bump the version
-# and checksum together. /usr/local/bin/verapdf is the launcher pdfa-pipeline.ts
-# (VERAPDF_BINARY, default `verapdf`) and pilot-go-no-go.mjs (VERAPDF_COMMAND)
-# both resolve from PATH.
+# veraPDF, pinned to the Consortium's released Maven Central CLI bytes.
+# The version and SHA256 stay paired; an upstream HTTP success never admits a
+# different payload. Published CI exhausted all nine repo1 attempts with 404s,
+# so use canonical Central first and its official repo1 endpoint as a bounded
+# fallback. Both remain HTTPS-only. Unavailability and integrity failures stop
+# the image, and the real strict PDF/A checks below remain mandatory.
 ARG VERAPDF_VERSION=1.30.2
 ARG VERAPDF_SHA256=287cc9c9757f99dcff4a2d39b68268245b48103fb6af443162d5a29df2afa332
+COPY scripts/ops/fetch-verapdf.sh /tmp/fetch-verapdf.sh
 RUN set -eu; \
-    mkdir -p /opt/verapdf; \
-    curl -fsSL -o /opt/verapdf/verapdf-cli.jar \
-      "https://repo1.maven.org/maven2/org/verapdf/apps/cli/${VERAPDF_VERSION}/cli-${VERAPDF_VERSION}.jar"; \
-    echo "${VERAPDF_SHA256}  /opt/verapdf/verapdf-cli.jar" | sha256sum -c -; \
+    sh /tmp/fetch-verapdf.sh "${VERAPDF_VERSION}" "${VERAPDF_SHA256}" /opt/verapdf/verapdf-cli.jar; \
+    rm /tmp/fetch-verapdf.sh; \
     printf '#!/bin/sh\nexec java -Djava.awt.headless=true -jar /opt/verapdf/verapdf-cli.jar "$@"\n' \
       > /usr/local/bin/verapdf; \
     chmod 0755 /usr/local/bin/verapdf

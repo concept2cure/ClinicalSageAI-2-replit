@@ -1,0 +1,14 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ tests/schema-contract/immutable-report-tenant-index.pglite.test.ts > immutable report tenant index repair > reproduces the inherited exact required-object failure when the leading tenant index is missing 2395ms
+ ✓ tests/schema-contract/immutable-report-tenant-index.pglite.test.ts > immutable report tenant index repair > applies the actual repair twice, satisfies that verifier and preserves stored rows, columns and RLS 1730ms
+ ✓ tests/schema-contract/immutable-report-tenant-index.pglite.test.ts > immutable report tenant index repair > fails closed if the canonical base table was never provisioned 1633ms
+ ✓ tests/schema-contract/immutable-report-tenant-index.pglite.test.ts > immutable report tenant index repair > reaches fresh install and deployment exactly once before the unchanged isolation tail 4ms
+ ✓ tests/schema-contract/immutable-report-tenant-index.pglite.test.ts > immutable report tenant index repair > repairs the existing canonical model index without changing table or column definitions 2ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  03:46:36
+   Duration  7.42s (transform 687ms, setup 91ms, import 1.31s, tests 5.77s, environment 0ms)
+

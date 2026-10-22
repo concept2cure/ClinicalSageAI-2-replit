@@ -110,6 +110,45 @@ const REAL_WORK = /\bawait\b|\bapiRequest\b|\bfetch\(|\bmutate|\bpersist|\bsaveT
  */
 const ASKS = /\b(?:on)?[Aa]sk(?:\?\.)?\(\s*(?:'|"|`)/;
 
+/** The same ask, `onAsk` only — for a file whose bare `ask` is its own domain helper. */
+const ON_ASKS = /\bonAsk(?:\?\.)?\(\s*(?:'|"|`)/;
+
+/**
+ * Is this file's bare `ask` a domain function rather than the chat ask?
+ *
+ * The string discriminator above is applied at the CALL. It misreads a local
+ * helper named `ask` whose argument is an enum token — ShadowFindingDisposition's
+ *     const ask = (disposition: FindingDisposition) => onDisposition({ ... });
+ *     <button onClick={() => ask('accepted')}>Accept risk (Part 11 e-signature)</button>
+ * `'accepted'` is a string literal, so the call looked like a chat sentence; the
+ * helper in fact requests the parent's governed chain, which opens the Part 11
+ * signature dialog and POSTs the disposition. A FALSE POSITIVE of exactly the
+ * AccessRequests kind, through a different door.
+ *
+ * So the same discriminator is applied at the DECLARATION too: the chat ask is
+ * declared taking a string (`const ask = onAsk`, `(q: string) => onAsk(q)`); a
+ * domain helper declares a record or token type. A file's bare `ask(` is set
+ * aside only when EVERY `const ask` in it is an arrow whose first parameter is
+ * annotated with a type that is not `string`. An untyped parameter, a string
+ * parameter, an alias assignment, or any one such declaration in the file keeps
+ * every `ask(` in scope — and `onAsk(` is never set aside.
+ *
+ * KNOWN LIMIT: a chat ask declared with a string ALIAS type (`(q: Prompt)`) is
+ * read as a domain helper. No such declaration exists today; spell it `string`.
+ */
+function askIsLocalDomainHelper(code) {
+  const DECL = /const\s+ask\s*=\s*/g;
+  const TYPED_ARROW = /^(?:useCallback\(\s*)?(?:async\s*)?\(\s*\w+\s*:\s*([^,)=]+)/;
+  let m;
+  let seen = 0;
+  while ((m = DECL.exec(code)) !== null) {
+    seen++;
+    const t = TYPED_ARROW.exec(code.slice(DECL.lastIndex, DECL.lastIndex + 200));
+    if (!t || /^string\b/.test(t[1].trim())) return false;
+  }
+  return seen > 0;
+}
+
 function sourceFiles() {
   return execSync("git ls-files 'client/src/**/*.tsx'", {
     cwd: ROOT, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024,
@@ -127,7 +166,7 @@ function sourceFiles() {
  * effect-free — reading half a function and concluding it does nothing is how a
  * gate produces confident false positives.
  */
-function askOnlyHandlers(code) {
+function askOnlyHandlers(code, asks = ASKS) {
   const names = new Set();
   const DECL = /const\s+(\w+)\s*=\s*(?:useCallback\(\s*)?(?:async\s*)?\([^)]*\)\s*=>\s*\{/g;
   let m;
@@ -143,7 +182,7 @@ function askOnlyHandlers(code) {
       }
     }
     const body = code.slice(start, end + 1);
-    if (ASKS.test(body) && !REAL_WORK.test(body)) names.add(m[1]);
+    if (asks.test(body) && !REAL_WORK.test(body)) names.add(m[1]);
   }
   return names;
 }
@@ -163,8 +202,9 @@ function scan(file, raw) {
   // route glob, a URL) cannot open a phantom comment that hides the code after
   // it, and lines and columns stay where they were, so reported lines are true.
   const code = stripComments(raw);
-  const askOnly = askOnlyHandlers(code);
-  const inlineAsk = (expr) => ASKS.test(expr) && !REAL_WORK.test(expr);
+  const asks = askIsLocalDomainHelper(code) ? ON_ASKS : ASKS;
+  const askOnly = askOnlyHandlers(code, asks);
+  const inlineAsk = (expr) => asks.test(expr) && !REAL_WORK.test(expr);
   const bound = (expr) => {
     const name = expr.trim().replace(/^\(\)\s*=>\s*/, '').replace(/[();\s]/g, '');
     return askOnly.has(name) || inlineAsk(expr);
@@ -215,7 +255,10 @@ if (process.argv.includes('--self-test')) {
                    'client/src/concept2cure/v2/surfaces/RbmSurfacesA.tsx',
                    // SubmissionCenter is the fixture behind the generate/plan/
                    // compile/assemble verbs; its repaired Planner must stay silent.
-                   'client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx']) {
+                   'client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx',
+                   // A local `ask(disposition)` that opens the Part 11 signature
+                   // chain — not the chat ask; see askIsLocalDomainHelper.
+                   'client/src/concept2cure/v2/surfaces/ShadowFindingDisposition.tsx']) {
     const hits = scan(f, readFileSync(path.join(ROOT, f), 'utf8'));
     if (hits.length > 0) { console.error(`  ✗ ${f}: still flags ${hits.map((h) => h.label).join(', ')}`); ok = false; }
     else console.log(`  ✓ ${f}: silent on the repaired source`);

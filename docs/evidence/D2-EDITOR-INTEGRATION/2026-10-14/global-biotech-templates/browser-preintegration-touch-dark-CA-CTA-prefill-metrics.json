@@ -1,0 +1,184 @@
+{
+  "metrics": {
+    "visibleEditableViewport": {
+      "x": 46,
+      "y": 732.796875,
+      "width": 298,
+      "height": 110.203125
+    },
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "page": {
+      "clientWidth": 390,
+      "scrollWidth": 390
+    },
+    "canvas": {
+      "x": 0,
+      "y": 0,
+      "width": 390,
+      "height": 844,
+      "clientWidth": 388,
+      "scrollWidth": 388,
+      "clientHeight": 842,
+      "scrollHeight": 842
+    },
+    "editor": {
+      "x": 46,
+      "y": 732.796875,
+      "width": 298,
+      "height": 320,
+      "clientWidth": 298,
+      "scrollWidth": 298,
+      "clientHeight": 320,
+      "scrollHeight": 320
+    },
+    "documentScroll": {
+      "x": 1,
+      "y": 701,
+      "width": 388,
+      "height": 142,
+      "clientWidth": 388,
+      "scrollWidth": 388,
+      "clientHeight": 142,
+      "scrollHeight": 1178
+    },
+    "editorScroll": null,
+    "sectionHeading": {
+      "x": 45,
+      "y": 203,
+      "width": 300,
+      "height": 223.796875,
+      "clientWidth": 300,
+      "scrollWidth": 300,
+      "clientHeight": 223,
+      "scrollHeight": 223
+    },
+    "editorCount": 1
+  },
+  "passage": {
+    "text": "Synthetic preparation notes await verified project evidence and source originals.",
+    "x": 66,
+    "y": 750.796875,
+    "width": 258,
+    "height": 42.25
+  },
+  "axe": {
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "impact": "serious",
+        "targets": [
+          [
+            "div[data-state=\"closed\"] > div"
+          ]
+        ]
+      },
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "targets": [
+          [
+            "aside > .scaf-note"
+          ],
+          [
+            ".ed-tree-row[data-active=\"true\"]:nth-child(1) > .ed-lbl"
+          ],
+          [
+            ".rd-chip"
+          ],
+          [
+            ".ed-tree-row[data-active=\"true\"]:nth-child(2) > .ed-num"
+          ],
+          [
+            ".ed-tree-row[data-active=\"true\"]:nth-child(2) > .ed-lbl"
+          ],
+          [
+            ".ed-tree-row:nth-child(3) > .ed-num"
+          ],
+          [
+            ".ed-tree-row:nth-child(3) > .ed-lbl"
+          ],
+          [
+            ".ed-tree-row:nth-child(4) > .ed-num"
+          ],
+          [
+            ".ed-tree-row:nth-child(4) > .ed-lbl"
+          ],
+          [
+            ".ed-tree-row:nth-child(5) > .ed-num"
+          ],
+          [
+            ".ed-tree-row:nth-child(5) > .ed-lbl"
+          ],
+          [
+            ".ed-tree-row:nth-child(6) > .ed-num"
+          ],
+          [
+            ".ed-tree-row:nth-child(6) > .ed-lbl"
+          ],
+          [
+            ".ed-tree-row:nth-child(7) > .ed-num"
+          ],
+          [
+            ".ed-tree-row:nth-child(7) > .ed-lbl"
+          ],
+          [
+            ".ed-tree-row:nth-child(8) > .ed-num"
+          ],
+          [
+            ".ed-tree-row:nth-child(8) > .ed-lbl"
+          ],
+          [
+            ".ed-tree-row:nth-child(9) > .ed-num"
+          ],
+          [
+            ".ed-tree-row:nth-child(9) > .ed-lbl"
+          ],
+          [
+            ".ed-tree-row:nth-child(10) > .ed-num"
+          ],
+          [
+            ".ed-tree-row:nth-child(10) > .ed-lbl"
+          ],
+          [
+            ".ed-tree-row:nth-child(11) > .ed-num"
+          ],
+          [
+            ".ed-tree-row:nth-child(11) > .ed-lbl"
+          ],
+          [
+            ".ed-mast-num"
+          ],
+          [
+            "h1"
+          ],
+          [
+            ".nda-open:nth-child(3)"
+          ],
+          [
+            ".nda-open:nth-child(5)"
+          ]
+        ]
+      },
+      {
+        "id": "label-content-name-mismatch",
+        "impact": "serious",
+        "targets": [
+          [
+            "button[title=\"Bold (⌘B)\"]"
+          ],
+          [
+            "button[title=\"Italic (⌘I)\"]"
+          ],
+          [
+            "button[title=\"Underline (⌘U)\"]"
+          ]
+        ]
+      }
+    ],
+    "passes": 24
+  }
+}

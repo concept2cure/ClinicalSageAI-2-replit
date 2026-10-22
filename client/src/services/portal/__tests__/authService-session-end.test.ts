@@ -18,7 +18,8 @@ const KEYS = {
   user: 'trialsage_user',
 } as const;
 
-type Call = { url: string; init: RequestInit };
+type FetchInit = NonNullable<Parameters<typeof fetch>[1]>;
+type Call = { url: string; init: FetchInit };
 const calls: Call[] = [];
 
 const jsonResponse = (status: number, body: unknown) => ({
@@ -50,7 +51,7 @@ beforeEach(() => {
   vi.resetModules();
   vi.stubGlobal(
     'fetch',
-    vi.fn(async (url: string, init: RequestInit) => {
+    vi.fn(async (url: string, init: FetchInit) => {
       calls.push({ url, init });
       const key = Object.keys(answers).find(k => url.endsWith(k));
       return key ? answers[key]() : jsonResponse(200, { success: true });
@@ -114,7 +115,26 @@ describe('the auth service on a session the server ended', () => {
     expect(authService.getSessionPolicy()).toMatchObject({ idleMinutes: 15, lifetimeHours: 12 });
     answers['/api/v1/auth/session'] = () => jsonResponse(200, { authenticated: true, user: { id: '1' }, session: { id: 's', idleMinutes: 30, lifetimeHours: 12, expiresAt: '2026-09-26T21:00:00.000Z' } });
     const policy = await authService.refreshSessionPolicy();
-    expect(policy).toEqual({ idleMinutes: 30, lifetimeHours: 12, expiresAt: '2026-09-26T21:00:00.000Z' });
+    expect(policy).toEqual({ idleMinutes: 30, lifetimeHours: 12, expiresAt: '2026-09-26T21:00:00.000Z', sessionId: 's' });
     expect(authService.getSessionPolicy()).toEqual(policy);
+  });
+});
+
+describe('a deferred API refusal belongs to its originally presented session', () => {
+  it.each(['SESSION_IDLE', 'AUTH_002'])('does not expire or refresh a replacement login after an old %s answer', async code => {
+    seedSession();
+    const authService = await load();
+    let finish!: (response: ReturnType<typeof jsonResponse>) => void;
+    answers['/api/v1/auth/me'] = () => new Promise(resolve => { finish = resolve; });
+    const request = authService.api.get('/api/v1/auth/me');
+    await vi.waitFor(() => expect(calls.some(call => call.url.endsWith('/me'))).toBe(true));
+    authService.setToken('replacement-access', { id: '9', organizationId: '7' }, 'replacement-refresh', 3600);
+    finish(jsonResponse(401, { error: { code, message: 'Old session refused' } }));
+    expect((await request).success).toBe(false);
+    expect(authService.getUser()).toMatchObject({ id: '9', organizationId: '7' });
+    expect(localStorage.getItem(KEYS.accessToken)).toBe('replacement-access');
+    expect(localStorage.getItem(KEYS.refreshToken)).toBe('replacement-refresh');
+    expect(calls.some(call => call.url.endsWith('/refresh'))).toBe(false);
+    expect(sessionStorage.getItem('trialsage_signout_reason')).toBeNull();
   });
 });

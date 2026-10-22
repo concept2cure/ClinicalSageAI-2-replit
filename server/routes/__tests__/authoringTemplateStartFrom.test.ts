@@ -47,6 +47,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-template-sta
 process.env.JWT_SECRET_DEV = process.env.JWT_SECRET;
 
 import router from '../authoring.router';
+import { getBuiltinAuthoringTemplates } from '../../services/authoring/builtin-authoring-templates';
 
 async function bearer(): Promise<string> {
   const secret = new TextEncoder().encode(process.env.JWT_SECRET);
@@ -93,6 +94,13 @@ function programLookup(sql: string, params?: unknown[]): { rowCount: number; row
 
 type QueryResult = { rowCount: number; rows: unknown[] };
 
+/** Echo the bound section identity and columns returned by the canonical seed writer. */
+function savedSectionInsert(params: unknown[] | undefined): QueryResult {
+  expect(params).toHaveLength(7);
+  const [id, doc_id, code, title, content, order_index, tenant_id] = params ?? [];
+  return { rowCount: 1, rows: [{ id, doc_id, code, title, content, order_index, tenant_id }] };
+}
+
 /** Install `impl` as the pool, with the project-anchor lookup answered first. */
 function mockDb(impl: (sql: string, params?: unknown[]) => Promise<QueryResult>): void {
   mockQuery.mockImplementation(async (sql: string, params?: unknown[]) => programLookup(sql, params) ?? impl(sql, params));
@@ -105,6 +113,27 @@ function calls(fragment: string): Array<{ sql: string; params: unknown[] }> {
     .map((c) => ({ sql: String(c[0]), params: (c[1] ?? []) as unknown[] }));
 }
 
+/** These cases isolate database-store behavior while preserving builtin offers. */
+interface PickerTemplate {
+  id: string;
+  name: string;
+  category?: string;
+  filingContext?: unknown;
+}
+function databaseTemplateNames(templates: PickerTemplate[]): string[] {
+  return templates.filter(template => template.category !== 'IND pyramid' && template.filingContext === undefined)
+    .map(template => template.name);
+}
+async function expectBuiltinTemplates(templates: PickerTemplate[]): Promise<number> {
+  const ind = templates.filter(template => template.category === 'IND pyramid');
+  const regional = templates.filter(template => template.filingContext !== undefined);
+  const expectedRegional = (await getBuiltinAuthoringTemplates()).filter(template => template.filingContext);
+  expect(ind).toHaveLength(200);
+  expect(expectedRegional.length).toBeGreaterThan(0);
+  expect(regional.map(template => template.id)).toEqual(expectedRegional.map(template => template.id));
+  return ind.length + regional.length;
+}
+
 beforeEach(() => {
   mockQuery.mockReset();
   // Every lookup answers zero rows — except the owned project, which exists.
@@ -113,7 +142,6 @@ beforeEach(() => {
 
 describe('POST /docs — create from a template', () => {
   it('seeds the skeleton from the global reference store, resolved BEFORE the document is written', async () => {
-    let sectionSeq = 0;
     mockDb(async (sql: string, params?: unknown[]) => {
       if (sql.includes('FROM intelligence.template_sections ts')) {
         return {
@@ -128,8 +156,7 @@ describe('POST /docs — create from a template', () => {
         return { rowCount: 1, rows: [{ id: (params as unknown[])[0], title: (params as unknown[])[1], module: 'M3', status: 'draft' }] };
       }
       if (sql.includes('INSERT INTO authoring_sections')) {
-        sectionSeq += 1;
-        return { rowCount: 1, rows: [{ id: `sec-${sectionSeq}`, code: (params as unknown[])[1], content: (params as unknown[])[3] }] };
+        return savedSectionInsert(params);
       }
       return { rowCount: 0, rows: [] };
     });
@@ -151,8 +178,8 @@ describe('POST /docs — create from a template', () => {
 
     // Both sections seeded with the template's codes; global scaffolds start empty.
     const seeded = calls('INSERT INTO authoring_sections');
-    expect(seeded.map((c) => c.params[1])).toEqual(['3.2.S.1', '3.2.S.7']);
-    expect(seeded.every((c) => c.params[3] === '')).toBe(true);
+    expect(seeded.map((c) => c.params[2])).toEqual(['3.2.S.1', '3.2.S.7']);
+    expect(seeded.every((c) => c.params[4] === '')).toBe(true);
   });
 
   it('falls back to the org template store and seeds ITS content', async () => {
@@ -170,7 +197,7 @@ describe('POST /docs — create from a template', () => {
         return { rowCount: 1, rows: [{ id: (params as unknown[])[0], title: (params as unknown[])[1], status: 'draft' }] };
       }
       if (sql.includes('INSERT INTO authoring_sections')) {
-        return { rowCount: 1, rows: [{ id: 'sec-org-1', code: (params as unknown[])[1], content: (params as unknown[])[3] }] };
+        return savedSectionInsert(params);
       }
       return { rowCount: 0, rows: [] };
     });
@@ -183,8 +210,8 @@ describe('POST /docs — create from a template', () => {
     expect(res.status).toBe(201);
     expect(res.body.sections_seeded).toBe(1);
     const seeded = calls('INSERT INTO authoring_sections');
-    expect(seeded[0].params[1]).toBe('A1');
-    expect(seeded[0].params[3]).toBe('<p>house text</p>');
+    expect(seeded[0].params[2]).toBe('A1');
+    expect(seeded[0].params[4]).toBe('<p>house text</p>');
   });
 
   it('refuses an id that resolves nothing in either store — and writes NO document', async () => {
@@ -244,11 +271,12 @@ describe('GET /templates — the picker lists what create consumes', () => {
     expect(res.status).toBe(200);
     // The shared catalog read succeeded and the response says so.
     expect(res.body.globalCatalog).toBe('ok');
-    const names = res.body.templates.map((t: { name: string }) => t.name);
+    const names = databaseTemplateNames(res.body.templates);
     // Org row first, real global next; the zero-section global cannot seed
     // anything and must not be offered.
     expect(names).toEqual(['House template', '3.2.S Drug Substance']);
-    expect(res.body.count).toBe(2);
+    const builtinCount = await expectBuiltinTemplates(res.body.templates);
+    expect(res.body.count).toBe(builtinCount + 2);
   });
 
   it('drops sectionless ORG rows too — the picker must not offer what POST /docs refuses', async () => {
@@ -276,8 +304,9 @@ describe('GET /templates — the picker lists what create consumes', () => {
       .set('Authorization', await bearer());
 
     expect(res.status).toBe(200);
-    expect(res.body.templates.map((t: { name: string }) => t.name)).toEqual(['House template']);
-    expect(res.body.count).toBe(1);
+    expect(databaseTemplateNames(res.body.templates)).toEqual(['House template']);
+    const builtinCount = await expectBuiltinTemplates(res.body.templates);
+    expect(res.body.count).toBe(builtinCount + 1);
   });
 
   it('fail-soft: an unreachable global store still lists the org templates', async () => {
@@ -296,7 +325,9 @@ describe('GET /templates — the picker lists what create consumes', () => {
       .set('Authorization', await bearer());
 
     expect(res.status).toBe(200);
-    expect(res.body.templates.map((t: { name: string }) => t.name)).toEqual(['House template']);
+    expect(databaseTemplateNames(res.body.templates)).toEqual(['House template']);
+    const builtinCount = await expectBuiltinTemplates(res.body.templates);
+    expect(res.body.count).toBe(builtinCount + 1);
     // The response SAYS the shared catalog failed — a short list and a failed
     // half are different facts, and the picker renders the difference.
     expect(res.body.globalCatalog).toBe('unavailable');
@@ -326,7 +357,7 @@ describe('POST /docs — create-with-seed is one transaction', () => {
       if (sql.includes('INSERT INTO authoring_sections')) {
         sectionInserts += 1;
         if (sectionInserts === 2) throw new Error('audit store unavailable');
-        return { rowCount: 1, rows: [{ id: 'sec-1', code: (params as unknown[])[1], content: (params as unknown[])[3] }] };
+        return savedSectionInsert(params);
       }
       return { rowCount: 0, rows: [] };
     });
@@ -337,6 +368,7 @@ describe('POST /docs — create-with-seed is one transaction', () => {
       .send({ title: 'Doomed halfway', module: 'M3', template_id: GLOBAL_TPL_ID, client_program_id: PROJECT_ID });
 
     expect(res.status).toBe(500);
+    expect(sectionInserts).toBe(2);
     const sqls = mockQuery.mock.calls.map((c) => String(c[0]));
     expect(sqls).toContain('BEGIN');
     expect(sqls).toContain('ROLLBACK');

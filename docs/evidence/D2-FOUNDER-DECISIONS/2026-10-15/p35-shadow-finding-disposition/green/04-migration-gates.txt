@@ -1,0 +1,49 @@
+# Migration and server gates after adding migrations/20261015b_shadow_finding_disposition.sql — 2026-10-15
+## npm run -s ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 389 migrations, 36 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+## npm run -s ci:migration-drop-safety:selftest
+[ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+## npm run -s ci:migration-set-order
+[ci:migration-set-order] OK — 389 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+## npm run -s ci:model-migration-agreement
+[ci:model-migration] Drizzle models vs migration lineage
+  models parsed              : 703
+  tables CREATEd by both     : 395
+  divergent tables           : 11
+  baselined (known, unfixed) : 28
+✅ no new divergence. 28 baselined and awaiting burn-down.
+## npm run -s ci:migration-reachability
+[ci:migration-reachability] 1360 durably-created tables; 0 server-referenced table(s) created only by a deploy-dead migration; 0 baselined
+[ci:migration-reachability] ✅ no new unreachable table references.
+## npm run -s ci:migration-deploy-path
+[ci:migration-deploy-path] OK — 108 baselined file(s) on no deploy path, none new.
+## npm run -s ci:migration-guard-order
+[ci:migration-guard-order] OK — every guarded table is created before it is guarded (0 baselined).
+## npm run -s ci:migration-prefix-collisions
+[ci:migration-prefix-collisions] OK — no NEW collisions (3 baselined collision prefix(es) tolerated)
+## npm run -s ci:column-reachability
+[ci:column-reachability] OK — 3154 column add(s) on no applier, 0 queried by the server.
+## npm run -s ci:insert-columns-declared
+[ci:insert-columns-declared] columns written vs columns declared
+  Drizzle models parsed        : 703
+  static INSERTs examined      : 693
+  skipped (unjudgeable)        : 8
+  migration lineage tables     : 1420
+  tables unknown to BOTH       : 9
+  baselined (known, unfixed)   : 47
+✅ no new violations. 47 baselined and awaiting burn-down.
+## npm run -s ci:sql-interpolation
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1068 baselined interpolation(s) in 228 file(s); the baseline may only shrink.
+## npm run -s ci:launch-scope-api
+ci:launch-scope-api: 389 API paths named by launch and shell screens; none refused. {"launch":338,"infrastructure":2,"never-gated":49}
+## npm run -s ci:route-ownership-matrix:check
+✅ Route ownership matrix check passed.
+## npm run -s ci:server-error-leaks
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+## npm run -s ci:drizzle-tenant-scope
+[ci:drizzle-tenant-scope] OK — 103 site(s), all baselined; 24 fixed since the baseline was written.
+[ci:drizzle-tenant-scope] Re-run with --write-baseline to bank the 24 fix(es).
+## npm run -s ci:tenant-column-types
+[ci:tenant-column-types] OK — all tenant columns are integer-typed
+
+# Replay: the pglite suite applies 20260604 + 20261015 + 20261015b, then 20261015b again ('the migration > replays as a no-op'): four columns, one FK.

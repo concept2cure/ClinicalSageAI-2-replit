@@ -14,7 +14,7 @@
  */
 
 import { pool } from '../../db.js';
-import { computeReadinessScore, type ReadinessContext } from '../intelligence/readiness-scoring-engine.js';
+import { computeReadinessScore, describeReadiness, type ReadinessContext } from '../intelligence/readiness-scoring-engine.js';
 import { type RecommendationContext } from '../intelligence/recommendation-engine.js';
 import { generateNextActions } from '../intelligence/next-best-action-engine.js';
 import { getProjectSignals } from '../intelligence/rim.js';
@@ -207,6 +207,16 @@ export type TurnProject =
 
 // ─── Enrichment functions ────────────────────────────────────────────────────
 
+/**
+ * A memory entry's recorded confidence as a whole percent, or null when none is
+ * recorded. 2026-10-15: the readers below tested the value for truthiness, so
+ * an unscored entry and a recorded 0 were both shown with no confidence and
+ * neither said so; each now renders the recorded figure or "unscored".
+ */
+function recordedConfidencePercent(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? Math.round(value * 100) : null;
+}
+
 // Reads project memory and returns the formatted block, `''` for a GENUINE
 // empty (no rows, or a legitimately-unprovisioned table), or `null` for a READ
 // FAILURE. The null is the honest signal a caller needs to tell "nothing
@@ -258,7 +268,8 @@ async function readProjectMemory(
     const result = await pool.query(
       `SELECT content, title, confidence_score, importance_level, category
        FROM project_memory_entries
-       WHERE project_id = $1 AND organization_id = $2
+       WHERE project_id = $1 AND organization_id = $2 AND status = 'active'
+         AND source_document_type IS DISTINCT FROM 'report_os_state'
          AND category IN (${catPlaceholders})
        ORDER BY CASE lower(coalesce(importance_level, ''))
                   WHEN 'critical' THEN 4
@@ -274,8 +285,9 @@ async function readProjectMemory(
 
     if (result.rows.length === 0) return '';
 
-    const items = result.rows.map((r: { confidence_score?: number; title?: string; content?: string }) => {
-      const conf = r.confidence_score ? ` [${Math.round(r.confidence_score * 100)}% confidence]` : '';
+    const items = result.rows.map((r: { confidence_score?: number | null; title?: string; content?: string }) => {
+      const pct = recordedConfidencePercent(r.confidence_score);
+      const conf = pct === null ? ' [unscored]' : ` [${pct}% confidence]`;
       const title = r.title ? `**${r.title}**` : '';
       return `- ${title}${conf}: ${(r.content || '').slice(0, 400)}`;
     }).join('\n');
@@ -363,11 +375,19 @@ async function enrichWithPrecedents(projectId: ProjectRowId, orgId?: number): Pr
   try {
     const catPlaceholders = categories.map((_, i) => `$${i + 3}`).join(', ');
     const result = await pool.query(
-      `SELECT content, title, confidence, importance, category
+      `SELECT content, title, confidence_score AS confidence, importance_level AS importance, category
        FROM project_memory_entries
-       WHERE project_id = $1 AND organization_id = $2
+       WHERE project_id = $1 AND organization_id = $2 AND status = 'active'
+         AND source_document_type IS DISTINCT FROM 'report_os_state'
          AND category IN (${catPlaceholders})
-       ORDER BY importance DESC, created_at DESC
+       ORDER BY CASE lower(coalesce(importance_level, ''))
+                  WHEN 'critical' THEN 4
+                  WHEN 'high'     THEN 3
+                  WHEN 'medium'   THEN 2
+                  WHEN 'low'      THEN 1
+                  ELSE 0
+                END DESC,
+                created_at DESC
        LIMIT $${categories.length + 3}`,
       [projectId, orgId, ...categories, 12]
     );
@@ -380,7 +400,8 @@ async function enrichWithPrecedents(projectId: ProjectRowId, orgId?: number): Pr
       const cat = r.category as string;
       const label = categoryLabels[cat] || cat;
       if (!grouped[label]) grouped[label] = [];
-      const conf = r.confidence ? ` [${Math.round(r.confidence * 100)}% confidence]` : '';
+      const pct = recordedConfidencePercent(r.confidence);
+      const conf = pct === null ? ' [unscored]' : ` [${pct}% confidence]`;
       const title = r.title ? `**${r.title}**` : '';
       grouped[label].push(`- ${title}${conf}: ${(r.content || '').slice(0, 400)}`);
     }
@@ -475,8 +496,9 @@ async function enrichWithReadiness(projectId: ProjectRowId, orgId?: number): Pro
       const gapLines = score.gaps.slice(0, 8).map(g =>
         `- **[${g.severity.toUpperCase()}]** ${g.module}: ${g.description} _(${g.remediation})_`
       ).join('\n');
+      // A dimension no assessment measured is null: "not measured", not "—/100" (2026-10-15).
       const dimLines = Object.entries(score.dimensions || {}).map(([k, v]: [string, unknown]) =>
-        `| ${k} | ${typeof v === 'number' ? v : (v && typeof v === 'object' && 'score' in v ? (v as Record<string, unknown>).score : '—')}/100 |`
+        `| ${k} | ${typeof v === 'number' ? `${v}/100` : v && typeof v === 'object' && 'score' in v ? `${String((v as Record<string, unknown>).score)}/100` : 'not measured'} |`
       ).join('\n');
 
       /* This block used to render, unconditionally:
@@ -505,10 +527,16 @@ async function enrichWithReadiness(projectId: ProjectRowId, orgId?: number): Pro
             ]
               .filter(Boolean)
               .join(' | ')
-          : `**No readiness assessment is on record for this program.** Do not state an ` +
-            `approval probability, a review-time estimate or a deficiency count — none has been computed.`;
+          : score.scoreBasis.source === 'twin_unreadable'
+            // 2026-10-15: a failed read of the assessment was told to the model
+            // as "no assessment is on record", a statement nobody had checked.
+            ? `**The program's readiness assessment could not be read.** Do not state an ` +
+              `approval probability, a review-time estimate or a deficiency count, and do not say ` +
+              `that none exists — whether one is on record is not known.`
+            : `**No readiness assessment is on record for this program.** Do not state an ` +
+              `approval probability, a review-time estimate or a deficiency count — none has been computed.`;
 
-      return `\n\n## Live Readiness Assessment\n**Overall Score: ${score.overallScore}/100** | Trend: ${score.trend?.direction || 'unknown'}\n\n${outlook}\n\n| Dimension | Score |\n|---|---|\n${dimLines}\n\n**Top Gaps (${score.gaps.length} total):**\n${gapLines || '- None identified'}\n\nPresent the scores above directly, and only those. Be specific about gaps and remediation steps.`;
+      return `\n\n## Live Readiness Assessment\n**${describeReadiness(score)}** | Trend: ${score.trend?.direction || 'not determined'}\n\n${outlook}\n\n| Dimension | Score |\n|---|---|\n${dimLines}\n\n**Top Gaps (${score.gaps.length} total):**\n${gapLines || '- None identified'}\n\nPresent the scores above directly, and only those. Be specific about gaps and remediation steps.`;
     } catch (e: unknown) {
       logger.warn('Live readiness failed, falling back to memory', { error: e instanceof Error ? e.message : 'unknown error' });
     }
@@ -553,10 +581,11 @@ async function enrichWithRecommendations(projectId: ProjectRowId, orgId?: number
       };
       const actionSet = await generateNextActions(ctx, 8);
       const actionLines = actionSet.actions.slice(0, 8).map((a, i) =>
-        `${i + 1}. **${a.title}** [${a.urgency}/${a.impactEstimate}] — ${a.description}${a.effortEstimate ? ` (${a.effortEstimate})` : ''}`
+        // 2026-10-15: printed `[urgency/impact]`; impact is not estimated by any engine (null).
+        `${i + 1}. **${a.title}** [${a.urgency}] — ${a.description}${a.effortEstimate ? ` (${a.effortEstimate})` : ''}`
       ).join('\n');
 
-      return `\n\n## Next Best Actions (Live)\n**${actionSet.actions.length} actions** prioritized by urgency and impact.\n\n${actionLines || 'No actions generated.'}${feedbackNote}\n\nPresent these as a prioritized to-do list. Be directive — tell the user what to do first and why.`;
+      return `\n\n## Next Best Actions (Live)\n**${actionSet.actions.length} actions** prioritized by urgency.\n\n${actionLines || 'No actions generated.'}${feedbackNote}\n\nPresent these as a prioritized to-do list. Be directive — tell the user what to do first and why.`;
     } catch (e: unknown) {
       console.warn('[enrichment] Live recommendations failed, falling back to memory:', e instanceof Error ? e.message : 'unknown error');
     }
@@ -573,6 +602,41 @@ async function enrichWithRecommendations(projectId: ProjectRowId, orgId?: number
   return memoryResult + feedbackNote;
 }
 
+type ClaimMemoryRow = { category?: string; title?: string; confidence?: number | null; content?: string };
+
+/**
+ * The claims block over project-memory evidence entries. 2026-10-15: every
+ * unscored entry (and every recorded 0) entered the evidence chain at an
+ * invented relevance of 0.5, so a "Confidence: NN/100" was printed for entries
+ * nobody had scored. Only recorded confidences enter the chain now; with none,
+ * it is not assessed, and the block says which entries were left out.
+ */
+function claimsEvidenceBlock(rows: ClaimMemoryRow[]): string {
+  const scored = rows.filter((r): r is ClaimMemoryRow & { confidence: number } =>
+    recordedConfidencePercent(r.confidence) !== null);
+  const sources: EvidenceSource[] = scored.map(r => ({
+    sourceType: r.category === 'evidence_gap' ? 'ai_analysis' as const : 'document_state' as const,
+    sourceId: `mem-${r.title || 'unknown'}`,
+    sourceTitle: r.title || 'Evidence entry',
+    relevance: r.confidence,
+    extractedValue: r.content?.slice(0, 200),
+  }));
+  const unscored = rows.length - scored.length;
+  let assessment = '**Evidence Chain Strength / Confidence:** not assessed — no entry below carries a recorded confidence';
+  if (sources.length > 0) {
+    const chain = buildEvidenceChain(sources, 'ai_inferred');
+    const factors = analyzeFactors(sources);
+    assessment = `**Evidence Chain Strength:** ${chain.chainStrength} | **Confidence:** ${computeConfidence(sources)}/100\n` +
+      `**Factors:** ${Object.entries(factors).map(([k, v]) => `${k}: ${v}`).join(', ')}` +
+      (unscored > 0 ? `\n**Not counted above:** ${unscored} of ${rows.length} entries (unscored)` : '');
+  }
+  const entryLines = rows.map(r => {
+    const pct = recordedConfidencePercent(r.confidence);
+    return `- **${r.title || r.category}** [${pct === null ? 'unscored' : `${pct}%`}]: ${r.content?.slice(0, 300)}`;
+  }).join('\n');
+  return `\n\n## Evidence & Claims Analysis\n${assessment}\n\n**Evidence Entries:**\n${entryLines}\n\nAnalyze the strength of evidence chains. Flag any claims with weak or missing evidence support.`;
+}
+
 async function enrichWithClaims(projectId: ProjectRowId, orgId?: number): Promise<string> {
   if (projectId === null) return ''; // no linked project: nothing project-scoped to read
   // Same rule as readProjectMemory: no organization, no memory.
@@ -581,35 +645,24 @@ async function enrichWithClaims(projectId: ProjectRowId, orgId?: number): Promis
   // Try to build evidence chains from stored memory
   try {
     const result = await pool.query(
-      `SELECT content, title, confidence, category
+      `SELECT content, title, confidence_score AS confidence, category
        FROM project_memory_entries
-       WHERE project_id = $1 AND organization_id = $2
+       WHERE project_id = $1 AND organization_id = $2 AND status = 'active'
+         AND source_document_type IS DISTINCT FROM 'report_os_state'
          AND category IN ('evidence_assessment', 'claim_evidence_map', 'evidence_gap')
-       ORDER BY importance DESC, created_at DESC
+       ORDER BY CASE lower(coalesce(importance_level, ''))
+                  WHEN 'critical' THEN 4
+                  WHEN 'high'     THEN 3
+                  WHEN 'medium'   THEN 2
+                  WHEN 'low'      THEN 1
+                  ELSE 0
+                END DESC,
+                created_at DESC
        LIMIT $3`,
       [projectId, orgId, 8]
     );
 
-    if (result.rows.length > 0) {
-      // Build evidence sources from memory entries
-      const sources: EvidenceSource[] = result.rows.map((r: { category?: string; title?: string; confidence?: number; content?: string }) => ({
-        sourceType: r.category === 'evidence_gap' ? 'ai_analysis' as const : 'document_state' as const,
-        sourceId: `mem-${r.title || 'unknown'}`,
-        sourceTitle: r.title || 'Evidence entry',
-        relevance: r.confidence || 0.5,
-        extractedValue: r.content?.slice(0, 200),
-      }));
-
-      const chain = buildEvidenceChain(sources, 'ai_inferred');
-      const confidence = computeConfidence(sources);
-      const factors = analyzeFactors(sources);
-
-      const entryLines = result.rows.map((r: { title?: string; category?: string; confidence?: number; content?: string }) =>
-        `- **${r.title || r.category}** [${r.confidence ? Math.round(r.confidence * 100) + '%' : '—'}]: ${r.content?.slice(0, 300)}`
-      ).join('\n');
-
-      return `\n\n## Evidence & Claims Analysis\n**Evidence Chain Strength:** ${chain.chainStrength} | **Confidence:** ${confidence}/100\n**Factors:** ${Object.entries(factors).map(([k, v]) => `${k}: ${v}`).join(', ')}\n\n**Evidence Entries:**\n${entryLines}\n\nAnalyze the strength of evidence chains. Flag any claims with weak or missing evidence support.`;
-    }
+    if (result.rows.length > 0) return claimsEvidenceBlock(result.rows);
   } catch (e: unknown) { logger.warn("Query failed", { error: e instanceof Error ? e.message : String(e) });
     // Fall through
   }
@@ -626,19 +679,21 @@ async function enrichWithClaims(projectId: ProjectRowId, orgId?: number): Promis
 async function enrichWithCrossModule(projectId: ProjectRowId, orgId?: number): Promise<string> {
   if (projectId === null) return ''; // no linked project: nothing project-scoped to read
   if (!orgId) return '';
-  try {
-    const report = await analyzeCrossModuleRelationships({ organizationId: orgId, projectId: Number(projectId) });
-    if (!report || report.insights.length === 0) return '';
+  // 2026-10-15: a failed analysis was caught and returned '', read as a
+  // healthy empty, so the budget never marked 'consistency' unavailable.
+  // Thrown, the budget records it and the reply says so.
+  const report = await analyzeCrossModuleRelationships({ organizationId: orgId, projectId: Number(projectId) });
+  if (report.insights.length === 0) return '';
 
-    const insightLines = report.insights.slice(0, 8).map((i: { severity?: string; type?: string; description?: string; message?: string; affectedModules?: string[] }) =>
-      `- **[${i.severity || i.type || 'info'}]** ${i.description || i.message || String(i)}${i.affectedModules ? ` (${i.affectedModules.join(', ')})` : ''}`
-    ).join('\n');
+  // 2026-10-15: this told the model to "highlight stale references, status
+  // gaps, and orphaned documents" — the names the detectors gave pairs of
+  // documents no link between which was checked. Each line now says what it
+  // rests on.
+  const insightLines = report.insights.slice(0, 8).map(i =>
+    `- **[${i.severity}; ${i.basis === 'co_occurrence_heuristic' ? 'co-occurrence observation' : 'from the evidence records'}]** ${i.description}`
+  ).join('\n');
 
-    return `\n\n## Cross-Module Consistency Report (Live)\n**${report.insights.length} insights** across ${report.documentsCovered || '—'} documents.\n\n${insightLines}\n\nHighlight stale references, status gaps, and orphaned documents. Be specific about which modules are affected.`;
-  } catch (e: unknown) {
-    console.warn('[enrichment] Cross-module analysis failed:', e instanceof Error ? e.message : 'unknown error');
-    return '';
-  }
+  return `\n\n## Cross-Module Report (Live)\n**${report.insights.length} insights** from ${report.documentsExamined} documents examined.\n\n${insightLines}\n\nA co-occurrence observation is not a recorded dependency or reference: present it as an observation, never as a dependency, a stale reference or an inconsistency.`;
 }
 
 async function enrichWithSignals(projectId: ProjectRowId, orgId?: number): Promise<string> {
@@ -652,7 +707,7 @@ async function enrichWithSignals(projectId: ProjectRowId, orgId?: number): Promi
           .filter(([, count]) => Number(count) > 0)
           .map(([risk, count]) => `- **${risk}**: ${count}`)
           .join('\n');
-        return `\n\n## RIM Intelligence Signals (Live)\n**${summary.totalSignals} signals** accumulated for this project.\n\nTrend: **${summary.overallTrend}** (${summary.trendConfidence}, n=${summary.trendSampleSize})\nAverage score: **${summary.averageScore}**\nTop patterns: ${summary.topPatternIds.slice(0, 6).join(', ') || 'none'}\n\n### By risk\n${byRisk || '- none'}\n\nSummarize patterns, highlight recurring risks, and note trend directions.`;
+        return `\n\n## RIM Intelligence Signals (Live)\n**${summary.totalSignals} signals** accumulated for this project.\n\nTrend: **${summary.overallTrend ?? 'not determined'}** (${summary.trendConfidence}, n=${summary.trendSampleSize})\nMean signal score: **${summary.averageScore ?? 'none recorded'}** (not a readiness figure)\nTop patterns: ${summary.topPatternIds.slice(0, 6).join(', ') || 'none'}\n\n### By risk\n${byRisk || '- none'}\n\nSummarize patterns and recurring risks. Report a trend only where one is determined above; never derive readiness from the mean signal score.`;
       }
     } catch (e: unknown) { logger.warn("Query failed", { error: e instanceof Error ? e.message : String(e) });
       // Fall through to memory
@@ -707,19 +762,28 @@ async function enrichWithKnowledgeSearch(query: string, projectId: ProjectRowId,
   try {
     // Search project memory entries semantically
     const result = await pool.query(
-      `SELECT title, content, category, confidence, importance
+      `SELECT title, content, category, confidence_score AS confidence, importance_level AS importance
        FROM project_memory_entries
-       WHERE project_id = $1 AND organization_id = $2
-       ORDER BY importance DESC, created_at DESC
+       WHERE project_id = $1 AND organization_id = $2 AND status = 'active'
+         AND source_document_type IS DISTINCT FROM 'report_os_state'
+       ORDER BY CASE lower(coalesce(importance_level, ''))
+                  WHEN 'critical' THEN 4
+                  WHEN 'high'     THEN 3
+                  WHEN 'medium'   THEN 2
+                  WHEN 'low'      THEN 1
+                  ELSE 0
+                END DESC,
+                created_at DESC
        LIMIT $3`,
       [projectId, orgId, 10]
     );
 
     if (result.rows.length === 0) return '';
 
-    const entries = result.rows.map((r: { title?: string; category?: string; confidence?: number; content?: string }) =>
-      `- **${r.title || r.category}** [${r.category}] ${r.confidence ? `(${Math.round(r.confidence * 100)}%)` : ''}: ${r.content?.slice(0, 300)}`
-    ).join('\n');
+    const entries = result.rows.map((r: { title?: string; category?: string; confidence?: number | null; content?: string }) => {
+      const pct = recordedConfidencePercent(r.confidence);
+      return `- **${r.title || r.category}** [${r.category}] ${pct === null ? '(unscored)' : `(${pct}%)`}: ${r.content?.slice(0, 300)}`;
+    }).join('\n');
 
     return `\n\n## Knowledge Base Search Results\n**${result.rows.length} entries** found in project knowledge.\n\n${entries}\n\nReference these knowledge atoms when answering. Cite the category and confidence level.`;
   } catch (e: unknown) { logger.warn("Query failed", { error: e instanceof Error ? e.message : String(e) });
@@ -1354,8 +1418,17 @@ export async function enrichContextForChat(params: {
   })();
   if (project.status === 'unresolved') budget.mark('project-record', project.reason);
   const pid: ProjectRowId = project.status === 'linked' ? project.id : null;
+  // Common context and workflow commands read the same snapshot. Share only
+  // this invocation's raw read; each consumer keeps its own budget/reporting.
+  let workflowPromise: Promise<string> | undefined;
   const workflowContext = (): Promise<string> =>
-    submissionType && pid !== null ? buildWorkflowContext(pid, submissionType, organizationId) : Promise.resolve('');
+    workflowPromise ??= submissionType && pid !== null
+      ? Promise.resolve().then(() => buildWorkflowContext(pid, submissionType, organizationId))
+      : Promise.resolve('');
+  // Share one raw deficiency snapshot only within this turn; consumers keep their budgets.
+  let deficiencyPromise: Promise<string> | undefined;
+  const deficiencyContext = (): Promise<string> =>
+    deficiencyPromise ??= Promise.resolve().then(() => enrichWithCRLRTF(pid, organizationId));
   /* A request that reads several sources reads, and reports, each one under its
      own name. They were joined with Promise.all inside one read, so one failed
      read (a domain memory read now throws) discarded what the others found,
@@ -1388,7 +1461,7 @@ export async function enrichContextForChat(params: {
   const slash = detectSlashCommand(message);
   if (slash) {
     const enrichMap: Record<string, () => Promise<string>> = {
-      risk: parts(['foresight', () => enrichWithForesight(pid, organizationId)], ['deficiency', () => enrichWithCRLRTF(pid, organizationId)]),
+      risk: parts(['foresight', () => enrichWithForesight(pid, organizationId)], ['deficiency', deficiencyContext]),
       readiness: () => enrichWithReadiness(pid, organizationId),
       precedent: () => enrichWithPrecedents(pid, organizationId),
       draft: () =>
@@ -1398,7 +1471,7 @@ export async function enrichContextForChat(params: {
         ['readiness', () => enrichWithReadiness(pid, organizationId)],
         ['workflow', workflowContext],
         ['claims', () => enrichWithClaims(pid, organizationId)],
-        ['deficiency', () => enrichWithCRLRTF(pid, organizationId)],
+        ['deficiency', deficiencyContext],
       ),
       claims: () => enrichWithClaims(pid, organizationId),
       recommend: () => enrichWithRecommendations(pid, organizationId),
@@ -1408,7 +1481,7 @@ export async function enrichContextForChat(params: {
         Promise.resolve(
           '\n\n## Conversation Export Intent\nUser requested conversation export. Provide a concise markdown-ready output and include any critical action receipts from this turn.'
         ),
-      simulate: () => enrichWithCRLRTF(pid, organizationId),
+      simulate: deficiencyContext,
       assess: parts(
         ['readiness', () => enrichWithReadiness(pid, organizationId)],
         ['recommendations', () => enrichWithRecommendations(pid, organizationId)],
@@ -1417,7 +1490,7 @@ export async function enrichContextForChat(params: {
       ),
       twin: parts(
         ['claims', () => enrichWithClaims(pid, organizationId)],
-        ['deficiency', () => enrichWithCRLRTF(pid, organizationId)],
+        ['deficiency', deficiencyContext],
         ['readiness', () => enrichWithReadiness(pid, organizationId)],
       ),
       consistency: () => enrichWithCrossModule(pid, organizationId),
@@ -1438,13 +1511,13 @@ export async function enrichContextForChat(params: {
       ectd: () => enrichWithECTD(pid, organizationId),
       audit: parts(['readiness', () => enrichWithReadiness(pid, organizationId)], ['claims', () => enrichWithClaims(pid, organizationId)]),
       amend: () => enrichWithProjectMemory(pid, ['document_version', 'change_impact', 'amendment_tracking'], 'Amendment Context', 'Relevant version history and change impact data.', 5, organizationId),
-      review: parts(['claims', () => enrichWithClaims(pid, organizationId)], ['deficiency', () => enrichWithCRLRTF(pid, organizationId)]),
+      review: parts(['claims', () => enrichWithClaims(pid, organizationId)], ['deficiency', deficiencyContext]),
       memo: () => enrichWithForesight(pid, organizationId),
-      brief: () => enrichWithCRLRTF(pid, organizationId),
+      brief: deficiencyContext,
       strategy: parts(['precedent', () => enrichWithPrecedents(pid, organizationId)], ['foresight', () => enrichWithForesight(pid, organizationId)]),
       freeze: () => enrichWithECTD(pid, organizationId),
       sign: () => enrichWithECTD(pid, organizationId),
-      scan: parts(['claims', () => enrichWithClaims(pid, organizationId)], ['deficiency', () => enrichWithCRLRTF(pid, organizationId)]),
+      scan: parts(['claims', () => enrichWithClaims(pid, organizationId)], ['deficiency', deficiencyContext]),
       checklist: () => enrichWithReadiness(pid, organizationId),
       submit: parts(['readiness', () => enrichWithReadiness(pid, organizationId)], ['ectd', () => enrichWithECTD(pid, organizationId)]),
       narrative: () => enrichWithSafety(pid, organizationId),
@@ -1456,7 +1529,7 @@ export async function enrichContextForChat(params: {
       rmp: () => enrichWithSafety(pid, organizationId),
       uspi: () => enrichWithSafety(pid, organizationId),
       haq: parts(
-        ['deficiency', () => enrichWithCRLRTF(pid, organizationId)],
+        ['deficiency', deficiencyContext],
         ['precedent', () => enrichWithPrecedents(pid, organizationId)],
         ['claims', () => enrichWithClaims(pid, organizationId)],
       ),
@@ -1696,11 +1769,11 @@ export async function enrichContextForChat(params: {
     const triggers: Array<{ test: RegExp[]; fn: () => Promise<string>; name: string }> = [
       { test: FORESIGHT_TRIGGERS, fn: () => enrichWithForesight(pid, organizationId), name: 'foresight' },
       { test: PRECEDENT_TRIGGERS, fn: () => enrichWithPrecedents(pid, organizationId), name: 'precedent' },
-      { test: CRL_RTF_TRIGGERS, fn: () => enrichWithCRLRTF(pid, organizationId), name: 'deficiency' },
+      { test: CRL_RTF_TRIGGERS, fn: deficiencyContext, name: 'deficiency' },
       { test: READINESS_TRIGGERS, fn: () => enrichWithReadiness(pid, organizationId), name: 'readiness' },
       { test: RECOMMENDATION_TRIGGERS, fn: () => enrichWithRecommendations(pid, organizationId), name: 'recommendations' },
       { test: CLAIMS_TRIGGERS, fn: () => enrichWithClaims(pid, organizationId), name: 'claims' },
-      { test: SIMULATION_TRIGGERS, fn: () => enrichWithCRLRTF(pid, organizationId), name: 'simulation' },
+      { test: SIMULATION_TRIGGERS, fn: deficiencyContext, name: 'simulation' },
       { test: BIOSTAT_TRIGGERS, fn: () => enrichWithBiostatContext(pid, submissionType, organizationId), name: 'biostatistics' },
       { test: SAFETY_TRIGGERS, fn: () => enrichWithSafety(pid, organizationId), name: 'safety' },
       { test: CMC_TRIGGERS, fn: cmcParts(), name: 'cmc' },
@@ -1709,7 +1782,7 @@ export async function enrichContextForChat(params: {
       { test: DIAGNOSTICS_TRIGGERS, fn: () => enrichWithDiagnostics(pid, organizationId), name: 'diagnostics' },
       { test: CMS_TRIGGERS, fn: () => enrichWithCMS(pid, organizationId), name: 'cms' },
       { test: ECTD_TRIGGERS, fn: () => enrichWithECTD(pid, organizationId), name: 'ectd' },
-      { test: HAQ_TRIGGERS, fn: parts(['deficiency', () => enrichWithCRLRTF(pid, organizationId)], ['precedent', () => enrichWithPrecedents(pid, organizationId)]), name: 'haq' },
+      { test: HAQ_TRIGGERS, fn: parts(['deficiency', deficiencyContext], ['precedent', () => enrichWithPrecedents(pid, organizationId)]), name: 'haq' },
       { test: WISDOM_TRIGGERS, fn: () => Promise.resolve(buildIndustryWisdomBlock({ submissionType, message })), name: 'industry-wisdom' },
       { test: WAYFINDING_TRIGGERS, fn: () => Promise.resolve(buildTourGuideBlock({ submissionType, message })), name: 'tour-guide' },
     ];

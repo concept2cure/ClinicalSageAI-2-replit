@@ -1,0 +1,343 @@
+{
+  "commit": "34389d3af6330effb361c28ee69d9988dea10df2",
+  "reviewer": "authoring_access_ui",
+  "algorithm": "SHA-256",
+  "method": "Recomputed every reported field from unmodified original git-show blob bytes, including exact serialization and trailing newline; no producer execution or source mutation.",
+  "alertCount": 16,
+  "verifiedChecksumCount": 16,
+  "all16Match": true,
+  "unmatchedAlerts": [],
+  "credentialLikeAlerts": [],
+  "rawDigestValuesIncluded": false,
+  "scope": "Only the 16 listed generic-api-key alerts. No general secret clearance, historical helper identity proof, lint execution proof, browser reproduction or regulatory qualification claim.",
+  "producerEvidence": [
+    {
+      "path": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/browser.mjs",
+      "gitBlobId": "a8490e8ea9ba5e986f1ff805841580b87043cc8c",
+      "lines": [
+        51,
+        54,
+        55,
+        274,
+        283
+      ],
+      "meaning": "createHash(sha256) hashes readFileSync Buffer bytes; fixturePins hashes fixture files; the browser summary records those pins and the separate API-contract file checksum."
+    },
+    {
+      "path": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/generate.ts",
+      "gitBlobId": "3b0fdbfd427742890ef7d73172e938340e8d5b88",
+      "lines": [
+        37,
+        38,
+        41
+      ],
+      "meaning": "Writes an explicitly synthetic API contract and synthetic actor JSON with a trailing newline."
+    },
+    {
+      "path": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-fixture-lint.json",
+      "gitBlobId": "3eb2429ce431bcb590e7141cf9f52abb0284b04c",
+      "lines": [
+        3,
+        5,
+        6,
+        7,
+        11
+      ],
+      "meaning": "Lint-result metadata stores file-keyed executable integrity pins; targeted mock-api file pin matches exact SHA-256 bytes. The report writer is not a committed executable, so its execution is not inferred."
+    }
+  ],
+  "historicalPinDistinction": [
+    {
+      "reportPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-diagnostic-summary.json",
+      "differingFinalFixturePins": [],
+      "targetedApiAndMockPinsMatch": true,
+      "historicalHelperPinsAreNotTreatedAsFinalHelperProof": true
+    },
+    {
+      "reportPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-lint-helpers-summary.json",
+      "differingFinalFixturePins": [],
+      "targetedApiAndMockPinsMatch": true,
+      "historicalHelperPinsAreNotTreatedAsFinalHelperProof": true
+    },
+    {
+      "reportPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-picker-copy-summary.json",
+      "differingFinalFixturePins": [
+        "browser.mjs"
+      ],
+      "targetedApiAndMockPinsMatch": true,
+      "historicalHelperPinsAreNotTreatedAsFinalHelperProof": true
+    },
+    {
+      "reportPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-preintegration-summary.json",
+      "differingFinalFixturePins": [
+        "browser.mjs"
+      ],
+      "targetedApiAndMockPinsMatch": true,
+      "historicalHelperPinsAreNotTreatedAsFinalHelperProof": true
+    },
+    {
+      "reportPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-summary.json",
+      "differingFinalFixturePins": [],
+      "targetedApiAndMockPinsMatch": true,
+      "historicalHelperPinsAreNotTreatedAsFinalHelperProof": true
+    }
+  ],
+  "checks": [
+    {
+      "fingerprint": "34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-diagnostic-summary.json:generic-api-key:42",
+      "reportPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-diagnostic-summary.json",
+      "reportGitBlobId": "c9e6588a8bac52206bce430a3dab3d069ff81805",
+      "reportLine": 42,
+      "field": "fixtureSha256",
+      "fieldKey": "api-contract.json",
+      "sourcePath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/api-contract.json",
+      "sourceGitBlobId": "2e536d6b2ba67fa8d1756ad4fc2823de512a7e21",
+      "sourceByteLength": 555730,
+      "matchesExactCommittedBytes": true,
+      "reportedLineContainsComputedChecksum": true,
+      "credentialLike": false,
+      "classification": "Recomputable file-integrity SHA-256 checksum",
+      "producerEvidence": "browser.mjs:51,54-55,274"
+    },
+    {
+      "fingerprint": "34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-diagnostic-summary.json:generic-api-key:47",
+      "reportPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-diagnostic-summary.json",
+      "reportGitBlobId": "c9e6588a8bac52206bce430a3dab3d069ff81805",
+      "reportLine": 47,
+      "field": "fixtureSha256",
+      "fieldKey": "mock-api.mjs",
+      "sourcePath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/mock-api.mjs",
+      "sourceGitBlobId": "b4264e12622ab28faf48c371ef88b0624eb55e55",
+      "sourceByteLength": 4918,
+      "matchesExactCommittedBytes": true,
+      "reportedLineContainsComputedChecksum": true,
+      "credentialLike": false,
+      "classification": "Recomputable file-integrity SHA-256 checksum",
+      "producerEvidence": "browser.mjs:51,54-55,274"
+    },
+    {
+      "fingerprint": "34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-diagnostic-summary.json:generic-api-key:52",
+      "reportPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-diagnostic-summary.json",
+      "reportGitBlobId": "c9e6588a8bac52206bce430a3dab3d069ff81805",
+      "reportLine": 52,
+      "field": "apiContractSha256",
+      "fieldKey": "apiContractSha256",
+      "sourcePath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/api-contract.json",
+      "sourceGitBlobId": "2e536d6b2ba67fa8d1756ad4fc2823de512a7e21",
+      "sourceByteLength": 555730,
+      "matchesExactCommittedBytes": true,
+      "reportedLineContainsComputedChecksum": true,
+      "credentialLike": false,
+      "classification": "Recomputable file-integrity SHA-256 checksum",
+      "producerEvidence": "browser.mjs:51,54-55,274"
+    },
+    {
+      "fingerprint": "34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-fixture-lint.json:generic-api-key:11",
+      "reportPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-fixture-lint.json",
+      "reportGitBlobId": "3eb2429ce431bcb590e7141cf9f52abb0284b04c",
+      "reportLine": 11,
+      "field": "executableFiles",
+      "fieldKey": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/mock-api.mjs",
+      "sourcePath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/mock-api.mjs",
+      "sourceGitBlobId": "b4264e12622ab28faf48c371ef88b0624eb55e55",
+      "sourceByteLength": 4918,
+      "matchesExactCommittedBytes": true,
+      "reportedLineContainsComputedChecksum": true,
+      "credentialLike": false,
+      "classification": "Recomputable file-integrity SHA-256 checksum",
+      "producerEvidence": "browser-fixture-lint.json executableFiles file pin beside lint command/error counts; original JSON-writer script not present in committed fixture"
+    },
+    {
+      "fingerprint": "34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-lint-helpers-summary.json:generic-api-key:42",
+      "reportPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-lint-helpers-summary.json",
+      "reportGitBlobId": "54724308e29240643ed01d2dcb247c153d59d938",
+      "reportLine": 42,
+      "field": "fixtureSha256",
+      "fieldKey": "api-contract.json",
+      "sourcePath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/api-contract.json",
+      "sourceGitBlobId": "2e536d6b2ba67fa8d1756ad4fc2823de512a7e21",
+      "sourceByteLength": 555730,
+      "matchesExactCommittedBytes": true,
+      "reportedLineContainsComputedChecksum": true,
+      "credentialLike": false,
+      "classification": "Recomputable file-integrity SHA-256 checksum",
+      "producerEvidence": "browser.mjs:51,54-55,274"
+    },
+    {
+      "fingerprint": "34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-lint-helpers-summary.json:generic-api-key:47",
+      "reportPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-lint-helpers-summary.json",
+      "reportGitBlobId": "54724308e29240643ed01d2dcb247c153d59d938",
+      "reportLine": 47,
+      "field": "fixtureSha256",
+      "fieldKey": "mock-api.mjs",
+      "sourcePath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/mock-api.mjs",
+      "sourceGitBlobId": "b4264e12622ab28faf48c371ef88b0624eb55e55",
+      "sourceByteLength": 4918,
+      "matchesExactCommittedBytes": true,
+      "reportedLineContainsComputedChecksum": true,
+      "credentialLike": false,
+      "classification": "Recomputable file-integrity SHA-256 checksum",
+      "producerEvidence": "browser.mjs:51,54-55,274"
+    },
+    {
+      "fingerprint": "34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-lint-helpers-summary.json:generic-api-key:52",
+      "reportPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-lint-helpers-summary.json",
+      "reportGitBlobId": "54724308e29240643ed01d2dcb247c153d59d938",
+      "reportLine": 52,
+      "field": "apiContractSha256",
+      "fieldKey": "apiContractSha256",
+      "sourcePath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/api-contract.json",
+      "sourceGitBlobId": "2e536d6b2ba67fa8d1756ad4fc2823de512a7e21",
+      "sourceByteLength": 555730,
+      "matchesExactCommittedBytes": true,
+      "reportedLineContainsComputedChecksum": true,
+      "credentialLike": false,
+      "classification": "Recomputable file-integrity SHA-256 checksum",
+      "producerEvidence": "browser.mjs:51,54-55,274"
+    },
+    {
+      "fingerprint": "34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-picker-copy-summary.json:generic-api-key:42",
+      "reportPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-picker-copy-summary.json",
+      "reportGitBlobId": "ec53f2c3a2152fbc9a17f6506cb03603d869e44a",
+      "reportLine": 42,
+      "field": "fixtureSha256",
+      "fieldKey": "api-contract.json",
+      "sourcePath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/api-contract.json",
+      "sourceGitBlobId": "2e536d6b2ba67fa8d1756ad4fc2823de512a7e21",
+      "sourceByteLength": 555730,
+      "matchesExactCommittedBytes": true,
+      "reportedLineContainsComputedChecksum": true,
+      "credentialLike": false,
+      "classification": "Recomputable file-integrity SHA-256 checksum",
+      "producerEvidence": "browser.mjs:51,54-55,274"
+    },
+    {
+      "fingerprint": "34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-picker-copy-summary.json:generic-api-key:47",
+      "reportPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-picker-copy-summary.json",
+      "reportGitBlobId": "ec53f2c3a2152fbc9a17f6506cb03603d869e44a",
+      "reportLine": 47,
+      "field": "fixtureSha256",
+      "fieldKey": "mock-api.mjs",
+      "sourcePath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/mock-api.mjs",
+      "sourceGitBlobId": "b4264e12622ab28faf48c371ef88b0624eb55e55",
+      "sourceByteLength": 4918,
+      "matchesExactCommittedBytes": true,
+      "reportedLineContainsComputedChecksum": true,
+      "credentialLike": false,
+      "classification": "Recomputable file-integrity SHA-256 checksum",
+      "producerEvidence": "browser.mjs:51,54-55,274"
+    },
+    {
+      "fingerprint": "34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-picker-copy-summary.json:generic-api-key:52",
+      "reportPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-picker-copy-summary.json",
+      "reportGitBlobId": "ec53f2c3a2152fbc9a17f6506cb03603d869e44a",
+      "reportLine": 52,
+      "field": "apiContractSha256",
+      "fieldKey": "apiContractSha256",
+      "sourcePath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/api-contract.json",
+      "sourceGitBlobId": "2e536d6b2ba67fa8d1756ad4fc2823de512a7e21",
+      "sourceByteLength": 555730,
+      "matchesExactCommittedBytes": true,
+      "reportedLineContainsComputedChecksum": true,
+      "credentialLike": false,
+      "classification": "Recomputable file-integrity SHA-256 checksum",
+      "producerEvidence": "browser.mjs:51,54-55,274"
+    },
+    {
+      "fingerprint": "34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-preintegration-summary.json:generic-api-key:27",
+      "reportPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-preintegration-summary.json",
+      "reportGitBlobId": "01339be9bcf2f5f96d2dad98ab3f791cd1b28250",
+      "reportLine": 27,
+      "field": "fixtureSha256",
+      "fieldKey": "api-contract.json",
+      "sourcePath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/api-contract.json",
+      "sourceGitBlobId": "2e536d6b2ba67fa8d1756ad4fc2823de512a7e21",
+      "sourceByteLength": 555730,
+      "matchesExactCommittedBytes": true,
+      "reportedLineContainsComputedChecksum": true,
+      "credentialLike": false,
+      "classification": "Recomputable file-integrity SHA-256 checksum",
+      "producerEvidence": "browser.mjs:51,54-55,274"
+    },
+    {
+      "fingerprint": "34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-preintegration-summary.json:generic-api-key:32",
+      "reportPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-preintegration-summary.json",
+      "reportGitBlobId": "01339be9bcf2f5f96d2dad98ab3f791cd1b28250",
+      "reportLine": 32,
+      "field": "fixtureSha256",
+      "fieldKey": "mock-api.mjs",
+      "sourcePath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/mock-api.mjs",
+      "sourceGitBlobId": "b4264e12622ab28faf48c371ef88b0624eb55e55",
+      "sourceByteLength": 4918,
+      "matchesExactCommittedBytes": true,
+      "reportedLineContainsComputedChecksum": true,
+      "credentialLike": false,
+      "classification": "Recomputable file-integrity SHA-256 checksum",
+      "producerEvidence": "browser.mjs:51,54-55,274"
+    },
+    {
+      "fingerprint": "34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-preintegration-summary.json:generic-api-key:37",
+      "reportPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-preintegration-summary.json",
+      "reportGitBlobId": "01339be9bcf2f5f96d2dad98ab3f791cd1b28250",
+      "reportLine": 37,
+      "field": "apiContractSha256",
+      "fieldKey": "apiContractSha256",
+      "sourcePath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/api-contract.json",
+      "sourceGitBlobId": "2e536d6b2ba67fa8d1756ad4fc2823de512a7e21",
+      "sourceByteLength": 555730,
+      "matchesExactCommittedBytes": true,
+      "reportedLineContainsComputedChecksum": true,
+      "credentialLike": false,
+      "classification": "Recomputable file-integrity SHA-256 checksum",
+      "producerEvidence": "browser.mjs:51,54-55,274"
+    },
+    {
+      "fingerprint": "34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-summary.json:generic-api-key:42",
+      "reportPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-summary.json",
+      "reportGitBlobId": "1f9a0d4adc5a235c1ea1c32792cc0180f049fcf4",
+      "reportLine": 42,
+      "field": "fixtureSha256",
+      "fieldKey": "api-contract.json",
+      "sourcePath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/api-contract.json",
+      "sourceGitBlobId": "2e536d6b2ba67fa8d1756ad4fc2823de512a7e21",
+      "sourceByteLength": 555730,
+      "matchesExactCommittedBytes": true,
+      "reportedLineContainsComputedChecksum": true,
+      "credentialLike": false,
+      "classification": "Recomputable file-integrity SHA-256 checksum",
+      "producerEvidence": "browser.mjs:51,54-55,274"
+    },
+    {
+      "fingerprint": "34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-summary.json:generic-api-key:47",
+      "reportPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-summary.json",
+      "reportGitBlobId": "1f9a0d4adc5a235c1ea1c32792cc0180f049fcf4",
+      "reportLine": 47,
+      "field": "fixtureSha256",
+      "fieldKey": "mock-api.mjs",
+      "sourcePath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/mock-api.mjs",
+      "sourceGitBlobId": "b4264e12622ab28faf48c371ef88b0624eb55e55",
+      "sourceByteLength": 4918,
+      "matchesExactCommittedBytes": true,
+      "reportedLineContainsComputedChecksum": true,
+      "credentialLike": false,
+      "classification": "Recomputable file-integrity SHA-256 checksum",
+      "producerEvidence": "browser.mjs:51,54-55,274"
+    },
+    {
+      "fingerprint": "34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-summary.json:generic-api-key:52",
+      "reportPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-summary.json",
+      "reportGitBlobId": "1f9a0d4adc5a235c1ea1c32792cc0180f049fcf4",
+      "reportLine": 52,
+      "field": "apiContractSha256",
+      "fieldKey": "apiContractSha256",
+      "sourcePath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/api-contract.json",
+      "sourceGitBlobId": "2e536d6b2ba67fa8d1756ad4fc2823de512a7e21",
+      "sourceByteLength": 555730,
+      "matchesExactCommittedBytes": true,
+      "reportedLineContainsComputedChecksum": true,
+      "credentialLike": false,
+      "classification": "Recomputable file-integrity SHA-256 checksum",
+      "producerEvidence": "browser.mjs:51,54-55,274"
+    }
+  ]
+}

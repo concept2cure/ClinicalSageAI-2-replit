@@ -40,21 +40,20 @@
  *      the portfolio read. This part was written against GET
  *      /api/cmc/blueprint/portfolio/overview (server/api/cmc/portfolio.ts),
  *      retired 2026-10-05 with no caller, and the counts below are that
- *      overview's; the board reads the same reg_submissions rows and
- *      reg_questions, and its RPI engine reads reg_m3_sections.
+ *      overview's; the board reads the same reg_submissions rows, and its RPI
+ *      engine reads reg_m3_sections.
  *      → reg_submissions (sub_id, product_id, region, sub_type, tenant_id) is the
- *        one-row-per-submission list; per row it counts open reg_questions,
- *        reg_obligations and reg_m3_sections keyed by sub_id. Org col on the
- *        parent: tenant_id (int).
+ *        one-row-per-submission list; per row it counts reg_obligations and
+ *        reg_m3_sections keyed by sub_id. Org col on the parent: tenant_id (int).
+ *        No agency questions are seeded (2026-10-19): the board no longer reads
+ *        reg_questions, which is read-only in the database
+ *        (migrations/20261019b_reg_questions_read_only.sql), and agency
+ *        questions are recorded on the letter they came in
+ *        (agency_communication_questions, P-38 / P-39 item 1).
  *      Faithfulness caveats encoded as guards:
  *        • reg_submissions / reg_m3_sections are created only by the legacy
  *          regulatory-foundation SQL (sub_id shape); the canonical drizzle
  *          schema does not define them. Guarded on table + tenant_id/sub_id.
- *        • the canonical reg_questions is org-scoped (id, organization_id,
- *          question_text …) with NO sub_id, so the overview's
- *          `reg_questions WHERE sub_id = …` can never match it — a route/schema
- *          mismatch. We seed reg_questions ONLY when it actually has a sub_id
- *          column (i.e. the legacy IR-hub shape); otherwise we skip and note it.
  *        • the overview reads reg_m3_sections.up_stability, a column no migration
  *          creates (the real column is upstream_json). We seed upstream_json
  *          (real) so the missing-section count is honest; the coverage subquery
@@ -74,8 +73,7 @@
  *   migrations/20260529_phase11_intelligence.sql        c2c_tlf_builds
  *   db/migrations/_legacy/060_regulatory_foundation.sql reg_submissions,
  *                                                       reg_m3_sections
- *   migrations/0000_sweet_joseph.sql                    reg_obligations,
- *                                                       reg_questions
+ *   migrations/0000_sweet_joseph.sql                    reg_obligations
  *   migrations/20260520_pdev_workflow_activities.sql    pdev_program_activities
  *
  * Program naming is consistent with the established demo universe (org
@@ -89,6 +87,8 @@
  * obligations on (sub_id, title); pdev activities on (program_id, activity_key).
  * Re-running inserts nothing new.
  */
+
+import { ensureOrganizationWorkspace } from '../organization-workspace.mjs';
 
 async function tableExists(client, table) {
   const { rows } = await client.query('SELECT to_regclass($1) AS t', [`public.${table}`]);
@@ -115,28 +115,13 @@ async function resolveUserId(client, email, admin) {
    Mirror the resolve-or-create pattern used by 70-vault so a missing parent
    degrades to a skipped part rather than aborting the orchestrator tx. */
 
-async function resolveWorkspaceId(client, org, admin) {
+async function resolveWorkspaceId(client, org) {
   if (!(await tableExists(client, 'client_workspaces'))) return null;
   try {
     await client.query('SAVEPOINT sp_pgm_ws');
-    let { rows } = await client.query(
-      'SELECT id FROM client_workspaces WHERE organization_id = $1 ORDER BY id LIMIT 1',
-      [org.id],
-    );
-    if (!rows[0]) {
-      await client.query(
-        `INSERT INTO client_workspaces (organization_id, name, slug, status, created_by_id)
-         VALUES ($1, 'Concept2Cure Therapeutics', 'concept2cure', 'active', $2)
-         ON CONFLICT (organization_id, slug) DO NOTHING`,
-        [org.id, admin.id],
-      );
-      ({ rows } = await client.query(
-        'SELECT id FROM client_workspaces WHERE organization_id = $1 ORDER BY id LIMIT 1',
-        [org.id],
-      ));
-    }
+    const id = await ensureOrganizationWorkspace(client, org.id);
     await client.query('RELEASE SAVEPOINT sp_pgm_ws');
-    return rows[0]?.id ?? null;
+    return id;
   } catch {
     await client.query('ROLLBACK TO SAVEPOINT sp_pgm_ws');
     return null;
@@ -152,7 +137,7 @@ async function resolveProjectId(client, org, admin) {
   );
   if (existing.rows[0]) return existing.rows[0].id;
 
-  const wsId = await resolveWorkspaceId(client, org, admin);
+  const wsId = await resolveWorkspaceId(client, org);
   const name = 'Concept2Cure regulatory workspace';
   const desc = 'Container program for demo regulatory correspondence.';
 
@@ -636,39 +621,8 @@ async function seedCmc(client, org, admin) {
     }
   }
 
-  // Information requests: the canonical reg_questions is org-scoped (no sub_id);
-  // the overview's `reg_questions WHERE sub_id = …` can only match the legacy
-  // IR-hub shape. Seed only if that shape is present.
-  let questionsInserted = 0;
-  let questionsSkipped = false;
-  if (await tableExists(client, 'reg_questions')
-    && await hasColumn(client, 'reg_questions', 'sub_id')
-    && await hasColumn(client, 'reg_questions', 'question_text')) {
-    const IR = [
-      { q: 'Provide the drug substance stability protocol and 6-month data.', status: 'OPEN', dueInDays: 20 },
-      { q: 'Clarify the shelf-life extrapolation for the drug product.', status: 'DRAFTED', dueInDays: 34 },
-    ];
-    for (const item of IR) {
-      const exists = await client.query(
-        'SELECT 1 FROM reg_questions WHERE sub_id = $1 AND question_text = $2 LIMIT 1',
-        [subId, item.q],
-      );
-      if (exists.rows[0]) continue;
-      await client.query(
-        `INSERT INTO reg_questions (sub_id, question_text, status, due_date)
-         VALUES ($1, $2, $3, CURRENT_DATE + ($4::int * interval '1 day'))`,
-        [subId, item.q, item.status, item.dueInDays],
-      );
-      questionsInserted += 1;
-    }
-  } else if (await tableExists(client, 'reg_questions')) {
-    questionsSkipped = true;
-  }
-
   const parts = [`1 submission`, `${sectionsInserted} m3 sections`, `${obligationsInserted} obligations`];
-  if (questionsInserted > 0) parts.push(`${questionsInserted} IRs`);
-  const qNote = questionsSkipped ? ' (reg_questions is org-scoped — no sub_id, IRs skipped)' : '';
-  console.log(`   ✓ cmc: ${parts.join(', ')} seeded${qNote}`);
+  console.log(`   ✓ cmc: ${parts.join(', ')} seeded`);
 }
 
 /* ── PDEV → IND program activities ────────────────────────────────────────────

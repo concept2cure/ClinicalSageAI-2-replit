@@ -39,11 +39,36 @@ async function login(page) {
 
 async function goHome(page) {
   await page.goto(HOME, { waitUntil: 'domcontentloaded' });
-  await page.waitForSelector('textarea', { timeout: 30000 });
+  // The shell redirects to the conversation destination and mounts the
+  // composer there. A fresh thread gets its own path segment
+  // (/conversation-thread/<threadId>), so paths are compared by prefix.
+  await page.waitForSelector('textarea:visible', { timeout: 30000 });
   await sleep(1500);
 }
 
+/**
+ * Open AnA from a working screen. The shell used to dock her beside the screen;
+ * it now has an "Ask AnA" control that goes to the conversation destination.
+ */
+async function openAna(page) {
+  if (await page.locator('textarea:visible').count()) return;
+  const ask = page.locator('button:has-text("Ask AnA")').first();
+  if (await ask.count()) await ask.click();
+  else {
+    // Not every screen carries the control (the audit trail does not), so the
+    // last resort is the conversation destination itself.
+    await page.keyboard.press('Control+\\');
+    await sleep(800);
+    if (!(await page.locator('textarea:visible').count())) {
+      await page.goto(HOME, { waitUntil: 'domcontentloaded' });
+    }
+  }
+  await page.waitForSelector('textarea:visible', { timeout: 30000 });
+  await sleep(800);
+}
+
 async function ask(page, text) {
+  await openAna(page);
   const box = page.locator('textarea:visible').first();
   await box.click();
   await box.fill(text);
@@ -68,13 +93,27 @@ async function stripText(page) {
 }
 // What AnA said at each stop reaches the person, each stop in its own
 // paragraph. The stand-in narrates a stop as "Stop N: <talking point> …".
-function recordNarration(text) {
+function recordNarration(text, saved) {
+  // `saved` is the conversation's own copy of what AnA said. The rail
+  // virtualises a long demonstration, so the rendered tail no longer holds
+  // every stop; the saved message is what the person scrolls back to.
+  if (saved) text = saved;
   const total = Number(/That is the whole demonstration: (\d+) stops/.exec(text)?.[1] ?? 0);
   const said = new Set([...text.matchAll(/Stop (\d+):/g)].map(m => Number(m[1])));
   const unsaid = Array.from({ length: total }, (_, i) => i + 1).filter(k => !said.has(k));
   const runOn = [...text.matchAll(/\S{0,24}\S(?=Stop \d+:|That is the whole demonstration)/g)].map(m => m[0]);
   record('training demo: every stop is narrated in AnA\'s words', total > 0 && unsaid.length === 0, `${total} stops; not narrated: ${unsaid.join(', ') || 'none'}`);
   record('training demo: each round\'s words start their own paragraph', runOn.length === 0, runOn.length ? `run together after: ${runOn.slice(0, 3).map(r => JSON.stringify(r)).join(', ')}` : '');
+}
+
+/** What AnA actually said in the demonstration, from the saved conversation. */
+function savedDemoMessage() {
+  if (!process.env.DATABASE_URL) return '';
+  try {
+    return psql("select content from chat_messages where content ilike '%whole demonstration%' order by id desc limit 1");
+  } catch {
+    return '';
+  }
 }
 
 async function bodyText(page) {
@@ -132,22 +171,33 @@ const SCENARIOS = {
   // Acting on a screen the person is not on: the bus heads there and the
   // action arrives while the screen's read is in flight, so the screen holds
   // it until its data settles. Each ask is answered with "Act result: …
-  // Screen: …" (the stand-in's planAct). The Inconsistency overlay is
-  // project-scoped, so a program is opened first; the design needs the local
-  // study design the README names.
+  // Screen: …" (the stand-in's planAct). eCTD Compile is project-scoped, so a
+  // program is opened first; the design needs the local study design the
+  // README names.
+  //
+  // This first check drove the Inconsistency board's FDA/EMA overlay until
+  // upstream a76a50aec6 made that gate the server's alone: no client overlay,
+  // no re-scoring, and inconsistency.set-regulator left the registry with its
+  // handler. The eCTD Region menu is the same shape — a project-scoped
+  // selector whose very presence waits on a read (compilation readiness) — so
+  // it tests the same thing: a held action, sent from another screen, answered
+  // by the screen that holds it.
   async heldAction(page) {
     await goHome(page);
     await ask(page, 'open program BX-301');
     await watchUrls(page, { until: s => s.some(p => p.endsWith('/project-home')) });
     await waitIdle(page);
-    const actResults = async () => [...(await bodyText(page)).matchAll(/Act result:[^\n]*/g)].map(m => m[0]);
-    // The next "Act result:" line, read once its turn is over (it streams in).
+    // A drive leaves the person on the screen it moved to, so AnA's answer is
+    // no longer in that page's text. It is read from the conversation's own
+    // saved copy, which is what the person scrolls back to.
+    if (!process.env.DATABASE_URL) { record('heldAction needs DATABASE_URL', false, 'set it to read the saved answers'); return; }
+    const actResults = () =>
+      (psql("select replace(content, chr(10), ' ') from chat_messages where content like '%Act result:%' order by id")
+        .match(/Act result:[^\n]*/g) ?? []);
     const nextResult = async before => {
-      for (const t = Date.now(); Date.now() - t < 45000; await sleep(500)) {
-        if ((await actResults()).length > before) {
-          await waitIdle(page);
-          return (await actResults()).pop();
-        }
+      for (const t = Date.now(); Date.now() - t < 45000; await sleep(1000)) {
+        const all = actResults();
+        if (all.length > before) return all[all.length - 1];
       }
       return '(no answer within 45 s)';
     };
@@ -155,15 +205,18 @@ const SCENARIOS = {
 
     let t = Date.now();
     let before = (await actResults()).length;
-    await ask(page, 'act inconsistency.set-regulator regulator=EMA');
-    const overlaySaid = await nextResult(before);
-    const overlayMs = Date.now() - t;
-    const overlay = await selectedText('button.gi-reg-b.on');
-    await page.screenshot({ path: `${SP}/e2e-held-overlay.png` });
+    await ask(page, 'act ectd-compile.set-region region=EMA');
+    const regionSaid = await nextResult(before);
+    const regionMs = Date.now() - t;
+    // Either the menu moved, or the sequence records its own region and the
+    // screen said so — both are the screen's own answer. A timeout ("not
+    // confirmed") or a menu left on FDA with no refusal is the failure.
+    const regionValue = await page.locator('#ectd-region').inputValue().catch(() => '');
+    await page.screenshot({ path: `${SP}/e2e-held-region.png` });
     record(
-      "held action: an overlay switch sent from another screen gets the screen's own answer",
-      /Screen: /.test(overlaySaid) && !/not confirmed/.test(overlaySaid),
-      `${overlaySaid} (overlay ${overlay || 'unchanged'}; answered in ${overlayMs} ms)`,
+      "held action: a region switch sent from another screen gets the screen's own answer",
+      /Screen: /.test(regionSaid) && !/not confirmed/.test(regionSaid) && (regionValue === 'EMA' || /records region/.test(regionSaid)),
+      `${regionSaid} (Region menu: ${regionValue || 'not on screen'}; answered in ${regionMs} ms)`,
     );
 
     t = Date.now();
@@ -176,6 +229,122 @@ const SCENARIOS = {
     const designDetail = `${designSaid} (selected: ${loaded || 'none'}; answered in ${designMs} ms)`;
     if (LAUNCH_ON) record('held action: a design on a screen outside the release is refused, not in this release', NOT_IN_RELEASE.test(designSaid) && !loaded, designDetail);
     else record('held action: a study design named from another screen is loaded', loaded === 'Phase 2 dose finding' && /Screen: no report/.test(designSaid), designDetail);
+  },
+  // The wave-7 screens: AnA could reach them but not operate them. Driven the
+  // same way a person would, from wherever the person happens to be — the bus
+  // navigates and the handler answers once the screen's read settles.
+  async coverage(page) {
+    if (!process.env.DATABASE_URL) { record('coverage needs DATABASE_URL', false, 'set it to read the saved answers'); return; }
+    const answers = () =>
+      (psql("select replace(content, chr(10), ' ') from chat_messages where content like '%Act result:%' order by id")
+        .match(/Act result:[^\n]*/g) ?? []);
+    const nextAnswer = async before => {
+      for (const t = Date.now(); Date.now() - t < 45000; await sleep(1000)) {
+        const all = answers();
+        if (all.length > before) return all[all.length - 1];
+      }
+      return '(no answer within 45 s)';
+    };
+    const drive = async (ask_, until) => {
+      const before = answers().length;
+      await ask(page, ask_);
+      const seen = await watchUrls(page, { timeout: 45000, until });
+      const said = await nextAnswer(before);
+      return { seen, said };
+    };
+
+    await goHome(page);
+    // The audit trail is the training demonstration's last stop, and had no
+    // action at all: AnA ended every demonstration on a screen she could not touch.
+    const filtered = await drive('act audit-trail.filter-entries kind=esign', async () =>
+      (await page.locator('button.seg-b.on').allTextContents().catch(() => [])).join().includes('E-sign'));
+    const onKind = (await page.locator('button.seg-b.on').allTextContents().catch(() => [])).join(', ');
+    await page.screenshot({ path: `${SP}/e2e-coverage-audit-filter.png` });
+    record('audit trail: AnA filters the ledger to one kind of event', /e-?sign/i.test(onKind), `selected: ${onKind || 'none'} — ${filtered.said.slice(0, 110)}`);
+
+    const searched = await drive('act audit-trail.search query=signature', async () =>
+      (await page.locator('input[aria-label="Search audit trail entries"]').inputValue().catch(() => '')) === 'signature');
+    const box = await page.locator('input[aria-label="Search audit trail entries"]').inputValue().catch(() => '');
+    record('audit trail: AnA runs the search box', box === 'signature', `box: ${JSON.stringify(box)} — ${searched.said.slice(0, 110)}`);
+
+    // A value the screen does not have must be refused, naming the legal set.
+    const bogus = await drive('act audit-trail.filter-entries kind=holodeck', async () => false);
+    record('audit trail: a kind the screen does not have is refused, not guessed',
+      /not|no |unknown|refus/i.test(bogus.said) && !/applied|filtered to holodeck/i.test(bogus.said), bogus.said.slice(0, 160));
+  },
+  // The second half of wave 7: the project-scoped screens. Same drive, but a
+  // program has to be open first — the bus lands on "Open a program" otherwise
+  // and the handler's own `ident == null` refusal is what AnA would get.
+  async coverage2(page) {
+    if (!process.env.DATABASE_URL) { record('coverage2 needs DATABASE_URL', false, 'set it to read the saved answers'); return; }
+    const answers = () =>
+      (psql("select replace(content, chr(10), ' ') from chat_messages where content like '%Act result:%' order by id")
+        .match(/Act result:[^\n]*/g) ?? []);
+    const nextAnswer = async before => {
+      for (const t = Date.now(); Date.now() - t < 45000; await sleep(1000)) {
+        const all = answers();
+        if (all.length > before) return all[all.length - 1];
+      }
+      return '(no answer within 45 s)';
+    };
+    /* waitIdle between drives, which `coverage` gets for free: its checks all
+       wait out the full watch window, so the previous turn has always finished
+       by the time the next ask is typed. Here the first check stops as soon as
+       the card appears, and an ask typed into a composer that is still
+       streaming is dropped — the next answer then never arrives and reads as a
+       screen that did not respond. The race was in the harness, not the bus. */
+    const drive = async (ask_, until) => {
+      const before = answers().length;
+      await ask(page, ask_);
+      await watchUrls(page, { timeout: 45000, until });
+      await waitIdle(page);
+      return await nextAnswer(before);
+    };
+
+    await goHome(page);
+    await ask(page, 'open program BX-301');
+    await watchUrls(page, { until: s => s.some(q => q.endsWith('/project-home')) });
+    await waitIdle(page);
+
+    // eCTD Compile was not even REACHABLE before this wave: no navigation
+    // target resolved to it, so AnA could not get to a shipped Submission
+    // Center screen at all. Both menus are selectors — nothing is sent until a
+    // person clicks Validate or Compile.
+    const subSel = '#ectd-subtype';
+    const typeSaid = await drive('act ectd-compile.set-submission-type submissionType=amendment', async () =>
+      (await page.locator(subSel).inputValue().catch(() => '')) === 'amendment');
+    const subValue = await page.locator(subSel).inputValue().catch(() => '');
+    await page.screenshot({ path: `${SP}/e2e-coverage2-ectd-subtype.png` });
+    record('eCTD compile: AnA switches the submission type the next compile is run as',
+      subValue === 'amendment', `menu: ${JSON.stringify(subValue)} — ${typeSaid.slice(0, 120)}`);
+
+    // A region the menu does not offer is refused by the registry before the
+    // bus is involved, naming the legal pair.
+    const regionSaid = await drive('act ectd-compile.set-region region=MARS', async () => false);
+    record('eCTD compile: a region the menu does not offer is refused, naming the pair',
+      /FDA/.test(regionSaid) && /EMA/.test(regionSaid) && !/Selected region MARS/i.test(regionSaid), regionSaid.slice(0, 160));
+
+    // The gateway transmittal log: a read of one row's agency status. The
+    // governed acts on that screen (transmit, rollback, technical rejection)
+    // stay a person's own click, so they are not registered at all.
+    // Read from the SCREEN, not from what AnA was told: this protocol reports a
+    // screen's own words back only when the action was refused (the deferred
+    // outcome), so a successful apply answers "Screen: no report" and the proof
+    // it worked is the card a person is looking at.
+    const logged = psql("select id from submission_transmittals order by id limit 1") || '1';
+    const card = `text=Gateway status · transmittal #${logged}`;
+    const statusSaid = await drive(`act submission-gateway.show-status transmittal=#${logged}`, async () =>
+      (await page.locator(card).count().catch(() => 0)) > 0);
+    const cardShown = (await page.locator(card).count().catch(() => 0)) > 0;
+    await page.screenshot({ path: `${SP}/e2e-coverage2-gateway-status.png` });
+    record('gateway transmittals: AnA opens one transmittal\'s gateway status',
+      cardShown, `card for #${logged}: ${cardShown ? 'on screen' : 'not shown'} — ${statusSaid.slice(0, 110)}`);
+
+    // A number that is not in the log must be refused with the numbers that
+    // are — never answered as though the transmittal existed.
+    const missSaid = await drive('act submission-gateway.show-status transmittal=#99999', async () => false);
+    record('gateway transmittals: a transmittal not in the log is refused, listing the logged numbers',
+      /99999/.test(missSaid) && /(Transmittals logged|No transmittal)/i.test(missSaid), missSaid.slice(0, 170));
   },
   async vaultSearch(page) {
     await goHome(page);
@@ -214,7 +383,7 @@ const SCENARIOS = {
     record('training demo visits every stop in order', missing.length === 0, `seen: ${seen.join(' → ')}${missing.length ? '  missing: ' + missing.join(',') : ''}`);
     record('training demo shows "AnA is demonstrating"', sawDemoStrip);
     record('training demo reaches its end', /That is the whole demonstration/.test(await bodyText(page)));
-    recordNarration(await bodyText(page));
+    recordNarration(await bodyText(page), savedDemoMessage());
   },
   async salesDemo(page) {
     const fs = await import('node:fs');
@@ -239,28 +408,24 @@ const SCENARIOS = {
     record('sales demo: a guessed document name is refused with the real titles, and AnA retries with one', retry, [...failures].join(' || ') || 'no refusal seen');
     record('sales demo reaches its end', /That is the whole demonstration/.test(await bodyText(page)));
   },
-  async railAsk(page) {
+  // Asking AnA from a working screen. The shell used to dock her beside the
+  // screen; now "Ask AnA" goes to the conversation destination, so what is
+  // checked is that the ask still drives the screen and the answer survives.
+  async askFromScreen(page) {
     await page.goto(`${HOME}/projects`, { waitUntil: 'domcontentloaded' });
     await sleep(2500);
-    let box = page.locator('aside textarea:visible').first();
-    if (!(await box.count())) {
-      await page.keyboard.press('Control+\\');
-      await sleep(600);
-      box = page.locator('aside textarea:visible').first();
-    }
-    await box.click();
-    await box.fill('take me to biostatistics');
-    await box.press('Enter');
+    const entry = await page.locator('button:has-text("Ask AnA")').count();
+    await ask(page, 'take me to biostatistics');
     const seen = await watchUrls(page, { until: s => s.some(p => p.endsWith('/biostatistics')) });
     await waitIdle(page);
     await sleep(800);
-    const railStill = await page.locator('aside textarea:visible').count();
     const text = await bodyText(page);
-    await page.screenshot({ path: `${SP}/e2e-rail.png` });
-    const railOpened = seen.some(p => p.endsWith('/biostatistics'));
-    if (LAUNCH_ON) record('rail: take me to biostatistics → refused, not in this release; the screen stays', !railOpened && NOT_IN_RELEASE.test(text), seen.join(' → '));
-    else record('rail: take me to biostatistics → Biostatistics opens', railOpened, seen.join(' → '));
-    record('rail: the conversation is still there after the move', railStill > 0 && /Navigation result/.test(text));
+    await page.screenshot({ path: `${SP}/e2e-ask-from-screen.png` });
+    const opened = seen.some(p => p.endsWith('/biostatistics'));
+    record('a working screen offers a way to reach AnA', entry > 0, `"Ask AnA" controls: ${entry}`);
+    if (LAUNCH_ON) record('from a screen: take me to biostatistics → refused, not in this release', !opened && NOT_IN_RELEASE.test(text), seen.join(' → '));
+    else record('from a screen: take me to biostatistics → Biostatistics opens', opened, seen.join(' → '));
+    record('from a screen: the answer is still readable after the move', /Navigation result/.test(text), text.slice(-120).replace(/\n+/g, ' '));
   },
   async chipsWhenOff(page) {
     await goHome(page);
@@ -353,7 +518,7 @@ const SCENARIOS = {
 };
 
 const want = process.argv.slice(2);
-const names = want.length ? want : ['biostat', 'vault', 'openProgram', 'heldAction', 'vaultSearch', 'railAsk', 'demo', 'salesDemo', 'chipsWhenOff'];
+const names = want.length ? want : ['biostat', 'vault', 'openProgram', 'heldAction', 'coverage', 'coverage2', 'vaultSearch', 'askFromScreen', 'demo', 'salesDemo', 'chipsWhenOff'];
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 const page = await ctx.newPage();

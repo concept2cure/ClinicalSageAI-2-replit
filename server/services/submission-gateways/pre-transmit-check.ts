@@ -16,13 +16,14 @@
  *      the bundle shows unconverted PDF leaves.
  *   3. DTD self-containment — blocks in production when ECTD_REQUIRE_DTD and the
  *      bundle is not DTD self-contained.
- *   4. External agency-grade validation — folds evaluateExternalValidationGate
+ *   4. External validation — folds evaluateExternalValidationGate
  *      when a report is supplied / required (ECTD_REQUIRE_EVALIDATOR).
  *
  * Flag-gated checks are report-only by default (identical to today's behavior);
  * they only block a production send when the operator has opted in. Missing
- * evidence never blocks (we warn rather than halt a legitimate send we cannot
- * disprove) — demonstrated non-compliance blocks.
+ * PDF/A or DTD evidence warns when absent. Required production external
+ * validation fails closed when no qualifying assessment is established.
+ * Advisory policy clearance never means the external assessment passed.
  *
  * PURE (no I/O): callers pass the bundle + an optional external report.
  *
@@ -30,14 +31,15 @@
  */
 
 import type { Region, SubmissionBundle } from './types';
-import { getGatewaySizeLimit, FDA_OVERSIZE_REMEDY, type RegulatoryRegion } from '../ectd/ectd-regional-rules';
+import { getGatewaySizeLimitOnFile, FDA_OVERSIZE_REMEDY, type RegulatoryRegion } from '../ectd/ectd-regional-rules';
 import {
   evaluateExternalValidationGate,
   evalidatorRequiredFromEnv,
   type ExternalValidationReport,
+  type ExternalValidator,
 } from '../ectd/external-validator';
 import { pdfaRequirementFrom, pdfaRequirementWho, type PdfARequirement } from '../ectd/pdfa-requirement';
-import { dtdRequiredFromEnv } from '../ectd/dtd-bundler';
+import { dtdRequiredFromEnv, hasPassedPackageDtdValidation } from '../ectd/dtd-bundler';
 import {
   evaluateRegionalBackboneGate,
   regionalBackboneRequiredFromEnv,
@@ -87,12 +89,14 @@ export interface PreTransmitInput {
   region: Region;
   bundle: SubmissionBundle;
   environment: 'staging' | 'production';
-  /** An already-run external (agency-grade) validation report, if available. */
+  /** A supplied validation report; it does not establish its own authority. */
   externalReport?: ExternalValidationReport | null;
-  /** Whether a licensed external engine is configured (default false). */
+  /** Trusted server-selected adapter identity/classification, never inferred from the report. */
+  selectedExternalValidator?: Pick<ExternalValidator, 'name' | 'kind'>;
+  /** Configuration discovery, not proof of licence or qualified coverage (default false). */
   externalConfigured?: boolean;
   /**
-   * Fold the external agency-grade validation gate into the decision. Default
+   * Fold the external validation gate into the decision. Default
    * true (the route layer, which has run the validator + holds the report).
    * The low-level gateway guard sets this false — it cannot run/receive a
    * report, and external enforcement already lives in assess-dispatch-readiness.
@@ -130,18 +134,19 @@ export interface PreTransmitResult {
 function evaluateDtdSelfContainment(
   dtd: SubmissionBundle['dtdStatus'],
   isProd: boolean,
-  dtdRequired: boolean
-): { check: PreTransmitCheck | null; blockers: string[]; warnings: string[] } {
+  dtdRequired: boolean,
+  studyFiles?: number,
+): { check: PreTransmitCheck | null; validationCheck: PreTransmitCheck | null; blockers: string[]; warnings: string[] } {
+  const validated = hasPassedPackageDtdValidation(dtd, studyFiles);
+  const validationCheck = packageDtdCheck(validated, Boolean(dtd) || dtdRequired);
+  const enforced = isProd && dtdRequired;
   if (!dtd) {
+    const message = 'ECTD_REQUIRE_DTD is set but the bundle carries no DTD status or current validation proof — cannot prove package DTD validity at transmit time.';
     return {
       check: null,
-      blockers: [],
-      warnings:
-        isProd && dtdRequired
-          ? [
-              'ECTD_REQUIRE_DTD is set but the bundle carries no DTD status — cannot prove self-containment at transmit time.',
-            ]
-          : [],
+      validationCheck,
+      blockers: enforced ? [message] : [],
+      warnings: enforced ? [message] : [],
     };
   }
   // `dtdStatus` reaches this gate off a persisted bundle record, so its fields
@@ -172,14 +177,21 @@ function evaluateDtdSelfContainment(
         ? 'all required DTDs and stylesheets bundled'
         : `missing: ${absentText}`,
     },
+    validationCheck,
     blockers:
-      isProd && dtdRequired && !selfContained
+      enforced && !selfContained
         ? [
             `Package is not DTD self-contained (missing ${absentText}); ECTD_REQUIRE_DTD blocks this production transmit.`,
           ]
-        : [],
-    warnings: [],
+        : enforced && !validated ? ['Package DTD validation is absent, incomplete or failed; ECTD_REQUIRE_DTD blocks this production transmit. Re-assemble and validate the package.'] : [],
+    warnings: !validated && !enforced ? ['Package DTD validation is unverified or failed; presence of DTDs and stylesheets alone does not prove validity.'] : [],
   };
+}
+
+function packageDtdCheck(passed: boolean, available: boolean): PreTransmitCheck | null {
+  return available ? { name: 'package-dtd-validation', passed,
+    detail: passed ? 'all package backbones/STFs passed current DTD checks with verified supportive bytes'
+      : 'current complete XML/DTD execution and supportive-file integrity proof is absent or failed; re-assemble and validate the package' } : null;
 }
 
 /** Evaluate the pre-transmit preconditions for a package. Pure + deterministic. */
@@ -224,12 +236,24 @@ function checkPdfA(
  * The gateway size limit — hard, always, where the figure is sourced; a warning
  * where it is not (SIZE_LIMIT_UNSOURCED). Extracted from evaluatePreTransmit
  * (2026-10-08, sweep VP-6), same shape as checkPdfA.
+ *
+ * Read from getGatewaySizeLimitOnFile. With no limit on file (CA, CN, KR, UK,
+ * AU, CH, BR, IN, SG) the size is not checked, and the check says so: the
+ * deprecated getGatewaySizeLimit's figures for those regions are published by
+ * no agency, and this gate turned them into "over the CA gateway limit"
+ * refusals (2026-10-22, W5/D7, merge review of sweep VP-6).
  */
 function checkGatewaySize(region: Region, sizeBytes: number): { check: PreTransmitCheck; blocker?: string; warning?: string } {
-  const limit = getGatewaySizeLimit(REGION_TO_REGULATORY[region]);
+  const name = region.toUpperCase();
+  const onFile = getGatewaySizeLimitOnFile(REGION_TO_REGULATORY[region]);
+  if (!onFile) {
+    return {
+      check: { name: 'gateway-size-limit', passed: true, detail: `not checked: no published ${name} gateway size limit is on file (${sizeBytes} bytes)` },
+    };
+  }
+  const limit = onFile.bytes;
   const sizeOk = sizeBytes <= limit;
   const unsourced = SIZE_LIMIT_UNSOURCED[region];
-  const name = region.toUpperCase();
   const check: PreTransmitCheck = {
     name: 'gateway-size-limit',
     passed: sizeOk,
@@ -276,9 +300,11 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
   const dtdGate = evaluateDtdSelfContainment(
     input.bundle.dtdStatus,
     isProd,
-    dtdRequiredFromEnv(env)
+    dtdRequiredFromEnv(env),
+    input.bundle.stf?.studies,
   );
   if (dtdGate.check) checks.push(dtdGate.check);
+  if (dtdGate.validationCheck) checks.push(dtdGate.validationCheck);
   blockers.push(...dtdGate.blockers);
   warnings.push(...dtdGate.warnings);
 
@@ -361,6 +387,7 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
     status: input.bundle.regionalBackbone,
     environment: input.environment,
     required: regionalBackboneRequiredFromEnv(env),
+    validation: input.bundle.dtdStatus?.validation,
   });
   if (regionalGate.check) checks.push(regionalGate.check);
   blockers.push(...regionalGate.blockers);
@@ -385,20 +412,29 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
   blockers.push(...m3RegionalGate.blockers);
   warnings.push(...m3RegionalGate.warnings);
 
-  // 4. External agency-grade validation gate (route layer only — see enforceExternal).
+  // 4. External validation gate (route layer only — see enforceExternal).
   if (input.enforceExternal !== false) {
     const extGate = evaluateExternalValidationGate({
       report: input.externalReport ?? null,
+      selectedValidator: input.selectedExternalValidator,
       configured: input.externalConfigured ?? false,
       requireEvalidator: evalidatorRequiredFromEnv(env),
       environment: input.environment,
     });
+    const externalDetail =
+      `status=${extGate.assessmentStatus}; kind=${extGate.validatorKind}; ` +
+      `errorCountKnown=${extGate.errorCountKnown}; ` +
+      `errors=${extGate.errorCountKnown ? extGate.externalErrorCount : 'unknown'}; ` +
+      `ran=${extGate.ran}; enforced=${extGate.enforced}`;
     checks.push({
       name: 'external-evalidator',
-      passed: extGate.cleared,
-      detail: extGate.ran ? `${extGate.externalErrorCount} agency error(s)` : 'did not run',
+      passed: extGate.assessmentStatus === 'passed',
+      detail: externalDetail,
     });
     blockers.push(...extGate.blockers);
+    if (!extGate.enforced && extGate.assessmentStatus !== 'passed') {
+      warnings.push(`External validation is advisory: ${externalDetail}. No qualifying passed external assessment is established.`);
+    }
   }
 
   return { cleared: blockers.length === 0, blockers, checks, warnings };

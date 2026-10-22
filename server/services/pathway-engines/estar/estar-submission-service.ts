@@ -25,8 +25,9 @@ import {
   type EstarSubmissionStatus,
 } from '../../../../shared/schema/estar-submission';
 import { getCatalogEntry, type EstarCatalogKey } from './estar-catalog';
-import auditService from '../../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../../audit/audit-write-outcome';
 import { recordGovernedAction } from '../../../routes/c2c/actions';
+import { PRESTAR_PREFILL_CODE_PREFIX } from './estar-field-map';
 import {
   BINDING_BASIS,
   persistGovernedActionSignature,
@@ -35,10 +36,11 @@ import {
 import { queryableFromDrizzle } from '../../../db/drizzle-queryable';
 import { projectBelongsToTenant } from '../../cmc/project-membership';
 import { createScopedLogger } from '../../../utils/logger';
+import type { RequestDb } from '../../../db/requestDb';
 
 const logger = createScopedLogger('estar-submission-service');
 
-export type EstarSubmissionErrorCode = 'NOT_FOUND' | 'VALIDATION';
+export type EstarSubmissionErrorCode = 'NOT_FOUND' | 'VALIDATION' | 'STATE_CHANGED';
 export class EstarSubmissionError extends Error {
   constructor(public code: EstarSubmissionErrorCode, message: string) {
     super(message);
@@ -86,6 +88,8 @@ export interface CreateEstarSubmissionInput {
   projectId?: number | null;
 }
 
+export type AuditedEstarSubmission = EstarSubmissionRow & { auditTrail: AuditRowOutcome };
+
 /**
  * Start tracking a filing from a catalog key. Program type + review clock are
  * pulled from the catalog (the filing→tracking bridge); starts in `draft`.
@@ -93,7 +97,7 @@ export interface CreateEstarSubmissionInput {
 export async function createEstarSubmission(
   input: CreateEstarSubmissionInput,
   ctx: Ctx,
-): Promise<EstarSubmissionRow> {
+): Promise<AuditedEstarSubmission> {
   const entry = getCatalogEntry(input.catalogKey as EstarCatalogKey);
   if (!entry) {
     throw new EstarSubmissionError('VALIDATION', `No eSTAR catalog entry for "${input.catalogKey}".`);
@@ -129,7 +133,7 @@ export async function createEstarSubmission(
       createdBy: ctx.userId,
     })
     .returning();
-  await auditService.logAction({
+  const auditTrail = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: 'ESTAR_SUBMISSION_CREATED',
@@ -138,7 +142,7 @@ export async function createEstarSubmission(
     details: { catalogKey: input.catalogKey, programType: entry.programType },
   });
   logger.info('Created eSTAR submission', { id: row.id, organizationId: ctx.organizationId });
-  return row as EstarSubmissionRow;
+  return { ...row, auditTrail };
 }
 
 export async function listEstarSubmissions(
@@ -160,8 +164,9 @@ export async function listEstarSubmissions(
 export async function getEstarSubmission(
   id: string,
   ctx: { organizationId: number },
+  database: Pick<RequestDb, 'select'> = db,
 ): Promise<EstarSubmissionRow> {
-  const [row] = await db
+  const [row] = await database
     .select()
     .from(estarSubmissions)
     .where(and(eq(estarSubmissions.id, id), eq(estarSubmissions.organizationId, ctx.organizationId)))
@@ -240,11 +245,14 @@ export async function applySignedFiling(
   p: SignedFilingParams,
 ): Promise<{ artifactSha256: string }> {
   const artifact = await client.query(
-    `SELECT content_hash FROM vault.documents
+    `SELECT content_hash, document_code FROM vault.documents
       WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
       LIMIT 1`,
     [p.artifactDocumentId, p.organizationId],
   );
+  if (String(artifact.rows[0]?.document_code ?? '').startsWith(PRESTAR_PREFILL_CODE_PREFIX)) {
+    throw new EstarSubmissionError('VALIDATION', 'This retained PreSTAR is an administrative prefill. Complete and review the request in a compatible PDF editor, then retain the completed artifact before recording a filing.');
+  }
   const artifactSha256: string | undefined = artifact.rows[0]?.content_hash;
   if (!artifactSha256) {
     throw new EstarSubmissionError(
@@ -345,7 +353,7 @@ export async function advanceEstarSubmission(
   id: string,
   input: AdvanceEstarSubmissionInput,
   ctx: Ctx,
-): Promise<EstarSubmissionRow> {
+): Promise<EstarSubmissionRow | AuditedEstarSubmission> {
   const current = await getEstarSubmission(id, ctx);
   if (!ESTAR_SUBMISSION_STATUSES.includes(input.toStatus)) {
     throw new EstarSubmissionError('VALIDATION', `Unknown status "${input.toStatus}".`);
@@ -404,10 +412,10 @@ export async function advanceEstarSubmission(
   const [row] = await db
     .update(estarSubmissions)
     .set(patch)
-    .where(and(eq(estarSubmissions.id, id), eq(estarSubmissions.organizationId, ctx.organizationId)))
+    .where(and(eq(estarSubmissions.id, id), eq(estarSubmissions.organizationId, ctx.organizationId), eq(estarSubmissions.status, current.status)))
     .returning();
-  if (!row) throw new EstarSubmissionError('NOT_FOUND', 'eSTAR submission not found for this organization.');
-  await auditService.logAction({
+  if (!row) throw new EstarSubmissionError('STATE_CHANGED', 'The tracked filing changed during this request. Read its current state before another transition.');
+  const auditTrail = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: 'ESTAR_SUBMISSION_ADVANCED',
@@ -415,7 +423,7 @@ export async function advanceEstarSubmission(
     resourceId: id,
     details: { from: current.status, to: input.toStatus },
   });
-  return row as EstarSubmissionRow;
+  return { ...row, auditTrail };
 }
 
 export default {

@@ -14,7 +14,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 /* The real class. The mock below spreads `importOriginal`, so this is the
    same ApiRequestError the transport actually throws — which is the point:
    the fixture has to fail the way production fails. */
@@ -28,9 +28,18 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 // The collab presence layer (AuthoringCollab) reads the auth identity; give it
 // a real-shaped user so the surface renders (it still joins no room here —
 // these tests set no C2C_PROJECT, so the collab layer honestly renders null).
-vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
-}));
+vi.mock('@/services/portal/authService', async original => {
+  const actual = await original<typeof import('@/services/portal/authService')>();
+  return {
+    ...actual,
+    authService: {
+      getUser: () => ({ id: 1, organizationId: 1 }),
+      captureSessionReadGuard: actual.authService.captureSessionReadGuard.bind(actual.authService),
+      on: actual.authService.on.bind(actual.authService),
+    },
+    useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
+  };
+});
 
 
 /* jsdom implements no layout: ProseMirror's scroll-into-view (scheduled by
@@ -48,6 +57,7 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 }
 
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
+import { publishShellProject } from '../shellProject';
 import type { Editor } from '@tiptap/core';
 
 function ok(payload: unknown) {
@@ -82,7 +92,7 @@ function props() {
   return { surface: { id: 'document-authoring', label: 'Authoring' } as any, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biotech' };
 }
 
-afterEach(() => cleanup());
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); delete window.C2C_PROJECT; });
 
 beforeEach(() => {
   apiRequest.mockReset();
@@ -95,6 +105,36 @@ beforeEach(() => {
       return ok({ success: true, revision_created: true, section: { ...SECTIONS.sections[0], content: 'EDITED', revision_count: 3 } });
     }
     return ok({ success: true });
+  });
+});
+
+describe('DocumentAuthoring — saved draft and filing trees', () => {
+  it.each([{ module: null, c2cDocumentId: null }, { module: 'M5', c2cDocumentId: 'filing-id' }])('keeps the tree basis explicit for $module / $c2cDocumentId', async ({ module, c2cDocumentId }) => {
+    const programId = '11111111-1111-4111-8111-111111111111';
+    publishShellProject({ id: programId, title: 'Clinical program' });
+    apiRequest.mockImplementation(async (_method: string, url: string) => {
+      if (url.startsWith('/api/authoring/docs?')) return ok({ documents: [{ ...DOCS.documents[0], title: 'Saved CSR copy', module, c2c_document_id: c2cDocumentId }] });
+      if (url === '/api/authoring/docs/D1/sections') return ok({ sections: [{ ...SECTIONS.sections[0], code: '1', title: 'Title Page' }] });
+      if (url.startsWith('/api/c2c/documents?')) return ok({ documents: [{ id: 'filing-id' }] });
+      if (url === '/api/c2c/documents/filing-id/outline') return ok({ document: { id: 'filing-id', title: 'Project IND filing', doc_type: 'ind', agency: 'fda' },
+        outline: [{ key: 'M1', parent_key: null, label: 'IND administrative module', path_order: 1, mandatory: true },
+          { key: '1.1', parent_key: 'M1', label: 'FDA forms', path_order: 2, mandatory: true }] });
+      return ok({ success: true });
+    });
+    render(<DocumentAuthoring {...props()} />);
+    await waitFor(() => expect(canvasText()).toBe(SECTIONS.sections[0].content));
+    await waitFor(() => expect(apiRequest.mock.calls.some(([, url]) => url === '/api/c2c/documents/filing-id/outline')).toBe(true));
+    expect(document.querySelector('.ed-tree')?.textContent).toContain('Saved CSR copy');
+    if (c2cDocumentId) {
+      expect(screen.queryByText(/Unbound working copy/)).toBeNull();
+      expect(document.querySelector('.ed-tree')?.textContent).toContain('FDA forms');
+      expect(document.querySelector('.ed-tree')?.textContent).toContain('Project IND filing');
+    } else {
+      expect(screen.getByText(/Unbound working copy/)).toBeTruthy();
+      expect(document.querySelector('.ed-tree')?.textContent).not.toContain('FDA forms');
+      expect(document.querySelector('.ed-tree')?.textContent).not.toContain('IND administrative module');
+    }
+    expect(Array.from(document.querySelectorAll('.ed-tree-row .ed-num'), node => node.textContent)).toContain('1');
   });
 });
 
@@ -123,7 +163,8 @@ describe('DocumentAuthoring — real editable canvas', () => {
       target: { value: 'Corrected the substance description.' },
     });
     // The header Save button enables once the dirty state propagates.
-    const saveBtn = screen.getByRole('button', { name: /Save/i }) as HTMLButtonElement;
+    const saveBtn = within(screen.getByRole('group', { name: 'Save and sign' }))
+      .getByRole('button', { name: /^Save(?:d)?$/i }) as HTMLButtonElement;
     await waitFor(() => expect(saveBtn.disabled).toBe(false));
     fireEvent.click(saveBtn);
 
@@ -175,7 +216,8 @@ describe('DocumentAuthoring — real editable canvas', () => {
     fireEvent.change(screen.getByTestId('change-reason'), {
       target: { value: 'Reworded the opening paragraph.' },
     });
-    const saveBtn = screen.getByRole('button', { name: /Save/i }) as HTMLButtonElement;
+    const saveBtn = within(screen.getByRole('group', { name: 'Save and sign' }))
+      .getByRole('button', { name: /^Save(?:d)?$/i }) as HTMLButtonElement;
     await waitFor(() => expect(saveBtn.disabled).toBe(false));
     fireEvent.click(saveBtn);
 
@@ -190,6 +232,9 @@ describe('DocumentAuthoring — real editable canvas', () => {
     // And the canvas says so: not persisted, still on this device.
     expect(await screen.findByText(/Save failed — kept on this device/i)).toBeTruthy();
   });
+});
+
+describe('DocumentAuthoring — saved section ordering', () => {
   it('moves the open section — server-validated reorder, tree redrawn from the canonical order', async () => {
     /* order_index is what the export assembles by, and nothing could change
        it before the reorder endpoint existed. This drives the real seam: the
@@ -295,5 +340,32 @@ describe('DocumentAuthoring — document-level section structure', () => {
     await waitFor(() => expect(screen.getAllByText('General Information').length).toBeGreaterThan(0));
     expect(text()).not.toContain('used by more than one section');
     expect(text()).not.toContain('stored in an order that differs');
+  });
+});
+
+function chooseImage() {
+  const picker = document.querySelector<HTMLInputElement>('input[type="file"][accept="image/png,image/jpeg,image/gif"]');
+  if (!picker) throw new Error('governed image picker unavailable');
+  fireEvent.change(picker, { target: { files: [new File(['image fixture'], 'figure.png', { type: 'image/png' })] } });
+}
+describe('governed figures belong to the actual open authoring document', () => {
+  it('sends the actual document id with the file, independent of shell program selection', async () => {
+    let form: FormData | null = null;
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init?: Parameters<typeof fetch>[1]) => {
+      if (url === '/api/authoring/images') { form = init?.body as FormData; return ok({ success: true, image: { id: 'image-1', url: '/api/authoring/images/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' } }); }
+      return ok({});
+    }));
+    render(<DocumentAuthoring {...props()} />); await waitFor(() => expect(canvasText()).toContain('monoclonal antibody'));
+    chooseImage(); await waitFor(() => expect(form?.get('documentId')).toBe('D1'));
+    expect(form!.get('file')).toBeInstanceOf(File);
+    await waitFor(() => expect(document.querySelector('.tiptap img')).not.toBeNull());
+  });
+  it('an upload finishing after a scope switch cannot insert into the replacement editor', async () => {
+    let resolve!: (value: Response) => void; const pending = new Promise<Response>(done => { resolve = done; });
+    vi.stubGlobal('fetch', vi.fn((url: string) => url === '/api/authoring/images' ? pending : Promise.resolve(ok({}))));
+    render(<DocumentAuthoring {...props()} />); await waitFor(() => expect(canvasText()).toContain('monoclonal antibody')); chooseImage();
+    await act(async () => { publishShellProject({ id: '11111111-1111-4111-8111-111111111111' }); });
+    await act(async () => { resolve(ok({ success: true, image: { id: 'image-1', url: '/api/authoring/images/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' } })); await pending; });
+    await waitFor(() => expect(canvasText()).toContain('monoclonal antibody')); expect(document.querySelector('.tiptap img')).toBeNull();
   });
 });

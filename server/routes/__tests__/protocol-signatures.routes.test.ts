@@ -20,6 +20,8 @@ const h = vi.hoisted(() => ({
   sod: null as unknown,
   sigFail: null as unknown,
   finalizeFail: null as unknown,
+  prepareFail: null as unknown,
+  afterReservation: null as (() => void) | null,
   dispositionFail: null as unknown,
   authors: [11] as number[],
   role: 'member',
@@ -36,18 +38,22 @@ const client = {
   }),
   release: vi.fn(),
 };
+const pinnedSigningClient = { query: client.query, release: () => undefined };
+const pinnedSigningPool = { query: client.query, connect: async () => pinnedSigningClient };
 
 vi.mock('../../db', () => ({
   pool: { connect: vi.fn(async () => client), query: vi.fn(async () => ({ rows: [] })) },
   db: {},
 }));
-vi.mock('../../db/requestDb', () => ({ requestPgClient: () => client }));
+vi.mock('../../db/requestDb', () => ({ requestPgClient: () => client,
+  requestConnectable: () => pinnedSigningPool,
+}));
 // Every case here signs as the same user; the attempt limit has its own suite
 // (server/middleware/__tests__/signing-attempt-limiter.test.ts).
 vi.mock('../../middleware/signing-attempt-limiter', () => ({
   signingAttemptLimiter: () => (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
-vi.mock('../../services/tenant/governed-tenant-context', () => ({ setTenantContextTx: vi.fn(async () => undefined) }));
+vi.mock('../../services/tenant/governed-tenant-context', () => ({ setTenantContextTx: vi.fn(async () => { h.log.push('TENANT'); }) }));
 vi.mock('../../services/protocol-development-metrics', () => ({
   recordProtocolDocCreated: vi.fn(), recordProtocolSectionUpdated: vi.fn(), recordProtocolObjectiveAdded: vi.fn(),
   recordProtocolEligibilityAdded: vi.fn(), recordProtocolVisitAdded: vi.fn(), recordProtocolVersionSnapshot: vi.fn(),
@@ -88,8 +94,8 @@ vi.mock('../../services/part11/signature-persistence', async (orig) => ({
 }));
 
 const assertSignerIsNotAuthor = vi.fn(async () => {
-  if (h.sod) throw h.sod;
   h.log.push('SOD');
+  if (h.sod) throw h.sod;
   return { checked: true, reason: 'ok' };
 });
 const resolveTargetAuthors = vi.fn(async () => {
@@ -102,6 +108,12 @@ vi.mock('../../services/governance/separation-of-duties', async (orig) => ({
   resolveTargetAuthors: (...a: unknown[]) => resolveTargetAuthors(...(a as [])),
 }));
 
+const lockProtocolForSignatureTx = vi.fn(async (_client: unknown, _orgId: number, _docId: number) => {
+  h.log.push('RESERVE');
+  if (h.prepareFail) throw h.prepareFail;
+  h.afterReservation?.();
+  return { kind: 'clinical', status: 'draft', version: '0.3' };
+});
 const finalizeProtocolTx = vi.fn(async () => {
   if (h.finalizeFail) throw h.finalizeFail;
   h.log.push('FINALIZE');
@@ -109,6 +121,7 @@ const finalizeProtocolTx = vi.fn(async () => {
 });
 vi.mock('../../services/protocol-development/protocol-development-service', async (orig) => ({
   ...(await orig<Record<string, unknown>>()),
+  lockProtocolForSignatureTx: (...a: unknown[]) => lockProtocolForSignatureTx(...(a as [unknown, number, number])),
   finalizeProtocolTx: (...a: unknown[]) => finalizeProtocolTx(...(a as [])),
 }));
 
@@ -126,6 +139,7 @@ import protocolDevelopment from '../protocol-development';
 import protocolReviews from '../protocol-reviews';
 import { SeparationOfDutiesError, SeparationOfDutiesUnverifiedError } from '../../services/governance/separation-of-duties';
 import { ProtocolReviewError } from '../../services/protocol-reviews/protocol-reviews-service';
+import { ProtocolDevError } from '../../services/protocol-development/protocol-development-service';
 
 const app = express();
 app.use(express.json());
@@ -144,12 +158,43 @@ const finalize = (body: Record<string, unknown>) =>
 const disposition = (body: Record<string, unknown>) =>
   request(app).patch('/api/protocol-reviews/assignments/9/disposition').send(body);
 
+/** The response, action ledger and signature describe the same committed act. */
+function expectCommittedAuthorshipEvidence(body: unknown) {
+  /* Through `unknown`: the mock's inferred call-argument type is narrower
+     than the real one, so a direct assertion is a TS2352 and turned tsc red
+     on the shared branch. The sibling assertion below already takes this
+     route for persistGovernedSignSignature. */
+  const ledger = recordGovernedAction.mock.calls[0][1] as unknown as {
+    payload: Record<string, unknown>;
+    reason: string;
+  };
+  expect(ledger.payload.meaning).toBe('authorship');
+  expect(ledger.reason).toBe(REASON);
+  const sig = persistGovernedSignSignature.mock.calls[0] as unknown as [unknown, Record<string, unknown>];
+  expect(sig[0]).toBe(pinnedSigningClient); // the SAME pinned request transaction client
+  expect(recordGovernedAction.mock.calls[0][0]).toBe(pinnedSigningClient);
+  expect(sig[1]).toMatchObject({
+    target: 'protocol-document:5',
+    actionId: 'act_1',
+    auditId: 'aud_1',
+    sha256Chain: 'chain_1',
+    authenticationMethod: 'password',
+    secondFactorVerified: false,
+  });
+  expect((sig[1].payload as Record<string, unknown>).meaning).toBe('authorship');
+  // The signature row itself says which version was finalized.
+  expect(sig[1].extraManifest).toEqual({ act: { finalized: true, protocolVersion: '1.0' } });
+  expect(body).toMatchObject({ documentId: 5, version: '1.0', signatureId: 314, meaning: 'authorship' });
+}
+
 beforeEach(() => {
   h.log.length = 0;
   h.reauth = { ok: true };
   h.sod = null;
   h.sigFail = null;
   h.finalizeFail = null;
+  h.prepareFail = null;
+  h.afterReservation = null;
   h.dispositionFail = null;
   h.authors = [11];
   h.role = 'member';
@@ -222,48 +267,28 @@ describe('POST /documents/:id/finalize is a real electronic signature: refused b
 });
 
 describe('POST /documents/:id/finalize is a real electronic signature: the signing transaction', () => {
-  it('finalizes, checks independence, and writes the ledger AND the signature row in one transaction', async () => {
+  it('reserves before checking authorship, then finalizes and writes the ledger AND signature row in one transaction', async () => {
     const r = await finalize({ reason: REASON, meaning: 'authorship', reauth: REAUTH });
     expect(r.status, JSON.stringify(r.body)).toBe(201);
     // Authorship is checked before the finalization writes anything, so the
     // act's own rows cannot make the signer an author of what they sign.
     expect(h.log).toEqual([
       'BEGIN',
+      'TENANT',
+      'RESERVE',
       'AUTHORS',
       'FINALIZE',
       'LEDGER:sign:protocol-document:5',
       'SIGNATURE:protocol-document:5',
       'COMMIT',
     ]);
-    expect(verifyReauth).toHaveBeenCalledWith(11, REAUTH);
+    expect(verifyReauth).toHaveBeenCalledWith(11, REAUTH, expect.objectContaining({ loadPasswordHash: expect.any(Function), verifyMfaToken: expect.any(Function) }));
+    expect(lockProtocolForSignatureTx).toHaveBeenCalledWith(pinnedSigningClient, 2, 5);
     // An authorship signature is checked against the recorded authors, on the
     // signing transaction's own client.
-    expect(resolveTargetAuthors).toHaveBeenCalledWith('protocol-document:5', 2, client);
+    expect(resolveTargetAuthors).toHaveBeenCalledWith('protocol-document:5', 2, pinnedSigningClient);
     expect(assertSignerIsNotAuthor).not.toHaveBeenCalled();
-    /* Through `unknown`: the mock's inferred call-argument type is narrower
-       than the real one, so a direct assertion is a TS2352 and turned tsc red
-       on the shared branch. The sibling assertion below already takes this
-       route for persistGovernedSignSignature. */
-    const ledger = recordGovernedAction.mock.calls[0][1] as unknown as {
-      payload: Record<string, unknown>;
-      reason: string;
-    };
-    expect(ledger.payload.meaning).toBe('authorship');
-    expect(ledger.reason).toBe(REASON);
-    const sig = persistGovernedSignSignature.mock.calls[0] as unknown as [unknown, Record<string, unknown>];
-    expect(sig[0]).toBe(client); // the SAME transaction client
-    expect(sig[1]).toMatchObject({
-      target: 'protocol-document:5',
-      actionId: 'act_1',
-      auditId: 'aud_1',
-      sha256Chain: 'chain_1',
-      authenticationMethod: 'password',
-      secondFactorVerified: false,
-    });
-    expect((sig[1].payload as Record<string, unknown>).meaning).toBe('authorship');
-    // The signature row itself says which version was finalized.
-    expect(sig[1].extraManifest).toEqual({ act: { finalized: true, protocolVersion: '1.0' } });
-    expect(r.body).toMatchObject({ documentId: 5, version: '1.0', signatureId: 314, meaning: 'authorship' });
+    expectCommittedAuthorshipEvidence(r.body);
   });
 
   it('records the second factor only when one was verified', async () => {
@@ -277,21 +302,56 @@ describe('POST /documents/:id/finalize is a real electronic signature: the signi
     const r = await finalize({ reason: REASON, meaning: 'authorship', reauth: REAUTH });
     expect(r.status).toBe(403);
     expect(r.body.error.code).toBe('NOT_AN_AUTHOR');
-    expect(h.log).toEqual(['BEGIN', 'AUTHORS', 'ROLLBACK']);
+    expect(h.log).toEqual(['BEGIN', 'TENANT', 'RESERVE', 'AUTHORS', 'ROLLBACK']);
     expect(recordGovernedAction).not.toHaveBeenCalled();
   });
 
   it('an approval is checked for independence on the signing client', async () => {
     await finalize({ reason: REASON, meaning: 'approval', reauth: REAUTH });
-    expect(assertSignerIsNotAuthor).toHaveBeenCalledWith('protocol-document:5', 2, 11, { command: 'sign', meaning: 'approval', client });
+    expect(lockProtocolForSignatureTx).toHaveBeenCalledWith(pinnedSigningClient, 2, 5);
+    expect(assertSignerIsNotAuthor).toHaveBeenCalledWith('protocol-document:5', 2, 11, { command: 'sign', meaning: 'approval', client: pinnedSigningClient });
+    expect(h.log).toEqual(['BEGIN', 'TENANT', 'RESERVE', 'SOD', 'FINALIZE', 'LEDGER:sign:protocol-document:5', 'SIGNATURE:protocol-document:5', 'COMMIT']);
   });
 
   it('an author approving their own protocol is refused before the finalization runs', async () => {
     h.sod = new SeparationOfDutiesError('you are an author of this record');
     const r = await finalize({ reason: REASON, meaning: 'approval', reauth: REAUTH });
     expect(r.status).toBe(403);
-    expect(h.log).toEqual(['BEGIN', 'ROLLBACK']);
+    expect(h.log).toEqual(['BEGIN', 'TENANT', 'RESERVE', 'SOD', 'ROLLBACK']);
+    expect(finalizeProtocolTx).not.toHaveBeenCalled();
     expect(recordGovernedAction).not.toHaveBeenCalled();
+  });
+
+  it('checks independence after reservation when authorship changed while the signer waited', async () => {
+    // Ordered preparation seam: the native sibling proves independent-connection waits.
+    h.afterReservation = () => { h.sod = new SeparationOfDutiesError('You authored this protocol before the reservation completed.'); };
+    const r = await finalize({ reason: REASON, meaning: 'approval', reauth: REAUTH });
+    expect(r.status).toBe(403);
+    expect(r.body.error.code).toBe('SEPARATION_OF_DUTIES');
+    expect(lockProtocolForSignatureTx).toHaveBeenCalledWith(pinnedSigningClient, 2, 5);
+    expect(assertSignerIsNotAuthor).toHaveBeenCalledWith('protocol-document:5', 2, 11, { command: 'sign', meaning: 'approval', client: pinnedSigningClient });
+    expect(h.log).toEqual(['BEGIN', 'TENANT', 'RESERVE', 'SOD', 'ROLLBACK']);
+    expect(finalizeProtocolTx).not.toHaveBeenCalled();
+    expect(recordGovernedAction).not.toHaveBeenCalled();
+    expect(persistGovernedSignSignature).not.toHaveBeenCalled();
+    expect(client.release).not.toHaveBeenCalled(); // The request owns its pinned connection.
+  });
+
+  it.each([
+    [new ProtocolDevError('NOT_FOUND', 'No current protocol target.'), 404],
+    [new ProtocolDevError('INVALID_STATE', 'Protocol changed while reservation waited.'), 409],
+  ] as const)('a refused target reservation rolls back before authorship or signature work (%s)', async (error, status) => {
+    h.prepareFail = error;
+    const r = await finalize({ reason: REASON, meaning: 'approval', reauth: REAUTH });
+    expect(r.status).toBe(status);
+    expect(r.body.error.code).toBe(error.code);
+    expect(h.log).toEqual(['BEGIN', 'TENANT', 'RESERVE', 'ROLLBACK']);
+    expect(resolveTargetAuthors).not.toHaveBeenCalled();
+    expect(assertSignerIsNotAuthor).not.toHaveBeenCalled();
+    expect(finalizeProtocolTx).not.toHaveBeenCalled();
+    expect(recordGovernedAction).not.toHaveBeenCalled();
+    expect(persistGovernedSignSignature).not.toHaveBeenCalled();
+    expect(client.release).not.toHaveBeenCalled(); // The request owns its pinned connection.
   });
 
   it('an authorship lookup that fails is a 503 with an authored sentence; its internal cause is logged, not returned', async () => {
@@ -303,7 +363,7 @@ describe('POST /documents/:id/finalize is a real electronic signature: the signi
     expect(r.body.error.message).toMatch(/could not be verified, so nothing was signed/);
     expect(JSON.stringify(r.body)).not.toMatch(/57P01|database error/);
     expect(err).toHaveBeenCalled();
-    expect(h.log).toEqual(['BEGIN', 'ROLLBACK']);
+    expect(h.log).toEqual(['BEGIN', 'TENANT', 'RESERVE', 'SOD', 'ROLLBACK']);
     err.mockRestore();
   });
 
@@ -313,7 +373,7 @@ describe('POST /documents/:id/finalize is a real electronic signature: the signi
     expect(r.status).toBe(500);
     expect(h.log).toContain('ROLLBACK');
     expect(h.log).not.toContain('COMMIT');
-    expect(client.release).toHaveBeenCalled();
+    expect(client.release).not.toHaveBeenCalled(); // The request owns its pinned connection.
   });
 });
 
@@ -339,6 +399,7 @@ describe('PATCH /assignments/:id/disposition is a real electronic signature', ()
     expect(setDispositionTx).toHaveBeenCalledWith(client, 2, 9, { disposition: 'approve', signerId: 11, meaning: 'review' });
     expect(h.log).toEqual([
       'BEGIN',
+      'TENANT',
       'SOD',
       'DISPOSITION',
       'LEDGER:sign:protocol-review-assignment:9',
@@ -346,6 +407,7 @@ describe('PATCH /assignments/:id/disposition is a real electronic signature', ()
       'COMMIT',
     ]);
     expect(r.body).toMatchObject({ assignmentId: 9, disposition: 'approve', signatureId: 314, meaning: 'review' });
+    expect(lockProtocolForSignatureTx).not.toHaveBeenCalled();
     // The decision is on the signature row, not only in the ledger payload: an
     // inspector reading electronic_signatures sees what the reviewer signed.
     const sig = persistGovernedSignSignature.mock.calls[0] as unknown as [unknown, Record<string, unknown>];
@@ -356,7 +418,7 @@ describe('PATCH /assignments/:id/disposition is a real electronic signature', ()
     h.dispositionFail = new ProtocolReviewError('FORBIDDEN', 'This review is assigned to another user.');
     const r = await disposition({ disposition: 'approve', reason: REASON, meaning: 'review', reauth: REAUTH });
     expect(r.status).toBe(403);
-    expect(h.log).toEqual(['BEGIN', 'SOD', 'ROLLBACK']);
+    expect(h.log).toEqual(['BEGIN', 'TENANT', 'SOD', 'ROLLBACK']);
     expect(recordGovernedAction).not.toHaveBeenCalled();
   });
 
@@ -373,7 +435,7 @@ describe('PATCH /assignments/:id/disposition is a real electronic signature', ()
    while every other signing route refused the same role (P-18: admin, approver,
    reviewer). The ceremony now applies the one policy (isSigningAuthorized) to
    the membership row's role, before the password, as the canonical sign route
-   does (routes/c2c/actions.ts signingAuthorityRefusal). */
+   does (routes/c2c/actions.ts, checkSigningAuthority). */
 describe('the protocol signing ceremony checks signing authority before the password (§11.10(g))', () => {
   it('a member cannot finalize: 403 ESIGNATURE_NO_AUTHORITY, no password asked, nothing written', async () => {
     h.memberRole = 'member';
@@ -383,7 +445,7 @@ describe('the protocol signing ceremony checks signing authority before the pass
       code: 'ESIGNATURE_NO_AUTHORITY',
       message: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed.',
     });
-    expect(resolveSignerOrgRole).toHaveBeenCalledWith(11, 2);
+    expect(resolveSignerOrgRole).toHaveBeenCalledWith(11, 2, pinnedSigningPool);
     expect(verifyReauth).not.toHaveBeenCalled();
     expect(finalizeProtocolTx).not.toHaveBeenCalled();
     expect(h.log).toEqual([]);
@@ -416,4 +478,36 @@ describe('the protocol signing ceremony checks signing authority before the pass
     expect(verifyReauth).not.toHaveBeenCalled();
     expect(h.log).toEqual([]);
   });
+});
+
+describe('current transaction authority after protocol reservation', () => {
+  it('rechecks the actual transaction role after reservation before SoD or domain writes', async () => {
+    h.afterReservation = () => { h.memberRole = 'member'; };
+    const r = await finalize({ reason: REASON, meaning: 'approval', reauth: REAUTH });
+    expect(r.status).toBe(403);
+    expect(r.body.error.code).toBe('ESIGNATURE_NO_AUTHORITY');
+    expect(resolveSignerOrgRole).toHaveBeenNthCalledWith(1, 11, 2, pinnedSigningPool);
+    expect(resolveSignerOrgRole).toHaveBeenNthCalledWith(2, 11, 2, pinnedSigningClient);
+    expect(resolveSignerOrgRole.mock.invocationCallOrder[1]).toBeGreaterThan(lockProtocolForSignatureTx.mock.invocationCallOrder[0]);
+    expect(h.log).toEqual(['BEGIN', 'TENANT', 'RESERVE', 'ROLLBACK']);
+    expect(assertSignerIsNotAuthor).not.toHaveBeenCalled();
+    expect(finalizeProtocolTx).not.toHaveBeenCalled();
+    expect(recordGovernedAction).not.toHaveBeenCalled();
+    expect(persistGovernedSignSignature).not.toHaveBeenCalled();
+    expect(client.release).not.toHaveBeenCalled(); // The request owns its pinned connection.
+  });
+
+  it('returns typed unavailable authority when the reserved transaction role cannot be verified', async () => {
+    h.afterReservation = () => { h.memberRoleFail = new Error('membership verification interrupted'); };
+    const r = await finalize({ reason: REASON, meaning: 'approval', reauth: REAUTH });
+    expect(r.status).toBe(503);
+    expect(r.body.error.code).toBe('SIGNING_AUTHORITY_UNVERIFIED');
+    expect(JSON.stringify(r.body)).not.toContain('membership verification interrupted');
+    expect(h.log).toEqual(['BEGIN', 'TENANT', 'RESERVE', 'ROLLBACK']);
+    expect(assertSignerIsNotAuthor).not.toHaveBeenCalled();
+    expect(finalizeProtocolTx).not.toHaveBeenCalled();
+    expect(recordGovernedAction).not.toHaveBeenCalled();
+    expect(persistGovernedSignSignature).not.toHaveBeenCalled();
+  });
+
 });

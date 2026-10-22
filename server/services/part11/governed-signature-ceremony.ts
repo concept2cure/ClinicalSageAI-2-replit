@@ -14,15 +14,16 @@
  *   1. the declared §11.50 meaning is one this act can carry
  *   2. authority (§11.10(g)): the signer's role on the membership row
  *      (resolveSignerOrgRole) must carry signing authority under the platform's
- *      one policy (isSigningAuthorized: admin, approver, reviewer; P-18), as the
- *      canonical route checks it (signingAuthorityRefusal), before the password.
+ *      one policy (checkSigningAuthority: admin, approver, reviewer; P-18), as the
+ *      canonical route checks it, before the password.
  *      Until 2026-10-08 (QA, cf950eeb9) the route's writer gate was the only
  *      one here, so a member's password made a protocol signature. The
  *      permission gate the canonical path runs when GOVERNANCE_RBAC_ENFORCE is
  *      on runs here too
  *   3. §11.200 re-authentication (verifyReauth: the password, and the second
  *      factor whenever the signer has one enrolled), before anything is written
- *   4. BEGIN, then the meaning checked against authorship on that client,
+ *   4. BEGIN, reserve the domain target when supplied, then the meaning
+ *      checked against authorship on that client,
  *      before the act writes anything (the canonical order: SoD before
  *      writeMutation): an `authorship` signature only from an author; any other
  *      meaning only from someone independent of the authors. Checked after the
@@ -38,8 +39,9 @@
  *
  * @module server/services/part11/governed-signature-ceremony
  */
-import type { PoolClient } from 'pg';
+import type { RequestConnectable, RequestSqlClient } from '../../db/requestDb';
 import { pool } from '../../db';
+import { signerReverificationDeps } from './reverify-signer-deps';
 import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
 import {
   assertSignerIsNotAuthor,
@@ -49,8 +51,8 @@ import {
 } from '../governance/separation-of-duties';
 import { can } from '../governance/permissions';
 import { persistGovernedSignSignature } from './signature-persistence';
+import { checkSigningAuthority, type SigningAuthorityRefusal } from './signing-authority-gate';
 import { resolveSignerOrgRole } from './resolve-signer-role';
-import { isSigningAuthorized } from './signing-authority';
 import { AUTHENTICATOR_REQUIRED_MESSAGE } from './reverify-signer';
 import { setTenantContextTx } from '../tenant/governed-tenant-context';
 import { clientIpOf, type HasClientIp } from '../../utils/client-ip';
@@ -82,8 +84,17 @@ export interface GovernedSignatureInput {
   allowedMeanings: readonly CeremonySignMeaning[];
   reauth: unknown;
   ipAddress: string | null;
-  /** The signer's org role, for the permission gate. */
+  /** Caller role snapshot retained for compatibility; permission uses the persisted role. */
   role: string;
+  /** Canonical pinned request client; legacy callers retain their pool. */
+  transactionPool?: RequestConnectable;
+  /**
+   * Server-owned reservation of the authoritative target before authorship is
+   * read. Runs on this transaction after tenant setup; it must not write
+   * content, versions or actions that could make the signer an author.
+   * Throwing refuses the ceremony before its domain write or signature.
+   */
+  prepare?: (client: RequestSqlClient, meaning: CeremonySignMeaning) => Promise<void>;
   /**
    * The domain write. Runs inside the transaction after the authorship check;
    * throw to refuse. `act` is what was decided (a reviewer's approve or reject,
@@ -91,7 +102,7 @@ export interface GovernedSignatureInput {
    * electronic_signatures manifest, so the signature row says what it signed.
    */
   write: (
-    client: PoolClient,
+    client: RequestSqlClient,
     meaning: CeremonySignMeaning,
   ) => Promise<{ act?: Record<string, unknown>; body: Record<string, unknown> }>;
 }
@@ -125,36 +136,13 @@ function asReauth(raw: unknown): { password?: string; totp?: string } | undefine
 const SOD_UNVERIFIED_MESSAGE =
   'Separation of duties could not be verified, so nothing was signed. Try again; if this continues, contact your administrator.';
 
-/**
- * Step 2 (§11.10(g)): identity is not authority. The signer's organization role
- * is read from the membership row, never the token or the body, and held to the
- * platform's one signing policy before any credential is compared, so this
- * ceremony is not a password oracle for a role that may not sign. A lookup that
- * cannot run signs nothing; its cause is logged, never shown.
- */
-async function assertSigningAuthority(userId: number, orgId: number): Promise<void> {
-  let role: string | null;
-  try {
-    role = await resolveSignerOrgRole(userId, orgId);
-  } catch (err) {
-    console.error('[governed-signature] signer role lookup failed:', err instanceof Error ? err.message : err);
-    throw new GovernedSignatureRefusal(
-      503,
-      'SIGNING_AUTHORITY_UNVERIFIED',
-      'Your signing authority could not be checked, so nothing was signed. Try again; if this continues, contact your administrator.',
-    );
-  }
-  if (!isSigningAuthorized(role)) {
-    throw new GovernedSignatureRefusal(
-      403,
-      'ESIGNATURE_NO_AUTHORITY',
-      'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed.',
-    );
-  }
+/** checkSigningAuthority's refusal as this ceremony's; nothing when the signer may sign. */
+function refuseWithoutAuthority(authority: SigningAuthorityRefusal | null): void {
+  if (authority) throw new GovernedSignatureRefusal(authority.status, authority.code, authority.message);
 }
 
 async function checkMeaningAgainstAuthorship(
-  client: PoolClient,
+  client: RequestSqlClient,
   act: Pick<GovernedSignatureInput, 'target' | 'subject' | 'orgId' | 'userId'>,
   meaning: CeremonySignMeaning,
 ): Promise<void> {
@@ -186,9 +174,41 @@ async function checkMeaningAgainstAuthorship(
   }
 }
 
-export async function signGovernedAct(input: GovernedSignatureInput): Promise<Record<string, unknown>> {
-  const { orgId, userId, target, reason } = input;
+async function reserveTargetAndCheckMeaning(
+  client: RequestSqlClient,
+  input: GovernedSignatureInput,
+  meaning: CeremonySignMeaning,
+): Promise<void> {
+  await input.prepare?.(client, meaning);
+  // Preserve the earlier precredential check, and reread/hold the current
+  // active signing authority after any domain reservation wait on this client.
+  refuseWithoutAuthority(await checkSigningAuthority(input.userId, input.orgId, client));
+  await checkCurrentResourceSigningPermission(client, input);
+  await checkMeaningAgainstAuthorship(client, input, meaning);
+}
 
+/** Grants are read on the actual signing client after the parent wait. This
+ * does not serialize independent grant writers through COMMIT. */
+async function checkCurrentResourceSigningPermission(client: RequestSqlClient, input: GovernedSignatureInput): Promise<void> {
+  if (process.env.GOVERNANCE_RBAC_ENFORCE !== 'true') return;
+  try {
+    // The canonical authority check already holds this role and active actor
+    // on this transaction. Reuse its resolver without duplicating its policy.
+    const role = await resolveSignerOrgRole(input.userId, input.orgId, client);
+    if (!role) throw new Error('Current signer role could not be verified.');
+    const resourceType = input.target.split(':')[0];
+    if (!(await can(input.orgId, role, { action: 'sign', resourceType }, { executor: client, strict: true }))) {
+      throw new GovernedSignatureRefusal(403, 'NOT_AUTHORIZED', `Your role does not hold sign permission for ${resourceType}. Nothing was signed.`);
+    }
+  } catch (err) {
+    if (err instanceof GovernedSignatureRefusal) throw err;
+    console.error('[governed-signature] resource signing permission unverified:', err instanceof Error ? err.message : err);
+    throw new GovernedSignatureRefusal(503, 'SIGNING_PERMISSION_UNVERIFIED',
+      'Your signing permission could not be verified, so nothing was signed. Try again; if this continues, contact your administrator.');
+  }
+}
+
+function requireCeremonyMeaning(input: GovernedSignatureInput): CeremonySignMeaning {
   if (typeof input.meaning !== 'string' || input.meaning.length === 0) {
     throw new GovernedSignatureRefusal(400, 'MEANING_REQUIRED', 'Declare what this signature means. Nothing was signed.');
   }
@@ -201,29 +221,36 @@ export async function signGovernedAct(input: GovernedSignatureInput): Promise<Re
     );
   }
 
-  await assertSigningAuthority(userId, orgId);
+  return meaning;
+}
 
-  // The canonical sign path's permission gate, dark-launched the same way
-  // (routes/c2c/actions.ts makeHandler): off until validated on real role data.
-  if (process.env.GOVERNANCE_RBAC_ENFORCE === 'true') {
-    const resourceType = target.split(':')[0];
-    if (!(await can(orgId, input.role, { action: 'sign', resourceType }))) {
-      throw new GovernedSignatureRefusal(403, 'NOT_AUTHORIZED', `Your role does not hold sign permission for ${resourceType}. Nothing was signed.`);
-    }
-  }
+export async function signGovernedAct(input: GovernedSignatureInput): Promise<Record<string, unknown>> {
+  const { orgId, userId, target, reason } = input;
+
+  const meaning = requireCeremonyMeaning(input);
+
+  // Step 2 (§11.10(g)): identity is not authority. The platform's one policy
+  // (signing-authority-gate.ts): the role from the membership row, never the
+  // token or the body, asked before any credential is compared, so this
+  // ceremony is not a password oracle for a role that may not sign. A lookup
+  // that cannot run signs nothing. This module's own wrapper of it
+  // (assertSigningAuthority) was removed on 2026-10-08 (P-27).
+  refuseWithoutAuthority(input.transactionPool ? await checkSigningAuthority(userId, orgId, input.transactionPool) : await checkSigningAuthority(userId, orgId));
 
   const reauth = asReauth(input.reauth);
-  const verified = await verifyReauth(userId, reauth);
+  const verified = input.transactionPool
+    ? await verifyReauth(userId, reauth, signerReverificationDeps(input.transactionPool))
+    : await verifyReauth(userId, reauth);
   if (!verified.ok) {
     const code = verified.error ?? 'REAUTH_REQUIRED';
     throw new GovernedSignatureRefusal(401, code, REAUTH_MESSAGE[code] ?? REAUTH_MESSAGE.REAUTH_REQUIRED);
   }
 
-  const client = await pool.connect();
+  const client = await (input.transactionPool ?? pool).connect();
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, orgId);
-    await checkMeaningAgainstAuthorship(client, input, meaning);
+    await reserveTargetAndCheckMeaning(client, input, meaning);
     const { act = {}, body } = await input.write(client, meaning);
 
     const signedPayload = { ...act, meaning };

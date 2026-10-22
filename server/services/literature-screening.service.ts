@@ -44,8 +44,8 @@
  *
  *   PART 11       This module persists the CURRENT decision. The immutable
  *                 before/after trail is written by the route through
- *                 `auditService.logAction` — the sanctioned chained+sealed
- *                 writer (docs/AUDIT_STORE_INVENTORY_2026-08.md §2) — which is
+ *                 `writeChainedAuditRow` in the same transaction — the sanctioned
+ *                 chained+sealed writer — which is
  *                 why `recordScreeningDecision` returns the SUPERSEDED
  *                 decision alongside the new one. Nothing here hand-rolls an
  *                 audit INSERT.
@@ -283,6 +283,7 @@ export async function recordScreeningDecision(
   organizationId: number,
   decidedBy: number,
   input: ScreeningDecisionInput,
+  options: { lockCorpusEntry?: boolean } = {},
 ): Promise<ScreeningWriteResult> {
   if (!Number.isInteger(organizationId) || organizationId <= 0) {
     throw new ScreeningRefusal(
@@ -325,13 +326,24 @@ export async function recordScreeningDecision(
   const programId = input.programId?.trim() ? input.programId.trim() : null;
 
   // ── 1. Resolve the corpus entry inside the org (tenancy + honesty guard) ──
-  const entryResult = await dbc.query(
-    `SELECT id, title
+  // The sole mounted writer opts into this inside its business transaction.
+  // Locking the existing corpus parent serializes the first screening as well
+  // as revisions; locking a nonexistent decision cannot protect the first one.
+  const entryQuery = options.lockCorpusEntry
+    ? `SELECT id, title
+       FROM literature_entries
+      WHERE organization_id::text = $1::text
+        AND source_name = $2
+        AND source_id = $3
+      LIMIT 1 FOR UPDATE`
+    : `SELECT id, title
        FROM literature_entries
       WHERE organization_id::text = $1::text
         AND source_name = $2
         AND source_id   = $3
-      LIMIT 1`,
+      LIMIT 1`;
+  const entryResult = await dbc.query(
+    entryQuery,
     [String(organizationId), LITERATURE_SOURCE_NAME, pmid],
   );
   if (entryResult.rows.length === 0) {

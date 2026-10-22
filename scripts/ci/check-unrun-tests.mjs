@@ -161,7 +161,16 @@ function readExtraRunnerGlobs() {
   for (const cmd of Object.values(pkg.scripts ?? {})) {
     // e.g. `node --test tests/ops/*.test.mjs`
     if (!/\bnode\b[^&|]*--test\b/.test(cmd)) continue;
-    for (const tok of cmd.split(/\s+/)) {
+    for (const raw of cmd.split(/\s+/)) {
+      // A glob must be QUOTED to reach node rather than the shell: `sh` has no
+      // globstar, so an unquoted `scripts/**/*.test.mjs` collapses to
+      // `scripts/*/*.test.mjs` and silently stops matching anything three
+      // levels deep. Node 22 expands the pattern itself when it arrives
+      // quoted. Reading the token with its quotes still attached made every
+      // such runner invisible here — so this guard would report files as run
+      // by nothing while that runner was executing them, which is the one
+      // direction a gate about invisible tests must not be wrong in.
+      const tok = raw.replace(/^['"]|['"]$/g, '');
       if (/[*?]/.test(tok) && /\.(m?[jt]sx?)$/.test(tok)) globs.push(tok);
       // A literal file argument (no wildcard) is a runner target too:
       // `node --test scripts/ci/__tests__/foo.test.mjs` runs exactly that file.

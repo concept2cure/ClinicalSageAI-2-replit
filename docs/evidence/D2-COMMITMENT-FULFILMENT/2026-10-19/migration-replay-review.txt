@@ -1,0 +1,47 @@
+# deploy-migrate replayed after the review's amendment of migrations/20261019_commitment_fulfilment_evidence.sql
+# (the type fixed on every row; deleted_at fixed on a recorded fulfilment). PostgreSQL 16 + pgvector at 127.0.0.1:55432/c2c_test.
+# file sha256: 31300666ea98b5f0deec473ee44f8774ddac793805ce69c9e79ca5449b659699
+
+## Replay run 1: DATABASE_URL=… APP_SERVICE_DB_PASSWORD=… node scripts/db/deploy-migrate.mjs
+1:▶ 1/5 Preflight — database already provisioned?
+4:▶ 2/5 Acquire migration lock
+7:▶ 3/5 Apply migrations
+550:  ✓ applied: migrations/20261019_commitment_fulfilment_evidence.sql
+709:▶ 4/5 Runtime role — required schemas + refresh non-superuser grants
+718:▶ 5/5 Verify readiness contract (incl. grant audit for app_service)
+732:✅ Schema migration complete — safe to roll services.
+733:exit 0
+
+## Replay run 2: DATABASE_URL=… APP_SERVICE_DB_PASSWORD=… node scripts/db/deploy-migrate.mjs
+1:▶ 1/5 Preflight — database already provisioned?
+4:▶ 2/5 Acquire migration lock
+7:▶ 3/5 Apply migrations
+550:  ✓ applied: migrations/20261019_commitment_fulfilment_evidence.sql
+709:▶ 4/5 Runtime role — required schemas + refresh non-superuser grants
+718:▶ 5/5 Verify readiness contract (incl. grant audit for app_service)
+732:✅ Schema migration complete — safe to roll services.
+733:exit 0
+
+## Catalog after both replays
+                      tgname                      | tgenabled | deferred 
+--------------------------------------------------+-----------+----------
+ regulatory_commitments_fulfilment_record_guard   | O         | f
+ trg_regulatory_commitments_signed_fulfilment_ins | O         | t
+ trg_regulatory_commitments_signed_fulfilment_upd | O         | t
+(3 rows)
+
+record guard md5 7faff05f705eb70e3380d0f413b4f2a4
+signature guard md5 b5f668ac939308c03e26c827f6823b27
+-- the installed record guard fixes the type on every row, and deleted_at with a recorded fulfilment:
+t|t|t
+        relname         | relrowsecurity | relforcerowsecurity 
+------------------------+----------------+---------------------
+ regulatory_commitments | t              | t
+(1 row)
+
+-- the migration journal for the file (the amendment registers as drift; Rule 1: the file documents it in its header)
+                          file                          |      sha256      | apply_count | applied_this_hour 
+--------------------------------------------------------+------------------+-------------+-------------------
+ migrations/20261019_commitment_fulfilment_evidence.sql | 31300666ea98b5f0 |           7 | t
+(1 row)
+

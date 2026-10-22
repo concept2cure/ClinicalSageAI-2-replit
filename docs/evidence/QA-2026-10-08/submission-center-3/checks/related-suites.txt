@@ -1,0 +1,15 @@
+# Related suites (RLS_ENFORCE=off)
+## Run A: server/services/{submission-service,ectd,part11,submission-gateways,tasking,ana-ri,ind-lifecycle,pathway-engines} server/routes/{ana-ri,c2c,ind-lifecycle} server/api/cmc
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 423 passed | 1 skipped (425)
+      Tests  2 failed | 5041 passed | 2 skipped (5045)
+ FAIL  server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > an export for filing keeps its name and binds only against filed sequences
+ FAIL  server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > names the package a rehearsal and reports the unfiled sequences it was bound against
+-> server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts exported without a recorded identity; its fixture now records one (8/8 green afterwards).
+
+## Run B: client/src/concept2cure/v2, server/routes/__tests__, tests/routes, tests/unit, tests/*.test.ts
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1073 passed | 1 skipped (1075)
+      Tests  1 failed | 11688 passed | 7 skipped (11696)
+ FAIL  tests/regulatory-honesty.contract.test.ts > the review surface does not fabricate an electronic signature > records the decision on the server and claims only what came back
+-> Not this change: the test reads client/src/concept2cure/v2/surfaces/Review.tsx (DecisionModal), which carries another worker's uncommitted edit; this change does not touch Review.tsx.

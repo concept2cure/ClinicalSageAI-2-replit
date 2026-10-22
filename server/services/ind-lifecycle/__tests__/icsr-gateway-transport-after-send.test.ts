@@ -13,8 +13,10 @@
  *     through a substring match on 'error', and `processed: error` (a
  *     description with no modifier) was 'transmitted'. Both are
  *     'receipt-unproven'.
- * Only node:https is stubbed; envelope, signing, httpsPost and MDN
- * interpretation run.
+ * node:https and the CMS primitives are explicitly stubbed; httpsPost and
+ * disposition/message/MIC interpretation run. Actual CMS signing/encryption
+ * and pin/tamper proofs remain in as2-cms.test.ts. This suite isolates event
+ * ordering and delivery ambiguity rather than asserting cryptographic proof.
  *
  * 2026-09-23 (W5/D7, MDN final pass): "after the whole message was written"
  * now needs an authenticated connection, not Node's 'finish' alone (see
@@ -29,10 +31,16 @@
  * icsr-delivery-outcome.test.ts.
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
-import { promises as fs } from 'fs';
-import * as os from 'os';
-import * as path from 'path';
-import { generateKeyPairSync } from 'crypto';
+import { makeMtlsPki, type MtlsPki } from '../../submission-gateways/__tests__/support/mtls-pki';
+
+vi.mock('../../submission-gateways/as2-cms', async original => {
+  const actual = await original<typeof import('../../submission-gateways/as2-cms')>();
+  const mic = 'A'.repeat(43) + '=';
+  return { ...actual,
+    buildAs2CmsEnvelope: async ({ body }: { body: Buffer }) => ({ body, contentType: 'application/octet-stream', mic, micAlgorithm: 'sha-256' as const }),
+    verifyAs2CmsReceipt: async (body: Buffer) => Buffer.from(body.toString('utf8').replace(/Disposition:/i, `Received-content-MIC: ${mic}, sha-256\r\nDisposition:`)),
+  };
+});
 
 const { wire } = vi.hoisted(() => ({
   wire: {
@@ -115,28 +123,24 @@ const message = (): IcsrTransmissionResult => ({
   transmitReady: true, gaps: [], gateway: 'FDA_FAERS', receiverId: 'ZZFDA',
 });
 
-let tmpBase: string;
+let pki: MtlsPki;
 let as2Config: () => IcsrGatewayConfig;
 const httpsConfig: IcsrGatewayConfig = { url: 'https://pv-gateway.example/upload', username: 'acct', password: 'pw' };
 
-beforeAll(async () => {
-  tmpBase = await fs.mkdtemp(path.join(os.tmpdir(), 'icsr-after-send-'));
-  const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
-  const keyPath = path.join(tmpBase, 'key.pem');
-  const certPath = path.join(tmpBase, 'cert.pem');
-  await fs.writeFile(keyPath, privateKey.export({ type: 'pkcs8', format: 'pem' }) as string);
-  await fs.writeFile(certPath, publicKey.export({ type: 'spki', format: 'pem' }) as string);
-  as2Config = () => ({ url: 'https://esg.fda.example/as2', username: 'SPONSOR-AS2', certPath, keyPath, as2To: 'FDA-CESUB' });
+beforeAll(() => {
+  pki = makeMtlsPki();
+  as2Config = () => ({ url: 'https://esg.fda.example/as2', username: 'SPONSOR-AS2', certPath: pki.paths.clientCert,
+    keyPath: pki.paths.clientKey, agencyCertPath: pki.paths.ca, tlsCaPath: pki.paths.ca, as2To: 'FDA-CESUB' });
 });
 
-afterAll(async () => {
-  await fs.rm(tmpBase, { recursive: true, force: true });
+afterAll(() => {
+  pki.cleanup();
 });
 
 beforeEach(() => {
   process.env.NODE_ENV = 'production';
   wire.mode = 'respond';
-  wire.headers = { 'message-id': '<mdn-1@esg.fda.example>' };
+  wire.headers = { 'message-id': '<mdn-1@esg.fda.example>', 'content-type': 'message/disposition-notification' };
   wire.body = '';
 });
 

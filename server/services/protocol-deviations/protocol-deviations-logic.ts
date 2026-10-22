@@ -6,15 +6,15 @@
  *
  * ── Rewritten 2026-09-22 from regulatory research ────────────────────────────
  * The previous version cited 45 CFR 46.108(a)(4) and "ICH E6(R2) §4.5.3 /
- * §5.20 (prompt deviation reporting)" and attached a 3-day window to critical
+ * §5.20 (prompt deviation reporting)" (E6(R2), superseded by E6(R3) 2025-01-06) and attached a 3-day window to critical
  * and a 10-day window to major deviations. None of that holds:
  *   • 46.108(a)(4) is the IRB's procedure for reporting unanticipated problems
  *     and serious or continuing noncompliance in Common-Rule research — not a
  *     rule that every major deviation is reportable, and not the sponsor's or
  *     investigator's duty.
- *   • ICH E6(R2) 4.5.3 says the investigator documents and explains ANY
+ *   • ICH E6(R2) 4.5.3 (R2→R3: E6(R3) Annex 1 §2.5) says the investigator documents and explains ANY
  *     deviation. It has no "minor deviations are logged rather than reported"
- *     carve-out; 5.20 is the sponsor's handling of noncompliance.
+ *     carve-out; 5.20 (R3 Annex 1 §3.12) is the sponsor's handling of noncompliance.
  *   • No US regulation, FDA guidance, ICH guideline or the EU Regulation sets
  *     3 / 10 days for deviations. Those are IRB or sponsor SOP windows.
  * And an unassessed deviation defaulted to severity 'minor', so it came out
@@ -75,7 +75,7 @@ export function inVocabulary<T extends string>(list: readonly T[], v: unknown): 
 // ─── Bases ───────────────────────────────────────────────────────────────────
 
 const DOCUMENT_BASIS =
-  'ICH E6(R2) 4.5.3 — the investigator documents and explains any deviation from the approved protocol; it is reported to the sponsor, which decides per trial which deviations are important (ICH E3 Q&A (R1)).';
+  'ICH E6(R3) Annex 1 §2.5 — the investigator documents and explains any deviation from the approved protocol; it is reported to the sponsor, which decides per trial which deviations are important (ICH E3 Q&A (R1)).';
 const IRB_PROMPT_BASIS =
   '21 CFR 312.66 — the investigator promptly reports to the IRB all changes in the research activity and all unanticipated problems involving risk to subjects or others. Which deviations the IRB requires, and by when, is set by its written procedures (21 CFR 56.108(a)(3), (b)); the regulations give no fixed day count for "promptly".';
 const NOT_ASSESSED_BASIS =
@@ -133,7 +133,7 @@ export const CONDITIONAL_CLOCKS: readonly ConditionalClock[] = [
 ];
 
 const OBLIGATIONS: readonly string[] = [
-  'Document and explain the deviation, and report it to the sponsor (ICH E6(R2) 4.5.3).',
+  'Document and explain the deviation, and report it to the sponsor (ICH E6(R3) Annex 1 §2.5).',
   'A deviation made without prior IRB approval to eliminate an apparent immediate hazard to subjects is reported to the IRB promptly (21 CFR 312.66) and, under an IND, to FDA by protocol amendment (21 CFR 312.30(b)(2)(ii)).',
 ];
 

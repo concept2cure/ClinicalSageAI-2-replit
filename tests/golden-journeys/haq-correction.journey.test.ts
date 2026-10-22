@@ -152,7 +152,9 @@ describe('Journey C — HAQ correction loop (service level, canonical DDL)', () 
 
     // ── 2. Deterministic contradiction detection (no LLM in the loop) ────────
     await R.step('detect-assumption-drift', async () => {
-      const findings = await contradictionEngineService.detectAssumptionDrift(ORG, PROJECT);
+      const { findings, coverage } = await contradictionEngineService.detectAssumptionDrift(ORG, PROJECT);
+      expect(coverage).toMatchObject({ detector: 'assumption_drift', read: 2, compared: 1, recorded: findings.length,
+        readTruncated: false, recordTruncated: false, comparedNothing: false });
       expect(findings.length).toBeGreaterThanOrEqual(1);
       const f = findings[0];
       findingId = f.id;
@@ -166,6 +168,7 @@ describe('Journey C — HAQ correction loop (service level, canonical DDL)', () 
         reviewState: f.reviewState,
         deterministicRule: f.deterministicRule,
         llmRole: f.llmRole,
+        coverage,
       };
     });
 
@@ -192,9 +195,13 @@ describe('Journey C — HAQ correction loop (service level, canonical DDL)', () 
     // ── 4. KNOWN-BAD: promotion must fail closed while unresolved ────────────
     await R.expectBlocked('promotion-blocked-while-unresolved', async () => {
       const svc = GovernanceBoundaryService.getInstance();
+      // The "Approved to Locked" rule rates a NAMED decision's recorded
+      // confidence against its minimum, and refuses when none is named (until
+      // 2026-10-15 it skipped the check and the lock read as allowed under the
+      // rule). This journey's decision is named at every lock, so this block is
+      // the unresolved decision's and not a missing name's.
       const result = await svc.evaluateTransition({
-        organizationId: ORG,
-        projectId: PROJECT,
+        organizationId: ORG, projectId: PROJECT, decisionId,
         fromBoundary: 'approved',
         toBoundary: 'locked',
         actorId: AUTHOR,
@@ -339,9 +346,10 @@ describe('Journey C — HAQ correction loop (service level, canonical DDL)', () 
     // ── 11. Promotion now clears — and the denial + grant are both audited ──
     await R.step('promotion-clears-after-correction', async () => {
       const svc = GovernanceBoundaryService.getInstance();
+      // Named as in step 4: the executed decision (confidence 'high') is what
+      // the rule's 'moderate' minimum is rated against.
       const result = await svc.evaluateTransition({
-        organizationId: ORG,
-        projectId: PROJECT,
+        organizationId: ORG, projectId: PROJECT, decisionId,
         fromBoundary: 'approved',
         toBoundary: 'locked',
         actorId: AUTHOR,
@@ -493,8 +501,7 @@ describe('Journey C — HAQ correction loop (service level, canonical DDL)', () 
       expect(reopened?.actionState).toBe('under_review');
 
       const relock = await GovernanceBoundaryService.getInstance().evaluateTransition({
-        organizationId: ORG,
-        projectId: PROJECT,
+        organizationId: ORG, projectId: PROJECT, decisionId,
         fromBoundary: 'approved',
         toBoundary: 'locked',
         actorId: AUTHOR,

@@ -21,7 +21,13 @@
  *   DATABASE_URL=... npx tsx scripts/seed-local-testing.ts
  */
 import { pool } from '../server/db.js';
+import { getRuntimeDatabaseUrl } from '../server/db/getDatabaseUrl.js';
+// @ts-expect-error — a plain .mjs module, no declarations.
+import { assertLocalDatabase } from './seed/local-only.mjs';
 import { persistStudyDesignTx } from '../server/services/study-design/study-design-repository.js';
+
+// "Laptops and throwaway containers only" was a comment until 2026-10-15.
+assertLocalDatabase(getRuntimeDatabaseUrl() ?? '', 'seed-local-testing');
 
 const ORG = Number(process.env.SEED_ORG_ID ?? 1);
 const USER = Number(process.env.SEED_USER_ID ?? 1);

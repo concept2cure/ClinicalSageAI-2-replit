@@ -118,6 +118,18 @@ describe('corpus ↔ gate cross-reference invariant', () => {
       { leaves: [leaf({ lifecycleOp: 'replace' })], opts: { isOriginalSequence: true } }, // LIFECYCLE_OP_IN_ORIGINAL
       { leaves: [leaf()], opts: { requiredSections: ['1.1'] } }, // MISSING_REQUIRED_SECTION
       { leaves: [leaf(), leaf()] }, // DUPLICATE_NEW_SECTION
+      // IND_MODULE3_BY_REFERENCE (3.2.S stands on a DMF with its LOA) and
+      // IND_MODULE3_REQUIRED (3.2.P has neither) — an original IND's Module 3.
+      {
+        leaves: [leaf({ sectionCode: 'm1.1' })],
+        opts: {
+          originalModule3: {
+            label: 'the original IND (sequence 0000)',
+            headings: [{ code: '3.2.S', title: 'Drug Substance' }, { code: '3.2.P', title: 'Drug Product' }],
+            crossReferences: [{ fileLabel: 'DMF 012345', authorizedSections: ['3.2.S'], loaOnFile: true }],
+          },
+        },
+      },
     ];
 
     const emitted = new Set<string>();
@@ -141,8 +153,9 @@ describe('corpus ↔ gate cross-reference invariant', () => {
     // floor — a rule that stops firing for any OTHER reason still trips it.
     // 9 since 2026-09-21: DOCUMENT_CONTENT_MISMATCH (a resolved document whose
     // pinned content hash no longer matches) joined the battery.
-    // 10 since 2026-10-08: DOCUMENT_NOT_APPROVED (QA j6) joined it.
-    expect(emitted.size).toBeGreaterThanOrEqual(10);
+    // 12 since 2026-10-05: DOCUMENT_NOT_APPROVED (QA j6, 2026-10-08) and, from
+    // CMC-M3-GA item 21, IND_MODULE3_REQUIRED and IND_MODULE3_BY_REFERENCE.
+    expect(emitted.size).toBeGreaterThanOrEqual(12);
   });
 });
 
@@ -153,7 +166,8 @@ describe('corpus ↔ gate cross-reference invariant', () => {
    the floor only catches rules that STOP firing. This scan reads the sources. */
 describe('corpus ↔ source invariant — every finding code written in the assessment', () => {
   it('catalogs every code the dispatch-readiness sources can emit', () => {
-    const sources = ['../dispatch-readiness.ts', '../assess-dispatch-readiness.ts'];
+    // ind-program-findings.ts since P-33: the IND gate's checks, carried into the assessment.
+    const sources = ['../dispatch-readiness.ts', '../assess-dispatch-readiness.ts', '../ind-program-findings.ts'];
     const codes = new Set<string>();
     for (const src of sources) {
       for (const line of fs.readFileSync(new URL(src, import.meta.url), 'utf8').split('\n')) {

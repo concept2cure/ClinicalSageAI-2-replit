@@ -1,0 +1,12 @@
+Initial probe stderr was captured by the execution tool, not redirected to its stdout log.
+The following error is retained from that observed tool output; it is not a rerun.
+
+error: date/time field value out of range: "2026-00-01T00:00:00.000Z"
+    at /workspace/concept2cure/node_modules/pg/lib/client.js:652:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async file:///workspace/scratch/task-handoff-native/pg15-processing-timestamp-probe.mjs:32:16
+code: 22008
+hint: Perhaps you need a different "datestyle" setting.
+file: datetime.c
+line: 4028
+routine: DateTimeParseError

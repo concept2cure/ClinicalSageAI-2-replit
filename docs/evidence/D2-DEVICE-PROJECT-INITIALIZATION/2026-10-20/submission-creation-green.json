@@ -1,0 +1,21 @@
+{
+  "at": "2026-10-20T22:21:37.288159+00:00",
+  "argv": [
+    "npx",
+    "vitest",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--silent=true",
+    "server/services/submission-service/__tests__/regional-device-preparation-creation.test.ts"
+  ],
+  "exit": 0,
+  "pins": {
+    "server/services/submission-service/submission-service.ts": "03d097226b6417bd8658cb1842f328deaa4a213e849ade92e134014ab961146b",
+    "server/services/submission-service/__tests__/regional-device-preparation-creation.test.ts": "57467061ee65274ad3b06c41aceb506fda938c95e3674f005a8941dab6b1334d",
+    "shared/regulatory/filing-catalog.ts": "5f6f35c7b9144f4ba3f62088ca690152c7267d34b840699035192dcc135f26fa"
+  },
+  "pinsStable": true,
+  "stdout": "\n RUN  v4.1.7 /workspace/ClinicalSageAI\n\n \u2713 server/services/submission-service/__tests__/regional-device-preparation-creation.test.ts > preparation-only regional applications cannot create a canonical submission > 'hde' refuses standalone and transactional creation before insert or audit 4ms\n \u2713 server/services/submission-service/__tests__/regional-device-preparation-creation.test.ts > preparation-only regional applications cannot create a canonical submission > 'mdl' refuses standalone and transactional creation before insert or audit 1ms\n \u2713 server/services/submission-service/__tests__/regional-device-preparation-creation.test.ts > preparation-only regional applications cannot create a canonical submission > 'ivd_licence' refuses standalone and transactional creation before insert or audit 1ms\n \u2713 server/services/submission-service/__tests__/regional-device-preparation-creation.test.ts > preparation-only regional applications cannot create a canonical submission > 'shonin' refuses standalone and transactional creation before insert or audit 0ms\n \u2713 server/services/submission-service/__tests__/regional-device-preparation-creation.test.ts > preparation-only regional applications cannot create a canonical submission > 'ninsho' refuses standalone and transactional creation before insert or audit 1ms\n \u2713 server/services/submission-service/__tests__/regional-device-preparation-creation.test.ts > preparation-only regional applications cannot create a canonical submission > 'todokede' refuses standalone and transactional creation before insert or audit 1ms\n \u2713 server/services/submission-service/__tests__/regional-device-preparation-creation.test.ts > preparation-only regional applications cannot create a canonical submission > 'ivd_approval' refuses standalone and transactional creation before insert or audit 0ms\n \u2713 server/services/submission-service/__tests__/regional-device-preparation-creation.test.ts > preparation-only regional applications cannot create a canonical submission > 'jp_cdx' refuses standalone and transactional creation before insert or audit 0ms\n \u2713 server/services/submission-service/__tests__/regional-device-preparation-creation.test.ts > preparation-only regional applications cannot create a canonical submission > reports the preparation refusal as 422 to existing callers 1ms\n \u2713 server/services/submission-service/__tests__/regional-device-preparation-creation.test.ts > preparation-only regional applications cannot create a canonical submission > preserves existing ind creation 2ms\n \u2713 server/services/submission-service/__tests__/regional-device-preparation-creation.test.ts > preparation-only regional applications cannot create a canonical submission > preserves existing nda creation 1ms\n \u2713 server/services/submission-service/__tests__/regional-device-preparation-creation.test.ts > preparation-only regional applications cannot create a canonical submission > preserves existing 510k creation 0ms\n \u2713 server/services/submission-service/__tests__/regional-device-preparation-creation.test.ts > preparation-only regional applications cannot create a canonical submission > preserves existing pma creation 1ms\n\n Test Files  1 passed (1)\n      Tests  13 passed (13)\n   Start at  22:21:33\n   Duration  3.56s (transform 2.12s, setup 84ms, import 3.18s, tests 16ms, environment 0ms)\n\n",
+  "stderr": ""
+}

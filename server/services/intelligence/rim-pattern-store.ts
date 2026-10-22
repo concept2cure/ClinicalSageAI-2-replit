@@ -165,9 +165,12 @@ export class InMemoryRimPatternStore implements RimPatternStore {
   private readonly loadingOrgs = new Map<number, Promise<void>>();
 
   /**
-   * Attempt to load persisted patterns for an org into the in-memory store.
-   * Only loads once per org per process lifetime. Non-blocking: returns a promise
-   * that resolves when loading is complete but callers may ignore it.
+   * Load persisted patterns for an org into the in-memory store, once per org
+   * per process. A failed load rejects and leaves the org unloaded, so the
+   * next call retries. 2026-10-15: a failure was swallowed and the org marked
+   * loaded — the store answered "no patterns" for the life of the process, and
+   * the next observation of a stored pattern re-seeded it at 1 occurrence,
+   * which the upsert then wrote over the stored counts.
    */
   private ensureLoaded(orgId: number): Promise<void> {
     if (this.loadedOrgs.has(orgId)) return Promise.resolve();
@@ -184,11 +187,8 @@ export class InMemoryRimPatternStore implements RimPatternStore {
           }
         }
         this.loadedOrgs.add(orgId);
-        this.loadingOrgs.delete(orgId);
       })
-      .catch(() => {
-        // Persistence load failure is non-fatal.
-        this.loadedOrgs.add(orgId);
+      .finally(() => {
         this.loadingOrgs.delete(orgId);
       });
 

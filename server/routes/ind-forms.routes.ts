@@ -60,6 +60,10 @@ import { module1HeadingForSectionKey } from '../services/ectd/section-to-ctd';
 import { storeRenderedLeafFile } from '../services/ectd/rendered-leaf-files';
 import { upsertLeaf, SubmissionError, isSequenceLocked } from '../services/submission-service/submission-service';
 import { runM1FormsQc } from '../services/ind-forms/ind-form-qc';
+import { checkAttachedForm } from '../services/ind-forms/attached-form-check';
+import {
+  INVALID_ATTESTATION, attestationOutcome, contradictedAttestation, recordCompletedSignedAttestation, statedAttestation,
+} from '../services/ind-forms/official-upload-attestation';
 import {
   getSponsor,
   getRegulatoryAgent,
@@ -73,15 +77,15 @@ import { db } from '../db';
 import {
   projects,
   concept2cureArtifacts,
-  organizations,
   submissionLeaves,
   renderedLeafFiles,
   ectdSequences,
 } from '@shared/schema';
-import { regulatoryPrograms } from '../../shared/schema/programs';
 import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
 import auditService from '../services/auditService';
 import { recordArtifactProvenanceDrizzle } from '../services/provenance/artifact-provenance';
+import { ProgramRecordWriteRefusal } from '../services/c2c/governed-program-write';
+import { ProgramFactsWriteRefusal, recordProgramFormFacts, resolveProgramIdent, type ResolvedProgram } from '../services/ind-forms/program-form-facts';
 
 const logger = createScopedLogger('ind-forms-routes');
 const router = Router();
@@ -106,74 +110,6 @@ function ctxOf(req: Request): Ctx | null {
 
 function isSupported(formId: string): formId is SupportedFormId {
   return (SUPPORTED_FORM_IDS as readonly string[]).includes(formId);
-}
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/**
- * The open program as the Module 1 forms need it: its identity, the facts that
- * belong on the forms, and its organisation's name — the sponsor of record in
- * this data model.
- */
-interface ResolvedProgram {
-  id: string;
-  code: string | null;
-  name: string | null;
-  productName: string | null;
-  indication: string | null;
-  applicationNumber: string | null;
-  programType: string | null;
-  sponsorName: string | null;
-  /** regulatory_programs.sponsor_address / ind_type (20261008b): the 1571's
-   *  address and IND type, stored on the program (P-20 follow-up). */
-  sponsorAddress: string | null;
-  indType: string | null;
-}
-
-/**
- * Resolve a program-spine ident (regulatory_programs UUID or program code),
- * org-scoped — the same 3-way ident contract as the eSTAR export routes
- * (510k-estar-routes.ts resolveProjectAnchor). Null when nothing in the caller's
- * org matches; a failed lookup is a non-match, never a guessed program.
- *
- * Selects the FORM FACTS as well as the identity: sponsor (the organisation),
- * product, indication and the agency-assigned application number. Those four are
- * held once, on the program record, and every Module 1 form takes them from
- * there — which is what stops a filing's sponsor name depending on who typed it
- * into which panel.
- */
-async function resolveProgramIdent(
-  ident: string,
-  organizationId: number,
-): Promise<ResolvedProgram | null> {
-  const byUuid = UUID_RE.test(ident);
-  try {
-    const [row] = await db
-      .select({
-        id: regulatoryPrograms.id,
-        code: regulatoryPrograms.code,
-        name: regulatoryPrograms.name,
-        productName: regulatoryPrograms.productName,
-        indication: regulatoryPrograms.indication,
-        applicationNumber: regulatoryPrograms.applicationNumber,
-        programType: regulatoryPrograms.programType,
-        sponsorName: organizations.name,
-        sponsorAddress: regulatoryPrograms.sponsorAddress,
-        indType: regulatoryPrograms.indType,
-      })
-      .from(regulatoryPrograms)
-      .leftJoin(organizations, eq(organizations.id, regulatoryPrograms.organizationId))
-      .where(
-        and(
-          byUuid ? eq(regulatoryPrograms.id, ident) : eq(regulatoryPrograms.code, ident),
-          eq(regulatoryPrograms.organizationId, organizationId),
-        ),
-      )
-      .limit(1);
-    return row ?? null;
-  } catch {
-    return null;
-  }
 }
 
 /** The CTD section a completed Module 1 form files at, or null when the FDA
@@ -233,13 +169,13 @@ function notApplicableReason(formId: string, programType: string | null): string
  * A blank input is NOT a value: an empty string is dropped rather than written
  * over a program fact, and never reaches a builder — `missingRequired` is the
  * server's verdict on what a form still needs, and `''` would silently satisfy
- * it. `projectIdent`/`projectId` are addressing, not form content, so they are
- * stripped before the merge.
+ * it. `projectIdent`/`projectId`/`sequenceId` are addressing, not form content,
+ * so they are stripped before the merge.
  */
 function statedFields(body: object): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(body as Record<string, unknown>)) {
-    if (key === 'projectIdent' || key === 'projectId') continue;
+    if (key === 'projectIdent' || key === 'projectId' || key === 'sequenceId') continue;
     if (value === null || value === undefined) continue;
     if (typeof value === 'string' && value.trim() === '') continue;
     out[key] = value;
@@ -272,12 +208,47 @@ async function metaForRequest(
     res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
     return null;
   }
-  const program = await resolveProgramIdent(ident, ctx.organizationId);
+  let program: ResolvedProgram | null;
+  try {
+    program = await resolveProgramIdent(ident, ctx.organizationId);
+  } catch (error) {
+    fail(res, error);
+    return null;
+  }
   if (!program) {
     res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
     return null;
   }
-  return { meta: { ...programToFormMetadata(program), ...stated }, program };
+  if (program.applicantSponsorId && !program.boundSponsor) {
+    res.status(409).json({ error: { code: 'APPLICANT_SPONSOR_UNAVAILABLE', message: 'The recorded applicant sponsor is unavailable for this organization. Review the program binding before generating a form.' } });
+    return null;
+  }
+  const meta = recordedRequestMetadata(program, stated);
+  return { meta, program };
+}
+
+/** Pin program-backed identity after applying the existing per-build choices. */
+function recordedRequestMetadata(program: ResolvedProgram, stated: IndProjectMetadata): IndProjectMetadata {
+  const recorded = programToFormMetadata(program);
+  const meta: IndProjectMetadata = { ...recorded, ...stated };
+  // Caller metadata can still state phase/serial and existing per-build form
+  // choices. Applicant identity comes only from the program's current record.
+  meta.sponsorName = recorded.sponsorName;
+  meta.indNumber = recorded.indNumber;
+  meta.applicationNumber = recorded.applicationNumber;
+  meta.applicationType = recorded.applicationType;
+  meta.sponsor = {
+    ...(stated.sponsor ?? {}),
+    ...recorded.sponsor,
+    name: recorded.sponsor?.name ?? recorded.sponsorName,
+    address: recorded.sponsor?.address,
+    ...(program.applicantSponsorId ? {
+      contactName: recorded.sponsor?.contactName,
+      contactPhone: recorded.sponsor?.contactPhone,
+      contactEmail: recorded.sponsor?.contactEmail,
+    } : {}),
+  };
+  return meta;
 }
 
 /** The program's canonical submission spine — the one rule, from submission-spine. */
@@ -324,6 +295,12 @@ async function listFormPlacements(
         fileName: renderedLeafFiles.fileName,
         sha256: renderedLeafFiles.sha256,
         byteSize: renderedLeafFiles.byteSize,
+        // The forms engine's check recorded with the attachment: [] complete,
+        // non-empty not complete, null never checked (QA 2026-10-08, j7).
+        requiredFieldsMissing: renderedLeafFiles.requiredFieldsMissing,
+        // When the uploader attested the file is the completed, signed form;
+        // null when nobody did (migrations/20260903, amended 2026-10-15).
+        attestedAt: renderedLeafFiles.completedSignedAttestedAt,
         placedAt: submissionLeaves.updatedAt,
         sequenceId: ectdSequences.id,
         sequenceNumber: ectdSequences.sequenceNumber,
@@ -375,7 +352,8 @@ function sendPdf(res: Response, result: IndFormPdfResult): void {
   // Honestly signal a faithful reconstruction (pure dynamic XFA forms 1571/3674)
   // so a consumer never mistakes it for the official Adobe-rendered PDF.
   res.setHeader('X-Form-Reconstructed', String(result.reconstructed === true));
-  res.setHeader('X-Form-Field-Coverage', result.fieldCoverage.toFixed(3));
+  // Absent, not "1.000", when the form had no built field to cover.
+  if (result.fieldCoverage !== null) res.setHeader('X-Form-Field-Coverage', result.fieldCoverage.toFixed(3));
   if (result.missingRequired.length > 0) {
     res.setHeader('X-Form-Missing-Required', result.missingRequired.join(','));
   }
@@ -397,6 +375,10 @@ function sendPdf(res: Response, result: IndFormPdfResult): void {
 }
 
 function fail(res: Response, err: unknown): void {
+  if (err instanceof ProgramFactsWriteRefusal || err instanceof ProgramRecordWriteRefusal) {
+    res.status(err.status).json({ error: { code: err.code, message: err.message } });
+    return;
+  }
   logger.error('ind-forms route error', { err: err instanceof Error ? err.message : String(err) });
   res.status(500).json({ error: { code: 'INTERNAL', message: 'Form generation failed.' } });
 }
@@ -451,10 +433,14 @@ router.get('/', limiter, requireRole(AUTHOR), async (req, res) => {
         code: program.code,
         name: program.name,
         programType: program.programType,
+        primaryAgency: program.primaryAgency,
         sponsorName: program.sponsorName,
         productName: program.productName,
         indication: program.indication,
         applicationNumber: program.applicationNumber,
+        applicantSponsorId: program.applicantSponsorId,
+        boundSponsor: program.boundSponsor,
+        factsVersion: program.factsVersion,
         sponsorAddress: program.sponsorAddress,
         indType: program.indType,
         // Exactly what the builders will receive from the record, so the panel
@@ -476,94 +462,15 @@ function registryIndTypes(): string[] {
   return Array.isArray(field?.options) ? field!.options.map(String) : [];
 }
 
-/** A clearable text from a request body: undefined = not sent (unchanged);
- *  null or blank = cleared; otherwise the trimmed text. */
-function clearableText(v: unknown): string | null | undefined | false {
-  if (v === undefined) return undefined;
-  if (v === null) return null;
-  if (typeof v !== 'string') return false;
-  const t = v.trim();
-  return t === '' ? null : t;
-}
-
-const SPONSOR_ADDRESS_MAX = 1000;
-
-/**
- * Record the sponsor's address and the IND type ON THE PROGRAM (P-20 follow-up,
- * docs/LAUNCH_DEFINITION_OF_DONE.md, 2026-10-08). Form FDA 1571 requires both
- * and no program column held either, so the forms panel sent them with every
- * build and the program record never knew them. They are stored in
- * regulatory_programs.sponsor_address / ind_type
- * (migrations/20261008b_regulatory_programs_sponsor_address_ind_type.sql), and
- * every build reads them from there (programToFormMetadata).
- *
- * Body: { projectIdent: program UUID or code, sponsorAddress?, indType? }. An
- * absent field is left as recorded; null or a blank clears it. The IND type
- * must be one of the registry's FDA_1571 ind_type options, and only an IND
- * program has one. Org-scoped (404 for another organisation's program) and
- * audited with the names of the fields it wrote.
- */
-/** A stated program-facts request, or why it is refused (400). Pure. */
-type ProgramFactsPatch = { sponsorAddress?: string | null; indType?: string | null };
-function parseProgramFacts(
-  body: Record<string, unknown>,
-  indTypes: string[],
-): { ident: string; patch: ProgramFactsPatch } | { refusal: string } {
-  const ident = typeof body.projectIdent === 'string' ? body.projectIdent.trim() : '';
-  if (ident === '' || /^\d+$/.test(ident)) {
-    return { refusal: 'projectIdent (the program UUID or code) is required: these facts are recorded on a program.' };
-  }
-  const sponsorAddress = clearableText(body.sponsorAddress);
-  const indType = clearableText(body.indType);
-  if (sponsorAddress === false || indType === false) return { refusal: 'sponsorAddress and indType are text, or null to clear.' };
-  if (sponsorAddress === undefined && indType === undefined) return { refusal: 'State the sponsor address, the IND type, or both.' };
-  if (typeof sponsorAddress === 'string' && sponsorAddress.length > SPONSOR_ADDRESS_MAX) {
-    return { refusal: `The sponsor address is longer than ${SPONSOR_ADDRESS_MAX} characters.` };
-  }
-  if (typeof indType === 'string' && !indTypes.includes(indType)) return { refusal: `IND type must be one of ${indTypes.join(', ')}.` };
-  const patch: ProgramFactsPatch = {};
-  if (sponsorAddress !== undefined) patch.sponsorAddress = sponsorAddress;
-  if (indType !== undefined) patch.indType = indType;
-  return { ident, patch };
-}
-
+/** Record applicant binding and other existing program form facts together. */
 router.put('/program-facts', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
-  const parsed = parseProgramFacts((req.body && typeof req.body === 'object' ? req.body : {}) as Record<string, unknown>, registryIndTypes());
-  if ('refusal' in parsed) return res.status(400).json({ error: { code: 'VALIDATION', message: parsed.refusal } });
-  const { ident, patch } = parsed;
   try {
-    const program = await resolveProgramIdent(ident, ctx.organizationId);
-    if (!program) {
-      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
-    }
-    if (typeof patch.indType === 'string' && (program.programType ?? '').trim().toUpperCase() !== 'IND') {
-      return res.status(400).json({
-        error: { code: 'VALIDATION', message: `An IND type is recorded only on an IND program; this program is ${program.programType ?? 'of no recorded type'}.` },
-      });
-    }
-    await db
-      .update(regulatoryPrograms)
-      .set({ ...patch, updatedAt: new Date() })
-      .where(and(eq(regulatoryPrograms.id, program.id), eq(regulatoryPrograms.organizationId, ctx.organizationId)));
-
-    // Part 11 §11.10(e): who set the facts printed on the filed form, and which.
-    const audit = await auditService.logAction({
-      action: 'ind_form.program_facts.update',
-      userId: ctx.userId,
-      organizationId: ctx.organizationId,
-      resourceType: 'regulatory_program',
-      resourceId: program.id,
-      metadata: { fields: Object.keys(patch), programCode: program.code },
-    });
-    if (!audit?.persisted) {
-      logger.warn('ind-form program facts audit row was not persisted', { err: audit?.error ?? 'no durable store accepted the row' });
-    }
-    const next = { ...program, ...patch };
-    return res.status(200).json({ programId: program.id, sponsorAddress: next.sponsorAddress, indType: next.indType });
-  } catch (err) {
-    fail(res, err);
+    const body = (req.body && typeof req.body === 'object' ? req.body : {}) as Record<string, unknown>;
+    return res.status(200).json(await recordProgramFormFacts(body, ctx, registryIndTypes()));
+  } catch (error) {
+    fail(res, error);
   }
 });
 
@@ -1148,14 +1055,21 @@ router.post('/3455/pdf-all', limiter, requireRole(AUTHOR), async (req, res) => {
  * Multipart body: `file` (the completed PDF) + `projectIdent` (program UUID or
  * code) + `sequenceId` (the sequence the person chose — required, never picked:
  * it must belong to the program's submission and be neither frozen nor
- * dispatched). A form the registry does not apply to the program's application
+ * dispatched) + optional `attestCompletedSigned: 'true'` (the uploader's
+ * statement that the file IS the completed form, signed by the person the form
+ * requires). A form the registry does not apply to the program's application
  * type is refused (FORM_NOT_APPLICABLE). Returns 201 { formId, sectionCode,
- * leafId, sequenceId, sequenceNumber, sha256, … }.
+ * leafId, sequenceId, sequenceNumber, sha256, requiredFieldsMissing, attested,
+ * attestedAt, attestedBy, complete, … }: the form is filed either way, and
+ * `complete` is true only when the forms engine found nothing required missing
+ * (services/ind-forms/attached-form-check.ts) AND the uploader attested it —
+ * an attachment either check does not pass is filed, and is not a completed
+ * form.
  */
 const officialFormUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 25 * 1024 * 1024, files: 1 },
-  fileFilter: makeUploadFileFilter({ extensions: ['pdf'], mimeTypes: ['application/pdf'], allowMimePrefixes: [] }),
+  fileFilter: makeUploadFileFilter({ extensions: ['pdf'], mimeTypes: ['application/pdf'] }),
 }).single('file');
 
 /** Map a submission-service refusal onto its HTTP status, in its own words. */
@@ -1210,6 +1124,8 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
           error: { code: 'VALIDATION', message: 'projectIdent (the open program) is required to file a completed form.' },
         });
       }
+      const attestation = statedAttestation(body.attestCompletedSigned);
+      if (attestation === null) return res.status(400).json(INVALID_ATTESTATION);
 
       const program = await resolveProgramIdent(ident, ctx.organizationId);
       if (!program) {
@@ -1308,6 +1224,27 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
       }
       const chosen = { id: Number(target.id), sequenceNumber: String(target.sequenceNumber) };
 
+      /* An attached PDF is an attachment, not a completion (QA 2026-10-08,
+         second walk, j7: the product's own unedited 1571 and 1572 were counted
+         COMPLETE). The forms engine checks it — the build over the program's
+         record and what the person stated with it, the same metadata Build &
+         check uses, plus the boxes the platform's own render leaves blank when
+         these bytes ARE that render — and the check is recorded with the file.
+         The IND checklist counts the form only when nothing is missing and the
+         uploader attested the file (below). */
+      const formCheck = await checkAttachedForm(
+        formId,
+        { ...programToFormMetadata(program), ...(statedFields(body) as IndProjectMetadata) },
+        sha256,
+      );
+
+      /* That check reads the record, not the file, and alone made an attachment
+         `complete` until 2026-10-15 (report_ind_ivd_irb #15): an edited, unsigned
+         PDF counted as the signed form. The uploader's statement is now required
+         too (official-upload-attestation.ts); one the bytes contradict is refused. */
+      const contradicted = contradictedAttestation(attestation, formCheck.unedited, formId);
+      if (contradicted) return res.status(409).json(contradicted);
+
       const documentType = documentTypeForForm(formId);
       const shortId = formId.replace(/^FDA_/, '').toLowerCase();
       try {
@@ -1334,7 +1271,11 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
           fileName: `form-fda-${shortId}.pdf`,
           renderedFrom: 'ind_form_sponsor_upload',
           sectionCode,
+          ...(formCheck.requiredFieldsMissing ? { requiredFieldsMissing: formCheck.requiredFieldsMissing } : {}),
         });
+
+        // Recorded only when the uploader made the statement.
+        const attestedAt = attestation ? await recordCompletedSignedAttestation(stored.id, ctx) : null;
 
         const leaf = await upsertLeaf(
           {
@@ -1375,6 +1316,9 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
             byteSize: bytes.length,
             originalFileName: typeof file?.originalname === 'string' ? file.originalname : null,
             replaced: Boolean(existing),
+            requiredFieldsMissing: formCheck.requiredFieldsMissing,
+            uneditedPlatformRender: formCheck.unedited,
+            completedSignedAttested: attestedAt !== null,
           },
         });
         if (!uploadAudit?.persisted) {
@@ -1398,6 +1342,12 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
           md5: stored.md5,
           byteSize: bytes.length,
           replaced: Boolean(existing),
+          // The forms engine's check: [] nothing required missing; null when no
+          // check could be made.
+          requiredFieldsMissing: formCheck.requiredFieldsMissing,
+          // attested / attestedAt / attestedBy, and `complete`, which needs both.
+          ...attestationOutcome(formCheck.requiredFieldsMissing, attestedAt, ctx.userId),
+          uneditedPlatformRender: formCheck.unedited,
         });
       } catch (err) {
         if (err instanceof SubmissionError) return submissionRefusal(res, err);

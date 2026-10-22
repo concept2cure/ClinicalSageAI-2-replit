@@ -42,6 +42,7 @@ import type { PoolClient } from 'pg';
 import { getPool } from './runtime';
 import { runWithTenantScope, type TenantScope, type TenantScopeSource } from './tenantStore';
 import { createScopedLogger } from '../utils/logger';
+import { applySessionScope, clearSessionScope } from './sessionScope';
 
 const logger = createScopedLogger('with-tenant-connection');
 
@@ -107,9 +108,7 @@ async function runOnScopedClient<T>(
     // pattern in tenantContext middleware. They are cleared in the
     // `finally` below to be safe in case the connection comes back into
     // the pool (it does — release() returns it).
-    await client.query("SELECT set_config('app.current_tenant_id', $1, false)", [tenantId]);
-    await client.query("SELECT set_config('app.current_org_id', $1, false)", [opts.orgUuid ?? '']);
-    await client.query("SELECT set_config('app.current_user_role', $1, false)", [opts.role ?? '']);
+    await applySessionScope(client, { tenantId, orgUuid: opts.orgUuid ?? '', role: opts.role ?? '' });
 
     return await fn(client);
   } catch (error) {
@@ -120,9 +119,7 @@ async function runOnScopedClient<T>(
     throw error;
   } finally {
     try {
-      await client.query("SELECT set_config('app.current_tenant_id', '', false)");
-      await client.query("SELECT set_config('app.current_org_id', '', false)");
-      await client.query("SELECT set_config('app.current_user_role', '', false)");
+      await clearSessionScope(client);
     } catch (cleanupErr) {
       releaseError = cleanupErr instanceof Error
         ? cleanupErr

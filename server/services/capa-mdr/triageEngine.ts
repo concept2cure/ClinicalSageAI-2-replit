@@ -23,6 +23,7 @@ import type {
   HarmLevel,
   MdrJurisdiction,
 } from '@shared/schema/capa-mdr';
+import { HARM_LEVELS } from '@shared/schema/capa-mdr';
 
 export interface TriageInput {
   patientHarm: HarmLevel;
@@ -177,9 +178,18 @@ export function classify(input: TriageInput): PreliminaryClassification {
       break;
 
     case 'none':
-    default:
       reasons.push('No harm reported — log under 820.198, no MDR');
       break;
+
+    default:
+      // An absent or unrecognised harm is not "no harm". This branch used to
+      // share the 'none' case, so a caller that omitted patientHarm — or sent
+      // "unknown", or a misspelling — got "No harm reported — no MDR", a
+      // reportability determination nobody made. Refuse instead; the AnA tool
+      // turns this into needs_parameters and the intake requires the field.
+      throw new RangeError(
+        `patientHarm must be one of: ${HARM_LEVELS.join(', ')} — got ${JSON.stringify(patientHarm)}`,
+      );
   }
 
   // 21 CFR 806 corrections-and-removals notice — tied to corrections that

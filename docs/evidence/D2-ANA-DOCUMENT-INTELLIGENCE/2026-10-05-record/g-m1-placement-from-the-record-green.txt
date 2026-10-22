@@ -1,0 +1,27 @@
+Green, 2026-10-12, after the Module 1 placement step.
+
+tests/regulatory/ (the whole regulatory contract suite, incl. ctd-registry-consistency,
+ctd-registry/m1-placement.consistency, regional-module1-record, fda-module1-numbering,
+ich-e6r3-citations):
+
+      Tests  1377 passed (1377)
+
+server/services/vault/__tests__, server/services/ana-ri/__tests__,
+server/routes/__tests__/vault-ingest-type-binding, tests/services/regulatory/:
+
+ Test Files  108 passed (108)
+      Tests  1425 passed (1425)
+
+npx tsc --noEmit over the whole tree:
+
+      DONE-0
+
+node scripts/ci/check-eslint-warning-ratchet.mjs:
+
+[ci:eslint-warning-ratchet] 6120 warning(s) across 1771 file(s), 21 rule(s) (baseline 6411).
+  291 fewer warning(s) than baseline — ratchet down so the gain is locked in.
+[ci:eslint-warning-ratchet] OK — warning count did not grow.
+
+ESLint over the nine changed files: 0 errors, 35 warnings, all pre-existing file-size and
+complexity warnings on files this change did not grow (mission-control.ts max-lines,
+vault-filing.service.ts classifyByName complexity, ind-pyramid.ts buildIndPyramid length).

@@ -1,0 +1,11 @@
+
+[repo]/client/src/concept2cure/v2/surfaces/Insights.tsx
+   429:19  warning  Arrow function has a complexity of 25. Maximum allowed is 15                complexity
+   715:1   warning  Function 'roRouteReply' has a complexity of 26. Maximum allowed is 15       complexity
+   759:1   warning  File has too many lines (1521). Maximum allowed is 500                      max-lines
+   838:1   warning  Function 'ROChart' has a complexity of 21. Maximum allowed is 15            complexity
+   915:1   warning  Function 'ROBlock' has a complexity of 24. Maximum allowed is 15            complexity
+  1512:8   warning  Function 'InsightsCanvas' has too many lines (445). Maximum allowed is 100  max-lines-per-function
+  1512:8   warning  Function 'InsightsCanvas' has a complexity of 98. Maximum allowed is 15     complexity
+
+✖ 7 problems (0 errors, 7 warnings)

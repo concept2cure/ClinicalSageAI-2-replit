@@ -31,6 +31,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ── Hoisted mocks (must be declared before the vi.mock factories run) ───────
 
 const hoisted = vi.hoisted(() => ({
+  omitApplicantProof: false,
   poolQuery: vi.fn<(sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; rowCount?: number }>>(),
   validateEctdPackageHardened: vi.fn(),
   buildModule3WithNarrative: vi.fn(),
@@ -39,6 +40,26 @@ const hoisted = vi.hoisted(() => ({
 }));
 
 // ── DB pool mock ────────────────────────────────────────────────────────────
+
+
+// P-27 (2026-10-08): a run's package names its recorded identity, or its
+// assembly is a dry run that package.sign refuses. This suite is about the
+// steps, not the record, so the record names the run's own application number
+// (tests/unit/orchestrator-dry-run-identity.test.ts drives the real reader).
+const { recordedRunIdentity } = vi.hoisted(() => ({
+  recordedRunIdentity: async (i: { applicationNumber: string; region?: string }) => ({
+    recorded: true as const, applicationNumber: i.applicationNumber, applicantName: 'Test Sponsor Inc',
+    applicantId: i.region === 'US' ? '123456789' : null,
+    contact: { name: 'Regulatory Contact', phone: '+1 555 0100', email: 'ra@example.test' },
+    ...(i.region === 'US' && !hoisted.omitApplicantProof ? { recordedPackageIdentity: { version: 1 as const, identity: {
+      programId: '11111111-1111-4111-8111-111111111111', applicationNumber: i.applicationNumber,
+      applicantSponsorId: '22222222-2222-4222-8222-222222222222', applicantName: 'Test Sponsor Inc',
+      applicantId: '123456789', contact: { name: 'Regulatory Contact', phone: '+1 555 0100', email: 'ra@example.test' },
+    } } } : {}),
+  }),
+}));
+vi.mock('../../server/services/ectd/run-package-identity.js', () => ({ resolveRunPackageIdentity: recordedRunIdentity }));
+vi.mock('../../server/services/ectd/run-package-identity', () => ({ resolveRunPackageIdentity: recordedRunIdentity }));
 
 vi.mock('../../server/db.js', () => {
   const pool = {
@@ -130,7 +151,7 @@ function baseInputs(over: Partial<OrchestratorInputs> = {}): OrchestratorInputs 
   return {
     organizationId: 1,
     submissionId: 'sub-1',
-    applicationNumber: 'IND123456',
+    applicationNumber: '123456',
     region: 'US',
     submissionType: 'IND',
     cmcSources: [
@@ -233,6 +254,7 @@ function notGatewayReadyResult(): HardenedValidationResult {
 }
 
 beforeEach(() => {
+  hoisted.omitApplicantProof = false;
   hoisted.poolQuery.mockReset();
   hoisted.validateEctdPackageHardened.mockReset();
   hoisted.buildModule3WithNarrative.mockReset();
@@ -394,7 +416,7 @@ function setupGetRunMock(persistedRunRowProvider: () => Record<string, unknown> 
   });
 }
 
-describe('Move 6 — csr.draft-narrative async enqueue + resume', () => {
+function registerPackageOrchestrationCases1() {
   it('enqueues via launchCSRBuildAsync, transitions to awaiting-async, returns run.status=awaiting-async', async () => {
     hoisted.launchCSRBuildAsync.mockResolvedValue({ jobId: 555, status: 'queued' });
 
@@ -431,6 +453,9 @@ describe('Move 6 — csr.draft-narrative async enqueue + resume', () => {
     expect(outputs.csrNarrativeJobs).toBeDefined();
     expect(outputs.csrNarrativeJobs!.pendingJobIds).toEqual([555]);
   });
+}
+
+function registerPackageOrchestrationCases2() {
 
   it('runOrchestrator({resumeRunId}) returns the run unchanged when the job is still running', async () => {
     // First: do the enqueue so we have a real run.
@@ -445,7 +470,7 @@ describe('Move 6 — csr.draft-narrative async enqueue + resume', () => {
       run_id: initial.run.runId,
       organization_id: 1,
       submission_id: 'sub-1',
-      application_number: 'IND123456',
+      application_number: '123456',
       region: 'US',
       submission_type: 'IND',
       started_at: initial.run.startedAt,
@@ -475,6 +500,9 @@ describe('Move 6 — csr.draft-narrative async enqueue + resume', () => {
     // validate was NOT re-called on this poll.
     expect(hoisted.validateEctdPackageHardened).not.toHaveBeenCalled();
   });
+}
+
+function registerPackageOrchestrationCases3() {
 
   it('runOrchestrator({resumeRunId}) drives the step to complete and runs downstream when the job is complete', async () => {
     // Enqueue first to get a real run.
@@ -487,7 +515,7 @@ describe('Move 6 — csr.draft-narrative async enqueue + resume', () => {
       run_id: initial.run.runId,
       organization_id: 1,
       submission_id: 'sub-1',
-      application_number: 'IND123456',
+      application_number: '123456',
       region: 'US',
       submission_type: 'IND',
       started_at: initial.run.startedAt,
@@ -524,6 +552,27 @@ describe('Move 6 — csr.draft-narrative async enqueue + resume', () => {
     expect(hoisted.validateEctdPackageHardened).toHaveBeenCalledTimes(1);
   });
 
+  it('preserves the exact paused Module 3 narrative on async resume without repeating AI or enqueue', async () => {
+    hoisted.launchCSRBuildAsync.mockResolvedValue({ jobId: 555, status: 'queued' });
+    const inputs = baseInputs({ enableCSRNarrative: true });
+    const initial = await runOrchestrator(inputs);
+    const frozenOutputs = JSON.parse(JSON.stringify(initial.outputs));
+    expect(frozenOutputs.module3Sections.length).toBeGreaterThan(0);
+    frozenOutputs.module3Sections[0].narrativeDraft = 'Exact previously refined narrative retained across the pause';
+    setupGetRunMock(() => ({ run_id: initial.run.runId, organization_id: 1, submission_id: 'sub-1', application_number: '123456', region: 'US', submission_type: 'IND', started_at: initial.run.startedAt, status: 'awaiting-async', steps: initial.run.steps }));
+    hoisted.getCSRBuildJobStatus.mockResolvedValue({ status: 'complete', progress: 100, sectionsComplete: 13 });
+    const resumed = await runOrchestrator(inputs, { resumeRunId: initial.run.runId, resumeOutputs: frozenOutputs });
+    expect(resumed.outputs.module3Sections[0].narrativeDraft).toBe(frozenOutputs.module3Sections[0].narrativeDraft);
+    expect(hoisted.buildModule3WithNarrative).not.toHaveBeenCalled();
+    expect(hoisted.launchCSRBuildAsync).toHaveBeenCalledTimes(1);
+    const captures = hoisted.poolQuery.mock.calls.filter(c => String(c[0]).includes('UPDATE submission_orchestrator_inputs'));
+    expect(captures).toHaveLength(1);
+    expect(JSON.parse(captures[0][1][2]).module3Sections).toEqual(initial.outputs.module3Sections);
+  });
+}
+
+function registerPackageOrchestrationCases4() {
+
   it('runOrchestrator({resumeRunId}) throws on tenant mismatch (previousRun.organizationId !== inputs.organizationId)', async () => {
     // Build a persisted run for org=1, then attempt to resume as org=999.
     // getRun's WHERE clause does the actual org-scope filter, so we model
@@ -538,6 +587,13 @@ describe('Move 6 — csr.draft-narrative async enqueue + resume', () => {
       runOrchestrator(inputs, { resumeRunId: 'some-run-id' }),
     ).rejects.toThrow(/not found or org mismatch/);
   });
+}
+
+describe('Move 6 — csr.draft-narrative async enqueue + resume', () => {
+  registerPackageOrchestrationCases1();
+  registerPackageOrchestrationCases2();
+  registerPackageOrchestrationCases3();
+  registerPackageOrchestrationCases4();
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -701,7 +757,17 @@ describe('Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6', () =
 // not Drizzle), so we drive it through the same hoisted mock that captures
 // every other pool.query invocation.
 
-describe('Path-to-GA §C.11 — package.sign e-sig gate', () => {
+function registerPackageOrchestrationCases5() {
+  it('refuses preparing a fresh FDA release without the captured recorded applicant proof', async () => {
+    hoisted.omitApplicantProof = true;
+    const { run } = await runOrchestrator(baseInputs({ submissionType: 'IND' }));
+    const step = run.steps.find((candidate) => candidate.key === 'package.sign');
+    expect(step?.status).toBe('skipped');
+    expect(step?.outputRef).toMatch(/reassemble.*recorded applicant/i);
+    expect(step?.outputRef).not.toMatch(/payloadDigest/);
+    expect(run.status).toBe('partial');
+  });
+
   it('a 510(k) never reaches package.sign — it cannot be filed on the eCTD backbone at all', async () => {
     /* This case used to assert that a 510(k) run completes with package.sign
        `skipped`, 510k being outside the REQUIRED allowlist (IND/NDA/BLA/MAA).
@@ -741,6 +807,9 @@ describe('Path-to-GA §C.11 — package.sign e-sig gate', () => {
     const payload = JSON.parse(signStep.outputRef!) as { payloadDigest: string };
     expect(payload.payloadDigest).toMatch(/^[0-9a-f]{64}$/);
   });
+}
+
+function registerPackageOrchestrationCases6() {
 
   it('resume path drives package.sign to `complete` when a matching signature row exists', async () => {
     // First: run to awaiting-signature.
@@ -755,7 +824,7 @@ describe('Path-to-GA §C.11 — package.sign e-sig gate', () => {
       run_id: initial.run.runId,
       organization_id: 1,
       submission_id: 'sub-1',
-      application_number: 'IND123456',
+      application_number: '123456',
       region: 'US',
       submission_type: 'IND',
       started_at: initial.run.startedAt,
@@ -789,6 +858,9 @@ describe('Path-to-GA §C.11 — package.sign e-sig gate', () => {
     expect(completePayload.signatureId).toBe(7777);
     expect(completePayload.payloadDigest).toBe(persistedPayload.payloadDigest);
   });
+}
+
+function registerPackageOrchestrationCases7() {
 
   it('resume path leaves the run in `awaiting-signature` when no signature row exists yet', async () => {
     // First: run to awaiting-signature.
@@ -800,7 +872,7 @@ describe('Path-to-GA §C.11 — package.sign e-sig gate', () => {
       run_id: initial.run.runId,
       organization_id: 1,
       submission_id: 'sub-1',
-      application_number: 'IND123456',
+      application_number: '123456',
       region: 'US',
       submission_type: 'IND',
       started_at: initial.run.startedAt,
@@ -825,4 +897,10 @@ describe('Path-to-GA §C.11 — package.sign e-sig gate', () => {
     // Run unchanged — caller polls again.
     expect(resumed.run.status).toBe('awaiting-signature');
   });
+}
+
+describe('Path-to-GA §C.11 — package.sign e-sig gate', () => {
+  registerPackageOrchestrationCases5();
+  registerPackageOrchestrationCases6();
+  registerPackageOrchestrationCases7();
 });

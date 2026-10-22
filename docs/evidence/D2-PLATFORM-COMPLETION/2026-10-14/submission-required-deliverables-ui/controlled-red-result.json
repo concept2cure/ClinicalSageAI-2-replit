@@ -1,0 +1,20 @@
+{
+  "exitCode": 1,
+  "failed": 25,
+  "passed": 3,
+  "skipped": 0,
+  "files": 2,
+  "durationSeconds": 33.91,
+  "newWorkspaceCaseFailures": 19,
+  "independentExistingSelectorCaseFailures": 6,
+  "positiveExistingSelectorCases": 3,
+  "rawBytes": 866648,
+  "rawDigestAlgorithm": "sha256",
+  "rawDigest": "8e6710ca9975e66a012f9d8e2a9c9b4d28f957d5ff327a480a4c22087492a90b",
+  "archiveBytes": 19363,
+  "archiveDigest": "f1bf6317e6c2d495d88f6bedea5d7cd2df312808fbb46af04e9ce5337d500d4f",
+  "readableBytes": 866647,
+  "readableDigest": "d4aba2e40029dadf039fcca562792ecb0340402e38320757ba1b43a0907f38dd",
+  "normalization": "Trailing printer whitespace and terminal blank lines removed only; raw exact bytes lossless.",
+  "noCompilerNativeBrowser": "No compiler/native/browser execution by UI owner."
+}

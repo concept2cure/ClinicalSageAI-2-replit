@@ -39,9 +39,12 @@
 import type { AnaTool } from '../ai-gateway/types';
 import type { ToolContext } from './AnaToolExecutor.js';
 import type { RegisterFn } from './document-tools-shared.js';
-import { resolveOpenProgram } from '../c2c/program-access';
+import { admitAnaProjectScope, AnaProjectScopeError } from './project-scope-admission';
 import { createScopedLogger } from '../../utils/logger';
 import { RESULT_BUDGET } from './agentic-loop.js';
+import { buildIndDocumentCatalog } from '../authoring/ind-document-catalog';
+import type { IndDocumentCatalog } from '../../../shared/authoring/ind-document-catalog';
+import { normalizeCtdCode } from '../../../shared/regulatory/section-code';
 import {
   ELSA_NOTE,
   SUBMISSION_CHAIN,
@@ -72,12 +75,19 @@ export const GET_DOCUMENT_SECTION_REQUIREMENTS: AnaTool = {
     '"2.5", "3.2.P.5", "1.14.4.1", "5.3.5.3"), a document type ("nda", "bla", "iss", "ise", "ind_initial", "dsur", ' +
     '"pre_nda_meeting", "nda_bla_annual_report"), or "csr" with an ICH E3 heading in `section` ("12.2", "16.1.9"; ' +
     'omit for the outline). Call it before drafting or reviewing a CSR, a Module 2 summary or overview, a Module 3 ' +
-    'section or an application component, and state its requirements rather than recalling them.',
+    'section or an application component, and state its requirements rather than recalling them. ' +
+    'With document="ind_pyramid", walk the complete canonical IND phase/deliverable/CTD-section catalogue. ' +
+    'This is reference structure, not this project\'s inventory, completion or readiness. Optional section="phase1" ' +
+    '(any returned phase id) or a CTD section code filters the walk. Pass numeric offset/limit; follow every ' +
+    'nextOffset until null. Each entry states its canonical AI-drafting limits; official forms, signed records ' +
+    'and datasets are not narrative drafts. Reconcile these requirements against saved authoring/Vault reads.',
   input_schema: {
     type: 'object',
     properties: {
-      document: { type: 'string', description: 'A CTD section code, a document type id, or "csr".' },
-      section: { type: 'string', description: 'With document "csr": the ICH E3 heading number. Omit for the outline.' },
+      document: { type: 'string', description: 'A CTD section code, a document type id, "csr", or "ind_pyramid".' },
+      section: { type: 'string', description: 'With csr: ICH E3 heading. With ind_pyramid: a phase id or CTD code (including descendants). Omit for the whole outline.' },
+      offset: { type: 'number', description: 'With ind_pyramid only: nonnegative integer nextOffset from the previous page; default 0.' },
+      limit: { type: 'number', description: 'With ind_pyramid only: integer entries requested (1–40; default 20). Pages shrink to fit the serialized result budget.' },
     },
     required: ['document'],
   },
@@ -151,6 +161,7 @@ const KIND_LABEL: Record<RequirementSource['kind'], string> = {
  */
 export function documentSectionRequirements(input: Record<string, unknown>): string {
   const document = str(input.document);
+  if (document.toLowerCase() === 'ind_pyramid') return indPyramidRequirements(input);
   if (!document) {
     return JSON.stringify({ error: 'get_document_section_requirements needs `document`: a CTD section code, a document type id, or "csr".' });
   }
@@ -175,6 +186,101 @@ export function documentSectionRequirements(input: Record<string, unknown>): str
     requirements: answer.requirements,
     note: 'Reference structure from the platform’s canonical guidance; the sponsor owns every conclusion. Statements marked as recall or platform practice are not a regulator’s text.',
   });
+}
+
+interface IndPageRequest { filter: string; phaseId: string | null; code: string | null; offset: number; limit: number }
+type IndPageError = { error: string };
+const indPageError = (message: string): IndPageError => ({ error: message });
+
+function indInteger(value: unknown, fallback: number, min: number, max: number): number | null {
+  if (value === undefined) return fallback;
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= min && value <= max ? value : null;
+}
+
+function indFilter(value: unknown, catalog: IndDocumentCatalog): Pick<IndPageRequest, 'filter' | 'phaseId' | 'code'> | IndPageError {
+  if (value !== undefined && typeof value !== 'string') return indPageError('ind_pyramid section must be a phase id or CTD code string.');
+  const filter = str(value);
+  if (!filter) return { filter, phaseId: null, code: null };
+  const phase = catalog.phases.find(p => p.id === filter);
+  if (phase) return { filter, phaseId: phase.id, code: null };
+  const code = normalizeCtdCode(filter);
+  if (!code || !catalog.sections.some(s => normalizeCtdCode(s.code) === code)) {
+    return indPageError('Unknown IND phase or CTD section. Read the unfiltered first page for phase ids and section entries.');
+  }
+  return { filter, phaseId: null, code };
+}
+
+function indPageRequest(input: Record<string, unknown>, catalog: IndDocumentCatalog): IndPageRequest | IndPageError {
+  const filter = indFilter(input.section, catalog);
+  if ('error' in filter) return filter;
+  const offset = indInteger(input.offset, 0, 0, Number.MAX_SAFE_INTEGER);
+  const limit = indInteger(input.limit, 20, 1, 40);
+  if (offset === null) return indPageError('ind_pyramid offset must be a nonnegative integer from nextOffset.');
+  if (limit === null) return indPageError('ind_pyramid limit must be an integer from 1 to 40.');
+  return { ...filter, offset, limit };
+}
+
+function indCodeWithin(value: string, code: string): boolean {
+  const candidate = normalizeCtdCode(value);
+  return !!candidate && (candidate === code || candidate.startsWith(code + '.'));
+}
+
+function indEntryMatches(phaseId: string | null, codes: string[], request: IndPageRequest): boolean {
+  if (request.phaseId) return phaseId === request.phaseId;
+  if (request.code) return codes.some(code => indCodeWithin(code, request.code!));
+  return true;
+}
+
+const indClip = (value: string | null | undefined, max: number) => value && value.length > max ? value.slice(0, max - 1) + '…' : value ?? null;
+
+function indDeliverableRow(d: IndDocumentCatalog['deliverables'][number]): Record<string, unknown> {
+  return { kind: 'deliverable', id: d.id, title: indClip(d.title, 120), titleClipped: d.title.length > 120,
+    phaseId: d.phaseId, taskId: d.taskId, sectionCodes: d.sectionCodes, artifactTypes: d.artifactTypes,
+    aiDraftable: d.aiDraftable, template_id: d.template?.id, template_kind: d.template?.kind,
+    description: indClip(d.description, 180), descriptionClipped: (d.description?.length ?? 0) > 180 };
+}
+
+function indSectionRow(s: IndDocumentCatalog['sections'][number]): Record<string, unknown> {
+  return { kind: 'section', id: s.id, code: s.code, title: indClip(s.title, 120), titleClipped: s.title.length > 120,
+    phaseId: s.phaseId, taskId: s.taskId, required: s.required, aiDraftable: s.aiDraftable,
+    authoringMode: s.authoringMode, template_id: s.template?.id, template_kind: s.template?.kind,
+    regulatoryRef: indClip(s.regulatoryRef, 180), regulatoryRefClipped: s.regulatoryRef.length > 180 };
+}
+
+function indPageEntries(catalog: IndDocumentCatalog, request: IndPageRequest): Array<Record<string, unknown>> {
+  const phaseIds = [...catalog.phases.map(p => p.id), null];
+  return phaseIds.flatMap(phaseId => [
+    ...catalog.deliverables.filter(d => d.phaseId === phaseId && indEntryMatches(d.phaseId, d.sectionCodes, request)).map(indDeliverableRow),
+    ...catalog.sections.filter(s => s.phaseId === phaseId && indEntryMatches(s.phaseId, [s.code], request)).map(indSectionRow),
+  ]);
+}
+
+function renderIndPage(catalog: IndDocumentCatalog, request: IndPageRequest, entries: Array<Record<string, unknown>>, shown: number): string {
+  const start = request.offset;
+  return JSON.stringify({
+    nextOffset: start + shown < entries.length ? start + shown : null,
+    kind: 'IND reference catalogue',
+    recordOrigin: ['services/regulatory/pyramids/ind-pyramid.ts', 'services/regulatory/ind-ectd-sections.ts'],
+    filter: request.filter || null, offset: start, returned: shown,
+    counts: { phases: catalog.phases.length, deliverables: catalog.deliverables.length, sections: catalog.sections.length, matchingEntries: entries.length },
+    ...(start === 0 ? { phases: catalog.phases.map(p => ({ id: p.id, name: indClip(p.name, 80), order: p.order })) } : {}),
+    entries: entries.slice(start, start + shown),
+    note: 'Canonical reference structure, not project inventory, completion, readiness or approval. Follow nextOffset until null; read saved authoring/Vault evidence separately. aiDraftable=false means use original forms/data or a checklist; never invent official or signed records. Clipped descriptive text is marked; identifiers and drafting limits are retained.',
+  });
+}
+
+/** The same canonical catalogue the editor reads, budgeted as complete rows.
+ * No project inventory or completion verdict is inferred from this reference. */
+export function indPyramidRequirements(input: Record<string, unknown>, catalog: IndDocumentCatalog = buildIndDocumentCatalog()): string {
+  const request = indPageRequest(input, catalog);
+  if ('error' in request) return JSON.stringify(request);
+  const entries = indPageEntries(catalog, request);
+  if (request.offset > entries.length) return JSON.stringify(indPageError('ind_pyramid offset is beyond the filtered catalogue. Restart at offset 0.'));
+  let shown = Math.min(request.limit, entries.length - request.offset);
+  let result = renderIndPage(catalog, request, entries, shown);
+  while (result.length > RESULT_BUDGET && shown > 1) { shown--; result = renderIndPage(catalog, request, entries, shown); }
+  if (result.length > RESULT_BUDGET) return JSON.stringify(indPageError('The IND reference entry cannot fit the read budget. No entries were skipped.'));
+  return result;
 }
 
 // ── plan_submission_from_database_lock ──────────────────────────────────────
@@ -313,10 +419,20 @@ async function submissionPlan(poolOf: PoolSource, input: Record<string, unknown>
   if (!ctx?.organizationId) {
     return JSON.stringify({ ...base, standing: null, standing_note: 'No organization in context, so no project standing.' });
   }
+  if (ctx.projectId == null && !ctx.projectRef) {
+    return JSON.stringify({ ...base, standing: null, standing_note: 'No project is open, so no standing. Open a project to see where it stands.' });
+  }
   try {
     const pool = await poolOf();
-    const programId = await resolveOpenProgram(pool, {
-      organizationId: ctx.organizationId, projectId: ctx.projectId ?? null, projectRef: ctx.projectRef ?? null,
+    const q = { async query(sql: string, params?: unknown[]) {
+      const { rows } = await pool.query(sql, params);
+      const records = rows.filter((row): row is Record<string, unknown> => !!row && typeof row === 'object' && !Array.isArray(row));
+      if (records.length !== rows.length) throw new Error('Invalid source access verification result');
+      return { rows: records };
+    } };
+    const { programId } = await admitAnaProjectScope(q, {
+      organizationId: ctx.organizationId, userId: ctx.userId,
+      projectId: ctx.projectId ?? null, projectRef: ctx.projectRef ?? null,
     });
     if (!programId) {
       return JSON.stringify({ ...base, standing: null, standing_note: 'No project is open, so no standing. Open a project to see where it stands.' });
@@ -328,6 +444,9 @@ async function submissionPlan(poolOf: PoolSource, input: Record<string, unknown>
     }
     return JSON.stringify({ ...base, standing: compactStanding(verdict, truncated) });
   } catch (err) {
+    if (err instanceof AnaProjectScopeError) {
+      return JSON.stringify({ ...base, standing: null, error: err.message, code: err.code });
+    }
     // The driver's message names tables; it goes to the log. The model is told
     // the read failed, never that the steps are missing.
     logger.error('plan_submission_from_database_lock failed', { err: err instanceof Error ? err.message : String(err) });

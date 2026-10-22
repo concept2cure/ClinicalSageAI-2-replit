@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { parseSsoHandoff } from '../redirectUtils';
+import { parseSsoHandoff, parseSsoMfaHandoff } from '../redirectUtils';
 
 const JWT = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI3In0.c2lnbmF0dXJl';
 
@@ -29,5 +29,17 @@ describe('parseSsoHandoff', () => {
     expect(parseSsoHandoff('#tab=1')).toBeNull();
     expect(parseSsoHandoff('#sso=not-a-token')).toBeNull();
     expect(parseSsoHandoff('#sso=')).toBeNull();
+  });
+});
+
+describe('parseSsoMfaHandoff', () => {
+  it('keeps a first-factor challenge separate from session adoption and filters continuation', () => {
+    expect(parseSsoMfaHandoff(`#mfa=${JWT}&provider=saml&method=totp&returnTo=%2Fconcept2cure%2Fvault`)).toEqual({
+      challenge: JWT, method: 'totp', returnTo: '/concept2cure/vault', maskedEmail: '',
+    });
+    expect(parseSsoMfaHandoff(`#mfa=${JWT}&provider=saml&method=email&returnTo=https%3A%2F%2Fevil.test`)?.returnTo).toBeNull();
+  });
+  it.each(['method=sms&provider=saml', 'method=totp&provider=microsoft', `method=totp&provider=saml&sso=${JWT}`])('refuses an unsupported or ambiguous factor handoff %s', extra => {
+    expect(parseSsoMfaHandoff(`#mfa=${JWT}&${extra}`)).toBeNull();
   });
 });

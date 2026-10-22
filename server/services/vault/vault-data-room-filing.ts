@@ -22,9 +22,11 @@
  */
 import { pool } from '../../db.js';
 import { createScopedLogger } from '../../utils/logger.js';
-import { programInOrganization } from '../c2c/program-access';
+import { ProgramReadAccessError, requireCurrentProgramAccess } from '../c2c/current-program-access';
+import { vaultWriteRefusal } from './vault-write-authority';
 import { readSourceUploads, sourceIdList, type SourceUpload } from '../clinical-regulatory-evidence/evidence-spine.service.js';
 import { currentVersionLateral, supersededSql } from './vault-version-family.js';
+import { capturedBinaryAvailableSql, capturedDataEligibleSql } from '../document-data-disposition/eligibility.js';
 import { fileUploadIntoVault } from './vault-file-upload-to-vault.js';
 
 const logger = createScopedLogger('vault-data-room-filing');
@@ -77,6 +79,42 @@ export async function readFiledAs(
     });
   }
   return out;
+}
+
+/** A data room's pipeline counts, over the whole project. */
+export interface DataRoomStageCounts { captured: number; classified: number; filed: number; needsReview: number }
+
+/**
+ * The data room's stage counts over EVERY current source of the project, not a
+ * page of them (Data Room catalog S2, 2026-10-08). The lane counted the 200 rows
+ * it read, so a room of 250 reported 200 captured and called it a floor. Same
+ * definitions as the lane's rows: a source is filed when its bytes are in this
+ * program's Vault (readFiledAs's join), classified when filed or the classifier
+ * proposed a folder, needs review when classified with no folder and not filed;
+ * only data-eligible sources whose original file is available are counted.
+ */
+export async function countDataRoomStages(q: Queryable, programId: string, organizationId: number): Promise<DataRoomStageCounts> {
+  const { rows } = await q.query(
+    `SELECT count(*)::int AS captured,
+            count(*) FILTER (WHERE filed)::int AS filed,
+            count(*) FILTER (WHERE filed OR folder IS NOT NULL)::int AS classified,
+            count(*) FILTER (WHERE NOT filed AND folder IS NULL AND has_dossier)::int AS needs_review
+       FROM (
+         SELECT jsonb_typeof(s.metadata->'dossier') = 'object' AS has_dossier,
+                NULLIF(s.metadata->'dossier'->>'suggestedFolder', '') AS folder,
+                EXISTS (
+                  SELECT 1 FROM vault.documents d
+                   WHERE d.program_id = $1 AND d.deleted_at IS NULL AND d.content_hash = trim(s.checksum)
+                ) AS filed
+           FROM cre_evidence_sources s
+          WHERE s.organization_id = $2 AND s.client_program_id = $1
+            AND s.source_type = 'client_document' AND s.deleted_at IS NULL AND s.is_current IS NOT FALSE
+            AND ${capturedDataEligibleSql('s')} AND ${capturedBinaryAvailableSql('s')}
+       ) x`,
+    [programId, organizationId],
+  );
+  const r = rows[0] ?? {};
+  return { captured: r.captured ?? 0, classified: r.classified ?? 0, filed: r.filed ?? 0, needsReview: r.needs_review ?? 0 };
 }
 
 export type DataRoomFileItem =
@@ -263,8 +301,13 @@ export async function fileDataRoomSources(input: DataRoomFileInput): Promise<Dat
       message: 'A file can only be added as a new version of a document named by its id. Nothing was filed.',
     };
   }
-  if (!(await programInOrganization(pool, input.programId, input.organizationId))) {
-    return { ok: false, status: 404, code: 'NOT_FOUND', message: 'Project not found.' };
+  try {
+    const access = await requireCurrentProgramAccess(pool, { organizationId: input.organizationId, userId: input.userId ?? undefined, programId: input.programId });
+    const roleRefusal = vaultWriteRefusal(access.actor.role);
+    if (roleRefusal) return roleRefusal;
+  } catch (error) {
+    if (error instanceof ProgramReadAccessError) return { ok: false, status: error.status, code: error.code, message: error.message };
+    return { ok: false, status: 503, code: 'PROJECT_ACCESS_UNAVAILABLE', message: 'Current project access could not be verified. Nothing was filed.' };
   }
 
   const sources = new Map((await readSourceUploads(input.organizationId, ids)).map((s) => [s.id, s]));

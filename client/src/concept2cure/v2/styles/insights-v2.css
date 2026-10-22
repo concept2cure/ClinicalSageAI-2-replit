@@ -171,7 +171,92 @@
 .ro-port-code{ font-size:14px; font-weight:600; color:var(--text-100); }
 .ro-port-ind{ font-size:11.5px; color:var(--text-300); line-height:1.4; margin:2px 0; }
 .ro-port-filing{ font-size:11px; color:var(--text-400); }
-@media (max-width:1000px){ .rc{ grid-template-columns:340px 1fr; } }
+/* ── Reporting library: catalog / run history / schedules / bundles ──
+   The screens for the routes the 2026-10-01 reporting review left with no
+   caller (ui-surface-registry.ui-v2.ts, the `insights` row). They live in the
+   artifact pane, so they inherit .rc-canvas padding and scrolling. All colour
+   comes from tokens so both themes and the contrast floor hold. */
+.rl-tabs{ display:flex; gap:6px; flex-wrap:wrap; border-bottom:1px solid var(--border); margin:0 0 18px; padding-bottom:12px; }
+.rl-tab{ display:inline-flex; align-items:center; gap:6px; background:var(--bg-000); border:1px solid var(--border); color:var(--text-300); font-size:12px; font-weight:600; padding:6px 12px; border-radius:999px; cursor:pointer; transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease); }
+.rl-tab:hover{ border-color:var(--accent-200); color:var(--accent-200); }
+.rl-tab.on{ background:var(--accent-strong); border-color:var(--accent-strong); color:var(--accent-on-strong); }
+.rl-tab svg{ width:13px; height:13px; }
+.rl-tab:focus-visible, .ro-port-open:focus-visible{ outline:2px solid var(--accent-200); outline-offset:2px; }
+.ro-port-open{ text-align:left; font:inherit; cursor:pointer; }
+.ro-port-open:hover{ border-color:var(--accent-200); }
+.rl-pagination{ display:flex; gap:12px; align-items:center; margin-top:16px; font-size:12px; color:var(--text-300); }
+
+.rl{ max-width:980px; }
+.rl-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin:0 0 16px; }
+.rl-h{ font-size:17px; font-weight:600; color:var(--text-100); margin:0; }
+.rl-sub{ font-size:12.5px; color:var(--text-300); line-height:1.55; margin:5px 0 0; }
+.rl-head-acts{ display:flex; gap:8px; flex-shrink:0; flex-wrap:wrap; }
+
+.rl-filters{ display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; margin:0 0 16px; }
+.rl-filter{ display:flex; flex-direction:column; gap:4px; min-width:150px; }
+.rl-filter-wide{ flex:1; min-width:260px; }
+.rl-input{ background:var(--bg-000); border:1px solid var(--border-control); border-radius:8px; color:var(--text-100); font:inherit; font-size:12.5px; padding:7px 10px; min-width:150px; transition:border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+.rl-input:focus{ outline:none; border-color:var(--accent-200); box-shadow:0 0 0 3px var(--accent-000); }
+
+.rl-fam{ margin:0 0 20px; }
+.rl-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(248px,1fr)); gap:12px; margin-top:8px; }
+.rl-card{ display:flex; flex-direction:column; gap:7px; background:var(--bg-000); border:1px solid var(--border); border-radius:12px; padding:13px; }
+.rl-card-h{ font-size:13.5px; font-weight:600; color:var(--text-100); line-height:1.4; }
+.rl-card-meta{ font-size:11px; color:var(--text-400); line-height:1.45; }
+.rl-card-run{ align-self:flex-start; display:inline-flex; align-items:center; gap:5px; margin-top:auto; background:var(--accent-strong); color:var(--accent-on-strong); border:none; border-radius:8px; padding:6px 11px; font-size:11.5px; font-weight:600; cursor:pointer; }
+.rl-card-run:disabled{ opacity:.5; cursor:default; }
+.rl-card-run svg{ width:12px; height:12px; }
+.rl-card-lock{ display:inline-flex; align-items:center; gap:5px; margin-top:auto; font-size:11px; font-weight:600; color:var(--warning); background:var(--warning-muted); padding:4px 9px; border-radius:999px; align-self:flex-start; }
+.rl-card-lock svg{ width:12px; height:12px; }
+
+.rl-nc-list{ list-style:none; margin:8px 0 0; padding:0; display:flex; flex-direction:column; gap:5px; }
+.rl-nc-item{ display:flex; align-items:center; gap:7px; font-size:12px; color:var(--text-300); line-height:1.45; }
+
+.rl-table{ width:100%; border-collapse:collapse; background:var(--bg-000); }
+.rl-cap{ caption-side:top; text-align:left; font-size:11px; color:var(--text-400); padding:0 0 7px; }
+.rl-table th, .rl-table td{ text-align:left; font-size:12px; padding:9px 11px; border-bottom:1px solid var(--border); vertical-align:top; }
+.rl-table th{ font-weight:600; color:var(--text-400); font-size:10.5px; letter-spacing:.04em; text-transform:uppercase; background:var(--bg-050); }
+.rl-table td{ color:var(--text-200); }
+.rl-table tr:last-child td{ border-bottom:none; }
+.rl-pick-h{ width:62px; }
+.rl-cell-sub{ font-size:10.5px; color:var(--text-400); margin-top:2px; }
+
+/* A status carries its word, never a colour alone (WCAG 1.4.1). */
+.rl-tag{ display:inline-block; font-size:10.5px; font-weight:600; padding:2px 8px; border-radius:999px; background:var(--bg-050); color:var(--text-300); border:1px solid var(--border); white-space:nowrap; }
+.rl-tag[data-status="final"]{ color:var(--success); background:var(--success-muted); border-color:color-mix(in srgb,var(--success) 32%,var(--border)); }
+.rl-tag[data-status="failed"]{ color:var(--error); background:var(--error-muted); border-color:color-mix(in srgb,var(--error) 32%,var(--border)); }
+.rl-tag[data-status="partial"], .rl-tag[data-status="draft"]{ color:var(--warning); background:var(--warning-muted); border-color:color-mix(in srgb,var(--warning) 32%,var(--border)); }
+
+.rl-form{ background:var(--bg-050); border:1px solid var(--border); border-radius:12px; padding:14px; margin:0 0 16px; }
+
+/* ── A run's Part 11 evidence: the seal read back, and what the run read ──
+   A disclosure, not a hover: an inspector reads this, and a hover cannot be
+   read by a keyboard, printed, or quoted. */
+.rl-ev{ border:1px solid var(--border); border-radius:12px; background:var(--bg-000); margin:18px 0 0; }
+.rl-ev-sum{ display:flex; align-items:center; gap:7px; padding:11px 14px; font-size:12.5px; font-weight:600; color:var(--text-200); cursor:pointer; }
+.rl-ev-sum svg{ width:13px; height:13px; }
+.rl-ev-sum:focus-visible{ outline:2px solid var(--accent-200); outline-offset:2px; }
+.rl-ev-body{ display:flex; flex-direction:column; gap:20px; padding:4px 14px 16px; border-top:1px solid var(--border); }
+.rl-ev-verdict{ display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; padding:5px 11px; border-radius:999px; margin:0 0 7px; background:var(--bg-050); color:var(--text-200); border:1px solid var(--border); }
+.rl-ev-verdict svg{ width:13px; height:13px; }
+.rl-ev-verdict[data-verdict="intact"]{ color:var(--success); background:var(--success-muted); border-color:color-mix(in srgb,var(--success) 32%,var(--border)); }
+.rl-ev-verdict[data-verdict="mismatch"]{ color:var(--error); background:var(--error-muted); border-color:color-mix(in srgb,var(--error) 32%,var(--border)); }
+/* `not-verifiable` is the absence of evidence, not a quieter pass and not a
+   failure, so it keeps the neutral token pair rather than borrowing either. */
+.rl-ev-verdict[data-verdict="not-verifiable"]{ color:var(--text-300); }
+.rl-ev-checks{ list-style:none; margin:10px 0 0; padding:0; display:flex; flex-direction:column; gap:9px; }
+.rl-ev-check{ display:flex; flex-direction:column; gap:3px; }
+.rl-ev-check-h{ display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:var(--text-200); }
+.rl-ev-check-h svg{ width:12px; height:12px; }
+.rl-ev-check[data-ok="true"] .rl-ev-check-h{ color:var(--success); }
+.rl-ev-check[data-ok="false"] .rl-ev-check-h{ color:var(--warning); }
+.rl-ev-check-d{ font-size:11.5px; color:var(--text-300); line-height:1.5; padding-left:18px; }
+.rl-ev-dl{ display:grid; grid-template-columns:auto 1fr; gap:5px 14px; margin:14px 0 0; font-size:12px; }
+.rl-ev-dl dt{ color:var(--text-400); font-weight:600; }
+.rl-ev-dl dd{ color:var(--text-200); margin:0; }
+.rl-ev-hash{ font-family:var(--font-mono); font-size:11px; word-break:break-all; }
+
+@media (max-width:1000px){ .rc{ grid-template-columns:340px 1fr; } .rl-head{ flex-direction:column; } }
 }
 
 @keyframes rcpulse{ 0%,60%,100%{ opacity:.3; } 30%{ opacity:1; } }

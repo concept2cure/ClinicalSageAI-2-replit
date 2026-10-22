@@ -31,4 +31,3 @@ stdout | tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit 
       Tests  7 passed (7)
    Start at  17:52:25
    Duration  3.44s (transform 1.38s, setup 81ms, import 2.33s, tests 747ms, environment 0ms)
-

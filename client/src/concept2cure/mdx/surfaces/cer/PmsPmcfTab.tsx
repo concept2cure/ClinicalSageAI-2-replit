@@ -13,30 +13,23 @@
  *     figure is computed from those rows or taken from the server's summary
  *     over them; a figure the rows cannot support is shown as absent.
  *
- * The kit's KPI / complaints / study / calendar fixtures render ONLY under the
- * explicit sample-mode guard, clearly bannered. The reporting calendar has no
- * backend and is therefore sample-only.
+ * The kit's example KPIs, complaints, PMCF studies and reporting calendar
+ * (CER_PMS_*, CER_PMCF_STUDIES) were removed with sample mode on 2026-10-14.
+ * The reporting calendar has no backend, so it is not shown.
  */
 
 import * as React from 'react';
 import { I } from '../../icons';
-import {
-  CER_PMS_COMPLAINTS,
-  CER_PMS_KPIS,
-  CER_PMCF_STUDIES,
-  CER_PMS_TIMELINE,
-} from '../../data/cer';
 import type { DeviceProfileView } from '../../hooks/useDeviceProfile';
+import { isIvdFamily } from '@shared/constants/domain/product-types';
 import {
   POST_MARKET_DOC_LABELS,
   useCerPostMarketStatus,
   useGeneratePostMarketDraft,
   type PostMarketDocType,
 } from '../../hooks/useCerPostMarket';
-import { SampleDataBanner } from '../../components/SampleDataBanner';
 import { EmptyState, ErrorState } from '../../../v2/dataConnect';
 import { redactInternals } from '@/lib/queryClient';
-import { useSampleMode } from '../../components/DataGate';
 import {
   isOpenComplaint,
   isSeriousComplaint,
@@ -64,9 +57,13 @@ const LIFECYCLE_PILL: Record<string, string> = {
 };
 
 export function PmsPmcfTab({ programId, profile, onAskAna }: PmsPmcfTabProps) {
-  const sampleOn = useSampleMode();
-  const deviceClass = profile?.deviceClass ?? null;
-  const { report, loading, error, refresh } = useCerPostMarketStatus(programId, deviceClass);
+  /* A device is classified under the MDR and a diagnostic under the IVDR, so
+     the product type picks the regulation this panel reports against. The
+     class itself is read from the programme record server-side — this panel
+     used to pass `profile.deviceClass`, the US 21 CFR 860 class, which an MDR
+     assessment refused by name. */
+  const regulation = isIvdFamily(profile?.productType ?? null) ? 'IVDR' : 'MDR';
+  const { report, loading, error, refresh } = useCerPostMarketStatus(programId, regulation);
   const { busy, outcome, generate } = useGeneratePostMarketDraft(refresh);
 
   const deviceName = (profile?.productName ?? profile?.name ?? '').trim();
@@ -84,7 +81,9 @@ export function PmsPmcfTab({ programId, profile, onAskAna }: PmsPmcfTabProps) {
         : report
           ? `${report.requiredPresent} of ${report.requiredTotal} required documents present · ` +
             `${report.requiredApprovedCount} approved · ${report.regulation}` +
-            (report.deviceClass ? ` · class ${report.deviceClass}` : ' · device class not set')
+            (report.deviceClass
+              ? ` · class ${report.deviceClass}`
+              : ` · no ${report.regulation} class on the program record`)
           : 'No status yet';
 
   const generateStatus = busy
@@ -182,7 +181,7 @@ export function PmsPmcfTab({ programId, profile, onAskAna }: PmsPmcfTabProps) {
                               programId,
                               documentType: d.documentType as PostMarketDocType,
                               deviceName,
-                              deviceClass,
+                              regulation,
                             })
                           }
                         >
@@ -239,8 +238,7 @@ export function PmsPmcfTab({ programId, profile, onAskAna }: PmsPmcfTabProps) {
         </div>
       )}
 
-      <SampleDataBanner show={sampleOn} label="PMS metrics and complaint queue" />
-      {sampleOn ? <SamplePmsPanels /> : <LivePmsPanels programId={programId} />}
+      <LivePmsPanels programId={programId} />
     </>
   );
 }
@@ -509,139 +507,6 @@ function LivePmsPanels({ programId }: { programId: string | null }) {
                 ))}
               </div>
             )}
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
-/** The kit's PMS KPI / complaints / PMCF fixtures — sample mode only. */
-function SamplePmsPanels() {
-  const totalEnrolled = CER_PMCF_STUDIES.reduce((s, x) => s + x.n, 0);
-  const totalTarget = CER_PMCF_STUDIES.reduce((s, x) => s + x.target, 0);
-  const enrollPct = Math.round((totalEnrolled / totalTarget) * 100);
-
-  return (
-    <>
-      <div className="metrics-row">
-        {CER_PMS_KPIS.map((k, i) => (
-          <div
-            key={i}
-            className="metric-card"
-            data-tone={k.tone === 'good' ? 'ok' : k.tone === 'warn' ? 'warn' : k.tone === 'bad' ? 'err' : undefined}
-          >
-            <div className="metric-label">{k.label}</div>
-            <div className="metric-val">
-              {k.value}
-              {k.delta && <span className="unit">{k.delta}</span>}
-            </div>
-            <div className="metric-meta">{k.foot}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="col2">
-        <div>
-          <div className="panel">
-            <div className="panel-hdr">
-              <div>
-                <div className="t">Complaint queue · sample</div>
-                <div className="s">Canonical example content</div>
-              </div>
-            </div>
-            <div className="tbl-scroll">
-              <table className="tbl">
-                <thead>
-                  <tr>
-                    <th>Code</th>
-                    <th>Category</th>
-                    <th>Severity</th>
-                    <th>Status</th>
-                    <th>Owner</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {CER_PMS_COMPLAINTS.map((c) => (
-                    <tr key={c.code}>
-                      <td>
-                        <span className="k-num">{c.code}</span>
-                        <div className="k-holder">
-                          {c.received} · {c.source}
-                        </div>
-                      </td>
-                      <td>
-                        <div className="k-name" style={{ fontWeight: 400, fontSize: 12 }}>
-                          {c.category}
-                        </div>
-                      </td>
-                      <td>
-                        <span className={`status-pill ${c.severity}`}>{c.severity}</span>
-                      </td>
-                      <td>
-                        <span className={`status-pill ${c.status === 'open' ? 'review' : c.status === 'closed' ? 'complete' : 'draft'}`}>
-                          {c.status}
-                        </span>
-                      </td>
-                      <td style={{ fontSize: 11, color: 'var(--text-300)' }}>{c.owner}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <div className="panel">
-            <div className="panel-hdr">
-              <div>
-                <div className="t">PMCF studies · sample</div>
-                <div className="s">
-                  {CER_PMCF_STUDIES.length} active · {totalEnrolled.toLocaleString()} of{' '}
-                  {totalTarget.toLocaleString()} enrolled · {enrollPct}%
-                </div>
-              </div>
-            </div>
-            <div className="estar">
-              {CER_PMCF_STUDIES.map((st) => (
-                <div key={st.id} className="estar-row">
-                  <div className="estar-num">{st.id.slice(-2)}</div>
-                  <div className="estar-label">
-                    <div>
-                      {st.id} · {st.kind}
-                    </div>
-                    <div style={{ fontSize: 11, color: 'var(--text-400)', marginTop: 2 }}>
-                      {st.primary} · {st.n.toLocaleString()} / {st.target.toLocaleString()} · through {st.through}
-                    </div>
-                  </div>
-                  <span className={`status-pill ${st.status === 'closed' ? 'complete' : 'review'}`}>
-                    {st.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="panel">
-            <div className="panel-hdr">
-              <div>
-                <div className="t">Reporting calendar · sample</div>
-                <div className="s">PMS deliverables required by NB and competent authorities</div>
-              </div>
-            </div>
-            <div className="estar">
-              {CER_PMS_TIMELINE.map((t, i) => (
-                <div key={i} className="estar-row">
-                  <div className="estar-num">{String(i + 1).padStart(2, '0')}</div>
-                  <div className="estar-label">
-                    <div>{t.label}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-400)', marginTop: 2 }}>{t.when}</div>
-                  </div>
-                  <span className={`status-pill ${t.status}`}>{t.status}</span>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </div>

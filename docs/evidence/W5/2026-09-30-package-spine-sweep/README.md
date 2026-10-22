@@ -58,9 +58,9 @@ both finders, and every verifier, were cut off by account usage limits
 | HS-1 | honest state | high | The transmit success toast drops `filedSequenceWarning`: a filed-history write that failed, had no usable manifest, or conflicted (two bundles under one number) reads as a clean success. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`) — see "Lens findings fixed" |
 | HS-2 | honest state | medium | The pre-transmit gate's failed checks and its "NOT an FDA-conformant Module 1 backbone" warning are returned and never shown; the assemble response carries no conformance verdict. | **confirmed** 2026-10-08; **fixed** 2026-10-08 — transmit half `f0a6c43e9`, assemble half with VP-1–VP-7 — see "Lens findings fixed" |
 | HS-3 | honest state | medium | A pre-transmit gate refusal renders as "Structural gate refused · 0 findings · … assemble again": the blockers arrive as strings and are dropped. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`) — see "Lens findings fixed" |
-| HS-4 | honest state | low | With the REST transport, FDA ESG reads "configured" and every transmit ends in a bare 500 INTERNAL_ERROR. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`, sequence-spine follow-up `b649ac2ae`) — see "Lens findings fixed" |
+| HS-4 | honest state | low | With the REST transport, FDA ESG reads "configured" and every transmit ends in a bare 500 INTERNAL_ERROR. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`); on the 2026-10-21 merge trunk's model replaced this lane's (`configured` = credentials, `transportReadiness` apart, precheck refuses REST before signing) — see "Lens findings fixed" |
 | HS-5 | honest state | medium | A bundle the agency may hold (delivered, unconfirmed) is announced "Transmit failed", and the log is not reloaded, so the row holding the lock is invisible. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`) — see "Lens findings fixed" |
-| HS-6 | honest state | medium | The active-transmittal refusal drops "the agency may already hold it" and advises a rollback that leads to sending the same sequence again. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`) — see "Lens findings fixed" |
+| HS-6 | honest state | medium | The active-transmittal refusal drops "the agency may already hold it" and advises a rollback that leads to sending the same sequence again. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`); since the 2026-10-21 merge no rollback exists to offer, and a resend is a new sequence — see "Lens findings fixed" |
 | HS-7 | honest state | low | A clean assembly's warnings (cover letter missing, placeholder on file, empty section) are reduced to a count, with no way to see them. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`) — see "Lens findings fixed" |
 | HS-8 | honest state | low | The transmittal log silently truncates at 100 rows, and the header and AnA report the truncated count. | **confirmed** 2026-10-08; **fixed** 2026-10-08 (`f0a6c43e9`) — see "Lens findings fixed" |
 | VP-1 | validation parity | high | An IND sequence 0000 with no Form FDA 1571 assembles with 0 errors and clears the production guard. | **confirmed** 2026-10-08; **fixed** 2026-10-08 — see "Lens findings fixed" |
@@ -430,6 +430,9 @@ server's sentence. `ci:sign-ceremony` carries one "proof across a boundary"
 entry for the service, as it does for governed transmit and the eSTAR filing
 signature: the route re-authenticates, the service refuses without that proof.
 Ack3 ingestion does not exist (ESG procurement); there is no reinstate action.
+*2026-10-21: the rollback route this paragraph compares against was removed on
+trunk (`6ef0ef121`). The technical-rejection action stays: it is the one signed
+act on a row of the read-only transmittal log (`8b75e6b5b`).*
 
 ```
 Fail-first: the e2e cases could not import the module at HEAD; against a no-op
@@ -497,11 +500,54 @@ message:
 
 **`b649ac2ae` (two problems the HS-4 change left behind):**
 - The sequence spine (`transmitSequence`) read the REST transport's
-  "not configured" as missing credentials. The Submission Center then told the
-  operator that FDA ESG had no credentials, when it had credentials and an
-  unverified transport. It now returns `transport_not_verified` and says so.
+  "not configured" as missing credentials. It returned `transport_not_verified`
+  instead.
 - 19 FDA gateway tests matched the old duplicate-send SELECT and failed. Their
   mocks now match both forms.
+
+**Merged onto trunk, 2026-10-21.** Trunk had moved in the same area while this
+work waited, and its model was kept where the two overlapped:
+- **The transmittals screen is a read-only log** (`8b75e6b5b`): transmit runs on
+  the sequence spine (Submission Center → Dispatch). The client halves of
+  HS-1–HS-7 were about this screen's transmit and assemble controls, which left
+  with that commit, so they are not carried. HS-8 (the log's true totals) was
+  ported onto the read-only log
+  (`gatewayTransmittalsLogTotals.test.tsx`).
+- **The rollback route was removed** (`6ef0ef121`). The duplicate-send messages
+  keep HS-6's operator wording and take trunk's remedy: confirm with the agency,
+  and a resend is a new sequence from Submission Center. No variant offers a
+  rollback.
+- **Credentials and transport readiness are reported apart** (`e1f3fd425`):
+  `configured` means the credentials resolve, and `transportReadiness` says
+  whether the transport can send. The sequence transmit's precheck refuses an
+  unavailable transport before a signature is asked for. So this lane's HS-4
+  change (REST counted as not configured) and the `b649ac2ae` follow-up were
+  reverted in favour of trunk's model. Their tests now pin REST as configured
+  with its transport unavailable. The 412 `TRANSPORT_NOT_VERIFIED` on the
+  package route stays, and its sentence says "implemented AS2", not "verified".
+- **The one-dot file-name rule moved with `FILENAME_PATTERN`** into
+  `shared/regulatory/ectd-leaf-rules.ts` (`07fbf47d4`), with
+  `FILENAME_RULE_TEXT` and `FOLDER_NAME_PATTERN`. The server re-exports them, so
+  placement in the client applies the same rule. FDA's 10 GB limit sits beside
+  trunk's sourced-limit accessor (`getGatewaySizeLimitOnFile`), and Canada keeps
+  its own 4 GiB figure, pending a source.
+- **The merge review (three lenses, 2026-10-22) found nothing must-fix** and
+  four should-fixes, all taken, each failing first with its fix removed:
+  - the "received" refusal no longer says "send sequence 0000 again … as a new
+    sequence";
+  - a test send holding production bytes says those bytes cannot be sent there
+    while it is active, and that a first filing there is a new sequence;
+  - the package route returns the failed checks in the one shape the sign
+    record and AnA carry ("name: detail"), not a second {name, detail} shape
+    no screen reads;
+  - the pre-transmit size check reads `getGatewaySizeLimitOnFile`. A region
+    with no published limit on file (CA, UK, CN, KR, AU, CH, BR, IN) is said to
+    be unchecked, where it was refused on a figure no agency publishes. The
+    us-ectd market spec holds exactly 10^10 bytes, so FDA has one figure.
+
+  Suites: the merged tree typechecks clean. In a broad run (1,938 files), the
+  32 files and 99 tests that fail also fail, identically, on a pristine export
+  of trunk; none is caused by the merge.
 
 **VP-1, VP-2: the Form FDA 1571 rule runs on bytes and at 0000.** The rule
 now covers every FDA IND sequence, including the original. A 1.1 leaf meets

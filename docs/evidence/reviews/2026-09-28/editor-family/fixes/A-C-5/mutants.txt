@@ -61,4 +61,3 @@
    × client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > gives the checkbox the whole cell and the focus ring the cell had 4ms
    Test Files  1 failed (1)
    Tests  1 failed | 9 passed (10)
-

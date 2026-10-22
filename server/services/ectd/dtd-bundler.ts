@@ -31,6 +31,7 @@
 
 import { promises as fs } from 'fs';
 import * as path from 'path';
+import type { DtdFileValidation, DtdValidationEvidence } from '../../../shared/regulatory/ectd-dtd-validation';
 
 /** Every region the canonical packager can build a backbone for. Kept in sync
  *  with regional-packager.ts backboneByRegion so `region as DtdRegion` at the
@@ -57,6 +58,8 @@ export interface VendoredDtd {
 
 /** The ICH backbone DTD every region's index.xml references. */
 export const ICH_BACKBONE_DTD = 'ich-ectd-3-2.dtd';
+/** Grammar referenced by generated Study Tagging Files, when any are shipped. */
+export const STF_DTD = 'ich-stf-v2-2.dtd';
 
 /** The ICH stylesheet index.xml references via <?xml-stylesheet?> (util/style/). */
 export const ICH_BACKBONE_STYLESHEET = 'ectd-2-0.xsl';
@@ -105,9 +108,10 @@ export function resolveDtdDir(env: NodeJS.ProcessEnv = process.env): string {
  *  A region without a mapped regional DTD (e.g. an ICH-aligned region that reuses
  *  the EMA backbone) requires only the ICH backbone DTD — never returns an
  *  `undefined` entry (which previously crashed assessDtdReadiness). */
-export function requiredDtdsForRegion(region: DtdRegion): string[] {
+export function requiredDtdsForRegion(region: DtdRegion, hasStudyTaggingFiles = false): string[] {
   const regional = REGIONAL_DTD[region];
-  return regional ? [ICH_BACKBONE_DTD, regional] : [ICH_BACKBONE_DTD];
+  const required = regional ? [ICH_BACKBONE_DTD, regional] : [ICH_BACKBONE_DTD];
+  return hasStudyTaggingFiles ? [...required, STF_DTD] : required;
 }
 
 /** The stylesheet filenames a region's package must contain under util/style/
@@ -132,6 +136,8 @@ async function listVendored(dir: string, extension: string): Promise<VendoredDtd
   for (const name of names.sort()) {
     if (!name.toLowerCase().endsWith(extension)) continue;
     try {
+      const stat = await fs.lstat(path.join(dir, name));
+      if (!stat.isFile() || stat.isSymbolicLink()) continue;
       out.push({ fileName: name, bytes: await fs.readFile(path.join(dir, name)) });
     } catch {
       // Unreadable entry — skip; treated as absent by the readiness check.
@@ -161,6 +167,8 @@ export interface DtdReadinessInput {
   environment: 'staging' | 'production';
   /** Wire from `ECTD_REQUIRE_DTD`; false ⇒ report-only (never blocks). */
   requireDtd: boolean;
+  /** True only when this package actually generated one or more STFs. */
+  hasStudyTaggingFiles?: boolean;
 }
 
 export interface DtdReadinessResult {
@@ -187,14 +195,16 @@ export interface DtdReadinessResult {
  * ECTD_REQUIRE_DTD, governs both kinds of supportive file.
  */
 export function assessDtdReadiness(input: DtdReadinessInput): DtdReadinessResult {
-  const required = requiredDtdsForRegion(input.region);
-  const presentSet = new Set(input.present.map((p) => p.toLowerCase()));
-  const missing = required.filter((r) => !presentSet.has(r.toLowerCase()));
+  const required = requiredDtdsForRegion(input.region, input.hasStudyTaggingFiles);
+  // Package paths are case-sensitive: an uppercase drop-point name cannot
+  // satisfy the lowercase SYSTEM path actually written in the XML.
+  const presentSet = new Set(input.present);
+  const missing = required.filter((r) => !presentSet.has(r));
 
   const requiredStylesheets = requiredStylesheetsForRegion(input.region);
   const presentStylesheets = input.presentStylesheets ?? [];
-  const presentStyleSet = new Set(presentStylesheets.map((p) => p.toLowerCase()));
-  const missingStylesheets = requiredStylesheets.filter((r) => !presentStyleSet.has(r.toLowerCase()));
+  const presentStyleSet = new Set(presentStylesheets);
+  const missingStylesheets = requiredStylesheets.filter((r) => !presentStyleSet.has(r));
 
   const selfContained = missing.length === 0 && missingStylesheets.length === 0;
   const blockers: string[] = [];
@@ -220,6 +230,70 @@ export function assessDtdReadiness(input: DtdReadinessInput): DtdReadinessResult
     cleared: blockers.length === 0,
     blockers,
   };
+}
+
+const stringList = (value: unknown): value is string[] => Array.isArray(value) && value.every(item => typeof item === 'string');
+const uniqueList = (value: string[]) => new Set(value).size === value.length;
+const inventory = (value: unknown): value is string[] => stringList(value) && uniqueList(value) &&
+  value.every(name => name.length > 0 && name.trim() === name && !/[\\/]/.test(name));
+const object = (value: unknown): value is Record<string, unknown> => Boolean(value && typeof value === 'object' && !Array.isArray(value));
+const packagePath = (value: string) => value.length > 0 && !value.includes('\\') && !path.posix.isAbsolute(value) &&
+  path.posix.normalize(value) === value && value.split('/').every(part => part !== '.' && part !== '..' && part !== '');
+
+function xmlProofPassed(value: unknown, mode: 'well-formed' | 'dtd'): boolean {
+  return object(value) && value.ran === true && value.valid === true && value.mode === mode && stringList(value.errors) && value.errors.length === 0;
+}
+
+/** Same proof interpretation for package aggregation and its existing gates. */
+export function dtdFileValidationPassed(value: unknown): value is DtdFileValidation {
+  if (!object(value) || typeof value.relPath !== 'string' || !packagePath(value.relPath) || !object(value.doctype)) return false;
+  return xmlProofPassed(value.wellFormed, 'well-formed') && value.doctype.valid === true &&
+    stringList(value.doctype.errors) && value.doctype.errors.length === 0 && xmlProofPassed(value.dtd, 'dtd');
+}
+
+export function dtdIntegrityPassed(value: unknown): value is DtdValidationEvidence['integrity'] {
+  return object(value) && value.ok === true && inventory(value.verified) && value.verified.length > 0 &&
+    Array.isArray(value.mismatched) && value.mismatched.length === 0 &&
+    stringList(value.missingFiles) && value.missingFiles.length === 0 && stringList(value.unlistedFiles) && value.unlistedFiles.length === 0;
+}
+
+function expectedXmlFiles(value: unknown): value is string[] {
+  return stringList(value) && value.length >= 2 && uniqueList(value) && value.every(packagePath) &&
+    value.includes('index.xml') && value.some(name => /^m1\/[^/]+\/[^/]+-regional\.xml$/.test(name));
+}
+
+/** A stored passed flag cannot stand in for nonempty, exact per-file coverage. */
+export function dtdValidationPassed(value: unknown): value is DtdValidationEvidence {
+  if (!object(value) || value.version !== 1 || value.passed !== true || !expectedXmlFiles(value.expectedFiles) ||
+      !Array.isArray(value.files) || value.files.length !== value.expectedFiles.length || !dtdIntegrityPassed(value.integrity)) return false;
+  const paths = value.files.map(file => object(file) ? file.relPath : null);
+  return paths.every((name): name is string => typeof name === 'string') && uniqueList(paths) &&
+    value.expectedFiles.every(name => paths.includes(name)) && value.files.every(dtdFileValidationPassed);
+}
+
+function inventoryComplete(required: unknown, present: unknown, mandatory: string[]): required is string[] {
+  return inventory(required) && required.length > 0 && inventory(present) &&
+    mandatory.every(name => required.includes(name)) && required.every(name => present.includes(name));
+}
+
+function packageInventoryComplete(value: Record<string, unknown>): boolean {
+  const { required, present, requiredStylesheets, presentStylesheets, missing, missingStylesheets } = value;
+  return value.selfContained === true && inventoryComplete(required, present, [ICH_BACKBONE_DTD]) &&
+    required.some(name => Object.values(REGIONAL_DTD).includes(name)) &&
+    inventoryComplete(requiredStylesheets, presentStylesheets, [ICH_BACKBONE_STYLESHEET]) &&
+    stringList(missing) && missing.length === 0 && stringList(missingStylesheets) && missingStylesheets.length === 0;
+}
+
+/** Complete current proof, including every declared required supportive file. */
+export function hasPassedPackageDtdValidation(value: unknown, expectedStudyFiles?: number): boolean {
+  if (!object(value) || !packageInventoryComplete(value) || !dtdValidationPassed(value.validation)) return false;
+  const required = value.required as string[];
+  const requiredStylesheets = value.requiredStylesheets as string[];
+  const proof = value.validation;
+  if (![...required, ...requiredStylesheets].every(name => proof.integrity.verified.includes(name))) return false;
+  const studyFiles = proof.expectedFiles.filter(name => /(?:^|\/)stf-[^/]+\.xml$/.test(name));
+  if (required.includes(STF_DTD) && studyFiles.length === 0) return false;
+  return expectedStudyFiles === undefined || (Number.isSafeInteger(expectedStudyFiles) && expectedStudyFiles >= 0 && studyFiles.length === expectedStudyFiles);
 }
 
 /** Read the opt-in DTD enforcement flag from the environment. */

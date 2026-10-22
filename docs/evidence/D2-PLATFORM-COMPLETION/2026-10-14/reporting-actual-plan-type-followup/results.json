@@ -1,0 +1,37 @@
+{
+  "source": "client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx",
+  "sha256": "8310ccdbfb9748fc000c584c004d9dceb71e4f7105c23a203b8508dcacc0c770",
+  "originalCompiler": {
+    "errors": 2,
+    "exitCode": 1,
+    "seconds": 296.942,
+    "sourceInputsStable": true,
+    "locations": [
+      69,
+      179
+    ],
+    "code": "TS2769"
+  },
+  "fix": "Remove two unsupported RoleOptions.exact properties. String role names already match exactly; names and assertions unchanged.",
+  "currentUI": {
+    "passed": 22,
+    "skipped": 0,
+    "seconds": 5.1
+  },
+  "correctedFullCompiler": {
+    "argv": [
+      "node",
+      "scripts/ci/typecheck-no-regression.mjs"
+    ],
+    "node": "v22.22.0",
+    "heapMiB": 12288,
+    "exitCode": 0,
+    "seconds": 287.842,
+    "sourceInputCount": 10451,
+    "sourceInputsStable": true,
+    "rawSha256": "88280664dabf1fafb5def9e258b8903e421f6bff2b3c98305e66864d3f4053c7",
+    "rawBytes": 190,
+    "qualification": "Working-tree source inputs, separate from published baff gates; no parallel heavy runner admitted."
+  },
+  "scope": "Fixture options only; production source unchanged; original 191-test UI phase remains independently pinned."
+}

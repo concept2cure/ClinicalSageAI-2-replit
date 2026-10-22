@@ -54,6 +54,9 @@ export const EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS: readonly ExpectedImmutability
   { schema: 'public', table: 'ana_turn_records', trigger: 'trg_ana_turn_records_no_truncate', source: 'migrations/20260926_ana_turn_records.sql' },
   { schema: 'public', table: 'ana_record_blobs', trigger: 'trg_ana_record_blobs_append_only', source: 'migrations/20260926_ana_turn_records.sql' },
   { schema: 'public', table: 'ana_record_blobs', trigger: 'trg_ana_record_blobs_no_truncate', source: 'migrations/20260926_ana_turn_records.sql' },
+  // Exact-source host-budget admission metadata; tenant purge uses its fixed door.
+  { schema: 'public', table: 'ana_source_read_receipts', trigger: 'trg_ana_source_read_receipts_append_only', source: 'migrations/20261014_ana_source_read_receipts.sql' },
+  { schema: 'public', table: 'ana_source_read_receipts', trigger: 'trg_ana_source_read_receipts_no_truncate', source: 'migrations/20261014_ana_source_read_receipts.sql' },
   // The authoring records. These files are on the authoring subsystem applier
   // (scripts/db/authoring-subsystem.mjs AUTHORING_SUBSYSTEM_FILES), which
   // replays them on every deploy just as C2C_MIGRATION_FILES does.

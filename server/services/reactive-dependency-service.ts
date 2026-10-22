@@ -17,6 +17,7 @@
 
 import { pool } from '../db.js';
 import { createScopedLogger } from '../utils/logger';
+import { systemActorEmail } from './part11/governed-actor';
 
 const log = createScopedLogger('reactive-dependency');
 
@@ -35,10 +36,13 @@ export type TriggerType =
   | 'contradiction_created' | 'contradiction_resolved'
   | 'artifact_promoted' | 'artifact_locked';
 
+// The table's CHECK still admits auto_created_review_thread,
+// auto_created_contradiction_memo and auto_superseded_assumption; nothing
+// performs those, so nothing may record them (see the note at
+// "AUTO-CONSEQUENCE TRIGGERING").
 export type ActionTaken =
   | 'marked_stale' | 'marked_impacted' | 'marked_requires_review'
-  | 'marked_requires_reapproval' | 'auto_created_review_thread'
-  | 'auto_created_contradiction_memo' | 'auto_superseded_assumption'
+  | 'marked_requires_reapproval'
   | 'auto_created_risk_signal' | 'notification_sent'
   | 'no_downstream_impact';
 
@@ -185,6 +189,9 @@ class ReactiveDependencyService {
     triggeredBy?: string;
   }): Promise<PropagationResult> {
     log.info('Propagating change', { trigger: input.triggerType, source: `${input.sourceType}:${input.sourceId}` });
+    // 2026-10-15: was `input.triggeredBy ?? 'system'` on both log rows below —
+    // a cascade no user started was logged as 'system', which names nobody.
+    const triggeredBy = input.triggeredBy || systemActorEmail('reactive-dependency');
 
     const downstream = await this.getDownstream(input.organizationId, input.sourceType, input.sourceId);
     const actions: PropagationResult['actions'] = [];
@@ -199,7 +206,7 @@ class ReactiveDependencyService {
         triggerObjectId: input.sourceId,
         triggerObjectLabel: input.sourceLabel,
         actionTaken: 'no_downstream_impact',
-        triggeredBy: input.triggeredBy ?? 'system',
+        triggeredBy,
       });
 
       return { triggerType: input.triggerType, triggerObjectId: input.sourceId, downstreamImpacted: 0, actions };
@@ -239,7 +246,7 @@ class ReactiveDependencyService {
         impactedObjectLabel: dep.targetLabel ?? undefined,
         dependencyId: dep.id,
         autoTriggered: true,
-        triggeredBy: input.triggeredBy ?? 'system',
+        triggeredBy,
       });
     }
 
@@ -251,69 +258,12 @@ class ReactiveDependencyService {
     };
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // AUTO-CONSEQUENCE TRIGGERING (Part E)
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  /**
-   * Auto-trigger consequences for contradiction findings when:
-   * - confidence is high/definitive
-   * - authority state is requires_review or higher
-   * - consequence path exists and is supported
-   */
-  async autoTriggerConsequence(input: {
-    organizationId: number;
-    projectId: number;
-    findingId: string;
-    confidenceLevel: string;
-    authorityState: string;
-    consequenceType: string;
-    triggeredBy?: string;
-  }): Promise<{ triggered: boolean; reason: string; action?: ActionTaken }> {
-    // Confidence gating — only auto-trigger on high+ confidence
-    const autoTriggerThreshold = ['definitive', 'high'];
-    if (!autoTriggerThreshold.includes(input.confidenceLevel)) {
-      return { triggered: false, reason: `Confidence too low for auto-trigger: ${input.confidenceLevel}` };
-    }
-
-    // Authority gating — only auto-trigger for actionable states
-    const autoTriggerAuthority = ['requires_review', 'requires_approval', 'blocks_promotion', 'requires_escalation'];
-    if (!autoTriggerAuthority.includes(input.authorityState)) {
-      return { triggered: false, reason: `Authority state is advisory only: ${input.authorityState}` };
-    }
-
-    // Execute the consequence
-    let action: ActionTaken;
-    switch (input.consequenceType) {
-      case 'review_thread':
-        action = 'auto_created_review_thread';
-        break;
-      case 'assumption_supersession':
-        action = 'auto_superseded_assumption';
-        break;
-      case 'contradiction_memo':
-        action = 'auto_created_contradiction_memo';
-        break;
-      default:
-        return { triggered: false, reason: `No auto-trigger path for consequence type: ${input.consequenceType}` };
-    }
-
-    // Log the auto-trigger
-    await this.logPropagation({
-      organizationId: input.organizationId,
-      projectId: input.projectId,
-      triggerType: 'contradiction_created',
-      triggerObjectType: 'contradiction',
-      triggerObjectId: input.findingId,
-      actionTaken: action,
-      autoTriggered: true,
-      confidenceLevel: input.confidenceLevel,
-      triggeredBy: input.triggeredBy ?? 'system',
-    });
-
-    log.info('Auto-triggered consequence', { findingId: input.findingId, action });
-    return { triggered: true, reason: `Auto-triggered: ${action}`, action };
-  }
+  // AUTO-CONSEQUENCE TRIGGERING — REMOVED 2026-10-15. autoTriggerConsequence
+  // logged auto_created_review_thread / auto_created_contradiction_memo /
+  // auto_superseded_assumption for every high-confidence finding and created
+  // none of them. A consequence is taken by a person through
+  // contradictionConsequenceService (POST
+  // /api/authoring-actions/contradiction-consequence).
 
   // ═══════════════════════════════════════════════════════════════════════════
   // RESOLVE STALENESS

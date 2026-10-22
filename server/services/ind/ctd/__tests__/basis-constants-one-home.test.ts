@@ -177,7 +177,9 @@ describe('server/services/ind/ctd/regulatory-basis.ts', () => {
     for (const name of SHARED_CONSTANTS) {
       const b = home?.[name] as RegulatoryBasis | undefined;
       expect(b, name).toBeDefined();
-      expect(b?.confidence, name).toBe('regulator-text');
+      // Seen only in search extracts, so recall (pinned as regulator-text until 2026-10-15).
+      expect(b?.confidence, name).toBe('recall');
+      expect(b?.note, name).toMatch(/search extract/i);
       expect(basisProblems(b as RegulatoryBasis), name).toEqual([]);
     }
   });

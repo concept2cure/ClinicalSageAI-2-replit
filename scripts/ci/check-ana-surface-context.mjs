@@ -50,8 +50,11 @@
  *     `rbm` ran the real assistant, on the real endpoint, with the real study
  *     id, and passed NO `moduleContext` at all, so it could not name one KRI on
  *     the board beside it. Both channels are now counted, each on the surfaces
- *     it actually applies to, and an owned surface that forwards no context is
- *     as blind here as one that never published.
+ *     it actually applies to. The 2026-10-08 one-conversation decision now also
+ *     allows a full-width owned surface to publish saved screen context and
+ *     hand its requests to the canonical conversation. Authoring uses that
+ *     path rather than a private editor hook. Either real grounding channel
+ *     must be present; the layout flag alone establishes neither.
  *
  *  4. THE RATCHET ONLY TURNED ONE WAY IN THEORY. `covered < BASELINE` fails,
  *     but `covered > BASELINE` passed silently, so the constant drifted below
@@ -118,7 +121,8 @@ const NO_CONTEXT_NEEDED = {
      screen to ground. This exemption expires the moment it runs a real
      `useAnaChat`: the gate then fails it as an owned surface with no
      moduleContext. */
-  insights: 'owns the rail column and deliberately runs no assistant — its report pane is a local intent router, not AnA',
+  insights:
+    'owns the rail column and deliberately runs no assistant — its report pane is a local intent router, not AnA',
 };
 
 /* ── The registry, parsed truthfully ──────────────────────────────────────── */
@@ -146,7 +150,8 @@ function registeredSurfaceIds() {
   if (start < 0) return null;
   const body = SURFACE_VIEWS_SRC.slice(start);
   const ids = new Set();
-  for (const m of body.matchAll(/^ {2}(?:'([a-z0-9-]+)'|([a-z0-9-]+)):\s*\{/gm)) ids.add(m[1] ?? m[2]);
+  for (const m of body.matchAll(/^ {2}(?:'([a-z0-9-]+)'|([a-z0-9-]+)):\s*\{/gm))
+    ids.add(m[1] ?? m[2]);
   return ids.size > 0 ? ids : null;
 }
 
@@ -162,16 +167,14 @@ function ownedConversationSurfaces() {
   if (!SURFACE_VIEWS_SRC) return new Map();
   const binding = new Map();
   for (const m of SURFACE_VIEWS_SRC.matchAll(
-    /^const (\w+) = lazy(?:Owned)?Surface\(\(\) => import\('([^']+)'\)/gm,
+    /^const (\w+) = lazy(?:Owned)?Surface\(\(\) => import\('([^']+)'\)/gm
   )) {
     binding.set(m[1], m[2]);
   }
   const start = SURFACE_VIEWS_SRC.indexOf('export const SURFACE_VIEWS');
   const body = SURFACE_VIEWS_SRC.slice(start);
   const out = new Map();
-  for (const m of body.matchAll(
-    /^ {2}(?:'([a-z0-9-]+)'|([a-z0-9-]+)):\s*\{([^}]*)\}/gm,
-  )) {
+  for (const m of body.matchAll(/^ {2}(?:'([a-z0-9-]+)'|([a-z0-9-]+)):\s*\{([^}]*)\}/gm)) {
     const id = m[1] ?? m[2];
     const entry = m[3];
     if (!/ownsConversation:\s*true/.test(entry)) continue;
@@ -253,21 +256,22 @@ const parseFailures = [];
 if (!REGISTERED_IDS) parseFailures.push('SURFACE_VIEWS could not be parsed out of surfaceViews.ts');
 else if (REGISTERED_IDS.size < 100 || !REGISTERED_IDS.has('vault')) {
   parseFailures.push(
-    `SURFACE_VIEWS parsed to ${REGISTERED_IDS.size} id(s) and ${REGISTERED_IDS.has('vault') ? 'does' : 'does not'} ` +
-      'contain the known id `vault` — the reader no longer matches the map',
+    `SURFACE_VIEWS parsed to ${REGISTERED_IDS.size} id(s) and ${
+      REGISTERED_IDS.has('vault') ? 'does' : 'does not'
+    } ` + 'contain the known id `vault` — the reader no longer matches the map'
   );
 }
 if (!ALIASES) parseFailures.push('DEEP_LINK_ALIASES could not be parsed out of registryModel.ts');
 
-const resolveId = (id) => (ALIASES && ALIASES[id]) || id;
+const resolveId = id => (ALIASES && ALIASES[id]) || id;
 
 /** Ids the shell can actually mount: registered, and not rewritten on the way in. */
 const ROUTABLE_IDS = REGISTERED_IDS
-  ? new Set([...REGISTERED_IDS].filter((id) => resolveId(id) === id))
+  ? new Set([...REGISTERED_IDS].filter(id => resolveId(id) === id))
   : new Set();
 /** Registered ids the router rewrites — publishing under one reaches nothing. */
 const ALIAS_SOURCE_IDS = REGISTERED_IDS
-  ? new Set([...REGISTERED_IDS].filter((id) => resolveId(id) !== id))
+  ? new Set([...REGISTERED_IDS].filter(id => resolveId(id) !== id))
   : new Set();
 
 /* ── The publishers, as they actually appear in product code ──────────────── */
@@ -282,7 +286,7 @@ const ALIAS_SOURCE_IDS = REGISTERED_IDS
  */
 function publishersById() {
   const byId = new Map();
-  const walk = (dir) => {
+  const walk = dir => {
     for (const e of fs.readdirSync(path.join(repoRoot, dir), { withFileTypes: true })) {
       const rel = `${dir}/${e.name}`;
       if (e.isDirectory()) {
@@ -310,24 +314,22 @@ const PUBLISHERS = publishersById();
 const selfGrounded = new Set(
   [...OWNED_SURFACES.entries()]
     .filter(([id, file]) => ROUTABLE_IDS.has(id) && ownedSurfaceIsGrounded(file))
-    .map(([id]) => id),
+    .map(([id]) => id)
 );
-/** Owned surfaces whose own hook forwards no context — the `rbm` failure mode. */
+/** Full-width surfaces with neither a grounded hook nor a real publisher. */
 const ownedUngrounded = [...OWNED_SURFACES.keys()]
-  .filter((id) => ROUTABLE_IDS.has(id) && !selfGrounded.has(id) && !(id in NO_CONTEXT_NEEDED))
+  .filter((id) => ROUTABLE_IDS.has(id) && !selfGrounded.has(id) && !PUBLISHERS.has(id) && !(id in NO_CONTEXT_NEEDED))
   .sort();
 
-const isGrounded = (id) => PUBLISHERS.has(id) || selfGrounded.has(id);
+const isGrounded = id => PUBLISHERS.has(id) || selfGrounded.has(id);
 
 const covered = [...ROUTABLE_IDS].filter(isGrounded).sort();
-const exempt = [...ROUTABLE_IDS].filter((id) => id in NO_CONTEXT_NEEDED && !isGrounded(id)).sort();
-const blind = [...ROUTABLE_IDS]
-  .filter((id) => !isGrounded(id) && !(id in NO_CONTEXT_NEEDED))
-  .sort();
+const exempt = [...ROUTABLE_IDS].filter(id => id in NO_CONTEXT_NEEDED && !isGrounded(id)).sort();
+const blind = [...ROUTABLE_IDS].filter(id => !isGrounded(id) && !(id in NO_CONTEXT_NEEDED)).sort();
 
 /** Surface FILES holding a publish call — reported, never gated on. See header. */
 const publishingFiles = new Set(
-  [...PUBLISHERS.values()].flat().filter((f) => f.startsWith(`${SURFACES_DIR}/`)),
+  [...PUBLISHERS.values()].flat().filter(f => f.startsWith(`${SURFACES_DIR}/`))
 );
 
 /* ── Failures ─────────────────────────────────────────────────────────────── */
@@ -341,14 +343,16 @@ for (const [id, files] of [...PUBLISHERS.entries()].sort()) {
   const where = files.join(', ');
   if (ALIAS_SOURCE_IDS.has(id)) {
     failures.push(
-      `${where} publishes as '${id}', which DEEP_LINK_ALIASES rewrites to '${resolveId(id)}' before ` +
+      `${where} publishes as '${id}', which DEEP_LINK_ALIASES rewrites to '${resolveId(
+        id
+      )}' before ` +
         `the shell has an active id — the shell reads context by exact id, so this publishes into nothing. ` +
-        `Publish as '${resolveId(id)}'.`,
+        `Publish as '${resolveId(id)}'.`
     );
   } else if (REGISTERED_IDS && !REGISTERED_IDS.has(id)) {
     failures.push(
       `${where} publishes as '${id}', which SURFACE_VIEWS does not register — ` +
-        'the shell reads context by surface id, so this publishes into nothing',
+        'the shell reads context by surface id, so this publishes into nothing'
     );
   }
 }
@@ -358,13 +362,13 @@ if (REGISTERED_IDS) {
   if (covered.length < ID_BASELINE) {
     failures.push(
       `surface-id coverage FELL to ${covered.length}, below the baseline of ${ID_BASELINE} — ` +
-        'a routable surface id stopped publishing its screen state to AnA. Restore the publish call.',
+        'a routable surface id stopped publishing its screen state to AnA. Restore the publish call.'
     );
   } else if (covered.length > ID_BASELINE) {
     failures.push(
       `surface-id coverage ROSE to ${covered.length}, above the baseline of ${ID_BASELINE} — ` +
         `raise ID_BASELINE to ${covered.length} in this change. A baseline left below reality is not a ` +
-        'gate: it silently permits everything back down to the stale number.',
+        'gate: it silently permits everything back down to the stale number.'
     );
   }
 }
@@ -381,7 +385,7 @@ for (const [id, reason] of Object.entries(NO_CONTEXT_NEEDED)) {
         (PUBLISHERS.has(id)
           ? `${PUBLISHERS.get(id).join(', ')} publishes for it`
           : 'its own useAnaChat forwards a moduleContext') +
-        '. Delete the exemption; it describes a decision that was reversed.',
+        '. Delete the exemption; it describes a decision that was reversed.'
     );
   }
 }
@@ -393,7 +397,7 @@ const summary = {
   registeredIds: REGISTERED_IDS ? REGISTERED_IDS.size : 0,
   aliasSourceIds: [...ALIAS_SOURCE_IDS].sort(),
   covered: covered.length,
-  viaPublisher: covered.filter((id) => PUBLISHERS.has(id)).length,
+  viaPublisher: covered.filter(id => PUBLISHERS.has(id)).length,
   viaOwnConversation: [...selfGrounded].sort(),
   ownedButUngrounded: ownedUngrounded,
   exempt: exempt.length,
@@ -407,7 +411,7 @@ if (JSON_MODE) {
 } else if (LIST_MODE) {
   console.log(`\nRoutable surface ids AnA cannot see the screen of (${blind.length}):\n`);
   for (const id of blind) {
-    console.log(`  ${id}${OWNED_SURFACES.has(id) ? '   [owns its conversation — needs a moduleContext, not a publish]' : ''}`);
+    console.log(`  ${id}${OWNED_SURFACES.has(id) ? '   [needs saved published context or a grounded conversation]' : ''}`);
   }
   console.log('');
 } else if (failures.length === 0) {
@@ -417,14 +421,16 @@ if (JSON_MODE) {
       `${summary.blind} still blind.\n` +
       `  ${summary.viaPublisher} through usePublishSurfaceContext; ` +
       `${summary.viaOwnConversation.length} through their own useAnaChat moduleContext ` +
-      `(${summary.viaOwnConversation.join(', ') || 'none'}) — surfaces that own the\n` +
-      '  conversation are grounded on that channel, because the shell draws no rail there.\n' +
+      `(${summary.viaOwnConversation.join(', ') || 'none'}) — full-width surfaces may\n` +
+      '  publish saved context and hand requests to the canonical conversation.\n' +
       `  ${summary.registeredIds} ids are registered; ${summary.aliasSourceIds.length} of those ` +
-      `(${summary.aliasSourceIds.join(', ') || 'none'}) are DEEP_LINK_ALIASES sources the router\n` +
+      `(${
+        summary.aliasSourceIds.join(', ') || 'none'
+      }) are DEEP_LINK_ALIASES sources the router\n` +
       '  rewrites before the shell has an active id, so they are not routable and cannot be\n' +
       '  published under. Ids, not files, are the unit AnA experiences: one file can serve\n' +
       `  several, and a child can publish for a parent that has no call of its own\n` +
-      `  (${summary.surfaceFilesPublishing} surface file(s) hold a call).\n`,
+      `  (${summary.surfaceFilesPublishing} surface file(s) hold a call).\n`
   );
 } else {
   console.error(`\n[ci:ana-surface-context] FAIL — ${failures.length} issue(s):\n`);
@@ -433,7 +439,7 @@ if (JSON_MODE) {
     '\nA surface that takes the shell conversation and publishes nothing leaves AnA\n' +
       'answering about a screen she cannot see. Restore the publish call, publish under\n' +
       'the id the router actually mounts, or — if the surface genuinely needs no context —\n' +
-      'declare its ID in NO_CONTEXT_NEEDED with a reason.\n',
+      'declare its ID in NO_CONTEXT_NEEDED with a reason.\n'
   );
 }
 

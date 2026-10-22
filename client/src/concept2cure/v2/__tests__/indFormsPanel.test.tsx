@@ -181,7 +181,7 @@ describe('IndFormsPanel — real FDA forms engine', () => {
     (window as any).C2C_PROJECT = { id: uuid };
     const refusal = 'This program has no project record, so it has no dossier to save the form into. Nothing was saved. An administrator can give the program its project record.';
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && isListing(url)) return { ok: true, status: 200, json: async () => ({ forms: ['1571'] }) } as Response;
+      if (method === 'GET' && isListing(url)) return { ok: true, status: 200, json: async () => ({ forms: ['1571'], program: { id: String(window.C2C_PROJECT?.id), code: 'TEST-IND', name: 'Recorded test program', programType: 'IND', sponsorName: 'Recorded test sponsor', productName: 'Test product', applicationNumber: null, indication: null, formMetadata: {} } }) } as Response;
       if (method === 'POST' && url === '/api/ind-forms/1571/artifact') {
         return { ok: false, status: 409, json: async () => ({ error: { code: 'PROGRAM_NOT_ANCHORED', message: refusal } }) } as Response;
       }
@@ -208,7 +208,7 @@ describe('IndFormsPanel — real FDA forms engine', () => {
   it('a 200 with no artifact id is not reported as any kind of save', async () => {
     (window as any).C2C_PROJECT = { id: '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70' };
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && isListing(url)) return { ok: true, status: 200, json: async () => ({ forms: ['1571'] }) } as Response;
+      if (method === 'GET' && isListing(url)) return { ok: true, status: 200, json: async () => ({ forms: ['1571'], program: { id: String(window.C2C_PROJECT?.id), code: 'TEST-IND', name: 'Recorded test program', programType: 'IND', sponsorName: 'Recorded test sponsor', productName: 'Test product', applicationNumber: null, indication: null, formMetadata: {} } }) } as Response;
       if (method === 'POST' && url === '/api/ind-forms/1571/artifact') {
         return { ok: true, status: 200, json: async () => ({ governed: false, audited: true, artifactId: null, ready: false, missingRequired: [] }) } as Response;
       }
@@ -627,12 +627,15 @@ describe('IndFormsPanel — filing the sponsor’s completed form', () => {
   it('shows a form already filed in each sequence, with the digest of the bytes the sponsor signed', async () => {
     mockProgramListing({
       placements: [
-        { formId: 'FDA_1571', leafId: 12, sectionCode: 'm1.1', sequenceId: 61, sequenceNumber: '0000', fileName: 'form-fda-1571.pdf', sha256: 'abcdef0123456789'.repeat(4), byteSize: 2048 },
-        { formId: 'FDA_1571', leafId: 14, sectionCode: 'm1.1', sequenceId: 62, sequenceNumber: '0001', fileName: 'form-fda-1571.pdf', sha256: '0123456789abcdef'.repeat(4), byteSize: 2048 },
+        { formId: 'FDA_1571', leafId: 12, sectionCode: 'm1.1', sequenceId: 61, sequenceNumber: '0000', fileName: 'form-fda-1571.pdf', sha256: 'abcdef0123456789'.repeat(4), byteSize: 2048, requiredFieldsMissing: [], attestedAt: '2026-10-15T09:00:00.000Z' },
+        { formId: 'FDA_1571', leafId: 14, sectionCode: 'm1.1', sequenceId: 62, sequenceNumber: '0001', fileName: 'form-fda-1571.pdf', sha256: '0123456789abcdef'.repeat(4), byteSize: 2048, requiredFieldsMissing: [], attestedAt: '2026-10-15T09:05:00.000Z' },
       ],
     } as never);
     render(<IndFormsPanel note={vi.fn()} />);
-    expect(await screen.findByText('completed form filed')).toBeTruthy();
+    // One verdict per placement: both were checked complete and attested by
+    // their uploader (2026-10-15: a clean check alone no longer reads as the
+    // completed form — indChecklistFormAttestation.test.tsx).
+    expect(await screen.findAllByText('completed form filed')).toHaveLength(2);
     expect(screen.getByText(/m1\.1 · sequence 0000 · 2 KB · SHA-256 abcdef012345…/)).toBeTruthy();
     expect(screen.getByText(/m1\.1 · sequence 0001 · 2 KB · SHA-256 0123456789ab…/)).toBeTruthy();
     // A form already filed in the CHOSEN sequence offers replacement there,

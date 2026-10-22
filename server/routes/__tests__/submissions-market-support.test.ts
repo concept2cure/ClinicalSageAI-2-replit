@@ -11,9 +11,15 @@ vi.hoisted(() => {
   process.env.JWT_SECRET = process.env.JWT_SECRET || 'submissions-market-support-secret-32ch';
 });
 
+/* The request's own pinned client, as establishRequestTenantScope attaches it
+   (2026-10-11): the route reads the active packs through requestPgClient(req),
+   not the shared pool. `sharedPool` stands in for the shared pool and must stay
+   untouched — a second path to the database is what ci:requestdb-coverage
+   exists to prevent. */
 const db = vi.hoisted(() => ({ query: vi.fn() }));
-vi.mock('../../db.js', async (importOriginal) => ({ ...(await importOriginal<object>()), pool: db }));
-vi.mock('../../db', async (importOriginal) => ({ ...(await importOriginal<object>()), pool: db }));
+const sharedPool = vi.hoisted(() => ({ query: vi.fn() }));
+vi.mock('../../db.js', async (importOriginal) => ({ ...(await importOriginal<object>()), pool: sharedPool }));
+vi.mock('../../db', async (importOriginal) => ({ ...(await importOriginal<object>()), pool: sharedPool }));
 
 import request from 'supertest';
 import express from 'express';
@@ -24,6 +30,7 @@ const app = express();
 app.use(express.json());
 app.use((req: any, _res, next) => {
   req.user = { id: 3, userId: 3, organizationId: 7, role: 'member', roles: expandRoleClaims('member', undefined) };
+  req.dbClient = db;
   next();
 });
 app.use('/api/submissions', submissionsRouter);
@@ -35,6 +42,7 @@ const PACKS = ['nda:fda', 'maa:ema', 'jnda:pmda'].map((k) => {
 
 beforeEach(() => {
   db.query.mockReset();
+  sharedPool.query.mockReset();
   db.query.mockResolvedValue({ rows: PACKS });
 });
 
@@ -46,18 +54,19 @@ describe('GET /api/submissions/market-support', () => {
     expect(res.body.asOf).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(res.body.markets).toHaveLength(12);
     const by = Object.fromEntries(res.body.markets.map((m: { region: string; summary: string }) => [m.region, m.summary]));
-    expect(by.US).toBe('Structured Module 1');
-    expect(by.CA).toBe('No outline, no channel');
-    expect(by.BR).toBe('Unmapped');
+    expect(by.US).toBe('Module 1 to the agency\'s headings');
+    expect(by.CA).toBe('No outline, no transmit channel');
+    expect(by.BR).toBe('Not supported');
     expect(db.query).toHaveBeenCalledTimes(1);
     expect(String(db.query.mock.calls[0][0])).toMatch(/superseded_by IS NULL/);
+    expect(sharedPool.query, 'the route reached for the shared pool').not.toHaveBeenCalled();
   });
 
   it('with a market, states that one', async () => {
     const res = await request(app).get('/api/submissions/market-support?applicationType=maa&market=eu');
     expect(res.status).toBe(200);
     expect(res.body.markets).toHaveLength(1);
-    expect(res.body.markets[0]).toMatchObject({ region: 'EU', summary: 'Flat Module 1, no channel', buildable: false });
+    expect(res.body.markets[0]).toMatchObject({ region: 'EU', summary: 'Module 1 without the agency\'s headings, no transmit channel', buildable: false });
   });
 
   it('refuses a request with no application type', async () => {

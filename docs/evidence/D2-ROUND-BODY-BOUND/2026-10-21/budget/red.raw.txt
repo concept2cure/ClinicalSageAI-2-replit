@@ -1,0 +1,237 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/ana/__tests__/strict-round-body-budget.test.ts
+{
+  "timestamp": "2026-10-21T00:59:36.236Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T00:59:36.237Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/strict-round-body-budget.test.ts
+{
+  "timestamp": "2026-10-21T00:59:36.237Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/strict-round-body-budget.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > CONTROL: omitted and false keep exact historical floor and marker bytes above 24000 10ms
+ × server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > bounds actual ordinary floor output, retains every correlation and withholds a reverse suffix only 6ms
+   → expected 29960 to be less than or equal to 24000
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > keeps a valid under-budget round byte-identical including whole protected JSON 1ms
+ × server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > uses a fixed ordinary envelope without copying source-controlled outcome or metadata 1ms
+   → Bad control character in string literal in JSON at position 1050 (line 1 column 1051)
+ × server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > measures real legacy marker bytes under custom per-result ceiling and ordinary floor 1ms
+   → Unexpected token 'C', "CCCCCCCCCC"... is not valid JSON
+ × server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > keeps short ordinary siblings, then withholds the last passage before any private read 18ms
+   → expected '{"label":"last passage","text":"診断 🧬…' to be '{"delivered":false,"code":"PASSAGE_RE…' // Object.is equality
+ × server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > withholds private reads in reverse call order using the exact trusted offset 8ms
+   → expected '{"label":"last read","text":"診断 🧬 \"…' to be '{"delivered":false,"reason":"This rou…' // Object.is equality
+ × server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > gives private-map membership precedence over a passage server name in the strict pass 5ms
+   → expected '{"label":"private mapped passage","te…' to be '{"delivered":false,"reason":"This rou…' // Object.is equality
+ × server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > does not enlarge an eligible short passage when ordinary floor output must be reduced 1ms
+   → Unexpected token 'Z', "ZZZZZZZZZZ"... is not valid JSON
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > preserves exact existing replacement JSON for over-ceiling passages and private reads 1ms
+ × server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=0 instead of dropping, slicing or enlarging a private outcome 1ms
+   → expected undefined to be an instance of Error
+ × server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=1 instead of dropping, slicing or enlarging a private outcome 0ms
+   → expected undefined to be an instance of Error
+ × server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=2 instead of dropping, slicing or enlarging a private outcome 0ms
+   → expected undefined to be an instance of Error
+ × server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=50 instead of dropping, slicing or enlarging a private outcome 0ms
+   → expected undefined to be an instance of Error
+ × server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses an excessive call count when even unchanged short bodies exceed the default target 14ms
+   → expected undefined to be an instance of Error
+ × server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > does not replace shorter ordinary or protected bodies with longer envelopes to claim success 1ms
+   → expected undefined to be an instance of Error
+ × server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total NaN even before an empty-round fast path 1ms
+   → expected undefined to be an instance of Error
+ × server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total Infinity even before an empty-round fast path 0ms
+   → expected undefined to be an instance of Error
+ × server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total -Infinity even before an empty-round fast path 0ms
+   → expected undefined to be an instance of Error
+ × server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total -1 even before an empty-round fast path 0ms
+   → expected undefined to be an instance of Error
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > admits exactly empty bodies at zero while preserving each empty call correlation 0ms
+ ↓ server/services/ana/__tests__/strict-round-body-budget.test.ts > optional final non-mutating assertion export (absent on frozen baseline) > accepts exact UTF-16 length and refuses one less without mutating bodies
+ ↓ server/services/ana/__tests__/strict-round-body-budget.test.ts > optional final non-mutating assertion export (absent on frozen baseline) > refuses the actual enlarged post-guard array, without a second allocation
+ ↓ server/services/ana/__tests__/strict-round-body-budget.test.ts > optional final non-mutating assertion export (absent on frozen baseline) > applies invalid-total and zero rules consistently to empty final arrays
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > bounds actual ordinary floor output, retains every correlation and withholds a reverse suffix only
+AssertionError: expected 29960 to be less than or equal to 24000
+ ❯ server/services/ana/__tests__/strict-round-body-budget.test.ts:85:24
+     83|     const out = strict(original);
+     84|     expect(total(legacy)).toBeGreaterThan(24000);
+     85|     expect(total(out)).toBeLessThanOrEqual(24000);
+       |                        ^
+     86|     expect(out.map(e => [e.tool_use_id, e.name])).toEqual(original.map…
+     87|     const firstChanged = out.findIndex((e, i) => e.content !== legacy[…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/17]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > uses a fixed ordinary envelope without copying source-controlled outcome or metadata
+SyntaxError: Bad control character in string literal in JSON at position 1050 (line 1 column 1051)
+ ❯ ordinaryWithheld server/services/ana/__tests__/strict-round-body-budget.test.ts:52:21
+     50|
+     51| function ordinaryWithheld(content: string): void {
+     52|   const body = JSON.parse(content) as Record<string, unknown>;
+       |                     ^
+     53|   expect(body.delivered).toBe(false);
+     54|   expect(body.code).toBe('TOOL_RESULT_WITHHELD');
+ ❯ server/services/ana/__tests__/strict-round-body-budget.test.ts:110:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/17]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > measures real legacy marker bytes under custom per-result ceiling and ordinary floor
+SyntaxError: Unexpected token 'C', "CCCCCCCCCC"... is not valid JSON
+ ❯ ordinaryWithheld server/services/ana/__tests__/strict-round-body-budget.test.ts:52:21
+     50|
+     51| function ordinaryWithheld(content: string): void {
+     52|   const body = JSON.parse(content) as Record<string, unknown>;
+       |                     ^
+     53|   expect(body.delivered).toBe(false);
+     54|   expect(body.code).toBe('TOOL_RESULT_WITHHELD');
+ ❯ server/services/ana/__tests__/strict-round-body-budget.test.ts:123:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/17]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > keeps short ordinary siblings, then withholds the last passage before any private read
+AssertionError: expected '{"label":"last passage","text":"診断 🧬…' to be '{"delivered":false,"code":"PASSAGE_RE…' // Object.is equality
+
+Expected: "{"delivered":false,"code":"PASSAGE_RESULT_WITHHELD","message":"This round withheld the passage result. Do not infer matches or absence. Narrow the query or read a known source."}"
+Received: "{"label":"last passage","text":"診断 🧬 \"quoted\" \\ path </section>","padding":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}"
+
+ ❯ server/services/ana/__tests__/strict-round-body-budget.test.ts:144:28
+    142|     expect(out.map(e => [e.tool_use_id, e.name])).toEqual(original.map…
+    143|     expect(out.slice(0, 3)).toEqual(original.slice(0, 3));
+    144|     expect(out[3].content).toBe(PASSAGE_WITHHELD);
+       |                            ^
+    145|     expect(JSON.parse(out[0].content)).toEqual(JSON.parse(original[0].…
+    146|     expect(JSON.parse(out[1].content)).toEqual(JSON.parse(original[1].…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/17]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > withholds private reads in reverse call order using the exact trusted offset
+AssertionError: expected '{"label":"last read","text":"診断 🧬 \"…' to be '{"delivered":false,"reason":"This rou…' // Object.is equality
+
+Expected: "{"delivered":false,"reason":"This round returned more than can be read at once.","readAgainFrom":65537}"
+Received: "{"label":"last read","text":"診断 🧬 \"quoted\" \\ path </section>","padding":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}"
+
+ ❯ server/services/ana/__tests__/strict-round-body-budget.test.ts:161:28
+    159|     expect(out[0].content).toBe(original[0].content);
+    160|     expect(out[1].content).toBe('{}');
+    161|     expect(out[2].content).toBe(retry(65537));
+       |                            ^
+    162|     expect(out[2].content).not.toContain('truncated');
+    163|     expect(total(out)).toBeLessThanOrEqual(1800);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/17]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > gives private-map membership precedence over a passage server name in the strict pass
+AssertionError: expected '{"label":"private mapped passage","te…' to be '{"delivered":false,"reason":"This rou…' // Object.is equality
+
+Expected: "{"delivered":false,"reason":"This round returned more than can be read at once.","readAgainFrom":8193}"
+Received: "{"label":"private mapped passage","text":"診断 🧬 \"quoted\" \\ path </section>","padding":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}"
+
+ ❯ server/services/ana/__tests__/strict-round-body-budget.test.ts:171:28
+    169|     const out = strict(original, { totalBudget: 900, minPerResult: 0,
+    170|       wholeOrNothing: new Map([['mapped-passage', { span: { start: 819…
+    171|     expect(out[0].content).toBe(retry(8193));
+       |                            ^
+    172|     expect(out[1].content).toBe('x');
+    173|     expect(total(out)).toBeLessThanOrEqual(900);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/17]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > does not enlarge an eligible short passage when ordinary floor output must be reduced
+SyntaxError: Unexpected token 'Z', "ZZZZZZZZZZ"... is not valid JSON
+ ❯ ordinaryWithheld server/services/ana/__tests__/strict-round-body-budget.test.ts:52:21
+     50|
+     51| function ordinaryWithheld(content: string): void {
+     52|   const body = JSON.parse(content) as Record<string, unknown>;
+       |                     ^
+     53|   expect(body.delivered).toBe(false);
+     54|   expect(body.code).toBe('TOOL_RESULT_WITHHELD');
+ ❯ server/services/ana/__tests__/strict-round-body-budget.test.ts:180:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/17]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=0 instead of dropping, slicing or enlarging a private outcome
+ FAIL  server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=1 instead of dropping, slicing or enlarging a private outcome
+ FAIL  server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=2 instead of dropping, slicing or enlarging a private outcome
+ FAIL  server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=50 instead of dropping, slicing or enlarging a private outcome
+AssertionError: expected undefined to be an instance of Error
+ ❯ expectOverflow server/services/ana/__tests__/strict-round-body-budget.test.ts:45:18
+     43|   // This assertion is intentionally meaningful before the class is ex…
+     44|   // the historical allocator returns an over-budget array instead of …
+     45|   expect(caught).toBeInstanceOf(Error);
+       |                  ^
+     46|   expect((caught as BudgetError).code).toBe(ERROR_CODE);
+     47|   expect((caught as Error).message).toBe(ERROR_MESSAGE);
+ ❯ server/services/ana/__tests__/strict-round-body-budget.test.ts:198:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/17]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses an excessive call count when even unchanged short bodies exceed the default target
+AssertionError: expected undefined to be an instance of Error
+ ❯ expectOverflow server/services/ana/__tests__/strict-round-body-budget.test.ts:45:18
+     43|   // This assertion is intentionally meaningful before the class is ex…
+     44|   // the historical allocator returns an over-budget array instead of …
+     45|   expect(caught).toBeInstanceOf(Error);
+       |                  ^
+     46|   expect((caught as BudgetError).code).toBe(ERROR_CODE);
+     47|   expect((caught as Error).message).toBe(ERROR_MESSAGE);
+ ❯ server/services/ana/__tests__/strict-round-body-budget.test.ts:206:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/17]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > does not replace shorter ordinary or protected bodies with longer envelopes to claim success
+AssertionError: expected undefined to be an instance of Error
+ ❯ expectOverflow server/services/ana/__tests__/strict-round-body-budget.test.ts:45:18
+     43|   // This assertion is intentionally meaningful before the class is ex…
+     44|   // the historical allocator returns an over-budget array instead of …
+     45|   expect(caught).toBeInstanceOf(Error);
+       |                  ^
+     46|   expect((caught as BudgetError).code).toBe(ERROR_CODE);
+     47|   expect((caught as Error).message).toBe(ERROR_MESSAGE);
+ ❯ server/services/ana/__tests__/strict-round-body-budget.test.ts:211:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/17]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total NaN even before an empty-round fast path
+ FAIL  server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total Infinity even before an empty-round fast path
+ FAIL  server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total -Infinity even before an empty-round fast path
+ FAIL  server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total -1 even before an empty-round fast path
+AssertionError: expected undefined to be an instance of Error
+ ❯ expectOverflow server/services/ana/__tests__/strict-round-body-budget.test.ts:45:18
+     43|   // This assertion is intentionally meaningful before the class is ex…
+     44|   // the historical allocator returns an over-budget array instead of …
+     45|   expect(caught).toBeInstanceOf(Error);
+       |                  ^
+     46|   expect((caught as BudgetError).code).toBe(ERROR_CODE);
+     47|   expect((caught as Error).message).toBe(ERROR_MESSAGE);
+ ❯ server/services/ana/__tests__/strict-round-body-budget.test.ts:217:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/17]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  17 failed | 4 passed | 3 skipped (24)
+   Start at  00:59:34
+   Duration  2.41s (transform 1.19s, setup 86ms, import 1.92s, tests 76ms, environment 0ms)
+

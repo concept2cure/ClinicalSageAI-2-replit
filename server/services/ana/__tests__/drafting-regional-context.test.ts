@@ -34,7 +34,12 @@ describe('drafting scope must precede regional filing instructions', () => {
     const r = resolveDraftingRequirements('ICH_DSUR', '20');
     expect(r.requirements).toContain('Conclusions');
     expect(r.requirementsSource).toContain('lifecycle-record');
-    expect(resolveDraftingRequirements('ICH_DSUR', '3.2.S').requirements).toBeNull();
+    // A section the DSUR record does not hold is named, with "do not supply its
+    // requirements from memory" — never null, which sent the prompt with no
+    // requirements block at all (review critic, 2026-10-18).
+    const miss = resolveDraftingRequirements('ICH_DSUR', '3.2.S');
+    expect(miss.requirements).toContain('is not a section of the');
+    expect(miss.requirements).toContain('do not supply its requirements from memory');
   });
   it.each([
     ['EU_CTA', 'PART_I.PROTOCOL', 'CTIS'], ['CA_CTA', '1.7.1', 'version number'],

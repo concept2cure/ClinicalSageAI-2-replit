@@ -63,7 +63,7 @@ export const ASSESS_PLR_STRUCTURE: AnaTool = {
       },
       therapeuticArea: {
         type: 'string',
-        description: 'Therapeutic area or indication (e.g., "oncology", "cardiology", "infectious disease"). Influences section content expectations and FDA reviewer focus areas.',
+        description: 'Therapeutic area or indication (e.g., "oncology", "cardiology", "infectious disease"). Influences section content expectations and FDA reviewer focus areas. Optional: unstated, the therapeutic-area considerations are reported as not assessed.',
       },
       specialPopulations: {
         type: 'array',
@@ -72,7 +72,7 @@ export const ASSESS_PLR_STRUCTURE: AnaTool = {
       },
       hasBoxedWarning: {
         type: 'boolean',
-        description: 'Whether the product has or is expected to have a Boxed Warning — triggers Section 5 and Highlights requirements.',
+        description: 'Whether the product has or is expected to have a Boxed Warning — decides whether the Highlights boxed warning (H.1) is required. Unstated, H.1 comes back required: "undetermined" — report it so, not as not required.',
       },
       isNewFormulation: {
         type: 'boolean',
@@ -92,18 +92,24 @@ export const ASSESS_BOXED_WARNING: AnaTool = {
   description:
     'Evaluate whether a safety signal meets FDA criteria for a Boxed Warning and ' +
     'return the recommended format, language structure, and regulatory basis. ' +
-    'Assesses the signal against the four FDA criteria for boxed warnings per ' +
-    '21 CFR 201.57(c)(1): (i) an adverse reaction so serious that the risk must ' +
+    'Without safetySignalType and severity it assesses nothing and asks for them; a criterion ' +
+    'whose deciding input was not stated comes back met: null — report it as not assessed. ' +
+    'Assesses the signal against the three boxed-warning criteria of FDA guidance ' +
+    '(2011) "Warnings and Precautions, Contraindications, and Boxed Warning Sections of ' +
+    'Labeling", cited by title only (21 CFR 201.57(c)(1) sets the box itself, not these ' +
+    'criteria): (i) an adverse reaction so serious that the risk must ' +
     'be weighed against benefit, (ii) a serious adverse reaction that can be ' +
-    'prevented or reduced by appropriate use, (iii) a restriction to certain ' +
-    'situations, or (iv) an FDA-approved REMS with a Medication Guide or ETASU. ' +
+    'prevented or reduced by appropriate use, and (iii) FDA approved the drug with ' +
+    'restrictions on distribution or use — taken from approvedWithRestrictions, never ' +
+    'inferred from the signal. meetsBoxedWarningCriteria is null when none is met and ' +
+    'one was not assessed. ' +
     'Returns a structured assessment including criteria met, recommended warning ' +
     'text structure (header, body, bullet points per FDA formatting conventions), ' +
     'whether the warning is class-wide or product-specific, cross-references to ' +
     'Warnings and Precautions (Section 5), Adverse Reactions (Section 6), and ' +
     'Contraindications (Section 4), and precedent analysis from similar class ' +
-    'labeling. Cites 21 CFR 201.57(c)(1), FDA guidance on warnings and ' +
-    'precautions, and relevant safety communication precedents. ' + DETERMINISTIC_NOTE,
+    'labeling. Cites that guidance, 21 CFR 201.57(c)(1) for the box\'s content and ' +
+    'format, and relevant safety communication precedents. ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
@@ -119,7 +125,7 @@ export const ASSESS_BOXED_WARNING: AnaTool = {
       severity: {
         type: 'string',
         enum: ['life_threatening', 'serious', 'significant'],
-        description: 'Severity classification of the safety signal — life-threatening and serious signals are most likely to meet boxed warning thresholds per 21 CFR 201.57(c)(1).',
+        description: 'Severity classification of the safety signal — life-threatening and serious signals are most likely to meet boxed warning criterion (i) of the FDA guidance.',
       },
       clinicalEvidenceLevel: {
         type: 'string',
@@ -128,7 +134,11 @@ export const ASSESS_BOXED_WARNING: AnaTool = {
       },
       riskMitigationAvailable: {
         type: 'boolean',
-        description: 'Whether effective risk mitigation measures exist (e.g., monitoring, dose adjustment, contraindication) — affects whether criterion (ii) applies.',
+        description: 'Whether effective risk mitigation measures exist (e.g., monitoring, dose adjustment, contraindication) — affects whether criterion (ii) applies. Unstated, criterion (ii) for a serious reaction is met: null (not assessed).',
+      },
+      approvedWithRestrictions: {
+        type: 'boolean',
+        description: 'Whether FDA approved (or is to approve) the drug with restrictions on distribution or use to ensure safe use — e.g. a REMS with ETASU, or 21 CFR 314.520 / 601.42. Decides criterion (iii); unstated, (iii) is met: null (not assessed).',
       },
       classWide: {
         type: 'boolean',
@@ -157,10 +167,11 @@ export const DESIGN_REMS: AnaTool = {
     'Implementation System), ETASU component design (prescriber certification, ' +
     'pharmacy certification, patient enrollment, dispensing restrictions, ' +
     'laboratory monitoring requirements), REMS assessment timeline and metrics, ' +
-    'REMS modification triggers, and shared system REMS considerations for ' +
-    'generic/biosimilar products per FDORA 2022 single shared system REMS ' +
-    'provisions. Accounts for product-specific risk profiles, target population ' +
-    'characteristics, and precedent REMS programs for similar drug classes. ' +
+    'REMS modification triggers, general shared system REMS considerations, and ' +
+    'precedent REMS programs matched by signal type. The elements are chosen from ' +
+    'safetySignalType and riskSeverity only: stated inputs that did not shape them ' +
+    '(product type, frequency, population, mitigation options) are listed in ' +
+    'inputsNotUsed — report them as not used, never as considered. ' +
     'Cites FD&C Act Section 505-1, 21 CFR Part 208 (Medication Guides), FDORA ' +
     '2022 Title III, and relevant FDA REMS guidance documents. ' + DETERMINISTIC_NOTE,
   input_schema: {
@@ -168,7 +179,7 @@ export const DESIGN_REMS: AnaTool = {
     properties: {
       identifiedRisk: {
         type: 'string',
-        description: 'Description of the identified serious risk that necessitates a REMS (e.g., "severe hepatotoxicity requiring liver function monitoring", "teratogenicity with pregnancy prevention program").',
+        description: 'Description of the identified serious risk that necessitates a REMS (e.g., "severe hepatotoxicity requiring liver function monitoring", "teratogenicity with pregnancy prevention program"). Echoed as identifiedRisk and in the Medication Guide rationale.',
       },
       safetySignalType: {
         type: 'string',
@@ -182,7 +193,7 @@ export const DESIGN_REMS: AnaTool = {
       productType: {
         type: 'string',
         enum: ['prescription_drug', 'biological', 'biosimilar', 'generic'],
-        description: 'Product type — biosimilars and generics trigger shared system REMS considerations per FDORA 2022.',
+        description: 'Product type. Not used to choose the elements; a stated one is listed in inputsNotUsed (for a generic, the ANDA provisions of FD&C Act 505-1(i) are not applied).',
       },
       riskSeverity: {
         type: 'string',
@@ -192,19 +203,20 @@ export const DESIGN_REMS: AnaTool = {
       riskFrequency: {
         type: 'string',
         enum: ['common', 'uncommon', 'rare', 'very_rare'],
-        description: 'Frequency of the identified risk — affects REMS burden-benefit calculus and assessment metrics.',
+        description: 'Frequency of the identified risk. Not used to choose the elements; a stated one is listed in inputsNotUsed.',
       },
       riskMitigationOptions: {
         type: 'array',
         items: { type: 'string' },
-        description: 'Available risk mitigation interventions (e.g., "laboratory monitoring", "pregnancy testing", "prescriber training", "restricted distribution", "patient registry").',
+        description: 'Available risk mitigation interventions (e.g., "laboratory monitoring", "pregnancy testing", "prescriber training", "restricted distribution", "patient registry"). Not used to choose the elements; stated ones are listed in inputsNotUsed.',
       },
       targetPopulation: {
         type: 'string',
-        description: 'Target patient population (e.g., "adults with moderate-to-severe psoriasis", "women of childbearing potential with epilepsy"). Influences REMS design complexity and patient enrollment requirements.',
+        description: 'Target patient population (e.g., "adults with moderate-to-severe psoriasis", "women of childbearing potential with epilepsy"). Not used to choose the elements; a stated one is listed in inputsNotUsed.',
       },
     },
-    required: ['identifiedRisk', 'safetySignalType', 'productType', 'riskSeverity'],
+    // 2026-10-15: productType was required, and the description said the design accounted for it; it never did.
+    required: ['identifiedRisk', 'safetySignalType', 'riskSeverity'],
   },
 };
 
@@ -267,7 +279,8 @@ export const ASSESS_PREGNANCY_LACTATION_LABELING: AnaTool = {
         description: 'Whether a pregnancy exposure registry exists or is planned — affects Clinical Considerations content and whether registry enrollment language is included in Section 8.1.',
       },
     },
-    required: ['placentalTransfer', 'breastMilkExcretion'],
+    // 2026-10-15: each of these writes label text; unstated, the engine used to read it as "no".
+    required: ['animalReproToxData', 'humanPregnancyData', 'placentalTransfer', 'breastMilkExcretion', 'mechanismBasedRisk'],
   },
 };
 
@@ -315,7 +328,7 @@ export const STRUCTURE_SMPC: AnaTool = {
       },
       hasAdditionalMonitoring: {
         type: 'boolean',
-        description: 'Whether the product is subject to additional monitoring (black inverted triangle symbol) — triggers mandatory statements in Section 4.8 and the beginning of the SmPC per EMA requirements.',
+        description: 'Whether the product is subject to additional monitoring (black inverted triangle symbol). When true, section 1 carries the black-triangle statement; unstated, section 1 says additional monitoring is not determined.',
       },
     },
     required: ['productType', 'procedure'],

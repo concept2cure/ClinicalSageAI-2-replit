@@ -1,0 +1,32 @@
+{
+  "change": "Genuine typed PGlite RequestSqlClient adapter; no production source edit.",
+  "fixture": {
+    "path": "server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts",
+    "sha256": "e3863f3d8475951f419976b084043782628fe163e42c32efb99514ab7c6cc9a8",
+    "previousSha256": "a9d0c4ace71d1d45c04d2f71243f4f536561c0e94439b062099ae11c78eb26b5"
+  },
+  "productionHashes": [
+    {
+      "path": "server/services/vault/document-catalog-admission.ts",
+      "sha256": "9393d11fdf67ff831fbda8eb54c77ae99d1e36395431904d2e7a3fa171170d60",
+      "matchesPrevious": true
+    },
+    {
+      "path": "server/services/vault/document-catalog-actor-captures.ts",
+      "sha256": "dbcb51705815c791b26fb48c61dd599c130fb8eab3a496514b4836a20e0b3947",
+      "matchesPrevious": true
+    }
+  ],
+  "tests": {
+    "files": 4,
+    "passed": 69,
+    "genuinePGliteCases": 10,
+    "log": "catalog-parent-reconciliation-typed-final.txt"
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 0,
+    "log": "catalog-parent-reconciliation-typed-lint.json"
+  },
+  "typeQualification": "Lead will rerun complete TypeScript check including this typed fixture; no baseline or whole-client casts."
+}

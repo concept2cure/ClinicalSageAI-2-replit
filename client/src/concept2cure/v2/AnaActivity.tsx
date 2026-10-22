@@ -45,10 +45,11 @@ import { SR_ONLY_STYLE } from '../hooks/useChatUpload';
 import { I } from './icons';
 import { downloadBlob, safeFileName } from './download';
 import type { AnaChatMessage, AnaToolCall } from '../components/ana/useAnaChat';
-import type { AnaPlanChange, AnaPlanStep, AnaStoppedReason, AnaTurnRecordStatus } from '../components/ana/useAnaChat.types';
+import type { AnaFollow, AnaPlanChange, AnaPlanStep, AnaStoppedReason, AnaTurnRecordStatus } from '../components/ana/useAnaChat.types';
 import { formatElapsed, LENS_PHRASE, PLAN_TOOL } from '../components/ana/anaProgress';
-import { statusGlyph, StepFactList } from './AnaWorkSections';
-import { isContinuable, replacedNoteText, showsEngineGlyph, stepDuration, stepFacts, stoppedNoteText } from './anaWorkModel';
+import { LiveAlert, statusGlyph, StepFactList } from './AnaWorkSections';
+import { orderedItems } from './turnSummaryRows';
+import { followPhaseLine, isContinuable, liveAlertLine, replacedNoteText, showsEngineGlyph, stepDuration, stepFacts, stoppedNoteText } from './anaWorkModel';
 import { useNow } from './useNow';
 import type { AnaRunPolicy } from '@shared/ana/run-control-limits';
 import { unknownStepLabel } from '@shared/ana/step-verbs';
@@ -114,6 +115,23 @@ export interface AnaActivityProps {
    * keeps its note and has no button.
    */
   onContinue?: () => void;
+  /**
+   * Opens this turn's Summary (the host's panel at this turn, or the sheet on
+   * a phone; ANA-SUMMARY S4). Absent on hosts that show no Summary: those that
+   * mount this only as a spinner for work that is not a recorded turn.
+   */
+  onSummary?: () => void;
+  /**
+   * Set while this view follows the turn from another device or after a
+   * reload (AnA detach DT2): the phase line is then the follower's
+   * ("Working · step 7 · 4m 12s"), and the turn's alert line — the reader's
+   * network, a stale owner, a refusal — is said beside it.
+   */
+  follow?: AnaFollow;
+  /** The turn's timeline: the follower's phase line counts its steps. */
+  timeline?: AnaChatMessage['timeline'];
+  /** Stop was pressed and the server has not confirmed it (§5.2). */
+  stopUnconfirmed?: boolean;
 }
 
 /** The one mapping from a turn to its record. Every host uses it. */
@@ -141,6 +159,7 @@ export function activityPropsFor(m: AnaChatMessage): AnaActivityProps {
     runPolicy: m.runPolicy,
     pendingSteps: m.pendingSteps,
     replacedSteps: m.replacedSteps,
+    follow: m.follow, timeline: m.timeline, stopUnconfirmed: m.stopUnconfirmed,
   };
 }
 
@@ -198,8 +217,12 @@ export function splitLabel(label: string): { verb: string; object?: string; rest
 
 /* ── Rows ─────────────────────────────────────────────────────────────────── */
 
-/** A row that may open in place. The disclosure is mounted while collapsed so aria-controls resolves. */
-function Row({
+/**
+ * A row that may open in place. The disclosure is mounted while collapsed so
+ * aria-controls resolves. The one row of AnA's work: the inline record and the
+ * Summary (TurnSummary.tsx) both draw it.
+ */
+export function Row({
   status,
   glyph,
   verb,
@@ -210,8 +233,11 @@ function Row({
   detail,
   mono,
   preview,
+  variant,
 }: {
   status: AnaToolCall['status'];
+  /** 'note': AnA's own words, regular weight, clamped to two lines until opened. */
+  variant?: 'note';
   glyph?: React.ReactElement;
   verb: string;
   object?: string;
@@ -239,7 +265,7 @@ function Row({
     </span>
   );
   return (
-    <li className={`ana-activity-step is-${status}${object ? ' has-obj' : ''}`}>
+    <li className={`ana-activity-step is-${status}${object ? ' has-obj' : ''}${variant ? ` is-${variant}` : ''}`}>
       <span className="ana-activity-glyph" aria-hidden="true">{glyph ?? statusGlyph(status)}</span>
       {detail ? (
         <button
@@ -341,42 +367,6 @@ function foldedLine(o: {
   return parts.length > 0 ? parts.join(' · ') : 'How this was read';
 }
 
-type Item =
-  | { kind: 'tool'; t: number; seq: number; call: AnaToolCall }
-  | { kind: 'plan'; t: number; seq: number; steps: string[]; persisted?: boolean }
-  | { kind: 'added'; t: number; seq: number; title: string };
-
-/**
- * Tool rows and plan rows in the order they happened. The first plan she
- * declared is one row ("Planned 5 steps"), not five; a step added later is
- * its own row. Starts and completions are not rows — the panel's rail carries
- * them — so the record stays the work, not bookkeeping. The plan tool's own
- * call is shown as the plan it recorded; a FAILED plan call stays a failed
- * row, because a failure is never folded away.
- */
-function orderedItems(calls: AnaToolCall[], changes: AnaPlanChange[], plan: AnaPlanStep[]): Item[] {
-  const items: Item[] = [];
-  let seq = 0;
-  let lastT = Number.NEGATIVE_INFINITY;
-  for (const c of calls) {
-    if (c.name === PLAN_TOOL && c.status !== 'error' && c.status !== 'unconfirmed') continue;
-    lastT = typeof c.startedAt === 'number' ? c.startedAt : lastT;
-    items.push({ kind: 'tool', t: lastT, seq: seq++, call: c });
-  }
-  const initial = changes.filter((c) => c.initial && c.kind === 'added');
-  if (initial.length > 0) {
-    items.push({ kind: 'plan', t: initial[0].at, seq: seq++, steps: initial.map((c) => c.title) });
-  } else if (changes.length === 0 && plan.length > 0) {
-    // A reopened thread: the final plan, first, with no claim about when.
-    items.push({ kind: 'plan', t: Number.NEGATIVE_INFINITY, seq: -1, steps: plan.map((s) => s.title), persisted: true });
-  }
-  for (const c of changes) {
-    if (c.initial || c.kind !== 'added') continue;
-    items.push({ kind: 'added', t: c.at, seq: seq++, title: c.title });
-  }
-  return items.sort((a, b) => (a.t === b.t ? a.seq - b.seq : a.t - b.t));
-}
-
 /**
  * The inspection package for a recorded turn — the record, every text it
  * references, its chain row and the steps to check them offline. Fetched with
@@ -384,7 +374,7 @@ function orderedItems(calls: AnaToolCall[], changes: AnaPlanChange[], plan: AnaP
  * server records the export on the audit chain before it hands anything over,
  * and refuses when it cannot; that refusal is shown in its own words.
  */
-function RecordDownload({ id }: { id: string }) {
+export function RecordDownload({ id }: { id: string }) {
   const [state, setState] = React.useState<{ busy: boolean; error: string | null }>({ busy: false, error: null });
   const download = async () => {
     setState({ busy: true, error: null });
@@ -423,6 +413,16 @@ function RecordDownload({ id }: { id: string }) {
   );
 }
 
+/** Opens the turn's Summary; its visible word is its name (SC 2.5.3). */
+function SummaryButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button type="button" className="ana-activity-summary" onClick={onClick} aria-haspopup="dialog">
+      {I.list}
+      <span>Summary</span>
+    </button>
+  );
+}
+
 export function AnaActivity({
   streaming,
   phase,
@@ -443,14 +443,22 @@ export function AnaActivity({
   pendingSteps,
   replacedSteps,
   onContinue,
+  onSummary,
+  follow, timeline, stopUnconfirmed,
 }: AnaActivityProps) {
   const calls = toolCalls ?? [];
   const changes = planChanges ?? [];
   const finalPlan = plan ?? [];
   // The clock ticks only while the turn is live AND has a start; a settled turn
   // reads its recorded end, and a turn with no start claims no duration.
-  const now = useNow(Boolean(streaming) && typeof startedAt === 'number');
+  const now = useNow((Boolean(streaming) && typeof startedAt === 'number') || Boolean(follow && streaming));
   const elapsed = typeof startedAt === 'number' ? formatElapsed((completedAt ?? now) - startedAt) : '';
+  /* A followed turn's phase is the follower's line, which carries its own
+     clock read against the server's; the stream's phase is a live turn's. */
+  const followLine = followPhaseLine({ follow, timeline }, now);
+  const phaseLine = followLine ?? phase;
+  const alertText = liveAlertLine({ follow, stopUnconfirmed }, now);
+  const alert = alertText ? <LiveAlert text={alertText} /> : null;
   const work = calls.filter((c) => c.name !== PLAN_TOOL || c.status === 'error' || c.status === 'unconfirmed');
   const ran = work.filter((c) => c.status === 'success' || c.status === 'error').length;
   const failed = work.filter((c) => c.status === 'error').length;
@@ -534,16 +542,18 @@ export function AnaActivity({
        speaks its stop from the region that was already mounted. A role=note
        paragraph is not announced; a region created in the same paint as its
        first content is the case AT misses. */
-    return unrecorded || stopped || replaced ? (
+    return unrecorded || stopped || replaced || alert ? (
       <div className="ana-activity">
         <span aria-live="polite" style={SR_ONLY_STYLE}>{stoppedText ?? ''}</span>
+        {alert}
         {stopped}
         {replaced}
         {unrecorded}
+        {onSummary && <SummaryButton onClick={onSummary} />}
       </div>
     ) : null;
   }
-  if (streaming && !hasBody && !phase) return null;
+  if (streaming && !hasBody && !phaseLine && !alert) return null;
 
   const expanded = Boolean(streaming) || open;
   const summary = foldedLine({
@@ -557,7 +567,8 @@ export function AnaActivity({
      its first content is the documented case AT misses). The rows themselves
      are not live. */
   const spoken = [
-    streaming && phase ? phase : null,
+    streaming && phaseLine ? phaseLine : null,
+    alertText,
     failed > 0 ? `${failed} ${failed === 1 ? 'step' : 'steps'} did not complete` : null,
     draftTitle ? `Drafted ${draftTitle}` : null,
     stoppedText,
@@ -581,6 +592,8 @@ export function AnaActivity({
           {open ? I.chevDown : I.chevRight}
         </button>
       )}
+      {!streaming && onSummary && <SummaryButton onClick={onSummary} />}
+      {alert}
       {stopped}
       {replaced}
       {unrecorded}
@@ -701,11 +714,12 @@ export function AnaActivity({
 
           {/* The live phase, last: what she is doing right now, with a running
               clock so a long silent window reads as time passing. */}
-          {streaming && phase && (
+          {streaming && phaseLine && (
             <li className="ana-activity-phase">
               <span className="ana-activity-pulse" aria-hidden="true">{I.dot}</span>
-              <span>{phase}</span>
-              {elapsed && <span className="ana-activity-clock">{elapsed}</span>}
+              <span>{phaseLine}</span>
+              {!followLine && elapsed && <span className="ana-activity-clock">{elapsed}</span>}
+              {onSummary && <SummaryButton onClick={onSummary} />}
             </li>
           )}
         </ol>

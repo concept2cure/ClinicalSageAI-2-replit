@@ -34,11 +34,12 @@ interface GoldTask {
   requiredSections?: string[];
   forbiddenPatterns?: string[];
   candidateContent?: unknown;
+  expectedFields?: Record<string, string>;
 }
 
 const protocol = JSON.parse(
   readFileSync(path.join(PQ_DIR, 'pq-protocol.json'), 'utf8'),
-) as { components: { generation?: { criteria: { minTasksPerDocType?: number } } } };
+) as { components: Record<'generation' | 'extraction', { criteria: { minTasksPerDocType?: number } } | undefined> };
 
 const bank = JSON.parse(
   readFileSync(path.join(PQ_DIR, '..', 'doc-quality', 'gold-tasks.json'), 'utf8'),
@@ -70,6 +71,53 @@ describe('gold bank meets the PQ protocol sample floor', () => {
       short,
       `below the floor of ${floor}: ${short.map(([d, n]) => `${d}=${n}`).join(', ')}`,
     ).toEqual([]);
+  });
+});
+
+/* P-31 conditions 3 and 5 (2026-10-15). Extraction counts the way run-pq.ts
+   takes its extraction tasks: an input a model can be given, and expected
+   fields to score it against. And each floor has headroom: a bank sitting
+   exactly AT its floor drops below it the day one task is retired, which is
+   the next PQ INCOMPLETE nobody saw coming. */
+const extractable = bank.tasks.filter(
+  (t) => t.taskType === 'extraction' && typeof t.input === 'string' && t.input.trim()
+    && t.expectedFields && Object.keys(t.expectedFields).length > 0,
+);
+
+describe('gold bank meets the extraction floor, and both floors have headroom', () => {
+  const extractionFloor = protocol.components.extraction?.criteria.minTasksPerDocType;
+  const generationFloor = protocol.components.generation?.criteria.minTasksPerDocType;
+
+  it('the protocol states an extraction sample floor', () => {
+    expect(typeof extractionFloor).toBe('number');
+  });
+
+  it('every document type reaches the extraction floor, counted as run-pq counts', () => {
+    const counts = countByDocType(extractable);
+    const short = [...countByDocType(scorable).keys()].filter((d) => (counts.get(d) ?? 0) < (extractionFloor as number));
+    expect(short.map((d) => `${d}=${counts.get(d) ?? 0}`), `below the extraction floor of ${extractionFloor}`).toEqual([]);
+  });
+
+  it('retiring any one task leaves every document type at or above both floors', () => {
+    const thin = [
+      ...[...countByDocType(scorable)].filter(([, n]) => n - 1 < (generationFloor as number)).map(([d, n]) => `generation ${d}=${n}`),
+      ...[...countByDocType(extractable)].filter(([, n]) => n - 1 < (extractionFloor as number)).map(([d, n]) => `extraction ${d}=${n}`),
+    ];
+    expect(thin, 'no headroom above the floor').toEqual([]);
+  });
+
+  it('every expected field is stated in its own source passage', () => {
+    // The scorer matches by normalized containment (doc-quality-metrics.ts
+    // fieldExtractionScore), so an expected value the source does not contain
+    // is ground truth no faithful extraction can reach: an invented answer.
+    const norm = (v: string) => v.toLowerCase().replace(/\s+/g, ' ').trim();
+    const absent: string[] = [];
+    for (const t of extractable) {
+      for (const [k, v] of Object.entries(t.expectedFields ?? {})) {
+        if (!norm(t.input as string).includes(norm(v))) absent.push(`${t.id}.${k}`);
+      }
+    }
+    expect(absent, 'expected values not found in the source').toEqual([]);
   });
 });
 

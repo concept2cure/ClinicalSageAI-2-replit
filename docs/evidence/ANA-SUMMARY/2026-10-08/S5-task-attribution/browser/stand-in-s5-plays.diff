@@ -1,0 +1,48 @@
+--- /home/user/ClinicalSageAI-2-replit/docs/evidence/W1/2026-09-28-ana-drive/harness/stand-in-model.mjs	2026-10-01 08:01:00.297488635 +0000
++++ stand-in-model.mjs	2026-10-08 14:54:12.411358818 +0000
+@@ -66,7 +66,7 @@
+     const t = textOf(m.content);
+     if (/\[Tool Result for /.test(t)) continue;
+     if (/^\s*\[(Screen report|User interjection)/i.test(t)) continue;
+-    if (/take me|open program|search the vault|demo|go to|show me|\bact [a-z]/i.test(t)) return t;
++    if (/take me|open program|search the vault|demo|go to|show me|\bact [a-z]|\bs5 /i.test(t)) return t;
+   }
+   return '';
+ }
+@@ -238,9 +238,35 @@
+   return { text: `Act result: ${outcomeOf(t.last)}. Screen: ${screen}` };
+ }
+ 
++// ── ANA-SUMMARY S5 plays (scratch copy; not the W1 harness) ──────────────────
++// "s5 tasks …": a four-part plan, each part's work dispatched while that part is
++// the one in progress, the plan advanced beside the work (it lands after the
++// work was dispatched, so the work keeps its task). Part 3 reads two documents
++// that do not exist, so both of its steps fail, and AnA still marks it complete.
++// Part 4 is marked complete with no step at all.
++const S5_TASKS = ['Find the stability reports', 'List the project documents', 'Read the two archived reports', 'Summarise the shelf-life claims'];
++const s5Plan = (...st) => ({ name: 'update_plan', input: { steps: S5_TASKS.map((title, i) => ({ title, status: st[i] })) } });
++const S5_MISSING = ['00000000-0000-4000-8000-0000000005a1', '00000000-0000-4000-8000-0000000005a2'];
++
++function planS5(t) {
++  if (!/\bs5 tasks\b/i.test(t.rawAsk)) return null;
++  const plans = t.results.filter(r => r.name === 'update_plan').length;
++  const withPlan = (p, ...st) => (p.tool ? { ...p, more: [...(p.more || []), s5Plan(...st)] } : p);
++  if (plans === 0) return { ...t.tool('update_plan', s5Plan('in_progress', 'pending', 'pending', 'pending').input, 'I will take this in four parts.') };
++  if (plans === 1) return withPlan(t.tool('search_project_documents', { query: 'stability' }, 'Searching the Vault for the stability reports.'), 'completed', 'in_progress', 'pending', 'pending');
++  if (plans === 2) return withPlan(t.tool('list_project_documents', {}, ''), 'completed', 'completed', 'in_progress', 'pending');
++  if (plans === 3) {
++    const first = t.tool('read_project_document', { document_id: S5_MISSING[0] }, 'Reading the two archived reports.');
++    if (!first.tool) return first;
++    return { ...first, more: [{ name: 'read_project_document', input: { document_id: S5_MISSING[1] } }, s5Plan('completed', 'completed', 'completed', 'in_progress')] };
++  }
++  if (plans === 4) return { ...t.tool('update_plan', s5Plan('completed', 'completed', 'completed', 'completed').input, 'Marking the last part done.') };
++  return { text: 'The archived reports could not be read, so the shelf-life claims come from the stability protocol only.' };
++}
++
+ function plan(body) {
+   const t = turnOf(body);
+-  const planned = planAct(t) ?? planReport(t) ?? planDemo(t) ?? planVaultSearch(t) ?? planOpenProgram(t) ?? planNav(t);
++  const planned = planS5(t) ?? planAct(t) ?? planReport(t) ?? planDemo(t) ?? planVaultSearch(t) ?? planOpenProgram(t) ?? planNav(t);
+   if (planned) return cutOff(t, planned);
+   if (/title|summar/i.test(t.all.slice(0, 400)) && !body.stream) return { text: 'Live Drive test' };
+   return { text: 'Understood.' };

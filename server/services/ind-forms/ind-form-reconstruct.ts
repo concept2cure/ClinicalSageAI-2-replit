@@ -537,14 +537,14 @@ export async function reconstructForm(
   }
 
   const pdfBytes = await doc.save({ useObjectStreams: false });
-  const total = Object.keys(built.fields).length || 1;
-  // Every built field is rendered (curated + leftover), so coverage is complete.
+  // Every built field is rendered (curated + leftover), so coverage is complete
+  // — when there is a field to render.
   return {
     formId,
     pdfBytes,
     usedOfficialTemplate: false,
     reconstructed: true,
-    fieldCoverage: Object.keys(built.fields).length === 0 ? 1 : 1,
+    fieldCoverage: Object.keys(built.fields).length > 0 ? 1 : null,
     missingRequired: built.missingRequired,
     /* Every built field is drawn here, so no box is unplaceable — but a
        required field with no value is still an empty box on the page, and the

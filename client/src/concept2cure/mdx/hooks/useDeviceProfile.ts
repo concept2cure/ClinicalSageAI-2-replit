@@ -32,7 +32,11 @@ const jsonHeaders = (): Record<string, string> => ({
 
 /* ─── Device profile (org-scoped, regulatory_programs) ──────────────── */
 
-export type DeviceClass = 'I' | 'II' | 'III';
+import type { DeviceClass } from '@shared/regulatory/device-class';
+export type { DeviceClass };
+/* The three this panel offers, not the governed six: it writes a 510(k)-family
+   profile, and `hde`, `ide` and `exempt` are not what it is for. Narrower on
+   purpose, and narrower is safe — the write accepts all six. */
 export type RegulatoryPath = '510k' | 'de_novo' | 'pma';
 
 export interface DeviceProfileView {

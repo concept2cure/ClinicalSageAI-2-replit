@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
@@ -7,25 +7,19 @@ import { assessmentState } from '../assessmentState';
 import type { AnswerLeadProps } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
-import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 
-// GI_META (enum labels/tones/authority ranks), the regulator overlay rules, and
-// the deterministic overlay/promotion-gate functions are canonical config +
-// computation — kept. Only the fixture DATA (giForSeg / GI_ASSUMPTIONS /
-// GI_DECISIONS / the sample program + findings) is retired in favor of the live
-// governed-intelligence board.
-import {
-  GI_META,
-  giApplyOverlay,
-  giPromotionGate,
-} from '../fixtures/governed-intelligence-data';
+// GI_META is display vocabulary for the enums the engine records. The gate and
+// each finding's authority come from the board; nothing on this screen
+// re-scores them (governed-intelligence-data.ts records what did, and why it
+// was removed).
+import { GI_META } from '../fixtures/governed-intelligence-data';
 import type {
   GiFinding,
-  GiPromotionGate,
+  GiGate,
   GiAssumption,
   GiDecision,
   GiCheck,
@@ -52,7 +46,9 @@ declare global {
      - finding.factId → always null (no fact-linkage column on the findings
        table), so the CMC "change value everywhere" affordance never appears.
      - checks → always [] (the engine persists detected contradictions, not the
-       set of cross-references it verified as consistent). */
+       set of cross-references it verified as consistent).
+   `gate` is counted by the server over EVERY finding of the project; `findings`
+   is a page of them, most severe first. */
 interface GiBoardProgram {
   projectId: number;
   name: string;
@@ -65,6 +61,7 @@ interface GiBoardProgram {
 
 interface GiBoard {
   program: GiBoardProgram;
+  gate: GiGate;
   findings: GiFinding[];
   assumptions: GiAssumption[];
   decisions: GiDecision[];
@@ -76,6 +73,16 @@ interface GiBoard {
    row read from the board. */
 type ReviewedFinding = GiFinding & { auditId?: string | null };
 
+/* A review decision this screen saw committed: what the server returned, and
+   the board read it was made over (so a later read takes precedence). */
+interface RecordedDecision {
+  reviewState: string;
+  resolvedBy: string | null;
+  resolvedAt: string | null;
+  auditId: string | null;
+  over: GiFinding[] | null;
+}
+
 /* POST /contradictions/:id/review response (assumption-decision-contradiction.ts). */
 interface ReviewResponse {
   finding?: { reviewState?: string; resolvedBy?: string | null; resolvedAt?: string | null };
@@ -83,6 +90,12 @@ interface ReviewResponse {
 }
 
 const REVIEW_REASON_MIN = 8;
+
+/* Still on the submission gate: not resolved, not superseded — the review
+   states checkPromotionBlocked and the server's gate count both exclude. */
+function onGate(f: GiFinding): boolean {
+  return f.reviewState !== 'approved_resolution' && f.reviewState !== 'superseded';
+}
 
 /* Who the record says resolved it: resolved_by as stored (a user id is shown
    as one — neither the board nor the review response carries a name). Null
@@ -239,20 +252,28 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
   // noun rather than fabricating a filing type.
   const filingLabel = (prog && prog.filing) || 'submission';
 
-  const [reg, setReg] = useState('FDA');
-  // Findings take the server-confirmed result of a resolve/reopen without a
-  // board re-read, so they live in local state seeded from the live board. Seed
-  // once per board load (gated on a ref) to avoid the re-seed render loop; a
-  // refresh refetch produces a new array identity and re-seeds from persistence.
-  const [findings, setFindings] = useState<ReviewedFinding[]>([]);
+  /* The rows are the board's, derived in the same render as its gate — they
+     used to be copied into state by an effect, one render behind the board, so
+     a gate read with the board could name a blocker the list did not hold yet.
+     A decision this screen saw committed shows on its row at once, with what
+     the server returned, until the board is re-read (the gate is the server's
+     count, so a recorded decision re-reads it); after that the row is the
+     record's, and keeps the audit-trail line while it is still in that state. */
   const liveFindings = boardData ? boardData.findings : null;
-  const seedRef = useRef<GiFinding[] | null>(null);
-  useEffect(() => {
-    if (liveFindings && liveFindings !== seedRef.current) {
-      seedRef.current = liveFindings;
-      setFindings(liveFindings.map(f => ({ ...f })));
-    }
-  }, [liveFindings]);
+  const liveRef = useRef(liveFindings);
+  liveRef.current = liveFindings;
+  const [recorded, setRecorded] = useState<Record<string, RecordedDecision>>({});
+  const findings: ReviewedFinding[] = useMemo(
+    () => (liveFindings ?? []).map((f): ReviewedFinding => {
+      const r = recorded[f.id];
+      if (!r) return f;
+      if (r.over === liveFindings) {
+        return { ...f, reviewState: r.reviewState, resolvedBy: r.resolvedBy, resolvedAt: r.resolvedAt, auditId: r.auditId };
+      }
+      return r.reviewState === f.reviewState ? { ...f, auditId: r.auditId } : f;
+    }),
+    [liveFindings, recorded],
+  );
 
   const [form, setForm] = useState<{ id: string; label: string; value: string; refs?: unknown[] } | null>(null);
   const [propagating, setPropagating] = useState(false);
@@ -292,10 +313,12 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
     };
     switch (o.kind) {
       case 'recorded':
-        setFindings(fs => fs.map(x => (x.id === f.id
-          ? { ...x, reviewState: o.reviewState, resolvedBy: o.resolvedBy, resolvedAt: o.resolvedAt, auditId: o.auditId }
-          : x)));
+        setRecorded(m => ({
+          ...m,
+          [f.id]: { reviewState: o.reviewState, resolvedBy: o.resolvedBy, resolvedAt: o.resolvedAt, auditId: o.auditId, over: liveRef.current },
+        }));
         setReviewing(null);
+        setRefresh(n => n + 1);
         fireToast('"' + f.title + '" was ' + verb + ' — recorded on the audit trail with your reason.');
         return;
       case 'refused':
@@ -420,11 +443,29 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
   const resolve = (f: ReviewedFinding) => setReviewing({ f, to: 'approved_resolution' });
   const reopen = (f: ReviewedFinding) => setReviewing({ f, to: 'unresolved' });
 
-  const gate: GiPromotionGate = giPromotionGate(findings, reg);
-  const total = findings.length;
-  const resolvedN = findings.filter(f => f.reviewState === 'approved_resolution').length;
-  const openN = total - resolvedN;
+  /* The submission gate is the server's count over every finding of the
+     project (ProjectGate), by the authority each was recorded with: the rule
+     checkPromotionBlocked enforces. It used to be computed here, from the page
+     of findings this screen holds, after re-scoring each one under an FDA/EMA
+     toggle from two hard-coded overlay rules; a blocker past the page was not
+     counted, and the EMA rule exists in no organisation's rule table. A board
+     without a gate is unreadable, not clear. While the board is re-read, after
+     a decision or a scan, the last count is not spoken as a verdict. */
+  const gate: GiGate | null = boardData?.gate ?? null;
+  const boardFailed = Boolean(boardState.error) || (Boolean(boardData) && !gate);
+  const recounting = boardState.loading && Boolean(boardData);
+  const total = gate ? gate.total : 0;
+  const resolvedN = gate ? gate.resolved : 0;
+  const openN = gate ? gate.open : 0;
+  const blockingN = gate ? gate.blocking : 0;
+  const approvalN = gate ? gate.needApproval : 0;
+  const escalationN = gate ? gate.needEscalation : 0;
+  const reviewN = gate ? gate.needReview : 0;
+  const unrecognizedN = gate ? gate.unrecognized : 0;
+  const blocked = Boolean(gate && gate.blocked);
   const hasFindings = total > 0;
+  /* The list is a page; say so when it is short of the record. */
+  const shownOf = hasFindings && findings.length < total ? findings.length : null;
 
   /* `clean` used to be `openN === 0`, so a program the engine had NEVER SCANNED
      was indistinguishable from one it had scanned and found nothing wrong. The
@@ -445,7 +486,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
      assessed and clear. */
   const giState = assessmentState({
     loading: boardState.loading,
-    unreadable: Boolean(boardState.error),
+    unreadable: boardFailed,
     scopeExists: Boolean(prog),
     findingCount: openN,
     assessmentRan: hasFindings,
@@ -453,11 +494,16 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
   const clean = giState === 'assessed-clear';
   /** Nothing has ever been detected here, so nothing is known. */
   const neverScanned = giState === 'not-assessed' && Boolean(prog);
-  const hasDosage = findings.some(f => f.contradictionType === 'dosage_conflict' && f.reviewState !== 'approved_resolution');
 
   /* Answer-first lead -- computed from the real gate, in AnA's voice, about the FILING. */
   const lead: AnswerLeadProps | null = (() => {
-    if (!prog) return null;
+    if (!prog || !gate) return null;
+    /* A re-read is in flight: the count on screen is the previous one. */
+    if (recounting) return {
+      tone: 'calm' as const, eyebrow: 'AnA — path to a clean filing',
+      headline: <>Re-counting the submission gate for <b>{progCode}</b>…</>,
+      body: 'The governed record is being read again. The verdict follows when the count returns.',
+    };
     /* Nothing has ever been detected against this program, and the board keeps
        no record of what was checked — so the honest answer is that no scan has
        reported, not that the filing is consistent. */
@@ -498,13 +544,17 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
          against the wrong application. */
       action: { label: 'Open the submission centre', onClick: () => open('submission-center') },
     };
-    if (gate.blocked) {
-      const b = gate.blocking[0];
+    if (blocked) {
+      /* The gate counts every finding and the list holds a page of them, so
+         the blocker named here is the first one on the page, if it is there. */
+      const b = findings.find(f => f.authorityState === 'blocks_promotion' && onGate(f));
       return {
         tone: 'urgent' as const, eyebrow: 'AnA — path to a clean filing',
-        headline: <>Your <b>{progCode}</b> can't be filed yet — {gate.blocking.length === 1 ? '1 issue would' : gate.blocking.length + ' issues would'} block it under {reg}.</>,
-        body: b.title + '. ' + b.description,
-        reassure: 'This is fixable, and I\'ll do the work with you — one governed change and the block clears.',
+        headline: <>Your <b>{progCode}</b> can't be filed yet — {blockingN === 1 ? '1 issue blocks it' : blockingN + ' issues block it'}.</>,
+        body: b
+          ? b.title + '. ' + b.description
+          : 'The ' + (blockingN === 1 ? 'finding that blocks it is' : 'findings that block it are') + ' not among the ' + findings.length + ' listed below.',
+        reassure: 'This is fixable, and I\'ll work through it with you — each blocker clears through a governed resolution.',
         /* ── Was a 1.6-second outline and nothing else ────────────────────
            The blocking finding is almost always below the fold, so the one
            thing this button did was flash a border on a card the user could
@@ -518,7 +568,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
         action: {
           label: 'Show me how to clear it',
           onClick: () => {
-            const el = document.getElementById('gi-f-' + b.id);
+            const el = b ? document.getElementById('gi-f-' + b.id) : null;
             /* Asking AnA is the part that matters; moving the viewport is a
                courtesy. `scrollIntoView` is absent in jsdom and in some
                embedded webviews, and an unguarded call there throws out of the
@@ -531,36 +581,41 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
               }
             } catch { /* no scrollIntoView here — the ask below still runs */ }
             ask(
-              'The ' + progCode + ' filing is blocked under ' + reg + ' by "' + b.title +
-                '". Walk me through clearing it: what the governed change is, which documents it touches, ' +
+              (b
+                ? 'The ' + progCode + ' filing is blocked by "' + b.title + '". Walk me through clearing it: '
+                : 'The ' + progCode + ' filing is blocked by ' + blockingN + ' contradiction(s) with a blocks-promotion authority. Name them, and walk me through clearing each: ') +
+                'what the governed change is, which documents it touches, ' +
                 'and what has to be re-approved afterwards.',
             );
           },
         },
       };
     }
-    if (gate.needApproval.length) return {
+    if (approvalN) return {
       tone: 'calm' as const, eyebrow: 'AnA — path to a clean filing',
-      headline: <>{progCode} won't be blocked under {reg}, but {gate.needApproval.length} {gate.needApproval.length === 1 ? 'item needs' : 'items need'} sign-off before filing.</>,
-      body: 'Nothing hard-blocks the submission, but these carry a "requires approval" authority under ' + reg + ' — get them approved and the filing is clean.',
+      headline: <>Nothing blocks {progCode}, but {approvalN} {approvalN === 1 ? 'item needs' : 'items need'} sign-off before filing.</>,
+      body: 'These carry a "requires approval" authority, and the promotion check names them until they are resolved.',
       reassure: 'You\'re close. I\'ll draft the resolutions and route them for approval.',
       action: { label: 'Resolve the open items with AnA', onClick: () => ask('Draft resolutions for the open ' + progCode + ' contradictions and route them for approval.') },
     };
     return {
       tone: 'calm' as const, eyebrow: 'AnA — path to a clean filing',
       headline: <>{progCode} has {openN} open {openN === 1 ? 'inconsistency' : 'inconsistencies'} to tidy before the filing is perfect.</>,
-      body: 'None of them block the submission under ' + reg + ' — they\'re advisory or review-level — but a perfect filing carries none of them.',
+      body: (escalationN
+        ? escalationN + ' of them ' + (escalationN === 1 ? 'requires' : 'require') + ' escalation; none blocks the submission or needs sign-off'
+        : 'None of them blocks the submission or needs sign-off — they are advisory or review-level') +
+        ' — but a perfect filing carries none of them.',
       reassure: 'I\'ll clear them with you so the dossier reads as one coherent story.',
       action: { label: 'Clean them up with AnA', onClick: () => ask('Walk me through resolving the open ' + progCode + ' inconsistencies.') },
     };
   })();
 
-  /* Order findings: open blockers -> approval -> review -> advisory -> resolved. */
-  const eff = gate.effective.reduce<Record<string, GiFinding>>((m, f) => { m[f.id] = f; return m; }, {});
+  /* Order findings: open blockers -> approval -> review -> advisory ->
+     superseded -> resolved, by the authority each was recorded with. */
   const rank = (f: GiFinding) => {
     if (f.reviewState === 'approved_resolution') return 99;
-    const a = eff[f.id];
-    return a ? (10 - (GI_META.authority[a.authorityState!]?.rank ?? 0)) : 50;
+    if (!onGate(f)) return 50;
+    return 10 - (GI_META.authority[f.authorityState]?.rank ?? 0);
   };
   const ordered = [...findings].sort((a, b) => rank(a) - rank(b) || ((GI_META.severity[b.severity] ? 1 : 0) - (GI_META.severity[a.severity] ? 1 : 0)));
 
@@ -651,7 +706,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
     if (boardState.loading && !boardData) {
       return { summary: 'Cross-document inconsistency board for this project, still loading.' };
     }
-    if (boardState.error) {
+    if (boardFailed) {
       // Fail-closed, stated: on this surface an empty findings set means
       // "ready to file", so a read failure must never be shown as clean.
       return {
@@ -665,11 +720,16 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
           'Cross-document inconsistency board: no inconsistency data for this project yet — no findings, assumption records or decision records are recorded.',
       };
     }
+    if (recounting) {
+      return {
+        summary: `Cross-document inconsistency board for ${progCode}: the board is being re-read after a decision or a scan, so the submission-gate verdict is not yet known.`,
+      };
+    }
     const verdict = neverScanned
       ? ('not-assessed' as const)
       : clean
         ? ('clear' as const)
-        : gate.blocked
+        : blocked
           ? ('blocked' as const)
           : ('clear-with-open-items' as const);
     return {
@@ -677,73 +737,31 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
         verdict === 'not-assessed'
           ? `Submission gate for ${progCode}: NOT ASSESSED — no contradiction scan has ever reported on this program. That is the absence of a result, not a clean result; consistency across the ${filingLabel} dossier is unknown until a scan runs.`
           : verdict === 'blocked'
-            ? `Submission gate for ${progCode}: BLOCKED under ${reg} — ${gate.blocking.length} unresolved contradiction(s) carry a blocks-promotion authority. The filing is held until resolved.`
+            ? `Submission gate for ${progCode}: BLOCKED — ${blockingN} unresolved contradiction(s) carry a blocks-promotion authority. The filing is held until resolved.`
             : verdict === 'clear-with-open-items'
-              ? `Submission gate for ${progCode}: clear under ${reg}, with ${openN} open item(s) (${gate.needApproval.length} needing sign-off, ${gate.needReview.length} needing review) to close for a perfect filing.`
+              ? `Submission gate for ${progCode}: clear, with ${openN} open item(s) (${approvalN} needing sign-off, ${escalationN} needing escalation, ${reviewN} needing review) to close for a perfect filing.`
               : `Submission gate for ${progCode}: CLEAR — assessed, with every detected contradiction resolved (${resolvedN}/${total}).`,
       facts: {
         gate: verdict,
-        regulator: reg,
         // Counts only in assessed states: a total of 0 next to "not-assessed"
         // would let a never-scanned board read as clean.
         ...(verdict !== 'not-assessed'
           ? {
-              blockingCount: gate.blocking.length,
-              needApprovalCount: gate.needApproval.length,
-              needReviewCount: gate.needReview.length,
+              blockingCount: blockingN,
+              needApprovalCount: approvalN,
+              needEscalationCount: escalationN,
+              needReviewCount: reviewN,
               resolvedCount: resolvedN,
               total,
+              // The findings AnA can see are a page; the counts are the record's.
+              findingsListed: findings.length,
             }
           : {}),
         disclaimer:
           'Running a scan, resolving or reopening findings, and revaluing assumptions (reason-for-change gated) are governed — AnA proposes them in conversation, never through screen controls.',
       },
-      availableActions: ['Switch the FDA/EMA overlay (re-scores the gate on screen)'],
     };
-  }, [projectId, boardState.loading, boardState.error, boardData, hasBoard, lead, neverScanned, clean, gate, progCode, filingLabel, reg, openN, resolvedN, total]);
-  /* The regulator overlay is a client-side re-scoring of the same findings.
-     The applied detail states the verdict UNDER THE NEW OVERLAY — recomputed
-     through `giPromotionGate`, the same pure function the screen scores with,
-     so no second derivation exists to drift. Scans, resolutions and assumption
-     revaluations stay governed acts AnA proposes in conversation. */
-  useSurfaceActionHandlers('inconsistency', {
-    'inconsistency.set-regulator': (params) => {
-      const target = params.regulator === 'EMA' ? 'EMA' : 'FDA';
-      if (!projectId) {
-        return { ok: false, reason: 'The board is project-scoped and no project is open.' };
-      }
-      if (boardState.loading && !boardData) {
-        return { ok: false, reason: 'The inconsistency board is still loading.', retry: true };
-      }
-      if (boardState.error) {
-        return { ok: false, reason: 'The inconsistency board could not be read, so no overlay can be scored against it.' };
-      }
-      if (reg === target) return { ok: true, detail: `Already showing the ${target} overlay` };
-      setReg(target);
-      if (neverScanned) {
-        return {
-          ok: true,
-          detail: `Switched to the ${target} overlay — no scan has reported on this filing, so the gate stays NOT ASSESSED under either regulator`,
-        };
-      }
-      const next = giPromotionGate(findings, target);
-      return {
-        ok: true,
-        detail:
-          `Switched to the ${target} overlay — the gate re-scores to ` +
-          (next.blocked
-            ? `BLOCKED (${next.blocking.length} blocking contradiction(s))`
-            : `clear, with ${next.needApproval.length} needing sign-off and ${next.needReview.length} needing review`),
-      };
-    },
-  });
-  /* The ready signal for the hold above: the handler holds only while the
-     board is loading with nothing to show, so it signals as soon as that is
-     no longer so, whether the read succeeded or failed. Without it an overlay
-     switch sent from another screen was never answered. */
-  useEffect(() => {
-    if (!boardState.loading || boardData) notifySurfaceActionReady('inconsistency');
-  }, [boardState.loading, boardData]);
+  }, [projectId, boardState.loading, boardFailed, boardData, hasBoard, lead, neverScanned, clean, recounting, blocked, blockingN, approvalN, escalationN, reviewN, findings.length, progCode, filingLabel, openN, resolvedN, total]);
 
   usePublishSurfaceContext('inconsistency', anaContext);
 
@@ -766,7 +784,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
         />
       ) : boardState.loading && !boardData ? (
         <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading the inconsistency board...</div>
-      ) : boardState.error ? (
+      ) : boardFailed ? (
         <EmptyState
           tone="error"
           icon={I.alertTriangle}
@@ -784,37 +802,34 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
           <AnswerLead {...lead} />
 
           {/* Submission gate: the hero verdict -- can this filing go? */}
-          <div className={'gi-gate ' + (clean ? 'is-clean' : neverScanned ? 'is-warn' : gate.blocked ? 'is-blocked' : 'is-warn')}>
+          <div className={'gi-gate ' + (recounting ? 'is-warn' : clean ? 'is-clean' : neverScanned ? 'is-warn' : blocked ? 'is-blocked' : 'is-warn')}>
             <div className="gi-gate-main">
-              <span className="gi-gate-ico">{clean ? I.shieldCheck : neverScanned ? I.help : gate.blocked ? I.shieldAlert : I.clock}</span>
+              <span className="gi-gate-ico">{recounting ? I.rotateCcw : clean ? I.shieldCheck : neverScanned ? I.help : blocked ? I.shieldAlert : I.clock}</span>
               <div>
-                <div className="gi-gate-verdict">{clean ? 'Submission gate — CLEAR' : neverScanned ? 'Submission gate — NOT ASSESSED' : gate.blocked ? 'Submission gate — BLOCKED' : 'Submission gate — clear, with open items'}</div>
-                <div className="gi-gate-sub">{clean
+                <div className="gi-gate-verdict">{recounting ? 'Submission gate — re-counting' : clean ? 'Submission gate — CLEAR' : neverScanned ? 'Submission gate — NOT ASSESSED' : blocked ? 'Submission gate — BLOCKED' : 'Submission gate — clear, with open items'}</div>
+                <div className="gi-gate-sub">{recounting
+                  ? 'The governed record is being read again. The verdict follows when the count returns.'
+                  : clean
                   ? 'No contradictions block promotion. ' + progCode + ' can enter the submission sequence.'
                   : neverScanned
                   ? 'No contradiction scan has reported on ' + progCode + '. A gate with nothing behind it is not a pass — run a scan before promoting.'
-                  : gate.blocked
-                    ? gate.blocking.length + ' unresolved ' + (gate.blocking.length === 1 ? 'contradiction' : 'contradictions') + ' with a "blocks promotion" authority under ' + reg + '. The filing is held until resolved.'
-                    : 'Nothing blocks promotion under ' + reg + ', but ' + openN + ' open ' + (openN === 1 ? 'item' : 'items') + ' should be cleared for a perfect filing.'}</div>
+                  : blocked
+                    ? blockingN + ' unresolved ' + (blockingN === 1 ? 'contradiction' : 'contradictions') + ' with a "blocks promotion" authority. The filing is held until resolved.'
+                    : 'Nothing blocks promotion, but ' + openN + ' open ' + (openN === 1 ? 'item' : 'items') + ' should be cleared for a perfect filing.'}</div>
               </div>
             </div>
-            <div className="gi-gate-side">
-              <div className="gi-reg" role="group" aria-label="Regulator overlay">
-                {(['FDA', 'EMA'] as const).map(r => (
-                  <button key={r} className={'gi-reg-b' + (reg === r ? ' on' : '')} onClick={() => setReg(r)}>{r}</button>
-                ))}
-              </div>
+            {!recounting && <div className="gi-gate-side">
               <div className="gi-gate-counts">
-                <span className="gi-c gi-c-bad">{gate.blocking.length} blocking</span>
-                <span className="gi-c gi-c-warn">{gate.needApproval.length} approval</span>
-                <span className="gi-c gi-c-rev">{gate.needReview.length} review</span>
+                <span className="gi-c gi-c-bad">{blockingN} blocking</span>
+                <span className="gi-c gi-c-warn">{approvalN} approval</span>
+                {escalationN > 0 && <span className="gi-c gi-c-warn">{escalationN} escalation</span>}
+                <span className="gi-c gi-c-rev">{reviewN} review</span>
+                {unrecognizedN > 0 && <span className="gi-c gi-c-warn" title="Open findings whose recorded authority this screen does not recognise">{unrecognizedN} unrecognised</span>}
                 <span className="gi-c gi-c-ok">{resolvedN}/{total} resolved</span>
               </div>
-            </div>
+            </div>}
           </div>
-          {hasDosage
-            ? <div className="gi-overlay-note">{I.info} Same dossier, different regulator: the dosage conflict is <b>{reg === 'FDA' ? 'a hard filing block under FDA' : '"requires approval" under EMA — not a hard block'}</b>. AnA re-scores authority from the active regulator's overlay rules.</div>
-            : <div className="gi-overlay-note">{I.info} AnA scores every finding's authority from the active regulator's overlay rules — switch <b>{reg}</b> to see how {filingLabel} severity shifts by regulator.</div>}
+          <div className="gi-overlay-note">{I.info} Each finding carries the severity and authority the contradiction engine recorded when it detected it, including any regulator overlay rule your organization has configured. The gate counts every finding recorded for {progCode}, by the rule the promotion check enforces — not only the ones listed below.</div>
 
           {/* The cross-reference record. Three different things to say here, and
               this card used to say only one.
@@ -891,17 +906,25 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
           )}
 
           {hasFindings && <div className="gi-findings">
+            {shownOf !== null && <div className="scaf-note" role="note">Showing the {shownOf} most severe of {total} recorded findings. The gate above counts all of them.</div>}
             {ordered.map(f => {
-              const a = eff[f.id] || giApplyOverlay(f, reg);
               const done = f.reviewState === 'approved_resolution';
-              const auth = GI_META.authority[a.authorityState!] || GI_META.authority.advisory_only;
+              const live = onGate(f);
+              /* The authority as recorded. A value this screen has no label for
+                 is shown as stored — it used to be relabelled "Advisory". */
+              const auth = GI_META.authority[f.authorityState] ||
+                { label: f.authorityState || 'No authority recorded', tone: 'warn', blocks: false, rank: 0 };
               return (
-                <div id={'gi-f-' + f.id} key={f.id} className={'gi-find' + (done ? ' is-done' : '') + (auth.blocks && !done ? ' is-block' : '')}>
+                <div id={'gi-f-' + f.id} key={f.id} className={'gi-find' + (done ? ' is-done' : '') + (auth.blocks && live ? ' is-block' : '')}>
                   <div className="gi-find-top">
-                    <span className="sp-sev" data-s={sevS(a.severity)}>{(GI_META.severity[a.severity] || { label: a.severity }).label}</span>
+                    <span className="sp-sev" data-s={sevS(f.severity)}>{(GI_META.severity[f.severity] || { label: f.severity }).label}</span>
                     <span className="gi-type">{GI_META.type[f.contradictionType] || f.contradictionType}</span>
-                    <span className={'gi-auth tone-' + auth.tone}>{done ? 'Resolved' : auth.label}</span>
-                    {a.overlayApplied && !done && <span className="gi-ov">{reg} overlay</span>}
+                    <span className={'gi-auth tone-' + auth.tone}>{done ? 'Resolved' : live ? auth.label : 'Superseded'}</span>
+                    {f.overlayRuleId && live && (
+                      <span className="gi-ov" title={'Scored by your organization’s ' + (f.regulatorBody || 'regulator') + ' overlay rule when this finding was detected'}>
+                        {f.regulatorBody ? f.regulatorBody + ' overlay' : 'Regulator overlay'}
+                      </span>
+                    )}
                     <span className="gi-conf">{Math.round(f.confidenceScore * 100)}% {I.dot} {GI_META.source[f.sourceClassification]}</span>
                   </div>
                   <div className="gi-find-title">{f.title}</div>
@@ -956,7 +979,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
             <div className="pj-card">
               <div className="pj-card-h"><span className="t">Assumption registry</span><span className="s">drift origin</span></div>
               <div className="pj-card-b">
-                <p className="gi-support-p">Contradictions like the dropout drift start here — two governed assumptions sharing a category and domain but holding different values.</p>
+                <p className="gi-support-p">Assumption-drift contradictions start here — two governed assumptions sharing a category and domain but holding different values.</p>
                 {assumptions.length > 0 ? (
                   <div className="sp-list">
                     {assumptions.map(a => (

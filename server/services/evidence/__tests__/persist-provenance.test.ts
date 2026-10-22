@@ -34,8 +34,11 @@ describe('provenanceToLineageEntry', () => {
     expect(entry.sourceObjectType).toBe('external_evidence');
     expect(entry.sourceObjectId).toBe('PMID:123');
     expect(entry.sourceTitle).toBe('A study');
-    expect(entry.confidenceScore).toBe(90); // high → 90
-    expect(entry.confidenceBasis).toBe('validation_based');
+    // 2026-10-15: pinned 90 ('high' through a lookup table) and
+    // 'validation_based'. No confidence was measured; the level is kept as one.
+    expect(entry.confidenceScore).toBeUndefined();
+    expect(entry.confidenceBasis).toBe('rules_based');
+    expect((entry.metadata as any).confidenceLevel).toBe('high');
     // TARGET
     expect(entry.organizationId).toBe(7);
     expect(entry.projectId).toBe(3);

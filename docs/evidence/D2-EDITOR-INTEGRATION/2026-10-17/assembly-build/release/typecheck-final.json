@@ -1,0 +1,7 @@
+{
+  "command": "PATH=/workspace/scratch/editor-toolchain/node_modules/.bin:$PATH npm run --silent ci:typecheck:no-regression -- --incremental",
+  "qualificationBase": "4b0e3ff1ed0882f8681fb3ad5b97660c6b969d7c",
+  "exitCode": 0,
+  "rawSha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce",
+  "rawOutput": "[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)\n[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)\n[ci:typecheck-no-regression] OK \u2014 error count 0 matches baseline.\n"
+}

@@ -51,7 +51,19 @@ function fakePool(connect = vi.fn(async (): Promise<PoolClient> => { throw new E
     }
     return Promise.resolve({ rows: [], rowCount: 1 });
   });
-  return { pool: { connect, query } as unknown as Pool, connect, query, reads, scopes, failNextSelect: (error: Error) => { throwNextSelect = error; } };
+  return { pool: { connect: listenOrTransaction(connect), query } as unknown as Pool, connect, query, reads, scopes, failNextSelect: (error: Error) => { throwNextSelect = error; } };
+}
+/**
+ * `connect` is the LISTEN connection these cases steer. beginRun (AnA detach
+ * DT1) also checks out a client, for the transaction that takes its advisory
+ * locks and inserts the run; that one is a plain client that commits. Told
+ * apart by the scope the listener opens its connection under.
+ */
+function listenOrTransaction(connect: () => Promise<PoolClient>) {
+  return () =>
+    getTenantScope()?.caller === 'ana-run-control:listen'
+      ? connect()
+      : Promise.resolve({ query: async () => ({ rows: [] }), release: () => undefined } as unknown as PoolClient);
 }
 async function flush() { for (let i = 0; i < 8; i++) await Promise.resolve(); }
 async function open(pool: Pool, organizationId = 7) {
@@ -385,7 +397,20 @@ function pendingSweep() {
     scopes.push(getTenantScope());
     return pending;
   });
-  return { pool: { query } as unknown as Pool, query, scopes, resolve, reject };
+  return { pool: reapOnly(query), query, scopes, resolve, reject };
+}
+
+/**
+ * A pool whose reap statement goes to `query` and whose other statements — the
+ * AnA detach DT1 pass that follows a reap (wake-ups of reaped runs, the
+ * throttled ana_run_events mirror sweep) — find nothing. Every count and scope
+ * below is the reap statement's, the work these cases bound.
+ */
+function reapOnly(query: (sql: string, params: unknown[]) => Promise<SweepResult>): Pool {
+  return {
+    query: (sql: string, params: unknown[]) =>
+      /^\s*UPDATE ana_runs\b/.test(sql) ? query(sql, params) : Promise.resolve({ rows: [], rowCount: 0 }),
+  } as unknown as Pool;
 }
 
 async function flushSweep() {
@@ -440,7 +465,7 @@ describe('overlapping estate-wide sweeps share pending work', () => {
   it('shares a synchronous query throw and clears admission for retry', async () => {
     const failure = new Error('synchronous sweep failure');
     const query = vi.fn((_sql: string, _params: unknown[]): Promise<SweepResult> => { throw failure; });
-    const pool = { query } as unknown as Pool;
+    const pool = reapOnly(query);
     const results = await Promise.allSettled([reapOrphanedRuns(pool), reapOrphanedRuns(pool)]);
     expect(results).toEqual(Array(2).fill({ status: 'rejected', reason: failure }));
     expect(query).toHaveBeenCalledTimes(1);

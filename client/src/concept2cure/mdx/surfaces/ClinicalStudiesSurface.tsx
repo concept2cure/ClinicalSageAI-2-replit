@@ -152,7 +152,7 @@ export function ClinicalStudiesSurface({ program = null, onAskAna }: ClinicalStu
               ? 'project profile'
               : effective.context.data.source === 'organization'
                 ? 'organization profile'
-                : 'license default'
+                : 'source not recorded' // 2026-10-15: was 'license default', a source nothing reads
           })`
         : 'No specialization on file — showing the full registry'
       : effective.context.status === 'error'

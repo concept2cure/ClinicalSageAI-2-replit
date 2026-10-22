@@ -15,8 +15,9 @@
  * absent — the surface renders them null-safe and its ICH E3 §16 composer flags them as
  * missing rather than inventing them.
  *
- * `adverse_events.organization_id` is TEXT and `seriousness_criteria` is a JSON array
- * round-tripped as TEXT (per the PV service), so both are handled accordingly.
+ * The canonical tenant sweeps make `organization_id` INTEGER (the older PV
+ * creating migration used TEXT). `seriousness_criteria` remains a JSON array
+ * round-tripped as TEXT; decimal org parameters work with either schema lineage.
  */
 import { pool } from '../../db';
 import { computeExpeditedReportingClock } from './expedited-reporting-clock';
@@ -54,22 +55,48 @@ function parseCriteria(v: unknown): string[] | null {
   return s.split(',').map((x) => x.trim()).filter(Boolean);
 }
 
+/** Display labels retain the engine's separate unassessed state. */
+function reportingLabels(reporting: ReturnType<typeof computeExpeditedReportingClock>) {
+  const notDetermined = !reporting.reportabilityDetermined;
+  const clockLabel = notDetermined
+    ? 'Reportability not determined'
+    : reporting.category === 'none'
+      ? 'No expedited clock'
+      : `${reporting.category} expedited report`;
+  const dueLabel = reporting.dueDate ?? (notDetermined ? 'Not determined' : reporting.category === 'none' ? '—' : 'awaiting Day 0');
+  /* A SORT KEY, not a day count. 9999 pushes a case with no clock to the end
+     of a soonest-first queue; it is never rendered and never published (the
+     AnA context used to hand it to the model as "due in 9999 day(s)"). */
+  const dueDays = reporting.daysRemaining ?? 9999;
+
+  return { clockLabel, dueLabel, dueDays };
+}
+
 /**
  * Assemble the org's SAE case worklist, most-urgent first. Returns [] when the org has
  * no adverse events — the surface renders its honest empty state.
  */
-export async function assembleOrgSaeCases(orgId: number, now: Date = new Date()): Promise<Record<string, unknown>[]> {
+export async function assembleOrgSaeCases(orgId: number, now: Date = new Date(), options: {
+  caseId?: string;
+  /** The mounted route supplies current project admission before any DTO leaves the server. */
+  canReadProject?: (projectRef: unknown) => Promise<boolean>;
+} = {}): Promise<Record<string, unknown>[]> {
   const { rows } = await pool.query(
     `SELECT id, patient_id, project_id, event_type, event_description, onset_date, report_date,
             seriousness_criteria, causality, outcome, expectedness, reaction_pt,
             suspect_product, suspect_product_dose, narrative, regulatory_reporting_deadline, created_at
        FROM adverse_events
       WHERE organization_id = $1
+        AND ($2::text IS NULL OR id = $2)
       ORDER BY regulatory_reporting_deadline ASC NULLS LAST, created_at ASC, id`,
-    [String(orgId)],
+    [String(orgId), options.caseId ?? null],
   );
 
-  return (rows as Array<Record<string, unknown>>).map((r) => {
+  const admitted: Array<Record<string, unknown>> = [];
+  for (const row of rows as Array<Record<string, unknown>>) {
+    if (!options.canReadProject || await options.canReadProject(row.project_id)) admitted.push(row);
+  }
+  return admitted.map((r) => {
     const criteria = parseCriteria(r.seriousness_criteria);
     // Recorded at all? The display contract carries this so the surface can say
     // "not recorded" instead of reading absence as a non-serious verdict.
@@ -86,12 +113,18 @@ export async function assembleOrgSaeCases(orgId: number, now: Date = new Date())
       now,
     );
 
-    // Legacy display fields the surface's queue/urgency use, derived from the live clock
-    // (the blob's static due/clock/due_days columns have no equivalent here).
-    const clockLabel =
-      reporting.category === 'none' ? 'No expedited clock' : `${reporting.category} expedited report`;
-    const dueLabel = reporting.dueDate ?? (reporting.category === 'none' ? '—' : 'awaiting Day 0');
-    const dueDays = reporting.daysRemaining ?? 9999;
+    /* Legacy display fields the surface's queue/urgency use, derived from the
+       live clock (the blob's static due/clock/due_days columns have no
+       equivalent here).
+       These labels used to read `category === 'none'` alone, so an UNASSESSED
+       case and a case decided non-reportable got byte-identical `clock` and
+       `due` strings — the same two-states-into-one collapse the report box was
+       fixed for on 2026-10-12, surviving in the labels rendered beside it. The
+       mono provenance line one element above the box read "No expedited clock"
+       while the box read "Reportability not determined". They now read the
+       engine's own `reportabilityDetermined`, so every reader of this row says
+       the same thing. */
+    const { clockLabel, dueLabel, dueDays } = reportingLabels(reporting);
 
     return {
       id: str(r.id),
@@ -108,6 +141,7 @@ export async function assembleOrgSaeCases(orgId: number, now: Date = new Date())
       firstDoseDate: undefined,
       awarenessDate: awarenessDate ?? undefined,
       expectedness: orUndef(r.expectedness),
+      narrative: r.narrative == null ? null : String(r.narrative),
       medicalHistory: [],
       concomitantMeds: [],
       event: {
@@ -127,6 +161,8 @@ export async function assembleOrgSaeCases(orgId: number, now: Date = new Date())
       reportingBasis: reporting.basis,
       /** Determination inputs that were never recorded (see the clock). */
       reportingUnassessedInputs: reporting.unassessedInputs,
+      /** Whether there IS a verdict — not the same as "nothing unassessed" (P-20 Gate 0). */
+      reportingDetermined: reporting.reportabilityDetermined,
     };
   });
 }

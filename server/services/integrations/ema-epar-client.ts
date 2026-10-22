@@ -123,10 +123,10 @@ export async function searchEmaEpar(params: EmaEparSearchParams): Promise<EmaEpa
       { headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' } },
       { timeoutMs: REQUEST_TIMEOUT_MS }
     );
+    // 2026-10-15: a 404 returned `status: 'ok'` with zero medicines. 404-as-no-match
+    // is documented for openFDA, not for this endpoint, so a moved or retired path
+    // answered every search "none found". It is a failed read like any other.
     if (!res.ok) {
-      if (res.status === 404) {
-        return { source: EMA_EPAR_SOURCE, status: 'ok', totalCount: 0, medicines: [] };
-      }
       return {
         source: EMA_EPAR_SOURCE,
         status: 'unavailable',
@@ -141,7 +141,17 @@ export async function searchEmaEpar(params: EmaEparSearchParams): Promise<EmaEpa
       ? data.content
       : Array.isArray(data?.results)
         ? data.results
-        : [];
+        : null;
+    // 2026-10-15: a body with neither array was read as zero medicines.
+    if (content === null) {
+      return {
+        source: EMA_EPAR_SOURCE,
+        status: 'unavailable',
+        totalCount: 0,
+        medicines: [],
+        message: 'EMA EPAR API response had no results array (unexpected shape)',
+      };
+    }
     const totalCount = Number(data?.totalElements ?? data?.total ?? content.length) || content.length;
     return {
       source: EMA_EPAR_SOURCE,

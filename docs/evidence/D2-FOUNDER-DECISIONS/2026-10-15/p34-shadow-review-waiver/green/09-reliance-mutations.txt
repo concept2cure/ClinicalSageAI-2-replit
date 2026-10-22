@@ -1,0 +1,23 @@
+# Mutations of the waiver reliance (audit identity, lock re-check), each restored
+
+## W1 the freeze row does not name the waiver
+ × server/services/submission-service/__tests__/freeze-relies-on-waiver.pglite.test.ts > a freeze that goes forward on a signed Shadow Review waiver > names the waiver on its §11.10(e) row: signature, waived run, failed run and why it failed
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)
+
+## W2 no Shadow Review re-check under the lock
+ × server/services/submission-service/__tests__/freeze-relies-on-waiver.pglite.test.ts > a freeze that goes forward on a signed Shadow Review waiver > is refused when the waiver is revoked after the assessment and before the lock, and its signature is void
+ × server/services/submission-service/__tests__/freeze-relies-on-waiver.pglite.test.ts > a freeze that goes forward on a signed Shadow Review waiver > is refused when a critical it counted as closed reopens before the lock (its closing signature revoked)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 2 passed (4)
+
+## W3 the lock re-check skips the criticals
+ × server/services/submission-service/__tests__/freeze-relies-on-waiver.pglite.test.ts > a freeze that goes forward on a signed Shadow Review waiver > is refused when a critical it counted as closed reopens before the lock (its closing signature revoked)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)
+
+## W4 the lock re-check skips the waiver
+ × server/services/submission-service/__tests__/freeze-relies-on-waiver.pglite.test.ts > a freeze that goes forward on a signed Shadow Review waiver > is refused when the waiver is revoked after the assessment and before the lock, and its signature is void
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)
+restored byte-identical

@@ -36,7 +36,7 @@ describe('integerProjectForRef with the real anchor reader', () => {
     expect(await ask(PROGRAM)).toBe(42);
     expect(query).toHaveBeenCalledTimes(1);
     const [sql, params] = query.mock.calls[0];
-    expect(String(sql)).toMatch(/regulatory_program_id = \$1 AND organization_id = \$2 ORDER BY id/);
+    expect(String(sql)).toMatch(/regulatory_program_id\s*=\s*\$1 AND organization_id\s*=\s*\$2 ORDER BY id/);
     expect(params).toEqual([PROGRAM.toLowerCase(), 7]);
   });
 

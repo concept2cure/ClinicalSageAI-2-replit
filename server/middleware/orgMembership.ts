@@ -33,7 +33,10 @@
 import type { Request, Response, NextFunction } from 'express';
 import { createScopedLogger } from '../utils/logger';
 import { runWithTenantScope } from '../db/tenantStore';
-import { GOVERNED_WRITE_PERMISSION, REPORT_FINALIZE_PERMISSION, REPORT_FINALIZE_ROLES } from '../../shared/constants/permissions';
+import { GOVERNED_WRITE_PERMISSION, REPORT_FINALIZE_PERMISSION, REPORT_FINALIZE_ROLES,
+  AUDIT_ATTEST_PERMISSION,
+  AUDIT_ATTEST_ROLES,
+} from '../../shared/constants/permissions';
 import { withExtendingRoles } from '../../shared/constants/org-roles';
 import { isSigningAuthorized } from '../services/part11/signing-authority';
 
@@ -530,6 +533,13 @@ export function sessionPermissions(role: string | null | undefined): string[] {
   // canvas never offers what the server refuses with ESIGNATURE_NO_AUTHORITY.
   if (REPORT_FINALIZE_ROLES.includes(String(role ?? '')) && isSigningAuthorized(role)) {
     permissions.push(REPORT_FINALIZE_PERMISSION);
+  }
+  /* Attesting to the audit trail is not the same act as reading it, and the
+     route has always admitted only admin and owner. The Compliance Reports
+     surface offered the control on the READ role set, so a manager clicked it
+     and got a 403 (coverage review C-24). */
+  if (AUDIT_ATTEST_ROLES.includes(String(role ?? ''))) {
+    permissions.push(AUDIT_ATTEST_PERMISSION);
   }
   return permissions;
 }

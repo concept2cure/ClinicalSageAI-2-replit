@@ -1,0 +1,27 @@
+{
+  "runtime": "PostgreSQL 15.19; native app_service/NOSUPERUSER/NOBYPASSRLS/RLS-on fixture",
+  "original_cases_preserved": 8,
+  "added_cases": 1,
+  "temporal_variants_in_added_case": 41,
+  "focused_native": {
+    "numTotalTests": 9,
+    "numPassedTests": 9,
+    "numFailedTests": 0,
+    "numPendingTests": 0,
+    "success": true
+  },
+  "parser_probe": {
+    "inputs": 526,
+    "settings": 3,
+    "accepted_per_setting": 189,
+    "rejected_per_setting": 337,
+    "mismatches": 0
+  },
+  "lint": {
+    "files": 2,
+    "errors": 0,
+    "warnings": 0
+  },
+  "source_pins_match": true,
+  "unchanged_shared_fixture_and_config_pins": true
+}

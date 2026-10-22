@@ -413,13 +413,94 @@ export const RULE_CORPUS: ValidationRule[] = [
     regions: ['fda', 'eu', 'jp', 'ca', 'au', 'ch'],
     severity: 'medium',
     rationale:
-      'Each region’s Module 1 mandates specific administrative documents. In an original sequence of an application kind the regional Module 1 record models (US IND/NDA/BLA/ANDA, EU MAA, JP J-NDA), a heading the record requires of that kind is an error — the application is not one the agency would receive without it. Elsewhere the region profile’s list is advisory at dispatch and decisive at agency intake (QA 2026-10-08, j7).',
+      'Each region’s Module 1 mandates specific administrative documents. In an original sequence of an application kind the regional Module 1 record models (US IND/NDA/BLA/ANDA, EU MAA, JP J-NDA), a heading the record requires of that kind is an error — the application is not one the agency would receive without it. A continuing US IND sequence is held to its Module 1 transmittal pair (the Form FDA 1571 at 1.1, the cover letter at 1.2) and the content its type requires, by the IND sequence validator, as errors (P-33, 2026-10-15). Elsewhere the region profile’s list is advisory at dispatch and decisive at agency intake (QA 2026-10-08, j7).',
     // FDA's criteria as well as the EU's: an FDA IND is the sequence that trips
     // this most, and a finding that cited only the EU family read as the wrong
     // agency's rule.
     source: `${FDA_CRIT}; ${EU_CRIT}`,
     enforcement: 'dispatch-readiness',
     findingCode: 'MISSING_REQUIRED_SECTION',
+  },
+  {
+    // 2026-10-05 (CMC-M3-GA item 21). Until then the dispatch path checked
+    // Module 1 alone, as warnings, and an original IND with no CMC section read
+    // dispatch-clear.
+    id: 'IND_MODULE3_REQUIRED',
+    title: 'The original IND carries its Module 3 (3.2.S, 3.2.P), or incorporates it by reference under a Letter of Authorization',
+    category: 'content',
+    regions: ['fda'],
+    severity: 'high',
+    rationale:
+      'An initial IND contains chemistry, manufacturing and controls information on the drug substance and the drug product ' +
+      '(21 CFR 312.23(a)(7)); information in a file another person holds may be incorporated by reference with that person’s ' +
+      'written authorization (21 CFR 312.23(b) — the Letter of Authorization, Module 1.4.1). The required Module 3 headings are ' +
+      'read from the IND required-section profile. A heading with no leaf at or under it in the original sequence, and no ' +
+      'recorded cross-reference naming it with a Letter of Authorization on file, blocks dispatch. An IND amendment is not asked.',
+    source: `21 CFR 312.23(a)(7) and 312.23(b); ICH M4Q (3.2.S, 3.2.P); ${FDA_CRIT}`,
+    enforcement: 'dispatch-readiness',
+    findingCode: 'IND_MODULE3_REQUIRED',
+  },
+  {
+    id: 'IND_MODULE3_BY_REFERENCE',
+    title: 'A required Module 3 heading of the original IND stands on a cross-reference rather than a placed leaf',
+    category: 'content',
+    regions: ['fda'],
+    severity: 'low',
+    rationale:
+      'Reported as information when the original IND carries no leaf for a required Module 3 heading and a recorded ' +
+      'cross-reference names that heading with a Letter of Authorization on file, so a clear verdict says what it rests on.',
+    source: '21 CFR 312.23(b)',
+    enforcement: 'dispatch-readiness',
+    findingCode: 'IND_MODULE3_BY_REFERENCE',
+  },
+  // ── The IND program (decision P-33, 2026-10-15) ──────────────────────────────
+  // What the deleted IND gate (ind-lifecycle/ind-dispatch-gate.ts) checked and
+  // this assessment did not; emitted by ind-program-findings.ts.
+  {
+    id: 'CROSS_REFERENCE_LOA_MISSING',
+    title: 'Every file the IND relies on has its Letter of Authorization on file',
+    category: 'content',
+    regions: ['fda'],
+    severity: 'high',
+    rationale:
+      'Information in a file another person holds — a Drug Master File, another IND, an NDA or BLA — may support an IND only with ' +
+      'that person’s written authorization (21 CFR 312.23(b); for a Drug Master File, 21 CFR 314.420(b)), filed as the Letter of ' +
+      'Authorization in Module 1.4.1. Each reference in the IND’s cross-reference register with no LOA on file is an error on EVERY ' +
+      'sequence of the IND, as the IND gate held it; a register that cannot be read is an error too, and says so.',
+    source: `21 CFR 312.23(b); 21 CFR 314.420(b); ${FDA_CRIT}`,
+    enforcement: 'dispatch-readiness',
+    findingCode: 'CROSS_REFERENCE_LOA_MISSING',
+  },
+  {
+    id: 'IND_SAFETY_REPORT_OVERDUE',
+    title: 'An unfiled IND safety report is past its deadline',
+    category: 'content',
+    regions: ['fda'],
+    severity: 'medium',
+    rationale:
+      'An IND safety report recorded in the register, not filed, whose 7- or 15-day deadline (21 CFR 312.32(c)) has passed, is ' +
+      'reported as a warning on the IND’s other sequences. It never blocks: FDA does not refuse an amendment for a late safety ' +
+      'report, and a sequence that carries the safety report itself (a 312.32 filing, or a leaf at 1.12.4) is not warned for its ' +
+      'own lateness. A register that cannot be read is reported as a warning that says so.',
+    source: '21 CFR 312.32(c)',
+    enforcement: 'dispatch-readiness',
+    findingCode: 'IND_SAFETY_REPORT_OVERDUE',
+  },
+  {
+    id: 'CLINICAL_HOLD_NOT_ASSESSED',
+    title: 'A US IND sequence states that a clinical hold is not assessed',
+    category: 'content',
+    regions: ['fda'],
+    severity: 'low',
+    rationale:
+      'Nothing on the platform records whether FDA has placed an IND on clinical hold (21 CFR 312.42), so every US IND sequence ' +
+      'states, as information, that its verdict neither clears nor blocks it on that ground — in its findings and on the ' +
+      'structural gate. What is enforced is the statement; the hold itself is not assessed. A hold is never read from a request ' +
+      'body: the IND gate did, and blocked every sequence whose caller did not describe one, including the complete response ' +
+      'that lifts a hold (312.42(e)). When a hold register exists, an active hold blocks dispatch of every sequence but a response.',
+    source: '21 CFR 312.42',
+    enforcement: 'dispatch-readiness',
+    findingCode: 'CLINICAL_HOLD_NOT_ASSESSED',
   },
   {
     id: 'STF_FOR_STUDIES',
@@ -563,12 +644,12 @@ export const RULE_CORPUS: ValidationRule[] = [
   },
   {
     id: 'EXTERNAL_VALIDATION_CLEAN',
-    title: 'The agency-grade validator’s report for this package carries no errors',
+    title: 'External validation result and dispatch policy are assessed',
     category: 'integrity',
     regions: ['ich'],
     severity: 'high',
     rationale:
-      'Only the agency’s own validator (or a licensed equivalent) proves a package will pass intake. When its report is on file, an error in it blocks dispatch; when it is required and absent, that blocks too.',
+      'Required production external validation blocks on an unavailable, invalid or errored matched external report. Advisory outcomes remain visible without claiming an external pass. Tool/profile/package qualification and actual agency acceptance require separate evidence.',
     source: FDA_CRIT,
     enforcement: 'external',
   },

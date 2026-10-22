@@ -1,0 +1,12 @@
+Mutant R03-unnamed-gets-verdict: a model the record does not name is reported as unapproved
+
+--- client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+- if (unnamed.length > 0) {
++ if (false) {
+
+Tests run: client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > a model the record does not name gets no verdict, because there is nothing to judge 8ms
+      Tests  1 failed | 34 passed (35)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

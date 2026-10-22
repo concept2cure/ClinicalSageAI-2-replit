@@ -1,0 +1,189 @@
+{
+  "existingLibraryCases": 30,
+  "newBundleExportCases": 10,
+  "unchangedIndividualRunExportCases": 4,
+  "passedCases": 44,
+  "failedCases": 0,
+  "skippedCases": 0,
+  "durationSeconds": 12.83,
+  "originalLibraryTestBodiesByteIdentical": true,
+  "originalLibraryTestBodiesSha256": "7a6a3d60a484ff2e88cc1bad6bd145585c914245f716b82c0fc7faa2ff6769c3",
+  "cases": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "the reporting library > lands on the Report pane, so the surface a reader already knew is unchanged"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "the reporting library > offers a tab for each route family that had no screen"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Run history \u2014 GET /api/report-os/runs > reads the route and renders the governed runs it returns"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Run history \u2014 GET /api/report-os/runs > a run with no measured confidence says so, and never reads as 0%"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Run history \u2014 GET /api/report-os/runs > sends the status filter the route accepts"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Run history \u2014 GET /api/report-os/runs > a failed read is a failure with a retry, not an empty history"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Run history \u2014 GET /api/report-os/runs > opens a run from the history through GET /runs/:id/rendered"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Run history \u2014 GET /api/report-os/runs > a sealed run whose seal no longer verifies is withheld with its reason, not shown"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Schedules \u2014 GET/POST/PATCH /api/insights/subscriptions > reads the route and renders the schedule in words"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Schedules \u2014 GET/POST/PATCH /api/insights/subscriptions > describes persisted platform output and does not promise external email"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Schedules \u2014 GET/POST/PATCH /api/insights/subscriptions > offers only report types an engine computes \u2014 scheduling the rest would never produce one"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Schedules \u2014 GET/POST/PATCH /api/insights/subscriptions > creates a schedule with the cadence chosen, and no creator in the body"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Schedules \u2014 GET/POST/PATCH /api/insights/subscriptions > pauses a schedule through PATCH, and says so when the server refuses"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Schedules \u2014 GET/POST/PATCH /api/insights/subscriptions > a failed read is a failure, not \"no scheduled reports\""
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Bundles \u2014 GET/POST /api/report-os/bundles > reads the route and renders each bundle with its reports"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Bundles \u2014 GET/POST /api/report-os/bundles > bundles the runs chosen in Run history, and posts their ids"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Bundles \u2014 GET/POST /api/report-os/bundles > a bundle whose runs belong to no project says why, rather than failing blankly"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Report catalog > offers every type an engine computes as a run control"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Report catalog > lists a type no engine computes by name, and never as a control"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Report catalog > runs a catalog type through the governed run route"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "run history uses the complete SQL result before pagination > requests a page and sends the search to the canonical route"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "run history uses the complete SQL result before pagination > shows the server total and reaches older matching reports on the next page"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "run history uses the complete SQL result before pagination > does not imply a complete result when an older server omits pagination metadata"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "run history uses the complete SQL result before pagination > encodes scope, search and offset without dropping a zero offset"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "a bundle's PDF is named for what it is > says the PDF is a manifest and where the sealed documents are"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "a bundle's PDF is named for what it is > never offers the manifest as the reports"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "a failed read says WHICH failure it was > a 403 on the run history is a role refusal with NO retry"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "a failed read says WHICH failure it was > an expired session says to sign in, not that the server failed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "a failed read says WHICH failure it was > a 500 keeps the retry, because retrying could change the answer"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "a failed read says WHICH failure it was > readFailureOf classifies each status, and only the reachable ones retry"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "retained bundle PDF downloads \u2014 server-byte exports > downloads the exact server report-pack blob once through the reports selector"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "retained bundle PDF downloads \u2014 server-byte exports > preserves the default manifest URL and its existing download filename"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "retained bundle PDF downloads \u2014 pending requests > disables both controls during a pending reports export and suppresses duplicate dispatch"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "retained bundle PDF downloads \u2014 pending requests > disables both controls during a pending manifest export and suppresses duplicate dispatch"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "retained bundle PDF downloads \u2014 pending requests > allows a different bundle to export while this bundle is pending"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "retained bundle PDF downloads \u2014 pending requests > keeps a pending export disabled when the reader leaves and returns to Bundles"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "retained bundle PDF downloads \u2014 failures > shows a backend response refusal without downloading, then re-enables both controls"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "retained bundle PDF downloads \u2014 failures > shows a backend typed-error refusal without downloading, then re-enables both controls"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "retained bundle PDF downloads \u2014 failures > reports a refused browser download without a success toast"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "retained bundle PDF downloads \u2014 failures > reports a transport failure and permits a retry"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx",
+      "case": "Insights \u2014 Export produces a file and finalizes nothing > fetches the governed PDF for the run, hands the bytes to downloadBlob, and sends no finalize"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx",
+      "case": "Insights \u2014 Export produces a file and finalizes nothing > exports a report the truthfulness gate holds below final as it stands, without sealing it"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx",
+      "case": "Insights \u2014 Export produces a file and finalizes nothing > hands over NO file when the export is refused, and reports it as a failure"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx",
+      "case": "Insights \u2014 Export produces a file and finalizes nothing > reports a browser that refuses the download rather than claiming a saved file"
+    }
+  ]
+}

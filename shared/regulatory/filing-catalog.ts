@@ -27,6 +27,8 @@
  */
 
 import { GLOBAL_REGISTRY } from './global-document-registry';
+import type { ProductType } from '../constants/domain/product-types';
+import { euDeviceClassOf, MDR_DECLARED_CLASSES, MDR_RULE_CLASSES, IVDR_CLASSES, mdrRuleClassOf, type MdrDeclaredClass, type IvdrClass } from './device-class';
 import type { RegulatoryApplicationType, Agency, Segment, FilingCategory } from './document-taxonomy';
 import {
   SEGMENT_METADATA,
@@ -58,7 +60,49 @@ export const AGENCY_LABEL: Record<Agency, string> = {
   EDQM: 'EDQM',
   National_Competent_Authority: 'National competent authority',
   Notified_Body: 'EU / Notified Body',
+  Registered_Certification_Body: 'Registered certification body',
+  EU_Reference_Laboratory: 'EU reference laboratory',
 };
+
+// ─── Exact regional device applications ───────────────────────────────────────
+
+/** Initialization metadata for existing registry applications, not additional
+ * catalog entries or documentary filing classes. A preparation outline names
+ * its own class even when its legal requirements are not fully modelled. */
+export interface RegionalDeviceApplicationClass {
+  registryId: string;
+  docType: string;
+  packAgency: 'fda' | 'hc' | 'pmda' | 'jp_rcb';
+  defaultProductType: ProductType;
+  productTypes: readonly ProductType[];
+  refineFromIvdLane?: true;
+}
+
+export const REGIONAL_DEVICE_APPLICATION_CLASSES: readonly RegionalDeviceApplicationClass[] = [
+  { registryId: 'US_HDE', docType: 'hde', packAgency: 'fda', defaultProductType: 'device', productTypes: ['device', 'samd', 'ivd', 'cdx'], refineFromIvdLane: true },
+  { registryId: 'CA_MDL', docType: 'mdl', packAgency: 'hc', defaultProductType: 'device', productTypes: ['device', 'samd'] },
+  { registryId: 'CA_IVD_LICENCE', docType: 'ivd_licence', packAgency: 'hc', defaultProductType: 'ivd', productTypes: ['ivd', 'cdx'] },
+  { registryId: 'JP_SHONIN', docType: 'shonin', packAgency: 'pmda', defaultProductType: 'device', productTypes: ['device', 'samd'] },
+  { registryId: 'JP_NINTEI', docType: 'ninsho', packAgency: 'jp_rcb', defaultProductType: 'device', productTypes: ['device', 'samd'] },
+  { registryId: 'JP_TODOKEDE', docType: 'todokede', packAgency: 'pmda', defaultProductType: 'device', productTypes: ['device', 'samd'] },
+  { registryId: 'JP_IVD_APPROVAL', docType: 'ivd_approval', packAgency: 'pmda', defaultProductType: 'ivd', productTypes: ['ivd', 'cdx'] },
+  { registryId: 'JP_CDX', docType: 'jp_cdx', packAgency: 'pmda', defaultProductType: 'cdx', productTypes: ['cdx'] },
+];
+
+export function regionalDeviceApplicationClassOf(programType?: string | null): RegionalDeviceApplicationClass | null {
+  const key = String(programType ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_');
+  return REGIONAL_DEVICE_APPLICATION_CLASSES.find(c => c.docType === key) ?? null;
+}
+
+export function regionalDeviceApplicationClassTypes(): string[] {
+  return REGIONAL_DEVICE_APPLICATION_CLASSES.map(c => c.docType);
+}
+
+/** Resolve the persisted filing selection using the catalog's existing aliases. */
+export function regionalDeviceApplicationClassForFiling(filingId?: string | null): RegionalDeviceApplicationClass | null {
+  const entry = resolveFilingCatalogEntry(filingId?.trim());
+  return REGIONAL_DEVICE_APPLICATION_CLASSES.find(c => c.registryId === entry?.registryId) ?? null;
+}
 
 // ─── Wizard pathway keys ──────────────────────────────────────────────────────
 
@@ -81,11 +125,11 @@ const PATHWAY_BY_ID: Record<string, string> = {
   eu_nb_consult: 'device',
   /* W2-1: the two consultations that legitimately involve the EMA. */
   eu_mdr_art117_nbop: 'device', eu_ivdr_art48_consult: 'ivdr',
-  us_510k: '510k', us_de_novo: 'denovo', us_pma: 'pma', us_hde: 'device', us_eua: 'device',
+  us_510k: '510k', us_de_novo: 'denovo', us_pma: 'pma', us_eua: 'device',
   eu_mdr_techdoc: 'mdr', eu_mdr_class_i: 'mdr', eu_mdr_class_iia: 'mdr', eu_mdr_class_iib: 'mdr', eu_mdr_class_iii: 'mdr',
   eu_sscp: 'device', eu_doc: 'device',
-  uk_device_reg: 'device', jp_shonin: 'device', jp_nintei: 'device', cn_device_reg: 'device',
-  au_device_inclusion: 'device', ca_mdl: 'device', ch_device_conformity: 'device', br_device_reg: 'device',
+  uk_device_reg: 'device', cn_device_reg: 'device',
+  au_device_inclusion: 'device', ch_device_conformity: 'device', br_device_reg: 'device',
   eu_sig_change: 'mdr', eu_fsca: 'device', us_ide: 'ide',
   us_mdr_report: 'device', eu_psur_device: 'device', eu_pmcf: 'cer', us_recall: 'device',
   us_dhf: 'device', iso_rmf: 'device',
@@ -95,11 +139,11 @@ const PATHWAY_BY_ID: Record<string, string> = {
   eu_ivdr: 'ivdr', eu_ivdr_class_a: 'ivdr', eu_ivdr_class_b: 'ivdr', eu_ivdr_class_cd: 'ivdr',
   eu_ivdr_classification: 'ivd', us_ivd_qsub: 'ivd', us_clia_waiver: 'ivd',
   us_eua_ivd: 'ivd', us_ldt: 'ivd', us_complementary_dx: 'ivd',
-  eu_cdx_ivdr_d: 'ivdr', jp_cdx: 'ivd', us_cdx_codev: 'ivd',
+  eu_cdx_ivdr_d: 'ivdr', us_cdx_codev: 'ivd',
   eu_per: 'ivd', eu_perf_study: 'ivdr', eu_ref_lab: 'ivd', eu_sscp_ivd: 'ivd',
   eu_ivd_clin_evidence: 'ivd', eu_pmpf: 'ivdr', eu_ivd_reeval: 'ivd',
-  us_ivd_analytical_validation: 'ivd', jp_ivd_approval: 'ivd', cn_ivd_reg: 'ivd',
-  au_ivd_inclusion: 'ivd', ca_ivd_licence: 'ivd',
+  us_ivd_analytical_validation: 'ivd', cn_ivd_reg: 'ivd',
+  au_ivd_inclusion: 'ivd',
   eu_ivd_pms_plan: 'ivdr', us_trend_report: 'ivd', eu_ivd_vigilance: 'ivd', eu_psur_ivd: 'ivd',
   // Explicit even where an id substring would currently route correctly — the
   // wizard treats a MISSING key as 'ctd' → 'nda', so a rename must never be
@@ -222,7 +266,7 @@ function toCatalogEntry(e: RegulatoryApplicationType): FilingCatalogEntry {
     submissionFormat: !e.submissionFormat || e.submissionFormat === 'none' ? '—' : e.submissionFormat,
     description: e.description ?? '',
     moduleAuthority: e.moduleAuthority ?? null,
-    pathwayKey: e.pathwayKey ?? PATHWAY_BY_ID[id] ?? null,
+    pathwayKey: REGIONAL_DEVICE_APPLICATION_CLASSES.find(c => c.registryId === e.id)?.docType ?? e.pathwayKey ?? PATHWAY_BY_ID[id] ?? null,
   };
 }
 
@@ -293,6 +337,36 @@ export function resolveFilingCatalogEntry(input?: string | null): FilingCatalogE
   if (direct) return direct;
   const alias = LEGACY_FILING_ID_ALIASES[input] ?? LEGACY_FILING_ID_ALIASES[input.toLowerCase()];
   if (alias && CATALOG_INDEX[alias]) return CATALOG_INDEX[alias];
+  return null;
+}
+
+export interface EuFilingClassScope {
+  regulation: 'mdr' | 'ivdr';
+  classes: readonly (MdrDeclaredClass | IvdrClass)[];
+}
+
+/** Exact class-specific registry identity (including aliases/parents), never a declared-class default.
+ * Class I includes its sterile/metrological/reusable-instrument variants; the
+ * existing IVDR C/D row is a combined scope. Legacy CDx IDs do not imply D. */
+export function deviceClassScopeForFiling(input?: string | null): EuFilingClassScope | null {
+  let entry = resolveFilingCatalogEntry(input);
+  const visited = new Set<string>();
+  while (entry && !visited.has(entry.registryId)) {
+    visited.add(entry.registryId);
+    const match = /^EU_(MDR|IVDR)_CLASS_([A-Z]+)$/.exec(entry.registryId);
+    if (match?.[1] === 'MDR') {
+      const ruleClass = euDeviceClassOf(match[2]);
+      if (MDR_RULE_CLASSES.some(value => value === ruleClass)) {
+        return { regulation: 'mdr', classes: MDR_DECLARED_CLASSES.filter(value => mdrRuleClassOf(value) === ruleClass) };
+      }
+    }
+    if (match?.[1] === 'IVDR') {
+      const classes = IVDR_CLASSES.filter(value => match[2].includes(value));
+      if (classes.length && classes.join('') === match[2]) return { regulation: 'ivdr', classes };
+    }
+    const parent = GLOBAL_REGISTRY.find(row => row.id === entry!.registryId)?.parentApplicationType;
+    entry = resolveFilingCatalogEntry(parent);
+  }
   return null;
 }
 

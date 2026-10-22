@@ -11,6 +11,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LazyRequestDbClient } from '../lazyRequestDbClient';
+import { CLEAR_SESSION_SCOPE_SQL, RESET_ENFORCEMENT_SQL } from '../../db/sessionScope';
 
 type FakePoolClient = {
   query: ReturnType<typeof vi.fn>;
@@ -83,6 +84,27 @@ describe('LazyRequestDbClient', () => {
     expect(pool.__client.release).not.toHaveBeenCalled();
   });
 
+  it('discards an uncertain connection without issuing cleanup SQL or releasing it twice', async () => {
+    const pool = makeFakePool();const lazy = new LazyRequestDbClient(pool as any, async () => {});
+    await lazy.query('BEGIN');const error = new Error('COMMIT acknowledgement lost');
+    await lazy.discard(error);
+    expect(pool.__client.release).toHaveBeenCalledExactlyOnceWith(error);
+    expect(pool.__client.query.mock.calls.map(args => args[0])).toEqual(['BEGIN']);
+    await expect(lazy.query('SELECT 1')).rejects.toThrow(/released|discarded/);
+    await lazy.release();expect(pool.__client.release).toHaveBeenCalledTimes(1);
+  });
+
+  it('discards a connection whose acquisition was pending and never sends the queued statement', async () => {
+    const client = makeFakeClient();let finish!: (value: typeof client) => void;
+    const pool = { connect: vi.fn(() => new Promise<typeof client>(resolve => { finish = resolve; })) };
+    const lazy = new LazyRequestDbClient(pool as any, async () => {});
+    const error = new Error('Uncertain request');
+    const pending = lazy.query('SELECT private_data');const rejected = expect(pending).rejects.toBe(error);
+    const discarded = lazy.discard(error);
+    finish(client);await rejected;await discarded;
+    expect(client.query).not.toHaveBeenCalled();expect(client.release).toHaveBeenCalledExactlyOnceWith(error);
+  });
+
   it('release() clears session vars and returns the client to the pool', async () => {
     const pool = makeFakePool();
     const lazy = new LazyRequestDbClient(pool as any, async () => {});
@@ -90,11 +112,12 @@ describe('LazyRequestDbClient', () => {
     await lazy.query('SELECT 1');
     await lazy.release();
 
-    // Three SET-config queries to clear the RLS session vars, then release.
-    const clearCalls = pool.__client.query.mock.calls.filter((args: unknown[]) =>
-      typeof args[0] === 'string' && (args[0] as string).includes("set_config('app."),
-    );
-    expect(clearCalls).toHaveLength(3);
+    // The tenant variables and the isolation switches are cleared, and
+    // enforcement is reset to its startup value, before the release
+    // (server/db/sessionScope.ts; proven on PostgreSQL by
+    // tests/db/isolation-switch-does-not-outlive-request.dbtest.ts).
+    const sql = pool.__client.query.mock.calls.map((args: unknown[]) => args[0]);
+    expect(sql.slice(-2)).toEqual([CLEAR_SESSION_SCOPE_SQL, RESET_ENFORCEMENT_SQL]);
     expect(pool.__client.release).toHaveBeenCalledTimes(1);
     expect(pool.__client.release).toHaveBeenCalledWith(undefined);
   });

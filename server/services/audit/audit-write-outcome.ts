@@ -26,7 +26,8 @@
  */
 
 import { createScopedLogger } from '../../utils/logger';
-import auditService from '../auditService';
+import auditService, { writeChainedAuditRow } from '../auditService';
+import type { RequestConnectable } from '../../db/requestDb';
 
 const logger = createScopedLogger('audit-write-outcome');
 
@@ -74,12 +75,16 @@ const logger = createScopedLogger('audit-write-outcome');
  *    exists" and "the record is retrievable" are not conflated.
  */
 export type AuditRowOutcome =
+  // `persisted: false` means durable persistence was not confirmed; it is not
+  // proof of absence after a lost acknowledgement. The compatibility code
+  // continues to drive existing client warnings. `unconfirmed` identifies an
+  // explicitly uncertain COMMIT on the request-owned transaction path.
   | { persisted: true; chained: boolean }
-  | { persisted: false; code: 'AUDIT_ROW_NOT_PERSISTED'; message: string };
+  | { persisted: false; code: 'AUDIT_ROW_NOT_PERSISTED'; message: string; unconfirmed?: true };
 
 /** What the caller may show a user. The detail goes to the log, never here. */
 const AUDIT_NOT_PERSISTED_MESSAGE =
-  'The 21 CFR Part 11 audit entry for this transition could not be written. The action itself completed. This has been logged for follow-up.';
+  'The 21 CFR Part 11 audit entry for this transition could not be confirmed. The action itself completed. Review the audit history before retrying. This has been logged for follow-up.';
 
 /** The object call form of `auditService.logAction` (its entry type is not exported). */
 type AuditEntry = Extract<Parameters<typeof auditService.logAction>[0], object>;
@@ -120,7 +125,7 @@ export function auditRowOutcomeFrom(
     result?.error ??
     'auditService.logAction reported no durable store; the audit row cannot be shown to exist';
   logger.error(
-    'Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist',
+    'Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition',
     { action, resourceType, resourceId, reason },
   );
   // `reason` is deliberately NOT returned: it is the store's own text and the
@@ -144,7 +149,36 @@ export function unpersistedAuditRow(): AuditRowOutcome {
  * same policy `logAction` holds — the difference is that the caller is now
  * told, and tells its own caller.
  */
-export async function recordAuditRow(entry: AuditEntry): Promise<AuditRowOutcome> {
+export async function recordAuditRow(entry: AuditEntry, postCommitConnection?: RequestConnectable): Promise<AuditRowOutcome> {
+  // This mode is for an ordinary mutation that has already completed. Signed
+  // critical acts keep their audit enlisted in the existing business TX and
+  // never call this helper from inside it. The request owns connection release.
+  if (postCommitConnection) {
+    let client: Awaited<ReturnType<RequestConnectable['connect']>> | undefined;
+    let commitAttempted = false;
+    let discardError: Error | undefined;
+    try {
+      client = await postCommitConnection.connect();
+      await client.query('BEGIN');
+      await writeChainedAuditRow(client, entry);
+      commitAttempted = true;
+      await client.query('COMMIT');
+      return { persisted: true, chained: true };
+    } catch (error) {
+      // A thrown COMMIT may have committed. Rollback cannot establish its
+      // absence, and an uncertain connection must not serve another query.
+      if (commitAttempted) discardError = error instanceof Error ? error : new Error('Audit commit acknowledgement unavailable');
+      else {
+        try { await client?.query('ROLLBACK'); }
+        catch (rollbackError) { discardError = rollbackError instanceof Error ? rollbackError : new Error('Audit rollback acknowledgement unavailable'); }
+      }
+      logger.warn('Request-scoped post-commit audit unavailable', {
+        action: entry.action, resourceType: entry.resourceType, resourceId: entry.resourceId,
+        code: (error as {code?: string})?.code ?? null,
+      });
+      return { ...unpersistedAuditRow(), ...(commitAttempted ? { unconfirmed: true as const } : {}) };
+    } finally { client?.release(discardError); }
+  }
   let result: AuditWriteResultLike | undefined;
   let thrown: string | undefined;
   try {
@@ -187,10 +221,18 @@ export function combineAuditRowOutcomes(first: AuditRowOutcome, ...rest: AuditRo
  * ivd-assessments, predicate-intelligence).
  */
 export function setAuditRowHeaders(
-  res: { setHeader(name: string, value: string): unknown },
+  res: { setHeader(name: string, value: string): unknown; getHeader?(name: string): unknown },
   outcome: AuditRowOutcome | undefined,
 ): void {
   if (!outcome) return;
+  // Multiple audited middleware/handlers can contribute to one response.
+  // A later healthy write cannot erase an earlier unconfirmed/unreadable one.
+  if (res.getHeader?.('X-Audit-Row-Persisted') === 'false') return;
+  if (res.getHeader?.('X-Audit-Row-Chained') === 'false' && outcome.persisted) return;
   res.setHeader('X-Audit-Row-Persisted', String(outcome.persisted));
   if (!outcome.persisted) res.setHeader('X-Audit-Row-Code', outcome.code);
+  else {
+    res.setHeader('X-Audit-Row-Chained', String(outcome.chained));
+    if (!outcome.chained) res.setHeader('X-Audit-Row-Code', 'AUDIT_ROW_NOT_RETRIEVABLE');
+  }
 }

@@ -197,7 +197,8 @@ describe('GovernedActionSignoff', () => {
 
     fireEvent.click(sign);
     await waitFor(() => expect(onResolved).toHaveBeenCalled());
-    const body = JSON.parse((global.fetch as any).mock.calls[0][1].body);
+    // The run is read first (§5.6, AnA detach DT2); the sign-off is the governed-action call.
+    const body = JSON.parse((global.fetch as any).mock.calls.find(([u]: [string]) => String(u).includes('/governed-action'))[1].body);
     expect(body.password).toBe('pw-secret');
     expect(body.params).toMatchObject({ signatureMeaning: 'APPROVER' });
   });
@@ -262,7 +263,8 @@ describe('GovernedActionSignoff — a proposed reason', () => {
     expect((screen.getByLabelText('Reason for change') as HTMLTextAreaElement).value).toBe('Seeding the TMF for the Phase 1 study');
     fireEvent.click(screen.getByRole('button', { name: 'Confirm and run' }));
     await waitFor(() => expect(onResolved).toHaveBeenCalled());
-    const body = JSON.parse((global.fetch as any).mock.calls[0][1].body);
+    // The run is read first (§5.6, AnA detach DT2); the sign-off is the governed-action call.
+    const body = JSON.parse((global.fetch as any).mock.calls.find(([u]: [string]) => String(u).includes('/governed-action'))[1].body);
     expect(body).toMatchObject({ command: 'seed_tmf', reasonForChange: 'Seeding the TMF for the Phase 1 study', runId: 'run-1', toolUseId: 'tu-7' });
   });
 
@@ -272,7 +274,8 @@ describe('GovernedActionSignoff — a proposed reason', () => {
     fireEvent.change(screen.getByLabelText('Reason for change'), { target: { value: 'Phase 1 TMF per sponsor SOP-114.' } });
     fireEvent.click(screen.getByRole('button', { name: 'Confirm and run' }));
     await waitFor(() => expect(onResolved).toHaveBeenCalled());
-    const body = JSON.parse((global.fetch as any).mock.calls[0][1].body);
+    // The run is read first (§5.6, AnA detach DT2); the sign-off is the governed-action call.
+    const body = JSON.parse((global.fetch as any).mock.calls.find(([u]: [string]) => String(u).includes('/governed-action'))[1].body);
     expect(body.reasonForChange).toBe('Phase 1 TMF per sponsor SOP-114.');
   });
 });

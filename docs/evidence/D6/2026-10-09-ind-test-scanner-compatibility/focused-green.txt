@@ -1,0 +1,388 @@
+(node:7) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+(node:20) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/324dc668b968/concept2cure-v2
+
+(node:20) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ana/__tests__/drafting-product-advisory.test.ts
+{
+  "timestamp": "2026-10-09T22:12:53.125Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-09T22:12:53.125Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/drafting-product-advisory.test.ts
+{
+  "timestamp": "2026-10-09T22:12:53.126Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/drafting-product-advisory.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for allergy / small_molecule 11ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for allergy / peptide 1ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for allergy / protein 1ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for allergy / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for allergy / adc 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for allergy / oligonucleotide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for allergy / vaccine 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for allergy / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for allergy / gene_therapy 1ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for allergy / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for allergy / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for cardiology / small_molecule 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for cardiology / peptide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for cardiology / protein 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for cardiology / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for cardiology / adc 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for cardiology / oligonucleotide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for cardiology / vaccine 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for cardiology / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for cardiology / gene_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for cardiology / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for cardiology / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for dental / small_molecule 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for dental / peptide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for dental / protein 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for dental / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for dental / adc 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for dental / oligonucleotide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for dental / vaccine 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for dental / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for dental / gene_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for dental / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for dental / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for dermatology / small_molecule 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for dermatology / peptide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for dermatology / protein 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for dermatology / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for dermatology / adc 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for dermatology / oligonucleotide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for dermatology / vaccine 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for dermatology / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for dermatology / gene_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for dermatology / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for dermatology / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for endocrinology / small_molecule 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for endocrinology / peptide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for endocrinology / protein 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for endocrinology / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for endocrinology / adc 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for endocrinology / oligonucleotide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for endocrinology / vaccine 4ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for endocrinology / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for endocrinology / gene_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for endocrinology / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for endocrinology / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for gastroenterology / small_molecule 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for gastroenterology / peptide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for gastroenterology / protein 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for gastroenterology / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for gastroenterology / adc 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for gastroenterology / oligonucleotide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for gastroenterology / vaccine 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for gastroenterology / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for gastroenterology / gene_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for gastroenterology / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for gastroenterology / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for gene-cell-therapy / small_molecule 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for gene-cell-therapy / peptide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for gene-cell-therapy / protein 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for gene-cell-therapy / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for gene-cell-therapy / adc 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for gene-cell-therapy / oligonucleotide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for gene-cell-therapy / vaccine 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for gene-cell-therapy / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for gene-cell-therapy / gene_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for gene-cell-therapy / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for gene-cell-therapy / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for other / small_molecule 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for other / peptide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for other / protein 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for other / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for other / adc 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for other / oligonucleotide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for other / vaccine 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for other / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for other / gene_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for other / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for other / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for hematology / small_molecule 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for hematology / peptide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for hematology / protein 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for hematology / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for hematology / adc 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for hematology / oligonucleotide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for hematology / vaccine 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for hematology / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for hematology / gene_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for hematology / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for hematology / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for immunology / small_molecule 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for immunology / peptide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for immunology / protein 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for immunology / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for immunology / adc 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for immunology / oligonucleotide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for immunology / vaccine 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for immunology / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for immunology / gene_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for immunology / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for immunology / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for infectious-disease / small_molecule 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for infectious-disease / peptide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for infectious-disease / protein 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for infectious-disease / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for infectious-disease / adc 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for infectious-disease / oligonucleotide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for infectious-disease / vaccine 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for infectious-disease / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for infectious-disease / gene_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for infectious-disease / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for infectious-disease / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for metabolic / small_molecule 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for metabolic / peptide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for metabolic / protein 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for metabolic / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for metabolic / adc 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for metabolic / oligonucleotide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for metabolic / vaccine 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for metabolic / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for metabolic / gene_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for metabolic / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for metabolic / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for musculoskeletal / small_molecule 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for musculoskeletal / peptide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for musculoskeletal / protein 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for musculoskeletal / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for musculoskeletal / adc 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for musculoskeletal / oligonucleotide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for musculoskeletal / vaccine 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for musculoskeletal / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for musculoskeletal / gene_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for musculoskeletal / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for musculoskeletal / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for nephrology / small_molecule 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for nephrology / peptide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for nephrology / protein 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for nephrology / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for nephrology / adc 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for nephrology / oligonucleotide 2ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for nephrology / vaccine 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for nephrology / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for nephrology / gene_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for nephrology / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for nephrology / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for neurology / small_molecule 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for neurology / peptide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for neurology / protein 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for neurology / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for neurology / adc 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for neurology / oligonucleotide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for neurology / vaccine 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for neurology / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for neurology / gene_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for neurology / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for neurology / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for obstetrics-gynecology / small_molecule 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for obstetrics-gynecology / peptide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for obstetrics-gynecology / protein 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for obstetrics-gynecology / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for obstetrics-gynecology / adc 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for obstetrics-gynecology / oligonucleotide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for obstetrics-gynecology / vaccine 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for obstetrics-gynecology / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for obstetrics-gynecology / gene_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for obstetrics-gynecology / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for obstetrics-gynecology / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for oncology / small_molecule 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for oncology / peptide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for oncology / protein 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for oncology / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for oncology / adc 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for oncology / oligonucleotide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for oncology / vaccine 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for oncology / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for oncology / gene_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for oncology / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for oncology / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for ophthalmology / small_molecule 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for ophthalmology / peptide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for ophthalmology / protein 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for ophthalmology / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for ophthalmology / adc 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for ophthalmology / oligonucleotide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for ophthalmology / vaccine 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for ophthalmology / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for ophthalmology / gene_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for ophthalmology / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for ophthalmology / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for pain / small_molecule 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for pain / peptide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for pain / protein 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for pain / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for pain / adc 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for pain / oligonucleotide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for pain / vaccine 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for pain / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for pain / gene_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for pain / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for pain / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for psychiatry / small_molecule 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for psychiatry / peptide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for psychiatry / protein 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for psychiatry / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for psychiatry / adc 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for psychiatry / oligonucleotide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for psychiatry / vaccine 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for psychiatry / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for psychiatry / gene_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for psychiatry / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for psychiatry / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for rare-disease / small_molecule 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for rare-disease / peptide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for rare-disease / protein 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for rare-disease / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for rare-disease / adc 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for rare-disease / oligonucleotide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for rare-disease / vaccine 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for rare-disease / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for rare-disease / gene_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for rare-disease / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for rare-disease / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for respiratory / small_molecule 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for respiratory / peptide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for respiratory / protein 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for respiratory / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for respiratory / adc 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for respiratory / oligonucleotide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for respiratory / vaccine 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for respiratory / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for respiratory / gene_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for respiratory / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for respiratory / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for transplant / small_molecule 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for transplant / peptide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for transplant / protein 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for transplant / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for transplant / adc 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for transplant / oligonucleotide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for transplant / vaccine 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for transplant / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for transplant / gene_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for transplant / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for transplant / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for urology / small_molecule 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for urology / peptide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for urology / protein 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for urology / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for urology / adc 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for urology / oligonucleotide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for urology / vaccine 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for urology / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for urology / gene_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for urology / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for urology / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for vaccines / small_molecule 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for vaccines / peptide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for vaccines / protein 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for vaccines / mab 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for vaccines / adc 1ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for vaccines / oligonucleotide 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for vaccines / vaccine 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for vaccines / cell_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for vaccines / gene_therapy 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for vaccines / biosimilar 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > retains independent labels for vaccines / combination 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > passes the advertised fields through the registered batch handler and real drafting service 15ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > leaves ambiguous modality biologic unassessed even with a CGT area 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > leaves ambiguous modality mrna unassessed even with a CGT area 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > leaves ambiguous modality unknown-modality unassessed even with a CGT area 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > leaves ambiguous modality __proto__ unassessed even with a CGT area 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > leaves ambiguous modality constructor unassessed even with a CGT area 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > leaves ambiguous modality toString unassessed even with a CGT area 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > does not infer a disease area from a recognized modality or repeat an unknown label as instructions 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > filters out oncology safety/efficacy rules while drafting CMC, retaining the default renderer contract 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > keeps matching CGT CMC rules and does not project a clinical study result 1ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > does not attach the CMC reference set to clinical safety drafting 0ms
+ ✓ server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > leaves omitted product context unassessed and preserves normal drafting 0ms
+(node:54) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts
+{
+  "timestamp": "2026-10-09T22:12:58.587Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-09T22:12:58.588Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts
+{
+  "timestamp": "2026-10-09T22:12:58.588Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > resolves 3.2.S.1.1 as its own recorded section, rather than a broad ancestor 2ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > resolves 3.2.S.1.2 as its own recorded section, rather than a broad ancestor 1ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > resolves 3.2.S.1.3 as its own recorded section, rather than a broad ancestor 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > resolves 3.2.P.2.1.1 as its own recorded section, rather than a broad ancestor 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > resolves 3.2.P.2.1.2 as its own recorded section, rather than a broad ancestor 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > resolves 3.2.P.2.2.1 as its own recorded section, rather than a broad ancestor 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > resolves 3.2.P.2.2.2 as its own recorded section, rather than a broad ancestor 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > resolves 3.2.P.2.2.3 as its own recorded section, rather than a broad ancestor 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > resolves 3.2.P.2.3 as its own recorded section, rather than a broad ancestor 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > resolves 3.2.P.2.4 as its own recorded section, rather than a broad ancestor 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > resolves 3.2.P.2.5 as its own recorded section, rather than a broad ancestor 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > resolves 3.2.P.2.6 as its own recorded section, rather than a broad ancestor 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > passes exact 3.2.S.1.1 guidance and missing-evidence limits to the real drafting gateway 3ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > passes exact 3.2.S.1.2 guidance and missing-evidence limits to the real drafting gateway 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > passes exact 3.2.S.1.3 guidance and missing-evidence limits to the real drafting gateway 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > passes exact 3.2.P.2.1.1 guidance and missing-evidence limits to the real drafting gateway 1ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > passes exact 3.2.P.2.1.2 guidance and missing-evidence limits to the real drafting gateway 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > passes exact 3.2.P.2.2.1 guidance and missing-evidence limits to the real drafting gateway 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > passes exact 3.2.P.2.2.2 guidance and missing-evidence limits to the real drafting gateway 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > passes exact 3.2.P.2.2.3 guidance and missing-evidence limits to the real drafting gateway 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > passes exact 3.2.P.2.3 guidance and missing-evidence limits to the real drafting gateway 1ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > passes exact 3.2.P.2.4 guidance and missing-evidence limits to the real drafting gateway 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > passes exact 3.2.P.2.5 guidance and missing-evidence limits to the real drafting gateway 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > passes exact 3.2.P.2.6 guidance and missing-evidence limits to the real drafting gateway 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > keeps missing phase/modality and sponsor data unresolved in every new leaf prompt 1ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > retains an explicit refusal to invent wholly unindexed section guidance 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > labels unsupported deeper numbering as inherited guidance, never exact coverage 0ms
+
+ Test Files  2 passed (2)
+      Tests  314 passed (314)
+   Start at  18:12:51
+   Duration  7.15s (transform 3.95s, setup 72ms, import 6.65s, tests 115ms, environment 0ms)
+

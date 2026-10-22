@@ -1,0 +1,42 @@
+$ RLS_ENFORCE=off npx vitest run --config vitest.config.ts tests/golden-journeys tests/lineage
+ ✓ tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey 4240ms
+ ✓ tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey 3706ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 1 · project — a project of org A, created the way the Projects surface creates it 118ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route 194ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx 165ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path 65ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature 82ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault 109ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6b · vault approval — the Vault copy is reviewed and approved (FD5 (c): approved in Authoring without a review, so approved in the Vault) 99ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves 323ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed) 2197ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project 31ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal 58ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a project’s source only through one audited adopt 123ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted 141ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for 1ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows 1ms
+ ✓ tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey 995ms
+ ✓ tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine 899ms
+ ✓ tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine 2521ms
+ ✓ tests/golden-journeys/submission-release-signature.journey.test.ts > Journey B phase 2 — the Part 11 release-signature gate > runs the release gate 228ms
+ ✓ tests/golden-journeys/submission-export-package.journey.test.ts > golden journey — eCTD export to submittable package (canonical) > produces a structurally valid, tenant-isolated, completeness-gated eCTD package 674ms
+ ✓ tests/golden-journeys/submission-export-validation.journey.test.ts > eCTD export → reopen → external-validator qualification > assembles a real package, reopens it, re-verifies checksums, and qualifies it externally 488ms
+ ✓ tests/golden-journeys/marketing-application.journey.test.ts > Journey B — marketing application spine (canonical DDL) > runs the submission spine 118ms
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > finds the journeys (guards the scanner itself) 2ms
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > cer-eu-mdr.journey.test.ts 1ms
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > device-510k-estar.journey.test.ts 1ms
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > drug-nda-ectd.journey.test.ts 1ms
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > haq-correction.journey.test.ts 1ms
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > ind-authoring.journey.test.ts 0ms
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > marketing-application.journey.test.ts 0ms
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > submission-export-package.journey.test.ts 0ms
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > submission-export-validation.journey.test.ts 0ms
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > submission-release-signature.journey.test.ts 0ms
+ ✓ tests/golden-journeys/__tests__/journey-recorder-expect-blocked.test.ts > JourneyRecorder.expectBlocked > records a thrown non-assertion error as the block (service-level semantics) 2ms
+ ✓ tests/golden-journeys/__tests__/journey-recorder-expect-blocked.test.ts > JourneyRecorder.expectBlocked > rethrows an assertion failure inside the step and files the step as failed 3ms
+ ✓ tests/golden-journeys/__tests__/journey-recorder-expect-blocked.test.ts > JourneyRecorder.expectBlocked > rejects a step that returns blocked: false 1ms
+ Test Files  12 passed (12)
+      Tests  37 passed (37)
+   Start at  12:47:29
+   Duration  126.74s (transform 17.91s, setup 537ms, import 25.39s, tests 96.66s, environment 1ms)

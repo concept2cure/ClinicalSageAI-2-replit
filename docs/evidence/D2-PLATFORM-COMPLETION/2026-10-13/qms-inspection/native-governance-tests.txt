@@ -1,0 +1,97 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-13T19:14:14.101Z","pid":13326,"hostname":"843541c42987","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-13T19:14:14.103Z","pid":13326,"hostname":"843541c42987","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-13T19:14:14.103Z","pid":13326,"hostname":"843541c42987","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/qms-document-signature-required.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/qms-document-signature-required.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > runs as the runtime role, under RLS, in its own tenant 37ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct UPDATE to effective with no signature is refused, and the document stays draft 145ms
+stdout | tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct INSERT of an effective document is refused
+[database] Database connection successful { timestamp: '2026-10-13T19:14:17.258Z', poolSize: 1 }
+
+stdout | tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct UPDATE to retired with no retirement signature is refused
+[database] Database connection successful { timestamp: '2026-10-13T19:14:17.287Z', poolSize: 1 }
+
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct INSERT of an effective document is refused 33ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct UPDATE to retired with no retirement signature is refused 25ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > the table owner is refused too 45ms
+stdout | tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a signature of the wrong kind, of another organisation, or already revoked does not count
+[database] Database connection successful { timestamp: '2026-10-13T19:14:17.408Z', poolSize: 1 }
+
+stdout | tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a signature of the wrong kind, of another organisation, or already revoked does not count
+[database] Database connection successful { timestamp: '2026-10-13T19:14:17.698Z', poolSize: 1 }
+
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a signature of the wrong kind, of another organisation, or already revoked does not count 505ms
+stdout | tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > an approval written by an earlier transaction does not make a revised version effective
+[database] Database connection successful { timestamp: '2026-10-13T19:14:18.281Z', poolSize: 1 }
+
+{"level":30,"time":"2026-10-13T19:14:18.514Z","pid":13326,"hostname":"843541c42987","context":{"userId":26,"tenantId":93180,"resourceId":"10"},"msg":"[audit-service] [AUDIT] mdx.qms.document.revise qms_document"}
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > an approval written by an earlier transaction does not make a revised version effective 692ms
+stdout | tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > approve: the route makes the document effective with one approval signature from the same transaction
+[database] Database connection successful { timestamp: '2026-10-13T19:14:18.573Z', poolSize: 1 }
+
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > approve: the route makes the document effective with one approval signature from the same transaction 172ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > retire: the route retires the effective document with its retirement signature 191ms
+{"level":30,"time":"2026-10-13T19:14:19.043Z","pid":13326,"hostname":"843541c42987","context":{"userId":26,"tenantId":93180,"resourceId":"13"},"msg":"[audit-service] [AUDIT] mdx.qms.document.revise qms_document"}
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a revised document is approved again through the route 236ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > the service writes the status before the signature, so the check is deferred to COMMIT; checked per statement it refuses 46ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a fixture gives an effective document its signature on the same transaction, before or after the status 41ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a document already effective is not re-checked: an edit that leaves its status alone commits 38ms
+{"level":30,"time":"2026-10-13T19:14:23.400Z","pid":13411,"hostname":"843541c42987","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-13T19:14:23.401Z","pid":13411,"hostname":"843541c42987","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-13T19:14:23.402Z","pid":13411,"hostname":"843541c42987","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/authoring-section-concurrency.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/authoring-section-concurrency.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-13T19:14:23.635Z', poolSize: 1 }
+
+stdout | tests/db/authoring-section-concurrency.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-13T19:14:23.636Z', poolSize: 2 }
+
+stdout | tests/db/authoring-section-concurrency.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/authoring-section-concurrency.dbtest.ts
+✅ Template tables initialized
+
+{"level":30,"time":"2026-10-13T19:14:33.915Z","pid":13411,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 85184998-6d2b-4fe4-85c8-b9b69609f794 by d***@example.test"}
+{"level":30,"time":"2026-10-13T19:14:33.916Z","pid":13411,"hostname":"843541c42987","context":{"userId":"28","tenantId":3,"resourceId":"4e4246ec-2ff3-4931-b41b-a30c6a696e1d"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+ ✓ tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > creates a document and a section to contend over 231ms
+{"level":30,"time":"2026-10-13T19:14:34.006Z","pid":13411,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc 85184998-6d2b-4fe4-85c8-b9b69609f794 by d***@example.test"}
+{"level":30,"time":"2026-10-13T19:14:34.130Z","pid":13411,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc 85184998-6d2b-4fe4-85c8-b9b69609f794 by d***@example.test"}
+ ✓ tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > refuses a save whose token is stale, and overwrites nothing 120ms
+ ✓ tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > accepts a save that carries the current token 74ms
+{"level":30,"time":"2026-10-13T19:14:34.199Z","pid":13411,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc 85184998-6d2b-4fe4-85c8-b9b69609f794 by d***@example.test"}
+ ✓ tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > leaves a caller that sends no token exactly as it was 104ms
+{"level":30,"time":"2026-10-13T19:14:37.710Z","pid":13520,"hostname":"843541c42987","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-13T19:14:37.720Z","pid":13520,"hostname":"843541c42987","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-13T19:14:37.720Z","pid":13520,"hostname":"843541c42987","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/protocol-reviewer-signing-authority.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-13T19:14:38.106Z', poolSize: 1 }
+
+stdout | tests/db/protocol-reviewer-signing-authority.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/protocol-reviewer-signing-authority.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/protocol-reviewer-signing-authority.dbtest.ts > a protocol review is assigned only to someone who can sign its disposition > runs as a role RLS applies to (not the owner, not BYPASSRLS) 90ms
+stdout | tests/db/protocol-reviewer-signing-authority.dbtest.ts > a protocol review is assigned only to someone who can sign its disposition > a member, whose role cannot sign, is refused with 409 in a plain sentence, and nothing is written
+[database] Database connection successful { timestamp: '2026-10-13T19:14:39.289Z', poolSize: 2 }
+
+ ✓ tests/db/protocol-reviewer-signing-authority.dbtest.ts > a protocol review is assigned only to someone who can sign its disposition > a member, whose role cannot sign, is refused with 409 in a plain sentence, and nothing is written 145ms
+ ✓ tests/db/protocol-reviewer-signing-authority.dbtest.ts > a protocol review is assigned only to someone who can sign its disposition > a manager, whose role cannot sign, is refused with 409 in a plain sentence, and nothing is written 35ms
+ ✓ tests/db/protocol-reviewer-signing-authority.dbtest.ts > a protocol review is assigned only to someone who can sign its disposition > the member list the reviewer picker reads marks who can sign, as the assignment judges it 22ms
+ ✓ tests/db/protocol-reviewer-signing-authority.dbtest.ts > a protocol review is assigned only to someone who can sign its disposition > a reviewer is assigned, and signs the disposition: the assignment does not end at a 403 235ms
+
+ Test Files  3 passed (3)
+      Tests  22 passed (22)
+   Start at  19:14:04
+   Duration  35.10s (transform 15.81s, setup 373ms, import 1.97s, tests 30.27s, environment 0ms)

@@ -1,0 +1,13 @@
+# mutation: no-owner-predicate
+# test: server/services/ana/__tests__/run-events.pglite.test.ts -t "4. owner only"
+ × server/services/ana/__tests__/run-events.pglite.test.ts > 4. owner only > a batch from another owner_instance writes zero rows 76ms
+   → expected 1 to be +0 // Object.is equality
+ × server/services/ana/__tests__/run-events.pglite.test.ts > 4. owner only > a heartbeat from another owner_instance changes zero rows 21ms
+   → expected 1 to be +0 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/run-events.pglite.test.ts > 4. owner only > a batch from another owner_instance writes zero rows
+AssertionError: expected 1 to be +0 // Object.is equality
+ FAIL  server/services/ana/__tests__/run-events.pglite.test.ts > 4. owner only > a heartbeat from another owner_instance changes zero rows
+AssertionError: expected 1 to be +0 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  2 failed | 14 skipped (16)

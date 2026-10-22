@@ -1,0 +1,56 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > writes the document and its section, then reports ok 4ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > says so when the new document is not bound to a filing 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > stays quiet when the document IS bound 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > invents no warning when the server reports no binding at all 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > reports NOT ok when the section write fails, even though the document exists 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > reports an unknown document outcome after a server failure and never attempts the section 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > names the 401 as a session problem rather than a server error 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > never throws — a transport failure comes back as a message 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > creates the document in the open project 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > posts nothing and keeps the work when no project is open (PF-07) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > posts nothing and keeps the work when the open id is not a project (PF-07) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > carries the caller’s module rather than defaulting it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > publishShellProject > sets the live global AND the per-tab mirror 10ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > restoreShellProject > rehydrates the global from the mirror after a reload 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > restoreShellProject > never overwrites a live selection with the mirror 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > restoreShellProject > returns null with no mirror and publishes nothing 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > restoreShellProject > treats a malformed or id-less mirror as no selection — never throws, never publishes garbage 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > the open program rides the URL > a fresh tab on a link naming the program opens that program 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > the open program rides the URL > the link wins over a mirror naming a different program 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > the open program rides the URL > keeps what the mirror knows when it names the same program 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > the open program rides the URL > ignores a program param that is not a program UUID 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > the open program rides the URL > writes the open program into the URL, keeping the path and every other param 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > the open program rides the URL > drops the param when no program is open, or the open one is not a program 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > the open program rides the URL > the shell hook follows both navigation and a newly opened program 17ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > returns the exact document, project and section code with its binding outcome 5ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 0 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 1 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 2 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 3 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 4 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 0 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 1 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 2 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 3 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 4 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not claim nothing was saved after a lost document response 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains confirmed document identity after a lost section response 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a project change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a project-round-trip change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a account change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a organization change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a session change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > rechecks scope after reading the response body 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > allows same-project metadata updates and token refresh for the same account 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > opens the exact saved target and refuses a later project or account change 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > detects leaving and returning to the same program 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > keeps same-program and metadata updates current 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > a fresh guard belongs to the current program 1ms
+
+ Test Files  4 passed (4)
+      Tests  48 passed (48)
+   Start at  21:24:26
+   Duration  3.91s (transform 325ms, setup 425ms, import 427ms, tests 85ms, environment 2.22s)

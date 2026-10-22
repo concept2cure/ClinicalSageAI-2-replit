@@ -14,10 +14,20 @@
  *    /api/ind-lifecycle/cover-letter) next to a button that never called it — a
  *    false affordance. The route text is gone; every card is now wired
  *    end-to-end (the cover-letter exemplar first, the rest mirroring it — see
- *    indLifecycleDeliverables.test.tsx), each card keeps an honest "Ask AnA"
- *    button that does exactly that, and the assemble result (the server's
+ *    indLifecycleDeliverables.test.tsx), each AnA-draftable card keeps an honest
+ *    "Draft with AnA" button that does exactly that, and the assemble result (the server's
  *    model + its gap verdict) renders in place.
+ *
+ * And, since 2026-10-15 (P-32 follow-up), the clock is the SERVER's:
+ * POST /api/ind-lifecycle/clock runs evaluateRegulatoryClock over the
+ * recorded target date. The screen used a client copy of that engine
+ * (indlClock in fixtures/ind-lifecycle-data.ts), and of the readiness engine
+ * (indlReadiness); both are gone. A computation in flight says so, and a
+ * failed one says it failed and offers a retry — it never renders as a clock.
  */
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, within, waitFor } from '@testing-library/react';
@@ -56,9 +66,27 @@ const CHECKLIST = (targetReceiptDate: string | null) => ({
 });
 
 const COVER_LETTER_URL = '/api/ind-lifecycle/cover-letter';
+const CLOCK_URL = '/api/ind-lifecycle/clock';
+
+type Stub = { ok: boolean; status: number; body: unknown };
+/** The server's ClockState for a receipt still inside the 30-day window. */
+const SERVER_CLOCK = {
+  status: 'submitted',
+  thirtyDayDate: '2031-01-15T00:00:00.000Z',
+  safeToProceed: false,
+  onHold: false,
+  daysUntilThirtyDay: 4321,
+  rationale: 'Within the 30-day FDA review period; 4321 calendar day(s) remain before the investigation may begin absent a hold.',
+};
+let clockStub: Stub | 'pending' = { ok: true, status: 200, body: SERVER_CLOCK };
 
 function mockApi(target: string | null, coverLetter?: { ok: boolean; status: number; body: unknown }) {
   apiRequest.mockImplementation(async (method: string, url: string) => {
+    if (method === 'POST' && url === CLOCK_URL) {
+      if (clockStub === 'pending') return new Promise<Response>(() => {});
+      const c = clockStub;
+      return { ok: c.ok, status: c.status, json: async () => c.body } as Response;
+    }
     if (method === 'GET' && url === '/api/ind-checklist') {
       return { ok: true, status: 200, json: async () => ({ data: [CHECKLIST(target)], meta: { count: 1 } }) } as Response;
     }
@@ -78,7 +106,10 @@ const fmt = (iso: string) =>
   new Date(iso).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
 
 afterEach(cleanup);
-beforeEach(() => apiRequest.mockReset());
+beforeEach(() => {
+  apiRequest.mockReset();
+  clockStub = { ok: true, status: 200, body: SERVER_CLOCK };
+});
 
 describe('IndLifecycle — 30-day clock from the RECORDED target date only', () => {
   it('renders "No target date set" (reason + next action) when no target is recorded', async () => {
@@ -114,6 +145,20 @@ describe('IndLifecycle — a projected 30-day clock never speaks as the regulato
      for an IND the FDA may never have received. That sentence authorises dosing
      the first human subject. */
   const LONG_PAST = new Date(Date.now() - 90 * 86400000).toISOString();
+  /* What the server's engine answers for that date: elapsed, no hold — its own
+     status is safe_to_proceed and its own sentence says investigations may
+     proceed. The screen must still speak of a projection. */
+  const ELAPSED = {
+    status: 'safe_to_proceed',
+    thirtyDayDate: new Date(Date.parse(LONG_PAST) + 30 * 86400000).toISOString(),
+    safeToProceed: true,
+    onHold: false,
+    daysUntilThirtyDay: 0,
+    rationale: 'The 30-day review period has elapsed with no clinical hold; clinical investigations may proceed (21 CFR 312.40(b)).',
+  };
+  beforeEach(() => {
+    clockStub = { ok: true, status: 200, body: ELAPSED };
+  });
 
   it('does not show a cleared-to-proceed chip or the may-proceed sentence over a target date', async () => {
     mockApi(LONG_PAST);
@@ -150,6 +195,78 @@ describe('IndLifecycle — a projected 30-day clock never speaks as the regulato
   });
 });
 
+describe('IndLifecycle — the 30-day clock is the server engine\'s, never a client copy', () => {
+  const TARGET = '2026-10-01T00:00:00.000Z';
+
+  it('shows the clock the server computed from the recorded target date', async () => {
+    mockApi(TARGET);
+    render(<IndLifecycle {...props()} />);
+
+    // The server's numbers, not a client-side receipt + 30 days.
+    expect(await screen.findByText('4321')).toBeTruthy();
+    expect(screen.getByText(fmt(SERVER_CLOCK.thirtyDayDate))).toBeTruthy();
+    expect(document.body.textContent).not.toContain(fmt(new Date(Date.parse(TARGET) + 30 * 86400000).toISOString()));
+    expect(apiRequest).toHaveBeenCalledWith('POST', CLOCK_URL, { receiptDate: TARGET });
+    // Still a projection: the receipt is a plan.
+    expect(screen.getByText('Projected from target date')).toBeTruthy();
+  });
+
+  it('while the server computes, says so — no number, no date', async () => {
+    clockStub = 'pending';
+    mockApi(TARGET);
+    render(<IndLifecycle {...props()} />);
+
+    expect(await screen.findByText(/Computing the 30-day clock/)).toBeTruthy();
+    expect(screen.getByText('Computing')).toBeTruthy(); // the chip
+    expect(document.querySelector('.indl-clock-big')?.textContent).toMatch(/^--/);
+    expect(screen.queryByText('No target date set')).toBeNull();
+  });
+
+  it('a failed computation reads as a failure with a retry — never as a clock, never as "no target date"', async () => {
+    clockStub = { ok: false, status: 500, body: { error: { code: 'INTERNAL', message: 'The clock engine is unavailable.' } } };
+    mockApi(TARGET);
+    render(<><IndLifecycle {...props()} /><ClockProbe /></>);
+
+    expect(await screen.findByText(/The 30-day clock could not be computed — The clock engine is unavailable\./)).toBeTruthy();
+    expect(screen.getByText('Clock not computed')).toBeTruthy();
+    expect(document.querySelector('.indl-clock-big')?.textContent).toMatch(/^--/);
+    expect(screen.queryByText('No target date set')).toBeNull();
+    expect(document.body.textContent).not.toContain('No target submission date is recorded');
+    await waitFor(() => expect((seenContext as any)?.facts?.thirtyDayClockState).toBe('not-computed'));
+    expect((seenContext as any).facts.thirtyDayClock).toBeNull();
+    expect(String((seenContext as any).summary)).toMatch(/could not be computed/);
+
+    // Retry asks the server again, and its answer renders.
+    clockStub = { ok: true, status: 200, body: SERVER_CLOCK };
+    fireEvent.click(screen.getByRole('button', { name: 'Retry the clock' }));
+    expect(await screen.findByText('4321')).toBeTruthy();
+    expect(apiRequest.mock.calls.filter((c) => c[1] === CLOCK_URL)).toHaveLength(2);
+  });
+
+  it('a 200 that is not a clock is a failure, not a clock at zero', async () => {
+    clockStub = { ok: true, status: 200, body: {} };
+    mockApi(TARGET);
+    render(<IndLifecycle {...props()} />);
+    expect(await screen.findByText(/The 30-day clock could not be computed — unexpected response/)).toBeTruthy();
+  });
+
+  it('with no recorded target date, nothing is asked of the server and nothing is projected', async () => {
+    mockApi(null);
+    render(<IndLifecycle {...props()} />);
+    await screen.findByText('No target date set');
+    expect(apiRequest.mock.calls.some((c) => c[1] === CLOCK_URL)).toBe(false);
+  });
+
+  it('the screen carries no client copy of the readiness or clock engine', async () => {
+    const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../..');
+    const src = fs.readFileSync(path.join(REPO, 'client/src/concept2cure/v2/surfaces/IndLifecycle.tsx'), 'utf8');
+    expect(src).not.toMatch(/\bindlReadiness\b|\bindlClock\b/);
+    const fixtures = await import('../fixtures/ind-lifecycle-data');
+    expect(Object.keys(fixtures)).not.toContain('indlReadiness');
+    expect(Object.keys(fixtures)).not.toContain('indlClock');
+  });
+});
+
 describe('IndLifecycle — deliverable cards carry no false affordance', () => {
   it('prints no server route as decorative text', async () => {
     mockApi(null);
@@ -160,19 +277,17 @@ describe('IndLifecycle — deliverable cards carry no false affordance', () => {
     expect(document.querySelector('.indl-route')).toBeNull();
   });
 
-  it('every card keeps an honest "Ask AnA" button that does exactly that', async () => {
+  it('an AnA-draftable card offers an honest "Draft with AnA" button that does exactly that', async () => {
     const p = props();
     mockApi(null);
     render(<IndLifecycle {...p} />);
     await screen.findByText('No target date set');
 
-    // The briefing-book card (now wired end-to-end) still offers Ask AnA, and
-    // that button hands its generic prompt to AnA — nothing else.
-    const askButtons = screen.getAllByText('Ask AnA');
-    expect(askButtons.length).toBeGreaterThan(0);
+    // The briefing-book card (wired end-to-end) offers Draft with AnA, and that
+    // button hands its generic prompt to AnA — nothing else.
     const briefingCard = screen.getByText('Pre-IND Briefing Book').closest('.indl-dcard')! as HTMLElement;
-    fireEvent.click(within(briefingCard).getByText('Ask AnA'));
-    expect(p.onAsk).toHaveBeenCalledWith('Assemble the Pre-IND briefing book for this program.');
+    fireEvent.click(within(briefingCard).getByText('Draft with AnA'));
+    expect(p.onAsk).toHaveBeenCalledWith('Draft the Pre-IND briefing book for this program in the editor.');
     // No POST fired from asking AnA.
     expect(apiRequest.mock.calls.some((c) => c[1] === '/api/ind-lifecycle/briefing-book')).toBe(false);
   });
@@ -199,10 +314,12 @@ describe('IndLifecycle — deliverable cards carry no false affordance', () => {
     expect(await screen.findByText('REAL SERVER LETTER BODY')).toBeTruthy();
     expect(document.body.textContent).toContain('Missing before filing: signatoryName');
     // The POST carried the loaded checklist's real identity — nothing invented.
+    // 2026-10-15: it also carried submissionType 'original' for every letter;
+    // it now names the submission, and the server reads the type from its record.
     expect(apiRequest).toHaveBeenCalledWith('POST', COVER_LETTER_URL, {
       sponsorName: 'Acme Bio',
       drugName: 'Zexanib',
-      submissionType: 'original',
+      submissionId: 31,
     });
   });
 

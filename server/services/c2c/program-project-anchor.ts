@@ -25,7 +25,7 @@
  */
 
 import type { PoolClient } from 'pg';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import { projects } from '../../../shared/schema';
 import type { RequestDb } from '../../db/requestDb';
 import { looksLikeProgramUuid, parseIntegerProjectId } from '../../lib/project-id.js';
@@ -77,6 +77,13 @@ export interface EnsureAnchorInput {
   code: string | null;
   /** regulatory_programs.priority, verbatim. */
   priority: string;
+  /**
+   * `projects.metadata` for the new row: the registry context the readiness
+   * engine reads (services/c2c/program-registry-context.ts), or null when the
+   * program names none. Written only on insert; an existing anchor keeps its
+   * own (its context comes from migrations/20261008c, Rule 1).
+   */
+  metadata?: Record<string, unknown> | null;
 }
 
 interface PreflightRow {
@@ -145,7 +152,7 @@ interface PreflightRow {
  * the way out; refusing the program is.
  */
 export async function ensureProgramProjectAnchor(input: EnsureAnchorInput): Promise<AnchorResult> {
-  const { client, orgId, userId, programId, name, code, priority } = input;
+  const { client, orgId, userId, programId, name, code, priority, metadata } = input;
 
   // One round trip for both preconditions. The column presence check comes
   // FIRST and is read from the catalog rather than discovered by a failed
@@ -232,13 +239,17 @@ export async function ensureProgramProjectAnchor(input: EnsureAnchorInput): Prom
   // unmaterialized path as a supported state (it falls back to the bare id in
   // its prefix scans and can recompute on demand). Writing a path here would
   // assert a hierarchy position nothing established.
+  // `metadata` carries the registry context the readiness engine reads
+  // (projects.metadata.registryId / submissionType, report-os orchestrator).
+  // Intake wrote none, so no program's readiness could ever be computed there
+  // (QA 2026-10-08, j8). NULL when the program names no registry entry.
   const inserted = await client.query<{ id: number | string }>(
     `INSERT INTO projects
        (organization_id, client_workspace_id, name, code, type, status, priority,
-        created_by_id, owner_id, regulatory_program_id)
-     VALUES ($1, $2, $3, $4, 'regulatory', 'active', $5, $6, $6, $7)
+        created_by_id, owner_id, regulatory_program_id, metadata)
+     VALUES ($1, $2, $3, $4, 'regulatory', 'active', $5, $6, $6, $7, $8::json)
      RETURNING id`,
-    [orgId, workspaceId, name, code, priority, userId, programId],
+    [orgId, workspaceId, name, code, priority, userId, programId, metadata ? JSON.stringify(metadata) : null],
   );
   return { projectId: Number(inserted.rows[0].id), created: true };
 }
@@ -281,6 +292,42 @@ export interface ProgramAnchorRow {
   clientWorkspaceId: number | null;
 }
 
+export interface ProgramAnchorReadExecutor {
+  query(text: string, params?: unknown[]): Promise<{ rows: unknown[] }>;
+}
+export type ProgramAnchorEligibility = 'all' | 'non-deleted';
+export interface ProgramAnchorCandidate { programId: string; anchor: ProgramAnchorRow | null }
+
+function parsedAnchor(row: unknown): ProgramAnchorRow | null {
+  if (!row || typeof row !== 'object' || !('id' in row)) return null;
+  const id = Number(row.id);
+  if (!Number.isSafeInteger(id) || id <= 0) return null;
+  const workspace = 'clientWorkspaceId' in row ? row.clientWorkspaceId : null;
+  if (workspace == null) return { id, clientWorkspaceId: null };
+  const clientWorkspaceId = Number(workspace);
+  return Number.isSafeInteger(clientWorkspaceId) && clientWorkspaceId > 0 ? { id, clientWorkspaceId } : null;
+}
+
+/** All recorded eligible anchors, before sharing is evaluated. A malformed or
+ * duplicate relationship never becomes unique by hiding its private row. */
+export async function listProgramAnchorCandidates(db: ProgramAnchorReadExecutor, params: {
+  orgId: number; eligibility?: ProgramAnchorEligibility;
+}): Promise<ProgramAnchorCandidate[]> {
+  const statement = params.eligibility === 'non-deleted'
+    ? `SELECT regulatory_program_id::text AS program_id,id,client_workspace_id AS "clientWorkspaceId"
+       FROM projects WHERE organization_id=$1 AND regulatory_program_id IS NOT NULL
+         AND status IS DISTINCT FROM 'deleted' ORDER BY regulatory_program_id,id`
+    : `SELECT regulatory_program_id::text AS program_id,id,client_workspace_id AS "clientWorkspaceId"
+       FROM projects WHERE organization_id=$1 AND regulatory_program_id IS NOT NULL ORDER BY regulatory_program_id,id`;
+  const { rows } = await db.query(statement,[params.orgId]);
+  return rows.map(row => {
+    if (!row || typeof row !== 'object' || !('program_id' in row) || typeof row.program_id !== 'string') {
+      throw new Error('Program anchor identity could not be read');
+    }
+    return { programId: row.program_id, anchor: parsedAnchor(row) };
+  });
+}
+
 /**
  * The program's anchor row, org-scoped: the lowest-id projects row naming it,
  * which is the row intake links (ensureProgramProjectAnchor, ORDER BY id). The
@@ -299,24 +346,28 @@ export interface ProgramAnchorRow {
  * caller's to judge (isMissingAnchorColumn).
  */
 export async function readProgramAnchorRow(
-  db: RequestDb | { query(text: string, params?: unknown[]): Promise<{ rows: ProgramAnchorRow[] }> },
-  params: { programId: string; orgId: number; context: string; requireUnique?: boolean },
+  db: RequestDb | ProgramAnchorReadExecutor,
+  params: { programId: string; orgId: number; context: string; requireUnique?: boolean; eligibility?: ProgramAnchorEligibility },
 ): Promise<ProgramAnchorRow | null> {
   const rows = 'select' in db ? await db
     .select({ id: projects.id, clientWorkspaceId: projects.clientWorkspaceId })
     .from(projects)
-    .where(and(eq(projects.regulatoryProgramId, params.programId), eq(projects.organizationId, params.orgId)))
+    .where(and(eq(projects.regulatoryProgramId, params.programId), eq(projects.organizationId, params.orgId),
+      params.eligibility === 'non-deleted' ? sql`${projects.status} IS DISTINCT FROM 'deleted'` : undefined))
     .orderBy(asc(projects.id))
     .limit(2) : (await db.query(
-      `SELECT id, client_workspace_id AS "clientWorkspaceId" FROM projects
-       WHERE regulatory_program_id = $1 AND organization_id = $2 ORDER BY id LIMIT 2`,
+      params.eligibility === 'non-deleted'
+        ? `SELECT id, client_workspace_id AS "clientWorkspaceId" FROM projects
+           WHERE regulatory_program_id=$1 AND organization_id=$2 AND status IS DISTINCT FROM 'deleted' ORDER BY id LIMIT 2`
+        : `SELECT id, client_workspace_id AS "clientWorkspaceId" FROM projects
+           WHERE regulatory_program_id=$1 AND organization_id=$2 ORDER BY id LIMIT 2`,
       [params.programId, params.orgId],
     )).rows;
   if ((rows?.length ?? 0) > 1) {
     logger.warn(params.requireUnique ? 'Program has more than one anchor row; unique anchor required' : 'Program has more than one anchor row; reading the lowest id, the row intake links', {
       context: params.context,
       programId: params.programId,
-      projectIds: rows.map((r) => r.id),
+      projectIds: rows.map((r) => parsedAnchor(r)?.id ?? null),
     });
     if (params.requireUnique) return null;
   }
@@ -325,8 +376,7 @@ export async function readProgramAnchorRow(
   // A non-integer id is not an anchor. `concept2cure_artifacts.project_id` is
   // an integer FK, so placing against anything else would fail at the
   // registry — better to take the honest unanchored path than to try.
-  const id = Number(row.id);
-  return Number.isInteger(id) && id > 0 ? { id, clientWorkspaceId: row.clientWorkspaceId ?? null } : null;
+  return parsedAnchor(row);
 }
 
 /**

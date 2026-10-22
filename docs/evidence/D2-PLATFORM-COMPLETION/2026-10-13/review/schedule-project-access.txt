@@ -1,0 +1,34 @@
+Branch concept2cure-v2, workstream W1, launch row D2.
+Independent reporting review and narrow scheduling authorization repair, 2026-10-13.
+
+Defect: an active organization member could create a schedule for another
+member's private project or receive its report despite the canonical project
+workspace denying access. Ownership was checked, but project-sharing access was
+not. Reporting backend now owns the canonical project-access helper and uses the
+existing canUseProject/getProjectSharingState/applyProjectSharingState policy.
+
+Repair: subscription configuration uses that helper for its current writing
+creator and every recipient, with current membership roles read from the database.
+Every project in the resolved scope must be accessible. Denial occurs before
+report computation or persistence. Organization-only registers retain their
+existing policy; notifications do not grant additional project rights.
+
+Verification under Node 22.22.0:
+- Before repair: three new configuration cases failed, ten existing cases passed.
+  Unauthorized creator/recipient were accepted, and project policy was not read.
+  See schedule-project-access-red.txt.
+- After repair: 21 cases passed across configuration.test.ts and the independent
+  project-access-integration.test.ts. The latter uses actual PostgreSQL SQL through
+  PGlite and the real sharing/configuration/generation boundaries: private member
+  denial, owner/explicit use-member/viewer access, public/manager/pending-review
+  access, foreign project refusal, live revocation, denied recipient before
+  compute/persist, all-project program group refusal, and organization-only access.
+  See schedule-project-access-green.txt.
+- Focused lint: zero errors, one complexity warning on the existing large
+  configuration function. See schedule-project-access-lint.txt.
+- git diff --check passed for the assigned files.
+
+This evidence uses synthetic fixture users and projects. It does not establish
+production deployment, agency acceptance, or clinical validation. Request/saved
+read/history/portfolio/bundle authorization is owned by the reporting backend and
+has separate regression evidence; these scheduling tests do not substitute for it.

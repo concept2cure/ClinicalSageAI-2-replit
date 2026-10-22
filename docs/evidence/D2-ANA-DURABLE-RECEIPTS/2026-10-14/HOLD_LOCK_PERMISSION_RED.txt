@@ -1,0 +1,74 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > replays around populated history without changing the row, acceptance time or indexes 18ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > refuses direct UPDATE, retaining accepted history 7ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > refuses direct DELETE, retaining accepted history 3ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > refuses direct TRUNCATE, retaining accepted history 3ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"organization_id":0} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"actor_user_id":0} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"receipt_version":1} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"checkpoint":"provider_served"} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"original_sha256":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"extraction_sha256":"broken"} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"payload_sha256":"b"} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"total_chars":0} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"admitted_role":" Viewer "} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"admitted_role":"\u0001viewer"} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"tool_use_id":""} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"thread_id":"  "} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"thread_id":"\u0001private"} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"admitted_role":"viewer"} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"tool_use_id":"tool"} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"thread_id":"private"} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list undefined 2ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list {"start":0,"end":1,"sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list {"start":0,"end":0,"sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list {"start":-1,"end":1,"sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list {"start":0.5,"end":1,"sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list {"start":0,"end":21,"sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list {"start":"0","end":1,"sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list {"start":0,"end":1,"sha256":"missing"} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list {"start":0,"end":1,"sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","text":"private source"} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list {"start":5,"end":10,"sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list {"start":0,"end":10,"sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > accepts exact bounded adjacent/disjoint ranges and Unicode code-point context limits 3ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > has no historical source/user/program foreign-key or automatic erasure cascade 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > installs explicit FORCE tenant RLS without a private-project claim 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > forced tenant/runtime and narrow source receipt erasure controls > permits a viewer-scope observation INSERT while refusing a foreign tenant row 3ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > forced tenant/runtime and narrow source receipt erasure controls > does not expose another tenant history through runtime SELECT 3ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > forced tenant/runtime and narrow source receipt erasure controls > refuses runtime mutation even when the synthetic fixture grants those DML privileges 4ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > forced tenant/runtime and narrow source receipt erasure controls > keeps the erasure door non-public and the runtime outside its NOLOGIN owner role 1ms
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > forced tenant/runtime and narrow source receipt erasure controls > refuses non-platform, invalid target and active-state erasure without deleting history 6ms
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > forced tenant/runtime and narrow source receipt erasure controls > refuses active or unavailable legal holds, then returns the exact authorized erasure count 7ms
+   → expected [Function] to throw error matching /active legal hold/ but got 'permission denied for table legal_hol…'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > forced tenant/runtime and narrow source receipt erasure controls > refuses active or unavailable legal holds, then returns the exact authorized erasure count
+AssertionError: expected [Function] to throw error matching /active legal hold/ but got 'permission denied for table legal_hol…'
+
+- Expected:
+/active legal hold/
+
++ Received:
+"permission denied for table legal_holds"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:143:89
+    141|     await pg.exec('INSERT INTO vault.legal_holds VALUES (1,8,NULL)');
+    142|     await asRuntime('app_super_admin', async () => {
+    143|       await expect(pg.query('SELECT * FROM public.purge_tenant_source_…
+       |                                                                                         ^
+    144|     });
+    145|     await pg.exec('UPDATE vault.legal_holds SET lifted_at=now() WHERE …
+ ❯ asRuntime tests/schema-contract/ana-source-read-receipts.contract.test.ts:38:18
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:142:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 39 passed (40)
+   Start at  20:44:34
+   Duration  2.09s (transform 71ms, setup 73ms, import 41ms, tests 1.76s, environment 0ms)
+

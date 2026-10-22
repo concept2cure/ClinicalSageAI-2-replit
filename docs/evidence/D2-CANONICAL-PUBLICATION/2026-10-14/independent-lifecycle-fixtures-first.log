@@ -1,0 +1,76 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/document-data-disposition/__tests__/runtime-role.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T21:29:01.819Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:29:01.820Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/document-data-disposition/__tests__/runtime-role.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T21:29:01.820Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/document-data-disposition/__tests__/runtime-role.pglite.integration.test.ts
+[database] Database connection successful
+
+ ✓ server/services/document-data-disposition/__tests__/runtime-role.pglite.integration.test.ts > dispositions under the deployed integer RLS sweep and runtime role > establishes a negative control and proves the role cannot bypass forced RLS 11ms
+ ✓ server/services/document-data-disposition/__tests__/runtime-role.pglite.integration.test.ts > dispositions under the deployed integer RLS sweep and runtime role > refuses cross-tenant reads, updates, deletes and inserts at the database boundary 7ms
+ ✓ server/services/document-data-disposition/__tests__/runtime-role.pglite.integration.test.ts > dispositions under the deployed integer RLS sweep and runtime role > runs preview, audit append, retain and terminal withdrawal without elevated privileges 208ms
+ ✓ server/services/document-data-disposition/__tests__/runtime-role.pglite.integration.test.ts > dispositions under the deployed integer RLS sweep and runtime role > refuses a foreign source and resets local tenant context after rollback 41ms
+stdout | server/services/document-data-disposition/__tests__/confirmation-freshness.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T21:29:04.805Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:29:04.806Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/document-data-disposition/__tests__/confirmation-freshness.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T21:29:04.806Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/document-data-disposition/__tests__/confirmation-freshness.pglite.integration.test.ts
+[database] Database connection successful
+
+ ✓ server/services/document-data-disposition/__tests__/confirmation-freshness.pglite.integration.test.ts > confirmation rechecks the current owned live program after reservations > refuses a program deleted change before any decision or audit is committed 85ms
+ ✓ server/services/document-data-disposition/__tests__/confirmation-freshness.pglite.integration.test.ts > confirmation rechecks the current owned live program after reservations > refuses a program owner change before any decision or audit is committed 46ms
+ ✓ server/services/document-data-disposition/__tests__/confirmation-freshness.pglite.integration.test.ts > confirmation rechecks the current owned live program after reservations > refuses a program lead change before any decision or audit is committed 48ms
+ ✓ server/services/document-data-disposition/__tests__/confirmation-freshness.pglite.integration.test.ts > confirmation rechecks the current owned live program after reservations > preserves the authorized capture, impact and audit receipt with the program held through confirmation 72ms
+ ✓ server/services/document-data-disposition/__tests__/route-auth.test.ts > canonical disposition route refuses unproven authority > does not read source impact without verified actor and tenant 22ms
+ ✓ server/services/document-data-disposition/__tests__/route-auth.test.ts > canonical disposition route refuses unproven authority > does not accept client body/header scope or let viewers mutate 26ms
+ ✓ server/services/document-data-disposition/__tests__/route-auth.test.ts > canonical disposition route refuses unproven authority > uses middleware scope and passes stale preview refusal unchanged 15ms
+ ✓ server/services/document-data-disposition/__tests__/route-auth.test.ts > canonical disposition route refuses unproven authority > refuses a cached manager claim when current persisted membership permits only viewing 9ms
+ ✓ server/services/document-data-disposition/__tests__/route-auth.test.ts > canonical disposition route refuses unproven authority > keeps mutation activation closed unless the exact environment gate is enabled 0ms
+
+ Test Files  3 passed (3)
+      Tests  13 passed (13)
+   Start at  21:29:00
+   Duration  9.53s (transform 821ms, setup 91ms, import 2.75s, tests 6.22s, environment 0ms)
+

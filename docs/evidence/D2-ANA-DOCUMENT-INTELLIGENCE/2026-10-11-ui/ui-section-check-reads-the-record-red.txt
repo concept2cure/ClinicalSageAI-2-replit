@@ -1,0 +1,257 @@
+RED — the final tests against the code as it stands at HEAD (0b8ef92c).
+Both source files were temporarily restored from HEAD for this run and then put back.
+
+=== server/routes/__tests__/authoringDeficiencyScanRecord.test.ts ===
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/authoringDeficiencyScanRecord.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringDeficiencyScanRecord.test.ts
+{
+  "timestamp": "2026-10-11T23:44:32.666Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDeficiencyScanRecord.test.ts
+{
+  "timestamp": "2026-10-11T23:44:33.136Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-11T23:44:33.136Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDeficiencyScanRecord.test.ts
+{
+  "timestamp": "2026-10-11T23:44:33.136Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDeficiencyScanRecord.test.ts
+✅ Template tables initialized
+
+ × server/routes/__tests__/authoringDeficiencyScanRecord.test.ts > the scan states what the record says the section must contain > serves 2.5 the record’s own nine elements, from its own entry, unverified by this check 39ms
+   → expected undefined to be truthy
+ ✓ server/routes/__tests__/authoringDeficiencyScanRecord.test.ts > the scan states what the record says the section must contain > does not turn the record’s descriptions into deficiencies, nor into an extra check 7ms
+ × server/routes/__tests__/authoringDeficiencyScanRecord.test.ts > the scan states what the record says the section must contain > keeps 2.7.3 and 2.7.4 on their own entries 5ms
+   → Cannot read properties of undefined (reading 'indexed')
+ × server/routes/__tests__/authoringDeficiencyScanRecord.test.ts > the scan states what the record says the section must contain > resolves 4.2.3 — a parent the record carries only the leaves of — to the sections it contains 4ms
+   → Cannot read properties of undefined (reading 'indexed')
+ × server/routes/__tests__/authoringDeficiencyScanRecord.test.ts > the scan states what the record says the section must contain > answers a sub-section with no entry of its own from its containing section, and says so 5ms
+   → Cannot read properties of undefined (reading 'indexed')
+ × server/routes/__tests__/authoringDeficiencyScanRecord.test.ts > the scan states what the record says the section must contain > a code the record does not index reads as not indexed — never as nothing required 5ms
+   → expected undefined to be truthy
+ × server/routes/__tests__/authoringDeficiencyScanRecord.test.ts > a missing keyword is not an agency requirement > never says "as required by", and never attributes the keyword to the region 5ms
+   → expected '{"success":true,"scan_results":{"sect…' not to match /as required by/i
+ ✓ server/routes/__tests__/authoringDeficiencyScanRecord.test.ts > a missing keyword is not an agency requirement > leaves the five-code substring check and its honest wording alone 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoringDeficiencyScanRecord.test.ts > the scan states what the record says the section must contain > serves 2.5 the record’s own nine elements, from its own entry, unverified by this check
+AssertionError: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/authoringDeficiencyScanRecord.test.ts:96:17
+     94|
+     95|     const rec = s.record_requirements;
+     96|     expect(rec).toBeTruthy();
+       |                 ^
+     97|     expect(rec.indexed).toBe(true);
+     98|     expect(rec.source).toBe('exact');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/routes/__tests__/authoringDeficiencyScanRecord.test.ts > the scan states what the record says the section must contain > keeps 2.7.3 and 2.7.4 on their own entries
+TypeError: Cannot read properties of undefined (reading 'indexed')
+ ❯ server/routes/__tests__/authoringDeficiencyScanRecord.test.ts:126:18
+    124|       wireSection(code, 'x'.repeat(400), 'M2');
+    125|       const rec = (await scan()).body.scan_results.record_requirements;
+    126|       expect(rec.indexed).toBe(true);
+       |                  ^
+    127|       expect(rec.source).toBe('exact');
+    128|       expect(rec.answered_by).toBe(code);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/routes/__tests__/authoringDeficiencyScanRecord.test.ts > the scan states what the record says the section must contain > resolves 4.2.3 — a parent the record carries only the leaves of — to the sections it contains
+TypeError: Cannot read properties of undefined (reading 'indexed')
+ ❯ server/routes/__tests__/authoringDeficiencyScanRecord.test.ts:137:16
+    135|     const rec = (await scan()).body.scan_results.record_requirements;
+    136|
+    137|     expect(rec.indexed).toBe(true);
+       |                ^
+    138|     expect(rec.source).toBe('parent');
+    139|     expect(rec.answered_by).toBe('4.2.3');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/routes/__tests__/authoringDeficiencyScanRecord.test.ts > the scan states what the record says the section must contain > answers a sub-section with no entry of its own from its containing section, and says so
+TypeError: Cannot read properties of undefined (reading 'indexed')
+ ❯ server/routes/__tests__/authoringDeficiencyScanRecord.test.ts:152:16
+    150|     const rec = (await scan()).body.scan_results.record_requirements;
+    151|
+    152|     expect(rec.indexed).toBe(true);
+       |                ^
+    153|     expect(rec.source).toBe('ancestor');
+    154|     expect(rec.answered_by).toBe('2.7.3');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/routes/__tests__/authoringDeficiencyScanRecord.test.ts > the scan states what the record says the section must contain > a code the record does not index reads as not indexed — never as nothing required
+AssertionError: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/authoringDeficiencyScanRecord.test.ts:165:19
+    163|
+    164|       // Present and honest: fail closed, never silently omitted.
+    165|       expect(rec).toBeTruthy();
+       |                   ^
+    166|       expect(rec.indexed).toBe(false);
+    167|       // The resolver's own words.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/routes/__tests__/authoringDeficiencyScanRecord.test.ts > a missing keyword is not an agency requirement > never says "as required by", and never attributes the keyword to the region
+AssertionError: expected '{"success":true,"scan_results":{"sect…' not to match /as required by/i
+
+- Expected:
+/as required by/i
+
++ Received:
+"{\"success\":true,\"scan_results\":{\"section_id\":\"S1\",\"section_code\":\"3.2.P.1\",\"section_title\":\"A section\",\"scan_type\":\"comprehensive\",\"region\":\"FDA\",\"signal_type\":\"heuristic_quality\",\"quality_score\":20,\"compliance_score\":20,\"checks_run\":5,\"checks_passed\":1,\"status\":\"review_required\",\"deficiencies\":[{\"type\":\"content_length\",\"severity\":\"high\",\"message\":\"Section content appears insufficient. Regulatory sections typically require detailed information.\",\"recommendation\":\"Expand content to include all required regulatory elements.\",\"location\":\"entire_section\"},{\"type\":\"missing_keyword\",\"severity\":\"medium\",\"message\":\"Missing expected regulatory term: \\\"specification\\\"\",\"recommendation\":\"Include discussion of specification as required by FDA guidelines\",\"location\":\"content\"},{\"type\":\"missing_keyword\",\"severity\":\"medium\",\"message\":\"Missing expected regulatory term: \\\"validation\\\"\",\"recommendation\":\"Include discussion of validation as required by FDA guidelines\",\"location\":\"content\"},{\"type\":\"missing_keyword\",\"severity\":\"medium\",\"message\":\"Missing expected regulatory term: \\\"stability\\\"\",\"recommendation\":\"Include discussion of stability as required by FDA guidelines\",\"location\":\"content\"},{\"type\":\"missing_keyword\",\"severity\":\"medium\",\"message\":\"Missing expected regulatory term: \\\"quality\\\"\",\"recommendation\":\"Include discussion of quality as required by FDA guidelines\",\"location\":\"content\"},{\"type\":\"missing_keyword\",\"severity\":\"medium\",\"message\":\"Missing expected regulatory term: \\\"manufacture\\\"\",\"recommendation\":\"Include discussion of manufacture as required by FDA guidelines\",\"location\":\"content\"},{\"type\":\"missing_keyword\",\"severity\":\"medium\",\"message\":\"Missing expected regulatory term: \\\"control\\\"\",\"recommendation\":\"Include discussion of control as required by FDA guidelines\",\"location\":\"content\"},{\"type\":\"missing_data\",\"severity\":\"medium\",\"message\":\"No data tables or figures detected\",\"recommendation\":\"Consider adding supporting data, tables, or figures\",\"location\":\"content\"},{\"type\":\"poor_structure\",\"severity\":\"low\",\"message\":\"Content lacks proper structure and formatting\",\"recommendation\":\"Add headings, paragraphs, and proper formatting\",\"location\":\"formatting\"}],\"deficiency_count\":9,\"scanned_at\":\"2026-10-11T23:44:35.563Z\"},\"message\":\"Heuristic quality scan completed (word-count/keyword signal, not a compliance determination)\"}"
+
+ ❯ server/routes/__tests__/authoringDeficiencyScanRecord.test.ts:183:38
+    181|
+    182|     expect(keyword).toHaveLength(6);
+    183|     expect(JSON.stringify(body)).not.toMatch(/as required by/i);
+       |                                      ^
+    184|     for (const d of keyword) {
+    185|       expect(String(d.recommendation)).not.toMatch(/FDA|EMA|PMDA|guide…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 2 passed (8)
+   Start at  23:44:30
+   Duration  5.07s (transform 2.79s, setup 95ms, import 4.64s, tests 79ms, environment 0ms)
+
+
+=== client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx ===
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > lists the record’s elements for 2.5, named as the record’s statement and as unverified, with its basis 784ms
+   → expected 'Section check — heuristic signals, no…' to contain 'Product development rationale linking…'
+ × client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > shows a parent code’s contained sections instead of an empty list 486ms
+   → expected 'Section check — heuristic signals, no…' to match /4\.2\.3\.3/
+ × client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > names the containing section when the answer came from an ancestor entry 518ms
+   → expected 'Section check — heuristic signals, no…' to match /3\.2\.S\.4/
+ × client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > reads a code the record does not index as not indexed — never as nothing required 480ms
+   → expected 'Section check — heuristic signals, no…' to match /not indexed/i
+ ✓ client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > says nothing about required content when the server sent no record statement 442ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > lists the record’s elements for 2.5, named as the record’s statement and as unverified, with its basis
+AssertionError: expected 'Section check — heuristic signals, no…' to contain 'Product development rationale linking…'
+
+Expected: "Product development rationale linking unmet need, MOA, and program design (2.5.1)"
+Received: "Section check — heuristic signals, not a compliance determinationDismissNo flags. The section passed all 5 mechanical checks (length, module keywords, CTD elements where defined, tables, placeholders, structure) — this is not a review."
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx:132:65
+    130|
+    131|     // The author sees the record's own words, every one of them.
+    132|     for (const el of RECORD_ELEMENTS) expect(panel.textContent).toCont…
+       |                                                                 ^
+    133|     // Framed as the record's statement about 2.5, not as a result of …
+    134|     expect(panel.textContent).toMatch(/record/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > shows a parent code’s contained sections instead of an empty list
+AssertionError: expected 'Section check — heuristic signals, no…' to match /4\.2\.3\.3/
+
+- Expected:
+/4\.2\.3\.3/
+
++ Received:
+"Section check — heuristic signals, not a compliance determinationDismissNo flags. The section passed all 5 mechanical checks (length, module keywords, CTD elements where defined, tables, placeholders, structure) — this is not a review."
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx:161:31
+    159|     const panel = await openCheck();
+    160|
+    161|     expect(panel.textContent).toMatch(/4\.2\.3\.3/);
+       |                               ^
+    162|     expect(panel.textContent).toContain('Genotoxicity');
+    163|     expect(panel.textContent).toContain('Carcinogenicity');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > names the containing section when the answer came from an ancestor entry
+AssertionError: expected 'Section check — heuristic signals, no…' to match /3\.2\.S\.4/
+
+- Expected:
+/3\.2\.S\.4/
+
++ Received:
+"Section check — heuristic signals, not a compliance determinationDismissNo flags. The section passed all 5 mechanical checks (length, module keywords, CTD elements where defined, tables, placeholders, structure) — this is not a review."
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx:179:31
+    177|     const panel = await openCheck();
+    178|
+    179|     expect(panel.textContent).toMatch(/3\.2\.S\.4/);
+       |                               ^
+    180|     // The author is told this is the containing section's entry, not …
+    181|     expect(panel.textContent).toMatch(/containing section|has no entry…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > reads a code the record does not index as not indexed — never as nothing required
+AssertionError: expected 'Section check — heuristic signals, no…' to match /not indexed/i
+
+- Expected:
+/not indexed/i
+
++ Received:
+"Section check — heuristic signals, not a compliance determinationDismissNo flags. The section passed all 5 mechanical checks (length, module keywords, CTD elements where defined, tables, placeholders, structure) — this is not a review."
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx:192:31
+    190|     const panel = await openCheck();
+    191|
+    192|     expect(panel.textContent).toMatch(/not indexed/i);
+       |                               ^
+    193|     expect(panel.textContent).toContain('has no entry for "9.9.9"');
+    194|     expect(panel.textContent).not.toMatch(/nothing required|no require…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  23:44:36
+   Duration  5.69s (transform 1.72s, setup 131ms, import 2.24s, tests 2.72s, environment 477ms)
+

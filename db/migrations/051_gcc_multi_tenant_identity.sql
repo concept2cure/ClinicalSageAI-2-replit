@@ -7,6 +7,9 @@
 -- Reference: Concept2Cure Architecture Specification v1.0
 -- Compliance: FDA 21 CFR Part 11, GDPR, SOC2
 -- ============================================================================
+-- AMENDED 2026-10-15: section H (four invented organisations and a CRO
+-- contract between them) removed — see the note at H.
+-- ============================================================================
 
 BEGIN;
 
@@ -473,86 +476,20 @@ END;
 $$;
 
 -- =============================================================================
--- H) SEED DATA: Sample Organizations
+-- H) SEED DATA — REMOVED 2026-10-15
 -- =============================================================================
-
--- Demo Sponsor
-DO $$
-BEGIN
-    BEGIN
-INSERT INTO identity.organizations (id, legal_name, display_name, business_model, headquarters_country, signature_legal_disclaimer, is_active)
-VALUES (
-    'a1000000-0000-0000-0000-000000000001'::UUID,
-    'Innovix Therapeutics, Inc.',
-    'Innovix',
-    'BIO_PHARMA_SPONSOR',
-    'US',
-    'I hereby certify that this electronic submission is true, accurate, and complete. I understand that any false or misleading information may be punishable under law.',
-    TRUE
-)
-ON CONFLICT (id) DO UPDATE SET updated_at = NOW();
-
--- Demo CRO
-INSERT INTO identity.organizations (id, legal_name, display_name, business_model, headquarters_country, signature_legal_disclaimer, is_active)
-VALUES (
-    'a2000000-0000-0000-0000-000000000002'::UUID,
-    'GlobalClin Research Partners',
-    'GlobalClin',
-    'CRO_PARTNER',
-    'US',
-    'As a contracted service provider, I certify that the work performed is in accordance with the applicable protocols and regulations.',
-    TRUE
-)
-ON CONFLICT (id) DO UPDATE SET updated_at = NOW();
-
--- Demo Medical Device Company
-INSERT INTO identity.organizations (id, legal_name, display_name, business_model, headquarters_country, signature_legal_disclaimer, is_active)
-VALUES (
-    'a3000000-0000-0000-0000-000000000003'::UUID,
-    'MedTech Diagnostics Corp',
-    'MedTech Dx',
-    'DEVICE_MANUFACTURER',
-    'US',
-    'I certify that this device submission is complete and accurate, and that the device meets all applicable regulatory requirements.',
-    TRUE
-)
-ON CONFLICT (id) DO UPDATE SET updated_at = NOW();
-
--- Demo Academic Institution
-INSERT INTO identity.organizations (id, legal_name, display_name, business_model, headquarters_country, signature_legal_disclaimer, is_active)
-VALUES (
-    'a4000000-0000-0000-0000-000000000004'::UUID,
-    'University Medical Research Center',
-    'UMRC',
-    'ACADEMIC_INSTITUTION',
-    'US',
-    'This research has been conducted in accordance with IRB protocols and all applicable research ethics guidelines.',
-    TRUE
-)
-ON CONFLICT (id) DO UPDATE SET updated_at = NOW();
-
--- Demo CRO relationship with Sponsor
-INSERT INTO identity.org_relationships (sponsor_org_id, delegate_org_id, relationship_type, contract_reference, contract_start_date, scope_all_programs, can_view_submissions, can_edit_submissions, can_upload_documents, can_sign_submissions, approved_by, approved_at, is_active)
-VALUES (
-    'a1000000-0000-0000-0000-000000000001'::UUID,
-    'a2000000-0000-0000-0000-000000000002'::UUID,
-    'CRO_CONTRACT',
-    'MSA-2024-001',
-    '2024-01-01',
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    FALSE,
-    'system',
-    NOW(),
-    TRUE
-)
-ON CONFLICT DO NOTHING;
-    EXCEPTION WHEN undefined_column THEN
-        RAISE NOTICE 'Skipping identity demo seed data (column mismatch in trigger).';
-    END;
-END $$;
+-- This section inserted four invented organisations ("Innovix Therapeutics,
+-- Inc.", "GlobalClin Research Partners", "MedTech Diagnostics Corp",
+-- "University Medical Research Center", each with a signature disclaimer) and
+-- a sponsor-CRO contract between two of them ("MSA-2024-001"). install-fresh
+-- step 6 applies every db/migrations/*_gcc_*.sql, and db:provision runs it —
+-- including .github/workflows/provision-database.yml against production — so a
+-- freshly provisioned production database held them in identity.organizations,
+-- the FK parent every tenant's identity-family rows now share (C-48 Stage 1).
+-- Removed by the D2 no-example-data change (session …01TzCCfqi5RbiwzZyfYxyBpX).
+-- Nothing in the repository reads these rows: the C-48 contract test creates
+-- its own seed row. A database provisioned before this change still holds
+-- them; removing them there is a data operation, not this file's.
 
 -- =============================================================================
 -- I) VIEWS

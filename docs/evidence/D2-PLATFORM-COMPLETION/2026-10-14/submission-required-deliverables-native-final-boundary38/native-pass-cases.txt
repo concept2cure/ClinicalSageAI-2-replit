@@ -1,0 +1,42 @@
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > admits a genuine owner positive control on current canonical sharing 634ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > admits a genuine member positive control on current canonical sharing 532ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > admits a genuine unassigned positive control on current canonical sharing 401ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > lists only accessible records, and the scoped list returns no withheld-row oracle 54ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > refuses an unassigned private submission read before placement or source SQL 24ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > refuses an unassigned private sequences read before placement or source SQL 21ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > refuses an unassigned private leaves read before placement or source SQL 25ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > refuses an unassigned private manifest read before placement or source SQL 24ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > keeps the current-manager unanchored metadata remedy reachable without admitting sources 383ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current actor, parent and selected scope > refuses a signed token without an actual organization membership 37ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current actor, parent and selected scope > refuses a formerly capable role after actual persisted demotion 250ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current actor, parent and selected scope > refuses an actual disabled account at the JWT boundary 299ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current actor, parent and selected scope > fails safely when the real authenticated request executor is removed 484ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current actor, parent and selected scope > refuses the actual foreign submission and sequence identities 553ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current actor, parent and selected scope > refuses an existing sequence when its actual parent is soft-deleted 296ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current actor, parent and selected scope > refuses a conflicting selected program identity before leaves 598ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current actor, parent and selected scope > refuses a conflicting selected submission identity before leaves 111ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables recorded filing frameworks > uses the actual filing framework, not the amendment lifecycle type or requested friendlier pathway 54ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables recorded filing frameworks > requires an explicit compatible choice when no live framework is recorded 208ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables recorded filing frameworks > refuses a recorded incompatible framework instead of selecting the requested compatible one 42ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables recorded filing frameworks > refuses a recorded sequence-region conflict 177ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables recorded filing frameworks > keeps actual unsupported IND coverage unavailable in both list metadata and direct assessment 385ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables recorded filing frameworks > returns current retained technical-file coverage for the actual MDR filing only 484ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > keeps the actual 'draft' source content qualification honest 274ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > keeps the actual 'unpinned' source content qualification honest 156ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > keeps the actual 'changed-pin' source content qualification honest 460ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > keeps the actual 'empty' source content qualification honest 741ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > keeps the actual 'placeholder' source content qualification honest 359ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > keeps the actual 'unknown-pointer' source content qualification honest 557ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > refuses a same-org source that was moved to a sibling programme before its body query 267ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > withholds the combined pane after a real committed source-content change and retains its attributed old version 360ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > withholds already-read content after actual current project membership withdrawal 885ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > withholds the pane after actual late leaf-pin binding facts change 456ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > withholds the pane after actual late programme-type binding facts change 548ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > withholds the pane after actual late framework binding facts change 286ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > binds native sequence/source admission to the exact held actual executor, even for equivalent current actors 89ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual repaired anchor and Vault-tenant read boundaries > withholds the pane after the same programme moves to another actual unique integer anchor 157ms
+ ✓ tests/db/submission-required-deliverables.dbtest.ts > actual repaired anchor and Vault-tenant read boundaries > refuses an actual NULL-tenant genesis Vault placement before metadata or local provider reads 126ms
+ Test Files  1 passed (1)
+      Tests  38 passed (38)
+   Start at  21:36:16
+   Duration  28.75s (transform 8.65s, setup 132ms, import 10.95s, tests 16.94s, environment 0ms)

@@ -167,10 +167,36 @@ describe('DocumentAttributionBar', () => {
     );
     render(<DocumentAttributionBar {...DOC} />);
 
-    await screen.findByText(/AI draft, not accepted — 60%/i);
+    await screen.findByText(/Machine draft, not accepted — 60%/i);
     expect(screen.getByText(/nobody has accepted it/i)).toBeTruthy();
   });
 
+});
+
+describe('DocumentAttributionBar — workflow copy labels', () => {
+  it('names deterministic workflow copies as imported content without claiming AI authorship', async () => {
+    fetchDocumentAttribution.mockResolvedValue(summary({ attributedChars: 100, unattributedChars: 0,
+      byKind: { fromSources: 0, authorAsserted: 0, machineDrafted: 0, machineDraftedUnaccepted: 100 },
+      spans: [{ charStart: 0, charEnd: 100, provenanceKind: 'machine_draft', machineAuthorId: 'workflow_import', usage: 'asserted', sourceTitle: null, stale: false }] }));
+    render(<DocumentAttributionBar {...DOC} />);
+    await screen.findByText(/Imported content, awaiting review — 100%/i);
+    expect(document.body.textContent).not.toMatch(/drafted by AI/i);
+    expect(screen.getByText(/original authorship remains in the source receipt/i)).toBeTruthy();
+  });
+
+  it('keeps a mixed imported and machine bucket honest without inventing split counts', async () => {
+    fetchDocumentAttribution.mockResolvedValue(summary({ attributedChars: 100, unattributedChars: 0,
+      byKind: { fromSources: 0, authorAsserted: 0, machineDrafted: 0, machineDraftedUnaccepted: 100 },
+      spans: [{ charStart: 0, charEnd: 50, provenanceKind: 'machine_draft', machineAuthorId: 'workflow_import' },
+        { charStart: 50, charEnd: 100, provenanceKind: 'machine_draft', machineAuthorId: 'ana' }] }));
+    render(<DocumentAttributionBar {...DOC} />);
+    await screen.findByText(/Machine or imported draft, not accepted — 100%/i);
+    expect(document.body.textContent).not.toMatch(/Imported content, awaiting review — 100%/i);
+  });
+
+});
+
+describe('DocumentAttributionBar — citations, access and refresh', () => {
   it('reports stale citations as still attributed, in words', async () => {
     fetchDocumentAttribution.mockResolvedValue(summary({ staleChars: 12 }));
     render(<DocumentAttributionBar {...DOC} />);

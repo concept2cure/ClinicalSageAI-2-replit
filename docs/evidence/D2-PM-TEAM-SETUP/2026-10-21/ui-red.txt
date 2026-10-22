@@ -1,0 +1,282 @@
+Command: node node_modules/vitest/vitest.mjs run client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx
+Baseline: existing PM03 team surface before PM04 sharing controls.
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > ProjectHome reaches its existing sharing controls > uses the admitted numeric anchor and offers only human Use/Edit choices 5122ms
+   → Unable to find role="heading" and name "Project sharing"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mview...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mview...
+ × client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > ProjectHome reaches its existing sharing controls > waits for a verified team anchor and retains the roster when sharing is unavailable 5062ms
+   → Unable to find an element with the text: Couldn't load project sharing. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mview...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mview...
+ × client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > ProjectHome reaches its existing sharing controls > uses server capability instead of a displayed project owner fact 5051ms
+   → expected false to be true // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner pj"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-back"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[3...
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > ProjectHome reaches its existing sharing controls > uses the admitted numeric anchor and offers only human Use/Edit choices
+TestingLibraryElementError: Unable to find role="heading" and name "Project sharing"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mview...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mview...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx:52:18
+     50|   it('uses the admitted numeric anchor and offers only human Use/Edit …
+     51|     serve(); render(<ProjectHome {...props} />);
+     52|     await screen.findByRole('heading', { name: 'Project sharing' });
+       |                  ^
+     53|     expect(screen.getByLabelText('Organization member')).toBeTruthy();
+     54|     const role = screen.getByLabelText('New sharing role');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > ProjectHome reaches its existing sharing controls > waits for a verified team anchor and retains the roster when sharing is unavailable
+TestingLibraryElementError: Unable to find an element with the text: Couldn't load project sharing. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mview...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mview...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx:74:18
+     72|     expect(request.mock.calls.some(([, path]) => path.includes('/shari…
+     73|     await act(async () => finish(ok(TEAM)));
+     74|     await screen.findByText("Couldn't load project sharing");
+       |                  ^
+     75|     expect(screen.getByText('Coordinator')).toBeTruthy();
+     76|     expect(screen.getByRole('button', { name: 'Retry sharing' })).toBe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > ProjectHome reaches its existing sharing controls > uses server capability instead of a displayed project owner fact
+AssertionError: expected false to be true // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner pj"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-back"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[3...
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx:83:85
+     81|     denied.members = denied.members.map(member => ({ ...member, canSet…
+     82|     serve(ok(TEAM), ok(denied)); render(<ProjectHome {...props} />);
+     83|     await waitFor(() => expect(request.mock.calls.some(([, path]) => p…
+       |                                                                                     ^
+     84|     expect(screen.queryByRole('button', { name: 'Grant sharing' })).to…
+     85|     expect(screen.queryByRole('button', { name: /Revoke explicit share…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  01:17:11
+   Duration  18.73s (transform 1.80s, setup 204ms, import 2.28s, tests 15.24s, environment 808ms)
+
+
+Exit code: 1

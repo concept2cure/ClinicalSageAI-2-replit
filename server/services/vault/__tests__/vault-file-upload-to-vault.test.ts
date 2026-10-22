@@ -19,7 +19,32 @@ vi.mock('../../ana/uploaded-file-access.js', async (importOriginal) => ({
 const { ingestVaultDocument } = vi.hoisted(() => ({ ingestVaultDocument: vi.fn() }));
 vi.mock('../vault-ingest.service.js', () => ({ ingestVaultDocument }));
 
+/* Since 14362ef00 the upload is admitted before it is loaded: the caller is a
+   current member of the program with a writing role (requireCurrentProgramAccess,
+   vaultWriteRefusal), and the original upload is one that caller may read
+   (assertVaultUploadSource). Both read the database. Here the member and program
+   are seated on the shared current-access double (support/current-member.ts),
+   and the upload admission answers from the uploads seated below; an unseated
+   caller or upload is refused as the real admissions refuse, so the refusals
+   stay observable. The admissions' SQL is proven by their own suites. */
+vi.mock('../../c2c/current-program-access', async (original) => {
+  const real = await original<typeof import('../../c2c/current-program-access')>();
+  return { ...real, ...(await import('../../../routes/c2c/__tests__/support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
+const { seatedUploads } = vi.hoisted(() => ({ seatedUploads: new Set<string>() }));
+vi.mock('../vault-upload-source-admission.js', async () => {
+  const { AnaProjectScopeError } = await import('../../ana/project-scope-admission');
+  return {
+    assertVaultUploadSource: async (_q: unknown, args: { organizationId: number; fileId: string }) => {
+      if (!seatedUploads.has(`${args.organizationId}:${args.fileId}`)) {
+        throw new AnaProjectScopeError(404, 'UPLOAD_NOT_FOUND', 'The original upload is unavailable. Nothing was filed.');
+      }
+    },
+  };
+});
+
 import { fileUploadIntoVault } from '../vault-file-upload-to-vault';
+import { clearSeats, seatMember, seatProgram } from '../../../routes/c2c/__tests__/support/current-member';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const HEAD = '44444444-4444-4444-8444-444444444444';
@@ -29,7 +54,38 @@ const admitted = () => ingestVaultDocument.mock.calls[0][0];
 
 beforeEach(() => {
   vi.clearAllMocks();
+  clearSeats();
+  seatMember(7, 3, 'member');
+  seatProgram(7, PROGRAM);
+  seatedUploads.clear();
+  for (let n = 1; n <= 5; n++) seatedUploads.add(`7:file_${n}`);
   ingestVaultDocument.mockResolvedValue({ ok: false, status: 409, code: 'VERSION_CONTENT_CONFLICT', message: 'x' });
+});
+
+describe('the upload is admitted before it is named', () => {
+  it('a caller who is not a current member is refused, and nothing is loaded or admitted', async () => {
+    clearSeats();
+    seatProgram(7, PROGRAM);
+    loadUploadedFile.mockResolvedValue(upload('Protocol-Stability.pdf'));
+    const out = await fileUploadIntoVault({
+      organizationId: 7, userId: 3, programId: PROGRAM, fileId: 'file_1',
+      documentTitle: 'Protocol-Stability', documentType: 'OTHER',
+    });
+    expect(out).toMatchObject({ ok: false, status: 403, code: 'PROJECT_ACTOR_ACCESS_DENIED' });
+    expect(loadUploadedFile).not.toHaveBeenCalled();
+    expect(ingestVaultDocument).not.toHaveBeenCalled();
+  });
+
+  it('an upload the caller may not read is refused, and nothing is loaded or admitted', async () => {
+    loadUploadedFile.mockResolvedValue(upload('Protocol-Stability.pdf'));
+    const out = await fileUploadIntoVault({
+      organizationId: 7, userId: 3, programId: PROGRAM, fileId: 'file_unseated',
+      documentTitle: 'Protocol-Stability', documentType: 'OTHER',
+    });
+    expect(out).toMatchObject({ ok: false, status: 404, code: 'UPLOAD_NOT_FOUND' });
+    expect(loadUploadedFile).not.toHaveBeenCalled();
+    expect(ingestVaultDocument).not.toHaveBeenCalled();
+  });
 });
 
 describe('a file is named the same whichever route admits it', () => {

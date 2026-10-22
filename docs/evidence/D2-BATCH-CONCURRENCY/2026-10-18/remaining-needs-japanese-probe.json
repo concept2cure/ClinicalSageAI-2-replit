@@ -1,0 +1,32 @@
+[
+  {
+    "label": "embedded-Japanese",
+    "passageStart": 37501,
+    "literalOccurrence": 37505,
+    "window": {
+      "start": 0,
+      "end": 500,
+      "basis": "opening"
+    }
+  },
+  {
+    "label": "spaced-Japanese-control",
+    "passageStart": 37501,
+    "literalOccurrence": 37501,
+    "window": {
+      "start": 37501,
+      "end": 38001,
+      "basis": "relevant"
+    }
+  },
+  {
+    "label": "English-control",
+    "passageStart": 37501,
+    "literalOccurrence": 37501,
+    "window": {
+      "start": 37501,
+      "end": 38001,
+      "basis": "relevant"
+    }
+  }
+]

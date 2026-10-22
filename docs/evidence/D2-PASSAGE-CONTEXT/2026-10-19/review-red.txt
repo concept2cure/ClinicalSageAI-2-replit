@@ -1,0 +1,55 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/vault/__tests__/passage-context-span-nested.test.ts > nested chunks > refuses a following chunk that ends before the hit chunk does 17ms
+   → expected { status: 'available', …(4) } to deeply equal { status: 'unavailable', …(1) }
+ ✓ server/services/vault/__tests__/passage-context-span-nested.test.ts > nested chunks > never returns an available context that does not contain the whole hit 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/vault/__tests__/passage-context-span-nested.test.ts > nested chunks > refuses a following chunk that ends before the hit chunk does
+AssertionError: expected { status: 'available', …(4) } to deeply equal { status: 'unavailable', …(1) }
+
+- Expected
++ Received
+
+  {
+-   "reason": "not_contiguous",
+-   "status": "unavailable",
++   "chunkRange": [
++     0,
++     1,
++   ],
++   "clipped": false,
++   "reference": {
++     "contentHash": "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh",
++     "documentId": "d",
++     "extractedTextSha256": "d77ecab76e09cf405f3d5c2943292ce8be27f8367334c5c361fb56e6fab5bbcc",
++     "span": {
++       "end": 200,
++       "start": 0,
++       "totalChars": 6000,
++     },
++     "spanSha256": "c2a908d98f5df987ade41b5fce213067efbcc21ef2240212a41e54b5e7c28ae5",
++     "version": 2,
++   },
++   "status": "available",
++   "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  }
+
+ ❯ server/services/vault/__tests__/passage-context-span-nested.test.ts:19:25
+     17|     const out = buildPassageContext({ documentId: 'd', contentHash: 'h…
+     18|       hit: { chunkId: 'c0', chunkIndex: 0 }, chunks: [chunk('c0', 0, 0…
+     19|     expect(out.context).toEqual({ status: 'unavailable', reason: 'not_…
+       |                         ^
+     20|   });
+     21|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  02:39:52
+   Duration  565ms (transform 140ms, setup 132ms, import 58ms, tests 24ms, environment 0ms)
+

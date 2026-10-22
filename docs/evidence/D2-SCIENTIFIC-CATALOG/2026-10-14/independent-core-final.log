@@ -1,0 +1,46 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent source and shape adversaries > supported single row control remains a read-only source preview 9ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent source and shape adversaries > another documentId cannot bind this source 2ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent source and shape adversaries > another contentHash cannot bind this source 1ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent source and shape adversaries > another extractedTextSha256 cannot bind this source 1ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent source and shape adversaries > a changed server extraction cannot be vouched for by candidate digests 0ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent source and shape adversaries > a same document quote at another offset is not this exact anchor 1ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent source and shape adversaries > a quote is not clipped at end of source 0ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent source and shape adversaries > candidate-controlled persisted is rejected 0ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent source and shape adversaries > candidate-controlled scientificQualification is rejected 1ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent source and shape adversaries > candidate-controlled actor is rejected 0ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent source and shape adversaries > candidate-controlled authoritativeText is rejected 0ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent source and shape adversaries > candidate-controlled page is rejected 0ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent source and shape adversaries > computation remains unsupported 0ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent source and shape adversaries > prototype-name family __proto__ refuses cleanly 0ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent source and shape adversaries > prototype-name family constructor refuses cleanly 0ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent source and shape adversaries > more than 50 candidates refuses the whole batch 1ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent source and shape adversaries > an anchor longer than 2000 characters refuses instead of clipping 0ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent source and shape adversaries > private batch snapshot does not retain caller-owned objects 0ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent contextual and written-value adversaries > a swapped batchAsWritten cannot borrow another relation 1ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent contextual and written-value adversaries > a swapped methodAsWritten cannot borrow another relation 1ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent contextual and written-value adversaries > a swapped productRef cannot borrow another relation 1ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent contextual and written-value adversaries > a swapped materialAsWritten cannot borrow another relation 1ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent contextual and written-value adversaries > missing mandatory context remains not established 1ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent contextual and written-value adversaries > a source specification is not a measured result 1ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent contextual and written-value adversaries > a repeated value elsewhere cannot rescue the claimed row 0ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent contextual and written-value adversaries > rounded written precision cannot be substituted 1ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent contextual and written-value adversaries > a bound is not scalar 0ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent contextual and written-value adversaries > a range is not scalar 0ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent contextual and written-value adversaries > a malformed scalar text cannot gain numeric meaning 0ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent contextual and written-value adversaries > a signed exponent is one numeric scalar, not a range 1ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent contextual and written-value adversaries > a double-subject relation remains unestablished 0ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent contextual and written-value adversaries > a contradictory negation qualifier is not ignored 1ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent contextual and written-value adversaries > OCR does not acquire original attestation 0ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent clinical witness adversaries > a complete local canonical clinical relation remains preview-only 211ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent clinical witness adversaries > dummy figure witnesses cannot vouch for mandatory clinical slots 5ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent clinical witness adversaries > remote study headers cannot be laundered through dummy local witnesses 25ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-core-adversaries.test.mts > independent clinical witness adversaries > a large quote cannot turn an inherited remote study header into a local relation 5ms
+
+ Test Files  1 passed (1)
+      Tests  37 passed (37)
+   Start at  06:58:03
+   Duration  2.00s (transform 1.02s, setup 0ms, import 1.17s, tests 274ms, environment 0ms)
+

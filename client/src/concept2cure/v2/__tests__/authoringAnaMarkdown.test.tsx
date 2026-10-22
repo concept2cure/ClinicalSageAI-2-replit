@@ -23,11 +23,20 @@ vi.mock('@/lib/queryClient', async importOriginal => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
-}));
+vi.mock('@/services/portal/authService', async original => {
+  const actual = await original<typeof import('@/services/portal/authService')>();
+  return {
+    ...actual,
+    authService: {
+      getUser: () => ({ id: 1, organizationId: 1 }),
+      captureSessionReadGuard: actual.authService.captureSessionReadGuard.bind(actual.authService),
+      on: actual.authService.on.bind(actual.authService),
+    },
+    useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
+  };
+});
 
-import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
+import { CanonicalAuthoringFlow, setAuthoringFlowScope, clearAuthoringFlowScope, serveAuthoringStream, sendAuthoringPrefill, toolbarDraftButton } from './canonicalAuthoringFlow';
 
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload }) as Response;
 
@@ -35,7 +44,7 @@ const DOCS = {
   success: true,
   documents: [
     {
-      id: 'D1',
+      id: 'dddddddd-0000-4000-8000-000000000001',
       title: 'Nonclinical Overview',
       module: 'M3',
       product_code: 'ABC',
@@ -49,8 +58,8 @@ const SECTIONS = {
   success: true,
   sections: [
     {
-      id: 'S1',
-      doc_id: 'D1',
+      id: 'aaaaaaaa-0000-4000-8000-000000000001',
+      doc_id: 'dddddddd-0000-4000-8000-000000000001',
       code: '3.2.S.1',
       title: 'General Information',
       content: 'The drug substance is a monoclonal antibody.',
@@ -62,13 +71,6 @@ const SECTIONS = {
     },
   ],
 };
-
-const props = () => ({
-  surface: { id: 'document-authoring', label: 'Authoring' } as never,
-  onAsk: vi.fn(),
-  onNav: vi.fn(),
-  segment: 'biotech',
-});
 
 function anaStream(events: unknown[]): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
@@ -82,44 +84,39 @@ function anaStream(events: unknown[]): ReadableStream<Uint8Array> {
   });
 }
 
-/** Stream one finished assistant answer and return the AnA pane. */
+/** Stream one finished assistant answer through the canonical conversation. */
 async function answer(markdown: string): Promise<HTMLElement> {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(async () => ({
-      ok: true,
-      status: 200,
-      body: anaStream([
+  serveAuthoringStream(() => anaStream([
         { type: 'text', content: markdown },
         { type: 'done', latencyMs: 12 },
         { type: 'post_done', cleanedResponse: markdown },
-      ]),
-    }))
-  );
-  render(<DocumentAuthoring {...props()} />);
+      ]));
+  render(<CanonicalAuthoringFlow />);
   await screen.findAllByText('General Information');
-  const composer = await screen.findByRole('textbox', { name: 'Ask AnA about 3.2.S.1' });
-  fireEvent.change(composer, { target: { value: 'Summarise the drug substance section.' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Send' }));
-  const pane = await screen.findByLabelText(/AnA — document authoring/);
+  fireEvent.click(toolbarDraftButton());
+  const pane = await sendAuthoringPrefill('Summarise the drug substance section.');
   await waitFor(() => expect(pane.querySelector('.ana-md')).toBeTruthy());
   return pane;
 }
 
 beforeEach(() => {
+  setAuthoringFlowScope();
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
-    if (method === 'GET' && url === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
+    if (method === 'GET' && url === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001') return ok({ document: DOCS.documents[0] });
+    if (method === 'GET' && url === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections') return ok(SECTIONS);
     if (method === 'GET' && url.startsWith('/api/authoring/sections/'))
       return ok({ success: true, revisions: [], sources: [], citations: [] });
-    if (method === 'GET' && url.startsWith('/api/authoring/documents/D1/comments'))
+    if (method === 'GET' && url.startsWith('/api/authoring/documents/dddddddd-0000-4000-8000-000000000001/comments'))
       return ok({ success: true, comments: [] });
+    if (url.startsWith('/api/c2c/documents/')) return { ...ok({ success: false }), ok: false, status: 404 };
     return ok({ success: true });
   });
 });
 afterEach(() => {
   cleanup();
+  clearAuthoringFlowScope();
   vi.unstubAllGlobals();
 });
 
@@ -190,27 +187,22 @@ describe('AnA answers render as prose, not as markdown source', () => {
     // The author's question is echoed verbatim — it is their words, not a
     // document, and rendering it as markdown would rewrite what they typed.
     expect(pane.textContent).toMatch(/Summarise the drug substance section\./);
-    const user = Array.from(pane.querySelectorAll('.cmt')).find(c =>
-      c.querySelector('.cmt-meta')?.textContent?.includes('You')
-    )!;
+    const user = pane.querySelector('.ct-user')!;
     expect(user.querySelector('.ana-md')).toBeNull();
   });
 
   it('still shows the streaming status phase rather than an invented sentence', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => ({
-        ok: true,
-        status: 200,
-        body: anaStream([{ type: 'status', phase: 'Reading the section…' }]),
-      }))
-    );
-    render(<DocumentAuthoring {...props()} />);
+    let endStream = () => {};
+    serveAuthoringStream(() => new ReadableStream<Uint8Array>({ start(controller) {
+      controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ type: 'status', phase: 'Reading the section…' })}\n\n`));
+      endStream = () => controller.close();
+    } }));
+    render(<CanonicalAuthoringFlow />);
     await screen.findAllByText('General Information');
-    const composer = await screen.findByRole('textbox', { name: 'Ask AnA about 3.2.S.1' });
-    fireEvent.change(composer, { target: { value: 'Anything?' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
-    const pane = await screen.findByLabelText(/AnA — document authoring/);
-    await waitFor(() => expect(pane.textContent).toMatch(/Reading the section…|Thinking…/));
+    fireEvent.click(toolbarDraftButton());
+    const pane = await sendAuthoringPrefill('Anything?');
+    try {
+      await waitFor(() => expect(pane.textContent).toMatch(/Reading the section…|Thinking…/));
+    } finally { endStream(); }
   });
 });

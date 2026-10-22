@@ -1,0 +1,149 @@
+# red: these files at HEAD (613e24e70), new modules present:
+#   server/routes/ana-ri/turn-records.ts
+#   server/services/ana/turn-record-verify.ts
+#   server/services/chat-thread-helpers.ts
+#   server/routes/chat/threads.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts
+{
+  "timestamp": "2026-10-08T13:02:00.309Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 3. the Summary payload leaks nothing the Summary never contains > carries the notes, steps, tasks, controls and models, and none of the sentinels 68ms
+   → expected 404 to be 200 // Object.is equality
+ ✓ server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 3. the Summary payload leaks nothing the Summary never contains > the check fails on a route that spreads the record's metadata (the full record read) 28ms
+ × server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 5. who may read the Summary (decision 6, as taken) > the asker, an admin and a colleague read it; another organisation cannot tell it exists 19ms
+   → asker: expected 404 to be 200 // Object.is equality
+ × server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 5. who may read the Summary (decision 6, as taken) > the full record stays with the asker and admins: a colleague gets 403 on ?texts=1 and on /export, told who may 19ms
+   → expected 'That turn record belongs to someone e…' to be 'The full record is available to the p…' // Object.is equality
+ × server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 5. who may read the Summary (decision 6, as taken) > a turn with no conversation has no transcript to read: a colleague gets 403 on its Summary 14ms
+   → expected 404 to be 403 // Object.is equality
+ × server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 4. (server half) records join their messages by id > the thread's list names each record's assistant message, for anyone who may read the thread 21ms
+   → asker: expected { …(7) } to match object { …(2) }
+(6 matching properties omitted from actual)
+ × server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 6. (server half) the verdict is recomputed on the Summary read > reads ok for an intact record, and not ok, with a reason, once its chain row no longer carries its hash 15ms
+   → Cannot read properties of undefined (reading 'verdict')
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 3. the Summary payload leaks nothing the Summary never contains > carries the notes, steps, tasks, controls and models, and none of the sentinels
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts:172:24
+    170|     const { id } = await recordTurn('th_s4');
+    171|     const res = await request(appAs()).get(`/api/ana-ri/turn-records/$…
+    172|     expect(res.status).toBe(200);
+       |                        ^
+    173|     const s = res.body.data;
+    174|     expect(Object.keys(s).sort()).toEqual(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 5. who may read the Summary (decision 6, as taken) > the asker, an admin and a colleague read it; another organisation cannot tell it exists
+AssertionError: asker: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts:200:31
+    198|     for (const who of ['asker', 'admin', 'colleague']) {
+    199|       const res = await request(appAs()).get(`/api/ana-ri/turn-records…
+    200|       expect(res.status, who).toBe(200);
+       |                               ^
+    201|     }
+    202|     const outsider = await request(appAs()).get(`/api/ana-ri/turn-reco…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 5. who may read the Summary (decision 6, as taken) > the full record stays with the asker and admins: a colleague gets 403 on ?texts=1 and on /export, told who may
+AssertionError: expected 'That turn record belongs to someone e…' to be 'The full record is available to the p…' // Object.is equality
+
+Expected: "The full record is available to the person who asked and to administrators."
+Received: "That turn record belongs to someone else's conversation"
+
+ ❯ server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts:211:44
+    209|       const colleague = await request(appAs()).get(url).set('x-as', 'c…
+    210|       expect(colleague.status, url).toBe(403);
+    211|       expect(colleague.body.error.message).toBe('The full record is av…
+       |                                            ^
+    212|       expect((await request(appAs()).get(url).set('x-as', 'outsider'))…
+    213|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 5. who may read the Summary (decision 6, as taken) > a turn with no conversation has no transcript to read: a colleague gets 403 on its Summary
+AssertionError: expected 404 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 404
+
+ ❯ server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts:219:116
+    217|   it('a turn with no conversation has no transcript to read: a colleag…
+    218|     const { id } = await recordTurn(null);
+    219|     expect((await request(appAs()).get(`/api/ana-ri/turn-records/${id}…
+       |                                                                                                                    ^
+    220|     expect((await request(appAs()).get(`/api/ana-ri/turn-records/${id}…
+    221|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 4. (server half) records join their messages by id > the thread's list names each record's assistant message, for anyone who may read the thread
+AssertionError: asker: expected { …(7) } to match object { …(2) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "assistantMessageId": 4321,
+    "id": "9625a872-4ec8-47ce-ad22-21fddf33a077",
+  }
+
+ ❯ server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts:231:24
+    229|       expect(res.status, who).toBe(200);
+    230|       const row = res.body.data.records.find((x: any) => x.id === id);
+    231|       expect(row, who).toMatchObject({ id, assistantMessageId: 4321 });
+       |                        ^
+    232|       // A colleague is not told who asked.
+    233|       if (who === 'colleague') expect(row).not.toHaveProperty('actorUs…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 6. (server half) the verdict is recomputed on the Summary read > reads ok for an intact record, and not ok, with a reason, once its chain row no longer carries its hash
+TypeError: Cannot read properties of undefined (reading 'verdict')
+ ❯ server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts:242:25
+    240|     const { id } = await recordTurn('th_s4');
+    241|     const ok = await request(appAs()).get(`/api/ana-ri/turn-records/${…
+    242|     expect(ok.body.data.verdict).toEqual({ ok: true });
+       |                         ^
+    243|     await holder.pg.exec(`ALTER TABLE audit_logs DISABLE TRIGGER ALL`);
+    244|     await holder.pg.query(`UPDATE audit_logs SET new_values = '{}'::js…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 1 passed (7)
+   Start at  13:01:57
+   Duration  6.41s (transform 1.79s, setup 106ms, import 2.89s, tests 2.97s, environment 0ms)
+

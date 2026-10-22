@@ -973,7 +973,7 @@
 .c2c-v2 .tb-dep-row{font-size:11.5px;color:var(--text-200);display:flex;align-items:center;gap:6px;margin-bottom:5px;}
 .c2c-v2 .tb-dep-row .ico{font-size:12px;color:var(--text-400);}
 .c2c-v2 .tb-dep-row.dn svg{color:var(--warning);}
-.c2c-v2 .tb-detail-f{display:flex;align-items:center;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border);}
+.c2c-v2 .tb-detail-f{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border);}
 @media (max-width:1100px){.c2c-v2 .tb-kanban{grid-template-columns:repeat(2,1fr);}}
 /* New-task intake (reuses .tb-detail modal shell) */
 .c2c-v2 .tb-form{display:flex;flex-direction:column;gap:13px;margin-top:6px;}
@@ -1067,14 +1067,6 @@
    panel, bounded so a large vault scrolls inside the section, not the page. */
 .c2c-v2 .pj-evidence .pf-search{padding:0 0 10px;border-bottom:none;}
 .c2c-v2 .pj-evidence .pf-list{max-height:480px;border:1px solid var(--border);border-radius:var(--radius-md);}
-.c2c-v2 .pj-convo{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:10px 6px;border-bottom:1px solid var(--border);}
-.c2c-v2 .pj-convo:last-child{border-bottom:none;}
-.c2c-v2 .pj-convo:hover{background:var(--bg-050);border-radius:var(--radius-lg);}
-.c2c-v2 .pj-convo-ic{width:28px;height:28px;border-radius:7px;background:var(--bg-100);color:var(--text-300);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
-.c2c-v2 .pj-convo-b{display:flex;flex-direction:column;min-width:0;flex:1;}
-.c2c-v2 .pj-convo-t{font-size:12.5px;font-weight:500;color:var(--text-100);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.c2c-v2 .pj-convo-m{font-size:10.5px;color:var(--text-400);}
-.c2c-v2 .pj-convo-go{color:var(--text-500);font-size:15px;flex-shrink:0;}
 .c2c-v2 .pj-map{display:flex;gap:18px;align-items:center;}
 .c2c-v2 .pj-map-ring{position:relative;flex-shrink:0;text-align:center;}
 .c2c-v2 .pj-map-ring-l{font-size:10px;color:var(--text-400);margin-top:2px;line-height:1.2;}
@@ -1101,6 +1093,26 @@
 .c2c-v2 .pj-team{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
 .c2c-v2 .pj-team-m{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-200);}
 .c2c-v2 .pj-team-av{width:22px;height:22px;border-radius:50%;background:var(--bg-200);color:var(--text-200);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+.c2c-v2 .pj-team-list{list-style:none;padding:0;margin:12px 0;display:grid;gap:12px;}
+.c2c-v2 .pj-team-person{padding:12px;border:1px solid var(--border);border-radius:8px;min-width:0;}
+.c2c-v2 .pj-team-identity{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline;overflow-wrap:anywhere;}
+.c2c-v2 .pj-team-identity strong{font-size:12px;color:var(--text-100);}
+.c2c-v2 .pj-team-identity>span,.c2c-v2 .pj-team-note{font-size:11.5px;line-height:1.5;color:var(--text-300);}
+.c2c-v2 .pj-team-note{margin:6px 0;}
+.c2c-v2 .pj-team-facts{display:grid;gap:7px;margin:10px 0 0;font-size:11.5px;}
+.c2c-v2 .pj-team-facts>div{display:flex;flex-wrap:wrap;gap:4px 12px;}
+.c2c-v2 .pj-team-facts dt{color:var(--text-300);min-width:145px;}
+.c2c-v2 .pj-team-facts dd{display:flex;flex-wrap:wrap;gap:5px;margin:0;color:var(--text-200);overflow-wrap:anywhere;}
+.c2c-v2 .pj-sharing{border-top:1px solid var(--border);margin-top:16px;padding-top:12px;}
+.c2c-v2 .pj-sharing-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.c2c-v2 .pj-sharing-heading h3{margin:0;font-size:13px;color:var(--text-100);}
+.c2c-v2 .pj-sharing-grant{display:flex;align-items:flex-end;flex-wrap:wrap;gap:10px;margin:12px 0;}
+.c2c-v2 .pj-sharing-grant label{display:grid;gap:5px;font-size:11.5px;min-width:0;flex:1 1 150px;}
+.c2c-v2 .pj-sharing-grant select,.c2c-v2 .pj-sharing-row select{max-width:100%;min-width:0;}
+.c2c-v2 .pj-sharing-members{list-style:none;padding:0;margin:12px 0;display:grid;gap:10px;}
+.c2c-v2 .pj-sharing-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:11.5px;min-width:0;}
+.c2c-v2 .pj-sharing-row strong{flex:1 1 140px;overflow-wrap:anywhere;}
+.c2c-v2 .pj-sharing-row .btn{white-space:normal;text-align:left;}
 .c2c-v2 .pj-acts{display:flex;flex-direction:column;gap:7px;}
 .c2c-v2 .pj-act{display:flex;align-items:baseline;gap:8px;font-size:11.5px;}
 .c2c-v2 .pj-act-w{font-weight:600;color:var(--text-200);min-width:62px;flex-shrink:0;}
@@ -1788,6 +1800,63 @@
 .c2c-v2 .ana-msg-warning-ic{display:inline-flex;flex:none;margin-top:1px;}
 .c2c-v2 .ana-msg-warning-ic svg{font-size:12px;}
 
+/* ── The question AnA asks, as positions you can take (AnaQuestionCard) ─────────
+   The interview engine has emitted a question per node since the flows landed
+   and nothing drew it, so the positions it resolved never reached the screen
+   (founder's directive, 2026-10-12).
+
+   One bordered card under the answer. Each position is a label, what it
+   commits the programme to, and the authority behind it where the flow states
+   one — so the choice is read before it is made. The last row is the position
+   the list does not hold; choosing it opens a box for the person's own words.
+   Motion is the house 200ms ease-out on border and background only. */
+.c2c-v2 .ana-q-card{margin-top:10px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg-000);padding:14px 16px;display:flex;flex-direction:column;gap:12px;}
+.c2c-v2 .ana-q-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
+.c2c-v2 .ana-q-section{font-size:11px;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-300);}
+.c2c-v2 .ana-q-progress{font-size:11.5px;color:var(--text-300);font-variant-numeric:tabular-nums;}
+.c2c-v2 .ana-q-title{margin:0;font-size:14.5px;line-height:1.5;font-weight:560;color:var(--text-000);}
+.c2c-v2 .ana-q-guidance{margin:0;font-size:12.5px;line-height:1.6;color:var(--text-200);}
+.c2c-v2 .ana-q-issues{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;}
+.c2c-v2 .ana-q-issue{font-size:12px;line-height:1.55;color:var(--text-200);padding-left:9px;border-left:2px solid var(--border);}
+.c2c-v2 .ana-q-issue.is-warning{border-left-color:var(--warning);}
+.c2c-v2 .ana-q-issue.is-critical{border-left-color:var(--error);}
+.c2c-v2 .ana-q-issue-title{font-weight:560;color:var(--text-100);}
+.c2c-v2 .ana-q-issue-ref{display:block;font-size:11px;color:var(--text-300);margin-top:2px;}
+.c2c-v2 .ana-q-field{margin:0;padding:0;border:0;display:flex;flex-direction:column;gap:8px;}
+.c2c-v2 .ana-q-label{padding:0;font-size:12.5px;font-weight:560;color:var(--text-100);}
+.c2c-v2 .ana-q-required{font-weight:400;color:var(--text-300);}
+.c2c-v2 .ana-q-help{margin:0;font-size:12px;line-height:1.55;color:var(--text-300);}
+.c2c-v2 .ana-q-positions{display:flex;flex-direction:column;gap:6px;}
+/* 44px minimum target height (SC 2.5.8) comes from the padding plus line-height. */
+.c2c-v2 .ana-q-position{display:flex;align-items:flex-start;gap:9px;padding:9px 11px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-000);cursor:pointer;transition:border-color var(--dur) ease-out,background var(--dur) ease-out;}
+.c2c-v2 .ana-q-position:hover{background:var(--bg-050);}
+.c2c-v2 .ana-q-position.is-picked{border-color:var(--accent-200);background:var(--bg-050);}
+.c2c-v2 .ana-q-position input{margin-top:2px;flex:none;accent-color:var(--accent-200);}
+.c2c-v2 .ana-q-position-body{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.c2c-v2 .ana-q-position-label{font-size:13px;line-height:1.45;color:var(--text-000);}
+.c2c-v2 .ana-q-position-commits{font-size:12px;line-height:1.5;color:var(--text-200);}
+.c2c-v2 .ana-q-position-desc{font-size:12px;line-height:1.5;color:var(--text-300);}
+.c2c-v2 .ana-q-position-authority{font-size:11px;line-height:1.45;color:var(--text-300);font-variant-numeric:tabular-nums;}
+.c2c-v2 .ana-q-position.is-needs-basis{border-color:var(--warning);}
+.c2c-v2 .ana-q-position.is-inapplicable{border-color:var(--error);}
+.c2c-v2 .ana-q-position-caution{display:block;margin-top:4px;font-size:11.5px;line-height:1.5;color:var(--text-200);padding-left:8px;border-left:2px solid var(--warning);}
+.c2c-v2 .ana-q-position-caution.is-inapplicable{border-left-color:var(--error);}
+.c2c-v2 .ana-q-caution-lead{font-weight:560;color:var(--text-100);}
+.c2c-v2 .ana-q-caution-authority{display:block;font-size:11px;color:var(--text-300);margin-top:2px;font-variant-numeric:tabular-nums;}
+.c2c-v2 .ana-q-caution-taken{display:block;font-size:11px;color:var(--text-300);margin-top:2px;}
+.c2c-v2 .ana-q-own{display:flex;flex-direction:column;gap:5px;padding:0 0 0 11px;border-left:2px solid var(--accent-200);}
+.c2c-v2 .ana-q-own-label{font-size:12px;line-height:1.5;color:var(--text-200);}
+.c2c-v2 .ana-q-input{width:100%;font:inherit;font-size:13px;line-height:1.5;color:var(--text-000);background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-md);padding:8px 10px;}
+.c2c-v2 .ana-q-input:focus-visible{outline:2px solid var(--accent-200);outline-offset:1px;}
+.c2c-v2 .ana-q-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.c2c-v2 .ana-q-submit{min-height:32px;padding:0 14px;border:1px solid var(--accent-200);border-radius:var(--radius-md);background:var(--accent-200);color:var(--bg-000);font-size:12.5px;font-weight:560;cursor:pointer;transition:opacity var(--dur) ease-out;}
+.c2c-v2 .ana-q-submit:disabled{opacity:0.55;cursor:not-allowed;}
+.c2c-v2 .ana-q-foot-note{font-size:11.5px;line-height:1.5;color:var(--text-300);}
+@media (prefers-reduced-motion: reduce){
+  .c2c-v2 .ana-q-position,
+  .c2c-v2 .ana-q-submit{transition:none;}
+}
+
 /* ── AnA activity — the per-turn record in the transcript (AnaActivity) ──────── */
 /* Text is --text-300 or darker, never --text-400: --text-400 on --bg-000 is
    3.37:1 light / 4.27:1 dark and fails SC 1.4.3 at these sizes. --text-300 is
@@ -1870,6 +1939,48 @@
 .c2c-v2 .ana-activity-think{grid-column:2;font-size:12px;line-height:1.6;color:var(--text-300);font-style:italic;border-left:2px solid var(--border);padding:2px 0 2px 10px;max-height:240px;overflow-y:auto;white-space:pre-wrap;}
 .c2c-v2 .ana-activity-think.is-live{max-height:none;overflow:visible;margin-top:4px;}
 .c2c-v2 .ana-activity-think:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;border-radius:var(--radius-md);}
+/* ── A turn's Summary (ANA-SUMMARY S4, TurnSummary.tsx) ──────────────────────
+   The same rows as the record, on a 24px glyph column joined by a 1px line.
+   A note is AnA's own words: a 6px dot, regular weight, two lines until
+   opened. Status is always in words; a glyph's colour only repeats it. The
+   phone's sheet slides up in 200ms ease-out, and not at all under reduced motion. */
+.c2c-v2 .ana-activity-summary{display:inline-flex;align-items:center;gap:4px;min-height:24px;margin-left:8px;padding:0 8px;font:inherit;font-size:12px;color:var(--text-200);background:none;border:1px solid var(--border);border-radius:var(--radius-md);cursor:pointer;}
+.c2c-v2 .ana-activity-summary svg{font-size:12px;}
+.c2c-v2 .ana-activity-summary:hover{color:var(--text-100);border-color:var(--border-strong);}
+.c2c-v2 .ana-activity-summary:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;}
+.c2c-v2 .ana-summary{display:flex;flex-direction:column;gap:8px;}
+.c2c-v2 .ana-summary-head{margin:0;display:flex;flex-direction:column;gap:2px;font-size:12px;font-weight:500;color:var(--text-100);font-variant-numeric:tabular-nums;}
+.c2c-v2 .ana-summary-models{font-size:11.5px;font-weight:400;color:var(--text-300);}
+.c2c-v2 .ana-summary-list .ana-activity-step{position:relative;grid-template-columns:24px minmax(0,1fr);}
+.c2c-v2 .ana-summary-list .ana-activity-step::before{content:"";position:absolute;left:23.5px;top:0;bottom:0;width:1px;background:var(--border);}
+.c2c-v2 .ana-summary-list .ana-activity-glyph{position:relative;justify-content:center;width:24px;background:var(--bg-000);}
+.c2c-v2 .ana-summary-list .ana-activity-row{min-height:44px;}
+.c2c-v2 .ana-activity-step.is-note .ana-activity-glyph svg{font-size:6px;color:var(--text-400);}
+.c2c-v2 .ana-activity-step.is-note .ana-activity-text{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.c2c-v2 .ana-activity-step.is-note .ana-activity-verb{color:var(--text-200);font-weight:400;}
+.c2c-v2 .ana-summary-note-full{margin:0;font-size:12.5px;line-height:1.55;color:var(--text-200);white-space:pre-wrap;}
+.c2c-v2 .ana-summary-task-steps-title{margin:8px 0 2px;font-size:11.5px;font-weight:500;color:var(--text-300);}
+.c2c-v2 .ana-summary-task-steps{margin:0;padding-left:18px;font-size:12px;line-height:1.5;color:var(--text-200);}
+.c2c-v2 .ana-summary-task-steps > li{margin:0 0 4px;}
+.c2c-v2 .ana-summary-task-step{display:block;color:var(--text-100);}
+.c2c-v2 .ana-summary-task-step-sub{display:block;color:var(--text-300);}
+.c2c-v2 .ana-summary-task-step-msg{display:block;white-space:normal;}
+.c2c-v2 .ana-summary-end .ana-activity-row{flex-wrap:wrap;align-items:center;}
+.c2c-v2 .ana-summary-end .ana-activity-text{white-space:normal;}
+.c2c-v2 .ana-summary-foot{margin:0;font-size:12px;line-height:1.5;color:var(--text-200);}
+.c2c-v2 .ana-sheet-backdrop{position:fixed;inset:0;z-index:95;background:rgb(20 20 19/.32);}
+.c2c-v2 .ana-sheet{position:absolute;left:0;right:0;bottom:0;top:48px;display:flex;flex-direction:column;background:var(--bg-000);border-radius:var(--radius-lg) var(--radius-lg) 0 0;box-shadow:0 -4px 24px rgb(20 20 19/.18);animation:ana-sheet-in 200ms ease-out;}
+.c2c-v2 .ana-sheet:focus{outline:none;}
+.c2c-v2 .ana-sheet-grab{width:36px;height:4px;margin:8px auto 0;border-radius:2px;background:var(--border-strong);}
+.c2c-v2 .ana-sheet-hdr{display:flex;align-items:center;justify-content:space-between;padding:6px 8px 6px 16px;border-bottom:1px solid var(--border);}
+.c2c-v2 .ana-sheet-title{margin:0;font-size:15px;font-weight:600;color:var(--text-100);}
+.c2c-v2 .ana-sheet-close{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;border:0;background:none;color:var(--text-300);cursor:pointer;border-radius:var(--radius-md);}
+.c2c-v2 .ana-sheet-close:focus-visible{outline:2px solid var(--accent-200);outline-offset:-2px;}
+.c2c-v2 .ana-sheet-body{flex:1;min-height:0;overflow-y:auto;padding:12px 16px 24px;}
+@keyframes ana-sheet-in{from{transform:translateY(16px);opacity:0;}to{transform:none;opacity:1;}}
+@media (prefers-reduced-motion:reduce){
+  .c2c-v2 .ana-sheet{animation:none;}
+}
 .c2c-v2 .ana-activity-pulse{display:inline-flex;color:var(--accent-200);animation:ana-activity-pulse 1600ms ease-out infinite;}
 .c2c-v2 .ana-activity-pulse svg{font-size:12px;}
 @keyframes ana-activity-pulse{0%,100%{opacity:.35;}50%{opacity:1;}}
@@ -2259,13 +2370,7 @@
 .c2c-v2 .gri-input{width:100%;height:34px;padding:0 11px;border:1px solid var(--border-control);border-radius:var(--radius-md);background:var(--bg-000);font-size:13px;}
 .c2c-v2 .gri-input:focus{border-color:var(--accent-200);box-shadow:0 0 0 3px var(--accent-000);}
 .c2c-v2 select.gri-input{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238a8880' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px;}
-.c2c-v2 .gri-toggle{display:flex;align-items:center;gap:10px;}
-.c2c-v2 .gri-toggle-l{font-size:12px;color:var(--text-200);}
 .c2c-v2 .gri-run-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;padding-top:14px;border-top:1px solid var(--border);}
-.c2c-v2 .gri-switch{width:38px;height:22px;border-radius:999px;background:var(--bg-300);position:relative;transition:background var(--dur);flex-shrink:0;}
-.c2c-v2 .gri-switch::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform var(--dur);box-shadow:var(--v2-shadow-sm);}
-.c2c-v2 .gri-switch[data-on="true"]{background:var(--accent-100);}
-.c2c-v2 .gri-switch[data-on="true"]::after{transform:translateX(16px);}
 .c2c-v2 .gri-result{border:1px solid var(--border);border-radius:var(--radius-xl);margin-top:18px;overflow:hidden;}
 .c2c-v2 .gri-result-hdr{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:var(--bg-100);border-bottom:1px solid var(--border);}
 .c2c-v2 .gri-result-hdr .t{font-size:13px;font-weight:600;}
@@ -2707,9 +2812,14 @@
    panel's one control. Without this the title collapsed to its first letter
    under the label beside it. */
 @media (max-width:560px){
-  .c2c-v2 .ct-thread-head{gap:8px;padding:10px 12px;}
+  .c2c-v2 .ct-thread-head{gap:8px;padding:10px 12px;flex-wrap:wrap;}
   .c2c-v2 .ct-head-model{display:none;}
   .c2c-v2 .ct-back{padding:6px 4px;}
+  /* The actions wrap under the title rather than run off the right edge: at
+     390px they were 39px wider than the screen, the chip (the phone's one way
+     to the Summary sheet) was off it, and every fixed layer — the sheet
+     included — was drawn 429px wide (ANA-SUMMARY S4, measured in s4-phone.json). */
+  .c2c-v2 .ct-head-r{flex-shrink:1;min-width:0;flex-wrap:wrap;justify-content:flex-end;row-gap:6px;margin-left:auto;}
 }
 /* --accent-200, not --accent-100: the identity orange is the colour the brand
    is SEEN in, and this is 11.5px text — at that size --accent-100 measures
@@ -2775,6 +2885,11 @@
 .c2c-v2 .ct-ref-l{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .c2c-v2 .ct-ref-go{color:var(--text-500);display:inline-flex;flex-shrink:0;}.c2c-v2 .ct-ref-go svg{width:12px;height:12px;}
 .c2c-v2 .ct-ref:hover .ct-ref-go{color:var(--accent-100);}
+/* A refused insert (the governed-write rule's GE-P-3 state, AnA reasoning
+   round 13) looks and hovers like the off control it is, as .ct-head-open does.
+   Its reason sits outside the button, at full strength. */
+.c2c-v2 .ct-ref:disabled{opacity:.5;cursor:not-allowed;}
+.c2c-v2 .ct-ref:disabled:hover{background:var(--bg-050);border-color:var(--border);color:var(--text-200);}
 
 .c2c-v2 .ct-ground{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding-top:2px;}
 .c2c-v2 .ct-ground-l{font-size:10.5px;color:var(--text-500);text-transform:uppercase;letter-spacing:.04em;margin-right:2px;}

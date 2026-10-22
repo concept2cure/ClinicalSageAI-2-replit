@@ -326,9 +326,12 @@ export interface ReviewerCandidate {
 
 /**
  * The organization's members who can sign a review: GET /api/tenant-users/:orgId,
- * the member-readable list. Viewers are left out, because the server refuses to
- * assign a review to someone who can never sign it. THROWS when the list cannot
- * be read: an error is not an organization with no members.
+ * the member-readable list, keeping only the rows the server marks `canSign`
+ * (its signing policy applied to the membership role). The server assigns a
+ * review only to someone who can sign its disposition and refuses anyone else
+ * with 409 REVIEWER_CANNOT_SIGN, so nobody else is offered; a row with no mark
+ * is not offered either. THROWS when the list cannot be read: an error is not
+ * an organization with no members.
  */
 export async function listReviewerCandidates(organizationId: string | number): Promise<ReviewerCandidate[]> {
   let res: Response;
@@ -342,7 +345,7 @@ export async function listReviewerCandidates(organizationId: string | number): P
   if (!Array.isArray(rows)) throw new Error('the member list was not in the expected shape');
   return rows
     .map((r) => r as Record<string, unknown>)
-    .filter((r) => Number.isInteger(Number(r.id)) && String(r.role ?? '').toLowerCase() !== 'viewer')
+    .filter((r) => Number.isInteger(Number(r.id)) && r.canSign === true)
     .map((r) => ({ id: Number(r.id), name: String(r.name ?? '').trim(), email: String(r.email ?? ''), role: String(r.role ?? '') }));
 }
 
@@ -409,11 +412,15 @@ export async function updateProtocolHeader(
 /* ── Start a protocol ──────────────────────────────────────────────────── */
 
 export async function startProtocolDocument(
-  v: { title: string; protocolKind: string; protocolNumber?: string; phase?: string; sponsor?: string; principalInvestigator?: string; reason: string },
+  v: { title: string; protocolKind: string; programId?: string; protocolNumber?: string; phase?: string; sponsor?: string; principalInvestigator?: string; reason: string },
 ): Promise<{ id: number | null; sectionsSeeded: number | null }> {
   const reason = requireReason(v.reason);
+  if (!v.programId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v.programId)) {
+    throw new Error('Open a program before starting a protocol. Nothing was written.');
+  }
   const json = await send('POST', '/api/protocol-development/documents', compact({
     title: v.title,
+    programId: v.programId,
     protocolKind: v.protocolKind,
     protocolNumber: v.protocolNumber,
     phase: v.phase,
@@ -421,8 +428,11 @@ export async function startProtocolDocument(
     principalInvestigator: v.principalInvestigator,
     reason,
   }), 'start the protocol');
+  if (typeof json.id !== 'number' || !Number.isSafeInteger(json.id) || json.id <= 0) {
+    throw new Error('The server did not confirm a protocol id. Refresh the protocol picker before starting another document.');
+  }
   return {
-    id: typeof json.id === 'number' ? json.id : null,
+    id: json.id,
     sectionsSeeded: typeof json.sectionsSeeded === 'number' ? json.sectionsSeeded : null,
   };
 }

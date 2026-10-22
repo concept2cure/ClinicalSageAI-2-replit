@@ -7,7 +7,7 @@ OK            package.json:297  | "prepare": "[ -n \"$CI\" ] || husky || true",
 OK            .github/workflows/pr-checks.yml:4,16-24,69,142,236-238,267  | pull_request:
 OK            .github/workflows/terraform-compliance.yml:3-6  | on:
 OK            client/index.html
-OK            terraform/stack/main.tf:259-263  | 
+OK            terraform/stack/main.tf:259-263  |
 OK            terraform/modules/ecs-fargate/main.tf:79-90  | resource "aws_iam_role_policy" "ecs_task_s3" {
 OK            terraform/modules/cloudfront/main.tf:151-173  | default_cache_behavior {
 OK            client/index.html:6-8  | <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
@@ -137,7 +137,7 @@ OK            server/services/emailOtpService.ts:67-80  | export async function 
 OK            server/bootstrap/register-platform-routes.ts:91  | app.use('/api/v1/auth', preAuthScope, authRouter);
 OK            server/middleware/enterprise-security.ts:1070  | app.use('/api/auth', rateLimiters.auth);
 OK            server/middleware/auth.ts:203-211  | req.user = {
-OK            server/routes/billing-dashboard.ts:764,800,894  | router.put('/seats', authenticateToken, requireRole('admin', 'owner'), async (req: Request, res: Response) => 
+OK            server/routes/billing-dashboard.ts:764,800,894  | router.put('/seats', authenticateToken, requireRole('admin', 'owner'), async (req: Request, res: Response) =>
 OK            server/routes/misc-inline-routes.ts:417-476  | router.post('/v1/drafting/start_task', authMiddleware as any, async (req: Request, res: Response) => {
 OK            server/src/routes/stability.router.ts:2054-2078  | router.patch('/results/:resultId', async (req, res) => {
 OK            server/socketServer.ts:225-280  | ioInstance.use((socket: AuthenticatedSocket, next) => {
@@ -213,7 +213,7 @@ OK            server/routes/c2c/actions.ts:545  | await persistGovernedSignature
 OK            db/migrations/20260617_audit_logs_immutability.sql:156  | IF coalesce(current_setting('app.audit_archive_bypass', true), '') = 'on' THEN
 OK            scripts/db/provision-app-role.mjs:138-152  | export const SCHEMA_PRIVILEGE_OVERRIDES = Object.freeze({
 OK            server/services/audit/chain.ts:450-600  | /**
-OK            server/services/audit/audit-archive.service.ts:88-160  | 
+OK            server/services/audit/audit-archive.service.ts:88-160  |
 OK            terraform/stack/main.tf:43-50,180-181  | #   DATABASE_URL      the owner role (c2c_admin). Migrations run as it, and so
 OK            server/db/bootstrap/index.ts:28-40  | // connection (DATABASE_URL) — the same role migrations use, and exactly what
 OK            server/services/part11/signature-persistence.ts:209,714  | const sha256Hex = (s: string): string => createHash('sha256').update(s).digest('hex');
@@ -252,7 +252,7 @@ OK            server/services/auditService.ts:288-310  | `INSERT INTO audit_logs
 OK            server/services/auditService.ts:340-450  | async logAction(
 OK            server/services/audit/domain-history-link.ts:67-72  | * STATE, STATED PLAINLY: `linked` is false for every entry, because
 OK            db/migrations/20260725_authoring_signatures_and_workflow.sql:40-70  | -- Deliberately NO foreign key on doc_id. A signature is evidence about a record
-OK            server/services/part11/signature-persistence.ts:683-688  | 
+OK            server/services/part11/signature-persistence.ts:683-688  |
 OK            server/routes/c2c/actions.ts
 OK            server/routes/audit-trail-routes.ts:213-240,537,588  | // GET /api/audit/events — event listing
 OK            server/routes/audit-trail-ledger.routes.ts:398  | router.get('/ledger', async (req: Request, res: Response) => {

@@ -1,0 +1,18 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e 
+  server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts (559 lines)
+  server/services/ana/verifiedSealService.ts (521 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3110 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 b4d0c4e92] fix(ana): bind verified seals to owned persisted version content
+ 5 files changed, 475 insertions(+), 96 deletions(-)

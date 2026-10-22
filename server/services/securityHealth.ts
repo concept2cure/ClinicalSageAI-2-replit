@@ -17,11 +17,16 @@
  *
  *   jwt_secret_strength        — JWT_SECRET (or env-variant) ≥32 chars
  *   csp_middleware_active      — helmet emits CSP with a nonce
- *   clamav_connectivity        — clamd reachable + responding (when
- *                                CLAMAV_HOST is set). Sends the EICAR
- *                                test signature and expects a FOUND
- *                                reply, confirming both reachability
- *                                AND detection.
+ *   clamav_connectivity        — clamd reachable + responding. Sends
+ *                                the EICAR test signature and expects a
+ *                                FOUND reply, confirming both
+ *                                reachability AND detection. With
+ *                                CLAMAV_HOST unset: skipped outside
+ *                                production; a critical FAIL in
+ *                                production, which refuses every upload
+ *                                it cannot scan (uploadSafety.ts) and so
+ *                                refuses to boot without a scanner
+ *                                (MR-08).
  *   audit_chain_integrity      — hash chain of audit_events is intact
  *                                from the first row to the latest.
  *   audit_immutability_triggers — every append-only trigger on the audit
@@ -223,6 +228,19 @@ async function checkClamavConnectivity(): Promise<SecurityCheckResult> {
   const start = Date.now();
 
   if (!process.env.CLAMAV_HOST) {
+    // Production refuses every upload it cannot scan (uploadSafety.ts: 503
+    // FILE_SCAN_UNAVAILABLE), so a production process with no scanner would
+    // boot green and refuse every file. It refuses to boot instead
+    // (startup/security-self-test.ts exits on a critical failure). MR-08.
+    if (process.env.NODE_ENV === 'production') {
+      return {
+        name: 'clamav_connectivity',
+        status: 'fail',
+        critical: true,
+        reason: 'CLAMAV_HOST not set: production refuses every upload (server/middleware/uploadSafety.ts)',
+        durationMs: Date.now() - start,
+      };
+    }
     return {
       name: 'clamav_connectivity',
       status: 'skipped',
@@ -281,8 +299,30 @@ async function checkClamavConnectivity(): Promise<SecurityCheckResult> {
 // Audit chain integrity
 // ---------------------------------------------------------------------------
 
+function isAuditIntegrityCheckEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  return (
+    (env.NODE_ENV ?? '').toLowerCase() === 'production' ||
+    env.AUDIT_TRAIL_ENABLED === 'true' ||
+    env.ENABLE_AUDIT_CHAIN_CHECK === 'true'
+  );
+}
+
+function skippedInactiveAuditCheck(name: string, start: number): SecurityCheckResult {
+  return {
+    name,
+    status: 'skipped',
+    critical: false,
+    reason: 'audit trail inactive outside production',
+    durationMs: Date.now() - start,
+  };
+}
+
 async function checkAuditChainIntegrity(pool: Pool): Promise<SecurityCheckResult> {
   const start = Date.now();
+  if (!isAuditIntegrityCheckEnabled()) {
+    return skippedInactiveAuditCheck('audit_chain_integrity', start);
+  }
+
   try {
     const { getTamperProofAuditLog } = await import('../lib/tamper-proof-audit');
     const audit = getTamperProofAuditLog(pool);
@@ -403,6 +443,10 @@ async function checkAuditImmutabilityTriggers(pool: Pool): Promise<SecurityCheck
 
 async function checkAuditEventCoverage(pool: Pool): Promise<SecurityCheckResult> {
   const start = Date.now();
+  if (!isAuditIntegrityCheckEnabled()) {
+    return skippedInactiveAuditCheck('audit_event_coverage', start);
+  }
+
   try {
     // tenant-isolation-safe: platform-wide security self-test — estate-wide audit-event coverage aggregate (all orgs) run under runWithSystemTenantScope('security-self-test'); org-scoping would defeat the coverage check.
     const { rows } = await pool.query<{ event_type: string; count: string }>(
@@ -593,6 +637,7 @@ export const __testing = {
   checkAuditChainIntegrity,
   checkAuditImmutabilityTriggers,
   checkAuditEventCoverage,
+  isAuditIntegrityCheckEnabled,
   checkCerReportMigration,
   NEW_AUDIT_ACTIONS,
   EICAR_TEST_STRING,

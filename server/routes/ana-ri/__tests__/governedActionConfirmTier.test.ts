@@ -48,6 +48,9 @@ vi.mock('../../../services/ana/run-control.js', async importOriginal => ({
   ),
 }));
 vi.mock('../../../services/part11/reverify-signer.js', () => ({ reverifySigner: reverify }));
+// §11.10(g): every signer here holds a signing role on its membership row; the
+// refusals are pinned in governedActionArtifactSignature.test.ts.
+vi.mock('../../../services/part11/resolve-signer-role', () => ({ resolveSignerOrgRole: async () => 'approver' }));
 vi.mock('../../../services/auditService.js', () => ({
   default: {
     logAction: vi.fn(async (entry: { action: string; details: Record<string, unknown> }) => {
@@ -263,6 +266,7 @@ describe('a confirmed tool', () => {
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(executed).toHaveLength(0); // not a command
     expect(toolCalls).toHaveLength(1);
+    expect(toolCalls[0].ctx.sqlClient).toEqual({ query: expect.any(Function) });
     expect(toolCalls[0]).toMatchObject({
       name: 'save_report_definition',
       input: { title: 'Weekly enrolment report' },

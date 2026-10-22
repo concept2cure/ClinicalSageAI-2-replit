@@ -22,6 +22,22 @@ import {
   PRODUCT_TYPES,
 } from '../product-types.js';
 
+describe('regional device application product identity', () => {
+  it.each([
+    ['mdl', 'device'], ['shonin', 'device'], ['ninsho', 'device'], ['todokede', 'device'],
+    ['ivd_licence', 'ivd'], ['ivd_approval', 'ivd'], ['jp_cdx', 'cdx'],
+  ])('%s preserves its filing family across arrival lanes', (filing, product) => {
+    for (const lane of ['diagnostics', 'medtech', 'biotech', 'pharma']) {
+      expect(productTypeForFilingType(filing, lane)).toBe(product);
+      expect(workstreamForFilingType(filing, product)).toBe('MDX');
+    }
+  });
+  it('retains HDE diagnostic refinement without refining device-only regional filings', () => {
+    expect(productTypeForFilingType('hde', 'diagnostics')).toBe('ivd');
+    expect(productTypeForFilingType('hde', 'medtech')).toBe('device');
+  });
+});
+
 describe('a device filing is never a medicinal product', () => {
   // The invariant, stated once and checked over every device instrument this
   // vocabulary knows.
@@ -71,6 +87,10 @@ describe('a device filing is never a medicinal product', () => {
 });
 
 describe('the lane refines within the device family, and only there', () => {
+  it.each(['diagnostics', 'ivd', 'diagnostics_ivd'])('an %s lane cannot turn MDR or CER into an IVD instrument', lane => {
+    expect(productTypeForFilingType('mdr', lane)).toBe('device');
+    expect(productTypeForFilingType('cer', lane)).toBe('device');
+  });
   it('reads a 510(k) started from the Diagnostics lane as an IVD 510(k)', () => {
     expect(productTypeForFilingType('510k', 'medtech')).toBe('device');
     expect(productTypeForFilingType('510k', 'diagnostics')).toBe('ivd');
@@ -87,8 +107,27 @@ describe('the lane refines within the device family, and only there', () => {
   });
 
   it('leaves medicinal filings alone', () => {
-    expect(productTypeForFilingType('ind', 'diagnostics')).toBe('biologic');
     expect(productTypeForFilingType('nda', 'medtech')).toBe('drug');
+    expect(productTypeForFilingType('bla', 'diagnostics')).toBe('biologic');
+  });
+});
+
+describe('a filing that does not fix the class is a question, never a default (P-21)', () => {
+  // QA 2026-10-08 (second walk, j1/j7): an inhaled small-molecule IND was
+  // recorded as a biologic. An IND is filed with CDER for a drug and with CBER
+  // for a biologic; an EU MAA, an EU CTA and a Japanese J-NDA cover both too.
+  // The filing type does not say which, so the person does.
+  it.each(['ind', 'IND', 'cta', 'maa', 'jnda'])('%s resolves to no class, so the person is asked', (filing) => {
+    expect(productTypeForFilingType(filing)).toBeNull();
+    for (const lane of ['biotech', 'pharma', 'health']) {
+      expect(productTypeForFilingType(filing, lane)).toBeNull();
+    }
+  });
+
+  it('the filings that do fix it still resolve: NDA and ANDA are drugs, a BLA is a biologic', () => {
+    expect(productTypeForFilingType('nda')).toBe('drug');
+    expect(productTypeForFilingType('anda')).toBe('drug');
+    expect(productTypeForFilingType('bla')).toBe('biologic');
   });
 });
 
@@ -165,6 +204,19 @@ describe('workstream bucketing', () => {
     expect(workstreamForFilingType('widget')).toBeNull();
   });
 
+  // Added 2026-10-18: a filing document class (a supplement, a CSR) covers drugs
+  // and biologics alike, so its bucket is the product class's, never a guess.
+  it('buckets a filing document class by its product class, and only once that is stated', () => {
+    expect(workstreamForFilingType('pas', 'biologic')).toBe('Biotech');
+    expect(workstreamForFilingType('csr', 'drug')).toBe('Pharma');
+    expect(workstreamForFilingType('cbe')).toBeNull();
+    expect(workstreamForFilingType('nda', 'biologic')).toBe('Pharma');
+    const sql = workstreamSqlCase('p.program_type', 'p.product_type');
+    expect(sql).toMatch(/lower\(p\.program_type\) IN \([^)]*'pas'[^)]*\) AND lower\(p\.product_type\) IN \('biologic'\) THEN 'Biotech'/);
+    expect(sql).toMatch(/AND lower\(p\.product_type\) IN \('drug'\) THEN 'Pharma'/);
+    expect(workstreamSqlCase('p.program_type')).not.toMatch(/product_type/);
+  });
+
   it('generates SQL that agrees with the function, member for member', () => {
     // The two must not drift: the server projects the SQL, the wizard's review
     // step calls the function, and the review step is a promise about what will
@@ -179,5 +231,14 @@ describe('workstream bucketing', () => {
                           'ind', 'bla', 'biologic', 'nda', 'maa', 'jnda', 'anda', 'cta']) {
       expect(sql).toContain(`'${filing}'`);
     }
+  });
+});
+
+
+describe('product descriptions preserve conditional diagnostic classification', () => {
+  it('does not assign an EU risk class from the companion-diagnostic label', () => {
+    const description = PRODUCT_TYPES.find(entry => entry.value === 'cdx')!.description;
+    expect(description).toMatch(/classification.*intended use.*(applicable|regional)/i);
+    expect(description).not.toMatch(/Class D under the IVDR/i);
   });
 });

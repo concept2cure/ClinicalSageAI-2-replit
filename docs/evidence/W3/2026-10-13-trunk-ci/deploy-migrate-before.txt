@@ -1,0 +1,3 @@
+# blank database c2c_blank_proof, install-fresh then deploy-migrate, at trunk 94b4f923 (unchanged)
+293:  ✗ failed:  db/migrations/20260813_knowledge_graph_tenant_keys.sql — column n.organization_id does not exist
+295:❌ Deploy migration failed: migration halted at db/migrations/20260813_knowledge_graph_tenant_keys.sql — column n.organization_id does not exist (172/375 applied before the failure)

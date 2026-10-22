@@ -7,12 +7,17 @@ import { z } from 'zod';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { documents, documentVersions } from '../../shared/schema';
 import { authMiddleware } from '../auth';
-import { db } from '../db';
+import { db, pool } from '../db';
 import { requestPgClient } from '../db/requestDb';
 import { FeatureToggleService } from '../services/featureToggleService';
 import { createScopedLogger } from '../utils/logger';
 import { serverError } from '../lib/api-response';
 import { programInOrganization } from '../services/c2c/program-access';
+import { writeChainedAuditRow } from '../services/auditService';
+import { ProjectAdmissionRefusal, requireCurrentProjectActor, requireProjectAdmission } from './c2c/project-access';
+import { admitAnaProjectScope, AnaProjectScopeError } from '../services/ana/project-scope-admission';
+import type { RequestSqlClient } from '../db/requestDb';
+import type { PoolClient } from 'pg';
 
 const router = Router();
 const logger = createScopedLogger('cerv2-documents');
@@ -101,6 +106,20 @@ const programVisibleInOrg = async (
 ): Promise<boolean> => {
   return programInOrganization(requestPgClient(req), programId, organizationId);
 };
+
+async function requireScreeningScope(req: Parameters<typeof requireCurrentProjectActor>[0], input: {
+  organizationId: number; userId: number | null; programId: string | null | undefined;
+  forWrite: boolean; client: RequestSqlClient;
+}) {
+  const { organizationId, userId, programId, forWrite, client } = input;
+  if (!userId) throw new ProjectAdmissionRefusal(403, 'SCREENING_ACTOR_REQUIRED', 'An identified organization member is required.');
+  await requireCurrentProjectActor(req, forWrite);
+  if (!programId) return;
+  if (!await programVisibleInOrg(req, programId, organizationId)) throw new ProjectAdmissionRefusal(404, 'SCREENING_PROGRAM_NOT_FOUND', 'Program not found in your organization.');
+  const scope = await admitAnaProjectScope(client, { organizationId, userId, projectRef: programId });
+  if (scope.projectId === null) throw new ProjectAdmissionRefusal(409, 'SCREENING_PROJECT_UNRESOLVED', 'The program project relationship could not be verified.');
+  await requireProjectAdmission(req, String(scope.projectId), forWrite);
+}
 
 const tableExists = async (_req: any, tableName: string) => {
   try {
@@ -343,27 +362,28 @@ router.post('/literature/screen', authMiddleware, async (req, res) => {
     '../services/literature-screening.service'
   );
 
+  let client: PoolClient | undefined;
+  let commitAttempted = false;
+  let releaseError: Error | undefined;
+  const recoveryUrl = parsed.data.programId
+    ? `/api/cerv2/literature/screening?programId=${encodeURIComponent(parsed.data.programId)}&pmids=${encodeURIComponent(parsed.data.pmid)}`
+    : `/api/cerv2/literature/screening?pmids=${encodeURIComponent(parsed.data.pmid)}`;
   try {
-    if (parsed.data.programId) {
-      if (!(await programVisibleInOrg(req, parsed.data.programId, organizationId))) {
-        return res.status(404).json({ error: 'Program not found in your organization' });
-      }
-    }
+    client = await pool.connect();
+    await client.query('BEGIN');
+    await requireScreeningScope(req, { organizationId, userId, programId: parsed.data.programId, forWrite: true, client });
 
-    const result = await recordScreeningDecision(requestPgClient(req), organizationId, userId, {
+    const result = await recordScreeningDecision(client, organizationId, userId, {
       pmid: parsed.data.pmid,
       stage: parsed.data.stage,
       decision: parsed.data.decision,
       exclusionReason: parsed.data.exclusionReason ?? null,
       programId: parsed.data.programId ?? null,
-    });
+    }, { lockCorpusEntry: true });
 
-    // Governance evidence → the sanctioned chained writer. Awaited, not
-    // fire-and-forget: the audit row is part of what makes this decision
-    // defensible. auditService itself never throws on a persistence failure
-    // (it logs), so awaiting cannot fail the user's action.
-    const auditService = (await import('../services/auditService')).default;
-    await auditService.logAction({
+    // The chain is the only retained before/after history. The current row
+    // must never commit without that history on this same connection.
+    await writeChainedAuditRow(client, {
       organizationId,
       userId,
       action: result.outcome === 'created' ? 'create' : 'update',
@@ -388,9 +408,26 @@ router.post('/literature/screen', authMiddleware, async (req, res) => {
       ipAddress: req.ip,
       userAgent: req.get?.('user-agent') ?? undefined,
     });
+    commitAttempted = true;
+    await client.query('COMMIT');
 
-    return res.json({ screened: true, outcome: result.outcome, decision: result.current });
+    return res.json({ screened: true, outcome: result.outcome, decision: result.current,
+      meta: { auditTrail: { persisted: true, chained: true } } });
   } catch (error) {
+    if (commitAttempted) {
+      releaseError = new Error('Literature screening COMMIT result was not confirmed');
+      return res.status(503).json({ screened: false, outcome: 'unconfirmed', recoveryUrl,
+        code: 'SCREENING_COMMIT_UNCONFIRMED',
+        error: 'The screening result could not be confirmed. Read the stored screening trail before retrying this decision.' });
+    }
+    await client?.query('ROLLBACK').catch(() => { releaseError = new Error('Literature screening rollback could not be confirmed'); });
+    if (error instanceof ProjectAdmissionRefusal) {
+      return res.status(error.status).json({ screened: false, code: error.code, error: error.message });
+    }
+    if (error instanceof AnaProjectScopeError) {
+      return res.status(error.status).json({ screened: false,
+        code: 'SCREENING_PROJECT_ACCESS_UNAVAILABLE', error: 'Current project permission could not be established. The decision was not changed.' });
+    }
     if (error instanceof ScreeningRefusal) {
       // Refusals are the honest outcome, not a server fault: the reviewer can
       // act on every one of them.
@@ -401,6 +438,8 @@ router.post('/literature/screen', authMiddleware, async (req, res) => {
       return res.status(422).json({ screened: false, code: error.code, error: error.message });
     }
     return serverError(res, logger, 'recording the screening decision', error);
+  } finally {
+    client?.release(releaseError);
   }
 });
 
@@ -440,11 +479,7 @@ router.get('/literature/screening', authMiddleware, async (req, res) => {
   );
 
   try {
-    if (parsed.data.programId) {
-      if (!(await programVisibleInOrg(req, parsed.data.programId, organizationId))) {
-        return res.status(404).json({ error: 'Program not found in your organization' });
-      }
-    }
+    await requireScreeningScope(req, { organizationId, userId: resolveUserIdOrNull(req), programId: parsed.data.programId, forWrite: false, client: requestPgClient(req) });
 
     const pmids = (parsed.data.pmids ?? '')
       .split(',')
@@ -458,6 +493,10 @@ router.get('/literature/screening', authMiddleware, async (req, res) => {
     });
     return res.json(result);
   } catch (error) {
+    if (error instanceof ProjectAdmissionRefusal || error instanceof AnaProjectScopeError) {
+      return res.status(error.status).json({ available: false, decisions: [], code: 'SCREENING_ACCESS_DENIED',
+        error: 'Current permission to read this screening trail could not be established.' });
+    }
     if (error instanceof ScreeningRefusal) {
       return res.status(422).json({
         available: false,

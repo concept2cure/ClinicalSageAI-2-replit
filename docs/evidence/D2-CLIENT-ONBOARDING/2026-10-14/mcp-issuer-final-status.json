@@ -1,0 +1,7 @@
+{
+  "command": "CI=true npm run test:mcp-sdk-issuer",
+  "exit_code": 0,
+  "tests_passed": 2,
+  "production_source_changed": false,
+  "scope": "Invitation membership role SQL fixture correction; exact hosted security job commands."
+}

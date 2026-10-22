@@ -27,6 +27,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { createHash } from 'crypto';
+import { readFileSync } from 'node:fs';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
 
 const holder = vi.hoisted(() => ({ db: null as any }));
@@ -96,9 +97,13 @@ beforeAll(async () => {
       storage_version_id TEXT,
       content_hash TEXT,
       file_name TEXT,
+      mime_type TEXT,
       deleted_at TIMESTAMPTZ
     );
   `);
+  // The vault lookup reads the binary-availability predicate the assembler
+  // reads (2026-10-17); apply the disposition ledger it consults.
+  await harness.pglite.exec(readFileSync(new URL('../../../../migrations/20261006_document_data_dispositions.sql', import.meta.url), 'utf8'));
   await harness.pglite.query(
     `INSERT INTO regulatory_programs (id, organization_id) VALUES ($1::uuid,$2),($3::uuid,$4)
      ON CONFLICT (id) DO NOTHING`,

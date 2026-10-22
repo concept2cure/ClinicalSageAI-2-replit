@@ -1,0 +1,16 @@
+{
+  "command": [
+    "/root/.npm/_npx/d18f28baf1132559/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=/workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-workflow-read-overlap/focused-green.json"
+  ],
+  "exitCode": 0,
+  "productionSha256": "b53b3862d03e6c297776b69a5a779f5c3b56349ba5317e436bf24d70b87ad9db",
+  "testSha256": "437f0b2bc3d7078c0e26d265df62599e1f725364f35d6715f2d80d1434f62cfa"
+}

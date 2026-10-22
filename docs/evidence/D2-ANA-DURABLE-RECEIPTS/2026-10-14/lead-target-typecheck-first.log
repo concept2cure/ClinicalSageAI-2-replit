@@ -1,0 +1,17 @@
+Scope: 10 owned roots plus imported dependencies; compiler options from repository tsconfig.json. This is not a whole-repository typecheck.
+shared/ana/source-admission-receipts.ts: 0 target diagnostics
+shared/schema/ana-source-read-receipts.ts: 0 target diagnostics
+server/services/ana/source-admission-receipt-store.ts: 0 target diagnostics
+server/services/ana/source-admission-receipt-history.ts: 0 target diagnostics
+server/services/ana/read-receipts.ts: 0 target diagnostics
+server/services/ana/source-read-receipt.ts: 1 target diagnostics
+server/services/tenant/tenant-source-read-receipt-purge.ts: 0 target diagnostics
+server/services/tenant/tenant-offboarding.ts: 0 target diagnostics
+server/services/tenant-export/tenant-full-export.service.ts: 0 target diagnostics
+server/services/audit/audit-immutability-triggers.ts: 0 target diagnostics
+Loaded imported/ambient sources: 4605
+[96mserver/services/ana/source-read-receipt.ts[0m:[93m190[0m:[93m5[0m - [91merror[0m[90m TS2322: [0mType 'ReceiptAdmission' is not assignable to type 'void'.
+
+[7m190[0m     return admission;
+[7m   [0m [91m    ~~~~~~[0m
+Total selected-scope diagnostics: 1

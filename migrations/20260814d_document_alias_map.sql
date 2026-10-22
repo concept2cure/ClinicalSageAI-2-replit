@@ -1,3 +1,12 @@
+-- 2026-10-17 AMENDED IN PLACE (D2, document store consolidation step 1,
+-- docs/design/DOCUMENT_STORE_CONSOLIDATION.md): the store vocabulary now admits
+-- 'vault_documents' (the filed record, vault.documents) and 'protocol_documents'
+-- (the protocol register), so those stores can carry identities in the map.
+-- Additive: every previously admitted store is still admitted. Applied through the
+-- same pg_get_constraintdef compare-then-replace below, so a database holding the
+-- old six-value CHECK converges on the next replay and a converged one is not
+-- re-validated. server/services/c2c/document-alias-map.ts DOCUMENT_ALIAS_STORES
+-- mirrors the list; tests/schema-contract/document-alias-store-vocabulary.pglite.test.ts pins both.
 -- 2026-09-25 AMENDED IN PLACE (W2 / D1, docs/evidence/W2/2026-09-25-replay-rebuilds-nothing/):
 -- c2c_document_aliases_store_check is now replaced only when the live definition
 -- (pg_get_constraintdef) differs from the one below. Unconditional, every deploy dropped
@@ -149,7 +158,7 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint
      WHERE conrelid = to_regclass('public.c2c_document_aliases') AND conname = 'c2c_document_aliases_store_check'
-       AND pg_get_constraintdef(oid) = $def$CHECK ((store = ANY (ARRAY['authoring_documents'::text, 'coauthor_documents'::text, 'c2c_documents'::text, 'concept2cure_artifacts'::text, 'submission_leaves'::text, 'unified_documents'::text])))$def$
+       AND pg_get_constraintdef(oid) = $def$CHECK ((store = ANY (ARRAY['authoring_documents'::text, 'coauthor_documents'::text, 'c2c_documents'::text, 'concept2cure_artifacts'::text, 'submission_leaves'::text, 'unified_documents'::text, 'vault_documents'::text, 'protocol_documents'::text])))$def$
   ) THEN
     EXECUTE $q$ALTER TABLE c2c_document_aliases
       DROP CONSTRAINT IF EXISTS c2c_document_aliases_store_check$q$;
@@ -162,7 +171,9 @@ BEGIN
           'c2c_documents',
           'concept2cure_artifacts',
           'submission_leaves',
-          'unified_documents'
+          'unified_documents',
+          'vault_documents',
+          'protocol_documents'
         ))
     $q$;
   END IF;

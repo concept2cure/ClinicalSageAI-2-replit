@@ -1,0 +1,37 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > says "Not assessed" and why when no validator ran, never "Satisfied" 57ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > does not call the validator clean in the cleared verdict when it never ran 18ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > still says "Satisfied" when the validator ran and its report was clean 14ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > shows advisory failed validation without converting clearance into a pass 16ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > shows advisory invalid validation without converting clearance into a pass 14ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > publishes an invalid zero placeholder with its status and engine provenance to AnA 26ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > shows a raw executed subset as not externally assessed 15ms
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > does not call a legacy advisory report clean when its observed error count is positive 27ms
+   → expected 'The agency-grade validator’s report f…' to contain 'External validation failed.'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > does not call a legacy advisory report clean when its observed error count is positive
+AssertionError: expected 'The agency-grade validator’s report f…' to contain 'External validation failed.'
+
+Expected: "External validation failed."
+Received: "The agency-grade validator’s report for this package carries no errorsSatisfied.EXTERNAL_VALIDATION_CLEAN · e"
+
+ ❯ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx:135:75
+    133|     render(<DispatchReadiness {...props()} />);
+    134|     await screen.findByText('At least one Shadow Review has completed'…
+    135|     expect(document.querySelector('[data-gate="external"]')!.textConte…
+       |                                                                           ^
+    136|     expect(document.body.textContent).not.toContain('external validato…
+    137|     expect(document.body.textContent).toContain('Cleared to dispatch');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  03:35:51
+   Duration  1.31s (transform 388ms, setup 111ms, import 483ms, tests 191ms, environment 417ms)
+

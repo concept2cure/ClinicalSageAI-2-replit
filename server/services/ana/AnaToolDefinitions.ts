@@ -374,7 +374,6 @@ import {
   VALIDATE_ECTD_PACKAGE,
   PLAN_SUBMISSION,
   EXPLAIN_VALIDATION_FINDINGS,
-  CROSS_REGION_GAP_ANALYSIS,
   DISPATCH_QC_CHECK,
   TRACE_PROVENANCE,
   CHECK_CONSISTENCY,
@@ -686,7 +685,7 @@ export const LOOKUP_ICH_GUIDELINE: AnaTool = {
     properties: {
       guideline: {
         type: 'string',
-        description: 'ICH guideline code (e.g., "E6(R2)", "E8(R1)", "E9(R1)", "M4") or topic to search',
+        description: 'ICH guideline code (e.g., "E6(R3)", "E8(R1)", "E9(R1)", "M4") or topic to search',
       },
       section: {
         type: 'string',
@@ -1295,17 +1294,19 @@ export const FETCH_TEMPLATE_AND_FILL: AnaTool = {
 export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
   name: 'package_ectd_for_region',
   description:
-    `Assemble a regional eCTD zip from a set of CTD leaves, for any of the twelve regions the gateway layer supports: ${agencyList()}. Produces that region's Module 1 folder structure and regional backbone (us-regional.xml / eu-regional.xml / jp-regional.xml / ca-regional.xml / …), computes SHA-256, and returns the bundle metadata for downstream transmit. The bundle carries a regionalBackbone status recording whether the backbone is built to the agency's own Module 1 structure or reuses another region's as a placeholder — read it before telling a user a package is agency-conformant. Use after AnA has gathered the leaf manifest for a submission.`,
+    `Assemble a regional eCTD zip from a set of CTD leaves, for any of the twelve regions the gateway layer supports: ${agencyList()}. Produces that region's Module 1 folder structure and regional backbone (us-regional.xml / eu-regional.xml / jp-regional.xml / ca-regional.xml / …), computes SHA-256, and returns the bundle metadata for downstream transmit. The bundle carries a regionalBackbone status recording whether the backbone is built to the agency's own Module 1 structure or reuses another region's as a placeholder — read it before telling a user a package is agency-conformant. The application number and the applicant are not inputs: they are read from the record of the project named by program_id (its recorded agency application number, and the organisation's name), and the tool refuses PACKAGE_IDENTITY_MISSING, naming what is missing, when the record lacks either. Use after AnA has gathered the leaf manifest for a submission.`,
   input_schema: {
     type: 'object',
     properties: {
       region:          { type: 'string', enum: [...ALL_REGIONS] },
-      application_id:  { type: 'string', description: 'IND/NDA number (FDA), procedure number (EMA), application number (PMDA), dossier id (Health Canada).' },
+      // 2026-10-08 (P-27, Rule 2): application_id, sponsor_id and sponsor_name
+      // were model input, so the backbone's application number and applicant
+      // were whatever the model wrote. They are read from the record now
+      // (ectd/package-identity.ts), as export and compile read them.
+      program_id:      { type: 'string', description: 'The project (regulatory_programs.id, UUID) this package is filed for. The agency application number and the applicant are read from its record and the organisation\'s; they are never taken from this call.' },
       sequence:        { type: 'string', description: '4-digit submission sequence, e.g. 0001.' },
       submission_type: { type: 'string', description: 'original | amendment | response | annual_report | safety.' },
       application_type: { type: 'string', description: 'REQUIRED for region "fda": what is being filed — nda | snda | anda | bla | ind | dmf. The us-regional backbone carries this as the application-type attribute, and it is a statement about the filing, so the packager refuses to guess it. Device pathways (510k, de_novo, pma) have no eCTD Module 1 code and are not filed on this backbone.' },
-      sponsor_id:      { type: 'string', description: 'DUNS / EMA org id / PMDA applicant id.' },
-      sponsor_name:    { type: 'string' },
       product_name:    { type: 'string' },
       leaves: {
         type: 'array',
@@ -1325,7 +1326,16 @@ export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
           'omit source_path and give modified_file, which names the withdrawn leaf by the prior sequence\'s backbone and that leaf\'s ID ' +
           '(e.g. ../0000/index.xml#leaf-3-2-S-2-file, the ID as that sequence\'s leaf manifest recorded it; never a file path). ' +
           'replace / append in a follow-up sequence also require modified_file, naming the filed leaf they act on the same way. ' +
-          'Sequence 0000 cannot carry a delete: nothing is on file to withdraw.',
+          'Sequence 0000 cannot carry a delete: nothing is on file to withdraw. ' +
+          // FDA validation 1789 is a high-severity Technical Rejection Criterion: a file submitted in a
+          // Module 4/5 study section must be referenced by a Study Tagging File. The packager refuses a
+          // US sequence that breaks it rather than ship one FDA will technically reject, so the fields
+          // that satisfy it are asked for here, with the rule and its exemptions stated.
+          'FDA validation 1789: every file filed in a Module 4 or Module 5 STUDY section must be referenced by a ' +
+          'Study Tagging File, so each such leaf must carry study_id and stf_file_tag. The sections that need no STF ' +
+          'are 4.3 Literature references, 5.2 Tabular listings, 5.3.6 Postmarketing reports and 5.4 Literature ' +
+          'references. A US sequence with an untagged study file is refused, naming each file; outside the US the ' +
+          'package is built and the count is reported on the bundle.',
         items: {
           type: 'object',
           properties: {
@@ -1335,13 +1345,15 @@ export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
             file_name:     { type: 'string' },
             title:         { type: 'string' },
             modified_file: { type: 'string', description: 'The filed leaf this one acts on, from this sequence root: the prior sequence\'s backbone, \'#\', and the leaf ID it recorded (e.g. ../0000/index.xml#leaf-3-2-S-2-file, or ../0000/m1/us/us-regional.xml#leaf-1-2-cover for Module 1). Never a file path. Required for every delete, and for a replace / append after 0000 (a delete in sequence 0000 is refused).' },
+            study_id:      { type: 'string', description: 'The sponsor study this leaf belongs to, as the Study Tagging File will carry it (e.g. DPL-301). Required for a file in a Module 4 or 5 study section when region is "fda" (validation 1789); omit it only where the leaf belongs to no study. It is never inferred — a leaf that names none is refused by name rather than tagged by guess.' },
+            stf_file_tag:  { type: 'string', description: 'The FDA STF file-tag this leaf is referenced under (e.g. study-report-body, legacy-data-tabulation-dataset-send), from the FDA Study Tagging File specification. Required alongside study_id for a Module 4/5 study file in an FDA sequence: a leaf with a study id and no tag is in no STF, so 1789 still fires.' },
           },
           required: ['ctd_section', 'operation', 'file_name', 'title'],
         },
       },
       output_dir: { type: 'string', description: 'Where to write the zip: a directory in your organization\'s AnA workspace. Omit it to use a fresh one.' },
     },
-    required: ['region', 'application_id', 'sequence', 'submission_type', 'sponsor_id', 'sponsor_name', 'product_name', 'leaves'],
+    required: ['region', 'program_id', 'sequence', 'submission_type', 'product_name', 'leaves'],
   },
 };
 
@@ -1387,7 +1399,7 @@ export const CHECK_SUBMISSION_STATUS: AnaTool = {
 export const GET_SUBMISSION_ACK: AnaTool = {
   name: 'get_submission_ack',
   description:
-    "Download the latest acknowledgment for a transmittal as a text summary. Includes the gateway's transmission id, current status, ack timestamp, and (when present) the raw acknowledgment payload. Use when the user wants to inspect the receipt or attach it to the audit trail.",
+    "Download the latest acknowledgment for a transmittal. `provenance` says what it is: 'agency' is the agency's own response stored verbatim (an FDA AS2 MDN); 'platform-record' is this platform's summary of its transmittal row and is not evidence the agency received anything — say so, and never call it a receipt. `receivedAt` is null when no acknowledgement time was recorded. Includes the gateway's transmission id and status.",
   input_schema: {
     type: 'object',
     properties: { transmittal_id: { type: 'number' } },
@@ -2011,7 +2023,6 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   VALIDATE_ECTD_PACKAGE,
   PLAN_SUBMISSION,
   EXPLAIN_VALIDATION_FINDINGS,
-  CROSS_REGION_GAP_ANALYSIS,
   DISPATCH_QC_CHECK,
   TRACE_PROVENANCE,
   CHECK_CONSISTENCY,

@@ -1,0 +1,115 @@
+# Mutation 4 — a recorded fulfilment can be changed afterwards (the BEFORE UPDATE guard no longer freezes it)
+#
+# Replaced in the database: public.regulatory_commitments_fulfilment_record_guard() (migrations/20261019_commitment_fulfilment_evidence.sql) by:
+#   -- MUTATION 4: the write-once guard returns before checking a recorded row.
+#   CREATE OR REPLACE FUNCTION public.regulatory_commitments_fulfilment_record_guard()
+#   RETURNS trigger
+#   LANGUAGE plpgsql
+#   SET search_path = pg_catalog, public
+#   AS $fn$
+#   DECLARE
+#     o jsonb;
+#     n jsonb := to_jsonb(NEW);
+#     col text;
+#     terminal constant text[] := ARRAY['fulfilled', 'waived', 'released'];
+#     fulfilling boolean;
+#   BEGIN
+#     -- A commitment is recorded first, and its fulfilment by the UPDATE that
+#     -- fulfils it, so the checks below always run on what met it.
+#     IF TG_OP = 'INSERT' THEN
+#       IF NEW.fulfilment_sequence_id IS NOT NULL OR NEW.fulfilment_vault_document_id IS NOT NULL
+#          OR NEW.fulfilment_recorded_by IS NOT NULL OR NEW.fulfilment_recorded_at IS NOT NULL THEN
+#         RAISE EXCEPTION 'IMMUTABILITY_VIOLATION: a commitment is recorded before its fulfilment; what met it is written by the update that fulfils it.'
+#           USING ERRCODE = 'raise_exception';
+#       END IF;
+#       RETURN NEW;
+#     END IF;
+#     o := to_jsonb(OLD);
+#   
+#     -- A removal is written once, on every row.
+#     IF OLD.deleted_at IS NOT NULL AND NEW.deleted_at IS DISTINCT FROM OLD.deleted_at THEN
+#       RAISE EXCEPTION 'IMMUTABILITY_VIOLATION: regulatory_commitments.deleted_at of commitment % is set once and cannot be changed or cleared (21 CFR 11.10(e)).', OLD.id
+#         USING ERRCODE = 'raise_exception';
+#     END IF;
+#   
+#     -- A recorded fulfilment is fixed: what the signature binds and the record it is on.
+#     IF OLD.fulfilment_recorded_at IS NOT NULL THEN
+#       RETURN NEW; -- MUTATION 4: a recorded fulfilment is no longer fixed
+#       FOREACH col IN ARRAY ARRAY['id', 'organization_id', 'project_id', 'submission_id', 'commitment_type', 'description',
+#                                  'regulatory_basis', 'due_date', 'status', 'fulfilled_date', 'fulfilment_sequence_id',
+#                                  'fulfilment_vault_document_id', 'fulfilment_vault_sha256', 'fulfilment_recorded_by',
+#                                  'fulfilment_recorded_at'] LOOP
+#         IF (o -> col) IS DISTINCT FROM (n -> col) THEN
+#           RAISE EXCEPTION 'IMMUTABILITY_VIOLATION: regulatory_commitments.% of commitment % is recorded with its fulfilment and cannot change (21 CFR 11.10(e)).', col, OLD.id
+#             USING ERRCODE = 'raise_exception';
+#         END IF;
+#       END LOOP;
+#       RETURN NEW;
+#     END IF;
+#   
+#     -- A terminal commitment keeps its type: a fulfilled meeting commitment is
+#     -- never retyped into a PMR that would read as fulfilled without a signature.
+#     IF OLD.status = ANY (terminal) AND NEW.commitment_type IS DISTINCT FROM OLD.commitment_type THEN
+#       RAISE EXCEPTION 'IMMUTABILITY_VIOLATION: regulatory_commitments.commitment_type of commitment % is fixed once it is %.', OLD.id, OLD.status
+#         USING ERRCODE = 'raise_exception';
+#     END IF;
+#   
+#     fulfilling := NEW.status = 'fulfilled' AND NOT (OLD.status = ANY (terminal));
+#   
+#     -- Every move into 'fulfilled' says who recorded it.
+#     IF fulfilling AND (NEW.fulfilment_recorded_by IS NULL OR NEW.fulfilment_recorded_at IS NULL) THEN
+#       RAISE EXCEPTION 'COMMITMENT_FULFILMENT_UNATTRIBUTED: commitment % may become fulfilled only with who recorded it and when (21 CFR 11.10(e)).', OLD.id
+#         USING ERRCODE = 'integrity_constraint_violation';
+#     END IF;
+#   
+#     -- Evidence and the recorder are written in the UPDATE that records the
+#     -- fulfilment, and only then (the CHECK keeps them NULL on an unrecorded row).
+#     IF (NEW.fulfilment_sequence_id IS NOT NULL OR NEW.fulfilment_vault_document_id IS NOT NULL
+#         OR NEW.fulfilment_recorded_at IS NOT NULL OR NEW.fulfilment_recorded_by IS NOT NULL)
+#        AND NOT fulfilling THEN
+#       RAISE EXCEPTION 'IMMUTABILITY_VIOLATION: commitment % records what met it only in the update that fulfils it; it is %.', OLD.id, OLD.status
+#         USING ERRCODE = 'raise_exception';
+#     END IF;
+#   
+#     IF NEW.fulfilment_vault_document_id IS NOT NULL AND NOT EXISTS (
+#       SELECT 1 FROM vault.documents d
+#        WHERE d.id = NEW.fulfilment_vault_document_id
+#          AND d.organization_id = NEW.organization_id
+#          AND d.deleted_at IS NULL
+#          AND lower(btrim(d.content_hash)) = NEW.fulfilment_vault_sha256
+#     ) THEN
+#       RAISE EXCEPTION 'COMMITMENT_EVIDENCE_INVALID: commitment % names Vault version % at a sha256 that is not that live version of its organisation.', OLD.id, NEW.fulfilment_vault_document_id
+#         USING ERRCODE = 'integrity_constraint_violation';
+#     END IF;
+#   
+#     IF NEW.fulfilment_sequence_id IS NOT NULL AND NOT EXISTS (
+#       SELECT 1 FROM public.ectd_sequences s
+#        WHERE s.id = NEW.fulfilment_sequence_id
+#          AND s.organization_id = NEW.organization_id
+#          AND s.deleted_at IS NULL
+#          AND s.dispatch_status IN ('sent', 'acknowledged')
+#     ) THEN
+#       RAISE EXCEPTION 'COMMITMENT_EVIDENCE_INVALID: commitment % names sequence %, which is not a live sequence of its organisation that the agency received.', OLD.id, NEW.fulfilment_sequence_id
+#         USING ERRCODE = 'integrity_constraint_violation';
+#     END IF;
+#   
+#     RETURN NEW;
+#   END;
+#   $fn$;
+#   
+#
+# Test run with the mutation in place: tests/db/commitment-fulfilment-database.dbtest.ts (-t "cannot be changed")
+# Function definition md5: before 814d9a31d26bff80680a6af2a89d6d7a, mutated 8b85f30a9072b7c38e994d1ac9fba02c, restored 814d9a31d26bff80680a6af2a89d6d7a (identical to before)
+# Restored by re-applying the migration file with psql, as deploy-migrate does on every deploy.
+
+## The run
+ × tests/db/commitment-fulfilment-database.dbtest.ts > a recorded fulfilment is fixed > the recorded fulfilment cannot be changed, cleared, or retyped by the runtime role 15ms
+   → UPDATE regulatory_commitments SET fulfilment_sequence_id = $2 WHERE id = $1: expected true to be false // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/commitment-fulfilment-database.dbtest.ts > a recorded fulfilment is fixed > the recorded fulfilment cannot be changed, cleared, or retyped by the runtime role
+AssertionError: UPDATE regulatory_commitments SET fulfilment_sequence_id = $2 WHERE id = $1: expected true to be false // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 skipped (13)
+
+## Reading
+With the BEFORE UPDATE guard returning before it inspects a recorded row, the runtime role can repoint a fulfilled PMR at another sequence ("the recorded fulfilment cannot be changed, cleared, or retyped by the runtime role" fails on the first UPDATE it tries). That is the one case written for this protection, and the only one that fails. Restored by re-running the migration; md5 identical (header). Control: "M4 db", 1 passed.

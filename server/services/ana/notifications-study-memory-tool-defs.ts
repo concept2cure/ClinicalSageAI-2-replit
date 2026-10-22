@@ -12,6 +12,7 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+import { NOTIFICATION_CATEGORIES } from '../../../shared/constants/notifications';
 import { STATED_REASON_INPUT } from './stated-reason-input';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -31,12 +32,7 @@ export const FIRE_NOTIFICATION: AnaTool = {
       recipient_role:    { type: 'string' },
       category: {
         type: 'string',
-        enum: [
-          'submission_status', 'validation_finding', 'q_sub_response',
-          'cdx_pairing', 'ldt_milestone_due', 'gateway_credential_expiring',
-          'ana_draft_pending', 'risk_residual_high', 'capa_due',
-          'study_deviation', 'enrollment_milestone', 'admin', 'system',
-        ],
+        enum: [...NOTIFICATION_CATEGORIES],
       },
       severity:      { type: 'string', enum: ['info', 'warning', 'critical'] },
       title:         { type: 'string', description: 'Short one-line headline.' },
@@ -227,7 +223,7 @@ export const REGISTER_ANIMAL_COHORT: AnaTool = {
 export const REVIEW_IACUC_PROTOCOL: AnaTool = {
   name: 'review_iacuc_protocol',
   description:
-    "Run the deterministic IACUC completeness gate on a protocol (read-only): the 3 Rs, category-D analgesia / category-E justification, animal numbers, plus continuing-review/expiration status. Returns cited findings + risk level. Use to tell the user what is missing before committee review.",
+    "Run the deterministic IACUC completeness gate on a protocol (read-only): text present for the 3 Rs, category-D analgesia / category-E justification, animal numbers, plus continuing-review/expiration status. The expiry is the expiration date on record (reviewStatus.expirationSource 'recorded'), else approval + 3 years, labelled 'computed'; with neither date it is undetermined ('none'). Say which when you state it. Returns cited findings, the checks run and a risk level; medium means a major finding is open. Use to tell the user what is missing before committee review.",
   input_schema: {
     type: 'object',
     properties: { protocol_id: { type: 'number' } },
@@ -238,7 +234,7 @@ export const REVIEW_IACUC_PROTOCOL: AnaTool = {
 export const CREATE_IRB_SUBMISSION: AnaTool = {
   name: 'create_irb_submission',
   description:
-    "Open an IRB/IEC human-subjects review submission (revised Common Rule 45 CFR 46 / 21 CFR 56 / ICH E6). risk_level drives the review pathway (greater-than-minimal → full board). Flag vulnerable populations and single-IRB (sIRB) for multi-site studies. Returns the submission id and recommended review type. Governed + audited, org-scoped.",
+    "Open an IRB/IEC human-subjects review submission (revised Common Rule 45 CFR 46 / 21 CFR 56 / ICH E6). risk_level drives the review pathway (greater-than-minimal → full board). Flag vulnerable populations and single-IRB (sIRB) for multi-site studies. Omit involves_vulnerable_populations unless the user has answered it: omitted is recorded as not recorded, never as no. Returns the submission id and recommended review type. Governed + audited, org-scoped.",
   input_schema: {
     type: 'object',
     properties: {
@@ -277,7 +273,7 @@ export const ADD_IRB_SITE: AnaTool = {
 export const REVIEW_IRB_SUBMISSION: AnaTool = {
   name: 'review_irb_submission',
   description:
-    "Run the deterministic IRB approval-criteria gate (45 CFR 46.111) on a submission (read-only): informed consent / waiver, vulnerable-population safeguards, sIRB for multi-site, risk-vs-review-type, plus continuing-review status. Returns cited findings + risk level.",
+    "Run four deterministic checks on an IRB submission (read-only): an informed-consent document or waiver, vulnerable-population safeguards (46.111(b)), sIRB for multi-site, and risk versus review type. The other 45 CFR 46.111 criteria are the board's and are not evaluated. Returns cited findings, the checks run and those not assessed (an unrecorded fact), a risk level (undetermined when a check could not run), and the approval lifecycle (approval, expiration and its source, continuing review), which says unknown where the record is silent.",
   input_schema: {
     type: 'object',
     properties: { irb_submission_id: { type: 'number' } },
@@ -288,7 +284,7 @@ export const REVIEW_IRB_SUBMISSION: AnaTool = {
 export const CREATE_IBC_REGISTRATION: AnaTool = {
   name: 'create_ibc_registration',
   description:
-    "Open an IBC biosafety registration (NIH Guidelines / BMBL) for recombinant or synthetic nucleic acid work — the clearance modality-heavy CGT/mRNA programs need. biosafety_level is the declared containment (BSL-1..4); nih_guidelines_section is the experiment category (III-A..III-F/exempt). Returns the registration id and whether convened IBC review is required. Governed + audited, org-scoped.",
+    "Open an IBC biosafety registration (NIH Guidelines / BMBL) for recombinant or synthetic nucleic acid work — the clearance modality-heavy CGT/mRNA programs need. biosafety_level is the declared containment (BSL-1..4); nih_guidelines_section is the experiment category (III-A..III-F/exempt). Omit biosafety_level, involves_recombinant_dna, nih_guidelines_section and involves_human_gene_transfer unless the user has stated them: omitted is recorded as not recorded (no level declared), never as BSL-1 or no. Returns the registration id and whether convened IBC review is required (true, false, or null when that cannot be determined yet). Governed + audited, org-scoped.",
   input_schema: {
     type: 'object',
     properties: {
@@ -301,7 +297,7 @@ export const CREATE_IBC_REGISTRATION: AnaTool = {
       involves_human_gene_transfer: { type: 'boolean' },
       reason: STATED_REASON_INPUT,
     },
-    required: ['registration_number', 'title', 'biosafety_level'],
+    required: ['registration_number', 'title'],
   },
 };
 
@@ -325,7 +321,7 @@ export const ADD_BIOLOGICAL_AGENT: AnaTool = {
 export const REVIEW_IBC_REGISTRATION: AnaTool = {
   name: 'review_ibc_registration',
   description:
-    "Run the deterministic IBC containment gate on a registration (read-only): does the declared BSL meet the highest containment its agents require, are agents at the right level for their risk group, and does the work need convened IBC review — plus annual-review expiration. Returns cited findings + risk level.",
+    "Run the deterministic IBC containment gate on a registration (read-only): does the declared BSL meet the highest containment its agents require, are agents at the right level for their risk group, and does the work need convened IBC review — plus annual-review expiration. Returns cited findings, the checks run and those not assessed (no agents, an undeclared BSL, an unrecorded section or gene-transfer answer), and a risk level; highestRequiredBsl is null when it cannot be derived. The expiry is the expiration date on record (expiration.expirationSource 'recorded'), else approval + 1 year, labelled 'computed'; with neither date it is undetermined ('none'). Say which when you state it.",
   input_schema: {
     type: 'object',
     properties: { registration_id: { type: 'number' } },
@@ -378,6 +374,7 @@ export const CREATE_PROTOCOL_DOCUMENT: AnaTool = {
       protocol_kind: { type: 'string', enum: ['iacuc', 'irb', 'clinical', 'ibc'] },
       title: { type: 'string' },
       protocol_number: { type: 'string' },
+      program_id: { type: 'string', description: 'Optional explicitly selected owned program UUID; otherwise the current authorized program context is resolved.' },
       design_type: { type: 'string', enum: ['interventional', 'observational', 'expanded_access', 'animal_study', 'basic_science', 'registry', 'other'] },
       phase: { type: 'string' },
       therapeutic_area: { type: 'string' },
@@ -441,7 +438,7 @@ export const FINALIZE_PROTOCOL_DOCUMENT: AnaTool = {
 export const ADD_PROTOCOL_RISK: AnaTool = {
   name: 'add_protocol_risk',
   description:
-    "Add a risk to a protocol's risk register, scored on a likelihood × impact matrix (ICH E6(R2) §5.0). Categories: participant_safety, data_integrity, regulatory, operational, privacy, other. Returns the computed risk level. Governed + audited.",
+    "Add a risk to a protocol's risk register, scored on a likelihood × impact matrix (ICH E6(R3) Annex 1 §3.10.1, risk management). Categories: participant_safety, data_integrity, regulatory, operational, privacy, other. Returns the computed risk level. Governed + audited.",
   input_schema: {
     type: 'object',
     properties: {
@@ -454,7 +451,8 @@ export const ADD_PROTOCOL_RISK: AnaTool = {
       owner: { type: 'string' },
       reason: STATED_REASON_INPUT,
     },
-    required: ['document_id', 'description'],
+    // The ratings are an assessment; ask for them rather than default them.
+    required: ['document_id', 'description', 'likelihood', 'impact'],
   },
 };
 
@@ -1279,7 +1277,7 @@ export const TRIAGE_COMPLIANCE_ATTENTION: AnaTool = {
 export const FULFILL_REGULATORY_COMMITMENT: AnaTool = {
   name: 'fulfill_regulatory_commitment',
   description:
-    "Mark a regulatory commitment (PMR/PMC/REMS/meeting commitment) fulfilled, optionally with the date it was met. Closes the commitment lifecycle. Governed + audited, org-scoped.",
+    "Mark an organisation-level meeting commitment or other commitment fulfilled, optionally with the date it was met. Governed + audited, org-scoped. AnA cannot sign: a PMR, PMC or REMS is recorded fulfilled only by the person's Part 11 signature naming the sequence or document that met it, so for those this tool records nothing and points to Communication, Meetings & commitments.",
   input_schema: { type: 'object', properties: { commitment_id: { type: 'number' }, fulfilled_date: { type: 'string', description: 'YYYY-MM-DD.' }, reason: STATED_REASON_INPUT }, required: ['commitment_id'] },
 };
 
@@ -1522,7 +1520,7 @@ export const REVIEW_TMF_COMPLETENESS: AnaTool = {
 export const RUN_COMPLIANCE_CHECKLIST: AnaTool = {
   name: 'run_compliance_checklist',
   description:
-    "Resolve the DETERMINISTIC compliance checklist for a research activity (the auto-updating, regulation-cited engine, not the LLM): which committee approvals (IRB/IACUC/IBC) are required, which personnel training is required, and the ordered steps. Use to tell a client what they must do before they can start. Read-only.",
+    "Resolve the DETERMINISTIC compliance checklist for a research activity (the auto-updating, regulation-cited engine, not the LLM): which committee approvals (IRB/IACUC/IBC) are required, which personnel training is required, and the ordered steps. Use to tell a client what they must do before they can start. Pass only the facts the user has stated: an omitted fact is not assumed false, and funding_source and region are not defaulted. What an omitted fact could require is returned as undeterminedApprovals / undeterminedTraining with the input that would settle it (notStated); ask the user for those before saying nothing is required. Read-only.",
   input_schema: {
     type: 'object',
     properties: {
@@ -1540,7 +1538,7 @@ export const RUN_COMPLIANCE_CHECKLIST: AnaTool = {
 export const ASSESS_STUDY_ONBOARDING: AnaTool = {
   name: 'assess_study_onboarding',
   description:
-    "One-shot study-onboarding assessment (read-only orchestration): resolves the required committee approvals + training for the activity profile, runs the training gate over the named team, and CROSS-REFERENCES each training gap to the specific approval it blocks (e.g. a PI missing CITI human-subjects blocks the IRB submission, not the IACUC one). Returns per-committee readiness, overall readyToSubmit, and a prioritized blocker list. Answers 'what do I need to stand up this study and is my team ready?' in one turn.",
+    "One-shot study-onboarding assessment (read-only orchestration): resolves the required committee approvals + training for the activity profile, runs the training gate over the named team, and CROSS-REFERENCES each training gap to the specific approval it blocks (e.g. a PI missing CITI human-subjects blocks the IRB submission, not the IACUC one). Returns per-committee readiness, overall readyToSubmit, and a prioritized blocker list. Answers 'what do I need to stand up this study and is my team ready?' in one turn. An omitted fact is not assumed false: what it could require is returned as not determined, and readyToSubmit is true, false, or null (not determined: a fact was not stated, or no personnel_ids were given). Never report null as ready.",
   input_schema: {
     type: 'object',
     properties: {
@@ -1576,7 +1574,7 @@ export const ADD_PERSONNEL_TRAINING: AnaTool = {
 export const REVIEW_TRAINING_GATE: AnaTool = {
   name: 'review_training_gate',
   description:
-    "Run the 'no index until trained' gate for a set of personnel against the required training for a research activity (read-only): returns whether the team is cleared, who is missing or expired on what training, and who is expiring soon. Use before letting a protocol proceed.",
+    "Run the 'no index until trained' gate for a set of personnel against the required training for a research activity (read-only): returns whether the team is cleared, who is missing or expired on what training, and who is expiring soon. Use before letting a protocol proceed. cleared is true, false, or null: null when the training required is not determined (an omitted activity fact is not assumed false) or no personnel were named; never report null as cleared. A personnel id not on this organization's roster is refused.",
   input_schema: {
     type: 'object',
     properties: {

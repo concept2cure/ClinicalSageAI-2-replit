@@ -6,14 +6,40 @@
  * data ingestion, stopping rule evaluation, sample size re-estimation,
  * decision recording, and IDMC report generation.
  *
- * Statistical computations implemented from scratch using mathjs:
- * - O'Brien-Fleming and Pocock alpha spending functions
- * - Conditional power
- * - Predictive power
- * - Monte Carlo operating characteristics
+ * Statistics are delegated to the canonical stats engine — no private copies:
+ * - Normal CDF / quantile: stats/normal.ts (full precision).
+ * - Lan–DeMets alpha-spending boundaries (O'Brien–Fleming, Pocock, linear):
+ *   stats/group-sequential-oc.ts `solveSpendingBoundaries`, which solves each
+ *   look's boundary by exact recursive numerical integration of the joint null
+ *   distribution of the sequential statistics (Armitage–McPherson–Rowe;
+ *   Jennison & Turnbull 2000, ch. 19) — i.e. accounting for the correlation
+ *   between looks.
+ * - Conditional power and predictive power on the Z / B-value scale (below).
+ * - Monte Carlo operating characteristics, cross-checked against the exact
+ *   recursive computation (stats/group-sequential-oc.ts).
+ *
+ * CONVENTIONS (stated, not assumed):
+ * - α is ONE-SIDED (default 0.025, the two-sided 0.05 convention), and the
+ *   efficacy boundary is an UPPER boundary: efficacy is declared when Z ≥ b_k,
+ *   with Z oriented so that positive favours treatment. Harm (large negative Z)
+ *   is the separate `harm` rule; it never counts as an efficacy crossing.
+ * - The drift θ is the expected final z-statistic, E[Z at information 1].
+ * - `maxSampleSize` is the per-arm maximum, consistent with performSSR (whose
+ *   formula is per-arm) and with θ = δ·√(n/2) (stats driftForTwoSampleMeans).
+ *
+ * 2026-10-05: replaced a private normal CDF that fed |x| to an erf
+ * approximation without dividing by √2 (Φ(1.96) = 0.981, Φ(−1) = 0.130), the
+ * nominal z_{1−Δα/2} per-look boundary (correlation-blind and halving a
+ * one-sided α), per-look boundary recomputation that treated every interim as
+ * the first look, conditional power on δ√(1−t) evaluated under H0 while
+ * labelled "current trend", and a predictive power that mixed a per-subject
+ * effect scale with the Z scale. Pinned by
+ * tests/biostat/adaptive-and-spending-reference.test.ts.
  */
 
+import type { RequestSqlClient } from '../db/requestDb';
 import { db } from '../db';
+import { AdaptiveDecisionRefusal } from './adaptive-decision-signature';
 import {
   adaptiveTrialPlans,
   interimDataSnapshots,
@@ -21,102 +47,15 @@ import {
   idmcReports,
 } from '../../shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
-import * as math from 'mathjs';
 import { Rng, createRng, seedFromObject } from './stats/rng';
 import { buildProvenance } from './stats/computation-provenance';
-
-// ─── Utility: Standard Normal CDF (Phi) ───────────────────────────────────────
-
-/**
- * Standard normal cumulative distribution function using the
- * Abramowitz & Stegun rational approximation (|error| < 1.5e-7).
- */
-function normalCDF(x: number): number {
-  if (x < -8) return 0;
-  if (x > 8) return 1;
-  const a1 = 0.254829592;
-  const a2 = -0.284496736;
-  const a3 = 1.421413741;
-  const a4 = -1.453152027;
-  const a5 = 1.061405429;
-  const p = 0.3275911;
-  const sign = x < 0 ? -1 : 1;
-  const absX = Math.abs(x);
-  const t = 1.0 / (1.0 + p * absX);
-  const y = 1.0 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-absX * absX / 2);
-  return 0.5 * (1.0 + sign * y);
-}
-
-/**
- * Inverse standard normal CDF (quantile function) via rational approximation.
- */
-function normalQuantile(p: number): number {
-  if (p <= 0) return -Infinity;
-  if (p >= 1) return Infinity;
-  if (p === 0.5) return 0;
-
-  const a = [
-    -3.969683028665376e1,
-    2.209460984245205e2,
-    -2.759285104469687e2,
-    1.383577518672690e2,
-    -3.066479806614716e1,
-    2.506628277459239e0,
-  ];
-  const b = [
-    -5.447609879822406e1,
-    1.615858368580409e2,
-    -1.556989798598866e2,
-    6.680131188771972e1,
-    -1.328068155288572e1,
-  ];
-  const c = [
-    -7.784894002430293e-3,
-    -3.223964580411365e-1,
-    -2.400758277161838e0,
-    -2.549732539343734e0,
-    4.374664141464968e0,
-    2.938163982698783e0,
-  ];
-  const d = [
-    7.784695709041462e-3,
-    3.224671290700398e-1,
-    2.445134137142996e0,
-    3.754408661907416e0,
-  ];
-
-  const pLow = 0.02425;
-  const pHigh = 1 - pLow;
-  let q: number, r: number;
-
-  if (p < pLow) {
-    q = Math.sqrt(-2 * Math.log(p));
-    return (
-      (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
-      ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1)
-    );
-  } else if (p <= pHigh) {
-    q = p - 0.5;
-    r = q * q;
-    return (
-      ((((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q) /
-      (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1)
-    );
-  } else {
-    q = Math.sqrt(-2 * Math.log(1 - p));
-    return -(
-      (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
-      ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1)
-    );
-  }
-}
-
-/**
- * Standard normal PDF.
- */
-function normalPDF(x: number): number {
-  return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
-}
+import { normalCdf, normalQuantile } from './stats/normal';
+import {
+  solveSpendingBoundaries,
+  computeOperatingCharacteristic,
+  driftForTwoSampleMeans,
+  type SpendingFunction,
+} from './stats/group-sequential-oc';
 
 /**
  * Generate a standard normal random variate from a seeded engine, so the Monte
@@ -126,137 +65,247 @@ function randomNormal(rng: Rng): number {
   return rng.normal();
 }
 
-// ─── Alpha Spending Functions ──────────────────────────────────────────────────
+// ─── Alpha-spending boundaries (canonical engine) ─────────────────────────────
 
-/**
- * O'Brien-Fleming spending function: alpha(t) = 2 * (1 - Phi(z_{alpha/2} / sqrt(t)))
- * Very conservative early, preserves most alpha for the final look.
- */
-function obrienFlemingSpending(t: number, alpha: number): number {
-  if (t <= 0) return 0;
-  if (t >= 1) return alpha;
-  const zAlphaHalf = normalQuantile(1 - alpha / 2);
-  return 2 * (1 - normalCDF(zAlphaHalf / Math.sqrt(t)));
+const SPENDING_FUNCTIONS: readonly SpendingFunction[] = ['obrien-fleming', 'pocock', 'linear'];
+
+/** Resolve a requested spending function; refuses an unrecognised one instead of defaulting. */
+function resolveSpendingFunction(requested: unknown): SpendingFunction {
+  if ((SPENDING_FUNCTIONS as readonly unknown[]).includes(requested)) return requested as SpendingFunction;
+  throw new Error(
+    `Unsupported spending function "${String(requested)}". Supported: ${SPENDING_FUNCTIONS.join(', ')}.`,
+  );
+}
+
+export interface SpendingBoundaries {
+  /** Information fractions the boundaries apply to (strictly increasing, in (0, 1]). */
+  informationFractions: number[];
+  /** Cumulative one-sided alpha spent by each look, α*(t_k). */
+  cumulativeAlpha: number[];
+  /** One-sided alpha spent at each look, α*(t_k) − α*(t_{k−1}). */
+  incrementalAlpha: number[];
+  /** Upper (efficacy) boundary on the z-scale at each look. */
+  criticalValues: number[];
+  alpha: number;
+  sided: 'one-sided-upper';
+  spendingFunction: SpendingFunction;
+  method: string;
 }
 
 /**
- * Pocock spending function: alpha(t) = alpha * ln(1 + (e - 1) * t)
- * Spends alpha more uniformly across looks.
+ * Lan–DeMets alpha-spending efficacy boundaries for the given looks, solved by
+ * the canonical engine (exact recursive integration; correlation between looks
+ * accounted for). A boundary at look k depends only on looks 1..k, so the
+ * fractions need not include the final analysis: when the last fraction is
+ * below 1 the solve is run with t = 1 appended and the appended look dropped.
  */
-function pocockSpending(t: number, alpha: number): number {
-  if (t <= 0) return 0;
-  if (t >= 1) return alpha;
-  return alpha * Math.log(1 + (Math.E - 1) * t);
-}
+/** The adaptations this service models. One list, used by the validator and its message. */
+export const VALID_ADAPTATION_TYPES = [
+  'sample_size_reestimation', 'response_adaptive_randomization',
+  'dose_selection', 'arm_dropping', 'endpoint_modification',
+  'population_enrichment', 'seamless_phase',
+] as const;
+export type AdaptationType = (typeof VALID_ADAPTATION_TYPES)[number];
 
-/**
- * Calculate cumulative spending and incremental alpha for each look.
- */
-function calculateSpendingBoundaries(
+export function calculateSpendingBoundaries(
   informationFractions: number[],
   alpha: number,
-  spendingFunction: 'obrien-fleming' | 'pocock'
-): { cumulativeAlpha: number[]; incrementalAlpha: number[]; criticalValues: number[] } {
-  const spendFn =
-    spendingFunction === 'obrien-fleming' ? obrienFlemingSpending : pocockSpending;
-
-  const cumulativeAlpha: number[] = [];
-  const incrementalAlpha: number[] = [];
-  const criticalValues: number[] = [];
-
-  for (let i = 0; i < informationFractions.length; i++) {
-    const cumAlpha = spendFn(informationFractions[i], alpha);
-    cumulativeAlpha.push(cumAlpha);
-
-    const incAlpha = i === 0 ? cumAlpha : cumAlpha - cumulativeAlpha[i - 1];
-    incrementalAlpha.push(Math.max(incAlpha, 0));
-
-    // Two-sided critical value from incremental alpha
-    const cv = normalQuantile(1 - incAlpha / 2);
-    criticalValues.push(cv);
+  spendingFunction: SpendingFunction,
+): SpendingBoundaries {
+  const fn = resolveSpendingFunction(spendingFunction);
+  if (informationFractions.length === 0) throw new Error('At least one information fraction is required');
+  for (const t of informationFractions) {
+    if (!(Number.isFinite(t) && t > 0 && t <= 1)) {
+      throw new Error(`Information fraction ${t} must be in (0, 1]`);
+    }
   }
-
-  return { cumulativeAlpha, incrementalAlpha, criticalValues };
+  const last = informationFractions[informationFractions.length - 1];
+  const solveFractions = last < 1 ? [...informationFractions, 1] : informationFractions;
+  const solved = solveSpendingBoundaries(solveFractions, alpha, fn);
+  const k = informationFractions.length;
+  return {
+    informationFractions: [...informationFractions],
+    cumulativeAlpha: solved.cumulativeAlpha.slice(0, k),
+    incrementalAlpha: solved.incrementalAlpha.slice(0, k),
+    criticalValues: solved.efficacyBoundaries.slice(0, k),
+    alpha,
+    sided: 'one-sided-upper',
+    spendingFunction: fn,
+    method: 'Lan–DeMets alpha spending; boundaries solved by exact recursive numerical integration (stats/group-sequential-oc solveSpendingBoundaries)',
+  };
 }
 
 // ─── Conditional Power ─────────────────────────────────────────────────────────
 
+const CP_FORMULA = 'CP(θ) = 1 − Φ((c − Z_t·√t − θ·(1 − t)) / √(1 − t))';
+const CP_CITATION = 'Lan & Wittes (1988) Biometrics 44:579; Jennison & Turnbull (2000) §10.2';
+
 /**
- * Conditional power: P(reject H0 at final analysis | current data)
+ * Conditional power, B-value form: P(Z_1 ≥ c | Z_t) under drift θ.
  *
- * Given test statistic Z_k at look k with information fraction t_k,
- * the conditional power under effect delta assuming final information = 1 is:
- *   CP = 1 - Phi( (z_final * sqrt(1) - Z_k * sqrt(t_k) - delta * (1 - t_k)) / sqrt(1 - t_k) )
- *
- * Simplified for the standard case:
- *   CP = Phi( (Z_k * sqrt(t_k/(1-t_k)) + delta * sqrt(n_remaining) - z_alpha) )
+ * With B(t) = Z_t·√t, B(1) − B(t) ~ N(θ(1 − t), 1 − t) independently of B(t),
+ * where θ = E[Z_1] is the expected final z-statistic. Hence
+ *   CP(θ) = 1 − Φ((c − Z_t·√t − θ·(1 − t)) / √(1 − t)).
+ * θ = Z_t/√t is the "current trend"; θ = 0 is H0; θ = the design drift is H1.
+ * Ignores any further interim looks (the standard definition: power of the
+ * final test given the data so far).
  */
-function computeConditionalPower(
+export function computeConditionalPower(
   testStatistic: number,
   informationFraction: number,
   finalCriticalValue: number,
-  assumedEffect: number = 0
+  drift: number,
 ): number {
-  if (informationFraction >= 1) return testStatistic >= finalCriticalValue ? 1 : 0;
-  if (informationFraction <= 0) return 0;
+  const t = informationFraction;
+  if (!(t > 0 && t <= 1)) throw new Error(`Information fraction ${t} must be in (0, 1]`);
+  if (t >= 1) return testStatistic >= finalCriticalValue ? 1 : 0;
+  const remaining = 1 - t;
+  return 1 - normalCdf((finalCriticalValue - testStatistic * Math.sqrt(t) - drift * remaining) / Math.sqrt(remaining));
+}
 
-  const tK = informationFraction;
-  const remaining = 1 - tK;
+export interface ConditionalPowerFigure {
+  assumption: 'current-trend' | 'design-effect' | 'null-hypothesis';
+  label: string;
+  /** θ, the expected final z-statistic assumed for the remainder of the trial. */
+  drift: number | null;
+  conditionalPower: number | null;
+  reason?: string;
+}
 
-  // Under assumed effect delta, conditional power:
-  // CP = Phi((Z_k * sqrt(t_k) + delta * sqrt(remaining) - z_final * sqrt(1)) / sqrt(remaining))
-  // When delta=0, this is the conditional power under the current trend.
-  const numerator = testStatistic * Math.sqrt(tK) + assumedEffect * Math.sqrt(remaining) - finalCriticalValue;
-  const denominator = Math.sqrt(remaining);
+export interface ConditionalPowerScenarios {
+  currentTrend: ConditionalPowerFigure;
+  designEffect: ConditionalPowerFigure;
+  nullHypothesis: ConditionalPowerFigure;
+  finalCriticalValue: number;
+  formula: string;
+  citation: string;
+}
 
-  return normalCDF(numerator / denominator);
+/** Where the caller would have got a design effect, named in the refusal. */
+const PLAN_DESIGN_DRIFT_SOURCE =
+  'the plan (efficacy rule designDrift, or a sample_size_reestimation adaptation effectSize)';
+
+/**
+ * Conditional power under each of the three standard assumptions, explicitly
+ * labelled. `designDrift` is θ under H1 (the design effect on the drift scale);
+ * when it is not on record the H1 figure is null with a reason — never defaulted.
+ *
+ * `designDriftSource` names, in the refusal, where THIS caller would have got
+ * the design effect. The stored-plan path and the stateless interim route
+ * (routes/biostat-design-stats.ts POST /adaptive/interim) take it from
+ * different places, and a reason that names the wrong one sends the reader
+ * looking in the wrong file. It defaults to the plan wording, so the plan
+ * callers are unchanged.
+ */
+export function conditionalPowerScenarios(
+  testStatistic: number,
+  informationFraction: number,
+  finalCriticalValue: number,
+  designDrift: number | null,
+  designDriftSource: string = PLAN_DESIGN_DRIFT_SOURCE,
+): ConditionalPowerScenarios {
+  const trendDrift = testStatistic / Math.sqrt(informationFraction);
+  const hasDesign = designDrift !== null && Number.isFinite(designDrift);
+  return {
+    currentTrend: {
+      assumption: 'current-trend',
+      label: 'Under the current trend (θ = Z_t/√t)',
+      drift: trendDrift,
+      conditionalPower: computeConditionalPower(testStatistic, informationFraction, finalCriticalValue, trendDrift),
+    },
+    designEffect: hasDesign
+      ? {
+          assumption: 'design-effect',
+          label: 'Under H1, the design effect (θ = design drift)',
+          drift: designDrift,
+          conditionalPower: computeConditionalPower(testStatistic, informationFraction, finalCriticalValue, designDrift),
+        }
+      : {
+          assumption: 'design-effect',
+          label: 'Under H1, the design effect (θ = design drift)',
+          drift: null,
+          conditionalPower: null,
+          reason: `No design effect is recorded on ${designDriftSource}; not computed rather than assumed.`,
+        },
+    nullHypothesis: {
+      assumption: 'null-hypothesis',
+      label: 'Under H0 (θ = 0)',
+      drift: 0,
+      conditionalPower: computeConditionalPower(testStatistic, informationFraction, finalCriticalValue, 0),
+    },
+    finalCriticalValue,
+    formula: CP_FORMULA,
+    citation: CP_CITATION,
+  };
 }
 
 // ─── Predictive Power ──────────────────────────────────────────────────────────
 
 /**
- * Predictive power: E[conditional power] integrated over the posterior of the effect size.
+ * Bayesian predictive power: E[CP(θ) | Z_t], averaging conditional power over
+ * the posterior of the drift θ (Spiegelhalter, Freedman & Blackburn 1986,
+ * Control Clin Trials 7:8; Jennison & Turnbull 2000, §10.3). Entirely on the
+ * Z / B-value scale.
  *
- * Uses a normal prior on delta, with posterior updated by interim data:
- *   posterior mean = (prior_var * Z_k / sqrt(t_k * n) + prior_mean / prior_var) / (1/prior_var + t_k * n)
- *
- * Simplified: we approximate by Bayesian predictive power via numerical integration
- * using the posterior N(deltaHat, sigma2_post) where deltaHat = Z_k / sqrt(t_k * N).
+ * Likelihood: B(t) = Z_t·√t ~ N(θ·t, t). Prior θ ~ N(m₀, s₀²), or flat when
+ * `prior` is omitted. Posterior θ ~ N(m, v) with 1/v = 1/s₀² + t and
+ * m = v·(m₀/s₀² + B(t)). The predictive distribution of the final B-value is
+ *   B(1) | data ~ N(B(t) + (1 − t)·m, (1 − t) + (1 − t)²·v),
+ * so PP = 1 − Φ((c − B(t) − (1 − t)·m) / √((1 − t) + (1 − t)²·v)).
+ * Flat prior (m = Z_t/√t, v = 1/t): PP = Φ((Z_t − c·√t) / √(1 − t)).
  */
-function computePredictivePower(
+export function computePredictivePower(
   testStatistic: number,
   informationFraction: number,
-  totalSampleSize: number,
   finalCriticalValue: number,
-  priorMean: number = 0,
-  priorVariance: number = 1
+  prior?: { mean: number; sd: number },
 ): number {
-  const tK = informationFraction;
-  if (tK >= 1 || tK <= 0) return 0;
-
-  // Observed effect estimate (standardized)
-  const nCurrent = Math.floor(tK * totalSampleSize);
-  const deltaHat = testStatistic / Math.sqrt(nCurrent > 0 ? nCurrent : 1);
-
-  // Posterior parameters (conjugate normal)
-  const likelihoodPrecision = nCurrent;
-  const priorPrecision = 1 / priorVariance;
-  const posteriorPrecision = priorPrecision + likelihoodPrecision;
-  const posteriorMean =
-    (priorPrecision * priorMean + likelihoodPrecision * deltaHat) / posteriorPrecision;
-  const posteriorSD = 1 / Math.sqrt(posteriorPrecision);
-
-  // Numerical integration over posterior using Gauss-Hermite-like quadrature (simple grid)
-  const nPoints = 100;
-  let ppSum = 0;
-  for (let i = 0; i < nPoints; i++) {
-    const u = (i + 0.5) / nPoints;
-    const delta = posteriorMean + posteriorSD * normalQuantile(u);
-    const cp = computeConditionalPower(testStatistic, tK, finalCriticalValue, delta);
-    ppSum += cp;
+  const t = informationFraction;
+  if (!(t > 0 && t <= 1)) throw new Error(`Information fraction ${t} must be in (0, 1]`);
+  if (t >= 1) return testStatistic >= finalCriticalValue ? 1 : 0;
+  const b = testStatistic * Math.sqrt(t);
+  let priorPrecision = 0;
+  let priorMean = 0;
+  if (prior) {
+    if (!(prior.sd > 0 && Number.isFinite(prior.sd)) || !Number.isFinite(prior.mean)) {
+      throw new Error('Predictive-power prior needs a finite mean and a positive finite sd');
+    }
+    priorPrecision = 1 / (prior.sd * prior.sd);
+    priorMean = prior.mean;
   }
+  const postVar = 1 / (priorPrecision + t);
+  const postMean = postVar * (priorPrecision * priorMean + b);
+  const remaining = 1 - t;
+  const predMean = b + remaining * postMean;
+  const predSd = Math.sqrt(remaining + remaining * remaining * postVar);
+  return 1 - normalCdf((finalCriticalValue - predMean) / predSd);
+}
 
-  return ppSum / nPoints;
+/**
+ * The design drift θ (expected final z under H1) recorded on a plan, or null.
+ * Sources, in order: an efficacy rule's explicit `designDrift`; else a
+ * sample_size_reestimation adaptation's standardized `effectSize` δ mapped by
+ * θ = δ·√(maxSampleSize/2) with maxSampleSize per arm.
+ */
+function designDriftFromPlan(plan: { stoppingRules: unknown; adaptations: unknown; maxSampleSize: number | null }): number | null {
+  const rules = (plan.stoppingRules as any[]) ?? [];
+  const explicit = rules.find((r: any) => r?.type === 'efficacy')?.designDrift;
+  if (typeof explicit === 'number' && Number.isFinite(explicit)) return explicit;
+  const ssr = ((plan.adaptations as any[]) ?? []).find((a: any) => a?.type === 'sample_size_reestimation');
+  const delta = ssr?.effectSize;
+  if (typeof delta === 'number' && Number.isFinite(delta) && plan.maxSampleSize && plan.maxSampleSize > 0) {
+    return driftForTwoSampleMeans(delta, plan.maxSampleSize);
+  }
+  return null;
+}
+
+/** Information fraction of a planned look; refuses a look that does not state one. */
+function lookFraction(look: any, index: number): number {
+  const t = look?.informationFraction ?? look?.timing;
+  if (typeof t !== 'number' || !Number.isFinite(t)) {
+    throw new Error(`Interim look ${index + 1} has no informationFraction (or timing); it must be stated, not assumed.`);
+  }
+  return t;
 }
 
 // ─── Service Class ─────────────────────────────────────────────────────────────
@@ -295,18 +344,13 @@ export class AdaptiveTrialOperationsService {
     this.validateStoppingRules(stoppingRules, interimLooks);
 
     // Calculate spending boundaries for the specified looks
-    const informationFractions = interimLooks.map(
-      (look: any) => look.informationFraction ?? look.timing ?? 0.5
-    );
+    const informationFractions = interimLooks.map((look: any, i: number) => lookFraction(look, i));
 
+    // One-sided alpha (see CONVENTIONS in the file header).
     const alpha = stoppingRules.find((r: any) => r.type === 'efficacy')?.alpha ?? 0.025;
 
-    const spendingFn = spendingFunction === 'pocock' ? 'pocock' : 'obrien-fleming';
-    const boundaries = calculateSpendingBoundaries(
-      informationFractions,
-      alpha,
-      spendingFn as 'obrien-fleming' | 'pocock'
-    );
+    const spendingFn = resolveSpendingFunction(spendingFunction);
+    const boundaries = calculateSpendingBoundaries(informationFractions, alpha, spendingFn);
 
     // Run initial operating characteristics via Monte Carlo
     const opChars = this.runMonteCarloOC(
@@ -375,14 +419,23 @@ export class AdaptiveTrialOperationsService {
     const { lookNumber, informationFraction, enrolledCount, isBlinded, summaryStatistics } =
       snapshotData;
 
-    // Retrieve spending boundaries from plan
+    if (!(typeof informationFraction === 'number' && informationFraction > 0 && informationFraction <= 1)) {
+      throw new Error(`informationFraction ${informationFraction} must be in (0, 1]`);
+    }
+
+    // Retrieve spending parameters from plan
     const spendingParams = plan.spendingParameters as any;
     const alpha = spendingParams?.alpha ?? 0.025;
-    const spendingFn = (plan.spendingFunction || 'obrien-fleming') as 'obrien-fleming' | 'pocock';
+    const spendingFn = resolveSpendingFunction(plan.spendingFunction || 'obrien-fleming');
 
-    // Recalculate boundary for this information fraction
-    const boundaries = calculateSpendingBoundaries([informationFraction], alpha, spendingFn);
-    const currentCriticalValue = boundaries.criticalValues[0];
+    const { design, designFractions, priorLookFractions, lookIndex } = await this.sequentialDesign(
+      plan,
+      { lookNumber, informationFraction },
+      { alpha, spendingFn },
+      organizationId,
+    );
+    const currentCriticalValue = design.criticalValues[lookIndex];
+    const finalCriticalValue = design.criticalValues[design.criticalValues.length - 1];
 
     // Calculate test statistic from summary statistics
     let testStatistic = 0;
@@ -390,30 +443,34 @@ export class AdaptiveTrialOperationsService {
       testStatistic = this.computeTestStatistic(summaryStatistics);
     }
 
-    // Final critical value for conditional/predictive power (alpha at t=1)
-    const finalCriticalValue = normalQuantile(1 - alpha);
-
-    // Conditional power under current trend
-    const conditionalPower = computeConditionalPower(
+    // Conditional power under each explicit assumption; the stored figure (used
+    // by the futility rule) is the current-trend one.
+    const cpScenarios = conditionalPowerScenarios(
       testStatistic,
       informationFraction,
-      finalCriticalValue
+      finalCriticalValue,
+      designDriftFromPlan(plan),
     );
+    const conditionalPower = cpScenarios.currentTrend.conditionalPower as number;
 
-    // Predictive power with non-informative prior
-    const predictivePower = computePredictivePower(
-      testStatistic,
-      informationFraction,
-      plan.maxSampleSize || 500,
-      finalCriticalValue
-    );
+    // Predictive power with a flat (non-informative) prior on the drift.
+    const predictivePower = computePredictivePower(testStatistic, informationFraction, finalCriticalValue);
 
     // Construct boundary information
     const boundaryInfo = {
       criticalValue: currentCriticalValue,
-      cumulativeAlpha: boundaries.cumulativeAlpha[0],
-      efficacyCrossed: Math.abs(testStatistic) >= currentCriticalValue,
+      cumulativeAlpha: design.cumulativeAlpha[lookIndex],
+      incrementalAlpha: design.incrementalAlpha[lookIndex],
+      efficacyCrossed: testStatistic >= currentCriticalValue,
       direction: testStatistic >= 0 ? 'positive' : 'negative',
+      sided: design.sided,
+      alpha,
+      spendingFunction: spendingFn,
+      priorLookFractions,
+      designInformationFractions: designFractions,
+      designCriticalValues: design.criticalValues,
+      finalCriticalValue,
+      method: design.method,
     };
 
     const [snapshot] = await db
@@ -438,7 +495,10 @@ export class AdaptiveTrialOperationsService {
       analysis: {
         testStatistic,
         conditionalPower,
+        conditionalPowerAssumption: 'current-trend',
+        conditionalPowerScenarios: cpScenarios,
         predictivePower,
+        predictivePowerPrior: 'flat (non-informative) prior on the drift θ',
         boundary: boundaryInfo,
         recommendation: this.deriveRecommendation(
           testStatistic,
@@ -496,12 +556,13 @@ export class AdaptiveTrialOperationsService {
 
       switch (rule.type) {
         case 'efficacy': {
+          // One-sided upper boundary: efficacy requires Z >= b (harm is its own rule).
           const criticalValue = boundaryInfo?.criticalValue ?? normalQuantile(1 - (rule.alpha ?? 0.025));
-          const crossed = Math.abs(testStatistic) >= criticalValue;
+          const crossed = testStatistic >= criticalValue;
           evaluation.triggered = crossed;
           evaluation.detail = crossed
-            ? `Test statistic |${testStatistic.toFixed(4)}| >= critical value ${criticalValue.toFixed(4)}. Efficacy boundary crossed.`
-            : `Test statistic |${testStatistic.toFixed(4)}| < critical value ${criticalValue.toFixed(4)}. Efficacy boundary not crossed.`;
+            ? `Test statistic ${testStatistic.toFixed(4)} >= critical value ${criticalValue.toFixed(4)}. Efficacy boundary crossed.`
+            : `Test statistic ${testStatistic.toFixed(4)} < critical value ${criticalValue.toFixed(4)}. Efficacy boundary not crossed.`;
           evaluation.testStatistic = testStatistic;
           evaluation.criticalValue = criticalValue;
           if (crossed) {
@@ -664,7 +725,7 @@ export class AdaptiveTrialOperationsService {
     const achievedZBeta = pooledVariance > 0
       ? effectSize * Math.sqrt(effectiveSampleSize / (2 * pooledVariance)) - zAlpha
       : -zAlpha;
-    const achievedPower = normalCDF(achievedZBeta);
+    const achievedPower = normalCdf(achievedZBeta);
 
     const ssrResult = {
       originalSampleSize: originalMaxN,
@@ -697,66 +758,112 @@ export class AdaptiveTrialOperationsService {
   /**
    * Record an adaptation decision with full audit trail.
    */
-  async recordDecision(
+  /**
+   * Record an interim decision, on a transaction the signature ceremony owns.
+   *
+   * This is the ceremony's `write` callback (adaptive-decision-signature.ts),
+   * not a method a route may call on its own. By the time it runs, the signer
+   * has been re-authenticated, their signing authority checked, and separation
+   * of duties verified — so `approved_by` and `approved_at` written HERE are
+   * true statements, where the same two columns written by the previous Drizzle
+   * insert were a claim nobody had checked.
+   *
+   * The `auditTrail` array it used to build by hand is gone: the ceremony
+   * writes the hash-chained, HMAC-sealed `audit_logs` row and the
+   * `electronic_signatures` manifest, which is the audit trail. A second,
+   * unsealed copy in a json column was a record that could disagree with it.
+   *
+   * Raw SQL rather than Drizzle because the ceremony hands over its scoped SQL client:
+   * the decision row and its signature must commit or roll back together.
+   */
+  async writeDecisionOnSignedTransaction(
+    client: RequestSqlClient,
     params: {
       planId: number;
-      snapshotId?: number;
+      snapshotId: number;
       adaptationType: string;
       decision: string;
       rationale: string;
-      parameters?: any;
+      parameters?: unknown;
     },
     organizationId: number,
-    userId: number
-  ) {
+    userId: number,
+  ): Promise<{ act: Record<string, unknown>; body: Record<string, unknown> }> {
     const { planId, snapshotId, adaptationType, decision, rationale, parameters } = params;
 
-    // Verify plan exists
-    const [plan] = await db
-      .select()
-      .from(adaptiveTrialPlans)
-      .where(and(eq(adaptiveTrialPlans.id, planId), eq(adaptiveTrialPlans.organizationId, organizationId)));
-
-    if (!plan) throw new Error(`Adaptive trial plan ${planId} not found`);
-
-    // Build audit trail entry
-    const auditEntry = {
-      timestamp: new Date().toISOString(),
-      userId,
-      action: `Recorded ${adaptationType} decision`,
-      decision,
-      rationale,
-      parameters,
-      snapshotId: snapshotId ?? null,
-    };
-
-    const validAdaptationTypes = [
-      'sample_size_reestimation', 'response_adaptive_randomization',
-      'dose_selection', 'arm_dropping', 'endpoint_modification',
-      'population_enrichment', 'seamless_phase',
-    ] as const;
-    type AdaptationType = typeof validAdaptationTypes[number];
-    if (!validAdaptationTypes.includes(adaptationType as AdaptationType)) {
-      throw new Error(`Invalid adaptation type: ${adaptationType}. Must be one of: ${validAdaptationTypes.join(', ')}`);
+    if (!VALID_ADAPTATION_TYPES.includes(adaptationType as AdaptationType)) {
+      throw new AdaptiveDecisionRefusal(
+        400,
+        'INVALID_ADAPTATION_TYPE',
+        `An adaptation type must be one of: ${VALID_ADAPTATION_TYPES.join(', ')}. Nothing was signed.`,
+      );
+    }
+    if (typeof decision !== 'string' || decision.trim().length === 0) {
+      throw new AdaptiveDecisionRefusal(400, 'DECISION_REQUIRED', 'State the decision. Nothing was signed.');
+    }
+    if (typeof rationale !== 'string' || rationale.trim().length < 8) {
+      throw new AdaptiveDecisionRefusal(
+        400,
+        'RATIONALE_REQUIRED',
+        'Give the rationale for this decision, of at least 8 characters. Nothing was signed.',
+      );
     }
 
-    const [record] = await db
-      .insert(adaptationDecisions)
-      .values({
-        planId,
-        snapshotId: snapshotId ?? null,
-        adaptationType: adaptationType as AdaptationType,
-        decision,
-        rationale,
-        parameters,
-        approvedBy: userId,
-        approvedAt: new Date(),
-        auditTrail: [auditEntry],
-        organizationId,
-      })
-      .returning();
+    /* The snapshot must belong to this plan AND this tenant. The signature
+       binds the snapshot, so a decision pointing at another plan's look would
+       be signed against data it is not about. */
+    const snap = await client.query(
+      `SELECT s.id, s.look_number, s.information_fraction, s.test_statistic,
+              s.conditional_power, s.predictive_power
+         FROM interim_data_snapshots s
+         JOIN adaptive_trial_plans p
+           ON p.id = s.plan_id AND p.organization_id = s.organization_id
+        WHERE s.id = $1::int AND s.plan_id = $2::int AND s.organization_id = $3
+        LIMIT 1`,
+      [snapshotId, planId, organizationId],
+    );
+    const look = snap.rows[0];
+    if (!look) {
+      throw new AdaptiveDecisionRefusal(
+        404,
+        'SNAPSHOT_NOT_FOUND',
+        'No such interim look on this plan in this organization. Nothing was signed.',
+      );
+    }
 
-    return record;
+    const { rows } = await client.query(
+      `INSERT INTO adaptation_decisions
+         (plan_id, snapshot_id, adaptation_type, decision, rationale, parameters,
+          approved_by, approved_at, organization_id)
+       VALUES ($1::int, $2::int, $3, $4, $5, $6::json, $7::int, now(), $8::int)
+       RETURNING id, plan_id, snapshot_id, adaptation_type, decision, rationale,
+                 parameters, approved_by, approved_at, created_at`,
+      [
+        planId, snapshotId, adaptationType, decision.trim(), rationale.trim(),
+        parameters === undefined ? null : JSON.stringify(parameters),
+        userId, organizationId,
+      ],
+    );
+    const record = rows[0];
+
+    return {
+      /* `act` goes into the ledger payload AND onto the signature manifest, so
+         the signature row says what it signed: the decision, at which look,
+         against the figures that look carried. */
+      act: {
+        decisionId: Number(record.id),
+        planId,
+        snapshotId,
+        lookNumber: Number(look.look_number),
+        informationFraction: look.information_fraction === null ? null : Number(look.information_fraction),
+        adaptationType,
+        decision: decision.trim(),
+        testStatistic: look.test_statistic === null ? null : Number(look.test_statistic),
+        conditionalPower: look.conditional_power === null ? null : Number(look.conditional_power),
+        predictivePower: look.predictive_power === null ? null : Number(look.predictive_power),
+      },
+      body: { decision: record },
+    };
   }
 
   /**
@@ -997,6 +1104,52 @@ export class AdaptiveTrialOperationsService {
   // ─── Private Helpers ───────────────────────────────────────────────────────
 
   /**
+   * Sequentially consistent boundaries for an interim look. The boundary at this
+   * look is conditional on the looks ACTUALLY performed before it, at their
+   * observed information fractions (Lan–DeMets: a skipped look spends nothing;
+   * its alpha carries forward). The design's final critical value additionally
+   * uses the remaining planned looks after this one, then t = 1.
+   */
+  private async sequentialDesign(
+    plan: { id: number; interimLooks: unknown },
+    look: { lookNumber: number; informationFraction: number },
+    spending: { alpha: number; spendingFn: SpendingFunction },
+    organizationId: number,
+  ) {
+    const { lookNumber, informationFraction } = look;
+    const earlierSnapshots = await db
+      .select()
+      .from(interimDataSnapshots)
+      .where(and(eq(interimDataSnapshots.planId, plan.id), eq(interimDataSnapshots.organizationId, organizationId)))
+      .orderBy(interimDataSnapshots.lookNumber);
+    const fractionByLook = new Map<number, number>();
+    for (const s of earlierSnapshots as any[]) {
+      if (s.lookNumber < lookNumber) fractionByLook.set(s.lookNumber, s.informationFraction);
+    }
+    const priorLookFractions = [...fractionByLook.entries()].sort((x, y) => x[0] - y[0]).map(([, t]) => t);
+    const designFractions = [...priorLookFractions, informationFraction];
+    for (let i = 1; i < designFractions.length; i++) {
+      if (!(designFractions[i] > designFractions[i - 1])) {
+        throw new Error(
+          `Interim looks must have strictly increasing information fractions; look ${lookNumber} at ` +
+            `${informationFraction} follows recorded looks at ${priorLookFractions.join(', ')}.`,
+        );
+      }
+    }
+    const plannedLater = ((plan.interimLooks as any[]) ?? [])
+      .map((look: any, i: number) => lookFraction(look, i))
+      .filter((t: number) => t > informationFraction && t < 1);
+    designFractions.push(...plannedLater);
+    if (informationFraction < 1) designFractions.push(1);
+    return {
+      design: calculateSpendingBoundaries(designFractions, spending.alpha, spending.spendingFn),
+      designFractions,
+      priorLookFractions,
+      lookIndex: priorLookFractions.length,
+    };
+  }
+
+  /**
    * Validate stopping rules against interim look definitions.
    */
   private validateStoppingRules(stoppingRules: any[], interimLooks: any[]): void {
@@ -1080,7 +1233,7 @@ export class AdaptiveTrialOperationsService {
     conditionalPower: number,
     stoppingRules: any[]
   ): string {
-    if (Math.abs(testStatistic) >= criticalValue) {
+    if (testStatistic >= criticalValue) {
       return 'Efficacy boundary crossed. Consider stopping for efficacy.';
     }
 
@@ -1116,10 +1269,10 @@ export class AdaptiveTrialOperationsService {
       switch (rule.type) {
         case 'efficacy': {
           const cv = boundary?.criticalValue ?? normalQuantile(1 - (rule.alpha ?? 0.025));
-          ev.triggered = Math.abs(testStatistic) >= cv;
+          ev.triggered = testStatistic >= cv;
           ev.detail = ev.triggered
-            ? `Efficacy boundary crossed (|Z|=${Math.abs(testStatistic).toFixed(4)} >= ${cv.toFixed(4)})`
-            : `Efficacy boundary not crossed (|Z|=${Math.abs(testStatistic).toFixed(4)} < ${cv.toFixed(4)})`;
+            ? `Efficacy boundary crossed (Z=${testStatistic.toFixed(4)} >= ${cv.toFixed(4)})`
+            : `Efficacy boundary not crossed (Z=${testStatistic.toFixed(4)} < ${cv.toFixed(4)})`;
           break;
         }
         case 'futility': {
@@ -1181,13 +1334,9 @@ export class AdaptiveTrialOperationsService {
 
     const effectSizes = [0, 0.1, 0.2, 0.3, 0.5];
     const alpha = config.stoppingRules.find((r: any) => r.type === 'efficacy')?.alpha ?? 0.025;
-    const spendingFn = (config.spendingFunction === 'pocock' ? 'pocock' : 'obrien-fleming') as
-      | 'obrien-fleming'
-      | 'pocock';
+    const spendingFn = resolveSpendingFunction(config.spendingFunction);
 
-    const informationFractions = config.interimLooks.map(
-      (look: any) => look.informationFraction ?? look.timing ?? 0.5
-    );
+    const informationFractions = config.interimLooks.map((look: any, i: number) => lookFraction(look, i));
 
     // Include final analysis at t=1
     const allFractions = [...informationFractions];
@@ -1197,6 +1346,14 @@ export class AdaptiveTrialOperationsService {
 
     const boundaries = calculateSpendingBoundaries(allFractions, alpha, spendingFn);
     const nLooks = allFractions.length;
+    const finalCV = boundaries.criticalValues[nLooks - 1];
+    const futilityRule = config.stoppingRules.find((r: any) => r.type === 'futility');
+    // The same current-trend conditional-power rule the interim evaluation
+    // applies, against the design's final boundary.
+    const futilityStops = (z: number, t: number): boolean =>
+      Boolean(futilityRule) &&
+      t >= (futilityRule.minInformationFraction ?? 0.3) &&
+      computeConditionalPower(z, t, finalCV, z / Math.sqrt(t)) < (futilityRule.conditionalPowerThreshold ?? 0.2);
 
     const scenarios: any[] = [];
 
@@ -1204,36 +1361,36 @@ export class AdaptiveTrialOperationsService {
       let rejectCount = 0;
       let totalSampleSizeSum = 0;
       const stageRejects = new Array(nLooks).fill(0);
+      // Drift θ = E[Z at full information] = δ·√(n_max/2), n_max per arm.
+      const theta = driftForTwoSampleMeans(delta, config.maxSampleSize);
 
       for (let sim = 0; sim < nSim; sim++) {
-        let rejected = false;
+        // Sequential statistics share data: simulate the score process with
+        // independent increments, S(t_k) − S(t_{k−1}) ~ N(θ·Δt, Δt), and
+        // Z_k = S(t_k)/√t_k, so corr(Z_j, Z_k) = √(t_j/t_k) as in the trial.
+        let score = 0;
+        let prevT = 0;
 
         for (let k = 0; k < nLooks; k++) {
           const tK = allFractions[k];
           const nK = Math.floor(tK * config.maxSampleSize);
+          const dT = tK - prevT;
+          score += theta * dT + Math.sqrt(dT) * randomNormal(rng);
+          prevT = tK;
+          const Zk = score / Math.sqrt(tK);
 
-          // Generate test statistic: Z_k ~ N(delta * sqrt(n_k / 2), 1)
-          const drift = delta * Math.sqrt(nK / 2);
-          const Zk = drift + randomNormal(rng);
-
-          if (Math.abs(Zk) >= boundaries.criticalValues[k]) {
+          // One-sided upper efficacy boundary.
+          if (Zk >= boundaries.criticalValues[k]) {
             rejectCount++;
             stageRejects[k]++;
             totalSampleSizeSum += nK;
-            rejected = true;
             break;
           }
 
-          // Check futility (if defined)
-          const futilityRule = config.stoppingRules.find((r: any) => r.type === 'futility');
-          if (futilityRule && k < nLooks - 1) {
-            const finalCV = normalQuantile(1 - alpha);
-            const cp = computeConditionalPower(Zk, tK, finalCV, delta);
-            if (cp < (futilityRule.conditionalPowerThreshold ?? 0.2) && tK >= (futilityRule.minInformationFraction ?? 0.3)) {
-              totalSampleSizeSum += nK;
-              rejected = false;
-              break;
-            }
+          // Futility (if defined), at interim looks only.
+          if (k < nLooks - 1 && futilityStops(Zk, tK)) {
+            totalSampleSizeSum += nK;
+            break;
           }
 
           // If last look and not rejected
@@ -1248,7 +1405,14 @@ export class AdaptiveTrialOperationsService {
 
       scenarios.push({
         effectSize: delta,
+        drift: theta,
         rejectionRate,
+        // Exact P(reject) with the efficacy boundary alone (stats/group-sequential-oc).
+        // Futility stopping can only lower rejection, so this bounds the simulated rate above.
+        exactRejectionRateEfficacyOnly: computeOperatingCharacteristic(
+          { informationFractions: allFractions, efficacyBoundaries: boundaries.criticalValues },
+          theta,
+        ).rejectProbability,
         expectedSampleSize: Math.round(avgSampleSize),
         stageRejections: stageRejects,
         nSimulations: nSim,
@@ -1260,7 +1424,9 @@ export class AdaptiveTrialOperationsService {
 
     const summary = {
       typeIError: nullScenario?.rejectionRate ?? 0,
+      exactTypeIErrorEfficacyOnly: nullScenario?.exactRejectionRateEfficacyOnly ?? null,
       power: designScenario?.rejectionRate ?? 0,
+      powerEffectSize: designScenario?.effectSize ?? null,
       expectedSampleSizeUnderNull: nullScenario?.expectedSampleSize ?? config.maxSampleSize,
       expectedSampleSizeUnderAlternative: designScenario?.expectedSampleSize ?? config.maxSampleSize,
       maxSampleSize: config.maxSampleSize,
@@ -1270,6 +1436,8 @@ export class AdaptiveTrialOperationsService {
         informationFractions: allFractions,
         criticalValues: boundaries.criticalValues,
         cumulativeAlpha: boundaries.cumulativeAlpha,
+        sided: boundaries.sided,
+        method: boundaries.method,
       },
     };
 

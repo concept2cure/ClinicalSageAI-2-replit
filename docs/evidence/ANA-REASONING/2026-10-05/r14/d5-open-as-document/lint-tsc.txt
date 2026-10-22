@@ -1,0 +1,10 @@
+Lint, against origin/concept2cure-v2. now=errors/warnings on this tree,
+trunk=the same file on trunk. No file gains a warning.
+
+client/src/concept2cure/v2/surfaces/ConversationThread.tsx                                           now=6/0      trunk=6/0
+client/src/concept2cure/v2/editor/anaInsertGate.ts                                                   now=0/0      trunk=0/0
+client/src/concept2cure/v2/fixtures/conversation-thread-data.ts                                      now=0/0      trunk=0/0
+client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx                       now=0/0      trunk=0/0
+client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx                               now=0/0      trunk=0/0
+
+typecheck: npm run -s typecheck:fast -> exit 0

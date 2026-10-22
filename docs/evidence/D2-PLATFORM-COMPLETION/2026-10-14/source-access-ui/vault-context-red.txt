@@ -1,0 +1,52 @@
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+ × client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a failed search publishes failure without an empty finding or an unrelated selection 5260ms
+ × client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a pending search does not publish a zero or stale selection 5238ms
+ × client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a malformed search reply is unavailable, not zero matches: {"results":[],"total":null} 5107ms
+ × client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a malformed search reply is unavailable, not zero matches: {"results":{},"total":0} 5154ms
+ × client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a malformed search reply is unavailable, not zero matches: {"results":[{"id":"one","title":"One"}],"total":0} 5142ms
+ × client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > an accessible-project library panel does not reuse the disabled project reader as a zero finding 5080ms
+ × client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a verified empty project search can publish its returned zero 5247ms
+ FAIL  client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a failed search publishes failure without an empty finding or an unrelated selection
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx:62:18
+ FAIL  client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a pending search does not publish a zero or stale selection
+ ❯ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx:76:55
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+ FAIL  client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a malformed search reply is unavailable, not zero matches: {"results":[],"total":null}
+ FAIL  client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a malformed search reply is unavailable, not zero matches: {"results":[{"id":"one","title":"One"}],"total":0}
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx:91:18
+ FAIL  client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a malformed search reply is unavailable, not zero matches: {"results":{},"total":0}
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx:91:18
+ FAIL  client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > an accessible-project library panel does not reuse the disabled project reader as a zero finding
+ ❯ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx:102:53
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+ FAIL  client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a verified empty project search can publish its returned zero
+ ❯ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx:112:53
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+TypeError: ((intermediate value) ?? []).map is not a function
+ ❯ VaultForProject client/src/concept2cure/v2/surfaces/Vault.tsx:1167:41
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+ ❯ performWorkOnRoot node_modules/react-dom/cjs/react-dom-client.development.js:16583:35
+ Test Files  1 failed (1)
+      Tests  7 failed | 2 passed (9)
+     Errors  1 error
+   Start at  01:01:18
+   Duration  45.02s (transform 5.49s, setup 1.35s, import 5.96s, tests 36.30s, environment 1.18s)

@@ -54,6 +54,14 @@ beforeEach(() => {
 });
 
 describe('publishRegulatoryChange reports what the propagation did', () => {
+  it('carries actual packet audit receipts without calling completed propagation a failure', async () => {
+    const auditTrail = { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message: 'Bounded fixture warning' };
+    const packetAuditReceipts = [{ packetId: 'actual-packet', auditTrail }];
+    ROUTER.result = { outcomes: [{ channel: 'defense_packet.evidence', detail: { markedStaleCount: 1 } }],
+      totalAffected: 1, packetAuditReceipts, auditTrail };
+    const out = await publishRegulatoryChange(ARGS);
+    expect(out).toMatchObject({ published: true, totalAffected: 1, packetAuditReceipts, auditTrail });
+  });
   it('a clean propagation that affected nothing says so, and says it succeeded', async () => {
     ROUTER.result = {
       event: 'evidence_changed',

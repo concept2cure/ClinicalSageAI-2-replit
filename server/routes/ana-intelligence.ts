@@ -14,7 +14,6 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { createHash } from 'crypto';
 import {
   getAnaDraftingService,
 } from '../services/ana/AnaDocumentDraftingService';
@@ -37,6 +36,10 @@ import { requestConnectable } from '../db/requestDb.js';
 import { loopToolCollector, recordLoopTurn, type LoopToolCall } from '../services/ana/turn-record-loop.js';
 import { canonicalJson, openTurnRecorder, writeTurnRecordSafely } from '../services/ana/turn-record.js';
 import { resolveOrgId, resolveUserId } from '../types/auth-request.js';
+import { recordModelProvenance, unavailableModelProvenance } from './ana-model-provenance';
+import type { AuditRowOutcome } from '../services/audit/audit-write-outcome';
+import { refuseInvalidBatchInput } from './ana-intelligence-batch-input.js';
+import { BATCH_CONCURRENCY_MESSAGE, resolveBatchConcurrency } from '../services/ana/batch-draft-concurrency';
 
 const router = Router();
 
@@ -87,42 +90,11 @@ function identityOf(req: Request): { organizationId: number | undefined; userId:
  * generation on a regulated-drafting surface writes an append-only audit
  * row recording WHICH pinned model produced WHAT content (sha256 of the
  * output), so any document later saved from this content can be traced
- * back to its model version by hashing it. Fire-and-forget — provenance
- * recording must never fail the drafting request; the dynamic import
- * keeps audit/DB code off this router's load path.
+ * back to its model version by hashing it. Await the actual audit outcome
+ * before completing the response; an unavailable audit never discards generated
+ * content or committed tool effects. The dynamic import keeps audit/DB code off
+ * this router's load path.
  */
-function recordModelProvenance(params: {
-  req: Request;
-  surface: string;
-  model: string | undefined;
-  content: string | undefined;
-  usage?: { inputTokens?: number; outputTokens?: number };
-}): void {
-  void (async () => {
-    try {
-      const { default: auditService } = await import('../services/auditService');
-      const { organizationId, userId } = identityOf(params.req);
-      await auditService.logAction({
-        tenantId: organizationId,
-        userId,
-        action: 'ai_generation',
-        resourceType: 'ai_drafting_surface',
-        resourceId: params.surface,
-        details: {
-          model: params.model || 'unknown',
-          contentSha256: params.content
-            ? createHash('sha256').update(params.content).digest('hex')
-            : null,
-          inputTokens: params.usage?.inputTokens ?? null,
-          outputTokens: params.usage?.outputTokens ?? null,
-        },
-      });
-    } catch (err: any) {
-      console.warn('[Claude Intelligence] model provenance record failed:', err?.message);
-    }
-  })();
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Document Drafting
 // ─────────────────────────────────────────────────────────────────────────────
@@ -166,7 +138,7 @@ router.post('/draft', async (req: Request, res: Response) => {
       ...identityOf(req),
     });
 
-    recordModelProvenance({
+    const auditTrail = await recordModelProvenance({
       req,
       surface: 'draft',
       model: result.model,
@@ -177,6 +149,7 @@ router.post('/draft', async (req: Request, res: Response) => {
     res.json({
       success: true,
       data: result,
+      meta: { auditTrail },
     });
   } catch (error: any) {
     console.error('[Claude Intelligence] Draft error:', error.message);
@@ -211,6 +184,7 @@ router.post('/draft/stream', async (req: Request, res: Response) => {
     // Set up SSE headers
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
+      'X-Content-Type-Options': 'nosniff',
       'Cache-Control': 'no-cache',
       'Connection': 'keep-alive',
       'X-Accel-Buffering': 'no',
@@ -240,13 +214,14 @@ router.post('/draft/stream', async (req: Request, res: Response) => {
     });
 
     // Send final event with full response metadata
-    recordModelProvenance({
+    const auditTrail = await recordModelProvenance({
       req,
       surface: 'draft/stream',
       model: result.model,
       content: result.content,
       usage: result.usage,
     });
+    // nosemgrep: javascript.express.security.audit.xss.direct-response-write.direct-response-write -- SSE with nosniff; the entire payload is JSON encoded, escaping frame delimiters and never interpreted as HTML.
     res.write(`data: ${JSON.stringify({
       type: 'done',
       model: result.model,
@@ -254,6 +229,7 @@ router.post('/draft/stream', async (req: Request, res: Response) => {
       cacheHit: result.cacheHit,
       latencyMs: result.latencyMs,
       toolsUsed: result.toolsUsed,
+      meta: { auditTrail },
     })}\n\n`);
 
     res.end();
@@ -304,7 +280,7 @@ router.post('/review', async (req: Request, res: Response) => {
       ...identityOf(req),
     });
 
-    recordModelProvenance({
+    const auditTrail = await recordModelProvenance({
       req,
       surface: 'review',
       model: result.model,
@@ -312,7 +288,7 @@ router.post('/review', async (req: Request, res: Response) => {
       usage: result.usage,
     });
 
-    res.json({ success: true, data: result });
+    res.json({ success: true, data: result, meta: { auditTrail } });
   } catch (error: any) {
     console.error('[Claude Intelligence] Review error:', error.message);
     return failRequest(res, 'running the compliance review', error);
@@ -348,7 +324,7 @@ router.post('/gap-analysis', async (req: Request, res: Response) => {
       }
     );
 
-    recordModelProvenance({
+    const auditTrail = await recordModelProvenance({
       req,
       surface: 'gap-analysis',
       model: result.model,
@@ -356,7 +332,7 @@ router.post('/gap-analysis', async (req: Request, res: Response) => {
       usage: result.usage,
     });
 
-    res.json({ success: true, data: result });
+    res.json({ success: true, data: result, meta: { auditTrail } });
   } catch (error: any) {
     console.error('[Claude Intelligence] Gap analysis error:', error.message);
     return failRequest(res, 'running the gap analysis', error);
@@ -391,7 +367,7 @@ router.post('/vision', async (req: Request, res: Response) => {
       ...identityOf(req),
     });
 
-    recordModelProvenance({
+    const auditTrail = await recordModelProvenance({
       req,
       surface: 'vision',
       model: result.model,
@@ -399,7 +375,7 @@ router.post('/vision', async (req: Request, res: Response) => {
       usage: result.usage,
     });
 
-    res.json({ success: true, data: result });
+    res.json({ success: true, data: result, meta: { auditTrail } });
   } catch (error: any) {
     console.error('[Claude Intelligence] Vision error:', error.message);
     return failRequest(res, 'analyzing the image', error);
@@ -445,28 +421,20 @@ router.post('/batch', async (req: Request, res: Response) => {
   try {
     const { requests, concurrency } = req.body;
 
-    if (!requests || !Array.isArray(requests) || requests.length === 0) {
-      return res.status(400).json({
-        error: 'Missing required field: requests (array of draft requests)',
-      });
+    if (refuseInvalidBatchInput(requests, res)) return;
+    const resolvedConcurrency = resolveBatchConcurrency(concurrency);
+    if (resolvedConcurrency === null) {
+      return res.status(400).json({ error: 'INVALID_BATCH_CONCURRENCY', message: BATCH_CONCURRENCY_MESSAGE });
     }
-
-    if (requests.length > 20) {
-      return res.status(400).json({
-        error: 'Maximum 20 requests per batch',
-      });
-    }
-
-    const service = getAnaDraftingService();
 
     // The server's identity on every request; a body-supplied organizationId
     // or userId is overwritten, never preferred.
     const identity = identityOf(req);
     const enrichedRequests = requests.map((r: any) => ({ ...r, ...identity }));
 
-    const results = await service.batchDraft({
+    const results = await getAnaDraftingService().batchDraft({
       requests: enrichedRequests,
-      concurrency: Math.min(concurrency || 3, 5),
+      concurrency: resolvedConcurrency,
     });
 
     // A section that could not be drafted is a failure RESULT in its own slot
@@ -477,8 +445,23 @@ router.post('/batch', async (req: Request, res: Response) => {
     // nobody paid for.
     const drafted = results.filter((r): r is DocumentDraftResponse => !isBatchDraftFailure(r));
     const failed = results.length - drafted.length;
+    // Provenance belongs only to actual generations. Await every write before
+    // answering, and retain a loss even if another section's row was recorded.
+    let auditTrail: AuditRowOutcome | undefined;
+    if (drafted.length > 0) {
+      const [first, ...rest] = await Promise.all(drafted.map((r) => recordModelProvenance({
+        req, surface: 'batch', model: r.model, content: r.content, usage: r.usage,
+      })));
+      try {
+        const { combineAuditRowOutcomes } = await import('../services/audit/audit-write-outcome');
+        auditTrail = combineAuditRowOutcomes(first, ...rest);
+      } catch {
+        auditTrail = unavailableModelProvenance('batch');
+      }
+    }
     res.json({
       success: true,
+      ...(auditTrail ? { meta: { auditTrail } } : {}),
       data: {
         // Each draft names the turn record that holds it; the accept sends that id back.
         results: await recordBatchTurn(req, requests, results),
@@ -495,16 +478,6 @@ router.post('/batch', async (req: Request, res: Response) => {
         },
       },
     });
-    // Provenance is recorded for content that exists; a failure produced none.
-    for (const r of drafted) {
-      recordModelProvenance({
-        req,
-        surface: 'batch',
-        model: r.model,
-        content: r.content,
-        usage: r.usage,
-      });
-    }
   } catch (error: any) {
     console.error('[Claude Intelligence] Batch error:', error.message);
     return failRequest(res, 'drafting the batch', error);
@@ -536,7 +509,7 @@ router.post('/quick', async (req: Request, res: Response) => {
       ...identityOf(req),
     });
 
-    recordModelProvenance({
+    const auditTrail = await recordModelProvenance({
       req,
       surface: 'quick',
       // The model the gateway served. Until 2026-09-23 this was the literal
@@ -546,7 +519,7 @@ router.post('/quick', async (req: Request, res: Response) => {
       content: result.content,
     });
 
-    res.json({ success: true, data: { content: result.content } });
+    res.json({ success: true, data: { content: result.content }, meta: { auditTrail } });
   } catch (error: any) {
     console.error('[Claude Intelligence] Quick error:', error.message);
     return failRequest(res, 'completing the prompt', error);
@@ -637,7 +610,7 @@ router.post('/agent', async (req: Request, res: Response) => {
       }
     );
 
-    recordModelProvenance({
+    const auditTrail = await recordModelProvenance({
       req,
       surface: 'agent',
       model: result.model,
@@ -648,6 +621,7 @@ router.post('/agent', async (req: Request, res: Response) => {
 
     res.json({
       success: true,
+      meta: { auditTrail },
       data: {
         content: result.content,
         thinking: result.thinking,

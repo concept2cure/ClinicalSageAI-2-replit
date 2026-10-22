@@ -212,8 +212,10 @@ export interface ExtendedThinkingConfig {
 export interface PromptCacheConfig {
   /** Mark system prompt blocks with cache_control for reuse */
   enabled: boolean;
-  /** Cache type — currently only 'ephemeral' supported */
+  /** Anthropic cache type */
   type: 'ephemeral';
+  /** Optional cache lifetime; the default is Anthropic's 5-minute TTL */
+  ttl?: '5m' | '1h';
 }
 
 /** Streaming callback for real-time token delivery */
@@ -369,6 +371,11 @@ export interface GatewayMessage {
 export interface GatewayRequest {
   /** Task categorization for routing decisions */
   taskType: TaskType;
+
+  /** @internal Trusted server checkpoint, captured before route awaits and
+   * repeated after outbound capacity is granted for every dispatch attempt.
+   * Never a wire input, metadata field or serialized source authority. */
+  beforeDispatch?: () => Promise<void>;
 
   /**
    * The caller's risk classification for this request, where it has one — the
@@ -534,6 +541,17 @@ export interface GatewayRequest {
 
   /** Enable extended thinking (Claude only) */
   thinking?: ExtendedThinkingConfig;
+
+  /**
+   * The notes the model writes between tool calls come back as its words,
+   * even when this call reasons (ANA-SUMMARY decision 3, A). Only a model that
+   * returns those notes as thinking blocks is affected (`progressUpdatesInThinking`):
+   * on this call its reasoning stays hidden — it still reasons — and its notes
+   * arrive as text (progress-updates.ts). Every other model already returns
+   * them as text and keeps its reasoning summary. Set on calls that offer
+   * tools; a closing call that offers none keeps the summary.
+   */
+  notesBetweenTools?: boolean;
 
   /**
    * Tools for agentic workflows (Claude only). Accepts either custom

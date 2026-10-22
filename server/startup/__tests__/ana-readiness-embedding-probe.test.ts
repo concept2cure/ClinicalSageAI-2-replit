@@ -18,7 +18,7 @@
 
 import express from 'express';
 import request from 'supertest';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import {
   EMBEDDING_PROBE_RETRY_MS,
@@ -51,6 +51,12 @@ vi.mock('../../services/embedding-corpus-policy.js', async (importOriginal) => (
   findVectorsFromAnotherModel: (await import('./support/embedding-lane')).corpus.check,
 }));
 vi.mock('../../db/runtime.js', () => ({ getPool: () => ({ query: async () => ({ rows: [] }) }) }));
+// The scanner is not this file's variable. A production /readyz also asks clamd
+// (MR-08: inline-endpoints.ts, deps.virusScan), so here it answers.
+vi.mock('../../utils/virusScan', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../utils/virusScan')>()),
+  pingClamdCached: async () => true,
+}));
 
 beforeEach(async () => {
   resetAnaReadinessForTests();
@@ -147,7 +153,8 @@ describe('evaluateAnaReadiness — the embedding lane is ready only once it has 
 
   it('outside production the probe runs too: an OpenAI lane that does not answer is NOT serving', async () => {
     embeddingServer.create.mockRejectedValue(Object.assign(new Error('Incorrect API key provided'), { status: 401 }));
-    gatewayStub = await laneGateway('development', { ANTHROPIC_API_KEY: 'sk-ant-test' });
+    // A key the server refuses: a keyless OpenAI lane sends nothing at all (1bd3af0bc), which is not this case.
+    gatewayStub = await laneGateway('development', { ANTHROPIC_API_KEY: 'sk-ant-test', OPENAI_API_KEY: 'sk-test-fake-refused' });
 
     expect(await evaluateAnaReadiness()).toBe('embedding_lane_down');
     expect(getAnaReadinessDetail()).toMatch(/HTTP 401/);
@@ -183,6 +190,12 @@ describe('evaluateAnaReadiness — a lane that has not answered is probed again,
     setSchemaReadiness('ready', '');
     delete process.env.REDIS_URL;
     delete process.env.REDIS_TLS_URL;
+    const savedClamavHost = process.env.CLAMAV_HOST;
+    process.env.CLAMAV_HOST = 'clamav.test';
+    onTestFinished(() => {
+      if (savedClamavHost === undefined) delete process.env.CLAMAV_HOST;
+      else process.env.CLAMAV_HOST = savedClamavHost;
+    });
     const a = express();
     mountFastPathHealthEndpoints(a, { query: async () => ({ rows: [{ '?column?': 1 }] }) } as never);
 

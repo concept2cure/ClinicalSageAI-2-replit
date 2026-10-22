@@ -15,6 +15,7 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+import { IVDR_CLASSES } from '../../../shared/regulatory/device-class.js';
 
 const DETERMINISTIC_NOTE =
   'DETERMINISTIC: report the returned values and verdict verbatim — do not recompute or estimate. If the engine reports a validation error or a missing[] list, relay exactly which field is missing or invalid.';
@@ -214,7 +215,7 @@ export const GENERATE_DECLARATION_OF_CONFORMITY: AnaTool = {
       srn: { type: 'string', description: 'Single Registration Number.' },
       productName: { type: 'string' },
       basicUdiDi: { type: 'string' },
-      riskClass: { type: 'string', enum: ['A', 'B', 'C', 'D'] },
+      riskClass: { type: 'string', enum: [...IVDR_CLASSES] },
       notifiedBodyNumber: { type: 'string' },
       certificateNumber: { type: 'string' },
       conformityRoute: { type: 'string' },

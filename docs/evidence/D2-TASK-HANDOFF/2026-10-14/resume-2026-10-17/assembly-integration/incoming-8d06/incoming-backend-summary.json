@@ -1,0 +1,102 @@
+{
+  "status": "completed-green-frozen",
+  "recorded_at_utc": "2026-10-18T00:05:49.967536+00:00",
+  "branch": "concept2cure-v2",
+  "incoming_commit": "8d06f71566d01380dc772c1d5f4fa0494aa215c7",
+  "source_anchor_commit": "4b16df8203f3cb5cbaa47faa70cc3f0f9bccf06c",
+  "head_after_run": "b90ad42c527039404a7eb5cd1996d57c0ab81ea6",
+  "head_transition": {
+    "changed_paths": [
+      "docs/reports/repo-health-scan-latest.json",
+      "docs/reports/repo-health-scan-latest.md"
+    ],
+    "reports_only": true,
+    "requires_test_replay": false
+  },
+  "runtime": {
+    "node_version": "v22.23.3",
+    "config": "vitest.config.ts",
+    "node_options": "--max-old-space-size=4096"
+  },
+  "result": {
+    "files_passed": 49,
+    "files_failed": 0,
+    "total_cases": 917,
+    "passed": 915,
+    "failed": 0,
+    "pending": 0,
+    "todo": 2,
+    "exit_code": 0,
+    "duration_seconds": 237.344
+  },
+  "existing_todo_cases": [
+    {
+      "file": "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+      "case": "step 4 safety net: refusals agree, and where they do not step 4: placement passes an approved Vault version (or files one) and upsertLeaf records a vault_documents leaf \u2014 no product path does yet"
+    },
+    {
+      "file": "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+      "case": "step 4 safety net: refusals agree, and where they do not step 4: re-filing an edited document must supersede (supersedes_id) the version a live leaf pins; file-to-vault passes no supersedesDocumentId today"
+    }
+  ],
+  "source_integrity": {
+    "source_pin_count": 7121,
+    "before_after_hashes_match": true,
+    "changed_paths": [],
+    "scope": "Tracked server/shared code, JSON and SQL plus package.json, default config and setup; no private environment files"
+  },
+  "scope": "49 server/shared default suites only; all four company client suites belong to a separate UI run. This automated run does not replace native runtime, full-program compiler/build, live-provider/browser or human acceptance evidence. No source edits or database commands were performed.",
+  "archives": [
+    {
+      "archive": "task-handoff-incoming-8d06-backend-final.log.gz",
+      "original_path": "/workspace/scratch/task-handoff-incoming-8d06-backend-final.log",
+      "original_sha256": "3fccf47b47774512a53084f982aaacd4e83e728f40510662db0dc889af6b9b4b",
+      "original_bytes": 273129,
+      "gzip_sha256": "20199ccbc747c035d20cdf20795586d4c6b0b8835d4c191702bde9b4ac21649d",
+      "gzip_bytes": 28851,
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-incoming-8d06-backend-final.json.gz",
+      "original_path": "/workspace/scratch/task-handoff-incoming-8d06-backend-final.json",
+      "original_sha256": "e17c1b54d0b354436e748c2bdad2811ab3adfba5d70dc29af8ecfa808120affc",
+      "original_bytes": 375782,
+      "gzip_sha256": "e23b9edfc67537a6f487effc0fbd6e9f65c6b70a5801183a1a636f74e0806781",
+      "gzip_bytes": 37271,
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-incoming-8d06-backend-final.pins.json.gz",
+      "original_path": "/workspace/scratch/task-handoff-incoming-8d06-backend-final.pins.json",
+      "original_sha256": "3342a7548025764cfb50f0f529f5458950d31e3c8b7b440a8a56a6121cd639ae",
+      "original_bytes": 1870483,
+      "gzip_sha256": "1fa267d91837048fbdae7591fe561192ee70a4af49100b075b8dd1182a7338b5",
+      "gzip_bytes": 723942,
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-incoming-8d06-default-backend-files.txt.gz",
+      "original_path": "/workspace/scratch/task-handoff-incoming-8d06-default-backend-files.txt",
+      "original_sha256": "acc58347de06ce9f1ca3382a462fb2cc9a2c8ecac020fbe0c9bbbdad7b2a3d22",
+      "original_bytes": 3421,
+      "gzip_sha256": "18d473dd373d0cb616238457e64e890b4aada240a5c6f261b6bae6b0abf74405",
+      "gzip_bytes": 706,
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-incoming-8d06-default-impact.json.gz",
+      "original_path": "/workspace/scratch/task-handoff-incoming-8d06-default-impact.json",
+      "original_sha256": "fd2cae1f1f9b9c3dbc111dfdbb7b869ad2ab593fa555877b40f97eca740b1508",
+      "original_bytes": 23713,
+      "gzip_sha256": "c96e9ba4a77dfd22acb3b38f4e240ade7dc26a16723c715d815a32cbde8d66b3",
+      "gzip_bytes": 2798,
+      "gzip_mtime": 0
+    }
+  ],
+  "archive_verification": {
+    "all_raw_decompression_round_trips_pass": true,
+    "gzip_timestamps_zero": true,
+    "gzip_embedded_filenames_absent": true,
+    "credential_pattern_scan_no_hits": true
+  }
+}

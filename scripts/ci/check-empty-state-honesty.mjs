@@ -477,6 +477,27 @@ if (process.argv.includes('--self-test')) {
 const hits = sourceFiles().flatMap(scanFile);
 const key = (h) => `${h.file}:${h.line}`;
 
+/**
+ * The identity a baseline entry pins — the OCCURRENCE, not the file.
+ *
+ * ── Why this exists (2026-10-13) ────────────────────────────────────────────
+ * Enforcement was `allowed.has(h.file)`: once a file was baselined, EVERY
+ * clearance-on-empty line in it was permitted, for good. Nonclinical.tsx is
+ * ~800 lines and the sole baselined file, so a second, genuine "No findings on
+ * an empty collection" added anywhere in it passed this gate silently. The
+ * baseline's one entry is a reasoned false positive about ONE conditional
+ * chain; it was buying immunity for the whole file.
+ *
+ * Keyed on the collection expression plus the claim text, NOT the line: line
+ * numbers move whenever anything above them is edited, so a line key would
+ * report every occurrence in a file whose top changed as new. Digit runs in the
+ * claim are masked for the same reason the ESLint ratchet masks them — a claim
+ * that renders a count ("0 of 12 checked") is the same claim one more study
+ * later.
+ */
+const occurrence = (h) =>
+  `${h.collection}|${String(h.claim).replace(/\s+/g, ' ').replace(/\d+/g, '#').trim()}`;
+
 if (process.argv.includes('--list')) {
   for (const h of hits) console.log(`${key(h)}  [${h.collection}]  ${h.claim}`);
   console.log(`\n${hits.length} occurrence(s) across ${new Set(hits.map((h) => h.file)).size} file(s).`);
@@ -495,21 +516,57 @@ if (process.argv.includes('--write-baseline')) {
   const reasons = Object.fromEntries(
     Object.entries(priorReasons).filter(([f]) => files.includes(f))
   );
+  /* Occurrence-level, so a NEW violation in an already-baselined file is still
+     reported. `files` is kept: the reasons map is keyed by it, and the stale
+     report below reads it. */
+  const occurrences = {};
+  for (const f of files) {
+    occurrences[f] = [...new Set(hits.filter((h) => h.file === f).map(occurrence))].sort();
+  }
   writeFileSync(
     BASELINE,
-    JSON.stringify(Object.keys(reasons).length ? { files, reasons } : { files }, null, 2) + '\n'
+    JSON.stringify(
+      Object.keys(reasons).length ? { files, occurrences, reasons } : { files, occurrences },
+      null,
+      2,
+    ) + '\n'
   );
   console.log(`Baseline written: ${hits.length} occurrence(s) across ${new Set(hits.map((h) => h.file)).size} file(s).`);
   process.exit(0);
 }
 
-const baseline = existsSync(BASELINE) ? JSON.parse(readFileSync(BASELINE, 'utf8')).files : [];
+const baselineDoc = existsSync(BASELINE) ? JSON.parse(readFileSync(BASELINE, 'utf8')) : {};
+const baseline = baselineDoc.files ?? [];
 const allowed = new Set(baseline);
-const fresh = hits.filter((h) => !allowed.has(h.file));
+const baselineOccurrences = baselineDoc.occurrences ?? null;
+
+/* An older baseline carries no `occurrences` map. Fall back to file scope so
+   the gate does not go red on one — but SAY SO, because that mode permits any
+   new violation in a baselined file and a silent downgrade is the thing this
+   gate exists to refuse. */
+if (baseline.length > 0 && !baselineOccurrences) {
+  console.warn(
+    'check-empty-state-honesty: the baseline has no `occurrences` map, so it is being\n' +
+      '  enforced at FILE scope — a new clearance-on-empty line in an already-baselined\n' +
+      '  file will pass. Run --write-baseline to pin it to the exact occurrences.',
+  );
+}
+
+const fresh = hits.filter((h) => {
+  if (!allowed.has(h.file)) return true;
+  if (!baselineOccurrences) return false; // legacy file-scope mode, warned above
+  return !(baselineOccurrences[h.file] ?? []).includes(occurrence(h));
+});
 
 if (fresh.length > 0) {
   console.error('\n❌ Clearance copy selected by an EMPTY collection.\n');
-  for (const h of fresh) console.error(`   ${key(h)}\n     when \`${h.collection}\` is empty → "${h.claim}"`);
+  for (const h of fresh) {
+    const inBaselinedFile = allowed.has(h.file);
+    console.error(
+      `   ${key(h)}${inBaselinedFile ? '  [NEW occurrence in an already-baselined file]' : ''}\n` +
+        `     when \`${h.collection}\` is empty → "${h.claim}"`,
+    );
+  }
   console.error(`
    An empty findings set is not a finding of "none". This copy is chosen BY the
    collection being empty, so it says "we found nothing" in a state that means

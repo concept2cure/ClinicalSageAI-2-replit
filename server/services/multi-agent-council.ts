@@ -24,7 +24,7 @@
  *
  * @module MultiAgentCouncilService
  * @version 3.1.0
- * @compliance FDA 21 CFR Part 11, ICH E6(R2), GAMP 5, OWASP LLM Top 10
+ * @compliance FDA 21 CFR Part 11, ICH E6(R3), GAMP 5, OWASP LLM Top 10
  */
 
 import { Pool } from 'pg';
@@ -180,7 +180,12 @@ interface CouncilLLMResult {
   content: string;
   provider: string;
   model: string;
-  fallbackUsed: boolean;
+  /**
+   * The gateway's request id: the key of its ai.gateway_audit_log row, whose
+   * tried_models is the real fallback chain. Until 2026-10-15 the council
+   * recorded `fallbackUsed: false` here, a value it hard-coded and cannot know.
+   */
+  gatewayRequestId: string;
   latencyMs: number;
   tokensUsed: { prompt: number; completion: number; total: number };
 }
@@ -216,6 +221,30 @@ function parseAgentJson(
     );
   }
   return list;
+}
+
+/**
+ * A prose agent's reply. An empty one is neither a draft nor a final text: it
+ * throws a recoverable CouncilError so withRetry asks again. Until 2026-10-15 an
+ * empty Drafter reply went on through the council as the draft, and an empty
+ * Synthesizer reply made the unrevised draft the final text.
+ */
+function requireAgentText(
+  content: string | null | undefined,
+  agent: string,
+  sessionId: string,
+  correlationId: string
+): string {
+  if (!content || content.trim().length === 0) {
+    throw new CouncilError(
+      `The ${agent} returned no text, so nothing was recorded as its output.`,
+      'EMPTY_AGENT_OUTPUT',
+      sessionId,
+      correlationId,
+      true
+    );
+  }
+  return content;
 }
 
 /** The Critic's overall verdict; anything unrecognised is the cautious REVISE. */
@@ -307,9 +336,9 @@ export class MultiAgentCouncilService {
         content: response.content,
         provider: response.provider,
         model: response.model,
-        // Provider failover and its audit trail now live inside the gateway;
-        // the council no longer surfaces a bespoke fallback flag.
-        fallbackUsed: false,
+        // Failover happens inside the gateway, which records the chain on its
+        // own ledger row; this id joins the council's audit rows to it.
+        gatewayRequestId: response.requestId,
         latencyMs: response.latencyMs,
         tokensUsed: {
           prompt: response.usage.inputTokens,
@@ -733,7 +762,7 @@ export class MultiAgentCouncilService {
       { temperature: agent.temperature, maxTokens: agent.maxTokens, organizationId: session.organization_id }
     );
 
-    const draftText = llmResponse.content || '';
+    const draftText = requireAgentText(llmResponse.content, 'Drafter', sessionId, correlationId);
     const latencyMs = Date.now() - startTime;
 
     // Log to tamper-proof audit
@@ -745,7 +774,7 @@ export class MultiAgentCouncilService {
         sessionId,
         agentRole: 'DRAFTER',
         provider: llmResponse.provider,
-        fallbackUsed: llmResponse.fallbackUsed,
+        gatewayRequestId: llmResponse.gatewayRequestId,
         outputLength: draftText.length,
         tokensUsed: llmResponse.tokensUsed.total,
         latencyMs: llmResponse.latencyMs,
@@ -1123,9 +1152,12 @@ export class MultiAgentCouncilService {
     );
 
     const latencyMs = llmResponse.latencyMs;
-    const finalText = llmResponse.content || draftText;
+    const finalText = requireAgentText(llmResponse.content, 'Synthesizer', sessionId, correlationId);
 
-    // Log to tamper-proof audit
+    // Log to tamper-proof audit. The counts are what the Synthesizer was handed
+    // and the latency is its call's alone. Until 2026-10-15 they were named
+    // correctionsApplied / issuesAddressed / totalLatencyMs, though nothing
+    // checks the final text for either.
     const auditLog = getTamperProofAuditLog(this.pool);
     await auditLog.log(
       'COUNCIL_SESSION_COMPLETED',
@@ -1133,11 +1165,11 @@ export class MultiAgentCouncilService {
       {
         sessionId,
         llmProvider: llmResponse.provider,
-        fallbackUsed: llmResponse.fallbackUsed,
-        correctionsApplied: corrections.length,
-        issuesAddressed: feedback.length,
+        gatewayRequestId: llmResponse.gatewayRequestId,
+        correctionsRequested: corrections.length,
+        issuesForwarded: feedback.length,
         finalTextLength: finalText.length,
-        totalLatencyMs: latencyMs,
+        synthesizerLatencyMs: latencyMs,
       },
       {
         correlationId,

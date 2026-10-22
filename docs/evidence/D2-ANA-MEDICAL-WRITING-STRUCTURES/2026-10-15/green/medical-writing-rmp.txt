@@ -1,0 +1,286 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/regulatory/medical-writing-rmp.test.ts > the medical-writing RMP structure > is the GVP Module V parts from the library, in order 2ms
+stdout | tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the IB builder (Investigator’s Brochure surface)
+{
+  "timestamp": "2026-10-15T17:40:46.559Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-15T17:40:46.560Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the IB builder (Investigator’s Brochure surface)
+{
+  "timestamp": "2026-10-15T17:40:46.560Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the IB builder (Investigator’s Brochure surface)
+[database] Database connection successful
+
+ ✓ tests/regulatory/ib-one-outline.test.ts > the IB AnA drafts in chat is the platform's one IB outline > has exactly the canonical headings, in order 2ms
+ ✓ tests/regulatory/ib-one-outline.test.ts > the IB AnA drafts in chat is the platform's one IB outline > cites the outline basis (ICH E6(R3) Appendix A), labelled as recall 0ms
+ ✓ tests/regulatory/ib-one-outline.test.ts > the legacy IND IB template > renders the canonical headings and files at M1 1.14.4.1 9ms
+ ✓ tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the IB builder (Investigator’s Brochure surface) 2345ms
+ ✓ tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the Authoring "Start from" seed 32ms
+ ✓ tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the Projects blueprint is not module 5 and does not cite E6 §7 1ms
+ ✓ tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the medical-writing advisor and the IND question flow list the canonical headings 10ms
+ ✓ tests/regulatory/chat-protocol-m11.test.ts > the protocol AnA drafts in chat follows ICH M11 > its headings are the M11 front matter and level-1 headings, in order 3ms
+ ✓ tests/regulatory/chat-protocol-m11.test.ts > the protocol AnA drafts in chat follows ICH M11 > cites the M11 basis 1ms
+ ✓ tests/regulatory/chat-protocol-m11.test.ts > the protocol AnA drafts in chat follows ICH M11 > keeps its phase 1 drafting guidance (dose escalation, DLT) on the M11 sections it belongs to 1ms
+ ✓ tests/regulatory/chat-protocol-m11.test.ts > the medical-writing advisor gives the M11 protocol structure > lists the M11 level-1 headings and names ICH M11 among the governing standards 5ms
+ ✓ tests/regulatory/chat-protocol-m11.test.ts > a draft with every M11 heading is reviewed as having every M11 heading > the long §9 heading is detected (the outline extractor dropped any line over 120 characters) 51ms
+stdout | tests/regulatory/csr-e3-overlay.test.ts
+{
+  "timestamp": "2026-10-15T17:40:48.440Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-15T17:40:48.441Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/regulatory/csr-e3-overlay.test.ts
+{
+  "timestamp": "2026-10-15T17:40:48.442Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/regulatory/csr-e3-overlay.test.ts
+[database] Database connection successful
+
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > carries exactly the headings E3 numbers, in report order 4ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > every heading sits under a heading that exists 3ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.1 has its 12 numbered headings 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.2 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.3 has its 2 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §14.3 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §11.4.2 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §12.2 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §12.3.1 has its 3 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §9.4 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §9.5 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > every heading cites its own E3 number; every checked source names its URL and date 4ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > a heading that names data sources says they are practice, not a requirement 2ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > E3 §16.2.7 and §12.2.4 name both the preferred and the investigator’s term; §16.3.1 names 314.50(f)(2) 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > resolves a number however it is written, and answers nothing for one E3 does not have 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > csr-builder's ICH_E3_STRUCTURE uses E3's numbers and headings 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the CSR scaffold behind get_csr_template carries every E3 heading 6ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the CSR template injected into AnA's prompt covers §1–§16 with E3's headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the medical-writing base outlines the CSR with E3's sixteen headings 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the stream's 5.3.5 playbook lists E3's sixteen headings 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the CSR template injected into AnA's prompt says, under each heading, what the E3 tree says (one summary helper) 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the market-specs CSR spine (get_document_template) is E3’s sixteen headings, each with the tree’s summary 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the DOCX blueprint csr-ich-e3 numbers and titles every heading as E3 does, to E3’s depth 7ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > a section supplied by title only lands once, even where E3 repeats a title 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > clinical-intelligence-service keeps no hand copy of the E3 outline 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > e3SectionSummary — the one statement of what a heading carries > is the purpose, else what it carries, else the headings under it, else its title — never empty 7ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the market-specs Investigator's Brochure cites ICH E6(R3) Appendix A, not E6(R2) §7 > names E6(R3) Appendix A, carries a structured basis, and shows recall as recall 0ms
+stdout | server/services/ana/__tests__/writing-gate-structure-status.test.ts
+{
+  "timestamp": "2026-10-15T17:40:50.131Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-15T17:40:50.132Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/writing-gate-structure-status.test.ts
+{
+  "timestamp": "2026-10-15T17:40:50.133Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/writing-gate-structure-status.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/writing-gate-structure-status.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/writing-gate-structure-status.test.ts
+{
+  "timestamp": "2026-10-15T17:40:51.426Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > critiqueDraft — an unindexed documentType is never a silent pass > the clean text passes when no documentType is asked for, and says structure was not applicable 21ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > critiqueDraft — an unindexed documentType is never a silent pass > clinical_study_report → not-checked, a located notice, verdict revise 15ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > critiqueDraft — an unindexed documentType is never a silent pass > 2.7.4 → not-checked, a located notice, verdict revise 1ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > critiqueDraft — an unindexed documentType is never a silent pass > iss → not-checked, a located notice, verdict revise 1ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > critiqueDraft — an unindexed documentType is never a silent pass > an indexed type with text is checked 2ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > critiqueDraft — an unindexed documentType is never a silent pass > an indexed type with no text is not checked, and does not pass 1ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > verifyRevision and critiqueDocument carry the structure status > verifyRevision never reports passesNow over an unchecked structure 1ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > verifyRevision and critiqueDocument carry the structure status > critiqueDocument puts the notice in crossSectionFindings and does not pass 2ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > verifyRevision and critiqueDocument carry the structure status > critiqueDocument without a documentType reports not-applicable and still passes a clean document 1ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > verifyRevision and critiqueDocument carry the structure status > uses existing separately held section titles as whole-document heading evidence 3ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > verifyRevision and critiqueDocument carry the structure status > does not accept prose heading keywords or partial authoring titles as structure 1ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > the three tools surface the notice > critique_draft returns structureChecked false, the finding, a revise verdict and the notice in the brief 2ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > the three tools surface the notice > verify_revision returns the status in result 1ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > the three tools surface the notice > critique_document returns the notice in crossSectionFindings 1ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > the tool contracts say what documentType checks > critique_draft: the type is checked as a whole document; a single section omits it 0ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > the tool contracts say what documentType checks > critique_draft lists every indexed type and says an unindexed one is reported not checked 1ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > the tool contracts say what documentType checks > verify_revision lists every indexed type and says an unindexed one is reported not checked 0ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > the tool contracts say what documentType checks > critique_document lists every indexed type and says an unindexed one is reported not checked 0ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > returns a pre-draft checklist (structure as review) when no draft is given 3ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > flags missing sections when a thin draft is reviewed 2ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > never treats narrative mentions of every heading keyword as complete structure 2ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > recognizes actual markdown headings without certifying scientific completeness 2ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > recognizes actual numbered headings without certifying scientific completeness 1ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > recognizes actual html headings without certifying scientific completeness 1ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > recognizes actual plain headings without certifying scientific completeness 1ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > does not promote a partial heading or heading-only skeleton to substantive completion 1ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing protocol standard rather than a second heading catalog 2ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing csr standard rather than a second heading catalog 1ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing ib standard rather than a second heading catalog 1ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing clinical_overview standard rather than a second heading catalog 4ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing clinical_summary standard rather than a second heading catalog 0ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing cer standard rather than a second heading catalog 2ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing pmcf standard rather than a second heading catalog 1ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing per standard rather than a second heading catalog 0ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing manuscript standard rather than a second heading catalog 0ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing plain_language_summary standard rather than a second heading catalog 0ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing regulatory_response standard rather than a second heading catalog 0ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing rmp standard rather than a second heading catalog 0ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing meeting_package standard rather than a second heading catalog 0ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting — unresolved evidence and honest scope > asks bounded source, study/SAP and population/units questions for an unverified clinical draft 1ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting — unresolved evidence and honest scope > asks for CMC material, methods and stability conditions only when relevant to the draft 1ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting — unresolved evidence and honest scope > keeps device inquiries on the indexed writing standard, not a medicinal-product preparation plan 1ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting — unresolved evidence and honest scope > preserves separately supplied canonical headings without treating prose as a heading 0ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting — unresolved evidence and honest scope > ignores fenced examples, list items and hidden HTML instead of promoting them to headings 0ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting — unresolved evidence and honest scope > does not silently stop checking after the search extractor default of forty headings 1ms
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting — unresolved evidence and honest scope > handles an unknown document type without throwing 1ms
+stdout | server/services/ana/__tests__/medical-writing-review-tool.test.ts
+{
+  "timestamp": "2026-10-15T17:41:00.127Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-15T17:41:00.129Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/medical-writing-review-tool.test.ts
+{
+  "timestamp": "2026-10-15T17:41:00.129Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/medical-writing-review-tool.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/medical-writing-review-tool.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/medical-writing-review-tool.test.ts
+{
+  "timestamp": "2026-10-15T17:41:00.263Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/medical-writing-review-tool.test.ts > medical_writing_review existing tool output > surfaces heading-only evidence and unassessed scientific/approval states 6ms
+ ✓ server/services/ana/__tests__/medical-writing-review-tool.test.ts > medical_writing_review existing tool output > does not certify prose or invent a standard for an unsupported type 2ms
+ ✓ server/services/ana/__tests__/medical-writing-review-tool.test.ts > medical_writing_review existing tool output > describes the actual limits rather than expert conformance or approval 1ms
+ ✓ server/services/ana/__tests__/medical-writing-qc.test.ts > countSyllables > estimates syllables for common words 3ms
+ ✓ server/services/ana/__tests__/medical-writing-qc.test.ts > assessReadability > rates simple prose as easy and meeting the patient target 1ms
+ ✓ server/services/ana/__tests__/medical-writing-qc.test.ts > assessReadability > flags dense regulatory prose as too complex for a patient audience, with suggestions 1ms
+ ✓ server/services/ana/__tests__/medical-writing-qc.test.ts > assessReadability > returns a no-text verdict for empty input 1ms
+ ✓ server/services/ana/__tests__/medical-writing-qc.test.ts > buildAbbreviationList > detects definitions at first use (both patterns) and counts occurrences 9ms
+ ✓ server/services/ana/__tests__/medical-writing-qc.test.ts > buildAbbreviationList > flags abbreviations used without a first-use definition 1ms
+ ✓ server/services/ana/__tests__/medical-writing-qc.test.ts > buildAbbreviationList > ignores trivial all-caps stopwords and pure numbers 1ms
+stdout | tests/regulatory/ana-submission-sequence-truth.test.ts
+{
+  "timestamp": "2026-10-15T17:41:03.721Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-15T17:41:03.723Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/regulatory/ana-submission-sequence-truth.test.ts
+{
+  "timestamp": "2026-10-15T17:41:03.723Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/regulatory/ana-submission-sequence-truth.test.ts
+[database] Database connection successful
+
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > ind: an overview depends on its written summary, never the reverse 2ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > nda: an overview depends on its written summary, never the reverse 0ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > bla: an overview depends on its written summary, never the reverse 0ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > nda: the clinical summary depends on every study report and integrated analysis 0ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > bla: the clinical summary depends on every study report and integrated analysis 0ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > ind: the quality overall summary depends on the Module 3 it summarises 0ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > nda: the quality overall summary depends on the Module 3 it summarises 0ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > bla: the quality overall summary depends on the Module 3 it summarises 0ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > ind: phase order is a valid order of its own dependencies 2ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > nda: phase order is a valid order of its own dependencies 1ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > bla: phase order is a valid order of its own dependencies 1ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > nda: once planning is done, the first document AnA names is not a Module 2 summary 1ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > bla: once planning is done, the first document AnA names is not a Module 2 summary 0ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the US NDA and BLA task blueprints name the pre-submission meeting as FDA classifies it > pre-NDA is a Type B meeting 0ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the US NDA and BLA task blueprints name the pre-submission meeting as FDA classifies it > pre-BLA is a Type B meeting 0ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the medical-writing base agrees with ICH E3 Q&A (R1) > does not require ICH E3 numbering exactly 0ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the medical-writing base agrees with ICH E3 Q&A (R1) > says E3 is a guideline, not a template, and cites the Q&A 0ms
+ ✓ server/services/ana/__tests__/medical-writing.test.ts > composeMedicalWritingGuidance > resolves a CSR for oncology to FDA, regulator audience, with ICH E3 + RECIST 2ms
+ ✓ server/services/ana/__tests__/medical-writing.test.ts > composeMedicalWritingGuidance > resolves therapeutic area from a disease name via loose alias match 1ms
+ ✓ server/services/ana/__tests__/medical-writing.test.ts > composeMedicalWritingGuidance > defaults region to ICH-global and uses the document’s default audience 1ms
+ ✓ server/services/ana/__tests__/medical-writing.test.ts > composeMedicalWritingGuidance > honors an explicit audience override (payer) for a manuscript 0ms
+ ✓ server/services/ana/__tests__/medical-writing.test.ts > composeMedicalWritingGuidance > falls back gracefully for an unknown document type (general craft + catalog) 1ms
+ ✓ server/services/ana/__tests__/medical-writing.test.ts > composeMedicalWritingGuidance > always includes the global craft rules and the evidence-grounding guidance 0ms
+ ✓ server/services/ana/__tests__/medical-writing.test.ts > composeMedicalWritingGuidance > lists a non-trivial catalog for discovery 1ms
+
+ Test Files  10 passed (10)
+      Tests  120 passed (120)
+   Start at  17:40:42
+   Duration  21.98s (transform 8.89s, setup 242ms, import 17.10s, tests 2.68s, environment 1ms)
+

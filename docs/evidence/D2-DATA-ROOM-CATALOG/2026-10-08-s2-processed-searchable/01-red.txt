@@ -1,0 +1,23 @@
+# tests/db/data-room-processing.dbtest.ts against HEAD 27926af0 server code, on a database migrated with 20261008c, PostgreSQL 16
+ × tests/db/data-room-processing.dbtest.ts > an adopted conversation file is read, classified and stored > adopt answers 201, and the source is extracted with its text, measure and declared version
+   → expected undefined to be true // Object.is equality
+ × tests/db/data-room-processing.dbtest.ts > an adopted conversation file is read, classified and stored > a word only in its body finds it, with a snippet of where
+   → expected undefined to be 1 // Object.is equality
+ × tests/db/data-room-processing.dbtest.ts > the pending sweep reads what was captured before > processes a pending capture from its stored bytes, and names one it cannot read
+   → Cannot find module '/server/services/clinical-regulatory-evidence/data-room-processing' imported from /home/user/ClinicalSageAI-2-replit/tests/db/data-room-processing.dbtest.ts
+ × tests/db/data-room-processing.dbtest.ts > the room pages past 200, and stays in its project > reports the real total and pages through it
+   → actual value must be number or bigint, received "undefined"
+ ✓ tests/db/data-room-processing.dbtest.ts > the room pages past 200, and stays in its project > a search never returns another project's source, nor another organization's
+ × tests/db/data-room-processing.dbtest.ts > the room pages past 200, and stays in its project > filters by how far a source was read, and refuses a filter it cannot read rather than widening
+   → expected false to be true // Object.is equality
+ × tests/db/data-room-processing.dbtest.ts > the Vault lane counts every current source of the project > counts captured, classified, filed and needs-review over the whole room
+   → countDataRoomStages is not a function
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected undefined to be true // Object.is equality
+AssertionError: expected undefined to be 1 // Object.is equality
+Error: Cannot find module '/server/services/clinical-regulatory-evidence/data-room-processing' imported from /home/user/ClinicalSageAI-2-replit/tests/db/data-room-processing.dbtest.ts
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+TypeError: actual value must be number or bigint, received "undefined"
+AssertionError: expected false to be true // Object.is equality
+TypeError: countDataRoomStages is not a function
+      Tests  6 failed | 1 passed (7)

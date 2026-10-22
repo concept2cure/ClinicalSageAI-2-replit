@@ -1,0 +1,168 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > selects an older document by id and stays there when another document becomes newest after a write 303ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > keeps an always-create affordance, creates under the actual program UUID and opens its returned id 94ms
+stderr | client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > consumes a notification for another protocol while already mounted, and keeps an unavailable exact id honest
+An update to ProtocolWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProtocolWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > consumes a notification for another protocol while already mounted, and keeps an unavailable exact id honest
+An update to ProtocolWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > filters open program protocols and makes legacy unfiled protocols explicitly selectable 147ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > restores an explicitly unfiled notification/deep link without switching to the open program newest protocol 28ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > consumes a notification for another protocol while already mounted, and keeps an unavailable exact id honest 58ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > explicitly files an unfiled protocol in the open program, consumes confirmation and reopens its id in program scope 106ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > requires a program for new protocols and leaves existing organization protocols readable 32ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > persists the first design through the canonical API, then binds its server id with the governed reason 340ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > reports persisted-but-unbound failure and retries the link without a duplicate persist 434ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > does not offer blind creation retry when the save outcome cannot be confirmed 416ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > uses canonical user copy for a confirmed creation refusal (response) 320ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > uses canonical user copy for a confirmed creation refusal (thrown) 351ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > keeps persisted-only binding recovery while suppressing driver details and enum error codes 307ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > shows canonical program filing refusal copy and retains the drawer for a safe retry 83ms
+stderr | server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T05:25:14.747Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > the creator and everyone who edited it through the ledger, and no one else 18ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > whoever built the schedule of assessments or the objectives is an author; a commenting reviewer is not 8ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > reads on the client it is given 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > comments, budget, version snapshots and other modules' records are not authorship of the protocol 7ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > a synopsis edit, which records no payload, counts 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > a document-level edit counts 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > a disposition is independent of the reviewed protocol's authors 7ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > another tenant's protocol has no authors here, so it cannot be shown independent 3ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > finalization and a disposition bind the same content, re-derivably 15ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > finalization does not move it: version and workflow status are not content 10ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing an objective moves it 9ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing an eligibility criterion moves it 11ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing a visit moves it 9ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing the synopsis moves it 8ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing the sponsor moves it 9ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > changing the content moves the digest 8ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > another tenant's protocol binds nothing of its content 2ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > the assigned reviewer, as review 5ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > not someone else, and nothing is recorded 3ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > a reviewer with no account can only have their decision recorded under responsibility 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > a signed disposition is final: a second signing is refused and the decision stands 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > another tenant's assignment is not found 2ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > someone independent of the authors finalizes it as approval: the version row finalize writes does not make them an author 14ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > a non-author cannot finalize as its author, and nothing is written 7ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > the author finalizes it as its author 11ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > whatever the act itself writes is not read as authorship of what is being signed 8ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > the author cannot approve their own protocol 7ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > a member of the organization without signing authority is refused before the password, and nothing is written 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > someone who is not a member of the organization cannot sign its protocol 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > a member who can sign 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > not a member, whose role holds no signing authority: 409, in a plain sentence, and nothing is written 2ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > not a manager, whose role holds no signing authority: 409, in a plain sentence, and nothing is written 2ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > assignable exactly when the signing ceremony would let them sign the disposition 17ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > a named reviewer with no account 3ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > not a user of another organization: the review could never be signed 2ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > not a viewer, who cannot sign 2ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > the disposition reports the protocol version that was reviewed 3ms
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > indexes all older documents and loads a selected document outside the newest 25 42ms
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > maps a full real protocol into the PdevDoc contract 24ms
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > carries the assessment state: legacy and unassessed rows read as not assessed; reportability null when undetermined 18ms
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > returns [] for an org with no protocols, and never crosses tenants 8ms
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > excludes soft-deleted protocols 10ms
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > carries the regulatory rule findings, with not-assessed counted separately 18ms
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > the one-document reader returns byte-identical rule findings to the page assembly 19ms
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > the one-document reader returns null for a protocol this organization does not have 10ms
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > leaves the vulnerable-population rules not-assessed, because no register records them 18ms
+stderr | server/services/protocol-development/__tests__/protocol-program-scope.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/protocol-development/__tests__/protocol-program-scope.pglite.test.ts
+{
+  "timestamp": "2026-10-14T05:25:20.526Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/protocol-development/__tests__/protocol-program-scope.pglite.test.ts > Protocol program association and binding > replays without rewriting legacy rows and enforces the same-organization foreign key 10ms
+ ✓ server/services/protocol-development/__tests__/protocol-program-scope.pglite.test.ts > Protocol program association and binding > creates and seeds the real canonical document under its live owned program 13ms
+ ✓ server/services/protocol-development/__tests__/protocol-program-scope.pglite.test.ts > Protocol program association and binding > explicitly files an editable legacy document once and refuses moving it to another program 9ms
+ ✓ server/services/protocol-development/__tests__/protocol-program-scope.pglite.test.ts > Protocol program association and binding > refuses filing a legacy document with a mismatched bound design, inactive actor or finalized status 8ms
+ ✓ server/services/protocol-development/__tests__/protocol-program-scope.pglite.test.ts > Protocol program association and binding > refuses foreign and deleted programs before creating a protocol or section 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-program-scope.pglite.test.ts > Protocol program association and binding > refuses an active non-lead member, then admits an actual persisted manager and refuses revoked membership 13ms
+ ✓ server/services/protocol-development/__tests__/protocol-program-scope.pglite.test.ts > Protocol program association and binding > binds the persisted id only in the same program and records the actual actor 12ms
+ ✓ server/services/protocol-development/__tests__/protocol-program-scope.pglite.test.ts > Protocol program association and binding > refuses a design from another program or unfiled scope (22222222-2222-4222-8222-222222222222) 11ms
+ ✓ server/services/protocol-development/__tests__/protocol-program-scope.pglite.test.ts > Protocol program association and binding > refuses a design from another program or unfiled scope (null) 13ms
+ ✓ server/services/protocol-development/__tests__/protocol-program-scope.pglite.test.ts > Protocol program association and binding > refuses foreign protocols and designs and finalized documents 12ms
+stderr | server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T05:25:23.511Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a finalized protocol takes no new assessment, and no cell is set or cleared 18ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a superseded protocol takes no new assessment, and no cell is set or cleared 8ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a protocol still in development takes all three 9ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > another tenant cannot claim, block or overwrite a protocol’s budget parameters 11ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a schedule assessment against another tenant’s protocol is refused, and nothing is written 7ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a budget line against another tenant’s protocol is refused, and nothing is written 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a risk against another tenant’s protocol is refused, and nothing is written 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a milestone against another tenant’s protocol is refused, and nothing is written 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review assignment against another tenant’s protocol is refused, and nothing is written 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review comment against another tenant’s protocol is refused, and nothing is written 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a schedule assessment against a protocol that does not exist is refused 2ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a budget line against a protocol that does not exist is refused 1ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a risk against a protocol that does not exist is refused 1ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a milestone against a protocol that does not exist is refused 1ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review assignment against a protocol that does not exist is refused 1ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review comment against a protocol that does not exist is refused 1ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a schedule assessment against the caller’s own protocol is written 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a budget line against the caller’s own protocol is written 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a risk against the caller’s own protocol is written 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a milestone against the caller’s own protocol is written 7ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review assignment against the caller’s own protocol is written 5ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review comment against the caller’s own protocol is written 11ms
+
+ Test Files  5 passed (5)
+      Tests  92 passed (92)
+   Start at  05:25:08
+   Duration  18.62s (transform 2.26s, setup 180ms, import 5.26s, tests 12.04s, environment 471ms)
+

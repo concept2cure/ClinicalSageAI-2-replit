@@ -1,0 +1,168 @@
+$ CI=true NODE_ENV=test RLS_ENFORCE=on DATABASE_URL=.../concept2cure-ri_qa_fresh2 TEST_DATABASE_URL=.../concept2cure-ri_qa_fresh2 APP_DATABASE_URL=<runtime role>/concept2cure-ri_qa_fresh2 npx vitest run --config vitest.db.config.ts tests/db/protocol-reviewer-signing-authority.dbtest.ts tests/db/report-os-registry-seed.dbtest.ts tests/db/report-os-delivery-recording.dbtest.ts tests/db/report-os-tenant-from-session.dbtest.ts tests/db/domain-sign-ceremony.dbtest.ts tests/db/two-tenant-application-rls.dbtest.ts tests/db/memberships.dbtest.ts tests/db/admin-change-audit.dbtest.ts tests/db/users-rls.dbtest.ts tests/db/signer-authenticator-required.dbtest.ts
+ ✓ tests/db/signer-authenticator-required.dbtest.ts > ADR-0014 P1-2b: in production a signer needs an authenticator > runs as a role RLS applies to (not the owner, not BYPASSRLS) 11ms
+ ✓ tests/db/signer-authenticator-required.dbtest.ts > ADR-0014 P1-2b: in production a signer needs an authenticator > production, no authenticator: refused in the decided words, and nothing is written or counted 148ms
+ ✓ tests/db/signer-authenticator-required.dbtest.ts > ADR-0014 P1-2b: in production a signer needs an authenticator > production, an authenticator and no code: it goes on to the code check, and nothing is written 43ms
+ ✓ tests/db/signer-authenticator-required.dbtest.ts > ADR-0014 P1-2b: in production a signer needs an authenticator > production, an authenticator and its current code: signed, and the row says both factors were verified 47ms
+ ✓ tests/db/signer-authenticator-required.dbtest.ts > ADR-0014 P1-2b: in production a signer needs an authenticator > outside production nothing changes: the password alone signs for a signer with no authenticator 32ms
+ ✓ tests/db/protocol-reviewer-signing-authority.dbtest.ts > a protocol review is assigned only to someone who can sign its disposition > runs as a role RLS applies to (not the owner, not BYPASSRLS) 5ms
+ ✓ tests/db/protocol-reviewer-signing-authority.dbtest.ts > a protocol review is assigned only to someone who can sign its disposition > a member, whose role cannot sign, is refused with 409 in a plain sentence, and nothing is written 102ms
+ ✓ tests/db/protocol-reviewer-signing-authority.dbtest.ts > a protocol review is assigned only to someone who can sign its disposition > a manager, whose role cannot sign, is refused with 409 in a plain sentence, and nothing is written 20ms
+ ✓ tests/db/protocol-reviewer-signing-authority.dbtest.ts > a protocol review is assigned only to someone who can sign its disposition > the member list the reviewer picker reads marks who can sign, as the assignment judges it 24ms
+ ✓ tests/db/protocol-reviewer-signing-authority.dbtest.ts > a protocol review is assigned only to someone who can sign its disposition > a reviewer is assigned, and signs the disposition: the assignment does not end at a 403 111ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > applies to the provisioned database and registers every in-code type, column for column 28ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > re-applies idempotently: the code's values return, an operator's disable survives 31ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > as app_service under RLS, POST /runs for a seeded type creates the run and records it 160ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > a run and its chain row, together > when report_os.run_created is refused, the run and its snapshot roll back with it (503, nothing saved) 52ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > refuses a member: nothing is sealed and nothing is recorded 19ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > refuses a password that is not the signer's: nothing is sealed, signed or recorded 83ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > when the chain row is refused, the status and the seal roll back with it (503, nothing changed) 51ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > an admin finalizes: status, seal, one chained row and the signature, together 66ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > a second finalize is refused: the seal stands and nothing more is recorded 23ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize is the run's signed act (P1-44b) > refuses a manager whose role carries no signing authority, with the right password: nothing sealed, signed or recorded 40ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize is the run's signed act (P1-44b) > the signed final report is exported with no second ceremony, and the chain row names its signature 80ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record > reads the seal back and re-verifies it, with the signer and the act (GET /runs/:id/seal) 28ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record > another organisation's session reads neither the seal nor the sealed document: 404, nothing in the body 39ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record > shows the final run as the stored sealed document (GET /runs/:id/rendered) 32ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record > a stored document changed after sealing reads as a mismatch, not intact 54ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record: what a rewrite of the mutable rows cannot hide > a sealed document removed from the snapshot reads as a mismatch, and nothing is re-rendered in its place 32ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record: what a rewrite of the mutable rows cannot hide > a run whose status was rewritten after finalizing reads as a mismatch, not as a run never sealed 64ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the export of the sealed record > exports the final run as its sealed document, signed and verified, and records the export id it prints 431ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record: a forgery by the app role is not the record > a run given final status, a forged sealed document and an unchained finalization row reads as a mismatch 127ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > a bundle export on the record (review round 1, DP-50) > a bundle export is recorded on the chain with the hash of the bytes sent 126ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > catalog and live session prove RLS is active for the runtime role 21ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal project-context endpoint cannot resolve Tenant B profile as Tenant A 215ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal regulatory-content CRUD endpoints hide and protect Tenant B rows 210ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: list/filter, direct read and existence probe hide tenant B from A 63ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: update and delete of tenant B are indistinguishable not-found 24ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: WITH CHECK rejects planting a row into tenant B without leaking details 10ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: list/filter, direct read and existence probe hide tenant B from A 65ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: update and delete of tenant B are indistinguishable not-found 45ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: WITH CHECK rejects planting a row into tenant B without leaking details 12ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: list/filter, direct read and existence probe hide tenant B from A 56ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: update and delete of tenant B are indistinguishable not-found 38ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: tenant A cannot rewrite its own row either (append-only by privilege) 44ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: WITH CHECK rejects planting a row into tenant B without leaking details 12ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: list/filter, direct read and existence probe hide tenant B from A 46ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: update and delete of tenant B are indistinguishable not-found 31ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: WITH CHECK rejects planting a row into tenant B without leaking details 11ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: list/filter, direct read and existence probe hide tenant B from A 40ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: update and delete of tenant B are indistinguishable not-found 32ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: WITH CHECK rejects planting a row into tenant B without leaking details 8ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: list/filter, direct read and existence probe hide tenant B from A 44ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: update and delete of tenant B are indistinguishable not-found 41ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: WITH CHECK rejects planting a row into tenant B without leaking details 12ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: list/filter, direct read and existence probe hide tenant B from A 48ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: update and delete of tenant B are indistinguishable not-found 34ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: WITH CHECK rejects planting a row into tenant B without leaking details 13ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > pooled session context is reset and the wrong-context negative control is observable 24ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the recording evaluator persists the caller's own decision through the app role 1510ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > WITH CHECK refuses a decision the recorder files for another tenant 1509ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the simulate route records nothing, for any tenant 1525ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the reads show tenant A its decision and tenant B nothing of it 183ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 161ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > refuses a wrong password, and writes nothing 72ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 66ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 27ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 19ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > refuses a wrong password, and writes nothing 41ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 70ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 37ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 17ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > refuses a wrong password, and writes nothing 44ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 62ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 23ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 24ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > refuses a wrong password, and writes nothing 43ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 49ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 23ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 30ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > refuses a wrong password, and writes nothing 42ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 76ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 35ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 44ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > refuses a wrong password, and writes nothing 44ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 76ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 18ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 22ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > refuses a wrong password, and writes nothing 42ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 41ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 19ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > a determination that is not an approval is not a signature > an IRB deferral is recorded under resolve, with no password and no signature row 33ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > refuses a sign without credentials, and writes nothing 26ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > refuses a wrong password, and writes nothing 31ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction 41ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > refuses a viewer who knows their own password (§11.10(g)), and changes nothing 25ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'spec': the signature row lands with the ledger sign > refuses a sign without credentials, and writes nothing 30ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'spec': the signature row lands with the ledger sign > refuses a wrong password, and writes nothing 26ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'spec': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction 45ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'spec': the signature row lands with the ledger sign > refuses a viewer who knows their own password (§11.10(g)), and changes nothing 16ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > refuses a sign without credentials, and writes nothing 17ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > refuses a wrong password, and writes nothing 38ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction 55ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > refuses a viewer who knows their own password (§11.10(g)), and changes nothing 20ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC batch release: a rejected batch is not signed as released > signs a rejection with meaning 'responsibility', on the ledger and the signature row 38ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': PATCH status cannot set what a determination sets > an admin's PATCH to 'approved' is refused, and nothing is written 17ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': PATCH status cannot set what a determination sets > an admin's PATCH to 'modifications_required' is refused, and nothing is written 27ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': PATCH status cannot set what a determination sets > a status no determination sets still moves, under a transition ledger row 41ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': PATCH status cannot set what a determination sets > an admin's PATCH to 'approved' is refused, and nothing is written 19ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': PATCH status cannot set what a determination sets > an admin's PATCH to 'conditional' is refused, and nothing is written 20ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': PATCH status cannot set what a determination sets > a status no determination sets still moves, under a transition ledger row 33ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': PATCH status cannot set what a determination sets > an admin's PATCH to 'approved' is refused, and nothing is written 17ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': PATCH status cannot set what a determination sets > an admin's PATCH to 'conditional' is refused, and nothing is written 18ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': PATCH status cannot set what a determination sets > a status no determination sets still moves, under a transition ledger row 27ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > a specification is created unsigned > refuses approvalStatus 'approved' and stores nothing 12ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > a specification is created unsigned > stores 'review' as asked, and names the creator on the audit row 22ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > positive control: the route admits A into its own organization 187ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot place its user in B, so the gate never admits a token for B 95ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot change or remove B's members 19ms
+ ✓ tests/db/memberships.dbtest.ts > no tenant can mint a platform-staff role, not even in its own organization (D3) > its own member cannot be made super_admin, platform_admin or app_super_admin 31ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > an organization manages its own members' ordinary roles 16ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > the platform scope writes any organization, staff roles included 13ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > self-serve signup gives the new organization its first admin 1292ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > a member sets their own persona (a write to their own membership row) 28ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into 338ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations changes a member's role in the one they are not signed into 42ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > GET /runs never lists another tenant's run, whatever org the query names 105ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > GET /runs lists the session tenant's own runs 32ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > POST /runs records for the session tenant and user, whatever the body names 64ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > POST /runs over another tenant's project is not found and computes nothing 13ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a program group is made in the session tenant by the session user, whatever the body names 34ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a program group over another tenant's project is refused 42ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > another tenant's program group cannot be changed 37ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > another tenant's program group cannot be snapshotted 20ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a bundle cannot take another tenant's run 29ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a bundle of the session tenant's own run is stored and records the session user 89ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a delivery cannot take another tenant's run 27ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a delivery of the session tenant's own run records the session user 49ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > the removed correspondence capture door writes nothing 20ms
+ ✓ tests/db/users-rls.dbtest.ts > tenant A's scope cannot reach tenant B's users (D3) > reads none of B's user rows, by id, by email, or by scanning 14ms
+ ✓ tests/db/users-rls.dbtest.ts > tenant A's scope cannot reach tenant B's users (D3) > cannot rewrite B's password hash, MFA secret or reset token, nor delete B's user 4ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > reads its own organization's members, the caller included 2ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > updates its own member's profile 4ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > INSERT … RETURNING of a non-member is refused, so tenant-users takes the id first 16ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > user_id_for_email answers an existing account’s id, and nothing else 10ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes: pre-auth reaches only its bound account, the system scope the whole table (D3) > pre-auth, unbound: no account is read or written, by email or by id 8ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes: pre-auth reaches only its bound account, the system scope the whole table (D3) > pre-auth, bound: the sign-in finds its account by email and writes its counters 9ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes: pre-auth reaches only its bound account, the system scope the whole table (D3) > system: SCIM and platform administration read and write every tenant’s users 8ms
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account 499ms
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > adding another tenant's account asks for its consent instead of failing or duplicating it 36ms
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator of both organizations lists and invites into the one they are not signed into 385ms
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > a plain member cannot deliver: 403, no letter and no chain row (DP-61) 91ms
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > platform_send as app_service under RLS: 'sent', with the letter, the record and one chained row 98ms
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > a refused correspondence write is not sent: 503, and no record or chain row claims it 53ms
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > a refused chain row is not sent: the letter and the record roll back with it 61ms
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > external_pdf_export of a final report with no signature is refused: 409, nothing recorded 38ms
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > a failed delivery logs ids and codes, never the letter (DP-67 (b)) > a delivery record refused by the database: 503, and no log line carries the subject, the letter or a recipient 51ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > without a reason: 400, the role unchanged, nothing recorded 93ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > when its audit row cannot be written, the role change is rolled back 33ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > writes exactly one chained row on the organisation's chain, with the roles, the member and the reason 35ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's removal (DP-49) > when its audit row cannot be written, the member stays 50ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's removal (DP-49) > writes one chained row with the role the member held 33ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > when its audit row cannot be written, the settings stay as they were 58ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a security change writes one chained row with the values before and after 48ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a notifications change names the webhook field and never records its address 78ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a reset writes one tenant_settings_reset row with the retention values 63ms
+ Test Files  10 passed (10)
+      Tests  163 passed (163)
+   Start at  12:30:45
+   Duration  44.87s (transform 7.59s, setup 445ms, import 13.68s, tests 28.44s, environment 1ms)

@@ -12,7 +12,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -143,7 +143,7 @@ describe('Connector for Claude on Admin → Settings', () => {
     const row = await openSettings();
     fireEvent.click(await screen.findByRole('switch', { name: 'Connector for Claude' }));
     fireEvent.click(screen.getByRole('button', { name: 'Turn on' }));
-    expect((await screen.findByRole('alert')).textContent).toBe(
+    expect((await within(screen.getByTestId('claude-connector-setting')).findByRole('alert')).textContent).toBe(
       "The setting was not changed. Only the organisation's owner or administrator can change it.",
     );
     expect(screen.getByRole('switch', { name: 'Connector for Claude' }).getAttribute('aria-checked')).toBe('false');

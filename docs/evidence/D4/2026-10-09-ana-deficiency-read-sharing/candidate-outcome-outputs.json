@@ -1,0 +1,169 @@
+{
+  "source": "f787677197949cc83f55c1bfe9aeafa98d357370",
+  "outputs": [
+    {
+      "mode": "empty",
+      "result": {
+        "block": "\n\n## Project Intelligence Profile\n**Strategy:** Reconcile source evidence\n\n**Documents:** 2 ingested | 3 memory atoms\n\nUse this context to personalize your responses. Reference known risks, open questions, and decisions.\nWorkflow context\n\n\n## PROJECT PRECEDENT INTELLIGENCE\nIdentified precedents and comparators. Reference these for similar products/devices.\n\n### Regulatory Precedent Analysis\n- **Precedent comparator** [75% confidence]: Agency requested longer stability follow-up.\n\n\n## Agency-interaction tactics\nThe user is preparing for or responding to a regulator. Apply the tactics below to their specifics — the move, why it works, and the failure mode it avoids. Be concrete and practical; this is execution help, not theory.\n\n### Answer the question the reviewer asked, in their words, before adding context. Lead each response with the direct answer, then the supporting evidence.\n_Response strategy · all segments_\n- **When:** Responding to a health-authority question or deficiency.\n- **Why it works:** Reviewers grade responsiveness. Burying the answer under preamble reads as evasion and invites a follow-up question and another cycle.\n- **Watch out for:** Reframing the question to the one you wish they had asked is the fastest way to a second round.\n- **Basis:** Recurring HAQ / deficiency review pattern across FDA and EMA.",
+        "sources": [
+          "project-profile",
+          "workflow",
+          "haq",
+          "agency-tactics"
+        ],
+        "enrichmentMeta": {
+          "sourcesAttempted": 4,
+          "sourcesSucceeded": [
+            "project-profile",
+            "workflow",
+            "haq",
+            "agency-tactics"
+          ],
+          "sourcesFailed": [
+            "deficiency",
+            "simulation"
+          ],
+          "unavailableSources": [],
+          "unavailableReasons": {},
+          "triggerType": "natural_language",
+          "hasProjectContext": true
+        }
+      },
+      "deficiencyReadCount": 1,
+      "recurringReadCount": 1
+    },
+    {
+      "mode": "memory-throw",
+      "result": {
+        "block": "\n\n## Project Intelligence Profile\n**Strategy:** Reconcile source evidence\n\n**Documents:** 2 ingested | 3 memory atoms\n\nUse this context to personalize your responses. Reference known risks, open questions, and decisions.\nWorkflow context\n\n\n## ACTIVE REGULATORY PATTERNS\n- **[HIGH]** Stability evidence gap (FDA) — 3 hits | Fix: Reconcile shelf-life evidence.\n\n\n## ACTIVE REGULATORY PATTERNS\n- **[HIGH]** Stability evidence gap (FDA) — 3 hits | Fix: Reconcile shelf-life evidence.\n\n\n## ACTIVE REGULATORY PATTERNS\n- **[HIGH]** Stability evidence gap (FDA) — 3 hits | Fix: Reconcile shelf-life evidence.\n\n## PROJECT PRECEDENT INTELLIGENCE\nIdentified precedents and comparators. Reference these for similar products/devices.\n\n### Regulatory Precedent Analysis\n- **Precedent comparator** [75% confidence]: Agency requested longer stability follow-up.\n\n\n## Agency-interaction tactics\nThe user is preparing for or responding to a regulator. Apply the tactics below to their specifics — the move, why it works, and the failure mode it avoids. Be concrete and practical; this is execution help, not theory.\n\n### Answer the question the reviewer asked, in their words, before adding context. Lead each response with the direct answer, then the supporting evidence.\n_Response strategy · all segments_\n- **When:** Responding to a health-authority question or deficiency.\n- **Why it works:** Reviewers grade responsiveness. Burying the answer under preamble reads as evasion and invites a follow-up question and another cycle.\n- **Watch out for:** Reframing the question to the one you wish they had asked is the fastest way to a second round.\n- **Basis:** Recurring HAQ / deficiency review pattern across FDA and EMA.",
+        "sources": [
+          "project-profile",
+          "workflow",
+          "deficiency",
+          "simulation",
+          "haq",
+          "agency-tactics"
+        ],
+        "enrichmentMeta": {
+          "sourcesAttempted": 4,
+          "sourcesSucceeded": [
+            "project-profile",
+            "workflow",
+            "deficiency",
+            "simulation",
+            "haq",
+            "agency-tactics"
+          ],
+          "sourcesFailed": [],
+          "unavailableSources": [],
+          "unavailableReasons": {},
+          "triggerType": "natural_language",
+          "hasProjectContext": true
+        }
+      },
+      "deficiencyReadCount": 1,
+      "recurringReadCount": 1
+    },
+    {
+      "mode": "memory-reject",
+      "result": {
+        "block": "\n\n## Project Intelligence Profile\n**Strategy:** Reconcile source evidence\n\n**Documents:** 2 ingested | 3 memory atoms\n\nUse this context to personalize your responses. Reference known risks, open questions, and decisions.\nWorkflow context\n\n\n## ACTIVE REGULATORY PATTERNS\n- **[HIGH]** Stability evidence gap (FDA) — 3 hits | Fix: Reconcile shelf-life evidence.\n\n\n## ACTIVE REGULATORY PATTERNS\n- **[HIGH]** Stability evidence gap (FDA) — 3 hits | Fix: Reconcile shelf-life evidence.\n\n\n## ACTIVE REGULATORY PATTERNS\n- **[HIGH]** Stability evidence gap (FDA) — 3 hits | Fix: Reconcile shelf-life evidence.\n\n## PROJECT PRECEDENT INTELLIGENCE\nIdentified precedents and comparators. Reference these for similar products/devices.\n\n### Regulatory Precedent Analysis\n- **Precedent comparator** [75% confidence]: Agency requested longer stability follow-up.\n\n\n## Agency-interaction tactics\nThe user is preparing for or responding to a regulator. Apply the tactics below to their specifics — the move, why it works, and the failure mode it avoids. Be concrete and practical; this is execution help, not theory.\n\n### Answer the question the reviewer asked, in their words, before adding context. Lead each response with the direct answer, then the supporting evidence.\n_Response strategy · all segments_\n- **When:** Responding to a health-authority question or deficiency.\n- **Why it works:** Reviewers grade responsiveness. Burying the answer under preamble reads as evasion and invites a follow-up question and another cycle.\n- **Watch out for:** Reframing the question to the one you wish they had asked is the fastest way to a second round.\n- **Basis:** Recurring HAQ / deficiency review pattern across FDA and EMA.",
+        "sources": [
+          "project-profile",
+          "workflow",
+          "deficiency",
+          "simulation",
+          "haq",
+          "agency-tactics"
+        ],
+        "enrichmentMeta": {
+          "sourcesAttempted": 4,
+          "sourcesSucceeded": [
+            "project-profile",
+            "workflow",
+            "deficiency",
+            "simulation",
+            "haq",
+            "agency-tactics"
+          ],
+          "sourcesFailed": [],
+          "unavailableSources": [],
+          "unavailableReasons": {},
+          "triggerType": "natural_language",
+          "hasProjectContext": true
+        }
+      },
+      "deficiencyReadCount": 1,
+      "recurringReadCount": 1
+    },
+    {
+      "mode": "live-throw",
+      "result": {
+        "block": "\n\n## Project Intelligence Profile\n**Strategy:** Reconcile source evidence\n\n**Documents:** 2 ingested | 3 memory atoms\n\nUse this context to personalize your responses. Reference known risks, open questions, and decisions.\nWorkflow context\n\n\n## Deficiency & Rejection Intelligence\nKnown deficiency patterns and rejection risk signals. Use when discussing CRL/RTF risk.\n- **Stability response history** [91% confidence]: Earlier reviewer request remains open.\n\n\n## Deficiency & Rejection Intelligence\nKnown deficiency patterns and rejection risk signals. Use when discussing CRL/RTF risk.\n- **Stability response history** [91% confidence]: Earlier reviewer request remains open.\n\n\n## Deficiency & Rejection Intelligence\nKnown deficiency patterns and rejection risk signals. Use when discussing CRL/RTF risk.\n- **Stability response history** [91% confidence]: Earlier reviewer request remains open.\n\n## PROJECT PRECEDENT INTELLIGENCE\nIdentified precedents and comparators. Reference these for similar products/devices.\n\n### Regulatory Precedent Analysis\n- **Precedent comparator** [75% confidence]: Agency requested longer stability follow-up.\n\n\n## Agency-interaction tactics\nThe user is preparing for or responding to a regulator. Apply the tactics below to their specifics — the move, why it works, and the failure mode it avoids. Be concrete and practical; this is execution help, not theory.\n\n### Answer the question the reviewer asked, in their words, before adding context. Lead each response with the direct answer, then the supporting evidence.\n_Response strategy · all segments_\n- **When:** Responding to a health-authority question or deficiency.\n- **Why it works:** Reviewers grade responsiveness. Burying the answer under preamble reads as evasion and invites a follow-up question and another cycle.\n- **Watch out for:** Reframing the question to the one you wish they had asked is the fastest way to a second round.\n- **Basis:** Recurring HAQ / deficiency review pattern across FDA and EMA.",
+        "sources": [
+          "project-profile",
+          "workflow",
+          "deficiency",
+          "simulation",
+          "haq",
+          "agency-tactics"
+        ],
+        "enrichmentMeta": {
+          "sourcesAttempted": 4,
+          "sourcesSucceeded": [
+            "project-profile",
+            "workflow",
+            "deficiency",
+            "simulation",
+            "haq",
+            "agency-tactics"
+          ],
+          "sourcesFailed": [],
+          "unavailableSources": [],
+          "unavailableReasons": {},
+          "triggerType": "natural_language",
+          "hasProjectContext": true
+        }
+      },
+      "deficiencyReadCount": 1,
+      "recurringReadCount": 1
+    },
+    {
+      "mode": "timeout",
+      "result": {
+        "block": "\n## Enrichment context availability\nEnrichment context unavailable: deficiency (took too long to read), simulation (took too long to read). Do not infer that missing context or unresolved findings do not exist. Check the relevant records before relying on their absence.\n\n\n## Project Intelligence Profile\n**Strategy:** Reconcile source evidence\n\n**Documents:** 2 ingested | 3 memory atoms\n\nUse this context to personalize your responses. Reference known risks, open questions, and decisions.\nWorkflow context\n\n\n## PROJECT PRECEDENT INTELLIGENCE\nIdentified precedents and comparators. Reference these for similar products/devices.\n\n### Regulatory Precedent Analysis\n- **Precedent comparator** [75% confidence]: Agency requested longer stability follow-up.\n\n\n## Agency-interaction tactics\nThe user is preparing for or responding to a regulator. Apply the tactics below to their specifics — the move, why it works, and the failure mode it avoids. Be concrete and practical; this is execution help, not theory.\n\n### Answer the question the reviewer asked, in their words, before adding context. Lead each response with the direct answer, then the supporting evidence.\n_Response strategy · all segments_\n- **When:** Responding to a health-authority question or deficiency.\n- **Why it works:** Reviewers grade responsiveness. Burying the answer under preamble reads as evasion and invites a follow-up question and another cycle.\n- **Watch out for:** Reframing the question to the one you wish they had asked is the fastest way to a second round.\n- **Basis:** Recurring HAQ / deficiency review pattern across FDA and EMA.",
+        "sources": [
+          "project-profile",
+          "workflow",
+          "haq",
+          "agency-tactics"
+        ],
+        "enrichmentMeta": {
+          "sourcesAttempted": 4,
+          "sourcesSucceeded": [
+            "project-profile",
+            "workflow",
+            "haq",
+            "agency-tactics"
+          ],
+          "sourcesFailed": [
+            "deficiency",
+            "simulation"
+          ],
+          "unavailableSources": [
+            "deficiency",
+            "simulation"
+          ],
+          "unavailableReasons": {
+            "deficiency": "timeout",
+            "simulation": "timeout"
+          },
+          "triggerType": "natural_language",
+          "hasProjectContext": true
+        }
+      },
+      "deficiencyReadCount": 1,
+      "recurringReadCount": 1
+    }
+  ]
+}

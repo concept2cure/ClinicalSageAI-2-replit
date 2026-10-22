@@ -1,0 +1,4 @@
+ × server/services/ind-lifecycle/__tests__/ind-ectd-envelope.test.ts > buildUsRegionalEnvelope > rejects a missing sponsor name ("") by name, rather than omitting <name> 4ms
+ × server/services/ind-lifecycle/__tests__/ind-ectd-envelope.test.ts > buildUsRegionalEnvelope > rejects a missing sponsor name ("   ") by name, rather than omitting <name> 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 7 passed (9)

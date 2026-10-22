@@ -415,6 +415,13 @@ export class ReleaseHashGenerator {
       return obj;
     }
 
+    // A Date hashes as the ISO string JSON writes for it. Until 2026-10-15 it
+    // had no own keys and hashed as {}: createdAt was outside the manifest
+    // hash, and a manifest saved and reloaded read as "tampered".
+    if (obj instanceof Date) {
+      return obj.toISOString();
+    }
+
     if (Array.isArray(obj)) {
       return obj.map(item => this.sortObjectKeys(item));
     }

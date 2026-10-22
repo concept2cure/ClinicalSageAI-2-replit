@@ -12,10 +12,14 @@ vi.hoisted(() => {
   process.env.JWT_SECRET = process.env.JWT_SECRET || 'submissions-program-anchor-secret-32-chars';
 });
 
-const svc = vi.hoisted(() => ({ anchor: vi.fn(), role: vi.fn() }));
+const svc = vi.hoisted(() => ({ anchor: vi.fn(), role: vi.fn(), candidates: vi.fn() }));
 vi.mock('../../services/submission-service/submission-service', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../services/submission-service/submission-service')>();
-  return { ...actual, anchorSubmissionToProgram: (...a: unknown[]) => svc.anchor(...a) };
+  return {
+    ...actual,
+    anchorSubmissionToProgram: (...a: unknown[]) => svc.anchor(...a),
+    listAnchorCandidates: (...a: unknown[]) => svc.candidates(...a),
+  };
 });
 vi.mock('../../services/part11/resolve-signer-role', () => ({ resolveSignerOrgRole: (...a: unknown[]) => svc.role(...a) }));
 
@@ -28,6 +32,7 @@ import { SubmissionError } from '../../services/submission-service/submission-se
 const app = express();
 app.use(express.json());
 app.use((req: any, _res, next) => {
+  Object.defineProperty(req, 'ip', { value:'192.0.2.17' });
   // The token says admin; the membership row decides.
   req.user = { id: 3, userId: 3, organizationId: 7, role: 'admin', roles: expandRoleClaims('admin', undefined) };
   next();
@@ -65,7 +70,7 @@ describe('the anchor route', () => {
     expect(svc.role).toHaveBeenCalledWith(3, 7);
     expect(svc.anchor).toHaveBeenCalledWith(
       { submissionId: 12, programId: PROGRAM, reason: REASON },
-      { organizationId: 7, userId: 3, orgRole: 'member' },
+      { organizationId: 7, userId: 3, orgRole: 'member', ipAddress:'192.0.2.17' },
     );
   });
 
@@ -74,5 +79,31 @@ describe('the anchor route', () => {
     const res = await request(app).post('/api/submissions/12/program-anchor').send({ programId: PROGRAM, reason: REASON });
     expect(res.status).toBe(403);
     expect(res.body.error).toEqual({ code: 'FORBIDDEN', message: expect.stringMatching(/lead or an organization manager/) });
+  });
+});
+
+/* QA 2026-10-08 (j6): the control offered every programme. The server now says
+   which projects this submission may be anchored to (its own filing type), by
+   the rule the anchor itself applies, so the client offers only those. */
+describe('the anchor candidates route', () => {
+  it('answers the projects of the submission’s filing type, from the service', async () => {
+    svc.candidates.mockResolvedValue({ applicationType: 'nda', candidates: [{ id: PROGRAM, code: 'N-1', title: 'Program N-1' }], otherTypes: 20 });
+    const res = await request(app).get('/api/submissions/12/program-anchor');
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body).toEqual({ applicationType: 'nda', candidates: [{ id: PROGRAM, code: 'N-1', title: 'Program N-1' }], otherTypes: 20 });
+    expect(svc.candidates).toHaveBeenCalledWith(12, { organizationId: 7, userId: 3, ipAddress:'192.0.2.17' });
+  });
+
+  it('answers a refusal with its status', async () => {
+    svc.candidates.mockRejectedValue(new SubmissionError('NOT_FOUND', 'Submission not found for this organization.'));
+    const res = await request(app).get('/api/submissions/12/program-anchor');
+    expect(res.status).toBe(404);
+  });
+
+  it('a type mismatch on the anchor itself is a 409 in the server’s words', async () => {
+    svc.anchor.mockRejectedValue(new SubmissionError('APPLICATION_TYPE_MISMATCH' as never, 'This submission is an NDA. Nothing was changed.'));
+    const res = await request(app).post('/api/submissions/12/program-anchor').send({ programId: PROGRAM, reason: REASON });
+    expect(res.status).toBe(409);
+    expect(res.body.error).toEqual({ code: 'APPLICATION_TYPE_MISMATCH', message: 'This submission is an NDA. Nothing was changed.' });
   });
 });

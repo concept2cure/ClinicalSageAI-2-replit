@@ -1,0 +1,31 @@
+{
+  "baseline": "normal merge of reviewed six increments with origin/concept2cure-v2 at 9ba70078fb55520244b5376d5d17d5e3f09e4471",
+  "ownedFilesFrozen": true,
+  "sha256": {
+    "server/services/ana-session-bootstrap.ts": "f74f12457f7d2828299bb0483fd7411d3018d2e9271efcbd6940e91accc9934c",
+    "server/services/advancedRAGPipeline.ts": "fa15d9f6b8573e6fe94fe7527ff482ac96e0da4123a4def2c7d0da8b118c7dd2",
+    "server/services/__tests__/ana-session-bootstrap-latency.test.ts": "01bfa85785ce1a8656449f8347208f2e378cf84026bcbf946deaae2012f44711",
+    "server/services/rag-filters.ts": "20f013c86e949f7ab5a080d1d4ced47680ab22d0d6dc192b5e16198a9b4077b6",
+    "server/services/ragRouter.ts": "44c13be63f61d7c76fbfeefc6381f6fbd5ea1b306d5649b52b3a752cf8096546",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts": "4e67c8047daf7f3b830e7ec4e8644d502dc5c5a1df5742298d87f5d2d7326a54",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.config.mts": "bcd8e126cfbc062fd749112f8fa40718002e51adadd53a362490150c6c97de16",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/run-recall-counterfactual.mjs": "a98f088a9d340ca3e27b5301e94d0482266d69e39875a2bac2f98ba2eb0bd838"
+  },
+  "focused": {
+    "tests": 75,
+    "files": 6
+  },
+  "offlineComposition": {
+    "tests": 16,
+    "files": 1
+  },
+  "counterfactual": {
+    "expectedExitCode": 1,
+    "productionSourceUnchanged": true
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 9
+  },
+  "postgresQualification": "Lead-owned genuine PostgreSQL proof required; this owner did not claim database isolation."
+}

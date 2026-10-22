@@ -88,11 +88,14 @@ export async function logToolRun(params: {
   result: Record<string, unknown>;
   /**
    * 'cancelled' is a real outcome, not a failure: the person stopped the run
-   * before this step finished. The column is free-text TEXT with no CHECK, so
-   * this widening needs no migration — but the ledger exists for replay and
-   * audit, and a stopped step recorded as an error would misreport why.
+   * before this step finished. 'incomplete' is a second: a sub-agent that
+   * stopped at a budget (row 74, S5), which is neither a success nor a
+   * failure. The column is free-text TEXT with no CHECK, so these widenings
+   * need no migration — but the ledger exists for replay and audit, and a
+   * stopped or cut-short step recorded as either an error or a plain success
+   * would misreport why.
    */
-  status: 'success' | 'error' | 'not_found' | 'cancelled';
+  status: 'success' | 'error' | 'not_found' | 'cancelled' | 'incomplete';
   errorMessage?: string;
   latencyMs: number;
 }): Promise<void> {

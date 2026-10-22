@@ -28,17 +28,25 @@ const queryMock = vi.fn();
 vi.mock('../../../db', () => ({
   pool: { query: (...args: unknown[]) => queryMock(...args) },
 }));
+vi.mock('../../../services/c2c/current-program-access', async (original) => {
+  const real = await original<typeof import('../../../services/c2c/current-program-access')>();
+  return { ...real, ...(await import('./support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
 
 import router from '../projects';
+import { clearSeats, seatMember, seatProgram } from './support/current-member';
 
 const P1 = '11111111-1111-1111-1111-111111111111';
 const P2 = '22222222-2222-2222-2222-222222222222';
+const USER = 41;
 
 function app(orgId: number | null) {
   const a = express();
   a.use(express.json());
   a.use((req: any, _res, next) => {
     if (orgId != null) req.organizationId = orgId;
+    req.userId = USER;
+    req.dbClient = { query: (...args: unknown[]) => queryMock(...args) };
     next();
   });
   a.use('/api/c2c/projects', router);
@@ -59,7 +67,13 @@ const listRows = () => ({
   ],
 });
 
-beforeEach(() => queryMock.mockReset());
+beforeEach(() => {
+  queryMock.mockReset();
+  clearSeats();
+  seatMember(7, USER, 'member');
+  seatProgram(7, P1);
+  seatProgram(7, P2);
+});
 
 describe('GET /api/c2c/projects — readiness is measured, not stored', () => {
   it('reports the governed section completion, not the frozen progress_percent', async () => {
@@ -172,6 +186,21 @@ describe('GET /api/c2c/projects/:id — the same readiness the list reports', ()
     queryMock.mockResolvedValueOnce(detailRow()).mockResolvedValueOnce({ rows: [] });
     const res = await request(app(7)).get(`/api/c2c/projects/${P1}`);
     expect(res.body.readiness).toBeNull();
+    expect(res.body.readinessAsOf).toBeNull();
+  });
+
+  /* Filing-spine design review, open item 9 (2026-10-08): the figure is
+     measured on each read and a project page stays open for hours, so the read
+     says when it measured. No figure, no time. */
+  it('says when the figure was measured', async () => {
+    queryMock
+      .mockResolvedValueOnce(detailRow())
+      .mockResolvedValueOnce({ rows: [{ project_id: P1, readiness: 62 }] });
+    const before = Date.now();
+    const res = await request(app(7)).get(`/api/c2c/projects/${P1}`);
+    const at = Date.parse(res.body.readinessAsOf);
+    expect(at).toBeGreaterThanOrEqual(before - 1000);
+    expect(at).toBeLessThanOrEqual(Date.now());
   });
 
   it('a failed readiness read is null — not assessed — never the stored 0', async () => {
@@ -181,6 +210,7 @@ describe('GET /api/c2c/projects/:id — the same readiness the list reports', ()
     const res = await request(app(7)).get(`/api/c2c/projects/${P1}`);
     expect(res.status).toBe(200);
     expect(res.body.readiness).toBeNull();
+    expect(res.body.readinessAsOf).toBeNull();
   });
 
   it('scopes the aggregate to this program and the caller org', async () => {

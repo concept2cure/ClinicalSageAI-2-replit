@@ -3,9 +3,11 @@
  *
  * This is the ONLY network-touching part of the learning loop, and it is
  * deliberately defensive: every fetch is time-boxed and wrapped, and any
- * failure (blocked egress, timeout, malformed feed) resolves to an empty list
- * rather than throwing. A locked-down network policy therefore degrades to
- * "0 new items this week", never to a crashed scan.
+ * failure (blocked egress, timeout, HTTP error, a feed URL answering with
+ * something that is not a feed) resolves to a result carrying the error rather
+ * than throwing. The scan names that source in its digest. Until 2026-10-15 a
+ * failure resolved to an empty list, so a locked-down network read as
+ * "0 new items this week".
  *
  * Two modes:
  *   - feed (rss/atom/api): if a verified feed URL is configured via the
@@ -29,10 +31,21 @@ export interface RawHarvestItem {
   content: string;
 }
 
+/** What one harvest produced: the items read, or why the source could not be read. */
+export interface HarvestResult {
+  items: RawHarvestItem[];
+  /** Null when the source was read. Otherwise the reason, and `items` is empty. */
+  error: string | null;
+}
+
 const DEFAULT_TIMEOUT_MS = 15_000;
 const MAX_CONTENT_CHARS = 20_000;
+/** The root element of an RSS 2.0, RSS 1.0 (RDF) or Atom document. */
+const FEED_ROOT = /<(rss|feed|rdf:RDF)\b/i;
 
-async function fetchText(url: string, timeoutMs: number): Promise<string | null> {
+type FetchOutcome = { ok: true; text: string } | { ok: false; error: string };
+
+async function fetchText(url: string, timeoutMs: number): Promise<FetchOutcome> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -42,13 +55,21 @@ async function fetchText(url: string, timeoutMs: number): Promise<string | null>
     });
     if (!res.ok) {
       logger.warn(`Fetch ${url} returned HTTP ${res.status}`);
-      return null;
+      return { ok: false, error: `HTTP ${res.status}` };
     }
     const text = await res.text();
-    return text.slice(0, MAX_CONTENT_CHARS);
+    return { ok: true, text: text.slice(0, MAX_CONTENT_CHARS) };
   } catch (err: any) {
-    logger.warn(`Fetch ${url} failed: ${err?.name === 'AbortError' ? 'timeout' : err?.message}`);
-    return null;
+    const timedOut = err?.name === 'AbortError';
+    logger.warn(`Fetch ${url} failed: ${timedOut ? 'timeout' : err?.message}`);
+    // The error code only (ENOTFOUND, ECONNREFUSED…): the digest that carries
+    // this is served to users, and a driver message can name hosts and ports.
+    return {
+      ok: false,
+      error: timedOut
+        ? `timed out after ${timeoutMs} ms`
+        : `request failed (${err?.cause?.code ?? err?.code ?? err?.name ?? 'unknown error'})`,
+    };
   } finally {
     clearTimeout(timer);
   }
@@ -117,30 +138,34 @@ export interface HarvestOptions {
 
 /**
  * Harvest a source. Never throws. Returns at most `limit` items, newest-first
- * where dates are available.
+ * where dates are available. A source that could not be read comes back with
+ * `error` set, never as an empty list.
  */
-export async function harvest(source: HorizonSource, opts: HarvestOptions = {}): Promise<RawHarvestItem[]> {
+export async function harvest(source: HorizonSource, opts: HarvestOptions = {}): Promise<HarvestResult> {
   const limit = opts.limit && opts.limit > 0 ? opts.limit : 25;
   const timeoutMs = opts.timeoutMs && opts.timeoutMs > 0 ? opts.timeoutMs : DEFAULT_TIMEOUT_MS;
 
   const feedUrl = source.feedEnvVar ? process.env[source.feedEnvVar]?.trim() : undefined;
 
-  let items: RawHarvestItem[] = [];
+  let items: RawHarvestItem[];
   if (feedUrl) {
-    const xml = await fetchText(feedUrl, timeoutMs);
-    if (xml) items = parseFeedItems(xml, source.id, limit);
+    const fetched = await fetchText(feedUrl, timeoutMs);
+    if (!fetched.ok) return { items: [], error: fetched.error };
+    // A login or error page answered with HTTP 200 parses to no items. That is
+    // a failed read, not an empty feed.
+    if (!FEED_ROOT.test(fetched.text)) return { items: [], error: 'response is not an RSS or Atom feed' };
+    items = parseFeedItems(fetched.text, source.id, limit);
   } else {
-    const page = await fetchText(source.url, timeoutMs);
-    if (page) {
-      items = [
-        {
-          sourceId: source.id,
-          title: source.title,
-          url: source.url,
-          content: stripTags(page).slice(0, MAX_CONTENT_CHARS),
-        },
-      ];
-    }
+    const fetched = await fetchText(source.url, timeoutMs);
+    if (!fetched.ok) return { items: [], error: fetched.error };
+    items = [
+      {
+        sourceId: source.id,
+        title: source.title,
+        url: source.url,
+        content: stripTags(fetched.text).slice(0, MAX_CONTENT_CHARS),
+      },
+    ];
   }
 
   if (opts.since) {
@@ -150,5 +175,5 @@ export async function harvest(source: HorizonSource, opts: HarvestOptions = {}):
     }
   }
 
-  return items.slice(0, limit);
+  return { items: items.slice(0, limit), error: null };
 }

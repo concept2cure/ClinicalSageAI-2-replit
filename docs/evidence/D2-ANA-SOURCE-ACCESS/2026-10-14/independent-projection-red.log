@@ -1,0 +1,81 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-tools.test.mts > independent actual registered source tools > active viewer reads without catalog/model flags and reports prospective history only 7ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-tools.test.mts > independent actual registered source tools > missing identified actor refuses before any source facade 1ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-tools.test.mts > independent actual registered source tools > server context determines actor identity despite model body overrides 1ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-tools.test.mts > independent actual registered source tools > named source access denial does not disclose private filename, ID or failure reason 1ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-tools.test.mts > independent actual registered source tools > read access revoked during coverage await cannot emit earlier admitted text 1ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-tools.test.mts > independent actual registered source tools > same-length extraction replacement during coverage await cannot emit stale text 0ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-tools.test.mts > independent actual registered source tools > history remains explicitly historical and earns no new current-source receipt 0ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-tools.test.mts > independent actual registered source tools > keep_data read states original unavailable and preserves eligible retained extraction 0ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-tools.test.mts > independent actual registered source tools > actor-filtered list never labels upload lookup failure as no files 1ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-tools.test.mts > independent actual registered source tools > passage outside-index ledger unknown stays unknown with actor-filtered scope 1ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-tools.test.mts > actual serving call-site source checks (static integration evidence) > both canonical chat bootstrap calls forward authenticated actor and admitted project reference 1ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-tools.test.mts > actual serving call-site source checks (static integration evidence) > actual stream and nonstream loop hosts guard staged sources with cancellation before settlement 4ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-tools.test.mts > actual serving call-site source checks (static integration evidence) > registered recall forwards the authenticated actor and session project scope 24ms
+stderr | docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-receipts.test.mts > independent exact source snapshot and legacy host admission > R09 failed and zero-row INSERT yield zero accepted receipts with rollback
+{
+  "timestamp": "2026-10-14T19:41:20.964Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "92929292-1111-4111-8111-000000000001",
+    "error": "synthetic failed insert"
+  }
+}
+
+stderr | docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-receipts.test.mts > independent exact source snapshot and legacy host admission > R09 failed and zero-row INSERT yield zero accepted receipts with rollback
+{
+  "timestamp": "2026-10-14T19:41:20.970Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "92929292-1111-4111-8111-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-receipts.test.mts > independent exact source snapshot and legacy host admission > R01 active viewer exact payload passes handoff and guarded legacy insertion 14ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-receipts.test.mts > independent exact source snapshot and legacy host admission > R02 same-length extraction replacement cannot inherit its earlier hash 3ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-receipts.test.mts > independent exact source snapshot and legacy host admission > R03 recorded source identity changes are refused before source handoff 7ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-receipts.test.mts > independent exact source snapshot and legacy host admission > R04 revocation after deferral produces safe no-source response 1ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-receipts.test.mts > independent exact source snapshot and legacy host admission > R05 caller mutation does not mutate the private snapshot or original payload 5ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-receipts.test.mts > independent exact source snapshot and legacy host admission > R06 invalid UTF-16 bounds and altered quote refuse rather than attesting metadata 2ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-receipts.test.mts > independent exact source snapshot and legacy host admission > R07 budget replacement records nothing and clears the deferred round 5ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-receipts.test.mts > independent exact source snapshot and legacy host admission > R08 cancellation during the last verification also withdraws prior reads 1ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-receipts.test.mts > independent exact source snapshot and legacy host admission > R09 failed and zero-row INSERT yield zero accepted receipts with rollback 7ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-receipts.test.mts > independent exact source snapshot and legacy host admission > R10 host helper result and writer columns do not fabricate provider or durable extraction proof 1ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A01 grants an active viewer organization-visible reads with its persisted role 41ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A02 grants custom-role shared reads without a new role allowlist 30ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A03 uses canonical ownership for a private project 22ms
+stderr | docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A09 checks all anchors before access intersection to defeat private duplicate laundering
+{
+  "timestamp": "2026-10-14T19:41:25.331Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "ana-project-scope",
+    "programId": "63636363-1111-4111-8111-000000000001",
+    "projectIds": [
+      16301,
+      16304
+    ]
+  }
+}
+
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A04 grants pending artifact reviewers canonical private reads 15ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A05 refuses unrelated private members and never grants organization-wide fallback 40ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A06 re-admission detects persisted role change even when source projects are unchanged 20ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A07 refuses an inactive or missing actor even without an explicit project 9ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A08 rejects contradictory explicit identifiers instead of widening 15ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A09 checks all anchors before access intersection to defeat private duplicate laundering 15ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A10 excludes unanchored programs and refuses explicit selection 33ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A11 a policy read failure is unavailable rather than empty 8ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A12 an authenticated evaluated empty set is explicitly actor-filtered 10ms
+
+ Test Files  3 passed (3)
+      Tests  35 passed (35)
+   Start at  19:41:16
+   Duration  8.80s (transform 2.45s, setup 0ms, import 5.24s, tests 2.82s, environment 0ms)
+

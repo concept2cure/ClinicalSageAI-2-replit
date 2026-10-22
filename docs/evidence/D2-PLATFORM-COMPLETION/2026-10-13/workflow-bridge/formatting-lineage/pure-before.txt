@@ -1,0 +1,261 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts
+{
+  "timestamp": "2026-10-13T23:28:22.029Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T23:28:22.031Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts
+{
+  "timestamp": "2026-10-13T23:28:22.031Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts
+[database] Database connection successful
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts
+{
+  "timestamp": "2026-10-13T23:28:22.364Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > preserves the recorded unaccepted prose across the real figure/table normalization 14ms
+   → expected '' to contain 'QA saved study report'
+ × server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > keeps normalized paragraph and table wrappers with the retained prose 3ms
+   → expected undefined to be 84 // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > preserves the original acceptor, time and signature without recording a fresh acceptance 3ms
+   → expected [] to have a length of 1 but got +0
+ × server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > does not carry an edited independent paragraph while preserving the untouched one 1ms
+   → expected '' to contain 'The primary endpoint was met at week …'
+ × server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > bounds repeated formatted clauses to the number previously attributed 1ms
+   → expected [] to have a length of 1 but got +0
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > preserves current behavior when no trusted previous content is supplied 1ms
+ × server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > carries the original usage and measured confidence without inventing new values 4ms
+   → expected undefined to match object { usage: 'derived', confidence: 0.72 }
+ × server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > attributes a whole-machine draft remainder after partially retaining an accepted span 1ms
+   → expected false to be true // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting carry-forward proves the trusted prior content > throws on a previous span hash that does not describe the trusted prior text 2ms
+   → expected function to throw an error, but it didn't
+ × server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting carry-forward proves the trusted prior content > throws on impossible previous offsets instead of crediting the current saver 2ms
+   → expected function to throw an error, but it didn't
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting carry-forward proves the trusted prior content > does not treat changed case characters as formatting 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting carry-forward proves the trusted prior content > does not treat changed decimal characters as formatting 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting carry-forward proves the trusted prior content > does not treat changed scientific operator characters as formatting 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting carry-forward proves the trusted prior content > refuses unsafe reader/printing markup in <p><xmp><b>The primary endpoint was met at week twelve.</b></xmp></p> 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting carry-forward proves the trusted prior content > refuses unsafe reader/printing markup in <p><b title="Reviewer added statement">The primary endpoint was met at week twelve.</b></p> 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting carry-forward proves the trusted prior content > refuses unsafe reader/printing markup in <p><b"malformed">The primary endpoint was met at week twelve.</b></p> 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting carry-forward proves the trusted prior content > refuses unsafe reader/printing markup in <figure><p><b>The primary endpoint was met at week twelve.</b></p></figure> 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting carry-forward proves the trusted prior content > does not collapse significant whitespace in preformatted content 0ms
+ × server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > table formatting preserves cell identity > retains unchanged exact cells when one other cell changes 1ms
+   → expected '' to contain 'AE'
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > table formatting preserves cell identity > does not flatten changed cell/header/span associations 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > table formatting preserves cell identity > does not flatten changed cell/header/span associations 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > table formatting preserves cell identity > does not flatten changed cell/header/span associations 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > table formatting preserves cell identity > does not carry a short old cell label inside a changed longer value 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > table formatting preserves cell identity > refuses changed header text rather than retaining data under a different association 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > table formatting preserves cell identity > refuses reordered cells even when the same words remain in the table 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > table formatting preserves cell identity > refuses reordered data rows even when their full text remains unchanged 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > preserves the recorded unaccepted prose across the real figure/table normalization
+AssertionError: expected '' to contain 'QA saved study report'
+
+- Expected
++ Received
+
+- QA saved study report
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts:41:25
+     39|     const result = carry(OLD_QA, NEW_QA);
+     40|     const machineText = attributedText(NEW_QA, result);
+     41|     expect(machineText).toContain('QA saved study report');
+       |                         ^
+     42|     expect(machineText).toContain('not clinical evidence.');
+     43|     expect(machineText).toContain('Saved CSR output');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > keeps normalized paragraph and table wrappers with the retained prose
+AssertionError: expected undefined to be 84 // Object.is equality
+
+- Expected:
+84
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts:52:34
+     50|   it('keeps normalized paragraph and table wrappers with the retained …
+     51|     const result = carry(OLD_QA, NEW_QA);
+     52|     expect(result[0]?.charStart).toBe(FIGURE.length);
+       |                                  ^
+     53|     expect(result.at(-1)?.charEnd).toBe(NEW_QA.length);
+     54|     expect(attributedText(NEW_QA, result)).toContain('colspan="1"');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > preserves the original acceptor, time and signature without recording a fresh acceptance
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts:59:20
+     57|   it('preserves the original acceptor, time and signature without reco…
+     58|     const result = carry(`<p>${TEXT}</p>`, `<p><strong>${TEXT}</strong…
+     59|     expect(result).toHaveLength(1);
+       |                    ^
+     60|     expect(result[0]).toMatchObject({ assertedBy: 'original-reviewer',…
+     61|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > does not carry an edited independent paragraph while preserving the untouched one
+AssertionError: expected '' to contain 'The primary endpoint was met at week …'
+
+- Expected
++ Received
+
+- The primary endpoint was met at week twelve.
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts:67:18
+     65|     const next = `<p><strong>${TEXT}</strong></p><p>The reviewed dose …
+     66|     const text = attributedText(next, carry(old, next));
+     67|     expect(text).toContain(TEXT);
+       |                  ^
+     68|     expect(text).not.toContain('200 mg');
+     69|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > bounds repeated formatted clauses to the number previously attributed
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts:74:30
+     72|     const old = `<p>${TEXT}</p>`;
+     73|     const next = `<p><b>${TEXT}</b></p><p><b>${TEXT}</b></p>`;
+     74|     expect(carry(old, next)).toHaveLength(1);
+       |                              ^
+     75|   });
+     76|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > carries the original usage and measured confidence without inventing new values
+AssertionError: expected undefined to match object { usage: 'derived', confidence: 0.72 }
+
+- Expected:
+{
+  "confidence": 0.72,
+  "usage": "derived",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts:88:69
+     86|     const options = { previousContent, content, accepted: [], actor: '…
+     87|       live: liveOf(previousContent).map(span => ({ ...span, usage: 'de…
+     88|     expect(attributeMachineSpans(clauseSpans(content), options)[0]).to…
+       |                                                                     ^
+     89|   });
+     90|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > attributes a whole-machine draft remainder after partially retaining an accepted span
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts:96:120
+     94|     const options = { previousContent, content, accepted: [], live: li…
+     95|     const result = attributeMachineSpans(clauseSpans(content), options…
+     96|     expect(result.some(span => span.machineAuthorId === 'workflow_impo…
+       |                                                                                                                        ^
+     97|     expect(result.filter(span => span.machineAuthorId === 'ana').map(s…
+     98|     expect(result.filter(span => span.machineAuthorId === 'ana').every…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting carry-forward proves the trusted prior content > throws on a previous span hash that does not describe the trusted prior text
+AssertionError: expected function to throw an error, but it didn't
+ ❯ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts:106:80
+    104|     const previousContent = `<p>${TEXT}</p>`;
+    105|     const options = { previousContent, content: previousContent, accep…
+    106|     expect(() => attributeMachineSpans(clauseSpans(previousContent), o…
+       |                                                                                ^
+    107|   });
+    108|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting carry-forward proves the trusted prior content > throws on impossible previous offsets instead of crediting the current saver
+AssertionError: expected function to throw an error, but it didn't
+ ❯ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts:112:80
+    110|     const previousContent = `<p>${TEXT}</p>`;
+    111|     const options = { previousContent, content: previousContent, accep…
+    112|     expect(() => attributeMachineSpans(clauseSpans(previousContent), o…
+       |                                                                                ^
+    113|   });
+    114|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > table formatting preserves cell identity > retains unchanged exact cells when one other cell changes
+AssertionError: expected '' to contain 'AE'
+
+- Expected
++ Received
+
+- AE
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts:144:18
+    142|     const next = '<table><tbody><tr><th colspan="1"><p>AE</p></th><th>…
+    143|     const text = attributedText(next, carry(old, next));
+    144|     expect(text).toContain('AE');
+       |                  ^
+    145|     expect(text).toContain('None recorded');
+    146|     expect(text).not.toContain('200 mg');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 16 passed (26)
+   Start at  23:28:19
+   Duration  3.48s (transform 1.89s, setup 88ms, import 2.94s, tests 42ms, environment 0ms)

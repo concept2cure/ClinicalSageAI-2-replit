@@ -32,6 +32,7 @@ import {
 } from '@shared/rule-pack-provenance';
 
 import { useLiveData } from './dataConnect';
+import { filingSectionKey } from '@shared/regulatory/filing-section-key';
 
 /** One row of `GET /api/c2c/documents/:id/outline`. */
 export interface FilingOutlineRow {
@@ -75,8 +76,20 @@ interface OutlineResponse {
     readiness: number;
     /** Absent when the server predates the provenance columns. */
     provenance?: unknown;
+    /** Absent before F22b: the home filing. */
+    filing_scope?: 'home' | 'market';
   };
   outline: FilingOutlineRow[];
+  /** A market document's required sections the home filing lacks (F22b). */
+  gaps?: Array<{ key: string; label: string }>;
+}
+
+/** One of the project's filings: its home filing or an added market (F22b). */
+export interface FilingMarket {
+  id: string;
+  title: string;
+  agency: string;
+  doc_type: string;
 }
 
 /** The document, with provenance guaranteed present and in the vocabulary. */
@@ -88,6 +101,8 @@ export interface FilingOutlineDocument {
   status: string;
   readiness: number;
   provenance: RulePackProvenance;
+  /** 'market' for an added market's Module 1 and 3.2.R (F22b). */
+  filing_scope: 'home' | 'market';
 }
 
 /**
@@ -148,6 +163,14 @@ export interface FilingOutlineState {
   error?: string;
   /** Set when there is no tree to show, saying WHICH of the reasons applies. */
   reason?: FilingOutlineReason;
+  /** The project's home filing, when one resolved (F22b). */
+  home: FilingMarket | null;
+  /** The markets added to the project, each its own governed document (F22b). */
+  markets: FilingMarket[];
+  /** The market list could not be read: the home filing is still shown. */
+  marketsError: boolean;
+  /** A market document's required sections the home filing lacks. Shown, never added. */
+  gaps: Array<{ key: string; label: string }>;
 }
 
 /**
@@ -163,16 +186,50 @@ export interface FilingOutlineState {
  * ivd / device / ide / biologic / anda have no `doc_type` and no rule pack, so
  * `scaffoldProjectDocuments()` skips them deliberately and says why.
  */
-export function useFilingOutline(projectId: string | null): FilingOutlineState {
-  const docs = useLiveData<DocumentsResponse>(
-    projectId ? `/api/c2c/documents?projectId=${encodeURIComponent(projectId)}` : null,
+const asFiling = (d: DocumentsResponse['documents'][number]): FilingMarket => ({
+  id: d.id, title: d.title, agency: d.agency, doc_type: d.doc_type,
+});
+
+/**
+ * The project's markets (F22b): `scope=market`, less any document the home
+ * read already named. A read that fails is said (marketsError) and leaves the
+ * home filing as it was.
+ */
+function useProjectMarkets(projectId: string | null, homeIds: ReadonlySet<string>) {
+  const markets = useLiveData<DocumentsResponse>(
+    projectId ? `/api/c2c/documents?projectId=${encodeURIComponent(projectId)}&scope=market` : null,
     [projectId],
   );
+  const list = React.useMemo(
+    () => (markets.data?.documents ?? []).filter((d) => !homeIds.has(d.id)).map(asFiling),
+    [markets.data, homeIds],
+  );
+  return { list, loading: markets.loading, error: Boolean(markets.error) };
+}
 
-  // The project's governed document. More than one is possible in principle;
-  // the newest by the server's own `updated_at DESC` ordering is the one the
-  // editor should open.
-  const documentId = docs.data?.documents?.[0]?.id ?? null;
+/**
+ * `boundDocumentId` is the governed document the open authoring document is
+ * the editing copy of (`authoring_documents.c2c_document_id`). When it is one
+ * of the project's markets, the outline is that market's Module 1 and 3.2.R
+ * (F22b); otherwise it is the home filing, as before.
+ */
+export function useFilingOutline(projectId: string | null, boundDocumentId: string | null = null): FilingOutlineState {
+  const docs = useLiveData<DocumentsResponse>(
+    projectId ? `/api/c2c/documents?projectId=${encodeURIComponent(projectId)}&scope=home` : null,
+    [projectId],
+  );
+  const homeDocs = docs.data?.documents;
+  const homeIds = React.useMemo(() => new Set((homeDocs ?? []).map((d) => d.id)), [homeDocs]);
+  const markets = useProjectMarkets(projectId, homeIds);
+
+  // The project's governed document: its home filing (scope=home), the newest
+  // by `updated_at DESC`, unless the open document is a market's copy. While
+  // the markets are read for such a document, nothing is chosen, so the home
+  // outline does not flash in first.
+  const homeId = homeDocs?.[0]?.id ?? null;
+  const marketPending = Boolean(boundDocumentId) && markets.loading;
+  const shownMarket = boundDocumentId ? markets.list.find((m) => m.id === boundDocumentId) : undefined;
+  const documentId = marketPending ? null : (shownMarket?.id ?? homeId);
 
   const outline = useLiveData<OutlineResponse>(
     documentId ? `/api/c2c/documents/${encodeURIComponent(documentId)}/outline` : null,
@@ -180,35 +237,52 @@ export function useFilingOutline(projectId: string | null): FilingOutlineState {
   );
 
   return React.useMemo<FilingOutlineState>(() => {
-    const loading = docs.loading || outline.loading;
-    const error = docs.error ?? outline.error;
-
-    if (loading || error) {
-      return { document: null, tree: [], flat: [], loading, error };
-    }
-    if (!projectId) {
-      return { document: null, tree: [], flat: [], loading: false, reason: 'no-project' };
-    }
-    if (!documentId) {
-      return { document: null, tree: [], flat: [], loading: false, reason: 'no-governed-document' };
-    }
-
-    const rows = outline.data?.outline ?? [];
-    const tree = buildOutlineTree(rows);
-    const raw = outline.data?.document ?? null;
-    return {
-      // Normalised here as well as on the server, because a client can be
-      // newer than the API it is talking to. An older server omits
-      // `provenance` entirely, and the surface must show "basis undeclared"
-      // rather than crash or — far worse — render nothing and let the outline
-      // read as unqualified.
-      document: raw ? { ...raw, provenance: normalizeRulePackProvenance(raw.provenance) } : null,
-      tree,
-      flat: flattenOutline(tree),
-      loading: false,
-      reason: rows.length === 0 ? 'empty-outline' : undefined,
+    const around = {
+      home: homeDocs?.[0] ? asFiling(homeDocs[0]) : null,
+      markets: markets.list,
+      marketsError: markets.error,
     };
-  }, [projectId, documentId, docs.loading, docs.error, outline.loading, outline.error, outline.data]);
+    const blocked = noTreeState({
+      loading: docs.loading || outline.loading || marketPending,
+      error: docs.error ?? outline.error,
+      projectId,
+      documentId,
+    });
+    return blocked ? { ...blocked, ...around, gaps: [] } : { ...treeState(outline.data), ...around };
+  }, [projectId, documentId, homeDocs, markets.list, markets.error, marketPending, docs.loading, docs.error, outline.loading, outline.error, outline.data]);
+}
+
+type TreePart = Pick<FilingOutlineState, 'document' | 'tree' | 'flat' | 'loading' | 'error' | 'reason'>;
+
+/** The states with no tree: reading, failed, no project, no governed document. */
+function noTreeState(a: { loading: boolean; error?: string; projectId: string | null; documentId: string | null }): TreePart | null {
+  const none = { document: null, tree: [], flat: [] };
+  if (a.loading || a.error) return { ...none, loading: a.loading, error: a.error };
+  if (!a.projectId) return { ...none, loading: false, reason: 'no-project' };
+  if (!a.documentId) return { ...none, loading: false, reason: 'no-governed-document' };
+  return null;
+}
+
+/** The outline read, as a tree, with its document and (for a market) its gaps. */
+function treeState(data: OutlineResponse | null | undefined): TreePart & { gaps: FilingOutlineState['gaps'] } {
+  const rows = data?.outline ?? [];
+  const tree = buildOutlineTree(rows);
+  const raw = data?.document ?? null;
+  return {
+    // Normalised here as well as on the server, because a client can be
+    // newer than the API it is talking to. An older server omits
+    // `provenance` entirely, and the surface must show "basis undeclared"
+    // rather than crash or — far worse — render nothing and let the outline
+    // read as unqualified.
+    document: raw
+      ? { ...raw, provenance: normalizeRulePackProvenance(raw.provenance), filing_scope: raw.filing_scope === 'market' ? 'market' : 'home' }
+      : null,
+    tree,
+    flat: flattenOutline(tree),
+    loading: false,
+    reason: rows.length === 0 ? 'empty-outline' : undefined,
+    gaps: Array.isArray(data?.gaps) ? data.gaps : [],
+  };
 }
 
 /**
@@ -221,13 +295,21 @@ export function useFilingOutline(projectId: string | null): FilingOutlineState {
  * `code` is nullable TEXT. A null must never match anything — collapsing null
  * onto a real section key would open the wrong section's text under a node,
  * which is the one failure mode worse than showing nothing.
+ *
+ * QA 2026-10-08, walk 2 (j4): given the outline's keys, a node the outline
+ * does not subdivide also opens the document's first section that belongs to
+ * it — 2.5 opens 2.5.1 of the Clinical Overview — by the same rule the server
+ * files that section's text into the node (shared/regulatory/filing-section-key.ts).
  */
 export function findSectionForNode<T extends { code?: string | null }>(
   sections: readonly T[],
   sectionKey: string,
+  outlineKeys?: ReadonlyArray<string>,
 ): T | null {
   if (!sectionKey) return null;
-  return sections.find((s) => typeof s.code === 'string' && s.code === sectionKey) ?? null;
+  const own = sections.find((s) => typeof s.code === 'string' && s.code === sectionKey);
+  if (own || !outlineKeys) return own ?? null;
+  return sections.find((s) => filingSectionKey(outlineKeys, s.code) === sectionKey) ?? null;
 }
 
 /**

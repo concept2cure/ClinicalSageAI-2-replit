@@ -12,7 +12,6 @@
 
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
-import type { VerificationOutcome } from '../lib/verification-outcome';
 
 // ============================================================
 // Types
@@ -28,66 +27,130 @@ interface EndpointForAssessment {
   isSurrogate: boolean;
   regulatoryQualification?: string;
 }
-import { ai } from '../lib/unified-ai-client';
+import { anaBiostatsOrchestrator } from './ana-biostats/orchestrator';
+import { toBiostatsInput } from './ana-biostats/request-input';
+import type { ComputationAssumption, ComputationResult, JudgmentResult, JudgmentVerdict, StatisticalInput } from './ana-biostats/types';
 
-interface DefensibilityRequest {
-  studyPhase: string;
-  indication: string;
-  studyDesign: string;
-  primaryEndpoint: EndpointForAssessment;
-  secondaryEndpoints: EndpointForAssessment[];
-  sampleSize: number;
-  powerAssumptions?: { effectSize: number; alpha: number; power: number; dropoutRate: number };
-  statisticalMethods: string[];
-  multiplicityMethod?: string;
-  missingDataMethod?: string;
-  interimAnalysis?: boolean;
-  adaptiveDesign?: boolean;
-  subgroupAnalyses?: string[];
-  estimandStrategy?: string;
+/**
+ * A defensibility assessment, from the deterministic judgment engine
+ * (ana-biostats/judgment-engine.ts) — the engine AnA's
+ * assess_statistical_defensibility tool runs.
+ *
+ * 2026-10-05 (CLAUDE.md Rule 2): this used to be a model's 0-100 score on
+ * seven dimensions, with the overall rating and reviewer-risk level derived
+ * from what it returned. A verdict on a study's statistics is a governed
+ * output; it now comes from the engine, which computes the design first and
+ * judges what it computed. When the engine lacks an input it says so
+ * ('needs_parameters') rather than scoring around the gap.
+ */
+export type DefensibilityAssessment =
+  | {
+      status: 'needs_parameters';
+      engine: 'deterministic';
+      errors: unknown[];
+      message: string;
+    }
+  | {
+      status: 'assessed';
+      engine: 'deterministic';
+      sampleSize: number | null;
+      power: number | null;
+      /**
+       * What the engine says it computed. Carried since 2026-10-12.
+       *
+       * The payload held only sampleSize, power and the judgment, so nothing
+       * on screen stated the method or the hazard ratio the sizing used — and
+       * the workbench labelled the engine's `effectSize` "Hazard ratio" when
+       * the engine reads it as the hazard-ratio REDUCTION. A sponsor typing
+       * their protocol's HR of 0.7 was sized for HR 0.300: 50 subjects where
+       * 550 is right, with nothing in the response to contradict the label.
+       * `formula` prints "HR=0.700", which is the line that would have caught
+       * it, and `assumptions` names the event rate the engine defaulted —
+       * which is what turns events into subjects.
+       */
+      method: string | null;
+      formula: string | null;
+      assumptions: ComputationAssumption[];
+      judgment: Pick<
+        JudgmentResult,
+        | 'overallVerdict'
+        | 'overallRisk'
+        | 'actionRecommendation'
+        | 'confidence'
+        | 'dimensions'
+        | 'fragility'
+        | 'endpointMethodFit'
+        | 'escalationReasons'
+      >;
+    };
+
+/**
+ * A `ComputationRefusal` reported as the assessment's own answer.
+ *
+ * A refusal is the engine declining to invent a figure, not a fault — and it
+ * threw straight out of this service, so a caller that asked for an assessment
+ * got an exception. Same defect the ana-biostats routes had until 2026-10-11:
+ * the refusal contract only works if every caller reports a refusal AS one.
+ *
+ * The engine's own sentence is the message, because it names the input AND the
+ * convention — for a time-to-event design, that `effectSize` is the
+ * hazard-ratio reduction, which is the thing a mislabelled field got wrong.
+ * Anything that is not a refusal is rethrown: a real fault must not be dressed
+ * as a missing parameter.
+ */
+function refusalAsAssessment(err: unknown): DefensibilityAssessment {
+  const e = err as { name?: unknown; message?: unknown; field?: unknown };
+  if (e?.name !== 'ComputationRefusal') throw err;
+  return {
+    status: 'needs_parameters',
+    engine: 'deterministic',
+    errors: typeof e.field === 'string' ? [{ field: e.field }] : [],
+    message: typeof e.message === 'string' ? e.message : NEEDS_PARAMETERS_MESSAGE,
+  };
 }
 
-interface DefensibilityIssue {
-  category: string;
-  description: string;
-  severity: 'critical' | 'major' | 'minor';
-  affectedSection: string;
-  regulatoryPrecedent?: string;
-  suggestedMitigation: string;
+/**
+ * The 'assessed' payload: the figures the engine computed, what it says about
+ * HOW it computed them, and the judgment OF that computation.
+ *
+ * `method`, `formula` and `assumptions` are carried since 2026-10-12. The
+ * payload held only the N, the power and the judgment, so nothing on screen
+ * stated the method or — in the formula — the hazard ratio the sizing used.
+ * The workbench meanwhile labelled the engine's `effectSize` "Hazard ratio"
+ * when the engine reads it as the hazard-ratio REDUCTION, so a sponsor typing
+ * their protocol's HR of 0.7 was sized for HR 0.300 (50 subjects where 550 is
+ * right) with nothing in the response to contradict the label. `formula`
+ * prints "HR=0.700"; `assumptions` names the event rate the engine defaulted,
+ * which is what turns events into subjects.
+ */
+function assessedFrom(
+  computation: ComputationResult | null,
+  j: JudgmentResult,
+): DefensibilityAssessment {
+  return {
+    status: 'assessed',
+    engine: 'deterministic',
+    sampleSize: computation?.adjustedTotal ?? computation?.sampleSize.total ?? null,
+    power: computation?.power ?? null,
+    method: computation?.method ?? null,
+    formula: computation?.formula ?? null,
+    assumptions: computation?.assumptions ?? [],
+    judgment: {
+      overallVerdict: j.overallVerdict,
+      overallRisk: j.overallRisk,
+      actionRecommendation: j.actionRecommendation,
+      confidence: j.confidence,
+      dimensions: j.dimensions,
+      fragility: j.fragility,
+      endpointMethodFit: j.endpointMethodFit,
+      escalationReasons: j.escalationReasons,
+    },
+  };
 }
 
-/** The seven dimensions of a defensibility assessment, in report order. */
-const DIMENSION_KEYS = [
-  'endpointQuality',
-  'sampleSizeAdequacy',
-  'multiplicityControl',
-  'missingDataHandling',
-  'statisticalMethodChoice',
-  'designAppropriateness',
-  'estimandClarity',
-] as const;
-
-type DimensionKey = (typeof DIMENSION_KEYS)[number];
-
-interface DefensibilityReport {
-  /** The mean of all seven dimensions, or null when any went unscored. */
-  overallScore: number | null;
-  overallRating: 'strong' | 'adequate' | 'weak' | 'deficient' | null;
-  /** A dimension the model did not score is null — never a substituted midpoint. */
-  dimensionScores: Record<DimensionKey, number | null>;
-  /**
-   * WO-16C finding 45 — the third state, in the vocabulary of
-   * server/lib/verification-outcome.ts. The overall score was either computed
-   * from all seven dimensions or it was not; when it was not, this carries the
-   * reason in place of a number. "Could not score" is not a low score.
-   */
-  scoreBasis: VerificationOutcome<{ assessedDimensions: DimensionKey[] }>;
-  criticalIssues: DefensibilityIssue[];
-  majorIssues: DefensibilityIssue[];
-  minorIssues: DefensibilityIssue[];
-  recommendations: string[];
-  reviewerRiskLevel: 'low' | 'moderate' | 'high';
-}
+const NEEDS_PARAMETERS_MESSAGE =
+  'The statistics engine could not assess this design: the inputs listed in errors are missing or invalid. ' +
+  'No verdict was formed.';
 
 interface ConsistencyReport {
   overallConsistency: 'consistent' | 'minor_discrepancies' | 'major_discrepancies';
@@ -163,132 +226,26 @@ interface MultiplicityAssessment {
 class StatisticalDefensibilityService {
 
   /**
-   * Comprehensive defensibility assessment.
+   * Defensibility assessment of a design, by the deterministic engine. The
+   * request is read exactly as AnA's biostatistics tools read their input
+   * (ana-biostats/request-input.ts).
    */
-  async assessDefensibility(request: DefensibilityRequest): Promise<DefensibilityReport> {
-    const aiResult = await ai.chat(
-      [
-        {
-          role: 'system',
-          content: `You are a senior biostatistician reviewing a clinical study design for regulatory submission to FDA/EMA. Evaluate the study for statistical defensibility.
-
-For each of these 7 dimensions, provide a score (0-100) and identify issues:
-
-1. Endpoint Quality: Is the primary endpoint clinically meaningful, well-defined, validated? Is it a surrogate? Does it have regulatory precedent?
-2. Sample Size Adequacy: Are assumptions reasonable? Is the study adequately powered? Is the dropout rate realistic?
-3. Multiplicity Control: Is familywise error rate controlled? Are multiple primary/secondary endpoints handled?
-4. Missing Data Handling: Is the approach per ICH E9(R1)? Is MMRM/MI used instead of LOCF? Are sensitivity analyses planned?
-5. Statistical Method Choice: Are the methods appropriate for the endpoint type? Are covariates pre-specified?
-6. Design Appropriateness: Is the study design suitable for the indication and phase?
-7. Estimand Clarity: Are estimands defined per ICH E9(R1)? Are intercurrent events addressed?
-
-If a dimension cannot be assessed from the inputs below, return null for that dimension and say why in minorIssues. Do not estimate a score to fill the gap: an unscored dimension is reported as unscored, and a study whose sample size, statistical methods, multiplicity, missing-data or estimand strategy were not supplied has not told you enough to score the dimensions that depend on them.
-
-You are given only the study description below. No precedent corpus, literature index or database lookup is available to you, so "regulatoryPrecedent" must be null unless the precedent is stated verbatim in that description.
-
-For each issue found, classify as critical/major/minor and suggest mitigation.
-
-Return JSON:
-{
-  "dimensionScores": { "endpointQuality": 0-100 or null, "sampleSizeAdequacy": 0-100 or null, "multiplicityControl": 0-100 or null, "missingDataHandling": 0-100 or null, "statisticalMethodChoice": 0-100 or null, "designAppropriateness": 0-100 or null, "estimandClarity": 0-100 or null },
-  "criticalIssues": [{ "category": "string", "description": "string", "severity": "critical", "affectedSection": "string", "regulatoryPrecedent": "string or null", "suggestedMitigation": "string" }],
-  "majorIssues": [...],
-  "minorIssues": [...],
-  "recommendations": ["string"]
-}`,
-        },
-        {
-          role: 'user',
-          content: `Assess this study design:
-Phase: ${request.studyPhase}
-Indication: ${request.indication}
-Design: ${request.studyDesign}
-Primary Endpoint: ${JSON.stringify(request.primaryEndpoint)}
-Secondary Endpoints: ${JSON.stringify(request.secondaryEndpoints)}
-Sample Size: ${request.sampleSize}
-Power Assumptions: ${JSON.stringify(request.powerAssumptions || 'Not provided')}
-Statistical Methods: ${request.statisticalMethods.join(', ')}
-Multiplicity: ${request.multiplicityMethod || 'Not specified'}
-Missing Data: ${request.missingDataMethod || 'Not specified'}
-Interim Analysis: ${request.interimAnalysis || false}
-Adaptive Design: ${request.adaptiveDesign || false}
-Subgroups: ${(request.subgroupAnalyses || []).join(', ') || 'None'}
-Estimand Strategy: ${request.estimandStrategy || 'Not specified'}`,
-        },
-      ],
-      { taskType: 'regulatory_review', jsonMode: true, temperature: 0.2, maxTokens: 4000, callerModule: 'statistical-defensibility-service' }
-    );
-
-    const content = aiResult.content;
-    if (!content) {
-      return this.defaultReport('The model returned no content, so no dimension was scored.');
+  async assessDefensibility(request: Record<string, unknown>): Promise<DefensibilityAssessment> {
+    let result: ReturnType<typeof anaBiostatsOrchestrator.quickCompute>;
+    try {
+      result = anaBiostatsOrchestrator.quickCompute(toBiostatsInput(request) as Partial<StatisticalInput>);
+    } catch (err) {
+      return refusalAsAssessment(err);
     }
-
-    const parsed = JSON.parse(content);
-    const scores = (parsed.dimensionScores || {}) as Record<string, unknown>;
-
-    // WO-16C finding 45. Every dimension used to be read as `scores.X || 50`,
-    // which turned BOTH a dimension the model omitted and a worst score of 0 it
-    // actually reported into the same hardcoded midpoint. A reported 0 is a
-    // finding; a 50 nothing computed is an invention, and it moved the rendered
-    // rating across the 40/60/80 thresholds with no indicator. Read each score
-    // as a number in range or as "not assessed" — those are different states.
-    const dimensionScores = {} as Record<DimensionKey, number | null>;
-    const assessedDimensions: DimensionKey[] = [];
-    const unassessedDimensions: DimensionKey[] = [];
-    for (const key of DIMENSION_KEYS) {
-      const raw = scores[key];
-      const value =
-        typeof raw === 'number' && Number.isFinite(raw) && raw >= 0 && raw <= 100 ? raw : null;
-      dimensionScores[key] = value;
-      (value === null ? unassessedDimensions : assessedDimensions).push(key);
+    if (!result.validation.valid || !result.judgment) {
+      return {
+        status: 'needs_parameters',
+        engine: 'deterministic',
+        errors: result.validation.errors ?? [],
+        message: NEEDS_PARAMETERS_MESSAGE,
+      };
     }
-
-    // `overallScore` is the mean of all seven dimensions and is labelled as one
-    // wherever it is rendered. The mean of whichever subset came back is a
-    // different quantity, so it is withheld with a reason rather than relabelled.
-    const scoreBasis: DefensibilityReport['scoreBasis'] =
-      unassessedDimensions.length === 0
-        ? { ran: true, assessedDimensions }
-        : {
-            ran: false,
-            reason:
-              `No usable 0-100 score was returned for: ${unassessedDimensions.join(', ')}. ` +
-              'An overall score is the mean of all seven dimensions, so none was computed. ' +
-              'This is not a verdict on the study: those dimensions were not assessed.',
-          };
-
-    const overallScore = scoreBasis.ran
-      ? Math.round(
-          assessedDimensions.reduce((sum, key) => sum + (dimensionScores[key] as number), 0) /
-            DIMENSION_KEYS.length,
-        )
-      : null;
-
-    const overallRating: DefensibilityReport['overallRating'] =
-      overallScore === null ? null :
-      overallScore >= 80 ? 'strong' :
-      overallScore >= 60 ? 'adequate' :
-      overallScore >= 40 ? 'weak' : 'deficient';
-
-    const criticalCount = (parsed.criticalIssues || []).length;
-    const majorCount = (parsed.majorIssues || []).length;
-    const reviewerRisk: 'low' | 'moderate' | 'high' =
-      criticalCount > 0 ? 'high' :
-      majorCount > 2 ? 'high' :
-      majorCount > 0 ? 'moderate' : 'low';
-
-    return {
-      overallScore,
-      overallRating,
-      dimensionScores,
-      scoreBasis,
-      criticalIssues: parsed.criticalIssues || [],
-      majorIssues: parsed.majorIssues || [],
-      minorIssues: parsed.minorIssues || [],
-      recommendations: parsed.recommendations || [],
-      reviewerRiskLevel: reviewerRisk,
-    };
+    return assessedFrom(result.computation ?? null, result.judgment);
   }
 
   /**
@@ -548,65 +505,43 @@ Estimand Strategy: ${request.estimandStrategy || 'Not specified'}`,
   }
 
   /**
-   * Generate reviewer risk annotations.
+   * The points a statistical reviewer is likely to raise: every dimension the
+   * deterministic judgment did not find adequate, with severity from its
+   * verdict and wording from the engine's own rationale and flags. Until
+   * 2026-10-05 a model predicted these and assigned their severity.
    */
-  async generateReviewerRiskAnnotations(studyData: {
-    phase: string;
-    indication: string;
-    design: string;
-    endpoints: EndpointForAssessment[];
-    sampleSize: number;
-    statisticalMethods: string[];
-    multiplicityApproach?: string;
-    missingDataApproach?: string;
-    hasInterimAnalysis: boolean;
-    subgroupAnalyses: string[];
-  }): Promise<ReviewerRiskAnnotation[]> {
-    const aiResult = await ai.chat(
-      [
+  async generateReviewerRiskAnnotations(
+    request: Record<string, unknown>,
+  ): Promise<{ assessment: DefensibilityAssessment; annotations: ReviewerRiskAnnotation[] }> {
+    const assessment = await this.assessDefensibility(request);
+    if (assessment.status !== 'assessed') return { assessment, annotations: [] };
+    const annotations = assessment.judgment.dimensions.flatMap((d): ReviewerRiskAnnotation[] => {
+      const severity = REVIEWER_SEVERITY[d.verdict];
+      if (!severity) return [];
+      const subject = d.name.toLowerCase();
+      return [
         {
-          role: 'system',
-          content: `You are an FDA/EMA statistical reviewer. Based on the study design provided, predict specific questions or objections a regulatory reviewer would raise. For each concern, provide severity (high/medium/low), the affected submission section, the likely reviewer question, and a suggested response.
-
-Return JSON: { "annotations": [{ "concern": "string", "severity": "high|medium|low", "affectedSection": "string", "likelyQuestion": "string", "suggestedResponse": "string" }] }`,
+          concern: `${d.name}: ${d.rationale}`,
+          severity,
+          affectedSection: 'Statistical methods (protocol and SAP)',
+          likelyQuestion:
+            d.verdict === 'insufficient_information'
+              ? `The ${subject} cannot be assessed from what was supplied. What is it, and how was it determined?`
+              : `How is the ${subject} justified?`,
+          suggestedResponse: d.flags.length > 0 ? `Address: ${d.flags.join('; ')}.` : d.rationale,
         },
-        {
-          role: 'user',
-          content: `Predict reviewer concerns for this study:\n${JSON.stringify(studyData, null, 2)}`,
-        },
-      ],
-      { taskType: 'regulatory_review', jsonMode: true, temperature: 0.3, maxTokens: 3000, callerModule: 'statistical-defensibility-service' }
-    );
-
-    const content = aiResult.content;
-    if (!content) return [];
-
-    const parsed = JSON.parse(content);
-    return parsed.annotations || [];
-  }
-
-  /**
-   * The assessment did not run. WO-16C finding 45: it used to say 0/100 and
-   * "deficient", which is a verdict on the study — the opposite of what
-   * happened. Scores are null and `scoreBasis` carries the reason.
-   */
-  private defaultReport(reason: string): DefensibilityReport {
-    return {
-      overallScore: null,
-      overallRating: null,
-      dimensionScores: {
-        endpointQuality: null, sampleSizeAdequacy: null, multiplicityControl: null,
-        missingDataHandling: null, statisticalMethodChoice: null, designAppropriateness: null,
-        estimandClarity: null,
-      },
-      scoreBasis: { ran: false, reason },
-      criticalIssues: [{ category: 'System', description: 'Assessment could not be completed', severity: 'critical', affectedSection: 'All', suggestedMitigation: 'Retry with complete study data' }],
-      majorIssues: [],
-      minorIssues: [],
-      recommendations: ['Provide complete study design data for assessment'],
-      reviewerRiskLevel: 'high',
-    };
+      ];
+    });
+    return { assessment, annotations };
   }
 }
+
+/** A dimension's verdict → the severity of the reviewer point it raises; adequate raises none. */
+const REVIEWER_SEVERITY: Record<JudgmentVerdict, ReviewerRiskAnnotation['severity'] | null> = {
+  inadequate: 'high',
+  marginal: 'medium',
+  insufficient_information: 'medium',
+  adequate: null,
+};
 
 export const statisticalDefensibilityService = new StatisticalDefensibilityService();

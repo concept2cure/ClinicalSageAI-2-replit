@@ -1,0 +1,1 @@
+PATH=/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 node node_modules/vitest/vitest.mjs run server/services/ana/__tests__/strict-round-body-executor.test.ts --config vitest.config.ts --maxWorkers=1 --no-file-parallelism > docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/executor/red.txt 2>&1

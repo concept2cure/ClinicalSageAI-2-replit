@@ -39,7 +39,8 @@ export interface CatalogTemplateEntry {
 // ─── Template Definitions ─────────────────────────────────────────────────────
 
 const CTD_TEMPLATES: CatalogTemplateEntry[] = [
-  { id: 'cover_letter', title: 'Cover Letter', description: 'Regulatory submission cover letter', sectionCode: '1.1', format: 'narrative', aiDraftable: true, category: 'administrative' },
+  // FDA regional Module 1: the cover letter is 1.2; 1.1 is Forms.
+  { id: 'cover_letter', title: 'Cover Letter', description: 'Regulatory submission cover letter', sectionCode: '1.2', format: 'narrative', aiDraftable: true, category: 'administrative' },
   { id: 'quality_overall_summary', title: 'Quality Overall Summary', description: 'Module 2.3 QOS per ICH M4Q', sectionCode: '2.3', format: 'narrative', aiDraftable: true, category: 'quality' },
   { id: 'nonclinical_overview', title: 'Nonclinical Overview', description: 'Module 2.4 nonclinical overview per ICH M4S', sectionCode: '2.4', format: 'narrative', aiDraftable: true, category: 'nonclinical' },
   { id: 'clinical_overview', title: 'Clinical Overview', description: 'Module 2.5 clinical overview per ICH M4E', sectionCode: '2.5', format: 'narrative', aiDraftable: true, category: 'clinical' },
@@ -69,6 +70,10 @@ const TEMPLATE_SETS: Record<string, CatalogTemplateEntry[]> = {
   ctd: CTD_TEMPLATES,
   device: DEVICE_TEMPLATES,
   eu_specific: EU_SPECIFIC_TEMPLATES,
+  k510_summary: [{ id: 'k510_summary', title: '510(k) summary', description: 'Evidence-based narrative summary; not the eSTAR form or a substantial-equivalence decision', format: 'narrative', aiDraftable: true, category: 'device' }],
+  ivdr_per: [{ id: 'performance_evaluation_report', title: 'Performance evaluation report', description: 'Narrative synthesis of supplied scientific validity, analytical and clinical performance evidence; not an evidence assessment', format: 'narrative', aiDraftable: true, category: 'device' }],
+  mdr_gspr: [{ id: 'gspr_checklist', title: 'MDR GSPR checklist', description: 'Preparation groups for the applicable MDR checklist and evidence references', format: 'table', aiDraftable: false, category: 'device' }],
+  ivdr_gspr: [{ id: 'ivdr_gspr_checklist', title: 'IVDR GSPR checklist', description: 'Preparation groups for the applicable IVDR checklist and evidence references', format: 'table', aiDraftable: false, category: 'device' }],
 };
 
 const REGISTRY_TO_TEMPLATE_SETS: Record<string, string[]> = {
@@ -77,9 +82,12 @@ const REGISTRY_TO_TEMPLATE_SETS: Record<string, string[]> = {
   US_BLA: ['ctd'],
   US_ANDA: ['ctd'],
   US_505B2: ['ctd'],
-  US_510K: ['device'],
+  US_510K: ['device', 'k510_summary'],
   US_PMA: ['device'],
   US_DE_NOVO: ['device'],
+  EU_MDR_TECHDOC: ['mdr_gspr'],
+  EU_IVDR: ['ivdr_per', 'ivdr_gspr'],
+  EU_PER: ['ivdr_per'],
   EU_MAA: ['ctd', 'eu_specific'],
   EU_CTA: ['ctd', 'eu_specific'],
   CA_NDS: ['ctd'],
@@ -126,7 +134,7 @@ export function searchTemplates(query: string, registryIdOrLegacy?: string): Cat
   const q = query.toLowerCase();
   const templates = registryIdOrLegacy
     ? getTemplatesForType(registryIdOrLegacy)
-    : [...CTD_TEMPLATES, ...DEVICE_TEMPLATES, ...EU_SPECIFIC_TEMPLATES];
+    : [...new Map(Object.values(TEMPLATE_SETS).flat().map(template => [template.id, template])).values()];
 
   return templates.filter(t =>
     t.title.toLowerCase().includes(q) ||

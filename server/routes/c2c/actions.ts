@@ -15,8 +15,10 @@
  * both substrates or in neither. Its reverse counterpart `revoke-signature`
  * closes the §11.70 supersession chain in that same transaction: it marks the
  * revoked signature superseded and records the revocation as its own
- * attributable row, or — when no live signature is anchored to the target —
- * refuses (409 REVOCATION_TARGET_UNRESOLVED) and writes nothing at all.
+ * attributable row, or — when no live signature answers to what the payload
+ * names (`signatureId`, `signatureActionId`, `intent`) — refuses (409
+ * REVOCATION_TARGET_UNRESOLVED), or when more than one does, refuses (409
+ * REVOCATION_TARGET_AMBIGUOUS, with the candidates), and writes nothing at all.
  *
  * Legacy redirect (handled here):
  *   POST /api/cerv2-sections/:id/accept-ana-draft → delegate to accept-ai-suggestion
@@ -54,22 +56,19 @@ import {
   type SignerRefused,
 } from '../../services/part11/reverify-signer.js';
 import { signerReverificationDeps } from '../../services/part11/reverify-signer-deps.js';
-import { resolveSignerOrgRole } from '../../services/part11/resolve-signer-role.js';
-import { isSigningAuthorized } from '../../services/part11/signing-authority.js';
+import { checkSigningAuthority } from '../../services/part11/signing-authority-gate.js';
 import { evaluateAcceptGate, GroundednessReviewError } from '../../services/ai-governance/review-policy.js';
 import {
   assertSignerIsNotAuthor,
-  SeparationOfDutiesAuthorUnresolvedError,
-  SeparationOfDutiesError,
-  SeparationOfDutiesUnverifiedError,
+  separationOfDutiesRefusal,
 } from '../../services/governance/separation-of-duties.js';
 import { can } from '../../services/governance/permissions.js';
 import {
   persistGovernedSignSignature,
   persistGovernedSignatureRevocation,
   SignatureMeaningError,
-  SignatureRevocationUnresolvedError,
 } from '../../services/part11/signature-persistence.js';
+import { revocationRefusal, revocationSelectorRefusal } from '../../services/part11/revocation-selection.js';
 import { signMeaningRefusal } from '../../services/part11/signature-meanings.js';
 import { clientIpOf } from '../../utils/client-ip';
 import { programInOrganization } from '../../services/c2c/program-access';
@@ -591,41 +590,11 @@ export async function writeMutation(
   }
 }
 
-/**
- * The answer to a separation-of-duties refusal, or null for any other error.
- * One mapping for every route that runs the check (this handler, and
- * POST /api/c2c/documents/:id/lock), so they cannot answer it differently.
- */
-export function separationOfDutiesRefusal(
-  err: unknown,
-  label: string,
-): { status: number; body: { error: string; detail: string } } | null {
-  if (err instanceof SeparationOfDutiesError) {
-    return { status: 403, body: { error: err.code, detail: err.message } };
-  }
-  if (err instanceof SeparationOfDutiesAuthorUnresolvedError) {
-    // The check ran, but the record has no recorded author (or its type has
-    // none modelled), so independence cannot be shown. A retry will not fix it.
-    return { status: 409, body: { error: err.code, detail: err.message } };
-  }
-  if (err instanceof SeparationOfDutiesUnverifiedError) {
-    // The check did not run, which is not the same as the check refusing.
-    // 503, not 403: the user is not the problem, and a retry may succeed.
-    // The error's own message carries the failed lookup's cause, which is
-    // internal; it goes to the log, and the caller gets an authored
-    // sentence (ci:server-error-leaks, 2026-09-23).
-    console.error(`[${label}]`, err.message);
-    return {
-      status: 503,
-      body: {
-        error: err.code,
-        detail:
-          'Separation of duties could not be verified, so nothing was signed. Try again; if this continues, contact your administrator.',
-      },
-    };
-  }
-  return null;
-}
+/* The separation-of-duties refusal mapping moved to the governance module
+   beside the three errors it maps (2026-10-18), so a route is not what another
+   route must import to answer the same refusal the same way. Re-exported here
+   because routes/c2c/documents.ts imports it from this module. */
+export { separationOfDutiesRefusal };
 
 // ── Request handler factory ───────────────────────────────────────────────────
 
@@ -634,45 +603,18 @@ export function separationOfDutiesRefusal(
  * route refuses a missing or unknown one before re-authentication, so a signer
  * is not asked for a password for a request the writer would refuse anyway
  * (the writer, persistGovernedActionSignature, enforces the same rule for every
- * caller). Other commands carry no signer-declared meaning here.
+ * caller). A `revoke-signature` is refused the same way when the signature it
+ * names is malformed (persistGovernedSignatureRevocation applies that rule
+ * too). Other commands carry no signer-declared meaning here.
  */
 function commandMeaningRefusal(command: Command, body: ActionEnvelope) {
-  return command === 'sign' ? signMeaningRefusal(body.payload?.meaning) : null;
-}
-
-/**
- * §11.10(g): identity is not authority. A command that writes an
- * electronic_signatures row is refused unless the signer's organisation role
- * carries signing authority — the one policy every other signing route
- * applies (services/part11/signing-authority), read from the membership row
- * (never the token or the body). The handler runs it BEFORE the credential, so
- * this route is not a password oracle for a role that may not sign. QA walk
- * 2026-10-08 (J8): a manager's 'approval' signature was persisted here while
- * the QMS approve route refused the same role; the only gate here was the
- * GOVERNANCE_RBAC_ENFORCE one, which no environment sets. Null when admitted
- * or when the command writes no signature.
- */
-async function signingAuthorityRefusal(
-  command: Command,
-  userId: number,
-  orgId: number,
-): Promise<{ status: number; body: { error: string; detail?: string } } | null> {
-  if (!SIGNATURE_COMMANDS.has(command)) return null;
-  let signerRole: string | null;
-  try {
-    signerRole = await resolveSignerOrgRole(userId, orgId);
-  } catch (err: any) {
-    console.error(`[c2c/actions/${command}] signer role lookup failed`, err?.message);
-    return { status: 500, body: { error: 'INTERNAL_ERROR' } };
+  if (command === 'revoke-signature') {
+    // A revocation names the signature it withdraws (signatureId,
+    // signatureActionId or intent); a malformed name is refused here, before
+    // re-authentication, by the rule the writer applies too.
+    return revocationSelectorRefusal(body.payload);
   }
-  if (isSigningAuthorized(signerRole)) return null;
-  return {
-    status: 403,
-    body: {
-      error: 'ESIGNATURE_NO_AUTHORITY',
-      detail: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed.',
-    },
-  };
+  return command === 'sign' ? signMeaningRefusal(body.payload?.meaning) : null;
 }
 
 function makeHandler(command: Command) {
@@ -694,8 +636,16 @@ function makeHandler(command: Command) {
     const meaningRefusal = commandMeaningRefusal(command, body);
     if (meaningRefusal) return res.status(400).json(meaningRefusal);
 
-    const authority = await signingAuthorityRefusal(command, userId, orgId);
-    if (authority) return res.status(authority.status).json(authority.body);
+    // §11.10(g): identity is not authority. A command that writes an
+    // electronic_signatures row is refused, before the credential, unless the
+    // signer's membership role carries signing authority — the platform's one
+    // policy (checkSigningAuthority). QA walk 2026-10-08 (J8) found a manager's
+    // 'approval' persisted here; P-27 (same day) deleted this file's own copy of
+    // the check (signingAuthorityRefusal), whose failed lookup answered 500.
+    if (SIGNATURE_COMMANDS.has(command)) {
+      const authority = await checkSigningAuthority(userId, orgId);
+      if (authority) return res.status(authority.status).json({ error: authority.code, detail: authority.message });
+    }
 
     // Re-auth gate for high-risk commands.
     if (HIGH_RISK_COMMANDS.has(command)) {
@@ -779,16 +729,17 @@ function makeHandler(command: Command) {
       }
       const sod = separationOfDutiesRefusal(err, `c2c/actions/${command}`);
       if (sod) return res.status(sod.status).json(sod.body);
-      if (err instanceof SignatureRevocationUnresolvedError) {
-        // Nothing was written (the transaction rolled back). Say so plainly
-        // rather than returning an opaque 500 that reads as "maybe it worked".
-        return res.status(409).json({ error: err.code, detail: err.message });
-      }
+      // A revocation that resolved nothing, more than one signature, or a
+      // malformed name: nothing was written (the transaction rolled back). Say
+      // so plainly rather than returning an opaque 500 that reads as "maybe it
+      // worked"; an ambiguous one names the candidates.
+      const revocation = revocationRefusal(err);
+      if (revocation) return res.status(revocation.status).json(revocation.body);
       if (err instanceof SignatureMeaningError) {
         // Refused ahead of the signer lookup; nothing was written.
         return res.status(400).json({ error: err.code, detail: err.message });
       }
-      console.error(`[c2c/actions/${command}]`, err?.message);
+      console.error('[c2c/actions/%s]', command, err?.message);
       return res.status(500).json({ error: 'INTERNAL_ERROR' });
     }
   };

@@ -430,7 +430,7 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'submissions',
     label: 'Switch the submission workspace',
     description:
-      'In the Submission Center, switch between its workspaces. The builder, validation, shadow-review, cross-region, and dispatch workspaces need a submission (and sequence) selected first — select one before switching there. Refused while an e-signature dialog is open or a lifecycle transition is in flight.',
+      'In the Submission Center, switch between its workspaces. The builder, validation, shadow-review and dispatch workspaces need a submission (and sequence) selected first — select one before switching there. Refused while an e-signature dialog is open or a lifecycle transition is in flight.',
     params: [
       {
         name: 'workspace',
@@ -443,7 +443,6 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
           'sequences',
           'validation',
           'shadow-review',
-          'cross-region',
           'dispatch',
         ],
       },
@@ -815,18 +814,6 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
-  // ── Inconsistency board ──
-  {
-    id: 'inconsistency.set-regulator',
-    surfaceId: 'inconsistency',
-    label: 'Switch the regulator overlay',
-    description:
-      'On the inconsistency board, switch the FDA/EMA overlay — a client-side re-scoring of the same findings; the applied detail restates the gate verdict under the new overlay. Scans, resolutions, and assumption revaluations stay governed human acts.',
-    params: [
-      { name: 'regulator', required: true, description: 'The regulator overlay to apply.', enum: ['FDA', 'EMA'] },
-    ],
-  },
-
   // ── Capability catalog ──
   {
     id: 'intelligence-catalog.filter',
@@ -1184,18 +1171,6 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
-  // ── Health-authority questions ──
-  {
-    id: 'haq-manager.select-question',
-    surfaceId: 'haq-manager',
-    label: 'Open a health-authority question',
-    description:
-      'On the HAQ manager, open an agency question by its id or its text so its analysis, draft and commitments show. Drafting an answer and committing a response stay governed human acts. Honest misses; held while the rounds load.',
-    params: [
-      { name: 'question', required: true, description: 'The question id (e.g. "HAQ-01") or a distinctive phrase from its text.' },
-    ],
-  },
-
   // ── Biostatistics workbench ──
   {
     id: 'biostat-workbench.select-calculator',
@@ -1405,6 +1380,218 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
       'On the shadow-review surface, switch to a simulated-reviewer lens (e.g. FDA filing reviewer, EMA D120 assessor, PMDA reviewer, MDR/IVDR notified body) by its id or label — the same click a person makes. Switching to a lens that has not yet been run is honest and expected: it shows the "not assessed" state rather than a fabricated clean pass. Running the lens itself stays a deliberate act elsewhere on the screen.',
     params: [
       { name: 'lens', required: true, description: 'The lens id (e.g. "fda_filing") or its label (e.g. "FDA filing reviewer"), case-insensitive.' },
+    ],
+  },
+
+  // ── Wave 7: the launch-catalog screens AnA could reach but not operate ──
+  //
+  // An audit of the shipped catalog found 13 of its 29 screens with no action
+  // at all: she navigated there and then had nothing to do. These are the
+  // view-state operations their own controls already perform — each handler
+  // drives the same state the human control drives, and names the control it
+  // mirrors. Three of the 13 are deliberately still empty: Submission
+  // Readiness and the Part 11 console hold no view state (they are verdicts,
+  // not workspaces), and Setup is a launcher. The conversation screen's own
+  // document list is not here either: it would need the chat to become a
+  // navigation target, which is a shell decision, not a registry one.
+  //
+  // An entry lands here only once its screen's handler does. A registered
+  // action with no handler is a dead end: AnA is told she can do it, tries,
+  // and the bus refuses — so she reports a capability the product does not
+  // have. That is now a gate, not a convention: launchSurfaceOperability.test.ts
+  // refuses an action with no handler, a handler no action names, and a
+  // launch-catalog screen with a view and no action unless it carries a written
+  // reason. The screens still owed — compliance reports, the reporting canvas,
+  // the identity console and both onboarding screens — are surveyed and
+  // specified, and land with their handlers
+  // (docs/evidence/W1/2026-09-28-ana-drive/ui-coverage.txt).
+  {
+    id: 'audit-trail.filter-entries',
+    surfaceId: 'audit-trail',
+    label: 'Filter the audit trail by kind',
+    description:
+      'On the audit trail, filter the hash-chained ledger to one kind of governed event — the same ' +
+      'selection the kind segment buttons make. A kind with no entries still applies and the ' +
+      'resulting count is reported truthfully; it is never presented as the trail being empty.',
+    params: [
+      {
+        name: 'kind',
+        required: true,
+        description:
+          'The event kind to filter to, or "all" for the whole ledger.',
+        enum: ['all', 'esign', 'authoring', 'review', 'submission', 'vault', 'validation', 'admin'],
+      },
+    ],
+  },
+  {
+    id: 'audit-trail.search',
+    surfaceId: 'audit-trail',
+    label: 'Search the audit trail',
+    description:
+      'On the audit trail, run the search box over the ledger rows on screen — matches entry id, ' +
+      'event, actor, actor account, target and record reference. A local view filter; zero matches is ' +
+      'a truthful result and is reported as a count, not as an empty trail.',
+    params: [
+      {
+        name: 'query',
+        required: true,
+        description:
+          'Text to search the ledger for — an entry id (e.g. "AUD-0007"), an event name, an actor, a ' +
+          'target or a record reference.',
+      },
+    ],
+  },
+  {
+    id: 'audit-trail.select-entry',
+    surfaceId: 'audit-trail',
+    label: 'Open an audit entry',
+    description:
+      'On the audit trail, open one ledger entry\'s detail panel — its event, timestamp, target, ' +
+      'record and signature references, kind, origin IP, reason for change, signature meaning, entry ' +
+      'hash and previous hash. Named by entry id (e.g. "AUD-0007") or by event text; resolved against ' +
+      'the real ledger with honest misses. When the only match is hidden by the kind filter or the ' +
+      'search, those are cleared first and the detail says so. Reading an entry is all that happens — ' +
+      'the ledger is append-only and nothing here can alter it.',
+    params: [
+      {
+        name: 'entry',
+        required: true,
+        description:
+          'The entry id as shown in the ID column, or the event text (case-insensitive; partial text ' +
+          'resolves when unambiguous).',
+      },
+    ],
+  },
+  {
+    id: 'audit-trail.set-chain-view',
+    surfaceId: 'audit-trail',
+    label: 'Show or hide the hash-chain view',
+    description:
+      'On the audit trail, show or hide the hash-chain view — the newest-to-oldest chain of entry ' +
+      'hashes beside the ledger table, where each entry links to the previous one. The same toggle ' +
+      'the Hash chain header button makes. It changes only what is displayed; it does not verify the ' +
+      'chain (the verdict in the banner is the server\'s).',
+    params: [
+      {
+        name: 'state',
+        required: true,
+        description:
+          'Whether the hash-chain view should be showing.',
+        enum: ['shown', 'hidden'],
+      },
+    ],
+  },
+  {
+    id: 'audit-trail.close-entry',
+    surfaceId: 'audit-trail',
+    label: 'Close the open audit entry',
+    description:
+      'On the audit trail, close the entry detail panel and clear the row selection, returning the ' +
+      'screen to the list. Precedent: intelligence.close-capability.',
+  },
+  {
+    id: 'apps.show-admin-controls',
+    surfaceId: 'apps',
+    label: 'Show or hide the admin controls',
+    description:
+      'On the Apps catalog, show or hide the administrator controls — the per-module enable/disable ' +
+      'switches on the app cards. This only changes what is displayed: switching a module on or off ' +
+      'for the organisation stays an administrator\'s own click on the switch this reveals (a ' +
+      'persisted, admin-only write). Refuses honestly when the catalog has not loaded, failed, is ' +
+      'empty, or when no module on screen has a switch at all (plan or industry-mode locks have no ' +
+      'switch), naming the modules and the reason in that case.',
+    params: [
+      {
+        name: 'state',
+        required: true,
+        description:
+          'Whether the admin controls should be showing. \'on\' reveals the per-module switches (same ' +
+          'as the header\'s "Admin controls" button and a locked card\'s "Admin controls" button); ' +
+          '\'off\' hides them and restores the Open / upgrade buttons.',
+        enum: ['on', 'off'],
+      },
+    ],
+  },
+  {
+    id: 'submission-gateway.show-status',
+    surfaceId: 'submission-gateway',
+    label: 'Show a transmittal\'s gateway status',
+    description:
+      'On Submission Gateway Transmittals, open the gateway-status card for one logged transmittal — ' +
+      'the same read the row\'s Status control performs. Name the transmittal by its log number as ' +
+      'shown ("#12" or "12") or by its gateway reference; resolved against the rows the log renders, ' +
+      'with the logged numbers named back on a miss so the next attempt uses a real one. The card ' +
+      'itself states whether the agency was polled or the last recorded state is being shown; it ' +
+      'changes nothing at the agency and nothing on file.',
+    params: [
+      {
+        name: 'transmittal',
+        required: true,
+        description:
+          'The transmittal to show, by its log number as the table renders it ("#12" or "12") or by ' +
+          'its gateway reference string from the Gateway ref column.',
+      },
+    ],
+  },
+  {
+    id: 'ectd-compile.set-region',
+    surfaceId: 'ectd-compile',
+    label: 'Switch the compile region',
+    description:
+      'On eCTD Compile & Export, switch the Region menu between US · FDA and EU · EMA — the region ' +
+      'the next Validate or Compile is run for. A selector only: nothing is sent until a person ' +
+      'clicks Validate or Compile. A sequence that already records its own region has no Region menu ' +
+      'at all, and the refusal names the recorded region and sequence.',
+    params: [
+      {
+        name: 'region',
+        required: true,
+        description:
+          'The region to select, as the Region menu\'s values: "FDA" (shown "US · FDA") or "EMA" ' +
+          '(shown "EU · EMA"). From REGIONS at EctdCompile.tsx:827.',
+        enum: ['FDA', 'EMA'],
+      },
+    ],
+  },
+  {
+    id: 'ectd-compile.set-submission-type',
+    surfaceId: 'ectd-compile',
+    label: 'Switch the submission type',
+    description:
+      'On eCTD Compile & Export, switch the Submission menu between "initial" and "amendment" — the ' +
+      'type the next compile is run as. The same menu a person uses; a selector only, nothing is sent ' +
+      'until a person clicks Compile.',
+    params: [
+      {
+        name: 'submissionType',
+        required: true,
+        description:
+          'The submission type to select, as the Submission menu lists it. From SUB_TYPES at ' +
+          'EctdCompile.tsx:828.',
+        enum: ['initial', 'amendment'],
+      },
+    ],
+  },
+  {
+    id: 'ectd-compile.load-run',
+    surfaceId: 'ectd-compile',
+    label: 'Load an orchestrator run',
+    description:
+      'On eCTD Compile & Export, load an orchestrator run by its run id — the same thing the Load run ' +
+      'button does: fills the Orchestrator run box and reads that run\'s 11 pipeline steps, its ' +
+      'release-signature state and its audit trail. A read; nothing is assembled, signed or ' +
+      'dispatched. This screen lists no run ids, so an id the organisation cannot see comes back as ' +
+      'the panel\'s own honest miss ("No run with that id is visible to your organization"), not as a ' +
+      'result.',
+    params: [
+      {
+        name: 'run',
+        required: true,
+        description:
+          'The orchestrator run id, as pasted into the Orchestrator run box. Free text — this screen ' +
+          'lists no run ids, so there is no set to choose from; the id comes from the Orchestration ' +
+          'board or from the run that built the package.',
+      },
     ],
   },
 ] as const;

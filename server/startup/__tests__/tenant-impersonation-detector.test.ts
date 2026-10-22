@@ -14,13 +14,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import type { NextFunction, Request, Response } from 'express';
 
-const audit = vi.hoisted(() => ({ logAction: vi.fn(async (..._args: any[]) => undefined) }));
+const audit = vi.hoisted(() => ({ logAction: vi.fn(async (..._args: any[]) => ({ persisted: true, chained: true, tamperProof: true })) }));
 vi.mock('../../services/auditService', () => ({ default: audit }));
 
 import { validateTenantContext } from '../../middleware/enterprise-security';
 import { applyAuthBoundary } from '../middleware';
 
-function call(user: unknown, headerOrg?: string) {
+async function call(user: unknown, headerOrg?: string) {
   const req = {
     // As the '/api' mount hands the request over: Express 5 makes req.path
     // mount-relative and puts the mount point in req.baseUrl.
@@ -41,7 +41,7 @@ function call(user: unknown, headerOrg?: string) {
     return res;
   };
   const next = vi.fn() as unknown as NextFunction;
-  validateTenantContext(req, res as Response, next);
+  await validateTenantContext(req, res as Response, next);
   return { req, res, next };
 }
 
@@ -49,7 +49,7 @@ afterEach(() => audit.logAction.mockClear());
 
 describe('validateTenantContext, given a session', () => {
   it("refuses a header naming another organisation (403 TENANT_MISMATCH) and audits it", async () => {
-    const { res, next } = call({ id: 7, organizationId: 7 }, '9');
+    const { res, next } = await call({ id: 7, organizationId: 7 }, '9');
     expect(res.statusCode).toBe(403);
     expect(res.body).toMatchObject({ code: 'TENANT_MISMATCH' });
     expect(next).not.toHaveBeenCalled();
@@ -59,18 +59,28 @@ describe('validateTenantContext, given a session', () => {
     expect(audit.logAction.mock.calls[0][0]).toMatchObject({ details: expect.objectContaining({ path: '/api/vault/documents' }) });
   });
 
-  it('passes a header naming the session\'s own organisation', () => {
-    const { next } = call({ id: 7, organizationId: 7 }, '7');
+  it('retains the 403 and discloses an actual lost security audit without exposing its diagnostics', async () => {
+    audit.logAction.mockRejectedValueOnce(new Error('private database outage'));
+    const { res, next } = await call({ id: 7, organizationId: 7 }, '9');
+    expect(res.statusCode).toBe(403);expect(next).not.toHaveBeenCalled();
+    expect(res.body.meta.auditTrail).toMatchObject({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' });
+    expect(JSON.stringify(res.body)).not.toContain('private database outage');
+    const recovered = await call({ id: 7, organizationId: 7 }, '9');
+    expect(recovered.res.body.meta.auditTrail).toEqual({ persisted: true, chained: true });
+  });
+
+  it('passes a header naming the session\'s own organisation', async () => {
+    const { next } = await call({ id: 7, organizationId: 7 }, '7');
     expect(next).toHaveBeenCalledOnce();
   });
 
-  it('passes a request with no header', () => {
-    const { next } = call({ id: 7, organizationId: 7 });
+  it('passes a request with no header', async () => {
+    const { next } = await call({ id: 7, organizationId: 7 });
     expect(next).toHaveBeenCalledOnce();
   });
 
-  it('with no session it neither refuses nor adopts the header (the boundary already answered)', () => {
-    const { req, next } = call(undefined, '9');
+  it('with no session it neither refuses nor adopts the header (the boundary already answered)', async () => {
+    const { req, next } = await call(undefined, '9');
     expect(next).toHaveBeenCalledOnce();
     expect((req as any).organizationId).toBeUndefined();
   });
@@ -79,15 +89,24 @@ describe('validateTenantContext, given a session', () => {
 describe('where it is mounted', () => {
   it('applyAuthBoundary mounts the boundary and then the detector on /api', () => {
     const app = express();
-    const stack = () => ((app as any).router ?? (app as any)._router).stack as Array<{ handle: { name: string } }>;
+    const stack = () => ((app as any).router ?? (app as any)._router).stack as Array<{
+      handle: { name: string };
+      route?: { path: string; methods: Record<string, boolean>; stack: Array<{ handle: { name: string } }> };
+    }>;
     const before = stack().length;
     applyAuthBoundary(app);
-    const added = stack().slice(before).map((l) => l.handle.name);
+    const layers = stack().slice(before);
+    const added = layers.map((l) => l.handle.name);
     // The boundary, then the detector; then, since 2026-09-26, the Concept2Cure
     // body parsers and their scrub, which read a body only for a session that
     // passed the boundary (security audit IAM-18 item 7).
     expect(added.slice(0, 2), 'the detector is not mounted behind the boundary').toHaveLength(2);
     expect(added[1]).toBe('validateTenantContext');
-    expect(added.slice(2), 'the Concept2Cure parsers do not follow the boundary').toEqual(['jsonParser', 'urlencodedParser', 'sanitizeInput']);
+    expect(added.slice(2,5), 'the Concept2Cure parsers do not follow the boundary').toEqual(['jsonParser', 'urlencodedParser', 'sanitizeInput']);
+    const reportParser = layers[5]?.route;
+    expect(reportParser?.path).toBe('/api/audit/reports/convert');
+    expect(reportParser?.methods).toEqual({ post: true });
+    expect(reportParser?.stack.map(layer => layer.handle.name)).toEqual(['jsonParser','sanitizeInput']);
+    expect(layers).toHaveLength(6);
   });
 });

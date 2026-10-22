@@ -61,7 +61,7 @@ See https://avd.aquasec.com/misconfig/ksv-0014
   36 │             - name: PORT
   37 │               value: "3000"
   38 └             - name: SHADOW_SERVICE_URL
-  ..   
+  ..
 ────────────────────────────────────────
 
 
@@ -82,7 +82,7 @@ See https://avd.aquasec.com/misconfig/ksv-0014
   80 │             - name: ADMIN_TOKEN
   81 │               valueFrom:
   82 └                 secretKeyRef:
-  ..   
+  ..
 ────────────────────────────────────────
 
 
@@ -103,7 +103,7 @@ See https://avd.aquasec.com/misconfig/ksv-0118
   80 │             - name: ADMIN_TOKEN
   81 │               valueFrom:
   82 └                 secretKeyRef:
-  ..   
+  ..
 ────────────────────────────────────────
 
 
@@ -124,7 +124,7 @@ See https://avd.aquasec.com/misconfig/ksv-0118
   36 │             - name: PORT
   37 │               value: "3000"
   38 └             - name: SHADOW_SERVICE_URL
-  ..   
+  ..
 ────────────────────────────────────────
 
 
@@ -145,7 +145,7 @@ See https://avd.aquasec.com/misconfig/ksv-0118
   32 │           ports:
   33 │             - containerPort: 3000
   34 └               name: http
-  ..   
+  ..
 ────────────────────────────────────────
 
 
@@ -201,9 +201,9 @@ See https://avd.aquasec.com/misconfig/aws-0052
   22 │   # The module's own group always applies: the CloudFront-only rule lives there.
   23 │   security_groups = distinct(concat([aws_security_group.alb.id], var.security_group_ids))
   24 │   subnets         = var.public_subnet_ids
-  25 │ 
+  25 │
   26 └   enable_deletion_protection = var.deletion_protection
-  ..   
+  ..
 ────────────────────────────────────────
 
 
@@ -226,9 +226,9 @@ See https://avd.aquasec.com/misconfig/aws-0052
   22 │   # The module's own group always applies: the CloudFront-only rule lives there.
   23 │   security_groups = distinct(concat([aws_security_group.alb.id], var.security_group_ids))
   24 │   subnets         = var.public_subnet_ids
-  25 │ 
+  25 │
   26 └   enable_deletion_protection = var.deletion_protection
-  ..   
+  ..
 ────────────────────────────────────────
 
 
@@ -245,9 +245,9 @@ See https://avd.aquasec.com/misconfig/aws-0053
      via terraform/environments/production/main.tf:40-83 (module.stack)
 ────────────────────────────────────────
   18   resource "aws_lb" "this" {
-  ..   
+  ..
   20 [   internal           = false
-  ..   
+  ..
   35   }
 ────────────────────────────────────────
 
@@ -265,9 +265,9 @@ See https://avd.aquasec.com/misconfig/aws-0053
      via terraform/environments/staging/main.tf:40-85 (module.stack)
 ────────────────────────────────────────
   18   resource "aws_lb" "this" {
-  ..   
+  ..
   20 [   internal           = false
-  ..   
+  ..
   35   }
 ────────────────────────────────────────
 
@@ -296,9 +296,9 @@ See https://avd.aquasec.com/misconfig/aws-0011
  111 │   aliases             = var.domain_aliases
  112 │   price_class         = var.price_class
  113 │   comment             = "C2C frontend - ${var.bucket_name}"
- 114 │ 
+ 114 │
  115 └   origin {
- ...   
+ ...
 ────────────────────────────────────────
 
 
@@ -320,9 +320,9 @@ See https://avd.aquasec.com/misconfig/aws-0011
  111 │   aliases             = var.domain_aliases
  112 │   price_class         = var.price_class
  113 │   comment             = "C2C frontend - ${var.bucket_name}"
- 114 │ 
+ 114 │
  115 └   origin {
- ...   
+ ...
 ────────────────────────────────────────
 
 
@@ -392,9 +392,9 @@ See https://avd.aquasec.com/misconfig/aws-0104
       via terraform/environments/production/main.tf:40-83 (module.stack)
 ────────────────────────────────────────
   94   resource "aws_security_group" "ecs_tasks" {
-  ..   
+  ..
  111 [     cidr_blocks = ["0.0.0.0/0"]
- ...   
+ ...
  115   }
 ────────────────────────────────────────
 
@@ -413,9 +413,9 @@ See https://avd.aquasec.com/misconfig/aws-0104
       via terraform/environments/staging/main.tf:40-85 (module.stack)
 ────────────────────────────────────────
   94   resource "aws_security_group" "ecs_tasks" {
-  ..   
+  ..
  111 [     cidr_blocks = ["0.0.0.0/0"]
- ...   
+ ...
  115   }
 ────────────────────────────────────────
 

@@ -154,7 +154,7 @@ jobs:
         # expects the failure, then the safe forms and the baseline semantics.
         # Each was mutation-checked against copies of its gate (2026-10-01,
         # docs/evidence/D6/2026-10-01-gate-selftests/).
-        run: npm run ci:audit-route-mounts:selftest && npm run ci:audit-logs-fixture:selftest && npm run ci:tenant-isolation-justifications:selftest && npm run ci:committed-secrets:selftest && npm run ci:gateway-bypass:selftest && npm run ci:no-dev-auth-in-prod:selftest && npm run ci:org-path-param-guards:selftest && npm run ci:password-hygiene:selftest && npm run ci:purge-coverage:selftest && npm run ci:regulated-delete-audit:selftest && npm run ci:rls-allowlist-sync:selftest && npm run ci:route-ownership-matrix:selftest && npm run ci:server-error-leaks:selftest && npm run ci:session-scoped-rls-bypass:selftest && npm run ci:tenant-blind-models:selftest && npm run ci:tenant-column-types:selftest && npm run ci:tenant-entry-points:selftest && npm run ci:tenant-isolation:selftest && npm run ci:tenant-resolvers:selftest
+        run: npm run ci:audit-route-mounts:selftest && npm run ci:audit-logs-fixture:selftest && npm run ci:tenant-isolation-justifications:selftest && npm run ci:committed-secrets:selftest && npm run ci:gateway-bypass:selftest && npm run ci:no-dev-auth-in-prod:selftest && npm run ci:org-path-param-guards:selftest && npm run ci:password-hygiene:selftest && npm run ci:purge-coverage:selftest && npm run ci:regulated-delete-audit:selftest && npm run ci:rls-allowlist-sync:selftest && npm run ci:route-ownership-matrix:selftest && npm run ci:server-error-leaks:selftest && npm run ci:session-scoped-rls-bypass:selftest && npm run ci:sql-interpolation:selftest && npm run ci:tenant-blind-models:selftest && npm run ci:tenant-column-types:selftest && npm run ci:tenant-entry-points:selftest && npm run ci:tenant-isolation:selftest && npm run ci:tenant-resolvers:selftest
 
       - name: Guardrails — no jsonb operator on a json column
         if: "!cancelled() && steps.install.conclusion == 'success'"
@@ -569,6 +569,7 @@ jobs:
           npm run ci:reasoning-tier-ga-readiness
           npm run ci:reasoning-tier-uat-evidence
           npm run ci:session-scoped-rls-bypass
+          npm run ci:sql-interpolation
           npm run ci:tenant-resolvers
 
       - name: Security gates that ran only in the pre-push hook
@@ -829,6 +830,20 @@ jobs:
           npm run ci:sign-ceremony:selftest
           npm run ci:sign-ceremony
 
+      - name: Guardrails — a seal asks whether the filing holds the document's text (P-29.2)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # An exit attests to the editing layer and the filing is a derived
+        # projection, so a seal, a signature, or a device package built from the
+        # filing must first prove the two agree (filingAgreesWithEditing). Round
+        # 16 shipped that check at the freeze and left /e-sign as APPROVER — the
+        # path a client actually uses — passing no check at all for a round,
+        # with every test green: an absent gate at the next door, invisible
+        # because every door that has it keeps working. The selftest runs first
+        # because this gate's value is in a branch a healthy tree never fires.
+        run: |
+          npm run ci:filing-exit-agreement:selftest
+          npm run ci:filing-exit-agreement
+
       - name: Guardrails — only named writers change a recorded Vault version (Part 11)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # The record guard (migrations/20260926_vault_documents_record_immutability.sql)
@@ -1023,6 +1038,21 @@ jobs:
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run audit:repo-health:no-regression
 
+      # The no-regression step above compares against
+      # docs/reports/repo-health-scan-latest.json, which
+      # repo-health-baseline-refresh.yml regenerates and commits on every push
+      # to concept2cure-v2. That design assumes PRs ("PRs branched after a
+      # merge therefore always see delta 0"), and RULE 0 means this repository
+      # has none — every change is a direct push to trunk, so each push's
+      # growth is absorbed into the baseline before any later run compares
+      # against it. WO-12 recorded 95 files over 1,500 lines on that reasoning;
+      # the tree reached 114 with the delta reading 0. This ceiling lives in
+      # package.json, where the auto-refresh cannot reach it, and is set at the
+      # measured count: nothing existing is blocked, only new growth fails.
+      - name: Guardrails — no new file over the size ceiling
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run audit:repo-health:ceiling
+
       - name: Audit — orphaned endpoints (threshold 1184)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # Regenerates docs/reports/orphan-endpoints-latest.{json,md} and fails
@@ -1191,7 +1221,9 @@ jobs:
         # backbones for real. Its suite skipIf's when the binary is absent —
         # installing it here is what makes CI actually run that conformance
         # evidence rather than silently skipping it.
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client libxml2-utils
+        # Match the production PDF runtime; missing Noto fonts must not
+        # turn actual governed export tests into a skipped or mocked pass.
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client fonts-noto-core fonts-noto-cjk libxml2-utils
 
       - name: Setup Python (document runtime)
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
@@ -1281,7 +1313,9 @@ jobs:
         run: npm ci
 
       - name: Install Postgres client
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+        # Match the production PDF runtime; missing Noto fonts must not
+        # turn actual governed export tests into a skipped or mocked pass.
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client fonts-noto-core fonts-noto-cjk
 
       - name: Apply GCC migrations
         run: |
@@ -1438,7 +1472,9 @@ jobs:
           echo "::error::npm ci failed after 3 attempts"; exit 1
 
       - name: Install Postgres client
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+        # Match the production PDF runtime; missing Noto fonts must not
+        # turn actual governed export tests into a skipped or mocked pass.
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client fonts-noto-core fonts-noto-cjk
 
       - name: Apply GCC migrations
         run: |
@@ -1947,6 +1983,38 @@ jobs:
           npm run ci:server-bundle-prod-imports
           npm run ci:server-bundle-prod-imports:selftest
 
+      # Production refuses to boot without a virus scanner (MR-08:
+      # services/securityHealth.ts, clamav_connectivity) and refuses every upload it
+      # cannot scan (middleware/uploadSafety.ts), and /readyz reports it. So this job
+      # runs the scanner production runs: the image Terraform pins beside the API
+      # (terraform/stack/variables.tf, scanner_image), read from there so the two
+      # cannot drift. Never SECURITY_SELF_TEST_NONBLOCKING: the boot is what this
+      # job proves. clamd answers only once its signature database has loaded.
+      - name: Start the pinned virus scanner (clamd) and wait for it
+        run: |
+          IMAGE=$(awk '/^variable "scanner_image"/{f=1} f && /^[[:space:]]*default[[:space:]]*=/{sub(/^[^"]*"/, ""); sub(/".*$/, ""); print; exit}' terraform/stack/variables.tf)
+          if ! echo "$IMAGE" | grep -Eq '@sha256:[0-9a-f]{64}$'; then
+            echo "::error::terraform/stack/variables.tf scanner_image default is not digest-pinned: '$IMAGE'"; exit 1
+          fi
+          # Configured as Terraform configures it: StreamMaxLength is the largest
+          # upload (server/config/platform-limits.ts), AlertExceedsMax reports a
+          # file it could not scan whole.
+          MB=$(grep -oE 'maxUploadBytes: [0-9]+ \* 1024 \* 1024' server/config/platform-limits.ts | grep -oE '^maxUploadBytes: [0-9]+' | grep -oE '[0-9]+' || true)
+          if [ -z "$MB" ]; then echo "::error::FILE_LIMITS.maxUploadBytes not found in server/config/platform-limits.ts"; exit 1; fi
+          echo "scanner image: $IMAGE (StreamMaxLength ${MB}M)"
+          docker run -d --name clamav -p 127.0.0.1:3310:3310 \
+            -e CLAMD_CONF_StreamMaxLength="${MB}M" -e CLAMD_CONF_AlertExceedsMax=yes "$IMAGE"
+          for i in $(seq 1 300); do
+            if docker exec clamav clamdcheck.sh >/dev/null 2>&1; then echo "clamd ready after ${i}s"; exit 0; fi
+            if [ "$(docker inspect --format '{{.State.Running}}' clamav)" != "true" ]; then
+              docker logs --tail 80 clamav; echo "::error::the clamav container exited before clamd answered."; exit 1
+            fi
+            if [ $((i % 30)) -eq 0 ]; then echo "…clamd still loading its database at ${i}s"; fi
+            sleep 1
+          done
+          docker logs --tail 80 clamav
+          echo "::error::clamd did not answer within 300s."; exit 1
+
       # The assertion: the built server, in production mode, under the only RLS
       # value production accepts, as the least-privilege role, reaches ready.
       - name: Boot in production mode and require /readyz=200
@@ -1995,6 +2063,10 @@ jobs:
           NODE_ENV: production
           RLS_ENFORCE: 'on'
           PORT: '5199'
+          # The scanner started above (MR-08). Boot scans the EICAR test string
+          # through it, and /readyz pings it.
+          CLAMAV_HOST: 127.0.0.1
+          CLAMAV_PORT: '3310'
           # Migrations/admin keep the owner URL; the request-serving pool is the
           # least-privilege role. This split is the whole point of the job.
           DATABASE_URL: postgresql://postgres@localhost:5432/c2c_boot
@@ -2068,9 +2140,15 @@ jobs:
           AI_SENSITIVE_DATA_POLICY_MODE: enforce
           AI_PROVIDER_PLACEMENT_APPROVALS: '{"private-deployment":{"region":"us","zeroRetentionApproved":true,"approvedDataClasses":[],"approvedIntendedUses":[]}}'
 
-      - name: Tear down PostgreSQL
+      # The scanner's own account of a boot that could not reach it, before the
+      # teardown below deletes the container that holds it.
+      - name: Scanner log on failure
+        if: failure()
+        run: docker logs --tail 60 clamav || true
+
+      - name: Tear down PostgreSQL and the scanner
         if: always()
-        run: docker rm -f pgboot || true
+        run: docker rm -f pgboot clamav || true
 
   # The image itself, not the source (launch row D1; evidence
   # docs/evidence/W2/2026-10-01-image-boot/). production-boot-smoke above runs
@@ -2080,6 +2158,8 @@ jobs:
   # starts the production image as `appuser` under RLS_ENFORCE=on as app_service,
   # requires /healthz and /readyz to answer 200, and signs a person in, second
   # factor included, from inside the image (scripts/ci/image-boot-signin.mjs).
+  # Since MR-08 it runs beside the pinned clamd, as production does, and that
+  # person uploads an EICAR file (400 FILE_SCAN_REJECTED) and a clean PDF (201).
   # The session that wrote it could not build the image (its network refuses
   # Debian's mirrors); GitHub's runners reach them, as deploy-aws.yml's build does.
   production-image-boot:
@@ -2094,6 +2174,14 @@ jobs:
       APP_SERVICE_PASSWORD: ci-image-boot-app-service-password
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup Node.js for download regression checks
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+
+      - name: Verify pinned validator download failures and fallback
+        run: node --test scripts/ci/__tests__/verapdf-download.test.mjs
 
       - name: Build the provision and production images (as deploy-aws.yml does)
         run: |
@@ -2141,6 +2229,38 @@ jobs:
             -e PGSSLROOTCERT=/ca/server.crt \
             c2c-provision:ci
 
+      # Production refuses to boot without a virus scanner (MR-08:
+      # services/securityHealth.ts, clamav_connectivity) and refuses every upload it
+      # cannot scan (middleware/uploadSafety.ts), and /readyz reports it. So this job
+      # runs the scanner production runs: the image Terraform pins beside the API
+      # (terraform/stack/variables.tf, scanner_image), read from there so the two
+      # cannot drift. Never SECURITY_SELF_TEST_NONBLOCKING: the boot is what this
+      # job proves. clamd answers only once its signature database has loaded.
+      - name: Start the pinned virus scanner (clamd) and wait for it
+        run: |
+          IMAGE=$(awk '/^variable "scanner_image"/{f=1} f && /^[[:space:]]*default[[:space:]]*=/{sub(/^[^"]*"/, ""); sub(/".*$/, ""); print; exit}' terraform/stack/variables.tf)
+          if ! echo "$IMAGE" | grep -Eq '@sha256:[0-9a-f]{64}$'; then
+            echo "::error::terraform/stack/variables.tf scanner_image default is not digest-pinned: '$IMAGE'"; exit 1
+          fi
+          # Configured as Terraform configures it: StreamMaxLength is the largest
+          # upload (server/config/platform-limits.ts), AlertExceedsMax reports a
+          # file it could not scan whole.
+          MB=$(grep -oE 'maxUploadBytes: [0-9]+ \* 1024 \* 1024' server/config/platform-limits.ts | grep -oE '^maxUploadBytes: [0-9]+' | grep -oE '[0-9]+' || true)
+          if [ -z "$MB" ]; then echo "::error::FILE_LIMITS.maxUploadBytes not found in server/config/platform-limits.ts"; exit 1; fi
+          echo "scanner image: $IMAGE (StreamMaxLength ${MB}M)"
+          docker run -d --name clamav -p 127.0.0.1:3310:3310 \
+            -e CLAMD_CONF_StreamMaxLength="${MB}M" -e CLAMD_CONF_AlertExceedsMax=yes "$IMAGE"
+          for i in $(seq 1 300); do
+            if docker exec clamav clamdcheck.sh >/dev/null 2>&1; then echo "clamd ready after ${i}s"; exit 0; fi
+            if [ "$(docker inspect --format '{{.State.Running}}' clamav)" != "true" ]; then
+              docker logs --tail 80 clamav; echo "::error::the clamav container exited before clamd answered."; exit 1
+            fi
+            if [ $((i % 30)) -eq 0 ]; then echo "…clamd still loading its database at ${i}s"; fi
+            sleep 1
+          done
+          docker logs --tail 80 clamav
+          echo "::error::clamd did not answer within 300s."; exit 1
+
       - name: Start the production image and require /healthz and /readyz = 200
         run: |
           # The production posture production-boot-smoke runs, as an env file.
@@ -2173,6 +2293,8 @@ jobs:
           AI_SENSITIVE_DATA_POLICY_MODE=enforce
           AI_PROVIDER_PLACEMENT_APPROVALS={"private-deployment":{"region":"us","zeroRetentionApproved":true,"approvedDataClasses":[],"approvedIntendedUses":[]}}
           ALLOWED_ORIGINS=https://image-boot.invalid
+          CLAMAV_HOST=127.0.0.1
+          CLAMAV_PORT=3310
           ENV
           docker run -d --name c2c-app --network host \
             -v "$RUNNER_TEMP/ca:/ca:ro" --env-file "$RUNNER_TEMP/app.env" c2c-app:ci
@@ -2201,7 +2323,10 @@ jobs:
           echo "/healthz=$HEALTH"
           if [ "$HEALTH" != "200" ]; then echo "::error::/healthz answered $HEALTH"; exit 1; fi
 
-      - name: Sign a person in to the running image, second factor included
+      # Then, as that person: a project, an EICAR test file refused (400
+      # FILE_SCAN_REJECTED) and a clean one-page PDF filed (201), through the
+      # scanner above, on the shipped image (MR-08 stage 1).
+      - name: Sign a person in to the running image, second factor included, and upload through the scanner
         run: |
           docker run --rm --network host -w /app \
             -v "$PWD/scripts/ci/image-boot-signin.mjs:/app/image-boot-signin.mjs:ro" \
@@ -2213,11 +2338,14 @@ jobs:
 
       - name: Container log on failure
         if: failure()
-        run: docker logs --tail 200 c2c-app || true
+        run: |
+          docker logs --tail 200 c2c-app || true
+          echo "──────── clamav ────────"
+          docker logs --tail 60 clamav || true
 
       - name: Tear down
         if: always()
-        run: docker rm -f c2c-app pgimage || true
+        run: docker rm -f c2c-app pgimage clamav || true
 
   aios-audit-assets:
     name: AIOS Audit Assets
@@ -2234,7 +2362,9 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Generate AIOS evidence pack and enforce release gates
+      # Sample metrics: no pilot run is recorded, so this exercises the
+      # generator and its gate logic and enforces no release gate (2026-10-15).
+      - name: Generate the AIOS sample evidence pack (exercises the gate logic)
         run: make aios-gate
 
       - name: Validate AIOS audit assets

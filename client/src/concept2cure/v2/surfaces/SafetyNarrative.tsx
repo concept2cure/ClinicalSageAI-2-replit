@@ -4,7 +4,7 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
-import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
@@ -41,9 +41,33 @@ type LiveSaeCase = SaeCase & {
   reportingOverdue?: boolean;
   reportingBasis?: string;
   reportingUnassessedInputs?: string[];
+  /** Whether a reportability verdict EXISTS — the engine's own Gate 0 answer, not
+   *  `unassessedInputs.length === 0`. Absent on an older server. */
+  reportingDetermined?: boolean;
   /** False = no seriousness assessment is recorded. Absent on an older server. */
   seriousnessAssessed?: boolean;
+  /** The exact stored narrative, distinct from a newly computed draft. */
+  narrative?: string | null;
 };
+
+/**
+ * The inputs the expedited clock could not assess, as a sentence.
+ *
+ * `pv/expedited-reporting-clock.ts` returns `unassessedInputs` — any of
+ * seriousness, expectedness, causality that carries no recorded assessment. An
+ * ABSENT seriousness-criteria list is "not assessed"; a recorded EMPTY list is
+ * "assessed, no criterion met". Both produce `category: 'none'`, and only one of
+ * them is a determination, which is why this list exists.
+ */
+function unassessedLabel(inputs: readonly string[]): string {
+  const names = inputs.map((i) => i.replace(/_/g, ' '));
+  if (names.length === 0) return '';
+  if (names.length === 1) return capitalize(names[0]);
+  const last = names[names.length - 1];
+  return capitalize(`${names.slice(0, -1).join(', ')} and ${last}`);
+}
+
+const capitalize = (s: string): string => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
 /* Stable empty seed for the local editable store while the live worklist is
    loading or on error — useLiveRows synthesizes a fresh [] every render in those
@@ -72,8 +96,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
 
   /* Local editable copy. Field edits (setField / toggleCrit) are in-memory
      drafting that re-runs the deterministic ICH E3 §16 composer over the selected
-     case; there is no case-write endpoint, so edits are not persisted (and the
-     surface never claims they are). Re-seed when the live rows resolve — their
+     case; Save version persists the selected draft with its history. Re-seed when the live rows resolve — their
      identity changes once the fetch settles. */
   const [cases, setCases] = useState<LiveSaeCase[]>(seed);
   const [selId, setSelId] = useState<string>(seed[0]?.id ?? '');
@@ -119,6 +142,26 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
   }, [live.loading]);
 
   const sel = cases.find((c) => c.id === selId) || cases[0];
+  /* Which of the clock's three inputs carry no assessment. An older server that
+     does not return the field answers [] — which renders the case as a
+     determination, the pre-2026-10-12 behaviour, rather than inventing a
+     not-assessed state the server did not report. */
+  const unassessed: readonly string[] = Array.isArray(sel?.reportingUnassessedInputs)
+    ? sel.reportingUnassessedInputs
+    : [];
+  /* THE ENGINE DECIDES WHETHER THERE IS A VERDICT, not this screen.
+     The first version of this fix inferred it as `unassessed.length > 0`, which
+     is the wrong boundary: decision P-20's follow-up
+     (docs/LAUNCH_DEFINITION_OF_DONE.md) and `classifyIndSafetyReport`'s Gate 0
+     both hold that an event recorded NON-SERIOUS, or not suspected, is not
+     expedited on those stated facts — a determination — even with expectedness
+     still blank. So a decided case was headed "Reportability not determined".
+     `reportabilityDetermined` is now computed once in the clock service and read
+     here. Absent (an older server) falls back to the inference, which is the
+     previous behaviour rather than a guess at a field the server did not send. */
+  const notDetermined = typeof sel?.reportingDetermined === 'boolean'
+    ? !sel.reportingDetermined
+    : unassessed.length > 0;
   const result = useMemo(() => (sel ? composeSafetyNarrative(sel) : null), [sel]);
   const nMissing = result ? result.missingFields.length : 0;
 
@@ -145,20 +188,50 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
       };
     }
     const serious = cases.filter((c) => (c.event?.seriousnessCriteria || []).length).length;
-    const soonest = cases.slice().sort((a, b) => a.dueDays - b.dueDays)[0] ?? null;
+    /* ── WHAT THE NARRATOR IS TOLD ABOUT REPORTABILITY ──────────────────────
+       Under Rule 2 the deterministic engine supplies the figures and the model
+       narrates. This context used to publish `clock` and `dueDays` and nothing
+       else, so for an unassessed case the only reportability fact the model
+       received was the conflated label "No expedited clock" — and `dueDays` is
+       the assembler's SORT SENTINEL, so a case with no clock was handed over as
+       "due in 9999 day(s)". A sentinel is not a figure.
+       The engine's own nullable `daysRemaining` is published instead, the
+       determination state travels with it, and the undetermined cases are
+       counted rather than left for the model to infer. */
+    const daysOf = (c: LiveSaeCase): number | null =>
+      typeof c.reportingDaysRemaining === 'number' ? c.reportingDaysRemaining : null;
+    const undetermined = cases.filter((c) => c.reportingDetermined === false).length;
+    const withClock = cases.filter((c) => daysOf(c) != null);
+    const soonest = withClock.slice().sort((a, b) => (daysOf(a) as number) - (daysOf(b) as number))[0] ?? null;
+    const reportabilityOf = (c: LiveSaeCase) => ({
+      category: c.reportingCategory ?? null,
+      determined: c.reportingDetermined ?? null,
+      unassessedInputs: c.reportingUnassessedInputs ?? [],
+      basis: c.reportingBasis ?? null,
+      daysRemaining: daysOf(c),
+      dueDate: c.reportingDueDate ?? null,
+    });
     return {
       summary:
         `Safety narratives: ${cases.length} SAE case(s), ${serious} meeting a seriousness criterion` +
-        (soonest ? `; soonest reporting clock ${soonest.id} due in ${soonest.dueDays} day(s)` : '') +
+        (undetermined ? `, ${undetermined} with reportability not determined` : '') +
+        (soonest ? `; soonest reporting clock ${soonest.id} due in ${daysOf(soonest)} day(s)` : '') +
         (sel ? `; case ${sel.id} open with ${nMissing} required field(s) still missing` : ''),
       facts: {
         caseCount: cases.length,
         seriousCount: serious,
-        soonestDue: soonest ? { id: soonest.id, dueDays: soonest.dueDays, clock: soonest.clock } : null,
+        reportabilityNotDeterminedCount: undetermined,
+        soonestDue: soonest
+          ? { id: soonest.id, daysRemaining: daysOf(soonest), reportability: reportabilityOf(soonest) }
+          : null,
         selected: sel
           ? {
-              id: sel.id, studyId: sel.studyId ?? null, dueDays: sel.dueDays, clock: sel.clock,
+              id: sel.id, studyId: sel.studyId ?? null,
+              reportability: reportabilityOf(sel),
               seriousnessCriteria: sel.event?.seriousnessCriteria ?? [],
+              /* Published beside the criteria so an empty list cannot read as an
+                 assessment that found none. */
+              seriousnessAssessed: sel.seriousnessAssessed ?? null,
               missingRequiredFields: result ? result.missingFields : [],
             }
           : null,
@@ -204,6 +277,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
         const nc = { ...c, event: { ...c.event } };
         if (path.startsWith('event.')) (nc.event as Record<string, unknown>)[path.slice(6)] = val;
         else (nc as Record<string, unknown>)[path] = val;
+        if (path === 'event.seriousnessCriteria') nc.seriousnessAssessed = true;
         return nc;
       }),
     );
@@ -233,8 +307,31 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
      than the one they started with. */
   const [saveReason, setSaveReason] = useState('');
   const [saving, setSaving] = useState(false);
+  const [readbackBusy, setReadbackBusy] = useState(false);
+  const [saveReadbacks, setSaveReadbacks] = useState<Record<string, { kind: 'saved' | 'unconfirmed'; loaded: boolean }>>({});
+  const pendingReadback = sel ? saveReadbacks[sel.id] : undefined;
+  const clearReadback = (caseId: string) => setSaveReadbacks((current) => {
+    const next = { ...current }; delete next[caseId]; return next;
+  });
+  const readStoredCase = async () => {
+    if (!sel || !pendingReadback || readbackBusy) return;
+    const caseId = sel.id;
+    setReadbackBusy(true);
+    try {
+      const response = await apiRequest('GET', `/api/safety-narratives/cases/${encodeURIComponent(caseId)}`);
+      const body = await response.json() as { data?: LiveSaeCase };
+      if (!body.data || body.data.id !== caseId) throw new Error('Invalid case readback');
+      const saved = body.data;
+      setCases((current) => current.map((item) => item.id === caseId ? saved : item));
+      if (pendingReadback.kind === 'saved') clearReadback(caseId);
+      else setSaveReadbacks((current) => ({ ...current, [caseId]: { kind: 'unconfirmed', loaded: true } }));
+      fire('The stored case was refreshed. Review its facts and stored narrative before making another version.');
+    } catch {
+      fire('The stored case could not be read. The save remains blocked until its current record can be reviewed.', 'error');
+    } finally { setReadbackBusy(false); }
+  };
   const saveVersion = async () => {
-    if (!sel || !result || saving) return;
+    if (!sel || !result || saving || pendingReadback || readbackBusy) return;
     if (saveReason.trim().length < 8) {
       fire('Enter a reason for change (at least 8 characters) before saving this version.', 'error');
       return;
@@ -249,18 +346,23 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
           expectedness: sel.expectedness ?? null,
           reactionPt: sel.event?.term ?? null,
           onsetDate: sel.event?.onsetDate ?? null,
-          seriousnessCriteria: sel.event?.seriousnessCriteria ?? [],
+          ...(sel.seriousnessAssessed === false ? {} : { seriousnessCriteria: sel.event?.seriousnessCriteria ?? [] }),
           narrative: result.narrative,
         },
       });
-      const json = (await res.json().catch(() => null)) as { data?: LiveSaeCase } | null;
+      const json = (await res.json().catch(() => null)) as { saved?: boolean | null; data?: LiveSaeCase; meta?: { readback?: { available?: boolean } } } | null;
+      if (json?.saved === true && json.meta?.readback?.available === false) {
+        setSaveReadbacks((current) => ({ ...current, [sel.id]: { kind: 'saved', loaded: false } }));
+        setSaveReason('');
+        fire('The case and its audit history were saved. Refresh its stored record before making another change.', 'error');
+        return;
+      }
       if (!res.ok || !json?.data) {
-        fire(
-          'The version was not saved — ' +
-            (serverMessage(json) ?? `the server refused it (HTTP ${res.status})`) +
-            '. The case is unchanged.',
-          'error',
-        );
+        if (res.status >= 400 && res.status < 500) fire(serverMessage(json) ?? 'The server refused this version.', 'error');
+        else {
+          setSaveReadbacks((current) => ({ ...current, [sel.id]: { kind: 'unconfirmed', loaded: false } }));
+          fire('The save result could not be confirmed. Read the stored case before retrying this change.', 'error');
+        }
         return;
       }
       const saved = json.data;
@@ -270,10 +372,14 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
         `Saved — ${sel.id} and its narrative are in the safety store. Reporting clock: ${saved.clock}, due ${saved.due}.`,
       );
     } catch (e) {
-      fire(
-        'The version was not saved — ' + (e instanceof Error ? e.message : String(e)) + '. The case is unchanged.',
-        'error',
-      );
+      const known = e instanceof ApiRequestError;
+      const payload = known && e.payload && typeof e.payload === 'object' ? e.payload as { saved?: unknown } : null;
+      if (known && (payload?.saved === false || (e.status >= 400 && e.status < 500))) {
+        fire(e.message, 'error');
+      } else {
+        setSaveReadbacks((current) => ({ ...current, [sel.id]: { kind: 'unconfirmed', loaded: false } }));
+        fire('The save result could not be confirmed. Read the stored case and its history before retrying this change.', 'error');
+      }
     } finally {
       setSaving(false);
     }
@@ -417,6 +523,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
                 <input
                   className="sn-fi sn-save-reason"
                   value={saveReason}
+                  disabled={saving || readbackBusy || !!pendingReadback}
                   onChange={(e) => setSaveReason(e.target.value)}
                   placeholder="Reason for change (audited)"
                   aria-label="Reason for change, required to save this narrative version"
@@ -424,13 +531,23 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
                 <button
                   className="bs-da alt"
                   onClick={() => void saveVersion()}
-                  disabled={saving || saveReason.trim().length < 8}
+                  disabled={saving || readbackBusy || !!pendingReadback || saveReason.trim().length < 8}
                   title={saveReason.trim().length < 8 ? 'Enter a reason for change to save' : 'Save the case and its narrative to the safety store'}
                 >
                   {I.check} {saving ? 'Saving…' : 'Save version'}
                 </button>
               </div>
             </div>
+            {pendingReadback && <div role="alert" className="scaf-note">
+              {pendingReadback.kind === 'saved'
+                ? 'The version and its audit history were saved; the current case display needs to be refreshed.'
+                : 'The previous save is unconfirmed. Read the current record and review its stored narrative before allowing another version.'}
+              <button className="bs-da" disabled={readbackBusy || saving} onClick={() => void readStoredCase()}>
+                {readbackBusy ? 'Reading…' : 'Read stored case'}
+              </button>
+              {pendingReadback.kind === 'unconfirmed' && pendingReadback.loaded && <button className="bs-da"
+                onClick={() => clearReadback(sel.id)}>I reviewed the stored case; allow a new version</button>}
+            </div>}
             <div className="cm-doc-page">
               <div className="cm-doc-render">
                 <h1>Serious adverse event case narrative</h1>
@@ -440,14 +557,39 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
                     returned on every real case row. The static clock line above is the stored label. */}
                 {sel.reportingCategory && (
                   <div
+                    data-testid="sae-reporting-clock"
+                    data-state={notDetermined ? 'not-assessed' : sel.reportingCategory === 'none' ? 'determined-none' : sel.reportingOverdue ? 'overdue' : 'due'}
                     style={{
                       margin: '8px 0 14px', padding: '10px 12px', borderRadius: 8,
-                      border: '1px solid ' + (sel.reportingOverdue ? 'var(--error)' : 'var(--border-200,#e2e2e2)'),
-                      background: sel.reportingOverdue ? 'var(--error-muted)' : 'var(--bg-100)',
+                      /* An unassessed case is not a calm neutral box. It is not an
+                         error either — nothing is wrong, something is UNDONE — so it
+                         takes the caution treatment between the two. */
+                      border: '1px solid ' + (sel.reportingOverdue ? 'var(--error)' : notDetermined ? 'var(--warning,#b45309)' : 'var(--border-200,#e2e2e2)'),
+                      background: sel.reportingOverdue ? 'var(--error-muted)' : notDetermined ? 'var(--warning-muted,#fffbeb)' : 'var(--bg-100)',
                       fontSize: 12.5, lineHeight: 1.5,
                     }}
                   >
-                    {sel.reportingCategory === 'none' ? (
+                    {sel.reportingCategory === 'none' && notDetermined ? (
+                      /* NOT A DETERMINATION. `category: 'none'` carries two different
+                         cases and the headline used to be the same sentence for both:
+                         "No expedited reporting clock." A reviewer who assessed this
+                         case and found it non-reportable, and a case nobody has looked
+                         at, read identically down to the border colour — the only thing
+                         separating them was the smaller continuation sentence.
+                         `reportingUnassessedInputs` is carried from the clock service
+                         (pv/expedited-reporting-clock.ts) for exactly this distinction
+                         and was declared on the row and read nowhere.
+                         A false "non-reportable" on a 7/15-calendar-day IND safety
+                         report (21 CFR 312.32(c)(1)(i)) is a reportability miss, so the
+                         headline states the absence of a determination, never a
+                         determination of absence. */
+                      <div>
+                        <strong>Reportability not determined.</strong> {unassessedLabel(unassessed)}{' '}
+                        {unassessed.length === 1 ? 'has' : 'have'} not been assessed, so no expedited-reporting
+                        determination has been made for this case — it is not a finding that no report is required.
+                        <div style={{ color: 'var(--text-400)', marginTop: 3 }}>{sel.reportingBasis}</div>
+                      </div>
+                    ) : sel.reportingCategory === 'none' ? (
                       <div><strong>No expedited reporting clock.</strong> {sel.reportingBasis}</div>
                     ) : sel.reportingDueDate ? (
                       <div>
@@ -471,6 +613,10 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
                   </div>
                 )}
                 <p>{result.narrative}</p>
+                {typeof sel.narrative === 'string' && <details>
+                  <summary>Stored narrative</summary>
+                  <p style={{ whiteSpace: 'pre-wrap' }}>{sel.narrative}</p>
+                </details>}
                 <hr />
                 <p>Drafted deterministically from the structured case per ICH E3 section 16 convention. No clinical detail is inferred beyond the supplied facts.</p>
               </div>

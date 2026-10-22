@@ -11,6 +11,8 @@
  *   retire_qms_document   — autocommit UPDATE, then `void auditService.logAction(...)`
  *   save_document_to_vault  — COMMIT, then post-commit
  *                             `try { auditLog(...) } catch { /* never block on audit *\/ }`
+ *                             (now an authoring draft; pinned in
+ *                             draft-authoring-document-tool.pglite.integration.test.ts)
  *   update_vault_document   — same post-COMMIT swallowing shape
  *
  * In every case the regulated mutation could durably commit with no audit row:
@@ -31,6 +33,7 @@
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
+import { installQmsAuthoringHarness, seedQmsEditingCopy, QMS_TEST_PROGRAM } from '../../qms/__tests__/qms-authoring-harness';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -142,7 +145,8 @@ async function breakAuditWrites() {
   await pglite.exec(`ALTER TABLE audit_logs ADD CONSTRAINT audit_write_broken CHECK (sha256_chain IS NULL);`);
 }
 async function repairAuditWrites() {
-  await pglite.exec(`ALTER TABLE audit_logs DROP CONSTRAINT IF EXISTS audit_write_broken;`);
+  await pglite.exec(`ALTER TABLE audit_logs DROP CONSTRAINT IF EXISTS audit_write_broken; ALTER TABLE authoring_audit_trail DROP CONSTRAINT IF EXISTS authoring_write_broken;
+    ALTER TABLE doc_permissions DROP CONSTRAINT IF EXISTS permission_write_broken;`);
 }
 
 beforeAll(async () => {
@@ -155,6 +159,7 @@ beforeAll(async () => {
   // organizations row for the FK, the evidence spine and the span-lineage store.
   await pglite.exec(`CREATE TABLE IF NOT EXISTS organizations (id SERIAL PRIMARY KEY, name TEXT);`);
   await pglite.exec(`INSERT INTO organizations (id, name) VALUES (1, 'org-1'), (9, 'org-9') ON CONFLICT DO NOTHING;`);
+  await installQmsAuthoringHarness(pglite);
   for (const rel of ['db/migrations/20260724_clinical_regulatory_evidence_spine.sql', 'db/migrations/20260803_document_span_lineage.sql', 'migrations/20260907_span_lineage_accepted_machine_draft.sql', 'migrations/20260908_span_lineage_machine_draft.sql']) {
     await pglite.exec(fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8'));
   }
@@ -165,18 +170,19 @@ beforeEach(async () => {
   await pglite.exec(
     `DELETE FROM c2c_ana_actions; DELETE FROM audit_logs;
      DELETE FROM concept2cure_artifact_versions; DELETE FROM concept2cure_artifacts;
-     DELETE FROM qms_documents;`,
+     DELETE FROM qms_documents; DELETE FROM c2c_document_aliases; DELETE FROM doc_permissions; DELETE FROM authoring_audit_trail; DELETE FROM doc_revisions; DELETE FROM authoring_sections; DELETE FROM authoring_documents;`,
   );
 });
 
 async function call(name: string, input: Record<string, unknown>, ctx: unknown = CTX) {
   const handler = approvedToolHandler(name);
   expect(handler, `${name} must be registered`).toBeTypeOf('function');
-  return JSON.parse(await handler!(input, ctx as never));
+  const body = name === 'create_qms_document' ? { program_id: QMS_TEST_PROGRAM, ...input } : input;
+  return JSON.parse(await handler!(body, ctx as never));
 }
 
 const auditRows = async () =>
-  (await pglite.query(`SELECT * FROM audit_logs ORDER BY occurred_at`)).rows as any[];
+  (await pglite.query(`SELECT * FROM audit_logs WHERE action NOT LIKE 'authoring.%' ORDER BY occurred_at`)).rows as any[];
 const ledgerRows = async () =>
   (await pglite.query(`SELECT * FROM c2c_ana_actions`)).rows as any[];
 const docRow = async (id: number) =>
@@ -188,7 +194,9 @@ async function effectiveDoc(num: string) {
      VALUES (1, $1, 'Proc', 'sop', '3.1', 'effective', 11) RETURNING id`,
     [num],
   );
-  return (r.rows[0] as { id: number }).id;
+  const id = (r.rows[0] as { id: number }).id;
+    await seedQmsEditingCopy(pglite, id);
+    return id;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -214,6 +222,8 @@ describe('create_qms_document — controlled document creation is audited atomic
     // c2c_ana_actions_command_check permits, or this INSERT would have thrown.
     expect(ALLOWED_COMMANDS).toContain(ledger[0].command);
     expect(ledger[0].payload.kind).toBe('create');
+    const permissions = (await pglite.query('SELECT role,principal_id FROM doc_permissions WHERE doc_id=$1',[(await docRow(res.id)).authoring_document_id])).rows;
+    expect(permissions).toEqual(expect.arrayContaining([expect.objectContaining({role:'OWNER',principal_id:'10'}),expect.objectContaining({role:'AUTHOR',principal_id:'10'})]));
   });
 
   it('FAILS CLOSED — a broken audit write rolls the document back', async () => {
@@ -226,6 +236,28 @@ describe('create_qms_document — controlled document creation is audited atomic
 
     const docs = (await pglite.query(`SELECT * FROM qms_documents`)).rows;
     expect(docs, 'the regulated document must NOT exist without its audit row').toHaveLength(0);
+    expect(await auditRows()).toHaveLength(0);
+    expect(await ledgerRows()).toHaveLength(0);
+  });
+
+  it('rolls back register, editing copy, sections and both ledgers when canonical authoring audit fails after the QMS ledger was written', async () => {
+    await pglite.exec('ALTER TABLE authoring_audit_trail ADD CONSTRAINT authoring_write_broken CHECK (false)');
+    const res = await call('create_qms_document', { doc_number: 'SOP-103', title: 'Must rollback', doc_type: 'sop', reason: 'Test late audit failure' });
+    expect(res.ok).not.toBe(true);
+    expect((await pglite.query('SELECT * FROM qms_documents')).rows).toHaveLength(0);
+    expect((await pglite.query('SELECT * FROM authoring_documents')).rows).toHaveLength(0);
+    expect((await pglite.query('SELECT * FROM authoring_sections')).rows).toHaveLength(0);
+    expect(await auditRows()).toHaveLength(0);
+    expect(await ledgerRows()).toHaveLength(0);
+  });
+
+  it('refuses the whole creation if canonical creator ownership cannot persist', async () => {
+    await pglite.exec('ALTER TABLE doc_permissions ADD CONSTRAINT permission_write_broken CHECK (false)');
+    const res = await call('create_qms_document',{doc_number:'SOP-NOGRANT',title:'Must remain editable',doc_type:'sop',reason:'Test creator ownership failure'});
+    expect(res.ok).not.toBe(true);
+    expect((await pglite.query('SELECT * FROM qms_documents')).rows).toHaveLength(0);
+    expect((await pglite.query('SELECT * FROM authoring_documents')).rows).toHaveLength(0);
+    expect((await pglite.query('SELECT * FROM authoring_sections')).rows).toHaveLength(0);
     expect(await auditRows()).toHaveLength(0);
     expect(await ledgerRows()).toHaveLength(0);
   });
@@ -324,78 +356,32 @@ describe('retire_qms_document — AnA cannot retire a controlled document', () =
   });
 });
 
-describe('save_document_to_vault — vault artifact + version + audit are one transaction', () => {
-  const INPUT = {
-    title: 'Module 2.5 Clinical Overview',
-    content: 'Regulated content body.',
-    reason: 'Drafting the clinical overview.',
-  };
-
-  it('writes the artifact, its immutable version AND the audit row', async () => {
-    const res = await call('save_document_to_vault', INPUT);
-    expect(res.ok).toBe(true);
-    const artifacts = (await pglite.query(`SELECT * FROM concept2cure_artifacts`)).rows as any[];
-    expect(artifacts).toHaveLength(1);
-    // Filed under the context's project — the column whose omission made this
-    // tool fail on every real call while the old test table hid it.
-    expect(artifacts[0].project_id).toBe(77);
-    expect((await pglite.query(`SELECT * FROM concept2cure_artifact_versions`)).rows).toHaveLength(1);
-
-    const audits = await auditRows();
-    expect(audits).toHaveLength(1);
-    expect(audits[0].target).toBe(`vault-document:${res.artifact_id}`);
-    expect(audits[0].actor_id).toBe(10);
-
-    /* Ledger L160 (extended to the create path): the vault document's text is
-       attributed in the same transaction. save_document_to_vault previously
-       recorded NO span lineage at all — a regulated INSERT the content-write
-       guard could not even see.
-       It is recorded as AnA's UNACCEPTED draft, not the caller's assertion:
-       this tool writes model-generated prose (the provenance row beside it says
-       eventAction 'ai_generate') and nobody has accepted it. asserted_by must
-       be NULL — the requester is named in created_by instead. */
-    const spans = await q(
-      `SELECT count(*)::int AS n FROM document_span_lineage
-        WHERE document_table = 'concept2cure_artifacts' AND provenance_kind = 'machine_draft'
-          AND machine_author_id = 'ana' AND asserted_by IS NULL AND deleted_at IS NULL`,
-    );
-    expect(Number(spans.rows[0].n)).toBeGreaterThanOrEqual(1);
-    const claimed = await q(
-      `SELECT count(*)::int AS n FROM document_span_lineage
-        WHERE document_table = 'concept2cure_artifacts' AND provenance_kind = 'author_assertion'
-          AND deleted_at IS NULL`,
-    );
-    expect(Number(claimed.rows[0].n), 'nobody asserted AnA-generated prose').toBe(0);
-  });
-
-  it('REFUSES without a project — a vault document belonging to no project is an orphaned capture', async () => {
-    const res = await call('save_document_to_vault', INPUT, { organizationId: 1, userId: 10, humanConfirmed: true });
-    expect(res.error).toMatch(/needs an open project/i);
-    expect((await pglite.query(`SELECT * FROM concept2cure_artifacts`)).rows).toHaveLength(0);
-    expect(await auditRows()).toHaveLength(0);
-  });
-
-  it('FAILS CLOSED — a broken audit write rolls back the artifact AND its version', async () => {
-    await breakAuditWrites();
-    const res = await call('save_document_to_vault', INPUT);
-    expect(res.error).toMatch(/save_document_to_vault failed/i);
-
-    expect(
-      (await pglite.query(`SELECT * FROM concept2cure_artifacts`)).rows,
-      'a vault document must not exist without its Part 11 audit row',
-    ).toHaveLength(0);
-    expect((await pglite.query(`SELECT * FROM concept2cure_artifact_versions`)).rows).toHaveLength(0);
-    expect(await auditRows()).toHaveLength(0);
-  });
-});
+/* save_document_to_vault no longer writes concept2cure_artifacts (document store
+   consolidation step 2, 2026-10-17): it creates an authoring draft through the
+   draft_authoring_document path, whose transaction holds the document, section,
+   genesis revision, machine-draft lineage and Part 11 CREATE row together. Its
+   atomicity, lineage, project refusal and tenant scoping are pinned against the
+   real authoring DDL in draft-authoring-document-tool.pglite.integration.test.ts
+   ("save_document_to_vault — the single-body form of draft_authoring_document"). */
 
 describe('update_vault_document — new regulated version is audited atomically', () => {
+  /* An existing artifact row, as save_document_to_vault wrote them before
+     2026-10-17. Those rows stay readable and versionable; no tool creates
+     new ones. */
   async function seedArtifact() {
-    const res = await call('save_document_to_vault', {
-      title: 'Protocol', content: 'v1 body', reason: 'Initial draft of the protocol.',
-    });
-    await pglite.exec(`DELETE FROM c2c_ana_actions; DELETE FROM audit_logs;`);
-    return res.artifact_id as string;
+    const externalId = 'ana-doc-seed00000001';
+    const ins = await pglite.query<{ id: number }>(
+      `INSERT INTO concept2cure_artifacts (artifact_id, organization_id, project_id, type, category, title, content,
+         content_hash, status, version, created_by_id)
+       VALUES ($1, 1, 77, 'document', 'document', 'Protocol', 'v1 body', 'h1', 'draft', 1, 10) RETURNING id`,
+      [externalId],
+    );
+    await pglite.query(
+      `INSERT INTO concept2cure_artifact_versions (artifact_id, organization_id, version, content, content_hash, change_description, created_by_id)
+       VALUES ($1, 1, 1, 'v1 body', 'h1', 'Initial draft of the protocol.', 10)`,
+      [ins.rows[0].id],
+    );
+    return externalId;
   }
 
   it('writes v2 AND the audit row', async () => {

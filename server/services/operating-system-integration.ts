@@ -17,9 +17,13 @@
 
 import {
   AssumptionRegistryService,
-  type CreateAssumptionInput,
+  LedgerInputRefusal,
+  type AssumptionCategory,
+  type AssumptionRecord,
+  type ConfidenceLevel,
+  type SourceType,
 } from './assumption-registry-service';
-import { DecisionRecordService } from './decision-record-service';
+import { DecisionRecordService, type DecisionRecord } from './decision-record-service';
 /* domain_track on the governance ledger is a DISCIPLINE. These three contexts
    used to declare it as the product-modality vocabulary (biotech, device,
    diagnostics, combination, biosimilar) -- a different column of the same name
@@ -40,7 +44,8 @@ export interface SapAssumptionContext {
   indication: string;
   phase: string;
   sampleSize: number;
-  dropoutRate: number;
+  /** As the SAP request stated it; absent when it did not (it was 0.15). */
+  dropoutRate?: number;
   primaryEndpoint: string;
   effectSize?: number;
   alpha?: number;
@@ -52,15 +57,21 @@ export interface SapAssumptionContext {
   createdById?: number;
 }
 
+/**
+ * A deterministic defensibility verdict (statistical-defensibility-service.ts,
+ * the ana-biostats judgment engine). Until 2026-10-05 this carried a model's
+ * 0-100 score, rating and issue counts.
+ */
 export interface DefensibilityDecisionContext {
   organizationId: number;
   projectId: number;
-  overallScore: number;
-  overallRating: string;
-  criticalIssueCount: number;
-  majorIssueCount: number;
-  reviewerRiskLevel: string;
-  recommendations: string[];
+  overallVerdict: 'adequate' | 'marginal' | 'inadequate' | 'insufficient_information';
+  overallRisk: 'low' | 'moderate' | 'high' | 'critical';
+  actionRecommendation: 'proceed' | 'proceed_with_conditions' | 'revise' | 'escalate';
+  /** Dimensions the engine judged inadequate, and marginal. */
+  inadequateDimensions: string[];
+  marginalDimensions: string[];
+  escalationReasons: string[];
   relatedArtifactId?: number;
   domainTrack?: DomainTrack;
   regulatorBody?: string;
@@ -76,12 +87,44 @@ export interface DocumentGenerationDecisionContext {
   generatedArtifactId: number;
   generatedArtifactVersionId?: number;
   usedAssumptionIds: string[];
-  confidence: 'strong' | 'moderate' | 'provisional' | 'uncertain';
+  /** As the caller stated it, in the ledger's vocabulary; absent is none. */
+  confidence?: ConfidenceLevel | null;
   domainTrack?: DomainTrack;
   regulatorBody?: string;
   jurisdiction?: string;
   createdById?: number;
 }
+
+/**
+ * A SAP capture that stopped part-way: the assumptions in
+ * `writtenAssumptionIds` were stored before it did, and no decision was. The
+ * caller reports what is in the registry rather than a bare driver error.
+ */
+export class SapCaptureIncomplete extends Error {
+  constructor(
+    readonly failure: unknown,
+    readonly writtenAssumptionIds: string[],
+  ) {
+    super(`SAP inputs were not fully recorded: ${failure instanceof Error ? failure.message : String(failure)}`);
+    this.name = 'SapCaptureIncomplete';
+  }
+}
+
+/**
+ * Who a ledger entry is recorded as. An absent user was recorded as 'system'
+ * (decided_by / created_by) until 2026-10-15; now nothing is recorded.
+ */
+function requireActor(createdById: unknown, flow: string): number {
+  const id = Number(createdById);
+  if (Number.isInteger(id) && id > 0) return id;
+  throw new LedgerInputRefusal(
+    'createdBy',
+    `${flow}: no authenticated user, so nothing was recorded. A ledger entry names who made it; it is not recorded as 'system'.`,
+  );
+}
+
+/** '3' and 'Phase 3' both read 'Phase 3' (titles said "Phase Phase 3"). */
+const phaseLabel = (phase: string) => (/^phase\b/i.test(phase.trim()) ? phase.trim() : `Phase ${phase}`);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SERVICE
@@ -111,152 +154,141 @@ export class OperatingSystemIntegration {
   // ═══════════════════════════════════════════════════════════════════════════
 
   /**
-   * Capture structured assumptions from SAP generation.
-   * Call this after SAP content is generated to persist the assumptions
-   * that were used, making them queryable and reusable.
+   * Record the SAP's stated inputs in the assumption registry, and the SAP
+   * itself as a decision.
+   *
+   * Until 2026-10-15 every value written here was outside the registry's
+   * vocabulary (category 'analysis_population' / 'attrition', source
+   * 'ana_generated' / 'manual', confidence 'provisional' / 'uncertain'), so the
+   * first INSERT failed and the caller logged it as non-fatal: no SAP ever
+   * recorded an assumption. Each input is now recorded in the registry's own
+   * terms, only when the request stated it, with no confidence — nobody stated
+   * one. The source is 'sap' for the SAP's planning figures and
+   * 'sponsor_decision' for what the sponsor chose (the endpoint, and a dropout
+   * rate the request named): the split the old 'ana_generated' / 'manual' drew.
+   * A failure part-way throws SapCaptureIncomplete, naming what was written.
    */
-  async captureFromSapGeneration(ctx: SapAssumptionContext) {
-    const assumptions = [];
-
-    // 1. Sample size assumption
-    assumptions.push(
-      await this.assumptionService.createAssumption({
-        organizationId: ctx.organizationId,
-        projectId: ctx.projectId,
-        category: 'analysis_population',
-        name: `Sample size for ${ctx.indication} Phase ${ctx.phase}`,
-        description: `Total planned sample size for the study`,
-        valueType: 'numeric',
-        numericValue: ctx.sampleSize,
-        unit: 'participants',
-        rationale: `Calculated for ${ctx.indication} Phase ${ctx.phase} study`,
-        sourceType: 'ana_generated',
-        sourceArtifactId: ctx.sourceArtifactId,
-        sourceDescription: 'SAP generation flow',
-        domainTrack: ctx.domainTrack ?? 'biostatistics',
-        regulatorBody: ctx.regulatorBody,
-        jurisdiction: ctx.jurisdiction,
-        confidence: 'provisional',
-        createdById: ctx.createdById,
-      })
-    );
-
-    // 2. Dropout/attrition assumption
-    assumptions.push(
-      await this.assumptionService.createAssumption({
-        organizationId: ctx.organizationId,
-        projectId: ctx.projectId,
-        category: 'attrition',
-        name: `Dropout rate for ${ctx.indication} Phase ${ctx.phase}`,
-        description: `Expected dropout/attrition rate used in sample size calculation`,
-        valueType: 'numeric',
-        numericValue: ctx.dropoutRate,
-        unit: 'proportion',
-        rationale:
-          ctx.dropoutRate === 0.15
-            ? 'Default dropout rate assumption — should be reviewed against historical data'
-            : `Study-specific dropout rate based on indication and phase`,
-        sourceType: ctx.dropoutRate === 0.15 ? 'ana_generated' : 'manual',
-        sourceArtifactId: ctx.sourceArtifactId,
-        sourceDescription: 'SAP generation flow',
-        domainTrack: ctx.domainTrack ?? 'biostatistics',
-        regulatorBody: ctx.regulatorBody,
-        jurisdiction: ctx.jurisdiction,
-        confidence: ctx.dropoutRate === 0.15 ? 'uncertain' : 'provisional',
-        createdById: ctx.createdById,
-      })
-    );
-
-    // 3. Effect size assumption (if provided)
-    if (ctx.effectSize !== undefined) {
-      assumptions.push(
-        await this.assumptionService.createAssumption({
-          organizationId: ctx.organizationId,
-          projectId: ctx.projectId,
-          category: 'effect_size',
-          name: `Expected effect size for ${ctx.primaryEndpoint}`,
-          description: `Assumed treatment effect for primary endpoint`,
-          valueType: 'numeric',
-          numericValue: ctx.effectSize,
-          rationale: 'Effect size used in sample size justification',
-          sourceType: 'ana_generated',
-          sourceArtifactId: ctx.sourceArtifactId,
-          sourceDescription: 'SAP generation flow',
-          domainTrack: ctx.domainTrack ?? 'biostatistics',
-          regulatorBody: ctx.regulatorBody,
-          jurisdiction: ctx.jurisdiction,
-          confidence: 'provisional',
-          createdById: ctx.createdById,
-        })
-      );
-    }
-
-    // 4. Endpoint assumption
-    assumptions.push(
-      await this.assumptionService.createAssumption({
-        organizationId: ctx.organizationId,
-        projectId: ctx.projectId,
-        category: 'endpoint',
-        name: `Primary endpoint: ${ctx.primaryEndpoint}`,
-        description: `Primary endpoint selection and measurement assumption`,
-        valueType: 'text',
-        textValue: ctx.primaryEndpoint,
-        rationale: `Selected as primary endpoint for ${ctx.indication} Phase ${ctx.phase}`,
-        sourceType: 'manual',
-        sourceArtifactId: ctx.sourceArtifactId,
-        sourceDescription: 'SAP generation flow',
-        domainTrack: ctx.domainTrack ?? 'biostatistics',
-        regulatorBody: ctx.regulatorBody,
-        jurisdiction: ctx.jurisdiction,
-        confidence: 'provisional',
-        createdById: ctx.createdById,
-      })
-    );
-
-    // Create a decision record for the SAP generation itself
-    const assumptionIds = assumptions.map(a => a.id);
-    const decision = await this.decisionService.createDecision({
+  async captureFromSapGeneration(ctx: SapAssumptionContext): Promise<{
+    assumptions: AssumptionRecord[];
+    decision: DecisionRecord;
+    notCaptured: string[];
+  }> {
+    const createdById = requireActor(ctx.createdById, 'captureFromSapGeneration');
+    const study = `${ctx.indication} ${phaseLabel(ctx.phase)}`;
+    const base = {
       organizationId: ctx.organizationId,
       projectId: ctx.projectId,
-      contextType: 'biostatistics_analysis',
-      contextDescription: `SAP generation for ${ctx.indication} Phase ${ctx.phase}`,
-      /* recommendation_type carries a CHECK naming twelve types; the three
-          descriptive labels this file used ('sap_generation',
-          'defensibility_assessment', 'document_generation') are not among
-          them, so every decision write here was rejected alongside the
-          domainTrack above. The label is kept below, where it reaches
-          decision_context and stays queryable. */
-      recommendationType: 'statistical_method',
-      analysisKind: 'sap_generation',
-      recommendationSummary: `Generate SAP with N=${ctx.sampleSize}, dropout=${(
-        ctx.dropoutRate * 100
-      ).toFixed(0)}%, endpoint=${ctx.primaryEndpoint}`,
-      recommendationDetail:
-        `Statistical Analysis Plan generated using ${assumptions.length} structured assumptions. ` +
-        `All assumptions are provisional and require review before the SAP can be promoted beyond advisory status.`,
-      confidence: 'provisional',
-      evidenceSources: ['sap_generator_service', 'historical_comparator_data'],
-      actionState: 'recommended_only',
-      approvalState: 'pending_review',
-      relatedAssumptionIds: assumptionIds,
-      relatedArtifactId: ctx.sourceArtifactId,
+      sourceArtifactId: ctx.sourceArtifactId,
+      sourceDescription: 'SAP generation request',
       domainTrack: ctx.domainTrack ?? 'biostatistics',
       regulatorBody: ctx.regulatorBody,
       jurisdiction: ctx.jurisdiction,
-      governanceBoundary: 'advisory',
-      linkedAssumptionIds: assumptionIds,
-      createdById: ctx.createdById,
+      createdById,
+    };
+    const stated = (category: AssumptionCategory, sourceType: SourceType, fields: Record<string, unknown>) => ({
+      ...base,
+      category,
+      sourceType,
+      ...fields,
     });
 
-    // Create contradiction-readiness links between assumptions and the SAP
-    if (ctx.sourceArtifactId) {
-      for (const assumption of assumptions) {
-        // Compatibility shim — no-op but keeps the integration wiring in place
-        await this.assumptionService.createContradictionLink();
-      }
+    const inputs: Array<Record<string, unknown>> = [
+      stated('enrollment', 'sap', {
+        name: `Sample size for ${study}`,
+        description: 'Total planned sample size for the study',
+        numericValue: ctx.sampleSize,
+        unit: 'participants',
+        rationale: 'Planned sample size as stated in the SAP request; not computed by the generator',
+      }),
+    ];
+    const notCaptured: string[] = [];
+    if (ctx.dropoutRate != null) {
+      inputs.push(
+        stated('dropout', 'sponsor_decision', {
+          name: `Dropout rate for ${study}`,
+          description: 'Expected dropout rate',
+          numericValue: ctx.dropoutRate,
+          unit: 'proportion',
+          rationale: 'Dropout rate as stated in the SAP request',
+        }),
+      );
+    } else {
+      notCaptured.push('dropout rate (not specified in the SAP request)');
     }
+    if (ctx.effectSize != null) {
+      inputs.push(
+        stated('effect_size', 'sap', {
+          // The request's minimum_detectable_effect: it was titled an "expected
+          // effect size", which is a different figure.
+          name: `Minimum detectable effect for ${ctx.primaryEndpoint}`,
+          description: 'Minimum detectable effect for the primary endpoint',
+          numericValue: ctx.effectSize,
+          rationale: 'Minimum detectable effect as stated in the SAP request; not computed by the generator',
+        }),
+      );
+    } else {
+      notCaptured.push('minimum detectable effect (not specified in the SAP request)');
+    }
+    inputs.push(
+      stated('endpoint', 'sponsor_decision', {
+        name: `Primary endpoint: ${ctx.primaryEndpoint}`,
+        description: 'Primary endpoint',
+        textValue: ctx.primaryEndpoint,
+        rationale: 'Primary endpoint as stated in the SAP request',
+      }),
+    );
 
-    return { assumptions, decision };
+    const assumptions: AssumptionRecord[] = [];
+    try {
+      for (const input of inputs) {
+        assumptions.push(await this.assumptionService.createAssumption(input));
+      }
+
+      // Create a decision record for the SAP generation itself
+      const assumptionIds = assumptions.map(a => a.id);
+      const decision = await this.decisionService.createDecision({
+        organizationId: ctx.organizationId,
+        projectId: ctx.projectId,
+        contextType: 'biostatistics_analysis',
+        contextDescription: `SAP generation for ${study}`,
+        /* recommendation_type carries a CHECK naming twelve types; the three
+            descriptive labels this file used ('sap_generation',
+            'defensibility_assessment', 'document_generation') are not among
+            them, so every decision write here was rejected alongside the
+            domainTrack above. The label is kept below, where it reaches
+            decision_context and stays queryable. */
+        recommendationType: 'statistical_method',
+        analysisKind: 'sap_generation',
+        recommendationSummary: `Generate SAP with N=${ctx.sampleSize}, dropout=${
+          ctx.dropoutRate == null ? 'not specified' : `${(ctx.dropoutRate * 100).toFixed(0)}%`
+        }, endpoint=${ctx.primaryEndpoint}`,
+        recommendationDetail:
+          `Statistical Analysis Plan generated using ${assumptions.length} structured assumptions, recorded as the SAP request stated them. ` +
+          `None has been reviewed; each requires review before the SAP can be promoted beyond advisory status.`,
+        // No confidence: nobody stated one. It was 'provisional', which the
+        // column refuses (2026-10-15).
+        // What the SAP was built from. 'historical_comparator_data' was cited
+        // too until 2026-10-15; the generator reads none.
+        evidenceSources: ['sap_generator_service', 'sap_generation_request'],
+        actionState: 'recommended_only',
+        approvalState: 'pending_review',
+        relatedAssumptionIds: assumptionIds,
+        relatedArtifactId: ctx.sourceArtifactId,
+        domainTrack: ctx.domainTrack ?? 'biostatistics',
+        regulatorBody: ctx.regulatorBody,
+        jurisdiction: ctx.jurisdiction,
+        governanceBoundary: 'advisory',
+        linkedAssumptionIds: assumptionIds,
+        createdById,
+      });
+
+      // A loop here called createContradictionLink() with no arguments, once
+      // per assumption — a no-op returning null — "to create contradiction-
+      // readiness links" that were never created. Removed 2026-10-15.
+      return { assumptions, decision, notCaptured };
+    } catch (err) {
+      throw new SapCaptureIncomplete(err, assumptions.map(a => a.id));
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -265,49 +297,44 @@ export class OperatingSystemIntegration {
 
   /**
    * Record a decision from statistical defensibility assessment.
-   * Captures the analysis result, its confidence, and recommended actions.
+   * Captures the analysis result and the recommended action.
    */
   async captureFromDefensibilityAssessment(ctx: DefensibilityDecisionContext) {
-    const confidence =
-      ctx.overallRating === 'strong'
-        ? ('strong' as const)
-        : ctx.overallRating === 'adequate'
-        ? ('moderate' as const)
-        : ctx.overallRating === 'weak'
-        ? ('provisional' as const)
-        : ('uncertain' as const);
+    // A verdict is not a confidence. This mapped 'adequate' -> 'strong',
+    // 'marginal' -> 'moderate' and anything else -> 'uncertain' (three of them
+    // outside the column's CHECK) until 2026-10-15. The verdict is in the
+    // summary; a confidence is the decider's to state, and nobody has.
+    const createdById = requireActor(ctx.createdById, 'captureFromDefensibilityAssessment');
 
     const actionState =
-      ctx.criticalIssueCount > 0
-        ? ('recommended_only' as const)
-        : ctx.majorIssueCount > 0
-        ? ('recommended_only' as const)
-        : ('prepared' as const);
+      ctx.actionRecommendation === 'proceed' ? ('prepared' as const) : ('recommended_only' as const);
 
     const approvalState =
-      ctx.criticalIssueCount > 0 ? ('pending_review' as const) : ('not_required' as const);
+      ctx.actionRecommendation === 'escalate' || ctx.inadequateDimensions.length > 0
+        ? ('pending_review' as const)
+        : ('not_required' as const);
+
+    const named = (label: string, list: string[]) => (list.length > 0 ? `${label}: ${list.join(', ')}. ` : '');
 
     const decision = await this.decisionService.createDecision({
       organizationId: ctx.organizationId,
       projectId: ctx.projectId,
       contextType: 'regulatory_analysis',
-      contextDescription: `Statistical defensibility assessment — score ${ctx.overallScore}/100 (${ctx.overallRating})`,
+      contextDescription: `Statistical defensibility assessment — ${ctx.overallVerdict} (${ctx.overallRisk} risk)`,
       // See the note in captureFromSapGeneration: a defensibility assessment
       // rates the study design, which is the type the column accepts.
       recommendationType: 'study_design',
       analysisKind: 'defensibility_assessment',
       recommendationSummary:
-        `Study design rated as "${ctx.overallRating}" (${ctx.overallScore}/100). ` +
-        `${ctx.criticalIssueCount} critical, ${ctx.majorIssueCount} major issues. ` +
-        `Reviewer risk: ${ctx.reviewerRiskLevel}.`,
+        `Study design judged "${ctx.overallVerdict}", risk ${ctx.overallRisk}; ` +
+        `recommended action: ${ctx.actionRecommendation}. ` +
+        named('Inadequate', ctx.inadequateDimensions) +
+        named('Marginal', ctx.marginalDimensions),
       recommendationDetail:
-        ctx.recommendations.length > 0
-          ? `Recommended actions:\n${ctx.recommendations
-              .map((r, i) => `${i + 1}. ${r}`)
-              .join('\n')}`
-          : 'No specific recommendations generated.',
-      confidence,
-      evidenceSources: ['statistical_defensibility_service', 'ai_review'],
+        ctx.escalationReasons.length > 0
+          ? `Escalation reasons:\n${ctx.escalationReasons.map((r, i) => `${i + 1}. ${r}`).join('\n')}`
+          : 'No escalation reasons.',
+      evidenceSources: ['statistical_defensibility_service', 'deterministic_judgment_engine'],
       actionState,
       approvalState,
       relatedArtifactId: ctx.relatedArtifactId,
@@ -315,8 +342,8 @@ export class OperatingSystemIntegration {
       regulatorBody: ctx.regulatorBody,
       jurisdiction: ctx.jurisdiction,
       governanceBoundary: 'advisory',
-      notes: `Reviewer risk level: ${ctx.reviewerRiskLevel}`,
-      createdById: ctx.createdById,
+      notes: `Overall risk: ${ctx.overallRisk}`,
+      createdById,
     });
 
     return decision;
@@ -332,6 +359,7 @@ export class OperatingSystemIntegration {
    * establishes the governance boundary.
    */
   async captureFromDocumentGeneration(ctx: DocumentGenerationDecisionContext) {
+    const createdById = requireActor(ctx.createdById, 'captureFromDocumentGeneration');
     const decision = await this.decisionService.createDecision({
       organizationId: ctx.organizationId,
       projectId: ctx.projectId,
@@ -344,10 +372,10 @@ export class OperatingSystemIntegration {
       recommendationSummary: `Generated ${ctx.documentType} "${ctx.documentTitle}" using ${ctx.usedAssumptionIds.length} linked assumptions.`,
       recommendationDetail:
         `Document generated as advisory output. ` +
-        `Confidence: ${ctx.confidence}. ` +
+        `Confidence: ${ctx.confidence ?? 'not stated'}. ` +
         `Linked assumptions: ${ctx.usedAssumptionIds.length}. ` +
         `Must be reviewed before promotion to governed draft.`,
-      confidence: ctx.confidence,
+      confidence: ctx.confidence ?? null,
       evidenceSources: ['document_generation_service'],
       actionState: 'executed',
       actionDescription: `Generated artifact #${ctx.generatedArtifactId}`,
@@ -362,7 +390,7 @@ export class OperatingSystemIntegration {
       regulatorBody: ctx.regulatorBody,
       jurisdiction: ctx.jurisdiction,
       governanceBoundary: 'advisory',
-      createdById: ctx.createdById,
+      createdById,
     });
 
     // Link each assumption to the generated artifact

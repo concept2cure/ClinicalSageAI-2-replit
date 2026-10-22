@@ -30,6 +30,9 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { Review } from '../surfaces/Review';
+import { peerRead, peerReceipt, peerContext, actorToken } from './peerReviewFixtures';
+import { setAuthToken, clearAuthToken } from '@/utils/authToken';
+vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ id: 7, organizationId: 7 }) }));
 
 const DOC = '3f2c1a10-0000-4000-8000-000000000055';
 const SECTION = '3f2c1a10-0000-4000-8000-000000000101';
@@ -53,7 +56,7 @@ const BOARD = {
   meta: { scope: 'all', programId: null, total: 1, threadItemId: DOC, threadDocumentId: DOC, generatedAt: '2026-09-20T00:00:00Z' },
 };
 
-const isRead = (path: string) => path.startsWith('/api/review/board') || path === '/api/concept2cure/reviews/my-queue';
+const isRead = (path: string) => path.startsWith('/api/review/board') || path === '/api/concept2cure/reviews/my-queue' || path.endsWith('/reviews');
 const writes = () => apiRequest.mock.calls.filter((c) => !isRead(String(c[1])));
 const boardReads = () => apiRequest.mock.calls.filter((c) => String(c[1]).startsWith('/api/review/board'));
 
@@ -68,15 +71,19 @@ async function mount() {
   await screen.findAllByText('Clinical Overview §2.5');
 }
 
-afterEach(() => cleanup());
+afterEach(() => { cleanup(); clearAuthToken(); });
 beforeEach(() => {
-  apiRequest.mockReset();
-  writeAnswer = { ok: true, status: 200, body: { success: true, review: { review_status: 'approved' } } };
-  apiRequest.mockImplementation(async (_m: string, path: string) => {
+  apiRequest.mockReset(); setAuthToken(actorToken());
+  writeAnswer = { ok: true, status: 200, body: peerReceipt() };
+  apiRequest.mockImplementation(async (method: string, path: string, input?: { review_status?: 'approved' | 'rejected' | 'changes_requested'; review_comments?: string }) => {
     if (path.startsWith('/api/review/board')) {
       return { ok: true, status: 200, json: async () => ({ success: true, data: BOARD }) } as Response;
     }
-    return { ok: writeAnswer.ok, status: writeAnswer.status, json: async () => writeAnswer.body } as Response;
+    if (path.endsWith('/reviews')) return { ok: true, status: 200, json: async () => peerRead() } as Response;
+    if (path === '/api/concept2cure/reviews/my-queue') return { ok: true, status: 200, json: async () => ({ success: true, data: { threads: [], tasks: [] } }) } as Response;
+    const receipt = method === 'POST' && path.endsWith('/review') && writeAnswer.ok && input?.review_status ? peerReceipt(input.review_status) : null;
+    if (receipt) receipt.review.review_comments = input?.review_comments ?? null;
+    return { ok: writeAnswer.ok, status: writeAnswer.status, json: async () => receipt ?? writeAnswer.body } as Response;
   });
 });
 
@@ -86,9 +93,33 @@ describe('recording a review decision', () => {
     fireEvent.click(screen.getByRole('button', { name: /Record review decision/ }));
     await screen.findByLabelText('Decision');
   }
+  /** The verdict is chosen, never preselected (P-21). */
+  async function openAndApprove() {
+    await openModal();
+    fireEvent.change(screen.getByLabelText('Decision'), { target: { value: 'approved' } });
+  }
+
+  /* QA 2026-10-08, walk 2 (j4): the dialog opened on "Approve" with a
+     "Record approval" button, so one click recorded an approval nobody chose.
+     P-21 (docs/LAUNCH_DEFINITION_OF_DONE.md): a regulated choice starts on
+     "Not stated — choose" and sends nothing until chosen. */
+  it('starts on "Not stated — choose" and records nothing until a decision is chosen (P-21)', async () => {
+    await openModal();
+    const select = screen.getByLabelText('Decision') as HTMLSelectElement;
+    expect(select.value).toBe('');
+    expect(select.selectedOptions[0]?.textContent).toBe('Not stated — choose');
+    expect(screen.queryByRole('button', { name: /Record approval/ })).toBeNull();
+    const btn = screen.getByRole('button', { name: /Record decision/ }) as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+    fireEvent.click(btn);
+    expect(writes().length).toBe(0);
+    expect(document.body.textContent).not.toMatch(/verdict — Approved/);
+    fireEvent.change(select, { target: { value: 'approved' } });
+    expect((screen.getByRole('button', { name: /Record approval/ }) as HTMLButtonElement).disabled).toBe(false);
+  });
 
   it('POSTs the verdict and the note to the authoring review transition', async () => {
-    await openModal();
+    await openAndApprove();
     fireEvent.change(screen.getByLabelText('Note for the thread (optional)'), {
       target: { value: 'Efficacy claim reads correctly now' },
     });
@@ -97,7 +128,7 @@ describe('recording a review decision', () => {
     const [method, path, body] = writes()[0];
     expect(method).toBe('POST');
     expect(path).toBe(`/api/authoring/documents/${DOC}/review`);
-    expect(body).toEqual({ review_status: 'approved', review_comments: 'Efficacy claim reads correctly now' });
+    expect(body).toEqual({ review_status: 'approved', review_comments: 'Efficacy claim reads correctly now', expected: { reviewId: peerContext.myReview!.reviewId, requestedAt: peerContext.myReview!.requestedAt, snapshotHash: peerContext.snapshotHash, bindingBasis: peerContext.bindingBasis } });
   });
 
   it('a decline is the authoring "rejected" verdict, and needs grounds', async () => {
@@ -110,11 +141,11 @@ describe('recording a review decision', () => {
     fireEvent.change(screen.getByLabelText('Reason (required)'), { target: { value: 'The dose rationale contradicts §2.7.' } });
     fireEvent.click(screen.getByRole('button', { name: /Record rejection/ }));
     await waitFor(() => expect(writes().length).toBe(1));
-    expect(writes()[0][2]).toEqual({ review_status: 'rejected', review_comments: 'The dose rationale contradicts §2.7.' });
+    expect(writes()[0][2]).toEqual({ review_status: 'rejected', review_comments: 'The dose rationale contradicts §2.7.', expected: { reviewId: peerContext.myReview!.reviewId, requestedAt: peerContext.myReview!.requestedAt, snapshotHash: peerContext.snapshotHash, bindingBasis: peerContext.bindingBasis } });
   });
 
   it('re-reads the board after the decision, so the row comes from the record', async () => {
-    await openModal();
+    await openAndApprove();
     const before = boardReads().length;
     fireEvent.click(screen.getByRole('button', { name: /Record approval/ }));
     await waitFor(() => expect(boardReads().length).toBeGreaterThan(before));
@@ -122,7 +153,7 @@ describe('recording a review decision', () => {
 
   it('says the decision was NOT recorded when the server refuses, and stays open', async () => {
     writeAnswer = { ok: false, status: 403, body: { success: false, error: 'Access denied: you are not a reviewer on this document' } };
-    await openModal();
+    await openAndApprove();
     fireEvent.click(screen.getByRole('button', { name: /Record approval/ }));
     await waitFor(() => {
       const banner = document.querySelector('.esign-err');
@@ -143,16 +174,17 @@ describe('requesting changes', () => {
   it('is the authoring "changes_requested" verdict with the reason, and re-reads the board', async () => {
     await mount();
     fireEvent.click(screen.getByRole('button', { name: /Request changes\.\.\./ }));
-    fireEvent.change(await screen.findByLabelText('Reason for requesting changes'), {
+    fireEvent.change(await screen.findByLabelText('Decision'), { target: { value: 'changes_requested' } });
+    fireEvent.change(screen.getByLabelText('Reason (required)'), {
       target: { value: 'State the software version in §2.5.1.' },
     });
     const before = boardReads().length;
-    fireEvent.click(screen.getByRole('button', { name: /^Request changes$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Record change request$/ }));
     await waitFor(() => expect(writes().length).toBe(1));
     const [method, path, body] = writes()[0];
     expect(method).toBe('POST');
     expect(path).toBe(`/api/authoring/documents/${DOC}/review`);
-    expect(body).toEqual({ review_status: 'changes_requested', review_comments: 'State the software version in §2.5.1.' });
+    expect(body).toEqual({ review_status: 'changes_requested', review_comments: 'State the software version in §2.5.1.', expected: { reviewId: peerContext.myReview!.reviewId, requestedAt: peerContext.myReview!.requestedAt, snapshotHash: peerContext.snapshotHash, bindingBasis: peerContext.bindingBasis } });
     await waitFor(() => expect(boardReads().length).toBeGreaterThan(before));
   });
 });

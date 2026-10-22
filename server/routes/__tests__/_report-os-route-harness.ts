@@ -7,6 +7,28 @@
  */
 import { vi } from 'vitest';
 import { getTableColumns } from 'drizzle-orm';
+import { switchPinTerms } from '../../db/sessionScope';
+
+/**
+ * The statement a governed transaction issues immediately after BEGIN, exactly
+ * as server/services/tenant/governed-tenant-context.ts builds it.
+ *
+ * Derived, not transcribed. Three suites each held their own copy of the
+ * one-term form, and when the pin of the isolation switches was added to the
+ * same statement (so a governed transaction cannot inherit a bypass) all three
+ * went red on a string compare while the route was correct. What these suites
+ * pin is the ORDER — BEGIN, the stamp, the domain writes, the chain row, COMMIT
+ * — and the tenant the chain row carries, which each case asserts separately.
+ * The stamp's own text is server/db/sessionScope's subject, not this harness's.
+ *
+ * A function, not a constant: `switchPinTerms` reads RLS_ENFORCE at call time,
+ * and this module is imported before the env is loaded, so a constant would
+ * freeze `app.rls_enforce` at '' and disagree with the route for any developer
+ * whose .env sets it on. Called at assertion time, the expectation and the
+ * route read the same environment.
+ */
+export const tenantStampSql = (): string =>
+  `SELECT set_config('app.current_tenant_id', $1, true), ${switchPinTerms(true)}`;
 
 export function createReportOsHarness() {
   const queued = { select: [] as unknown[][], insert: [] as unknown[][], update: [] as unknown[][] };
@@ -36,18 +58,23 @@ export function createReportOsHarness() {
    * onTransaction) asks for its rows as arrays in the table's column order.
    */
   const respond = { fn: (_sql: string, _arrayMode?: boolean): unknown[] => [] };
+  /** Real company-profile reads on exports; no branding unless a case enables it. */
+  const company = { name: 'Fixture organization', settings: {} as Record<string, unknown>, unavailable: false };
   const client = {
     query: async (q: string | { text: string; rowMode?: string }, values?: unknown[]) => {
       const sql = typeof q === 'string' ? q : q.text;
       statements.push(sql.replace(/\s+/g, ' ').trim());
       params.push(values ?? []);
-      return { rows: respond.fn(sql, typeof q !== 'string' && q.rowMode === 'array'), rowCount: 1 };
+      const rows = /SELECT name, settings FROM organizations WHERE id=\$1/.test(sql)
+        ? company.unavailable ? [] : [{ name: company.name, settings: company.settings }]
+        : respond.fn(sql, typeof q !== 'string' && q.rowMode === 'array');
+      return { rows, rowCount: 1 };
     },
     release: () => statements.push('<released>'),
   };
   const pool = { connect: async () => client, query: async () => ({ rows: [] }) };
   return {
-    queued, reads, db, pool, statements, params, respond,
+    queued, reads, db, pool, statements, params, respond, company,
     audit: vi.fn(), gate: vi.fn(), compute: vi.fn(),
     reauth: vi.fn(), ledger: vi.fn(), signature: vi.fn(),
     /** The signer's role as the membership row holds it (resolveSignerOrgRole, P1-44b). */
@@ -58,12 +85,25 @@ export function createReportOsHarness() {
 
 export type ReportOsHarness = ReturnType<typeof createReportOsHarness>;
 
+/** Inspect a bound insert column without relying on the table's ordinal order. */
+export function boundInsertColumn(sql: string, params: unknown[], column: string): unknown {
+  const insert = sql.match(/\(([^)]+)\) values \(([^)]+)\)/);
+  if (!insert) throw new Error('Expected a parameterized insert');
+  const columns = insert[1].split(',').map(value => value.trim().replaceAll('"', ''));
+  const binding = insert[2].split(',')[columns.indexOf(column)]?.trim();
+  if (!binding?.startsWith('$')) throw new Error(`Expected a bound value for ${column}`);
+  return params[Number(binding.slice(1)) - 1];
+}
+
 /** Empty queues and statement logs; every spy back to its passing default. */
 export function resetReportOsHarness(h: ReportOsHarness) {
   h.queued.select.length = h.queued.insert.length = h.queued.update.length = 0;
   h.reads.select = 0;
   h.statements.length = h.params.length = 0;
   h.respond.fn = () => [];
+  h.company.name = 'Fixture organization';
+  h.company.settings = {};
+  h.company.unavailable = false;
   h.audit.mockReset().mockImplementation(async () => {
     h.statements.push('<audit row>');
   });

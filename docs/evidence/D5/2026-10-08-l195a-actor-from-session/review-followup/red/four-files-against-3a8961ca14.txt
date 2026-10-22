@@ -1,0 +1,54 @@
+# The follow-up's four test files against the code as pushed in 3a8961ca14 (the first L195 change).
+# The blocker and Sentinel SQL cases run on PGlite; sessions carry a STRING subject, as production's do.
+
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > a body naming another resolver is refused, and nothing is written
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > resolving records the caller, whose session subject is a string
+ × tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > a body naming the caller themself (as a number) is accepted
+ × tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > a body naming the caller themself (as a string) is accepted
+ × tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > a repeat resolution keeps the original closer and time
+ × tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > dismissing clears the gate, so it records its closer too
+ × tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > reopening clears the last closer, who did not set the new state
+ × tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > status "closed" is refused, and nothing changes
+ × tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > status "Resolved" is refused, and nothing changes
+ × tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > status "resolved " is refused, and nothing changes
+ × tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > status "done" is refused, and nothing changes
+ × tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > status "" is refused, and nothing changes
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > a next-action edit alone records no closer
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > another organisation's blocker is 404, and untouched
+ ✓ server/services/sentinel/__tests__/finding-closer.pglite.test.ts > a Sentinel finding records its closer once (L195) > resolving records the closer and the time
+ × server/services/sentinel/__tests__/finding-closer.pglite.test.ts > a Sentinel finding records its closer once (L195) > a repeat resolution keeps the original closer and time
+ × server/services/sentinel/__tests__/finding-closer.pglite.test.ts > a Sentinel finding records its closer once (L195) > dismissing records its closer, and does not keep an earlier resolver
+ × server/services/sentinel/__tests__/finding-closer.pglite.test.ts > a Sentinel finding records its closer once (L195) > moving to open clears the last closer
+ × server/services/sentinel/__tests__/finding-closer.pglite.test.ts > a Sentinel finding records its closer once (L195) > moving to acknowledged clears the last closer
+ ✓ server/services/sentinel/__tests__/finding-closer.pglite.test.ts > a Sentinel finding records its closer once (L195) > another organisation's finding is not touched
+ ✓ tests/gspr-mapping-actor.test.ts > a GSPR decision is attributed to the session user (L195) > a body that sets decidedBy is refused, and nothing is stored
+ ✓ tests/gspr-mapping-actor.test.ts > a GSPR decision is attributed to the session user (L195) > a body that sets decidedAt is refused, and nothing is stored
+ ✓ tests/gspr-mapping-actor.test.ts > a GSPR decision is attributed to the session user (L195) > a body that sets reviewedBy is refused, and nothing is stored
+ ✓ tests/gspr-mapping-actor.test.ts > a GSPR decision is attributed to the session user (L195) > a body that sets reviewedAt is refused, and nothing is stored
+ × tests/gspr-mapping-actor.test.ts > a GSPR decision is attributed to the session user (L195) > the stored row carries only decision fields, a server decider and a server time
+ ✓ tests/gspr-mapping-actor.test.ts > a GSPR decision is attributed to the session user (L195) > with no user on the request nothing is stored under 'system'
+ ✓ tests/sentinel-finding-resolver.test.ts > a Sentinel finding is resolved by the session user (L195) > a body naming another resolver is refused, and nothing is written
+ ✓ tests/sentinel-finding-resolver.test.ts > a Sentinel finding is resolved by the session user (L195) > resolving with no resolver in the body records the caller, not nobody
+ ✓ tests/sentinel-finding-resolver.test.ts > a Sentinel finding is resolved by the session user (L195) > closing (resolved) with no user id on the session is refused, not recorded as nobody
+ × tests/sentinel-finding-resolver.test.ts > a Sentinel finding is resolved by the session user (L195) > closing (dismissed) with no user id on the session is refused, not recorded as nobody
+ ✓ tests/sentinel-finding-resolver.test.ts > a Sentinel finding is resolved by the session user (L195) > dismissing records the caller as its closer
+ ✓ tests/sentinel-finding-resolver.test.ts > a Sentinel finding is resolved by the session user (L195) > a body naming the caller themself (as a number) is accepted
+ ✓ tests/sentinel-finding-resolver.test.ts > a Sentinel finding is resolved by the session user (L195) > acknowledging is unchanged and needs no resolver
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { …(7) } to match object { organizationId: 99, …(7) }
+AssertionError: expected [ [ 'f-1', 99, 'dismissed', …(1) ] ] to deeply equal []
+AssertionError: expected 422 to be 200 // Object.is equality
+AssertionError: expected { status: 'resolved', …(2) } to deeply equal { status: 'resolved', …(2) }
+AssertionError: expected { status: 'dismissed', …(2) } to match object { status: 'dismissed', …(1) }
+AssertionError: expected { status: 'open', …(2) } to match object { status: 'open', …(2) }
+AssertionError: expected { status: 'closed', …(2) } to match object { Object (status, resolved_by_id) }
+AssertionError: expected { status: 'Resolved', …(2) } to match object { Object (status, resolved_by_id) }
+AssertionError: expected { status: 'resolved ', …(2) } to match object { Object (status, resolved_by_id) }
+AssertionError: expected { status: 'done', …(2) } to match object { Object (status, resolved_by_id) }
+AssertionError: expected 200 to be 422 // Object.is equality
+AssertionError: expected { status: 'resolved', …(2) } to deeply equal { status: 'resolved', …(2) }
+AssertionError: expected { status: 'dismissed', …(2) } to match object { status: 'dismissed', …(1) }
+AssertionError: expected { status: 'open', …(2) } to match object { status: 'open', …(2) }
+AssertionError: expected { status: 'acknowledged', …(2) } to match object { status: 'acknowledged', …(2) }
+ Test Files  4 failed (4)
+      Tests  16 failed | 17 passed (33)

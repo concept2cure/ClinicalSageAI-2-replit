@@ -103,7 +103,8 @@ function buildAliasMap(): Record<string, string> {
     'JNDA': 'JP_MKT_APPROVAL',
     'JP_MAA': 'JP_MKT_APPROVAL',
     'MDR_TD': 'EU_MDR_TECHDOC',
-    'IVDR_TD': 'EU_IVDR_TECHDOC',
+    'IVDR_TD': 'EU_IVDR',
+    'EU_IVDR_TECHDOC': 'EU_IVDR',
     'CTD': 'ICH_CTD_M1',
     'ECTD': 'ICH_CTD_M1',
     'IDE': 'US_IDE',
@@ -173,6 +174,18 @@ export function getSubmissionTypeLabel(input: string): string {
  */
 export function isKnownSubmissionType(input: string): boolean {
   return resolveToRegistryId(input) !== null;
+}
+
+/**
+ * Whether two submission-type strings name the same filing: both resolve to one
+ * registry entry ('NDA' and 'nda' do; 'NDA' and '510K' do not). A string that
+ * resolves to nothing matches nothing (fail closed), so an unrecognised type is
+ * never taken as a match. Compares types, never names. Used to anchor a
+ * submission only to a project of its own filing type (QA 2026-10-08, j6).
+ */
+export function isSameSubmissionType(a: string | null | undefined, b: string | null | undefined): boolean {
+  const left = resolveToRegistryId(String(a ?? ''));
+  return left !== null && left === resolveToRegistryId(String(b ?? ''));
 }
 
 // ─── Context Extraction ──────────────────────────────────────────────────────
@@ -316,7 +329,8 @@ const REGISTRY_ID_TO_DEFICIENCY: Record<string, DeficiencySubmissionType> = {
   EU_CTA: 'ind',
   EU_CER: 'cer',
   EU_MDR_TECHDOC: 'cer',
-  EU_IVDR_TECHDOC: 'cer',
+  // There is no PER deficiency taxonomy; never substitute a CER or FDA PMA.
+  EU_IVDR: 'general',
   UK_CTA: 'ind',
   UK_MA: 'nda',
   CA_NDS: 'nda',

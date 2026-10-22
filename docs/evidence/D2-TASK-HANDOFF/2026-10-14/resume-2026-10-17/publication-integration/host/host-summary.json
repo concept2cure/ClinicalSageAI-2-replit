@@ -1,0 +1,10 @@
+{
+  "sourceCommit": "4c0c791c42aa72b49e4d23232437bc270ec592a5",
+  "passed": 61,
+  "failed": 0,
+  "files": 5,
+  "sourcePinsUnchanged": true,
+  "pinnedFiles": 2012,
+  "exitCode": 0,
+  "boundary": "Actual frozen merged HEAD, default Vitest synthetic host/navigation cases; not human witnessing."
+}

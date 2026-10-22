@@ -43,7 +43,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()),
   useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
 }));
 vi.mock('../surfaces/AuthoringCollab', () => ({ AuthoringCollab: () => null }));
@@ -402,7 +403,7 @@ describe('Send for review — a member who already has a review request', () => 
   it('a row that comes back with a verdict gets no task, and is never reported as requested', async () => {
     // A row that comes back with a verdict was not reopened. The route resets a
     // re-requested row to pending since wave 2D, so this is a server that did not;
-    // the dialog still makes no task for it and says the verdict stands.
+    // the dialog still makes no task for it and preserves the earlier verdict.
     answerRequest = body => ok({
       success: true,
       reviews: body.reviewers.map(r => ({ ...standingRow(r.id, r.name ?? r.id, r.id === '42' ? 'changes_requested' : 'pending'), id: `rev-${r.id}` })),
@@ -414,13 +415,13 @@ describe('Send for review — a member who already has a review request', () => 
     await waitFor(() => expect(calls('POST', '/api/tasks/tasks')).toHaveLength(1));
     expect((calls('POST', '/api/tasks/tasks')[0][2] as { assigneeId: number }).assigneeId).toBe(7);
     const reviews = within(result).getByTestId('sfr-reviews').textContent ?? '';
-    expect(reviews).toContain('OQ Signer · Changes requested: their earlier verdict stands. This request did not reopen their review, so no task was created');
+    expect(reviews).toContain('OQ Signer · Changes requested; saved-content binding unavailable. This request did not reopen their review, so no task was created');
     expect(reviews).toContain('Dana Chen · Pending');
-    expect(within(result).getByTestId('sfr-headline').textContent).toContain('One reviewer’s earlier verdict stands; it was not reopened.');
+    expect(within(result).getByTestId('sfr-headline').textContent).toContain('One reviewer’s earlier verdict was retained; it was not reopened.');
     const toast = String(fireToast.mock.calls[0]?.[0]);
     expect(toast).toContain('Review requested from Dana Chen.');
     expect(toast).not.toContain('Review requested from OQ Signer');
-    expect(toast).toContain('Not reopened; the earlier verdict stands: OQ Signer (Changes requested).');
+    expect(toast).toContain('Earlier verdict retained: OQ Signer (Changes requested; saved-content binding unavailable).');
   });
 
   it('when no row was reopened, nothing is reported as requested and no task is made', async () => {
@@ -431,7 +432,7 @@ describe('Send for review — a member who already has a review request', () => 
     const result = await within(dlg).findByTestId('sfr-result');
     await waitFor(() => expect(fireToast).toHaveBeenCalled());
     expect(calls('POST', '/api/tasks/tasks')).toHaveLength(0);
-    expect(fireToast).toHaveBeenCalledWith('Not reopened; the earlier verdict stands: OQ Signer (Approved).', 'error');
+    expect(fireToast).toHaveBeenCalledWith('Earlier verdict retained: OQ Signer (Approved; saved-content binding unavailable).', 'error');
     expect(within(result).getByTestId('sfr-headline').textContent).toMatch(/^No review was reopened\./);
     expect(within(result).queryByTestId('sfr-tasks')).toBeNull();
   });

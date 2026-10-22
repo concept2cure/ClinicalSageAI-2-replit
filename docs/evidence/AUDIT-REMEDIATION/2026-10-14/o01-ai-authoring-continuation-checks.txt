@@ -1,0 +1,41 @@
+O01 AI/authoring continuation focused checks; Node 22.23.3; synthetic data/provider fixtures only.
+
+Initial persisted-route red run (before source repairs):
+ ❯ server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts (17 tests | 15 failed) 2364ms
+ Test Files  1 failed (1)
+      Tests  15 failed | 2 passed (17)
+   Start at  19:47:27
+   Duration  6.50s (transform 2.38s, setup 57ms, import 3.86s, tests 2.36s, environment 0ms)
+
+Exact admitted-project retrieval filter red control:
+ ❯ server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts (19 tests | 1 failed | 18 skipped) 4481ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 18 skipped (19)
+   Start at  19:50:48
+   Duration  21.37s (transform 9.58s, setup 233ms, import 15.70s, tests 4.48s, environment 0ms)
+
+Final main/AnA-new focused green run:
+ ✓ server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts (19 tests) 2442ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts (23 tests) 275ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts (28 tests) 265ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts (140 tests) 27ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-loader-failure.test.ts (3 tests) 68ms
+ Test Files  5 passed (5)
+      Tests  213 passed (213)
+   Start at  19:51:33
+   Duration  13.49s (transform 4.09s, setup 170ms, import 9.47s, tests 3.08s, environment 4ms)
+
+The final combined run passed 213 tests in 5 files: 19 new persisted/SSE cases, 140 canonical section-requirement cases, 23 figure/text cases and 31 new AnA provenance/loader cases. The separately documented AnA 41-test run overlaps those 31 cases; do not add overlapping counts as unique tests. Native feedback 7/7 is separately documented in ai-feedback-native-persistence.md.
+
+Scoped lint (ai-editing, context-intelligence, section-generation-service and new persisted test):
+✖ 29 problems (0 errors, 29 warnings)
+AnA source/new-tests lint is recorded separately: zero errors, three retained source warnings.
+
+Canonical discarded-outcome scanner: zero in each owned source.
+server/routes/c2c/ai-editing.ts: 0 (previous 2)
+server/routes/c2c/context-intelligence.ts: 0 (previous 1)
+server/routes/ana-intelligence.ts: 0 (previous 1 shared site, 8 response paths)
+server/services/authoring/section-generation-service.ts: 0 (previous 1)
+No baselines were modified by this scope. The control tower owns the integrated unique test inventory, full typecheck, build and all release checks.
+
+Limits: PGlite uses the real business/audit SQL with a controlled gateway and disabled secondary audit backend. An unused nullable embedding column is TEXT because PGlite lacks pgvector. Native feedback proof uses actual deployed FORCE RLS and the non-bypass runtime role. No live provider, vector retrieval, standalone UI, production image or agency qualification is asserted. Raw local logs are not copied because inherited diagnostic writers can include synthetic SQL parameters; this evidence contains bounded summaries only.

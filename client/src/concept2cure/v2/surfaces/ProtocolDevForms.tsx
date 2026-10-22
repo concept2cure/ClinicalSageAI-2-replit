@@ -34,6 +34,8 @@ export type PdevFormKind =
 
 /** What the drawer is acting on: the child row's id and how to name it. */
 export interface PdevFormTarget {
+  /** Regulatory-program UUID for a new protocol, never a legacy anchor id. */
+  programId?: string;
   /** The visit / assessment / risk / assignment the write addresses. */
   id?: number;
   /** How the row reads on screen, so the drawer names what is being changed. */
@@ -104,7 +106,7 @@ const FORMS: Record<PdevFormKind, C2CFormConfig> = {
   },
   'risk-residual': {
     eyebrow: 'Protocol · risk register', title: 'Record residual risk',
-    sub: 'ICH E6(R2) §5.0 — the rating that remains after the mitigation is in place.',
+    sub: 'ICH E6(R3) Annex 1 §3.10.1 (risk management) — the rating that remains after the mitigation is in place.',
     governed: true, submitLabel: 'Save risk',
     fields: [
       { key: 'residualLikelihood', label: 'Residual likelihood', type: 'select', options: LIKELIHOOD, half: true },
@@ -342,12 +344,6 @@ async function submitRegister(
     case 'cover-page':
       await updateProtocolHeader(documentId, { sponsor: v.sponsor, principalInvestigator: v.principalInvestigator, reason: v.reason });
       return true;
-    case 'start-protocol':
-      await startProtocolDocument({
-        title: v.title, protocolKind: v.protocolKind || 'clinical', protocolNumber: v.protocolNumber,
-        phase: v.phase, sponsor: v.sponsor, reason: v.reason,
-      });
-      return true;
     default:
       return false;
   }
@@ -356,7 +352,13 @@ async function submitRegister(
 /** Run the write behind `kind`. Throws with the route's own refusal. */
 export async function submitPdevForm(
   kind: PdevFormKind, documentId: number, target: PdevFormTarget | undefined, v: Record<string, string>,
-): Promise<void> {
+): Promise<{ id?: number | null } | void> {
+  if (kind === 'start-protocol') {
+    return startProtocolDocument({
+      title: v.title, protocolKind: v.protocolKind || 'clinical', protocolNumber: v.protocolNumber,
+      phase: v.phase, sponsor: v.sponsor, programId: target?.programId, reason: v.reason,
+    });
+  }
   if (await submitSchedule(kind, documentId, target, v)) return;
   if (await submitRegister(kind, documentId, target, v)) return;
   throw new Error(`No write is registered for "${kind}". Nothing was written.`);
@@ -369,7 +371,7 @@ export interface ProtocolDevFormProps {
   target?: PdevFormTarget;
   onCancel: () => void;
   /** Fires only once the server has confirmed the write. */
-  onDone: (kind: PdevFormKind) => void;
+  onDone: (kind: PdevFormKind, receipt?: { id?: number | null } | void) => void;
   onError: (message: string) => void;
   /**
    * A disposition is signed, not submitted: the drawer collects the decision
@@ -406,8 +408,8 @@ export function ProtocolDevForm({ kind, documentId, target, onCancel, onDone, on
     }
     try {
       // A chosen account's name arrives in v.reviewerName: its field derives it.
-      await submitPdevForm(kind, documentId, target, v);
-      onDone(kind);
+      const receipt = await submitPdevForm(kind, documentId, target, v);
+      onDone(kind, receipt);
     } catch (e) {
       onError(e instanceof Error ? e.message : String(e));
     }

@@ -1,0 +1,315 @@
+{
+  "evidenceScope": "Current component behavior only; local synthetic report values; no full assessor, database, licensed validator, package validation or transmission.",
+  "expectedHead": "87b27c897c5d1be20b0527009bcaf425ebbf3af6",
+  "fileHashes": {
+    "gate.ts": "0764a2d297b2e8007951c57f9100c1a4e3878360916aa728ea170acdf7059331",
+    "types.ts": "bb537940c7096023b567dd3aebaacde35c8698da7df904f2585f409f6a74dc72",
+    "lorenz-adapter.ts": "d102ef8b654f4bfb03eeb3f7f1e78d6bcf74c91b47f59990b2f74aa6749063a6",
+    "index.ts": "7867415b933106cce5575b98edd220eb7f7ef86b61f8d4e460c30f18cc69ee82"
+  },
+  "results": [
+    {
+      "id": "clean-external-required",
+      "input": {
+        "validator": "lorenz-evalidator",
+        "ran": true,
+        "passed": true,
+        "errorCount": 0,
+        "required": true,
+        "environment": "production"
+      },
+      "output": {
+        "externalErrorCount": 0,
+        "ran": true,
+        "configured": true,
+        "blockers": [],
+        "cleared": true
+      }
+    },
+    {
+      "id": "clean-subset-required",
+      "input": {
+        "validator": "fda-criteria-subset",
+        "ran": true,
+        "passed": true,
+        "errorCount": 0,
+        "required": true,
+        "environment": "production"
+      },
+      "output": {
+        "externalErrorCount": 0,
+        "ran": true,
+        "configured": true,
+        "blockers": [],
+        "cleared": true
+      }
+    },
+    {
+      "id": "unknown-report-required",
+      "input": {
+        "validator": "invented-engine",
+        "ran": true,
+        "passed": true,
+        "errorCount": 0,
+        "required": true,
+        "environment": "production"
+      },
+      "output": {
+        "externalErrorCount": 0,
+        "ran": true,
+        "configured": true,
+        "blockers": [],
+        "cleared": true
+      }
+    },
+    {
+      "id": "ran-string-false-required",
+      "input": {
+        "validator": "lorenz-evalidator",
+        "ran": "false",
+        "passed": true,
+        "errorCount": 0,
+        "required": true,
+        "environment": "production"
+      },
+      "output": {
+        "externalErrorCount": 0,
+        "ran": true,
+        "configured": true,
+        "blockers": [],
+        "cleared": true
+      }
+    },
+    {
+      "id": "passed-false-zero-errors-required",
+      "input": {
+        "validator": "lorenz-evalidator",
+        "ran": true,
+        "passed": false,
+        "errorCount": 0,
+        "required": true,
+        "environment": "production"
+      },
+      "output": {
+        "externalErrorCount": 0,
+        "ran": true,
+        "configured": true,
+        "blockers": [],
+        "cleared": true
+      }
+    },
+    {
+      "id": "negative-errors-required",
+      "input": {
+        "validator": "lorenz-evalidator",
+        "ran": true,
+        "passed": true,
+        "errorCount": -1,
+        "required": true,
+        "environment": "production"
+      },
+      "output": {
+        "externalErrorCount": -1,
+        "ran": true,
+        "configured": true,
+        "blockers": [],
+        "cleared": true
+      }
+    },
+    {
+      "id": "nan-errors-required",
+      "input": {
+        "validator": "lorenz-evalidator",
+        "ran": true,
+        "passed": true,
+        "errorCount": "NaN",
+        "required": true,
+        "environment": "production"
+      },
+      "output": {
+        "externalErrorCount": null,
+        "ran": true,
+        "configured": true,
+        "blockers": [],
+        "cleared": true
+      }
+    },
+    {
+      "id": "fractional-errors-required",
+      "input": {
+        "validator": "lorenz-evalidator",
+        "ran": true,
+        "passed": true,
+        "errorCount": 0.5,
+        "required": true,
+        "environment": "production"
+      },
+      "output": {
+        "externalErrorCount": 0.5,
+        "ran": true,
+        "configured": true,
+        "blockers": [
+          "External eValidator reported 0.5 error-severity finding(s); the agency would reject this package. Resolve them before dispatch."
+        ],
+        "cleared": false
+      }
+    },
+    {
+      "id": "error-row-count-zero-required",
+      "input": {
+        "validator": "lorenz-evalidator",
+        "ran": true,
+        "passed": true,
+        "errorCount": 0,
+        "required": true,
+        "environment": "production"
+      },
+      "output": {
+        "externalErrorCount": 0,
+        "ran": true,
+        "configured": true,
+        "blockers": [],
+        "cleared": true
+      }
+    },
+    {
+      "id": "unknown-finding-severity-required",
+      "input": {
+        "validator": "lorenz-evalidator",
+        "ran": true,
+        "passed": true,
+        "errorCount": 0,
+        "required": true,
+        "environment": "production"
+      },
+      "output": {
+        "externalErrorCount": 0,
+        "ran": true,
+        "configured": true,
+        "blockers": [],
+        "cleared": true
+      }
+    },
+    {
+      "id": "warnings-only-required",
+      "input": {
+        "validator": "lorenz-evalidator",
+        "ran": true,
+        "passed": true,
+        "errorCount": 0,
+        "required": true,
+        "environment": "production"
+      },
+      "output": {
+        "externalErrorCount": 0,
+        "ran": true,
+        "configured": true,
+        "blockers": [],
+        "cleared": true
+      }
+    },
+    {
+      "id": "real-errors-advisory-production",
+      "input": {
+        "validator": "lorenz-evalidator",
+        "ran": true,
+        "passed": false,
+        "errorCount": 1,
+        "required": false,
+        "environment": "production"
+      },
+      "output": {
+        "externalErrorCount": 1,
+        "ran": true,
+        "configured": true,
+        "blockers": [],
+        "cleared": true
+      }
+    },
+    {
+      "id": "real-errors-required-staging",
+      "input": {
+        "validator": "lorenz-evalidator",
+        "ran": true,
+        "passed": false,
+        "errorCount": 1,
+        "required": true,
+        "environment": "staging"
+      },
+      "output": {
+        "externalErrorCount": 1,
+        "ran": true,
+        "configured": true,
+        "blockers": [],
+        "cleared": true
+      }
+    },
+    {
+      "id": "noop-advisory",
+      "input": {
+        "validator": "noop",
+        "ran": false,
+        "passed": false,
+        "errorCount": 0,
+        "required": false,
+        "environment": "production"
+      },
+      "output": {
+        "externalErrorCount": 0,
+        "ran": false,
+        "configured": false,
+        "blockers": [],
+        "cleared": true
+      }
+    },
+    {
+      "id": "run-failure-operational-diagnostic",
+      "input": {
+        "validator": "lorenz-evalidator",
+        "ran": false,
+        "passed": false,
+        "errorCount": 0,
+        "required": true,
+        "environment": "production"
+      },
+      "output": {
+        "externalErrorCount": 0,
+        "ran": false,
+        "configured": true,
+        "blockers": [
+          "External agency-grade eValidator is required for a production dispatch but did not run (configured=true, ran=false). Configure EVALIDATOR_BINARY/EVALIDATOR_ENDPOINT and a region profile, or clear ECTD_REQUIRE_EVALIDATOR for non-production builds. See EVALIDATOR_INTEGRATION_SPEC.md."
+        ],
+        "cleared": false
+      }
+    }
+  ],
+  "parserObservations": {
+    "normalizeFatal": "info",
+    "xmlCases": [
+      {
+        "id": "unknown-xml-envelope",
+        "findings": []
+      },
+      {
+        "id": "xml-fatal-severity",
+        "findings": [
+          {
+            "ruleId": "X",
+            "severity": "info",
+            "message": ""
+          }
+        ]
+      },
+      {
+        "id": "xml-unknown-severity",
+        "findings": [
+          {
+            "ruleId": "X",
+            "severity": "info",
+            "message": ""
+          }
+        ]
+      }
+    ]
+  }
+}

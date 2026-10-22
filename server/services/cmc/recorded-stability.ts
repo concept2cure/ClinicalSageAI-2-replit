@@ -95,7 +95,19 @@ export function parseNumeric(value: unknown): number | null {
 }
 
 /** The register records months. Recognize its labels, never convert other units. */
-function parseMonthTime(value: unknown): number | null {
+/**
+ * Exported because the Q1E verdict needs this parser and no other: it asked
+ * "how far does the recorded data reach" with `monthsIn`, the parser written
+ * for the CLAIM text, and the two disagree on the register's own labels —
+ * `monthsIn('Month 24')` is null where this is 24, and `monthsIn('0')` is null
+ * where a pull point at time zero is real data. A complete 24-month study
+ * labelled "Month 0/6/12/24" therefore read as 0 months recorded and failed a
+ * compliant dossier (2026-10-18;
+ * docs/evidence/CMC-M3-GA/2026-10-18/07-batch-disposition-and-timepoints/).
+ * One parser per field: this one for a pull point's time, `monthsIn` for the
+ * free-text claim and planned duration.
+ */
+export function parseMonthTime(value: unknown): number | null {
   if (typeof value === 'number') return Number.isFinite(value) && value >= 0 ? value : null;
   if (typeof value !== 'string') return null;
   const match = value.trim().match(MONTH_TIME_RE);

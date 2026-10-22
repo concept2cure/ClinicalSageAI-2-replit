@@ -11,7 +11,8 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
-import { deriveGovernedTargetBinding } from '../signature-persistence';
+import { deriveGovernedTargetBinding, sha256CanonicalJson } from '../signature-persistence';
+import { readSubmissionPackageIdentity, recordedPackageIdentitySnapshot } from '../../ectd/package-identity';
 
 let h: IndPgliteDb;
 const ORG = 7;
@@ -19,8 +20,9 @@ const USER = 3;
 const client = () => ({ query: (t: string, p?: unknown[]) => h.pglite.query(t, p) as never });
 
 beforeAll(async () => {
-  h = await createIndPgliteDb({ submissionCore: true });
+  h = await createIndPgliteDb({ submissionCore: true, programSpine: true });
   await h.pglite.exec(`
+    INSERT INTO organizations (id, name) VALUES (${ORG}, 'Recorded organization');
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by)
     VALUES (1, 'IND', 'ind', 'biotech', 'fda', ${ORG}, ${USER});
     INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by)
@@ -36,6 +38,26 @@ afterAll(async () => {
 });
 
 describe('ectd-sequence signature binding', () => {
+  it('omits absent study metadata while binding the recorded FDA applicant facts', async () => {
+    await h.pglite.exec('UPDATE submission_leaves SET study_id=NULL, stf_file_tag=NULL WHERE id=1');
+    const seq = await h.pglite.query('SELECT id, submission_id, region, sequence_number, type FROM ectd_sequences WHERE id=1');
+    const leaves = await h.pglite.query(`SELECT id, section_code, lifecycle_op, document_table, document_id, document_uuid,
+      document_content_sha256, checksum, title FROM submission_leaves WHERE sequence_id=1 ORDER BY section_code, id`);
+    expect((await deriveGovernedTargetBinding(client(), 'ectd-sequence:1', ORG)).digest)
+      .toBe(sha256CanonicalJson({ sequence: seq.rows[0], leaves: leaves.rows,
+        recordedPackageIdentity: recordedPackageIdentitySnapshot(await readSubmissionPackageIdentity(client(), ORG, 1)) }));
+  });
+
+  it.each(['study_id', 'stf_file_tag'])('changes when %s changes, including tagged-but-unbound signatures', async (field) => {
+    await h.pglite.exec('UPDATE submission_leaves SET study_id=NULL, stf_file_tag=NULL WHERE id=1');
+    const before = await deriveGovernedTargetBinding(client(), 'ectd-sequence:1', ORG);
+    await h.pglite.query(`UPDATE submission_leaves SET ${field}=$1 WHERE id=1`, ['STUDY-101']);
+    const after = await deriveGovernedTargetBinding(client(), 'ectd-sequence:1', ORG);
+    expect(after.digest).not.toBe(before.digest);
+    await h.pglite.query(`UPDATE submission_leaves SET ${field}=$1 WHERE id=1`, ['STUDY-102']);
+    expect((await deriveGovernedTargetBinding(client(), 'ectd-sequence:1', ORG)).digest).not.toBe(after.digest);
+  });
+
   it('changes when a vault leaf is re-pointed at a different document', async () => {
     const before = await deriveGovernedTargetBinding(client(), 'ectd-sequence:1', ORG);
     await h.pglite.exec(`UPDATE submission_leaves SET document_uuid = '22222222-2222-4222-8222-222222222222' WHERE id = 1`);

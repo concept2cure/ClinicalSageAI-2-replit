@@ -1,10 +1,9 @@
 /**
  * AnalyticsSurface — HYBRID (per PHASE_4_INSTALL.md §1.1).
  *
- * Portfolio cycle times · blocker root causes · reviewer velocity vs
- * peer cohort · AnA effectiveness. Read-only. Dashboards are the primary
- * work; DocumentsPanel is a secondary zone (scheduled exports, velocity
- * dossiers).
+ * Portfolio counts and submission pace use tenant data. Cohorts and per-tool
+ * acceptance remain explicitly unavailable until authoritative sources exist.
+ * Saved reports read the canonical Reporting register and exact run viewer.
  *
  * Cross-program surface. Port basis:
  * ui_kits/mdx/surfaces/Analytics.jsx.
@@ -12,20 +11,8 @@
 
 import * as React from 'react';
 import { I } from '../icons';
-import { DocumentsPanel } from '../components/DocumentsPanel';
-import {
-  ANL_ANA_USAGE,
-  ANL_BLOCKERS,
-  ANL_CYCLE_PHASES,
-  ANL_KPIS,
-  ANL_PACE_24M,
-  ANL_REVIEWERS,
-} from '../data/analytics';
-import { ANL_DOC_FRAMEWORKS } from '../data/analytics-docs';
+import { AnalyticsReportLibrary } from '../components/AnalyticsReportLibrary';
 import { useAnalytics, type AnalyticsPathway } from '../hooks/useAnalytics';
-import { SampleDataBanner } from '../components/SampleDataBanner';
-import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
-import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 
 export interface AnalyticsSurfaceProps {
   onAskAna: (text: string, opts?: { tool?: string }) => void;
@@ -38,39 +25,18 @@ const PATHWAYS: ReadonlyArray<{ id: AnalyticsPathway; label: string }> = [
   { id: 'cer', label: 'CER' },
 ];
 
-/** Stable identity: an empty list must not churn memo/effect deps. */
-const EMPTY_DOCS: KitDocument[] = [];
-
 export function AnalyticsSurface({ onAskAna }: AnalyticsSurfaceProps) {
-  const [pathway, setPathway] = React.useState<AnalyticsPathway>('all');
+  const pathway: AnalyticsPathway = 'all';
   const live = useAnalytics(pathway);
-  const kpis = useSampleRows(live.kpis, ANL_KPIS);
-  const phases = useSampleRows(live.phases, ANL_CYCLE_PHASES);
-  const blockers = useSampleRows(live.blockers, ANL_BLOCKERS);
-  const reviewers = useSampleRows(live.reviewers, ANL_REVIEWERS);
-  const usage = useSampleRows(live.anaUsage, ANL_ANA_USAGE);
-  const pace = useSampleRows(live.pace24m, ANL_PACE_24M);
-  // Documents/frameworks have no live feed yet. They were the ONE panel on
-  // this surface wired to fixtures unconditionally — example artifacts
-  // rendered as real in production while every sibling panel honored the
-  // sample gate. Same gate now: live rows would win, sample only in explicit
-  // sample mode, honest empty otherwise.
-  /* This panel has no live feed, and the rows it used to show under sample
-     mode were fabricated regulatory artifacts — several asserting
-     `esigState: 'signed'` with a named signer and a date (anl-docs.ts).
-     There is no real document list to show here yet, so it shows none:
-     the panel renders its honest empty state instead of example records.
-     Wiring a real read is what fills it. */
-  const documents: KitDocument[] = EMPTY_DOCS;
-  /* The framework list is a real category taxonomy, not tenant data, so it
-     is not sample content and is no longer gated as though it were. */
-  const frameworks = ANL_DOC_FRAMEWORKS as unknown as KitDocFramework[];
-
-  const docsReady = documents.filter(
-    (d) => d.status === 'ready' || d.status === 'locked',
-  ).length;
-  const docsDrafting = documents.filter((d) => d.status === 'draft').length;
-  const totalCleared = pace.reduce((s, n) => s + n, 0);
+  const kpis = live.kpis ?? [];
+  const phases = live.phases ?? [];
+  const blockers = live.blockers ?? [];
+  const reviewers = live.reviewers ?? [];
+  const usage = live.anaUsage ?? [];
+  const pace = live.pace24m ?? [];
+  const metricsUnavailable = live.error || (!live.loading && live.kpis === null);
+  const showMetrics = !live.loading && !metricsUnavailable;
+  const totalSubmitted = pace.reduce((s, n) => s + n, 0);
 
   return (
     <>
@@ -79,8 +45,8 @@ export function AnalyticsSurface({ onAskAna }: AnalyticsSurfaceProps) {
           <div className="page-eyebrow">Intelligence</div>
           <h1 className="page-title">Analytics</h1>
           <div className="page-sub">
-            Portfolio cycle times · blocker root causes · reviewer velocity vs
-            peer cohort · AnA effectiveness. Read-only.
+            Portfolio counts, submission history and saved reports. Missing
+            metric sources are identified below. Read-only.
           </div>
         </div>
         <div className="page-actions">
@@ -90,28 +56,27 @@ export function AnalyticsSurface({ onAskAna }: AnalyticsSurfaceProps) {
                 key={p.id}
                 className="seg-btn"
                 data-on={pathway === p.id || undefined}
-                onClick={() => setPathway(p.id)}
+                disabled={p.id !== 'all'}
+                title={p.id !== 'all' ? 'Pathway-specific aggregates are not available from all current sources.' : undefined}
                 type="button"
               >
                 {p.label}
               </button>
             ))}
           </div>
-          <button
-            className="btn ghost small"
-            onClick={() =>
-              onAskAna(
-                'Export the portfolio analytics summary as a one-page PDF — cycle times, top blockers, reviewer-velocity rank vs peers.',
-              )
-            }
-            type="button"
-          >
-            {I.download} Export
-          </button>
         </div>
       </div>
+      <p className="section-sub">Pathway filtering is unavailable; these metrics cover the authorized organization.</p>
 
-      <SampleDataBanner show={live.phases === null} loading={live.loading} label="cycle-time analytics" />
+      <AnalyticsReportLibrary {...live} />
+      {live.loading && <p role="status">Loading analytics metrics…</p>}
+      {!live.loading && metricsUnavailable && (
+        <div role="alert">
+          <p>Analytics metrics are unavailable. A required source or its tenant scope could not be verified.</p>
+          <button className="btn ghost small" type="button" onClick={live.refresh}>Retry analytics</button>
+        </div>
+      )}
+      {showMetrics && <>
 
       <div className="metrics-row">
         {kpis.map((k, i) => (
@@ -144,20 +109,11 @@ export function AnalyticsSurface({ onAskAna }: AnalyticsSurfaceProps) {
         ))}
       </div>
 
-      <DocumentsPanel
-        title="Reports and dossiers"
-        subtitle={`${documents.length} analytics artifacts · ${docsReady} ready · ${docsDrafting} drafting`}
-        docs={documents}
-        frameworks={frameworks}
-        onOpenEditor={(docId) => onAskAna(`Open report ${docId} in viewer`)}
-        onAskAna={(text) => onAskAna(text)}
-      />
-
       <section className="section">
         <div className="section-head">
-          <h2>Pace of clearance</h2>
+          <h2>Submission pace</h2>
           <span className="section-sub">
-            {totalCleared} cleared in last 24 months
+            {totalSubmitted} submitted in last 24 months
           </span>
         </div>
         <div className="anl-pace">
@@ -169,7 +125,7 @@ export function AnalyticsSurface({ onAskAna }: AnalyticsSurfaceProps) {
                 key={i}
                 className="anl-pace-col"
                 data-thisyear={isThisYear || undefined}
-                title={`${monthsAgo} mo ago · ${n} cleared`}
+                title={`${monthsAgo} mo ago · ${n} submitted`}
               >
                 <div
                   className="anl-pace-bar"
@@ -193,7 +149,8 @@ export function AnalyticsSurface({ onAskAna }: AnalyticsSurfaceProps) {
             Left of axis · faster than peer · Right of axis · slower
           </span>
         </div>
-        <div className="anl-phase">
+        {phases.length === 0 && <p>Peer cycle-time data is unavailable; no authoritative cohort source is connected.</p>}
+        {phases.length > 0 && <div className="anl-phase">
           {phases.map((row, i) => {
             const k510 = row.k510;
             const pma = row.pma;
@@ -261,7 +218,7 @@ export function AnalyticsSurface({ onAskAna }: AnalyticsSurfaceProps) {
               <span className="anl-phase-swatch slow" /> Slower than peer median
             </span>
           </div>
-        </div>
+        </div>}
       </section>
 
       <div className="anl-grid">
@@ -273,6 +230,7 @@ export function AnalyticsSurface({ onAskAna }: AnalyticsSurfaceProps) {
             </span>
           </div>
           <div className="anl-blockers">
+            {blockers.length === 0 && <p>No open blockers were found in the organization registry.</p>}
             {blockers.map((b, i) => (
               <button
                 key={i}
@@ -287,20 +245,20 @@ export function AnalyticsSurface({ onAskAna }: AnalyticsSurfaceProps) {
                 <div className="anl-blocker-head">
                   <span className="anl-blocker-count mono">{b.count}</span>
                   <span className="anl-blocker-cause">{b.cause}</span>
-                  <span className={`anl-blocker-trend trend-${b.trend}`}>
+                  {b.trend && <span className={`anl-blocker-trend trend-${b.trend}`}>
                     {b.trend === 'up'
                       ? I.trendingUp
                       : b.trend === 'down'
                       ? I.trendingDown
                       : I.minus}
-                  </span>
+                  </span>}
                 </div>
                 <div className="anl-blocker-foot">
                   <span>{b.pathway}</span>
                   <span className="dot-sep" aria-hidden="true">·</span>
-                  <span>median age {b.median}d</span>
+                  <span>{b.median === null ? 'Median age not recorded' : `median age ${b.median}d`}</span>
                   <span className="dot-sep" aria-hidden="true">·</span>
-                  <span style={{ color: 'var(--text-400)' }}>{b.owner}</span>
+                  <span style={{ color: 'var(--text-400)' }}>{b.owner || 'Owner not recorded'}</span>
                 </div>
               </button>
             ))}
@@ -315,6 +273,7 @@ export function AnalyticsSurface({ onAskAna }: AnalyticsSurfaceProps) {
             </span>
           </div>
           <div className="anl-reviewers">
+            {reviewers.length === 0 && <p>FDA reviewer cohort data is unavailable; no authoritative decision corpus is connected.</p>}
             {reviewers.map((r) => {
               const range = r.slowest - r.fastest || 1;
               const orgPos = r.orgMedian > 0 ? ((r.orgMedian - r.fastest) / range) * 100 : null;
@@ -390,6 +349,7 @@ export function AnalyticsSurface({ onAskAna }: AnalyticsSurfaceProps) {
           </span>
         </div>
         <div className="anl-ana">
+          {usage.length === 0 && <p>Per-tool acceptance data is unavailable; accepted drafts cannot be attributed to recorded tool calls.</p>}
           {usage.map((u) => {
             const pct = u.calls > 0 ? Math.round((u.accepted / u.calls) * 100) : 0;
             return (
@@ -414,6 +374,7 @@ export function AnalyticsSurface({ onAskAna }: AnalyticsSurfaceProps) {
           })}
         </div>
       </section>
+      </>}
     </>
   );
 }

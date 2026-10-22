@@ -43,6 +43,8 @@ import {
   calculateCriticalPath,
   getOptimalAssignee,
 } from '../services/tasking/task-planning';
+import { requestDb } from '../db/requestDb';
+import { projectForTaskSource, AUTHORING_DOCUMENT_SOURCE } from '../services/tasking/task-project';
 
 const router = Router();
 const storage = { db };
@@ -175,6 +177,64 @@ const createAutomationSchema = z.object({
   smartAssignment: jsonValueSchema.optional(),
 });
 
+/**
+ * The project a new task is on, or null once a refusal has been sent.
+ *
+ * A task raised on an authoring document is on that document's program's
+ * project (services/tasking/task-project.ts), read on the request's RLS client.
+ * Assign review sends no projectId — the editor holds the program UUID, not
+ * projects.id — so the reviewer's task was stored with project_id NULL and the
+ * program's Review tab, which reads work by project, listed nothing (QA
+ * 2026-10-08, second walk, j1). A project the caller named is kept. A read that
+ * cannot complete refuses the create (503): a task whose project could not be
+ * told is not written.
+ */
+async function taskProjectOrRefuse(
+  req: Request,
+  res: Response,
+  organizationId: number,
+  data: { projectId?: number; sourceEntityType?: string; sourceEntityId?: string },
+): Promise<{ projectId: number | undefined } | null> {
+  if (data.projectId !== undefined || data.sourceEntityType !== AUTHORING_DOCUMENT_SOURCE) {
+    return { projectId: data.projectId };
+  }
+  try {
+    const projectId = await projectForTaskSource(requestDb(req), {
+      orgId: organizationId,
+      sourceEntityType: data.sourceEntityType,
+      sourceEntityId: data.sourceEntityId,
+    });
+    return { projectId: projectId ?? undefined };
+  } catch (err) {
+    console.error('Task create: the source document\'s project could not be read:', err instanceof Error ? err.message : err);
+    res.status(503).json({
+      success: false,
+      code: 'TASK_PROJECT_UNREADABLE',
+      error: 'The project of the document this task is for could not be read. Nothing was created; try again.',
+    });
+    return null;
+  }
+}
+
+/** Tell a new task's assignee it is theirs, unless they created it themselves. */
+function notifyNewAssignee(
+  organizationId: number,
+  assigneeId: number | undefined,
+  actorUserId: number,
+  task: { title: string; description?: string },
+  taskId: string,
+): void {
+  if (!assigneeId || assigneeId === actorUserId) return;
+  notifyTaskEvent({
+    organizationId,
+    recipientUserId: assigneeId,
+    category: 'task_assigned',
+    title: `Task assigned: ${task.title}`,
+    body: task.description ?? null,
+    taskId,
+  });
+}
+
 // Critical-path + workload-balancing helpers live in
 // services/tasking/task-planning (extracted for the repo-health line gate).
 // Create single task
@@ -215,6 +275,9 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
       assignment = { assignedBy: actorUserId, assignedAt: new Date() };
     }
 
+    const project = await taskProjectOrRefuse(req, res, organizationId, validatedData);
+    if (!project) return;
+
     if (!assigneeId) {
       const optimalAssignee = await getOptimalAssignee(organizationId, validatedData);
       if (optimalAssignee) {
@@ -233,6 +296,7 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
           taskId,
           organizationId,
           ...taskFields,
+          projectId: project.projectId,
           startDate: startDate ? new Date(startDate) : undefined,
           dueDate: dueDate ? new Date(dueDate) : undefined,
           assigneeId,
@@ -265,17 +329,7 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
     });
     commitInFlight = false;
 
-    // Tell the assignee (unless they created it themselves).
-    if (assigneeId && assigneeId !== actorUserId) {
-      notifyTaskEvent({
-        organizationId,
-        recipientUserId: assigneeId,
-        category: 'task_assigned',
-        title: `Task assigned: ${validatedData.title}`,
-        body: validatedData.description ?? null,
-        taskId,
-      });
-    }
+    notifyNewAssignee(organizationId, assigneeId, actorUserId, validatedData, taskId);
 
     res.json({
       success: true,

@@ -134,10 +134,9 @@ describe('FdaEsgGateway with FDA_ESG_TRANSPORT=rest', () => {
   it('credentials present → typed UnverifiedTransportError, transmitted:false, no row, no socket, no identifier', async () => {
     configureRest();
     const gw = new FdaEsgGateway();
-    // 2026-10-08 (W5/D7, sweep HS-4): this asserted `true` — credentials that
-    // resolve read as "configured", and the surface showed a gateway that
-    // refuses every transmit as ready to send. Configured means able to transmit.
-    expect(await gw.isConfigured(11, 'production')).toBe(false);
+    // Configured means the credentials resolve; whether the transport can send
+    // is reported apart from it (gatewayTransportReadiness, 2026-10-17).
+    expect(await gw.isConfigured(11, 'production')).toBe(true);
 
     const err = await gw.transmit(request()).catch((e) => e);
     expect(err).toBeInstanceOf(UnverifiedTransportError);
@@ -154,7 +153,8 @@ describe('FdaEsgGateway with FDA_ESG_TRANSPORT=rest', () => {
     expect(err.message).not.toMatch(/https?:\/\//);
     expect(err.message).not.toMatch(/FDA_ESG_/);
     expect(err.message).not.toContain('ESG-SUBMITTER-1');
-    expect(err.message).toMatch(/An administrator can switch FDA ESG to the verified AS2 transport\./);
+    expect(err.message).toMatch(/An administrator can switch FDA ESG to the implemented AS2 transport\./);
+    expect(err.message).not.toMatch(/verified AS2/);
     expect(logWarn).toHaveBeenCalledWith(
       expect.stringContaining('unverified'),
       expect.objectContaining({
@@ -167,14 +167,18 @@ describe('FdaEsgGateway with FDA_ESG_TRANSPORT=rest', () => {
     expect(httpsRequests).toHaveLength(0);
   });
 
-  it('the gateway list reports the transport this environment resolves, and REST as not able to transmit', async () => {
+  // 2026-10-08 (W5/D7, sweep HS-4): the list said "configured" for a REST
+  // gateway with nothing beside it to say the transport cannot send. Since
+  // 2026-10-17 the two are reported apart, and this pins REST in particular.
+  it('the gateway list keeps credentials and transport apart: REST credentials resolve, and the REST transport is unavailable', async () => {
     configureRest();
     const { gatewayConfigurationStatus } = await import('../index');
     const production = (await gatewayConfigurationStatus(11, 'production')).find((g) => g.region === 'fda' && g.gateway === 'esg');
-    expect(production).toEqual({ region: 'fda', gateway: 'esg', transport: 'rest', configured: false });
-    // Staging is not REST here: it keeps the AS2 default, unconfigured (no AS2 variables).
-    const staging = (await gatewayConfigurationStatus(11, 'staging')).find((g) => g.region === 'fda' && g.gateway === 'esg');
-    expect(staging).toEqual({ region: 'fda', gateway: 'esg', transport: 'as2', configured: false });
+    expect(production).toMatchObject({
+      configured: true,
+      transportReadiness: { transport: 'rest', implementation: 'unavailable', qualified: false },
+    });
+    expect(production?.transportReadiness.reason).toMatch(/has not been verified; transmit is refused/);
   });
 
   it('the staging environment reads the FDA_ESG_STAGING_* REST variables', async () => {

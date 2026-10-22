@@ -154,6 +154,29 @@ function usEctdSubmissionFormat(): string {
   return `eCTD v3.2.2 (eCTD v4.0 accepted voluntarily for new applications since ${v4.effectiveDate})`;
 }
 
+/**
+ * The EU eCTD format, read from the dated EU facts in
+ * regulatory-currency/currency-registry.ts: `eu-ectd-m1-v311-vc-v82` (EU M1
+ * v3.1.1 with validation criteria v8.2, mandatory since its date) and
+ * `ema-ectd-v4-cp-optional` (eCTD v4.0 optional for new centralised MAAs since
+ * its date). Each qualifier is named only while its fact is in force, and every
+ * date is the fact's. With a fact missing, its claim is not made (fail closed).
+ * 2026-10-05 (D2 record, step g-eu-medicines-dated-facts; finding 45): this was
+ * the literal 'EU eCTD (EU M1 spec; eCTD v3.2.2 / v4.0)', which named no M1
+ * version and set the optional v4.0 beside v3.2.2 as an equal.
+ */
+function euEctdSubmissionFormat(): string {
+  const m1 = REGULATORY_FACTS.find((f) => f.id === 'eu-ectd-m1-v311-vc-v82');
+  const v4 = REGULATORY_FACTS.find((f) => f.id === 'ema-ectd-v4-cp-optional');
+  const m1Part =
+    m1 && m1.status === 'in_force'
+      ? `EU M1 v3.1.1 with validation criteria v8.2, mandatory since ${m1.effectiveDate}`
+      : 'EU M1 specification';
+  const base = `EU eCTD v3.2.2 (${m1Part})`;
+  if (!v4 || v4.status !== 'in_force') return base;
+  return `${base}; eCTD v4.0 optional for new centralised MAAs since ${v4.effectiveDate}`;
+}
+
 export const MARKET_SUBMISSION_SPECS: MarketSubmissionSpec[] = [
   // ── FDA — drug/biologic eCTD ────────────────────────────────────────────────
   {
@@ -183,9 +206,10 @@ export const MARKET_SUBMISSION_SPECS: MarketSubmissionSpec[] = [
       maxFileSizeMb: null,
       // FDA's ESG limit is 10 GB (FDA Form 5640 v2.0; ectd-regional-rules
       // FDA_GATEWAY_LIMIT_BYTES), read as 10^10 bytes; this field is MiB, so
-      // 9536 MiB, rounded down. 2026-10-08 (W5/D7, sweep VP-6 follow-up): it
-      // was 4096, a second FDA limit that disagreed with the gateway's.
-      maxSubmissionSizeMb: 9536,
+      // exactly 10^10 / 2^20. 2026-10-08 (W5/D7, sweep VP-6 follow-up): it was
+      // 4096, a second FDA limit that disagreed with the gateway's; 9536
+      // (rounded down) left a window the gateway accepted and this refused.
+      maxSubmissionSizeMb: (10 * 1000 ** 3) / 1024 ** 2,
       checksumAlgorithm: 'MD5',
       folderConvention: 'CTD m1–m5 tree; Module 1 under m1/us/.',
     },
@@ -222,7 +246,7 @@ export const MARKET_SUBMISSION_SPECS: MarketSubmissionSpec[] = [
     authorityId: 'EMA',
     region: 'eu',
     family: 'ectd',
-    submissionFormat: 'EU eCTD (EU M1 spec; eCTD v3.2.2 / v4.0)',
+    submissionFormat: euEctdSubmissionFormat(),
     /* The one EMA wording (global-ri/electronic-submission-format.ts): the
        eSubmission Gateway / Web Client for the centralised procedure, CESP for
        national procedures. Which a given filing takes is submissionChannelFor's

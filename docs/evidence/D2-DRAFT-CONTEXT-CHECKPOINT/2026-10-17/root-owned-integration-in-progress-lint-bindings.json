@@ -1,0 +1,24 @@
+{
+  "exitCode": 0,
+  "files": 6,
+  "errors": 0,
+  "warnings": 3,
+  "before": {
+    "server/routes/ana-intelligence.ts": "0e0547e1f6b02900a90fa7c163f36657c7d9fb7802d3bfc0eed8470c428b526d",
+    "server/routes/ana-intelligence-batch-input.ts": "352ef253c3211bc2e414116c965e7c4b22e51537ee55631833631a8d98d96dee",
+    "server/routes/__tests__/ana-intelligence-source-context.test.ts": "06d32131b4adf4e93c84c386e2bb94e9f052fa29e377b69dd64a1922b8a85182",
+    "server/services/ai-gateway/gateway-error-map.ts": "c0ca52e155ea99cd17a3c59f1ae513c9f93467ab65e2c045168ecf9bb13d52e0",
+    "server/services/ai-gateway/__tests__/gateway-source-checkpoint-error.test.ts": "698c48a7079a3df75bc0a9f6d4451f3ae98e3a50ecb7e5a19bfc71051ab9e3c7",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/run-regression.mjs": "cf25d5f703e692ff11039464c7012c074b810399139379cc5dc13421a8f91e90"
+  },
+  "after": {
+    "server/routes/ana-intelligence.ts": "0e0547e1f6b02900a90fa7c163f36657c7d9fb7802d3bfc0eed8470c428b526d",
+    "server/routes/ana-intelligence-batch-input.ts": "352ef253c3211bc2e414116c965e7c4b22e51537ee55631833631a8d98d96dee",
+    "server/routes/__tests__/ana-intelligence-source-context.test.ts": "06d32131b4adf4e93c84c386e2bb94e9f052fa29e377b69dd64a1922b8a85182",
+    "server/services/ai-gateway/gateway-error-map.ts": "c0ca52e155ea99cd17a3c59f1ae513c9f93467ab65e2c045168ecf9bb13d52e0",
+    "server/services/ai-gateway/__tests__/gateway-source-checkpoint-error.test.ts": "698c48a7079a3df75bc0a9f6d4451f3ae98e3a50ecb7e5a19bfc71051ab9e3c7",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/run-regression.mjs": "cf25d5f703e692ff11039464c7012c074b810399139379cc5dc13421a8f91e90"
+  },
+  "baselineWarnings": 2,
+  "note": "Two inherited route warnings; first root lint and baseline comparison preserve the initial size/complexity warnings corrected by a small HTTP helper and canonical outer-classifier branch."
+}

@@ -1,0 +1,77 @@
+{
+  "docs/evidence/D4/2026-10-09-review-integrity/SCIENTIFIC_SOURCE_REVIEW_CONTRACT.md": {
+    "bytes": 7906,
+    "sha256": "f828521b9d7d39df6bd1f38537bcb2f260f73e0f936b776c2265d7f318cb15b0",
+    "gitBlob": "21056e43d5e8234ed4b268493f86fa2aac44fe42"
+  },
+  "docs/evidence/D4/2026-10-09-signed-target/SIGNATURE_TARGET_CONTRACT.md": {
+    "bytes": 5198,
+    "sha256": "1d8f809fe97eceeb06a7d3ac0bbe4b82ebbeb35b043b7d628c198a41d3d4032d",
+    "gitBlob": "3e0314a76742c16d54e84fdd9c1b0563967ef8dc"
+  },
+  "server/routes/ana-ri/__tests__/seal-qualification-declarations.test.ts": {
+    "bytes": 6661,
+    "sha256": "b6182ad244b8ce8191e8d3c802c1007b69960e68c54d114971369317c6a36456",
+    "gitBlob": "e6d9dd73ffb5b5be1efdac84320da3daf37d885e"
+  },
+  "server/routes/ana-ri/seal-verified.ts": {
+    "bytes": 6555,
+    "sha256": "8fde5e9cc28623dadf2fd084ba6d2aec0d19066721bf9c997691403cd1d99cee",
+    "gitBlob": "3f7acf2d7031172f49497ee1da86ea7e7eb16a0f"
+  },
+  "server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts": {
+    "bytes": 19425,
+    "sha256": "ab14420bc9a41c3ad1e690d45b3a3fed91e36fd565f53a672ad7aa9531238e87",
+    "gitBlob": "8b0d0fee805f62ba7c483478e68b0a98c59e0e19"
+  },
+  "server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts": {
+    "bytes": 8688,
+    "sha256": "7ffbdffa9ae06df07240af0db301e8b5bbee944eb273134a0e8091fe60918f09",
+    "gitBlob": "7c975f92654af36f669b93cab61d2cfa1c5c308f"
+  },
+  "server/services/__tests__/artifact-signed-target-binding.test.ts": {
+    "bytes": 927,
+    "sha256": "4633bd091f5fe285150be50b74ff869b04778909f16e34f3cd5ba5ee7df85e6c",
+    "gitBlob": "24f050fc96e3485fe4db76f49b12ee2360e70726"
+  },
+  "server/services/__tests__/fixtures/artifact-review-quorum-cases.json": {
+    "bytes": 16816,
+    "sha256": "61126aae1f101e703d39bfebd0be0af70d4dce66ba9d3c8bd61c5c75f6686914",
+    "gitBlob": "b766bd8d5c1b46bd6fad7e6a2db47a36e153a49e"
+  },
+  "server/services/__tests__/fixtures/artifact-signed-target-cases.json": {
+    "bytes": 15033,
+    "sha256": "cfdeb934d28c544583277e52d6809bb3150255222bd12ecb22767205feb5117d",
+    "gitBlob": "7f363dcb4c886ff9db82da4546d19380a82aa28f"
+  },
+  "server/services/__tests__/fixtures/artifact-signed-target-harness.cjs": {
+    "bytes": 14579,
+    "sha256": "d1496792e2b739f6060961f280e35e073ae1a0c021c310adfa2509f9d5136fc3",
+    "gitBlob": "09d5401af5a80c97bb23899fb6b8cc0dace74111"
+  },
+  "server/services/ana/verifiedSealService.ts": {
+    "bytes": 24641,
+    "sha256": "d339eb4c80ee000602f1f684c714f4bf893d3691fc50950d827aa37ff925356e",
+    "gitBlob": "6bbabb66e1966925e53e6f1a7542a57d757f6ddf"
+  },
+  "server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts": {
+    "bytes": 18638,
+    "sha256": "a3fc112010179a7bd5417edb5f63093826cb33c96e1621c76ae39ded0f8af092",
+    "gitBlob": "d59d2219d67b6d75c1a1a96ea9f08c23fc8a52b8"
+  },
+  "server/services/artifact-approval-act.ts": {
+    "bytes": 17963,
+    "sha256": "8a1967fb84947f3f8a2dbbc4791996fa5b98a0e65ccea9a8bc4d162f9d659d48",
+    "gitBlob": "e2e3af240922ffd402b37b983a886d2b50ade8d8"
+  },
+  "server/services/artifact-signed-act.ts": {
+    "bytes": 18519,
+    "sha256": "ced6f28015834905043e4d0270e8c40591067703bc7e051298606c8ae0a2b458",
+    "gitBlob": "68049f5cf19f7744338bc55aff10a9cfcc38b875"
+  },
+  "tests/artifact-status-lock-covers-approval.test.ts": {
+    "bytes": 18421,
+    "sha256": "0c544912d9024d226f0999697460f08c8b3b8e3b559f6cb8afd2796304d64858",
+    "gitBlob": "ae249d9abc9ac722aabef89669b69b2dfd416a7b"
+  }
+}

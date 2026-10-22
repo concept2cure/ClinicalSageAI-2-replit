@@ -16,7 +16,7 @@
 
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -26,9 +26,18 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 // The collab presence layer (AuthoringCollab) reads the auth identity; give it
 // a real-shaped user so the surface renders (it still joins no room here —
 // these tests set no C2C_PROJECT, so the collab layer honestly renders null).
-vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
-}));
+vi.mock('@/services/portal/authService', async original => {
+  const actual = await original<typeof import('@/services/portal/authService')>();
+  return {
+    ...actual,
+    authService: {
+      getUser: () => ({ id: 1, organizationId: 1 }),
+      captureSessionReadGuard: actual.authService.captureSessionReadGuard.bind(actual.authService),
+      on: actual.authService.on.bind(actual.authService),
+    },
+    useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
+  };
+});
 
 
 /* jsdom implements no layout: ProseMirror's scroll-into-view (scheduled by
@@ -108,7 +117,8 @@ describe('the save confirmation carries whether the text reached the filing', ()
     canvasEditor().chain().focus().selectAll().insertContent('Revised substance description.').run();
     await waitFor(() => expect(canvasText()).toBe('Revised substance description.'));
     fireEvent.change(screen.getByTestId('change-reason'), { target: { value: 'Corrected the potency limit.' } });
-    const save = screen.getByRole('button', { name: /Save/i }) as HTMLButtonElement;
+    const save = within(screen.getByRole('group', { name: 'Save and sign' }))
+      .getByRole('button', { name: /^Save(?:d)?$/i }) as HTMLButtonElement;
     await waitFor(() => expect(save.disabled).toBe(false));
     fireEvent.click(save);
     await waitFor(() => expect(apiRequest.mock.calls.some((c) => c[0] === 'PATCH')).toBe(true));
@@ -128,6 +138,16 @@ describe('the save confirmation carries whether the text reached the filing', ()
     await saveOnce();
     await waitFor(() => expect(screen.getByText(/committed to the filing/i)).toBeTruthy());
     expect(document.body.textContent).not.toMatch(/not in the filing/i);
+  });
+
+  /* QA 2026-10-08, walk 2 (j4): a section of a document the outline files as
+     one node (2.5.1 of the 2.5 Clinical Overview) reaches the filing as part of
+     that node; the confirmation names the node it went to. */
+  it('names the filing section a part-of save went into', async () => {
+    filing = { committed: true, documentId: 'C1', sectionKey: '2.5', partOf: '2.5' };
+    await saveOnce();
+    await waitFor(() => expect(screen.getByText(/committed to the filing/i)).toBeTruthy());
+    expect(document.body.textContent).toContain('committed to the filing as part of its section 2.5, with this document’s other sections under 2.5');
   });
 
   it('claims nothing about the filing when the server reported nothing', async () => {

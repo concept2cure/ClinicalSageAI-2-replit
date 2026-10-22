@@ -44,17 +44,25 @@ vi.mock('../../../services/audit/chain.js', () => ({
 vi.mock('../../../services/submission-service/submission-service.js', () => ({
   createSubmissionTx: async () => ({ id: 3101 }),
 }));
+vi.mock('../../../services/c2c/current-program-access', async (original) => {
+  const real = await original<typeof import('../../../services/c2c/current-program-access')>();
+  return { ...real, ...(await import('./support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
 
 import projectsRouter, { serializeProgramDetail } from '../projects';
+import { clearSeats, seatMember, seatProgram } from './support/current-member';
 
 const PID = '82d3b729-87a1-4714-9a21-819b538683f3';
 
-function app(org: number | null, userId?: number) {
+// Every /:id read admits only a current member of the program's org (14362ef00);
+// the gate's reads are answered from the seats in beforeEach.
+function app(org: number | null, userId = 1) {
   const a = express();
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     if (org !== null) (req as unknown as { organizationId: number }).organizationId = org;
-    if (userId !== undefined) (req as unknown as { userId: number }).userId = userId;
+    (req as unknown as { userId: number }).userId = userId;
+    (req as unknown as { dbClient: unknown }).dbClient = { query: (...q: unknown[]) => query(...q) };
     next();
   });
   a.use('/api/c2c/projects', projectsRouter);
@@ -84,6 +92,9 @@ beforeEach(() => {
   query.mockReset();
   release.mockReset();
   query.mockResolvedValue({ rows: [] });
+  clearSeats();
+  seatMember(2, 1, 'admin');
+  seatProgram(2, PID);
 });
 
 describe('GET /api/c2c/projects/:id — device taxonomy', () => {
@@ -170,7 +181,9 @@ describe('POST /api/c2c/projects — the create answers with the same serializer
     // Nothing to measure is not "0% ready": a program with no governed sections
     // has no readiness figure (7196d63d1 — ProjectHome and the card both say
     // "Readiness not measured"). This expected 0 from before that change.
-    expect(res.body.program).toEqual({ ...serializeProgramDetail(deviceRow()), readiness: null });
+    // 2026-10-08: the read also says when it measured readiness, and with no
+    // figure it gives no time (filing-spine design review, open item 9).
+    expect(res.body.program).toEqual({ ...serializeProgramDetail(deviceRow()), readiness: null, readinessAsOf: null });
     expect(res.body.program).toMatchObject({ device_class: 'II', product_code: 'QNX', predicate_devices: [{ kNumber: 'K223456' }], review_panel: 'Microbiology', product_type: 'ivd' });
 
     // The detail re-select is the SAME SQL the read issues (one projection, one serializer).

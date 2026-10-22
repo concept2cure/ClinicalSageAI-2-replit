@@ -29,6 +29,7 @@ import { z } from 'zod';
 import { assembleSubmissionEctd } from '../services/ectd/assemble-from-core';
 import { validateEctdPackage } from '../services/submission-gateways/ectd-structural-validator';
 import { EctdCompletenessError } from '../services/ectd/completeness';
+import { PackageIdentityMissingError } from '../services/ectd/package-identity';
 import {
   validatePackage as validateEctdLeafPackage,
   type ECTDLeaf,
@@ -42,6 +43,8 @@ import { requestDb } from '../db/requestDb';
 import {
   applyExportGovernanceHeaders,
   evaluateExportGovernance,
+  exportReviewAttestation,
+  type ExportReviewAttestation,
 } from '../services/export/exportReviewGate';
 import auditService from '../services/auditService';
 import {
@@ -108,6 +111,12 @@ function classifyError(error: unknown): {
   message: string;
 } {
   const raw = error instanceof Error ? error.message : String(error);
+  // The record names no application number or no applicant (QA 2026-10-08, j6):
+  // the package is not built, and the refusal names what to record. Checked
+  // first, so no phrase in it can be read as another class below.
+  if (error instanceof PackageIdentityMissingError) {
+    return { status: 409, code: error.code, message: raw };
+  }
   // Region-unsupported is thrown by the canonical region mapper with a stable
   // prefix (core-to-packager toPackagerRegion).
   if (/does not support region|Unsupported region/i.test(raw)) {
@@ -475,6 +484,7 @@ async function recordGovernedEctdExport(
     submissionId: number;
     packageSha256: string;
     result: Awaited<ReturnType<typeof assembleSubmissionEctd>>;
+    reviewAttestation: ExportReviewAttestation;
   },
 ): Promise<'placed' | 'unplaced' | null> {
   const { result } = p;
@@ -504,6 +514,7 @@ async function recordGovernedEctdExport(
         region: result.region,
         priorState: result.priorState,
         unfiledPriorSequences: result.unfiledPriorSequences,
+        reviewAttestation: p.reviewAttestation,
       },
     });
     return 'unplaced';
@@ -583,7 +594,8 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
   const { region, sequenceNumber, applicationNumber, validateAfter, requireComplete, rehearsal } =
     parsedBody.data;
 
-  if (!validateExportGovernance(req, res)) return;
+  const governance = validateExportGovernance(req, res);
+  if (!governance) return;
 
   try {
     console.log(
@@ -659,6 +671,10 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
        defect was fixed on the DOCX route (20dc3980b); this is the eCTD package,
        where it matters most. */
     const packageSha256 = createHash('sha256').update(result.buffer).digest('hex');
+    /* 2026-10-15: the review assertion that passed the gate was recorded
+       nowhere, and stamped Human-Review-Approved: true. Both rows below now
+       carry it, as the caller's assertion, with the principal who made it. */
+    const reviewAttestation = exportReviewAttestation(governance, Number(user.id));
     const registry = await recordGovernedEctdExport(req, {
       organizationId,
       userId: Number(user.id),
@@ -666,6 +682,7 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
       submissionId,
       packageSha256,
       result,
+      reviewAttestation,
     });
     if (registry === null) {
       return res.status(500).json({
@@ -722,6 +739,7 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
       sequenceNumber: result.sequenceNumber,
       priorState: result.priorState,
       unfiledPriorSequences: result.unfiledPriorSequences,
+      reviewAttestation,
     });
 
     return res.send(result.buffer);

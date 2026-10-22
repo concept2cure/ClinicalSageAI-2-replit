@@ -67,6 +67,18 @@ import createVaultIngestRoutes from '../vault-ingest';
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const HTML = Buffer.from('<!doctype html><html><body><script>fetch("/x?t="+localStorage.getItem("token"))</script></body></html>');
 const PDF = Buffer.from('%PDF-1.7\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF\n');
+let currentRole = 'member';
+
+/** Scripted canonical access-reader rows; permission is still checked by the real service. */
+function currentAccessRows(sql: string): Array<Record<string, unknown>> | undefined {
+  if (/SELECT ou\.role FROM organization_users/.test(sql)) return [{ role: currentRole }];
+  if (/FROM regulatory_programs/.test(sql)) return [{ id: PROGRAM }];
+  if (/client_workspace_id AS "clientWorkspaceId" FROM projects/.test(sql)) return [{ id: 88, clientWorkspaceId: null }];
+  if (/FROM projects p LEFT JOIN project_visibility_settings/.test(sql)) return [{
+    id: 88, owner_id: 1, created_by_id: 1, settings: {}, visibility: 'private', members: [], review_assigned: false,
+  }];
+  return undefined;
+}
 
 function app() {
   const a = express();
@@ -91,22 +103,27 @@ const upload = (bytes: Buffer, filename: string, contentType: string) =>
 /** The ingest transaction, answering the INSERT the way the table would. */
 function txClient() {
   return {
-    query: vi.fn(async (sql: string) =>
-      /INSERT INTO vault\.documents/.test(String(sql))
+    query: vi.fn(async (sql: string) => {
+      const access = currentAccessRows(sql);
+      if (access) return { rows: access, rowCount: access.length };
+      return /INSERT INTO vault\.documents/.test(String(sql))
         ? { rows: [{ id: 'doc-1', processing_status: 'PENDING' }], rowCount: 1 }
-        : { rows: [], rowCount: 0 },
-    ),
+        : { rows: [], rowCount: 0 };
+    }),
     release: vi.fn(),
   };
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
+  currentRole = 'member';
   delete process.env.CLAMAV_HOST;
   // The caller owns the program; no vault row holds these bytes yet.
-  query.mockImplementation(async (sql: string) =>
-    /FROM vault\.documents/.test(String(sql)) ? { rows: [], rowCount: 0 } : { rows: [{ '?column?': 1 }], rowCount: 1 },
-  );
+  query.mockImplementation(async (sql: string) => {
+    const access = currentAccessRows(sql);
+    if (access) return { rows: access, rowCount: access.length };
+    return /FROM vault\.documents/.test(String(sql)) ? { rows: [], rowCount: 0 } : { rows: [{ '?column?': 1 }], rowCount: 1 };
+  });
   connect.mockResolvedValue(txClient());
   put.mockResolvedValue({
     vaultFileId: `vault://2/${PROGRAM}/report.pdf`, vaultVersionId: 'ver-1', provider: 'local', sizeBytes: 1, sha256: 'x',
@@ -134,5 +151,13 @@ describe('POST /api/vault/ingest — the name binds the declared type', () => {
     expect(res.status).toBe(201);
     expect(put).toHaveBeenCalledTimes(1);
     expect(put.mock.calls[0][0]).toMatchObject({ filename: 'report.pdf', mime: 'application/pdf' });
+  });
+
+  it('refuses a current viewer before admission despite the request’s older editor role', async () => {
+    currentRole = 'viewer';
+    const res = await upload(PDF, 'report.pdf', 'application/pdf');
+    expect(res.status).toBe(403);
+    expect(put).not.toHaveBeenCalled();
+    expect(connect).not.toHaveBeenCalled();
   });
 });

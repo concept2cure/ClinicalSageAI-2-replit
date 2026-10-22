@@ -18,6 +18,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import fs from 'node:fs';
 import path from 'node:path';
+import { PROGRAM_SPINE_PGLITE_DDL } from '../../../db/pglite-harness';
 
 const holder = vi.hoisted(() => ({
   db: null as unknown as { execute: (q: unknown) => Promise<unknown> },
@@ -40,6 +41,14 @@ import { composeStepVerdicts } from '../assess-dispatch-readiness';
 const ORG = 42;
 const OTHER_ORG = 99;
 const USER = 7;
+const PROGRAM_BY_ORG: Record<number, string> = {
+  [ORG]: 'd1500000-0000-4000-8000-000000000042',
+  [OTHER_ORG]: 'd1500000-0000-4000-8000-000000000099',
+};
+const SPONSOR_BY_ORG: Record<number, string> = {
+  [ORG]: 'd1600000-0000-4000-8000-000000000042',
+  [OTHER_ORG]: 'd1600000-0000-4000-8000-000000000099',
+};
 
 function migration(rel: string): string {
   return fs.readFileSync(path.resolve(__dirname, '../../../../', rel), 'utf8');
@@ -89,9 +98,9 @@ async function q<R = any>(sql: string, params?: unknown[]): Promise<{ rows: R[] 
 /** A sequence with `leafCount` leaves, and the submission it belongs to. */
 async function makeSequence(orgId: number, sequenceNumber: string, leafCount: number): Promise<number> {
   const sub = await q<{ id: number }>(
-    `INSERT INTO submissions (title, application_type, client_type, primary_region, organization_id, created_by)
-     VALUES ('S','nda','pharma','fda',$1,$2) RETURNING id`,
-    [orgId, USER],
+    `INSERT INTO submissions (title, application_type, client_type, primary_region, organization_id, created_by, program_id)
+     VALUES ('S','nda','pharma','fda',$1,$2,$3) RETURNING id`,
+    [orgId, USER, PROGRAM_BY_ORG[orgId]],
   );
   const seq = await q<{ id: number }>(
     `INSERT INTO ectd_sequences (submission_id, region, sequence_number, organization_id, created_by)
@@ -132,7 +141,7 @@ async function sign(
       actionId,
       orgId,
       target,
-      JSON.stringify({ intent: opts.intent ?? 'dispatch', meaning: 'I approve this release.' }),
+      JSON.stringify({ intent: opts.intent ?? 'dispatch', meaning: 'release' }),
       opts.state ?? 'executed',
       USER,
     ],
@@ -169,10 +178,28 @@ beforeAll(async () => {
   await pglite.exec(`INSERT INTO users (id, email, name) VALUES (${USER},'s@e.test','A Signer');`);
   // The REAL sequence/leaf tables the binding is derived from.
   await pglite.exec(migration('migrations/20260604_submission_core_canonical.sql'));
+  // The current FDA binding reads the existing program/sponsor identity. Apply
+  // its real deployed migrations and stand up recorded synthetic facts rather
+  // than mocking that reader or treating a missing relation as unsigned.
+  await pglite.exec(PROGRAM_SPINE_PGLITE_DDL);
+  await pglite.exec(migration('migrations/20260609_ind_master_data.sql'));
+  await pglite.exec(migration('migrations/20261021_regulatory_programs_applicant_sponsor.sql'));
+  await pglite.exec(migration('migrations/20260925b_submissions_program_anchor.sql'));
+  for (const orgId of [ORG, OTHER_ORG]) {
+    await q(`INSERT INTO ind_sponsors (id,organization_id,name,duns,contact_name,contact_phone,contact_email)
+      VALUES ($1,$2,'Dispatch test sponsor','123456789','Recorded test contact','+1 212 555 0100','dispatch@example.test')`,
+    [SPONSOR_BY_ORG[orgId], orgId]);
+    await q(`INSERT INTO regulatory_programs (id,organization_id,name,code,program_type,product_name,application_number,applicant_sponsor_id)
+      VALUES ($1,$2,'Dispatch test program','DISPATCH-NDA','NDA','Test product','000512',$3)`,
+    [PROGRAM_BY_ORG[orgId], orgId, SPONSOR_BY_ORG[orgId]]);
+  }
+
   // The later leaf columns the binding digests (2026-09-22, W5/D7): the content
   // pin and the uuid half of the document pointer. Both are on the applier.
   await pglite.exec(migration('migrations/20260814e_submission_leaf_source_pin.sql'));
   await pglite.exec(migration('migrations/20260917b_submission_leaf_document_uuid.sql'));
+  // Existing study metadata participates in the sequence signature manifest.
+  await pglite.exec(migration('migrations/20261012_submission_leaf_stf_study_tagging.sql'));
   await pglite.exec(ANA_ACTIONS_DDL);
   await pglite.exec(ELECTRONIC_SIGNATURES_PRE_D6_DDL);
   // The REAL migration that adds signed_target / binding_basis.

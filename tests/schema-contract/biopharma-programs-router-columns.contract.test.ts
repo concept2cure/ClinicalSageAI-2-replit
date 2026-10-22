@@ -65,6 +65,10 @@ const REGULATORY_PROGRAMS_DDL = `
     program_type text NOT NULL,
     product_type text NOT NULL,
     device_class text,
+    -- The recorded jurisdiction-specific device classes (deployed by
+    -- migrations/20261012b_regulatory_programs_eu_device_classes.sql).
+    eu_mdr_class text,
+    eu_ivdr_class text,
     regulatory_path text,
     primary_agency text NOT NULL,
     target_agencies json,
@@ -72,6 +76,14 @@ const REGULATORY_PROGRAMS_DDL = `
     product_code varchar(50),
     indication text,
     application_number text,
+    -- Form FDA 1571's sponsor address and IND type, on the program (aac603a1b,
+    -- migrations/20261008b_regulatory_programs_sponsor_address_ind_type.sql),
+    -- in the position shared/schema/programs.ts gives them. Two sessions added
+    -- this pair on 2026-10-08 and the merge kept both, so the fixture's CREATE
+    -- TABLE named each column twice and every case in this file failed to load
+    -- with 42701 (2026-10-11).
+    sponsor_address text,
+    ind_type text,
     intended_use text,
     predicate_devices json,
     -- The device-level eSTAR administrative facts (WO-8 Phase 3). They live on

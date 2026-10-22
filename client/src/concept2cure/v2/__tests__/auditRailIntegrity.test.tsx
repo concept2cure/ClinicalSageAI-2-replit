@@ -23,7 +23,8 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
-vi.mock('@/services/portal/authService', () => ({
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()),
   useAuth: () => ({ user: { displayName: 'Test Reviewer', email: 'reviewer@test.co' } }),
 }));
 vi.mock('../surfaces/AuthoringCollab', () => ({ AuthoringCollab: () => null }));
@@ -266,6 +267,19 @@ describe('the audit rail reports each row’s chain verdict', () => {
     // Silence is the default: nothing on the rail claims a row was verified.
     const rail = rows[0].closest('aside') as HTMLElement;
     expect(rail.textContent).not.toMatch(/\bverified\b|\bintact\b/i);
+  });
+
+  it('stamps every row with the instant it happened, not only "3 h ago"', async () => {
+    /* The rail now prints as-of claims — whether a model was allowed to write
+       regulatory text, how the turn ended — and relTime caps at "N d ago". An
+       inspector diffing a screenshot against the trail needs the instant, in
+       the <time> element the signatures and exports rails already use. */
+    await openAuditRail();
+    const [first] = screen.getAllByTestId('audit-event');
+    const when = first.querySelector('time');
+    expect(when).toBeTruthy();
+    expect(when!.getAttribute('dateTime')).toMatch(/^\d{4}-\d{2}-\d{2}T.*Z$/);
+    expect(when!.textContent).toMatch(/UTC/);
   });
 
   it('describes a comment row by the passage it quoted', async () => {

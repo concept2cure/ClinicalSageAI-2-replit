@@ -1,0 +1,1 @@
+The first native attempt reached the disposable PostgreSQL container during initialization and failed its database-connectivity setup before any of the 29 cases ran. After confirming TCP readiness with pg_isready, the unchanged suite was rerun. This startup attempt is not qualification evidence.

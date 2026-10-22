@@ -1,0 +1,87 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/ana/__tests__/batch-draft-sections.test.ts
+{
+  "timestamp": "2026-10-14T19:39:35.659Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:39:35.661Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/batch-draft-sections.test.ts
+{
+  "timestamp": "2026-10-14T19:39:35.661Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/batch-draft-sections.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/batch-draft-sections.test.ts > batch_draft_sections > reports an invalid section in its original slot while keeping the valid draft
+{
+  "timestamp": "2026-10-14T19:39:42.318Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/c2c/program-access.ts:224:33",
+    "queryPreview": "SELECT regulatory_program_id FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > uses actual processed source records and returns version-bound receipts without copying raw text
+{
+  "timestamp": "2026-10-14T19:39:42.321Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/c2c/program-access.ts:186:25",
+    "queryPreview": "SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1",
+    "enforcement": "off"
+  }
+}
+
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch_draft_sections > is registered 1ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch_draft_sections > errors on an empty sections array 2ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch_draft_sections > errors above the 20-section cap 0ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch_draft_sections > drafts valid sections in parallel and shapes the result 26ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch_draft_sections > reports an invalid section in its original slot while keeping the valid draft 56ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > uses actual processed source records and returns version-bound receipts without copying raw text 3ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > blocks generation for unavailable selected sources while retaining other section drafts 1ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > uses the open program UUID before a legacy project ID for drafting context 1ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > preserves successful drafts and names only failed original slots for retry 1ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > does not throw on null or non-object slots or lose their position 1ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > errors when every section is invalid 9ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > reports no usable blank draft as a failure rather than success 1ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > a failed batch retains actionable slots without exposing the thrown provider detail 1ms
+ ✓ server/services/ana/__tests__/document-catalog-program-binding.test.ts > serving programme binding across catalog source loads > a move between preflight and service load refuses even when both programmes are writable (project open: true) 5ms
+ ✓ server/services/ana/__tests__/document-catalog-program-binding.test.ts > serving programme binding across catalog source loads > a move between preflight and service load refuses even when both programmes are writable (project open: false) 1ms
+ ✓ server/services/ana/__tests__/document-catalog-program-binding.test.ts > serving programme binding across catalog source loads > a missing preflight cannot become an unadmitted document on a later load 1ms
+ ✓ server/services/ana/__tests__/document-catalog-program-binding.test.ts > serving programme binding across catalog source loads > a body-supplied programme cannot replace the server-loaded programme 3ms
+ ✓ server/services/ana/__tests__/document-catalog-program-binding.test.ts > serving programme binding across catalog source loads > the completion service independently refuses a different expected programme 1ms
+ ✓ server/services/ana/__tests__/document-catalog-program-binding.test.ts > serving programme binding across catalog source loads > matching expected programme is retained in the final writer handoff 1ms
+ ✓ server/services/ana/__tests__/vault-access-without-key.test.ts > AnA reaches the Vault with no key and the catalog off > the three Vault tools are offered whatever the catalog flag says 2ms
+ ✓ server/services/ana/__tests__/vault-access-without-key.test.ts > AnA reaches the Vault with no key and the catalog off > search_project_documents finds a document by full text, with no key and no catalog 14ms
+ ✓ server/services/ana/__tests__/vault-access-without-key.test.ts > AnA reaches the Vault with no key and the catalog off > with the catalog on and no embedding provider, the full-text hits still come back 1ms
+ ✓ server/services/ana/__tests__/vault-access-without-key.test.ts > AnA reaches the Vault with no key and the catalog off > a document found both ways is one hit that says so 1ms
+ ✓ server/services/ana/__tests__/vault-access-without-key.test.ts > AnA reaches the Vault with no key and the catalog off > nothing found is said as nothing found, not as unavailable 1ms
+ ✓ server/services/ana/__tests__/vault-access-without-key.test.ts > AnA reaches the Vault with no key and the catalog off > list_project_documents and read_project_document do not refuse when the catalog is off 2ms
+
+ Test Files  3 passed (3)
+      Tests  25 passed (25)
+   Start at  19:39:32
+   Duration  12.03s (transform 6.64s, setup 187ms, import 11.14s, tests 143ms, environment 0ms)
+

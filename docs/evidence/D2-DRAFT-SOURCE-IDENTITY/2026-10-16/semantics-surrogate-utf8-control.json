@@ -1,0 +1,88 @@
+{
+  "kind": "UTF-8 encoding semantics control; not application test",
+  "runtime": "v22.23.3",
+  "controls": [
+    {
+      "name": "different unpaired high surrogates",
+      "stringsEqual": false,
+      "leftCodeUnits": [
+        "0041",
+        "d800",
+        "005a"
+      ],
+      "rightCodeUnits": [
+        "0041",
+        "d801",
+        "005a"
+      ],
+      "leftUtf16Length": 3,
+      "rightUtf16Length": 3,
+      "leftUtf8Hex": "41efbfbd5a",
+      "rightUtf8Hex": "41efbfbd5a",
+      "leftSha256": "1dbad52b4840c58a645cb742112894d0bae85b97e87e1942ec04559a72937998",
+      "rightSha256": "1dbad52b4840c58a645cb742112894d0bae85b97e87e1942ec04559a72937998",
+      "sha256Equal": true
+    },
+    {
+      "name": "well-formed replacement character changed to unpaired surrogate at final checkpoint",
+      "stringsEqual": false,
+      "leftCodeUnits": [
+        "0041",
+        "fffd",
+        "005a"
+      ],
+      "rightCodeUnits": [
+        "0041",
+        "d800",
+        "005a"
+      ],
+      "leftUtf16Length": 3,
+      "rightUtf16Length": 3,
+      "leftUtf8Hex": "41efbfbd5a",
+      "rightUtf8Hex": "41efbfbd5a",
+      "leftSha256": "1dbad52b4840c58a645cb742112894d0bae85b97e87e1942ec04559a72937998",
+      "rightSha256": "1dbad52b4840c58a645cb742112894d0bae85b97e87e1942ec04559a72937998",
+      "sha256Equal": true
+    },
+    {
+      "name": "well-formed Japanese correction",
+      "stringsEqual": false,
+      "leftCodeUnits": [
+        "8a3a",
+        "65ad",
+        "7532"
+      ],
+      "rightCodeUnits": [
+        "8a3a",
+        "65ad",
+        "4e59"
+      ],
+      "leftUtf16Length": 3,
+      "rightUtf16Length": 3,
+      "leftUtf8Hex": "e8a8bae696ade794b2",
+      "rightUtf8Hex": "e8a8bae696ade4b999",
+      "leftSha256": "4ef3fd9d1ab779d0bed420b249939de2dff1852f0d53cc6e87c54264e78e419c",
+      "rightSha256": "c0f7eae74e111eb7717f5ccab4ac96bc0ae9cbba779fad05d234056e06d6259a",
+      "sha256Equal": false
+    },
+    {
+      "name": "normalization remains distinct",
+      "stringsEqual": false,
+      "leftCodeUnits": [
+        "00e9"
+      ],
+      "rightCodeUnits": [
+        "0065",
+        "0301"
+      ],
+      "leftUtf16Length": 1,
+      "rightUtf16Length": 2,
+      "leftUtf8Hex": "c3a9",
+      "rightUtf8Hex": "65cc81",
+      "leftSha256": "4a99557e4033c3539de2eb65472017cad5f9557f7a0625a09f1c3f6e2ba69c4c",
+      "rightSha256": "bf12767b0f2a56b2190075bae8169f656e3ce8d6357d4aff184bc6c7ea48f9f6",
+      "sha256Equal": false
+    }
+  ],
+  "recommendation": "Reject ill-formed full extraction Unicode in the canonical identity factory; preserve UTF-8 hash and UTF-16 coordinate contract."
+}

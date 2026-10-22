@@ -67,4 +67,3 @@ stderr | tests/db/sign-in-posture.dbtest.ts > an account without one is told it 
       Tests  7 passed (7)
    Start at  08:58:14
    Duration  3.99s (transform 1.42s, setup 69ms, import 190ms, tests 3.47s, environment 0ms)
-

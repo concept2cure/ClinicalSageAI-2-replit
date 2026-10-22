@@ -1,0 +1,18 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline starts a section that is not started yet (F4) > clicking an unstarted node in the filing’s copy posts the create with its code, opens the new section and puts the cursor in it 811ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline starts a section that is not started yet (F4) > a refused create shows the server’s words and opens nothing 340ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline starts a section that is not started yet (F4) > a 409 (someone else started it) re-reads, and the node binds to their section 396ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline offers a start only where the section can be started (F4) > an approved document says approved, offers no start and posts nothing 241ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline offers a start only where the section can be started (F4) > with an AnA draft open (not the filing’s copy), a click posts nothing and names the document that holds the filing 257ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline offers a start only where the section can be started (F4) > a module-3 working document that is not the filing’s copy does not take a module-2 node 228ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline offers a start only where the section can be started (F4) > when the document list does not say what a document is bound to, nothing is offered 214ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline offers a start only where the section can be started (F4) > a section whose code differs only in case is said, not posted into a 409 216ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline offers a start only where the section can be started (F4) > while a create runs, its row is busy and a click on another node is answered, not dropped 342ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  18:18:44
+   Duration  6.93s (transform 2.24s, setup 143ms, import 2.94s, tests 3.05s, environment 593ms)
+

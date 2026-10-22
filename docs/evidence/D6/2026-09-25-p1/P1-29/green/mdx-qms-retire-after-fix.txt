@@ -34,4 +34,3 @@ stderr | server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/docu
       Tests  15 passed (15)
    Start at  12:58:47
    Duration  1.31s (transform 403ms, setup 93ms, import 745ms, tests 105ms, environment 0ms)
-

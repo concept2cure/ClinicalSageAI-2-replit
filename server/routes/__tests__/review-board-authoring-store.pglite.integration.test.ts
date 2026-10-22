@@ -25,18 +25,20 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import request from 'supertest';
 import { SignJWT, jwtVerify } from 'jose';
 import { randomBytes } from 'node:crypto';
-import { createJourneyDb, makeRequestDbClient, type JourneyDb } from '../../../tests/golden-journeys/harness';
+import { createJourneyDb, extractTableDdl, makeRequestDbClient, type JourneyDb } from '../../../tests/golden-journeys/harness';
+import { authoringReviewReadSchema, authoringReviewResponseSchema, type AuthoringReviewExpected } from '@shared/authoring/peer-review';
 import type { RequestDbClient } from '../../middleware/lazyRequestDbClient';
 import { AUDIT_LOGS_PGLITE_DDL } from '../../db/pglite-harness';
+import { runWithTenantScope } from '../../db/tenantStore';
 
 const JWT_SECRET = randomBytes(32).toString('hex');
 process.env.JWT_SECRET = JWT_SECRET;
 process.env.JWT_SECRET_DEV = JWT_SECRET;
 
-const AUTHOR = { id: '5a1c2a10-0000-4000-8000-000000000001', organizationId: 1, email: 'author@f6.example', name: 'Avery Author' };
-const REVIEWER = { id: '5a1c2a10-0000-4000-8000-000000000002', organizationId: 1, email: 'reviewer@f6.example', name: 'Robin Reviewer' };
-const BYSTANDER = { id: '5a1c2a10-0000-4000-8000-000000000003', organizationId: 1, email: 'bystander@f6.example', name: 'Blake Bystander' };
-const OUTSIDER = { id: '5a1c2a10-0000-4000-8000-000000000099', organizationId: 2, email: 'outsider@other.example', name: 'Iris Intruder' };
+const AUTHOR = { id: '11', organizationId: 1, email: 'author@f6.example', name: 'Avery Author' };
+const REVIEWER = { id: '21', organizationId: 1, email: 'reviewer@f6.example', name: 'Robin Reviewer' };
+const BYSTANDER = { id: '31', organizationId: 1, email: 'bystander@f6.example', name: 'Blake Bystander' };
+const OUTSIDER = { id: '99', organizationId: 2, email: 'outsider@other.example', name: 'Iris Intruder' };
 type U = typeof AUTHOR;
 
 const PROGRAM_A = 'a0000000-0000-4000-8000-00000000000a';
@@ -44,24 +46,38 @@ const PROGRAM_B = 'b0000000-0000-4000-8000-00000000000b';
 
 const PREREQ = `
   ${AUDIT_LOGS_PGLITE_DDL}
-  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
-  CREATE TABLE users (id UUID PRIMARY KEY, name TEXT, email TEXT);
+  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT, uuid UUID NOT NULL DEFAULT gen_random_uuid(),
+    status TEXT NOT NULL DEFAULT 'active', payment_status TEXT NOT NULL DEFAULT 'active');
+  CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT, email TEXT, status TEXT NOT NULL DEFAULT 'active');
+  CREATE TABLE organization_users (organization_id INTEGER NOT NULL, user_id INTEGER NOT NULL,
+    role TEXT NOT NULL, PRIMARY KEY (organization_id,user_id));
   INSERT INTO organizations (id, name) VALUES (1, 'f6-org'), (2, 'other-org');
   INSERT INTO users (id, name, email) VALUES
     ('${AUTHOR.id}', '${AUTHOR.name}', '${AUTHOR.email}'),
     ('${REVIEWER.id}', '${REVIEWER.name}', '${REVIEWER.email}'),
     ('${BYSTANDER.id}', '${BYSTANDER.name}', '${BYSTANDER.email}'),
     ('${OUTSIDER.id}', '${OUTSIDER.name}', '${OUTSIDER.email}');
-  /* The columns the board's program join reads (name, organization_id), and
-     deleted_at, which document creation's project-anchor check reads
-     (programInOrganization, 8eaccfa6a) — the deployed table has it. */
+  INSERT INTO organization_users (organization_id,user_id,role) VALUES
+    (1,${AUTHOR.id},'member'),(1,${REVIEWER.id},'member'),(1,${BYSTANDER.id},'member'),(2,${OUTSIDER.id},'member');
   CREATE TABLE regulatory_programs (
     id UUID PRIMARY KEY, organization_id INTEGER NOT NULL, name TEXT NOT NULL, code TEXT,
-    deleted_at TIMESTAMPTZ
+    program_type TEXT, primary_agency TEXT, product_type TEXT, deleted_at TIMESTAMPTZ
   );
-  INSERT INTO regulatory_programs (id, organization_id, name, code) VALUES
-    ('${PROGRAM_A}', 1, 'IND 12345 — Program A', 'PA'),
-    ('${PROGRAM_B}', 1, 'NDA 200100 — Program B', 'PB');
+  INSERT INTO regulatory_programs (id, organization_id, name, code,program_type,primary_agency,product_type) VALUES
+    ('${PROGRAM_A}', 1, 'IND 12345 — Program A', 'PA','ind','FDA','drug'),
+    ('${PROGRAM_B}', 1, 'NDA 200100 — Program B', 'PB','nda','FDA','drug');
+  CREATE TABLE projects (id INTEGER PRIMARY KEY, organization_id INTEGER NOT NULL, name TEXT,
+    regulatory_program_id UUID, client_workspace_id INTEGER, status TEXT NOT NULL DEFAULT 'planning',
+    owner_id INTEGER, created_by_id INTEGER, settings JSONB NOT NULL DEFAULT '{}');
+  CREATE TABLE project_visibility_settings (project_id INTEGER, organization_id INTEGER, visibility TEXT);
+  CREATE TABLE project_members (project_id INTEGER, organization_id INTEGER, user_id INTEGER, role TEXT, status TEXT);
+  CREATE TABLE concept2cure_artifacts (id INTEGER PRIMARY KEY, organization_id INTEGER, project_id INTEGER);
+  CREATE TABLE concept2cure_review_assignments (artifact_id INTEGER, organization_id INTEGER, reviewer_id INTEGER, status TEXT);
+  INSERT INTO projects (id,organization_id,name,regulatory_program_id,owner_id,created_by_id) VALUES
+    (41,1,'Program A anchor','${PROGRAM_A}',${AUTHOR.id},${AUTHOR.id}),
+    (42,1,'Program B anchor','${PROGRAM_B}',${AUTHOR.id},${AUTHOR.id});
+  INSERT INTO project_visibility_settings VALUES (41,1,'org_public'),(42,1,'org_public');
+  ${extractTableDdl('migrations/0000_sweet_joseph.sql', ['unified_tasks','task_dependencies','cross_module_task_links'])}
 `;
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
@@ -74,7 +90,7 @@ vi.mock('../../db', () => ({
 }));
 
 async function mint(u: U) {
-  return new SignJWT({ userId: u.id, email: u.email, name: u.name, organizationId: u.organizationId, tenant_id: u.organizationId })
+  return new SignJWT({ userId: u.id, email: u.email, name: u.name, role: 'member', roles: ['member'], organizationId: u.organizationId, tenant_id: u.organizationId })
     .setProtectedHeader({ alg: 'HS256' }).setIssuedAt().setExpirationTime('1h')
     .sign(new TextEncoder().encode(JWT_SECRET));
 }
@@ -93,18 +109,44 @@ function boardContext(req: Request, res: Response, next: NextFunction) {
     .then(({ payload }) => {
       // jwtVerify's payload is Record<string, unknown>; the request user is a
       // narrow shape, so read the claims through it rather than casting each.
-      const claims = payload as { userId?: number; email?: string; organizationId?: number };
+      const claims = payload as { userId?: string | number; email?: string; organizationId?: number };
       (req as Request & { user?: unknown }).user = {
         id: claims.userId, userId: claims.userId, email: claims.email, organizationId: claims.organizationId,
       };
       (req as Request & { dbClient?: unknown }).dbClient = makeRequestDbClient(jdb.pglite) as unknown as RequestDbClient;
-      next();
+      runWithTenantScope({ tenantId:String(claims.organizationId),role:'member',source:'request',caller:'review-board-route-fixture' },next);
     })
     .catch(() => res.status(401).json({ success: false, error: 'unauthenticated' }));
 }
 
 const board = (u: U, qs = '') => as(u)(request(app).get(`/api/review/board${qs}`));
 const queueOf = (res: request.Response) => (res.body?.data?.queue ?? []) as Array<Record<string, any>>;
+
+/** Read the same captured document/request the native decision UI presents. */
+async function expectedReview(documentId: string, user = REVIEWER): Promise<AuthoringReviewExpected> {
+  const response = await as(user)(request(app).get(`/api/authoring/documents/${documentId}/reviews`));
+  expect(response.status,JSON.stringify(response.body)).toBe(200);
+  const { reviewContext } = authoringReviewReadSchema.parse(response.body);
+  expect(reviewContext).toMatchObject({ actorId:user.id,organizationId:user.organizationId,documentId });
+  expect(reviewContext.myReview,'the reviewer has no captured request').not.toBeNull();
+  return {
+    reviewId:reviewContext.myReview!.reviewId,requestedAt:reviewContext.myReview!.requestedAt,
+    snapshotHash:reviewContext.snapshotHash,bindingBasis:reviewContext.bindingBasis,
+  };
+}
+
+async function decide(documentId: string, body: { review_status: string; review_comments?: string }) {
+  const response = await as(REVIEWER)(request(app).post(`/api/authoring/documents/${documentId}/review`))
+    .send({ ...body,expected:await expectedReview(documentId) });
+  if (response.status === 200) authoringReviewResponseSchema.parse(response.body);
+  return response;
+}
+
+async function grantDocument(documentId: string, user: U, role: 'VIEWER' | 'AUTHOR') {
+  await jdb.pool.query(`INSERT INTO doc_permissions (doc_id,tenant_id,principal_id,email,role,granted_by,grant_reason)
+    VALUES ($1,$2,$3,$4,$5,$6,'Explicit review-board fixture access')`,
+  [documentId,user.organizationId,user.id,user.email,role,AUTHOR.id]);
+}
 
 let docA = '';
 let docB = '';
@@ -131,6 +173,9 @@ beforeAll(async () => {
       'migrations/20260907_span_lineage_accepted_machine_draft.sql',
       'migrations/20260908_span_lineage_machine_draft.sql',
       'migrations/20260728_authoring_reviews.sql',
+      'db/migrations/20260727_unified_tasks_mdx_metadata.sql',
+      'db/migrations/20260807_task_graph_org_columns.sql',
+      'db/migrations/20260807_unified_tasks_soft_delete.sql',
     ],
   });
   h.db = jdb.db;
@@ -141,7 +186,7 @@ beforeAll(async () => {
   const { default: createReviewBoardRoutes } = await import('../review-board-routes');
   app = express();
   app.use(express.json({ limit: '5mb' }));
-  app.use('/api/authoring', authoringRouter);
+  app.use('/api/authoring', boardContext, authoringRouter);
   app.use('/api/review', boardContext, createReviewBoardRoutes());
 
   const mk = async (title: string, programId: string | null) => {
@@ -151,6 +196,7 @@ beforeAll(async () => {
   };
   docA = await mk('IND 12345 — Module 2.5 Clinical Overview', PROGRAM_A);
   docB = await mk('NDA 200100 — Module 2.7 Clinical Summary', PROGRAM_B);
+  await grantDocument(docA,BYSTANDER,'VIEWER');
   const sec = await as(AUTHOR)(request(app).post('/api/authoring/sections'))
     .send({ doc_id: docA, code: '2.5.1', title: 'Rationale', content: '<p>The pivotal study met its primary endpoint.</p>', order_index: 1 });
   expect(sec.status).toBe(201);
@@ -182,7 +228,7 @@ describe('a review requested in Authoring reaches the Review board', () => {
     expect(row!.state).toBe('in-review');
     expect(row!.prog).toBe('IND 12345 — Program A');
     expect(row!.reviews).toHaveLength(1);
-    expect(row!.reviews[0]).toMatchObject({ reviewerEmail: REVIEWER.email, status: 'pending', requestedBy: AUTHOR.email });
+    expect(row!.reviews[0]).toMatchObject({ reviewerEmail: REVIEWER.email, status: 'pending', requestedBy: AUTHOR.id });
 
     const requested = await board(AUTHOR, '?scope=requested');
     const mineAsAuthor = queueOf(requested).find((q) => q.id === docA);
@@ -190,8 +236,8 @@ describe('a review requested in Authoring reaches the Review board', () => {
     expect(mineAsAuthor!.requestedByMe).toBe(true);
     expect(mineAsAuthor!.awaitingMyReview).toBe(false);
 
-    // A colleague who neither asked nor was asked sees it under "all open"
-    // (it is the organisation's open review work) but owns nothing on it.
+    // A colleague with an explicit full-document VIEWER grant sees the open
+    // work but neither owns the review nor gains a decision right.
     const all = await board(BYSTANDER);
     const seen = queueOf(all).find((q) => q.id === docA);
     expect(seen).toBeTruthy();
@@ -236,8 +282,7 @@ describe('a review requested in Authoring reaches the Review board', () => {
 
 describe('a decision on the board is the authoring workflow’s own transition', () => {
   it('POST /documents/:id/review {changes_requested} → the board row changes state, and the act is in the authoring audit trail', async () => {
-    const d = await as(REVIEWER)(request(app).post(`/api/authoring/documents/${docA}/review`))
-      .send({ review_status: 'changes_requested', review_comments: 'State the software version in §2.5.1.' });
+    const d = await decide(docA,{ review_status:'changes_requested',review_comments:'State the software version in §2.5.1.' });
     expect(d.status).toBe(200);
 
     const row = queueOf(await board(REVIEWER)).find((q) => q.id === docA)!;
@@ -268,8 +313,7 @@ describe('a decision on the board is the authoring workflow’s own transition',
     expect(back!.awaitingMyReview).toBe(true);
     expect(back!.myReviewStatus).toBe('pending');
 
-    const ok = await as(REVIEWER)(request(app).post(`/api/authoring/documents/${docA}/review`))
-      .send({ review_status: 'approved', review_comments: 'Software version stated.' });
+    const ok = await decide(docA,{ review_status:'approved',review_comments:'Software version stated.' });
     expect(ok.status).toBe(200);
     const row = queueOf(await board(AUTHOR, '?scope=requested')).find((q) => q.id === docA)!;
     expect(row.state).toBe('approved');
@@ -380,11 +424,12 @@ const namedReviewers = [{ id: REVIEWER.id, name: REVIEWER.name, email: REVIEWER.
 describe('peer review uses the tenant document and an atomic audit', () => {
   it('refuses foreign and missing documents on read, request and verdict', async () => {
     const id = await newReviewDocument();
+    const expected = await expectedReview(docA);
     for (const target of [id, '00000000-0000-4000-8000-000000000099']) {
       const base = `/api/authoring/documents/${target}`;
       expect((await as(OUTSIDER)(request(app).get(`${base}/reviews`))).status).toBe(404);
       expect((await as(OUTSIDER)(request(app).post(`${base}/request-review`)).send({ reviewers: namedReviewers })).status).toBe(404);
-      expect((await as(OUTSIDER)(request(app).post(`${base}/review`)).send({ review_status: 'approved' })).status).toBe(404);
+      expect((await as(OUTSIDER)(request(app).post(`${base}/review`)).send({ review_status:'approved',expected })).status).toBe(404);
     }
     expect((await jdb.pool.query('SELECT id FROM authoring_reviews WHERE doc_id=$1', [id])).rows).toEqual([]);
   }, T);
@@ -405,7 +450,8 @@ describe('peer review uses the tenant document and an atomic audit', () => {
       const r = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({
         reviewers: [...namedReviewers, { id: BYSTANDER.id, name: BYSTANDER.name, email: BYSTANDER.email }],
       });
-      expect(r.status).toBe(500);
+      expect(r.status).toBe(503);
+      expect(r.body).toMatchObject({ success:false,error:{ code:'REVIEW_UNAVAILABLE' } });
       expect((await jdb.pool.query('SELECT id FROM authoring_reviews WHERE doc_id=$1', [id])).rows).toEqual([]);
     } finally {
       await jdb.pool.query('DROP TRIGGER reject_second_reviewer ON authoring_reviews');
@@ -417,7 +463,8 @@ describe('peer review uses the tenant document and an atomic audit', () => {
     const id = await newReviewDocument();
     await rejectPeerAudit('review_requested', async () => {
       const r = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers: namedReviewers });
-      expect(r.status).toBe(500);
+      expect(r.status).toBe(503);
+      expect(r.body).toMatchObject({ success:false,error:{ code:'REVIEW_UNAVAILABLE' } });
       expect((await jdb.pool.query('SELECT id FROM authoring_reviews WHERE doc_id=$1', [id])).rows).toEqual([]);
     });
     expect((await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers: namedReviewers })).status).toBe(200);
@@ -429,8 +476,9 @@ describe('peer review uses the tenant document and an atomic audit', () => {
     const id = await newReviewDocument();
     await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers: namedReviewers });
     await rejectPeerAudit('document_reviewed', async () => {
-      const r = await as(REVIEWER)(request(app).post(`/api/authoring/documents/${id}/review`)).send({ review_status: 'changes_requested', review_comments: 'Clarify the IND clinical rationale.' });
-      expect(r.status).toBe(500);
+      const r = await decide(id,{ review_status:'changes_requested',review_comments:'Clarify the IND clinical rationale.' });
+      expect(r.status).toBe(503);
+      expect(r.body).toMatchObject({ success:false,error:{ code:'REVIEW_UNAVAILABLE' } });
       const rows = (await jdb.pool.query('SELECT review_status,reviewed_at FROM authoring_reviews WHERE doc_id=$1', [id])).rows;
       expect(rows).toMatchObject([{ review_status: 'pending', reviewed_at: null }]);
     });
@@ -482,6 +530,9 @@ describe('a review request names someone other than the author and gives them th
 
   it('a requester who may not manage the document’s access records the request and is told no grant was made', async () => {
     const id = await newReviewDocument();
+    // An AUTHOR grant permits requesting review, while grant management stays
+    // with the OWNER. Mere membership is not authority to send any document.
+    await grantDocument(id,BYSTANDER,'AUTHOR');
     const r = await as(BYSTANDER)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers: namedReviewers });
     expect(r.status, JSON.stringify(r.body)).toBe(200);
     expect(r.body.grants).toEqual([expect.objectContaining({ reviewerId: REVIEWER.id, granted: false })]);

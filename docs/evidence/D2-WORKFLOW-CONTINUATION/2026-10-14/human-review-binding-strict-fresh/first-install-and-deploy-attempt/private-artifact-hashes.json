@@ -1,0 +1,18 @@
+{
+  "capturedAtUtc": "2026-10-14T21:30:34.552997+00:00",
+  "privateArtifacts": {
+    "/tmp/authoring-review-binding-strict-fresh-prep/run.py": "b8cb18a23c5520dcb0902914dbd73fec08f96b18f6f4ce22d9d55c68b7b13b83",
+    "/tmp/authoring-review-binding-strict-fresh-prep/create.mjs": "fd9d5560ca7993883420824b33525e1f3bc7b24ade9b2bdee566e92e2f0afeff",
+    "/tmp/authoring-review-binding-strict-fresh-prep/validate.mjs": "0cbd7cc59430e34ffc2ec97e5794fa6d9f7140ad49b03f0abe16a520cdfc92a2",
+    "/tmp/authoring-review-binding-strict-fresh-prep/observe-deploy1-readonly.mjs": "a8ad71cfa4c1fa3659531b0c4df0fe95ab2b4e00c230af56f07d7ef08ee699c7",
+    "/tmp/authoring-review-binding-strict-fresh-prep/strict-fresh.log": "31cc07a6acd3f152db97ddcc6a4c9498e0d46dbb55e2ae6321036b649efddf13",
+    "/tmp/authoring-review-binding-strict-fresh-prep/source-pins.json": "b98c3ae0cc3da013150dc2ab8b7aa652c5d32bd32d9cbbee894e8954e328dfd3",
+    "/tmp/authoring-review-binding-strict-fresh-prep/created.json": "e935b8f94a014d86ee34f3d1c772e24ce64f6ec909f75ad0609a38cc0f69bf8e",
+    "/tmp/authoring-review-binding-strict-fresh-prep/installed.json": "8d6661a56db8be07cb03457b2db45b3f4834ac4d4c14d62c534fee3072d5762f",
+    "/tmp/authoring-review-binding-strict-fresh-prep/deploy1-diagnostic.json": "2bedc850ef4d0ad38bbbf6a725dbb4bfe2079a62f8312edabbbaf13980055601",
+    "/tmp/authoring-review-binding-strict-fresh-prep/stages.json": "70087490664fcb5586f5ded4c1a81f25a7a7e14f308449db9f7e71fede458019"
+  },
+  "processExitCode": 1,
+  "timeouts": 0,
+  "qualification": "14 critical source pins only; complete installer dependency graph was not frozen. Global-role digest is pg_authid attributes only, not role memberships."
+}

@@ -6,22 +6,15 @@
  * the profile PUT does not accept equivalentDevices and no per-criterion
  * matrix backend exists; the tab says so instead of simulating one.
  *
- * The kit's device cards + MDCG 2020-5 matrix fixtures render ONLY under the
- * explicit sample-mode guard, and only when the program has no recorded
- * equivalent devices.
+ * (The kit's example device cards and MDCG 2020-5 matrix, CER_EQUIV_DEVICES
+ * and CER_EQUIV_MATRIX, were removed with sample mode on 2026-10-14.)
  */
 
 import * as React from 'react';
 import { AskAnaChip } from '../AskAnaChip';
-import {
-  CER_EQUIV_DEVICES,
-  CER_EQUIV_MATRIX,
-} from '../../data/cer';
 import type { DeviceProfileView } from '../../hooks/useDeviceProfile';
 import { I } from '../../icons';
-import { SampleDataBanner } from '../../components/SampleDataBanner';
 import { EmptyState } from '../../../v2/dataConnect';
-import { useSampleMode } from '../../components/DataGate';
 
 /** The equivalent_devices json element shape (shared/schema/programs.ts). */
 export interface ProgramEquivalentDevice {
@@ -67,9 +60,7 @@ export function EquivalenceTab({
   programTitle,
   onAskAna,
 }: EquivalenceTabProps) {
-  const sampleOn = useSampleMode();
   const devices = readEquivalentDevices(profile);
-  const usingSample = sampleOn && devices.length === 0 && !profileLoading;
 
   const summary = profileLoading
     ? 'Loading the program’s device profile…'
@@ -162,7 +153,7 @@ export function EquivalenceTab({
         </div>
       )}
 
-      {devices.length === 0 && !usingSample && !profileLoading && (
+      {devices.length === 0 && !profileLoading && (
         <div className="panel">
           {/* The copy here named a JSON column and an API endpoint —
               "equivalent_devices via the programs API" — on screen, to a
@@ -185,101 +176,6 @@ export function EquivalenceTab({
         </div>
       )}
 
-      <SampleDataBanner show={usingSample} loading={profileLoading} label="equivalence matrix" />
-      {usingSample && <SampleEquivalenceMatrix onAskAna={onAskAna} />}
     </>
-  );
-}
-
-/** The kit's MDCG 2020-5 example matrix — reachable only in sample mode. */
-function SampleEquivalenceMatrix({ onAskAna }: { onAskAna: (text: string) => void }) {
-  const [eqDevice, setEqDevice] = React.useState('eqA');
-  const subject = CER_EQUIV_DEVICES[0];
-  const eqDef = CER_EQUIV_DEVICES.find((d) => d.id === eqDevice) ?? CER_EQUIV_DEVICES[1];
-
-  const dims = CER_EQUIV_MATRIX.reduce<Record<string, typeof CER_EQUIV_MATRIX>>((acc, r) => {
-    (acc[r.dim] = acc[r.dim] || []).push(r);
-    return acc;
-  }, {});
-
-  return (
-    <div className="panel">
-      <div className="panel-hdr">
-        <div>
-          <div className="t">
-            Sample conformity matrix · {subject.label} vs {eqDef.label}
-          </div>
-          <div className="s">MDCG 2020-5 · all three dimensions must be conform</div>
-        </div>
-        <div className="actions" style={{ display: 'flex', gap: 6 }}>
-          {CER_EQUIV_DEVICES.filter((d) => d.id !== 'subj').map((d) => (
-            <button
-              key={d.id}
-              className={`audit-filter ${eqDevice === d.id ? 'active' : ''}`}
-              aria-pressed={eqDevice === d.id}
-              onClick={() => setEqDevice(d.id)}
-            >
-              {d.label}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="tbl-scroll">
-        {Object.entries(dims).map(([dim, rows]) => (
-          <div key={dim}>
-            <div
-              style={{
-                padding: '10px 16px 4px',
-                fontSize: 11,
-                fontWeight: 600,
-                color: 'var(--text-300)',
-                letterSpacing: '0.02em',
-              }}
-            >
-              {dim}
-            </div>
-            <table className="tbl">
-              <thead>
-                <tr>
-                  <th style={{ width: '30%' }}>Criterion</th>
-                  <th style={{ width: '14%' }}>Verdict</th>
-                  <th>Justification</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r, i) => {
-                  const verdict = r.verdicts[eqDevice];
-                  return (
-                    <tr key={`${dim}-${i}`}>
-                      <td>
-                        <div className="k-name" style={{ fontWeight: 400, fontSize: 12 }}>
-                          {r.crit}
-                        </div>
-                      </td>
-                      <td>
-                        <span className={`status-pill ${verdictPill[verdict] ?? 'draft'}`}>{verdict}</span>
-                      </td>
-                      <td style={{ fontSize: 11, color: 'var(--text-300)', lineHeight: 1.5 }}>
-                        {r.notes[eqDevice]}
-                        {verdict !== 'equivalent' && (
-                          <AskAnaChip
-                            onAsk={() =>
-                              onAskAna(
-                                `Draft a gap-bridging narrative for "${r.crit}" between ${subject.label} and ${eqDef.label}`,
-                              )
-                            }
-                            label="Ask AnA"
-                          />
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        ))}
-      </div>
-    </div>
   );
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
-import { useLiveData, EmptyState, hasKeys } from '../dataConnect';
+import { useLiveData, EmptyState } from '../dataConnect';
 import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { AnswerLead } from '../AnswerLead';
@@ -46,6 +46,15 @@ interface StSection {
   sources: StCitedSource[];
 }
 
+interface SourceTracerRead { sections: StSection[]; scope: 'verified-accessible-authoring-sections' }
+function isSourceTracerRead(value: unknown): value is SourceTracerRead {
+  if (!value || typeof value !== 'object') return false;
+  const read = value as Partial<SourceTracerRead>;
+  return read.scope === 'verified-accessible-authoring-sections' && Array.isArray(read.sections)
+    && read.sections.every(section => !!section && typeof section.id === 'string' && Array.isArray(section.sources)
+      && section.sources.every(source => !!source && typeof source.citationId === 'string'));
+}
+
 /** How each recorded citation's standing reads. Mirrors the authoring Sources
  *  rail so the same fact never gets two vocabularies. */
 function stateLabel(s: StCitedSource): { text: string; tone: string; hint: string } {
@@ -81,9 +90,9 @@ function stateLabel(s: StCitedSource): { text: string; tone: string; hint: strin
       };
     case 'unresolved':
       return {
-        text: 'source no longer available',
+        text: 'source unavailable with current access',
         tone: 'warn',
-        hint: 'The citation is recorded but its source does not resolve in this organization — it may have been deleted.',
+        hint: 'This recorded citation’s source could not be resolved within your current access. The citation remains recorded.',
       };
     default:
       return {
@@ -108,12 +117,12 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
   // below rather than the `?? []` fallback. Without it, a wrong shape renders as
   // "no sections yet" — an empty state that is not true, on a surface whose
   // entire job is telling the user where text came from.
-  const st = useLiveData<{ sections: StSection[] }>(
+  const st = useLiveData<SourceTracerRead>(
     '/api/source-tracer/sections',
     ['/api/source-tracer/sections'],
-    hasKeys<{ sections: StSection[] }>('sections'),
+    isSourceTracerRead,
   );
-  const sections = st.data?.sections ?? [];
+  const sections = useMemo(() => st.data?.sections ?? [], [st.data]);
 
   const [selId, setSel] = useState<string | null>(null);
 
@@ -133,8 +142,8 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
       const raw = String(params.section ?? '').trim();
       if (!raw) return { ok: false, reason: 'Name a section by its id or a phrase from its title.' };
       if (st.loading) return { ok: false, reason: 'The traced sections are still loading.', retry: true };
-      if (st.error) return { ok: false, reason: 'The sections did not load, so there are none to open.' };
-      if (sections.length === 0) return { ok: false, reason: 'No traced sections are recorded yet.' };
+      if (st.error || !st.data) return { ok: false, reason: 'The section read did not complete, so no selection is verified.' };
+      if (sections.length === 0) return { ok: false, reason: 'No traced sections are visible with your current access.' };
       const needle = raw.toLowerCase();
       const byId = sections.filter((s) => s.id.toLowerCase() === needle);
       const hits = byId.length
@@ -175,7 +184,7 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
     if (st.loading) {
       return { summary: 'Source tracer, still loading recorded source lineage.' };
     }
-    if (st.error) {
+    if (st.error || !st.data) {
       return {
         summary: 'Source tracer could not load the citation store — lineage is unavailable, not absent.',
         availableActions: ['Retry the source-tracer read'],
@@ -184,11 +193,12 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
     return {
       summary:
         sections.length === 0
-          ? 'Source tracer: no recorded source citations yet for this organization.'
-          : `Source tracer: ${sections.length} section(s) with recorded citations` +
+          ? 'Source tracer: no recorded source citations are visible with your current access.'
+          : `Source tracer: ${sections.length} accessible section(s) with recorded citations` +
             (sec ? `, "${sec.sectionTitle ?? sec.sec ?? sec.id}" selected` : '') +
             `; ${changed.length} source(s) changed since citation, ${unresolved.length} unresolved.`,
       facts: {
+        scope: st.data?.scope,
         lineageState: sections.length === 0 ? 'empty' : 'ready',
         sectionCount: sections.length,
         ...(sec ? { selectedSectionId: sec.id, selectedSectionTitle: sec.sectionTitle, selectedSectionModule: sec.module, selectedSectionStatus: sec.status, selectedSectionSources: sec.sources?.length ?? 0 } : {}),
@@ -205,7 +215,7 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
         'Explain why a source is unresolved',
       ],
     };
-  }, [st.loading, st.error, sections.length, sec, allSources.length, changed.length, unresolved.length]);
+  }, [st.loading, st.error, st.data, sections.length, sec, allSources.length, changed.length, unresolved.length]);
   usePublishSurfaceContext('source-tracer', anaContext);
 
   // Four-state on the real read-model — never a fabricated stand-in.
@@ -214,14 +224,14 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
       <div className="sp"><div style={{ padding: 24 }}><EmptyState title="Loading recorded source lineage…" icon={I.clock} /></div></div>
     );
   }
-  if (st.error) {
+  if (st.error || !st.data) {
     return (
       <div className="sp"><div style={{ padding: 24 }}>
         <EmptyState
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load source lineage"
-          hint="The source-tracer service didn't respond (the citation store may not be provisioned for this organization yet). Sign in and retry — a failed read is a failed read, not an empty library."
+          hint="The citation read could not be verified for your current access. Retry or open an accessible project; no citation counts are confirmed."
         />
       </div></div>
     );
@@ -231,8 +241,8 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
       <div className="sp"><div style={{ padding: 24 }}>
         <EmptyState
           icon={I.shieldCheck || I.check}
-          title="No recorded source citations yet"
-          hint="When a section records what it is drafted from — in the authoring editor's Sources rail — it appears here with its source's content identity. Only recorded citations are shown; nothing is inferred from text similarity."
+          title="No accessible source citations"
+          hint="Only citations visible with your current access appear here. When an accessible section records what it is drafted from — in the authoring editor's Sources rail — it appears with its source's content identity. Only recorded citations are shown; nothing is inferred from text similarity."
         />
       </div></div>
     );
@@ -245,10 +255,10 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
           <div className="sp-eyebrow">Provenance / 21 CFR Part 11</div>
           <h1 className="sp-title">Source tracer</h1>
           <p className="sp-state">
-            Each section below records the sources it was drafted from, with the source&rsquo;s
+            Each accessible section below records the sources it was drafted from, with the source&rsquo;s
             content identity captured at the moment of citation. A citation whose source has since
             changed is flagged — nothing is rewritten for you. Only recorded citations appear here;
-            this surface never presents an inferred match as source lineage.
+            this surface never presents an inferred match as source lineage. Counts describe only records visible with your current access.
           </p>
         </div>
       </div>
@@ -256,12 +266,12 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
       <AnswerLead
         tone={changed.length || unresolved.length ? 'calm' : 'good'}
         eyebrow="What your authored sections are drafted from"
-        headline={<><b>{sections.length}</b> section{sections.length === 1 ? '' : 's'} carr{sections.length === 1 ? 'ies' : 'y'} <b>{allSources.length}</b> recorded source citation{allSources.length === 1 ? '' : 's'} — each with the source&rsquo;s content identity at cite time. Sections that recorded nothing do not appear.</>}
+        headline={<><b>{sections.length}</b> accessible section{sections.length === 1 ? '' : 's'} carr{sections.length === 1 ? 'ies' : 'y'} <b>{allSources.length}</b> recorded source citation{allSources.length === 1 ? '' : 's'} — each with the source&rsquo;s content identity at cite time. Only records visible with your current access appear.</>}
         body={changed.length
           ? <><b>{changed.length}</b> citation{changed.length === 1 ? ' is' : 's are'} against content the source no longer has — those sections were written from an earlier version.</>
-          : <>Every recorded citation still matches the source record it points at, or says plainly that it was never checked. A revised document is ingested as a new source, so this does not establish that the underlying document is unchanged.</>}
+          : <>Each returned citation shows whether its source matches, was not checked or could not be read. A revised document is ingested as a new source, so this does not establish that the underlying document is unchanged.</>}
         reassure={unresolved.length
-          ? <><b>{unresolved.length}</b> citation{unresolved.length === 1 ? '' : 's'} point{unresolved.length === 1 ? 's' : ''} at a source that no longer resolves — kept visible rather than dropped, because &ldquo;cites something unavailable&rdquo; is worth seeing.</>
+          ? <><b>{unresolved.length}</b> citation{unresolved.length === 1 ? '' : 's'} point{unresolved.length === 1 ? 's' : ''} at a source unavailable to this read — the recorded citation remains visible.</>
           : <>Recorded lineage only — nothing here is a similarity guess.</>}
         action={{
           label: changed.length ? 'Review sections on changed sources' : 'Analyze for unrecorded claims',
@@ -314,7 +324,7 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
                     <div key={s.citationId} className="st-sent">
                       <div className="st-sent-src">
                         <span className="st-sent-title" style={{ fontWeight: 600 }}>
-                          {s.sourceTitle ?? 'Source no longer resolvable'}
+                          {s.sourceTitle ?? 'Source unavailable to this read'}
                         </span>
                         <span className={'rd-chip tone-' + lab.tone} title={lab.hint}>{lab.text}</span>
                         {fmtWhen(s.citedAt) && <span style={{ fontSize: 12, color: 'var(--text-400,#667085)' }}>cited {fmtWhen(s.citedAt)}</span>}

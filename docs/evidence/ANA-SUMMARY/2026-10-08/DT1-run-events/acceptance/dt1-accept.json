@@ -1,0 +1,443 @@
+{
+  "runId": "run_8ab6b0f9-2f37-46a9-87e6-fadfe16454a6",
+  "threadId": "ana-ri_1791479416068_wabq4iqx9",
+  "frameTypes": [
+    "run_started",
+    "status",
+    "context_used",
+    "thread_id",
+    "orchestration",
+    "text",
+    "step",
+    "tool_use",
+    "timeline",
+    "tool_result",
+    "plan",
+    "done",
+    "grounding_strip",
+    "post_done"
+  ],
+  "postDone": {
+    "status": "recorded",
+    "id": "8582cbca-fd1f-481e-bcc3-410eabfc4bb4",
+    "sha256": "35d94d1ceeed1368656adc02542372ecdc8dcf8db82b0eee063f9e315d3d5e62",
+    "servedBy": [
+      {
+        "provider": "anthropic",
+        "model": "claude-sonnet-5",
+        "qualified": false,
+        "approvedForHighRisk": false,
+        "pq": "pending"
+      }
+    ]
+  },
+  "timelineFrameCount": 9,
+  "liveRowsEqualFramesSoFar": true,
+  "midTurnViews": {
+    "asker": {
+      "status": 200,
+      "body": {
+        "runId": "run_8ab6b0f9-2f37-46a9-87e6-fadfe16454a6",
+        "threadId": "ana-ri_1791479416068_wabq4iqx9",
+        "threadTitle": null,
+        "userMessageId": 21,
+        "status": "running",
+        "stoppedReason": null,
+        "round": 1,
+        "runPolicy": "auto",
+        "hold": null,
+        "plan": [
+          {
+            "title": "Find the stability reports",
+            "status": "in_progress"
+          },
+          {
+            "title": "List the project documents",
+            "status": "pending"
+          },
+          {
+            "title": "Read the two archived reports",
+            "status": "pending"
+          },
+          {
+            "title": "Summarise the shelf-life claims",
+            "status": "pending"
+          }
+        ],
+        "startedAt": "2026-10-08T17:10:16.064Z",
+        "detachedAt": null,
+        "unattendedStopsAt": null,
+        "lastBeatAt": "2026-10-08T17:10:19.043Z",
+        "releasedAt": null,
+        "serverNow": "2026-10-08T17:10:20.043Z",
+        "highWater": 8,
+        "events": [
+          {
+            "at": "2026-10-08T17:10:19.053Z",
+            "seq": 1,
+            "kind": "note",
+            "text": "I will take this in four parts.",
+            "round": 1
+          },
+          {
+            "at": "2026-10-08T17:10:19.053Z",
+            "seq": 2,
+            "kind": "step",
+            "step": "s1",
+            "task": null,
+            "label": "Updating the plan",
+            "phase": "announced",
+            "round": 1,
+            "source": "plan",
+            "preview": null
+          },
+          {
+            "at": "2026-10-08T17:10:19.053Z",
+            "ms": 0,
+            "seq": 3,
+            "kind": "step",
+            "step": "s1",
+            "task": null,
+            "facts": [
+              {
+                "name": "Took",
+                "value": "0 ms"
+              }
+            ],
+            "label": "Updated the plan",
+            "phase": "finished",
+            "round": 1,
+            "source": "plan",
+            "status": "success",
+            "preview": null,
+            "heldBack": false,
+            "usedModel": false
+          },
+          {
+            "at": "2026-10-08T17:10:19.057Z",
+            "seq": 4,
+            "kind": "task",
+            "task": "t1",
+            "round": 1,
+            "title": "Find the stability reports",
+            "change": "added"
+          },
+          {
+            "at": "2026-10-08T17:10:19.057Z",
+            "seq": 5,
+            "kind": "task",
+            "task": "t2",
+            "round": 1,
+            "title": "List the project documents",
+            "change": "added"
+          },
+          {
+            "at": "2026-10-08T17:10:19.057Z",
+            "seq": 6,
+            "kind": "task",
+            "task": "t3",
+            "round": 1,
+            "title": "Read the two archived reports",
+            "change": "added"
+          },
+          {
+            "at": "2026-10-08T17:10:19.057Z",
+            "seq": 7,
+            "kind": "task",
+            "task": "t4",
+            "round": 1,
+            "title": "Summarise the shelf-life claims",
+            "change": "added"
+          },
+          {
+            "at": "2026-10-08T17:10:19.057Z",
+            "seq": 8,
+            "kind": "task",
+            "task": "t1",
+            "round": 1,
+            "title": "Find the stability reports",
+            "change": "started"
+          }
+        ],
+        "controls": [],
+        "sealed": null,
+        "approval": null,
+        "canControl": true,
+        "controlScope": "all"
+      }
+    },
+    "colleague": {
+      "status": 403,
+      "body": {
+        "ok": false,
+        "code": "RUN_NOT_YOURS",
+        "error": "You don't have access to this conversation's live progress."
+      }
+    },
+    "admin": {
+      "status": 200,
+      "body": {
+        "runId": "run_8ab6b0f9-2f37-46a9-87e6-fadfe16454a6",
+        "threadId": "ana-ri_1791479416068_wabq4iqx9",
+        "threadTitle": null,
+        "userMessageId": 21,
+        "status": "running",
+        "stoppedReason": null,
+        "round": 1,
+        "runPolicy": "auto",
+        "hold": null,
+        "plan": [
+          {
+            "title": "Find the stability reports",
+            "status": "in_progress"
+          },
+          {
+            "title": "List the project documents",
+            "status": "pending"
+          },
+          {
+            "title": "Read the two archived reports",
+            "status": "pending"
+          },
+          {
+            "title": "Summarise the shelf-life claims",
+            "status": "pending"
+          }
+        ],
+        "startedAt": "2026-10-08T17:10:16.064Z",
+        "detachedAt": null,
+        "unattendedStopsAt": null,
+        "lastBeatAt": "2026-10-08T17:10:19.043Z",
+        "releasedAt": null,
+        "serverNow": "2026-10-08T17:10:20.144Z",
+        "highWater": 8,
+        "events": [
+          {
+            "at": "2026-10-08T17:10:19.053Z",
+            "seq": 1,
+            "kind": "note",
+            "text": "I will take this in four parts.",
+            "round": 1
+          },
+          {
+            "at": "2026-10-08T17:10:19.053Z",
+            "seq": 2,
+            "kind": "step",
+            "step": "s1",
+            "task": null,
+            "label": "Updating the plan",
+            "phase": "announced",
+            "round": 1,
+            "source": "plan",
+            "preview": null
+          },
+          {
+            "at": "2026-10-08T17:10:19.053Z",
+            "ms": 0,
+            "seq": 3,
+            "kind": "step",
+            "step": "s1",
+            "task": null,
+            "facts": [
+              {
+                "name": "Took",
+                "value": "0 ms"
+              }
+            ],
+            "label": "Updated the plan",
+            "phase": "finished",
+            "round": 1,
+            "source": "plan",
+            "status": "success",
+            "preview": null,
+            "heldBack": false,
+            "usedModel": false
+          },
+          {
+            "at": "2026-10-08T17:10:19.057Z",
+            "seq": 4,
+            "kind": "task",
+            "task": "t1",
+            "round": 1,
+            "title": "Find the stability reports",
+            "change": "added"
+          },
+          {
+            "at": "2026-10-08T17:10:19.057Z",
+            "seq": 5,
+            "kind": "task",
+            "task": "t2",
+            "round": 1,
+            "title": "List the project documents",
+            "change": "added"
+          },
+          {
+            "at": "2026-10-08T17:10:19.057Z",
+            "seq": 6,
+            "kind": "task",
+            "task": "t3",
+            "round": 1,
+            "title": "Read the two archived reports",
+            "change": "added"
+          },
+          {
+            "at": "2026-10-08T17:10:19.057Z",
+            "seq": 7,
+            "kind": "task",
+            "task": "t4",
+            "round": 1,
+            "title": "Summarise the shelf-life claims",
+            "change": "added"
+          },
+          {
+            "at": "2026-10-08T17:10:19.057Z",
+            "seq": 8,
+            "kind": "task",
+            "task": "t1",
+            "round": 1,
+            "title": "Find the stability reports",
+            "change": "started"
+          }
+        ],
+        "controls": [],
+        "sealed": null,
+        "approval": null,
+        "canControl": true,
+        "controlScope": "cancel"
+      }
+    },
+    "mineLive": {
+      "status": 200,
+      "body": {
+        "runs": [
+          {
+            "runId": "run_8ab6b0f9-2f37-46a9-87e6-fadfe16454a6",
+            "threadId": "ana-ri_1791479416068_wabq4iqx9",
+            "threadTitle": null,
+            "userMessageId": 21,
+            "status": "running",
+            "stoppedReason": null,
+            "runPolicy": "auto",
+            "startedAt": "2026-10-08T17:10:16.064Z",
+            "lastBeatAt": "2026-10-08T17:10:19.043Z",
+            "releasedAt": null
+          }
+        ],
+        "serverNow": "2026-10-08T17:10:20.183Z"
+      }
+    }
+  },
+  "afterRecord": {
+    "status": 200,
+    "body": {
+      "runId": "run_8ab6b0f9-2f37-46a9-87e6-fadfe16454a6",
+      "threadId": "ana-ri_1791479416068_wabq4iqx9",
+      "threadTitle": null,
+      "userMessageId": 21,
+      "status": "finished",
+      "stoppedReason": "no_more_tools",
+      "round": 1,
+      "runPolicy": "auto",
+      "hold": null,
+      "plan": null,
+      "startedAt": "2026-10-08T17:10:16.064Z",
+      "detachedAt": null,
+      "unattendedStopsAt": null,
+      "lastBeatAt": "2026-10-08T17:10:19.043Z",
+      "releasedAt": "2026-10-08T17:10:20.618Z",
+      "serverNow": "2026-10-08T17:10:20.932Z",
+      "highWater": 9,
+      "events": [],
+      "controls": [],
+      "sealed": {
+        "recordId": "8582cbca-fd1f-481e-bcc3-410eabfc4bb4",
+        "assistantMessageId": 22
+      },
+      "approval": null,
+      "canControl": true,
+      "controlScope": "all"
+    }
+  },
+  "byThreadAfter": {
+    "status": 200,
+    "body": {
+      "runs": [],
+      "serverNow": "2026-10-08T17:10:20.965Z"
+    }
+  },
+  "polls": [
+    {
+      "at": "2026-10-08T17:10:16.177Z",
+      "phase": "live",
+      "status": 200,
+      "runStatus": "running",
+      "events": 0,
+      "highWater": 0,
+      "sealed": null,
+      "releasedAt": null
+    },
+    {
+      "at": "2026-10-08T17:10:16.924Z",
+      "phase": "live",
+      "status": 200,
+      "runStatus": "running",
+      "events": 0,
+      "highWater": 0,
+      "sealed": null,
+      "releasedAt": null
+    },
+    {
+      "at": "2026-10-08T17:10:17.749Z",
+      "phase": "live",
+      "status": 200,
+      "runStatus": "running",
+      "events": 0,
+      "highWater": 0,
+      "sealed": null,
+      "releasedAt": null
+    },
+    {
+      "at": "2026-10-08T17:10:18.521Z",
+      "phase": "live",
+      "status": 200,
+      "runStatus": "running",
+      "events": 0,
+      "highWater": 0,
+      "sealed": null,
+      "releasedAt": null
+    },
+    {
+      "at": "2026-10-08T17:10:19.273Z",
+      "phase": "live",
+      "status": 200,
+      "runStatus": "running",
+      "events": 0,
+      "highWater": 0,
+      "sealed": null,
+      "releasedAt": null
+    },
+    {
+      "at": "2026-10-08T17:10:20.048Z",
+      "phase": "live",
+      "status": 200,
+      "runStatus": "running",
+      "events": 8,
+      "highWater": 8,
+      "sealed": null,
+      "releasedAt": null
+    },
+    {
+      "at": "2026-10-08T17:10:20.934Z",
+      "phase": "after",
+      "status": 200,
+      "runStatus": "finished",
+      "events": 0,
+      "highWater": 9,
+      "sealed": {
+        "recordId": "8582cbca-fd1f-481e-bcc3-410eabfc4bb4",
+        "assistantMessageId": 22
+      },
+      "releasedAt": "2026-10-08T17:10:20.618Z"
+    }
+  ]
+}

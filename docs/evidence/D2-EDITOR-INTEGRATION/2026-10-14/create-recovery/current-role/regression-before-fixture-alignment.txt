@@ -1,0 +1,3091 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:06:13.044Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T22:06:13.048Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:06:13.049Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > refuses a private project before original bytes, conversion or authoring evidence are read or written 115ms
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > creates the exact working copy using real verified bytes/native conversion, with source identity in every CREATE audit
+{
+  "timestamp": "2026-10-14T22:06:18.731Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 24fba37c-3124-4cb0-aacf-84f9c4ba3746 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > creates the exact working copy using real verified bytes/native conversion, with source identity in every CREATE audit
+{
+  "timestamp": "2026-10-14T22:06:18.760Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 24fba37c-3124-4cb0-aacf-84f9c4ba3746 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > creates the exact working copy using real verified bytes/native conversion, with source identity in every CREATE audit 848ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > reuses the exact actor’s draft without replacing edited section content 140ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > current source project and membership access > admits an explicitly assigned private-project member and refuses revoked access to their saved import 68ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > current source project and membership access > uses the current membership role rather than a previously issued member token 6ms
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction, integrity and format guards > refuses changed stored bytes through the default Vault adapter, with no new authoring evidence
+{
+  "timestamp": "2026-10-14T22:06:19.242Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download refused: content hash mismatch",
+  "context": {
+    "documentId": "28f079c4-05e3-4b46-ab12-2529c7fbc6e8",
+    "recorded": "c7809c46afdb",
+    "actual": "9375701c5719"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > current source project and membership access > keeps document ownership separate from current saved-binary source access after project revocation 112ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction, integrity and format guards > rechecks a sharing revocation during conversion inside the real canonical creation transaction 75ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction, integrity and format guards > refuses source/project mismatches and foreign tenants without creating anything 13ms
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction, integrity and format guards > imports a captured data-room source through the real tenant-checked upload byte reader
+{
+  "timestamp": "2026-10-14T22:06:19.344Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 90d82c6d-4a79-4868-be94-ec626721fe97 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction, integrity and format guards > imports a captured data-room source through the real tenant-checked upload byte reader
+{
+  "timestamp": "2026-10-14T22:06:19.358Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 90d82c6d-4a79-4868-be94-ec626721fe97 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction, integrity and format guards > refuses changed stored bytes through the default Vault adapter, with no new authoring evidence 13ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction, integrity and format guards > requires a stated reason and an editor role 6ms
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > rolls back document, section, revision and origin evidence together when a CREATE audit cannot be recorded
+CRITICAL: Failed to create audit trail: error: Injected audit failure
+    at pe.Le (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:4097716)
+    at Object.Module._PostgresMainLongJmp (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:3:196659)
+    at O.execProtocolRawSync (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:3:286371)
+    at O.execProtocolRaw (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:3:286638)
+    at O.execProtocolStream (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:3:287295)
+    at O.y (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:2046) {
+  length: 146,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function editor_import_fail_audit() line 2 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    'ef447b46-4dd0-439e-8af3-a7a0917c4689',
+    'b61c28cf-79e9-4eb8-84fc-26fec1185c47',
+    'CREATE',
+    'author@canvas.example',
+    'unknown',
+    null,
+    '<table><tbody><tr><td><p>Assay</p></td><td><p>99.2 %</p></td></tr></tbody></table><p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==" alt=""></p>',
+    null,
+    'fb434e4a943c180f0ead454bc788e5333db4ba979f93ec40fb8999cb8b138e8c',
+    'Exercise the import rollback guard',
+    { provenance: [Object], drafted: true, section_code: '3.2.S.4.1' },
+    '::ffff:127.0.0.1',
+    'unknown',
+    'd5f02bd5-8fcd-41a5-9ca1-ebebd407042f',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > rolls back document, section, revision and origin evidence together when a CREATE audit cannot be recorded
+{
+  "timestamp": "2026-10-14T22:06:19.461Z",
+  "level": "error",
+  "message": "[authoring-router] pulling a source into the document editor failed",
+  "context": {
+    "err": "Injected audit failure",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction, integrity and format guards > imports a captured data-room source through the real tenant-checked upload byte reader 116ms
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > continued source headings in the same authoring working copy > preserves repeated Word headings, content and source evidence through save, reopen and exact draft reuse
+{
+  "timestamp": "2026-10-14T22:06:19.692Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d7dcb166-7942-4bbd-8c7a-6a55da6cb1cb by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > continued source headings in the same authoring working copy > preserves repeated Word headings, content and source evidence through save, reopen and exact draft reuse
+{
+  "timestamp": "2026-10-14T22:06:19.709Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d7dcb166-7942-4bbd-8c7a-6a55da6cb1cb by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > continued source headings in the same authoring working copy > preserves repeated Word headings, content and source evidence through save, reopen and exact draft reuse
+{
+  "timestamp": "2026-10-14T22:06:19.721Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d7dcb166-7942-4bbd-8c7a-6a55da6cb1cb by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > continued source headings in the same authoring working copy > preserves repeated Word headings, content and source evidence through save, reopen and exact draft reuse
+{
+  "timestamp": "2026-10-14T22:06:19.776Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc d7dcb166-7942-4bbd-8c7a-6a55da6cb1cb by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > rolls back document, section, revision and origin evidence together when a CREATE audit cannot be recorded 144ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > serves the complete canonical IND library through the same authenticated authoring router 79ms
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > refuses an earlier version before byte access, including an existing working copy (true)
+{
+  "timestamp": "2026-10-14T22:06:20.017Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 42dba3df-05c5-4162-9f4a-2fe41dab89ae by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > continued source headings in the same authoring working copy > preserves repeated Word headings, content and source evidence through save, reopen and exact draft reuse 300ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > refuses an earlier version before byte access, including an existing working copy (false) 55ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > refuses an earlier version before byte access, including an existing working copy (true) 117ms
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > rechecks a successor inserted during conversion before creation or reuse (true)
+{
+  "timestamp": "2026-10-14T22:06:20.214Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6489cd80-6a9b-4fb4-8b84-7fd61d2b44a2 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > rechecks a successor inserted during conversion before creation or reuse (false) 89ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > rechecks a successor inserted during conversion before creation or reuse (true) 143ms
+stderr | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:06:21.643Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > full visible review and retained content binding > reads every saved section in canonical order and binds the verdict plus real chained audit
+{
+  "timestamp": "2026-10-14T22:06:25.132Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 09f6d5d1-af09-4e24-ba11-95f7e36c5574 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > full visible review and retained content binding > reads every saved section in canonical order and binds the verdict plus real chained audit
+{
+  "timestamp": "2026-10-14T22:06:25.234Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 09f6d5d1-af09-4e24-ba11-95f7e36c5574 by r***@review.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > full visible review and retained content binding > refuses a captured verdict after title changes without writing audit or task evidence
+{
+  "timestamp": "2026-10-14T22:06:25.343Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 7588eb1b-1b15-4335-8131-e8e065c2007b by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > full visible review and retained content binding > refuses a captured verdict after version changes without writing audit or task evidence
+{
+  "timestamp": "2026-10-14T22:06:25.435Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 3d3c9d6f-8a71-46c8-8187-91194139724e by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > full visible review and retained content binding > reads every saved section in canonical order and binds the verdict plus real chained audit 244ms
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > full visible review and retained content binding > refuses a captured verdict after title changes without writing audit or task evidence 94ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > full visible review and retained content binding > refuses a captured verdict after prose changes without writing audit or task evidence
+{
+  "timestamp": "2026-10-14T22:06:25.526Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc aa18b3cf-e201-4d4c-a71a-520268610fe5 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > full visible review and retained content binding > refuses a captured verdict after section-title changes without writing audit or task evidence
+{
+  "timestamp": "2026-10-14T22:06:25.613Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc e47c18f8-853d-4a3b-9f99-30df843a5dc1 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > full visible review and retained content binding > refuses a captured verdict after version changes without writing audit or task evidence 91ms
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > full visible review and retained content binding > refuses a captured verdict after prose changes without writing audit or task evidence 87ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > full visible review and retained content binding > refuses a captured verdict after order changes without writing audit or task evidence
+{
+  "timestamp": "2026-10-14T22:06:25.697Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 32a0b82e-a6ca-49c6-9190-181313e31571 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > full visible review and retained content binding > keeps an approved earlier binding visibly stale after a saved content change
+{
+  "timestamp": "2026-10-14T22:06:25.778Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc c7dd33c9-a05f-430f-99cd-2018a52e5a39 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > full visible review and retained content binding > keeps an approved earlier binding visibly stale after a saved content change
+{
+  "timestamp": "2026-10-14T22:06:25.831Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc c7dd33c9-a05f-430f-99cd-2018a52e5a39 by r***@review.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > full visible review and retained content binding > refuses a captured verdict after section-title changes without writing audit or task evidence 88ms
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > full visible review and retained content binding > refuses a captured verdict after order changes without writing audit or task evidence 81ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > full visible review and retained content binding > re-request clears only the active binding, retains its immutable audit, and refuses the prior round
+{
+  "timestamp": "2026-10-14T22:06:25.900Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 918e780b-0a85-487b-92f8-84a4b697990b by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > full visible review and retained content binding > re-request clears only the active binding, retains its immutable audit, and refuses the prior round
+{
+  "timestamp": "2026-10-14T22:06:25.974Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 918e780b-0a85-487b-92f8-84a4b697990b by r***@review.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > full visible review and retained content binding > re-request clears only the active binding, retains its immutable audit, and refuses the prior round
+{
+  "timestamp": "2026-10-14T22:06:26.012Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 918e780b-0a85-487b-92f8-84a4b697990b by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > full visible review and retained content binding > keeps an approved earlier binding visibly stale after a saved content change 119ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > request rounds retain identity beyond JavaScript timestamp precision > refuses the old round when distinct PostgreSQL microseconds serialize to the same millisecond
+{
+  "timestamp": "2026-10-14T22:06:26.096Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 2d964d19-74a0-4833-be27-fa62817b36bd by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > request rounds retain identity beyond JavaScript timestamp precision > refuses the old round when distinct PostgreSQL microseconds serialize to the same millisecond
+{
+  "timestamp": "2026-10-14T22:06:26.161Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 2d964d19-74a0-4833-be27-fa62817b36bd by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > request rounds retain identity beyond JavaScript timestamp precision > refuses the old round when distinct PostgreSQL microseconds serialize to the same millisecond
+{
+  "timestamp": "2026-10-14T22:06:26.227Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 2d964d19-74a0-4833-be27-fa62817b36bd by r***@review.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > full visible review and retained content binding > re-request clears only the active binding, retains its immutable audit, and refuses the prior round 196ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains legacy-null verdicts as unbound without manufacturing current approval
+{
+  "timestamp": "2026-10-14T22:06:26.267Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc cb06f770-e849-4739-860b-4b4ee5805dd6 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains legacy-null verdicts as unbound without manufacturing current approval
+{
+  "timestamp": "2026-10-14T22:06:26.325Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc cb06f770-e849-4739-860b-4b4ee5805dd6 by r***@review.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > request rounds retain identity beyond JavaScript timestamp precision > refuses the old round when distinct PostgreSQL microseconds serialize to the same millisecond 174ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains legacy-email-reviewer verdicts as unbound without manufacturing current approval
+{
+  "timestamp": "2026-10-14T22:06:26.389Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 2d9c0284-a9a7-4f6a-a816-6acc50e0dec5 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains legacy-email-reviewer verdicts as unbound without manufacturing current approval
+{
+  "timestamp": "2026-10-14T22:06:26.444Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 2d9c0284-a9a7-4f6a-a816-6acc50e0dec5 by r***@review.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains legacy-null verdicts as unbound without manufacturing current approval 121ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains legacy-email-requester verdicts as unbound without manufacturing current approval
+{
+  "timestamp": "2026-10-14T22:06:26.512Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 817e2366-f492-4b90-8fe8-0242329061f9 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains legacy-email-requester verdicts as unbound without manufacturing current approval
+{
+  "timestamp": "2026-10-14T22:06:26.570Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 817e2366-f492-4b90-8fe8-0242329061f9 by r***@review.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains legacy-email-reviewer verdicts as unbound without manufacturing current approval 120ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains out-of-range-reviewer verdicts as unbound without manufacturing current approval
+{
+  "timestamp": "2026-10-14T22:06:26.645Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 0ef61767-2695-4822-9dc8-39d4f98b026e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains out-of-range-reviewer verdicts as unbound without manufacturing current approval
+{
+  "timestamp": "2026-10-14T22:06:26.703Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 0ef61767-2695-4822-9dc8-39d4f98b026e by r***@review.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains legacy-email-requester verdicts as unbound without manufacturing current approval 132ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains out-of-range-requester verdicts as unbound without manufacturing current approval
+{
+  "timestamp": "2026-10-14T22:06:26.770Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc f087792a-e4aa-4957-b6f0-2d5db7bdf2d9 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains out-of-range-requester verdicts as unbound without manufacturing current approval
+{
+  "timestamp": "2026-10-14T22:06:26.826Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc f087792a-e4aa-4957-b6f0-2d5db7bdf2d9 by r***@review.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains out-of-range-reviewer verdicts as unbound without manufacturing current approval 125ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains missing-requester verdicts as unbound without manufacturing current approval
+{
+  "timestamp": "2026-10-14T22:06:26.896Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 6150173c-6120-4c85-aa96-9fabeb160267 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains missing-requester verdicts as unbound without manufacturing current approval
+{
+  "timestamp": "2026-10-14T22:06:26.956Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 6150173c-6120-4c85-aa96-9fabeb160267 by r***@review.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains out-of-range-requester verdicts as unbound without manufacturing current approval 128ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains malformed-snapshot verdicts as unbound without manufacturing current approval
+{
+  "timestamp": "2026-10-14T22:06:27.025Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc a18617ca-8c0d-4e67-9fcf-1413e7c3326e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains malformed-snapshot verdicts as unbound without manufacturing current approval
+{
+  "timestamp": "2026-10-14T22:06:27.079Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc a18617ca-8c0d-4e67-9fcf-1413e7c3326e by r***@review.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains missing-requester verdicts as unbound without manufacturing current approval 129ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains malformed-hash verdicts as unbound without manufacturing current approval
+{
+  "timestamp": "2026-10-14T22:06:27.150Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc ac19ec76-e7ab-48b9-8ee8-b4f966e68b6e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains malformed-hash verdicts as unbound without manufacturing current approval
+{
+  "timestamp": "2026-10-14T22:06:27.208Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc ac19ec76-e7ab-48b9-8ee8-b4f966e68b6e by r***@review.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains malformed-snapshot verdicts as unbound without manufacturing current approval 125ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains wrong-hash verdicts as unbound without manufacturing current approval
+{
+  "timestamp": "2026-10-14T22:06:27.261Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 07bf0b60-08fa-457e-8906-2c275438d32f by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains wrong-hash verdicts as unbound without manufacturing current approval
+{
+  "timestamp": "2026-10-14T22:06:27.320Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 07bf0b60-08fa-457e-8906-2c275438d32f by r***@review.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains malformed-hash verdicts as unbound without manufacturing current approval 116ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains wrong-basis verdicts as unbound without manufacturing current approval
+{
+  "timestamp": "2026-10-14T22:06:27.382Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 95eded71-8786-454e-ad5a-cd454c912a85 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains wrong-basis verdicts as unbound without manufacturing current approval
+{
+  "timestamp": "2026-10-14T22:06:27.440Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 95eded71-8786-454e-ad5a-cd454c912a85 by r***@review.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains wrong-hash verdicts as unbound without manufacturing current approval 121ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains wrong-document verdicts as unbound without manufacturing current approval
+{
+  "timestamp": "2026-10-14T22:06:27.502Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc e91bea5d-3b20-407f-b4e1-a2c1d62162e1 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains wrong-document verdicts as unbound without manufacturing current approval
+{
+  "timestamp": "2026-10-14T22:06:27.559Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc e91bea5d-3b20-407f-b4e1-a2c1d62162e1 by r***@review.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains wrong-basis verdicts as unbound without manufacturing current approval 113ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains reviewed-before-request verdicts as unbound without manufacturing current approval
+{
+  "timestamp": "2026-10-14T22:06:27.626Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc ad7ed8f5-ac06-44a6-896a-2679a5a23626 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains reviewed-before-request verdicts as unbound without manufacturing current approval
+{
+  "timestamp": "2026-10-14T22:06:27.675Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc ad7ed8f5-ac06-44a6-896a-2679a5a23626 by r***@review.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains wrong-document verdicts as unbound without manufacturing current approval 128ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains the recorded verdict and complete text under read-only payment posture while refusing another decision
+{
+  "timestamp": "2026-10-14T22:06:27.770Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 6c89eaba-d71e-4db1-a5a2-08551e400309 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains the recorded verdict and complete text under read-only payment posture while refusing another decision
+{
+  "timestamp": "2026-10-14T22:06:27.844Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 6c89eaba-d71e-4db1-a5a2-08551e400309 by r***@review.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains reviewed-before-request verdicts as unbound without manufacturing current approval 112ms
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > does not acquire peer approval with no assigned verdicts 29ms
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > honest historical verdicts and retained reads > retains the recorded verdict and complete text under read-only payment posture while refusing another decision 145ms
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > legacy pending request attribution requires an honest new request > keeps legacy email requester text readable but refuses its decision without backfilling attribution 66ms
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses an unassigned actor even with a document Reviewer grant 40ms
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses original authorship at both request and verdict gates 84ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses foreign current admission without changing the assigned verdict
+{
+  "timestamp": "2026-10-14T22:06:28.269Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc c3922937-4546-4847-850e-5931ea54c168 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses contributor authorship at both request and verdict gates 81ms
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses unresolved-contributor authorship at both request and verdict gates 86ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses inactive-user current admission without changing the assigned verdict
+{
+  "timestamp": "2026-10-14T22:06:28.343Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 2649e84c-e445-4b66-b0b1-213f2b7531fa by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses inactive-org current admission without changing the assigned verdict
+{
+  "timestamp": "2026-10-14T22:06:28.408Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc db801848-4f99-429f-bc76-c4ee497f17d5 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses foreign current admission without changing the assigned verdict 65ms
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses inactive-user current admission without changing the assigned verdict 74ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses departed current admission without changing the assigned verdict
+{
+  "timestamp": "2026-10-14T22:06:28.474Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 1f1e1b42-08c6-497b-acf7-0cb0bccdff2b by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses viewer current admission without changing the assigned verdict
+{
+  "timestamp": "2026-10-14T22:06:28.537Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc bad20bfb-e472-43b4-9225-b73863af5b89 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses inactive-org current admission without changing the assigned verdict 66ms
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses departed current admission without changing the assigned verdict 61ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses duplicate-membership current admission without changing the assigned verdict
+{
+  "timestamp": "2026-10-14T22:06:28.603Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc fd0950a3-449c-45fd-9770-14ddad5c730f by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses revoked full-document access for read and write
+{
+  "timestamp": "2026-10-14T22:06:28.671Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 8e56f893-0477-4992-bd81-7fae72634db6 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses viewer current admission without changing the assigned verdict 66ms
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses duplicate-membership current admission without changing the assigned verdict 71ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses section-only full-document access for read and write
+{
+  "timestamp": "2026-10-14T22:06:28.747Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 457a5669-749c-4fbb-a05a-be10ef084fd5 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses private-project full-document access for read and write
+{
+  "timestamp": "2026-10-14T22:06:28.823Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 7d91a02b-022a-4c7b-b6d8-17f9f0cb83c7 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses revoked full-document access for read and write 77ms
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses section-only full-document access for read and write 73ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > resolves supplied reviewer ids to their actual tenant identity
+{
+  "timestamp": "2026-10-14T22:06:28.903Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 409efd0f-072b-4ccd-bd2c-9d02070be76b by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses another document or request round in the expected ceremony
+{
+  "timestamp": "2026-10-14T22:06:28.956Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 6393853a-6373-40da-9325-c31a405b4004 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses another document or request round in the expected ceremony
+{
+  "timestamp": "2026-10-14T22:06:28.992Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 94365590-3ecb-4c33-a752-5a1a4ffe2a2f by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses private-project full-document access for read and write 80ms
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > resolves supplied reviewer ids to their actual tenant identity 52ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > strict input cannot spoof actor, reviewer, snapshot content or binding basis
+{
+  "timestamp": "2026-10-14T22:06:29.104Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 03178773-7da2-4f1c-b8e0-799cce8bc16a by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > requires a governed reason for rejected before a verdict or task write
+{
+  "timestamp": "2026-10-14T22:06:29.164Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc c3a38c4f-1b49-4a29-b478-d3b673bdca26 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > refuses another document or request round in the expected ceremony 147ms
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > strict input cannot spoof actor, reviewer, snapshot content or binding basis 64ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > requires a governed reason for changes_requested before a verdict or task write
+{
+  "timestamp": "2026-10-14T22:06:29.227Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 0ed57219-8b28-4e00-ad8f-a7582ee74734 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > one transaction for the decision, task closure and actual audit > a failed chained audit rolls back the verdict and task evidence on the same client
+{
+  "timestamp": "2026-10-14T22:06:29.290Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc f9f779ca-1f37-433e-a622-e67217535682 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > one transaction for the decision, task closure and actual audit > a failed chained audit rolls back the verdict and task evidence on the same client
+{
+  "timestamp": "2026-10-14T22:06:29.352Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc f9f779ca-1f37-433e-a622-e67217535682 by r***@review.example",
+  "context": {}
+}
+
+stderr | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > one transaction for the decision, task closure and actual audit > a failed chained audit rolls back the verdict and task evidence on the same client
+CRITICAL: Failed to create audit trail: error: Fixture audit unavailable
+    at pe.Le (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 157,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function peer_review_fixture_reject_audit() line 1 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO audit_logs\n' +
+    '       (id, tenant_id, user_id, action, table_name, record_id,\n' +
+    '        actor_id, target, payload_hash, sha256_chain, occurred_at, hmac_seal,\n' +
+    '        old_values, new_values, ip_address, user_agent)\n' +
+    '     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::json,$15,$16)',
+  params: [
+    '4a1f61fc-99ba-46b2-b814-46dbb9ce82a3',
+    1,
+    21,
+    'authoring.section.document_reviewed',
+    'authoring_document',
+    'f9f779ca-1f37-433e-a622-e67217535682',
+    21,
+    'authoring_document:f9f779ca-1f37-433e-a622-e67217535682',
+    '07b9638a3bc9356c912334c72691a44b4fdaf5ff87bd78b43ff7f11a025d3ff8',
+    'ab7452ac464a7de13a7a78b1b87ed96f3ddef57a98a42a2ed6a8e76746c7fd19',
+    '2026-10-14T22:06:29.352Z',
+    null,
+    null,
+    '{"docId":"f9f779ca-1f37-433e-a622-e67217535682","sectionId":null,"operationType":"document_reviewed","contentHashBefore":null,"contentHashAfter":null,"changeReason":null,"actorRole":"member","sessionId":"e0480ebc-bc61-419e-af2f-0c84f00fada1","trailId":"413aeaf6-830c-4177-b227-fa8fa27f35c6","metadataSha256":"c850b72cb9498a5f561123842f6cc0d2b6c4b5130b114878c8258e72145e99a1","actorEmail":"reviewer@review.example"}',
+    '127.0.0.1',
+    'canonical-peer-review-fixture'
+  ],
+  queryOptions: undefined
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > requires a governed reason for rejected before a verdict or task write 62ms
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > fresh independent assignment and native admission > requires a governed reason for changes_requested before a verdict or task write 63ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > one transaction for the decision, task closure and actual audit > failed task-record persistence also rolls back the canonical trail and bound verdict
+{
+  "timestamp": "2026-10-14T22:06:29.397Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 6caf2df6-51bb-4d9b-aa00-7c3b76effe1f by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > one transaction for the decision, task closure and actual audit > failed task-record persistence also rolls back the canonical trail and bound verdict
+{
+  "timestamp": "2026-10-14T22:06:29.456Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 6caf2df6-51bb-4d9b-aa00-7c3b76effe1f by r***@review.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > refuses a full read after document-acl changes following its captured snapshot
+{
+  "timestamp": "2026-10-14T22:06:29.489Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc c02ed233-71fb-483c-9182-9f68d0634ede by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > one transaction for the decision, task closure and actual audit > a failed chained audit rolls back the verdict and task evidence on the same client 105ms
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > one transaction for the decision, task closure and actual audit > failed task-record persistence also rolls back the canonical trail and bound verdict 92ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > refuses a full read after membership changes following its captured snapshot
+{
+  "timestamp": "2026-10-14T22:06:29.543Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 4f622d2f-7ce6-4495-8b37-8268ce735fc7 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > refuses a full read after project-sharing changes following its captured snapshot
+{
+  "timestamp": "2026-10-14T22:06:29.601Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 18299c7f-4e02-4502-a5bc-c2c462ff0e14 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > refuses a full read after document-acl changes following its captured snapshot 60ms
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > refuses a full read after membership changes following its captured snapshot 42ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > refuses a full read after saved-content changes following its captured snapshot
+{
+  "timestamp": "2026-10-14T22:06:29.649Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 36a4d5af-47ee-4125-a3b8-22bf6329e343 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > retains the full saved text but lowers review authority when a Reviewer grant becomes Viewer during the read
+{
+  "timestamp": "2026-10-14T22:06:29.705Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 4a2d1bf1-0f34-4e1f-917c-da85495785bc by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > refuses a full read after project-sharing changes following its captured snapshot 63ms
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > refuses a full read after saved-content changes following its captured snapshot 53ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > rolls back the bound verdict, task record and audit when document-acl changes after the verdict write
+{
+  "timestamp": "2026-10-14T22:06:29.787Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 47e7a46b-6635-4090-bf35-57cd711f6dc4 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > rolls back the bound verdict, task record and audit when document-acl changes after the verdict write
+{
+  "timestamp": "2026-10-14T22:06:29.838Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 47e7a46b-6635-4090-bf35-57cd711f6dc4 by r***@review.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > rolls back the bound verdict, task record and audit when membership changes after the verdict write
+{
+  "timestamp": "2026-10-14T22:06:29.878Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 3cf2c2dc-f978-40e7-b747-a76dc32b538e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > rolls back the bound verdict, task record and audit when membership changes after the verdict write
+{
+  "timestamp": "2026-10-14T22:06:29.934Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 3cf2c2dc-f978-40e7-b747-a76dc32b538e by r***@review.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > retains the full saved text but lowers review authority when a Reviewer grant becomes Viewer during the read 83ms
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > rolls back the bound verdict, task record and audit when document-acl changes after the verdict write 88ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > rolls back the bound verdict, task record and audit when project-sharing changes after the verdict write
+{
+  "timestamp": "2026-10-14T22:06:29.965Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc d0a60ded-b7c6-44a4-843d-edd440721c3e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > rolls back the bound verdict, task record and audit when project-sharing changes after the verdict write
+{
+  "timestamp": "2026-10-14T22:06:30.022Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc d0a60ded-b7c6-44a4-843d-edd440721c3e by r***@review.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > rolls back the bound verdict, task record and audit when saved-content changes after the verdict write
+{
+  "timestamp": "2026-10-14T22:06:30.056Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc beee1def-7d9d-4352-87bd-f3898e7c0727 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > rolls back the bound verdict, task record and audit when saved-content changes after the verdict write
+{
+  "timestamp": "2026-10-14T22:06:30.110Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc beee1def-7d9d-4352-87bd-f3898e7c0727 by r***@review.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > rolls back the bound verdict, task record and audit when membership changes after the verdict write 88ms
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > rolls back the bound verdict, task record and audit when project-sharing changes after the verdict write 92ms
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > rolls back the review request, grants and audit when requester-acl changes after insertion
+{
+  "timestamp": "2026-10-14T22:06:30.149Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc d9451c0f-c801-45ed-b0d7-67b8a017ce72 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > rolls back the review request, grants and audit when reviewer-membership changes after insertion
+{
+  "timestamp": "2026-10-14T22:06:30.185Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 35d38768-37cb-44d7-be6d-7b55870542b7 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > rolls back the review request, grants and audit when project-sharing changes after insertion
+{
+  "timestamp": "2026-10-14T22:06:30.226Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc ff993486-e519-4972-bede-81f971075e00 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > rolls back the bound verdict, task record and audit when saved-content changes after the verdict write 95ms
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > rolls back the review request, grants and audit when requester-acl changes after insertion 33ms
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > rolls back the review request, grants and audit when reviewer-membership changes after insertion 37ms
+ ✓ server/services/authoring/__tests__/peer-review.pglite.integration.test.ts > final current-authority and content reread before returning or committing > rolls back the review request, grants and audit when project-sharing changes after insertion 38ms
+stderr | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts
+{
+  "timestamp": "2026-10-14T22:06:31.471Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts
+{
+  "timestamp": "2026-10-14T22:06:35.253Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T22:06:35.255Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts
+{
+  "timestamp": "2026-10-14T22:06:35.255Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts
+{
+  "timestamp": "2026-10-14T22:06:36.960Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 2eeb0cf6-2012-4f78-a97c-13b7529d642b by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > credits the claim the record holds, under a model RULE 2 admits (the honest case)
+{
+  "timestamp": "2026-10-14T22:06:37.038Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc cbc23685-5921-47ec-b0fe-46f287247624 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > credits the claim the record holds, under a model RULE 2 admits (the honest case) 88ms
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > a claim of words the record does not hold is the saver’s own, not AnA’s
+{
+  "timestamp": "2026-10-14T22:06:37.119Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 6def9da9-3425-434e-9ed4-20709a6cb17d by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > a claim naming no turn record at all is the saver’s own
+{
+  "timestamp": "2026-10-14T22:06:37.175Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 93245710-e0e6-427f-b561-83e6bc36be0f by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > a claim of words the record does not hold is the saver’s own, not AnA’s 70ms
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > a turn record of another organisation vouches for nothing: an id is not a capability
+{
+  "timestamp": "2026-10-14T22:06:37.238Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a8e0cf94-12ba-4016-a38f-bcae201f8407 by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: a verified claim the rule will not admit stops the save > refuses the save, names the model, and writes nothing
+{
+  "timestamp": "2026-10-14T22:06:37.275Z",
+  "level": "warn",
+  "message": "[authoring-router] Section save refused: a verified machine claim names a model RULE 2 does not admit",
+  "context": {
+    "sectionId": "51da3fed-d3fa-45d5-8af6-5cf403a65102",
+    "tenantId": 1,
+    "servedBy": [
+      "claude-sonnet-5"
+    ],
+    "passages": 1
+  }
+}
+
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > a claim naming no turn record at all is the saver’s own 52ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > a turn record of another organisation vouches for nothing: an id is not a capability 62ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: a verified claim the rule will not admit stops the save > refuses the save, names the model, and writes nothing 35ms
+stderr | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: a verified claim the rule will not admit stops the save > one unadmitted model among several is enough
+{
+  "timestamp": "2026-10-14T22:06:37.308Z",
+  "level": "warn",
+  "message": "[authoring-router] Section save refused: a verified machine claim names a model RULE 2 does not admit",
+  "context": {
+    "sectionId": "21344dff-3de0-4404-b0ba-07f049326f63",
+    "tenantId": 1,
+    "servedBy": [
+      "claude-opus-5-5",
+      "claude-sonnet-5"
+    ],
+    "passages": 1
+  }
+}
+
+stderr | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: a verified claim the rule will not admit stops the save > a record naming NO model is not approval: an empty list is not a list of admitted models
+{
+  "timestamp": "2026-10-14T22:06:37.340Z",
+  "level": "warn",
+  "message": "[authoring-router] Section save refused: a verified machine claim names a model RULE 2 does not admit",
+  "context": {
+    "sectionId": "48ff25ad-5351-4e96-8854-1679231ff29c",
+    "tenantId": 1,
+    "servedBy": [],
+    "passages": 1
+  }
+}
+
+stderr | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: a verified claim the rule will not admit stops the save > refuses when only ONE of several claims names an unadmitted model
+{
+  "timestamp": "2026-10-14T22:06:37.393Z",
+  "level": "warn",
+  "message": "[authoring-router] Section save refused: a verified machine claim names a model RULE 2 does not admit",
+  "context": {
+    "sectionId": "6bee9f15-ab6b-4d32-8b94-f09e40dfe741",
+    "tenantId": 1,
+    "servedBy": [
+      "claude-sonnet-5"
+    ],
+    "passages": 1
+  }
+}
+
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: a verified claim the rule will not admit stops the save > one unadmitted model among several is enough 32ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: a verified claim the rule will not admit stops the save > a record naming NO model is not approval: an empty list is not a list of admitted models 31ms
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: a verified claim the rule will not admit stops the save > an UNVERIFIABLE claim does not refuse the save — the server cannot tell
+{
+  "timestamp": "2026-10-14T22:06:37.463Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 3ea60ad7-4bc8-41c0-82f3-fe4dc6af2b06 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > one verdict gates both channels > an accepted-author claim no record vouches for names no contributor and no draft source
+{
+  "timestamp": "2026-10-14T22:06:37.511Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 28a11aa2-647d-4699-b7e5-56336f1220a6 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: a verified claim the rule will not admit stops the save > refuses when only ONE of several claims names an unadmitted model 54ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: a verified claim the rule will not admit stops the save > an UNVERIFIABLE claim does not refuse the save — the server cannot tell 71ms
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > one verdict gates both channels > an author whose every claim is unverifiable is not a contributor either
+{
+  "timestamp": "2026-10-14T22:06:37.575Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 832de0c9-4038-4732-a3bd-4895e52504ec by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > one verdict gates both channels > a verified claim that credits no clause names nobody: one word is not an acceptance
+{
+  "timestamp": "2026-10-14T22:06:37.634Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 39ff9ab6-faa5-4163-80f4-4ee3222c4ce1 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > one verdict gates both channels > an accepted-author claim no record vouches for names no contributor and no draft source 50ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > one verdict gates both channels > an author whose every claim is unverifiable is not a contributor either 60ms
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > discloses a credited claim
+{
+  "timestamp": "2026-10-14T22:06:37.691Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 2967945e-7326-4c9e-90e2-7c21d42247d4 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > discloses an unverifiable claim with the reason the record gives
+{
+  "timestamp": "2026-10-14T22:06:37.728Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 09448a05-d804-4622-87ce-d7901de5474b by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > discloses a claim naming a record this organisation does not have
+{
+  "timestamp": "2026-10-14T22:06:37.763Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 1e8dd45e-9306-4e71-be45-623b3044670b by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > one verdict gates both channels > a verified claim that credits no clause names nobody: one word is not an acceptance 64ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > discloses a credited claim 50ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > discloses an unverifiable claim with the reason the record gives 38ms
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > names the machine author from the server’s own vocabulary, never the request’s
+{
+  "timestamp": "2026-10-14T22:06:37.803Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc bf95043c-6abd-41bd-8f02-d432f128fd28 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > says nothing about machine text when no claim was made
+{
+  "timestamp": "2026-10-14T22:06:37.839Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc da417759-d2d8-4ba7-bd2c-412ffc97715b by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the saver is told what was not credited > the response names each refused claim and why, so the editor can say so
+{
+  "timestamp": "2026-10-14T22:06:37.879Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 962ed725-663c-44a1-aca5-153a2474808c by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > discloses a claim naming a record this organisation does not have 36ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > names the machine author from the server’s own vocabulary, never the request’s 40ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > says nothing about machine text when no claim was made 35ms
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the saver is told what was not credited > says nothing when every claim was credited
+{
+  "timestamp": "2026-10-14T22:06:37.918Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 4e32b4ac-6268-427d-9819-9b482604d4ad by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the saver is told what was not credited > the response names each refused claim and why, so the editor can say so 38ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the saver is told what was not credited > says nothing when every claim was credited 41ms
+stderr | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:06:42.839Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T22:06:42.840Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:06:42.841Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-10-14T22:06:44.601Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 0ed84a0e-e37c-4b8f-8612-6b14cfaec119 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-10-14T22:06:44.629Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 0ed84a0e-e37c-4b8f-8612-6b14cfaec119 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-10-14T22:06:44.654Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 0ed84a0e-e37c-4b8f-8612-6b14cfaec119 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > direct from-draft private project boundary > refuses direct private-program source references before reading source text or creating evidence 101ms
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > sanitizes the content: a <script> tag and an onerror handler never reach the store
+{
+  "timestamp": "2026-10-14T22:06:44.757Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 09cafc9f-4e28-400c-a4da-25369ba19800 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } } 197ms
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-10-14T22:06:44.908Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f2051eb6-93dd-4c8b-9430-e85ac7fa663e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-10-14T22:06:44.930Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f2051eb6-93dd-4c8b-9430-e85ac7fa663e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-10-14T22:06:44.945Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f2051eb6-93dd-4c8b-9430-e85ac7fa663e by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > sanitizes the content: a <script> tag and an onerror handler never reach the store 73ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 on an empty section list — nothing written 6ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 without a programId 4ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 404 a project of another organization — nothing written (PF-02: the draft route checked the id's shape only) 6ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 on a provenance source it does not know 3ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 403 without a tenant 5ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > the root cause, demonstrated: the alias map admits ONE canonical document per filing 6ms
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+{
+  "timestamp": "2026-10-14T22:06:45.071Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 69fdf865-b614-4e44-b0a0-53ac7f533c33 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+{
+  "timestamp": "2026-10-14T22:06:45.091Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 69fdf865-b614-4e44-b0a0-53ac7f533c33 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+{
+  "timestamp": "2026-10-14T22:06:45.108Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 69fdf865-b614-4e44-b0a0-53ac7f533c33 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId= 208ms
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft's section that held only an image is stored empty (a gap), not as <p></p>
+{
+  "timestamp": "2026-10-14T22:06:45.153Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6b3b5a0a-cf33-4d75-9bb1-ffb52a5e0994 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > an imported draft keeps its governed figure (a person placed it)
+{
+  "timestamp": "2026-10-14T22:06:45.208Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 868430b8-3d95-4325-ab7d-ba6ea4eb4eff by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre> 106ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft's section that held only an image is stored empty (a gap), not as <p></p> 52ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > an imported draft keeps its governed figure (a person placed it) 51ms
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts
+{
+  "timestamp": "2026-10-14T22:06:46.901Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T22:06:46.903Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts
+{
+  "timestamp": "2026-10-14T22:06:46.904Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > brackets the revision, section update and audit in one BEGIN…COMMIT
+{
+  "timestamp": "2026-10-14T22:06:48.604Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > ROLLBACK + 500 when the section update fails mid-transaction
+Error updating section: Error: [vitest] No "UnverifiedMachineFormattingError" export is defined on the "../../services/clinical-regulatory-evidence/lineage-gate" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+    at VitestMocker.createError (file:///workspace/ClinicalSageAI/node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:62:17)
+    at Object.get (file:///workspace/ClinicalSageAI/node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:324:16)
+    at /workspace/ClinicalSageAI/server/routes/authoring.router.ts:2423:26
+    at processTicksAndRejections (node:internal/process/task_queues:103:5) {
+  codeFrame: 'vi.mock(import("../../services/clinical-regulatory-evidence/lineage-gate"), async (importOriginal) => {\n' +
+    '  const actual = await importOriginal()\n' +
+    '  return {\n' +
+    '    ...actual,\n' +
+    '    // your mocked methods\n' +
+    '  }\n' +
+    '})'
+}
+{
+  "timestamp": "2026-10-14T22:06:48.637Z",
+  "level": "error",
+  "message": "[authoring-router] updating sections failed",
+  "context": {
+    "err": "[vitest] No \"UnverifiedMachineFormattingError\" export is defined on the \"../../services/clinical-regulatory-evidence/lineage-gate\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > brackets the snapshot, status update and audit in one BEGIN…COMMIT
+{
+  "timestamp": "2026-10-14T22:06:48.649Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > brackets the revision, section update and audit in one BEGIN…COMMIT 60ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > ROLLBACK + 500 when the section update fails mid-transaction 24ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > brackets the snapshot, status update and audit in one BEGIN…COMMIT 12ms
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > ROLLBACK + 500 when the status update fails mid-transaction
+Error freezing document: Error: injected mid-transaction failure
+    at Object.<anonymous> (/workspace/ClinicalSageAI/server/routes/__tests__/authoring-atomic-mutations.test.ts:151:41)
+    at Object.Mock [as query] (file:///workspace/ClinicalSageAI/node_modules/@vitest/spy/dist/index.js:332:34)
+    at /workspace/ClinicalSageAI/server/routes/authoring.router.ts:5084:20
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > brackets the signature, workflow step, document approval and audit in one BEGIN…COMMIT
+{
+  "timestamp": "2026-10-14T22:06:48.677Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SIGN on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > ROLLBACK + 500 when the signature insert fails mid-transaction
+Sign error: Error: injected mid-transaction failure
+    at Object.<anonymous> (/workspace/ClinicalSageAI/server/routes/__tests__/authoring-atomic-mutations.test.ts:151:41)
+    at Object.Mock [as query] (file:///workspace/ClinicalSageAI/node_modules/@vitest/spy/dist/index.js:332:34)
+    at /workspace/ClinicalSageAI/server/routes/authoring.router.ts:7373:20
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+{
+  "timestamp": "2026-10-14T22:06:48.686Z",
+  "level": "error",
+  "message": "[authoring-router] signing docs failed",
+  "context": {
+    "err": "injected mid-transaction failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > writes its audit record inside the same BEGIN…COMMIT, not on the pool after it
+{
+  "timestamp": "2026-10-14T22:06:48.693Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: REVERT on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > a failed audit write rolls the revert back and reports 500
+CRITICAL: Failed to create audit trail: Error: injected mid-transaction failure
+    at Object.<anonymous> (/workspace/ClinicalSageAI/server/routes/__tests__/authoring-atomic-mutations.test.ts:151:41)
+    at Object.Mock [as query] (file:///workspace/ClinicalSageAI/node_modules/@vitest/spy/dist/index.js:332:34)
+    at writeAuthoringAuditTrail (/workspace/ClinicalSageAI/server/services/authoring/authoring-evidence.ts:240:37)
+    at createAuditTrail (/workspace/ClinicalSageAI/server/routes/authoring.router.ts:714:9)
+    at /workspace/ClinicalSageAI/server/routes/authoring.router.ts:2683:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > a failed audit write rolls the revert back and reports 500
+Error reverting section: Error: injected mid-transaction failure
+    at Object.<anonymous> (/workspace/ClinicalSageAI/server/routes/__tests__/authoring-atomic-mutations.test.ts:151:41)
+    at Object.Mock [as query] (file:///workspace/ClinicalSageAI/node_modules/@vitest/spy/dist/index.js:332:34)
+    at writeAuthoringAuditTrail (/workspace/ClinicalSageAI/server/services/authoring/authoring-evidence.ts:240:37)
+    at createAuditTrail (/workspace/ClinicalSageAI/server/routes/authoring.router.ts:714:9)
+    at /workspace/ClinicalSageAI/server/routes/authoring.router.ts:2683:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+{
+  "timestamp": "2026-10-14T22:06:48.703Z",
+  "level": "error",
+  "message": "[authoring-router] saving revert failed",
+  "context": {
+    "err": "injected mid-transaction failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > ROLLBACK + 500 when the status update fails mid-transaction 17ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > brackets the signature, workflow step, document approval and audit in one BEGIN…COMMIT 11ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > ROLLBACK + 500 when the signature insert fails mid-transaction 8ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > writes its audit record inside the same BEGIN…COMMIT, not on the pool after it 7ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > a failed audit write rolls the revert back and reports 500 10ms
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:06:52.986Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T22:06:52.987Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:06:52.988Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:06:54.229Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc cf627ce7-ac4c-4aa2-81a1-ed07878a2440 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:06:54.249Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc cf627ce7-ac4c-4aa2-81a1-ed07878a2440 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:06:54.260Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc cf627ce7-ac4c-4aa2-81a1-ed07878a2440 by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-14T22:06:54.363Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "approve",
+    "docId": "cf627ce7-ac4c-4aa2-81a1-ed07878a2440",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-14T22:06:54.364Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "export",
+    "docId": "cf627ce7-ac4c-4aa2-81a1-ed07878a2440",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-14T22:06:54.365Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "review",
+    "docId": "cf627ce7-ac4c-4aa2-81a1-ed07878a2440",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-14T22:06:54.366Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "edit",
+    "docId": "cf627ce7-ac4c-4aa2-81a1-ed07878a2440",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > the creator (OWNER + AUTHOR grants, org role member) may file and assign, and may neither freeze nor sign 24ms
+ × server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a member with only a Reviewer grant and a viewer org role is told, per act, why not 18ms
+   → expected 'Freezing needs an editing role in thi…' to match /Owner or Approver grant/
+ × server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a Reviewer grant with a signing role may apply the review signature, and still not the approval 20ms
+   → expected { allowed: false, …(1) } to deeply equal { allowed: true, reason: null }
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a FROZEN document can still be filed to the vault — the sealed record is what filing is for 15ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial 19ms
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > a member with an editing role but no grant on the document is told it needs an Owner or Author grant
+{
+  "timestamp": "2026-10-14T22:06:54.397Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "7",
+    "method": "POST",
+    "path": "/authoring/documents/cf627ce7-ac4c-4aa2-81a1-ed07878a2440/request-review",
+    "action": "edit",
+    "docId": "cf627ce7-ac4c-4aa2-81a1-ed07878a2440",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > the creator, who holds Owner and Author, is offered it, and the request goes through
+{
+  "timestamp": "2026-10-14T22:06:54.461Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc cf627ce7-ac4c-4aa2-81a1-ed07878a2440 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > a member with an editing role but no grant on the document is told it needs an Owner or Author grant 27ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > on a FROZEN document even its owner is told why not 20ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > the creator, who holds Owner and Author, is offered it, and the request goes through 60ms
+stderr | tests/schema-contract/authoring-section-permissions.contract.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/authoring-section-permissions.contract.test.ts
+{
+  "timestamp": "2026-10-14T22:06:59.128Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-permissions.contract.test.ts
+{
+  "timestamp": "2026-10-14T22:06:59.315Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T22:06:59.315Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-permissions.contract.test.ts
+{
+  "timestamp": "2026-10-14T22:06:59.316Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-permissions.contract.test.ts
+✅ Template tables initialized
+
+stderr | tests/schema-contract/authoring-section-permissions.contract.test.ts > G-01: object-level section-permission enforcement > enforces least privilege on section edits and closes the OR-branch over-grant
+{
+  "timestamp": "2026-10-14T22:07:01.196Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "aa3974d2-eb98-4532-a97b-be78f03957e6",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-permissions.contract.test.ts > G-01: object-level section-permission enforcement > enforces least privilege on section edits and closes the OR-branch over-grant
+{
+  "timestamp": "2026-10-14T22:07:01.278Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc aa3974d2-eb98-4532-a97b-be78f03957e6 by a***@perms.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T22:07:01.279Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.CREATE authoring_section",
+  "context": {
+    "userId": "5a1c2a10-0000-4000-8000-000000000001",
+    "tenantId": 1,
+    "resourceId": "d0f839ff-78ad-444e-9ebd-5afa5306c7d9"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-permissions.contract.test.ts > G-01: object-level section-permission enforcement > enforces least privilege on section edits and closes the OR-branch over-grant
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | tests/schema-contract/authoring-section-permissions.contract.test.ts > G-01: object-level section-permission enforcement > enforces least privilege on section edits and closes the OR-branch over-grant
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | tests/schema-contract/authoring-section-permissions.contract.test.ts > G-01: object-level section-permission enforcement > enforces least privilege on section edits and closes the OR-branch over-grant
+{
+  "timestamp": "2026-10-14T22:07:01.299Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-permissions.contract.test.ts > G-01: object-level section-permission enforcement > enforces least privilege on section edits and closes the OR-branch over-grant
+{
+  "timestamp": "2026-10-14T22:07:01.322Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "d79de4e7-a138-4aa8-bfa1-50d377123dff",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-permissions.contract.test.ts > G-01: object-level section-permission enforcement > enforces least privilege on section edits and closes the OR-branch over-grant
+{
+  "timestamp": "2026-10-14T22:07:01.381Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc aa3974d2-eb98-4532-a97b-be78f03957e6 by a***@perms.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-permissions.contract.test.ts > G-01: object-level section-permission enforcement > enforces least privilege on section edits and closes the OR-branch over-grant 332ms
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:07:07.193Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T22:07:07.195Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:07:07.195Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > viewer refuses save despite an old admin JWT and OWNER grants
+{
+  "timestamp": "2026-10-14T22:07:09.102Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "3",
+    "method": "PATCH",
+    "path": "/authoring/sections/92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "action": "edit",
+    "docId": "91e015d1-cd64-4840-a122-181b2588df0a",
+    "sectionId": "92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "reason": "organization-read-only"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > viewer refuses save despite an old admin JWT and OWNER grants 94ms
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > readonly refuses save despite an old admin JWT and OWNER grants
+{
+  "timestamp": "2026-10-14T22:07:09.158Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "3",
+    "method": "PATCH",
+    "path": "/authoring/sections/92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "action": "edit",
+    "docId": "91e015d1-cd64-4840-a122-181b2588df0a",
+    "sectionId": "92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "reason": "organization-read-only"
+  }
+}
+
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > read_only refuses save despite an old admin JWT and OWNER grants
+{
+  "timestamp": "2026-10-14T22:07:09.192Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "3",
+    "method": "PATCH",
+    "path": "/authoring/sections/92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "action": "edit",
+    "docId": "91e015d1-cd64-4840-a122-181b2588df0a",
+    "sectionId": "92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "reason": "organization-read-only"
+  }
+}
+
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > guest refuses save despite an old admin JWT and OWNER grants
+{
+  "timestamp": "2026-10-14T22:07:09.230Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "3",
+    "method": "PATCH",
+    "path": "/authoring/sections/92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "action": "edit",
+    "docId": "91e015d1-cd64-4840-a122-181b2588df0a",
+    "sectionId": "92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "reason": "organization-read-only"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > readonly refuses save despite an old admin JWT and OWNER grants 31ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > read_only refuses save despite an old admin JWT and OWNER grants 46ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > guest refuses save despite an old admin JWT and OWNER grants 21ms
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > does not promote a current member using stale admin claims after object grants are revoked
+{
+  "timestamp": "2026-10-14T22:07:09.289Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "3",
+    "method": "PATCH",
+    "path": "/authoring/sections/92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "action": "edit",
+    "docId": "91e015d1-cd64-4840-a122-181b2588df0a",
+    "sectionId": "92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "reason": "permission-denied"
+  }
+}
+
+stdout | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > allows the current member with an existing AUTHOR grant to save
+{
+  "timestamp": "2026-10-14T22:07:09.395Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 91e015d1-cd64-4840-a122-181b2588df0a by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > a current viewer cannot create via /api/authoring/docs with an old admin JWT 19ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > a current viewer cannot create via /api/authoring/docs/from-draft with an old admin JWT 14ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > does not promote a current member using stale admin claims after object grants are revoked 18ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > keeps foreign-tenant records unavailable even to an administrator 11ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > keeps sealed records immutable for a current administrator 13ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > allows the current member with an existing AUTHOR grant to save 96ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > seeds every document creator as OWNER and AUTHOR atomically 6ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > allows the creator to edit and manage the document 9ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > denies a same-tenant user with no object permission 3ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > explicit reviewer and approver grants — real canonical DDL > grants reviewer and approver authority explicitly, without edit escalation 13ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > explicit reviewer and approver grants — real canonical DDL > does not let a permission on one section authorize a different section 3ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > tenant and document-owner safeguards — real canonical DDL > rejects cross-tenant document and section permission links at the database boundary 6ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > tenant and document-owner safeguards — real canonical DDL > blocks edits after the document becomes immutable 2ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > tenant and document-owner safeguards — real canonical DDL > prevents revocation of the final active owner 3ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > tenant and document-owner safeguards — real canonical DDL > a section owner cannot replace the last document owner, and may be revoked separately 11ms
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member of the organization with no role on the document: 403, the standard body
+{
+  "timestamp": "2026-10-14T22:07:14.312Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/request-review",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member whose only grant is REVIEWER
+{
+  "timestamp": "2026-10-14T22:07:14.319Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-granted",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/request-review",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member whose only grant is APPROVER
+{
+  "timestamp": "2026-10-14T22:07:14.320Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-granted",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/request-review",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member whose only grant is VIEWER
+{
+  "timestamp": "2026-10-14T22:07:14.321Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-granted",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/request-review",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses an ungranted verdict and admits only current review authority
+{
+  "timestamp": "2026-10-14T22:07:14.326Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-reviewer",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/review",
+    "action": "review",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/request-review
+{
+  "timestamp": "2026-10-14T22:07:14.358Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/request-review",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/request-review/
+{
+  "timestamp": "2026-10-14T22:07:14.366Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/request-review/",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/Request-Review
+{
+  "timestamp": "2026-10-14T22:07:14.374Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/Request-Review",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/Documents/10000000-0000-4000-8000-000000000001/request-review
+{
+  "timestamp": "2026-10-14T22:07:14.382Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/authoring/Documents/10000000-0000-4000-8000-000000000001/request-review",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/Authoring/documents/10000000-0000-4000-8000-000000000001/request-review
+{
+  "timestamp": "2026-10-14T22:07:14.395Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/Authoring/documents/10000000-0000-4000-8000-000000000001/request-review",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /API/AUTHORING/DOCUMENTS/10000000-0000-4000-8000-000000000001/REQUEST-REVIEW/
+{
+  "timestamp": "2026-10-14T22:07:14.403Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/AUTHORING/DOCUMENTS/10000000-0000-4000-8000-000000000001/REQUEST-REVIEW/",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member of the organization with no role on the document: 403, the standard body 8ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member whose only grant is REVIEWER 2ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member whose only grant is APPROVER 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member whose only grant is VIEWER 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > admits the document’s OWNER, classified as an edit of this document 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > admits the document’s AUTHOR, classified as an edit of this document 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > admits a global admin without a grant, as on every other authoring object 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > answers 404 for a document this tenant does not have, before any grant is read 0ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a sealed document with 409: a request would reopen verdicts on a signed record 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses an ungranted verdict and admits only current review authority 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > matches the request path exactly, not a longer path that only begins with it 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/request-review 32ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/request-review/ 8ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/Request-Review 8ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/Documents/10000000-0000-4000-8000-000000000001/request-review 9ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/Authoring/documents/10000000-0000-4000-8000-000000000001/request-review 12ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /API/AUTHORING/DOCUMENTS/10000000-0000-4000-8000-000000000001/REQUEST-REVIEW/ 8ms
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/tracked-change-decisions/
+{
+  "timestamp": "2026-10-14T22:07:14.410Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/tracked-change-decisions/",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/Tracked-Change-Decisions
+{
+  "timestamp": "2026-10-14T22:07:14.417Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/Tracked-Change-Decisions",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/docs/10000000-0000-4000-8000-000000000001/freeze/
+{
+  "timestamp": "2026-10-14T22:07:14.426Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/freeze/",
+    "action": "approve",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/Authoring/Docs/10000000-0000-4000-8000-000000000001/Freeze
+{
+  "timestamp": "2026-10-14T22:07:14.432Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/Authoring/Docs/10000000-0000-4000-8000-000000000001/Freeze",
+    "action": "approve",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/tracked-change-decisions/ 8ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/Tracked-Change-Decisions 7ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/docs/10000000-0000-4000-8000-000000000001/freeze/ 9ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/Authoring/Docs/10000000-0000-4000-8000-000000000001/Freeze 6ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > decides on the document the handler acts on: the id keeps the spelling the caller sent 3ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > a path that only begins like an authoring route is still not classified 3ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > requires an authenticated principal and organization for reads and writes 57ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses AUTHOR grants and revokes without document-owner authority 9ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses REVIEWER grants and revokes without document-owner authority 7ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses APPROVER grants and revokes without document-owner authority 6ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses VIEWER grants and revokes without document-owner authority 7ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > allows owners and administrators to read tenant-scoped permission history 7ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses a foreign tenant document even to an administrator 5ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > ignores spoofed tenant, granting actor, and email from the body 5ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses a principal who exists only in a different organization 3ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses a section in another tenant without mutation or audit 3ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses a section in a missing section without mutation or audit 4ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses a section belonging to another document in the same tenant 3ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects a malformed grant {} 3ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects a malformed grant {"principalId":"","role":"REVIEWER","reason":"Review assignment"} 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects a malformed grant {"principalId":"22","role":"QA","reason":"Review assignment"} 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects a malformed grant {"principalId":"22","role":"REVIEWER"} 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects a malformed grant {"principalId":"22","role":"REVIEWER","reason":"   "} 3ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects a malformed grant {"principalId":"22","role":"REVIEWER","reason":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} 3ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects malformed, expired, or non-ISO expiry not-a-date 3ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects malformed, expired, or non-ISO expiry 2026-01-01T00:00:00.000Z 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects malformed, expired, or non-ISO expiry 2999-01-01 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > requires a reason for revocation {} 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > requires a reason for revocation {"reason":" "} 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > requires a reason for revocation {"reason":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > persists a normalized role, trimmed reason, valid expiry, and requested section 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > locks the document and verifies authority on the mutation client before granting and auditing 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > rolls back a grant when the chained audit cannot persist 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > revokes and audits on the same client before commit with server attribution 3ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > rolls back a revocation when its audit cannot persist 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > refuses removal of the last active document owner without an audit or write 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > does not let another section owner satisfy the last document-owner requirement 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > allows revoking a section owner while retaining the sole document owner 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > does not count an expired owner as a replacement for the active document owner 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > returns not found for a foreign or nonexistent permission without audit 2ms
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > denies a same-tenant authenticated user with no object permission
+{
+  "timestamp": "2026-10-14T22:07:15.346Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "unrelated-user",
+    "method": "PATCH",
+    "path": "/authoring/sections/20000000-0000-4000-8000-000000000001",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": "20000000-0000-4000-8000-000000000001",
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets a REVIEWER comment but does not let the reviewer edit content
+{
+  "timestamp": "2026-10-14T22:07:15.350Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "reviewer-user",
+    "method": "PATCH",
+    "path": "/authoring/sections/20000000-0000-4000-8000-000000000001",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": "20000000-0000-4000-8000-000000000001",
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets a section-scoped APPROVER reach an approval action but not an ordinary edit
+{
+  "timestamp": "2026-10-14T22:07:15.352Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "approver-user",
+    "method": "DELETE",
+    "path": "/authoring/sections/20000000-0000-4000-8000-000000000001",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": "20000000-0000-4000-8000-000000000001",
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > classes /docs/:id/e-sign as an approval action, so a FROZEN document can be signed (VSR-001 F-12)
+{
+  "timestamp": "2026-10-14T22:07:15.354Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "approver-user",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/e-sign",
+    "action": "approve",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets a REVIEWER apply the review signature, and nothing more
+{
+  "timestamp": "2026-10-14T22:07:15.356Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "reviewer-user",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/e-sign",
+    "action": "approve",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets a REVIEWER apply the review signature, and nothing more
+{
+  "timestamp": "2026-10-14T22:07:15.357Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "reviewer-user",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/e-sign",
+    "action": "approve",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets a REVIEWER apply the review signature, and nothing more
+{
+  "timestamp": "2026-10-14T22:07:15.357Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "reviewer-user",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/e-sign",
+    "action": "review",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets a REVIEWER apply the review signature, and nothing more
+{
+  "timestamp": "2026-10-14T22:07:15.358Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "reviewer-user",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/freeze",
+    "action": "approve",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/export
+{
+  "timestamp": "2026-10-14T22:07:15.364Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/export",
+    "action": "export",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/export
+{
+  "timestamp": "2026-10-14T22:07:15.365Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/export",
+    "action": "export",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/file-to-vault
+{
+  "timestamp": "2026-10-14T22:07:15.366Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/file-to-vault",
+    "action": "export",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/file-to-vault
+{
+  "timestamp": "2026-10-14T22:07:15.367Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/file-to-vault",
+    "action": "export",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/send-to-packager
+{
+  "timestamp": "2026-10-14T22:07:15.370Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/send-to-packager",
+    "action": "export",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/send-to-packager
+{
+  "timestamp": "2026-10-14T22:07:15.371Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/send-to-packager",
+    "action": "export",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/working-copy
+{
+  "timestamp": "2026-10-14T22:07:15.372Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/working-copy",
+    "action": "export",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/working-copy
+{
+  "timestamp": "2026-10-14T22:07:15.372Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/working-copy",
+    "action": "export",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > fails closed with 503 when the permission store cannot be queried
+{
+  "timestamp": "2026-10-14T22:07:15.374Z",
+  "level": "error",
+  "message": "[authoring-object-authorization] Authoring authorization unavailable; denying mutation",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "PATCH",
+    "path": "/authoring/sections/20000000-0000-4000-8000-000000000001",
+    "error": "permission store unavailable"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > denies a same-tenant member with no doc_permissions grant — this is the case the fix exists for
+{
+  "timestamp": "2026-10-14T22:07:15.377Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-outsider",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/tracked-change-decisions",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > denies the same caller on the bulk route identically
+{
+  "timestamp": "2026-10-14T22:07:15.378Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-outsider",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/tracked-change-decisions/bulk",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > a REVIEWER who can review but not edit is still refused here — the same person can accept via /sections/:id, so this is not a workflow lockout
+{
+  "timestamp": "2026-10-14T22:07:15.380Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-reviewer",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/tracked-change-decisions",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > native bound human review object authorization > requires full-document view for native saved review reads (/authoring/documents/)
+{
+  "timestamp": "2026-10-14T22:07:15.383Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "reviewer-user",
+    "method": "GET",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/Reviews/",
+    "action": "view",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > native bound human review object authorization > requires full-document view for native saved review reads (/Authoring/Documents/)
+{
+  "timestamp": "2026-10-14T22:07:15.384Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "reviewer-user",
+    "method": "GET",
+    "path": "/Authoring/Documents/10000000-0000-4000-8000-000000000001/Reviews/",
+    "action": "view",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > native bound human review object authorization > classifies native verdicts as review and refuses a viewer
+{
+  "timestamp": "2026-10-14T22:07:15.385Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "reviewer-user",
+    "method": "POST",
+    "path": "/Authoring/Documents/10000000-0000-4000-8000-000000000001/Review/",
+    "action": "review",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > ignores non-authoring API mutations at the shared /api mount 4ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > allows document creation so the database trigger can seed OWNER and AUTHOR 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > allows a document author to edit the section 4ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > denies a same-tenant authenticated user with no object permission 4ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets a REVIEWER comment but does not let the reviewer edit content 2ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets a section-scoped APPROVER reach an approval action but not an ordinary edit 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > classes /docs/:id/e-sign as an approval action, so a FROZEN document can be signed (VSR-001 F-12) 2ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets a REVIEWER apply the review signature, and nothing more 5ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets the record be produced from a FROZEN document: POST /docs/:id/export 2ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets the record be produced from a FROZEN document: POST /docs/:id/file-to-vault 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets the record be produced from a FROZEN document: POST /docs/:id/send-to-packager 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets the record be produced from a FROZEN document: POST /docs/:id/working-copy 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/export 2ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/file-to-vault 4ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/send-to-packager 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/working-copy 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > blocks content mutation after the document becomes immutable 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > fails closed with 503 when the permission store cannot be queried 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > rejects a mutation when verified principal or tenant context is missing 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > does not impose mutation permission checks on safe reads 0ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > denies a same-tenant member with no doc_permissions grant — this is the case the fix exists for 2ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > denies the same caller on the bulk route identically 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > still allows the document author — an AUTHOR grant is enough to record a decision 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > a REVIEWER who can review but not edit is still refused here — the same person can accept via /sections/:id, so this is not a workflow lockout 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > refuses a FROZEN document with 409, not a silent pass-through 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > does not impose review policy on an unrelated /documents/ route 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > native bound human review object authorization > requires full-document view for native saved review reads (/authoring/documents/) 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > native bound human review object authorization > requires full-document view for native saved review reads (/Authoring/Documents/) 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > native bound human review object authorization > classifies native verdicts as review and refuses a viewer 1ms
+ ✓ tests/schema-contract/authoring-section-revision-gate.contract.test.ts > every section-content overwrite is preceded by a revision snapshot > finds the write sites at all — the gate is not vacuous 1ms
+ ✓ tests/schema-contract/authoring-section-revision-gate.contract.test.ts > every section-content overwrite is preceded by a revision snapshot > each one sits inside a handler that also calls createRevision 1ms
+ ✓ tests/schema-contract/authoring-section-revision-gate.contract.test.ts > every section-content overwrite is preceded by a revision snapshot > createRevision itself still writes the revision ledger 1ms
+ ✓ tests/schema-contract/authoring-section-revision-gate.contract.test.ts > every section-content overwrite is preceded by a revision snapshot > and it is tenant-scoped, so a snapshot cannot land in another org 0ms
+ ✓ tests/schema-contract/authoring-section-revision-gate.contract.test.ts > the section store has exactly one revision ledger > nothing writes a second section-history table 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > allows the program lead 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > allows every org manage role regardless of who leads the program 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > normalizes the org role, so SUPER_ADMIN is the same authority as super_admin 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies an unrelated org member 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies a viewer and an actor with no role at all 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies a non-manager when the program has no lead — unowned is not everyone-owned 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies an unauthenticated actor even when the program is unowned 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > denies read-only roles 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > allows ordinary and elevated roles 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > allows an unrecognized role rather than locking it out 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > defaults to WARN, unlike the authorization gate 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > honours an explicit enforce 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > falls back to warn on an unrecognized value 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > defaults to enforce when PROGRAM_AUTHZ_MODE is unset or empty 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > defaults to enforce outside production too 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > honours an explicit mode, case- and whitespace-insensitively 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > falls back to enforce on an unrecognized value rather than opening up 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > asks regulatory_programs for a live program of this organization 2ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > is false when the query finds nothing 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > admits a deleted program only when the caller opts in by name 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses "not-a-uuid" without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses "" without asking the database 2ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses 42 without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses null without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses undefined without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > reads a digit-string organization as that organization, and nothing else as one 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > throws VerificationUnavailableError, not false, when the query cannot run 2ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > resolves a connection given as a function inside the check, so "no pool" is "could not check" 1ms
+stderr | tests/schema-contract/authoring-auth-parity.contract.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/authoring-auth-parity.contract.test.ts
+{
+  "timestamp": "2026-10-14T22:07:20.397Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-auth-parity.contract.test.ts
+{
+  "timestamp": "2026-10-14T22:07:20.605Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T22:07:20.606Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/authoring-auth-parity.contract.test.ts
+{
+  "timestamp": "2026-10-14T22:07:20.606Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-auth-parity.contract.test.ts
+✅ Template tables initialized
+
+stderr | tests/schema-contract/authoring-auth-parity.contract.test.ts > C2C-SEC-001: authoring router enforces canonical access-token semantics > a valid access token for a seeded member is accepted by auth (not 401)
+{
+  "timestamp": "2026-10-14T22:07:22.050Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | tests/schema-contract/authoring-auth-parity.contract.test.ts > C2C-SEC-001: authoring router enforces canonical access-token semantics > a valid access token for a seeded member is accepted by auth (not 401)
+Error creating template: error: relation "authoring_templates" does not exist
+    at pe.Le (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 118,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '13',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1469',
+  routine: 'parserOpenTable',
+  query: 'INSERT INTO authoring_templates\n' +
+    '       (template_name, template_type, category, regions, template_content, guidance_content, metadata, created_by, tenant_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)\n' +
+    '       RETURNING *',
+  params: [
+    'parity 235',
+    'm3',
+    'quality',
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    'member@parity.example',
+    1
+  ],
+  queryOptions: undefined
+}
+{
+  "timestamp": "2026-10-14T22:07:22.059Z",
+  "level": "error",
+  "message": "[authoring-router] saving templates failed",
+  "context": {
+    "err": "relation \"authoring_templates\" does not exist",
+    "correlationId": null,
+    "code": "42P01"
+  }
+}
+
+stderr | tests/schema-contract/authoring-auth-parity.contract.test.ts > C2C-SEC-001: authoring router enforces canonical access-token semantics > AUTH_009: revoking the organization_users row rejects the same token (403)
+{
+  "timestamp": "2026-10-14T22:07:22.065Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | tests/schema-contract/authoring-auth-parity.contract.test.ts > C2C-SEC-001: authoring router enforces canonical access-token semantics > AUTH_009: revoking the organization_users row rejects the same token (403)
+Error creating template: error: relation "authoring_templates" does not exist
+    at pe.Le (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 118,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '13',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1469',
+  routine: 'parserOpenTable',
+  query: 'INSERT INTO authoring_templates\n' +
+    '       (template_name, template_type, category, regions, template_content, guidance_content, metadata, created_by, tenant_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)\n' +
+    '       RETURNING *',
+  params: [
+    'parity 235',
+    'm3',
+    'quality',
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    'member@parity.example',
+    1
+  ],
+  queryOptions: undefined
+}
+{
+  "timestamp": "2026-10-14T22:07:22.069Z",
+  "level": "error",
+  "message": "[authoring-router] saving templates failed",
+  "context": {
+    "err": "relation \"authoring_templates\" does not exist",
+    "correlationId": null,
+    "code": "42P01"
+  }
+}
+
+stderr | tests/schema-contract/authoring-auth-parity.contract.test.ts > C2C-SEC-001: authoring router enforces canonical access-token semantics > AUTH_009: revoking the organization_users row rejects the same token (403)
+{
+  "timestamp": "2026-10-14T22:07:22.075Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | tests/schema-contract/authoring-auth-parity.contract.test.ts > C2C-SEC-001: authoring router enforces canonical access-token semantics > AUTH_009: revoking the organization_users row rejects the same token (403)
+{
+  "timestamp": "2026-10-14T22:07:22.077Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership revoked — rejecting authenticated request (fail-closed)",
+  "context": {
+    "userId": 42,
+    "organizationId": 1
+  }
+}
+
+stderr | tests/schema-contract/authoring-auth-parity.contract.test.ts > C2C-SEC-001: authoring router enforces canonical access-token semantics > AUTH_009: a degraded-enrichment membership is NOT cached, so revocation is immediate
+{
+  "timestamp": "2026-10-14T22:07:22.084Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | tests/schema-contract/authoring-auth-parity.contract.test.ts > C2C-SEC-001: authoring router enforces canonical access-token semantics > AUTH_009: a degraded-enrichment membership is NOT cached, so revocation is immediate
+Error creating template: error: relation "authoring_templates" does not exist
+    at pe.Le (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 118,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '13',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1469',
+  routine: 'parserOpenTable',
+  query: 'INSERT INTO authoring_templates\n' +
+    '       (template_name, template_type, category, regions, template_content, guidance_content, metadata, created_by, tenant_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)\n' +
+    '       RETURNING *',
+  params: [
+    'parity 235',
+    'm3',
+    'quality',
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    'member@parity.example',
+    1
+  ],
+  queryOptions: undefined
+}
+{
+  "timestamp": "2026-10-14T22:07:22.086Z",
+  "level": "error",
+  "message": "[authoring-router] saving templates failed",
+  "context": {
+    "err": "relation \"authoring_templates\" does not exist",
+    "correlationId": null,
+    "code": "42P01"
+  }
+}
+
+ ✓ tests/schema-contract/authoring-auth-parity.contract.test.ts > C2C-SEC-001: authoring router enforces canonical access-token semantics > AUTH_008: a refresh token is rejected (401), not accepted as an access credential 38ms
+ ✓ tests/schema-contract/authoring-auth-parity.contract.test.ts > C2C-SEC-001: authoring router enforces canonical access-token semantics > AUTH_008: an MFA-partial token (mfaPending) is rejected (401) 7ms
+ ✓ tests/schema-contract/authoring-auth-parity.contract.test.ts > C2C-SEC-001: authoring router enforces canonical access-token semantics > AUTH_008: a pending_mfa-role token is rejected (401) 5ms
+ ✓ tests/schema-contract/authoring-auth-parity.contract.test.ts > C2C-SEC-001: authoring router enforces canonical access-token semantics > a token signed with the wrong secret is rejected (401) 4ms
+ ✓ tests/schema-contract/authoring-auth-parity.contract.test.ts > C2C-SEC-001: authoring router enforces canonical access-token semantics > a valid access token for a seeded member is accepted by auth (not 401) 22ms
+ ✓ tests/schema-contract/authoring-auth-parity.contract.test.ts > C2C-SEC-001: authoring router enforces canonical access-token semantics > AUTH_009: revoking the organization_users row rejects the same token (403) 17ms
+stderr | tests/schema-contract/authoring-auth-parity.contract.test.ts > C2C-SEC-001: authoring router enforces canonical access-token semantics > AUTH_009: a degraded-enrichment membership is NOT cached, so revocation is immediate
+{
+  "timestamp": "2026-10-14T22:07:22.095Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | tests/schema-contract/authoring-auth-parity.contract.test.ts > C2C-SEC-001: authoring router enforces canonical access-token semantics > AUTH_009: a degraded-enrichment membership is NOT cached, so revocation is immediate
+{
+  "timestamp": "2026-10-14T22:07:22.096Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership revoked — rejecting authenticated request (fail-closed)",
+  "context": {
+    "userId": 42,
+    "organizationId": 1
+  }
+}
+
+ ✓ tests/schema-contract/authoring-auth-parity.contract.test.ts > C2C-SEC-001: authoring router enforces canonical access-token semantics > AUTH_009: a degraded-enrichment membership is NOT cached, so revocation is immediate 26ms
+stderr | server/routes/__tests__/authoring-signing-authority.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoring-signing-authority.test.ts
+{
+  "timestamp": "2026-10-14T22:07:23.472Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-signing-authority.test.ts
+{
+  "timestamp": "2026-10-14T22:07:23.666Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T22:07:23.667Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-signing-authority.test.ts
+{
+  "timestamp": "2026-10-14T22:07:23.667Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-signing-authority.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.10(g) — authoring e-signature requires signing authority > /e-sign: a role outside the allowlist is refused 43ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.10(g) — authoring e-signature requires signing authority > /e-sign: no membership row at all is refused (fails closed) 7ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.10(g) — authoring e-signature requires signing authority > /e-sign: rejects an unauthorized role BEFORE verifying the password 5ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.10(g) — authoring e-signature requires signing authority > /e-sign: an authorized role passes the gate and proceeds 5ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.10(g) — authoring e-signature requires signing authority > /sign: a role outside the allowlist is refused 6ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.10(g) — authoring e-signature requires signing authority > /sign: no membership row at all is refused (fails closed) 4ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.10(g) — authoring e-signature requires signing authority > /sign: rejects an unauthorized role BEFORE verifying the password 4ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.10(g) — authoring e-signature requires signing authority > /sign: an authorized role passes the gate and proceeds 4ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.70 — a signature must be linked to a real record > e-sign refuses an unknown document rather than binding to sha256("") 7ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > replaces stale admin claims with the uncached role for this actor and organization 2ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > does not borrow a foreign or empty identity role: {"legacyUserId":99,"organizationId":2,"role":"admin"} 1ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > does not borrow a foreign or empty identity role: {"legacyUserId":1,"organizationId":99,"role":"admin"} 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > does not borrow a foreign or empty identity role: {"legacyUserId":1,"organizationId":2,"role":""} 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > uses the verified membership role when no request identity is attached 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > preserves existing claims for a legacy principal with no membership role 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > viewer cannot use OWNER or stale admin to write 1ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants >  VIEWER  cannot use OWNER or stale admin to write 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > readonly cannot use OWNER or stale admin to write 1ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > read_only cannot use OWNER or stale admin to write 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > guest cannot use OWNER or stale admin to write 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > retains current viewer reads through the existing object ACL 1ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > preserves the narrower ACL for writing and unknown custom organization roles 1ms
+stdout | server/middleware/__tests__/authoringObjectAuthorization-from-draft.test.ts
+{
+  "timestamp": "2026-10-14T22:07:26.793Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T22:07:26.795Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-from-draft.test.ts
+{
+  "timestamp": "2026-10-14T22:07:26.795Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/middleware/__tests__/authoringObjectAuthorization-from-draft.test.ts
+[database] Database connection successful
+
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-from-draft.test.ts > POST /api/authoring/docs/from-draft passes the object-authorization gate > reaches the router (the gate treats it like POST /docs — no object exists yet) 37ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a member with only a Reviewer grant and a viewer org role is told, per act, why not
+AssertionError: expected 'Freezing needs an editing role in thi…' to match /Owner or Approver grant/
+
+- Expected:
+/Owner or Approver grant/
+
++ Received:
+"Freezing needs an editing role in this organization. Your current organization access is read-only."
+
+ ❯ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts:186:34
+    184|     const { access } = res.body;
+    185|     expect(access.freeze.allowed).toBe(false);
+    186|     expect(access.freeze.reason).toMatch(/Owner or Approver grant/);
+       |                                  ^
+    187|     expect(access.freeze.reason).toMatch(/Your grants on it: Reviewer/…
+    188|     expect(access.esign.allowed).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a Reviewer grant with a signing role may apply the review signature, and still not the approval
+AssertionError: expected { allowed: false, …(1) } to deeply equal { allowed: true, reason: null }
+
+- Expected
++ Received
+
+  {
+-   "allowed": true,
+-   "reason": null,
++   "allowed": false,
++   "reason": "Signing the review needs an editing role in this organization. Your current organization access is read-only.",
+  }
+
+ ❯ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts:213:34
+    211|       expect(res.status, JSON.stringify(res.body)).toBe(200);
+    212|       const { access } = res.body;
+    213|       expect(access.esignReview).toEqual({ allowed: true, reason: null…
+       |                                  ^
+    214|       expect(access.esign.allowed).toBe(false);
+    215|       expect(access.esign.reason).toMatch(/Owner or Approver grant/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 17 passed (18)
+      Tests  2 failed | 289 passed (291)
+   Start at  22:06:05
+   Duration  81.25s (transform 7.06s, setup 380ms, import 15.38s, tests 61.75s, environment 2ms)

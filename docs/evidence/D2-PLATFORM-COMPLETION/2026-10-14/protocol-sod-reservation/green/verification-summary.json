@@ -1,0 +1,46 @@
+{
+  "qualifiedAtUtc": "2026-10-14T04:55:16.721292+00:00",
+  "runs": [
+    {
+      "database": "platform_test",
+      "files": 1,
+      "testsPassed": 3,
+      "testsSkipped": 0,
+      "durationSeconds": 9.61,
+      "log": "native-final-three.txt",
+      "actualRestrictedRole": "app_service",
+      "governanceRolePolicyQualification": "Fresh active admin actors and genuine auth/reauth; this run does not separately establish enforcement of the feature-gated governance RBAC policy."
+    },
+    {
+      "database": "platform_ci_native_recheck_20261013",
+      "files": 4,
+      "testsPassed": 89,
+      "testsSkipped": 0,
+      "durationSeconds": 53.59,
+      "log": "native-final-four-files.txt",
+      "perFile": [
+        {
+          "path": "tests/db/project-vault-parent-access.dbtest.ts",
+          "passed": 43
+        },
+        {
+          "path": "tests/db/project-vault-secondary-access.dbtest.ts",
+          "passed": 18
+        },
+        {
+          "path": "tests/db/protocol-finalization-concurrency.dbtest.ts",
+          "passed": 25
+        },
+        {
+          "path": "tests/db/report-tenant-index.dbtest.ts",
+          "passed": 3
+        }
+      ],
+      "actualRestrictedRole": "app_service"
+    }
+  ],
+  "retainedBaselineStateUnchanged": true,
+  "retainedBaselineScope": "Only actual org1538506/protocol86/signature22 and the full state covered in preservation-final.json. Original org18/protocol9/signature12 are absent from platform_test; prior separate presence-only observation cannot establish comparative preservation.",
+  "auditChainQualification": "Actual update/sign actions and audit rows checked; the native log records AUDIT_HMAC_SECRET development fallback. This run does not establish production audit-chain integrity.",
+  "testAssertionPreservation": "All 101 original explicit expect lines preserved exactly through named helper extraction."
+}

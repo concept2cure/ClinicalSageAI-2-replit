@@ -1,0 +1,32 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx [ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx ]
+Error: Failed to resolve import "../AccountOnboardingSettings" from "client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /workspace/concept2cure/client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx:18:0
+  12 |  const __vi_import_0__ = await import("react/jsx-dev-runtime");
+  13 |  const __vi_import_1__ = await import("@testing-library/react");
+  14 |  const __vi_import_2__ = await import("../AccountOnboardingSettings");
+     |                                       ^
+  15 |  const __vi_import_3__ = await import("@shared/constants/domain/report-personas");
+  16 |  
+ ❯ TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42658:41
+ ❯ TransformPluginContext.error node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42655:16
+ ❯ normalizeUrl node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40634:23
+ ❯ node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40753:37
+ ❯ TransformPluginContext.transform node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40680:7
+ ❯ EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42453:18
+ ❯ loadAndTransform node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:35845:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  02:54:26
+   Duration  969ms (transform 82ms, setup 142ms, import 0ms, tests 0ms, environment 513ms)
+

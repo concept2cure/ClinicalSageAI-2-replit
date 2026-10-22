@@ -650,4 +650,3 @@ stdout | tests/golden-journeys/submission-export-validation.journey.test.ts > eC
       Tests  19 passed (19)
    Start at  04:56:46
    Duration  6.00s (transform 3.68s, setup 249ms, import 6.84s, tests 7.97s, environment 1ms)
-

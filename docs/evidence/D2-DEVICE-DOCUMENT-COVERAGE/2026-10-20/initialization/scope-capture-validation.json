@@ -1,0 +1,32 @@
+{
+  "recordedAt": "2026-10-20T20:20:20.627062+00:00",
+  "testExitCode": 0,
+  "wrapperExitCode": 1,
+  "wrapperReason": "Final assertion refused to call all dependency pins frozen because the parent added Japan Class I notification to the shared registry during this run.",
+  "changedDuringRun": [
+    "shared/regulatory/global-document-registry.ts"
+  ],
+  "afterRunPinsAllCurrent": true,
+  "ownedImplementationAndTestsFrozen": true,
+  "sourcePinsAfter": {
+    "client/src/concept2cure/v2/surfaces/Projects.tsx": "ccf6c189c9ea452ac7153a1a4a076df85ed3a40d7ab1b00e74986369ac6ef669",
+    "server/routes/c2c/projects.ts": "ecbf9fc8888c20b09ac0d181184991c7e181841d150d718d214f0ea6154dbbd6",
+    "shared/regulatory/device-class.ts": "ecd46f03488ca2474519d703f5ee1b4a601323274bf07ca297a36b6daaefda54",
+    "server/services/c2c/programme-profile-write.ts": "b998504a8dbff56705d4a2cc33a7006cbdbeaff44c65418082866e0a4b5e3c48",
+    "shared/regulatory/filing-catalog.ts": "59c4fb5df3b7a5681722c098545a667896f1172b68b789e3f94cc598a91cc9e2",
+    "shared/regulatory/global-document-registry.ts": "0cd6c7549b8b286fac113e0ff5fc0954587a0beee1b36c1254557e1f7d971ac4",
+    "server/services/regulatory/market-support.ts": "846e03cda6a9b90bc4813f770e6d62612a6abfe4c1a69aa6886bb144ae317505",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx": "e5c26de6083952e98a88a9c317b3a6b915872bf73989d4324d65c315cc02c9b2",
+    "server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts": "f3558c4f63ce9e6bc0bf6b525040f94c2033a43ab65f5fbf9324aa7bfa8e2373",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardPredicatePair.test.tsx": "f66d88e359f431f3d57c23896aed4da5846374ba5ead080a253260671ad1c98d",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx": "4238f7154389d32344e732d85cbf4d2e875bd82d343ea6959948b850e41812ab",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx": "c019243ec545e5803f207043c53933c25c9a11ad8c4c068bd37b895132ea821e",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx": "00254570a55da375336831e85ac9335633a2fb592f8d297a0e3072aae74b740b",
+    "server/routes/c2c/__tests__/projects-create.test.ts": "e24ba8a9f5a63313c0ad07e6f675cca926376c33567630e26cf8b3f1d0c8e812",
+    "server/routes/c2c/__tests__/projects-create-stated-facts.test.ts": "ed27217bb0f573528c95c2149a626445f157d5b48f05b69b86cfc8c48b17604b",
+    "server/routes/c2c/__tests__/projects-create-market-offer.test.ts": "403ea922fc3ec348ef280c307af582a795cc60eb2198148b34a931bf69deea12",
+    "server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts": "8d314b44e47dfef034eb230b9fa356fdd48ebfce2c47d937222f3167214e8787",
+    "server/routes/c2c/__tests__/projects-create-digest-readiness.pglite.test.ts": "66ed3ada950ddb1d594eddbaf82621ca524391c2b8230a610ecd2d358978ff67"
+  },
+  "qualification": "The101-test result is retained as scope proof. Root combined qualification on frozen current sources supersedes the dependency-drift capture."
+}

@@ -1,5 +1,5 @@
 {
-  "_comment": "Symbols a launch-scope surface may import from client/src/concept2cure/v2/fixtures/. Every entry is a reference constant, configuration map or pure function \u2014 the folder name predates the de-mock work. A record array (invented projects, documents, tasks, users) must never be added here; it belongs behind useSampleRows + SampleDataBanner or nowhere. Reviewed 2026-09-20 against each export's definition.",
+  "_comment": "Symbols a launch-scope surface may import from client/src/concept2cure/v2/fixtures/. Every entry is a reference constant, configuration map or pure function \u2014 the folder name predates the de-mock work. A record array (invented projects, documents, tasks, users) must never be added here; it belongs nowhere (the sample mode that once held such rows was removed 2026-10-14). Reviewed 2026-09-20 against each export's definition.",
   "symbols": {
     "admin-data.ARTIFACT_FMT": "ARTIFACT_FMT: audit-kind filter labels, platform-service descriptions and artifact format labels \u2014 reference configuration",
     "admin-data.AUDIT_KINDS": "AUDIT_KINDS: audit-kind filter labels, platform-service descriptions and artifact format labels \u2014 reference configuration",
@@ -20,9 +20,10 @@
     "filings-catalog-data.FILING_LOOP_ARCHETYPE": "FILING_LOOP_ARCHETYPE: the filing-type taxonomy derived from filingCatalogTree() and loop/workflow label maps \u2014 reference data, not an organisation's filings",
     "filings-catalog-data.FILING_WF_LABEL": "FILING_WF_LABEL: the filing-type taxonomy derived from filingCatalogTree() and loop/workflow label maps \u2014 reference data, not an organisation's filings",
     "filings-catalog-data.FILING_WF_SURFACE": "FILING_WF_SURFACE: the filing-type taxonomy derived from filingCatalogTree() and loop/workflow label maps \u2014 reference data, not an organisation's filings",
-    "governed-intelligence-data.GI_META": "GI_META: GI authority/promotion metadata and pure overlay/gate functions \u2014 reference configuration",
-    "governed-intelligence-data.giApplyOverlay": "giApplyOverlay: GI authority/promotion metadata and pure overlay/gate functions \u2014 reference configuration",
-    "governed-intelligence-data.giPromotionGate": "giPromotionGate: GI authority/promotion metadata and pure overlay/gate functions \u2014 reference configuration",
+    "governed-intelligence-data.GI_META": "GI_META: display labels and tones for the enums the contradiction engine records \u2014 reference configuration; the gate and every authority come from the board (the overlay/gate functions were removed 2026-10-15)",
+    "ind-lifecycle-data.INDL_CLOCK_STATUS": "INDL_CLOCK_STATUS: label and tone for each 21 CFR 312.40/312.42 clock state \u2014 reference configuration; the screen shows it only over a recorded FDA receipt, never over a projection (decision P-32, 2026-10-15)",
+    "ind-lifecycle-data.INDL_DELIVERABLES": "INDL_DELIVERABLES: the deliverable card definitions (title, eCTD placement, CFR reference, route, AnA request wording) \u2014 product configuration that names no programme (indLifecycleNoFixtures.test.ts); the safety-report entry is withheld by P-32",
+    "ind-lifecycle-data.INDL_STATUS_LABEL": "INDL_STATUS_LABEL: display labels for the authoring-status values the IND checklist returns \u2014 reference configuration, no records (decision P-32, 2026-10-15)",
     "licensing.LIC_ARCHETYPES": "LIC_ARCHETYPES: tier, role, archetype and price tables \u2014 reference configuration mirrored from server billing, not records",
     "licensing.LIC_DTC": "LIC_DTC: tier, role, archetype and price tables \u2014 reference configuration mirrored from server billing, not records",
     "licensing.LIC_PRICING": "LIC_PRICING: tier, role, archetype and price tables \u2014 reference configuration mirrored from server billing, not records",
@@ -36,7 +37,6 @@
     "onboarding-data.LIC_TIER_LEVEL": "LIC_TIER_LEVEL: the same tier/role/archetype/price tables re-exported for the onboarding flow \u2014 reference configuration",
     "onboarding-data.licBundle": "licBundle: the same tier/role/archetype/price tables re-exported for the onboarding flow \u2014 reference configuration",
     "project-home-data.PJ_LIFECYCLE": "PJ_LIFECYCLE: lifecycle stage definitions, per-stage tool lists and pure helpers (initials, tone, ring) \u2014 reference configuration and functions, no project records",
-    "project-home-data.PJ_STAGE_TOOLS": "PJ_STAGE_TOOLS: lifecycle stage definitions, per-stage tool lists and pure helpers (initials, tone, ring) \u2014 reference configuration and functions, no project records",
     "project-home-data.Ring": "Ring: lifecycle stage definitions, per-stage tool lists and pure helpers (initials, tone, ring) \u2014 reference configuration and functions, no project records",
     "project-home-data.fileTone": "fileTone: lifecycle stage definitions, per-stage tool lists and pure helpers (initials, tone, ring) \u2014 reference configuration and functions, no project records",
     "project-home-data.pjInitials": "pjInitials: lifecycle stage definitions, per-stage tool lists and pure helpers (initials, tone, ring) \u2014 reference configuration and functions, no project records",
@@ -55,6 +55,10 @@
     "vault-data.flattenDocs": "flattenDocs: pure helpers over VaultDoc trees (flatten, status, icon key, type guard) \u2014 functions, no documents",
     "vault-data.isVaultDoc": "isVaultDoc: pure helpers over VaultDoc trees (flatten, status, icon key, type guard) \u2014 functions, no documents",
     "vault-data.vaultFileIconKey": "vaultFileIconKey: pure helpers over VaultDoc trees (flatten, status, icon key, type guard) \u2014 functions, no documents",
-    "vault-data.vaultStatus": "vaultStatus: pure helpers over VaultDoc trees (flatten, status, icon key, type guard) \u2014 functions, no documents"
+    "vault-data.vaultStatus": "vaultStatus: pure helpers over VaultDoc trees (flatten, status, icon key, type guard) \u2014 functions, no documents",
+    "commcenter.CC_CLOSURE": "CC_CLOSURE: closure-status to tone map for the inbox pills \u2014 reference configuration, no records (added 2026-10-17 when Communication's launch entry was gated)",
+    "commcenter.CC_INTERACTION_TYPES": "CC_INTERACTION_TYPES: display labels for the agency meeting types the ha_interactions CHECK admits \u2014 reference vocabulary, no records (added 2026-10-17)",
+    "commcenter.CC_SOURCE_TYPES": "CC_SOURCE_TYPES: display labels for the communication source types \u2014 reference vocabulary, no records (added 2026-10-17)",
+    "commcenter.CC_TONE": "CC_TONE: urgency to tone map for the inbox pills \u2014 reference configuration, no records (added 2026-10-17)"
   }
 }

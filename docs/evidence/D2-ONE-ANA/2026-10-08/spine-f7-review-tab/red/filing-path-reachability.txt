@@ -1,0 +1,53 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ↓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > baseline file > names only hops from the original six, each once, each with its slice and a reason
+ ↓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > baseline file > every hop in the test has a fixture pair
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > review-tab-to-document: red on the 2026-10-08 dead end 3ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > review-tab-to-document: green on the shape its slice builds 2ms
+ ↓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > outline-node-to-started-section: red on the 2026-10-08 dead end
+ ↓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > outline-node-to-started-section: green on the shape its slice builds
+ ↓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > placed-document-to-sequence: red on the 2026-10-08 dead end
+ ↓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > placed-document-to-sequence: green on the shape its slice builds
+ ↓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > dispatched-sequence-to-transmit: red on the 2026-10-08 dead end
+ ↓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > dispatched-sequence-to-transmit: green on the shape its slice builds
+ ↓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > respond-to-response-sequence: red on the 2026-10-08 dead end
+ ↓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > respond-to-response-sequence: green on the shape its slice builds
+ ↓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > author-document-row-to-document: red on the 2026-10-08 dead end
+ ↓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > author-document-row-to-document: green on the shape its slice builds
+ ↓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > author-document-row-to-document: green when the page hands its open handler down as a prop
+ × tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > review-tab-to-document: Project page, Review tab → the document under review, open in the editor 252ms
+   → review-tab-to-document is not reachable: the Review tab sends the person to the task-board alias. It is not in the baseline, so the filing path has regressed.: expected false to be true // Object.is equality
+ ↓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > outline-node-to-started-section: Editor outline, a required section not started in this document → that section, created and open
+ ↓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > placed-document-to-sequence: Place into filing, "Open in Submission Center" (and the market row, once F9 builds it) → the Submission Center, on that sequence
+ ↓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > dispatched-sequence-to-transmit: Submission Center, a dispatched sequence → POST /api/submissions/sequences/:seqId/transmit
+ ↓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > respond-to-response-sequence: Project page, Respond tab → the Submission Center, starting a response sequence
+ ↓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > author-document-row-to-document: Project page, Author tab, a document row → that document, open in the editor
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > review-tab-to-document: Project page, Review tab → the document under review, open in the editor
+AssertionError: review-tab-to-document is not reachable: the Review tab sends the person to the task-board alias. It is not in the baseline, so the filing path has regressed.: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/ui/filing-path-reachability.test.ts:706:126
+    704|           ).toBe(false);
+    705|         } else {
+    706|           expect(v.ok, `${hop.id} is not reachable: ${v.why}. It is no…
+       |                                                                                                                              ^
+    707|         }
+    708|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed | 18 skipped (21)
+   Start at  17:48:34
+   Duration  816ms (transform 141ms, setup 97ms, import 74ms, tests 262ms, environment 0ms)
+

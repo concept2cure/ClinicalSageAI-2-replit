@@ -1,0 +1,6 @@
+{
+  "server/services/market-specs/document-preparation.ts": "1e8b5683afd364f400634903b42ffec59e5b403df0af8c263f5200fcbd675672",
+  "server/services/ana/builtin-template-reference.ts": "aec8d1d512ac95490fc2235728c61e07bd475892a03e2eefc9332647e698c775",
+  "server/services/ana/AnaDocumentDraftingService.ts": "0ba1d6951222e44b334b033c586a3c316ae641d9eeb8be099561379b8944e70c",
+  "server/services/ana/__tests__/device-document-preparation.test.ts": "99214420aaca22e4bd7639178ba78cfac52d29df465928a3b439f5c324713bcd"
+}

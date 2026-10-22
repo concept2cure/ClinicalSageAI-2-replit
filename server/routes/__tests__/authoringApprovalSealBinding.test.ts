@@ -49,6 +49,7 @@ vi.mock('../../services/part11/resolve-signer-role.js', () => ({
 }));
 vi.mock('../../middleware/orgMembership', () => ({
   enforceOrgMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
+  requireEditorAccess: (_req: unknown, _res: unknown, next: () => void) => next(),
   invalidateOrgMembershipCache: () => undefined,
 }));
 vi.mock('../../services/part11/reverify-signer-deps', () => ({

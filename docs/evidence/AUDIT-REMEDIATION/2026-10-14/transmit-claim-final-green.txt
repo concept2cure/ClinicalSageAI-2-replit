@@ -1,0 +1,20 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > transmit guard refusal before the wire > releases the claim, so the sequence is not left "in flight" when nothing was sent 490ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a refusal inside the gateway that proves nothing was sent > releases the claim for the FDA NextGen REST refusal (UnverifiedTransportError) 3ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a refusal inside the gateway that proves nothing was sent > releases the claim for the requiredAgencyMetadata refusal raised by the gateway 2ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA SFTP branch refusing before connect (round-3 skeptic) > releases the claim when a >1 GiB sequence has no SFTP credentials (CredentialError) 3ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA SFTP branch refusing before connect (round-3 skeptic) > releases the claim when the SFTP credentials are set but the ssh2-sftp-client module is absent (MDN close) 7ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NOT_DELIVERED (FDA refuses our client certificate at the TLS handshake): row rejected, claim released 33ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — DELIVERED_UNCONFIRMED (HTTP 502 after the whole bundle): in transit, the claim stays transmitting 27ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — HTTP 502 from a separate-process server that read the whole bundle, while this process is busy: the claim stays transmitting 5203ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — a reset from a separate-process server that read the whole bundle, while this process is busy: the claim stays transmitting 5052ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > TransportError keeps the claim at transmitting 3ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > GatewayError keeps the claim at transmitting 2ms
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  04:14:30
+   Duration  13.40s (transform 1.45s, setup 68ms, import 2.12s, tests 11.03s, environment 0ms)
+

@@ -37,7 +37,6 @@ import {
   c2cBlockers,
   c2cAutomationRuns,
   c2cAutomationActions,
-  c2cDigests,
   concept2cureArtifacts,
   concept2cureReviewTasks,
   concept2cureReviewAssignments,
@@ -125,6 +124,12 @@ import {
 } from '../services/submission-gateways/validator-registry';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+import { requestConnectable, requestPgClient } from '../db/requestDb';
+import { resolveOrgId, resolveUserId } from '../types/auth-request';
+import { setAuditRowHeaders } from '../services/audit/audit-write-outcome';
+import {
+  DIGEST_GENERATION_AVAILABILITY, DigestAccessError, listRecipientDigests, markRecipientDigestRead,
+} from '../services/submission-ops/digest-access';
 
 /*
  * Every mutating route in this file was gated by nothing but `getOrgId(req)`,
@@ -143,6 +148,7 @@ import { createScopedLogger } from '../utils/logger';
  * shaped as POSTs, and `/digests/:digestId/read` is a reader's own receipt.
  */
 import { requireEditorAccess } from '../middleware/orgMembership';
+import { authedUserId } from '../utils/authedActor';
 
 const router = Router();
 
@@ -1285,16 +1291,47 @@ router.get('/blockers', async (req: Request, res: Response) => {
   }
 });
 
+/** c2c_blockers.status, as shared/schema.ts declares it. */
+const BLOCKER_STATUSES: readonly string[] = ['open', 'resolved', 'dismissed'];
+
 router.patch('/blockers/:blockerId', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const { status, nextAction, resolvedById } = req.body;
-    const updates: any = { updatedAt: new Date() };
-    if (status) updates.status = status;
+    const { status, nextAction, resolvedById } = req.body ?? {};
+    // Who closed a blocker is the session's user (ledger L195). The body's
+    // resolvedById used to win, so an editor could record a resolution in a
+    // colleague's name. A body naming anyone else is refused, not ignored, so a
+    // caller never believes it recorded an attribution it did not. The id is
+    // the canonical one: every sign-in path puts a STRING subject on req.user.
+    const userId = authedUserId(req);
+    if (userId === null) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    if (resolvedById !== undefined && resolvedById !== null && Number(resolvedById) !== userId) {
+      return res.status(422).json({ error: 'resolvedById is the signed-in user; it cannot name anyone else' });
+    }
+    // The model's status set. Every gate reads `status = 'open'` as live, so a
+    // free-text status ('closed', 'Resolved') used to clear a blocker with no
+    // closer recorded.
+    if (status !== undefined && !BLOCKER_STATUSES.includes(status)) {
+      return res.status(422).json({ error: `status must be one of: ${BLOCKER_STATUSES.join(', ')}` });
+    }
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
     if (nextAction !== undefined) updates.nextAction = nextAction;
-    if (status === 'resolved') {
-      updates.resolvedAt = new Date();
-      updates.resolvedById = resolvedById || getUserId(req);
+    if (status !== undefined) {
+      updates.status = status;
+      if (status === 'open') {
+        // Reopened: nobody has closed it, so the last closer is not left behind.
+        updates.resolvedById = null;
+        updates.resolvedAt = null;
+      } else {
+        // Resolved or dismissed: the closer is recorded on the transition only.
+        // A repeat of the same status keeps the original closer and time,
+        // decided in the UPDATE itself, against the row as it stands.
+        const transition = sql`${c2cBlockers.status} IS DISTINCT FROM ${status}`;
+        updates.resolvedById = sql`CASE WHEN ${transition} THEN ${userId} ELSE ${c2cBlockers.resolvedById} END`;
+        updates.resolvedAt = sql`CASE WHEN ${transition} THEN now() ELSE ${c2cBlockers.resolvedAt} END`;
+      }
     }
 
     const [updated] = await db
@@ -1576,43 +1613,37 @@ router.get('/due-soon', async (req: Request, res: Response) => {
 // DIGESTS
 // ============================================================
 
+function digestActorOf(req:Request) {
+  const organizationId=resolveOrgId(req),userId=resolveUserId(req);
+  if (!organizationId || !userId) throw new DigestAccessError(403,'DIGEST_ACTOR_REQUIRED','A current organization member is required to read this digest.');
+  return {organizationId,userId};
+}
+function digestFailure(res:Response,error:unknown,operation:string) {
+  if (error instanceof DigestAccessError) return res.status(error.status).json({
+    error:error.message,code:error.code,...(error.recovery ? {recovery:error.recovery} : {}),
+  });
+  return serverError(res,logger,operation,error);
+}
+
 router.get('/digests', async (req: Request, res: Response) => {
   try {
-    const orgId = getOrgId(req);
-    const userId = getUserId(req);
-    const { projectId, digestType } = req.query;
-
-    const conditions = [eq(c2cDigests.orgId, orgId)];
-    if (projectId) conditions.push(eq(c2cDigests.projectId, Number(projectId)));
-    if (digestType) conditions.push(eq(c2cDigests.digestType, digestType as string));
-    if (userId) conditions.push(eq(c2cDigests.recipientUserId, userId));
-
-    const digests = await db
-      .select()
-      .from(c2cDigests)
-      .where(and(...conditions))
-      .orderBy(desc(c2cDigests.generatedAt))
-      .limit(20);
-
-    res.json({ data: digests });
+    const actor=digestActorOf(req);
+    const digests=await listRecipientDigests(requestPgClient(req),actor,req.query);
+    res.json({data:digests,meta:{digestGeneration:DIGEST_GENERATION_AVAILABILITY}});
   } catch (e) {
-    return serverError(res, logger, 'loading digests', e);
+    return digestFailure(res,e,'loading digests');
   }
 });
 
 router.post('/digests/:digestId/read', async (req: Request, res: Response) => {
   try {
-    const orgId = getOrgId(req);
-    const [updated] = await db
-      .update(c2cDigests)
-      .set({ status: 'read', readAt: new Date() })
-      .where(and(eq(c2cDigests.digestId, String(req.params.digestId)), eq(c2cDigests.orgId, orgId)))
-      .returning();
-
-    if (!updated) return res.status(404).json({ error: 'Digest not found' });
-    res.json({ data: updated });
+    const actor=digestActorOf(req);
+    const receipt=await markRecipientDigestRead(requestConnectable(req),actor,req.params.digestId,req.ip ?? null);
+    if (receipt.auditTrail) setAuditRowHeaders(res,receipt.auditTrail);
+    res.json({data:receipt.digest,meta:{digestGeneration:DIGEST_GENERATION_AVAILABILITY,
+      readReceipt:receipt.outcome,...(receipt.auditTrail ? {auditTrail:receipt.auditTrail} : {})}});
   } catch (e) {
-    return serverError(res, logger, 'marking read digests', e);
+    return digestFailure(res,e,'marking read digests');
   }
 });
 

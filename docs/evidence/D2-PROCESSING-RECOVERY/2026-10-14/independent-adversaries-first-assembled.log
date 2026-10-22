@@ -1,0 +1,46 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure/docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14
+
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 01: a live claimed attempt makes a second caller busy without a second extraction 90ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 02: expired A cannot overwrite B completed text with a late successful result 78ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 03: expired A late extraction/profile failure cannot replace B completion or reintroduce an error 151ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 04: an expired token is refused even before a replacement claims 37ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 05: supersession or live-project deletion while extraction runs refuses stale completion 65ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 06: actual same-program keep_data withdrawal fences new processing and retains prior text 170ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 07: another program withdrawing the same upload makes in-flight original processing unavailable 86ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 08: a null-program capture still refuses organization-wide original withdrawal 78ms
+ × independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 09: nullable scope and exact upload file/path/name/MIME association cannot change during an attempt 103ms
+   → IMMUTABILITY_VIOLATION: cre_evidence_sources.client_workspace_id of source 19 is set once and cannot be changed or cleared (21 CFR 11.10(e)). Capture the file again instead.
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 10: source/upload hash split, missing upload digest, and caller Buffer mutation fail safely 105ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 11: correct duplicate input cannot bypass missing canonical original loading 31ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 12: failed final persistence and failed journaling retain an expired-lease recovery signal 91ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 13: lost completion reply is resolved from persisted state without repeating extraction 73ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 14: future/malformed metadata and timestamps cannot reset budget or crash a sweep 308ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 15: blockers do not consume runnable limit; dry run has no load, extraction or writes 281ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 16: persisted extraction failure is not completion, explicit retry clears stale prose, lineage changes fence a result 203ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 09: nullable scope and exact upload file/path/name/MIME association cannot change during an attempt
+error: IMMUTABILITY_VIOLATION: cre_evidence_sources.client_workspace_id of source 19 is set once and cannot be changed or cleared (21 CFR 11.10(e)). Capture the file again instead.
+ ❯ pe.Le ../../../../node_modules/@electric-sql/pg-protocol/src/parser.ts:423:39
+ ❯ pe.Xe ../../../../node_modules/@electric-sql/pg-protocol/src/parser.ts:208:8
+ ❯ pe.parse ../../../../node_modules/@electric-sql/pg-protocol/src/parser.ts:99:38
+ ❯ O.qe ../../../../node_modules/@electric-sql/pglite/src/pglite.ts:753:25
+ ❯ ../../../../node_modules/@electric-sql/pglite/src/pglite.ts:706:13
+ ❯ null.<anonymous> ../../../../wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> ../../../../wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> ../../../../wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> ../../../../wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> ../../../../wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 308, severity: 'ERROR', code: 'P0001', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: 'PL/pgSQL function cre_evidence_sources_capture_guard() line 19 at RAISE', schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'pl_exec.c', routine: 'exec_stmt_raise', query: 'UPDATE cre_evidence_sources SET client_workspace_id=$3 WHERE id=$1 AND organization_id=$2', params: [ 19, 942009, 6 ], queryOptions: undefined }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 passed (16)
+   Start at  04:21:44
+   Duration  4.44s (transform 316ms, setup 0ms, import 400ms, tests 3.80s, environment 0ms)
+

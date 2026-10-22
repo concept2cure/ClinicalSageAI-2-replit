@@ -6,7 +6,8 @@
  * suite does: over the SQL-aware fake store
  * (services/authoring/__tests__/authoring-read-fixture.ts), which leaks another
  * program's rows to any query that forgets to filter on it, and over PGlite,
- * where the open program is looked up by the real resolveOpenProgram SQL. That
+ * where current membership, project sharing and the program anchor are read
+ * by the real canonical project-admission SQL. That
  * second run is what makes "another organization cannot open this program" a
  * property of the lookup query rather than of the fake. What is pinned:
  *
@@ -29,6 +30,7 @@ import path from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import type { ToolContext } from '../AnaToolExecutor';
+import type { RequestSqlClient } from '../../../db/requestDb';
 import { budgetToolResultsForModel } from '../agentic-loop';
 import { FREE_TEXT_FIELD, freeTextFields } from '../governed-write-tools';
 import {
@@ -37,7 +39,6 @@ import {
   READ_AUTHORING_SECTION,
   registerAuthoringReadHandlers,
 } from '../authoring-read-tools';
-import type { AuthoringReadQueryable } from '../../authoring/authoring-read';
 import {
   DOC_A1, DOC_B1, DOC_X1, OTHER_TENANT, PGLITE_DDL, PROGRAM_A, PROGRAM_B, PROGRAM_C, SEC, TENANT,
   makeFakePool, outsideProposals, pgliteInsertDoc, pgliteInsertSection, pglitePool, pgliteSeed, seedState,
@@ -51,7 +52,7 @@ const RESULT_MAX = 5000;
 
 interface Harness {
   name: string;
-  pool: () => AuthoringReadQueryable;
+  pool: () => RequestSqlClient;
   reset: () => Promise<void>;
   addDoc: (d: FakeDoc) => Promise<void>;
   addSection: (s: FakeSection) => Promise<void>;

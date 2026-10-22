@@ -16,11 +16,11 @@
  * Compliance Requirements Met:
  * - FDA 21 CFR Part 11.10(e): Audit trails
  * - FDA 21 CFR Part 11.10(k.2): Electronic signatures
- * - ICH E6(R2) 5.5.3: Data integrity
+ * - ICH E6(R3) Annex 1 §4.3: Computerised systems (data integrity)
  *
  * @module TamperProofAuditLog
  * @version 1.0.0
- * @compliance FDA 21 CFR Part 11, ICH E6(R2), GAMP 5
+ * @compliance FDA 21 CFR Part 11, ICH E6(R3), GAMP 5
  */
 
 import { Pool } from 'pg';
@@ -227,7 +227,8 @@ export function verifyTamperProofLogRows(
     });
     const matchesContentHash =
       row.content_hash === sha256(TamperProofAuditLog.stringifyForHash(contentData)) ||
-      row.content_hash === sha256(TamperProofAuditLog.legacyStringifyForVerify(contentData));
+      row.content_hash === sha256(TamperProofAuditLog.legacyStringifyForVerify(contentData)) ||
+      row.content_hash === sha256(TamperProofAuditLog.historicalVerificationStringify(contentData));
     if (!matchesContentHash) {
       return fail(row, `Content tampered: content_hash mismatch at sequence ${seq}`);
     }
@@ -865,6 +866,23 @@ export class TamperProofAuditLog {
    * content, so an attacker who edits a persisted field still fails both.
    */
   static legacyStringifyForVerify(contentData: Record<string, unknown>): string {
+    return JSON.stringify(contentData);
+  }
+  static historicalVerificationStringify(contentData: Record<string, unknown>): string {
+    // The historical verifier wrote this fixed detail order before jsonb
+    // reordered the keys. Reconstruct only that known writer's exact shape;
+    // never try arbitrary permutations or omit an unfamiliar field.
+    const details = contentData.details;
+    const keys = ['entriesVerified', 'startSequence', 'endSequence', 'verifiedAt'];
+    if (contentData.eventType === 'AUDIT_VERIFICATION_PASSED' &&
+        details && typeof details === 'object' && !Array.isArray(details) &&
+        Object.keys(details).every(key => keys.includes(key))) {
+      const record = details as Record<string, unknown>;
+      return JSON.stringify({
+        ...contentData,
+        details: Object.fromEntries(keys.filter(key => key in record).map(key => [key, record[key]])),
+      });
+    }
     return JSON.stringify(contentData);
   }
 

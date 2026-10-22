@@ -1,0 +1,13 @@
+{
+  "qualification_base": "1e217bfbec5eeb96c0af06b858883d83fc3eec07",
+  "command": [
+    "python",
+    "/workspace/scratch/03341391a627/prepare-direct-answer-compiler-cache.py",
+    "post-sync-preparation"
+  ],
+  "heap_mb": 6656,
+  "soft_rss_mb": 6200,
+  "max_files_per_process": 3000,
+  "helper_git_blob": "9866391314b83ebb762720141b584f350ecdace2",
+  "scope": "Native compiler invalidation and actual semantic diagnostics under unchanged whole-project config after canonical merge. Preparation is not qualification."
+}

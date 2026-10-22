@@ -177,6 +177,8 @@ function mapResult(p: SearchRow): PrecedentResultDTO {
 }
 
 function mapRisk(r: RiskResult): RiskAnalysisDTO {
+  // No source could be read: the surface's "not assessed" state, not score 0.
+  if (r.overallRisk === 'not_assessed' || r.riskScore === null) return emptyRisk();
   return {
     overall: r.overallRisk,
     score: typeof r.riskScore === 'number' ? r.riskScore : 0,
@@ -193,6 +195,8 @@ function emptyRisk(): RiskAnalysisDTO {
 }
 
 function mapStrategy(s: StrategyResult): StrategyDTO {
+  // No approved precedent recorded a strategy: nothing is recommended.
+  if (s.basis === 'no-precedents' || s.recommendedStrategy === null) return emptyStrategy();
   const rationale: string[] = [];
   const top = s.supportingPrecedents?.[0];
   if (top) {
@@ -228,7 +232,8 @@ function emptyPattern(title: string): PatternAnalysisDTO {
 function mapCrl(r: CrlResult): PatternAnalysisDTO {
   return {
     title: 'CRL trigger patterns',
-    rate: r.overallCRLRisk ? `${r.overallCRLRisk} overall risk` : '—',
+    // A curated checklist: no overall risk is computed (precedent-engine.ts).
+    rate: `curated checklist · ${r.totalPatterns} categories`,
     items: (r.triggers ?? []).map(t => `${t.category} — ${t.description}`),
   };
 }
@@ -256,8 +261,8 @@ function mapAdcomm(r: AdcommResult): PatternAnalysisDTO {
   const items = (r.triggers ?? []).map(t => `${t.trigger} — ${t.description}`);
   return {
     title: 'Advisory Committee risk',
-    rate: r.overallAdcomRisk ? `${r.overallAdcomRisk} overall risk` : '—',
-    items: items.length ? items : (r.votingInsights ?? []),
+    rate: `curated checklist · ${r.totalTriggers} triggers`,
+    items,
   };
 }
 

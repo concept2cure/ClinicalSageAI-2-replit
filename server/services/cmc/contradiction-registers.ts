@@ -41,6 +41,26 @@ export interface ContradictionRegisters {
   specifications: Array<{ materialName: string; acceptanceCriteria?: Record<string, unknown> }>;
   methods: Array<{ methodName: string; purpose?: string; validationStatus?: string }>;
   stability: Array<{ studyName: string; status?: string }>;
+  /**
+   * `disposition` here is the batch's SIGNED release decision, and it is read
+   * from `release_status` — the column the governed release actually writes.
+   *
+   * The table carries two columns for the one fact. `cmc_batch_records.release_status`
+   * is what `POST /api/cmc/batch-records/:id/release` sets under the signature
+   * (api/cmc/batchRecordRoutes.ts), and what the edit-lock and the
+   * already-dispositioned refusal both read (services/cmc/signed-record.ts
+   * `batchWriteRefusal`, `batchReleaseRefusal`). `cmc_batch_records.disposition`
+   * is written by NOTHING: not the create's INSERT column list, not the
+   * ordinary PUT's field map, not the governed release. On this deployment,
+   * 83 batch records held 0 dispositions and 20 release statuses.
+   *
+   * This sweep read the empty one. `batch_rejected` is the only
+   * critical-severity CMC contradiction (services/cmc-impact-contradiction-engine.ts),
+   * and the final-export gate keeps only critical findings
+   * (services/cmc/final-export-gate.ts, contradiction-lifecycle.ts) — so the one
+   * contradiction that can block an export could never fire, and a rejected
+   * batch was invisible to it.
+   */
   batch: Array<{ batchNumber: string; disposition?: string }>;
   comparability: Array<{ assessmentName: string; regulatoryRiskLevel?: string }>;
 }
@@ -94,7 +114,10 @@ export async function readContradictionRegisters(
     ),
     isUuidProject
       ? pool.query(
-          `SELECT batch_number as "batchNumber", disposition FROM cmc_batch_records
+          /* release_status, aliased to the name the engine reads. See the
+             `batch` field's own note: `disposition` is a second column for the
+             same fact that nothing writes. */
+          `SELECT batch_number as "batchNumber", release_status as "disposition" FROM cmc_batch_records
             WHERE project_id = $1::uuid AND (tenant_id = $2 OR organization_id = $3)`,
           // Two params for one identity, deliberately. cmc_batch_records names
           // its owner in both `tenant_id TEXT` (db/migrations/

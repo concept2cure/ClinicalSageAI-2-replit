@@ -1,0 +1,9 @@
+# npm run test:ana; RLS_ENFORCE=off
+# Trimmed: passing tests counted per file, failures (if any) listed in full.
+ Test Files  4 passed (4)
+      Tests  303 passed (303)
+
+    256 server/services/__tests__/ana-ri.test.ts
+     22 tests/resolution/ana-orchestrator.test.ts
+     18 tests/routes/ana-gap-analysis.test.ts
+      7 tests/routes/ana-ri-health.test.ts

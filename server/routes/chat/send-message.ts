@@ -12,6 +12,7 @@
 
 import type { Request, Response } from 'express';
 import { getPool, pool } from '../../db.js';
+import { requestPgClient } from '../../db/requestDb.js';
 import { currentTenantOrgUuid } from '../../db/currentTenant.js';
 import {
   getOrCreateThread,
@@ -36,7 +37,7 @@ import { executeAgenticLoop } from '../../services/ana/AnaToolExecutor.js';
 import { loopToolCollector, recordLoopTurn } from '../../services/ana/turn-record-loop.js';
 import type { TurnRecordStatus } from '../../services/ana/turn-record.js';
 import { requestsGovernedDraft } from '../../services/ana/governed-write-tools.js';
-import { resolveMaxRounds } from '../../services/ana/agentic-loop.js';
+import { resolveMaxRounds, ToolResultBudgetExceededError } from '../../services/ana/agentic-loop.js';
 import {
   isSubstantiveTurn,
   resolveModelTier,
@@ -76,6 +77,8 @@ import { ensureGateway, normalizeBody } from './shared.js';
 import { sha256, stableStringify } from './provenance.js';
 import { verifyClaim, type VerifierFlag } from './verifier.js';
 import { evidencePromptBlock, type RetrievalStatus } from './retrieval-evidence-block';
+import { admitAnaProjectScope, AnaProjectScopeError } from '../../services/ana/project-scope-admission';
+import { assertAnaUploadAccess } from '../../services/ana/source-context-admission';
 
 // ── Retrieval + generation tuning (externalized for runtime changes) ────────
 const RETRIEVAL_TOP_K = parseInt(process.env.ANA_RETRIEVAL_TOP_K ?? '5', 10);
@@ -96,7 +99,7 @@ const INCONTEXT_INJECTION_ENABLED =
 export const sendMessageHandler = async (req: Request, res: Response) => {
   normalizeBody(req);
   try {
-    const { message, thread_id, file_id, system_prompt, project_id, preferred_provider, selected_tools, tool_context } = req.body;
+    const { message, thread_id, file_id, system_prompt, project_id: rawProjectId, preferred_provider, selected_tools, tool_context } = req.body;
 
     if (!message || typeof message !== 'string') {
       return res.status(400).json({
@@ -110,7 +113,15 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     const rawUserId = (req as any).userId || (req as any).user?.id;
     const userId: number | string = rawUserId ?? 'anonymous';
     const numericOrgId = orgId ? (typeof orgId === 'string' ? Number(orgId) : orgId) : null;
-    const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) || 0 : userId;
+    const numericUserId = typeof userId === 'string' ? Number(userId) : userId;
+    const project_id = rawProjectId ?? req.body.context?.projectId ?? req.body.project_context?.projectId;
+    // Check the explicit scope and attachment before any thread, source or
+    // model work. An unreadable access decision never becomes org-wide chat.
+    const admittedProject = await admitAnaProjectScope(getPool(), { organizationId: numericOrgId,
+      userId: numericUserId, projectRef: project_id });
+    await assertAnaUploadAccess(getPool(), { organizationId: numericOrgId, userId: numericUserId,
+      fileIds: file_id == null || file_id === '' ? [] : [file_id] });
+
     // The org's UUID tenant key, from the same session scope. Both uses below —
     // Data Room retrieval and AnA's document tools — used to fall back to the
     // client's x-org-uuid header, and with neither ran the search across every
@@ -295,13 +306,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     // anything else as none. Each step below used to parseInt on its own, and
     // parseInt('7abb1c22-…') is 7, a valid, wrong project of the same
     // organization (services/c2c/project-ref.ts).
-    const turnProjectId =
-      numericOrgId && project_id
-        ? await (await import('../../services/c2c/project-ref.js')).integerProjectForRef(
-            async () => (await import('../../db.js')).db,
-            { ref: project_id, orgId: numericOrgId, context: 'chat.send-message' },
-          )
-        : null;
+    const turnProjectId = admittedProject.projectId;
 
     // ── STEP 4: RETRIEVE (org-scoped + project-scoped when available) ───
     let sources: Array<{ id: string; title: string; content: string; score: number }> = [];
@@ -601,9 +606,12 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           '../../services/ana-session-bootstrap.js'
         );
         const block = await sessionBootstrapBlockFor({
+          db: requestPgClient(req),
           priorMessageCount: previousMessages.length,
           organizationId: numericOrgId ?? null,
+          userId: numericUserId,
           projectId: turnProjectId ?? undefined,
+          projectRef: admittedProject.projectRef,
           threadId,
           atomLimit: 6,
         });
@@ -625,23 +633,28 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       const contextType = (req.body.context?.productType || '').toUpperCase();
 
       // ── Device Context Injection ────────────────────────────────────────────────
+      // The registry renders the block. CER and IVDR are projections of the
+      // canonical outlines (market-specs/cer-structure.ts CER_SECTIONS and
+      // per-structure.ts PER_SECTIONS); the client's productType wins over the
+      // type detected from the message.
       let deviceContextBlock = '';
-      const deviceTypes = ['510K', 'PMA', 'DE_NOVO', 'CER', 'IVDR'];
-      if (deviceTypes.includes(detectedType) || deviceTypes.includes(contextType)) {
-        try {
-          const { getDeviceSections } = await import('../../services/device/device-section-registry.js');
-          const deviceType = (deviceTypes.includes(contextType) ? contextType : detectedType) as '510K' | 'PMA' | 'DE_NOVO' | 'CER';
-          const sections = getDeviceSections(deviceType);
-          if (sections.length > 0) {
-            const sectionList = sections.map(s =>
-              `- ${s.code} ${s.title} (${s.required ? 'required' : 'optional'}) — ${s.guidance}`
-            ).join('\n');
-            const projectContext = req.body.context || {};
-            deviceContextBlock = `\n\n## ${deviceType} Submission Context\nThis is a ${deviceType} medical device submission project.\n${projectContext.activeProject ? `Project: ${projectContext.activeProject}` : ''}\n\nRequired sections (${sections.filter(s => s.required).length} required, ${sections.length} total):\n${sectionList}\n\nUse the generate_document tool to draft any section. Guide the user through the submission systematically.\n`;
-          }
-        } catch {
-          // Device registry not available
+      try {
+        const { isDeviceSubmissionType, renderDeviceContextBlock } = await import(
+          '../../services/device/device-section-registry.js'
+        );
+        const deviceType = isDeviceSubmissionType(contextType)
+          ? contextType
+          : isDeviceSubmissionType(detectedType)
+            ? detectedType
+            : null;
+        if (deviceType) {
+          const projectContext = req.body.context || {};
+          deviceContextBlock = renderDeviceContextBlock(deviceType, {
+            activeProject: typeof projectContext.activeProject === 'string' ? projectContext.activeProject : undefined,
+          });
         }
+      } catch {
+        // Device registry not available
       }
 
       // Project instructions injection (spec A1.1) — read the project's
@@ -831,6 +844,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       const gwResponse: AnaGatewayResponse = await executeAgenticLoop(baseRequest, {
         maxRounds: resolveMaxRounds('balanced'),
         toolContext: {
+          sqlClient: requestPgClient(req),
           organizationId: numericOrgId,
           userId: numericUserId || null,
           projectId: turnProjectId,
@@ -926,7 +940,8 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         outcome: 'success',
       });
     } catch (gwError: any) {
-      console.error('[AnA] AI Gateway call failed:', gwError.message);
+      const budgetRefusal = gwError instanceof ToolResultBudgetExceededError ? gwError : null;
+      console.error(budgetRefusal ? '[AnA] Tool result handoff refused:' : '[AnA] AI Gateway call failed:', gwError.message);
       void logKernelDecision({
         requestId: `chat-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
         threadId,
@@ -938,14 +953,14 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         selectedTaskType: 'chat',
         routingStrategy: 'quality_optimized',
         selectedTools: [],
-        decisionRationale: 'AnA chat failed during AI Gateway call.',
+        decisionRationale: budgetRefusal ? 'AnA tool results exceeded the handoff limit.' : 'AnA chat failed during AI Gateway call.',
         outcome: 'failed',
         errorMessage: gwError?.message || 'AI Gateway call failed',
       });
       const turnRecord = await fileTurn('failed', undefined, gwError);
-      return res.status(503).json({
-        error: 'AI provider call failed',
-        code: 'AI_PROVIDER_UNAVAILABLE',
+      return res.status(budgetRefusal ? 422 : 503).json({
+        error: budgetRefusal?.message ?? 'AI provider call failed',
+        code: budgetRefusal?.code ?? 'AI_PROVIDER_UNAVAILABLE',
         turnRecord,
       });
     }
@@ -1343,6 +1358,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       turnRecord,
     });
   } catch (error: any) {
+    if (error instanceof AnaProjectScopeError) return res.status(error.status).json({ error: error.message, code: error.code });
     console.error('[AnA] Chat error:', error);
 
     // Rule 6: no raw error.message leak

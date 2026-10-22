@@ -1,0 +1,94 @@
+{
+  "kind": "project-files-rail",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "panel": {
+    "x": 1060,
+    "y": 0,
+    "right": 1440,
+    "bottom": 1000,
+    "width": 380,
+    "height": 1000,
+    "clientWidth": 379,
+    "scrollWidth": 379
+  },
+  "pageWidth": 1440,
+  "scrollOwner": {
+    "className": "ed-comments",
+    "overflowY": "auto",
+    "scrollTop": 0,
+    "clientHeight": 1000,
+    "scrollHeight": 1000
+  },
+  "footer": {
+    "x": 1075,
+    "y": 804.25,
+    "right": 1426,
+    "bottom": 986,
+    "width": 351,
+    "height": 181.75,
+    "clientWidth": 351,
+    "scrollWidth": 351
+  },
+  "controls": [
+    {
+      "text": " Open",
+      "disabled": false,
+      "bounds": {
+        "x": 1087,
+        "y": 865.5,
+        "right": 1168.734375,
+        "bottom": 897.5,
+        "width": 81.734375,
+        "height": 32,
+        "clientWidth": 80,
+        "scrollWidth": 80
+      }
+    },
+    {
+      "text": " Build in editor",
+      "disabled": false,
+      "bounds": {
+        "x": 1174.734375,
+        "y": 865.5,
+        "right": 1306.875,
+        "bottom": 897.5,
+        "width": 132.140625,
+        "height": 32,
+        "clientWidth": 130,
+        "scrollWidth": 130
+      }
+    },
+    {
+      "text": " Work on document",
+      "disabled": true,
+      "bounds": {
+        "x": 1087,
+        "y": 903.5,
+        "right": 1249.015625,
+        "bottom": 935.5,
+        "width": 162.015625,
+        "height": 32,
+        "clientWidth": 160,
+        "scrollWidth": 160
+      }
+    },
+    {
+      "text": " Cite in §3.2.P.8.1",
+      "disabled": false,
+      "bounds": {
+        "x": 1255.015625,
+        "y": 903.5,
+        "right": 1399.015625,
+        "bottom": 935.5,
+        "width": 144,
+        "height": 32,
+        "clientWidth": 142,
+        "scrollWidth": 142
+      }
+    }
+  ],
+  "text": "Synthetic retained Vault stability source.pdfSHA-256 777777777777… Open Build in editor Work on document Cite in §3.2.P.8.1The original file is unavailable. Use retained data-room text with AnA where data use is still permitted."
+}

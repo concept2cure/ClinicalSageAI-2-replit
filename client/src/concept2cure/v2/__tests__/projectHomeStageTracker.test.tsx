@@ -80,7 +80,7 @@ describe('Project home — lifecycle tracker', () => {
 
     // No tracker to mark anything on — a lifecycle belongs to a project.
     expect(stages().length).toBe(0);
-    expect(document.querySelector('[role="tablist"][aria-label="Project lifecycle"]')).toBeNull();
+    expect(document.querySelector('nav[aria-label="Project lifecycle"]')).toBeNull();
 
     // No "PROJECT Project" crumb, and the H1 names the screen, not a project.
     expect(document.querySelector('.pj-crumb')).toBeNull();

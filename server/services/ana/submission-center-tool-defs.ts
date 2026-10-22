@@ -358,23 +358,6 @@ export const EXPLAIN_VALIDATION_FINDINGS: AnaTool = {
   },
 };
 
-export const CROSS_REGION_GAP_ANALYSIS: AnaTool = {
-  name: 'cross_region_gap_analysis',
-  description:
-    'Given a submission prepared for a source region, compute what is additionally needed to file the same product in target regions: Module 1 deltas, bridging-study needs (ICH E5), translation scope, and format conversion. Tenant comes from the active context; the call is audited.',
-  input_schema: {
-    type: 'object',
-    properties: {
-      source_region: { type: 'string', enum: ['fda', 'eu', 'jp'] },
-      target_regions: { type: 'array', items: { type: 'string', enum: ['fda', 'eu', 'jp'] } },
-      application_type: { type: 'string', description: 'e.g. nda, maa, jnda.' },
-      sections_present: { type: 'array', items: { type: 'string' }, description: 'Optional CTD section codes already prepared.' },
-      submission_id: { type: 'number', description: 'Optional submission id for the audit entry.' },
-    },
-    required: ['source_region', 'target_regions', 'application_type'],
-  },
-};
-
 export const DISPATCH_QC_CHECK: AnaTool = {
   name: 'dispatch_qc_check',
   description:
@@ -608,8 +591,9 @@ export const GET_DOCUMENT_TEMPLATE: AnaTool = {
   name: 'get_document_template',
   description:
     'Paged authoring outlines; not drafted prose, verified evidence or readiness. ' +
-    'Use `template_id` or an exact active `registry_id` (never guess); `family`/`coverage` list components/biotech gaps. ' +
-    '`offset`/`limit` page results. `market`+`prepare` adds a regional route and at most 3 focused questions. ' +
+    'Use `template_id` or an exact active `registry_id` (never guess); `family`/`coverage` list medicinal/device/IVD outlines and gaps. ' +
+    '`offset`/`limit` page results. Editor UUIDs retain exact outline, scope and source checks. ' +
+    '`market`+`prepare` adds a regional route and at most 3 focused questions. ' +
     '`discussed_topics` only prevents re-asking. ' +
     "Cite basis/limits: hand-kept outlines and blueprint required flags are platform guidance, not the agency's text. " +
     `Record-derived: ${recordDerivedOutlines}. ` +
@@ -618,8 +602,8 @@ export const GET_DOCUMENT_TEMPLATE: AnaTool = {
   input_schema: {
     type: 'object',
     properties: {
-      template_id: { type: 'string', description: "A specific template id, e.g. 'clinical_overview', 'k510_summary', 'smpc', 'gspr_checklist'." },
-      registry_id: { type: 'string', description: 'Exact active global registry ID, such as US_IND, EU_MAA, CA_NDS or JP_MKT_APPROVAL. With template_id: sets filing context for preparation. Alone: reads the existing filing scaffold, with explicit unavailability when it is absent or needs review. Never guess an ID.' },
+      template_id: { type: 'string', description: "An exact editor template UUID or component id, e.g. 'clinical_overview', 'k510_summary', 'smpc', 'gspr_checklist'. Follow all UUID reference pages, including preparation JSON parts when requested." },
+      registry_id: { type: 'string', description: 'Exact active global registry ID, such as US_IND, US_510K, EU_IVDR, CA_MDL, JP_SHONIN or JP_TODOKEDE. With template_id: sets filing context for preparation. Alone: reads the existing filing scaffold, with explicit unavailability when it is absent or needs review. Never guess an ID.' },
       market: { type: 'string', enum: ['US', 'EU', 'CA', 'JP'], description: 'Confirmed target jurisdiction for preparation; do not infer from the conversation language.' },
       prepare: { type: 'boolean', description: 'Include a regional route and up to 3 prioritized client questions. This creates an inquiry brief, not a readiness or evidence-sufficiency verdict.' },
       discussed_topics: {
@@ -627,7 +611,7 @@ export const GET_DOCUMENT_TEMPLATE: AnaTool = {
         description: 'Topics already discussed in this conversation, to avoid asking them again. These are conversational markers only; they never establish that source data are supplied, verified or sufficient.',
         items: { type: 'string', enum: ['scope', 'source_versions', 'data_cutoff', 'statistical_results', 'estimands', 'safety', 'quality', 'local_requirements', 'japan_evidence', 'agency_commitments', 'review_owners'] },
       },
-      coverage: { type: 'boolean', description: 'Without template_id or registry_id: list existing biotech registry outline coverage, including missing or withheld outlines. Scaffold availability is not qualified builder or filing capability.' },
+      coverage: { type: 'boolean', description: 'Without template_id or registry_id: list existing medicinal, device and diagnostics registry outline coverage, including missing or withheld outlines. Scaffold availability is not qualified builder or filing capability.' },
       offset: { type: 'integer', minimum: 0, default: 0, description: 'Zero-based catalog/section offset. Continue with nextOffset when one is returned.' },
       limit: { type: 'integer', minimum: 1, maximum: 30, default: 12, description: 'Maximum catalog entries or template sections to return in this page.' },
       family: {
@@ -753,9 +737,11 @@ export const CLASSIFY_DEVICE: AnaTool = {
   name: 'classify_device',
   // The engine fails closed (2026-10-05): a class a missing fact decides comes back
   // null with missingFacts, and bad facts are refused. The fact vocabulary is the
-  // engine's own key list, so the two cannot drift.
+  // engine's own key list, so the two cannot drift. 2026-10-15: the FDA engine answers
+  // pathway 'undetermined' when the deciding facts are unstated; this said only that it
+  // "recommends a pathway", and its undetermined clause spoke of a null class.
   description:
-    "Determine an EU MDR or IVDR risk class, or an FDA pathway, from structured facts. `framework: 'mdr'` applies Regulation (EU) 2017/745 Annex VIII Rules 1–22 → Class I/IIa/IIb/III with the rule(s) that gave it. `framework: 'ivdr'` applies Regulation (EU) 2017/746 Annex VIII Rules 1–7 → Class A/B/C/D. `framework: 'fda'` recommends a pathway (exempt/510k/de_novo/pma). Unknown fact keys, unreadable values and facts that contradict each other are refused with an error naming them. When a fact that decides the class was not supplied, class is null and missingFacts names it: say the class is not determined, ask the user for those facts, and never state a class. The rule wording is a recall paraphrase; each result carries a caveat to confirm against the Annex text or the FDA classification database. Deterministic.",
+    "Determine an EU MDR or IVDR risk class, or an FDA pathway, from structured facts. `framework: 'mdr'` applies Regulation (EU) 2017/745 Annex VIII Rules 1–22 → Class I/IIa/IIb/III with the rule(s) that gave it. `framework: 'ivdr'` applies Regulation (EU) 2017/746 Annex VIII Rules 1–7 → Class A/B/C/D. `framework: 'fda'` recommends a pathway (exempt/510k/de_novo/pma); when the facts that decide it are unstated, pathway is 'undetermined' with missingFacts naming them: say so, ask for them, and never state a pathway. Unknown fact keys, unreadable values and facts that contradict each other are refused with an error naming them. For mdr/ivdr, when a fact that decides the class was not supplied, class is null and missingFacts names it: say the class is not determined, ask the user for those facts, and never state a class. The rule wording is a recall paraphrase; each result carries a caveat to confirm against the Annex text or the FDA classification database. Deterministic.",
   input_schema: {
     type: 'object',
     properties: {

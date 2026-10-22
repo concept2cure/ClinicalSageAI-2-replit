@@ -1,0 +1,222 @@
+CSR supporting-source focused verification, 2026-10-14
+Main focused run: 131 passing cases / 8 files. Subsequent safety-zero and schema-error privacy corrections were verified by 65 passing source/schema/history/tabulator cases / 4 files; two cases are additional and 63 overlap. The distinct focused inventory is 133 cases / 8 files. The control tower owns the final whole-tree rerun.
+
+Source: continuation-csr-focused-final.log
+ ✓ server/services/__tests__/part11-release-signature-single-write-path.pglite.integration.test.ts > release signing goes through the one electronic_signatures writer > writes exactly one row, carrying every column the deleted builder wrote 2229ms
+ ✓ server/services/__tests__/part11-release-signature-single-write-path.pglite.integration.test.ts > release signing goes through the one electronic_signatures writer > states the binding basis — the column the deleted builder could not express 1501ms
+ ✓ server/services/__tests__/part11-release-signature-single-write-path.pglite.integration.test.ts > release signing goes through the one electronic_signatures writer > a caller-supplied release digest is recorded under its OWN basis, not the version-content one 1464ms
+ ✓ server/services/__tests__/part11-release-signature-single-write-path.pglite.integration.test.ts > release signing goes through the one electronic_signatures writer > §11.200: the attribution hash re-derives from the persisted manifest bytes 1820ms
+ ✓ server/services/__tests__/part11-release-signature-single-write-path.pglite.integration.test.ts > release signing goes through the one electronic_signatures writer > §11.10(e) ATOMIC: if the audit row cannot be written, no signature row survives 1288ms
+ ✓ server/services/__tests__/part11-release-signature-single-write-path.pglite.integration.test.ts > release signing goes through the one electronic_signatures writer > §11.10(e) ATOMIC, the other way: a refused signature leaves no audit event 1115ms
+ ✓ server/services/__tests__/part11-release-signature-single-write-path.pglite.integration.test.ts > release signing goes through the one electronic_signatures writer > the signature and its audit event land together on the happy path 1163ms
+ ✓ server/services/__tests__/part11-release-signature-single-write-path.pglite.integration.test.ts > release signing goes through the one electronic_signatures writer > refuses to sign content that is not there (§11.70 fails closed) 1365ms
+ ✓ server/services/__tests__/part11-release-signature-single-write-path.pglite.integration.test.ts > the row records what the signing ceremony verified (services/part11/reverify-signer.ts) > records a verified second factor as verified (it always wrote password / false) 1827ms
+ ✓ server/services/__tests__/part11-release-signature-single-write-path.pglite.integration.test.ts > the row records what the signing ceremony verified (services/part11/reverify-signer.ts) > writes nothing for a signer the ceremony did not verify 1770ms
+ ✓ server/services/__tests__/part11-release-signature-single-write-path.pglite.integration.test.ts > both call paths write through the same writer, into the same shape > the document path and the release path produce rows with the same stated columns 1559ms
+ ✓ server/services/__tests__/part11-release-signature-single-write-path.pglite.integration.test.ts > the release audit event commits WITH the signature, or not at all (L138) > writes the route-level event on the signature transaction 1743ms
+ ✓ server/services/__tests__/part11-release-signature-single-write-path.pglite.integration.test.ts > the release audit event commits WITH the signature, or not at all (L138) > REGRESSION: an unwritable audit row leaves NO signature behind 1534ms
+ ✓ server/services/__tests__/part11-release-signature-single-write-path.pglite.integration.test.ts > the release audit event commits WITH the signature, or not at all (L138) > enlists a current-record guard before the signature insert on the actual transaction 2406ms
+ ✓ server/services/__tests__/part11-release-signature-single-write-path.pglite.integration.test.ts > the release audit event commits WITH the signature, or not at all (L138) > a source withdrawn during the ceremony leaves no signature or audit writes behind 3436ms
+ ✓ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > counts completed studies once within the actual anchor and keeps unlinked tabulation unknown 79ms
+ ✓ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > returns null rather than zero or an organization-wide count for a program without a unique anchor 33ms
+ ✓ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > reports an actual zero for an accessible anchored program without a completed study 35ms
+ ✓ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > refuses foreign, missing and malformed program scopes before counting summaries 20ms
+ ✓ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > uses fresh membership and canonical private-project policy, including a read-only share 31ms
+ ✓ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > refuses inactive principals and anonymous requests 12ms
+ ✓ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > refuses a deleted program and inactive organization rather than disclosing retained counts 37ms
+ ✓ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > does not substitute an empty summary count when the store cannot be read 13ms
+ ✓ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > refuses first-study narrative opt-in even when old completed summaries are reusable 25ms
+ ✓ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > keeps default package composition over completed accessible summaries without creating another narrative job 27ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — auth gating > returns 401 when no JWT principal is present 51ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — auth gating > returns 403 when JWT principal is present but org context is missing 4ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — run lookup + status checks > returns 404 when getRun returns null (collapsed miss-or-cross-org) 5ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — run lookup + status checks > returns 404 when URL submissionId does not match the run's submissionId 6ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — run lookup + status checks > returns 409 when run.status is not awaiting-signature 8ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > returns 401 when password verification fails (NEVER 200, no signature row) 24ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > creates a signature and persists bound_payload_digest on the happy path 12ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > REGRESSION: a signature whose audit row cannot be written does not exist at all 9ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > refuses the password alone from a signer with an authenticator enrolled (400, no signature) 12ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > signs with the password and the enrolled code, and records both 3ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > refuses an account that is not active (401), as the route always has, before comparing anything 6ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > refuses a locked account (423) before its password is compared 7ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > returns the existing signatureId without creating a duplicate when one already exists (idempotent) 5ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > resolves a concurrent-signing race idempotently on a 23505 unique violation 7ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > surfaces 500 on a non-race createElectronicSignature failure 5ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > returns 422 when no documentId anchor can be resolved (lineage unresolved) 7ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — body schema enforcement > returns 400 on invalid signatureMeaning (closed enum, only "approval" allowed) 8ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — body schema enforcement > returns 400 on empty reason (§11.50 requires a meaning manifestation) 8ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — body schema enforcement > keeps the recorded signature successful when continuation is temporarily unavailable 7ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — body schema enforcement > refuses unavailable release verification before checking credentials or inserting a signature 2ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — body schema enforcement > refuses a source withdrawn during password/MFA after the same-transaction source guard runs 6ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > previews actual deterministic aggregate tables with exact receipt and no participant rows 53ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > holds exact source locks until durable inputs are captured, then releases before unrelated composers 5ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > rolls back and performs no downstream work when input capture fails 9ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > previews unapproved source honestly but refuses to include it in a new run 2ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses a review lifecycle for new runs 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses a superseded lifecycle for new runs 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses a withdrawn lifecycle for new runs 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses an approval for different bytes 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses private before publishing tables 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses revoked before publishing tables 3ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses foreign before publishing tables 10ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses withdrawn before publishing tables 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses superseded before publishing tables 0ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses stale-digest before publishing tables 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses corrupt-bytes before publishing tables 0ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses invalid-json before publishing tables 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses invalid-observations before publishing tables 2ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses oversized before publishing tables 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > allows a read-only member to preview an accessible source but not start a source-bound run 2ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > does not turn store errors into an empty candidate list 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > lists metadata only and requires the exact approval hash 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > returns aggregate tables and exact provenance without exposing frozen participant rows 35ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > requires current project access before reading the private receipt 2ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses a missing/foreign run rather than reporting a successful empty history 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained observations 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained digest 0ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained seal 0ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained program 0ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained organization 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > honors explicit data withdrawal without erasing the original receipt or returning fake empty tables 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > does not require an old historical source to remain the current Vault version or retain original bytes 5ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > returns an honest empty source-receipt history for an intact run that never selected a source 0ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses an ambiguous study identity even in a correctly sealed input receipt 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > accepts exact recorded values without deriving efficacy or changing source observations 4ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses duplicate participant 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses unknown arm 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses wrong protocol 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses wrong randomized count 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses wrong safety population 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses wrong sample size 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses missing disposition 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses duplicate demographics 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses missing demographics 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses wrong completion flag 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses foreign AE subject 2ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses wrong AE arm 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses unrecorded primary endpoint 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses duplicate efficacy result 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses reversed confidence interval 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses invalid p value 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses nonfinite observed result 3ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses invalid date 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses missing domain declaration 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses lab counts above denominator 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses duplicate exposure 5ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > requires optional population flags and counts together, retaining unknown when neither is recorded 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > requires complete-domain declaration even for an explicitly empty adverse-event listing 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > generates field documentation from the actual schema and states semantic and qualification limits 12ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > uses only verified persisted inputs and the original run id, then releases the claim 21ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > does not run any downstream effect if another connection already holds the run 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > returns an already finished run after the claim without repeating its effects 5ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > releases the claim even when downstream persistence fails 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > allows only one of two overlapping continuation requests to execute the driver 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a changed snapshot before any effect 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a changed hash before any effect 5ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a changed seal before any effect 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a changed identity before any effect 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a changed program before any effect 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > collapses a foreign or missing run before loading any source inputs 0ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > rechecks current program authority, ignoring the original actor role 0ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a program lead downgraded to viewer before build/resume effects 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > does not guess original inputs for older asynchronous work 5ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > hydrates an older frozen signature record using its scoped submission identity 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a forged frozen release before creating any signature 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > waits for async jobs without running downstream work, then resumes with exact paused outputs 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses closed CMC approval/source records before assembling an async continuation 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses changed CMC approval/source records before assembling an async continuation 0ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses replacing the paused job id with another same-organization job 8ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a CSR job whose persisted project has changed from the original program anchor 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > continues dependent work on CSR completion using only its stored tenant and original actor 1ms
+ ✓ server/services/__tests__/csr-tabulation-source-correctness.test.ts > CSR descriptive tabulation correctness > uses sample SD and represents one-subject variability as unknown 12ms
+ ✓ server/services/__tests__/csr-tabulation-source-correctness.test.ts > CSR descriptive tabulation correctness > includes Other in sex counts and screen failure in disposition 7ms
+ ✓ server/services/__tests__/csr-tabulation-source-correctness.test.ts > CSR descriptive tabulation correctness > counts unique AE subjects, preserves recorded efficacy, and does not label fatal AEs as all study deaths 12ms
+ ✓ server/services/__tests__/csr-tabulation-source-correctness.test.ts > CSR descriptive tabulation correctness > does not count baseline-abnormal lab subjects as staying normal 1ms
+ ✓ server/services/__tests__/csr-tabulation-source-correctness.test.ts > CSR descriptive tabulation correctness > keeps optional population totals unknown when an arm denominator is unrecorded 1ms
+ Test Files  8 passed (8)
+      Tests  131 passed (131)
+   Start at  19:50:19
+   Duration  49.19s (transform 4.39s, setup 296ms, import 13.36s, tests 33.25s, environment 1ms)
+
+Source: continuation-csr-zero-denominator-final.log
+ ✓ server/services/__tests__/csr-tabulation-source-correctness.test.ts > CSR descriptive tabulation correctness > uses sample SD and represents one-subject variability as unknown 3ms
+ ✓ server/services/__tests__/csr-tabulation-source-correctness.test.ts > CSR descriptive tabulation correctness > includes Other in sex counts and screen failure in disposition 1ms
+ ✓ server/services/__tests__/csr-tabulation-source-correctness.test.ts > CSR descriptive tabulation correctness > counts unique AE subjects, preserves recorded efficacy, and does not label fatal AEs as all study deaths 1ms
+ ✓ server/services/__tests__/csr-tabulation-source-correctness.test.ts > CSR descriptive tabulation correctness > does not count baseline-abnormal lab subjects as staying normal 1ms
+ ✓ server/services/__tests__/csr-tabulation-source-correctness.test.ts > CSR descriptive tabulation correctness > keeps optional population totals unknown when an arm denominator is unrecorded 1ms
+ ✓ server/services/__tests__/csr-tabulation-source-correctness.test.ts > CSR descriptive tabulation correctness > keeps AE percentages unknown for an arm with no safety participants 0ms
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  19:53:43
+   Duration  311ms (transform 107ms, setup 65ms, import 59ms, tests 8ms, environment 0ms)
+
+Final source/schema/history/tabulator subset after privacy correction:
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > previews actual deterministic aggregate tables with exact receipt and no participant rows 11ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > holds exact source locks until durable inputs are captured, then releases before unrelated composers 2ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > rolls back and performs no downstream work when input capture fails 2ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > previews unapproved source honestly but refuses to include it in a new run 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses a review lifecycle for new runs 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses a superseded lifecycle for new runs 0ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses a withdrawn lifecycle for new runs 0ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses an approval for different bytes 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses private before publishing tables 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses revoked before publishing tables 0ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses foreign before publishing tables 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses withdrawn before publishing tables 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses superseded before publishing tables 0ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses stale-digest before publishing tables 0ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses corrupt-bytes before publishing tables 0ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses invalid-json before publishing tables 0ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses invalid-observations before publishing tables 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses oversized before publishing tables 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > allows a read-only member to preview an accessible source but not start a source-bound run 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > does not turn store errors into an empty candidate list 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > lists metadata only and requires the exact approval hash 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > does not echo participant cell values or unknown uploaded keys in schema validation issues 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > returns aggregate tables and exact provenance without exposing frozen participant rows 19ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > requires current project access before reading the private receipt 4ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses a missing/foreign run rather than reporting a successful empty history 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained observations 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained digest 0ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained seal 0ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained program 0ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained organization 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > honors explicit data withdrawal without erasing the original receipt or returning fake empty tables 2ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > does not require an old historical source to remain the current Vault version or retain original bytes 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > returns an honest empty source-receipt history for an intact run that never selected a source 0ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses an ambiguous study identity even in a correctly sealed input receipt 4ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > accepts exact recorded values without deriving efficacy or changing source observations 4ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses duplicate participant 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses unknown arm 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses wrong protocol 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses wrong randomized count 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses wrong safety population 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses wrong sample size 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses missing disposition 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses duplicate demographics 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses missing demographics 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses wrong completion flag 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses foreign AE subject 2ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses wrong AE arm 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses unrecorded primary endpoint 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses duplicate efficacy result 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses reversed confidence interval 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses invalid p value 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses nonfinite observed result 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses invalid date 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses missing domain declaration 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses lab counts above denominator 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses duplicate exposure 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > requires optional population flags and counts together, retaining unknown when neither is recorded 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > requires complete-domain declaration even for an explicitly empty adverse-event listing 0ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > generates field documentation from the actual schema and states semantic and qualification limits 2ms
+ ✓ server/services/__tests__/csr-tabulation-source-correctness.test.ts > CSR descriptive tabulation correctness > uses sample SD and represents one-subject variability as unknown 3ms
+ ✓ server/services/__tests__/csr-tabulation-source-correctness.test.ts > CSR descriptive tabulation correctness > includes Other in sex counts and screen failure in disposition 1ms
+ ✓ server/services/__tests__/csr-tabulation-source-correctness.test.ts > CSR descriptive tabulation correctness > counts unique AE subjects, preserves recorded efficacy, and does not label fatal AEs as all study deaths 1ms
+ ✓ server/services/__tests__/csr-tabulation-source-correctness.test.ts > CSR descriptive tabulation correctness > does not count baseline-abnormal lab subjects as staying normal 1ms
+ ✓ server/services/__tests__/csr-tabulation-source-correctness.test.ts > CSR descriptive tabulation correctness > keeps optional population totals unknown when an arm denominator is unrecorded 1ms
+ ✓ server/services/__tests__/csr-tabulation-source-correctness.test.ts > CSR descriptive tabulation correctness > keeps AE percentages unknown for an arm with no safety participants 0ms
+ Test Files  4 passed (4)
+      Tests  65 passed (65)
+   Start at  19:56:56
+   Duration  6.29s (transform 2.28s, setup 286ms, import 4.94s, tests 97ms, environment 0ms)

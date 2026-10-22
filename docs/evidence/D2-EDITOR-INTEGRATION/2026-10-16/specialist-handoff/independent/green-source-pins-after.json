@@ -1,0 +1,29 @@
+{
+  "head": "990a687c6eb31adb1becfa58d91fc9d2932f23ed",
+  "sourcePins": {
+    "client/src/concept2cure/v2/authoringHandoff.ts": "cd47d14e26ab93fc0ac0f000cc6aeb3c9fb05ed27c57073ad3b83079648bfe4b",
+    "client/src/concept2cure/v2/shellProject.ts": "cf78e614a1bd8ff3fbd7041c886f1126adb1bc77bb14ba064d776627dc98a9c7",
+    "client/src/concept2cure/v2/surfaces/ReportEngine.tsx": "acae5f79fd5809643fa385989e5120fd32924c23daa049095d9845961e87ce44",
+    "client/src/concept2cure/v2/surfaces/Biostatistics.tsx": "1767db63a41ca3bdb0e81fd09080399ce6ce8482d687b9ac866430061eac72dd",
+    "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx": "11e38e5e07072968cfc79ca21c06cb90674907a17451f174fad07b5105a66042",
+    "client/src/concept2cure/v2/surfaces/CmcModule.tsx": "01a498cab01a95205dcc2833f070b84e2bc5b065a415f526eb0125dc4f1f4469",
+    "client/src/concept2cure/v2/surfaces/CmcQuality.tsx": "1d6e4a9a3a34861d868fe59b0d46752689ccdf1d83aa7d152fd8bccd5d328c36",
+    "client/src/concept2cure/v2/surfaces/PvCockpit.tsx": "3368be06b5192f1b05f18f9fe2def1c7dabdf78765ea9965be3e92dd50504d17",
+    "client/src/concept2cure/v2/editorTarget.ts": "4ab6cc8a9154b5261270f016072fca992b8e5b0c04ca00a77df03320a949a59d",
+    "client/src/services/portal/authService.tsx": "d40ad22711f5125c2b2cc1e09949b585d4a3060075a7b6e01f8fb9ab7407f1db",
+    "client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx": "61592b3cc19f072a0497e125d1e8319148779c662810fcb3e8b96fa8fdf0e018"
+  },
+  "unchangedDuringFinalRun": {
+    "client/src/concept2cure/v2/authoringHandoff.ts": true,
+    "client/src/concept2cure/v2/shellProject.ts": true,
+    "client/src/concept2cure/v2/surfaces/ReportEngine.tsx": true,
+    "client/src/concept2cure/v2/surfaces/Biostatistics.tsx": true,
+    "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx": true,
+    "client/src/concept2cure/v2/surfaces/CmcModule.tsx": true,
+    "client/src/concept2cure/v2/surfaces/CmcQuality.tsx": true,
+    "client/src/concept2cure/v2/surfaces/PvCockpit.tsx": true,
+    "client/src/concept2cure/v2/editorTarget.ts": true,
+    "client/src/services/portal/authService.tsx": true,
+    "client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx": true
+  }
+}

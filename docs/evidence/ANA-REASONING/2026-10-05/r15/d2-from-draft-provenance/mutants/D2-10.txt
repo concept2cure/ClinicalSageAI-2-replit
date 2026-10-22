@@ -1,0 +1,7 @@
+mutant D2-10: a run reference is not rewritten to the record it resolved to
+verdict: KILLED
+Tests  1 failed | 10 passed (11)
+
+ × server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > resolves the AnA tool’s turnId, which is a RUN id, not a record id 107ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)

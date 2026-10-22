@@ -143,6 +143,40 @@ export const BUILD_STATE_META: Record<string, { tone: string; label: string; hin
   locked: { tone: 'ok', label: 'locked', hint: 'Locked for submission.' },
 };
 
+/** What a contradiction sweep compared (POST …/contradictions `examined`). */
+interface SweepExamined {
+  specifications?: number;
+  methods?: number;
+  stability?: number;
+  batches?: number;
+  comparability?: number;
+}
+
+/** The last recorded sweep (GET …/contradictions `meta.lastSweep`). */
+interface LastSweep {
+  at: string;
+  by: string | null;
+  examined: SweepExamined | null;
+  found: number | null;
+}
+
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/** "Compared 2 specifications, 1 method, …" — or that the scope was not reported. */
+function sweepScope(e: SweepExamined | undefined): string {
+  if (!e) return 'What it compared was not reported';
+  return (
+    'Compared ' +
+    [
+      plural(e.specifications ?? 0, 'specification', 'specifications'),
+      plural(e.methods ?? 0, 'method', 'methods'),
+      plural(e.stability ?? 0, 'stability study', 'stability studies'),
+      plural(e.batches ?? 0, 'batch', 'batches'),
+      plural(e.comparability ?? 0, 'comparability assessment', 'comparability assessments'),
+    ].join(', ')
+  );
+}
+
 export function buildStateMeta(state: string) {
   return BUILD_STATE_META[state] ?? { tone: 'dim', label: state.replace(/_/g, ' '), hint: '' };
 }
@@ -190,6 +224,10 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
   const sections = build.data?.sections ?? [];
   const summary = build.data?.summary;
   const open = contradictions.rows.filter((c) => c.status !== 'resolved');
+  /* When the program was last swept, and over what (GET …/contradictions
+     meta). An empty list from a program nobody swept is not "no
+     contradictions"; the export gate runs the detector itself either way. */
+  const lastSweep = (contradictions.meta as { lastSweep?: LastSweep | null } | undefined)?.lastSweep ?? null;
   const criticalOpen = open.filter((c) => String(c.severity).toLowerCase() === 'critical');
 
   /** Every action here is awaited, reports the server's own words, and reloads
@@ -255,7 +293,8 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
       };
       const found = body?.contradictions?.length ?? 0;
       if (found === 0) {
-        return 'Contradiction sweep complete — nothing found across specifications, methods, stability, batches and comparability.';
+        // Say what was compared: a sweep over empty registers also finds nothing.
+        return 'Contradiction sweep complete — nothing found. ' + sweepScope((json as { examined?: SweepExamined })?.examined) + '.';
       }
       /* Each finding is now raised as work on the shared task board. Say what
          happened to it: "3 findings recorded" and a silently empty board is the
@@ -463,7 +502,9 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
                   ? 'Loading contradictions…'
                   : contradictions.error
                     ? 'Couldn’t load contradictions — no count is claimed'
-                    : `${open.length} open${criticalOpen.length ? ` — ${criticalOpen.length} critical` : ''} — across specifications, methods, stability, batch and comparability`}
+                    : !lastSweep
+                      ? 'Not swept yet — no count is claimed'
+                      : `${open.length} open${criticalOpen.length ? ` — ${criticalOpen.length} critical` : ''} — last swept ${new Date(lastSweep.at).toLocaleString()}`}
               </span>
             </div>
             <div className="pj-card-b" style={{ padding: 0 }}>
@@ -474,11 +515,19 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
                   ) : contradictions.error ? (
                     <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load contradictions" hint={contradictions.error} retry={bump} />
                   ) : (
-                    <EmptyState
-                      icon={I.shieldCheck}
-                      title="No open contradictions"
-                      hint="The detection engine compares specifications against their methods, stability against its studies, batch dispositions and comparability risk. Run the sweep after recording new CMC data — a critical finding blocks section approval."
-                    />
+                    !lastSweep ? (
+                      <EmptyState
+                        icon={I.shieldAlert}
+                        title="Not swept yet"
+                        hint="No contradiction sweep has run for this program, so no finding is recorded and none is claimed absent. Run the sweep after recording CMC data. The export gate refuses a critical finding in the records whether or not a sweep recorded it."
+                      />
+                    ) : (
+                      <EmptyState
+                        icon={I.shieldCheck}
+                        title="No open contradictions at the last sweep"
+                        hint={`Swept ${new Date(lastSweep.at).toLocaleString()}. ${sweepScope(lastSweep.examined ?? undefined)}. Run the sweep again after recording new CMC data — a critical finding blocks section approval.`}
+                      />
+                    )
                   )}
                 </div>
               ) : (

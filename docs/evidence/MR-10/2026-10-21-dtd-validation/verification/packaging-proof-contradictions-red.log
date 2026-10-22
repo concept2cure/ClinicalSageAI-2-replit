@@ -1,0 +1,56 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ × server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > canonical proof rejects contradictory xml-errors details 10ms
+   → expected true to be false // Object.is equality
+ × server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > canonical proof rejects contradictory missing-present details 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > canonical proof rejects contradictory missing-styles-inventory details 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > canonical proof rejects contradictory duplicate-required details 1ms
+   → expected true to be false // Object.is equality
+ ↓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses absent historical status and presence-only historical status when required
+ ↓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > accepts actual complete proof while preserving the default/report-only posture
+ ↓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged empty proof despite passed:true
+ ↓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged duplicate proof despite passed:true
+ ↓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged missing-row proof despite passed:true
+ ↓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged skipped proof despite passed:true
+ ↓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged doctype proof despite passed:true
+ ↓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged integrity proof despite passed:true
+ ↓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged missing-required-style proof despite passed:true
+ ↓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses incomplete or forged nonboolean proof despite passed:true
+ ↓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > refuses omitted STF coverage in a study package
+ ↓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > regional classification needs current regional DTD and integrity proof > does not establish conformance from a clean structural-gap report alone
+ ↓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > regional classification needs current regional DTD and integrity proof > accepts a clean structural report only with current complete regional proof
+ ↓ server/services/ectd/__tests__/dtd-validation-proof.test.ts > regional classification needs current regional DTD and integrity proof > retains structural refusals even with an XML-valid synthetic grammar
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > canonical proof rejects contradictory xml-errors details
+ FAIL  server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > canonical proof rejects contradictory missing-present details
+ FAIL  server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > canonical proof rejects contradictory missing-styles-inventory details
+ FAIL  server/services/ectd/__tests__/dtd-validation-proof.test.ts > existing DTD gate requires complete validation proof > canonical proof rejects contradictory duplicate-required details
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ectd/__tests__/dtd-validation-proof.test.ts:31:51
+     29|       if (mode === 'missing-styles-inventory') data.presentStylesheets…
+     30|       if (mode === 'duplicate-required') data.required.push(data.requi…
+     31|       expect(hasPassedPackageDtdValidation(data)).toBe(false);
+       |                                                   ^
+     32|     });
+     33|   it('refuses absent historical status and presence-only historical st…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 14 skipped (18)
+   Start at  00:31:39
+   Duration  2.69s (transform 1.36s, setup 193ms, import 1.42s, tests 18ms, environment 0ms)
+

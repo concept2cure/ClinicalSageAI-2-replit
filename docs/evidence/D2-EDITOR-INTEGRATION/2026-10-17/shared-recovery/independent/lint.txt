@@ -1,0 +1,7 @@
+
+/workspace/ClinicalSageAI/client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx
+  283:22  warning  'structuredClone' is not defined  no-undef
+
+✖ 1 problem (0 errors, 1 warning)
+
+ESLint found too many warnings (maximum: 0).

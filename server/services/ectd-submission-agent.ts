@@ -1,8 +1,9 @@
 /**
  * eCTD Submission Agent Service
  *
- * Manages the full lifecycle of eCTD submissions to regulatory agency gateways
- * (FDA ESG, EMA eSubmission, PMDA, Health Canada CESG).
+ * Records eCTD submissions bound for regulatory agency gateways (FDA ESG, EMA
+ * eSubmission, PMDA, Health Canada CESG) and runs four local pre-submission
+ * checks over them. It validates no eCTD package and transmits nothing.
  *
  * @module server/services/ectd-submission-agent
  * @compliance ICH M8 v4.0, FDA ESG Technical Conformance Guide
@@ -69,12 +70,32 @@ const REQUIRED_MODULES: Record<string, string[]> = {
 // 2026-10-08 (W5/D7, sweep VP-7): FILENAME_PATTERN now requires the one '.' and
 // extension itself, so the separate extension check here is gone.
 
+/** What the four pre-submission checks do not assess; stated on every summary. */
+const PRECHECK_NOT_ASSESSED = [
+  'eCTD backbone (index.xml) and DTD conformance',
+  'regional Module 1 rules',
+  'lifecycle operations against earlier sequences',
+  'sequence continuity',
+  "PDF content (PDF/A is the uploader's declaration)",
+  'the files at their document paths (checksums cover the content supplied)',
+];
+
 // ─── Service ─────────────────────────────────────────────────────────────────
 
 export class EctdSubmissionAgent {
 
   /** Create a draft submission record */
   async prepareSubmission(orgId: number, data: PrepareSubmissionData) {
+    // 2026-10-15: these defaulted to 'IND' and '0000', so a submission prepared
+    // without them was recorded as an IND original sequence. Neither is assumed.
+    const applicationType = data.applicationType?.trim();
+    const sequenceNumber = data.sequenceNumber?.trim();
+    if (!applicationType || !sequenceNumber) {
+      const missing = [!applicationType && 'application type', !sequenceNumber && 'sequence number'].filter(Boolean);
+      throw new Error(
+        `Cannot prepare a submission without its ${missing.join(' and ')}; none is assumed, and no submission was created.`,
+      );
+    }
     const pool = getPool();
     const result = await pool.query(
       `INSERT INTO ectd_submissions
@@ -86,9 +107,9 @@ export class EctdSubmissionAgent {
         orgId,
         data.projectId ?? null,
         data.submissionType,
-        data.applicationType ?? 'IND',
+        applicationType,
         data.applicationNumber ?? null,
-        data.sequenceNumber ?? '0000',
+        sequenceNumber,
         data.agency,
         data.center ?? null,
         data.applicantName ?? null,
@@ -119,12 +140,18 @@ export class EctdSubmissionAgent {
     const sub = await this.getSubmission(orgId, submissionId);
     if (!sub) throw new Error('Submission not found');
 
-    // Generate MD5 checksum from content or filename fallback
-    const source = doc.content ?? doc.fileName;
-    const md5Checksum = crypto.createHash('md5').update(source).digest('hex');
-    const sha256 = doc.content
-      ? crypto.createHash('sha256').update(doc.content).digest('hex')
-      : null;
+    // 2026-10-15: with no content this stored md5(fileName) as the document's
+    // checksum. The file at documentPath is never read here, so the content
+    // supplied is the only bytes there are; without them (md5_checksum is NOT
+    // NULL) there is no honest row to write.
+    if (!doc.content) {
+      throw new Error(
+        `Document "${doc.fileName}" was sent without its content. Its checksum is computed over the content ` +
+          'supplied (this service does not read the file at documentPath), so it was not added.',
+      );
+    }
+    const md5Checksum = crypto.createHash('md5').update(doc.content).digest('hex');
+    const sha256 = crypto.createHash('sha256').update(doc.content).digest('hex');
 
     const result = await pool.query(
       `INSERT INTO ectd_submission_documents
@@ -244,16 +271,18 @@ export class EctdSubmissionAgent {
       });
     }
 
-    // Rule 4: MD5 checksum presence
+    // Rule 4: checksums over the content supplied when the document was added.
+    // 2026-10-15: this passed on any non-empty md5_checksum, and a row added
+    // without content carries the MD5 of its file name and no SHA-256.
     for (const doc of docs) {
-      const passed = !!doc.md5_checksum;
+      const passed = !!doc.md5_checksum && !!doc.sha256_checksum;
       validations.push({
         ruleId: 'CHECKSUM_PRESENT', ruleCategory: 'checksum', severity: passed ? 'info' : 'error',
         message: passed
-          ? `Checksum present for "${doc.file_name}"`
-          : `Missing MD5 checksum for "${doc.file_name}"`,
+          ? `MD5 and SHA-256 of "${doc.file_name}" were computed over the content supplied when it was added; the file at its document path was not read`
+          : `No checksum covers the bytes of "${doc.file_name}": no content was supplied when it was added, so the MD5 on record does not fingerprint the document`,
         sectionCode: doc.section_code, documentPath: doc.document_path,
-        passed, fixSuggestion: passed ? null : 'Regenerate document with checksum',
+        passed, fixSuggestion: passed ? null : 'Add the document again with its content so its checksum is computed over its bytes',
       });
     }
 
@@ -273,14 +302,19 @@ export class EctdSubmissionAgent {
     const warnings = validations.filter((v) => !v.passed && v.severity === 'warning').length;
     const allPassed = errors === 0;
 
-    const summary = { total: validations.length, passed: validations.filter((v) => v.passed).length, errors, warnings, allPassed };
+    // 2026-10-15: a clean run set status 'validated'. These four checks are a
+    // precheck; nothing here validates the eCTD package, so the status is left
+    // as it was and the summary says what was not assessed.
+    const summary = {
+      total: validations.length, passed: validations.filter((v) => v.passed).length, errors, warnings, allPassed,
+      scope: 'precheck' as const,
+      notAssessed: PRECHECK_NOT_ASSESSED,
+    };
 
-    // Update submission validation summary and status
-    const newStatus = allPassed ? 'validated' : sub.status;
     await pool.query(
-      `UPDATE ectd_submissions SET validation_summary = $1, status = $2, updated_at = NOW()
-       WHERE id = $3 AND org_id = $4`,
-      [JSON.stringify(summary), newStatus, submissionId, orgId],
+      `UPDATE ectd_submissions SET validation_summary = $1, updated_at = NOW()
+       WHERE id = $2 AND org_id = $3`,
+      [JSON.stringify(summary), submissionId, orgId],
     );
 
     return { summary, validations };
@@ -303,12 +337,10 @@ export class EctdSubmissionAgent {
     if (parseInt(total) === 0) throw new Error('Submission has not been validated yet');
     if (parseInt(errors) > 0) throw new Error(`Submission has ${errors} validation error(s) that must be resolved`);
 
-    const prevStatus = sub.status;
-
     // ── THIS METHOD DOES NOT TRANSMIT ANYTHING ───────────────────────────────
     // There is no gateway client here: no AS2 handshake, no ESG connection, no
     // bytes leaving the process, no transmittal record, no acknowledgement. The
-    // work above is validation-gating and nothing more.
+    // work above gates on the pre-submission checks and nothing more.
     //
     // It previously wrote `status = 'submitted'` with a history row reading
     // "Submitted to agency gateway", and returned `{ status: 'submitted' }`. A
@@ -318,42 +350,33 @@ export class EctdSubmissionAgent {
     // found and closed in ESGSubmissionService and medicalDeviceService; this is
     // the third site.
     //
-    // The record therefore stays at 'validated' — which is exactly what is true.
-    //
-    // 'validated' rather than a new 'ready_for_transmission': the status column
-    // carries a CHECK constraint (db/migrations/082_ectd_submission_agent.sql:71)
-    // listing draft/assembling/validated/submitted/acknowledged/under_review/
-    // approved/rejected/withdrawn/amendment_required. Introducing a new value
-    // needs a migration on the durable apply path, and inventing one to carry a
-    // message would be schema churn for prose. It is also the more honest
-    // outcome: pressing "submit" on a build that cannot submit SHOULD leave the
-    // record where it was, so the queue of sequences genuinely awaiting filing
-    // stays visible instead of silently emptying itself.
+    // Pressing "submit" on a build that cannot submit leaves the record where it
+    // was, so the queue of sequences genuinely awaiting filing stays visible.
+    // 2026-10-15: it then wrote status 'validated' and answered "Validation
+    // passed." on the four local prechecks validateSubmission runs. Those are no
+    // eCTD validation, so no status is written at all.
     //
     // The history row is where the operator's intent and our refusal are
-    // recorded, so the attempt is auditable rather than invisible.
-    await pool.query(
-      `UPDATE ectd_submissions SET status = 'validated', updated_at = NOW()
-       WHERE id = $1 AND org_id = $2`,
-      [submissionId, orgId],
-    );
-
+    // recorded, so the attempt is auditable rather than invisible. It records the
+    // status the submission holds, read in the same statement.
     await pool.query(
       `INSERT INTO ectd_submission_status_history
         (submission_id, org_id, from_status, to_status, change_reason)
-       VALUES ($1,$2,$3,'validated',
-               'Transmission requested and validation passed. NOT transmitted: this build performs no agency gateway transmission, so the sequence remains awaiting filing.')`,
-      [submissionId, orgId, prevStatus],
+       SELECT id, org_id, status, status,
+              'Transmission requested; the pre-submission checks passed. NOT transmitted: this build performs no agency gateway transmission, and the package has not been validated against the eCTD specification.'
+         FROM ectd_submissions WHERE id = $1 AND org_id = $2`,
+      [submissionId, orgId],
     );
 
     return {
       id: submissionId,
-      status: 'validated',
+      status: sub.status,
       transmitted: false,
       submittedAt: null,
       message:
-        'Validation passed. This sequence has NOT been transmitted to any agency gateway — ' +
-        'this build performs no gateway transmission. It remains awaiting filing.',
+        'The pre-submission checks passed (file names, required modules, declared PDF/A, checksums over supplied content). ' +
+        'This sequence has NOT been validated against the eCTD specification and has NOT been transmitted to any ' +
+        'agency gateway — this build performs no gateway transmission. It remains awaiting filing.',
     };
   }
 
@@ -430,6 +453,14 @@ export class EctdSubmissionAgent {
 
     const parent = await this.getSubmission(orgId, parentSubmissionId);
     if (!parent) throw new Error('Parent submission not found');
+    // 2026-10-15: with no application number the MAX() below matched nothing and
+    // the amendment was recorded as sequence 0001, whatever the parent's was.
+    if (!parent.application_number) {
+      throw new Error(
+        `Parent submission #${parentSubmissionId} records no application number, so the next sequence number ` +
+          'cannot be determined; no amendment was created.',
+      );
+    }
 
     // Determine next sequence number
     const seqResult = await pool.query(

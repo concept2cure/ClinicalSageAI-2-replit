@@ -1,0 +1,6 @@
+ × server/routes/__tests__/agent-swarm-retired.test.ts > /api/agent-swarm is retired > its route module is gone 7ms
+ × server/routes/__tests__/agent-swarm-retired.test.ts > /api/agent-swarm is retired > nothing imports or mounts it 2ms
+ × server/routes/__tests__/agent-swarm-retired.test.ts > /api/agent-swarm is retired > its unapproved-model-pin baseline entry is gone, and the pin gate passes 1ms
+ ✓ server/routes/__tests__/agent-swarm-retired.test.ts > /api/agent-swarm is retired > no client calls it 20ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 1 passed (4)

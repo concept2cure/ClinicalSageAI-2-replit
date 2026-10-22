@@ -1,0 +1,12 @@
+# Green run: this change, after the review fixes. 2026-10-08T18:26:41Z
+# npx vitest run client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx tests/ui/filing-path-reachability.test.ts  (lines for client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx; totals are for the whole run)
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > after placing into sequence 7, the Submission Center opens on sequence 7 in the Builder 513ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > a sequence not in the submission is not guessed at: the sequence list, with a line saying so 62ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > on the first submission too: an unknown sequence is said, never replaced by sequence 0000 48ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > a failed sequence read is said as a failed read, not as "not found" 35ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > a submission not in the list is not guessed at: the submission list, with a line saying so 41ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > the line about the link is cleared once the person moves to another tab 83ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > the line about the link is cleared once the person picks another submission 36ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > with nothing carried, the Submission Center opens on its portfolio as before 34ms
+ Test Files  3 passed (3)
+      Tests  38 passed (38)

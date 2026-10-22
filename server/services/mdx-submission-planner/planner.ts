@@ -10,10 +10,11 @@
  *   - global-markets/market-registry  (descriptors + capability flags)
  *   - global-markets/market-readiness (assessMarketReadiness)
  *
- * HONEST BY CONSTRUCTION: capability flags come straight from the registry;
- * `canTransmit` mirrors the registry — true for the 11 markets with a live
- * gateway, false for JP/TW/SA/ZA/MDSAP. The planner never asserts a capability
- * the registry does not have.
+ * Capability flags come straight from the registry. `canTransmit` mirrors it:
+ * what regulatory/market-support.ts states for the market's device and IVD
+ * filings, false for every market today, and each such market carries the
+ * "platform cannot transmit to <authority>" blocker. The planner asserts no
+ * capability the registry does not.
  *
  * PURE + DETERMINISTIC: same inputs ⇒ same output (apart from the ISO timestamp
  * in provenance). No DB, no network, no LLM. Results are sorted by canonical

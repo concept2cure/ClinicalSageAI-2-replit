@@ -1,0 +1,30 @@
+{
+  "database": "platform_ci_fixture_reconcile_20261014_4e18c6a9",
+  "nativeFiles": 4,
+  "sharedFixtureFiles": 1,
+  "passed": 44,
+  "failed": 2,
+  "total": 46,
+  "skipped": 0,
+  "durationSeconds": 37.32,
+  "originalExpectationsUnchanged": true,
+  "globalRolesAndMembershipsUnchanged": true,
+  "failures": [
+    {
+      "test": "foreign target upload",
+      "expectedStatus": 403,
+      "observedStatus": 404,
+      "responseCodeObserved": false,
+      "remainingAssertionsNotReached": true
+    },
+    {
+      "test": "genuinely missing organization membership",
+      "expectedStatus": 403,
+      "observedStatus": 403,
+      "expectedCode": "VAULT_WRITE_ROLE_REQUIRED",
+      "observedCode": "PROJECT_ACTOR_ACCESS_DENIED"
+    }
+  ],
+  "historyRetained": true,
+  "expectationsChanged": false
+}

@@ -1,0 +1,17 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files source assembly reaches the one editor > offers Build in editor on the selected real Vault upload beside the actual document 1009ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files source assembly reaches the one editor > keeps the exact Vault identity through read-only selection and explicit build (AnA=false) 1672ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files source assembly reaches the one editor > keeps the exact Vault identity through read-only selection and explicit build (AnA=true) 1621ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > preserves current source selection and dirty text on Stay, then adopts only after an explicit guarded leave 2126ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > honors the existing ceremony guard without disturbing the current canvas 829ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > does not publish a delayed chooser result after the project is left and revisited 770ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > holds the current canvas when its rail project differs from the current shell project 426ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > does not bind an old pending source choice after the selected Vault upload changes 731ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > carries a later search page UUID through the same chooser without inventing a checksum or Data Room identity 989ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  19:33:47
+   Duration  15.88s (transform 2.34s, setup 329ms, import 2.98s, tests 10.18s, environment 1.57s)

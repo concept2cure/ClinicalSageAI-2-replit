@@ -1,0 +1,6 @@
+[ci:program-ownership-single-source] 2 copy(ies) of the program-ownership check outside server/services/c2c/program-access.ts:
+  server/services/clinical-regulatory-evidence/data-room-processing-store.ts:83  inline yes/no program-ownership query: SELECT id FROM regulatory_programs WHERE id=$1 AND organization_id=$2
+  server/services/vault/document-catalog-admission.ts:47  inline yes/no program-ownership query: SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2
+
+Call programInOrganization(db, programId, organizationId) instead. It is the one definition of a program
+the organization may act on: live, theirs, in regulatory_programs. A copy drifts — see this script's header.

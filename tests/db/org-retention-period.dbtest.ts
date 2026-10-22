@@ -38,10 +38,13 @@ import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
 import { getPool } from '../../server/db/runtime';
 import { runWithTenantScope } from '../../server/db/tenantStore';
+import { nativeCatalogRunId } from './catalog-native-fixture';
+import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime, seedVaultFixtureParent } from './vault-current-access-fixture';
 
-const PROBE = 'dbtest-p122org ';
-const CODE = 'DBTEST-P122ORG';
-const POLICY = 'DBTEST-P122ORG-15Y';
+const RUN = nativeCatalogRunId();
+const PROBE = `dbtest-p122org ${RUN} `;
+const CODE = `DBTEST-P122ORG-${RUN}`;
+const POLICY = `${CODE}-15Y`;
 const APP_ROLE = process.env.APP_SERVICE_DB_ROLE || 'app_service';
 const SETTING = '/api/vault/legal-holds/retention';
 
@@ -124,53 +127,25 @@ async function tenant(slug: string): Promise<Tenant> {
   const org = await owner.query(
     `INSERT INTO organizations (name, slug) VALUES ($1, $2)
        ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
-    [`${PROBE}${slug}`, `dbtest-p122org-${slug}`],
+    [`${PROBE}${slug}`, `dbtest-p122org-${RUN}-${slug}`],
   );
   const prog = await owner.query(
     `INSERT INTO regulatory_programs (name, code, organization_id, program_type, product_type, primary_agency, product_name)
      VALUES ($1, $2, $3, 'ind', 'drug', 'FDA', 'Retainol 5mg') RETURNING id`,
     [`${PROBE}${slug} program`, `${CODE}-${slug}`, org.rows[0].id],
   );
-  return { orgId: Number(org.rows[0].id), orgUuid: String(org.rows[0].uuid), programId: String(prog.rows[0].id) };
+  const scoped = { orgId: Number(org.rows[0].id), orgUuid: String(org.rows[0].uuid), programId: String(prog.rows[0].id) };
+  await seedVaultFixtureParent(owner, scoped, { userId: admin, namespace: `${CODE}-${slug}` });
+  return scoped;
 }
 
 async function user(label: string): Promise<number> {
   const u = await owner.query(
     `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, 'not-a-real-hash')
        ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    [`dbtest-p122org-${label}@example.test`, `${PROBE}${label}`],
+    [`dbtest-p122org-${RUN}-${label}@example.test`, `${PROBE}${label}`],
   );
   return Number(u.rows[0].id);
-}
-
-/** Everything this suite writes, by its own tag and its own two organisations. */
-async function cleanup(): Promise<void> {
-  const orgs = (
-    await owner.query('SELECT id FROM organizations WHERE slug LIKE $1', ['dbtest-p122org-%'])
-  ).rows.map(r => Number(r.id));
-  const client = await owner.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query('DELETE FROM audit_logs WHERE tenant_id = ANY($1::int[])', [orgs]);
-    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query('COMMIT');
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    console.warn('[p122org] audit cleanup incomplete:', err);
-  } finally {
-    client.release();
-  }
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${CODE}%`]);
-  await owner.query('DELETE FROM vault.retention_policies WHERE policy_name = $1', [POLICY]);
-  if (await settingTable()) {
-    await owner.query('DELETE FROM organization_retention_settings WHERE organization_id = ANY($1::int[])', [orgs]);
-  }
-  await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE}%`]);
-  await owner.query('DELETE FROM tenant_export_receipts WHERE organization_id = ANY($1::int[])', [orgs]);
-  // Last, once nothing of theirs references them: the suite's own users and organisations.
-  await owner.query('DELETE FROM users WHERE email LIKE $1', ['dbtest-p122org-%@example.test']);
-  await owner.query('DELETE FROM organizations WHERE slug LIKE $1', ['dbtest-p122org-%']);
 }
 
 beforeAll(async () => {
@@ -178,11 +153,13 @@ beforeAll(async () => {
     throw new Error('[p122org] APP_DATABASE_URL is required; owner execution is not an isolation proof');
   }
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
-  await cleanup();
-  mine = await tenant('mine');
-  theirs = await tenant('theirs');
+  await assertVaultFixtureDatabase(owner);
   admin = await user('admin');
   member = await user('member');
+  mine = await tenant('mine');
+  theirs = await tenant('theirs');
+  await owner.query(`INSERT INTO organization_users(organization_id,user_id,role) VALUES($1,$2,'member')`, [mine.orgId, member]);
+  await assertVaultFixtureRuntime(mine);
   await owner.query(
     `INSERT INTO vault.retention_policies (policy_name, description, retention_days)
      VALUES ($1, 'dbtest: a named policy longer than the organisation period', 5490)`,
@@ -191,8 +168,8 @@ beforeAll(async () => {
 }, 60_000);
 
 afterAll(async () => {
-  await cleanup().catch(() => undefined);
   await owner.end().catch(() => undefined);
+  await closeVaultFixtureRuntime();
 });
 
 describe('the runtime posture this suite proves under', () => {

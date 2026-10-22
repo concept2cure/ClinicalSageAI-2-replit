@@ -9,8 +9,10 @@ vi.mock('../../../services/cmc/project-membership', () => ({ projectBelongsToTen
 const mockRecordGoverned = vi.fn();
 // §11.10(g) gate; its role read is proven in cmc-sign-signature-row.test.ts.
 const mockRefusedAuthority = vi.fn();
-vi.mock('../cmc-signer', () => ({
-  refusedWithoutSigningAuthority: (...a: unknown[]) => mockRefusedAuthority(...a),
+// P-27 (2026-10-08): the route asks the platform's one policy directly
+// (cmc-signer's refusedWithoutSigningAuthority was deleted).
+vi.mock('../../../services/part11/signing-authority-gate', () => ({
+  checkSigningAuthority: (...a: unknown[]) => mockRefusedAuthority(...a),
 }));
 
 vi.mock('../../../db', () => ({
@@ -23,6 +25,19 @@ vi.mock('../../../db', () => ({
 // The section-approve endpoint re-authenticates the signer (§11) before any
 // write, then records a hash-chained governed action; mock both so the gate +
 // audit are exercised without bcrypt/MFA or a real ledger.
+/* Four-eyes on a section approval — the signer may not be one of the people who
+   ENTERED the register records the section cites — is a control with its own
+   suite, against a real Postgres and the real audit chain
+   (services/cmc/__tests__/section-approval-separation-of-duties.pglite.integration.test.ts),
+   and its own route cases (module3SectionApproveFourEyes.test.ts). Here it is a
+   pass-through, because these cases drive the SQL and audit sequence and would
+   otherwise all refuse on a fixture that cites no recorded source. */
+vi.mock('../../../services/governance/separation-of-duties', () => ({
+  assertSignerIsNotAuthor: async () => ({ checked: true, reason: 'stubbed in this suite' }),
+  cmcModule3SectionTarget: (projectId: string, sectionKey: string) =>
+    `cmc-module3-section:${projectId}:${sectionKey}`,
+  separationOfDutiesRefusal: () => null,
+}));
 vi.mock('../../../routes/c2c/actions', () => ({
   verifyReauth: (...a: unknown[]) => mockVerifyReauth(...a),
   recordGovernedAction: (...a: unknown[]) => mockRecordGoverned(...a),
@@ -69,7 +84,7 @@ describe('module3OperatingSystemRoutes', () => {
     mockQuery.mockReset();
     mockQuery.mockResolvedValue({ rows: [] }); // unscripted reads (lineage drift): nothing found
     mockRefusedAuthority.mockReset();
-    mockRefusedAuthority.mockResolvedValue(false);
+    mockRefusedAuthority.mockResolvedValue(null);
     mockVerifyReauth.mockReset();
     mockVerifyReauth.mockResolvedValue({ ok: true });
     mockRecordGoverned.mockReset();
@@ -122,8 +137,13 @@ describe('module3OperatingSystemRoutes', () => {
 
   it('section approve proceeds past the re-auth gate on success (then honors the contradiction block)', async () => {
     mockVerifyReauth.mockResolvedValueOnce({ ok: true });
-    // First query after the gate is the critical-contradiction check.
-    mockQuery.mockResolvedValueOnce({ rows: [{ id: 'c-1' }] });
+    /* The critical-contradiction check runs INSIDE the transaction, after the
+       section row is locked (GA plan item 4): BEGIN, the section, then it. */
+    mockQuery
+      .mockResolvedValueOnce({}) // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 'sec-1', deterministic_json: COMPLETE, approval_state: 'draft', stale: false }] }) // section, FOR UPDATE
+      .mockResolvedValueOnce({ rows: [{ id: 'c-1' }] }) // contradiction check: one critical open
+      .mockResolvedValueOnce({}); // ROLLBACK
 
     const res = await request(app)
       .post('/api/cmc/module3-os/sections/proj-1/3.2.P.5/approve')
@@ -137,11 +157,11 @@ describe('module3OperatingSystemRoutes', () => {
   it('approves a section atomically and records a hash-chained governed action (§11)', async () => {
     mockVerifyReauth.mockResolvedValueOnce({ ok: true });
     mockQuery
-      .mockResolvedValueOnce({ rows: [] }) // contradiction check: none critical
       .mockResolvedValueOnce({}) // BEGIN
       .mockResolvedValueOnce({
         rows: [{ id: 'sec-1', deterministic_json: COMPLETE, narrative_text: 'The drug product is a tablet.', approval_state: 'draft', stale: false }],
-      }) // section
+      }) // section, FOR UPDATE
+      .mockResolvedValueOnce({ rows: [] }) // contradiction check: none critical
       .mockResolvedValueOnce({ rows: [] }) // drift: lineage against live sources
       .mockResolvedValueOnce({ rows: [] }) // drift: sources of the project
       .mockResolvedValueOnce({ rows: [{ max_version: 2 }] }) // version max
@@ -202,7 +222,6 @@ describe('module3OperatingSystemRoutes', () => {
     // must refuse it first, with the same rule.
     mockVerifyReauth.mockResolvedValueOnce({ ok: true });
     mockQuery
-      .mockResolvedValueOnce({ rows: [] }) // contradiction check: none critical
       .mockResolvedValueOnce({}) // BEGIN
       .mockResolvedValueOnce({
         rows: [{
@@ -210,7 +229,8 @@ describe('module3OperatingSystemRoutes', () => {
           deterministic_json: { completeness: 0, missingInputs: ['containerClosureDescription', 'suitabilityJustification'] },
           approval_state: 'draft',
         }],
-      }) // section
+      }) // section, FOR UPDATE
+      .mockResolvedValueOnce({ rows: [] }) // contradiction check: none critical
       .mockResolvedValueOnce({}); // ROLLBACK
 
     const res = await request(app)
@@ -246,14 +266,14 @@ describe('module3OperatingSystemRoutes', () => {
     // the same reading the export gate applies.
     mockVerifyReauth.mockResolvedValueOnce({ ok: true });
     mockQuery
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({})
-      .mockResolvedValueOnce({ rows: [{ id: 'sec-1', deterministic_json: '{}', approval_state: 'draft' }] })
-      .mockResolvedValueOnce({});
+      .mockResolvedValueOnce({}) // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 'sec-1', deterministic_json: '{}', approval_state: 'draft' }] }) // section
+      .mockResolvedValueOnce({ rows: [] }) // contradiction check
+      .mockResolvedValueOnce({}); // ROLLBACK
 
     const res = await request(app)
       .post('/api/cmc/module3-os/sections/proj-1/3.2.S.1/approve')
-      .send({ reason: 'approve', meaning: 'approval', reauth: { password: 'ok' } });
+      .send({ reason: 'approve for filing', meaning: 'approval', reauth: { password: 'ok' } });
 
     expect(res.status).toBe(409);
     expect(res.body.error).toContain('3.2.S.1');
@@ -533,9 +553,17 @@ describe('module3OperatingSystemRoutes', () => {
   });
 
   describe('POST /sections/:projectId/:sectionKey/refresh — the record is the composer\'s, never the body\'s', () => {
-    /* One drug_substance source with only a name: §3.2.S.1 composes at well
-       under 100% with missing inputs. The request body claims 100% / none. */
-    const SOURCE = { id: 'so-1', sourceType: 'drug_substance', sourcePayload: { name: 'BX-701' }, sourceHash: 'h1' };
+    /* One drug_substance source: §3.2.S.1 composes at well under 100% with
+       missing inputs, and the request body claims 100% / none. `modality` is
+       not one of §3.2.S.1's inputs — it is what the composition boundary reads
+       to establish the program composes here at all
+       (services/cmc/composition-scope.ts). */
+    const SOURCE = {
+      id: 'so-1',
+      sourceType: 'drug_substance',
+      sourcePayload: { name: 'BX-701', modality: 'small_molecule' },
+      sourceHash: 'h1',
+    };
     function scriptRefresh(statements: Array<{ text: string; params: unknown[] }>) {
       mockQuery.mockImplementation(async (text: string, params: unknown[] = []) => {
         statements.push({ text, params });
@@ -543,7 +571,10 @@ describe('module3OperatingSystemRoutes', () => {
           return { rows: [{ id: 'sec-1', deterministic_json: { completeness: 40, missingInputs: ['manufacturer'] }, approval_state: 'approved' }] };
         }
         if (/FROM cmc_source_objects/.test(text)) return { rows: [SOURCE] };
-        if (/FROM regulatory_programs/.test(text)) return { rows: [] };
+        // The program row the boundary reads: a US IND for a drug.
+        if (/FROM regulatory_programs/.test(text)) {
+          return { rows: [{ id: 'proj-1', programType: 'ind', productType: 'drug', productName: 'BX-701', name: 'BX-701 IND', code: 'BX701' }] };
+        }
         if (/INSERT INTO cmc_module3_sections/.test(text)) return { rows: [{ id: 'sec-1' }] };
         return { rows: [], rowCount: 0 };
       });

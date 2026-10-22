@@ -4,7 +4,9 @@
  *
  * 2026-10-08 (W5/D7, sweep HS-2/HS-3/HS-4):
  *   - FDA ESG in REST mode was listed as configured, with the registry's 'as2'
- *     transport, although every transmit through it is refused.
+ *     transport, although every transmit through it is refused. Since
+ *     2026-10-17 the list reports credentials (configured) and the transport's
+ *     readiness apart; REST reads configured with its transport unavailable.
  *   - an UnverifiedTransportError (FDA ESG in REST mode) had no branch and
  *     became a 500 'INTERNAL_ERROR'; its sentence saying nothing was
  *     transmitted never reached the operator. Now 412 TRANSPORT_NOT_VERIFIED.
@@ -24,6 +26,11 @@ import request from 'supertest';
 
 const { queryFn, transmitFn } = vi.hoisted(() => ({ queryFn: vi.fn(), transmitFn: vi.fn() }));
 
+// The transmitter holds a signing role (approver): only such a role may
+// transmit to an agency (SEC-1008-1), asked before the password.
+vi.mock('../../part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: async () => 'approver',
+}));
 vi.mock('../../account-standing', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../account-standing')>()),
   isAccountActive: async () => true,
@@ -165,15 +172,19 @@ describe('GET /api/mdx/gateways — FDA ESG in REST mode', () => {
   });
 
   // The row carried the registry's default transport ('as2') and configured:
-  // true once the REST credentials resolved, while every transmit through it
-  // was refused. It is listed with the transport it resolves, and as not able
-  // to transmit. The real registry and FdaEsgGateway answer here.
-  it('is listed with the REST transport, and not as configured', async () => {
+  // true once the REST credentials resolved, with nothing beside it to say
+  // every transmit through it is refused. It is listed with the REST transport
+  // as unavailable beside its credentials. The real registry and FdaEsgGateway
+  // answer here.
+  it('is listed with its credentials configured and the REST transport unavailable', async () => {
     Object.assign(process.env, REST_ENV);
     const res = await request(app()).get('/api/mdx/gateways?environment=production');
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body.data.find((g: { region: string; gateway: string }) => g.region === 'fda' && g.gateway === 'esg'))
-      .toEqual({ region: 'fda', gateway: 'esg', transport: 'rest', configured: false, environment: 'production' });
+      .toMatchObject({
+        region: 'fda', gateway: 'esg', configured: true, environment: 'production',
+        transportReadiness: { transport: 'rest', implementation: 'unavailable', qualified: false },
+      });
   });
 });
 
@@ -191,8 +202,9 @@ describe('a completed transmit carries what the pre-transmit guard found', () =>
     });
     const res = await transmit();
     expect(res.status, JSON.stringify(res.body)).toBe(201);
+    // One shape, as the sign record and AnA's result carry it ("name: detail").
     expect(res.body.data.preTransmitFailedChecks).toEqual([
-      { name: 'dtd-self-contained', detail: 'missing: ich-ectd-3-2.dtd, us-regional-v3-3.dtd' },
+      'dtd-self-contained: missing: ich-ectd-3-2.dtd, us-regional-v3-3.dtd',
     ]);
     expect(res.body.data.preTransmitWarnings).toEqual(['m1/us/us-regional.xml is NOT an FDA-conformant Module 1 backbone.']);
   });

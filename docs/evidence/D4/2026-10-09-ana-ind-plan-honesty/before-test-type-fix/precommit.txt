@@ -1,0 +1,24 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e
+  server/services/ana/AnaToolExecutor.ts (21829 lines)
+  server/services/ana/evidence-literature-tool-defs.ts (1935 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+(node:121) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:134) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:134) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+check-security-patterns: 0 violations across 3110 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 0f5348d88] fix(ana): keep IND transcription plans explicitly non-sealable
+ 3 files changed, 200 insertions(+), 80 deletions(-)

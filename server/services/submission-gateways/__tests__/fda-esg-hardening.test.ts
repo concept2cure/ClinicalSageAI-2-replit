@@ -17,6 +17,8 @@
  *           transmittal exists for (org, package_id, bundle_sha256), and
  *           returns null when no active row exists for that tenant — even if
  *           a DIFFERENT tenant has one (CMO scenario).
+ * CMS primitives are semantic doubles; this suite retains the actual parser
+ * and persistence/rollback decisions. Actual CMS proofs live in as2-cms.test.ts.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -53,10 +55,11 @@ vi.hoisted(() => {
 
 interface QueryRecord { sql: string; args: unknown[] }
 
-const { poolQueries, clientQueries, mdnRawStorage, rollbackStatusOverride, activeTransmittalRow } = vi.hoisted(() => ({
+const { poolQueries, clientQueries, mdnRawStorage, metadataStorage, rollbackStatusOverride, activeTransmittalRow } = vi.hoisted(() => ({
   poolQueries:           [] as QueryRecord[],
   clientQueries:         [] as QueryRecord[],
   mdnRawStorage:         { value: null as string | null },
+  metadataStorage:       { value: {} as Record<string, unknown> },
   rollbackStatusOverride: { value: 'received' as string },
   activeTransmittalRow:  { value: null as { id: number; status: string } | null },
 }));
@@ -69,6 +72,10 @@ vi.mock('../../../db', () => {
       return { rows: [{ id: 4242 }], rowCount: 1 };
     }
     if (/UPDATE submission_transmittals/i.test(sql)) {
+      // Retain the exact CMS binding/agency receipt and MIME type now persisted.
+      if (/jsonb_set/i.test(sql) && typeof args[2] === 'string' && typeof args[3] === 'string') {
+        metadataStorage.value[args[2]] = JSON.parse(args[3]);
+      }
       // Capture mdn_raw value if present in the UPDATE.
       const mdnIdx = sql.indexOf('mdn_raw');
       if (mdnIdx >= 0) {
@@ -91,7 +98,7 @@ vi.mock('../../../db', () => {
           status: 'received',
           ack_received_at: new Date('2026-06-29T12:00:00Z'),
           mdn_raw: mdnRawStorage.value,
-          metadata: null,
+          metadata: metadataStorage.value,
         }],
         rowCount: 1,
       };
@@ -147,18 +154,9 @@ vi.mock('../../../db', () => {
   };
 });
 
-/*
- * The AS2 request signer (signAs2Body) calls
- * crypto.createSign('RSA-SHA256').sign(privateKeyPem, …). Under OpenSSL 3
- * (Node 22) that rejects any string that isn't a parseable key with
- * `error:1E08010C:DECODER routines::unsupported`, so the fs mock must hand
- * back a real PEM private key rather than a placeholder. The cert paths are
- * read too but only the key participates in signing, so one valid key for
- * every readFile call is sufficient for these tests. Generated in a
- * vi.hoisted block so it is available to the hoisted vi.mock factory below.
- */
+/* Credentials remain boundary fixtures. The explicit CMS double below tests
+ * semantics; actual certificate/key and encryption proofs live in as2-cms.test.ts. */
 const { TEST_PRIVATE_KEY_PEM } = vi.hoisted(() => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { generateKeyPairSync } = require('node:crypto');
   return {
     TEST_PRIVATE_KEY_PEM: generateKeyPairSync('rsa', {
@@ -180,6 +178,10 @@ vi.mock('fs', async (orig) => {
 vi.mock('../bundle-integrity', () => ({
   readVerifiedBundle: vi.fn(async () => Buffer.from('zip-bytes')),
 }));
+vi.mock('../as2-cms', async original => {
+  const { semanticCmsDouble } = await import('./support/cms-semantic-double');
+  return semanticCmsDouble(await original<typeof import('../as2-cms')>());
+});
 
 /* ─── HTTPS mock (AS2 POST returns a verbatim MDN body) ─────────── */
 
@@ -221,13 +223,13 @@ vi.mock('node:https', () => {
       const endHandlers: Array<() => void> = [];
       const res: any = {
         statusCode: 200,
-        headers: { 'message-id': '<mdn-msg-id@FDA-CESUB>', ...mdnFixture.headers },
+        headers: { 'message-id': '<mdn-msg-id@FDA-CESUB>', 'content-type': 'multipart/report; boundary="----=_Part_FDA_MDN"', ...mdnFixture.headers },
         on: (evt: string, h: any) => {
           if (evt === 'data') dataHandlers.push(h);
           if (evt === 'end') endHandlers.push(h);
         },
       };
-      setImmediate(() => {
+      globalThis.setImmediate(() => {
         cb(res);
         for (const h of dataHandlers) h(Buffer.from(FAKE_MDN_BODY, 'utf8'));
         for (const h of endHandlers) h();
@@ -278,6 +280,7 @@ beforeEach(() => {
   poolQueries.length = 0;
   clientQueries.length = 0;
   mdnRawStorage.value = null;
+  metadataStorage.value = {};
   rollbackStatusOverride.value = 'received';
   activeTransmittalRow.value = null;
   mdnFixture.originalMessageId = null;
@@ -313,7 +316,7 @@ describe('FIX 2 — raw MDN persistence', () => {
     await gw.transmit(SMALL_AS2_REQUEST());
 
     const ack = await gw.downloadAcknowledgment(4242);
-    expect(ack.contentType).toBe('message/disposition-notification');
+    expect(ack.contentType).toBe('multipart/report; boundary="----=_Part_FDA_MDN"');
     expect(ack.buffer.toString('utf8')).toBe(mdnRawStorage.value);
     expect(ack.buffer.toString('utf8')).toContain('Disposition: automatic-action/MDN-sent-automatically; processed');
     expect(ack.buffer.toString('utf8')).not.toMatch(/^FDA ESG Acknowledgement\n/);
@@ -561,7 +564,7 @@ describe('AS2 MDN — failure modifiers, bare msg-ids and the HTTP Content-Type 
     expect((await new FdaEsgGateway().transmit(SMALL_AS2_REQUEST())).status).toBe('received');
   });
 
-  it('reads the MIME boundary from the HTTP Content-Type of an unsigned multipart/report', async () => {
+  it('reads the declared MIME boundary of the verified inner multipart/report', async () => {
     // A delimiter-like line inside the text part is not a part boundary once the
     // real boundary is known; without it the two notifications are ambiguous.
     mdnFixture.headers = { 'content-type': 'multipart/report; report-type=disposition-notification; boundary="outer"' };
@@ -573,7 +576,7 @@ describe('AS2 MDN — failure modifiers, bare msg-ids and the HTTP Content-Type 
     expect(rejectedUpdate()).toBeDefined();
   });
 
-  it('accepts an unsigned multipart/report whose human part declares a nested boundary', async () => {
+  it('parses a verified inner multipart/report whose human part declares a nested boundary', async () => {
     mdnFixture.headers = { 'content-type': 'multipart/report; report-type=disposition-notification; boundary="outer"' };
     mdnFixture.body = (sent) =>
       '--outer\r\nContent-Type: multipart/alternative; boundary="alt"\r\n\r\n--alt\r\nContent-Type: text/plain\r\n\r\nreceived\r\n--alt--\r\n\r\n' +

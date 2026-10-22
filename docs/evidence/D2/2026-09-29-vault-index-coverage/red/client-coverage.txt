@@ -18,7 +18,7 @@ Ignored nodes: comments, script, style
           <div
             class="sp-eyebrow"
           >
-            Documents 
+            Documents
             <svg
               aria-hidden="true"
               class="lucide lucide-dot"
@@ -53,7 +53,7 @@ Ignored nodes: comments, script, style
               class="vd-sub-x"
             >
               IND · 21 CFR 312
-               
+
               <svg
                 aria-hidden="true"
                 class="lucide lucide-dot"
@@ -74,7 +74,7 @@ Ignored nodes: comments, script, style
                   r="1"
                 />
               </svg>
-               
+
               1
                document
             </span>
@@ -191,7 +191,7 @@ Ignored nodes: comments, script, style
           <div
             class="sp-eyebrow"
           >
-            Documents 
+            Documents
             <svg
               aria-hidden="true"
               class="lucide lucide-dot"
@@ -226,7 +226,7 @@ Ignored nodes: comments, script, style
               class="vd-sub-x"
             >
               IND · 21 CFR 312
-               
+
               <svg
                 aria-hidden="true"
                 class="lucide lucide-dot"
@@ -247,7 +247,7 @@ Ignored nodes: comments, script, style
                   r="1"
                 />
               </svg>
-               
+
               1
                document
             </span>
@@ -366,7 +366,7 @@ Ignored nodes: comments, script, style
           <div
             class="sp-eyebrow"
           >
-            Documents 
+            Documents
             <svg
               aria-hidden="true"
               class="lucide lucide-dot"
@@ -401,7 +401,7 @@ Ignored nodes: comments, script, style
               class="vd-sub-x"
             >
               IND · 21 CFR 312
-               
+
               <svg
                 aria-hidden="true"
                 class="lucide lucide-dot"
@@ -422,7 +422,7 @@ Ignored nodes: comments, script, style
                   r="1"
                 />
               </svg>
-               
+
               1
                document
             </span>
@@ -539,7 +539,7 @@ Ignored nodes: comments, script, style
           <div
             class="sp-eyebrow"
           >
-            Documents 
+            Documents
             <svg
               aria-hidden="true"
               class="lucide lucide-dot"
@@ -574,7 +574,7 @@ Ignored nodes: comments, script, style
               class="vd-sub-x"
             >
               IND · 21 CFR 312
-               
+
               <svg
                 aria-hidden="true"
                 class="lucide lucide-dot"
@@ -595,7 +595,7 @@ Ignored nodes: comments, script, style
                   r="1"
                 />
               </svg>
-               
+
               1
                document
             </span>
@@ -714,7 +714,7 @@ Ignored nodes: comments, script, style
           <div
             class="sp-eyebrow"
           >
-            Documents 
+            Documents
             <svg
               aria-hidden="true"
               class="lucide lucide-dot"
@@ -749,7 +749,7 @@ Ignored nodes: comments, script, style
               class="vd-sub-x"
             >
               IND · 21 CFR 312
-               
+
               <svg
                 aria-hidden="true"
                 class="lucide lucide-dot"
@@ -770,7 +770,7 @@ Ignored nodes: comments, script, style
                   r="1"
                 />
               </svg>
-               
+
               1
                document
             </span>
@@ -887,7 +887,7 @@ Ignored nodes: comments, script, style
           <div
             class="sp-eyebrow"
           >
-            Documents 
+            Documents
             <svg
               aria-hidden="true"
               class="lucide lucide-dot"
@@ -922,7 +922,7 @@ Ignored nodes: comments, script, style
               class="vd-sub-x"
             >
               IND · 21 CFR 312
-               
+
               <svg
                 aria-hidden="true"
                 class="lucide lucide-dot"
@@ -943,7 +943,7 @@ Ignored nodes: comments, script, style
                   r="1"
                 />
               </svg>
-               
+
               1
                document
             </span>
@@ -1062,7 +1062,7 @@ Ignored nodes: comments, script, style
           <div
             class="sp-eyebrow"
           >
-            Documents 
+            Documents
             <svg
               aria-hidden="true"
               class="lucide lucide-dot"
@@ -1097,7 +1097,7 @@ Ignored nodes: comments, script, style
               class="vd-sub-x"
             >
               IND · 21 CFR 312
-               
+
               <svg
                 aria-hidden="true"
                 class="lucide lucide-dot"
@@ -1118,7 +1118,7 @@ Ignored nodes: comments, script, style
                   r="1"
                 />
               </svg>
-               
+
               1
                document
             </span>
@@ -1235,7 +1235,7 @@ Ignored nodes: comments, script, style
           <div
             class="sp-eyebrow"
           >
-            Documents 
+            Documents
             <svg
               aria-hidden="true"
               class="lucide lucide-dot"
@@ -1270,7 +1270,7 @@ Ignored nodes: comments, script, style
               class="vd-sub-x"
             >
               IND · 21 CFR 312
-               
+
               <svg
                 aria-hidden="true"
                 class="lucide lucide-dot"
@@ -1291,7 +1291,7 @@ Ignored nodes: comments, script, style
                   r="1"
                 />
               </svg>
-               
+
               1
                document
             </span>
@@ -1413,7 +1413,7 @@ Ignored nodes: comments, script, style
           <div
             class="sp-eyebrow"
           >
-            Documents 
+            Documents
             <svg
               aria-hidden="true"
               class="lucide lucide-dot"
@@ -1448,7 +1448,7 @@ Ignored nodes: comments, script, style
               class="vd-sub-x"
             >
               IND · 21 CFR 312
-               
+
               <svg
                 aria-hidden="true"
                 class="lucide lucide-dot"
@@ -1469,7 +1469,7 @@ Ignored nodes: comments, script, style
                   r="1"
                 />
               </svg>
-               
+
               1
                document
             </span>
@@ -1586,7 +1586,7 @@ Ignored nodes: comments, script, style
           <div
             class="sp-eyebrow"
           >
-            Documents 
+            Documents
             <svg
               aria-hidden="true"
               class="lucide lucide-dot"
@@ -1621,7 +1621,7 @@ Ignored nodes: comments, script, style
               class="vd-sub-x"
             >
               IND · 21 CFR 312
-               
+
               <svg
                 aria-hidden="true"
                 class="lucide lucide-dot"
@@ -1642,7 +1642,7 @@ Ignored nodes: comments, script, style
                   r="1"
                 />
               </svg>
-               
+
               1
                document
             </span>
@@ -1773,7 +1773,7 @@ Ignored nodes: comments, script, style
           <div
             class="sp-eyebrow"
           >
-            Documents 
+            Documents
             <svg
               aria-hidden="true"
               class="lucide lucide-dot"
@@ -1808,7 +1808,7 @@ Ignored nodes: comments, script, style
               class="vd-sub-x"
             >
               IND · 21 CFR 312
-               
+
               <svg
                 aria-hidden="true"
                 class="lucide lucide-dot"
@@ -1829,7 +1829,7 @@ Ignored nodes: comments, script, style
                   r="1"
                 />
               </svg>
-               
+
               1
                document
             </span>
@@ -1946,7 +1946,7 @@ Ignored nodes: comments, script, style
           <div
             class="sp-eyebrow"
           >
-            Documents 
+            Documents
             <svg
               aria-hidden="true"
               class="lucide lucide-dot"
@@ -1981,7 +1981,7 @@ Ignored nodes: comments, script, style
               class="vd-sub-x"
             >
               IND · 21 CFR 312
-               
+
               <svg
                 aria-hidden="true"
                 class="lucide lucide-dot"
@@ -2002,7 +2002,7 @@ Ignored nodes: comments, script, style
                   r="1"
                 />
               </svg>
-               
+
               1
                document
             </span>
@@ -2133,7 +2133,7 @@ Ignored nodes: comments, script, style
           <div
             class="sp-eyebrow"
           >
-            Documents 
+            Documents
             <svg
               aria-hidden="true"
               class="lucide lucide-dot"
@@ -2168,7 +2168,7 @@ Ignored nodes: comments, script, style
               class="vd-sub-x"
             >
               IND · 21 CFR 312
-               
+
               <svg
                 aria-hidden="true"
                 class="lucide lucide-dot"
@@ -2189,7 +2189,7 @@ Ignored nodes: comments, script, style
                   r="1"
                 />
               </svg>
-               
+
               1
                document
             </span>
@@ -2306,7 +2306,7 @@ Ignored nodes: comments, script, style
           <div
             class="sp-eyebrow"
           >
-            Documents 
+            Documents
             <svg
               aria-hidden="true"
               class="lucide lucide-dot"
@@ -2341,7 +2341,7 @@ Ignored nodes: comments, script, style
               class="vd-sub-x"
             >
               IND · 21 CFR 312
-               
+
               <svg
                 aria-hidden="true"
                 class="lucide lucide-dot"
@@ -2362,7 +2362,7 @@ Ignored nodes: comments, script, style
                   r="1"
                 />
               </svg>
-               
+
               1
                document
             </span>
@@ -2493,7 +2493,7 @@ Ignored nodes: comments, script, style
           <div
             class="sp-eyebrow"
           >
-            Documents 
+            Documents
             <svg
               aria-hidden="true"
               class="lucide lucide-dot"
@@ -2528,7 +2528,7 @@ Ignored nodes: comments, script, style
               class="vd-sub-x"
             >
               IND · 21 CFR 312
-               
+
               <svg
                 aria-hidden="true"
                 class="lucide lucide-dot"
@@ -2549,7 +2549,7 @@ Ignored nodes: comments, script, style
                   r="1"
                 />
               </svg>
-               
+
               1
                document
             </span>
@@ -2666,7 +2666,7 @@ Ignored nodes: comments, script, style
           <div
             class="sp-eyebrow"
           >
-            Documents 
+            Documents
             <svg
               aria-hidden="true"
               class="lucide lucide-dot"
@@ -2701,7 +2701,7 @@ Ignored nodes: comments, script, style
               class="vd-sub-x"
             >
               IND · 21 CFR 312
-               
+
               <svg
                 aria-hidden="true"
                 class="lucide lucide-dot"
@@ -2722,7 +2722,7 @@ Ignored nodes: comments, script, style
                   r="1"
                 />
               </svg>
-               
+
               1
                document
             </span>
@@ -2842,4 +2842,3 @@ Ignored nodes: comments, script, style
       Tests  4 failed (4)
    Start at  21:19:17
    Duration  21.86s (transform 707ms, setup 161ms, import 854ms, tests 20.12s, environment 573ms)
-

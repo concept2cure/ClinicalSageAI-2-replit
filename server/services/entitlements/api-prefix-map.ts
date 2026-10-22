@@ -31,6 +31,7 @@ export const NEVER_GATED: readonly string[] = [
   '/api/health', // liveness
   '/api/tenant', // tenant context resolution
   '/api/users', // identity
+  '/api/tenant-users/invitations', // an existing account's own membership consent inbox
   '/api/notifications',
 ];
 

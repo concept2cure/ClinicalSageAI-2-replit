@@ -114,6 +114,14 @@ const h = vi.hoisted(() => {
   return { tables, poolWrites, poolValues, statements, calls, fail, readFail, sealed, db, pool, audit: vi.fn() };
 });
 
+
+// These suites isolate audit/compute contracts; sharing itself is exercised
+// against SQL in run-history and scheduling project-access integration tests.
+vi.mock('../../services/report-os/project-access', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/report-os/project-access')>()),
+  getAccessibleReportProjectIds: async () => [1, 2, 3, 7, 11, 12, 14, 17, 21, 41, 52, 99, 100, 101],
+  canAccessReportScope: async () => true,
+}));
 vi.mock('../../db', () => ({ db: h.db, pool: h.pool, getPool: () => h.pool, getDb: () => h.db, query: vi.fn(), transaction: vi.fn() }));
 vi.mock('../../auth', () => ({ authMiddleware: (_req: unknown, _res: unknown, next: () => void) => next() }));
 vi.mock('../../utils/authedOrgId', async (importOriginal) => ({
@@ -128,6 +136,7 @@ vi.mock('../../services/auditService', async (importOriginal) => ({
 
 import reportOsRouter from '../report-os';
 import logger from '../../utils/logger';
+import { boundInsertColumn, tenantStampSql } from './_report-os-route-harness';
 
 /** Every line handed to the logger, whichever scoped logger sent it (DP-67). */
 const logs: Array<{ level: string; message: string; context: unknown }> = [];
@@ -149,7 +158,6 @@ app.use((req, _res, next) => {
 });
 app.use('/api/report-os', reportOsRouter);
 
-const STAMP = "SELECT set_config('app.current_tenant_id', $1, true)";
 const SUBMISSION = '00000000-0000-4000-8000-0000000000aa';
 const BUNDLE_ID = '11111111-1111-4111-8111-111111111111';
 const run = (status: string, over: Record<string, unknown> = {}) => ({
@@ -231,7 +239,7 @@ describe('POST /deliveries platform_send: the letter, the record and the chain r
     const { deliveryId, correspondenceId, status } = res.body.data;
     expect(status).toBe('sent');
     expect(correspondenceId).toMatch(/^[0-9a-f-]{36}$/);
-    expect(h.statements.slice(0, 2)).toEqual(['BEGIN', STAMP]);
+    expect(h.statements.slice(0, 2)).toEqual(['BEGIN', tenantStampSql()]);
     expect(h.statements.slice(-2)).toEqual(['COMMIT', '<released>']);
     expect(at(CORRESPONDENCE)).toBeGreaterThan(1);
     expect(at(MEMORY)).toBeGreaterThan(at(CORRESPONDENCE));
@@ -239,6 +247,8 @@ describe('POST /deliveries platform_send: the letter, the record and the chain r
     expect(at(/^COMMIT$/)).toBeGreaterThan(at(/<audit row>/));
     expect(h.calls.find((c) => CORRESPONDENCE.test(c.text))?.params[0]).toBe(correspondenceId);
     expect(JSON.stringify(h.calls.find((c) => MEMORY.test(c.text))?.params)).toContain(`delivery:${deliveryId}`);
+    const memory = h.calls.find(c => MEMORY.test(c.text));
+    expect(boundInsertColumn(memory!.text, memory!.params, 'confidence_score')).toBeNull();
     expect(h.poolWrites, 'nothing is written outside the transaction').toEqual([]);
     expect(h.audit).toHaveBeenCalledTimes(1);
     expect(auditEntry()).toMatchObject({
@@ -340,7 +350,7 @@ describe('POST /deliveries external_pdf_export (P1-44)', () => {
     expect(res.status, JSON.stringify(res.body)).toBe(201);
     expect(res.body.data.status).toBe('exported');
     expect(count(CORRESPONDENCE)).toBe(0);
-    expect(h.statements.slice(0, 2)).toEqual(['BEGIN', STAMP]);
+    expect(h.statements.slice(0, 2)).toEqual(['BEGIN', tenantStampSql()]);
     expect(at(/<audit row>/)).toBeGreaterThan(at(MEMORY));
     expect(h.statements.slice(-2)).toEqual(['COMMIT', '<released>']);
     expect(auditEntry()).toMatchObject({

@@ -24,11 +24,19 @@
  * and then logs the state it resolves — including which way it is on, and, when
  * it is off, the two ways to turn it on.
  *
- * It does NOT enable anything. Defaulting the catalog on for every tenant is a
- * product decision with a per-upload embedding cost behind it (chunking embeds
- * every document at ingest), and an agent is not the right place to make it.
- * What this removes is the part that was not a decision at all: nobody could
- * see the switch.
+ * The catalog row is created ON (founder decision, 2026-10-08, Data Room
+ * catalog S4: docs/design/DATA_ROOM_CATALOG_AND_CLINICAL_DATA_2026-10-08.md).
+ * The cost that kept it off is gone: since S1 the passage index chunks every
+ * upload with no embedder, and the per-upload embedding is the separate
+ * ana.vault_chunking row, still created off. And what AnA writes is now a
+ * suggestion that names its model and turn and waits for a person's
+ * confirmation (document-catalog-governance.service.ts), so turning it on no
+ * longer lets a model's reading stand as fact.
+ *
+ * Only a row that does not exist is created ON. A row that exists keeps its
+ * state, on or off, so an environment an operator turned off stays off, and
+ * an environment bootstrapped before this change keeps the off row it was
+ * given until an operator enables it.
  *
  * @module server/startup/document-catalog-bootstrap
  */
@@ -101,9 +109,10 @@ export function describeCatalogToggles(state: CatalogToggleState): string {
     `${VAULT_CHUNKING_FEATURE_KEY}: ${how(state.chunking.source)}`;
   if (state.catalog.enabled) {
     return state.chunking.enabled
-      ? `${head} — AnA can list, read, catalog, file and passage-search the client's project files.`
-      : `${head} — AnA can list, read, catalog and file project files; passage search has no index ` +
-          'until vault chunking is on, and says so rather than returning nothing.';
+      ? `${head} — AnA can list, read, catalog, file and passage-search the client's project files; ` +
+          'passages are embedded for meaning-based search.'
+      : `${head} — AnA can list, read, catalog, file and passage-search project files; passages are ` +
+          'searched by text and none is sent for embedding (vault chunking off).';
   }
   if (state.catalog.source === 'unreadable' || state.chunking.source === 'unreadable') {
     return (
@@ -113,8 +122,9 @@ export function describeCatalogToggles(state: CatalogToggleState): string {
     );
   }
   return (
-    `${head} — the client-files surface is inactive platform-wide: no document tools, no session-start ` +
-    'recall of project files, no passage index. Individual organizations on the toggle\'s per-org list are ' +
+    `${head} — cataloging and filing are inactive platform-wide, and there is no session-start ` +
+    'recall of project files. AnA still lists, reads and searches project files and their passages by ' +
+    'text, with no key. Individual organizations on the toggle\'s per-org list are ' +
     'unaffected. Turn it on globally by enabling the feature toggle rows above, or per environment with ' +
     'ANA_DOCUMENT_CATALOG_FORCE_ON=true (and ANA_VAULT_CHUNKING_FORCE_ON=true for the passage index).'
   );
@@ -131,8 +141,9 @@ export async function bootstrapDocumentCatalogToggles(): Promise<CatalogToggleSt
   await FeatureToggleService.initializeFeatureToggle(
     DOCUMENT_CATALOG_FEATURE_KEY,
     "AnA's project-file surface: list, read (with a full-coverage gate), catalog, file and semantically " +
-      "search the client's vault documents, and recall them at session start.",
-    false,
+      "search the client's vault documents, and recall them at session start. AnA's descriptions are " +
+      'suggestions a person confirms in the Vault.',
+    true,
   ).catch(rowNotCreated(DOCUMENT_CATALOG_FEATURE_KEY));
   await FeatureToggleService.initializeFeatureToggle(
     VAULT_CHUNKING_FEATURE_KEY,

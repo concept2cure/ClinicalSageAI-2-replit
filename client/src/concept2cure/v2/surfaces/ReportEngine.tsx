@@ -1,10 +1,11 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
 import { connected, liveMutateOrNull, useLiveData, EmptyState } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
-import { saveToAuthoring } from '../authoringHandoff';
+import { useAuthoringHandoff, openSavedAuthoring } from '../authoringHandoff';
+import { AuthoringHandoffNotice } from '../AuthoringHandoffNotice';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { assessmentState, mayReassure } from '../assessmentState';
@@ -310,7 +311,7 @@ function genIndReadiness(a: ParsedProtocol): string {
   s += `- **Safety monitoring provisions** — not read by this analysis.\n`;
   s += `- **Concomitant medication management** (FDA 21 CFR 312.23(a)(6))\n`;
   s += `- **Interim analysis points** (ICH E9, Section 4.5)\n`;
-  s += `- **Data management plan** (ICH E6(R2), Section 5.5)\n`;
+  s += `- **Data management plan** (ICH E6(R3) Annex 1 §3.16)\n`;
   s += `- **Randomization implementation details** (EMA Guideline on multiplicity issues)\n\n`;
   s += `None of the above has been examined against your protocol. Their absence from the findings above is not a finding of adequacy.\n\n`;
 
@@ -322,11 +323,11 @@ function genIndReadiness(a: ParsedProtocol): string {
   s += phaseKnown
     ? `- The protocol reads as **Phase ${a.phase}**, so FDA's phase-specific guidance for Phase ${a.phase} studies${indKnown ? ` in ${a.indication}` : ''} is the applicable set. Conformance with it has not been assessed here.\n`
     : `- No study phase could be read from the protocol text, so no phase-specific FDA guidance has been identified. State the phase in the synopsis and it will be named here.\n`;
-  s += `- ICH E6(R2) Good Clinical Practice applies to this study; conformance is not evaluated by this analysis.\n`;
+  s += `- ICH E6(R3) Good Clinical Practice applies to this study; conformance is not evaluated by this analysis.\n`;
   s += `- EMA Scientific Advice has its own submission requirements; this analysis has not checked the protocol against them.\n`;
   s += `- A PMDA submission may raise ethnic-factor considerations; this analysis has not evaluated them.\n\n`;
 
-  s += `## Citations\n\n- U.S. FDA (2023). IND Application Procedures: Clinical Hold. 21 CFR 312.42\n- EMA (2022). Guideline on the clinical evaluation of anticancer medicinal products. EMA/CHMP/205/95 Rev.6\n- ICH (2016). Integrated Addendum to ICH E6(R1): Guideline for GCP E6(R2)\n\n---\n*The guidance above names what applies to a study of this description. Nothing here has been reviewed against FDA, EMA or PMDA guidance, and no numeric score is emitted.*\n`;
+  s += `## Citations\n\n- U.S. FDA (2023). IND Application Procedures: Clinical Hold. 21 CFR 312.42\n- EMA (2022). Guideline on the clinical evaluation of anticancer medicinal products. EMA/CHMP/205/95 Rev.6\n- ICH (2025). Guideline for Good Clinical Practice E6(R3), Step 4, 2025-01-06\n- ICH (2016). Integrated Addendum to ICH E6(R1): Guideline for GCP E6(R2) (superseded by E6(R3), 2025-01-06)\n\n---\n*The guidance above names what applies to a study of this description. Nothing here has been reviewed against FDA, EMA or PMDA guidance, and no numeric score is emitted.*\n`;
   return s;
 }
 
@@ -431,6 +432,8 @@ function parseProtocol(text: string): ParsedProtocol {
 /* ═══ Main surface ═══ */
 
 export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
+  const handoff = useAuthoringHandoff();
+  const saveToAuthoring = handoff.save;
   const ask = onAsk || (() => {});
   const [text, setText] = useState('');
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
@@ -556,27 +559,22 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
    * an honest reason, because navigating away from work that was not saved is
    * the same defect this replaces.
    */
-  const openingRef = useRef(false);
-  const [opening, setOpening] = useState(false);
+  const opening = handoff.state?.phase === 'pending';
   const openEditor = async () => {
-    if (openingRef.current) return; // a second click must not create a second document
+    if (handoff.blocked) return;
     const title = docDef?.label || 'Protocol analysis';
     if (!md.trim()) { fireToast('Nothing to open yet — analyze a protocol first.', 'error'); return; }
-    openingRef.current = true; setOpening(true);
-    try {
-      // Protocol-derived analysis files under Module 5; the server would
-      // default to M3.
-      const r = await saveToAuthoring({
-        title, module: 'M5', code: docDef?.id || 'protocol_analysis',
-        content: md, subject: 'the analysis',
-      });
-      // Navigate only on a clean write — see authoringHandoff.
-      if (!r.ok) { fireToast(r.message, 'error'); return; }
-      if (onNav) onNav('document-authoring');
-      else fireToast(r.message);
-    } finally {
-      openingRef.current = false; setOpening(false);
-    }
+    // Protocol-derived analysis files under Module 5; the server would
+    // default to M3.
+    const r = await saveToAuthoring({
+      title, module: 'M5', code: docDef?.id || 'protocol_analysis',
+      content: md, subject: 'the analysis',
+    });
+    // Navigate only on a clean write — see authoringHandoff.
+    if (!r.isCurrent()) return;
+    if (!r.ok) { fireToast(r.message, 'error'); return; }
+    if (onNav) openSavedAuthoring(r, onNav);
+    else fireToast(r.message);
   };
 
   return (
@@ -611,6 +609,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
         />
       )}
 
+      <AuthoringHandoffNotice handoff={handoff} onNav={onNav} />
       <div className="ra-layout">
         <div className="pj-card ra-input">
           <div className="pj-card-h"><span className="t">Protocol</span><span className="s">paste or edit</span></div>
@@ -648,7 +647,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
                 {analysis.source === 'live' ? 'Live analytics service' : 'Ported generator — offline'} — draft</span></div>
               <div className="bs-doc-bar-a">
                 <button className="bs-da" onClick={() => ask('Refine the ' + (docDef?.label || 'document') + ' for this protocol')}>{I.sparkles} Refine</button>
-                <button className="bs-da primary" onClick={() => void openEditor()} disabled={opening}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
+                <button className="bs-da primary" onClick={() => void openEditor()} disabled={handoff.blocked}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
               </div>
             </div>
             <div className="bs-doc-page"><div className="bs-doc-render" dangerouslySetInnerHTML={{ __html: html }} /></div>

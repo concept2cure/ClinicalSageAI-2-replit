@@ -1,0 +1,9 @@
+$ npx vitest run shared/regulatory/__tests__ server/services/ana/intelligence-questions tests/ana-intelligence
+ Test Files  42 passed (42)
+      Tests  711 passed (711)
+
+$ TYPECHECK_HEAP_MB=20480 npm run ci:typecheck:no-regression
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+
+$ node scripts/ci/check-eslint-warning-ratchet.mjs --since origin/concept2cure-v2
+[ci:eslint-warning-ratchet] no file changed its warning count.

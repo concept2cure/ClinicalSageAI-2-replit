@@ -119,10 +119,21 @@ export function defaultPeriod(now: Date = new Date()): Period {
   return { from, to };
 }
 
-/** The client-side check before any request; null when the period may be sent. */
-export function periodProblem(kind: PeriodKind, period: Period): string | null {
+/** The client-side check before any request; null when the period may be sent.
+ *
+ *  Mirrors the server's `parseReportPeriod` so the field is refused where the
+ *  person is typing rather than by a 400 after the round trip — including the
+ *  future-date check, which neither side had: an as-of date a year away was
+ *  accepted and answered with today's state (HS-1008-6). */
+export function periodProblem(kind: PeriodKind, period: Period, now: Date = new Date()): string | null {
   const to = utcMs(period.to);
   if (to === null) return kind === 'as-of' ? 'Enter the date the report is as of.' : 'Enter an end date.';
+  const today = utcMs(now.toISOString().slice(0, 10));
+  if (today !== null && to > today) {
+    return kind === 'as-of'
+      ? 'That date has not happened yet. Choose today or an earlier date.'
+      : 'That end date has not happened yet. Choose today or an earlier date.';
+  }
   if (kind === 'as-of') return null;
   const from = utcMs(period.from);
   if (from === null) return 'Enter a start date.';

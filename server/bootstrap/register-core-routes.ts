@@ -84,8 +84,13 @@ export function registerCoreRoutes({
            explain_cmc_topic (server/services/ana/cmc-knowledge-tools.ts), and
            POST /api/cmc/control-strategy, POST /api/cmc/ich-compliance
            (server/api/cmc/routes.ts);
-         · change-impact-simulator → POST /api/cmc/variations/classify
-           (routes.ts, supac-classifier) and /api/cmc/change-control;
+         · change-impact-simulator → /api/cmc/change-control, and the
+           deterministic POST /api/cmc/variations/classify (routes.ts,
+           supac-classifier), now reached by the deferred CMC variation
+           assessment. The route explicitly refuses when launch scope is on;
+           a UI prefix claim is not permission to widen the IND composition
+           (decision P-28, docs/evidence/CMC-M3-GA/2026-10-05/
+           20-cmc-api-allowlist/);
          · blueprint-generator → GET /api/cmc/quality/qbd/:projectId and
            POST /api/cmc/control-strategy; Module 3 drafting →
            POST /api/cmc/module3-os/compile/:projectId;
@@ -144,11 +149,15 @@ export function registerCoreRoutes({
        POST /auto-draft/:projectId, and its engine server/services/cmc/
        auto-draft-composer.ts): a preview composed from documents in the request
        body, which could not write and refused when asked to. An upload becomes
-       a canonical source through POST /api/cmc/module3-os/classify-artifact/
-       :projectId, and Module 3 is composed from canonical sources, with lineage
-       and provenance, by POST /api/cmc/module3-os/compile/:projectId
-       (module3OperatingSystemRoutes.ts) and POST /api/cmc/module3-os/
-       build-section/:projectId/:sectionKey (module3ConvergenceRoutes.ts). */
+       a canonical source through AnA's module3_classify_source command
+       (services/ana-ri/module3-command-handlers.ts; the HTTP route
+       /api/cmc/module3-os/classify-artifact, which no screen called, was
+       deleted on 2026-10-05), a Vault document is linked to the record it
+       evidences by /api/cmc/module3-os/source-evidence, and Module 3 is
+       composed from canonical sources, with lineage and provenance, by POST
+       /api/cmc/module3-os/compile/:projectId (module3OperatingSystemRoutes.ts)
+       and POST /api/cmc/module3-os/build-section/:projectId/:sectionKey
+       (module3ConvergenceRoutes.ts). */
     /* `/api/cmc/collaboration` is gone. Its four reads were keyed only by a
        caller-supplied workflowId or userId, over process-global in-memory Maps
        that carried no tenant key at all — so any authenticated user of any
@@ -185,8 +194,10 @@ export function registerCoreRoutes({
        Module 3 sections (/api/cmc/module3-os/sections). */
     // Module 3 board — portfolio + governed section read-model for the ui-v2 cmc surface.
     app.use('/api/cmc/module3-board', authenticateToken, cmcModule3BoardRoutes());
-    // Agency questions — the org-scoped WRITE half of the correspondence loop
-    // the board reads (log a question, triage status/assignee/due date).
+    // The earlier CMC agency-question file (reg_questions), read-only history
+    // since 2026-10-19 (P-39 item 1): GET lists it; POST and PATCH answer 410.
+    // Agency questions are recorded on their letter, and CMC reads them from
+    // /api/concept2cure/projects/:projectId/agency-questions.
     app.use('/api/cmc/agency-questions', authenticateToken, cmcAgencyQuestionRoutes());
     // /api/cmc/dashboard removed — backed by Prisma which was excised in
     // 066acdb. Route file (cmc-dashboard-prisma.ts) had zero callers.

@@ -66,6 +66,19 @@ None of the eleven does what its place promises for a real organisation; the tab
 
 Nothing is deleted, and no migration or catalog row changes.
 
+## What the filing spine changed (recorded 2026-10-15, FILING_SPINE F24)
+
+`docs/design/FILING_SPINE.md` is the build record for the Submissions rows below. Three rows read differently now that F12 and F14 have landed:
+
+- **`ectd-compile`.** It is reached from the sequence: the Dispatch tab's "Validate and compile this sequence" opens compile on that sequence, and compile, status, validate and the eValidator import take only a sequence the project owns (F14, `305fd6bf`).
+- **`gateway-transmittals`.** Transmit is in the Dispatch tab, on the dispatched sequence (F12, `0e50993c`), and its transmissions and acknowledgements are listed there (F13, `d5176f24`). The surface stays the transmit log; it is not the way in.
+- **`dispatch-readiness`.** It is the one dispatch verdict per sequence, shown inside Submit (P-33, `docs/LAUNCH_DEFINITION_OF_DONE.md`). The name stays as a catalog and entitlement entry.
+
+Two further decisions of the filing spine are recorded here:
+
+- **Cross-region is scrapped.** The model's cross-region verdict has no workspace, route, AI task, prompt or AnA tool (F21 in part, `afca3546`). A market's support is the server's deterministic statement (F19).
+- **Project home has five tabs that follow the work:** Evidence, Author, Review, Submit, Respond (F2). The stage strip drawn in `ONE_ANA_ONE_CANVAS.md` (Plan > Author > Review > File > Submit) is superseded by them.
+
 ## Build order
 
 The lane's claim is in `docs/work-orders/README.md` §0. Each step is one commit, and each is shown failing first.

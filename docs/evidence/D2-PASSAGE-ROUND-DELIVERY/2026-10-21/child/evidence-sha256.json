@@ -1,0 +1,23 @@
+{
+  "algorithm": "sha256",
+  "scope": "Child-owner frozen baseline evidence; excludes this manifest itself.",
+  "files": {
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/README.md": "c2b5c8a16bceab1b12a9567efb80f833361f7e1da5b36a8cc6b1935a8a357917",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/baseline-command.json": "1563a06eef1e0998269b427387b4c9652c9e8477584de12bf460199da118eda2",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/baseline-red.txt": "f0975e786bb2bbb3efea2333230d114e5cdae1257233c4d43e10d96d676d6055",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/baseline-result.json": "65943e0e9f3e6d489387dd5122950115ede95812e4de1de55fe4500478fdd2a5",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/frozen-test.json": "4794d88f4efdb2fae7b37523b279995254ea904ad4c3a4fd60e4f89650216108",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/initial-baseline-command.json": "5b5304f5477febd53bf3772a7712126b7c4de711293ba9f2b1044d94f7a0e47f",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/initial-baseline-red.txt": "e771570ac31fac02855bdcb1ba89983ed0704dd0659cebf45f154d43086fa4e0",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/initial-baseline-result.json": "e760fb48e191d6acac4e64b29872b5872e0a090f7d490f87694c94129b8d156a",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/initial-lint-stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/initial-lint-summary.json": "9010e280caa625cf480ae87aaf9c792745c15a70c5d6741a5ab44f1d8c32c2ea",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/lint-stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/lint-summary.json": "c1c380b995b99c79eca69475d22d838e3130b9d2dd4478bc1554e042224d211f",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/pre-correlation-baseline-command.json": "8b4d68bb2d34972939a456783a5906ee583a3118decd1fa1927580f37d3a05b0",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/pre-correlation-baseline-red.txt": "ceded74683554f49fb71d327c90bec178d2ed93b7093517c1eb123f9d7db183d",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/pre-correlation-baseline-result.json": "bc11d087e5ecd0e15c4705b40bdd5de18deda6e5c54a0b7b52fd163e813effce",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/pre-correlation-lint-stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/child/pre-correlation-lint-summary.json": "c1c380b995b99c79eca69475d22d838e3130b9d2dd4478bc1554e042224d211f"
+  }
+}

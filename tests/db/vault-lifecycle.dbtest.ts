@@ -24,9 +24,12 @@ import request from 'supertest';
 import { Pool } from 'pg';
 import { createHash } from 'node:crypto';
 import { databaseUrl } from '../setup.db';
+import { nativeCatalogRunId } from './catalog-native-fixture';
+import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime, seedVaultFixtureParent, seedVaultFixtureViewer } from './vault-current-access-fixture';
 
-const PROBE = 'dbtest-vr13 ';
-const CODE = 'DBTEST-VR13';
+const RUN = nativeCatalogRunId();
+const PROBE = `dbtest-vr13 ${RUN} `;
+const CODE = `DBTEST-VR13-${RUN}`;
 
 type Tenant = { orgId: number; orgUuid: string; programId: string };
 type Who = 'uploader' | 'reviewer' | 'approver' | 'viewer';
@@ -132,54 +135,46 @@ async function tenant(slug: string): Promise<Tenant> {
   const org = await owner.query(
     `INSERT INTO organizations (name, slug) VALUES ($1, $2)
        ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
-    [`${PROBE}${slug}`, `dbtest-vr13-${slug}`],
+    [`${PROBE}${slug}`, `dbtest-vr13-${RUN}-${slug}`],
   );
   const prog = await owner.query(
     `INSERT INTO regulatory_programs (name, code, organization_id, program_type, product_type, primary_agency, product_name)
      VALUES ($1, $2, $3, 'ind', 'drug', 'FDA', 'Approvin 5mg') RETURNING id`,
     [`${PROBE}${slug} program`, `${CODE}-${slug.toUpperCase()}`, org.rows[0].id],
   );
-  return { orgId: Number(org.rows[0].id), orgUuid: String(org.rows[0].uuid), programId: String(prog.rows[0].id) };
-}
-
-async function cleanup(): Promise<void> {
-  // Lifecycle records and signatures are append-only (VR-03, VR-12) and stay
-  // with the probe tenant; each run uses fresh Vault versions.
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1 AND supersedes_id IS NOT NULL', [`${CODE}%`]);
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${CODE}%`]);
-  await owner.query(
-    'DELETE FROM c2c_documents WHERE project_id IN (SELECT id FROM regulatory_programs WHERE name LIKE $1)',
-    [`${PROBE}%`],
-  );
-  await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE}%`]);
+  const scoped = { orgId: Number(org.rows[0].id), orgUuid: String(org.rows[0].uuid), programId: String(prog.rows[0].id) };
+  await seedVaultFixtureParent(owner, scoped, { userId: users.uploader, namespace: `${CODE}-${slug}` });
+  return scoped;
 }
 
 beforeAll(async () => {
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
+  await assertVaultFixtureDatabase(owner);
   for (const who of ['uploader', 'reviewer', 'approver', 'viewer'] as Who[]) {
     const u = await owner.query(
       `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, 'not-a-real-hash')
          ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-      [`dbtest-vr13-${who}@example.test`, `Vera ${who[0].toUpperCase()}${who.slice(1)}`],
+      [`dbtest-vr13-${RUN}-${who}@example.test`, `Vera ${who[0].toUpperCase()}${who.slice(1)}`],
     );
     users[who] = Number(u.rows[0].id);
   }
-  await cleanup();
   mine = await tenant('mine');
   theirs = await tenant('theirs');
   // A signature is attributed through the signer's membership (§11.100).
-  for (const who of ['uploader', 'reviewer', 'approver', 'viewer'] as Who[]) {
+  for (const who of ['reviewer', 'approver'] as Who[]) {
     await owner.query(
       `INSERT INTO organization_users (organization_id, user_id, role)
        SELECT $1, $2, $3 WHERE NOT EXISTS (SELECT 1 FROM organization_users WHERE organization_id = $1 AND user_id = $2)`,
-      [mine.orgId, users[who], who === 'viewer' ? 'viewer' : 'admin'],
+      [mine.orgId, users[who], 'admin'],
     );
   }
+  await seedVaultFixtureViewer(owner, mine, { userId: users.viewer, invitedBy: users.uploader });
+  await assertVaultFixtureRuntime(mine);
 }, 60_000);
 
 afterAll(async () => {
-  await cleanup().catch(() => {});
   await owner.end().catch(() => {});
+  await closeVaultFixtureRuntime();
 });
 
 describe('starting a Vault version\'s lifecycle (VR-13)', () => {

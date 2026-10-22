@@ -32,14 +32,20 @@ import express from 'express';
 import http from 'node:http';
 import request from 'supertest';
 import { Pool } from 'pg';
+import { createHash } from 'node:crypto';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
 import { databaseUrl } from '../setup.db';
 import { callToolAsTurn } from './ana-tool-call';
+import type { RequestSqlClient } from '../../server/db/requestDb';
+import { nativeCatalogRunId, seedNativeCatalogProject, withNativeCatalogClient } from './catalog-native-fixture';
 
 process.env.ANA_DOCUMENT_CATALOG_FORCE_ON = 'true';
 process.env.ANA_VAULT_CHUNKING_FORCE_ON = 'true';
 
-const PROBE_PREFIX = 'dbtest-recall ';
-const PROBE_CODE = 'DBTEST-RECALL-DOC';
+const RUN = nativeCatalogRunId();
+const PROBE_PREFIX = `dbtest-recall-${RUN} `;
+const PROBE_CODE = `DBTEST-RECALL-DOC-${RUN}`;
 
 const TOX_BODY =
   'GLP 28-Day Repeat-Dose Toxicology Study TOX-77-A in Sprague-Dawley rats. ' +
@@ -56,7 +62,6 @@ let owner: Pool;
 let orgId: number;
 let orgUuid: string;
 let userId: number;
-let workspaceId: number;
 let projectId: number;
 let profileId: number;
 let programId: string;
@@ -103,23 +108,35 @@ function startEmbeddingStub(): Promise<string> {
   });
 }
 
-async function inTenantScope<T>(fn: () => Promise<T>): Promise<T> {
-  const { runWithTenantScope } = await import('../../server/db/tenantStore');
-  return runWithTenantScope(
-    {
-      tenantId: String(orgId),
-      orgUuid,
-      role: 'admin',
-      source: 'request',
-      caller: 'tests/db/document-catalog-recall.dbtest.ts',
-    },
-    fn,
-  );
+async function inTenantScope<T>(fn: (sqlClient: RequestSqlClient) => Promise<T>): Promise<T> {
+  return withNativeCatalogClient({
+    organizationId: orgId, organizationUuid: orgUuid, userId, role: 'admin',
+    caller: 'tests/db/document-catalog-recall.dbtest.ts',
+  }, fn);
 }
 
 /** A tool called as AnA's turn calls it (a read counts once delivered; see ana-tool-call.ts). */
 async function callTool(name: string, input: Record<string, unknown>, extra: { humanConfirmed?: boolean } = {}) {
-  return inTenantScope(() => callToolAsTurn(name, input, { organizationId: orgId, userId, projectId, ...extra }));
+  return inTenantScope(sqlClient => callToolAsTurn(name, input, { organizationId: orgId, userId, projectId, sqlClient, ...extra }));
+}
+
+/** Discovery admits an actual same-org upload and its exact capture identity. */
+async function storedChatUpload(version: number) {
+  const { Document, Packer, Paragraph } = await import('docx');
+  const fileId = `file_recall_${RUN}_v${version}`;
+  const fileName = `protocol-draft-v${version}.docx`;
+  const bytes = await Packer.toBuffer(new Document({ sections: [{ children: [
+    new Paragraph(`Retained protocol draft, version ${version}.`),
+  ] }] }));
+  const checksum = createHash('sha256').update(bytes).digest('hex');
+  const storagePath = `uploads/org-${orgId}/${fileId}`;
+  await fs.mkdir(path.resolve(process.cwd(), 'uploads', `org-${orgId}`), { recursive: true });
+  await fs.writeFile(path.resolve(process.cwd(), storagePath), bytes);
+  await owner.query(`INSERT INTO file_uploads
+    (id,user_id,organization_id,original_name,mime_type,file_size,storage_path,checksum_sha256,status)
+    VALUES($1,$2,$3,$4,'application/vnd.openxmlformats-officedocument.wordprocessingml.document',$5,$6,$7,'uploaded')`,
+  [fileId, userId, orgId, fileName, bytes.length, storagePath, checksum]);
+  return { fileId, fileName, checksum, storagePath };
 }
 
 async function buildApp(): Promise<express.Express> {
@@ -141,48 +158,6 @@ async function buildApp(): Promise<express.Express> {
   return a;
 }
 
-async function cleanupProbeRows(): Promise<void> {
-  const client = await owner.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query(
-      `DELETE FROM audit_logs WHERE action = 'vault.document.ingest'
-         AND record_id IN (SELECT id::text FROM vault.documents WHERE document_code LIKE $1)`,
-      [`${PROBE_CODE}%`],
-    );
-    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query('COMMIT');
-  } catch {
-    await client.query('ROLLBACK').catch(() => {});
-  } finally {
-    client.release();
-  }
-  /* Delete by PROGRAM, not by document_code.
-     The code-prefix delete matched only the documents this suite names itself.
-     `file_chat_upload_to_vault` derives the code from the uploaded FILE NAME,
-     so the document it admits is called `coa-batch-23-104` and survived every
-     run — one orphaned document and its chunks per run, accumulating in any
-     database that is not thrown away afterwards. With the embedding stub
-     returning a constant vector every chunk ties, so after a few runs the
-     leftovers won the similarity ranking and the passage-retrieval case
-     started failing on a reused database while passing in CI. A suite whose
-     own residue breaks its next run is not hermetic; scoping the delete to the
-     programs this suite created covers every document it admits, whatever the
-     admitting path decided to call it. */
-  await owner.query(
-    `DELETE FROM vault.documents
-      WHERE program_id IN (SELECT id FROM regulatory_programs WHERE name LIKE $1)
-         OR document_code LIKE $2`,
-    [`${PROBE_PREFIX}%`, `${PROBE_CODE}%`],
-  );
-  await owner.query(`DELETE FROM cre_evidence_sources WHERE organization_id = $1 AND title LIKE $2`,
-    [orgId, `${PROBE_PREFIX}%`]);
-  await owner.query(`DELETE FROM project_memory_entries WHERE organization_id = $1`, [orgId]);
-  await owner.query(`DELETE FROM project_ingested_documents WHERE organization_id = $1`, [orgId]);
-  await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE_PREFIX}%`]);
-}
-
 beforeAll(async () => {
   // The stub must exist before anything resolves the provider seam.
   const baseUrl = await startEmbeddingStub();
@@ -198,7 +173,7 @@ beforeAll(async () => {
   const org = await owner.query(
     `INSERT INTO organizations (name, slug) VALUES ($1, $2)
        ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    [`${PROBE_PREFIX}tenant`, 'dbtest-recall-tenant'],
+    [`${PROBE_PREFIX}tenant`, `dbtest-recall-tenant-${RUN}`],
   );
   orgId = Number(org.rows[0].id);
   orgUuid = String(
@@ -207,7 +182,7 @@ beforeAll(async () => {
   const user = await owner.query(
     `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, $3)
        ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    ['dbtest-recall@example.test', `${PROBE_PREFIX}actor`, 'not-a-real-hash'],
+    [`dbtest-recall-${RUN}@example.test`, `${PROBE_PREFIX}actor`, 'not-a-real-hash'],
   );
   userId = Number(user.rows[0].id);
   // AnA's tool dispatch reads the caller's role live from organization_users
@@ -216,31 +191,18 @@ beforeAll(async () => {
   await owner.query(`INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'admin')
      ON CONFLICT (user_id, organization_id) DO UPDATE SET role = EXCLUDED.role`, [orgId, userId]);
 
-  await cleanupProbeRows();
 
   const prog = await owner.query(
     `INSERT INTO regulatory_programs
        (name, code, organization_id, program_type, product_type, primary_agency, product_name)
      VALUES ($1, $2, $3, 'IND', 'drug', 'FDA', $4) RETURNING id`,
-    [`${PROBE_PREFIX}program`, 'DBTEST-RECALL-A', orgId, 'Recallin 5mg'],
+    [`${PROBE_PREFIX}program`, `DBTEST-RECALL-A-${RUN}`, orgId, 'Recallin 5mg'],
   );
   programId = String(prog.rows[0].id);
 
-  const ws = await owner.query(
-    `INSERT INTO client_workspaces (organization_id, name, slug) VALUES ($1, $2, $3)
-       ON CONFLICT DO NOTHING RETURNING id`,
-    [orgId, `${PROBE_PREFIX}workspace`, 'dbtest-recall-ws'],
-  );
-  workspaceId =
-    Number(ws.rows[0]?.id) ||
-    Number((await owner.query(`SELECT id FROM client_workspaces WHERE slug = 'dbtest-recall-ws'`)).rows[0].id);
-
-  const proj = await owner.query(
-    `INSERT INTO projects (organization_id, client_workspace_id, name, type, regulatory_program_id)
-     VALUES ($1, $2, $3, 'IND', $4) RETURNING id`,
-    [orgId, workspaceId, `${PROBE_PREFIX}project`, programId],
-  );
-  projectId = Number(proj.rows[0].id);
+  ({ projectId } = await seedNativeCatalogProject(owner, {
+    organizationId: orgId, userId, programId, namespace: `dbtest-recall-${RUN}`,
+  }));
 
   const profile = await owner.query(
     `INSERT INTO project_intelligence_profiles (project_id, organization_id)
@@ -253,9 +215,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await cleanupProbeRows().catch(() => {});
-  await owner.query('DELETE FROM project_intelligence_profiles WHERE id = $1', [profileId]).catch(() => {});
-  await owner.query('DELETE FROM projects WHERE id = $1', [projectId]).catch(() => {});
+  // Retain this fresh run's source ancestry and immutable audit history.
   await owner.end().catch(() => {});
   await new Promise<void>(resolve => embedServer.close(() => resolve()));
 });
@@ -314,7 +274,7 @@ describe('semantic search over the catalog', () => {
 
     const done = await callTool('catalog_project_document', {
       document_id: docId,
-      document_kind: 'GLP 28-day repeat-dose toxicology study report',
+      document_kind: 'nonclinical',
       purpose: 'Supports Module 4 repeat-dose toxicology for Recallin.',
       summary: 'TOX-77-A in rats; NOAEL 50 mg/kg/day; reversible hepatocellular hypertrophy at 150.',
       key_data: { study: 'TOX-77-A', noaelMgKgDay: 50 },
@@ -355,17 +315,21 @@ describe('chat-upload discovery', () => {
     const { createSource, createSupersedingSource } = await import(
       '../../server/services/clinical-regulatory-evidence/evidence-spine.service'
     );
+    const firstUpload = await storedChatUpload(1);
+    const currentUpload = await storedChatUpload(2);
     const v1 = await inTenantScope(() =>
       createSource(orgId, {
         sourceType: 'client_document',
+        createdBy: userId,
         clientProgramId: programId,
         title: `${PROBE_PREFIX}protocol draft`,
-        checksum: 'a'.repeat(64),
+        checksum: firstUpload.checksum,
+        storedArtifactRef: firstUpload.storagePath,
         version: '1.0',
         ingestionStatus: 'ingested',
         extractionStatus: 'extracted',
-        provenance: { origin: 'chat_upload', fileUploadId: 'file_recall_v1' },
-        metadata: { originalName: 'protocol-draft-v1.docx' },
+        provenance: { origin: 'chat_upload', fileUploadId: firstUpload.fileId },
+        metadata: { originalName: firstUpload.fileName },
       }),
     );
     const v2 = await inTenantScope(() =>
@@ -373,14 +337,16 @@ describe('chat-upload discovery', () => {
         orgId,
         {
           sourceType: 'client_document',
+          createdBy: userId,
           clientProgramId: programId,
           title: `${PROBE_PREFIX}protocol draft`,
-          checksum: 'b'.repeat(64),
+          checksum: currentUpload.checksum,
+          storedArtifactRef: currentUpload.storagePath,
           version: '2.0',
           ingestionStatus: 'ingested',
           extractionStatus: 'extracted',
-          provenance: { origin: 'chat_upload', fileUploadId: 'file_recall_v2' },
-          metadata: { originalName: 'protocol-draft-v2.docx' },
+          provenance: { origin: 'chat_upload', fileUploadId: currentUpload.fileId },
+          metadata: { originalName: currentUpload.fileName },
         },
         v1.id,
       ),
@@ -390,9 +356,9 @@ describe('chat-upload discovery', () => {
     expect(listed.ok).toBe(true);
     expect(listed.chatUploads).not.toBeNull();
     const fileIds = listed.chatUploads.map((u: { fileId: string | null }) => u.fileId);
-    expect(fileIds).toContain('file_recall_v2');
+    expect(fileIds).toContain(currentUpload.fileId);
     // The superseded v1 must not be presented as a live file.
-    expect(fileIds).not.toContain('file_recall_v1');
+    expect(fileIds).not.toContain(firstUpload.fileId);
     const v2Row = listed.chatUploads.find((u: { sourceId: number }) => u.sourceId === v2.source.id);
     expect(v2Row.fileName).toBe('protocol-draft-v2.docx');
     expect(listed.message).toContain('chat-uploaded');
@@ -437,8 +403,11 @@ describe('vault passage retrieval — the reader finally has a writer', () => {
 
     // End to end: the vault corpus returns the passage through the single router.
     const { ragRetrieve } = await import('../../server/services/ragRouter');
-    const ctx = await inTenantScope(() =>
-      ragRetrieve({
+    const ctx = await inTenantScope(async sqlClient => {
+      const { getCurrentAccessibleProgramScope } = await import('../../server/services/c2c/current-program-access');
+      const verifiedScope = await getCurrentAccessibleProgramScope(sqlClient, { organizationId: orgId, userId, programId });
+      return ragRetrieve({
+        vaultRead: { sqlClient, organizationId: orgId, userId, programId, verifiedScope },
         query: 'dissolution profile batch 44-B',
         organizationUuid: orgUuid,
         strategy: 'basic',
@@ -449,13 +418,15 @@ describe('vault passage retrieval — the reader finally has a writer', () => {
         useContextExpansion: false,
         threshold: 0.2,
         limit: 3,
-      }),
-    );
+      });
+    });
     expect(ctx.documents.length).toBeGreaterThan(0);
     expect(ctx.documents[0].content).toContain('dissolution profile');
   });
 
-  it('an embedding failure leaves ZERO chunks and a chunk_failed ledger row — never a partial index', async () => {
+  /* Keyless (2026-10-08): every chunk is written for text search; no vector is
+     kept, so the meaning-based arm never ranks a half-embedded document. */
+  it('an embedding failure still indexes every chunk for text search, with no partial set of vectors', async () => {
     const BODY =
       'Opening section that embeds fine. '.repeat(50) +
       '\n\nFAIL_EMBEDDING poison paragraph that the stub refuses. ' +
@@ -474,15 +445,18 @@ describe('vault passage retrieval — the reader finally has a writer', () => {
       `SELECT COUNT(*)::int AS n FROM vault.document_chunks WHERE document_id = $1`,
       [docId],
     );
-    expect(chunks.rows[0].n).toBe(0); // …but nothing half-indexed exists…
+    expect(chunks.rows[0].n).toBeGreaterThan(1); // …every chunk is indexed for text…
+    const vectors = await owner.query('SELECT COUNT(embedding)::int AS n FROM vault.document_chunks WHERE document_id = $1', [docId]);
+    expect(vectors.rows[0].n).toBe(0); // …and none keeps a vector: never a partial set.
 
     const ledger = await owner.query(
-      `SELECT chunk_status, chunk_error FROM vault.document_catalog WHERE document_id = $1`,
+      `SELECT chunk_status, chunk_count, chunk_error FROM vault.document_catalog WHERE document_id = $1`,
       [docId],
     );
-    // …and the ledger states the failure with its reason.
-    expect(ledger.rows[0].chunk_status).toBe('chunk_failed');
-    expect(ledger.rows[0].chunk_error).toMatch(/Embedding failed/);
+    expect(ledger.rows[0].chunk_status).toBe('chunked');
+    expect(ledger.rows[0].chunk_count).toBe(chunks.rows[0].n);
+    // The provider's failure is stated with its reason, not hidden.
+    expect(ledger.rows[0].chunk_error).toMatch(/Not embedded/);
   });
 });
 
@@ -503,15 +477,17 @@ describe('backfilling documents ingested before chunking existed', () => {
     expect(legacyRes.status).toBe(201);
     const legacyId = legacyRes.body.document.id;
 
-    // It is outside retrieval, and its ledger says "never attempted" (NULL) —
-    // not "chunked", and not a failure.
+    // Since 2026-10-08 it is indexed for text search at ingest, with no
+    // vectors: passage embedding was off.
     const before = await owner.query(
       `SELECT (SELECT COUNT(*)::int FROM vault.document_chunks WHERE document_id = $1) AS chunks,
+              (SELECT COUNT(embedding)::int FROM vault.document_chunks WHERE document_id = $1) AS embedded,
               (SELECT chunk_status FROM vault.document_catalog WHERE document_id = $1) AS status`,
       [legacyId],
     );
-    expect(before.rows[0].chunks).toBe(0);
-    expect(before.rows[0].status).toBeNull();
+    expect(before.rows[0].chunks).toBeGreaterThan(0);
+    expect(before.rows[0].embedded).toBe(0);
+    expect(before.rows[0].status).toBe('chunked');
 
     const { backfillVaultChunks } = await import(
       '../../server/services/vault/document-chunking-backfill.service'
@@ -521,13 +497,10 @@ describe('backfilling documents ingested before chunking existed', () => {
     const dry = await inTenantScope(() => backfillVaultChunks(orgId, { limit: 100 }));
     expect(dry.dryRun).toBe(true);
     expect(dry.examined).toBeGreaterThan(0);
-    const stillEmpty = await owner.query(
-      `SELECT COUNT(*)::int AS n FROM vault.document_chunks WHERE document_id = $1`,
-      [legacyId],
-    );
+    const stillEmpty = await owner.query('SELECT COUNT(embedding)::int AS n FROM vault.document_chunks WHERE document_id = $1', [legacyId]);
     expect(stillEmpty.rows[0].n).toBe(0);
 
-    // Applying indexes it for real.
+    // With passage embedding now on, applying gives its passages vectors.
     const applied = await inTenantScope(() => backfillVaultChunks(orgId, { apply: true, limit: 100 }));
     expect(applied.indexed).toBeGreaterThan(0);
     expect(applied.chunksWritten).toBeGreaterThan(0);

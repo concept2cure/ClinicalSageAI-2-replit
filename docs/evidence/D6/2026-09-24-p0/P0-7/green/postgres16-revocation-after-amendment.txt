@@ -8,7 +8,7 @@ DO
 
 ## seed S3 (signature) and S4 (revocation record)
 INSERT INTO electronic_signatures (document_id, version_id, signature_type, signature_purpose, signer_id, signer_name, signer_email, authentication_method, authentication_timestamp, signature_hash, organization_id) VALUES (1,1,'x','x',1,'x','x','x',now(),'h3',7),(1,1,'x','x',1,'x','x','x',now(),'h4',7) RETURNING id;
- id 
+ id
 ----
   3
   4
@@ -18,7 +18,7 @@ INSERT 0 2
 
 ## THE FORMERLY FAILING STATEMENT (Phase A transcript §4 raised IMMUTABILITY_VIOLATION)
 UPDATE electronic_signatures SET superseded_by = 4, is_valid = false, verification_status = 'revoked', verification_date = now(), updated_at = now() WHERE id = 3 AND organization_id = 7 AND superseded_by IS NULL RETURNING id, superseded_by, is_valid, verification_status;
- id | superseded_by | is_valid | verification_status 
+ id | superseded_by | is_valid | verification_status
 ----+---------------+----------+---------------------
   3 |             4 | f        | revoked
 (1 row)

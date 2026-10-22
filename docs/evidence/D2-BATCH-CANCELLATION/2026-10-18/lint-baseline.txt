@@ -1,0 +1,4 @@
+server/services/ana/AnaDocumentDraftingService.ts baseline(errors warnings)=0 6
+server/services/ana/AnaToolExecutor.ts baseline(errors warnings)=0 95
+server/services/ana/legacy-import-tool-defs.ts baseline(errors warnings)=0 1
+server/services/ana/batch-draft-result.ts baseline(errors warnings)=0 0

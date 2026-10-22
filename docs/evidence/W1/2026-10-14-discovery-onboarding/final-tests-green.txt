@@ -1,0 +1,718 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/mdx-admin-facets.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/mdx-admin-facets.test.ts
+{
+  "timestamp": "2026-10-14T03:27:35.096Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > returns apiKeys from api_keys (revoked filtered, prefix owner, no invented rotation) 17ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > returns audit from audit_logs with a real chained sha and system actor 4ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > derives settings only from real org values 3ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > builds a TRUTHFUL sso object (disabled + no SCIM) — not the mock topology 3ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > reflects SSO enabled + active SCIM when the org config says so 3ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > fails a single facet closed — a missing api_keys table does not sink the payload 3ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > 403s without an org context (no tenant leak) 2ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > 403s an authenticated NON-admin member (fail-closed authorization) 2ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > session policy follows the enforced sign-in policy > shows the idle interval sign-in actually enforces for {"sessionTimeout":120} 3ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > session policy follows the enforced sign-in policy > shows the idle interval sign-in actually enforces for {"sessionTimeoutMinutes":99999} 2ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > session policy follows the enforced sign-in policy > shows the idle interval sign-in actually enforces for {"sessionTimeoutMinutes":0} 2ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > session policy follows the enforced sign-in policy > shows the idle interval sign-in actually enforces for {"sessionTimeoutMinutes":"90"} 1ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > session policy follows the enforced sign-in policy > shows the idle interval sign-in actually enforces for {"sessionTimeoutMinutes":22.9} 1ms
+stderr | server/routes/__tests__/mdx-admin-honesty.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/mdx-admin-honesty.test.ts
+{
+  "timestamp": "2026-10-14T03:27:35.865Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > names a failed api_keys read in meta.unavailable
+{
+  "timestamp": "2026-10-14T03:27:35.943Z",
+  "level": "warn",
+  "message": "[mdx-admin] admin facet apiKeys failed",
+  "context": {
+    "err": "permission denied for table"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > names a failed audit read
+{
+  "timestamp": "2026-10-14T03:27:35.947Z",
+  "level": "warn",
+  "message": "[mdx-admin] admin facet audit failed",
+  "context": {
+    "err": "permission denied for table"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > withholds settings and SSO derived from a failed organizations read
+{
+  "timestamp": "2026-10-14T03:27:35.954Z",
+  "level": "warn",
+  "message": "[mdx-admin] admin facet settings failed",
+  "context": {
+    "err": "permission denied for table"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > withholds SSO when scim_tenants could not be read
+{
+  "timestamp": "2026-10-14T03:27:35.957Z",
+  "level": "warn",
+  "message": "[mdx-admin] admin facet sso failed",
+  "context": {
+    "err": "permission denied for table"
+  }
+}
+
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > second factor — the row says what sign-in enforces > reports the challenge as required, whatever settings.security.mfaEnabled holds 13ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > second factor — the row says what sign-in enforces > says the second factor is skipped on a development server with dev auth on 3ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > second factor — the row says what sign-in enforces > counts an authenticator only when sign-in would ask for one 3ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > names a failed api_keys read in meta.unavailable 4ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > names a failed audit read 3ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > withholds settings and SSO derived from a failed organizations read 7ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > withholds SSO when scim_tenants could not be read 3ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > keeps a missing table (42P01) an honest empty — nothing is unavailable 2ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > audit rows name people and events, not ids > uses the recorded description, the account name and the named target 3ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > audit rows name people and events, not ids > humanizes an action with no recorded description 2ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > member rows carry what the membership routes take > names the organization, each member by user id, and marks only the caller as self 2ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > member rows carry what the membership routes take > marks no row as self when the session names no user 2ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > member state says whether the account can sign in > invited (setup link not redeemed), active, disabled — and the KPI counts only active 2ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > member state says whether the account can sign in > reads the invitation from the hash prefix in SQL and never returns the hash 2ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > roles say what they may do, from the checks the server enforces > describes each live role and lists its scopes 2ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > roles say what they may do, from the checks the server enforces > a role the product does not describe says so, and lists only what the checks grant it 2ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > the account menu offers the panel > lists Account, and choosing it opens the panel on the server's account 243ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > profile > shows name, e-mail, organisation and the membership role, as the server reports them 19ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > profile > a session with no organisation says so, and names none (P-25) 15ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > profile > a failed account read is an error with a way to retry, never an empty panel 27ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a wrong current password shows the server's refusal — not "Session expired" — and the session stays 39ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > shows every policy refusal the server lists, in its words 32ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a confirmation that differs is caught before anything is sent 28ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a change says that every session has ended, this one included, and signs out on request 96ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > enrolment shows the server's QR code and key, confirms a code, then shows the recovery codes once 75ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > a wrong confirmation code shows the server's refusal, not "Session expired", and keeps the key on screen 39ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > a refused setup is shown in the server's words 23ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > never loads a QR code from anywhere but the server's own data: URL 19ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > removal sends a current code; the server's refusal is shown, and a good code removes it 56ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app: what removal costs where signing needs it (P-25 follow-up) > where signing needs an authenticator, removal warns that it stops signing (P-25 follow-up) 21ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app: what removal costs where signing needs it (P-25 follow-up) > where signing does not need one, removal carries no such warning 22ms
+stderr | client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > offers no therapeutic area and no pre-chosen indication: the indication is an empty text field
+An update to DiscoveryProjectPrefill inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to MarketSupportLine inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > offers no therapeutic area and no pre-chosen indication: the indication is an empty text field 257ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > sends no indication when none was typed, and the review says it is not stated 119ms
+stderr | client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > starts on "Not stated — choose" and offers only drug and biologic
+An update to DiscoveryProjectPrefill inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to MarketSupportLine inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > cannot continue until the product type is chosen
+An update to DiscoveryProjectPrefill inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to MarketSupportLine inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > sends exactly the indication the person typed 119ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > starts on "Not stated — choose" and offers only drug and biologic 65ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > cannot continue until the product type is chosen 83ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > records the class that was chosen, and the review shows it 97ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — a filing type that fixes the class asks nothing > an NDA is recorded as a drug with no product-type question 103ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > discovery onboarding persists through governed setup and keeps outcomes reviewable > requires a company goal and a use before advancing 217ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > discovery onboarding persists through governed setup and keeps outcomes reviewable > saves discovery first, writes markets/pathways to the existing industry profile and preserves the setup link 202ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > discovery onboarding persists through governed setup and keeps outcomes reviewable > keeps answers and does not invite or bill when saving discovery is refused 160ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > discovery onboarding persists through governed setup and keeps outcomes reviewable > loads previously recorded answers and never renders a failed read as an empty profile 43ms
+stderr | client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > cannot continue past Configure without a project name, and says it is required
+An update to DiscoveryProjectPrefill inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to MarketSupportLine inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > treats a name of spaces as no name
+An update to DiscoveryProjectPrefill inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to MarketSupportLine inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > never reaches a review that reads "(unnamed)"
+An update to DiscoveryProjectPrefill inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to MarketSupportLine inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > cannot continue past Configure without a project name, and says it is required 235ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > treats a name of spaces as no name 78ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > never reaches a review that reads "(unnamed)" 65ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > sends the typed name and product, trimmed, exactly as the review showed them 123ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > with no product name, the review says the project name will be recorded as the product 102ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > never sends the filing type label as the name or the product 101ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > opens a governed form, requires a reason, and sends nothing without one 205ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > PATCHes the organization and user the server named, with the role and the reason 67ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > shows the server's refusal in its own words and keeps the form and its values 58ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > a 401 answer is not reported as a change 54ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > removing a member > DELETEs with the reason after a governed confirmation, and says what removal does 54ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > what is not offered > the administrator's own row: neither control is enabled, and the drawer says why 18ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > what is not offered > a payload without the organization or user id: fail closed 20ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > issuing a new setup link > is offered for an invited member only, behind a confirmation that says the old link stops working 43ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > issuing a new setup link > says "on your clipboard" when the copy succeeded 39ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > issuing a new setup link > inviting an invited address again through the form says a new link was issued and the role is unchanged 67ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > assigning a signing role > PATCHes approver with the reason 40ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > assigning a signing role > the invite form offers the same roles, labelled as the rest of the page labels them 20ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup reads the organization record > shows the organization’s real name, not an invented default 70ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup reads the organization record > seeds the translation policy from the persisted section 33ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup reads the organization record > addresses the org from the token claim, never the stale localStorage id 62ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup reads the organization record > writes nothing to the browser-local settings blob it replaced 36ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > sends nothing until something has changed 30ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > refuses to write without a reason, because the route audits one 39ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > PATCHes both governed routes with the reason and the token’s org id 42ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > never carries a stale record’s “guardrail off” claim back to the server 34ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > leaves a refused section dirty, and re-sends only that section 50ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > reports an unreachable server as unreachable, not as a refusal 35ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > has no switch for anything enforced elsewhere or per user 27ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > offers the agency gateway account choice (D7, founder decision 2026-10-01) 21ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > offers Require PDF/A, the organisation's own choice (D7, the PDF/A rule, 2026-10-01) 17ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > states the approval guardrails as always enforced 20ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > discloses that the editable translation preferences are not yet read 17ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > does not offer edits it cannot persist when the record fails to load 17ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleRuleActions.test.tsx > SCIM allowlist row controls > requires explicit confirmation to disable a rule and names the unrestricted consequence 226ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleRuleActions.test.tsx > SCIM allowlist row controls > deletes only the selected rule after confirmation and re-reads the real list 69ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleRuleActions.test.tsx > SCIM allowlist row controls > keeps refused changes pending and preserves platform-administrator authorization 72ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleRuleActions.test.tsx > SCIM allowlist row controls > does not claim a successful rule change from an unrelated or malformed response 74ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleRuleActions.test.tsx > SCIM allowlist row controls > requires a governed reason before sending a rule change 56ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/ApiKeyCreate.test.tsx > organization API key creation > uses explicit least-access scope choices and the authenticated organization 188ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/ApiKeyCreate.test.tsx > organization API key creation > requires at least one scope and never creates a broad default key 38ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/ApiKeyCreate.test.tsx > organization API key creation > preserves the one-time key until stored and reports manual copy when clipboard refuses 77ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/ApiKeyCreate.test.tsx > organization API key creation > reports refusal, keeps the form open, and never shows a fabricated key 60ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/ApiKeyCreate.test.tsx > organization API key creation > clears the raw key when unmounted and never restores it from browser storage 56ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/ApiKeyCreate.test.tsx > organization API key creation > retains the one-time issued key when its audit record could not be persisted 49ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — Request Enterprise onboarding > files a real licence request carrying the contact and the configured plan 191ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — Request Enterprise onboarding > sends nothing — and says nothing was sent — when the intake refuses 103ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — Request Enterprise onboarding > cannot be fired at all without an address to reply to 73ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — the free tier activates a plan > provisions the free tier through the real checkout endpoint and does not redirect 91ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — the free tier activates a plan > reports no plan when the server refuses the free activation 73ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx > New project wizard — a filing creation refuses > states the reason, offers no "Try again", and "Choose another filing" returns to step 1 without sending again 320ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx > New project wizard — a filing creation refuses > any other failure keeps "Try again" 135ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > second factor — one answer on one screen > labels the count as authenticator enrolment and a member without one as "Emailed code" 68ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > second factor — one answer on one screen > shows the sign-in policy row as a fact, not a setting to change 23ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > API keys: "--" and "Couldn't load", not "0" and "No API keys" 25ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > audit: "Couldn't load the admin audit", not "No admin audit entries yet" 14ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > settings and SSO: say they could not be read 55ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > retries the read from the error 292ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > names and times, not ids and ISO strings > renders the audit band and Last seen for a reader 17ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > names and times, not ids and ISO strings > shows an API key by prefix and owner name, and revokes it by its numeric id 133ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > invited members are not counted as active > the Members KPI reads "1 active · 1 invited", and the Invited filter lists the invitee 59ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > governed session security policy > reads runtime-backed keys and ignores obsolete sessionTimeout and unsupported flags 117ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > governed session security policy > sends only the two enforced keys and an audited reason to the JWT organization 58ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > governed session security policy > requires a reason and valid integers before making a governed change 53ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > governed session security policy > does not display platform defaults as loaded organization policy after a failed read 15ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > governed session security policy > retains unsaved edits on audit-write refusal and never claims save success 38ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > governed session security policy > keeps changes unconfirmed when the returned policy does not match the requested values 36ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > preserves metadata/expiry/rate normalization and stores the trimmed creation reason in both audit fields 201ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > legacy callers may omit reason; tenant/user spoofing never changes the authenticated generation or audit actor 3ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > rejects a blank supplied reason before generating or auditing a key 3ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > rejects a too short after trimming supplied reason before generating or auditing a key 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > rejects a too long supplied reason before generating or auditing a key 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > rejects a null supplied reason before generating or auditing a key 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > accepts the trimmed 3-character reason boundary 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > accepts the trimmed 500-character reason boundary 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > reports a tamper-proof-only audit as persisted but not chained 3ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > a lost audit still returns the already-created key once with 201 and a safe warning 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > a rejected audit still returns the already-created key once with 201 and a safe warning 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > a later list never returns the raw key, including after a rejected creation audit 3ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > successful revocation with a chained audit remains scoped and 200 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > successful revocation with a tamper-proof-only audit remains scoped and 200 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > successful revocation with a lost audit remains scoped and 200 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > successful revocation with a rejected audit remains scoped and 200 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > a missing/foreign/already-revoked key with a chained audit remains 404 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > a missing/foreign/already-revoked key with a tamper-proof-only audit remains 404 1ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > a missing/foreign/already-revoked key with a lost audit remains 404 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > a missing/foreign/already-revoked key with a rejected audit remains 404 1ms
+stderr | server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change whose record is refused is not made: 500, nothing claimed saved, no store text
+Error updating organization settings: audit_logs refused the row: secret-detail
+
+stderr | server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a lost row still answers 200 with the change, and says the row is missing
+{
+  "timestamp": "2026-10-14T03:27:52.616Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "data_modify",
+    "resourceType": "organization",
+    "resourceId": 7,
+    "reason": "relation \"audit_logs\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 403s an admin of a DIFFERENT organization (tenant scoping) 15ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 403s a non-admin member of the target org 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 400s when the reason is missing 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 400s when no profile field is provided 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > updates and audits for an org admin (reason recorded) 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > allows platform staff into any org 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 404s when the organization does not exist 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > platform staff acting on another organization > opens the system scope only for staff acting on ANOTHER org 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 403s a non-admin member 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 400s the governed form without a reason 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > writes through the one settings writer: laid over the stored settings, its sections and reason (DP-73) 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > still accepts the legacy bare-partial body (recorded with no reason) 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 404s when there is no such organization, and claims nothing 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change that would move the connector is refused by the writer: 403, nothing written 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change whose record is refused is not made: 500, nothing claimed saved, no store text 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 400s an empty settings object 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a lost row still answers 200 with the change, and says the row is missing 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a written row says so 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > GET /api/organizations lists only its own memberships, not every organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot read another organization: GET /api/organizations/7 is 403 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot patch another organization's profile: 403, nothing written, no system scope 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot patch another organization's settings: 403, the writer is never asked 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > GET /api/organizations lists only its own memberships, not every organization 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot read another organization: GET /api/organizations/7 is 403 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot patch another organization's profile: 403, nothing written, no system scope 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot patch another organization's settings: 403, the writer is never asked 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > GET /api/organizations lists every organization 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > reads another organization: GET /api/organizations/7 is 200 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > patches another organization's profile, in the system scope, audited against that organization 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > GET /api/organizations lists every organization 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > reads another organization: GET /api/organizations/7 is 200 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > patches another organization's profile, in the system scope, audited against that organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a grant for a role this router does not accept (support) is not staff 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an org admin reading their OWN organization costs no grant lookup 1ms
+stderr | server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > returns a refused audit transaction as failure without claiming discovery saved
+Error updating organization settings: chained audit unavailable
+
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > keeps the membership and tenant boundaries for {"id":2,"role":"member","organizationId":7} 17ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > keeps the membership and tenant boundaries for {"id":3,"role":"admin","organizationId":9} 3ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > keeps the membership and tenant boundaries for {"id":21,"role":"super_admin","organizationId":9} 2ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > allows verified platform staff through the existing system scope 4ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > requires a bounded human reason and the governed body 0 2ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > requires a bounded human reason and the governed body 1 2ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > requires a bounded human reason and the governed body 2 2ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > requires a bounded human reason and the governed body 3 2ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section 0 3ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section 1 2ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section 2 2ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section 3 2ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section 4 2ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section 5 2ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section 6 2ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section 7 2ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > stores reviewed answers, preserves other settings, and grants or enforces nothing 3ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > returns a refused audit transaction as failure without claiming discovery saved 2ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/InvitationInbox.test.tsx > personal organization invitation inbox > accepts only the selected invitation and keeps the current workspace active 117ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/InvitationInbox.test.tsx > personal organization invitation inbox > declines explicitly without creating membership 27ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/InvitationInbox.test.tsx > personal organization invitation inbox > keeps an invitation pending after quota refusal and shows the server reason 22ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/InvitationInbox.test.tsx > personal organization invitation inbox > reports a failed read with retry, preserving the distinction from an empty inbox 10ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/InvitationInbox.test.tsx > personal organization invitation inbox > does not permit acceptance until the organization is identified by name 10ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/InvitationInbox.test.tsx > personal organization invitation inbox > does not treat malformed or success:false responses as accepted 16ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupClientTypeGoverned.test.tsx > the client type chips > are named in words, not keys 50ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupClientTypeGoverned.test.tsx > the client type chips > write nothing on click — the choice is pending until saved 55ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupClientTypeGoverned.test.tsx > the client type chips > are saved by "Save to organization" with the page’s reason for change 36ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupClientTypeGoverned.test.tsx > the client type chips > are not saved without a reason 60ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/OnboardingSecurity.test.tsx > onboarding security handoffs > opens the canonical account dialog and restores focus on close 118ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/OnboardingSecurity.test.tsx > onboarding security handoffs > routes administrators to the existing membership, setup and identity screens 23ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/OnboardingSecurity.test.tsx > onboarding security handoffs > gives nonadministrators the personal-account flow and a truthful admin handoff 7ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — real admin estate renders (no fixture) > renders the REAL members and audit, with no provenance pill or fixture 72ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — real admin estate renders (no fixture) > derives every KPI from the real rows (not hardcoded, not a fixture) 21ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — real admin estate renders (no fixture) > adopts the real API-keys and SSO panels on tab switch 38ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — honest empty state > shows an EmptyState — never a fixture — when the org has no admin data 9ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — honest error state > says "no access" — not "didn't respond" — when the caller is not an org admin (403) 12ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — honest error state > shows an error state — never a fixture — when the read fails (500) 10ms
+stderr | client/src/concept2cure/v2/__tests__/onboardingCurrentOrganization.test.tsx > the form starts from what the organisation records > never overwrites a name the person typed before the read answered
+An update to Onboarding inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/onboardingCurrentOrganization.test.tsx > the wizard names the organisation it will change > does not call itself a new organization 48ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingCurrentOrganization.test.tsx > the form starts from what the organisation records > prefills the recorded name 15ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingCurrentOrganization.test.tsx > the form starts from what the organisation records > pre-selects the archetype whose write-back is the recorded industry, not "Virtual biotech" 15ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingCurrentOrganization.test.tsx > the form starts from what the organisation records > never overwrites a name the person typed before the read answered 37ms
+ ✓ server/services/tenant/__tests__/tenant-session-policy-audit.test.ts > governed session policy values in the chained settings audit > records both idle minutes and the concurrent-session limit before and after on the writer client 106ms
+ ✓ server/services/tenant/__tests__/tenant-session-policy-audit.test.ts > governed session policy values in the chained settings audit > refuses a session-policy change whose chained audit cannot be written 1ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/InvitationResults.test.tsx > private invitation results > keeps every link visible and copies only the person selected 112ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/InvitationResults.test.tsx > private invitation results > preserves the visible link and announces manual copy when clipboard permission is refused 21ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/InvitationResults.test.tsx > private invitation results > shows consent and failed activation explicitly without offering a nonexistent link 2ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/DiscoveryProjectPrefill.test.tsx > copies only user-stated context when the user chooses it and never picks a filing 97ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/DiscoveryProjectPrefill.test.tsx > does not offer fabricated project details on a missing or unreadable record 3ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/DiscoveryQuestionnaire.test.tsx > discovery questions adapt to the client’s own answers > shows guidance for a newcomer and keeps comma-separated domains editable 65ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/DiscoveryQuestionnaire.test.tsx > discovery questions adapt to the client’s own answers > asks predicate questions only for a device and clears answers when the product changes 44ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/DiscoveryQuestionnaire.test.tsx > discovery questions adapt to the client’s own answers > offers launch-scoped uses and explains the CMC scope when selected 14ms
+stderr | server/routes/__tests__/tenant-user-invitation-handoff.test.ts > GET invitations/mine — names belong only to the caller’s invitations > a failed name read is 500 instead of a successful empty invitation list
+{
+  "timestamp": "2026-10-14T03:27:58.303Z",
+  "level": "error",
+  "message": "[tenant-users] Error retrieving pending invitations",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenant-user-invitation-handoff.test.ts > the invitee’s answer — scoped, atomic and recorded > accept audit refusal rolls membership and status back and returns 500 with no success claim
+Atomic invitation accept failed: Error: audit-chain-probe refused audit_logs
+    at /workspace/ClinicalSageAI-2-replit/server/routes/__tests__/tenant-user-invitation-handoff.test.ts:172:29
+    at Mock (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at recordInvitationConsent (/workspace/ClinicalSageAI-2-replit/server/services/tenant/invitation-consent.ts:26:9)
+    at Module.atomicAcceptInvitation (/workspace/ClinicalSageAI-2-replit/server/services/atomicQuotaService.js:448:34)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/tenant-users.ts:229:20
+
+stderr | server/routes/__tests__/tenant-user-invitation-handoff.test.ts > the invitee’s answer — scoped, atomic and recorded > decline audit refusal rolls the status back and returns 500 with no success claim
+{
+  "timestamp": "2026-10-14T03:27:58.341Z",
+  "level": "error",
+  "message": "[tenant-users] Error declining invitation",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/tenant-user-invitation-handoff.test.ts > GET invitations/mine — names belong only to the caller’s invitations > uses the session caller despite body/query targets, then reads only their inviting organization in verified scope 52ms
+ ✓ server/routes/__tests__/tenant-user-invitation-handoff.test.ts > GET invitations/mine — names belong only to the caller’s invitations > an empty self-only list does not look up another person’s organization 3ms
+ ✓ server/routes/__tests__/tenant-user-invitation-handoff.test.ts > GET invitations/mine — names belong only to the caller’s invitations > a missing organization name is null, never a fabricated name 2ms
+ ✓ server/routes/__tests__/tenant-user-invitation-handoff.test.ts > GET invitations/mine — names belong only to the caller’s invitations > a failed name read is 500 instead of a successful empty invitation list 3ms
+ ✓ server/routes/__tests__/tenant-user-invitation-handoff.test.ts > GET invitations/mine — names belong only to the caller’s invitations > requires authentication before resolving invitations or names 2ms
+ ✓ server/routes/__tests__/tenant-user-invitation-handoff.test.ts > the invitee’s answer — scoped, atomic and recorded > accept refuses another person’s invitation without disclosing or changing it 8ms
+ ✓ server/routes/__tests__/tenant-user-invitation-handoff.test.ts > the invitee’s answer — scoped, atomic and recorded > decline refuses another person’s invitation without disclosing or changing it 3ms
+ ✓ server/routes/__tests__/tenant-user-invitation-handoff.test.ts > the invitee’s answer — scoped, atomic and recorded > accept commits membership, accepted status and one chained audit on the same client, with the authenticated actor 6ms
+ ✓ server/routes/__tests__/tenant-user-invitation-handoff.test.ts > the invitee’s answer — scoped, atomic and recorded > accept audit refusal rolls membership and status back and returns 500 with no success claim 10ms
+ ✓ server/routes/__tests__/tenant-user-invitation-handoff.test.ts > the invitee’s answer — scoped, atomic and recorded > accepting an already accepted invitation is 409 without audit, role overwrite or membership insertion 3ms
+ ✓ server/routes/__tests__/tenant-user-invitation-handoff.test.ts > the invitee’s answer — scoped, atomic and recorded > accept preserves an existing lower membership role and records that no membership was created 2ms
+ ✓ server/routes/__tests__/tenant-user-invitation-handoff.test.ts > the invitee’s answer — scoped, atomic and recorded > decline commits its conditional update and one chained audit on the same client, before commit 2ms
+ ✓ server/routes/__tests__/tenant-user-invitation-handoff.test.ts > the invitee’s answer — scoped, atomic and recorded > decline audit refusal rolls the status back and returns 500 with no success claim 2ms
+ ✓ server/routes/__tests__/tenant-user-invitation-handoff.test.ts > the invitee’s answer — scoped, atomic and recorded > a concurrent response makes the guarded decline 409 with no audit or success claim 2ms
+stderr | server/routes/__tests__/tenant-user-invitation-handoff.test.ts > real atomic accept service — defense in depth > returns DATABASE_ERROR and no persisted audit claim when audit fails, even without a route caller
+Atomic invitation accept failed: Error: audit-chain-probe refused audit_logs
+    at /workspace/ClinicalSageAI-2-replit/server/routes/__tests__/tenant-user-invitation-handoff.test.ts:172:29
+    at Mock (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at recordInvitationConsent (/workspace/ClinicalSageAI-2-replit/server/services/tenant/invitation-consent.ts:26:9)
+    at atomicAcceptInvitation (/workspace/ClinicalSageAI-2-replit/server/services/atomicQuotaService.js:448:34)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/__tests__/tenant-user-invitation-handoff.test.ts:375:20
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ server/routes/__tests__/tenant-user-invitation-handoff.test.ts > the invitee’s answer — scoped, atomic and recorded > decline refuses an invitation already accepted before any write 2ms
+ ✓ server/routes/__tests__/tenant-user-invitation-handoff.test.ts > the invitee’s answer — scoped, atomic and recorded > decline refuses an invitation already declined before any write 2ms
+ ✓ server/routes/__tests__/tenant-user-invitation-handoff.test.ts > real atomic accept service — defense in depth > reports a committed chained audit and binds its actor to callerUserId even if optional context names somebody else 1ms
+ ✓ server/routes/__tests__/tenant-user-invitation-handoff.test.ts > real atomic accept service — defense in depth > rejects a non-invitee even if called directly in the inviting organization 1ms
+ ✓ server/routes/__tests__/tenant-user-invitation-handoff.test.ts > real atomic accept service — defense in depth > returns DATABASE_ERROR and no persisted audit claim when audit fails, even without a route caller 1ms
+ ✓ server/routes/__tests__/tenant-user-invitation-handoff.test.ts > real atomic accept service — defense in depth > continues to enforce the existing member quota before writes or audit 3ms
+stderr | server/__tests__/security/scim-ip-policy-audit.test.ts > atomic governed SCIM IP policy mutations > rolls back the create when the chained audit write fails
+{
+  "timestamp": "2026-10-14T03:27:58.539Z",
+  "level": "error",
+  "message": "[admin-scim-ip-allowlist] Create SCIM IP rule failed",
+  "context": {}
+}
+
+stderr | server/__tests__/security/scim-ip-policy-audit.test.ts > atomic governed SCIM IP policy mutations > rolls back the update when the chained audit write fails
+{
+  "timestamp": "2026-10-14T03:27:58.542Z",
+  "level": "error",
+  "message": "[admin-scim-ip-allowlist] Update SCIM IP rule failed",
+  "context": {}
+}
+
+stderr | server/__tests__/security/scim-ip-policy-audit.test.ts > atomic governed SCIM IP policy mutations > rolls back the delete when the chained audit write fails
+{
+  "timestamp": "2026-10-14T03:27:58.544Z",
+  "level": "error",
+  "message": "[admin-scim-ip-allowlist] Delete SCIM IP rule failed",
+  "context": {}
+}
+
+stderr | server/__tests__/security/scim-ip-policy-audit.test.ts > atomic governed SCIM IP policy mutations > denies a tenant super_admin membership that has no active platform grant
+{
+  "timestamp": "2026-10-14T03:27:58.546Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 41,
+    "path": "/api/admin/scim-ip-allowlist/11"
+  }
+}
+
+ ✓ server/__tests__/security/scim-ip-policy-audit.test.ts > atomic governed SCIM IP policy mutations > records the actual target organization, policy before/after and reason before committing a PATCH 34ms
+ ✓ server/__tests__/security/scim-ip-policy-audit.test.ts > atomic governed SCIM IP policy mutations > records creation and deletion with the same atomic audit contract 5ms
+ ✓ server/__tests__/security/scim-ip-policy-audit.test.ts > atomic governed SCIM IP policy mutations > rolls back the create when the chained audit write fails 3ms
+ ✓ server/__tests__/security/scim-ip-policy-audit.test.ts > atomic governed SCIM IP policy mutations > rolls back the update when the chained audit write fails 2ms
+ ✓ server/__tests__/security/scim-ip-policy-audit.test.ts > atomic governed SCIM IP policy mutations > rolls back the delete when the chained audit write fails 2ms
+ ✓ server/__tests__/security/scim-ip-policy-audit.test.ts > atomic governed SCIM IP policy mutations > denies a tenant super_admin membership that has no active platform grant 2ms
+ ✓ server/__tests__/security/scim-ip-policy-audit.test.ts > atomic governed SCIM IP policy mutations > rejects supplied invalid reason "x" before any mutation 2ms
+ ✓ server/__tests__/security/scim-ip-policy-audit.test.ts > atomic governed SCIM IP policy mutations > rejects supplied invalid reason "" before any mutation 2ms
+ ✓ server/__tests__/security/scim-ip-policy-audit.test.ts > atomic governed SCIM IP policy mutations > rejects supplied invalid reason 42 before any mutation 2ms
+ ✓ server/__tests__/security/scim-ip-policy-audit.test.ts > atomic governed SCIM IP policy mutations > rejects supplied invalid reason "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" before any mutation 1ms
+ ✓ server/__tests__/security/scim-ip-policy-audit.test.ts > atomic governed SCIM IP policy mutations > refuses creating a rule for a missing organization, without a policy or audit write 2ms
+stderr | server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > forbids non-admins (403)
+{
+  "timestamp": "2026-10-14T03:27:58.709Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 1,
+    "path": "/api/admin/scim-ip-allowlist"
+  }
+}
+
+stderr | server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > forbids a tenant membership role of super_admin with no platform grant (403)
+{
+  "timestamp": "2026-10-14T03:27:58.715Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 1,
+    "path": "/api/admin/scim-ip-allowlist"
+  }
+}
+
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > forbids non-admins (403) 16ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > forbids a tenant membership role of super_admin with no platform grant (403) 3ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > creates a rule with a valid CIDR (201) 8ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > rejects an invalid CIDR (400) 2ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > 400 when organizationId is missing 2ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > lists rules (never org-filtered from query) 2ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > disables a rule via PATCH 2ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > deletes a rule (204), 404 when missing 4ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/DiscoveryReview.test.tsx > states missing context honestly and renders human input as text 23ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateProject — the ceiling is organizations.max_projects > refuses the create at the organization ceiling, and rolls back 9ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateProject — the ceiling is organizations.max_projects > creates under the ceiling and records the creator on the row 1ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateProject — the ceiling is organizations.max_projects > a NULL ceiling means the schema default (10), not unlimited and not 20 0ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateProject — the ceiling is organizations.max_projects > an unknown organization is ORGANIZATION_NOT_FOUND, never NO_LICENSE 0ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateProject — the ceiling is organizations.max_projects > never consults the licence tables 0ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateProject — the ceiling is organizations.max_projects > a driver failure is DATABASE_ERROR with the driver message kept out of the result 1ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateUser — the ceiling is organizations.max_users > refuses a new member at the organization ceiling 0ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateUser — the ceiling is organizations.max_users > creates the user and the membership under the ceiling — no licence row required 1ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateUser — the ceiling is organizations.max_users > an unknown organization is ORGANIZATION_NOT_FOUND 0ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicAcceptInvitation — re-checks the same organization ceiling at accept time > refuses acceptance when the organization is full 0ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicAcceptInvitation — re-checks the same organization ceiling at accept time > accepts under the ceiling: membership + accepted status, no licence tables 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > leaves unknown client context unstated and creates independent editable forms 2ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > preserves stated goals, guidance and launch use cases without inventing account access 1ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > does not guess absent, incomplete or newer-version answers: undefined 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > does not guess absent, incomplete or newer-version answers: null 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > does not guess absent, incomplete or newer-version answers: {} 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > does not guess absent, incomplete or newer-version answers: {"schemaVersion":2,"company":{"goals":"","useCases":[],"therapeuticAreas":[],"markets":[],"pathways":[]},"user":{"workingRole":"","sophistication":"not_stated","preferredGuidance":"not_stated"},"project":{"name":"","goals":"","productType":"not_stated","lifecycleStage":"","indication":"","targetDate":"","predicateDevice":"","assayContext":""},"setup":{"teamSize":null,"needs":[],"approvalRigor":null}} 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses an impossible or non-calendar milestone: 2027-02-29 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses an impossible or non-calendar milestone: 2026-02-30 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses an impossible or non-calendar milestone: 2026-13-01 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses an impossible or non-calendar milestone: 2026-10-14T12:00:00Z 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses an impossible or non-calendar milestone: 10/14/2026 1ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > asks for device and IVD context without applying it to a drug project 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 0 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 1 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 2 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 3 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 4 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 5 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 6 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 7 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 8 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 9 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 10 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 11 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 12 0ms
+stdout | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+{
+  "timestamp": "2026-10-14T03:27:59.871Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T03:27:59.872Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+{
+  "timestamp": "2026-10-14T03:27:59.872Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > ok only when every check is intact 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > false when any check is broken, whatever the others say 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > null, with how many could not verify, when none is broken and not all are intact 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 3 — what the seal is, and who verifies it, said plainly > the instruction names the HMAC key the platform holds, the verifier, the CSV case and the inspector 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 3 — what the seal is, and who verifies it, said plainly > the manifest does not claim independent verification 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > the past role and the review decision are stated as not shown; role changes are where they are recorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > P1-41: no longer says an administrator's role change or removal goes unrecorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > P1-41 fix round: no sentence says role changes in general are listed or recorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > the SCIM group handler is where the test thinks it is 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > P1-49: the handler records each role change, through the canonical membership writer 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > access-review states the gap while the handler writes no row, and stops once it writes one 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > administrative-changes states the gap while the handler writes no row, and stops once it writes one 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > P1-49: the administrative changes report says how a SCIM-group role change is listed 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > tenant configuration is recorded by section and field name, with values only for security and audit-trail retention 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > P1-41: no longer says a role change, a removal or a tenant configuration change goes unrecorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > P1-41: reads the actions the membership and tenant configuration writers store 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > workspace setup consent and provisioning access changes reach the report > queries invitation consent and SCIM IP-rule events within the selected tenant and period 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > workspace setup consent and provisioning access changes reach the report > keeps the historical IP-rule audit gap and SCIM-token limitation distinct from current recorded rules 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 6 — the signature register shows what was signed, as stored > carries the purpose and the signed version as their own columns 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > documents carry the approving signer, meaning, the revoked count and the superseding document 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > change controls carry their description and reason 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > states what does not appear and where training lives 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > archetypeToPrimaryIndustry > maps every selectable archetype into the PATCH /api/mdx/industry-profile enum 2ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > archetypeToPrimaryIndustry > maps the specific archetype semantics 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > archetypeToPrimaryIndustry > falls back to biotech_pharma for unknown archetypes 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > inviteRoleToOrgRole > maps every wizard-selectable platform role into the POST /api/tenant-users enum 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > inviteRoleToOrgRole > down-scopes business-tier roles to org admin and support to member 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > inviteRoleToOrgRole > fails closed to least-privilege member for unknown roles 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > inviteNameFromEmail > uses the email local part as the provisional display name 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > inviteNameFromEmail > always satisfies the endpoint min-length of 2 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > checkoutRequestFor > routes DTC paid tiers to POST /api/billing/dtc-checkout with a schema-valid body 1ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > checkoutRequestFor > routes per-user (b2b) paid tiers to POST /api/billing/checkout with seats 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > checkoutRequestFor > clamps seats to a positive integer (schema requires min 1) 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > checkoutRequestFor > normalizes any non-annual cycle to monthly (schema enum) 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > checkoutRequestFor > reports enterprise as unavailable — custom pricing has no self-service checkout 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > checkoutRequestFor > sends the DTC free tier to checkout like any other self-service tier 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > checkoutRequestFor > still refuses enterprise on the DTC path — custom pricing has no checkout 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > keeps an individually shareable setup link when no invitation email went out 2ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > counts a created account with failed activation as recorded but not usable 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > does not claim that a 202 consent request added membership or sent an email 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > identifies delivered email without granting immediate access to a new account 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > retains the stored role for a replacement invitation and explains invalidation 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > confirms immediate access only when an existing account was actually added 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > never invents delivery from a missing or inconsistent success payload 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > rejects unsafe setup link javascript:alert(1) 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > rejects unsafe setup link data:text/html,secret 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > rejects unsafe setup link https://c2c.test/wrong?token=secret 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > rejects unsafe setup link https://admin:secret@c2c.test/concept2cure/password-reset?token=secret 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > renders the server refusal while stripping infrastructure details 1ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > handles network uncertainty honestly without exposing raw exceptions 0ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingWelcome.test.ts > welcomeFor — client-type-aware first-run welcome > makes the discovery wizard reachable from every client-family welcome 1ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingWelcome.test.ts > welcomeFor — client-type-aware first-run welcome > adapts the greeting + starters to each client family 0ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingWelcome.test.ts > welcomeFor — client-type-aware first-run welcome > matches the client type case-insensitively 0ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingWelcome.test.ts > welcomeFor — client-type-aware first-run welcome > falls back to a neutral welcome for an unknown segment (never empty) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingWelcome.test.ts > welcomeFor — client-type-aware first-run welcome > uses a neutral name when none is supplied 0ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingWelcome.test.ts > welcomeFor — client-type-aware first-run welcome > always offers the upload starter (the bridge to P2/P3) with a live prompt 0ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingWelcome.test.ts > welcomeFor — client-type-aware first-run welcome > routes the upload starter to the real ingest flow, not a conversation about it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingWelcome.test.ts > welcomeFor — client-type-aware first-run welcome > every starter carries a label and a non-empty live prompt 0ms
+ ✓ shared/auth/__tests__/session-policy.test.ts > one canonical session policy for runtime and UI > reexports the same policy functions and platform limits from the runtime 1ms
+ ✓ shared/auth/__tests__/session-policy.test.ts > one canonical session policy for runtime and UI > preserves effective policy for settings undefined 0ms
+ ✓ shared/auth/__tests__/session-policy.test.ts > one canonical session policy for runtime and UI > preserves effective policy for settings {"security":{"sessionTimeout":30,"ipWhitelist":["127.0.0.1"]}} 0ms
+ ✓ shared/auth/__tests__/session-policy.test.ts > one canonical session policy for runtime and UI > preserves effective policy for settings {"security":{"sessionTimeoutMinutes":45,"maxConcurrentSessions":3}} 0ms
+ ✓ shared/auth/__tests__/session-policy.test.ts > one canonical session policy for runtime and UI > preserves effective policy for settings {"security":{"sessionTimeoutMinutes":0,"maxConcurrentSessions":0}} 0ms
+ ✓ shared/auth/__tests__/session-policy.test.ts > one canonical session policy for runtime and UI > preserves effective policy for settings {"security":{"sessionTimeoutMinutes":9999,"maxConcurrentSessions":99}} 0ms
+ ✓ shared/auth/__tests__/session-policy.test.ts > one canonical session policy for runtime and UI > preserves effective policy for settings {"security":{"sessionTimeoutMinutes":"30","maxConcurrentSessions":"2"}} 0ms
+ ✓ shared/auth/__tests__/session-policy.test.ts > one canonical session policy for runtime and UI > preserves effective policy for settings {"security":{"sessionTimeoutMinutes":12.9,"maxConcurrentSessions":2.8}} 0ms
+
+ Test Files  37 passed (37)
+      Tests  369 passed (369)
+   Start at  03:27:33
+   Duration  26.87s (transform 2.32s, setup 1.06s, import 5.81s, tests 11.10s, environment 5.94s)

@@ -1,0 +1,43 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > executes a real contained DTD as its positive control 40ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > accepts a captured package-local secondary parameter entity 69ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > does not certify a DOCTYPE written only in a comment 6ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > does not let a benign commented declaration mask the actual escaped DTD 5ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects a symlinked XML input even when its declaration names a local DTD 11ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects a symlinked primary DTD 5ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects an intermediate DTD directory symlink 5ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects a symlinked secondary parameter entity 44ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > refuses an absolute file URI hidden in a secondary DTD declaration 15ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > refuses a missing or remote module even when libxml can validate without it: missing.ent 7ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > refuses a missing or remote module even when libxml can validate without it: https://schemas.invalid/not-captured.ent 6ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > refuses an XML internal subset that references an outside entity 7ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > does not use an ambient XML catalog as proof of a missing packaged module 5ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects URI-encoded traversal even when a literal percent-path decoy exists in the package 4ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects a constructed external identifier split across parameter entities 5ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > does not audit UTF-16 DTD bytes as if they were dependency-free UTF-8 5ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > canonical per-file DTD evidence > records actual well-formedness, DOCTYPE and DTD execution 36ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > canonical per-file DTD evidence > records grammar-invalid XML separately from well-formedness 21ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > canonical per-file DTD evidence > records a declared but absent DTD as unexecuted, not passed 13ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > canonical per-file DTD evidence > records a missing runtime as unexecuted, not passed 8ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > canonical per-file DTD evidence > does not let a commented declaration override the actual declaration 21ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > refuses unsafe XML path ../outside.xml before invoking xmllint 5ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > refuses unsafe XML path /outside.xml before invoking xmllint 4ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > refuses a symlinked XML file outside the package 4ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > refuses absolute primary DTD references 4ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > refuses symlink primary DTD references 5ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > refuses network primary DTD references 3ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > never certifies an unsafe outside secondary dependency 4ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > never certifies an unsafe network secondary dependency 4ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > never certifies an unsafe missing secondary dependency 4ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > never certifies an unsafe symlink secondary dependency 4ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > never certifies an unsafe public secondary dependency 4ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > allows a literal package-contained secondary dependency and lets xmllint judge its grammar 19ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > refuses unprovable declarations generated by parameter entities 4ms
+
+ Test Files  2 passed (2)
+      Tests  34 passed (34)
+   Start at  00:36:31
+   Duration  3.31s (transform 1.60s, setup 214ms, import 1.79s, tests 426ms, environment 1ms)
+

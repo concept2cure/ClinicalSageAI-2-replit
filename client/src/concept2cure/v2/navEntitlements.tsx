@@ -87,6 +87,8 @@ export interface NavEntitlementsValue {
   platformAdmin: boolean;
   /** The organization's plan tier, when known. */
   tier: string | null;
+  /** Null until the server declares scope; deferred tools fail closed. */
+  launchScopeEnforced: boolean | null;
 }
 
 const EMPTY: NavEntitlementsValue = {
@@ -95,6 +97,7 @@ const EMPTY: NavEntitlementsValue = {
   masterAdmin: false,
   platformAdmin: false,
   tier: null,
+  launchScopeEnforced: null,
 };
 
 const NavEntitlementsContext = React.createContext<NavEntitlementsValue>(EMPTY);
@@ -136,9 +139,10 @@ export function NavEntitlementsProvider({ children }: { children: React.ReactNod
     const payload = state.data;
     // Independent of the catalog read, so it survives resolved:false.
     const platformAdmin = payload?.platformAdmin === true;
+    const launchScopeEnforced = typeof payload?.launchScope?.enforced === 'boolean' ? payload.launchScope.enforced : null;
     // Rule 1: anything short of a resolved payload yields no verdicts at all.
     if (!payload || payload.resolved !== true || !Array.isArray(payload.surfaces)) {
-      return platformAdmin ? { ...EMPTY, platformAdmin } : EMPTY;
+      return { ...EMPTY, platformAdmin, launchScopeEnforced };
     }
     const byId = new Map<string, NavSurfaceEntitlement>();
     for (const s of payload.surfaces) {
@@ -151,6 +155,7 @@ export function NavEntitlementsProvider({ children }: { children: React.ReactNod
       masterAdmin: payload.masterAdmin === true,
       platformAdmin,
       tier: typeof payload.tier === 'string' ? payload.tier : null,
+      launchScopeEnforced,
     };
   }, [state.data]);
 

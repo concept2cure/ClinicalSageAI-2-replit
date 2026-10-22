@@ -16,6 +16,8 @@
 
 import { resolveToRegistryEntry } from '../../../shared/regulatory/submission-type-bridge.js';
 import type { CanonicalRegion } from '../../../shared/regulatory/region-identity.js';
+import { FILENAME_PATTERN, FILENAME_RULE_TEXT } from '../../../shared/regulatory/ectd-leaf-rules';
+export { FILENAME_PATTERN, FILENAME_RULE_TEXT, FOLDER_NAME_PATTERN } from '../../../shared/regulatory/ectd-leaf-rules';
 
 /**
  * The twelve jurisdictions, aliased to the canonical type rather than restated.
@@ -88,12 +90,6 @@ export interface RegionalFinding {
   scope: 'package' | 'leaf' | 'sequence';
   leafPath?: string;
 }
-
-/** FILENAME_PATTERN (below) in words: every rule description and finding that
- *  refuses a file name quotes this, so the operator reads the rule the name was
- *  tested against. Declared here because the rule catalog reads it at load. */
-export const FILENAME_RULE_TEXT =
-  "lowercase a-z, 0-9 and '-', then one '.' and the extension; at most 64 characters in all";
 
 // ── Rule catalog ─────────────────────────────────────────────────────────────
 
@@ -369,21 +365,6 @@ const PMDA_APPLICATION_PREFIX = /^\d{8}$/;
 // followed by garbage does not slip through as a conformant identifier.
 const HC_APPLICATION_PREFIX = /^(SNDS|NDS|ANDS|DIN)-?\d+$/i;
 const SEQUENCE_PATTERN = /^\d{4}$/;
-/** eCTD leaf file name: lowercase a-z, 0-9 and '-', ONE '.' before the
- *  extension, at most 64 characters including the extension (ICH eCTD v3.2.2
- *  Appendix 2; EMA-CESP-005). Exported so the assemble path composes names to it
- *  and the structural validator refuses names that break it — one rule, not
- *  three spellings of it.
- *  2026-10-08 (sweep VP-7): it was /^[a-z0-9][a-z0-9.-]{0,63}$/, which passed
- *  'a.b.c.pdf' and 'noextension'. The us-ectd market spec's pattern is not the
- *  replacement: it allows 64 characters BEFORE the extension. Its words are
- *  FILENAME_RULE_TEXT; change both together. */
-export const FILENAME_PATTERN = /^(?=.{1,64}$)[a-z0-9][a-z0-9-]*\.[a-z0-9]+$/;
-
-/** eCTD folder name: the file-name character set with no '.', at most 64
- *  characters (ICH eCTD v3.2.2 Appendix 2 names folders and files alike). */
-export const FOLDER_NAME_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/;
-
 /*
  * FDA: the ESG takes a sequence of up to 10 GB; above that FDA takes it on
  * physical media (USB) at the CDER or CBER document room — FDA, "Transmitting
@@ -409,11 +390,10 @@ export const FDA_OVERSIZE_REMEDY =
 const CA_CESG_LIMIT_BYTES = 4 * 1024 ** 3;
 const EMA_CESP_LIMIT_BYTES = 600 * 1024 * 1024;
 const PMDA_LIMIT_BYTES = 1024 * 1024 * 1024;
-// NMPA does not publish a single eCTD gateway package-size limit in the accessible
-// technical specification; use a conservative 1 GB default pending verification.
+// NMPA and MFDS publish no single eCTD gateway package-size limit in the
+// accessible specifications. These two figures are NOT published limits; they
+// survive only for the deprecated getGatewaySizeLimit.
 const NMPA_LIMIT_BYTES = 1024 * 1024 * 1024;
-// MFDS does not publish a single eCTD gateway package-size limit in the accessible
-// guidance; use a conservative 1 GB default pending verification.
 const MFDS_LIMIT_BYTES = 1024 * 1024 * 1024;
 
 // Region → its M1 regional backbone path. Every eCTD region requires a
@@ -493,6 +473,56 @@ function checkAsciiFilenames(
   }
 }
 
+/** Regions whose validator applies rules of the region's own (application number, size, …). */
+const REGIONAL_RULE_PACKS: ReadonlySet<RegulatoryRegion> = new Set<RegulatoryRegion>(['US', 'EU', 'JP', 'CA']);
+
+/**
+ * Regions whose validator applies only the universal eCTD invariants (M1
+ * regional backbone, ASCII file names, four-digit sequence), with the catalogued
+ * rule ids it does apply. 2026-10-15: a package for one of these came back with
+ * no finding, which read as clean (gatewayReady:true in the hardened validator),
+ * though none of the region's own rules had been applied. CN and KR have named
+ * packs whose validators make exactly these two checks.
+ */
+const UNIVERSAL_CHECKS_ONLY: Partial<Record<RegulatoryRegion, readonly string[]>> = {
+  CN: ['NMPA-CDE-001', 'NMPA-CDE-005'],
+  KR: ['MFDS-KR-001', 'MFDS-KR-004'],
+  ...Object.fromEntries(
+    (['UK', 'AU', 'CH', 'BR', 'IN', 'SG'] as const).map(r => [r, [`${r}-REG-001`, `${r}-REG-002`]])
+  ),
+};
+
+/**
+ * True only for a region whose own rules validateRegionalPackage applies. A
+ * package for any other region cannot be reported gateway-ready on its result.
+ */
+export function isRegionalRulePackEncoded(region: RegulatoryRegion): boolean {
+  return REGIONAL_RULE_PACKS.has(region);
+}
+
+/** Say, for a universal-checks-only region, what was not assessed. */
+function pushRulesNotEncoded(
+  region: RegulatoryRegion,
+  evaluated: readonly string[],
+  findings: RegionalFinding[]
+): void {
+  const catalogued = getRulesForRegion(region)
+    .map(r => r.id)
+    .filter(id => !evaluated.includes(id));
+  findings.push({
+    ruleId: 'REGION_RULES_NOT_ENCODED',
+    region,
+    severity: 'info',
+    message:
+      `Only the M1 regional backbone and file names are checked for ${region}; none of its own rules is encoded. ` +
+      'Not assessed: application-number format, gateway package size, language and labelling requirements' +
+      (catalogued.length ? `, including catalogued rules ${catalogued.join(', ')}` : '') +
+      '.',
+    fix: `Check the package against the ${region} agency's eCTD specification before filing; this validator cannot report it gateway-ready.`,
+    scope: 'package',
+  });
+}
+
 // ── Validators ──────────────────────────────────────────────────────────────
 
 /**
@@ -552,6 +582,9 @@ export function validateRegionalPackage(
       validateGenericRegionPackage(context, leaves, findings);
       break;
   }
+
+  const evaluatedOnly = UNIVERSAL_CHECKS_ONLY[context.region];
+  if (evaluatedOnly) pushRulesNotEncoded(context.region, evaluatedOnly, findings);
 
   return findings;
 }
@@ -871,8 +904,36 @@ export function getRulesForRegion(region: RegulatoryRegion): RegionalRule[] {
   return RULES_BY_REGION.get(region) || [];
 }
 
+/** A gateway package-size limit and the citation it is taken from. */
+export interface GatewaySizeLimit {
+  bytes: number;
+  /** The citation of the region's size rule in REGIONAL_RULES. */
+  source: string;
+}
+
+const SIZE_RULE_BY_REGION: Partial<Record<RegulatoryRegion, { bytes: number; ruleId: string }>> = {
+  US: { bytes: FDA_GATEWAY_LIMIT_BYTES, ruleId: 'FDA-ESG-003' },
+  EU: { bytes: EMA_CESP_LIMIT_BYTES, ruleId: 'EMA-CESP-004' },
+  JP: { bytes: PMDA_LIMIT_BYTES, ruleId: 'PMDA-003' },
+};
+
 /**
- * Get the gateway size limit (bytes) for a region.
+ * The gateway package-size limit on file for a region, with its source, or null
+ * when none is on file (CA, CN, KR, UK, AU, CH, BR, IN, SG). null means the size
+ * cannot be checked against a published limit, not that any size is accepted.
+ */
+export function getGatewaySizeLimitOnFile(region: RegulatoryRegion): GatewaySizeLimit | null {
+  const entry = SIZE_RULE_BY_REGION[region];
+  const rule = entry && REGIONAL_RULES.find(r => r.id === entry.ruleId);
+  return entry && rule ? { bytes: entry.bytes, source: rule.citation } : null;
+}
+
+/**
+ * @deprecated Use getGatewaySizeLimitOnFile. For CA (a 4 GiB figure, pending a
+ * Health Canada source; FDA's until 2026-10-08), CN, KR, UK,
+ * AU, CH, BR, IN and SG this returns a figure no agency publishes (2026-10-15);
+ * it remains only until its two consumers, submission-gateways/pre-transmit-check
+ * and regulatory/workspace-config-enrichment, move to the sourced accessor.
  */
 export function getGatewaySizeLimit(region: RegulatoryRegion): number {
   switch (region) {
@@ -888,7 +949,7 @@ export function getGatewaySizeLimit(region: RegulatoryRegion): number {
       return NMPA_LIMIT_BYTES;
     case 'KR':
       return MFDS_LIMIT_BYTES;
-    // ICH-aligned agencies: conservative 1 GB default pending published specs
+    // Not a published limit (see the deprecation note above).
     default:
       return PMDA_LIMIT_BYTES;
   }

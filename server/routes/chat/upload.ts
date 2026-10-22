@@ -4,9 +4,10 @@
  * Governed file upload handler for chat.
  *
  * Handles POST /api/chat/upload. Stores file metadata in the `file_uploads` table
- * and, when a valid projectId + organizationId are present, also creates a
- * governed concept2cure_artifact (category='source') for unified Data Room access
- * and embeds the content into lumen_data_atoms for pgvector retrieval.
+ * and, when a project is open, records ONE Data Room source
+ * (`cre_evidence_sources`) and embeds its text into lumen_data_atoms keyed to
+ * that source. It writes no concept2cure_artifacts copy (document store
+ * consolidation step 3, 2026-10-17).
  *
  * Extracted from the legacy monolithic server/routes/chat.ts as part of the
  * Phase 4 chat-route decomposition. This module exports the handler only; the
@@ -21,17 +22,13 @@ import type { Request, Response } from 'express';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { pool } from '../../db.js';
-import { resolveGovernedContext } from '../../services/concept2cure/governedDocumentContractService.js';
-import { recordArtifactProvenance } from '../../services/provenance/artifact-provenance';
-import { sha256, sha256Bytes } from './provenance.js';
+import { sha256Bytes } from './provenance.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { sha256Hex } from '../../services/ana/uploaded-file-access';
-// Pure, dependency-free (no db import), so it is safe to load statically —
-// unlike the evidence spine below, which is imported lazily so a database
-// without the cre_* tables cannot break the route's module graph.
-import { determineSourceVersion } from '../../services/clinical-regulatory-evidence/source-version.js';
 import { programInOrganization } from '../../services/c2c/program-access.js';
+import { resolveUploadCaptureScope } from '../../services/chat-uploads/capture-scope.js';
 import { projectBelongsToTenant } from '../../services/cmc/project-membership.js';
+import type { SourceProcessingResult } from '../../services/clinical-regulatory-evidence/data-room-processing.js';
 
 const logger = createScopedLogger('chat-upload');
 
@@ -47,7 +44,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
  *   - a numeric workspace id, optionally `proj_`-prefixed — the legacy space.
  *
  * Treating every id as numeric is what made a UUID-scoped upload unusable: it
- * parsed to NaN, and the governed-artifact block rejected the request outright.
+ * parsed to NaN, and the upload was rejected outright.
  */
 function resolveProjectScope(
   projectId: unknown,
@@ -59,6 +56,21 @@ function resolveProjectScope(
   return Number.isFinite(numeric)
     ? { programId: null, workspaceId: numeric }
     : { programId: null, workspaceId: null };
+}
+
+/** The capture stands when its later derived processing is unavailable. */
+async function processUploadCapture(orgId: number, sourceId: number,
+  input: Parameters<typeof import('../../services/clinical-regulatory-evidence/data-room-processing.js').processCapturedSource>[2],
+): Promise<Omit<SourceProcessingResult, 'extracted'>> {
+  try {
+    const { processCapturedSource } = await import('../../services/clinical-regulatory-evidence/data-room-processing.js');
+    const done = await processCapturedSource(orgId, sourceId, input);
+    return { ok: done.ok, processed: done.processed, status: done.status,
+      ...(done.reasonCode ? { reasonCode: done.reasonCode } : {}) };
+  } catch (err) {
+    logger.warn('Captured upload processing unavailable', { sourceId, err: err instanceof Error ? err.message : String(err) });
+    return { ok: false, processed: false, status: 'retryable_failure', reasonCode: 'PROCESSING_UNAVAILABLE' };
+  }
 }
 
 export const uploadHandler = async (req: Request, res: Response) => {
@@ -109,7 +121,7 @@ export const uploadHandler = async (req: Request, res: Response) => {
     // copy of the first and the last, and its scan failed OPEN.
 
     // Which project id-space this upload arrived with, resolved once and used
-    // by the ownership check here, the governed-artifact block and the source
+    // by the ownership check here, the capture scope and the source
     // identity below.
     const projectScope = resolveProjectScope(projectId);
 
@@ -124,7 +136,7 @@ export const uploadHandler = async (req: Request, res: Response) => {
     }
     // The legacy numeric id-space holds to the same rule (PF-03): a projects
     // row of the uploader's organization. The number was taken as given, and
-    // it keys the governed artifact row and the source identity below, so a
+    // it keys the source identity below, so a
     // file could be filed under another organization's project. A lookup that
     // cannot complete throws to the outer catch: nothing is written.
     if (
@@ -194,7 +206,7 @@ export const uploadHandler = async (req: Request, res: Response) => {
     // ── Text extraction (runs for every upload with a buffer) ──
     // Extract real text once so: (a) the response can report it was read
     // (method + word count) regardless of project scope, and (b) the
-    // project-scoped block below reuses it for the artifact + memory atom.
+    // project-scoped block below reuses it for the source and memory atom.
     // Falls back to a filename placeholder on failure.
     /* What the retrieval corpus ends up holding for this file, so the response
        can state it rather than leaving the caller to assume the whole document
@@ -203,170 +215,38 @@ export const uploadHandler = async (req: Request, res: Response) => {
     let extractionMethod: string | null = null;
     let extractionWords = 0;
     let extractedText = `[Uploaded via chat: ${fileName}] (${mimeType}, ${fileSize} bytes)`;
-    if (fileBuffer && fileBuffer.length > 0) {
-      try {
-        const { extractDocumentText } = await import('../../services/ocr/index.js');
-        const extracted = await extractDocumentText(fileBuffer, mimeType, fileName);
-        if (extracted.text && extracted.text.trim().length > 0) {
-          extractedText = extracted.text;
-          extractionMethod = extracted.method;
-          extractionWords = extracted.text.trim().split(/\s+/).length;
-          logger.info('Upload text extracted', { fileId, method: extracted.method, chars: extracted.text.length });
-        }
-      } catch (extractErr: any) {
-        logger.warn('Upload text extraction failed (non-fatal)', { err: extractErr?.message, fileId });
-      }
+    // The one Data Room processing step reads the bytes for every capture path
+    // (data-room-processing.ts); the upload reads them here, once.
+    const { extractCapture, describeCapture } = await import(
+      '../../services/clinical-regulatory-evidence/data-room-processing.js'
+    );
+    const extracted = fileBuffer && fileBuffer.length > 0 ? await extractCapture(fileBuffer, mimeType, fileName) : null;
+    if (extracted?.text) {
+      extractedText = extracted.text;
+      extractionMethod = extracted.method;
+      extractionWords = extracted.words;
+      logger.info('Upload text extracted', { fileId, method: extracted.method, chars: extracted.text.length });
+    } else if (extracted?.error) {
+      logger.warn('Upload text extraction failed (non-fatal)', { err: extracted.error, fileId });
     }
 
-    // ── Data Room convergence: create artifact + embed for retrieval ──
+    // ── One record per uploaded file (document store consolidation step 3) ──
     //
-    // `concept2cure_artifacts.project_id` is an INTEGER, so this block can only
-    // run for the numeric id-space. A UUID-scoped upload skips it and still
-    // gets its canonical source identity below — previously it was rejected
-    // with a 400, which meant a file could not be uploaded at all while a
-    // UUID-keyed program was open.
-    let artifactId: string | null = null;
-    if (projectId && orgId && projectScope.workspaceId != null) {
-      const numericProjectId = projectScope.workspaceId;
-      const numericOrgId = parseInt(String(orgId), 10);
-      if (isNaN(numericOrgId)) {
-        return res.status(400).json({
-          error: 'projectId and organizationId must be valid for governed upload',
-          code: 'GOVERNED_UPLOAD_CONTEXT_INVALID',
-        });
-      }
-
-      const artId = `artifact_chat_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-      const boundedContent = extractedText.substring(0, 100000);
-
-      const governedResolution = resolveGovernedContext({
-        req,
-        projectId: numericProjectId,
-        artifactId: null,
-        documentType: 'source_document',
-        generationMode: 'imported',
-        lifecycleStatus: 'draft',
-        originSurface: 'api_route',
-        clientTrack: 'biotech',
-        submissionProgram: 'general_ri',
-        persona: 'regulatory',
-        regulatorScope: 'fda',
-        evidenceMode: 'mixed',
-        documentClass: 'evidence_memo',
-        readinessGate: 'internal_review',
-        approvalPathType: 'single_reviewer',
-        recommendationSource: 'report_engine',
-        workspaceTarget: 'project',
-        regulatorIntent: 'evidence_analysis',
-        placementContainerId: String(numericProjectId),
-        title: fileName,
-        content: boundedContent,
-        sourceRefs: [`upload:${fileId}`],
-        provider: 'chat_upload',
-        model: 'file_ingest',
-        exportAllowed: false,
-        eventType: 'artifact.created',
-      });
-
-      if (!governedResolution.validation.valid) {
-        return res.status(400).json({
-          error: 'Governed document contract validation failed',
-          code: 'GOVERNED_CONTRACT_INVALID',
-          details: {
-            errors: governedResolution.validation.errors,
-            warnings: governedResolution.validation.warnings,
-            resolved: governedResolution.resolved,
-          },
-        });
-      }
-
-      try {
-        const contentHash = sha256(boundedContent);
-        const uploadIns = await pool.query<{ id: number }>(
-          `INSERT INTO concept2cure_artifacts
-             (organization_id, project_id, artifact_id, type, category, title, content, content_hash, version, metadata, created_by_id)
-           VALUES ($1, $2, $3, 'source_document', 'source', $4, $5, $6, 1, $7, $8)
-           RETURNING id`,
-          [
-            numericOrgId,
-            numericProjectId,
-            artId,
-            fileName,
-            boundedContent,
-            contentHash,
-            JSON.stringify({
-              uploadSource: 'chat',
-              fileId,
-              mimeType,
-              fileSize,
-              harness: {
-                clientTrack: governedResolution.contract.clientTrack,
-                submissionProgram: governedResolution.contract.submissionProgram,
-                persona: governedResolution.contract.persona,
-                regulatorScope: governedResolution.contract.regulatorScope,
-                documentClass: governedResolution.contract.documentClass,
-                readinessGate: governedResolution.contract.readinessGate,
-                workspaceTarget: governedResolution.contract.workspaceTarget,
-                originSurface: governedResolution.contract.originSurface,
-                recommendationSource: governedResolution.contract.recommendationSource,
-                regulatorIntent: governedResolution.contract.regulatorIntent,
-                gateChecks: governedResolution.contract.exportEligibility.gateChecks,
-                blockingReasons: governedResolution.contract.exportEligibility.blockingReasons,
-                readinessOutcome: governedResolution.contract.exportEligibility.readinessOutcome,
-              },
-            }),
-            userId,
-          ]
-        );
-        artifactId = artId;
-        // Uniform provenance: an uploaded source document is a 'source_input'
-        // event. Best-effort — inside the existing artifact-persist try, a
-        // provenance hiccup must not fail the upload.
-        try {
-          await recordArtifactProvenance(pool, {
-            artifactId: uploadIns.rows[0].id,
-            organizationId: numericOrgId,
-            eventType: 'source_input',
-            eventAction: 'upload',
-            actorId: typeof userId === 'number' ? userId : null,
-            details: { uploadSource: 'chat', fileId, mimeType, fileSize },
-            backendService: 'routes/chat/upload',
-          });
-        } catch { /* upload provenance is best-effort */ }
-      } catch (artErr: any) {
-        // Log the raw cause through the scoped logger (redacted by
-        // SENSITIVE_KEYS) — never echo it back to the client.
-        logger.error('Governed artifact persistence failed', {
-          err: artErr?.message,
-          fileId,
-          orgId,
-        });
-        return res.status(500).json({
-          error: 'Governed artifact persistence failed for upload',
-          code: 'ARTIFACT_CONSEQUENCE_REQUIRED',
-        });
-      }
-
-      // Retrieval atom, through the one writer both upload paths use. It bounds
-      // the content and RECORDS the bound, so the row says whether it holds the
-      // whole file or its opening — see upload-retrieval-atom.ts.
-      //
-      // Only real extracted content, as the program branch below already
-      // required. This call was unconditional, so a file with no extractable
-      // text (a scan, an image OCR could not read) was embedded as the
-      // "[Uploaded via chat: …]" placeholder and retrieved as though it were a
-      // passage of the document. With nothing read, nothing is embedded, and
-      // atomBounds stays null — which the response reports as no atom path.
-      if (extractionMethod) {
-        atomBounds = await writeUploadRetrievalAtom(pool, {
-          organizationId: numericOrgId,
-          sourceId: artId,
-          fileName,
-          text: extractedText,
-          tags: ['source', 'chat_upload'],
-        });
-      }
-    }
+    // A numeric-workspace upload used to ALSO write a concept2cure_artifacts
+    // 'source_document' row holding the extracted text, and key its retrieval
+    // atom and the source's metadata.artifactId to that row. That was a second
+    // record of the same file beside the data-room source. The data-room
+    // source below is the one capture record: the Data Room lists it, a person
+    // files it into the Vault from there (VR-11a), its processed text and its
+    // `cre_source:<id>` atom serve retrieval and citation. Artifact rows written
+    // before 2026-10-17 stay readable through their recorded bindings.
+    //
+    // A numeric id names a `projects` row. When that row is the single live
+    // anchor of a regulatory program, the capture is recorded in the program,
+    // exactly as a UUID upload into it is, so both id-spaces produce the same
+    // record and the same reads admit it. Otherwise it keeps its workspace
+    // scope, as before.
+    const captureScope = await resolveUploadCaptureScope(pool, projectScope, Number(orgId));
 
     // ── Canonical source identity ──────────────────────────────────────────
     //
@@ -394,6 +274,7 @@ export const uploadHandler = async (req: Request, res: Response) => {
     // (below): the bytes are stored, and the answer says the Data Room does not
     // hold them. It used to answer 200 "ready" with sourceId null.
     let sourceId: number | null = null;
+    let processing: Omit<SourceProcessingResult, 'extracted'> | null = null;
     let sourceWriteFailed = false;
     const scopedToProject = projectScope.programId != null || projectScope.workspaceId != null;
     // The org must resolve to a real numeric id. `tenantContext.organizationId`
@@ -425,8 +306,8 @@ export const uploadHandler = async (req: Request, res: Response) => {
 
         const existing = await findSourceByChecksum(numericOrgId, checksum, {
           sourceType: 'client_document',
-          clientProgramId: projectScope.programId,
-          clientWorkspaceId: projectScope.workspaceId,
+          clientProgramId: captureScope.programId,
+          clientWorkspaceId: captureScope.workspaceId,
         });
         if (existing) {
           sourceId = existing.id;
@@ -440,45 +321,23 @@ export const uploadHandler = async (req: Request, res: Response) => {
           // with either: a `regulatory_programs` UUID (what the project
           // management module selects) or the numeric workspace id. Stamp
           // whichever we actually got rather than assuming one.
-          const scope = projectScope;
+          const scope = captureScope;
 
-          // ── Dossier classification (capture → classify) ────────────────────
+          // ── Dossier classification (capture → classify) and declared version ──
           // The same deterministic classifier the Vault ingest runs, stamped
           // into the source's metadata so the Data Room can show WHAT this is
-          // and WHERE it likely belongs the moment it lands — the 'classified'
-          // stage of the capture→classify→file pipeline. A proposal, never a
-          // commitment: filing into the vault stays a governed act. Failure to
-          // classify must never fail the capture.
-          let dossier: Record<string, unknown> | null = null;
-          try {
-            const { classifyForFiling, resolveVaultView, resolveOrgVaultView } = await import(
-              '../../services/vault/vault-filing.service.js'
-            );
-            const view = scope.programId
-              ? await resolveVaultView(scope.programId, numericOrgId)
-              : await resolveOrgVaultView(numericOrgId);
-            const c = classifyForFiling({
-              fileName,
-              title: fileName,
-              mimeType,
-              extractedText: extractionMethod ? extractedText : null,
-              view,
-            });
-            dossier = {
-              view,
-              evidenceKind: c.evidenceKind,
-              suggestedFolder: c.folderId,
-              ctdSection: c.ctdSection,
-              confidence: c.confidence,
-              needsReview: c.needsReview,
-              rationale: c.rationale,
-            };
-          } catch (classifyErr: any) {
-            logger.warn('Upload dossier classification failed (non-fatal)', {
-              err: classifyErr?.message,
-              fileId,
-            });
-          }
+          // and WHERE it likely belongs the moment it lands. A proposal, never a
+          // commitment: filing into the vault stays a governed act. The version
+          // is only ever one the document DECLARES (ledger L21), never a count
+          // of uploads. Both live in data-room-processing.ts, shared with adopt
+          // and the spreadsheet edit.
+          const { dossier, versionDetermination } = await describeCapture(numericOrgId, scope.programId ?? null, {
+            fileName,
+            mimeType,
+            // The filename placeholder built when extraction fails is metadata,
+            // not document text.
+            text: extractionMethod ? extractedText : null,
+          });
           // Is this a REVISION of a document this project already holds?
           //
           // A new checksum means new bytes, and until now that was the end of
@@ -507,30 +366,6 @@ export const uploadHandler = async (req: Request, res: Response) => {
             });
           }
 
-          // What version of this document is it? (ledger L21)
-          //
-          // `cre_evidence_sources.version` has existed since the spine
-          // migration and NOTHING has ever passed it, so every row reads NULL
-          // and no fact can be told which revision of a protocol it rests on.
-          //
-          // The value written is only ever one the document DECLARES — read off
-          // its title page, or off its filename — never this system's count of
-          // how many times a file with that name has been uploaded. A sponsor's
-          // first upload into a new project is routinely revision 4 of a
-          // protocol that lived in email for a year; stamping `1` on it would
-          // put a number in a provenance column indistinguishable from a real
-          // one. When nothing declares a version, `version` stays NULL and the
-          // determination itself is recorded, so a reviewer can tell "this
-          // document is unversioned" from "nobody looked".
-          const versionDetermination = determineSourceVersion({
-            // The filename placeholder built when extraction fails is metadata,
-            // not document text — the same distinction the classifier draws
-            // above. Reading a version out of it would be reading it out of the
-            // filename twice.
-            documentText: extractionMethod ? extractedText : null,
-            fileName,
-          });
-
           // Typed against createSource's parameter so pulling the literal out of
           // the call keeps its string-union fields (sourceType, visibilityClass,
           // the two statuses) instead of widening them to string.
@@ -542,17 +377,16 @@ export const uploadHandler = async (req: Request, res: Response) => {
             clientProgramId: scope.programId,
             clientWorkspaceId: scope.workspaceId,
             title: fileName,
-            // The stored blob these bytes live at; the governed artifact (when
-            // one exists) is in metadata below.
+            // The stored blob these bytes live at.
             storedArtifactRef: storagePath,
             checksum,
             // Null unless the document actually declares one; the determination
             // travels in provenance either way.
             version: versionDetermination.version,
-            // The bytes are stored and were read at ingest, so neither status
-            // is 'pending' — reporting otherwise would misstate the corpus.
+            // Capture is durable; derived text/facts are still pending until
+            // the bound processor commits them on this source.
             ingestionStatus: 'ingested',
-            extractionStatus: extractionMethod ? 'extracted' : 'failed',
+            extractionStatus: 'pending',
             provenance: {
               origin: 'chat_upload',
               fileUploadId: fileId,
@@ -572,7 +406,6 @@ export const uploadHandler = async (req: Request, res: Response) => {
               originalName: fileName,
               mimeType,
               fileSize,
-              artifactId,
               ...(dossier ? { dossier } : {}),
             },
           };
@@ -621,28 +454,33 @@ export const uploadHandler = async (req: Request, res: Response) => {
         fileId,
       });
     }
+    // Both a new capture and a same-byte duplicate use the bound orchestration.
+    // The processor verifies the recorded original upload; this new upload ID
+    // never replaces an existing source's original provenance.
+    if (scopedToProject && sourceId != null) {
+      processing = await processUploadCapture(numericOrgId, sourceId, {
+        bytes: fileBuffer, fileName, mimeType, programId: captureScope.programId,
+        expectedWorkspaceId: captureScope.workspaceId, processedBy: 'chat_upload ingest',
+        ...(extracted ? { preExtracted: extracted } : {}),
+      });
+    }
 
-    // ── Retrieval embedding for program-scoped (UUID) uploads ──────────────
+    // ── Retrieval embedding, keyed to the data-room source ────────────────
     //
-    // The numeric-workspace path above embeds inside its governed-artifact
-    // block, but that block is skipped for the UUID id-space because
-    // concept2cure_artifacts.project_id is an INTEGER. The Data Room (ProjectHome)
-    // opens a `regulatory_programs` UUID, so EVERY upload a real customer makes
-    // there took the UUID path: it got a canonical source identity but its
-    // extracted text was never embedded — read once, used for a word count, then
-    // dropped from the retrieval corpus. That is the foundational gap behind the
-    // whole "ingest the sponsor's source data and cite it back" premise: with no
-    // atom + embedding, the content is not retrievable by RAG and cannot be cited
-    // in authoring.
+    // One atom per captured file, keyed `cre_source:<id>` so retrieval,
+    // citation (retrieval-source-link.ts form 2) and the disposition impact
+    // count (document-data-disposition/impact.ts) resolve it to the source.
+    // lumen_data_atoms is org-scoped (no project column), so a program capture
+    // carries a `program:<uuid>` tag for program-scoped retrieval; re-uploading
+    // the same file resolves the same source, so the guarded insert is a no-op.
     //
-    // Embed here so program uploads join the corpus too. lumen_data_atoms is
-    // org-scoped (no project column) with `tags` for finer scoping, so the atom
-    // carries a `program:<uuid>` tag for program-scoped retrieval and is keyed to
-    // the canonical source id for idempotency (re-uploading the same file resolves
-    // the same source, so the guarded insert is a no-op rather than a duplicate).
+    // Only real extracted content, never the filename placeholder: a file with
+    // no extractable text (a scan OCR could not read) is not embedded, and
+    // atomBounds stays null — which the response reports as no atom path. The
+    // numeric-workspace path used to key its atom to its artifact copy instead.
     if (
-      projectScope.programId != null &&
-      extractionMethod && // only real extracted content, never the filename placeholder
+      scopedToProject &&
+      extractionMethod &&
       extractedText.trim().length > 0 &&
       Number.isFinite(numericOrgId) &&
       numericOrgId > 0
@@ -652,14 +490,14 @@ export const uploadHandler = async (req: Request, res: Response) => {
         sourceId: sourceId != null ? `cre_source:${sourceId}` : `upload:${fileId}`,
         fileName,
         text: extractedText,
-        tags: ['source', 'chat_upload', `program:${projectScope.programId}`],
+        tags: ['source', 'chat_upload', ...(captureScope.programId != null ? [`program:${captureScope.programId}`] : [])],
       });
       if (atomBounds.atomId != null) {
-        logger.info('Program-scoped upload embedded into retrieval corpus', {
+        logger.info('Project-scoped upload embedded into retrieval corpus', {
           fileId,
           sourceId,
           atomId: atomBounds.atomId,
-          programId: projectScope.programId,
+          programId: captureScope.programId,
           embeddedChars: atomBounds.embeddedChars,
           extractedChars: atomBounds.extractedChars,
           truncated: atomBounds.truncated,
@@ -672,14 +510,13 @@ export const uploadHandler = async (req: Request, res: Response) => {
       message: 'File uploaded successfully',
       status: 'ready',
       fileName,
-      artifactId,
       // Canonical `cre_evidence_sources` id for this document; null when no
       // project was open (a conversation file) or no org context.
       sourceId,
       // Whether the Data Room holds this file (PF-07). With no project open it
       // stays in the conversation until it is adopted into a project.
       dataRoom: scopedToProject && sourceId != null
-        ? { recorded: true }
+        ? { recorded: true, readable: processing?.processed === true, processing }
         : {
             recorded: false,
             reason: scopedToProject
@@ -687,9 +524,12 @@ export const uploadHandler = async (req: Request, res: Response) => {
               : 'No project was open, so this file stays in the conversation. Adopt it into a project to add it to that project’s Data Room.',
           },
       // Extraction summary for the chat UI: which method read the file and how
-      // many words landed in memory (null/0 when unscoped or extraction failed).
+      // many words this extraction attempt read. Committed Data Room
+      // readability is reported separately above.
       extractionMethod,
       extractionWords,
+      // How much of a scanned PDF OCR read; null when OCR did not run.
+      extractionCoverage: extracted?.coverage ?? null,
       /* What the retrieval corpus actually holds. An upload's atom is ONE
          embedding over a bounded prefix, so for anything longer than a few
          pages `indexedWholeFile` is false — and saying so here is the
@@ -699,7 +539,8 @@ export const uploadHandler = async (req: Request, res: Response) => {
         ? {
             embeddedChars: atomBounds.embeddedChars,
             extractedChars: atomBounds.extractedChars,
-            indexedWholeFile: !atomBounds.truncated,
+            // Not whole when the extraction itself covered only part of the document.
+            indexedWholeFile: !atomBounds.truncated && !extracted?.coverage?.limitedBy,
             embedded: atomBounds.embedded,
           }
         : null,

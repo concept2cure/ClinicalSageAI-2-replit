@@ -23,10 +23,11 @@
  *    localStorage says 999 — so a regression to the wrong resolver fails rather
  *    than quietly addressing another tenant's record.
  *
- * 2. "SAVED" MUST MEAN SAVED. Two governed PATCHes go out per save. If one is
- *    refused (requireOrgAdmin returns 403 to a member without the admin role),
- *    the section it belonged to must stay dirty and unsaved. The sharp
- *    assertion is the SECOND save: only the failed section may be re-sent.
+ * 2. "SAVED" MUST MEAN SAVED. Up to two governed PATCHes go out per save
+ *    (organization name, client type). If one is refused (requireOrgAdmin
+ *    returns 403 to a member without the admin role), the section it belonged
+ *    to must stay dirty and unsaved. The sharp assertion is the SECOND save:
+ *    only the failed section may be re-sent.
  *
  * 3. NO SWITCH MAY IMPLY A CONTROL IT DOES NOT HAVE. Three translation
  *    "policy" toggles read Enforced/Disabled while approvalGuard() applied
@@ -35,6 +36,13 @@
  *    administrator they had relaxed a 21 CFR Part 11 control. They are gone as
  *    switches, and the enforced guardrails are written back on every save so
  *    the stored record cannot describe a laxer policy than the server applies.
+ *
+ * 4. NO CONTROL MAY SAVE WHAT NOTHING READS (settings/integrity audit
+ *    2026-10-17, finding 5). The Translation workspace card then saved
+ *    organizations.settings.translation — targets, engine, glossary scope —
+ *    which no server code reads (the card itself admitted "the translation
+ *    service does not read them yet"). An audited save of a setting with no
+ *    effect is a control that does nothing, so the card is gone.
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -149,16 +157,15 @@ const saveButton = (c: HTMLElement) =>
   ) as HTMLButtonElement;
 const chipByText = (c: HTMLElement, text: string) =>
   Array.from(c.querySelectorAll('button.txw-pchip')).find(b =>
-    (b.textContent || '').includes(text),
+    (b.textContent || '').trim() === text,
   ) as HTMLButtonElement;
 
 const patches = (kind: 'profile' | 'settings') =>
   sent.filter(r => r.method === 'PATCH' && r.url.includes(`/${kind}`));
 
-/** Wait for both governed reads to have landed in the rendered fields. */
+/** Wait for the governed organization read to have landed in the rendered fields. */
 async function loaded(container: HTMLElement) {
   await waitFor(() => expect(nameInput(container)?.value).toBe('Northwind Bio'));
-  await waitFor(() => expect(chipByText(container, 'German')).toBeTruthy());
   return container;
 }
 
@@ -171,16 +178,14 @@ describe('Admin → Setup reads the organization record', () => {
     expect(container.textContent).not.toContain('Acme Bio');
   });
 
-  it('seeds the translation policy from the persisted section', async () => {
+  it('shows no translation-workspace card: nothing reads organizations.settings.translation', async () => {
     const { container } = renderSurface();
     await loaded(container);
-    // 'de-DE' is the only persisted target; the old fixture seeded three.
-    expect(chipByText(container, 'German').getAttribute('data-on')).toBe('true');
-    expect(chipByText(container, 'Japanese').hasAttribute('data-on')).toBe(false);
-    const engine = container.querySelector(
-      'select[aria-label="Default MT engine"]',
-    ) as HTMLSelectElement;
-    expect(engine.value).toBe('DeepL Pro');
+    const text = container.textContent || '';
+    expect(text).not.toContain('Translation workspace');
+    expect(container.querySelector('[aria-label="Enable translation workspace"]')).toBeNull();
+    expect(container.querySelector('select[aria-label="Default MT engine"]')).toBeNull();
+    expect(chipByText(container, 'German')).toBeUndefined();
   });
 
   it('addresses the org from the token claim, never the stale localStorage id', async () => {
@@ -198,7 +203,6 @@ describe('Admin → Setup reads the organization record', () => {
     const { container } = renderSurface();
     await loaded(container);
     fireEvent.change(nameInput(container), { target: { value: 'Contoso Bio' } });
-    fireEvent.click(chipByText(container, 'Japanese'));
     expect(localStorage.getItem('c2c_admin_settings')).toBeNull();
   });
 });
@@ -226,78 +230,48 @@ describe('Admin → Setup governed save', () => {
     expect(patches('settings')).toHaveLength(0);
   });
 
-  it('PATCHes both governed routes with the reason and the token’s org id', async () => {
+  it('PATCHes the profile with the reason and the token’s org id, and writes no settings section', async () => {
     const { container } = renderSurface();
     await loaded(container);
     fireEvent.change(nameInput(container), { target: { value: 'Contoso Bio' } });
-    fireEvent.click(chipByText(container, 'Japanese'));
     fireEvent.change(reasonInput(container), { target: { value: 'Onboarding review' } });
     fireEvent.click(saveButton(container));
 
-    await waitFor(() => expect(patches('settings')).toHaveLength(1));
+    await waitFor(() => expect(patches('profile')).toHaveLength(1));
     const profile = patches('profile')[0];
     expect(profile.url).toBe(`/api/organizations/${TOKEN_ORG}/profile`);
     expect(profile.body).toEqual({ name: 'Contoso Bio', reason: 'Onboarding review' });
-
-    const settings = patches('settings')[0];
-    expect(settings.url).toBe(`/api/organizations/${TOKEN_ORG}/settings`);
-    expect(settings.body.reason).toBe('Onboarding review');
-    expect(settings.body.settings.translation.targets.sort()).toEqual(['de-DE', 'ja-JP']);
-  });
-
-  it('never carries a stale record’s “guardrail off” claim back to the server', async () => {
-    // `organizations.settings` is free-form jsonb, so a record written before
-    // this surface existed — or by hand — can claim the guardrails are off.
-    // approvalGuard() enforces them regardless, so persisting that claim would
-    // leave the org's stored policy describing weaker Part 11 controls than the
-    // platform actually applies: an audit finding, invisible on screen.
-    //
-    // Scope note, so nobody over-reads this test. Two independent lines make it
-    // pass — readTranslationPolicy pins the guardrails on the way IN, and the
-    // save re-pins them on the way OUT — and removing EITHER alone still leaves
-    // it green. That redundancy is deliberate, and it means this test pins the
-    // outcome (nothing false reaches the wire), not any one implementation of
-    // it. Removing both does fail it.
-    const stale = liveSettings({
-      requireBackTranslation: false,
-      twoPersonRule: false,
-      blockMachineApproval: false,
-    });
-    (globalThis.fetch as any).mockImplementation(async (input: any, init: any = {}) => {
-      const url = String(input);
-      const method = String(init.method || 'GET');
-      sent.push({ url, method, body: init.body ? JSON.parse(init.body) : null });
-      if (url.includes('/api/mdx/industry-profile')) return json(200, { data: null });
-      if (method === 'PATCH' && url.includes('/settings')) return json(200, { success: true });
-      if (url.includes('/settings')) return json(200, stale);
-      if (url.includes('/api/organizations/')) return json(orgGet.status, orgGet.body);
-      return json(404, { success: false, error: 'unexpected ' + url });
-    });
-
-    const { container } = renderSurface();
-    await loaded(container);
-    fireEvent.click(chipByText(container, 'Japanese'));
-    fireEvent.change(reasonInput(container), { target: { value: 'Add PMDA target' } });
-    fireEvent.click(saveButton(container));
-
-    await waitFor(() => expect(patches('settings')).toHaveLength(1));
-    expect(patches('settings')[0].body.settings.translation).toMatchObject({
-      requireBackTranslation: true,
-      twoPersonRule: true,
-      blockMachineApproval: true,
-    });
+    await waitFor(() => expect(saveButton(container).disabled).toBe(true));
+    expect(patches('settings')).toHaveLength(0);
   });
 
   it('leaves a refused section dirty, and re-sends only that section', async () => {
-    // requireOrgAdmin refuses the settings write; the profile write succeeds.
-    settingsPatch = {
+    // requireOrgAdmin refuses the profile write; the client-type write succeeds.
+    profilePatch = {
       status: 403,
       body: { success: false, error: 'Organization admin role required for this action' },
     };
+    const industry = () => sent.filter(r => r.method === 'PATCH' && r.url.includes('/api/mdx/industry-profile'));
+    let storedIndustry = 'biotech_pharma';
+    (globalThis.fetch as any).mockImplementation(async (input: any, init: any = {}) => {
+      const url = String(input);
+      const method = String(init.method || 'GET');
+      const body = init.body ? JSON.parse(init.body) : null;
+      sent.push({ url, method, body });
+      if (url.includes('/api/mdx/industry-profile')) {
+        if (method === 'PATCH') storedIndustry = body.primaryIndustry;
+        return json(200, { data: { organizationId: TOKEN_ORG, primaryIndustry: storedIndustry, mdxSpecialization: null } });
+      }
+      if (method === 'PATCH' && url.includes('/profile')) return json(profilePatch.status, profilePatch.body);
+      if (url.includes('/settings')) return json(200, { success: true, settings: {} });
+      if (url.includes('/api/organizations/')) return json(orgGet.status, orgGet.body);
+      return json(404, { success: false, error: 'unexpected ' + url });
+    });
     const { container } = renderSurface();
     await loaded(container);
+    await waitFor(() => expect(chipByText(container, 'CRO')?.disabled).toBe(false));
     fireEvent.change(nameInput(container), { target: { value: 'Contoso Bio' } });
-    fireEvent.click(chipByText(container, 'Japanese'));
+    fireEvent.click(chipByText(container, 'CRO'));
     fireEvent.change(reasonInput(container), { target: { value: 'Onboarding review' } });
     fireEvent.click(saveButton(container));
 
@@ -307,16 +281,18 @@ describe('Admin → Setup governed save', () => {
     );
     // A refused write must not read as an unreachable server.
     expect(container.textContent).not.toContain('could not be reached');
-    // Still dirty: the translation section was never persisted.
+    expect(industry()).toHaveLength(1);
+    // The client type landed (and the profile re-read confirms it)…
+    await waitFor(() => expect(container.textContent).toContain('Saved to the governed org profile'));
+    // …but the page is still dirty: the name was never persisted.
     expect(saveButton(container).disabled).toBe(false);
 
     // THE assertion. Saving again must re-send the refused section and NOT the
-    // one that already landed — a baseline that advanced for both would repeat
-    // the profile write and, worse, would have marked the refused one clean.
-    settingsPatch = { status: 200, body: { success: true } };
+    // one that already landed.
+    profilePatch = { status: 200, body: { success: true, organization: { name: 'Contoso Bio' } } };
     fireEvent.click(saveButton(container));
-    await waitFor(() => expect(patches('settings')).toHaveLength(2));
-    expect(patches('profile')).toHaveLength(1);
+    await waitFor(() => expect(patches('profile')).toHaveLength(2));
+    expect(industry()).toHaveLength(1);
     await waitFor(() => expect(saveButton(container).disabled).toBe(true));
   });
 
@@ -335,6 +311,13 @@ describe('Admin → Setup governed save', () => {
 });
 
 describe('Admin → Setup claims no control it does not have', () => {
+  it('offers the existing Vault legal-hold controls beside the retention period', async () => {
+    const { container } = renderSurface();
+    await loaded(container);
+    expect(container.querySelector('[data-testid="legal-holds-card"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="retention-period-card"]')).not.toBeNull();
+  });
+
   it('has no switch for anything enforced elsewhere or per user', async () => {
     const { container } = renderSurface();
     await loaded(container);
@@ -359,23 +342,6 @@ describe('Admin → Setup claims no control it does not have', () => {
     const { container } = renderSurface();
     await loaded(container);
     expect(container.querySelector('[data-testid="pdfa-requirement-setting"]')).not.toBeNull();
-  });
-
-  it('states the approval guardrails as always enforced', async () => {
-    const { container } = renderSurface();
-    await loaded(container);
-    const text = container.textContent || '';
-    expect(text).toContain('Machine-only segments are never approvable');
-    expect(text).toContain('Verified back-translation before approval');
-    expect(text).toContain('Separation of duties on approval');
-    // Three rows, each carrying the enforced marker rather than a toggle.
-    expect((text.match(/Always enforced/g) || []).length).toBe(3);
-  });
-
-  it('discloses that the editable translation preferences are not yet read', async () => {
-    const { container } = renderSurface();
-    await loaded(container);
-    expect(container.textContent).toContain('the translation service does not read them yet');
   });
 
   it('does not offer edits it cannot persist when the record fails to load', async () => {

@@ -143,6 +143,28 @@ export const getAuthHeaders = (): Record<string, string> => {
   };
 };
 
+/** Pin the bearer whose actor and organization match a captured governed read.
+ * Promoted from Quality's personal acknowledgement check for all ceremonies.
+ * Claims are a client consistency hint; the server still verifies the token. */
+export function capturedActorHeaders(scope: { userId: number; organizationId: number }): Record<string, string> {
+  const validId = (value: unknown): number | null => {
+    if (typeof value !== 'number' && (typeof value !== 'string' || !/^[1-9]\d*$/.test(value))) return null;
+    const n = Number(value);
+    return Number.isInteger(n) && n > 0 && n <= 2_147_483_647 ? n : null;
+  };
+  const changed = 'Your signed-in account or organization changed. Reopen this record before continuing.';
+  const token = getAuthToken();
+  try {
+    if (!token || validId(scope.userId) === null || validId(scope.organizationId) === null) throw new Error(changed);
+    const claims = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))) as
+      { userId?: unknown; organizationId?: unknown } | null;
+    if (validId(claims?.userId) !== scope.userId || validId(claims?.organizationId) !== scope.organizationId) throw new Error(changed);
+    return { Authorization: `Bearer ${token}`, 'x-organization-id': String(scope.organizationId) };
+  } catch {
+    throw new Error(changed);
+  }
+}
+
 /**
  * Store the token in exactly ONE tier. Writes the canonical key to
  * sessionStorage and removes it from localStorage plus every legacy key from

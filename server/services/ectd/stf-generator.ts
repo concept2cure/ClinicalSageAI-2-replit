@@ -37,7 +37,8 @@
  *   - That a deleted leaf is not tagged (it ships no file).
  *   - The document file-tag list STF_DOCUMENT_FILE_TAGS. It only warns.
  *   - The eCTD file-name character rule is the platform's one copy of it,
- *     FILENAME_PATTERN in ectd-regional-rules.ts.
+ *     FILENAME_PATTERN in shared/regulatory/ectd-leaf-rules.ts (re-exported
+ *     through ectd-regional-rules.ts for existing server callers).
  *
  * Until 2026-10-05 every file was named 'stf.xml', file-tags were free text,
  * each tag wrapped <leaf> elements pointing at the PDFs, and a default
@@ -47,7 +48,9 @@
  * @module server/services/ectd/stf-generator
  */
 
-import { FILENAME_PATTERN, FILENAME_RULE_TEXT } from './ectd-regional-rules';
+import { stfFileName } from '../../../shared/regulatory/ectd-leaf-rules';
+import { STF_DTD } from './dtd-bundler';
+export { stfFileName } from '../../../shared/regulatory/ectd-leaf-rules';
 import { FDA_STUDY_DATA_TRC, recall } from '../ind/ctd/regulatory-basis';
 import type { RegulatoryBasis } from '../ind/ctd/types';
 
@@ -159,26 +162,6 @@ function escapeXml(s: string): string {
     .replace(/'/g, '&apos;');
 }
 
-/**
- * The STF file name for a study: "stf-" + study-id + ".xml", case-folded because
- * eCTD file names are lower case. Throws when the result breaks the eCTD
- * file-name rule (FILENAME_PATTERN) — a study id with a space, '&', '_', '/' or
- * '.', or one too long — rather than inventing a different name for the study.
- * 2026-10-08 (W5/D7, sweep VP-7): a '.' in the study id passed until the rule
- * became ICH's one '.' before the extension; such an id is now refused.
- */
-export function stfFileName(studyId: string): string {
-  const name = `stf-${studyId.toLowerCase()}.xml`;
-  if (!FILENAME_PATTERN.test(name)) {
-    throw new Error(
-      `Study id "${studyId}" cannot form its Study Tagging File name: "${name}" breaks the eCTD file-name rule ` +
-        `(${FILENAME_RULE_TEXT}). The STF is named "stf-" + study-id + ".xml" ` +
-        `(ICH STF v2.6.1); give the study an id that fits rather than have the platform rename it.`,
-    );
-  }
-  return name;
-}
-
 /** The file-tag a dataset or define.xml leaf must carry, or null for a document leaf. */
 function datasetTagsFor(href: string): readonly string[] | null {
   const base = href.slice(href.lastIndexOf('/') + 1).toLowerCase();
@@ -220,7 +203,7 @@ function checkStfLeaf(leaf: StfLeaf, warnings: string[]): void {
 }
 
 /** The STF document for one study: study-identifier, then a doc-content per tagged leaf. */
-function renderStf(studyId: string, title: string, tagged: readonly StfLeaf[]): string {
+function renderStf(studyId: string, title: string, tagged: readonly StfLeaf[], dtdSystemPath = STF_DTD): string {
   const docContents = tagged.map(
     (l) =>
       `    <doc-content xlink:href="${escapeXml(`${l.indexRelPath}#${l.indexLeafId}`)}">\n` +
@@ -231,7 +214,7 @@ function renderStf(studyId: string, title: string, tagged: readonly StfLeaf[]): 
 
   return (
     `<?xml version="1.0" encoding="UTF-8"?>\n` +
-    `<!DOCTYPE ectd:study SYSTEM "ich-stf-v2-2.dtd">\n` +
+    `<!DOCTYPE ectd:study SYSTEM "${escapeXml(dtdSystemPath)}">\n` +
     `<ectd:study xmlns:ectd="http://www.ich.org/ectd" xmlns:xlink="http://www.w3.org/1999/xlink" dtd-version="${STF_DTD_VERSION}">\n` +
     `  <study-identifier>\n` +
     `    <title>${escapeXml(title)}</title>\n` +
@@ -254,7 +237,7 @@ function renderStf(studyId: string, title: string, tagged: readonly StfLeaf[]): 
  *   1735 list; when a study id cannot form an eCTD file name; or when two study
  *   ids fold to the same file name.
  */
-export function generateStfFiles(leaves: StfLeaf[], studyMeta: StfStudyMeta[] = []): StfResult {
+export function generateStfFiles(leaves: StfLeaf[], studyMeta: StfStudyMeta[] = [], options: { dtdSystemPath?: (studyId: string) => string } = {}): StfResult {
   const metaById = new Map(studyMeta.map((m) => [m.studyId, m]));
   const byStudy = new Map<string, StfLeaf[]>();
   const warnings: string[] = [];
@@ -298,7 +281,7 @@ export function generateStfFiles(leaves: StfLeaf[], studyMeta: StfStudyMeta[] = 
     // A study whose leaves are all deleted in this sequence has nothing to tag.
     if (tagged.length === 0) continue;
 
-    const xml = renderStf(studyId, meta?.studyTitle ?? studyId, tagged);
+    const xml = renderStf(studyId, meta?.studyTitle ?? studyId, tagged, options.dtdSystemPath?.(studyId));
     files.push({ studyId, fileName, xml, leafCount: tagged.length });
   }
 

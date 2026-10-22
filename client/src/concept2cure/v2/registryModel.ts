@@ -139,8 +139,11 @@ export const NAV_GROUP_OF: Record<string, string> = {
  * its name says (the board alone opens on everyone's).
  */
 export const RAIL_CORE = [
-  { id: 'new-conversation', label: 'New conversation', icon: 'plus', target: 'home' },
+  { id: 'home', label: 'Home', icon: 'home' },
+  { id: 'apps', label: 'Apps catalog', icon: 'grid' },
   { id: 'projects', label: 'Projects', icon: 'folder' },
+  { id: 'tasking', label: 'Tasking', icon: 'checkSquare', target: 'tasks', applies: { actionId: 'tasking.filter', params: { mine: 'false' } } },
+  { id: 'communication-center', label: 'Communication', icon: 'messageSquare' },
   { id: 'vault', label: 'Vault', icon: 'vault' },
   { id: 'submission-center', label: 'Submission Center', icon: 'rocket' },
   { id: 'quality', label: 'Quality', icon: 'shieldCheck' },
@@ -639,7 +642,11 @@ export const SEGMENT_MODULES = {
     { label: 'Review & govern', items: ['review', 'tasks', 'device-tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
-      items: ['precedent-intelligence', 'device-analytics', 'device-postmarket', 'crl-library', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      // 2026-10-11: the device segment had no biostatistics surface either,
+      // while the engines a 510(k) or PMA sponsor needs — device performance
+      // sizing, Bayesian device sizing, MRMC, group-sequential operating
+      // characteristics — were reachable only from the two pharma segments.
+      items: ['precedent-intelligence', 'device-analytics', 'device-postmarket', 'biostat-workbench', 'crl-library', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Lifecycle & access', items: ['registrations', 'device-udi', 'market-access', 'change-assessment'] },
   ],
@@ -667,7 +674,13 @@ export const SEGMENT_MODULES = {
     { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
-      items: ['precedent-intelligence', 'crl-library', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      // 2026-10-11: this segment had no biostatistics surface at all, and the
+      // gap is sharpest here: diagnostic accuracy sizing, co-primary
+      // sensitivity/specificity, MRMC reader studies and AUC comparison exist
+      // FOR an IVD sponsor, and this segment could reach none of them. The
+      // workbench is the surface that delivers the outcome
+      // (docs/SURFACE_DECISIONS_2026-10-08.md).
+      items: ['precedent-intelligence', 'biostat-workbench', 'crl-library', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Lifecycle & access', items: ['registrations', 'market-access', 'change-assessment'] },
   ],
@@ -797,7 +810,11 @@ export const SEGMENT_MODULES = {
     { label: 'Submit & file', items: ['ind-checklist', 'submission-center'] },
     {
       label: 'Science & intelligence',
-      items: ['biostatistics', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      // 2026-10-11: the workbench joins the segment that had only the surface
+      // docs/SURFACE_DECISIONS_2026-10-08.md scraps as a place. That surface
+      // stays listed until the change that removes it names the replacement
+      // path for each of its entry points, as the working agreement requires.
+      items: ['biostatistics', 'biostat-workbench', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Review & govern', items: ['review', 'tasks', 'audit-trail'] },
   ],

@@ -103,12 +103,13 @@ function minuteBucket(now = new Date()): string {
  *  replacement are one suggestion from one author and one turn, so both are
  *  made from the same call; a selection the person struck for a draft is
  *  theirs, made from their author at the same minute. */
-function suggestionMarkAttrs(author: SuggestionAuthor, at: string) {
+function suggestionMarkAttrs(author: SuggestionAuthor, at: string, applicationId?: string) {
   return {
     authorId: author.id,
     authorName: author.name,
     at,
     sourceRecord: author.sourceRecord ?? null,
+    applicationId: applicationId ?? null,
   };
 }
 
@@ -142,6 +143,12 @@ const suggestionAttrs = {
     parseHTML: (el: HTMLElement) => el.getAttribute('data-source-record'),
     renderHTML: (attrs: Record<string, unknown>) =>
       attrs.sourceRecord ? { 'data-source-record': String(attrs.sourceRecord) } : {},
+  },
+  applicationId: {
+    default: null as string | null,
+    parseHTML: (el: HTMLElement) => el.getAttribute('data-application-id'),
+    renderHTML: (attrs: Record<string, unknown>) =>
+      attrs.applicationId ? { 'data-application-id': String(attrs.applicationId) } : {},
   },
 };
 
@@ -221,6 +228,8 @@ export interface SuggestionRange {
   at: string | null;
   /** The AnA turn record the text came from, when the mark carries one. */
   sourceRecord: string | null;
+  /** One explicit replacement attempt; ordinary typing and older marks omit it. */
+  applicationId?: string | null;
   text: string;
 }
 
@@ -239,7 +248,8 @@ function continuesRange(
     prev.to === pos &&
     prev.kind === kind &&
     prev.authorId === ((attrs.authorId as string | null) ?? null) &&
-    prev.sourceRecord === ((attrs.sourceRecord as string | null) ?? null)
+    prev.sourceRecord === ((attrs.sourceRecord as string | null) ?? null) &&
+    (prev.applicationId ?? null) === ((attrs.applicationId as string | null) ?? null)
   );
 }
 
@@ -267,6 +277,7 @@ export function collectSuggestions(doc: PMNode): SuggestionRange[] {
       authorName: (mark.attrs.authorName as string | null) ?? null,
       at: (mark.attrs.at as string | null) ?? null,
       sourceRecord: (mark.attrs.sourceRecord as string | null) ?? null,
+      ...(mark.attrs.applicationId ? { applicationId: String(mark.attrs.applicationId) } : {}),
       text: node.text ?? '',
     });
   });
@@ -1109,10 +1120,25 @@ interface TrackChangesStorage {
   acceptedInsertions: AcceptedInsertion[];
 }
 
-/** One accepted insertion: whose it was, and what it said. */
+/** One accepted insertion: whose it was, what it said, and which turn wrote it. */
 export interface AcceptedInsertion {
   authorId: string;
   text: string;
+  /**
+   * The AnA turn record this text came from, or null when the mark named none
+   * (round 15, SEC-A-7 door 1).
+   *
+   * The id is on the mark already — AnA's suggestion carries it as
+   * `sourceRecord` and it rides on `SuggestionRange` — and it stopped here,
+   * because this type held only the author and the words. So the save could
+   * tell the server WHICH words a machine wrote and never WHICH TURN wrote
+   * them, and the server's own verifier had nothing to hold the claim against.
+   *
+   * Null is not a forgery: a plain paste, an older bundle and text typed by
+   * hand all name no turn. The clause still travels, and the server records it
+   * as the person's own words with the reason.
+   */
+  turnRecordId: string | null;
 }
 
 /** The last recorded decision as an undo and a redo floor. */
@@ -1136,6 +1162,18 @@ const trackKey = new PluginKey<DecisionFloor>('c2cTrackChanges');
 /* Carried by accept/reject transactions only: the ones whose decision the host
    records as they run. An AnA insert records nothing, so it sets no floor. */
 const DECISION_META = 'c2c-suggestion-decision';
+const PROPOSAL_ACCEPTED_META = 'c2c-proposal-accepted';
+
+/** Accepted application identities on the transaction that actually resolved them. */
+export function acceptedProposalApplications(tr: Transaction): readonly string[] {
+  const ids: unknown = tr.getMeta(PROPOSAL_ACCEPTED_META);
+  return Array.isArray(ids) ? ids.filter((id): id is string => typeof id === 'string' && !!id) : [];
+}
+
+function recordProposalDecision(tr: Transaction, range: SuggestionRange, action: 'accept' | 'reject'): void {
+  if (action !== 'accept' || !range.applicationId) return;
+  tr.setMeta(PROPOSAL_ACCEPTED_META, [...acceptedProposalApplications(tr), range.applicationId]);
+}
 
 /**
  * Mark `tr` as a recorded decision.
@@ -1297,6 +1335,10 @@ export function rememberAcceptedAuthor(
   authorId: string | null,
   authorName: string | null,
   text: string,
+  /* The mark's `sourceRecord`. Per INSERTION, not per author: two AnA drafts
+     from different turns can be accepted in one editing session, and the models
+     that served one turn say nothing about the other. */
+  turnRecordId?: string | null,
 ): void {
   if (kind !== 'insertion' || action !== 'accept') return;
   if (!authorId && !authorName) return;
@@ -1304,7 +1346,7 @@ export function rememberAcceptedAuthor(
   // The text first, per insertion — before the once-per-author return below,
   // or a second accepted draft from the same author would lose its words.
   if (typeof text === 'string' && text.trim().length > 0) {
-    store.acceptedInsertions.push({ authorId: id, text });
+    store.acceptedInsertions.push({ authorId: id, text, turnRecordId: turnRecordId ?? null });
   }
   if (store.acceptedAuthors.some((a) => a.id === id)) return;
   store.acceptedAuthors.push({ id, name: authorName ?? id });
@@ -1377,11 +1419,11 @@ function settledTextblocks(doc: PMNode): string[] {
  * compliance record that loses a decision is worse than no record.
  *
  * So the id is the merge key PLUS a digest of the change's own text. Two runs
- * in the same minute with different words get different ids, the editor's mark
- * schema is untouched, and nothing about merging changes. The remaining
- * collision — the same author proposing the identical text twice inside one
- * minute — is genuinely the same change by every field that identifies one, and
- * the decision for it is the same either way.
+ * in the same minute with different words get different ids, and ordinary
+ * typing-run merging stays unchanged. Explicit replacement attempts additionally
+ * carry an application identity: rejecting then retrying the identical proposal
+ * in the same minute must preserve two decisions. That identity is minted once
+ * per explicit operation, never per keystroke.
  *
  * FNV-1a rather than SHA-256 because this must be synchronous (WebCrypto's
  * digest is not) and it is an index key, not a security boundary: the change's
@@ -1403,6 +1445,9 @@ export function changeIdOf(range: SuggestionRange): string {
      against its own turn. A range with no turn record keeps its old id. */
   const parts = [range.kind, range.authorId ?? '', range.at ?? '', range.text];
   if (range.sourceRecord) parts.push(range.sourceRecord);
+  // Explicit attempts stay distinct after a same-minute rejection and retry.
+  // Legacy typing keys and their merging remain unchanged.
+  if (range.applicationId) parts.push(range.applicationId);
   const key = parts.join('\u0000');
   // Two differently-seeded 32-bit passes → 64 bits of digest.
   return `${range.kind}:${fnv1a(key, 0x811c9dc5)}${fnv1a(key, 0x01000193)}`;
@@ -1422,6 +1467,7 @@ export interface SuggestionDecision {
   at: string | null;
   /** The AnA turn record the proposed text came from, when known. */
   sourceRecord: string | null;
+  applicationId?: string | null;
 }
 
 /** Build the decision record for one resolved range. */
@@ -1438,6 +1484,7 @@ export function decisionOf(
     authorName: range.authorName,
     at: range.at,
     sourceRecord: range.sourceRecord,
+    ...(range.applicationId ? { applicationId: range.applicationId } : {}),
   };
 }
 
@@ -1471,15 +1518,15 @@ const setContentUntracked =
     return commands.setContent(content);
   };
 
-/** `fragment` with each insertion mark `swap` replaces swapped, at any depth. */
-function swapInsertionMarks(fragment: Fragment, swap: (mark: PMMark) => PMMark | null): Fragment {
+/** `fragment` with each suggestion mark (insertion or deletion) `swap` replaces swapped, at any depth. */
+function swapSuggestionMarks(fragment: Fragment, swap: (mark: PMMark) => PMMark | null): Fragment {
   const nodes: PMNode[] = [];
   fragment.forEach((node) => {
     if (!node.isText) {
-      nodes.push(node.copy(swapInsertionMarks(node.content, swap)));
+      nodes.push(node.copy(swapSuggestionMarks(node.content, swap)));
       return;
     }
-    const mark = node.marks.find((m) => m.type.name === 'insertion');
+    const mark = node.marks.find((m) => m.type.name === 'insertion' || m.type.name === 'deletion');
     const next = mark ? swap(mark) : null;
     nodes.push(mark && next ? node.mark(next.addToSet(mark.removeFromSet(node.marks))) : node);
   });
@@ -1492,10 +1539,16 @@ function swapInsertionMarks(fragment: Fragment, swap: (mark: PMMark) => PMMark |
  * rule admits (anaInsertGate.ts). A paste or a drop of an AnA suggestion was a
  * second way in: with track changes off (the database default) it kept her
  * name and turn, never met that rule, and its accept was filed as hers. A
- * pasted AnA suggestion now keeps them only when the host admits its turn
+ * pasted AnA suggestion now keeps her name only when the host admits its turn
  * (one its insert gate admitted); any other becomes the pasting person's, at
- * this minute, with no turn, which is what a paste with track changes on
- * already records. Other authors' suggestions are left as they are.
+ * this minute. Other authors' suggestions are left as they are.
+ *
+ * It keeps the turn (round 13, round 11's UI review, Part 11 §11.10(e)). The
+ * person is the proposer now, but the words came from AnA's turn, and the
+ * swap had dropped it: the decision then filed AnA's words as the person's
+ * own, with no source. With the turn kept, the decision names it, and the
+ * server verifies the words against it and records which models wrote them
+ * (round 10). A pasted deletion is swapped as an insertion is.
  */
 export function reattributePasted(
   slice: Slice,
@@ -1505,9 +1558,39 @@ export function reattributePasted(
   const swap = (mark: PMMark): PMMark | null => {
     if (mark.attrs.authorId !== ANA_SUGGESTION_AUTHOR_ID) return null;
     if (admitsAnaSource?.((mark.attrs.sourceRecord as string | null) ?? null)) return null;
-    return mark.type.create({ ...mark.attrs, ...suggestionMarkAttrs(person, minuteBucket()) });
+    return mark.type.create({ ...mark.attrs, authorId: person.id, authorName: person.name, at: minuteBucket() });
   };
-  return new Slice(swapInsertionMarks(slice.content, swap), slice.openStart, slice.openEnd);
+  return new Slice(swapSuggestionMarks(slice.content, swap), slice.openStart, slice.openEnd);
+}
+
+/**
+ * The turns a pasted run's insertions came from, by position, so the person's
+ * insertion that replaces them can still name each (round 13). Only an
+ * insertion's turn is AnA's words: a deletion's turn proposed striking text
+ * she did not write.
+ */
+function pastedTurns(doc: PMNode, from: number, to: number): Array<[number, number, string]> {
+  const runs: Array<[number, number, string]> = [];
+  doc.nodesBetween(from, to, (node, pos) => {
+    if (!node.isText) return;
+    const turn = node.marks.find((m) => m.type.name === 'insertion')?.attrs.sourceRecord;
+    if (typeof turn === 'string' && turn) runs.push([Math.max(from, pos), Math.min(to, pos + node.nodeSize), turn]);
+  });
+  return runs;
+}
+
+/**
+ * Track changes on: mark [from, to) as the person's pending insertion, clearing
+ * any deletion mark it inherited. A paste or a drop (`edit`'s uiEvent) is the
+ * person's insertion still naming the turn its words came from (round 13);
+ * text they type carries no turn.
+ */
+function markPersonInsertion(fix: Transaction, from: number, to: number, insMark: PMMark, edit: Transaction): void {
+  const ui = edit.getMeta('uiEvent');
+  const turns = ui === 'paste' || ui === 'drop' ? pastedTurns(fix.doc, from, to) : [];
+  fix.removeMark(from, to, fix.doc.type.schema.marks.deletion);
+  fix.addMark(from, to, insMark);
+  for (const [x, y, turn] of turns) fix.addMark(x, y, insMark.type.create({ ...insMark.attrs, sourceRecord: turn }));
 }
 
 export const TrackChanges = Extension.create<
@@ -1563,7 +1646,7 @@ export const TrackChanges = Extension.create<
         (range: SuggestionRange, action: 'accept' | 'reject') =>
         ({ state, tr, dispatch }) => {
           const { insertion, deletion } = state.schema.marks;
-          rememberAcceptedAuthor(this.storage, range.kind, action, range.authorId, range.authorName, range.text);
+          rememberAcceptedAuthor(this.storage, range.kind, action, range.authorId, range.authorName, range.text, range.sourceRecord);
           /* Before the mark is stripped, for the same reason
              rememberAcceptedAuthor is: stripping it erases the text and the
              attribution the decision record is about. */
@@ -1585,6 +1668,7 @@ export const TrackChanges = Extension.create<
              it is recorded too. Periodic review 2026-09-28, editor family,
              P11-B-4; the undo and redo floor is its remaining gap (e). */
           markRecordedDecision(tr);
+          recordProposalDecision(tr, range, action);
           if (dispatch) dispatch(tr);
           return true;
         },
@@ -1597,8 +1681,9 @@ export const TrackChanges = Extension.create<
           const removedAt: number[] = [];
           // Descending order so earlier positions stay valid as text is removed.
           for (const r of [...ranges].sort((a, b) => b.from - a.from)) {
-            rememberAcceptedAuthor(this.storage, r.kind, action, r.authorId, r.authorName, r.text);
+            rememberAcceptedAuthor(this.storage, r.kind, action, r.authorId, r.authorName, r.text, r.sourceRecord);
             notifyResolved(this.options.onResolve, r, action);
+            recordProposalDecision(tr, r, action);
             const keepText = (r.kind === 'insertion') === (action === 'accept');
             if (keepText) {
               tr.removeMark(r.from, r.to, r.kind === 'insertion' ? insertion : deletion);
@@ -1778,8 +1863,7 @@ export const TrackChanges = Extension.create<
                   const a = fix.mapping.map(insStart, -1) + restoredSize;
                   const b = a + step.slice.size;
                   if (b > a) {
-                    fix.removeMark(a, b, delType);
-                    fix.addMark(a, b, insMark);
+                    markPersonInsertion(fix, a, b, insMark, tr);
                     mutated = true;
                   }
                 }
@@ -1862,7 +1946,7 @@ export type ProposeRefusal =
   | 'structural'
   | 'unsupported-content';
 
-export type ProposeResult = { ok: true } | { ok: false; reason: ProposeRefusal };
+export type ProposeResult = { ok: true; applicationId?: string } | { ok: false; reason: ProposeRefusal };
 
 /** Whitespace as the reader writes it: any run, NBSP included, is one space.
  *  A pipe is whitespace too, on both sides: the reader joins table cells with
@@ -2005,7 +2089,7 @@ function locateProposal(
  * Redline the one passage `proposal.quote` names: strike it as a pending
  * deletion by `author` and insert `replacement` (the markdown subset, as
  * insertSuggestedContent reads it) as a pending insertion by `author` right
- * after it. Both carry the same author, minute and turn record.
+ * after it. Both carry the same author, minute, turn record and application UUID.
  *
  * Nothing changes unless the result is `{ ok: true }`. The transaction is the
  * editor's own suggestion machinery (SUGGESTION_ACTION_META, so the tracking
@@ -2032,7 +2116,8 @@ export function proposeReplacement(
   const target = locateProposal(state.doc, proposal);
   if (typeof target === 'string') return { ok: false, reason: target };
 
-  const attrs = suggestionMarkAttrs(proposal.author, minuteBucket());
+  const applicationId = globalThis.crypto.randomUUID();
+  const attrs = suggestionMarkAttrs(proposal.author, minuteBucket(), applicationId);
   const t = new Transform(state.doc);
   // The range holds no suggestion (locateProposal), so this is a plain strike
   // — of text that can take one, or of nothing.
@@ -2051,7 +2136,7 @@ export function proposeReplacement(
   tr.setMeta(SUGGESTION_ACTION_META, true);
   tr.setMeta('addToHistory', false);
   editor.view.dispatch(tr);
-  return { ok: true };
+  return { ok: true, applicationId };
 }
 
 /**

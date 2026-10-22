@@ -1,0 +1,398 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > refuses signed content before any erasure or success record
+{
+  "timestamp": "2026-10-14T05:33:49.660Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 11,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "synthetic-final-export",
+    "deletedRows": {
+      "mdx_notification_receipts": 1,
+      "mdx_notifications": 1,
+      "documents": 1,
+      "regulatory_programs": 1
+    },
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "runEventErasure": {
+      "events": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+ × server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > refuses signed content before any erasure or success record 2261ms
+   → promise resolved "{ organizationId: 11, …(13) }" instead of rejecting
+stderr | server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > refuses legacy-registry content before any erasure or success record
+{
+  "timestamp": "2026-10-14T05:33:51.265Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 11,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "synthetic-final-export",
+    "deletedRows": {
+      "mdx_notification_receipts": 1,
+      "mdx_notifications": 1,
+      "documents": 1,
+      "regulatory_programs": 1
+    },
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "runEventErasure": {
+      "events": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+stdout | server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > refuses frozen-inputs content before any erasure or success record
+{
+  "timestamp": "2026-10-14T05:33:51.349Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:33:51.350Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > refuses frozen-inputs content before any erasure or success record
+{
+  "timestamp": "2026-10-14T05:33:51.350Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ × server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > refuses legacy-registry content before any erasure or success record 1598ms
+   → promise resolved "{ organizationId: 11, …(13) }" instead of rejecting
+ × server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > refuses frozen-inputs content before any erasure or success record 1623ms
+   → expected error: update or delete on table "regulat… { …(18) } to match object { Object (code) }
+(20 matching properties omitted from actual)
+stdout | server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > allows an empty requested tenant while preserving another tenant’s retained content
+[database] Database connection successful
+
+stderr | server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > allows an empty requested tenant while preserving another tenant’s retained content
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > allows an empty requested tenant while preserving another tenant’s retained content
+{
+  "timestamp": "2026-10-14T05:33:53.044Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > allows an empty requested tenant while preserving another tenant’s retained content
+{
+  "timestamp": "2026-10-14T05:33:54.347Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 11,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "synthetic-final-export",
+    "deletedRows": {
+      "mdx_notification_receipts": 1,
+      "mdx_notifications": 1,
+      "documents": 1,
+      "regulatory_programs": 1
+    },
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "runEventErasure": {
+      "events": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+ × server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > allows an empty requested tenant while preserving another tenant’s retained content 1463ms
+   → expected -1 to be less than -1
+stderr | server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > refuses an unavailable retained store instead of assuming it is empty
+{
+  "timestamp": "2026-10-14T05:33:55.987Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 11,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "synthetic-final-export",
+    "deletedRows": {
+      "mdx_notification_receipts": 1,
+      "mdx_notifications": 1,
+      "documents": 1,
+      "regulatory_programs": 1
+    },
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "runEventErasure": {
+      "events": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+ × server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > refuses an unavailable retained store instead of assuming it is empty 1636ms
+   → promise resolved "{ organizationId: 11, …(13) }" instead of rejecting
+ × server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > refuses an unreadable retained store through real database permissions 1547ms
+   → expected error: permission denied for table mdx_no… { …(18) } to match object { Object (code) }
+(20 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > refuses signed content before any erasure or success record
+AssertionError: promise resolved "{ organizationId: 11, …(13) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "artifactRecordErasure": {
++     "signatures": 0,
++     "snapshots": 0,
++   },
++   "deletedRows": {
++     "documents": 1,
++     "mdx_notification_receipts": 1,
++     "mdx_notifications": 1,
++     "regulatory_programs": 1,
++   },
++   "deletionReason": null,
++   "deletionRequestedAt": null,
++   "deletionRequestedBy": null,
++   "finalExportDigest": "synthetic-final-export",
++   "name": "Synthetic tenant",
++   "organizationId": 11,
++   "purgeEligibleAt": 2026-10-13T05:33:49.553Z,
++   "purgedAt": 2026-10-14T05:33:49.624Z,
++   "runEventErasure": {
++     "events": 0,
++   },
++   "status": "purged",
++   "storageErasure": {
++     "deleted": 0,
++     "notDeleted": [],
++     "objects": 0,
++   },
++   "turnRecordErasure": {
++     "blobs": 0,
++     "records": 0,
++   },
+  }
+
+ ❯ server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts:119:25
+    117|     if (kind === 'frozen-inputs') await frozenInputs(ORG);
+    118|     else await qmsVersion(ORG, kind);
+    119|     await expect(purge()).rejects.toMatchObject({ code: 'REGULATED_CON…
+       |                         ^
+    120|     await expectNothingPurged();
+    121|     expect(statements.some((sql) => /FOR UPDATE/.test(sql))).toBe(true…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > refuses legacy-registry content before any erasure or success record
+AssertionError: promise resolved "{ organizationId: 11, …(13) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "artifactRecordErasure": {
++     "signatures": 0,
++     "snapshots": 0,
++   },
++   "deletedRows": {
++     "documents": 1,
++     "mdx_notification_receipts": 1,
++     "mdx_notifications": 1,
++     "regulatory_programs": 1,
++   },
++   "deletionReason": null,
++   "deletionRequestedAt": null,
++   "deletionRequestedBy": null,
++   "finalExportDigest": "synthetic-final-export",
++   "name": "Synthetic tenant",
++   "organizationId": 11,
++   "purgeEligibleAt": 2026-10-13T05:33:51.205Z,
++   "purgedAt": 2026-10-14T05:33:51.255Z,
++   "runEventErasure": {
++     "events": 0,
++   },
++   "status": "purged",
++   "storageErasure": {
++     "deleted": 0,
++     "notDeleted": [],
++     "objects": 0,
++   },
++   "turnRecordErasure": {
++     "blobs": 0,
++     "records": 0,
++   },
+  }
+
+ ❯ server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts:119:25
+    117|     if (kind === 'frozen-inputs') await frozenInputs(ORG);
+    118|     else await qmsVersion(ORG, kind);
+    119|     await expect(purge()).rejects.toMatchObject({ code: 'REGULATED_CON…
+       |                         ^
+    120|     await expectNothingPurged();
+    121|     expect(statements.some((sql) => /FOR UPDATE/.test(sql))).toBe(true…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > refuses frozen-inputs content before any erasure or success record
+AssertionError: expected error: update or delete on table "regulat… { …(18) } to match object { Object (code) }
+(20 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "REGULATED_CONTENT_RETENTION_REVIEW_REQUIRED",
++ C {
++   "code": "23503",
+  }
+
+ ❯ server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts:119:25
+    117|     if (kind === 'frozen-inputs') await frozenInputs(ORG);
+    118|     else await qmsVersion(ORG, kind);
+    119|     await expect(purge()).rejects.toMatchObject({ code: 'REGULATED_CON…
+       |                         ^
+    120|     await expectNothingPurged();
+    121|     expect(statements.some((sql) => /FOR UPDATE/.test(sql))).toBe(true…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > allows an empty requested tenant while preserving another tenant’s retained content
+AssertionError: expected -1 to be less than -1
+ ❯ server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts:135:69
+    133|     expect((await db.query('SELECT organization_id FROM submission_orc…
+    134|     expect((await db.query('SELECT action,tenant_id FROM audit_logs'))…
+    135|     expect(PURGE_CHILD_TABLES.indexOf('mdx_notification_receipts')).to…
+       |                                                                     ^
+    136|   });
+    137|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > refuses an unavailable retained store instead of assuming it is empty
+AssertionError: promise resolved "{ organizationId: 11, …(13) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "artifactRecordErasure": {
++     "signatures": 0,
++     "snapshots": 0,
++   },
++   "deletedRows": {
++     "documents": 1,
++     "mdx_notification_receipts": 1,
++     "mdx_notifications": 1,
++     "regulatory_programs": 1,
++   },
++   "deletionReason": null,
++   "deletionRequestedAt": null,
++   "deletionRequestedBy": null,
++   "finalExportDigest": "synthetic-final-export",
++   "name": "Synthetic tenant",
++   "organizationId": 11,
++   "purgeEligibleAt": 2026-10-13T05:33:55.916Z,
++   "purgedAt": 2026-10-14T05:33:55.972Z,
++   "runEventErasure": {
++     "events": 0,
++   },
++   "status": "purged",
++   "storageErasure": {
++     "deleted": 0,
++     "notDeleted": [],
++     "objects": 0,
++   },
++   "turnRecordErasure": {
++     "blobs": 0,
++     "records": 0,
++   },
+  }
+
+ ❯ server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts:140:25
+    138|   it('refuses an unavailable retained store instead of assuming it is …
+    139|     await db.exec('DROP TABLE qms_document_versions');
+    140|     await expect(purge()).rejects.toMatchObject({ code: 'REGULATED_RET…
+       |                         ^
+    141|     await expectNothingPurged();
+    142|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > refuses an unreadable retained store through real database permissions
+AssertionError: expected error: permission denied for table mdx_no… { …(18) } to match object { Object (code) }
+(20 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "REGULATED_RETENTION_CHECK_UNAVAILABLE",
++ C {
++   "code": "42501",
+  }
+
+ ❯ server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts:151:25
+    149|       REVOKE SELECT ON qms_document_versions FROM retention_reader;
+    150|       SET ROLE retention_reader;`);
+    151|     await expect(purge()).rejects.toMatchObject({ code: 'REGULATED_RET…
+       |                         ^
+    152|     await db.exec('RESET ROLE');
+    153|     await expectNothingPurged();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  05:33:45
+   Duration  11.58s (transform 952ms, setup 61ms, import 1.19s, tests 10.14s, environment 0ms)
+

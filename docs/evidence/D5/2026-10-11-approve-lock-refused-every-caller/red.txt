@@ -1,0 +1,19 @@
+# Red — the 8 failures as trunk (275707c7) produces them, 2026-10-11
+# Reproduced locally before the change; the route answers 409 ARTIFACT_CHANGED to every approve and lock.
+
+## server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts (6)
+  × re-authenticated: approved at the version …
+    → {"success":false,"error":{"message":"The document changed while it was being signed. Reload it and sign again. Nothing was signed.","code":"ARTIFACT_CHANGED"}}: expected 409 to be 200
+  × enrolled in TOTP: signed with password and a verified code … → same, expected 409 to be 200
+  × no stored row for the version … → same, expected 409 to be 200
+  × a provenance event that cannot be written takes the whole act back → expected 409 to be 500
+  × a signature that cannot be written takes the approval back with it → expected 409 to be 500
+  × locking, re-authenticated with the meaning release … → same, expected 409 to be 200
+
+## tests/artifact-status-lock-covers-approval.test.ts (2)
+  × approved v2 → locked records published_version_id = 2 … → expected undefined to be defined
+  × review v3 → approved records approved_version_id = 3 … → expected undefined to be 3
+
+# Cause: server/services/artifact-signed-act.ts validatedStatusChanges (c91dba52) admits only the
+# canonical columns from artifactStatusUpdate(); server/routes/c2c/artifacts.ts added a 'metadata' key
+# to that set, so the key-count check threw ArtifactActConflictError before any lock was taken.

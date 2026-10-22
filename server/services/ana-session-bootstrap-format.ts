@@ -91,6 +91,8 @@ export interface VaultFileDigest {
   catalogStatus: string;
   documentKind?: string | null;
   purpose?: string | null;
+  /** suggested | confirmed | corrected (S4); absent or null reads as not confirmed. */
+  catalogState?: string | null;
 }
 
 /** A chat-uploaded file the client attached in some past conversation. */
@@ -113,6 +115,8 @@ export interface ChatUploadRecallDigest {
  */
 export interface VaultFileScope {
   files: VaultFileDigest[];
+  actorFiltered?: boolean;
+  sourceAccessNotice?: string;
   /** Live documents in the org — not `files.length`. */
   total: number;
   /** How many the sample leaves out. */
@@ -126,6 +130,10 @@ export interface VaultFileScope {
 export interface ChatUploadScope {
   uploads: ChatUploadRecallDigest[];
   hasMore: boolean;
+  actorFiltered?: boolean;
+  total?: number;
+  withheld?: number;
+  sourceAccessNotice?: string;
 }
 
 export interface SessionBootstrapParts {
@@ -151,14 +159,17 @@ export interface SessionBootstrapParts {
  */
 export function formatVaultScopeLine(scope: VaultFileScope): string {
   const parts: string[] = [];
+  const scopeLabel = scope.actorFiltered ? 'in your accessible source scope' : 'on record';
   if (scope.withheld > 0) {
     parts.push(
-      `Showing ${scope.files.length} of ${scope.total} files on record — ` +
+      `Showing ${scope.files.length} of ${scope.total} files ${scopeLabel} — ` +
         `${scope.withheld} older one(s) are NOT listed above. Never answer "no such document" ` +
         `from this list alone: use list_project_documents or search_project_documents first.`,
     );
   } else {
-    parts.push(`${scope.total} file(s) on record — this is all of them.`);
+    parts.push(scope.actorFiltered
+      ? `${scope.total} file(s) in your accessible source scope at this recall check.`
+      : `${scope.total} file(s) on record — this is all of them.`);
   }
   const flags: string[] = [];
   if (scope.notYetStudied > 0) flags.push(`${scope.notYetStudied} not yet studied`);
@@ -168,17 +179,32 @@ export function formatVaultScopeLine(scope: VaultFileScope): string {
   return parts.join(' ');
 }
 
+/**
+ * Whose description this is (S4). AnA's own suggestion is recalled as hers and
+ * unconfirmed, so she does not repeat it to the user as an established fact.
+ */
+function catalogProvenance(state: string | null | undefined): string {
+  if (state === 'confirmed') return ' (confirmed by a person)';
+  if (state === 'corrected') return ' (corrected by a person)';
+  return ' (your suggestion, not yet confirmed by a person)';
+}
+
 /** One recall line per file — location first, then what it is (or, honestly, that it awaits study). */
 export function formatVaultFileLine(f: VaultFileDigest): string {
+  const filed = [f.folderId, f.ctdSection].filter(Boolean).join(' · ');
+  // A suggested folder is a proposal no person has confirmed; said so (S4).
   const location =
     f.placementStatus === 'unfiled'
       ? 'unfiled — needs review'
-      : [f.folderId, f.ctdSection].filter(Boolean).join(' · ') || f.placementStatus;
+      : f.placementStatus === 'suggested'
+        ? `${filed ? `${filed}, ` : ''}filing suggested, not yet confirmed by a person`
+        : filed || f.placementStatus;
   const name = clip(f.documentTitle || f.fileName, 90);
   const where = `${f.programName ? `${clip(f.programName, 40)} / ` : ''}${location}`;
   if (f.catalogStatus === 'cataloged') {
     const what = [f.documentKind, f.purpose].filter(Boolean).map(s => clip(String(s), 160)).join(' — ');
-    return `- **${name}** (${where}): ${what || 'cataloged'}`;
+    return `- **${name}** (${where}): ${what || 'cataloged'}${catalogProvenance(f.catalogState)}. ` +
+      'Automatic scope: legacy value-presence check; label/context verification is not recorded; scientific qualification is unassessed.';
   }
   if (f.catalogStatus === 'extraction_failed') {
     return `- **${name}** (${where}): extraction FAILED — the content is not readable yet; say so if asked.`;
@@ -218,25 +244,26 @@ export function formatSessionBootstrap(parts: SessionBootstrapParts): string {
 
   const vault = parts.vaultFiles;
   const files = (vault?.files ?? []).slice(0, 12);
-  if (files.length) {
-    lines.push('### Project files on record');
+  if (files.length || vault?.actorFiltered) {
+    lines.push(vault?.actorFiltered ? '### Project files in your accessible source scope' : '### Project files on record');
     for (const f of files) lines.push(formatVaultFileLine(f));
     /* The scope line before the how-to: what is missing from this list changes
        whether the reader should consult the tools at all. */
     if (vault) lines.push(`_${formatVaultScopeLine(vault)}_`);
+    if (vault?.sourceAccessNotice) lines.push(`_${vault.sourceAccessNotice}_`);
     lines.push(
       '_Use list_project_documents for the full folder; read_project_document to study a file (all of it)._'
     );
   }
 
   const uploads = (parts.chatUploads?.uploads ?? []).slice(0, 8);
-  if (uploads.length) {
+  if (uploads.length || parts.chatUploads?.actorFiltered) {
     /* A chat upload is reachable but has no vault row, so it carries no filed
        location and no comprehension record — saying only "these exist" would
        invite the same "I can't see it" answer the catalog exists to end. Each
        line carries the id that reopens it and the fact that filing is what
        gives it a durable record. */
-    lines.push('### Files the client sent in past conversations');
+    lines.push(parts.chatUploads?.actorFiltered ? '### Past chat files in your accessible source scope' : '### Files the client sent in past conversations');
     for (const u of uploads) {
       lines.push(
         `- **${clip(u.fileName, 90)}**${u.fileId ? ` (${u.fileId})` : ''} — attached earlier, not filed into the vault.`
@@ -246,6 +273,12 @@ export function formatSessionBootstrap(parts: SessionBootstrapParts): string {
       lines.push(
         `_More than these ${uploads.length} were attached — list_project_documents returns the rest._`
       );
+    }
+    if (parts.chatUploads?.actorFiltered) {
+      lines.push(parts.chatUploads.total === undefined
+        ? `_Showing ${uploads.length} chat file(s) from your accessible source scope; the scope total was not measured at this recall check._`
+        : `_${parts.chatUploads.total} chat file(s) in your accessible source scope at this recall check._`);
+      if (parts.chatUploads.sourceAccessNotice) lines.push(`_${parts.chatUploads.sourceAccessNotice}_`);
     }
     /* The retrieval corpus holds ONE bounded-prefix atom per chat upload, so
        "it is searchable" is true of its opening and false of the rest. Filing

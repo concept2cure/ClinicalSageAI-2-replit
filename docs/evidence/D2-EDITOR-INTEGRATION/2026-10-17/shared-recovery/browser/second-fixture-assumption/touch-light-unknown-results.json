@@ -1,0 +1,150 @@
+{
+  "key": "touch-light-unknown",
+  "width": 390,
+  "height": 844,
+  "theme": "light",
+  "mode": "unknown",
+  "status": "pass",
+  "stages": [
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "notice": {
+        "x": 32,
+        "y": 156.171875,
+        "width": 326,
+        "height": 122.421875,
+        "right": 358,
+        "bottom": 278.59375
+      },
+      "noticeScrollWidth": 322,
+      "noticeClientWidth": 322,
+      "noticeText": "Could not verify the current working document and sections. The save remains unresolved; no additional write was requested.Check working documents",
+      "noticeRole": "alert",
+      "controls": [
+        {
+          "text": "Check working documents",
+          "disabled": false,
+          "rect": {
+            "x": 51,
+            "y": 231.59375,
+            "width": 185.65625,
+            "height": 32,
+            "right": 236.65625,
+            "bottom": 263.59375
+          }
+        }
+      ],
+      "sourceRetained": true
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "notice": {
+        "x": 32,
+        "y": 156.171875,
+        "width": 326,
+        "height": 292.359375,
+        "right": 358,
+        "bottom": 448.53125
+      },
+      "noticeScrollWidth": 322,
+      "noticeClientWidth": 322,
+      "noticeText": "Check these working documents before requesting another copy. This read cannot identify the interrupted request or prove that nothing was saved. Another creation is a deliberate choice.This list does not identify which request created a document. Review it before creating another copy.Synthetic working document · synthetic-confirmed-documentOpen working documents",
+      "noticeRole": "alert",
+      "controls": [
+        {
+          "text": "Open working documents",
+          "disabled": false,
+          "rect": {
+            "x": 51,
+            "y": 401.53125,
+            "width": 182.53125,
+            "height": 32,
+            "right": 233.53125,
+            "bottom": 433.53125
+          }
+        }
+      ],
+      "sourceRetained": true
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/dashboard",
+      "query": ""
+    },
+    {
+      "method": "POST",
+      "path": "/api/analytics/analyze-protocol-text",
+      "query": "",
+      "body": {
+        "text": "Title: Synthetic protocol\nIndication: Synthetic indication\nPhase: 2\nSample size: 240\nDuration: 24 weeks\nPrimary endpoint: Synthetic outcome"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs",
+      "query": "",
+      "body": {
+        "title": "Design Recommendations",
+        "module": "M5",
+        "client_program_id": "0b9f6c2e-5d4a-4c3b-9a21-7e6f5d4c3b2a"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs",
+      "query": "?status=all&programId=0b9f6c2e-5d4a-4c3b-9a21-7e6f5d4c3b2a"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs",
+      "query": "?status=all&programId=0b9f6c2e-5d4a-4c3b-9a21-7e6f5d4c3b2a"
+    }
+  ],
+  "mutations": [
+    {
+      "method": "POST",
+      "path": "/api/analytics/analyze-protocol-text",
+      "body": {
+        "text": "Title: Synthetic protocol\nIndication: Synthetic indication\nPhase: 2\nSample size: 240\nDuration: 24 weeks\nPrimary endpoint: Synthetic outcome"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs",
+      "body": {
+        "title": "Design Recommendations",
+        "module": "M5",
+        "client_program_id": "0b9f6c2e-5d4a-4c3b-9a21-7e6f5d4c3b2a"
+      }
+    }
+  ],
+  "documentWrites": 1,
+  "sectionWrites": 0,
+  "scopedInventoryReads": 2,
+  "navigation": [
+    {
+      "route": "document-authoring",
+      "target": null
+    }
+  ],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "unexpected": []
+}

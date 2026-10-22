@@ -40,6 +40,7 @@ import { useEsignature, type EsigMeaning } from '../../hooks/useEsignature';
 import { useSigningPosture } from '../signingPosture';
 import { ESIGN_MEANINGS } from '../esignMeanings';
 import { GovernedTimestamp } from './GovernedTimestamp';
+import { registerCeremonyOpen } from '../../v2/ceremony';
 import './EsignModal.css';
 
 // ── Inline Lucide icons (stroke, currentColor) ───────────────────────────────
@@ -144,6 +145,9 @@ export interface EsignModalProps {
    * Defaults to all five.
    */
   meanings?: ReadonlyArray<EsigMeaning>;
+  /** Optional governed context for the selected meaning, inside this ceremony. */
+  renderMeaningDetails?: (meaning: EsigMeaning, committing: boolean) => React.ReactNode;
+  onMeaningChange?: (meaning: EsigMeaning) => void;
   /** Identity shown as the signer. Server is the source of truth at /sign. */
   signer?: EsignSigner;
   /** Require a TOTP second factor (set when the signer is MFA-enrolled). */
@@ -187,12 +191,17 @@ export function EsignModal({
   targetMeta,
   defaultMeaning,
   meanings,
+  renderMeaningDetails,
+  onMeaningChange,
   signer,
   requireMfa = false,
   onClose,
   onSign,
 }: EsignModalProps) {
   const esig = useEsignature();
+  // Protect the actual credential dialog, including a delayed sign request,
+  // from navigation whose record lookup started before this modal opened.
+  React.useLayoutEffect(() => open ? registerCeremonyOpen() : undefined, [open]);
 
   const offered = React.useMemo(
     () => (meanings ? MEANINGS.filter((m) => meanings.includes(m.id)) : MEANINGS),
@@ -268,7 +277,7 @@ export function EsignModal({
   }, [phase, onClose]);
 
   // Esc to close + focus trap.
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     if (!open) return undefined;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -512,7 +521,7 @@ export function EsignModal({
                     role="radio"
                     aria-checked={meaning === m.id}
                     data-active={meaning === m.id || undefined}
-                    onClick={() => setMeaning(m.id)}
+                    onClick={() => { setMeaning(m.id); onMeaningChange?.(m.id); }}
                     disabled={committing}
                   >
                     {m.label}
@@ -521,6 +530,7 @@ export function EsignModal({
               </div>
               <span className="es-field-hint">{meaningObj.desc}</span>
             </fieldset>
+            {renderMeaningDetails?.(meaning, committing)}
 
             <div className="es-field">
               <label className="es-field-lbl" htmlFor={reasonId}>

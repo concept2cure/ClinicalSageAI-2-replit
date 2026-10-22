@@ -1,0 +1,129 @@
+{
+  "status": "RED",
+  "failure": "AssertionError [ERR_ASSERTION]: The actual Project files selected Vault upload must offer Build in editor\n\n0 !== 1\n\n    at file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/baseline-entry.mjs:30:10",
+  "sourcePath": "client/src/concept2cure/v2/editor/ProjectFileActions.tsx",
+  "sourceSha256": "79165f65b84af6f41f691ee1eb4765741fbcbe9b912da1843ad8fdf0bac9c743",
+  "sourceFrozenDuringCapture": true,
+  "qualification": "Actual DocumentWorkbench and ProjectFilesPanel Vault lane with synthetic HTTP. Missing selected-upload Build in editor assertion only; no provider/backend/full-shell qualification.",
+  "docId": "dddddddd-0000-4000-8000-000000000181",
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/templates",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000181",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000181/sources",
+      "query": "?limit=200&offset=0"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/citations",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/documents",
+      "query": "?projectId=bbbbbbbb-0000-4000-8000-000000000181&scope=home"
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/documents",
+      "query": "?projectId=bbbbbbbb-0000-4000-8000-000000000181&scope=market"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/sections",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "query": ""
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms",
+      "query": "",
+      "body": {
+        "documentId": "dddddddd-0000-4000-8000-000000000181",
+        "projectId": "bbbbbbbb-0000-4000-8000-000000000181",
+        "sectionId": "aaaaaaaa-0000-4000-8000-000000000181"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-origins/document",
+      "query": "?documentTable=authoring_sections&documentId=aaaaaaaa-0000-4000-8000-000000000181"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/aaaaaaaa-0000-4000-8000-000000000181/sources",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/realtime-collab/locks/dddddddd-0000-4000-8000-000000000181",
+      "query": ""
+    },
+    {
+      "method": "PUT",
+      "path": "/api/realtime-collab/rooms/dddddddd-0000-4000-8000-000000000181/awareness",
+      "query": "",
+      "body": {
+        "sectionId": "aaaaaaaa-0000-4000-8000-000000000181",
+        "focusedField": "aaaaaaaa-0000-4000-8000-000000000181",
+        "isTyping": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/project-vault/bbbbbbbb-0000-4000-8000-000000000181",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/aaaaaaaa-0000-4000-8000-000000000181/sources",
+      "query": ""
+    }
+  ],
+  "mutations": [
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms",
+      "body": {
+        "documentId": "dddddddd-0000-4000-8000-000000000181",
+        "projectId": "bbbbbbbb-0000-4000-8000-000000000181",
+        "sectionId": "aaaaaaaa-0000-4000-8000-000000000181"
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/api/realtime-collab/rooms/dddddddd-0000-4000-8000-000000000181/awareness",
+      "body": {
+        "sectionId": "aaaaaaaa-0000-4000-8000-000000000181",
+        "focusedField": "aaaaaaaa-0000-4000-8000-000000000181",
+        "isTyping": false
+      }
+    }
+  ],
+  "unexpected": [],
+  "consoleErrors": [],
+  "pageErrors": []
+}

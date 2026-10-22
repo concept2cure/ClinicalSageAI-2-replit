@@ -4,6 +4,9 @@
 -- non-destructively — to the existing corpus (csr_reports, csr_studies,
 -- precedent.regulatory_precedents, innovation.submission_outcomes) rather than
 -- replacing it.
+-- AMENDED IN PLACE 2026-10-14: preserve explicitly global-public sources under
+-- enforced tenant RLS with a SELECT-only policy. NULL organization alone never
+-- grants visibility, and this policy grants no INSERT/UPDATE/DELETE authority.
 --
 -- Naming: the work order names entities evidence_sources / clinical_studies /
 -- regulatory_findings / regulatory_outcomes / evidence_relationships /
@@ -15,11 +18,11 @@
 -- csr_endpoints / csr_endpoint_results / csr_statistical_analyses (Phase 2), so
 -- we never duplicate the corpus.
 --
--- Tenancy (§13): organization_id INTEGER, NULL = GLOBAL_PUBLIC (the shared FDA
+-- Tenancy (§13): organization_id INTEGER, NULL + global_public = GLOBAL_PUBLIC (the shared FDA
 -- CRL corpus, identical for every tenant), non-NULL = tenant-owned — the
 -- precedent NULL-org idiom (db/migrations/20260617_precedent_org_isolation.sql).
 -- visibility_class carries the three-value label the work order requires.
--- Queried as (organization_id IS NULL OR organization_id = $org); the service
+-- Queried as explicit global_public or organization_id = $org; the service
 -- layer enforces it and Phase-1 tests prove the boundary.
 --
 -- Extensibility (§3): type/status/category columns are TEXT with a documented
@@ -67,6 +70,23 @@ CREATE INDEX IF NOT EXISTS cre_src_type_idx       ON cre_evidence_sources (sourc
 CREATE INDEX IF NOT EXISTS cre_src_visibility_idx ON cre_evidence_sources (visibility_class);
 CREATE INDEX IF NOT EXISTS cre_src_app_idx        ON cre_evidence_sources (application_number);
 CREATE INDEX IF NOT EXISTS cre_src_indication_idx ON cre_evidence_sources (indication);
+
+DO $explicit_public_source_read$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_policy WHERE polrelid='public.cre_evidence_sources'::regclass
+      AND polname='cre_explicit_global_public_read' AND (polcmd<>'r' OR NOT polpermissive)) THEN
+    RAISE EXCEPTION 'CRE_PUBLIC_READ_POLICY_RECONCILIATION_REQUIRED: the named policy must be a permissive SELECT-only policy. No policy or source was changed.';
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_policy WHERE polrelid='public.cre_evidence_sources'::regclass
+      AND polname='cre_explicit_global_public_read') THEN
+    ALTER POLICY cre_explicit_global_public_read ON public.cre_evidence_sources TO PUBLIC
+      USING (organization_id IS NULL AND visibility_class='global_public');
+  ELSE
+    CREATE POLICY cre_explicit_global_public_read ON public.cre_evidence_sources FOR SELECT TO PUBLIC
+      USING (organization_id IS NULL AND visibility_class='global_public');
+  END IF;
+END
+$explicit_public_source_read$;
 
 -- ─── Canonical study identity (§4.2) ───────────────────────────────────
 -- A cross-source study identity (protocol/SAP/CSR/registry/publication/

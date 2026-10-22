@@ -1,0 +1,7 @@
+ × tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > tells the author, before they try, that they cannot approve their own answer 35ms
+ × tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses the author, with the right password, and writes nothing 60ms
+ × tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses a viewer: identity is not authority 25ms
+ × tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses a signature over a revision the signer did not see 54ms
+ × tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > signs: one electronic_signatures row binding the exact response text 35ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 16 passed (21)

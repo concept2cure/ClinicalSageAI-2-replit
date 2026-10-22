@@ -1,0 +1,10 @@
+Scope: 7 owned roots plus imported dependencies; compiler options from repository tsconfig.json. This is not a whole-repository typecheck.
+server/services/ectd/assess-dispatch-readiness.ts: 0 target diagnostics
+server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts: 0 target diagnostics
+client/src/concept2cure/v2/surfaces/programSequence.ts: 0 target diagnostics
+client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx: 0 target diagnostics
+client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx: 0 target diagnostics
+client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx: 0 target diagnostics
+client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx: 0 target diagnostics
+Loaded imported/ambient sources: 3068
+Total selected-scope diagnostics: 0

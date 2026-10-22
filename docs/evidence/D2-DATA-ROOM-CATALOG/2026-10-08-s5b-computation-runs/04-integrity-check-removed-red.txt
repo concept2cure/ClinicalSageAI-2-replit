@@ -1,0 +1,53 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-08T20:22:05.533Z","pid":16410,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-08T20:22:05.534Z","pid":16410,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-08T20:22:05.534Z","pid":16410,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > stores the run in the apply, keyed to this design and project
+[database] Database connection successful
+
+stderr | tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > stores the run in the apply, keyed to this design and project
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > stores the run in the apply, keyed to this design and project 1007ms
+ ✓ tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > the design, the governed action and the SAP name the run 24ms
+ ✓ tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > the stored inputs recompute to the stored outputs 2ms
+ × tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > a changed output is caught, not trusted 14ms
+   → expected { found: true, runId: 3, …(7) } to match object { found: true, …(2) }
+(6 matching properties omitted from actual)
+ ✓ tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > another organization's run is not found 4ms
+ ✓ tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > the database refuses a run naming another organization's design 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > a changed output is caught, not trusted
+AssertionError: expected { found: true, runId: 3, …(7) } to match object { found: true, …(2) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "found": true,
+    "inputsIntact": true,
+-   "outputsIntact": false,
++   "outputsIntact": true,
+  }
+
+ ❯ tests/db/stats-computation-run.dbtest.ts:170:66
+    168|     try {
+    169|       const { reproduceComputationRun } = await import('../../server/s…
+    170|       expect(await reproduceComputationRun(owner, orgId, runId)).toMat…
+       |                                                                  ^
+    171|     } finally {
+    172|       await owner.query('UPDATE stats_computation_runs SET outputs = $…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  20:22:03
+   Duration  3.83s (transform 1.85s, setup 107ms, import 44ms, tests 3.25s, environment 0ms)
+

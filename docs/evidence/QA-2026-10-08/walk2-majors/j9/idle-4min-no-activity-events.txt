@@ -1,0 +1,18 @@
+session policy {"id":"19c06d50-9c12-401f-ab1d-ee540e2152e1","createdAt":"2026-10-08T16:31:09.000Z","expiresAt":"2026-10-09T04:31:09.000Z","lastActivityAt":"2026-10-08T16:31:15.139Z","idleMinutes":15,"lifetimeHours":12}
+activity events during idle: 0
+[]
+API requests total 26
+{
+ "GET /api/tenants": 2,
+ "GET /api/users/me": 2,
+ "GET /api/v1/auth/session": 7,
+ "GET /api/clients": 2,
+ "GET /src/lib/api/query-options.ts": 1,
+ "GET /api/task-management/my-work": 2,
+ "GET /api/mdx/notifications/unread-count": 2,
+ "GET /api/module-subscriptions/navigation": 2,
+ "GET /api/ana-ri/live-drive/state": 2,
+ "GET /api/organizations/60": 2,
+ "GET /api/c2c/projects": 2
+}
+url http://localhost:5078/concept2cure/projects

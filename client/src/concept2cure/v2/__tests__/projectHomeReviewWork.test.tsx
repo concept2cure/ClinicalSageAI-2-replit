@@ -29,6 +29,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { ProjectHome } from '../surfaces/ProjectHome';
+import { stashNavParamsForTarget, clearNavParams } from '../navParams';
 
 const PROGRAM = '099991d1-dac8-43c5-b88a-8baab26194ee';
 const WORK_URL = `/api/concept2cure/projects/${PROGRAM}/unified-work`;
@@ -70,7 +71,13 @@ const props = () => ({
 
 function route(workResponse: () => Response) {
   apiRequest.mockReset();
-  apiRequest.mockImplementation(async (_m: string, url: string) => (url === WORK_URL ? workResponse() : ok({})));
+  apiRequest.mockImplementation(async (_m: string, url: string) => {
+    if (url === WORK_URL) return workResponse();
+    // The conversations list above the tabs: a reply without `threads` is now
+    // a failed read (projectThreads.ts), so the empty list is given as one.
+    if (url.startsWith('/api/chat/threads?')) return ok({ threads: [] });
+    return ok({});
+  });
 }
 
 function openReviewStage() {
@@ -78,14 +85,36 @@ function openReviewStage() {
 }
 
 beforeEach(() => {
+  clearNavParams();
   (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PROGRAM, title: 'BX-256' };
 });
 afterEach(() => {
   cleanup();
+  clearNavParams();
   delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
 });
 
 describe('ProjectHome — Review stage: the program’s tasks and approvals', () => {
+  it('opens the exact task handed off by the board, even beyond the list cap or already done', async () => {
+    const rows = Array.from({ length: 12 }, (_, i) => item({ id: `schedule:${i}`, title: `Schedule ${i}` }));
+    rows.push(item({ id: 'review:target', title: 'The requested older review', status: 'done' }));
+    route(() => ok(work(rows)));
+    stashNavParamsForTarget('project-home', { workId: 'review:target', stage: 'review' });
+    render(<ProjectHome {...props()} />);
+    const target = await screen.findByText('The requested older review');
+    expect(target.closest('[data-work-target]')?.getAttribute('aria-label')).toBe('Requested task: The requested older review');
+    expect(apiRequest.mock.calls.some((c) => c[1] === WORK_URL)).toBe(true);
+    expect(window.C2C_NAV_PARAMS).toBeUndefined();
+  });
+
+  it('states when the task no longer belongs to the authorized program work view', async () => {
+    route(() => ok(work([item()])));
+    stashNavParamsForTarget('project-home', { workId: 'review:another-program' });
+    render(<ProjectHome {...props()} />);
+    expect(await screen.findByText(/requested task is not available in this program/)).toBeTruthy();
+    expect(document.querySelector('[data-work-target]')).toBeNull();
+  });
+
   it('reads the work view by the program UUID and lists its items with their store', async () => {
     route(() => ok(work([item(), item({ id: 'schedule:4', source: 'schedule', title: 'Pre-IND meeting', blocking: false, ownerName: null })])));
     render(<ProjectHome {...props()} />);

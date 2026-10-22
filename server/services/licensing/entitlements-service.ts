@@ -16,7 +16,7 @@
  */
 
 import {
-  getLicenseInfo,
+  readLicenseInfo,
   getModuleCatalog,
   checkProjectQuota,
   checkUserQuota,
@@ -122,9 +122,10 @@ export interface QuotaUsage {
   key: 'projects' | 'users';
   label: string;
   current: number;
-  max: number;
-  pct: number; // 0..100
-  withinQuota: boolean;
+  /** null when the organization row records no limit; pct and withinQuota are then null too. */
+  max: number | null;
+  pct: number | null; // 0..100
+  withinQuota: boolean | null;
 }
 
 export interface Recommendation {
@@ -144,8 +145,12 @@ export interface EntitlementSummary {
   modules: ModuleCatalogEntry[];
   features: FeatureEntitlement[];
   quotas: QuotaUsage[];
-  outstandingAgreements: Pick<LicenseAgreement, 'id' | 'agreementKey' | 'version' | 'title' | 'scope'>[];
-  licenseAccepted: boolean;
+  /**
+   * null = not assessed: the request carried no user, and acceptance is per
+   * user. 2026-10-15: that case used to read [] and licenseAccepted: true.
+   */
+  outstandingAgreements: Pick<LicenseAgreement, 'id' | 'agreementKey' | 'version' | 'title' | 'scope'>[] | null;
+  licenseAccepted: boolean | null;
   recommendations: Recommendation[];
 }
 
@@ -173,7 +178,8 @@ interface RecommendationInput {
   tier: string;
   features: FeatureEntitlement[];
   quotas: QuotaUsage[];
-  outstandingAgreements: { id: string; title: string }[];
+  /** null = not assessed; no license recommendation is made either way. */
+  outstandingAgreements: { id: string; title: string }[] | null;
 }
 
 const UPGRADE_URL = '/settings/subscription';
@@ -188,7 +194,7 @@ export function computeRecommendations(input: RecommendationInput): Recommendati
   const recs: Recommendation[] = [];
 
   // 1) Outstanding license agreements — highest priority (blocks compliant use).
-  if (input.outstandingAgreements.length > 0) {
+  if (input.outstandingAgreements != null && input.outstandingAgreements.length > 0) {
     recs.push({
       type: 'license_acceptance',
       severity: 'critical',
@@ -201,8 +207,9 @@ export function computeRecommendations(input: RecommendationInput): Recommendati
     });
   }
 
-  // 2) Quota pressure.
+  // 2) Quota pressure. A limit nobody recorded is no basis for a warning.
   for (const q of input.quotas) {
+    if (q.max == null || q.pct == null || q.withinQuota == null) continue;
     if (!q.withinQuota || q.pct >= 100) {
       recs.push({
         type: 'quota_warning',
@@ -257,19 +264,22 @@ export function computeRecommendations(input: RecommendationInput): Recommendati
 /**
  * Resolve the full, explainable entitlements summary for an organization
  * (optionally scoped to a user for license-acceptance status).
+ *
+ * null only when the organization has no row. Any read that fails rejects:
+ * no part of the summary stands in for a source that could not be read.
  */
 export async function resolveEntitlements(
   organizationId: number,
   userId?: number
 ): Promise<EntitlementSummary | null> {
-  const license = await getLicenseInfo(organizationId);
+  const license = await readLicenseInfo(organizationId);
   if (!license) return null;
 
   const [modules, projectQuota, userQuota, outstanding] = await Promise.all([
     getModuleCatalog(organizationId),
     checkProjectQuota(organizationId),
     checkUserQuota(organizationId),
-    userId != null ? getOutstandingAgreements(userId, organizationId) : Promise.resolve([]),
+    userId != null ? getOutstandingAgreements(userId, organizationId) : Promise.resolve(null),
   ]);
 
   const features = buildFeatureCatalog(license.tier);
@@ -297,7 +307,7 @@ export async function resolveEntitlements(
     tier: license.tier,
     features,
     quotas,
-    outstandingAgreements: outstanding.map(a => ({ id: a.id, title: a.title })),
+    outstandingAgreements: outstanding?.map(a => ({ id: a.id, title: a.title })) ?? null,
   });
 
   return {
@@ -308,19 +318,21 @@ export async function resolveEntitlements(
     modules,
     features,
     quotas,
-    outstandingAgreements: outstanding.map(a => ({
-      id: a.id,
-      agreementKey: a.agreementKey,
-      version: a.version,
-      title: a.title,
-      scope: a.scope,
-    })),
-    licenseAccepted: outstanding.length === 0,
+    outstandingAgreements:
+      outstanding?.map(a => ({
+        id: a.id,
+        agreementKey: a.agreementKey,
+        version: a.version,
+        title: a.title,
+        scope: a.scope,
+      })) ?? null,
+    licenseAccepted: outstanding == null ? null : outstanding.length === 0,
     recommendations,
   };
 }
 
-function pct(current: number, max: number): number {
-  if (!max || max <= 0) return 0;
+function pct(current: number, max: number | null): number | null {
+  if (max == null) return null;
+  if (max <= 0) return 0;
   return Math.min(100, Math.round((current / max) * 100));
 }

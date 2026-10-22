@@ -1,0 +1,130 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e 
+  server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts (528 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3231 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 c6aba3b5d] Qualify exact draft source identity through save and rendition lifecycles
+ 114 files changed, 14448 insertions(+), 1 deletion(-)
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/INDEPENDENT_SOURCE_IDENTITY_REVIEW.md
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/README.md
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/baseline-draft-source-references.ts.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/baseline-independent-source-identity.test.mts.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/final-static-source-gates.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/finish-evidence-js-lint-stderr.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/finish-evidence-js-lint.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/finish-review-frozen-semantics.md
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/finish-review-premerge-checkpoint/checkpoint-manifest.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/finish-review-premerge-checkpoint/finish-review-frozen-semantics.md
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/finish-review-premerge-checkpoint/finish-review-source-bindings.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/finish-review-premerge-checkpoint/independent-counterfactual-source-bindings.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/finish-review-premerge-checkpoint/independent-counterfactual.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/finish-review-premerge-checkpoint/independent-final-source-bindings.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/finish-review-premerge-checkpoint/independent-final.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/finish-review-premerge-checkpoint/independent-outcome-summary.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/finish-review-source-bindings.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/finish-tools-before-bindings.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/finish-tools-owned-lint-bindings.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/finish-tools-owned-lint-stderr.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/finish-tools-owned-lint.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/finish-tools-postmerge-lint-bindings.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/finish-tools-postmerge-lint-stderr.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/finish-tools-postmerge-lint.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/finish-tools-review.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/finish-tools-review.md
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/governance-final-tests.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/governance-focused-tests.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/governance-lint.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/governance-review.md
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/governance-source-hashes.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-baseline-fail-first.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-baseline-source-bindings.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-counterfactual-source-bindings.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-counterfactual.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-final-source-bindings.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-final.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-fixture-path-error-bindings.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-fixture-path-error.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-outcome-summary.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-runner-lint.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity-counterfactual.config.mts
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.config.mts
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/ingestion-focused-final.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/ingestion-focused-first.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/ingestion-lint-final.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/ingestion-lint-first.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/ingestion-source-manifest.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-artifact-manifest.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-counterfactual-fixture-state.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-counterfactual-postgres-observations.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-fixture-state.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-lint-final.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-lint.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-final-manifest.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-final-source-after.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-final-source-before.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-final.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-first-frozen-run.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-first-incomplete-owner-edit.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-merge-in-progress-manifest.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-merge-in-progress-source-after.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-merge-in-progress-source-before.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-merge-in-progress.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-refactor-equivalence.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-refactor-unbound-run.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-reuse-check.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-source-after.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-source-before.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres-counterfactual.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres-final.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres-observations.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres-premerge.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.config.mts
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.test.mts
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-premerge-fixture-state.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-premerge-postgres-observations.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-qualification.md
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-run-owned-postgres.mjs
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/merge-integration-focused.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/merge-integration-review.md
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/merge-integration-source-bindings.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/merge-owned-lint.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/merge-typecheck-fix.after.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/merge-typecheck-fix.before.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/merge-typecheck-fix.before.ts.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/merge-typecheck-fix.equivalence.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/merge-typecheck-fix.focused.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/merge-typecheck-fix.lint.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/merge-typecheck-fix.md
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/push-contract.log
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/regression-final-manifest.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/regression-final.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/regression-paths.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/regression-runtime.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/run-independent-source-identity.mjs
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/run-regression.mjs
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/semantics-contract-review.md
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/semantics-surrogate-utf8-control.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/tool-existing-fixture-baseline-lint.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/tool-owned-lint-final.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/tool-owned-lint-first.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/tool-real-pglite-final.log
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/tool-real-pglite-first.log
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/tool-schema-batch-focused.log
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/tool-schema-before.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/tool-schema-fail-first.log
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/tool-schema-initial-probe.log
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/typecheck-final-manifest.json
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/typecheck-final.txt
+ create mode 100644 docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/typecheck-resumed-first.txt
+ create mode 100644 server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts

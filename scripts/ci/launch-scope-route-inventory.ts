@@ -79,7 +79,7 @@ async function main() {
 
   const app = express();
   const flags = resolveStartupFlags();
-  const ctx = { app, pool, experimentalRoutesEnabled: flags.experimentalRoutesEnabled, demoRoutesEnabled: flags.demoRoutesEnabled, testRoutesEnabled: flags.testRoutesEnabled } as any;
+  const ctx = { app, pool, experimentalRoutesEnabled: flags.experimentalRoutesEnabled, testRoutesEnabled: flags.testRoutesEnabled } as any;
   await registerPreStartRoutes(ctx, createAiCircuitBreaker());
   await registerPostStartRoutes(ctx);
   const routes: RouteRow[] = [];

@@ -1086,12 +1086,12 @@ diff -ru a/client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx
 +++ b/client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx	2026-09-28 04:25:07.280431223 +0000
 @@ -66,7 +66,7 @@
    `<tr><td>Headache</td><td>12 (4.1)</td></tr></tbody></table>`;
- 
+
  const STORED_FIGURE =
 -  `<img ${CAPTION_ID_ATTR}="${CHROMATOGRAM}" src="/api/authoring/images/77" ` +
 +  `<img ${CAPTION_ID_ATTR}="${CHROMATOGRAM}" src="/api/authoring/images/file_77_a" ` +
    `alt="Chromatogram of batch 21-004">`;
- 
+
  const canvasText = () => document.querySelector('.tiptap')?.textContent ?? '';
 @@ -260,7 +260,7 @@
          AuthoringImage,
@@ -1101,13 +1101,13 @@ diff -ru a/client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx
 +      content: '<img src="/api/authoring/images/file_77_a">',
      });
      editor.commands.setNodeSelection(0);
- 
+
 diff -ru a/client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts b/client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts
 --- a/client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts	2026-09-28 04:25:07.267984743 +0000
 +++ b/client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts	2026-09-28 04:25:07.280823482 +0000
 @@ -232,7 +232,7 @@
    });
- 
+
    it('a normal img[src] still round-trips — not a false positive', () => {
 -    const stored = '<img src="/api/authoring/images/77" alt="Chromatogram">';
 +    const stored = '<img src="/api/authoring/images/file_77_a" alt="Chromatogram">';

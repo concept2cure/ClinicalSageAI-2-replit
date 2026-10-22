@@ -187,8 +187,8 @@ export interface AuditEvent {
   prev?: string;
   /** Real per-row integrity for live rows: 'sealed' (chain link + HMAC seal),
    *  'chained', or 'unchained' — a row that reached the audit table outside the
-   *  chain writer and therefore is not tamper-evident. Absent on fixtures,
-   *  which carry a synthesized chain and make no integrity claim. */
+   *  chain writer and therefore is not tamper-evident. Absent when the feed
+   *  does not report it, which makes no integrity claim. */
   chain?: 'sealed' | 'chained' | 'unchained';
   /** False when the chain predecessor exists but is not this tenant's to show
    *  (the audit_logs chain is global across tenants). Distinguishes "no
@@ -261,19 +261,13 @@ export interface Approval {
   refs?: CorrespondenceRef[];
 }
 
-/**
- * The sample content a pathway's sub-tabs may fall back to in explicit sample
- * mode. Correspondence only, deliberately: the `audit` and `approvals` bundles
- * were a synthesized Part 11 hash-chain and a set of fabricated signed
- * approvals, and they are gone (see data/pathwayTabs.ts). Their absence from
- * this type is the enforcement — `sample={fixtures.audit}` no longer compiles.
- */
-/* A pathway's correspondence tab label. The bundle used to carry example
-   letters too — an invented CDRH AI-Hold on "K-251401", a Day-100 letter on
-   "P250048", notified-body questions — reachable under sample mode. Those are
-   agency correspondence, the same class of record as a signature: there is no
-   honest example of one. The field is gone so `sample={fixtures.correspondence}`
-   cannot compile again. */
+/* A pathway's correspondence tab label — the bundle's only field. It used to
+   carry example audit events (a synthesized Part 11 hash-chain), approvals
+   (fabricated signatures) and agency letters (an invented CDRH AI-Hold on
+   "K-251401", a Day-100 letter on "P250048"), reachable under sample mode. Those
+   are records whose only value is that nothing in them was authored for display:
+   there is no honest example of one. All three, and sample mode, are gone (see
+   data/pathwayTabs.ts). */
 export interface PathwayTabsBundle {
   corrLabel: string;
 }

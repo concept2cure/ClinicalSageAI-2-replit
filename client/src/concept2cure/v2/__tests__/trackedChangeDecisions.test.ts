@@ -142,7 +142,7 @@ describe('notifyResolved', () => {
 });
 
 /* ── The other half: a record nobody can read is not a record ───────────── */
-import { describeAuditMetadata } from '../surfaces/DocumentAuthoring';
+import { describeAuditMetadata, describeAuditSource } from '../surfaces/DocumentAuthoring';
 
 describe('describeAuditMetadata', () => {
   it('reads a rejection back as a sentence naming what was refused', () => {
@@ -215,5 +215,163 @@ describe('describeAuditMetadata — bulk decisions', () => {
   it('is null when the row carries no verdict or no count', () => {
     expect(describeAuditMetadata('tracked_change_bulk_decision', { count: 3 })).toBeNull();
     expect(describeAuditMetadata('tracked_change_bulk_decision', { decision: 'accept' })).toBeNull();
+  });
+});
+
+/* AnA reasoning round 13 (round 11's UI review, Part 11 §11.10(b)): the server
+   records, on every decision, the AnA turn the decided words came from,
+   verified against those words, and every model that wrote them with RULE 2's
+   verdict (round 10). The rail showed none of it, so an inspector reading it
+   could not see that an accepted AnA insertion came from a model not approved
+   to write governed text, or that a named turn did not verify. */
+describe('describeAuditSource — the AnA turn a decided change came from', () => {
+  const TURN = '6f1c2a4e-9b3d-4e21-8a7f-0c5d1e2b3a41';
+  const OPUS = { provider: 'anthropic', model: 'claude-opus-5-5', qualified: true, approvedForHighRisk: true, pq: 'passed' };
+  const SONNET = { provider: 'anthropic', model: 'claude-sonnet-5', qualified: false, approvedForHighRisk: false, pq: 'pending' };
+  const PQ_PENDING = { ...OPUS, qualified: false, pq: 'pending' };
+  const UNNAMED = { provider: 'anthropic', model: null, qualified: false, approvedForHighRisk: null, pq: null };
+  const verified = (over: Record<string, unknown> = {}) =>
+    ({ verified: true, turnRecordId: TURN, turnRecordSha256: 'b'.repeat(64), outcome: 'answered', servedBy: [OPUS], ...over });
+
+  it('says the turn served the words, never that a model wrote them', () => {
+    /* `servedBy` is every model that served ANY call in the turn. It does not
+       say which model wrote the decided words, which is why the insert gate
+       refuses to say "written in part by". The rail may not claim more. */
+    expect(describeAuditSource({ source: verified() })).toBe('From AnA turn record 6f1c2a4e, served by claude-opus-5-5.');
+    expect(describeAuditSource({ source: verified({ servedBy: [OPUS, SONNET] }) })).toBe(
+      'From AnA turn record 6f1c2a4e, served by claude-opus-5-5 and claude-sonnet-5. claude-sonnet-5 is not approved for regulatory drafting.',
+    );
+  });
+
+  it('names each reason RULE 2 gives, in the words the insert gate uses', () => {
+    expect(describeAuditSource({ source: verified({ servedBy: [PQ_PENDING] }) })).toBe(
+      'From AnA turn record 6f1c2a4e, served by claude-opus-5-5. claude-opus-5-5 has not passed performance qualification.',
+    );
+  });
+
+  it('a model the record does not name gets no verdict, because there is nothing to judge', () => {
+    expect(describeAuditSource({ source: verified({ servedBy: [UNNAMED] }) })).toBe(
+      'From AnA turn record 6f1c2a4e; the record does not name the model that served it.',
+    );
+    expect(describeAuditSource({ source: verified({ servedBy: [OPUS, UNNAMED] }) })).toBe(
+      'From AnA turn record 6f1c2a4e; the record does not name one of the models that served it.',
+    );
+  });
+
+  it('a row that recorded no model list is not a record that names none', () => {
+    const noList = { ...(verified() as Record<string, unknown>) };
+    delete noList.servedBy;
+    expect(describeAuditSource({ source: noList })).toBe(
+      'From AnA turn record 6f1c2a4e; the models that served it were not recorded with this decision.',
+    );
+    expect(describeAuditSource({ source: verified({ servedBy: [] }) })).toBe(
+      'From AnA turn record 6f1c2a4e, whose record names no model.',
+    );
+  });
+
+  it('a turn that did not answer says so: the rail holds what the gate could only guess at', () => {
+    expect(describeAuditSource({ source: verified({ outcome: 'stopped' }) })).toBe(
+      'From AnA turn record 6f1c2a4e, served by claude-opus-5-5. That turn ended: stopped.',
+    );
+    expect(describeAuditSource({ source: verified({ outcome: 'failed' }) })).toMatch(/That turn ended: failed\.$/);
+  });
+
+  it('a named turn that does not vouch for the words says so, and why', () => {
+    expect(describeAuditSource({ source: { verified: false, claimed: TURN, why: 'the turn record does not hold this text' } })).toBe(
+      'Names AnA turn record 6f1c2a4e, not verified: the turn record does not hold this text.',
+    );
+  });
+
+  it('a change from no AnA turn has no second line at all', () => {
+    expect(describeAuditSource({})).toBeNull();
+    expect(describeAuditSource({ source: null })).toBeNull();
+  });
+
+  it('a bulk decision counts the changes, the ones a model may not write, and the ones that do not verify', () => {
+    expect(describeAuditSource({
+      count: 4,
+      changes: [
+        { text: 'One.', source: verified() },
+        { text: 'Two.', source: verified({ servedBy: [SONNET] }) },
+        { text: 'Three.', source: { verified: false, claimed: TURN, why: 'no such turn record in this organization' } },
+        { text: 'Four.' },
+      ],
+    })).toBe('2 changes from AnA turns. 1 of them was served by a model that is not allowed to write regulatory text. 1 more names a turn that does not verify.');
+  });
+
+  it('one change from one turn reads as one, not as a plural', () => {
+    expect(describeAuditSource({ count: 1, changes: [{ text: 'One.', source: verified() }] })).toBe('1 change from an AnA turn.');
+  });
+});
+
+describe('describeAuditMetadata — the AnA turn a decided change came from', () => {
+  const TURN = '6f1c2a4e-9b3d-4e21-8a7f-0c5d1e2b3a41';
+  const OPUS = { provider: 'anthropic', model: 'claude-opus-5-5', qualified: true, approvedForHighRisk: true, pq: 'passed' };
+  const SONNET = { provider: 'anthropic', model: 'claude-sonnet-5', qualified: false, approvedForHighRisk: false, pq: 'pending' };
+  const verified = (servedBy: unknown[]) => ({ verified: true, turnRecordId: TURN, turnRecordSha256: 'b'.repeat(64), outcome: 'answered', servedBy });
+  const decision = (over: Record<string, unknown>) =>
+    describeAuditMetadata('tracked_change_decision', { decision: 'accept', changeType: 'insertion', text: 'ORR was 31%.', ...over });
+
+  it('a verified AnA proposal says it was verified, from which turn, and which model wrote it', () => {
+    expect(decision({ proposedBy: 'AnA (AI draft)', proposedByVerified: true, source: verified([OPUS]) })).toBe(
+      'accepted a proposed insertion (proposed by AnA (AI draft), verified against its turn record) — “ORR was 31%.”',
+    );
+  });
+
+  it('a row from before the words were checked is not called verified', () => {
+    /* DP-43 rows recorded `verified` as a bare "this turn exists in this
+       organization" lookup; round 10 made it "this turn holds THESE words" and
+       began recording servedBy with it. The trail is append-only, so the old
+       rows are still there — including the case round 10 was written for, a
+       person typing inside AnA's pending insertion with track changes off. A
+       verified source that names no models at all is one of those, and the
+       rail must not put round 10's claim on it. */
+    expect(decision({ proposedBy: 'AnA (AI draft)', proposedByVerified: true, source: { verified: true, turnRecordId: TURN, turnRecordSha256: 'b'.repeat(64), outcome: 'answered' } })).toBe(
+      'accepted a proposed insertion (proposed by AnA (AI draft), as recorded by the editing client) — “ORR was 31%.”',
+    );
+  });
+
+  it('a machine author is "as recorded by the editing client" until the turn vouches for the words', () => {
+    /* The server resets proposedByVerified unless the source verified. A row
+       written before that reset must not read as verified either. */
+    expect(decision({ proposedBy: 'AnA (AI draft)', proposedByVerified: true, source: { verified: false, claimed: TURN, why: 'the turn record does not hold this text' } })).toBe(
+      'accepted a proposed insertion (proposed by AnA (AI draft), as recorded by the editing client) — “ORR was 31%.”',
+    );
+    expect(decision({ proposedBy: 'AnA (AI draft)', proposedByVerified: true })).toBe(
+      'accepted a proposed insertion (proposed by AnA (AI draft), as recorded by the editing client) — “ORR was 31%.”',
+    );
+  });
+
+  it('the bulk decision line stays the decision; its turns are the second line', () => {
+    const metadata = {
+      decision: 'accept',
+      count: 3,
+      changes: [
+        { text: 'One.', source: verified([OPUS]) },
+        { text: 'Two.', source: verified([SONNET]) },
+        { text: 'Three.' },
+      ],
+    };
+    expect(describeAuditMetadata('tracked_change_bulk_decision', metadata)).toBe(
+      'accepted 3 tracked changes in one action — including “One.”, “Two.”, “Three.”',
+    );
+    expect(describeAuditSource(metadata)).toBe(
+      '2 changes from AnA turns. 1 of them was served by a model that is not allowed to write regulatory text.',
+    );
+  });
+
+  it('an accepted AI draft names the turn record it came from (round 12)', () => {
+    const text = describeAuditMetadata('UPDATE', {
+      source: 'ai-draft-accept',
+      generator: { model: 'claude-x', provider: 'anthropic', requestId: 'req-1', turnRecordId: TURN },
+      draft_modified_on_accept: false,
+    });
+    expect(text).toBe('accepted an AI draft generated by claude-x · anthropic, from AnA turn record 6f1c2a4e');
+  });
+
+  it('a decision with no source reads as it did (negative control)', () => {
+    expect(decision({ proposedBy: 'R. Author' })).toBe(
+      'accepted a proposed insertion (proposed by R. Author, as recorded by the editing client) — “ORR was 31%.”',
+    );
   });
 });

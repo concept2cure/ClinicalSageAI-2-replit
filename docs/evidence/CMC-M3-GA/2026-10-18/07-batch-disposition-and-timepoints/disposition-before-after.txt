@@ -1,0 +1,31 @@
+# A batch signed REJECTED, and the gate that is supposed to stop it
+
+$ BASE=http://127.0.0.1:5000 bash probe-disposition.sh
+
+## Before — the sweep reading the column nothing writes
+```
+batch created                                      id=43da8d16-7356-4688-aa10-9a1d206ea15a
+QC result recorded and reviewed (a FAIL)           id=494
+signed release, decision=rejected                200  release_status=None  disposition=None  status=None
+contradiction sweep                              200  0 finding(s), 0 critical: none
+export readiness                                 200  {"openCriticalContradictions": 0}
+```
+
+## After — the sweep reading the column the signature writes
+```
+batch created                                      id=6921209a-2896-4e46-a28e-39c6e5cac0e4
+QC result recorded and reviewed (a FAIL)           id=495
+signed release, decision=rejected                200  release_status=None  disposition=None  status=None
+contradiction sweep                              200  1 finding(s), 1 critical: batch_rejected
+export readiness                                 200  {"openCriticalContradictions": 1}
+```
+
+## The two columns, on this deployment
+```
+$ psql -c "SELECT count(*) total, count(disposition) with_disposition, count(release_status) with_release_status FROM cmc_batch_records"
+ total | with_disposition | with_release_status 
+-------+------------------+---------------------
+    86 |                0 |                  23
+(1 row)
+
+```

@@ -1,0 +1,56 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > keeps a private snapshot when the caller changes its receipt, span and actor after deferral
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not accept a same-length re-extraction under unchanged original bytes
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write when current private-project access was revoked
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source program change
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source hash change
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source withdrawal change
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source successor change
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > rejects an unchanged payload whose source window differs from the actual stored slice
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > rejects out-of-bounds source spans before recording a receipt
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > uses fresh read authority and only legacy storage columns for a mocked successful INSERT
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not count a failed persistence receipt (zero)
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not count a failed persistence receipt (wrong_actor)
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not count a failed persistence receipt (error)
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > clears a pre-cancelled round without opening a receipt connection
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > rolls back cancellation observed after INSERT and before COMMIT
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > retains the actual committed count when cancellation arrives after COMMIT
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > notifies the host when insertion observes a typed source refusal after the first handoff check
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > normalizes canonical actor/source verification refusal so the host withdraws it
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > retains authorized read content for an ordinary SQL42501 receipt insertion failure
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > stops a three-read round after typed source refusal and preserves the first committed count
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > ordinary SQL42501 in a three-read round does not stop later authorized receipt attempts
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > canonical withdrawal after observed source refusal does not invent a receipt rollback outcome
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > an ordinary failed conditional persistence result does not become a source-access refusal
+ × server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > keeps an unchanged admitted read without writing or claiming provider service 10ms
+   → expected [ …(2) ] to include 'COMMIT'
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > replaces denied source context with no source-bearing metadata (source_changed)
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > replaces denied source context with no source-bearing metadata (private_revoked)
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > preserves an existing budget replacement and drops its receipt candidate without a source query
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > does not accept a post-deferral amended payload
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > withholds a pending source read when cancellation occurs during verification
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > late cancellation also withdraws earlier amended/budget-safe source results
+ ↓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > rejects mutation through the publicly visible deferred map value
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > keeps an unchanged admitted read without writing or claiming provider service
+AssertionError: expected [ …(2) ] to include 'COMMIT'
+ ❯ server/services/ana/__tests__/read-receipt-snapshots.test.ts:224:23
+    222|     expect(guarded).toEqual([entry(r.result)]); expect(h.inserted).toE…
+    223|     expect(map.size).toBe(1); expect(h.releases).toBe(1);
+    224|     expect(h.queries).toContain('COMMIT'); expect(h.queries).not.toCon…
+       |                       ^
+    225|   });
+    226|   it.each(['source_changed', 'private_revoked'] as const)('replaces de…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 30 skipped (31)
+   Start at  20:48:18
+   Duration  806ms (transform 482ms, setup 66ms, import 520ms, tests 14ms, environment 0ms)
+

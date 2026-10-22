@@ -55,13 +55,7 @@ const TAG = '[ci:session-scoped-rls-bypass]';
 
 /** Files permitted to still contain the session-scoped form, with a count. */
 const BASELINE = new Map([
-  ['server/services/innovation/regulatory-delta-radar-service.ts', 6],
-  ['server/services/innovation/adaptive-reviewer-workspace-service.ts', 8],
-  ['server/services/innovation/outcome-based-template-learning-service.ts', 6],
-  ['server/services/innovation/auto-traceability-service.ts', 4],
   ['server/services/innovation/submission-readiness-twin-service.ts', 4],
-  ['server/services/innovation/evidence-confidence-heatmap-service.ts', 4],
-  ['server/services/innovation/regulatory-negotiation-logbook-service.ts', 2],
 ]);
 
 // `SET app.bypass_rls`, but not `SET LOCAL app.bypass_rls`.
@@ -143,6 +137,44 @@ for (const [file, count] of found) {
         ? `${file}: ${count} session-scoped bypass set(s) — this file is not in the baseline`
         : `${file}: ${count} session-scoped bypass set(s), baseline allows ${allowed}`,
     );
+  }
+}
+
+// ── Writers of the isolation switches, in any form (D3, 2026-10-08) ─────────
+//
+// Tenant policies grant every row when app.rls_enforce is not 'on'; the
+// identity.can_* helpers grant on app.bypass_rls; gcc policies on app.is_admin.
+// The check above catches only a session-scoped SET of the latter two. This one
+// counts every write of any of the three in server code (SET, SET LOCAL, SET
+// SESSION, set_config), outside tests, against a named allowlist. RESET is not
+// a write: it restores the connection's startup value. Enforcement is turned on
+// by the startup option (rlsEnforcement.ts), which is not a statement, and kept
+// on by server/db/sessionScope.ts, which pins it whenever a scope is applied and
+// clears the bypass switches on release
+// (tests/db/isolation-switch-does-not-outlive-request.dbtest.ts).
+const SWITCH_WRITE =
+  /\bSET\s+(?:LOCAL\s+|SESSION\s+)?app\.(?:rls_enforce|bypass_rls|is_admin)\b|set_config\(\s*['"]app\.(?:rls_enforce|bypass_rls|is_admin)['"]/gi;
+/** Server files that may write a switch, with the exact count and why. The BASELINE files above count at their allowance. */
+const SWITCH_WRITERS = new Map([
+  ['server/db/sessionScope.ts', [5, 'the one pin (3: enforcement to the deployment mode, both bypass switches empty) and the release clear (2: both bypass switches empty)']],
+  ['server/routes/innovation-routes.ts', [1, 'SET LOCAL inside guardQuery\'s own transaction; the router is not mounted']],
+]);
+const isTestPath = (rel) => /(^|\/)(__tests__|__mocks__)\//.test(rel) || /\.(test|spec)\.[cm]?[jt]sx?$/.test(rel);
+for (const rel of walk('server')) {
+  if (isTestPath(rel)) continue;
+  // A file the check above already reports is not reported twice for the same lines.
+  if (violations.some((v) => v.startsWith(`${rel}:`))) continue;
+  const n = [...stripComments(fs.readFileSync(path.join(repoRoot, rel), 'utf8')).matchAll(SWITCH_WRITE)].length;
+  const allowed = SWITCH_WRITERS.get(rel)?.[0] ?? BASELINE.get(rel) ?? 0;
+  if (n > allowed) {
+    violations.push(
+      allowed === 0
+        ? `${rel}: ${n} write(s) of an isolation switch (app.rls_enforce / app.bypass_rls / app.is_admin) — not an allowed writer; ` +
+            'a scope is applied through server/db/sessionScope.ts, and enforcement is never turned off by the runtime'
+        : `${rel}: ${n} write(s) of an isolation switch, allowed ${allowed}`,
+    );
+  } else if (SWITCH_WRITERS.has(rel) && n < allowed) {
+    violations.push(`${rel}: now ${n} isolation-switch write(s) (allowed ${allowed}) — lower SWITCH_WRITERS to lock it in`);
   }
 }
 

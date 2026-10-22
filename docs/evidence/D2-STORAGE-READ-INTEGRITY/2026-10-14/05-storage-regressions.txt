@@ -1,0 +1,80 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/storage/__tests__/s3-provider-lookup.test.ts > S3StorageProvider finds what it stored, past the first page > reads a tenant's document when other tenants' keys fill the first 1000 12ms
+ ✓ server/services/storage/__tests__/s3-provider-lookup.test.ts > S3StorageProvider finds what it stored, past the first page > reads a tenant's 1,200th document 14ms
+ ✓ server/services/storage/__tests__/s3-provider-lookup.test.ts > S3StorageProvider finds what it stored, past the first page > lists every document in a project, not the first 500 20ms
+ ✓ server/services/storage/__tests__/s3-provider-lookup.test.ts > S3StorageProvider finds what it stored, past the first page > deletes a document past the first page, and it is then gone 9ms
+ ✓ server/services/storage/__tests__/s3-provider-lookup.test.ts > S3StorageProvider finds what it stored, past the first page > never looks outside the requesting tenant's prefix, and never returns another tenant's document 0ms
+ ✓ server/services/storage/__tests__/s3-provider-lookup.test.ts > S3StorageProvider reports a failure as a failure > rejects, rather than reporting the document missing, when S3 refuses 2ms
+ ✓ server/services/storage/__tests__/s3-provider-lookup.test.ts > S3StorageProvider reports a failure as a failure > still reports a genuinely absent version as missing 0ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > reads unchanged bytes, including an empty file 6ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > reads unchanged bytes, including an empty file 1ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses changed bytes even when their size is unchanged 1ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses bytes whose size no longer matches the record 1ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses a changed recorded size even when the content digest matches 1ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses a different recorded digest even when the size matches 1ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses missing digest rather than claiming integrity 1ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses malformed digest rather than claiming integrity 1ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses missing size rather than claiming integrity 2ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses string size rather than claiming integrity 1ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses negative size rather than claiming integrity 1ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses fractional size rather than claiming integrity 1ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses unsafe integer size rather than claiming integrity 1ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > preserves the existing malformed-JSON outcome without returning bytes 1ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > keeps foreign version IDs indistinguishable from genuinely absent ones 1ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > reads unchanged bytes, including an empty file 1ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > reads unchanged bytes, including an empty file 0ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses changed bytes even when their size is unchanged 0ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses bytes whose size no longer matches the record 0ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses a changed recorded size even when the content digest matches 0ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses a different recorded digest even when the size matches 0ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses missing digest rather than claiming integrity 0ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses malformed digest rather than claiming integrity 0ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses missing size rather than claiming integrity 0ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses string size rather than claiming integrity 0ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses negative size rather than claiming integrity 0ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses fractional size rather than claiming integrity 0ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses unsafe integer size rather than claiming integrity 0ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > preserves the existing malformed-JSON outcome without returning bytes 0ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > keeps foreign version IDs indistinguishable from genuinely absent ones 1ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > one tenant cannot read another tenant’s stored bytes > returns a tenant its OWN file 4ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > one tenant cannot read another tenant’s stored bytes > returns NULL for another tenant’s version id 1ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > one tenant cannot read another tenant’s stored bytes > reports a foreign id exactly like an id that never existed 1ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > one tenant cannot destroy another tenant’s stored bytes > refuses a cross-tenant delete AND leaves the file readable 1ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > one tenant cannot destroy another tenant’s stored bytes > allows a tenant to delete its own file 1ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > the version id cannot escape the org subtree > rejects parent traversal 1ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > the version id cannot escape the org subtree > rejects absolute path 1ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > the version id cannot escape the org subtree > rejects empty 1ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > the version id cannot escape the org subtree > rejects not a uuid 1ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > the version id cannot escape the org subtree > rejects uuid with a suffix 1ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > the version id cannot escape the org subtree > rejects a nonsense organization id rather than searching 1ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > a tampered or misplaced sidecar cannot widen a read > refuses a version directory whose recorded owner is a different org 1ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > a tampered or misplaced sidecar cannot widen a read > refuses to DELETE a relocated directory it does not own 1ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > a tampered or misplaced sidecar cannot widen a read > refuses a filename that is not its own basename 1ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > a tampered or misplaced sidecar cannot widen a read > returns null on a corrupt sidecar rather than throwing 1ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > put writes only inside the version directory > refuses a traversal into another tenant and writes nothing 1ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > put writes only inside the version directory > refuses an absolute path and writes nothing 0ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > put writes only inside the version directory > refuses the ownership sidecar and writes nothing 0ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > put writes only inside the version directory > refuses a windows-style traversal and writes nothing 0ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > put writes only inside the version directory > refuses a bare parent and writes nothing 0ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > put writes only inside the version directory > still stores an ordinary name 1ms
+DATABASE_URL_PROD not found, using DATABASE_URL as fallback
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > assertDurableStorageForProduction > refuses production with no STORAGE_PROVIDER 2ms
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > assertDurableStorageForProduction > refuses a provider it does not implement 0ms
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > assertDurableStorageForProduction > refuses S3 without a bucket, and accepts it with one 0ms
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > assertDurableStorageForProduction > refuses local disk unless the operator states it is durable 0ms
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > assertDurableStorageForProduction > is a no-op outside production 0ms
+DATABASE_URL_PROD not found, using DATABASE_URL as fallback
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > the server configuration fires it on import > refuses to load production configuration that names no vault store 188ms
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > the server configuration fires it on import > loads it once the store is named 160ms
+ ✓ server/services/storage/__tests__/storage-provider-production-bundle.test.ts > the production bundle selects the storage provider it is configured with > serves S3 when STORAGE_PROVIDER=s3 and a bucket is named 129ms
+ ✓ server/services/storage/__tests__/storage-provider-production-bundle.test.ts > the production bundle selects the storage provider it is configured with > refuses an S3 selection that names no bucket 122ms
+ ✓ server/services/storage/__tests__/storage-provider-production-bundle.test.ts > the production bundle selects the storage provider it is configured with > refuses a value it does not recognise instead of writing to local disk 133ms
+ ✓ server/services/storage/__tests__/storage-provider-production-bundle.test.ts > the production bundle selects the storage provider it is configured with > still serves local disk by default outside production configuration 131ms
+
+ Test Files  5 passed (5)
+      Tests  69 passed (69)
+   Start at  03:00:41
+   Duration  2.00s (transform 162ms, setup 97ms, import 250ms, tests 995ms, environment 0ms)
+

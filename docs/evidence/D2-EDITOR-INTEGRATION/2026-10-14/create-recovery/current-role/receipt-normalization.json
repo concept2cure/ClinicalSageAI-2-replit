@@ -1,0 +1,62 @@
+{
+  "purpose": "Store test receipts without a blank EOF line while retaining the hashes of original raw tool output.",
+  "productionOrTestSourceChanged": false,
+  "testRerunRequired": false,
+  "normalization": "EOF only: remove exactly one trailing LF, retaining exactly one final LF and every preceding byte.",
+  "receipts": [
+    {
+      "path": "access-fixture-after.txt",
+      "rawSha256": "333339ff5c01bf328053bf4cc5603f0de2e25efb6e13084927778df15889dd26",
+      "storedCopySha256": "aeb57877b0502480a3840515bccdabceeaa558be4dfd4fd30717d64e2cf41340",
+      "rawBytes": 7060,
+      "storedBytes": 7059,
+      "removedBytes": 1,
+      "normalization": "Removed one redundant trailing LF; retained one terminal LF. Every preceding byte is unchanged."
+    },
+    {
+      "path": "first-green.txt",
+      "rawSha256": "7ef97cbc57d3a34070174ca7d9a55c7e2b64869c69fbf6d2c70d2c7b229481b3",
+      "storedCopySha256": "cef928d6a17990ea1ee42cb2bf9391edfe72147a674acf9b9674c64354b30c01",
+      "rawBytes": 10015,
+      "storedBytes": 10014,
+      "removedBytes": 1,
+      "normalization": "Removed one redundant trailing LF; retained one terminal LF. Every preceding byte is unchanged."
+    },
+    {
+      "path": "post-sync-regression.txt",
+      "rawSha256": "3b7e11d44972268d5a190992fa00d0d7a675866b2c1791d074773c645c5f7653",
+      "storedCopySha256": "568e354491a3b952470889839a5458e995986df14f47991501d2a7dbbb5c030c",
+      "rawBytes": 190795,
+      "storedBytes": 190794,
+      "removedBytes": 1,
+      "normalization": "Removed one redundant trailing LF; retained one terminal LF. Every preceding byte is unchanged."
+    },
+    {
+      "path": "red-complete.txt",
+      "rawSha256": "90e697a2b278af231af8d2e38f6f3adabda85485bd84a85803fe0a979edd1750",
+      "storedCopySha256": "8ce8ef3d35b16a4a49dd93d51dfbc3f3f68fe273de55fb7b194077c9f94d406c",
+      "rawBytes": 25887,
+      "storedBytes": 25886,
+      "removedBytes": 1,
+      "normalization": "Removed one redundant trailing LF; retained one terminal LF. Every preceding byte is unchanged."
+    },
+    {
+      "path": "regression-before-fixture-alignment.txt",
+      "rawSha256": "f2feeaa0cf5ae81b52b196324ea52448379aabdd1847b3275235cfa720ef03bf",
+      "storedCopySha256": "76a1a0cba364529a97bcc81582cb50e098382832e670368a9d6240560ba03e73",
+      "rawBytes": 193120,
+      "storedBytes": 193119,
+      "removedBytes": 1,
+      "normalization": "Removed one redundant trailing LF; retained one terminal LF. Every preceding byte is unchanged."
+    },
+    {
+      "path": "regression-final.txt",
+      "rawSha256": "0c6d7f7ebae6a0c83d189f07a79628af6eabb60f1f9559b4988cbf3ec232ba37",
+      "storedCopySha256": "f79ce0a0f4704f9863c8e1de4cbadc63e161855f89a052cb7e5d532b4f018de9",
+      "rawBytes": 190763,
+      "storedBytes": 190762,
+      "removedBytes": 1,
+      "normalization": "Removed one redundant trailing LF; retained one terminal LF. Every preceding byte is unchanged."
+    }
+  ]
+}

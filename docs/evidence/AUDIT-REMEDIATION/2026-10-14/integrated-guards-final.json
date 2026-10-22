@@ -1,0 +1,1000 @@
+{
+  "checkedAt": "2026-10-14T07:15:44.905176+00:00",
+  "passes": 82,
+  "failures": 0,
+  "results": [
+    {
+      "command": "npm run --silent ci:node-runtime",
+      "exitCode": 0,
+      "seconds": 0.16,
+      "log": "/workspace/audit/integrated-frozen-guards/01.txt",
+      "summary": [
+        "Node runtime contracts are pinned to Node 22 (17 fixed surfaces plus active workflows)."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:migration-set-order",
+      "exitCode": 0,
+      "seconds": 0.15,
+      "log": "/workspace/audit/integrated-frozen-guards/02.txt",
+      "summary": [
+        "[ci:migration-set-order] OK \u2014 386 migrations, sweep last, tail uuid step \u2192 child scope \u2192 sweep, all present, no duplicates."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:migration-guard-order",
+      "exitCode": 0,
+      "seconds": 0.23,
+      "log": "/workspace/audit/integrated-frozen-guards/03.txt",
+      "summary": [
+        "[ci:migration-guard-order] OK \u2014 every guarded table is created before it is guarded (0 baselined)."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:migration-drop-safety",
+      "exitCode": 0,
+      "seconds": 0.26,
+      "log": "/workspace/audit/integrated-frozen-guards/04.txt",
+      "summary": [
+        "[ci:migration-drop-safety] OK \u2014 386 migrations, 37 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable \u2014 data-bearing kinds gated, 2 reviewed)."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:migration-deploy-path",
+      "exitCode": 0,
+      "seconds": 0.17,
+      "log": "/workspace/audit/integrated-frozen-guards/05.txt",
+      "summary": [
+        "[ci:migration-deploy-path] OK \u2014 109 baselined file(s) on no deploy path, none new."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:migration-prefix-collisions",
+      "exitCode": 0,
+      "seconds": 0.16,
+      "log": "/workspace/audit/integrated-frozen-guards/06.txt",
+      "summary": [
+        "[ci:migration-prefix-collisions] OK \u2014 no NEW collisions (3 baselined collision prefix(es) tolerated)"
+      ]
+    },
+    {
+      "command": "npm run --silent ci:rls-allowlist-sync",
+      "exitCode": 0,
+      "seconds": 0.12,
+      "log": "/workspace/audit/integrated-frozen-guards/07.txt",
+      "summary": [
+        "[ci:rls-allowlist-sync] OK \u2014 6 entries match across RLS_ALLOWLIST and 4 consumers"
+      ]
+    },
+    {
+      "command": "npm run --silent ci:duplicate-table-ddl",
+      "exitCode": 0,
+      "seconds": 0.47,
+      "log": "/workspace/audit/integrated-frozen-guards/08.txt",
+      "summary": [
+        "[ci:duplicate-table-ddl] scanned 655 non-archived .sql files; 1392 distinct tables; 13 defined more than once; 13 baselined",
+        "[ci:duplicate-table-ddl] \u2705 no new duplicate table definitions."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:journey-migration-reachability",
+      "exitCode": 0,
+      "seconds": 0.14,
+      "log": "/workspace/audit/integrated-frozen-guards/09.txt",
+      "summary": [
+        "[ci:journey-migration-reachability] OK \u2014 all 53 golden-journey-declared migrations are on a durable apply path."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:migration-reachability",
+      "exitCode": 0,
+      "seconds": 0.78,
+      "log": "/workspace/audit/integrated-frozen-guards/10.txt",
+      "summary": [
+        "[ci:migration-reachability] 1362 durably-created tables; 0 server-referenced table(s) created only by a deploy-dead migration; 0 baselined",
+        "[ci:migration-reachability] \u2705 no new unreachable table references."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:column-reachability",
+      "exitCode": 0,
+      "seconds": 1.51,
+      "log": "/workspace/audit/integrated-frozen-guards/11.txt",
+      "summary": [
+        "[ci:column-reachability] OK \u2014 3194 column add(s) on no applier, 0 queried by the server."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:launch-scope",
+      "exitCode": 0,
+      "seconds": 0.13,
+      "log": "/workspace/audit/integrated-frozen-guards/12.txt",
+      "summary": [
+        "[ci:launch-scope] 8 apps \u00b7 31 surfaces \u00b7 13 modules \u00b7 26 surface files checked for fixture imports",
+        "\u2705 launch scope is routable, registered, licensable and fixture-free"
+      ]
+    },
+    {
+      "command": "npm run --silent ci:launch-scope-api",
+      "exitCode": 0,
+      "seconds": 0.84,
+      "log": "/workspace/audit/integrated-frozen-guards/13.txt",
+      "summary": [
+        "ci:launch-scope-api: 373 API paths named by launch and shell screens; none refused. {\"launch\":319,\"infrastructure\":2,\"never-gated\":52}"
+      ]
+    },
+    {
+      "command": "npm run --silent ci:workflow-targets",
+      "exitCode": 0,
+      "seconds": 0.16,
+      "log": "/workspace/audit/integrated-frozen-guards/14.txt",
+      "summary": [
+        "[ci:workflow-targets] 1 dead reference(s); 1 baselined",
+        "[ci:workflow-targets] OK"
+      ]
+    },
+    {
+      "command": "npm run --silent ci:surface-discoverability",
+      "exitCode": 0,
+      "seconds": 0.12,
+      "log": "/workspace/audit/integrated-frozen-guards/15.txt",
+      "summary": [
+        "",
+        "[ci:surface-discoverability] OK \u2014 123 renderable surface(s): 94 in the Apps catalog, 29 declared contextual.",
+        ""
+      ]
+    },
+    {
+      "command": "npm run --silent ci:ana-surface-context",
+      "exitCode": 0,
+      "seconds": 0.19,
+      "log": "/workspace/audit/integrated-frozen-guards/16.txt",
+      "summary": [
+        "",
+        "[ci:ana-surface-context] OK \u2014 116 of 121 routable surface ids publish screen state (baseline 116 exact), 5 exempt, 0 still blind.",
+        "  113 through usePublishSurfaceContext; 3 through their own useAnaChat moduleContext (conversation-thread, ectd-coauthor, rbm) \u2014 full-width surfaces may",
+        "  publish saved context and hand requests to the canonical conversation.",
+        "  123 ids are registered; 2 of those (ind-lifecycle, task-board) are DEEP_LINK_ALIASES sources the router",
+        "  rewrites before the shell has an active id, so they are not routable and cannot be",
+        "  published under. Ids, not files, are the unit AnA experiences: one file can serve",
+        "  several, and a child can publish for a parent that has no call of its own",
+        "  (78 surface file(s) hold a call).",
+        ""
+      ]
+    },
+    {
+      "command": "npm run --silent ci:discarded-audit-write",
+      "exitCode": 0,
+      "seconds": 0.58,
+      "log": "/workspace/audit/integrated-frozen-guards/17.txt",
+      "summary": [
+        "check-discarded-audit-write: no new occurrences. 81 baselined across 43 file(s).",
+        "  3 baselined file(s) now below their count \u2014 run --write-baseline to shrink it."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:sign-ceremony",
+      "exitCode": 0,
+      "seconds": 0.76,
+      "log": "/workspace/audit/integrated-frozen-guards/18.txt",
+      "summary": [
+        "[ci:sign-ceremony] OK \u2014 no new sign write without the ceremony. 20 baselined site(s) remain, exactly as baselined.",
+        "[ci:sign-ceremony] OK \u2014 every signer re-verification asks signing authority in its handler; 5 baselined re-authentication(s) sign nothing, exactly as baselined."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:action-overclaim",
+      "exitCode": 0,
+      "seconds": 0.43,
+      "log": "/workspace/audit/integrated-frozen-guards/19.txt",
+      "summary": [
+        "check-action-overclaim: no new occurrences. 0 baselined."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:success-before-ok",
+      "exitCode": 0,
+      "seconds": 0.42,
+      "log": "/workspace/audit/integrated-frozen-guards/20.txt",
+      "summary": [
+        "check-success-before-ok: no occurrences across 248 file(s)."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:lineage-save-gate",
+      "exitCode": 0,
+      "seconds": 1.96,
+      "log": "/workspace/audit/integrated-frozen-guards/21.txt",
+      "summary": [
+        "[ci:lineage-save-gate] ok  server/routes/c2c/artifacts.ts",
+        "[ci:lineage-save-gate] ok  server/services/ana/AnaToolExecutor.ts",
+        "[ci:lineage-save-gate] ok  server/services/ana/submission-chat-apply-rewrite.ts",
+        "[ci:lineage-save-gate] ok  server/services/ai-actions/handlers/refine-with-validation.ts",
+        "[ci:lineage-save-gate] ok  server/services/module3-convergence-service.ts",
+        "[ci:lineage-save-gate] ok  server/routes/q-sub.ts",
+        "[ci:lineage-save-gate] ok  server/services/labeling/labeling-pi-service.ts",
+        "[ci:lineage-save-gate] ok  server/services/compute/artifactWriteback.ts",
+        "[ci:lineage-save-gate] ok  server/services/ana/verifiedSealService.ts",
+        "[ci:lineage-save-gate] ok  server/services/resolution/bundle-executor.ts",
+        "[ci:lineage-save-gate] ok  server/services/protocol-templates/protocol-templates-service.ts",
+        "[ci:lineage-save-gate] OK \u2014 21 guarded path(s) enforce lineage on save."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:artifact-provenance",
+      "exitCode": 0,
+      "seconds": 1.03,
+      "log": "/workspace/audit/integrated-frozen-guards/22.txt",
+      "summary": [
+        "",
+        "[ci:artifact-provenance] 20/20 artifact producers emit provenance; 0 in baseline debt.",
+        "[ci:artifact-provenance] OK \u2014 no new provenance-less artifact producers."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:vault-document-writers",
+      "exitCode": 0,
+      "seconds": 0.39,
+      "log": "/workspace/audit/integrated-frozen-guards/23.txt",
+      "summary": [
+        "[ci:vault-document-writers] 6 file(s) write vault.documents; 6 named.",
+        "[ci:vault-document-writers] OK: every writer is a named one."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:program-ownership-single-source",
+      "exitCode": 0,
+      "seconds": 0.46,
+      "log": "/workspace/audit/integrated-frozen-guards/24.txt",
+      "summary": [
+        "[ci:program-ownership-single-source] OK \u2014 every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts)."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:gateway-bypass",
+      "exitCode": 0,
+      "seconds": 8.82,
+      "log": "/workspace/audit/integrated-frozen-guards/25.txt",
+      "summary": [
+        "[check-gateway-bypass] OK \u2014 no new bypasses (8 baselined site(s) tolerated)."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:no-dev-auth-in-prod",
+      "exitCode": 0,
+      "seconds": 0.19,
+      "log": "/workspace/audit/integrated-frozen-guards/26.txt",
+      "summary": [
+        "[ci:no-dev-auth-in-prod] OK \u2014 no leaky dev-auth gates found"
+      ]
+    },
+    {
+      "command": "npm run --silent ci:org-path-param-guards",
+      "exitCode": 0,
+      "seconds": 0.43,
+      "log": "/workspace/audit/integrated-frozen-guards/27.txt",
+      "summary": [
+        "[ci:org-path-param-guards] 45 route(s) take an org/tenant id from the path; 45 guarded, 0 not (baseline 0).",
+        "[ci:org-path-param-guards] OK \u2014 every org path param is checked against the caller."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:regulated-delete-audit",
+      "exitCode": 0,
+      "seconds": 0.3,
+      "log": "/workspace/audit/integrated-frozen-guards/28.txt",
+      "summary": [
+        "[regulated-delete-audit] OK \u2014 every regulated-table delete has an audit call (or is operator-allow-listed)."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:jwt-verify-pinned",
+      "exitCode": 0,
+      "seconds": 0.35,
+      "log": "/workspace/audit/integrated-frozen-guards/29.txt",
+      "summary": [
+        "[ci:jwt-verify-pinned] OK \u2014 every production jwt.verify call pins an algorithm"
+      ]
+    },
+    {
+      "command": "npm run --silent ci:saml-fail-closed",
+      "exitCode": 0,
+      "seconds": 0.13,
+      "log": "/workspace/audit/integrated-frozen-guards/30.txt",
+      "summary": [
+        "\u2713 SAML SSO fail-closed invariants hold (vetted library, signed assertion required)."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:session-scoped-rls-bypass",
+      "exitCode": 0,
+      "seconds": 3.68,
+      "log": "/workspace/audit/integrated-frozen-guards/31.txt",
+      "summary": [
+        "[ci:session-scoped-rls-bypass] OK \u2014 no new session-scoped RLS bypass. 34 baselined occurrence(s) remain in 7 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may only shrink."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:sql-interpolation",
+      "exitCode": 0,
+      "seconds": 1.77,
+      "log": "/workspace/audit/integrated-frozen-guards/32.txt",
+      "summary": [
+        "[ci:sql-interpolation] OK \u2014 no new value interpolated into SQL text. 1028 baselined interpolation(s) in 215 file(s); the baseline may only shrink."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:tenant-blind-models",
+      "exitCode": 0,
+      "seconds": 0.18,
+      "log": "/workspace/audit/integrated-frozen-guards/33.txt",
+      "summary": [
+        "[ci:tenant-blind-models] 225 table(s) carry a tenant column; 701 model(s) scanned; 4 blind (baseline 4).",
+        "[ci:tenant-blind-models] OK \u2014 no unjustified tenant-blind models."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:tenant-column-types",
+      "exitCode": 0,
+      "seconds": 0.16,
+      "log": "/workspace/audit/integrated-frozen-guards/34.txt",
+      "summary": [
+        "[ci:tenant-column-types] OK \u2014 all tenant columns are integer-typed"
+      ]
+    },
+    {
+      "command": "npm run --silent ci:tenant-entry-points",
+      "exitCode": 0,
+      "seconds": 0.43,
+      "log": "/workspace/audit/integrated-frozen-guards/35.txt",
+      "summary": [
+        "[ci:tenant-entry-points] 13 entry point(s); 5 consider tenant entitlement, 8 do not (baseline 8)",
+        "[ci:tenant-entry-points] OK \u2014 no unclassified tenant entry points."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:tenant-isolation:no-regression",
+      "exitCode": 0,
+      "seconds": 1.33,
+      "log": "/workspace/audit/integrated-frozen-guards/36.txt",
+      "summary": [
+        "[ci:tenant-isolation] OK \u2014 no raw SQL against tenant-scoped tables without a tenant filter (43 query(ies) inline-suppressed with justifications \u2014 grep 'tenant-isolation-safe:' to audit)",
+        "[ci:tenant-isolation] OK \u2014 no new findings above baseline (0 current, 0 baseline)"
+      ]
+    },
+    {
+      "command": "npm run --silent ci:tenant-resolvers",
+      "exitCode": 0,
+      "seconds": 0.4,
+      "log": "/workspace/audit/integrated-frozen-guards/37.txt",
+      "summary": [
+        "Local tenant resolvers: 182 (baseline 185)",
+        "",
+        "3 baselined module(s) no longer define one \u2014 regenerate the baseline:",
+        "  - server/api/cmc/module3BuildStateRoutes.ts",
+        "  - server/api/cmc/module3ConvergenceRoutes.ts",
+        "  - server/api/cmc/module3OperatingSystemRoutes.ts",
+        "",
+        "OK: no new local tenant resolvers."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:drizzle-tenant-scope",
+      "exitCode": 0,
+      "seconds": 0.35,
+      "log": "/workspace/audit/integrated-frozen-guards/38.txt",
+      "summary": [
+        "[ci:drizzle-tenant-scope] OK \u2014 102 site(s), all baselined; 25 fixed since the baseline was written.",
+        "[ci:drizzle-tenant-scope] Re-run with --write-baseline to bank the 25 fix(es)."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:upload-guards",
+      "exitCode": 0,
+      "seconds": 0.31,
+      "log": "/workspace/audit/integrated-frozen-guards/39.txt",
+      "summary": [
+        "[ci:upload-guards] OK \u2014 1 unguarded multer site(s) across 1 file(s), none new; 20 file(s) build uploads."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:unauthenticated-fetch",
+      "exitCode": 0,
+      "seconds": 0.85,
+      "log": "/workspace/audit/integrated-frozen-guards/40.txt",
+      "summary": [
+        "\u2705 ci:unauthenticated-fetch \u2014 76 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined)."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:unbacked-tables",
+      "exitCode": 0,
+      "seconds": 2.64,
+      "log": "/workspace/audit/integrated-frozen-guards/41.txt",
+      "summary": [
+        "[ci:unbacked-tables] 1498 tables/views created across migrations, drizzle and runtime DDL; 743 referenced in server SQL; 19 unbacked; 19 baselined",
+        "[ci:unbacked-tables] \u2705 no new references to tables nothing creates."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:writerless-stores",
+      "exitCode": 0,
+      "seconds": 0.63,
+      "log": "/workspace/audit/integrated-frozen-guards/42.txt",
+      "summary": [
+        "    fda510kProjects \u2014 10 reader file(s)",
+        "    fdaCommunications \u2014 2 reader file(s)",
+        "    gsprRequirements \u2014 1 reader file(s)",
+        "    methodRegulatoryOutcomes \u2014 2 reader file(s)",
+        "    projectDocuments \u2014 1 reader file(s)",
+        "    qSubMeetings \u2014 3 reader file(s)",
+        "    qSubQuestions \u2014 3 reader file(s)",
+        "    qSubTimelineEntries \u2014 2 reader file(s)",
+        "    regulatoryObligations \u2014 1 reader file(s)",
+        "    regulatorySequences \u2014 1 reader file(s)",
+        "    reports \u2014 1 reader file(s)",
+        "    sections \u2014 3 reader file(s)"
+      ]
+    },
+    {
+      "command": "npm run --silent check:security-patterns",
+      "exitCode": 0,
+      "seconds": 3.05,
+      "log": "/workspace/audit/integrated-frozen-guards/43.txt",
+      "summary": [
+        "check-security-patterns: 0 violations across 3201 file(s)."
+      ]
+    },
+    {
+      "command": "npm run --silent check:compliance-claims",
+      "exitCode": 0,
+      "seconds": 0.42,
+      "log": "/workspace/audit/integrated-frozen-guards/44.txt",
+      "summary": [
+        "[ci:compliance-claims] OK \u2014 scanned 1328 customer-facing files, no unsupported claims."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:server-error-leaks",
+      "exitCode": 0,
+      "seconds": 2.15,
+      "log": "/workspace/audit/integrated-frozen-guards/45.txt",
+      "summary": [
+        "[ci:server-error-leaks] OK \u2014 10 baselined site(s) across 10 file(s); no file gained one."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:error-envelope",
+      "exitCode": 0,
+      "seconds": 0.55,
+      "log": "/workspace/audit/integrated-frozen-guards/46.txt",
+      "summary": [
+        "[ci:error-envelope] OK \u2014 0 hand-rolled read(s) (baseline 0), none new."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:insert-columns-declared",
+      "exitCode": 0,
+      "seconds": 0.65,
+      "log": "/workspace/audit/integrated-frozen-guards/47.txt",
+      "summary": [
+        "[ci:insert-columns-declared] columns written vs columns declared",
+        "  Drizzle models parsed        : 702",
+        "  static INSERTs examined      : 703",
+        "  skipped (unjudgeable)        : 7",
+        "  migration lineage tables     : 1422",
+        "  tables unknown to BOTH       : 9",
+        "  baselined (known, unfixed)   : 47",
+        "",
+        "\u2705 no new violations. 47 baselined and awaiting burn-down."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:migration-guard-order:selftest",
+      "exitCode": 0,
+      "seconds": 0.14,
+      "log": "/workspace/audit/integrated-frozen-guards/48.txt",
+      "summary": [
+        "[ci:migration-guard-order] selftest OK \u2014 reports public.qms_documents when the Part 11 triggers precede its CREATE, and nothing when they follow it."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:migration-drop-safety:selftest",
+      "exitCode": 0,
+      "seconds": 0.63,
+      "log": "/workspace/audit/integrated-frozen-guards/49.txt",
+      "summary": [
+        "  \u2713 quiet \u2014 drop-and-re-add of the same name in one file",
+        "  \u2713 quiet \u2014 a DROP nothing in the set re-creates",
+        "  \u2713 quiet \u2014 a reviewed baseline exception suppresses a real pairing",
+        "  \u2713 NARROWED \u2014 an earlier file re-imposes a narrower CHECK a later file widened",
+        "  \u2713 quiet \u2014 the earlier replacement is conditional on the current definition",
+        "  \u2713 NARROWED \u2014 a guard that names a different constraint does not count",
+        "  \u2713 NARROWED \u2014 a guard that exists only in a comment does not count",
+        "  \u2713 dynamic \u2014 an EXECUTE-issued DROP TABLE is caught, not silently skipped",
+        "  \u2713 dynamic \u2014 an EXECUTE-issued DROP POLICY is counted, not failed (carries no data)",
+        "  \u2713 dynamic \u2014 a reviewed allowDynamic entry suppresses the data-bearing case",
+        "",
+        "[ci:migration-drop-safety:selftest] OK \u2014 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:migration-deploy-path:selftest",
+      "exitCode": 0,
+      "seconds": 0.14,
+      "log": "/workspace/audit/integrated-frozen-guards/50.txt",
+      "summary": [
+        "[ci:migration-deploy-path:selftest] OK \u2014 an unlisted new file fails; the tree as it stands passes; a listed file passes."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:launch-scope:selftest",
+      "exitCode": 0,
+      "seconds": 0.33,
+      "log": "/workspace/audit/integrated-frozen-guards/51.txt",
+      "summary": [
+        "\u2705 selftest: gate exits 1 and names Vault.tsx / SELFTEST_FAKE_ROWS on the seeded violation",
+        "\u2705 selftest: gate exits 1 and names 'ectd-compile' when it is missing from the 20260810 keep-list",
+        "\u2705 selftest: gate exits 1 and names only 'selftest-unregistered' (not the 'task-board' alias) as an ungated route",
+        "\u2705 selftest: gate passes on the real tree"
+      ]
+    },
+    {
+      "command": "npm run --silent ci:launch-scope-api:selftest",
+      "exitCode": 0,
+      "seconds": 0.66,
+      "log": "/workspace/audit/integrated-frozen-guards/52.txt",
+      "summary": [
+        "  \u2713 flags a launch screen calling a prefix only an out-of-scope surface claims",
+        "  \u2713 names the surface and the file",
+        "  \u2713 does not flag the launch prefix, or a never-gated shell call",
+        "  \u2713 passes once the launch surface declares the prefix it calls",
+        "  \u2713 flags a launch call no surface claims (unmapped)",
+        "  \u2713 resolves every registration it was given",
+        "  \u2713 reads the surface's own registration, not a longer id ending in it",
+        "  \u2713 flags a launch screen that computes the /api namespace",
+        "",
+        "selftest PASSED \u2014 the gate flags a launch screen that production would refuse."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:discarded-audit-write:self-test",
+      "exitCode": 0,
+      "seconds": 0.15,
+      "log": "/workspace/audit/integrated-frozen-guards/53.txt",
+      "summary": [
+        "  \u2713 a recordAuditRow whose outcome is returned is not flagged",
+        "  \u2713 a discarded logAuditEntry is flagged",
+        "  \u2713 a discarded auditTaskAction is flagged",
+        "  \u2713 a logAuditEntry whose outcome is returned is not flagged",
+        "  \u2713 the defect quoted in a comment is not flagged",
+        "  \u2713 a discarded INJECTED deps.audit.logAction is flagged",
+        "  \u2713 and the this.audit.logAction form too",
+        "  \u2713 an injected write whose outcome is returned is not flagged",
+        "  \u2713 a baselined file that GROWS is flagged",
+        "  \u2713 a baselined file at its baselined count is not flagged",
+        "",
+        "self-test PASSED \u2014 the gate flags the defect and the baseline cannot grow."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:sign-ceremony:selftest",
+      "exitCode": 0,
+      "seconds": 0.15,
+      "log": "/workspace/audit/integrated-frozen-guards/54.txt",
+      "summary": [
+        "  \u2713 an authoring approval stamp beside its authoring_signatures write passes",
+        "  \u2713 the same authoring approval stamp with no signature write fails",
+        "  \u2713 clearing an approval (a revision) is not a stamp",
+        "  \u2713 the pre-fix Gateway transmit (re-authentication, no authority) fails the authority rule",
+        "  \u2713 the same transmit asking checkSigningAuthority first passes",
+        "  \u2713 reverifySigner is held to the rule too, and checkSigningAuthority satisfies it",
+        "  \u2713 an inline copy of the policy (isSigningAuthorized in the handler) no longer satisfies the rule",
+        "  \u2713 the retired local wrappers no longer satisfy the rule",
+        "  \u2713 an authority check in another handler does not count for this one",
+        "  \u2713 a declaration of the primitive is not a call; a commented check is not a check",
+        "  \u2713 an authority baseline entry is a ceiling with a written reason, as the sign baseline is",
+        "[ci:sign-ceremony:selftest] 27 passed \u2014 the gate fails on what it exists to catch."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:action-overclaim:self-test",
+      "exitCode": 0,
+      "seconds": 0.22,
+      "log": "/workspace/audit/integrated-frozen-guards/55.txt",
+      "summary": [
+        "  \u2713 Biostatistics.pre-fix.tsx.fixture: flagged 1 \u2014 e.g. \"Attach to dossier\"",
+        "  \u2713 RbmSurfacesA.pre-fix.tsx.fixture: flagged 1 \u2014 e.g. \"Export markdown\"",
+        "  \u2713 RichSectionEditor.pre-fix.tsx.fixture: flagged 2 \u2014 e.g. \"Cite the selected claim\"",
+        "  \u2713 SubmissionCenterPlanner.pre-fix.tsx.fixture: flagged 1 \u2014 e.g. \"Generate plan (plan_submission)\"",
+        "  \u2713 client/src/concept2cure/v2/surfaces/Biostatistics.tsx: silent on the repaired source",
+        "  \u2713 client/src/concept2cure/v2/editor/RichSectionEditor.tsx: silent on the repaired source",
+        "  \u2713 client/src/concept2cure/v2/surfaces/RbmSurfacesA.tsx: silent on the repaired source",
+        "  \u2713 client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx: silent on the repaired source",
+        "",
+        "self-test PASSED \u2014 catches the real defect, quiet on the repair."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:success-before-ok:self-test",
+      "exitCode": 0,
+      "seconds": 0.14,
+      "log": "/workspace/audit/integrated-frozen-guards/56.txt",
+      "summary": [
+        "  \u2713 AuthoringFilingBar.pre-fix.tsx.fixture: flagged 1 \u2014 e.g. fireToast('Document frozen and sealed'",
+        "  \u2713 DocumentAuthoringRename.pre-fix.tsx.fixture: flagged 1 \u2014 e.g. fireToast(`Section renamed \u2014 ${code} \u00b7 ${title}. Its content and history are unchanged.`",
+        "  \u2713 client/src/concept2cure/v2/surfaces/AuthoringFilingBar.tsx: silent on the repaired source",
+        "  \u2713 client/src/concept2cure/v2/surfaces/Vault.tsx: silent on the repaired source",
+        "  \u2713 client/src/concept2cure/v2/surfaces/Biostatistics.tsx: silent on the repaired source",
+        "  \u2713 client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx: silent on the repaired source",
+        "",
+        "self-test PASSED \u2014 catches the real defect, quiet on the repair."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:gateway-bypass:selftest",
+      "exitCode": 0,
+      "seconds": 4.24,
+      "log": "/workspace/audit/integrated-frozen-guards/57.txt",
+      "summary": [
+        "  \u2713 quiet \u2014 app routes that extend a provider path with more name (suffix guard: -history, -index)",
+        "  \u2713 quiet \u2014 a Python gateway wrapper class whose name ends in OpenAI (Python prefix guard)",
+        "  \u2713 quiet \u2014 a file migrated onto aiComplete whose note names the old call in prose and the dotted SDK form",
+        "  \u2713 quiet \u2014 provider display labels like 'OpenAI (GPT)' in a .ts file (the Python pattern is *.py only)",
+        "  \u2713 quiet \u2014 app methods named generateContent (the Gemini REST pattern needs the colon)",
+        "  \u2713 quiet \u2014 Python that is handed a client and names the class without constructing it",
+        "  \u2713 quiet \u2014 provider hosts in a README and a JSON config (source files only)",
+        "  \u2713 quiet \u2014 the governed root module next to the renamed direct client the gate recommends",
+        "  \u2713 quiet \u2014 a nested ai-service.ts when no root ai-service.ts exists to be shadowed",
+        "  \u2713 quiet \u2014 this selftest's own source, which lives in the gate's scan path",
+        "",
+        "[ci:gateway-bypass:selftest] 53 passed \u2014 the gate fails on what it exists to catch."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:no-dev-auth-in-prod:selftest",
+      "exitCode": 0,
+      "seconds": 0.74,
+      "log": "/workspace/audit/integrated-frozen-guards/58.txt",
+      "summary": [
+        "  \u2713 FAILS on a dev shortcut at every name-scoped path (9, incl. nested server/auth/ and top-level server/)",
+        "  \u2713 FAILS on a copy of the allowlisted helper at another path (the allowlist is one exact file)",
+        "  \u2713 FAILS with --strict as without it: there is no lenient mode",
+        "  \u2713 FAILS closed when a scan root is missing (server/middleware absent), rather than reporting OK",
+        "  \u2713 quiet: sso.ts as it is now \u2014 isDevAuthAllowed() before jwt.sign, comment lines quoting both spellings",
+        "  \u2713 quiet: the allowlisted helper server/auth/dev-auth-policy.ts itself",
+        "  \u2713 quiet: out-of-scope dev gates (rate limit, mock agency route, request logger, feature flag) \u2014 no auth, no token minting",
+        "  \u2713 quiet: fail-closed spellings in an auth file (=== 'production', !== 'development', !== 'test')",
+        "  \u2713 quiet: the leaky gate in *.test.*, __tests__/, node_modules/ and non-source files is not read",
+        "  \u2713 quiet: every clean shape at once, under --strict",
+        "",
+        "[ci:no-dev-auth-in-prod:selftest] 15 passed \u2014 the gate fails on what it exists to catch."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:org-path-param-guards:selftest",
+      "exitCode": 0,
+      "seconds": 0.81,
+      "log": "/workspace/audit/integrated-frozen-guards/59.txt",
+      "summary": [
+        "  \u2713 FAILS on a stale baseline entry \u2014 the route is guarded now, so the entry must go",
+        "  \u2713 FAILS when the baseline entry names another verb \u2014 it suppresses nothing, and is itself stale",
+        "  \u2713 FAILS when the baseline entry names another file \u2014 suppression is per file, not per path",
+        "",
+        "  Known gaps in the gate (pinned, not passed \u2014 see the header):",
+        "  ! gap 1, still open: router.param('orgId') that only parses is credited with the guard of a router.param('tenantId') below it",
+        "  ! gap 2, still open: a baseline entry with no reason at all ({}) suppresses an unguarded tenant route",
+        "  ! gap 2, still open: --write-baseline's own 'TODO:' placeholder suppresses the finding it was written for",
+        "  ! gap 3, still open: an unguarded router.all('/:orgId/\u2026') is not detected at all \u2014 zero routes counted",
+        "",
+        "[ci:org-path-param-guards:selftest] 4 known gap probe(s) still reproduce \u2014 gate defects, recorded above and in the header.",
+        "[ci:org-path-param-guards:selftest] 16 passed \u2014 the gate fails on what it exists to catch."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:regulated-delete-audit:selftest",
+      "exitCode": 0,
+      "seconds": 1.12,
+      "log": "/workspace/audit/integrated-frozen-guards/60.txt",
+      "summary": [
+        "  \u2713 quiet \u2014 an allow-list entry with a written justification suppresses its file",
+        "  \u2713 FAILS on a file the allow-list does not name \u2014 an entry covers its own file only",
+        "  \u2713 FAILS when the allow-list entry carries an empty justification",
+        "  \u2713 quiet \u2014 ind.ts as shipped: audit_events INSERT in the delete transaction (after the delete)",
+        "  \u2713 quiet \u2014 authoring governed delete with writeChainedAuditRow (2026-10-01)",
+        "  \u2713 quiet \u2014 coauthor delete with recordCoauthorDocumentEvent",
+        "  \u2713 quiet \u2014 c2c evidence unlink with writeMutation on the same client",
+        "  \u2713 quiet \u2014 a delete inside governedQmsWrite's callback, no audit call in its window, ')' in a string and a comment",
+        "  \u2713 quiet \u2014 route registrations, SELECTs, comments and look-alike tables are not regulated deletes",
+        "  \u2713 quiet \u2014 test fixtures under __tests__/ and *.test.ts are not scanned",
+        "",
+        "[ci:regulated-delete-audit:selftest] 29 passed \u2014 the gate fails on what it exists to catch. (1.0s)"
+      ]
+    },
+    {
+      "command": "npm run --silent ci:program-ownership-single-source:selftest",
+      "exitCode": 0,
+      "seconds": 0.16,
+      "log": "/workspace/audit/integrated-frozen-guards/61.txt",
+      "summary": [
+        "[self-test] OK \u2014 10 copies found, 6 reads passed."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:drizzle-tenant-scope:selftest",
+      "exitCode": 0,
+      "seconds": 0.64,
+      "log": "/workspace/audit/integrated-frozen-guards/62.txt",
+      "summary": [
+        "  the estate. Constrain the organization in the statement, as the sibling handlers in",
+        "  server/routes/c2c/tasks.ts do:",
+        "      .where(and(eq(table.someId, id), eq(table.organizationId, getOrganizationId(req))))",
+        "  A lookup used only to derive an org id must itself be org-scoped, or it is a way to",
+        "  read another tenant's row and adopt its tenancy.",
+        "  \u2713 FAILS on an unscoped lookup used to derive an org id (the create-path defect)",
+        "  \u2713 quiet \u2014 the statement constrains organizationId",
+        "  \u2713 quiet \u2014 the table is not org-scoped",
+        "  \u2713 quiet \u2014 a known site stays baselined",
+        "  \u2713 reports a baselined site that has since been fixed",
+        "",
+        "[ci:drizzle-tenant-scope:selftest] OK \u2014 6/6; the gate fires on both defect shapes and stays quiet on the rest."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:upload-guards:selftest",
+      "exitCode": 0,
+      "seconds": 0.17,
+      "log": "/workspace/audit/integrated-frozen-guards/63.txt",
+      "summary": [
+        "[ci:upload-guards] selftest caught: bare site is one site lacking all three",
+        "[ci:upload-guards] selftest caught: guarded site lacks nothing",
+        "[ci:upload-guards] selftest caught: comment is not a site; the real site lacks only fileFilter",
+        "[ci:upload-guards] selftest caught: empty baseline: the two unguarded files fail",
+        "[ci:upload-guards] selftest caught: a reasonless baseline entry fails even at its count",
+        "[ci:upload-guards] selftest caught: a file above its baseline count fails",
+        "[ci:upload-guards] selftest 6/6 caught"
+      ]
+    },
+    {
+      "command": "npm run --silent ci:unauthenticated-fetch:selftest",
+      "exitCode": 0,
+      "seconds": 3.79,
+      "log": "/workspace/audit/integrated-frozen-guards/64.txt",
+      "summary": [
+        "  ok    a literal /api URL with credentials only (useVaultUpload, useSubmissions)",
+        "  ok    a URL passed as a PARAMETER (usePdevData.postJson \u2014 invisible to a URL sweep)",
+        "  ok    a ${BASE}${path} template (useEsignature \u2014 invisible to a URL sweep)",
+        "  ok    \"auth\" that is only a COMMENT",
+        "  ok    a baseline entry with no written reason",
+        "  ok    a baseline entry that no longer occurs",
+        "[ci:unauthenticated-fetch:selftest] the gate admits:",
+        "  ok    a public endpoint, judged by the SERVER allowlist (/api/auth/*)",
+        "  ok    the token sent through a local helper (useEstarFiling jsonHeaders shape)",
+        "  ok    the token sent through an init object passed by name (apiRequest shape)",
+        "",
+        "\u2705 ci:unauthenticated-fetch:selftest \u2014 every case behaves"
+      ]
+    },
+    {
+      "command": "npm run --silent ci:step-presentation",
+      "exitCode": 0,
+      "seconds": 0.89,
+      "log": "/workspace/audit/integrated-frozen-guards/65.txt",
+      "summary": [
+        "ci:step-presentation OK \u2014 618 in-scope tools each have a present entry (625 entries in all); 128 engine claims, none with a reachable model call."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:ai-tenant-binding",
+      "exitCode": 0,
+      "seconds": 1.47,
+      "log": "/workspace/audit/integrated-frozen-guards/66.txt",
+      "summary": [
+        "\u2713 ai-tenant-binding: every AnA gateway call binds its tenant; payloadProvenance 'public' only in allowlisted modules"
+      ]
+    },
+    {
+      "command": "npm run --silent ci:client-ip-single-source",
+      "exitCode": 0,
+      "seconds": 1.99,
+      "log": "/workspace/audit/integrated-frozen-guards/67.txt",
+      "summary": [
+        "\u2713 client-ip-single-source: no forwarding-header reads and no stray trust proxy in server/ or shared/"
+      ]
+    },
+    {
+      "command": "npm run --silent ci:validation-traceability",
+      "exitCode": 0,
+      "seconds": 0.38,
+      "log": "/workspace/audit/integrated-frozen-guards/68.txt",
+      "summary": [
+        "\u2713 validation traceability: every file cited by 7 URS document(s) resolves; every OQ step carries its protocol's kind"
+      ]
+    },
+    {
+      "command": "npm run --silent ci:internals-in-copy",
+      "exitCode": 0,
+      "seconds": 0.73,
+      "log": "/workspace/audit/integrated-frozen-guards/69.txt",
+      "summary": [
+        "check-internals-in-copy: no new occurrences. 0 baselined across 0 file(s)."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:empty-state-honesty",
+      "exitCode": 0,
+      "seconds": 0.9,
+      "log": "/workspace/audit/integrated-frozen-guards/70.txt",
+      "summary": [
+        "check-empty-state-honesty: no new occurrences. 1 baselined across 1 file(s)."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:fixture-fallback",
+      "exitCode": 0,
+      "seconds": 0.75,
+      "log": "/workspace/audit/integrated-frozen-guards/71.txt",
+      "summary": [
+        "[ci:fixture-fallback] `live ?? FIXTURE` and `live?.length ? live : FIXTURE` in client/src/concept2cure",
+        "  ungated content fallbacks  : 0",
+        "  baselined (known, unfixed) : 0",
+        "",
+        "\u2705 no new ungated fixture fallback. 0 baselined."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:document-alias-attribute-free",
+      "exitCode": 0,
+      "seconds": 0.24,
+      "log": "/workspace/audit/integrated-frozen-guards/72.txt",
+      "summary": [
+        "",
+        "[ci:document-alias-attribute-free] OK \u2014 1 statement(s) across 2 file(s); c2c_document_aliases still holds identities only.",
+        ""
+      ]
+    },
+    {
+      "command": "npm run --silent ci:canvas-path",
+      "exitCode": 0,
+      "seconds": 0.16,
+      "log": "/workspace/audit/integrated-frozen-guards/73.txt",
+      "summary": [
+        "\u2705 ci:canvas-path \u2014 thread \u2192 canvas \u2192 workbench, surface \u2192 workbench, tool registered, vault read, file-to-vault route: all wired; the founder-path walk runs project \u2192 agency within its baseline"
+      ]
+    },
+    {
+      "command": "npm run --silent ci:no-mock-in-prod-routes",
+      "exitCode": 0,
+      "seconds": 1.32,
+      "log": "/workspace/audit/integrated-frozen-guards/74.txt",
+      "summary": [
+        "\u2705 no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)"
+      ]
+    },
+    {
+      "command": "npm run --silent check:catalog-copy",
+      "exitCode": 0,
+      "seconds": 0.13,
+      "log": "/workspace/audit/integrated-frozen-guards/75.txt",
+      "summary": [
+        "[ci:catalog-copy] OK \u2014 119 catalog description(s) across 3 migration(s) read as product copy."
+      ]
+    },
+    {
+      "command": "npm run --silent check:ledger",
+      "exitCode": 0,
+      "seconds": 0.13,
+      "log": "/workspace/audit/integrated-frozen-guards/76.txt",
+      "summary": [
+        "",
+        "ledger-check \u2014 docs/GA_COMPLETION_LEDGER_2026-08.md",
+        "",
+        "  rows parsed:       202",
+        "  pending targets:   1",
+        "    \u00b7 L2 \u2192 docs/ANA_PERFORMANCE_ASSESSMENT_2026-08.md (not created yet)",
+        "  failures:          0",
+        "",
+        "  Ledger is internally consistent.",
+        ""
+      ]
+    },
+    {
+      "command": "npm run --silent ci:dead-audit-tables",
+      "exitCode": 0,
+      "seconds": 2.47,
+      "log": "/workspace/audit/integrated-frozen-guards/77.txt",
+      "summary": [
+        "[ci:dead-audit-tables] \u2705 19 dropped + 0 withheld table(s); none declared on the drizzle push surface (11 file(s) scanned); 19/19 in the migration's drop list; 78 permitted mention(s), baseline 78 (shrink-only)."
+      ]
+    },
+    {
+      "command": "node scripts/ci/check-node-runtime.mjs --self-test",
+      "exitCode": 0,
+      "seconds": 0.19,
+      "log": "/workspace/audit/integrated-frozen-guards/78.txt",
+      "summary": [
+        "Node runtime guard self-test passed: 9 simulated drifts were rejected; new and deleted workflow inventory was verified."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:tenant-isolation:selftest",
+      "exitCode": 0,
+      "seconds": 2.0,
+      "log": "/workspace/audit/integrated-frozen-guards/79.txt",
+      "summary": [
+        "  \u2713 GREEN \u2014 quoted SQL literals ('active', '') before the tenant filter do not hide it",
+        "  \u2713 GREEN \u2014 (org_id IS NULL OR org_id = $1) is global-or-own, and ($2 IS NULL OR status = $2) is not a tenant escape",
+        "  \u2713 GREEN \u2014 SQL inside comments, a table name only as a word, and tables that merely START with a tenant table name",
+        "  \u2713 GREEN \u2014 a reasoned // tenant-isolation-safe: marker suppresses its query and is recorded with its reason",
+        "  \u2713 BASELINE \u2014 written fingerprint is file#sha12:tables; a baselined finding passes; line drift and reflow do not churn it",
+        "  \u2713 BASELINE \u2014 editing a baselined unscoped statement makes it NEW (and the old entry reported resolved)",
+        "  \u2713 BASELINE \u2014 the same unscoped SQL in a second file is NEW (fingerprints are file-scoped: DP-37's second caller)",
+        "  \u2713 BASELINE \u2014 a fixed (stale) entry is reported as resolved, not fatal; the gate does not fail on over-allowance",
+        "  \u2713 BASELINE \u2014 --strict-no-regression with no baseline file fails",
+        "  \u2713 BASELINE \u2014 a legacy file:line:tables entry covers its (file, tables) at any line, and no other table set",
+        "",
+        "[ci:tenant-isolation:selftest] 23 passed \u2014 the gate fails on what it exists to catch. (1.8s)"
+      ]
+    },
+    {
+      "command": "npm run --silent ci:dead-audit-tables:selftest",
+      "exitCode": 0,
+      "seconds": 12.05,
+      "log": "/workspace/audit/integrated-frozen-guards/80.txt",
+      "summary": [
+        "  ok   the row-count refusal is announced, not silent",
+        "  ok   the foreign-key refusal is announced",
+        "  ok   the dependency refusal is announced",
+        "  ok   the absent phantom is counted, not treated as an error",
+        "",
+        "  notices emitted:",
+        "    [dead-audit-drop] keeping public.doc_activity_log \u2014 foreign key(s) from live_child point at it.",
+        "    [dead-audit-drop] keeping public.qc_compliance_history \u2014 DROP RESTRICT refused: cannot drop table qc_compliance_history because other objects depend on it",
+        "    [dead-audit-drop] KEEPING public.strategy_audit \u2014 1 row(s) present. An audit table with records is evidence under 21 CFR Part 11 \u00a711.10(e), not debris. It needs owner sign-off and a retention disposition before any drop; re-run this migration afterwards and it will be picked up with no edit.",
+        "    [dead-audit-drop] dropped 9, kept 3 (rows / dependencies / wrong relkind), 7 already absent.",
+        "",
+        "\u2705 drops what is dead, refuses what is not, and says which is which."
+      ]
+    },
+    {
+      "command": "npm run --silent ci:purge-coverage:selftest",
+      "exitCode": 0,
+      "seconds": 5.85,
+      "log": "/workspace/audit/integrated-frozen-guards/81.txt",
+      "summary": [
+        "  \u2713 FAILS closed when DATABASE_URL is unset",
+        "  \u2713 FAILS closed on a placeholder DATABASE_URL",
+        "  \u2713 FAILS closed, readably, when the database cannot be reached",
+        "  \u2713 FAILS closed on a partly provisioned database (3 of 4 probe tables) rather than measuring it",
+        "  \u2713 FAILS closed on an empty database rather than measuring it",
+        "  \u2713 FAILS closed when the offboarding service is missing",
+        "  \u2713 FAILS closed when PURGE_CHILD_TABLES is not a frozen literal it can read",
+        "  \u2713 FAILS closed on an entry it cannot interpret instead of dropping it",
+        "  \u2713 FAILS closed on a list with no public-schema entries",
+        "  \u2713 FAILS closed on a list that parses to zero entries",
+        "",
+        "[ci:purge-coverage:selftest] 30 passed \u2014 the gate fails on what it exists to catch."
+      ]
+    },
+    {
+      "command": "node scripts/ci/check-purge-coverage.mjs",
+      "exitCode": 0,
+      "seconds": 0.12,
+      "log": "/workspace/audit/integrated-frozen-guards/82.txt",
+      "summary": [
+        "   records with explicit retention policy (regulated content can block erasure): 3",
+        "     document_data_dispositions: Immutable attributed disposition receipts retained with the audit trail under POLICY-DR-007 section 1; UPDATE, DELETE and TRUNCATE are refused by the 20261006 migration.",
+        "     qms_document_versions: Immutable controlled-document snapshots contain signed prose or legacy registry content. Physical erasure requires governed retention review; a populated tenant is refused before any purge write.",
+        "     submission_orchestrator_inputs: Private immutable input snapshots and suspended outputs contain frozen submission and clinical content. Physical erasure requires governed retention review; a populated tenant is refused before any purge write.",
+        "\u2705 purge-coverage: 606 org-keyed tables outside the purge reach (baseline 612, new 0, 6 now covered).",
+        "   Newly covered \u2014 re-run with --write-baseline to lock the gain in:",
+        "     coauthor_import_history",
+        "     coauthor_status_history",
+        "     csr_extraction_log",
+        "     document_audit_log",
+        "     mdx_notifications",
+        "     qmp_audit_trail"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+mutant RV-01: the filing is not told the restored origin (trunk behaviour: NULL over model prose)
+verdict: KILLED
+Tests  2 failed | 35 passed (37)
+
+ × tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert carries the attribution the restored revision recorded (round 15, SEC-A-7 door 3) > restores draft_source from the revision instead of nulling it 141ms
+ × tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert carries the attribution the restored revision recorded (round 15, SEC-A-7 door 3) > survives a revert OF the revert: the attribution is recorded again, not spent 101ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 35 passed (37)

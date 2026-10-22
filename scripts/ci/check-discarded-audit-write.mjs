@@ -9,10 +9,11 @@
  * `persisted` (and in `chained`, which distinguishes the retrievable
  * `audit_logs` row from a tamper-proof-only write).
  *
- * Two syntaxes discard that value, and they are the same defect:
+ * Three syntaxes discard that value, and they are the same defect:
  *
  *     void auditService.logAction({ … });      // explicit fire-and-forget
  *     await auditService.logAction({ … });     // awaited at statement position
+ *     logAuditEvent({ … });                    // bare unawaited statement
  *
  * The second form reads more careful than the first and is not: awaiting a promise
  * and throwing away what it resolved to reports exactly as much as not awaiting
@@ -54,9 +55,10 @@
  * the mutation's own transaction, where a failed row rolls the mutation back.
  *
  * ── Deliberately narrow ───────────────────────────────────────────────────────
- * Only `void auditService.logAction(` in real code is reported. Comments and
- * string literals are stripped first: several files document this very defect by
- * quoting it, and a guard that fails on its own explanation is noise.
+ * Named outcome writers are checked at statement position, including bare
+ * calls. Promise chains, aliases and assigned-but-unused results still require
+ * semantic review; a zero census is not proof that every audit sink is sound.
+ * Comments and literals are not calls.
  *
  * Usage:
  *   node scripts/ci/check-discarded-audit-write.mjs              # fail on new
@@ -67,6 +69,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
+import ts from 'typescript';
 
 const ROOT = path.resolve(new URL('../..', import.meta.url).pathname);
 const BASELINE = path.join(ROOT, 'scripts/ci/discarded-audit-write-baseline.json');
@@ -123,7 +126,21 @@ const BASELINE = path.join(ROOT, 'scripts/ci/discarded-audit-write-baseline.json
  *     failure at warn level, by a decision its header states: an audit outage
  *     must not lock every user out of sign-in.
  */
-const AUDIT_CALL = String.raw`(?:auditService\s*\.\s*logAction|recordAuditRow|logAuditEvent|logAuditEntry|auditTaskAction)`;
+/*
+ * The named writers, plus an INJECTED one.
+ *
+ * `deps.audit.logAction(` was invisible here, and that is not hypothetical: on
+ * 2026-10-13 the device-profile route's discarded write was extracted into
+ * services/c2c/programme-profile-write.ts as an injected dependency, the gate
+ * went on reporting "no new occurrences", and the route's baseline slot was
+ * left vacant for a new discard to occupy in silence. A gate that a refactor
+ * can walk out of measures the spelling, not the defect.
+ *
+ * `\w+\.audit\.logAction` matches the injected form without matching every
+ * `.logAction` in the tree — the dependency is named `audit` by the two
+ * modules that inject one, and a third would be caught by the same shape.
+ */
+const AUDIT_CALL = String.raw`(?:auditService\s*\.\s*logAction|\w+\s*\.\s*audit\s*\.\s*logAction|recordAuditRow|logAuditEvent|logAuditEntry|auditTaskAction)`;
 
 /** `void auditService.logAction(` / `void recordAuditRow(` — fire-and-forget. */
 const VOID_WRITE = new RegExp(String.raw`\bvoid\s+${AUDIT_CALL}\s*\(`, 'g');
@@ -212,7 +229,7 @@ function isArgumentPosition(code, matchIndex) {
 }
 
 function sourceFiles() {
-  return execSync("git ls-files 'server/**/*.ts'", {
+  return execSync("git ls-files --cached --others --exclude-standard -- 'server/**/*.ts'", {
     cwd: ROOT,
     encoding: 'utf8',
     maxBuffer: 32 * 1024 * 1024,
@@ -235,6 +252,21 @@ export function scanSource(src, file) {
       hits.push({ file, line: code.slice(0, m.index).split('\n').length });
     }
   }
+  // A bare expression discards the same outcome without either await or void.
+  // Parse statement position so a returned arrow body, call argument or a
+  // promise chain that consumes its result is not mistaken for a discard.
+  // This remains a named-writer census, not proof that every assigned result
+  // is used or that every independent audit sink has the same contract.
+  const source = ts.createSourceFile(file, src, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const writer = new RegExp(`^${AUDIT_CALL}$`);
+  const visit = node => {
+    if (ts.isExpressionStatement(node) && ts.isCallExpression(node.expression) &&
+        writer.test(node.expression.expression.getText(source))) {
+      hits.push({ file, line: source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1 });
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
   hits.sort((a, b) => a.line - b.line);
   return hits;
 }
@@ -320,6 +352,21 @@ if (process.argv.includes('--self-test')) {
       const audit = await auditService.logAction({ action: entry.action });
       if (!audit.persisted) log.error('audit row NOT persisted', { a: 1 });
     }`;
+  /* The INJECTED writer. This shape was invisible until 2026-10-13, and an
+     extraction walked a real discarded write out of this gate through it. */
+  const INJECTED = `
+    async function f(deps, entry) {
+      await deps.audit.logAction({ action: entry.action });
+    }`;
+  const INJECTED_REPORTED = `
+    async function f(deps, entry) {
+      const audit = await deps.audit.logAction({ action: entry.action });
+      return { ok: true, audit };
+    }`;
+  const INJECTED_MEMBER = `
+    async function f(entry) {
+      await this.audit.logAction({ action: entry.action });
+    }`;
   const TWO = `
     async function f(entry) {
       void auditService.logAction({ action: 'a' });
@@ -333,6 +380,8 @@ if (process.argv.includes('--self-test')) {
   };
   say(scanSource(VOIDED, '<t>').length === 1, 'a void write is flagged');
   say(scanSource(AWAITED, '<t>').length === 1, 'an awaited write whose result is discarded is flagged');
+  say(scanSource('function f() { logAuditEvent({ action: "lost" }); }', '<t>').length === 1, 'a bare unawaited statement is flagged, including inline statements');
+  say(scanSource('const f = () => logAuditEvent({}); consume(logAuditEvent({}));', '<t>').length === 0, 'returned arrow bodies and arguments retain their results');
   say(scanSource(REPORTED, '<t>').length === 0, 'an awaited-and-reported write is not flagged');
   say(scanSource(RETURNED, '<t>').length === 0, 'a write returned to the caller is not flagged');
   say(scanSource(REASSIGNED, '<t>').length === 0, 'a write assigned to an existing variable is not flagged');
@@ -343,6 +392,12 @@ if (process.argv.includes('--self-test')) {
   say(scanSource(DISCARDED_TASK, '<t>').length === 1, 'a discarded auditTaskAction is flagged');
   say(scanSource(ENTRY_REPORTED, '<t>').length === 0, 'a logAuditEntry whose outcome is returned is not flagged');
   say(scanSource(DOCUMENTED, '<t>').length === 0, 'the defect quoted in a comment is not flagged');
+  say(scanSource(INJECTED, '<t>').length === 1, 'a discarded INJECTED deps.audit.logAction is flagged');
+  say(scanSource(INJECTED_MEMBER, '<t>').length === 1, 'and the this.audit.logAction form too');
+  say(
+    scanSource(INJECTED_REPORTED, '<t>').length === 0,
+    'an injected write whose outcome is returned is not flagged',
+  );
 
   // Case 4: the ratchet. A file baselined at 1 that now has 2 must fail.
   const baselineOne = { 'server/x.ts': 1 };

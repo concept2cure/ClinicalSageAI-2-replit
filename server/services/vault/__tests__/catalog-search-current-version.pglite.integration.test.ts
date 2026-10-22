@@ -13,7 +13,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { createJourneyDb, assertNoSchemaGaps, type JourneyDb } from '../../../../tests/golden-journeys/harness';
-import { PREREQ, VAULT_DDL, PROGRAM, PROGRAM_B, OTHER_PROGRAM, ORG } from '../../../routes/__tests__/_authoring-canvas-fixture';
+import { PREREQ, VAULT_DDL, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, PROGRAM_B, OTHER_PROGRAM, ORG } from '../../../routes/__tests__/_authoring-canvas-fixture';
 import { supersededSql } from '../vault-version-family';
 
 const h = vi.hoisted(() => ({ query: vi.fn() }));
@@ -25,10 +25,14 @@ let jdb: JourneyDb;
 const DISTANCE = 'c.embedding <=> $2::vector';
 beforeAll(async () => {
   jdb = await createJourneyDb({
-    prereqSql: PREREQ + VAULT_DDL,
-    migrations: ['migrations/20260905_document_catalog.sql', 'migrations/20261006_document_data_dispositions.sql'],
+    prereqSql: PREREQ + AUTHORING_ACCESS_DDL + VAULT_DDL,
+    migrations: ['migrations/20260905_document_catalog.sql', 'migrations/20261008e_document_catalog_attribution.sql', 'migrations/20261006_document_data_dispositions.sql'],
     testOnlySql: 'ALTER TABLE vault.document_catalog ADD COLUMN embedding REAL',
   });
+  await jdb.pool.query(`INSERT INTO organization_users (organization_id,user_id,role) VALUES (2,${AUTHOR.id},'member')`);
+  await jdb.pool.query(`INSERT INTO projects (id,organization_id,name,regulatory_program_id,owner_id,created_by_id)
+      VALUES (44,2,'foreign owned anchor','${OTHER_PROGRAM}',${AUTHOR.id},${AUTHOR.id})`);
+  await jdb.pool.query("INSERT INTO project_visibility_settings VALUES (44,2,'private')");
   h.query.mockImplementation((sql: string, params: unknown[] = []) => {
     if (!sql.includes(DISTANCE)) return jdb.pool.query(sql, params);
     const scalarParams = [...params];
@@ -70,7 +74,9 @@ async function catalog(id: string, options: { status?: string; embedded?: boolea
   [id, options.stale ? 'a'.repeat(64) : id.replaceAll('-', '').repeat(2),
     options.status ?? 'cataloged', `Summary of ${id}`, options.embedded === false ? null : 0]);
 }
-const search = () => searchCatalog(ORG, 'clinical endpoint', { programId: PROGRAM });
+const executor = { query: h.query };
+const actorOptions = { executor, userId: Number(AUTHOR.id) };
+const search = () => searchCatalog(executor, ORG, 'clinical endpoint', { userId: Number(AUTHOR.id), programId: PROGRAM });
 const ids = (result: Awaited<ReturnType<typeof searchCatalog>>) => result.hits.map(hit => hit.documentId).sort();
 
 describe('semantic catalog — current version, not a better indexed predecessor', () => {
@@ -85,14 +91,16 @@ describe('semantic catalog — current version, not a better indexed predecessor
     expect(JSON.stringify(result)).not.toContain(`Summary of ${old}`);
     const retained = await jdb.pool.query('SELECT id FROM vault.documents WHERE id=$1', [old]);
     expect(retained.rows).toHaveLength(1); // Search eligibility does not erase stored version history.
-    for (const [sql] of h.query.mock.calls) expect(sql).toContain(`NOT ${supersededSql('d')}`);
+    for (const [sql] of h.query.mock.calls.filter(([statement]) => statement.includes('FROM vault.documents d') || statement.includes('FROM vault.document_catalog c'))) {
+      expect(sql).toContain(`NOT ${supersededSql('d')}`);
+    }
     const { loadDocumentForOrg } = await import('../document-catalog.service');
-    expect(await loadDocumentForOrg(old, ORG)).toMatchObject({
+    expect(await loadDocumentForOrg(old, ORG, actorOptions)).toMatchObject({
       id: old, catalog: { summary: `Summary of ${old}` },
     }); // Explicit historical reads remain available, not default search evidence.
-    expect(await loadDocumentForOrg(old, ORG, { currentOnly: true })).toBeNull();
-    expect(await loadDocumentForOrg(current, ORG, { currentOnly: true })).toMatchObject({ id: current });
-    expect(await loadDocumentForOrg(old, 2)).toBeNull();
+    expect(await loadDocumentForOrg(old, ORG, { ...actorOptions, currentOnly: true })).toBeNull();
+    expect(await loadDocumentForOrg(current, ORG, { ...actorOptions, currentOnly: true })).toMatchObject({ id: current });
+    expect(await loadDocumentForOrg(old, 2, actorOptions)).toBeNull();
   });
 
   it.each(['no catalog', 'extracted', 'cataloged without embedding', 'stale catalog'])('reports %s current successor as unsearchable without returning the old summary', async state => {
@@ -130,7 +138,10 @@ describe('semantic catalog — canonical legacy-family boundaries', () => {
     await catalog(unrelated);
     const result = await search();
     expect(ids(result)).toContain(original);
-    expect(result.searchedCount).toBe('program' in different ? 1 : 2);
+    // Invalid lineage does not hide the original. A foreign/unattributable
+    // recorded source itself is not laundered through the owned parent.
+    expect(result.searchedCount).toBe('program' in different || 'organization' in different ? 1 : 2);
+    if ('organization' in different) expect(ids(result)).not.toContain(unrelated);
     expect(result.unsearchableCount).toBe(0);
   });
 
@@ -152,11 +163,11 @@ describe('semantic catalog — current evidence remains organization/project sco
     const foreign = await version({ program: OTHER_PROGRAM, organization: 2 });
     for (const id of [mine, sibling, foreign]) await catalog(id);
     expect(ids(await search())).toEqual([mine]);
-    const org = await searchCatalog(ORG, 'endpoint');
+    const org = await searchCatalog(executor, ORG, 'endpoint', { userId: Number(AUTHOR.id) });
     expect(ids(org)).toEqual([mine, sibling].sort());
     expect(org).toMatchObject({ searchedCount: 2, unsearchableCount: 0 });
-    expect(await searchCatalog(ORG, 'endpoint', { programId: OTHER_PROGRAM }))
-      .toEqual({ hits: [], searchedCount: 0, unsearchableCount: 0 });
-    expect(ids(await searchCatalog(2, 'endpoint', { programId: OTHER_PROGRAM }))).toEqual([foreign]);
+    await expect(searchCatalog(executor, ORG, 'endpoint', { userId: Number(AUTHOR.id), programId: OTHER_PROGRAM }))
+      .rejects.toMatchObject({ status: 404, code: 'PROJECT_NOT_FOUND' });
+    expect(ids(await searchCatalog(executor, 2, 'endpoint', { userId: Number(AUTHOR.id), programId: OTHER_PROGRAM }))).toEqual([foreign]);
   });
 });

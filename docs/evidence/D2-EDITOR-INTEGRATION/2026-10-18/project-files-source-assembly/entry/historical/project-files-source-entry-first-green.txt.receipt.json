@@ -1,0 +1,15 @@
+{
+  "originalPath": "/workspace/scratch/project-files-source-entry-first-green.txt",
+  "archivedAt": "2026-10-20T19:34:15.409867+00:00",
+  "rawBytes": 960,
+  "rawSha256": "e86e28ba4b1fa15a22e86c7eca01550f99e58598e6f9b3e40405bda11f2dffa6",
+  "rawUtf8": "\n RUN  v4.1.7 /workspace/ClinicalSageAI\n\n \u2713 client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > opens the shared chooser from a retained upload in a local host 359ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > opens the shared chooser from a retained upload in a external host 131ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > source launch eligibility ownership > retires a pending chooser across availability ABA 56ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > source launch eligibility ownership > retires a pending chooser across disabled ABA 53ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  00:54:25\n   Duration  2.13s (transform 558ms, setup 155ms, import 671ms, tests 603ms, environment 519ms)\n\n",
+  "capturedWrapperExitCode": null,
+  "qualification": "Original retained artifact has no captured shell/wrapper exit status. Test summaries and any JSON-embedded per-file lint exitCode values are retained as originally recorded; no wrapper status is inferred. Original UTF-8 bytes are preserved without normalization.",
+  "retainedSummaryLines": [
+    "Test Files  1 passed (1)",
+    "Tests  4 passed (4)",
+    "Start at  00:54:25",
+    "Duration  2.13s (transform 558ms, setup 155ms, import 671ms, tests 603ms, environment 519ms)"
+  ]
+}

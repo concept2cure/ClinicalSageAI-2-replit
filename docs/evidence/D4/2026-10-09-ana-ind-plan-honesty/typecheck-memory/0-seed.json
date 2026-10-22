@@ -1,0 +1,28 @@
+{
+  "command": [
+    "/root/.npm/_npx/d18f28baf1132559/node_modules/node/bin/node",
+    "--expose-gc",
+    "--max-old-space-size=6656",
+    "docs/evidence/D2-D5/2026-10-06-document-dispositions/typecheck-memory/c2c-ts-prewarm.cjs",
+    "seed",
+    "3000",
+    "6200"
+  ],
+  "exit": 0,
+  "elapsed_seconds": 37.075,
+  "result": {
+    "version": "5.6.3",
+    "mode": "seed",
+    "rootCount": 7098,
+    "sourceCount": 12157,
+    "skippedDuringNativeInvalidation": 1,
+    "pendingBefore": 1,
+    "pendingAfter": 1,
+    "checkedCount": 0,
+    "cachedDiagnosticFileCount": 0,
+    "rssMb": 5390,
+    "heapMb": 5144,
+    "gcEvents": [],
+    "checked": []
+  }
+}

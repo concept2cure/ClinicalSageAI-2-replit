@@ -1,0 +1,59 @@
+{
+  "fixture": "Current full 200-template provider/catalog; synthetic isolated API; actual library → canvas → workbench → TipTap",
+  "browser": "Chromium /usr/bin/chromium",
+  "createdAt": "2026-10-14T05:06:19.804Z",
+  "apiContractSha256": "ee58e2b7a35a7f075111acd4cd6f09878dd31e22957ecf7593c14a1bb048009f",
+  "testedHead": "013e54ba82d59f3eb74c854a324d27404b719af5",
+  "testedSourceSha256": {
+    "client/src/concept2cure/v2/editor/IndDocumentLibrary.tsx": "1d5f1bae0f8521032af536b74588241cc266f5e97a7e23ef31dde516ed902260",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "5dac26bbe5c2a53029b315f6603ab8c0bcfdfcf65462f45b4a941e82753bce96",
+    "client/src/concept2cure/v2/styles/rich-section-editor.css": "5653d4aa6e86f91a60b66c3faf4d6474129b5aad5e8f8f04f65c5c2cd0367c71"
+  },
+  "templateCount": 200,
+  "canonicalSections": 102,
+  "canonicalDeliverables": 93,
+  "moduleOutlines": 5,
+  "emptyOutlineSections": 2725,
+  "contexts": [
+    {
+      "label": "desktop-light",
+      "status": "pass",
+      "completedModules": 5,
+      "createdDocuments": 5,
+      "violations": 0,
+      "pageErrors": [],
+      "consoleErrors": []
+    },
+    {
+      "label": "desktop-dark",
+      "status": "pass",
+      "completedModules": 5,
+      "createdDocuments": 5,
+      "violations": 0,
+      "pageErrors": [],
+      "consoleErrors": []
+    },
+    {
+      "label": "touch-light",
+      "status": "pass",
+      "completedModules": 5,
+      "createdDocuments": 5,
+      "violations": 0,
+      "pageErrors": [],
+      "consoleErrors": []
+    },
+    {
+      "label": "touch-dark",
+      "status": "pass",
+      "completedModules": 5,
+      "createdDocuments": 5,
+      "violations": 0,
+      "pageErrors": [],
+      "consoleErrors": []
+    }
+  ],
+  "limitations": [
+    "Browser API data is synthetic; this evaluates native client behavior, layout and accessibility, not live server authorization or persistence.",
+    "Only five representative section templates per context are created; full template completeness is separately evidenced by current provider JSON and server/database checks."
+  ]
+}

@@ -29,7 +29,7 @@
  * codebase hedges on.
  */
 import { describe, it, expect } from 'vitest';
-import { getApplicationType } from '../../../../../shared/regulatory/global-document-registry';
+import { getApplicationType, GLOBAL_REGISTRY } from '../../../../../shared/regulatory/global-document-registry';
 import {
   getSubmittability,
   buildSubmittabilityReport,
@@ -102,11 +102,11 @@ describe('submittability honours the channel the entry declares', () => {
     expect(ind.tier).toBe('submittable');
   });
 
-  it('is the one channel function: CTIS is a portal, an EMA device filing goes to EUDAMED', () => {
+  it('is the one channel function: CTIS is a portal, an IVDR PER retains its Notified Body recipient', () => {
     expect(submissionChannelFor(getApplicationType('EU_CTA')!).kind).toBe('portal');
-    expect(submissionChannelFor(getApplicationType('EU_PER')!)).toEqual({
-      kind: 'gateway', region: 'ema', name: 'eudamed',
-    });
+    const per = submissionChannelFor(getApplicationType('EU_PER')!);
+    expect(per.kind).toBe('unconnected');
+    if (per.kind === 'unconnected') expect(per.channel).toMatch(/Notified Body/);
     expect(submissionChannelFor(getApplicationType('US_IND')!)).toEqual({
       kind: 'gateway', region: 'fda', name: 'esg',
     });
@@ -160,17 +160,17 @@ describe('an EMA filing outside the centralised procedure is not sent to the eSu
     }
   });
 
-  it('fails closed for an EMA filing whose channel is not modelled — never the CESP region default', () => {
-    // These EMA-agency entries have no modelled channel. Falling through to
-    // REGION_IDENTITY.EU (cesp) reported them submittable through CESP, a
-    // channel nothing on record says accepts them.
-    for (const id of [
-      'EU_EUDRAVIGILANCE_ICSR', 'EU_PSMF', 'EU_ACCEL_ASSESS', 'EU_REF_LAB',
-      'EU_PERF_STUDY', 'EU_PMPF', 'EU_IVD_REEVAL', 'EU_IVDR_ART48_CONSULT',
+  it('fails closed for each actual recipient whose channel is not modelled — never the CESP region default', () => {
+    // Device recipients read from their corrected registry identities, rather
+    // than reasserting the former EMA metadata as a premise.
+    for (const [id, agency] of [
+      ['EU_EUDRAVIGILANCE_ICSR', 'EMA'], ['EU_PSMF', 'EMA'], ['EU_ACCEL_ASSESS', 'EMA'],
+      ['EU_REF_LAB', 'EU_Reference_Laboratory'], ['EU_PERF_STUDY', 'National_Competent_Authority'],
+      ['EU_PMPF', 'Notified_Body'], ['EU_IVD_REEVAL', 'Notified_Body'], ['EU_IVDR_ART48_CONSULT', 'EMA'],
     ]) {
       const entry = getApplicationType(id);
       expect(entry, `${id} missing from the registry`).toBeTruthy();
-      expect(entry!.agency, `the premise: ${id} is an EMA-agency entry`).toBe('EMA');
+      expect(entry!.agency, `the premise: ${id} retains its actual recipient`).toBe(agency);
       const ch = submissionChannelFor(entry!);
       expect(ch.kind, `${id} fell through to the region default`).toBe('unconnected');
       const text = ch.kind === 'unconnected' ? `${ch.channel} ${ch.reason}` : '';
@@ -178,5 +178,67 @@ describe('an EMA filing outside the centralised procedure is not sent to the eSu
       expect(text, id).not.toMatch(/Centralised procedure|eSubmission Gateway/);
       expect(getSubmittability(entry!).tier, id).toBe('no_gateway');
     }
+  });
+});
+
+describe('the registry declares IRIS for the EMA filings that go through IRIS', () => {
+  /* 2026-10-05 (step g-eu-medicines-dated-facts; finding 45). EU_ORPHAN,
+     EU_PIP, EU_SCIENTIFIC_ADVICE and EU_PRIME declared submissionFormat 'eCTD'
+     (and EU_PIP ctdModule 'M1 (EU regional)'), while EMA receives them through
+     IRIS (regulator text, ema.europa.eu — g-eu-medicines-dated-facts-facts.md).
+     The channel function knew it only from a list of ids beside the registry;
+     now the registry entry says it, and the channel is read from the entry. */
+  const IRIS_IDS = ['EU_ORPHAN', 'EU_PIP', 'EU_SCIENTIFIC_ADVICE', 'EU_PRIME'];
+
+  it('declares IRIS, not eCTD, on orphan designation, PIP, scientific advice and PRIME', () => {
+    for (const id of IRIS_IDS) {
+      const entry = getApplicationType(id);
+      expect(entry, `${id} missing from the registry`).toBeTruthy();
+      expect(entry!.submissionFormat, id).toBe('IRIS');
+      expect(entry!.dossierStandard, `${id} is not an eCTD dossier`).not.toBe('eCTD');
+    }
+    // A PIP application is not the MAA's Module 1 paediatric section.
+    expect(getApplicationType('EU_PIP')!.ctdModule).toBeUndefined();
+    expect(getApplicationType('EU_PIP')!.moduleAuthority ?? '').toMatch(/IRIS/);
+  });
+
+  it('routes every entry the registry declares IRIS to EMA IRIS, and no other entry', () => {
+    const declared = GLOBAL_REGISTRY.filter((e) => e.submissionFormat === 'IRIS').map((e) => e.id).sort();
+    expect(declared).toEqual([...IRIS_IDS].sort());
+    for (const entry of GLOBAL_REGISTRY) {
+      const ch = submissionChannelFor(entry);
+      const isIris = ch.kind === 'unconnected' && /IRIS/.test(ch.channel);
+      expect(isIris, `${entry.id}: IRIS channel must follow the declared format`).toBe(
+        entry.submissionFormat === 'IRIS',
+      );
+    }
+  });
+
+  it('never reports an IRIS filing submittable, and keeps the centralised MAA on the eSubmission Gateway', () => {
+    for (const id of IRIS_IDS) {
+      expect(getSubmittability(getApplicationType(id)!).tier, id).not.toBe('submittable');
+    }
+    const maa = submissionChannelFor(getApplicationType('EU_MAA')!);
+    expect(maa.kind).toBe('unconnected');
+    if (maa.kind === 'unconnected') expect(maa.channel).toMatch(/eSubmission Gateway/);
+  });
+});
+
+
+describe('corrected device recipient identity cannot inherit a regional gateway', () => {
+  it.each([
+    ['EU_PERF_STUDY', 'National_Competent_Authority', /national competent authority/i],
+    ['EU_REF_LAB', 'EU_Reference_Laboratory', /reference laboratory/i],
+    ['JP_NINTEI', 'Registered_Certification_Body', /registered certification body/i],
+  ] as const)('%s recipient has no modelled submission channel', (id, agency, body) => {
+    const entry = getApplicationType(id)!;
+    expect(entry.agency).toBe(agency);
+    const channel = submissionChannelFor(entry);
+    expect(channel.kind).toBe('unconnected');
+    if (channel.kind !== 'unconnected') throw new Error('An unmodelled device recipient inherited a gateway.');
+    expect(channel.channel).toMatch(body);
+    expect(channel.reason).toMatch(/not modelled/);
+    expect(channel.applicantStep).toMatch(/confirm|specified/i);
+    expect(getSubmittability(entry).tier).toBe('no_gateway');
   });
 });

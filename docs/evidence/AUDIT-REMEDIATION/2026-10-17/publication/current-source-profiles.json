@@ -1,0 +1,857 @@
+{
+  "profiles": [
+    {
+      "rawArtifact": {
+        "artifact": "oct17-ui-acceptance.json",
+        "sha256": "1cb8b17926b9756f0837cf6f021c4ad8f091ad4c62605818b0509b31aaa8959b",
+        "bytes": 10537
+      },
+      "scope": {
+        "originalConflictFiles": 14,
+        "resolvedFilesAndCompanions": 23,
+        "reviewedWithoutEdits": [
+          "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+          "client/src/concept2cure/quality/data.ts"
+        ]
+      },
+      "currentSourceFilesVerified": 23,
+      "files": [
+        {
+          "file": "client/src/concept2cure/mdx/hooks/useAnalytics.ts",
+          "sha256": "2baaf31a36923a0465ce8e7868b5993828990f9307008dfe4eba749fd0163845",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/mdx/surfaces/AnalyticsSurface.tsx",
+          "sha256": "20058948123c72df75df7fcf417fe64b327c2738daa9032ecc110559fa078036",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/mdx/surfaces/__tests__/AnalyticsSurface.availability.test.tsx",
+          "sha256": "b229aedbaa223f90b6977e7c3a21961d219830dd2076f17cf50ac8c127da89ae",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/quality/App.tsx",
+          "sha256": "ed896db3c15a644f7f9bd3b0a17c284ed6b3deb07631cafc5b6a20a2ccf450ae",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/quality/ChangeControl.tsx",
+          "sha256": "c0788365c3fec9fa27ec07c99d523fecf76ea3193254471e5845bbf26404f0b4",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/quality/NewControlledDocumentForm.tsx",
+          "sha256": "5c10bdb8def6e8b5f94ae759db92c38ef3d1cd39637ff273801b64165819923a",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/quality/SopRegister.tsx",
+          "sha256": "3fe56bdcc81cadc6f52ee3a31954e5ffd9820e0752fa13753f5a25e2b1a0e916",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx",
+          "sha256": "872961bac2f7f39cf7bd4f305dc3c01727d08ebc43c007b8db8003acbfd6d031",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/quality/qmsWrites.ts",
+          "sha256": "d56712589674ece3d55613e9304b9f297369f000224c4fb667d397ad7f141c78",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx",
+          "sha256": "02fab3fa453390344f75f953de2bf61dfdbdc9afcf77e8c42e65741705501f1a",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/__tests__/protocolDevPicker.test.tsx",
+          "sha256": "ad89822252f9c56c1e8e65b36b55b47e30a0c2754c62a52ff53efe328073e2a2",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts",
+          "sha256": "0ec861b39a894a2a8a12b9ffcddeb216703af5dac7561b702f9deaa29fb72777",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx",
+          "sha256": "5d1dfc41780f523cc984b972080ef102949cdde6547123b5058dcc5f7b1649ac",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/__tests__/usageBillingControls.test.tsx",
+          "sha256": "98007f5d93c386a03b3f733ca9a642e98639477fa98e20ba6c7ab7d7757155a7",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx",
+          "sha256": "056e4182f7bb462bc0535981ef748fa70f99488c25dde7e8a7cff58807b07fcd",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/shellProject.ts",
+          "sha256": "f79651896b6b87dc974140fd02950ab1e872d34173fdccb13278570b9dd3d8e1",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+          "sha256": "6b37d233b053253d95a497dcc886fd9fce61d2fc509ba1695fc86f5a0a733c17",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/surfaces/GatewayTransmittals.tsx",
+          "sha256": "4b76b6c2fc787a6d976f08df4f8f1c4a4259677a7d196787c96ff7be033caca0",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/surfaces/ProtocolDev.tsx",
+          "sha256": "79bc635b9e169a4ef4f75897102c3a5180ac96b6cde6b61065724ad9490a0e63",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+          "sha256": "3712faf90148e0fa3106c5e0ee9227710cc0400450ec5458a7be1c9ec8e6144f",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/surfaces/UsageBilling.tsx",
+          "sha256": "e2d9e1557024f384a0f0ebdbe0123ba0190d24dd5c6063e72123278abf740894",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/surfaces/submissionNavTarget.ts",
+          "sha256": "2165334a07c3b6d81633a8b5c12081805f3575f140f1eab53cb6fabde271ca46",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "tests/mdx-qms-labeling-search-analytics-routes.test.ts",
+          "sha256": "c439973834ec007810293f93455a606c73293bb4f41071063cdcb61468d83aae",
+          "qualificationStatus": "current scoped proof"
+        }
+      ],
+      "supersededNativeFixtureHashes": {},
+      "nativeFixtureReplacementProofs": {},
+      "supersededUiRecoveryHashes": {
+        "client/src/concept2cure/v2/surfaces/CmcModule.tsx": "2f9164b119b6d725ecbe00f42cef0e10a22254ae04dabe1477e8a595a92af707"
+      },
+      "uiRecoveryReplacementProfile": "oct17-recovery-ui-acceptance.json",
+      "historicalNativeFixturesNotRequalified": {}
+    },
+    {
+      "rawArtifact": {
+        "artifact": "oct17-routes-acceptance.json",
+        "sha256": "979be87c6c6040d7c1080abf5bbdec4e5ad973d9534f60bc5fa5fcc9b4b5d267",
+        "bytes": 4071
+      },
+      "scope": "Oct17 route merge integration; no staging or commit by delegated agent",
+      "currentSourceFilesVerified": 16,
+      "files": [
+        {
+          "file": "server/routes/__tests__/audit-services-figures-call-the-engine.test.ts",
+          "sha256": "d06af240d66c232286956b3db91d395c846b9f47785a97bdb62363b14a0e0e37",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/routes/__tests__/audit-services-keywords-call-the-engine.test.ts",
+          "sha256": "5bd354d618b277b2dcfc7199183326aba755747d6976aeb464ac96e02fb94b6b",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/routes/__tests__/authoringAiDraftAccept.test.ts",
+          "sha256": "d58fa07968fc6f39af78c7432c58222a1ce1581632072392f107cb03af1c008c",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/routes/__tests__/capa-mdr-complaint-intake.test.ts",
+          "sha256": "4be9e6d4cee4918289fb0413d3444124d901ebfdda008438fb095e64e2c60157",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/routes/__tests__/licensing-routes-fail-closed.test.ts",
+          "sha256": "4de2cc00ce0214d5f9076bf07391b2970f4c67939938b5a84ca27c76eed6e9d9",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts",
+          "sha256": "5b5e8491f3d95403333b09f9380bc54e66b5224ac3db0a8605df91e635061779",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/routes/__tests__/submissions-program-anchor.test.ts",
+          "sha256": "f7af25d4507444d1f9030232b05b6f183bcbe97f6e5fe92ea372682b8cba4da8",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/routes/audit-services.ts",
+          "sha256": "da4d1f89ee3cf4295dbb451b5380a0115e1bd29413e37e856e2589549d187be9",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/routes/c2c/__tests__/communication-advance.pglite.test.ts",
+          "sha256": "d3c3f4c1ab822e12129a988431aa249188ea227353e38b22f8956c2e088ce8c7",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/routes/c2c/__tests__/communication-center.test.ts",
+          "sha256": "60d27d50dc4cdde788984e1f2347f83e37eb6fac62a98e33a2240e30c6ee178e",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/routes/c2c/communication-center.ts",
+          "sha256": "aa29f5e556e2487d01f3ca5a47cb0f47948ac09f5fbae7e67a5452a65014fda6",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/routes/capa-mdr.ts",
+          "sha256": "572c445e7ec42842b5cafb67eba9156b6ea2ba12e8e3e7b1c8e8cfed8b939aa9",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/routes/ind-lifecycle/filing.routes.ts",
+          "sha256": "bbf671f256a38aad737465c73cfc389826242121e3636334b0927bfa7b9d1475",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/routes/licensing.ts",
+          "sha256": "44c3a03f07bd92278c8f5287dd798595095aa9dce9053a2a1418d7c37cc47fe3",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/routes/mdx-submission-gateway.ts",
+          "sha256": "2ffad64c03369b782cd2119cf085fff490072a2fda4d9ec5e2ac0031b07e074f",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/routes/submissions.ts",
+          "sha256": "761cf923863d8280e136f2c2c609df0ca72df304be839c0be8647f6607cb44e2",
+          "qualificationStatus": "current scoped proof"
+        }
+      ],
+      "supersededNativeFixtureHashes": {},
+      "nativeFixtureReplacementProofs": {},
+      "supersededUiRecoveryHashes": {},
+      "uiRecoveryReplacementProfile": null,
+      "historicalNativeFixturesNotRequalified": {}
+    },
+    {
+      "rawArtifact": {
+        "artifact": "oct17-domain-acceptance.json",
+        "sha256": "8c20a20059267171262b3a0e5a6b6d167889be94d6fc3a47a3ada726a625f49e",
+        "bytes": 6040
+      },
+      "scope": "Oct17 domain/service canonical merge integration",
+      "currentSourceFilesVerified": 19,
+      "files": [
+        {
+          "file": "server/services/__tests__/figure-generation-a-failed-store-or-read-is-a-failure.test.ts",
+          "sha256": "839e4883f3468c28abcf95fb3f669240d9bd2a12411316fed984dde8523da40c",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/__tests__/figure-generation-reports-rows-used-not-a-confidence.test.ts",
+          "sha256": "abe5e0801e59640d2da39b092591b4cb88566d75ecbe792363a01793237e86d3",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/__tests__/figure-numbers-count-untargeted-figures.pglite.test.ts",
+          "sha256": "8beb85fa1b76f928de86e83eb3a2447f064a93cd183d91b27704a82ad67d9605",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/__tests__/part11-audit-receipts.test.ts",
+          "sha256": "d55684b4992a1575af9a3321d7884a1a7292368c8fbbd2764ec8fb526aa9349d",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/etmf/tmf-artifact-persistence.ts",
+          "sha256": "f8fedf00715199a4cd428d5be1617067d3adcec32cbe4f01b8a728e80300c262",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/figureGenerationService.ts",
+          "sha256": "4bfc17a7c4d01f286c0826e5a577a9f965c965eaa3d8f8ddd9ab6151d6398fe0",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ind-lifecycle/ind-annual-report-persistence.ts",
+          "sha256": "2a4528aba8b7d7f91565135e710da201f718a99b026001a7ecc0fcd3d034de7a",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/keywordExtractionService.ts",
+          "sha256": "d5733a86f443d07a371017f0d49e7d406aedddc8edf740e107ef456de8f46311",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/licensing/__tests__/eula-acceptance-audit.pglite.test.ts",
+          "sha256": "eed6637e18138973a367e2dbca14f1b48b04bbda61d9b5347f5bf978ae90f698",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/licensing/__tests__/eula-reads-fail-closed-and-acceptance-binds-text.test.ts",
+          "sha256": "8402968f84fa9582e50e747352e86c43ed004ae2a2f30f2fcbba4bead4202968",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/licensing/eula-service.ts",
+          "sha256": "ebefee016b775fe293cc0604e99cfbf46f3d3dedeedae421f4874c68db27f1fe",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/part11ComplianceService.ts",
+          "sha256": "6f110f763046c1121885bfd0fb295bfc1a391e7b0f43ac32196e2b26638f4414",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/regulatory-graph/__tests__/defense-packet-staleness-names-the-machine-actor.test.ts",
+          "sha256": "d8dfb6d9f2ff785fb9e069e48fbec9d006de392c2fae9705a8d9389a4b1c8d0c",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/regulatory-graph/defense-packet-staleness.service.ts",
+          "sha256": "b7be46a3dc305bc5e5617348814d0f12f85751d0b74a59502a2b34d6485d60cb",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/submission-gateways/acknowledgement.ts",
+          "sha256": "dc4ce78d8bc16da95447507a212bcb027f62d5accd7c9b3ace9ae6508e38ea93",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/submission-gateways/fda-esg.ts",
+          "sha256": "97bd78ca13f8dbdeb9d03430f6e0135cb0c97a6e8f033414875280103ef3f22d",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/submission-gateways/types.ts",
+          "sha256": "f04723661b5f0347a3444e5bf6032ec2884d954d085503204eb7504104993369",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "tests/db/content-audit-consumers.dbtest.ts",
+          "sha256": "df2b8df96f962fc4e96093179f44124f8b9921e8df488df1a4fe17f2da4d9c9c",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "tests/db/part11-audit-receipts.dbtest.ts",
+          "sha256": "d1f78917e355959be0eb7e3af5a1d24c8afa79f5183255d67b4684287c137719",
+          "qualificationStatus": "current scoped proof"
+        }
+      ],
+      "supersededNativeFixtureHashes": {
+        "tests/db/part11-audit-receipts.dbtest.ts": "bf3c61405ff71750d3af48b459c1a6d0043d371da98ee4f48a002590faceab5d",
+        "tests/db/content-audit-consumers.dbtest.ts": "5049cc98a23712880766d7fbd1acfd51b998f26d696c3b2f7161a2e61cc6c08a"
+      },
+      "nativeFixtureReplacementProofs": {
+        "tests/db/part11-audit-receipts.dbtest.ts": "oct17-transport-tls-final-native.json",
+        "tests/db/content-audit-consumers.dbtest.ts": "oct17-remaining-transport-features-native.json"
+      },
+      "supersededUiRecoveryHashes": {},
+      "uiRecoveryReplacementProfile": null,
+      "historicalNativeFixturesNotRequalified": {}
+    },
+    {
+      "rawArtifact": {
+        "artifact": "oct17-sources-checkpoint-current-acceptance.json",
+        "sha256": "4cd71628a0f649b885819aa883ca1bc86852897d2ac48e1ffa069f58d3cdc92c",
+        "bytes": 30260
+      },
+      "scope": null,
+      "currentSourceFilesVerified": 45,
+      "files": [
+        {
+          "file": "server/routes/__tests__/ana-intelligence-source-context.test.ts",
+          "sha256": "06d32131b4adf4e93c84c386e2bb94e9f052fa29e377b69dd64a1922b8a85182",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts",
+          "sha256": "a1a4e35bf9e686cded1bb5bbec05961b1643738673663e8c78d8b0d3e4456aae",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/routes/ana-intelligence-batch-input.ts",
+          "sha256": "a7c78450d3bb8250595091745a93f7886dc41f841629f39ce370ff14851172f0",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/routes/ana-intelligence.ts",
+          "sha256": "08bc86115d096a65a10516df396ad103c4e0cf9887d5d762b9cc1703bcaf678e",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/routes/authoring.router.ts",
+          "sha256": "48964d9c4e8da9ff91e2296737605718ebdaab1390b24eca2edb05ed435051fb",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ai-gateway/__tests__/gateway-source-checkpoint-error.test.ts",
+          "sha256": "698c48a7079a3df75bc0a9f6d4451f3ae98e3a50ecb7e5a19bfc71051ab9e3c7",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts",
+          "sha256": "6559f7a1628faac5a3bbc58fa25a33d9c15c4b99fce251ccb1dec48203a9ea89",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ai-gateway/gateway-error-map.ts",
+          "sha256": "c0ca52e155ea99cd17a3c59f1ae513c9f93467ab65e2c045168ecf9bb13d52e0",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ai-gateway/gateway.ts",
+          "sha256": "c386323b2d8cabb58701692494f503a22ded7aad257664700b789077ce5348e6",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ai-gateway/types.ts",
+          "sha256": "435e835e322defd5a81918578c081f343737376691e8e0d2d7eb7c84b3ea5129",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ana/AnaDocumentDraftingService.ts",
+          "sha256": "183507536e25deb22838767b6543631c8a74036ef4548bf165f53f03ebb80b8b",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ana/AnaToolExecutor.ts",
+          "sha256": "0f635afe9069793ef40d54507b2d4e8737ac0eec76204fb86fc561a74b907fcb",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ana/__tests__/batch-draft-sections.test.ts",
+          "sha256": "401ebd2fa922d261408c584709f1c3e14dfa8a254d7816fcd9dcd77a7f545785",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ana/__tests__/blueprint-grounded-drafting.test.ts",
+          "sha256": "3f2208a0971ba7fb697e9e012b855b611694124d1493f76227c6e883979d9fde",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts",
+          "sha256": "edcd80e2ed9effdb50da99bd54cf83db0871c1bf33916775eab8376c488d284d",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ana/__tests__/draft-authoring-source-schema.test.ts",
+          "sha256": "0e0d02ff580c0b4253ab21e060af5cc835e7fe59c41fcb01dc31bb9ca8363985",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts",
+          "sha256": "364ad83313ba343653b7055b928a101690fd3c0323db1c1e239b0d91f610e505",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ana/__tests__/draft-project-sources.test.ts",
+          "sha256": "038050c181347aa4cef241eb7f0f569e900d3ea3714391f03409730189c550c6",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ana/__tests__/draft-source-context-authority.test.ts",
+          "sha256": "3cdfc7f99b93727674251da647c85dda38d0b2dabda18deafeae8e08b2b5d476",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ana/__tests__/draft-source-identity.test.ts",
+          "sha256": "afd9143794cf8af09d059839fdd9ac7cb5f13e4d4509a10cade99a8f4ac65854",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ana/__tests__/draft-source-service-checkpoint.test.ts",
+          "sha256": "6488c053c61200939bc23111c3b018b9148936c7e99e71b89981562dcfa5a46d",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ana/__tests__/governed-reason-not-invented.test.ts",
+          "sha256": "32117166ce4c53fc02895396d3173b5bf78a8b927c70b7d6dfd2f8e2c3308ddf",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ana/__tests__/support/canonical-positional-reason-controls.ts",
+          "sha256": "3946de7641b050756ee2cf17fe345ca3175edc527ac19542f5b53869400083be",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ana/__tests__/support/draft-source-tool-v2-controls.ts",
+          "sha256": "249009aaadaa15255284dffe21ea8613743d69b0afead129fb606e29b5443a2d",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ana/__tests__/tool-trace-document-ids.test.ts",
+          "sha256": "3da56bbd68561f13fd321f2d0be3fe231477770434b184c6adb3db0174b2a1ec",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ana/document-surface-tool-defs.ts",
+          "sha256": "1378083e6971b1a35fd20ddc6cf3b8477967d2a1b1dd777a906aede51f7932ee",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ana/draft-project-sources.ts",
+          "sha256": "ecc39eec0bf741a62e3135d117a9f3003706fc7d05bdd0f70c15895f3abe81f2",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ana/draft-source-identity.ts",
+          "sha256": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ana/tool-trace.ts",
+          "sha256": "04c88f5259f8587cacfdca616b822db1d168896b8af900e1cd17840298c2660d",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/authoring/__tests__/authoring-create-outcome.test.ts",
+          "sha256": "f574053354eab92f5379e4b899f49902c089b8bf6e49e40d1c30e2f08b7057e1",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts",
+          "sha256": "de77a1df3d92b2a7133042033f1848f37c2bfbc47a3dc91333b80c4e55eae84c",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/authoring/__tests__/draft-source-references.test.ts",
+          "sha256": "017fd18724a9fbcc77a36d061eb44b31634a641fd33e9921f4fa489cef582120",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/authoring/__tests__/saved-draft-source-export.test.ts",
+          "sha256": "fe38e93a6ab3249a6738110fd966315a31b0aec5232156c002d4377d551f2a8b",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/authoring/__tests__/saved-draft-source-reservation.test.ts",
+          "sha256": "fd6777c13fa09de38b2a4afa33663c8e038adb04a37bf91c190d46dfb5f9028f",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/authoring/authoring-create-outcome.ts",
+          "sha256": "4fd2eb19d83947cc2310a8ce90dd33c37251ff0160d76cf2fe024682793101ef",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/authoring/authoring-documents.ts",
+          "sha256": "0fbcfcaddb0e301dcd24e1f6ada579f7f2a855b0f577126b567176aeb54f9501",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/authoring/authoring-draft-tool.ts",
+          "sha256": "7dec0f3721541f9b4a08bcef7d34ff98f537ece0ff793083d4961a2270a9a00d",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/authoring/authoring-from-draft.ts",
+          "sha256": "2275be58ccd905a1e92ec412be031955a14f6bd4385cbab4f3b24c2106eae3e5",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/authoring/draft-source-references.ts",
+          "sha256": "048a5987fcafeba5c4decaedabd3fa857c6246342215d31713b60fe62359ad66",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/c2c/governed-document-binding.ts",
+          "sha256": "f958d37873664f4323e6708068732b57fc3970187ab02e959b366547fe92de45",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts",
+          "sha256": "bab92a19dcc83ed176c85eedb7e7886506f30eb0055ec18bcb3672062e0d0803",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/vault/document-catalog-actor-reads.ts",
+          "sha256": "a5ee942856aeadb7ce4c68eb62f0cf53fc508234657767a9eada8c0810eab7e1",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/vault/document-catalog-document.ts",
+          "sha256": "9ea10fa9f063d49915696d0a42ff002299806d464111d206f71633bf5baefda4",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "shared/authoring/draft-source-reference.ts",
+          "sha256": "02277e41fd4d967f1e1461ceb44b117e445a199570f521a04324fca328d6740d",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "tests/db/data-room-processing.dbtest.ts",
+          "sha256": "eb18b1beca41f8e5fb2ae862bd0bdcfb83605a12e28c4d26be38c56b2417bb03",
+          "qualificationStatus": "current scoped proof"
+        }
+      ],
+      "supersededNativeFixtureHashes": {},
+      "nativeFixtureReplacementProofs": {},
+      "supersededUiRecoveryHashes": {},
+      "uiRecoveryReplacementProfile": null,
+      "historicalNativeFixturesNotRequalified": {}
+    },
+    {
+      "rawArtifact": {
+        "artifact": "oct17-semgrep-remediation-summary.json",
+        "sha256": "52623a111f76a416ceb555b7c279cfa71c223dbd182e24c255a2b8e473be9490",
+        "bytes": 5716
+      },
+      "scope": "Owned source and companion fixes after incoming bfec9be6 integration; no whole-repository Semgrep pass is claimed",
+      "currentSourceFilesVerified": 19,
+      "files": [
+        {
+          "file": "server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts",
+          "sha256": "c1ebe6c386594451825c91cc1835135e6c1d772af87792abaf7cdc3e425b0e69",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+          "sha256": "d267ee0c569edddf9b367107a43ba8f086b11453b790321c830aa04ac0b22ec0",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/routes/__tests__/ledger-routes-refuse-unstated-inputs.test.ts",
+          "sha256": "23d642904ef8b327f92665a91987960dccc57106fc0689733273e953d82de522",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/routes/fda-forms.routes.ts",
+          "sha256": "68c5d3599efcc408b546bdaa5fd7fbd9009cb68cfe919ed6c16b1e4d7e594bae",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/DocumentOrchestrationService.ts",
+          "sha256": "f2a88484e93556d3fd43a941590dc771a0217f6b485e89ce82a98616143c5583",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/__tests__/assumption-registry-records-only-what-was-stated.test.ts",
+          "sha256": "b8802902ac02ff30d9825998c2081b3753945ed698d30eb67424db56f6dc6a76",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/__tests__/export-service-archive-is-a-real-zip.test.ts",
+          "sha256": "ce4519990032af228a3a3fea74f6750fa5cf5f09fd555d39f6a25ee4b52cb2a0",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ana/__tests__/draft-source-window.test.ts",
+          "sha256": "21c11c174af99311e570f9b16963d60fa81ec172573b00711d144619094278cf",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ana/__tests__/ibc-iacuc-tool-defs-describe-unstated-answers-and-expiry-source.test.ts",
+          "sha256": "c0324a846a0e6c6f398b5336d8dd0e65ca65f762617544d1bdb8132adc18ef7e",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ana/draft-source-window.ts",
+          "sha256": "674575e6f1a7e97883874e18fd4490648036fec90cd2377f73250f8102ca1544",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/c2c/__tests__/commitSectionMarketScope.test.ts",
+          "sha256": "58db8a5554611581bc12d4fcadc283d4e6cfa73769c51b6271d9ca1f8a1e73d6",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/export-service.ts",
+          "sha256": "b1ba7fb14eadd0147cb87bf9c705ae9bcd0e84a06d44807feba10f69574f8ffe",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/global-ri/__tests__/regulatory-fee-estimator-orphan-fee-effect-per-market.test.ts",
+          "sha256": "959af654485525fc504b94974db770013463d1fbf35a5116d8c48245c89b28f9",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ha-interactions/__tests__/ha-logic.test.ts",
+          "sha256": "72ea2a4a39f9b27f0fdf8c2af98e1fcec147e5d22e64da0b30a69c02f9ae5b23",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ind-lifecycle/__tests__/ind-regulatory-clock-unreadable-event-is-refused.test.ts",
+          "sha256": "cc5bc234edae0aefec46242dfe0cd3e6c2ec518dff1fed10c5712aaaa4b8ddf6",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/ind-lifecycle/__tests__/ind-timeline-safe-to-proceed-from-recorded-receipt.test.ts",
+          "sha256": "0a115755f86d9ce74a93bbc6e2b8bea6d50a84dd0c954f9353fc6405361c8e15",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/lumen-context-builder.ts",
+          "sha256": "217e139a291c205ea3f39fe5aac57285bb6507b2277dfa4673d5ab1ce18c28a8",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/postmarket/__tests__/openfda-failed-read-not-empty.test.ts",
+          "sha256": "fb4298da78722576d755595c822a2081e5fbe5552ad22f67e070765952c4addb",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/protocol-risks/__tests__/protocol-risk-ratings-required.test.ts",
+          "sha256": "c1d640afd35b2d3785782333c84d6fd1fc09375cb2b7a82deecd81010e2f89c0",
+          "qualificationStatus": "current scoped proof"
+        }
+      ],
+      "supersededNativeFixtureHashes": {},
+      "nativeFixtureReplacementProofs": {},
+      "supersededUiRecoveryHashes": {},
+      "uiRecoveryReplacementProfile": null,
+      "historicalNativeFixturesNotRequalified": {}
+    },
+    {
+      "rawArtifact": {
+        "artifact": "oct17-routes-capa-assessment-type-acceptance.json",
+        "sha256": "2b1245ae2ad9988a85b24d7dc99fea52e29a9df4ed478027761636ec3bad3b4d",
+        "bytes": 894
+      },
+      "scope": "CAPA required-assessment admission before transaction acquisition",
+      "currentSourceFilesVerified": 2,
+      "files": [
+        {
+          "file": "server/services/capa-mdr/__tests__/complaint-assessment-required.test.ts",
+          "sha256": "b49da7187931361b94b31aae076cbdbebafea6feaaa4a0f8a4d5ee2bf6ab6de5",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "server/services/capa-mdr/capaMdr.service.ts",
+          "sha256": "98c3872deab4b22bb9df25ecc55524a440633a4ae323e123becf78c9ac4d23ca",
+          "qualificationStatus": "current scoped proof"
+        }
+      ],
+      "supersededNativeFixtureHashes": {},
+      "nativeFixtureReplacementProofs": {},
+      "supersededUiRecoveryHashes": {},
+      "uiRecoveryReplacementProfile": null,
+      "historicalNativeFixturesNotRequalified": {}
+    },
+    {
+      "rawArtifact": {
+        "artifact": "oct17-recovery-ui-acceptance.json",
+        "sha256": "bb0f68f27b9962cddb2d6864af8edbbc7ebb3055a52658e0b59ef785de59ed1a",
+        "bytes": 8209
+      },
+      "scope": "Oct17 final upstream authoring shared recovery integration",
+      "currentSourceFilesVerified": 21,
+      "files": [
+        {
+          "file": "client/src/concept2cure/v2/AuthoringHandoffNotice.tsx",
+          "sha256": "b24758ae02131cd2577a1f88952554d77e36ce90d03ea9f5703c29ab2e4879f4",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/AuthoringRecoveryNotice.tsx",
+          "sha256": "9408bfdf71910e94217ad47b7ecd1d9187db0c50306c721c2255911cae1f8697",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx",
+          "sha256": "84ae2281f12c0a064630ddcd985aede2f05bbdcaf1b1314314ceb586025d5f2c",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx",
+          "sha256": "deaf150ddb485f3200ed74752cd98ebd0cd8ada3fceeb1c86de8d30ad0cf4f40",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/__tests__/cmcAuditRemediation.test.tsx",
+          "sha256": "f18ebca584a853f112fc9ef57801ac068f093609d87a752a93d8228d72525fd9",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx",
+          "sha256": "1eae6219c28b7bbe8029ec8f277e1b322c50ccd50c980c99ce50873abd1d6da8",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx",
+          "sha256": "1ca289d44eed7e00efd1a4176b29ab0c49a739c587db86a9cb8582a583e1a436",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/__tests__/specialistHandoffRecoveryUi.test.tsx",
+          "sha256": "2290313914dfeff74e4bcda8fd9cd145e41452731cfa7f16793f4140c150faec",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx",
+          "sha256": "1976c42f5bbb36ac316aaf0eb7e6c3adb772b37deb6b266f144f7ff3a48aee68",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/authoringHandoff.ts",
+          "sha256": "bba2f120b45b3b3df19ae9d97c5271c90ad9f6ec0a37073f86466af939956250",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/authoringHandoffRecovery.ts",
+          "sha256": "83255d578e56f7ebffa1dda4a2e0c8a7df7a7504ccd1c2f5048ebcb585f0e37c",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/editor/authoringCreationRecovery.ts",
+          "sha256": "dcd44ed93ac2741cc03848b2bb33ba37b1237b5a77e4871c754da568217ef9b5",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/editor/useAuthoringCreation.ts",
+          "sha256": "97345e639bb2077e1d03ae5d41e6bc80e9c59acea421430e485c5a7a90ab8f5a",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx",
+          "sha256": "f2dd7cdb9dda6438488677b6bb4c689db1505ed6626d1c39ae830fac19c446a7",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+          "sha256": "c86c2a6a932413be12a325344e948d0c67985839c1d38ea4992225964cb3505a",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/surfaces/Biostatistics.tsx",
+          "sha256": "8edbcbe7623e10e5748df62b9abf43a8b813c98499eaf28b52ce677e128fee2b",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+          "sha256": "6b37d233b053253d95a497dcc886fd9fce61d2fc509ba1695fc86f5a0a733c17",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/surfaces/CmcQuality.tsx",
+          "sha256": "c9870e12e96506453e9157691a8155f1091239aee3bd8da61170a3c6a7fb0ea0",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/surfaces/CmcVariationAssessment.tsx",
+          "sha256": "fa0e7aa4f65d69c3fffbd304d9ed6d3758c2d35606455df4b6f0c676dbc36304",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/surfaces/PvCockpit.tsx",
+          "sha256": "40361dba9e66e24e40666112ee0d78c03f0d2f33129877ed623271af9d638c0f",
+          "qualificationStatus": "current scoped proof"
+        },
+        {
+          "file": "client/src/concept2cure/v2/surfaces/ReportEngine.tsx",
+          "sha256": "7f87e8e1b7bbdeeafc0c8fc4dd8444cb9ffbab4aa2aa79423f9cce246b2ead98",
+          "qualificationStatus": "current scoped proof"
+        }
+      ],
+      "supersededNativeFixtureHashes": {},
+      "nativeFixtureReplacementProofs": {},
+      "supersededUiRecoveryHashes": {},
+      "uiRecoveryReplacementProfile": null,
+      "historicalNativeFixturesNotRequalified": {}
+    }
+  ],
+  "scope": "Current October 17 scoped source snapshots; these are not whole-codebase qualification."
+}

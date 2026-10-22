@@ -24,10 +24,15 @@ const h = vi.hoisted(() => ({
   query: vi.fn(async () => ({ rows: [] })),
   connect: vi.fn(),
   persist: vi.fn(),
+  programAccess: vi.fn(),
   recordGovernedAction: vi.fn(async () => ({ actionId: 'act-1', auditTrail: { ok: true } })),
 }));
 vi.mock('../../db', () => ({ pool: { connect: h.connect } }));
 vi.mock('../c2c/actions', () => ({ recordGovernedAction: h.recordGovernedAction }));
+vi.mock('../../services/protocol-development/protocol-program-access', async (original) => ({
+  ...(await original<typeof import('../../services/protocol-development/protocol-program-access')>()),
+  requireProtocolProgramWriteTx: h.programAccess,
+}));
 vi.mock('../../services/study-design', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../services/study-design')>()),
   persistStudyDesignTx: h.persist,
@@ -35,6 +40,7 @@ vi.mock('../../services/study-design', async (importOriginal) => ({
 
 import router from '../study-design';
 import { StudyDesignPersistRefusal } from '../../services/study-design';
+import { ProtocolProgramAccessError } from '../../services/protocol-development/protocol-program-access';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const DESIGN = {
@@ -65,9 +71,19 @@ beforeEach(() => {
   vi.clearAllMocks();
   h.connect.mockResolvedValue({ query: h.query, release: vi.fn() });
   h.persist.mockResolvedValue('sd_1');
+  h.programAccess.mockResolvedValue(undefined);
 });
 
 describe('POST /api/study-design/persist', () => {
+  it('refuses a current program policy denial inside the transaction before persistence/audit', async () => {
+    h.programAccess.mockRejectedValueOnce(new ProtocolProgramAccessError('FORBIDDEN', 403, 'Not permitted'));
+    const res = await post({ ...DESIGN, programId: PROGRAM });
+    expect(res.status).toBe(403);
+    expect(h.programAccess).toHaveBeenCalledWith(expect.anything(), 1, 7, PROGRAM);
+    expect(h.persist).not.toHaveBeenCalled();
+    expect(h.recordGovernedAction).not.toHaveBeenCalled();
+    expect(h.query).toHaveBeenCalledWith('ROLLBACK');
+  });
   it('refuses a viewer, before a connection is taken', async () => {
     const res = await post({ ...DESIGN, programId: PROGRAM }, 'viewer');
     expect(res.status).toBe(403);

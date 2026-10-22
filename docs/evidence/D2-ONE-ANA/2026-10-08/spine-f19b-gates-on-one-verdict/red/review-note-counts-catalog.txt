@@ -1,0 +1,442 @@
+# Mutation (review fix removed, everything else as now): in client/src/concept2cure/v2/surfaces/AnaVerbs.tsx
+# -   const notOfferedInTab = notOffered.filter((n) => n.entry.segment === seg).length;
+# +   const notOfferedInTab = notOffered.length;
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+{
+  "timestamp": "2026-10-08T17:15:34.827Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T17:15:34.828Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+{
+  "timestamp": "2026-10-08T17:15:34.829Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > for every catalog row, a tile is shown exactly when the server offers the filing, and author-only ones say so 1354ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > offers no Health Canada filing, and a search for one says why, in the server's words 75ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > a filing whose agency the server names no market for is not offered, and its reason is the server's 123ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > the chosen filing states its offer as text 45ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > lists nothing while the verdict is pending 8ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > a failed read is an error with Retry, never an empty or a full list 58ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a filing that creates an NDA without being one (a Type A meeting) states no tier; the NDA itself says Build and sequence 89ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the EU MDR/IVDR lane at a Notified Body is offered for authoring, asked of the server by its own market 75ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a search lists not-offered filings by the same fields as offered ones (an eCTD search finds Health Canada) 78ms
+ × client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the not-offered note counts the tab it is shown on 389ms
+   → Unable to find an element with the text: /^31 filing types? in Medical Devices (is|are) not offered/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"rpk"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rpk-search"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"ico rpk-search-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-search"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"11"[39m
+              [33mcy[39m=[32m"11"[39m
+              [33mr[39m=[32m"8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21 21-4.3-4.3"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<input[39m
+          [33maria-label[39m=[32m"Search filing types"[39m
+          [33mplaceholder[39m=[32m"Search 70 filing types — name, agency, region…"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rpk-tabs"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"rpk-tab"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"ico"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-beaker"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4.5 3h15"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M6 14h12"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0mPharma & Biotech[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"rpk-tab-n"[39m
+          [36m>[39m
+            [0m36[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"rpk-tab"[39m
+          [33mdata-on[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"ico"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-stethoscope"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M11 2v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 2v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 15a6 6 0 0 0 12 0v-3"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"20"[39m
+                [33mcy[39m=[32m"10"[39m
+                [33mr[39m=[32m"2"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0mMedical Devices[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"rpk-tab-n"[39m
+          [36m>[39m
+            [0m15[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"rpk-tab"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"ico"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-microscope"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M6 18h8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 22h18"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14 22a7 7 0 1 0 0-14h-1"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9 14h2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0mDiagnostics & IVD[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"rpk-tab-n"[39m
+       ...
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > Retry stays mounted and busy while it reads again, and focus lands on the search box when the list arrives 58ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the not-offered note counts the tab it is shown on
+TestingLibraryElementError: Unable to find an element with the text: /^31 filing types? in Medical Devices (is|are) not offered/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"rpk"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rpk-search"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"ico rpk-search-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-search"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"11"[39m
+              [33mcy[39m=[32m"11"[39m
+              [33mr[39m=[32m"8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21 21-4.3-4.3"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<input[39m
+          [33maria-label[39m=[32m"Search filing types"[39m
+          [33mplaceholder[39m=[32m"Search 70 filing types — name, agency, region…"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rpk-tabs"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"rpk-tab"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"ico"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-beaker"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4.5 3h15"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M6 14h12"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0mPharma & Biotech[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"rpk-tab-n"[39m
+          [36m>[39m
+            [0m36[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"rpk-tab"[39m
+          [33mdata-on[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"ico"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-stethoscope"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M11 2v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 2v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 15a6 6 0 0 0 12 0v-3"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"20"[39m
+                [33mcy[39m=[32m"10"[39m
+                [33mr[39m=[32m"2"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0mMedical Devices[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"rpk-tab-n"[39m
+          [36m>[39m
+            [0m15[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"rpk-tab"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"ico"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-microscope"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M6 18h8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 22h18"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14 22a7 7 0 1 0 0-14h-1"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9 14h2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0mDiagnostics & IVD[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"rpk-tab-n"[39m
+       ...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx:173:19
+    171|     const want = GLOBAL_REGISTRY.filter((e) => e.segment === 'medical_…
+    172|       marketSupport({ applicationType: typeOf(e), market: e.agency }, …
+    173|     expect(screen.getByText(new RegExp(`^${want} filing types? in ${RE…
+       |                   ^
+    174|   });
+    175|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+   Start at  17:15:30
+   Duration  7.79s (transform 3.08s, setup 178ms, import 4.41s, tests 2.36s, environment 631ms)
+

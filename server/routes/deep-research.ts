@@ -129,6 +129,9 @@ router.post('/jobs/:id/stop', async (req: Request, res: Response) => {
 router.get('/jobs/:id/stream', async (req: Request, res: Response) => {
   const jobId = parseInt(String(req.params.id), 10);
   const streamOrgId = (req as any).user?.organizationId || (req as any).tenantContext?.organizationId;
+  // Refused before the stream opens and before any read, as GET /jobs/:id is:
+  // without an organisation there is no job to stream (D3, 2026-10-11).
+  if (!streamOrgId) return res.status(400).json({ error: 'Organization context required' });
 
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
@@ -138,7 +141,7 @@ router.get('/jobs/:id/stream', async (req: Request, res: Response) => {
 
   // Send initial status (org-scoped: a foreign-tenant job id reads as not found)
   try {
-    const job = await getJobStatus(jobId, streamOrgId ? Number(streamOrgId) : undefined);
+    const job = await getJobStatus(jobId, Number(streamOrgId));
     res.write(`data: ${JSON.stringify({ progress: job.progress, status: job.status })}\n\n`);
 
     if (job.status === 'complete' || job.status === 'failed') {
@@ -272,8 +275,13 @@ router.post('/document/generate', requireTier('standard'), async (req: Request, 
         { number: '13', title: 'Discussion and Overall Conclusions' },
       ],
       ctd_full: [
-        { number: '1.1', title: 'Cover Letter' },
-        { number: '1.2', title: 'Administrative Information' },
+        /* FDA regional Module 1: 1.1 is FORMS, 1.2 is the COVER LETTER
+     (shared/regulatory/regional-module1.ts; gate: tests/regulatory/m1-placement-repo-wide.test.ts).
+     The table of contents has no US Module 1 heading at all — the eCTD XML backbone IS the table
+     of contents — so the row for it is gone rather than renumbered. */
+        { number: '1.1', title: 'Forms' },
+        { number: '1.2', title: 'Cover Letter' },
+        { number: '1.3', title: 'Administrative Information' },
         { number: '2.2', title: 'Introduction (Quality Overall Summary)' },
         { number: '2.3', title: 'Quality Overall Summary' },
         { number: '2.4', title: 'Nonclinical Overview' },
@@ -326,9 +334,13 @@ router.post('/document/generate', requireTier('standard'), async (req: Request, 
         { number: '5.3.6', title: 'Reports of Post-Marketing Experience' },
       ],
       ind_full: [
-        { number: '1.1', title: 'Cover Letter' },
-        { number: '1.2', title: 'FDA Form 1571' },
-        { number: '1.3', title: 'FDA Form 1572' },
+        /* FDA regional Module 1: 1.1 is FORMS, 1.2 is the COVER LETTER
+     (shared/regulatory/regional-module1.ts; gate: tests/regulatory/m1-placement-repo-wide.test.ts).
+     The table of contents has no US Module 1 heading at all — the eCTD XML backbone IS the table
+     of contents — so the row for it is gone rather than renumbered. */
+        { number: '1.1', title: 'Forms (FDA 1571, 1572, 3674)' },
+        { number: '1.2', title: 'Cover Letter' },
+        { number: '1.3', title: 'Administrative Information' },
         { number: '2.2', title: 'Introduction' },
         { number: '2.3', title: 'Quality Overall Summary' },
         { number: '2.4', title: 'Nonclinical Overview' },

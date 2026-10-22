@@ -1,0 +1,36 @@
+{
+  "variant": "dark",
+  "qualification": "Actual native positive reader and retained packet on isolated actual-route/Vite composition; no full-app boot/provider qualification.",
+  "bundleId": "6b9f7cf0-5bb3-4487-81ad-e376ee67cf36",
+  "runOrder": [
+    10,
+    9
+  ],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "apiFailures": [],
+  "blockedWrites": [],
+  "downloads": [
+    {
+      "mode": "reports",
+      "suggestedFilename": "report-pack-6b9f7cf0.pdf",
+      "bytes": 131337,
+      "sha256": "292718b402848944a87f1356123c57815c86ad740a70456d82589c58492598a5"
+    },
+    {
+      "mode": "manifest",
+      "suggestedFilename": "report-pack-native-150999-mv7qq8zd-975b02f4_positive_6b9f7cf0.pdf",
+      "bytes": 19775,
+      "sha256": "b4860f1d98850511181a2ec931296921a33868800d6d0c49516546085806f4ba"
+    }
+  ],
+  "bodyWidth": 1440,
+  "viewportWidth": 1440,
+  "cardWidth": 318.65625,
+  "cardText": "report-pack-native-150999-mv7qq8zd-975b02f4 positive\n2 reports \u00b7 bundled Oct 14, 2026, 06:40 AM\nSynthetic native retained report\nComputed\nSynthetic native retained report\nFinal\nStatus shown is the status at bundling; the manifest prints it beside the status at export.\nExport manifest PDF\nExport reports PDF",
+  "actions": {
+    "Export manifest PDF": true,
+    "Export reports PDF": true
+  },
+  "passed": true
+}

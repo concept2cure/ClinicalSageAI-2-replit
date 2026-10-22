@@ -16,4 +16,3 @@
   75:8  warning  Async function 'takeAuthoringSnapshot' has too many lines (114). Maximum allowed is 100  max-lines-per-function
 
 ✖ 10 problems (0 errors, 10 warnings)
-

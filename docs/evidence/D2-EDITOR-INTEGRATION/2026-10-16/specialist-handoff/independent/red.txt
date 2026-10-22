@@ -1,0 +1,238 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ × client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > specialist document identity through the existing editor channel > Reporting publishes the exact confirmed document, project and section before navigation 821ms
+   → expected null to match object { …(4) }
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > specialist document identity through the existing editor channel > double clicking the real open control starts one two-request writer 186ms
+ × client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > project change suppresses navigation after a committed section response 207ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "document-authoring",
+    ]
+
+
+Number of calls: 1
+
+ × client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > project-away-and-back change suppresses navigation after a committed section response 247ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "document-authoring",
+    ]
+
+
+Number of calls: 1
+
+ × client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > account change suppresses navigation after a committed section response 235ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "document-authoring",
+    ]
+
+
+Number of calls: 1
+
+ × client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > organization change suppresses navigation after a committed section response 189ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "document-authoring",
+    ]
+
+
+Number of calls: 1
+
+ × client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > a new project never receives the older request’s refusal status 192ms
+   → expected <div class="de-toast" …(2)>…(1)</div> to be null
+ × client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > unmounting the specialist prevents its old success from navigating another host 191ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "document-authoring",
+    ]
+
+
+Number of calls: 1
+
+ × client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > Biostatistics distinguishes saved working documents from filed documents > binding false cannot become a dossier-filed claim 395ms
+   → expected 'Sample Size Rationale filed to the do…' to match /saved/i
+ × client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > Biostatistics distinguishes saved working documents from filed documents > binding null cannot become a dossier-filed claim 362ms
+   → expected 'Sample Size Rationale filed to the do…' to match /saved/i
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > specialist document identity through the existing editor channel > Reporting publishes the exact confirmed document, project and section before navigation
+AssertionError: expected null to match object { …(4) }
+
+- Expected:
+{
+  "docId": "saved-specialist-document",
+  "docType": null,
+  "programId": "0b9f6c2e-5d4a-4c3b-9a21-7e6f5d4c3b2a",
+  "sectionCode": "recommendations",
+}
+
++ Received:
+null
+
+ ❯ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx:150:24
+    148|     await waitFor(() => expect(onNav).toHaveBeenCalledWith('document-a…
+    149|     expect(targets).toHaveLength(1);
+    150|     expect(targets[0]).toMatchObject({ docId: DOC_ID, programId: PROGR…
+       |                        ^
+    151|     expect(peekEditorTarget()).toBeNull();
+    152|     expect(authoringCalls().map(([, url]) => url)).toEqual(['/api/auth…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > project change suppresses navigation after a committed section response
+ FAIL  client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > project-away-and-back change suppresses navigation after a committed section response
+ FAIL  client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > account change suppresses navigation after a committed section response
+ FAIL  client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > organization change suppresses navigation after a committed section response
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "document-authoring",
+    ]
+
+
+Number of calls: 1
+
+ ❯ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx:181:23
+    179|     });
+    180|     await settle();
+    181|     expect(onNav).not.toHaveBeenCalled();
+       |                       ^
+    182|     expect(peekEditorTarget()).toBeNull();
+    183|     expect(document.querySelector('.de-toast')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > a new project never receives the older request’s refusal status
+AssertionError: expected <div class="de-toast" …(2)>…(1)</div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="de-toast"
+  data-tone="error"
+  role="alert"
+>
+  <span
+    class="ico"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-triangle-alert"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"
+      />
+      <path
+        d="M12 9v4"
+      />
+      <path
+        d="M12 17h.01"
+      />
+    </svg>
+  </span>
+  The document was created but its text didn’t save — Synthetic section refusal. Staying here so you don’t lose it.
+</div>
+
+ ❯ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx:196:49
+    194|     await settle();
+    195|     expect(onNav).not.toHaveBeenCalled();
+    196|     expect(document.querySelector('.de-toast')).toBeNull();
+       |                                                 ^
+    197|   });
+    198|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > unmounting the specialist prevents its old success from navigating another host
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "document-authoring",
+    ]
+
+
+Number of calls: 1
+
+ ❯ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx:204:23
+    202|     await waitFor(() => expect(authoringCalls()).toHaveLength(2)); unm…
+    203|     await act(async () => pending.resolve(sectionReceipt())); await se…
+    204|     expect(onNav).not.toHaveBeenCalled();
+       |                       ^
+    205|     expect(peekEditorTarget()).toBeNull();
+    206|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > Biostatistics distinguishes saved working documents from filed documents > binding false cannot become a dossier-filed claim
+ FAIL  client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > Biostatistics distinguishes saved working documents from filed documents > binding null cannot become a dossier-filed claim
+AssertionError: expected 'Sample Size Rationale filed to the do…' to match /saved/i
+
+- Expected:
+/saved/i
+
++ Received:
+"Sample Size Rationale filed to the dossier under Module 5 — open it from Document authoring."
+
+ ❯ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx:218:21
+    216|     const message = document.querySelector('.de-toast')?.textContent ?…
+    217|     expect(authoringCalls()).toHaveLength(2);
+    218|     expect(message).toMatch(/saved/i);
+       |                     ^
+    219|     expect(message).not.toMatch(/filed to the dossier/i);
+    220|     if (bound === false) expect(message).toContain('Not bound to a fil…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 1 passed (10)
+   Start at  21:22:55
+   Duration  5.37s (transform 1.06s, setup 233ms, import 1.29s, tests 3.04s, environment 584ms)

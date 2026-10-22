@@ -1,0 +1,20 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e 
+  client/src/concept2cure/v2/surfaces/BatchDraft.tsx (922 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3272 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 e42a5e59b] Preserve batch draft finish status through review and acceptance
+ 5 files changed, 365 insertions(+), 73 deletions(-)
+ create mode 100644 client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx
+ create mode 100644 server/routes/__tests__/batch-draft-termination-boundary.test.ts
+ create mode 100644 shared/ai/finish-reason.ts

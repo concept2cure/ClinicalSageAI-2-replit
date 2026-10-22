@@ -20,12 +20,14 @@ import { db, pool } from '../../db';
 import { submissions, ectdSequences, submissionLeaves } from '../../../shared/schema';
 import { packageEctdSubmission } from '../submission-gateways/regional-packager';
 import type { SubmissionBundle } from '../submission-gateways/types';
-import { buildPackagerInputFromCore, coreLeafFromSubmissionLeaf, type LeafFileResolver } from './core-to-packager';
+import { buildPackagerInputFromCore, coreLeafFromSubmissionLeaf, toPackagerRegion, type LeafFileResolver } from './core-to-packager';
 import { loadLatestPriorManifestBySubmission, loadRehearsalPriorManifestBySubmission } from './prior-sequence-loader';
 import { computeLifecycleOperations, type DesiredLeaf, type PriorLeaf } from './lifecycle-operator';
 import { computeSequencePrefix } from './sequence-manifest';
 import { leafFileCarriesKey, leafSourceKey } from './leaf-source-resolver';
 import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
+import type { FdaApplicantContact } from '../submission-gateways/ectd-packager/types';
+import { fdaContactsForPackageIdentity, packageIdentityRefusal, recordedPackageIdentitySnapshot, sameRecordedPackageIdentitySnapshot, type RecordedPackageIdentitySnapshot } from './package-identity';
 
 export interface PackageFromCoreParams {
   sequenceId: number;
@@ -35,6 +37,9 @@ export interface PackageFromCoreParams {
   applicationId: string;
   sponsorId: string;
   sponsorName: string;
+  contacts?: FdaApplicantContact[];
+  /** Exact captured facts authorized by the caller, never a later DB read. */
+  recordedPackageIdentity?: RecordedPackageIdentitySnapshot;
   /** Resolves each leaf's document to an on-disk file (storage-specific). */
   resolveFile: LeafFileResolver;
   emitUnzipped?: boolean;
@@ -51,6 +56,7 @@ export type PriorState = 'filed' | 'rehearsal';
 
 export interface PackageFromCoreResult {
   bundle: SubmissionBundle;
+  recordedPackageIdentity?: RecordedPackageIdentitySnapshot;
   skipped: Array<{ sectionCode: string; reason: string }>;
   /**
    * The newest filed sequence the prior state folds up to — what this
@@ -186,6 +192,12 @@ function bindWithdrawalToFiledLeaf(
  * @throws if the sequence or submission is not found in the organization.
  */
 export async function packageSequenceFromCore(params: PackageFromCoreParams): Promise<PackageFromCoreResult> {
+  const capturedIdentity = params.recordedPackageIdentity
+    ? recordedPackageIdentitySnapshot(params.recordedPackageIdentity.identity) : undefined;
+  if (params.recordedPackageIdentity && !sameRecordedPackageIdentitySnapshot(params.recordedPackageIdentity, capturedIdentity)) {
+    throw new Error('The captured package identity is malformed. Nothing was packaged.');
+  }
+
   const { sequenceId, organizationId, userId } = params;
 
   const [sequence] = await db
@@ -243,6 +255,17 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
         : null,
     }));
 
+  if (capturedIdentity && toPackagerRegion(sequence.region) === 'fda') {
+    const identity = capturedIdentity.identity;
+    const refusal = packageIdentityRefusal(identity, 'Nothing was packaged.', { fda: true });
+    if (refusal) throw refusal;
+    if (identity.programId !== submission.programId || identity.applicationNumber !== params.applicationId ||
+        identity.applicantId !== params.sponsorId || identity.applicantName !== params.sponsorName ||
+        JSON.stringify(fdaContactsForPackageIdentity(identity)) !== JSON.stringify(params.contacts ?? [])) {
+      throw new Error('The package inputs do not match the captured recorded applicant identity. Nothing was packaged.');
+    }
+  }
+
   const { input, skipped } = buildPackagerInputFromCore({
     sequence: { sequenceNumber: sequence.sequenceNumber, region: sequence.region, type: sequence.type },
     submission: { applicationType: submission.applicationType, productName: submission.productName },
@@ -259,6 +282,7 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
     applicationId: params.applicationId,
     sponsorId: params.sponsorId,
     sponsorName: params.sponsorName,
+    contacts: params.contacts,
     outputDir: params.outputDir,
     emitUnzipped: params.emitUnzipped,
   });
@@ -414,7 +438,9 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
     },
   });
 
-  return { bundle, skipped, priorSequence, priorState, unfiledPriorSequences, auditTrail };
+  return { bundle, skipped, priorSequence, priorState, unfiledPriorSequences, auditTrail,
+    ...(capturedIdentity ? { recordedPackageIdentity: capturedIdentity } : {}),
+  };
 }
 
 export default { packageSequenceFromCore };

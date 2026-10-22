@@ -1,0 +1,2 @@
+$ npm run -s typecheck   (2026-10-19, the final tree)
+exit=0

@@ -30,6 +30,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
 import { createHash } from 'node:crypto';
+import { StorageIntegrityError } from '../../services/storage/storage-provider';
 
 const { query, readFile } = vi.hoisted(() => ({ query: vi.fn(), readFile: vi.fn() }));
 /* The download's audit row is written in a transaction of its own (a chained
@@ -54,18 +55,38 @@ vi.mock('../../services/storage/index.js', () => {
   };
 });
 
+/* The current-access gate (installProjectRouteAccess, 14362ef00) admits every
+   /:id and /:documentId on a current member of the caller's organization, read
+   on the request's own connection. Its four reads are answered from seats
+   (support/current-member.ts); an unseated caller or program is refused exactly
+   as the real gate refuses. The gate's own SQL is proven on PostgreSQL by its
+   own suites. */
+vi.mock('../../services/c2c/current-program-access', async (original) => {
+  const real = await original<typeof import('../../services/c2c/current-program-access')>();
+  return { ...real, ...(await import('../c2c/__tests__/support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
+
 import createProjectVaultRoutes from '../c2c/project-vault';
+import { clearSeats, seatMember, seatProgram } from '../c2c/__tests__/support/current-member';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const DOCUMENT = '22222222-2222-4222-8222-222222222222';
 const BYTES = Buffer.from('%PDF-1.7 the real stored document');
 const HASH = createHash('sha256').update(BYTES).digest('hex');
+const USER = 3;
+
+/* The request's own pinned connection, which the production request scope
+   supplies. After the program admission the gate reads one thing on it: the
+   document's organization (requireVaultDocumentTenant). Kept apart from the
+   pool mock so every assertion below still sees only the route's own reads. */
+const { requestQuery } = vi.hoisted(() => ({ requestQuery: vi.fn() }));
 
 function app(org: number | null = 7) {
   const a = express();
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
-    if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org, id: 3 };
+    if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org, id: USER };
+    (req as unknown as { dbClient: unknown }).dbClient = { query: requestQuery };
     next();
   });
   a.use('/api/c2c/project-vault', createProjectVaultRoutes());
@@ -85,6 +106,12 @@ function app(org: number | null = 7) {
  * whatever order they are tested in.
  */
 function store(doc: Record<string, unknown> | null, programFound = true) {
+  // The current member is seated; the program only when it is this org's.
+  clearSeats();
+  seatMember(7, USER, 'member');
+  if (programFound) seatProgram(7, PROGRAM);
+  requestQuery.mockImplementation(async (sql: string) =>
+    /FROM vault\.documents/.test(sql) && doc ? { rows: [{ organization_id: doc.organization_id }] } : { rows: [] });
   query.mockImplementation(async (sql: string) => {
     if (/FROM vault\.documents/.test(sql)) return { rows: doc ? [doc] : [] };
     if (/SELECT\s+id\s+FROM\s+regulatory_programs/.test(sql)) {
@@ -97,23 +124,40 @@ function store(doc: Record<string, unknown> | null, programFound = true) {
 const DOC = (over: Record<string, unknown> = {}) => ({
   id: DOCUMENT, file_name: 'CSR-201 final.pdf', document_title: 'CSR-201',
   mime_type: 'application/pdf', file_size: BYTES.length,
-  s3_key: `uploads/vault/${PROGRAM}/${HASH}.pdf`, content_hash: HASH, ...over,
+  s3_key: `uploads/vault/${PROGRAM}/${HASH}.pdf`, content_hash: HASH, organization_id: 7, ...over,
 });
 
 const url = (p = PROGRAM, d = DOCUMENT) => `/api/c2c/project-vault/${p}/documents/${d}/download`;
 
 beforeEach(() => {
   query.mockReset();
+  requestQuery.mockReset();
   readFile.mockReset();
   readFile.mockResolvedValue(BYTES);
   storageGet.mockReset();
 });
 
 describe('scope', () => {
-  it('403 without org context', async () => {
+  it('refuses without org context, concealed as 404 on a read, and reads nothing', async () => {
+    // The current-access gate refuses a caller with no organization actor
+    // (403 PROJECT_ACTOR_REQUIRED) and, on a GET, conceals every 403 as the
+    // 404 a missing project answers (sendProjectAccessFailure, 14362ef00), so a
+    // refusal never confirms the project exists.
     store(DOC());
     const res = await request(app(null)).get(url());
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('PROJECT_NOT_FOUND');
+    expect(query).not.toHaveBeenCalled();
+    expect(readFile).not.toHaveBeenCalled();
+  });
+
+  it('refuses a caller who is not a current member, concealed as 404, and reads nothing', async () => {
+    store(DOC());
+    clearSeats();
+    seatProgram(7, PROGRAM);
+    const res = await request(app()).get(url());
+    expect(res.status).toBe(404);
+    expect(query).not.toHaveBeenCalled();
     expect(readFile).not.toHaveBeenCalled();
   });
 
@@ -344,6 +388,28 @@ describe('download — where the bytes come from', () => {
     const res = await request(app()).get(url());
     expect(res.status).toBe(409);
     expect(readFile).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['size_mismatch', 'CONTENT_HASH_MISMATCH'],
+    ['digest_mismatch', 'CONTENT_HASH_MISMATCH'],
+    ['invalid_metadata', 'STORED_FILE_UNREADABLE'],
+  ] as const)('preserves the provider %s refusal as %s without serving or auditing a download', async (reason, code) => {
+    // A readable legacy file is present, so a fallback would disclose bytes
+    // despite the provider's refusal of this version's recorded identity.
+    store(DOC({ storage_version_id: VERSION }));
+    storageGet.mockRejectedValue(new StorageIntegrityError(reason));
+
+    const res = await request(app()).get(url());
+
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ success: false, error: code, message: expect.any(String) });
+    expect(res.text).not.toContain('%PDF');
+    expect(res.headers['content-disposition']).toBeUndefined();
+    expect(res.headers['x-content-sha256']).toBeUndefined();
+    expect(storageGet).toHaveBeenCalledExactlyOnceWith(VERSION, 7);
+    expect(readFile).not.toHaveBeenCalled();
+    expect(query.mock.calls.filter(([sql]) => /INSERT INTO audit_logs/i.test(String(sql)))).toHaveLength(0);
   });
 
   it('hash-verifies provider bytes against the record, same as disk bytes', async () => {

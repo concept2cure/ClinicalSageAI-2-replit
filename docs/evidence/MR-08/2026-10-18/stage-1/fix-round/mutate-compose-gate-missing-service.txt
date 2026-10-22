@@ -1,0 +1,7 @@
+Mutation: the missing-service rule in checkScanner disabled (after scanner?.ports etc. were made null-safe), 2026-10-18T20:35:17Z.
+FAIL CLAMAV_HOST naming a missing service
+     expected ["CLAMAV_HOST \"scanner\" names no service"], got ["service \"app\": scanner \"scanner\" has no healthcheck.test, so nothing can wait for clamd to load its database","service \"app\": depends_on must name \"scanner\" with condition: service_healthy (the list form starts the app before clamd answers)","service \"app\": scanner \"scanner\" image must be clamav/clamav:1.4.6@sha256:57deb108fc4c72778aa83eafbca7bb7153e28c3f57c005afd38d31f16da86f23 (terraform/stack/variables.tf); got undefined","service \"app\": scanner \"scanner\" CLAMD_CONF_StreamMaxLength must be 100M (FILE_LIMITS.maxUploadBytes, server/config/platform-limits.ts); got undefined","service \"app\": scanner \"scanner\" CLAMD_CONF_AlertExceedsMax must be \"yes\" (a file it could not scan whole is reported, not passed); got undefined","service \"app\": scanner \"scanner\" shares no network with the app (scanner: default; app: main, scan)"]
+ok   CLAMAV_HOST that may resolve to anything
+ok   a scanner that publishes a host port
+[ci:compose-boot-contract] self-test: 1 case(s) failed
+exit=1

@@ -19,8 +19,17 @@
  */
 import express from 'express';
 import request from 'supertest';
+import { runWithTenantScope } from '../../../../db/tenantStore.js';
 
 export type ToolUse = { id: string; name: string; input: Record<string, unknown> };
+/**
+ * One model call that says something as well as (or instead of) calling tools:
+ * `say` streams as text, the way the gateway hands over AnA's words; `think`
+ * streams as a summarized thinking block (reasoning); `progress` is a
+ * progress-update block, passed through the gateway's real ProgressNotes so
+ * only what it accepts becomes text (ai-gateway/progress-updates.ts).
+ */
+export type ModelSays = { say?: string; think?: string; progress?: string; tools?: ToolUse[] };
 export type SseEvent = Record<string, any> & { type: string };
 export type QueueEntry = { kind: 'steer' | 'screen_report' | 'move_landed'; text: string; moveId?: string };
 
@@ -28,14 +37,27 @@ export type QueueEntry = { kind: 'steer' | 'screen_report' | 'move_landed'; text
 export interface GatewayRequestSeen {
   callerModule?: string;
   toolChoice?: unknown;
+  /** The thinking config the call asked for (visible reasoning when enabled). */
+  thinking?: { enabled?: boolean } | undefined;
+  /** The call asked for the notes between tool calls as AnA's words (decision 3, A). */
+  notesBetweenTools?: boolean;
   /** The messages, copied at the moment of the call. */
   messages: Array<{ role: string; content: unknown; inlineSystem?: boolean }>;
+  /** The names of the tools offered on this call (row 74, S5c). */
+  tools?: string[];
+  /** The run ids and risk the call carried — a sub-agent's own, and its parent's. */
+  runId?: string;
+  parentRunId?: string;
+  organizationId?: unknown;
+  riskTier?: string;
 }
 
 function freshState() {
   return {
-    /** One entry per model call: tool calls to make, or the answer text. */
-    script: [] as Array<ToolUse[] | string>,
+    /** One entry per model call: tool calls to make, the answer text, or words with tool calls. */
+    script: [] as Array<ToolUse[] | string | ModelSays>,
+    /** The gateway request id each call reports, by call number from 1; none when absent. */
+    requestIds: [] as string[],
     /** How many model calls were made. */
     gatewayCalls: 0,
     /** Every model call, in order. */
@@ -44,6 +66,10 @@ function freshState() {
     statuses: [] as Array<string | null>,
     /** Once set, every status read returns this. */
     forced: null as string | null,
+    /** The options each governedToolsetFor call was given (row 74, S5c). */
+    governedOpts: [] as Array<Record<string, unknown> | undefined>,
+    /** Tool names the tenant denies: absent from the governed set. */
+    governedDenies: [] as string[],
     /** What the row does after holdForPerson moves it to paused (then the statuses above). */
     afterManualHold: null as Array<string | null> | null,
     holdForPersonCalls: 0,
@@ -68,6 +94,16 @@ function freshState() {
     drains: [] as QueueEntry[][],
     /** beginRun throws (run control unavailable). */
     beginRunThrows: false,
+    /** What beginRun throws instead of opening a run (a RunRefusedError-shaped refusal). */
+    beginRunError: null as unknown,
+    /** Every input beginRun was called with. */
+    beginRunInputs: [] as Array<Record<string, unknown>>,
+    /** The run's live mirror, when a test supplies one (AnA detach DT1): handed out as handle.events. */
+    mirror: null as null | Record<string, unknown>,
+    /** Each stampThread call: the conversation and question written onto the run. */
+    stamps: [] as Array<{ threadId: string; userMessageId: number | null }>,
+    /** Each handle.heartbeat call. */
+    heartbeats: 0,
     /** requestApproval opens the gate (true) or cannot hold the run (false). */
     approvalOpens: false,
     approvalDecisionsRecorded: 0,
@@ -76,6 +112,8 @@ function freshState() {
     endRuns: [] as Array<{ status: string; stoppedReason: string }>,
     /** The context post-processing was handed. */
     post: null as any,
+    /** Each tool-run telemetry row the route wrote (toolRegistry.logToolRun). */
+    toolRunLogs: [] as Array<{ toolName: string; status: string; errorMessage?: string }>,
     /** The signed-in user the route sees. */
     user: { id: 3, organizationId: 7 } as Record<string, unknown>,
     /** Aborts the run's cancel signal (a Stop). */
@@ -88,7 +126,18 @@ export type HarnessState = ReturnType<typeof freshState>;
 const state: HarnessState = freshState();
 
 const pool = {
-  query: async () => ({ rows: [], rowCount: 0 }),
+  // Legitimate public-project fixtures for suites testing model/run behavior.
+  // Private access suites replace this pool with actual SQL and live sharing.
+  query: async (sql: string, params?: unknown[]) => {
+    let rows: Record<string, unknown>[] = [];
+    if (/FROM regulatory_programs WHERE id = \$1/.test(sql)) rows = [{ id: params?.[0] }];
+    else if (/WHERE regulatory_program_id\s*=\s*\$1/.test(sql)) rows = [{ id: 42, clientWorkspaceId: null }];
+    else if (/SELECT id, regulatory_program_id FROM projects/.test(sql)) rows = [{ id: params?.[0], regulatory_program_id: null }];
+    else if (/FROM organization_users/.test(sql)) rows = [{ role: 'member', user_id: params?.[0] }];
+    else if (/FROM projects p LEFT JOIN project_visibility_settings/.test(sql)) rows = [{ id: params?.[2], owner_id: 3,
+      created_by_id: 3, settings: {}, visibility: 'org_public', members: [], review_assigned: false }];
+    return { rows, rowCount: rows.length };
+  },
   connect: async () => {
     throw new Error('no dedicated client in this test');
   },
@@ -100,14 +149,55 @@ const gateway = {
   getModels: () => [],
   route: async (req: any) => {
     state.gatewayCalls++;
-    state.requests.push({ callerModule: req.callerModule, toolChoice: req.toolChoice, messages: [...req.messages] });
+    state.requests.push({
+      callerModule: req.callerModule,
+      toolChoice: req.toolChoice,
+      thinking: req.thinking,
+      notesBetweenTools: req.notesBetweenTools,
+      messages: [...req.messages],
+      tools: Array.isArray(req.tools) ? req.tools.map((t: { name?: string }) => t.name) : undefined,
+      runId: req.runId,
+      parentRunId: req.parentRunId,
+      organizationId: req.organizationId,
+      riskTier: req.riskTier,
+    });
+    const requestId = state.requestIds[state.gatewayCalls - 1];
+    const served = { model: 'm', provider: 'p', usage: {}, latencyMs: 1, ...(requestId ? { requestId } : {}) };
     const step = state.script.shift();
-    if (Array.isArray(step)) return { content: '', toolUses: step, model: 'm', provider: 'p', usage: {}, latencyMs: 1 };
+    if (Array.isArray(step)) return { content: '', toolUses: step, ...served };
+    if (step && typeof step === 'object') return modelSays(req, step, served);
     const text = step ?? 'Done.';
     req.onStream?.(text, undefined);
-    return { content: text, toolUses: [], model: 'm', provider: 'p', usage: {}, latencyMs: 1 };
+    return { content: text, toolUses: [], ...served };
   },
 };
+
+/** The flagship's own declaration: it returns the notes between tool calls as thinking blocks. */
+const NOTES_IN_THINKING = { thinkingMode: 'adaptive', progressUpdatesInThinking: true } as const;
+
+/**
+ * A call that speaks: reasoning as thinking, notes through ProgressNotes, words
+ * as text. ProgressNotes is active exactly when the gateway would ask for
+ * notes on this request (wantsProgressUpdates); otherwise a progress block is
+ * reasoning and its note is lost, as on the flagship.
+ */
+async function modelSays(req: any, step: ModelSays, served: Record<string, unknown>) {
+  const { ProgressNotes, wantsProgressUpdates } = await import('../../../../services/ai-gateway/progress-updates.js');
+  let content = '';
+  if (step.think) req.onStream?.('', { type: 'thinking', thinkingContent: step.think });
+  if (step.progress) {
+    const shown = new ProgressNotes(wantsProgressUpdates(NOTES_IN_THINKING, req)).note(step.progress, content);
+    if (shown) {
+      content += shown;
+      req.onStream?.(shown, undefined);
+    }
+  }
+  if (step.say) {
+    content += step.say;
+    req.onStream?.(step.say, undefined);
+  }
+  return { content, toolUses: step.tools ?? [], ...served };
+}
 
 /** A handler that counts its runs and answers like a read tool. */
 function reader(name: string, result: Record<string, unknown>) {
@@ -148,7 +238,14 @@ function runHandle() {
       state.wakes.push(ms);
       state.clockOffset += ms;
     },
-    heartbeat: async () => {},
+    heartbeat: async () => {
+      state.heartbeats++;
+    },
+    stampThread: async (threadId: string, userMessageId: number | null) => {
+      state.stamps.push({ threadId, userMessageId });
+      return true;
+    },
+    ...(state.mirror ? { events: state.mirror } : {}),
   };
 }
 
@@ -162,7 +259,9 @@ function readStatus(): string | null {
 function runControl(real: { readMoveId: unknown }) {
   return {
     readMoveId: real.readMoveId,
-    beginRun: async () => {
+    beginRun: async (input: Record<string, unknown>) => {
+      state.beginRunInputs.push(input);
+      if (state.beginRunError) throw state.beginRunError;
       if (state.beginRunThrows) throw new Error('ana_runs is unavailable');
       return { runId: 'run_test', handle: runHandle() };
     },
@@ -232,9 +331,16 @@ export const mocks = {
     },
   }),
   toolExecutor: () => ({ getToolHandler: (name: string) => handlers[name], servedModelOf }),
+  /* As the real one does: run_agent is offered only when the caller asks to
+     host agents, and a tenant's deny takes any tool out of the set. */
   governedToolset: () => ({
-    governedToolsetFor: async () =>
-      Object.keys(handlers).map(name => ({ name, description: name, input_schema: { type: 'object', properties: {} } })),
+    governedToolsetFor: async (_pool: unknown, _org: unknown, opts?: Record<string, unknown>) => {
+      state.governedOpts.push(opts);
+      return Object.keys(handlers)
+        .filter(name => name !== 'run_agent' || opts?.hostsSubAgents === true)
+        .filter(name => !state.governedDenies.includes(name))
+        .map(name => ({ name, description: name, input_schema: { type: 'object', properties: {} } }));
+    },
   }),
   runControl,
   orchestrator: () => ({ orchestrate: () => orchestrated }),
@@ -256,22 +362,40 @@ export const mocks = {
     PromptInjectionError: class PromptInjectionError extends Error {},
   }),
   audit: () => ({ default: { logAction: async () => {} } }),
-  toolRegistry: () => ({ logToolRun: async () => {} }),
+  toolRegistry: () => ({
+    logToolRun: async (row: { toolName: string; status: string; errorMessage?: string }) => {
+      state.toolRunLogs.push({ toolName: row.toolName, status: row.status, errorMessage: row.errorMessage });
+    },
+  }),
   relationalProfile: () => ({ reflectAfterTurn: async () => {} }),
   toolTelemetry: () => ({ getUnhealthyTools: () => [] }),
   metrics: () => ({ recordAnaTurn: () => {} }),
   anthropicFiles: () => ({ isPdfIntakeEnabled: () => false, readLocalUploadBuffer: async () => null }),
 };
 
-export const harness = { state, handlers };
+export const harness = { state, handlers, gateway };
 
-/** An app with the stream route mounted, signed in as `state.user` in org 7. */
-export function streamApp(mount: (router: express.Router) => void): express.Express {
+/**
+ * An app with the stream route mounted, signed in as `state.user` in org 7.
+ * `tenantScope` opts the request into a tenant scope, as the auth boundary
+ * opens one; without it nothing changes for the suites that came before.
+ */
+export function streamApp(
+  mount: (router: express.Router) => void,
+  options: { tenantScope?: string } = {},
+): express.Express {
   const app = express();
   app.use(express.json());
+  if (options.tenantScope) {
+    const tenantId = options.tenantScope;
+    app.use((_req, _res, next) => runWithTenantScope({ tenantId, source: 'test', caller: 'stream-harness' }, () => next()));
+  }
   app.use((req, _res, next) => {
     (req as any).tenantId = 7;
     (req as any).user = { ...state.user };
+    // The actual host now passes the request executor to source tools. Keep
+    // that per-request contract in this scripted, post-admission harness too.
+    (req as any).dbClient = { query: mocks.db().pool.query };
     next();
   });
   const router = express.Router();

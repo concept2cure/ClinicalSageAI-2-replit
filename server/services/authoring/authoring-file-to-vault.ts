@@ -25,22 +25,32 @@
  *     Part 11 filing-artifact gate stays where it is; the project vault holds
  *     working files as well as sealed ones, and lying about which is which is
  *     the only thing refused.
+ *   • no PDF engine      503 PDF_RENDERER_UNAVAILABLE — 2026-10-08 (QA walk 2,
+ *                          j4): where Puppeteer is absent the PDF renderer falls
+ *                          back to a plain-text stand-in whose first line says
+ *                          not to file it, and this filed it as the governed
+ *                          Vault copy, silently. No decision allows filing it
+ *                          with an acknowledgement (docs/LAUNCH_DEFINITION_OF_DONE.md,
+ *                          docs/design), so it fails closed before ingest. DOCX
+ *                          does not use that engine and is unaffected.
  *
- * ── Never a partial write ───────────────────────────────────────────────────
- * Rendering writes nothing. Ingest is atomic in itself. If the filing or the
- * final record transaction fails after ingest committed, the vault row is
- * soft-deleted (compensation) and the caller is told nothing was filed. The
- * compensation is exercised by the route test, which forces the final
- * transaction to fail and asserts the vault row is no longer visible.
+ * Rendering writes nothing. Only a proven new admission may be placed or
+ * recorded. A failed filing compensates that row with a scoped tombstone and
+ * audit transaction; unconfirmed cleanup requires review of current Vault
+ * records. A reused or unverified admission is never compensated here.
  */
 
 import crypto from 'crypto';
+import { isDeepStrictEqual } from 'node:util';
 import { writeChainedAuditRow } from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
 import { LOCKED_DOCUMENT_STATUSES } from './document-lock';
 import { columnState, writeAuthoringAuditTrail, type AuthoringAuditContext } from './authoring-evidence';
 import { renderAuthoringExport, logExport, sectionsDigest, type RenderedExport, type ExportSectionRow } from './authoring-export';
-import { SavedDraftSourceError, reserveSavedDraftSourceReferences } from './draft-source-references';
+import { filingAgreesWithEditing } from '../c2c/filing-section-target.js';
+import { SavedDraftSourceError, reserveSavedDraftSourceReferences, withSavedDraftSourceReservation } from './draft-source-references';
+import { assertWorkflowImportRelease, WorkflowImportGovernanceError } from './workflow-import-governance';
+import { savedImportSource } from './import-source-references';
 import type { AuthoringPool, AuthoringActor } from './authoring-documents';
 import { ingestVaultDocument } from '../vault/vault-ingest.service';
 import { placeVaultDocument, type VaultFilingRecord } from '../vault/vault-placement.service';
@@ -101,13 +111,36 @@ interface DocRow {
   created_by: string | null;
   created_at: unknown;
   provenance?: unknown;
+  locale: string | null;
+  product_code: string | null;
+  template_id: string | null;
+  c2c_document_id: string | null;
 }
 
 const refuse = (status: number, code: string, error: string): FileToVaultOutcome => ({ kind: 'refused', status, code, error });
 
+/** The refusal of a plain-text PDF fallback (see the header). */
+const PDF_FALLBACK_REFUSAL =
+  'The PDF renderer is not available here; this would file a plain-text rendering. Nothing was filed. ' +
+  'Word (.docx) is filed with its formatting.';
+
 /** Postgres: lock_not_available — another transaction holds the row FOR UPDATE. */
 const LOCK_NOT_AVAILABLE = '55P03';
 const DOCUMENT_CHANGED_DURING_FILING = 'DOCUMENT_CHANGED_DURING_FILING';
+
+// The identical fixed projection is locked at capture and recording. Optional
+// schema keys are read through to_jsonb; timestamp columns retain Date values.
+const LOCKED_DOCUMENT_HEADER = `SELECT id, title, module,
+  to_jsonb(authoring_documents)->>'locale' AS locale,
+  to_jsonb(authoring_documents)->>'product_code' AS product_code,
+  to_jsonb(authoring_documents)->'provenance' AS provenance,
+  to_jsonb(authoring_documents)->>'template_id' AS template_id,
+  to_jsonb(authoring_documents)->>'c2c_document_id' AS c2c_document_id,
+  status, locked_at, client_program_id, version, created_by, created_at
+  FROM authoring_documents WHERE id = $1 AND tenant_id = $2 FOR UPDATE NOWAIT`;
+
+const outcomeUnknown = (): FileToVaultOutcome => refuse(503, 'OUTCOME_UNKNOWN',
+  'The filing outcome could not be confirmed. Review the current Vault records before trying again.');
 
 /** Compare every rendered field and its order; the canonical section digest
  * deliberately omits titles, which can also change the delivered file. */
@@ -132,15 +165,7 @@ async function readDocumentForFiling(
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    // provenance carries `moduleDefaulted` when the draft's module was assumed
-    // rather than chosen; read it only where the column exists.
-    const hasProvenance = (await columnState(pool, 'provenance')) === 'present';
-    const r = await client.query(
-      `SELECT id, title, module, status, locked_at, client_program_id, version, created_by, created_at${hasProvenance ? ', provenance' : ''}
-         FROM authoring_documents WHERE id = $1 AND tenant_id = $2
-         FOR UPDATE NOWAIT`,
-      [docId, tenantId],
-    );
+    const r = await client.query(LOCKED_DOCUMENT_HEADER, [docId, tenantId]);
     await client.query('COMMIT');
     const doc = r.rows[0] as DocRow | undefined;
     if (!doc) return refuse(404, 'DOCUMENT_NOT_FOUND', 'Document not found');
@@ -177,9 +202,9 @@ function ingestDocumentType(requested: string | null | undefined, module: string
 
 /**
  * Compensation: a filing that could not be completed must not leave an
- * admitted vault row behind. Soft-delete (the vault reads filter deleted_at)
- * rather than DELETE — the ingest's own chained audit row says the bytes were
- * admitted, and the reversal is recorded beside it, best effort.
+ * operation-created vault row behind. Soft-delete (Vault reads filter
+ * deleted_at) and audit together. A failed or unmatched reversal is unknown;
+ * this does not qualify every third-party use race after admission.
  */
 interface RevertIngestArgs {
   pool: AuthoringPool;
@@ -190,18 +215,20 @@ interface RevertIngestArgs {
   why: string;
 }
 
-async function revertIngest(args: RevertIngestArgs): Promise<void> {
+async function revertIngest(args: RevertIngestArgs): Promise<boolean> {
   const { pool, tenantId, actorId, vaultDocumentId, programId, why } = args;
-  const client = await pool.connect();
+  let client: Awaited<ReturnType<AuthoringPool['connect']>> | undefined;
   try {
+    client = await pool.connect();
     await client.query('BEGIN');
-    // tenant-isolation-safe: vault.documents is program-scoped; the program's
-    // ownership by this tenant was proven by ingestVaultDocument moments ago,
-    // and the predicate pins the row to that program.
-    await client.query(
-      `UPDATE vault.documents SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND program_id = $2 AND deleted_at IS NULL`,
-      [vaultDocumentId, programId],
+    const reverted = await client.query(
+      `UPDATE vault.documents SET deleted_at = NOW(), updated_at = NOW()
+        WHERE id = $1 AND program_id = $2 AND organization_id = $3 AND deleted_at IS NULL RETURNING id`,
+      [vaultDocumentId, programId, tenantId],
     );
+    if (reverted.rows.length !== 1 || reverted.rows[0]?.id !== vaultDocumentId) {
+      throw new Error('The operation-created Vault row could not be confirmed for compensation');
+    }
     await writeChainedAuditRow(client, {
       tenantId,
       userId: actorId,
@@ -211,13 +238,15 @@ async function revertIngest(args: RevertIngestArgs): Promise<void> {
       details: { programId, reason: why },
     });
     await client.query('COMMIT');
+    return true;
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => {});
+    await client?.query('ROLLBACK').catch(() => {});
     logger.error('file-to-vault compensation failed; an admitted vault row may remain', {
       vaultDocumentId, programId, err: err instanceof Error ? err.message : String(err),
     });
+    return false;
   } finally {
-    client.release();
+    client?.release();
   }
 }
 
@@ -234,16 +263,17 @@ async function recordFiling(
   const { pool, tenantId, actor, docId } = args;
   const { rendered, sections } = snapshot;
   const client = await pool.connect();
+  let commitAttempted = false;
   try {
-    await client.query('BEGIN');
+    await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ');
     // Same order as withdrawal and source-linked save: program before row locks.
-    await reserveSavedDraftSourceReferences(doc, client, tenantId);
-    const again = await client.query(
-      `SELECT status FROM authoring_documents WHERE id = $1 AND tenant_id = $2 FOR UPDATE NOWAIT`,
-      [docId, tenantId],
-    );
+    await reserveSavedDraftSourceReferences(doc, client, tenantId, actor);
+    const again = await client.query(LOCKED_DOCUMENT_HEADER, [docId, tenantId]);
     if (String(again.rows[0]?.status ?? '') !== String(doc.status ?? '')) {
       throw Object.assign(new Error('document changed state during filing'), { code: LOCK_NOT_AVAILABLE });
+    }
+    if (!isDeepStrictEqual(again.rows[0], doc)) {
+      throw Object.assign(new Error('document header changed during filing'), { code: DOCUMENT_CHANGED_DURING_FILING });
     }
     // Admission can take time, and working drafts remain editable. Reserve
     // inserts as well as updates before comparing the exact rendered snapshot.
@@ -251,12 +281,29 @@ async function recordFiling(
     await client.query('LOCK TABLE authoring_sections IN SHARE MODE');
     const currentSections = await client.query(
       `SELECT id, code, title, content FROM authoring_sections
-        WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index`,
+        WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index, created_at, id`,
       [docId, tenantId],
     );
     if (sectionRenderState(currentSections.rows) !== sectionRenderState(sections)) {
       throw Object.assign(new Error('document sections changed during filing'), { code: DOCUMENT_CHANGED_DURING_FILING });
     }
+    await assertWorkflowImportRelease(client, { organizationId: tenantId, doc,
+      sections: currentSections.rows, actor });
+    /* P-29.2 — RECORDED, NOT REFUSED, and the distinction is the decision
+       (docs/EXIT_ATTESTATION_DECISION_2026-10-18.md).
+       Filing to the Vault is the one exit outside the seal cone: it takes
+       working drafts BY DESIGN and stamps "WORKING DRAFT — not a sealed 21 CFR
+       Part 11 record" on page one. Refusing here would dead-end a draft for no
+       gain — the draft attests only to itself and its own gates stop it being
+       transmitted. But a filed rendition whose source sections' filed copies
+       are not this document's text is a fact about THIS artefact, so it goes on
+       the artefact's own record rather than being discovered later from two
+       stores.
+       Read on the filing client, inside the LOCK TABLE above, so the answer is
+       the one these bytes were rendered from. It cannot throw the export: an
+       absent store or an unbound document answers "nothing to compare". */
+    const agreement = await filingAgreesWithEditing(client, { authoringDocId: docId, tenantId });
+    const filingDiverged = agreement.diverged.map((d) => ({ key: d.key, filed: d.filed, section: d.section.code }));
     const details = {
       format: args.format,
       exportId: vault.exportId,
@@ -267,6 +314,10 @@ async function recordFiling(
       folderId: vault.folder.folderId,
       placementStatus: vault.folder.placementStatus,
       documentStatus: doc.status,
+      ...(filingDiverged.length > 0 ? { filingDiverged } : {}),
+      // The exact original dependency survives the new bytes' identity. This
+      // receipt is how withdrawal finds a source-derived Vault rendition.
+      ...(savedImportSource(doc) ? { importSource: savedImportSource(doc) } : {}),
     };
     await logExport(client, {
       docId,
@@ -300,9 +351,13 @@ async function recordFiling(
       userAgent: args.userAgent,
       details,
     });
+    commitAttempted = true;
     await client.query('COMMIT');
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => {});
+    const rollbackConfirmed = await client.query('ROLLBACK').then(() => true, () => false);
+    if (commitAttempted || !rollbackConfirmed) {
+      throw Object.assign(new Error('The filing recording transaction outcome is unconfirmed'), { code: 'OUTCOME_UNKNOWN', cause: err });
+    }
     throw err;
   } finally {
     client.release();
@@ -336,7 +391,7 @@ async function placeAdmittedDocument(p: {
   target: string;
   vaultDocumentId: string;
   userId: number | null;
-}): Promise<Awaited<ReturnType<typeof placeVaultDocument>>> {
+}): Promise<Awaited<ReturnType<typeof placeVaultDocument>> | FileToVaultOutcome> {
   const { args, doc, programId, target, vaultDocumentId, userId } = p;
   const { tenantId, actor } = args;
   try {
@@ -356,10 +411,11 @@ async function placeAdmittedDocument(p: {
       userAgent: args.userAgent,
     });
   } catch (err) {
-    await revertIngest({
+    const reverted = await revertIngest({
       pool: args.pool, tenantId, actorId: actor.id, vaultDocumentId, programId,
       why: `filing threw: ${err instanceof Error ? err.message : String(err)}`,
     });
+    if (!reverted) return outcomeUnknown();
     throw err;
   }
 }
@@ -391,18 +447,22 @@ async function ingestAndFile(
     userAgent: args.userAgent,
   });
   if (!ingested.ok) return refuse(ingested.status, ingested.code, ingested.message);
+  if (ingested.admission?.created === false) return refuse(409, 'VAULT_VERSION_ALREADY_RECORDED',
+    'This document version is already recorded in the Vault. Review the existing Vault record before filing again.');
+  if (ingested.admission?.created !== true) return outcomeUnknown();
 
   const target = await filingTarget(args, doc, programId);
   if (!target) {
     return { id: ingested.document.id, folder: { ...ingested.filing, folderLabel: ingested.filing.folderLabel ?? '' } };
   }
   const placed = await placeAdmittedDocument({ args, doc, programId, target, vaultDocumentId: ingested.document.id, userId });
+  if ('kind' in placed) return placed;
   if (!placed.ok) {
-    await revertIngest({
+    const reverted = await revertIngest({
       pool: args.pool, tenantId, actorId: actor.id, vaultDocumentId: ingested.document.id, programId,
       why: `filing refused: ${placed.code}`,
     });
-    return refuse(placed.status, placed.code, `${placed.message} Nothing was filed.`);
+    return reverted ? refuse(placed.status, placed.code, `${placed.message} Nothing was filed.`) : outcomeUnknown();
   }
   return { id: ingested.document.id, folder: placed.filing };
 }
@@ -410,19 +470,22 @@ async function ingestAndFile(
 async function renderForVaultFiling(args: FileToVaultArgs, doc: DocRow, sections: ExportSectionRow[]): Promise<RenderedExport | FileToVaultOutcome> {
   const sealed = LOCKED_DOCUMENT_STATUSES.has(String(doc.status ?? '').toUpperCase());
   try {
-    return await renderAuthoringExport({
-      executor: args.pool, tenantId: args.tenantId, doc, sections, format: args.format,
+    return await withSavedDraftSourceReservation(doc, args.pool, args.tenantId, executor => renderAuthoringExport({
+      executor, tenantId: args.tenantId, doc, sections, format: args.format, actor: args.actor,
       notice: sealed ? null
         : `WORKING DRAFT — not a sealed 21 CFR Part 11 record (status: ${doc.status ?? 'unknown'}). ` +
           'No frozen snapshot or signature manifest certifies this content.',
-    });
+    }), args.actor);
   } catch (err) {
     if (err instanceof SavedDraftSourceError) return refuse(409, err.code, err.message);
+    if (err instanceof WorkflowImportGovernanceError) return refuse(err.status, err.code, err.message);
     throw err;
   }
 }
 
-function recordingFailure(err: unknown): FileToVaultOutcome {
+async function recordingFailure(err: unknown, compensation: RevertIngestArgs): Promise<FileToVaultOutcome> {
+  if ((err as { code?: string })?.code === 'OUTCOME_UNKNOWN') return outcomeUnknown();
+  if (!await revertIngest(compensation)) return outcomeUnknown();
   if (err instanceof SavedDraftSourceError) return refuse(409, err.code, err.message);
   if ((err as { code?: string })?.code === DOCUMENT_CHANGED_DURING_FILING) {
     return refuse(409, DOCUMENT_CHANGED_DURING_FILING,
@@ -457,11 +520,12 @@ export async function fileAuthoringDocumentToVault(args: FileToVaultArgs): Promi
 
   const sectionsRes = await pool.query(
     `SELECT id, code, title, content FROM authoring_sections
-      WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index`,
+      WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index, created_at, id`,
     [docId, tenantId],
   );
   const rendered = await renderForVaultFiling(args, doc, sectionsRes.rows);
   if ('kind' in rendered) return rendered;
+  if (rendered.rendering === 'plain-text-fallback') return refuse(503, 'PDF_RENDERER_UNAVAILABLE', PDF_FALLBACK_REFUSAL);
 
   const admitted = await ingestAndFile(args, doc, rendered, programId);
   if ('kind' in admitted) return admitted;
@@ -471,9 +535,8 @@ export async function fileAuthoringDocumentToVault(args: FileToVaultArgs): Promi
     await recordFiling(args, doc, { rendered, sections: sectionsRes.rows }, { id: admitted.id, folder: admitted.folder, exportId });
   } catch (err) {
     const why = err instanceof Error ? err.message : String(err);
-    logger.error('file-to-vault record transaction failed; reverting the ingested vault row', { docId, why });
-    await revertIngest({ pool, tenantId, actorId: args.actor.id, vaultDocumentId: admitted.id, programId, why: `record failed: ${why}` });
-    return recordingFailure(err);
+    logger.error('file-to-vault record transaction failed', { docId, why });
+    return recordingFailure(err, { pool, tenantId, actorId: args.actor.id, vaultDocumentId: admitted.id, programId, why: `record failed: ${why}` });
   }
 
   const approval = await carryApprovalToVault(args, doc, sectionsRes.rows, admitted.id, rendered.artifactSha256);

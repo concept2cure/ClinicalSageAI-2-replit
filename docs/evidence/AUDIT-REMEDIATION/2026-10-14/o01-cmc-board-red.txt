@@ -1,0 +1,148 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/cmc-module3-board-canonical.pglite.test.ts > canonical CMC board with no legacy reg_submissions registry > returns a real anchored filing and actual Module 3 placement counts without querying an absent legacy registry
+{
+  "timestamp": "2026-10-14T03:18:52.382Z",
+  "level": "warn",
+  "message": "[cmc-module3-board] reg_submissions read failed",
+  "context": {
+    "err": "relation \"reg_submissions\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/cmc-module3-board-canonical.pglite.test.ts > canonical CMC board with no legacy reg_submissions registry > reads only the current tenant and respects a selected canonical program
+{
+  "timestamp": "2026-10-14T03:18:52.403Z",
+  "level": "warn",
+  "message": "[cmc-module3-board] reg_submissions read failed",
+  "context": {
+    "err": "relation \"reg_submissions\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/cmc-module3-board-canonical.pglite.test.ts > canonical CMC board with no legacy reg_submissions registry > reads only the current tenant and respects a selected canonical program
+{
+  "timestamp": "2026-10-14T03:18:52.409Z",
+  "level": "warn",
+  "message": "[cmc-module3-board] reg_submissions read failed",
+  "context": {
+    "err": "relation \"reg_submissions\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/cmc-module3-board-canonical.pglite.test.ts > canonical CMC board with no legacy reg_submissions registry > publishes no established submission count when its canonical portfolio read fails
+{
+  "timestamp": "2026-10-14T03:18:52.414Z",
+  "level": "warn",
+  "message": "[cmc-module3-board] submissions spine read failed",
+  "context": {
+    "err": "connection failed"
+  }
+}
+
+stderr | server/routes/__tests__/cmc-module3-board-canonical.pglite.test.ts > canonical CMC board with no legacy reg_submissions registry > publishes no established submission count when its canonical portfolio read fails
+{
+  "timestamp": "2026-10-14T03:18:52.414Z",
+  "level": "warn",
+  "message": "[cmc-module3-board] reg_submissions read failed",
+  "context": {
+    "err": "relation \"reg_submissions\" does not exist"
+  }
+}
+
+ × server/routes/__tests__/cmc-module3-board-canonical.pglite.test.ts > canonical CMC board with no legacy reg_submissions registry > returns a real anchored filing and actual Module 3 placement counts without querying an absent legacy registry 34ms
+   → expected { sub: 'Live filing', …(8) } to match object { sub: 'Live filing', …(8) }
+ × server/routes/__tests__/cmc-module3-board-canonical.pglite.test.ts > canonical CMC board with no legacy reg_submissions registry > reads only the current tenant and respects a selected canonical program 13ms
+   → expected [ { sub: 'Live filing', …(8) } ] to deeply equal []
+ × server/routes/__tests__/cmc-module3-board-canonical.pglite.test.ts > canonical CMC board with no legacy reg_submissions registry > publishes no established submission count when its canonical portfolio read fails 5ms
+   → expected +0 to be null
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/cmc-module3-board-canonical.pglite.test.ts > canonical CMC board with no legacy reg_submissions registry > returns a real anchored filing and actual Module 3 placement counts without querying an absent legacy registry
+AssertionError: expected { sub: 'Live filing', …(8) } to match object { sub: 'Live filing', …(8) }
+
+- Expected
++ Received
+
+  {
+    "ir": null,
+-   "m3Leaves": 2,
++   "m3Leaves": 3,
+    "product": "Product one",
+    "region": "FDA",
+    "rpi": null,
+-   "sequences": 1,
++   "sequences": 2,
+    "source": "spine",
+    "sub": "Live filing",
+    "type": "IND",
+  }
+
+ ❯ server/routes/__tests__/cmc-module3-board-canonical.pglite.test.ts:44:40
+     42|     h.query.mockClear();const res=await request(app()).get(`/api/cmc/m…
+     43|     expect(res.status).toBe(200);expect(res.body.data.portfolio).toHav…
+     44|     expect(res.body.data.portfolio[0]).toMatchObject({sub:'Live filing…
+       |                                        ^
+     45|     expect(res.body.data.portfolio[0]).toMatchObject({submissionId:1,p…
+     46|     expect(res.body.data.sections).toHaveLength(1);expect(res.body.dat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/routes/__tests__/cmc-module3-board-canonical.pglite.test.ts > canonical CMC board with no legacy reg_submissions registry > reads only the current tenant and respects a selected canonical program
+AssertionError: expected [ { sub: 'Live filing', …(8) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "ir": null,
++     "m3Leaves": 3,
++     "product": "Product one",
++     "region": "FDA",
++     "rpi": null,
++     "sequences": 2,
++     "source": "spine",
++     "sub": "Live filing",
++     "type": "IND",
++   },
++ ]
+
+ ❯ server/routes/__tests__/cmc-module3-board-canonical.pglite.test.ts:54:42
+     52|     expect(foreign.body.data.portfolio.map((row:any)=>row.sub)).toEqua…
+     53|     const mismatch=await request(app(1)).get(`/api/cmc/module3-board?p…
+     54|     expect(mismatch.body.data.portfolio).toEqual([]);expect(mismatch.b…
+       |                                          ^
+     55|   });
+     56|   it('publishes no established submission count when its canonical por…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/routes/__tests__/cmc-module3-board-canonical.pglite.test.ts > canonical CMC board with no legacy reg_submissions registry > publishes no established submission count when its canonical portfolio read fails
+AssertionError: expected +0 to be null
+
+- Expected:
+null
+
++ Received:
+0
+
+ ❯ server/routes/__tests__/cmc-module3-board-canonical.pglite.test.ts:60:44
+     58|     const res=await request(app()).get('/api/cmc/module3-board');
+     59|     expect(res.status).toBe(200);expect(res.body.data.meta.portfolioUn…
+     60|     expect(res.body.data.kpis.submissions).toBeNull();expect(res.body.…
+       |                                            ^
+     61|   });
+     62| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  03:18:49
+   Duration  2.55s (transform 150ms, setup 67ms, import 207ms, tests 1.93s, environment 0ms)
+

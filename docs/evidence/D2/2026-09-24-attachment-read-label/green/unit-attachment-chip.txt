@@ -171,4 +171,3 @@ This ensures that you're testing the behavior the user would see in the browser.
       Tests  76 passed (76)
    Start at  21:21:18
    Duration  8.77s (transform 3.40s, setup 1.00s, import 6.65s, tests 9.55s, environment 5.85s)
-

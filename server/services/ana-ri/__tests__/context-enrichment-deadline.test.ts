@@ -163,3 +163,90 @@ describe('enrichment deadline preserves normal and late-result behavior', () => 
     expect(vi.getTimerCount()).toBe(0);
   });
 });
+
+describe('one workflow snapshot per enrichment invocation', () => {
+  it.each(['workflow', 'preflight', 'status'])('shares the workflow read for /%s without changing prompt composition', async command => {
+    const result = await enrichContextForChat({ ...INPUT, message: `/${command}` });
+    expect(h.workflow).toHaveBeenCalledTimes(1);
+    expect(h.workflow).toHaveBeenCalledWith(42, 'IND', 7);
+    expect(result.block.split('Workflow context')).toHaveLength(3);
+    expect(result.sources.slice(0, 3)).toEqual(['project-profile', 'workflow', command]);
+    expect(result.enrichmentMeta?.detectedCommand).toBe(command);
+    expect(result.enrichmentMeta?.unavailableSources).toEqual([]);
+    expect(result.rewrittenMessage).not.toContain(`/${command}`);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('starts a single workflow read while independent project context is pending', async () => {
+    let resolveWorkflow!: (value: string) => void;
+    let resolveProfile!: (value: typeof PROFILE) => void;
+    h.workflow.mockReturnValue(new Promise<string>(resolve => { resolveWorkflow = resolve; }));
+    h.summary.mockReturnValue(new Promise<typeof PROFILE>(resolve => { resolveProfile = resolve; }));
+    const { settled, pending } = observe({ ...INPUT, message: '/workflow' });
+    try {
+      await vi.advanceTimersByTimeAsync(0);
+      expect(h.workflow).toHaveBeenCalledTimes(1);
+      expect(h.summary).toHaveBeenCalledWith(42, 7);
+      expect(settled).not.toHaveBeenCalled();
+      resolveWorkflow('Single pending workflow');
+      await vi.advanceTimersByTimeAsync(0);
+      expect(settled).not.toHaveBeenCalled();
+      resolveProfile(PROFILE);
+      await pending;
+      expect(settled.mock.calls[0][0].block.split('Single pending workflow')).toHaveLength(3);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      resolveWorkflow('Single pending workflow');
+      resolveProfile(PROFILE);
+      await pending;
+    }
+  });
+
+  it.each(['reject', 'throw', 'timeout'] as const)('contains one %s workflow read and preserves its availability reason', async failure => {
+    let resolveLate!: (value: string) => void;
+    h.workflow.mockImplementation(() => {
+      if (failure === 'throw') throw new Error('workflow unavailable');
+      if (failure === 'reject') return Promise.reject(new Error('workflow unavailable'));
+      return new Promise<string>(resolve => { resolveLate = resolve; });
+    });
+    const { settled, pending } = observe({ ...INPUT, message: '/workflow' });
+    try {
+      await vi.advanceTimersByTimeAsync(3000);
+      await pending;
+      const result = settled.mock.calls[0][0];
+      expect(h.workflow).toHaveBeenCalledTimes(1);
+      expect(result.enrichmentMeta.unavailableSources).toEqual(['workflow']);
+      expect(result.enrichmentMeta.unavailableReasons.workflow).toBe(failure === 'timeout' ? 'timeout' : 'error');
+      expect(result.block).toContain('Retain stability arm');
+      expect(result.block).toContain('Do not infer that missing context or unresolved findings do not exist');
+      const snapshot = JSON.stringify(result);
+      resolveLate?.('Late workflow');
+      await vi.advanceTimersByTimeAsync(0);
+      expect(JSON.stringify(result)).toBe(snapshot);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      resolveLate?.('Late workflow');
+      await pending;
+    }
+  });
+
+  it('keeps healthy empty workflow results distinct from failures', async () => {
+    h.workflow.mockResolvedValue('');
+    const result = await enrichContextForChat({ ...INPUT, message: '/workflow' });
+    expect(h.workflow).toHaveBeenCalledTimes(1);
+    expect(result.enrichmentMeta?.unavailableSources).toEqual([]);
+    expect(result.block).not.toContain('Enrichment context unavailable');
+    expect(result.sources).not.toContain('workflow');
+  });
+
+  it('reads again on every invocation and keeps tenant and project results separate', async () => {
+    h.workflow.mockImplementation(async (project: number, _type: string, org: number) => `Workflow ${org}/${project}`);
+    const inputs = [INPUT, { ...INPUT, organizationId: 8 }, { ...INPUT, projectId: 43 }, INPUT];
+    for (const input of inputs) {
+      const result = await enrichContextForChat({ ...input, message: '/workflow' });
+      expect(result.block.split(`Workflow ${input.organizationId}/${input.projectId}`)).toHaveLength(3);
+    }
+    expect(h.workflow.mock.calls).toEqual([[42, 'IND', 7], [42, 'IND', 8], [43, 'IND', 7], [42, 'IND', 7]]);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+});

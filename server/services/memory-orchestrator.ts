@@ -150,7 +150,10 @@ export const SEMANTIC_WORKING_MEMORY_POLICY: MemoryPolicy = {
 /**
  * Cross-layer relevance score: priorityBoost + similarity·w + confidence·w +
  * verifiedBoost, with the weights drawn from the atom's layer. One formula for
- * every layer — a layer's primacy is encoded in its weights, not a branch.
+ * every layer — a layer's primacy is encoded in its weights, not a branch. An
+ * atom with no recorded confidence is scored on its similarity and verification,
+ * rescaled to the layer's full weight, so the missing figure neither sinks nor
+ * lifts it.
  */
 export function scoreAtom(
   atom: RetrievedMemoryAtom,
@@ -159,14 +162,24 @@ export function scoreAtom(
   const weights = policy.ranking.byLayer[atom.layer] ?? SEMANTIC_LAYER_WEIGHTS;
 
   const similarity = atom.similarity ?? 0;
-  const confidence = atom.metadata?.confidence ?? 0;
   const verifiedBoost = atom.metadata?.isVerified ? weights.verifiedBoost : 0;
-  return (
-    weights.priorityBoost +
-    similarity * weights.similarityWeight +
-    confidence * weights.confidenceWeight +
-    verifiedBoost
-  );
+  const signals = similarity * weights.similarityWeight + verifiedBoost;
+  const confidence = atom.metadata?.confidence;
+  if (confidence == null) {
+    // 2026-10-15: a missing confidence was scored as 0, ranking every atom
+    // nobody scored below any atom carrying a stamped figure (the old 0.8
+    // column default), however much more relevant it was.
+    const otherWeight = weights.similarityWeight + weights.verifiedBoost;
+    const fullWeight = otherWeight + weights.confidenceWeight;
+    return weights.priorityBoost + (otherWeight > 0 ? (signals * fullWeight) / otherWeight : 0);
+  }
+  return weights.priorityBoost + signals + confidence * weights.confidenceWeight;
+}
+
+/** Whether the atom's layer weighs a confidence and the atom carries none. */
+function isRankedUnscored(atom: RetrievedMemoryAtom, policy: MemoryPolicy): boolean {
+  const weights = policy.ranking.byLayer[atom.layer] ?? SEMANTIC_LAYER_WEIGHTS;
+  return weights.confidenceWeight > 0 && atom.metadata?.confidence == null;
 }
 
 /**
@@ -224,6 +237,11 @@ export interface OrchestrationResult {
   ranked: RetrievedMemoryAtom[];
   droppedByForgetting: number;
   droppedByDeduplication: number;
+  /**
+   * Ranked atoms whose layer weighs a confidence but which carry none, so were
+   * ranked on similarity and verification alone.
+   */
+  unscored: number;
 }
 
 /**
@@ -242,6 +260,7 @@ export function orchestrateAtoms(
   const { deduped, dropped: droppedByDeduplication } = dedupeAtoms(remembered, policy);
 
   const ranked = [...deduped].sort((a, b) => scoreAtom(b, policy) - scoreAtom(a, policy));
+  const unscored = ranked.filter(atom => isRankedUnscored(atom, policy)).length;
 
-  return { ranked, droppedByForgetting, droppedByDeduplication };
+  return { ranked, droppedByForgetting, droppedByDeduplication, unscored };
 }

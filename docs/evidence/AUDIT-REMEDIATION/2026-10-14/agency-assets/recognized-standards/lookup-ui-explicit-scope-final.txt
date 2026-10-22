@@ -1,0 +1,110 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — honest states > says so — and fetches nothing — when no program is selected 27ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — honest states > renders while the profile request is still pending 6ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — honest states > summarizes the loaded profile from real fields only 8ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — honest states > shows the profile error instead of a blank success shell 5ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — honest states > surfaces the lookup unavailableReason honestly — no fabricated autofill 52ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — honest states > offers the top hit as autofill — fields fill, the user still Saves 26ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — the five eSTAR device fields > shows the stored eSTAR device fields in the intake form 17ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — the five eSTAR device fields > Save PUTs only the edited eSTAR fields — and an emptied one as "" to clear it 47ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — the five eSTAR device fields > reports an honest empty when openFDA matches nothing 23ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > profilePatch — the five eSTAR device fields > is empty when the form mirrors the profile 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > profilePatch — the five eSTAR device fields > sends a changed field trimmed and an emptied field as "" (the clear signal) 1ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > profilePatch — the five eSTAR device fields > does not clear a field that was already blank 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > classificationAutofill — openFDA hit → intake fields, offered not saved > maps regulationNumber → regulationNumber and deviceName → classificationName 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > classificationAutofill — openFDA hit → intake fields, offered not saved > leaves a typed value alone when the hit has nothing for it 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > standardsStatusLine — the three states stay three > names an absent dataset as unavailable, quoting the server reason 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > standardsStatusLine — the three states stay three > labels zero explicit associations and keeps broader recognition scope open for review 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > standardsStatusLine — the three states stay three > counts real hits and cites the recognition list they came from 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > standardsStatusLine — the three states stay three > distinguishes a failed request from the server saying "unavailable" 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — recognized standards > renders actual acquired FDA associations through the canonical loader with their limited scope 54ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — recognized standards > renders an actual zero-code match without ruling out broader FDA recognition scope 20ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — recognized standards > shows nothing about standards until asked 11ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — recognized standards > says the list is not held rather than showing a plausible one 20ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — recognized standards > renders FDA fields verbatim, with the extent of recognition and the source 21ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — recognized standards > reports zero explicit code associations without asserting no broader recognized standard applies 27ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — the eSTAR device inputs carry the route’s caps > Regulation number (21 CFR) is capped at 50 characters 16ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — the eSTAR device inputs carry the route’s caps > Common name is capped at 500 characters 14ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — the eSTAR device inputs carry the route’s caps > Classification name is capped at 500 characters 16ms
+stderr | client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — a refused save says which refusal it was > 403 names the role, not the data — the operator is not sent hunting for a bad value
+An update to DeviceProfilePanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — a refused save says which refusal it was > 400 is the one case that really is the update being rejected
+An update to DeviceProfilePanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — a refused save says which refusal it was > a request that reached no verdict says so, and says nothing changed
+An update to DeviceProfilePanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — a refused save says which refusal it was > 500 is not reported as a rejection of the operator’s data either
+An update to DeviceProfilePanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — the eSTAR device inputs carry the route’s caps > Associated product codes is capped at 500 characters 14ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — the eSTAR device inputs carry the route’s caps > Indications for Use citation (attachment and page) is capped at 1000 characters 11ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — a refused save says which refusal it was > 403 names the role, not the data — the operator is not sent hunting for a bad value 27ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — a refused save says which refusal it was > 400 is the one case that really is the update being rejected 22ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — a refused save says which refusal it was > a request that reached no verdict says so, and says nothing changed 19ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — a refused save says which refusal it was > 500 is not reported as a rejection of the operator’s data either 22ms
+ ✓ server/services/fda-recognized-standards/__tests__/recognized-standards.test.ts > recognized-standards dataset — drop-point resolution > defaults to the assets drop-point and honours the env override 1ms
+ ✓ server/services/fda-recognized-standards/__tests__/recognized-standards.test.ts > recognized-standards dataset — validation is whole-file > indexes by normalized product code and de-duplicates the codes 7ms
+ ✓ server/services/fda-recognized-standards/__tests__/recognized-standards.test.ts > recognized-standards dataset — validation is whole-file > orders each product code deterministically by designation 0ms
+ ✓ server/services/fda-recognized-standards/__tests__/recognized-standards.test.ts > recognized-standards dataset — validation is whole-file > keeps a standard FDA maps to no product code, unmatched rather than guessed at 1ms
+ ✓ server/services/fda-recognized-standards/__tests__/recognized-standards.test.ts > recognized-standards dataset — validation is whole-file > rejects an unprovenanced list — a recognition list with no source is notes 0ms
+ ✓ server/services/fda-recognized-standards/__tests__/recognized-standards.test.ts > recognized-standards dataset — validation is whole-file > rejects a partial provenance block rather than accept the rest 0ms
+ ✓ server/services/fda-recognized-standards/__tests__/recognized-standards.test.ts > recognized-standards dataset — validation is whole-file > rejects the WHOLE file when a record is missing recognitionNumber 0ms
+ ✓ server/services/fda-recognized-standards/__tests__/recognized-standards.test.ts > recognized-standards dataset — validation is whole-file > rejects the WHOLE file when a record is missing title 0ms
+ ✓ server/services/fda-recognized-standards/__tests__/recognized-standards.test.ts > recognized-standards dataset — validation is whole-file > rejects the WHOLE file when a record is missing extentOfRecognition 0ms
+ ✓ server/services/fda-recognized-standards/__tests__/recognized-standards.test.ts > recognized-standards dataset — validation is whole-file > rejects a record with no productCodes key — [] must be written explicitly 0ms
+ ✓ server/services/fda-recognized-standards/__tests__/recognized-standards.test.ts > recognized-standards dataset — validation is whole-file > rejects an empty standards array and a non-object root 0ms
+ ✓ server/services/fda-recognized-standards/__tests__/recognized-standards.test.ts > recognized-standards dataset — loading never throws > reports an absent dataset with the path it looked at, and names the runbook item 1ms
+ ✓ server/services/fda-recognized-standards/__tests__/recognized-standards.test.ts > recognized-standards dataset — loading never throws > reports invalid JSON as absent rather than throwing 2ms
+ ✓ server/services/fda-recognized-standards/__tests__/recognized-standards.test.ts > recognized-standards dataset — loading never throws > treats a schema-invalid dataset as ABSENT, never partially loaded 1ms
+ ✓ server/services/fda-recognized-standards/__tests__/recognized-standards.test.ts > recognized-standards dataset — loading never throws > loads a well-formed dataset 1ms
+ ✓ server/services/fda-recognized-standards/__tests__/recognized-standards.test.ts > lookupRecognizedStandards — three distinguishable outcomes > 1. dataset not vendored: available:false, datasetLoaded:false, nothing invented 1ms
+ ✓ server/services/fda-recognized-standards/__tests__/recognized-standards.test.ts > lookupRecognizedStandards — three distinguishable outcomes > 2. dataset loaded, code has no listed standards: available:true with an empty list 1ms
+ ✓ server/services/fda-recognized-standards/__tests__/recognized-standards.test.ts > lookupRecognizedStandards — three distinguishable outcomes > 3. dataset loaded with hits: FDA fields verbatim, in dataset order 2ms
+ ✓ server/services/fda-recognized-standards/__tests__/recognized-standards.test.ts > lookupRecognizedStandards — three distinguishable outcomes > says which is missing when no product code was resolvable 1ms
+ ✓ server/services/fda-recognized-standards/__tests__/recognized-standards.test.ts > lookupRecognizedStandards — three distinguishable outcomes > picks up a dataset dropped in after a failed lookup, without a restart 1ms
+
+ Test Files  2 passed (2)
+      Tests  53 passed (53)
+   Start at  06:30:45
+   Duration  1.44s (transform 188ms, setup 143ms, import 166ms, tests 559ms, environment 366ms)
+

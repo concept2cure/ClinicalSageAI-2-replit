@@ -11,22 +11,36 @@
 import { getPool } from '../../db';
 import { type ComposedSection } from '../module3Composer';
 import { composeProjectModule3, persistComposedSection } from '../cmc/module3-compile';
-import { bridgeCompileToArtifact, classifyAndMapArtifactToSource, getModule3BuildStatus } from '../module3-convergence-service';
+import { anaCompositionRefusal, refusedByCompositionScope } from '../cmc/composition-scope';
+import {
+  bridgeCompileToArtifact,
+  classifyAndMapArtifactToSource,
+  getModule3BuildStatus,
+  type DossierUploadClassification,
+} from '../module3-convergence-service';
+import { resolveToRegistryId } from '../../../shared/regulatory/submission-type-bridge';
 import { detectContradictions, deriveImpactTasks } from '../cmc-impact-contradiction-engine';
 import { readContradictionRegisters } from '../cmc/contradiction-registers';
+import { NO_CANONICAL_SOURCES_REMEDY } from '../cmc/link-to-module3';
 import { evaluateFinalExportGate, type FinalExportGateVerdict } from '../cmc/final-export-gate';
+import type { CommandContext, CommandResult } from './command-types';
 
-interface CommandContext {
-  userId: number;
-  organizationId: number;
-  activeProjectId?: number;
+/**
+ * The user a Module 3 write is attributed to. 2026-10-15: these handlers
+ * persisted with `String(ctx.userId ?? 'system')` and classification passed no
+ * actor at all, so a command that reached them without a user wrote its
+ * provenance as 'system'. It is refused instead.
+ */
+function commandActor(ctx: CommandContext): number | null {
+  return Number.isInteger(ctx.userId) && ctx.userId > 0 ? ctx.userId : null;
 }
 
-interface CommandResult {
-  success: boolean;
-  action: string;
-  message: string;
-  data?: unknown;
+function refusedWithoutActor(action: string): CommandResult {
+  return {
+    success: false,
+    action,
+    message: 'This command records Module 3 provenance and carries no acting user, so it was refused; nothing was written.',
+  };
 }
 
 // ── module3_build_all ─────────────────────────────────────────────────────────
@@ -36,6 +50,8 @@ export async function module3BuildAll(ctx: CommandContext, params: Record<string
   const orgId = ctx.organizationId;
   const projectId = (params.projectId as string) || String(ctx.activeProjectId || '');
   if (!projectId) return { success: false, action: 'module3_build_all', message: 'Project ID required' };
+  const actorId = commandActor(ctx);
+  if (actorId === null) return refusedWithoutActor('module3_build_all');
 
   const client = await pool.connect();
   try {
@@ -56,11 +72,11 @@ export async function module3BuildAll(ctx: CommandContext, params: Record<string
          which is the fabricated readiness this codebase forbids. The
          single-section path (module3BuildSection) already refuses on the same
          condition; this is the same answer in the same words. */
-      return { success: false, action: 'module3_build_all', message: 'No canonical source objects for this project — nothing to build from. Upload and classify source documents first.' };
+      return { success: false, action: 'module3_build_all', message: `No canonical source objects for this project — nothing to build from. ${NO_CANONICAL_SOURCES_REMEDY}` };
     }
 
     for (const section of compiled) {
-      await persistComposedSection(client, orgId, projectId, section, { actorId: String(ctx.userId ?? 'system'), event: 'compiled' });
+      await persistComposedSection(client, orgId, projectId, section, { actorId: String(actorId), event: 'compiled' });
     }
     await client.query('COMMIT');
 
@@ -74,7 +90,7 @@ export async function module3BuildAll(ctx: CommandContext, params: Record<string
           completeness: section.completeness,
           missingInputs: section.missingInputs,
           lineage: section.lineage,
-        }, { createdById: ctx.userId ?? null });
+        }, { createdById: actorId });
         if (result.bridged) bridged.push({ sectionKey: section.sectionKey, artifactId: result.artifactId, isNew: result.isNew });
       } catch { /* non-fatal */ }
     }
@@ -115,7 +131,7 @@ export async function module3BuildAll(ctx: CommandContext, params: Record<string
     };
   } catch (err) {
     await client.query('ROLLBACK');
-    return { success: false, action: 'module3_build_all', message: `Build failed: ${(err as Error).message}` };
+    return anaCompositionRefusal(err, 'module3_build_all', `Build failed: ${(err as Error).message}`);
   } finally {
     client.release();
   }
@@ -129,6 +145,8 @@ export async function module3BuildSection(ctx: CommandContext, params: Record<st
   const projectId = (params.projectId as string) || String(ctx.activeProjectId || '');
   const sectionKey = params.sectionKey as string;
   if (!projectId || !sectionKey) return { success: false, action: 'module3_build_section', message: 'Project ID and sectionKey required (e.g. 3.2.S.4)' };
+  const actorId = commandActor(ctx);
+  if (actorId === null) return refusedWithoutActor('module3_build_section');
 
   /* Composed and persisted through the one service the compile route uses
      — row, lineage and provenance in one transaction. */
@@ -139,17 +157,18 @@ export async function module3BuildSection(ctx: CommandContext, params: Record<st
     const { sources, sections: allComposed } = await composeProjectModule3(client, orgId, projectId);
     if (sources.length === 0) {
       await client.query('ROLLBACK');
-      return { success: false, action: 'module3_build_section', message: 'No canonical source objects for this project — nothing to build from. Upload and classify source documents first.' };
+      return { success: false, action: 'module3_build_section', message: `No canonical source objects for this project — nothing to build from. ${NO_CANONICAL_SOURCES_REMEDY}` };
     }
     section = allComposed.find(s => s.sectionKey === sectionKey);
     if (!section) {
       await client.query('ROLLBACK');
       return { success: false, action: 'module3_build_section', message: `Section ${sectionKey} is not composable from this project's sources (no composition rule, or no recorded region for a regional section).` };
     }
-    await persistComposedSection(client, orgId, projectId, section, { actorId: String(ctx.userId ?? 'system'), event: 'compiled' });
+    await persistComposedSection(client, orgId, projectId, section, { actorId: String(actorId), event: 'compiled' });
     await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
+    if (refusedByCompositionScope(err)) return anaCompositionRefusal(err, 'module3_build_section', '');
     throw err;
   } finally {
     client.release();
@@ -165,7 +184,7 @@ export async function module3BuildSection(ctx: CommandContext, params: Record<st
       completeness: section.completeness,
       missingInputs: section.missingInputs,
       lineage: section.lineage,
-    }, { createdById: ctx.userId ?? null });
+    }, { createdById: actorId });
     if (result.bridged) bridgedArtifact = { artifactId: result.artifactId, isNew: result.isNew };
   } catch { /* non-fatal */ }
 
@@ -233,6 +252,8 @@ export async function module3RefreshStale(ctx: CommandContext, params: Record<st
   const orgId = ctx.organizationId;
   const projectId = (params.projectId as string) || String(ctx.activeProjectId || '');
   if (!projectId) return { success: false, action: 'module3_refresh_stale', message: 'Project ID required' };
+  const actorId = commandActor(ctx);
+  if (actorId === null) return refusedWithoutActor('module3_refresh_stale');
 
   const { sections: statuses } = await getModule3BuildStatus(orgId, projectId);
   const stale = statuses.filter(s => s.isStale);
@@ -257,14 +278,14 @@ export async function module3RefreshStale(ctx: CommandContext, params: Record<st
     }
     for (const section of allComposed) {
       if (!staleKeys.has(section.sectionKey)) continue;
-      await persistComposedSection(client, orgId, projectId, section, { actorId: String(ctx.userId ?? 'system'), event: 'refreshed' });
+      await persistComposedSection(client, orgId, projectId, section, { actorId: String(actorId), event: 'refreshed' });
       refreshed.push(section.sectionKey);
       toBridge.push(section);
     }
     await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK');
-    return { success: false, action: 'module3_refresh_stale', message: `Refresh failed and nothing was written: ${err instanceof Error ? err.message : String(err)}` };
+    return anaCompositionRefusal(err, 'module3_refresh_stale', `Refresh failed and nothing was written: ${err instanceof Error ? err.message : String(err)}`);
   } finally {
     client.release();
   }
@@ -277,7 +298,7 @@ export async function module3RefreshStale(ctx: CommandContext, params: Record<st
         completeness: section.completeness,
         missingInputs: section.missingInputs,
         lineage: section.lineage,
-      }, { createdById: ctx.userId ?? null });
+      }, { createdById: actorId });
     } catch (err) {
       bridgeSkips.push(`${section.sectionKey}: ${err instanceof Error ? err.message : String(err)}`);
     }
@@ -489,6 +510,55 @@ export async function cmcStatus(ctx: CommandContext, params: Record<string, unkn
 
 // ── module3_classify_source ───────────────────────────────────────────────────
 
+const PROGRAM_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** The classification's tracks, by the registry id a recorded type resolves to. */
+const TRACK_BY_REGISTRY_ID: Partial<Record<string, DossierUploadClassification['submissionTrack']>> = {
+  US_IND: 'IND',
+  US_NDA: 'NDA',
+  US_BLA: 'BLA',
+  US_510K: '510K',
+  US_PMA: 'PMA',
+  EU_CER: 'CER',
+};
+
+/**
+ * The submission type the project records: a program's own `program_type` (by
+ * its uuid, or through a legacy projects.id anchored to one), else a legacy
+ * project's `metadata.submissionType`. `found: false` when the id is no program
+ * or project of this organization.
+ */
+async function recordedSubmissionType(
+  orgId: number,
+  projectId: string,
+): Promise<{ found: boolean; type: string | null }> {
+  const pool = getPool();
+  if (PROGRAM_ID_RE.test(projectId)) {
+    const { rows } = await pool.query(
+      `SELECT program_type FROM regulatory_programs
+        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [projectId, orgId],
+    );
+    if (rows.length === 0) return { found: false, type: null };
+    return { found: true, type: String(rows[0].program_type ?? '').trim() || null };
+  }
+  const id = /^\d+$/.test(projectId) ? Number(projectId) : NaN;
+  if (!Number.isSafeInteger(id) || id <= 0 || id > 2_147_483_647) return { found: false, type: null };
+  const { rows } = await pool.query(
+    `SELECT rp.program_type, p.metadata
+       FROM projects p
+       LEFT JOIN regulatory_programs rp
+         ON rp.id = p.regulatory_program_id AND rp.organization_id = p.organization_id
+        AND rp.deleted_at IS NULL
+      WHERE p.id = $1 AND p.organization_id = $2`,
+    [id, orgId],
+  );
+  if (rows.length === 0) return { found: false, type: null };
+  const meta = (rows[0].metadata ?? {}) as Record<string, unknown>;
+  const type = rows[0].program_type || meta.submissionType || meta.submission_type;
+  return { found: true, type: String(type ?? '').trim() || null };
+}
+
 export async function module3ClassifySource(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   const orgId = ctx.organizationId;
   const projectId = (params.projectId as string) || String(ctx.activeProjectId || '');
@@ -498,164 +568,48 @@ export async function module3ClassifySource(ctx: CommandContext, params: Record<
   if (!projectId || !artifactId || !sourceType) {
     return { success: false, action: 'module3_classify_source', message: 'Project ID, artifactId, and sourceType required' };
   }
+  const actorId = commandActor(ctx);
+  if (actorId === null) return refusedWithoutActor('module3_classify_source');
+
+  /* 2026-10-15: every source was classified under submissionTrack 'IND',
+     whatever the program files, and that track was written into the source
+     payload and its provenance event. It is the recorded one, or the command
+     is refused. */
+  const recorded = await recordedSubmissionType(orgId, String(projectId).trim());
+  if (!recorded.found) {
+    return {
+      success: false,
+      action: 'module3_classify_source',
+      message: `${projectId} is not a program or project of this organization, so its submission track is not established; nothing was classified.`,
+    };
+  }
+  const registryId = recorded.type ? resolveToRegistryId(recorded.type) : null;
+  const submissionTrack = registryId ? TRACK_BY_REGISTRY_ID[registryId] : undefined;
+  if (!submissionTrack) {
+    return {
+      success: false,
+      action: 'module3_classify_source',
+      message: recorded.type
+        ? `This program records its application as "${recorded.type}", which the Module 3 source classification ` +
+          'has no track for (it carries IND, NDA, BLA, 510(k), PMA and CER); nothing was classified.'
+        : 'This project records no submission type, so the track to classify the source under is not established; ' +
+          'nothing was classified. Record its submission type, then classify again.',
+    };
+  }
 
   const result = await classifyAndMapArtifactToSource(orgId, projectId, artifactId, {
-    submissionTrack: 'IND',
+    submissionTrack,
     dossierModule: '3',
     ctdSection,
     sourceType: sourceType as any,
     useAsModule3Source: true,
     tags: [],
-  });
+  }, { actorUserId: actorId });
 
   return {
     success: true,
     action: 'module3_classify_source',
     message: `Artifact ${artifactId} classified as ${sourceType} source${ctdSection ? ` for ${ctdSection}` : ''}.`,
     data: result,
-  };
-}
-
-// ── ich_compliance ────────────────────────────────────────────────────────────
-//
-// Runs the deterministic ICH compliance check for the active CMC project
-// across Q1A/Q2/Q3A-B/Q3D/Q6A-B/Q8/Q9/Q10. Returns a structured report
-// with overall status (compliant / warnings / non_compliant), per-guideline
-// status, and the failing findings with their guideline citations.
-
-export async function ichCompliance(
-  ctx: CommandContext,
-  params: Record<string, unknown>,
-): Promise<CommandResult> {
-  const orgId = ctx.organizationId;
-  const projectId = (params.projectId as string) || String(ctx.activeProjectId || '');
-  if (!projectId) {
-    return { success: false, action: 'ich_compliance', message: 'Project ID required' };
-  }
-  const { runIchComplianceCheck } = await import('../cmc/ich-compliance-checker');
-  const report = await runIchComplianceCheck(orgId, projectId);
-
-  const failing = report.findings.filter(f => f.status === 'fail');
-  const warnings = report.findings.filter(f => f.status === 'warning');
-
-  const statusLabel =
-    report.overallStatus === 'compliant' ? '**COMPLIANT**'
-    : report.overallStatus === 'warnings' ? '**WARNINGS**'
-    : '**NON-COMPLIANT**';
-
-  const guidelineLines = Object.entries(report.guidelineStatus)
-    .map(([g, s]) => `- ${g}: ${s}`)
-    .join('\n');
-
-  const failingLines = failing.slice(0, 5).map(f =>
-    `- **${f.guideline}** ${f.ruleId}: ${f.message}`
-  ).join('\n');
-  const warningLines = warnings.slice(0, 5).map(f =>
-    `- ${f.guideline} ${f.ruleId}: ${f.message}`
-  ).join('\n');
-
-  const message =
-    `**ICH compliance:** ${statusLabel}\n\n` +
-    `Findings: ${report.counts.pass} pass / ${report.counts.warning} warnings / ${report.counts.fail} fail\n\n` +
-    `**Guideline status**\n${guidelineLines}` +
-    (failingLines ? `\n\n**Failing (top 5)**\n${failingLines}` : '') +
-    (warningLines ? `\n\n**Warnings (top 5)**\n${warningLines}` : '');
-
-  return {
-    success: true,
-    action: 'ich_compliance',
-    message,
-    data: report,
-  };
-}
-
-// ── control_strategy ──────────────────────────────────────────────────────────
-//
-// Generates a deterministic ICH Q8/Q9/Q10/Q11-grade control strategy for
-// the active CMC project. Reads CMC source data via the QbD analyzer +
-// analytical methods + stability and composes release tests, in-process
-// controls, stability monitoring, raw material controls — each with
-// risk-based justification and guideline citation.
-
-export async function controlStrategy(
-  ctx: CommandContext,
-  params: Record<string, unknown>,
-): Promise<CommandResult> {
-  const orgId = ctx.organizationId;
-  const projectId = (params.projectId as string) || String(ctx.activeProjectId || '');
-  if (!projectId) {
-    return { success: false, action: 'control_strategy', message: 'Project ID required' };
-  }
-  const scope = (params.scope as 'drug_substance' | 'drug_product' | 'both') || 'both';
-  const { generateControlStrategy } = await import('../cmc/control-strategy-generator');
-  const strategy = await generateControlStrategy(orgId, projectId, scope);
-
-  const byType: Record<string, number> = {};
-  for (const c of strategy.controlElements) {
-    byType[c.controlType] = (byType[c.controlType] ?? 0) + 1;
-  }
-  const typeLines = Object.entries(byType)
-    .map(([t, n]) => `- ${t.replace(/_/g, ' ')}: ${n}`)
-    .join('\n');
-
-  const gapBlock = strategy.gaps.length > 0
-    ? `\n\n**Open gaps:**\n${strategy.gaps.slice(0, 5).map(g => `- ${g}`).join('\n')}`
-    : '\n\nNo open gaps identified.';
-
-  const message =
-    `**Control strategy (${scope.replace('_', ' ')})**\n\n` +
-    `Control elements: ${strategy.controlElements.length}\n${typeLines}\n\n` +
-    `CQAs covered: ${strategy.cqas.length}  ·  CPPs covered: ${strategy.cpps.length}\n` +
-    `Citations: ${strategy.citations.join(', ')}` +
-    gapBlock;
-
-  return {
-    success: true,
-    action: 'control_strategy',
-    message,
-    data: strategy,
-  };
-}
-
-// ── variations_classify ───────────────────────────────────────────────────────
-//
-// Classifies a proposed manufacturing variation against FDA 21 CFR 314.70
-// + SUPAC + EMA Commission Reg 1234/2008 + ICH Q12. Pure deterministic;
-// caller supplies the change spec, this returns reporting category, SUPAC
-// tier, BE requirement, impacted CTD sections, cross-module impact.
-
-export async function variationsClassify(
-  _ctx: CommandContext,
-  params: Record<string, unknown>,
-): Promise<CommandResult> {
-  if (!params.dosageFormFamily || !params.changeCategory) {
-    return {
-      success: false,
-      action: 'variations_classify',
-      message: 'dosageFormFamily and changeCategory are required (e.g. immediate_release_oral_solid + scale_up).',
-    };
-  }
-  const { classifyVariation } = await import('../cmc/supac-classifier');
-  const classification = classifyVariation(params as unknown as Parameters<typeof classifyVariation>[0]);
-
-  const moduleLines = classification.crossModuleImpact
-    .map(m => `- ${m.module}: ${m.sections.slice(0, 3).join(', ')}${m.required ? ' (required)' : ' (recommended)'}`)
-    .join('\n');
-
-  const message =
-    `**Variation classification**\n\n` +
-    `FDA: **${classification.fdaReportingCategory.toUpperCase().replace(/_/g, ' ')}**` +
-      (classification.supacTier !== 'not_applicable' ? `  ·  SUPAC: ${classification.supacTier.replace('_', ' ')}` : '') +
-      `  ·  EMA: ${classification.emaVariationCategory.toUpperCase().replace(/_/g, ' ')}\n` +
-    `BE: ${classification.bioequivalence.replace(/_/g, ' ')}  ·  Timeline: ~${classification.estimatedTimelineDays} days\n\n` +
-    `**Impacted CTD sections**\n${classification.impactedCtdSections.map(s => `- ${s}`).join('\n')}\n\n` +
-    `**Cross-module impact**\n${moduleLines}\n\n` +
-    `**Citations**\n${classification.citations.map(c => `- ${c}`).join('\n')}`;
-
-  return {
-    success: true,
-    action: 'variations_classify',
-    message,
-    data: classification,
   };
 }

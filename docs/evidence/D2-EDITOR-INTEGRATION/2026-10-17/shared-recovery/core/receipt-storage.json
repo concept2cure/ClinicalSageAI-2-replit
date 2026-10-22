@@ -1,0 +1,38 @@
+[
+  {
+    "path": "final-core.txt",
+    "originalCaptureSha256": "bc68fb24282fc0abe05093d4bfbfec7d28298679947a514e2d0f07e9809b0ade",
+    "storedCopySha256": "045020bb8d07d783057821c01a383109784f87f82616a4b0b599d3909ead8637",
+    "normalization": "trailing line endings only, one LF; empty output stays empty"
+  },
+  {
+    "path": "final-regression-candidate.txt",
+    "originalCaptureSha256": "a5cb542f58a023a071fcca4a229e614b4e1e353a9c0d9ba5ab24955dd0920205",
+    "storedCopySha256": "1e209468c82b0de861ab62c01235411b32f2fc6987ddd607acc678943d166e35",
+    "normalization": "trailing line endings only, one LF; empty output stays empty"
+  },
+  {
+    "path": "first-green-candidate.txt",
+    "originalCaptureSha256": "4b187de09275d30e67fadc6a733d220d167d380c772b6e6f00fa8b9c980387f6",
+    "storedCopySha256": "6a56f6ee2c1a743ac9a79737cae82da22b5091fbdbd8d7632d8ba69ed0365f06",
+    "normalization": "trailing line endings only, one LF; empty output stays empty"
+  },
+  {
+    "path": "red.txt",
+    "originalCaptureSha256": "22a909bcae9497d6bc2f9b6095259bb1d427128b60099561b147c21dfede0621",
+    "storedCopySha256": "581affb0a794b4f1ef42fd65b86077bc34e07b92482ddeaeec7396ecdc987df2",
+    "normalization": "trailing line endings only, one LF; empty output stays empty"
+  },
+  {
+    "path": "second-candidate.txt",
+    "originalCaptureSha256": "c38444b7d880a424315fad6d87adb0994e1e081bda312d05593bc25565a5d8f4",
+    "storedCopySha256": "733412273fa7c1bbab5eecaa4a0e83216786a8e207bb3ca4678cd7cec0558dcd",
+    "normalization": "trailing line endings only, one LF; empty output stays empty"
+  },
+  {
+    "path": "strict-lint.txt",
+    "originalCaptureSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "storedCopySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normalization": "trailing line endings only, one LF; empty output stays empty"
+  }
+]

@@ -17,7 +17,8 @@
  */
 
 import { pool } from '../db.js';
-import auditService from './auditService';
+import { recordAuditRow, type AuditRowOutcome } from './audit/audit-write-outcome';
+import { artifactDataEligibleSql } from './document-data-disposition/eligibility';
 import crypto from 'crypto';
 import { ai } from '../lib/unified-ai-client';
 
@@ -66,7 +67,8 @@ export interface KeywordSource {
   sourceId: string;
   sourceType: 'evidence_object' | 'artifact' | 'uploaded_document' | 'literature';
   title: string;
-  relevance: number; // 0-1
+  /** No relevance is computed — this is a term match. It was a constant 0.7 (2026-10-15). */
+  relevance: null;
   excerpt: string;
   pageReference?: string;
   linkType: 'defines' | 'reports' | 'validates' | 'references';
@@ -82,12 +84,19 @@ export interface KeywordExtractionResult {
   linkagePercent: number;
   categories: Record<KeywordCategory, number>;
   extractedAt: string;
+  meta: { auditTrail: AuditRowOutcome };
+  sourceLinkage: 'completed' | 'not_requested';
+  extractionMethods: { model:'completed'|'unavailable'; patterns:'completed' };
+  source: { artifactId:string; nativeId:number; version:number; sha256:string };
+  /** What this extraction could not do (e.g. the model-assisted pass failed). */
+  notes: string[];
 }
 
 export interface KeywordConsistencyCheck {
   term: string;
   documents: Array<{ documentId: string; usage: string }>;
-  isConsistent: boolean;
+  /** null: nothing compares the usages. It defaulted to true (2026-10-15). */
+  isConsistent: boolean | null;
   inconsistencyType?: 'definition_mismatch' | 'spelling_variation' | 'context_conflict';
   suggestion?: string;
 }
@@ -96,9 +105,38 @@ export interface KeywordConsistencyCheck {
 // KEYWORD EXTRACTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
+export class KeywordInputRefusal extends Error {
+  constructor(readonly status:404|409|503, readonly code:string, message:string) { super(message); this.name='KeywordInputRefusal'; }
+}
+
 /**
  * Extract domain-specific keywords from regulatory content.
  */
+async function verifyKeywordSource(content: string, documentId: string, projectId: number, organizationId: number) {
+  const { rows } = await pool.query(
+    `SELECT a.id, a.artifact_id, a.version, a.content, a.content_hash FROM concept2cure_artifacts a
+     WHERE a.artifact_id=$1 AND a.project_id=$2 AND a.organization_id=$3
+       AND a.status NOT IN ('deleted','archived','superseded','withdrawn') AND ${artifactDataEligibleSql('a')}`,
+    [documentId, projectId, organizationId]).catch(()=>{
+      throw new KeywordInputRefusal(503,'KEYWORD_SOURCE_UNAVAILABLE','Current source data could not be verified. No extraction was performed.');
+    });
+  const artifact=rows[0];
+  if (!artifact || typeof artifact.content!=='string') throw new KeywordInputRefusal(404,'KEYWORD_SOURCE_NOT_FOUND','The current source document is unavailable for this project.');
+  const sha256=crypto.createHash('sha256').update(artifact.content).digest('hex');
+  if (artifact.content !== content || artifact.content_hash !== sha256) {
+    throw new KeywordInputRefusal(409,'KEYWORD_SOURCE_CHANGED','The submitted text does not match the current verified source. Reload the document before extracting keywords.');
+  }
+  return {artifactId:artifact.artifact_id,nativeId:Number(artifact.id),version:Number(artifact.version),sha256};
+}
+
+function keywordCoverage(keywords: ExtractedKeyword[]) {
+  const categories: Record<string, number> = {};
+  for (const keyword of keywords) categories[keyword.category] = (categories[keyword.category] || 0) + 1;
+  const linkedKeywords = keywords.filter(keyword => keyword.linkedSources.length > 0).length;
+  return { categories: categories as Record<KeywordCategory, number>, linkedKeywords,
+    linkagePercent: keywords.length > 0 ? Math.round(linkedKeywords / keywords.length * 100) : 0 };
+}
+
 export async function extractKeywords(
   content: string,
   documentId: string,
@@ -108,24 +146,28 @@ export async function extractKeywords(
     sectionCode?: string;
     maxKeywords?: number;
     categories?: KeywordCategory[];
+    linkSources?: boolean;
+    userId?: number;
   }
 ): Promise<KeywordExtractionResult> {
   const maxKeywords = options?.maxKeywords || 100;
+  const source = await verifyKeywordSource(content, documentId, projectId, organizationId);
 
-  // 1. AI-powered extraction for domain terms
-  const aiKeywords = await extractKeywordsViaAI(content, maxKeywords);
+  // A failed model pass is explicit while the deterministic pattern pass remains useful.
+  const modelExtraction = await extractKeywordsViaAI(content, maxKeywords, { organizationId, projectId, userId: options?.userId });
+  const notes = modelExtraction.available ? [] : ['The model-assisted term extraction failed; only pattern matches are listed.'];
 
   // 2. Regex-based extraction for known patterns
   const patternKeywords = extractKeywordsViaPatterns(content);
 
   // 3. Merge and deduplicate
-  const merged = mergeKeywords(aiKeywords, patternKeywords);
+  const merged = mergeKeywords(modelExtraction.keywords, patternKeywords);
 
   // 4. Add occurrence positions
   const withOccurrences = addOccurrencePositions(merged, content, documentId, options?.sectionCode);
 
   // 5. Link keywords to source documents
-  const withSources = await linkKeywordsToSources(withOccurrences, projectId, organizationId);
+  const withSources = options?.linkSources === false ? withOccurrences : await linkKeywordsToSources(withOccurrences, projectId, organizationId);
 
   // 6. Filter by category if specified
   const filtered = options?.categories
@@ -133,39 +175,40 @@ export async function extractKeywords(
     : withSources;
 
   // 7. Compute category counts
-  const categories: Record<string, number> = {};
-  for (const kw of filtered) {
-    categories[kw.category] = (categories[kw.category] || 0) + 1;
-  }
+  const coverage = keywordCoverage(filtered);
 
   // 8. Store extraction result
-  await storeKeywordExtraction(documentId, projectId, organizationId, filtered);
+  const auditTrail = await storeKeywordExtraction(documentId, projectId, organizationId, filtered, options?.userId);
 
   return {
     documentId,
     projectId,
     organizationId,
+    meta: { auditTrail },
+    source,
+    extractionMethods:{model:modelExtraction.available?'completed':'unavailable',patterns:'completed'},
+    sourceLinkage: options?.linkSources === false ? 'not_requested' : 'completed',
     keywords: filtered.slice(0, maxKeywords),
     totalKeywords: filtered.length,
-    linkedKeywords: filtered.filter(k => k.linkedSources.length > 0).length,
-    linkagePercent:
-      filtered.length > 0
-        ? Math.round(
-            (filtered.filter(k => k.linkedSources.length > 0).length / filtered.length) * 100
-          )
-        : 0,
-    categories: categories as Record<KeywordCategory, number>,
+    ...coverage,
     extractedAt: new Date().toISOString(),
+    notes,
   };
 }
 
+/** Model-suggested terms, or null when the call failed. */
 async function extractKeywordsViaAI(
   content: string,
-  maxKeywords: number
-): Promise<Partial<ExtractedKeyword>[]> {
+  maxKeywords: number,
+  principal: { organizationId: number; projectId: number; userId?: number }
+): Promise<{keywords:Partial<ExtractedKeyword>[];available:boolean}> {
   try {
+    // Routed by task like every other caller; it pinned OPENAI_MODEL ||
+    // 'gpt-4o', outside the approved-models register (2026-10-15).
     const aiResult = await ai.chat({
-      model: process.env.OPENAI_MODEL || 'gpt-4o',
+      taskType: 'document_analysis',
+      callerModule: 'keywordExtraction.extractKeywordsViaAI',
+      ...principal,
       temperature: 0.1,
       response_format: { type: 'json_object' },
       messages: [
@@ -191,7 +234,7 @@ Focus on terms that would need source traceability in a regulatory submission. M
     });
 
     const parsed = JSON.parse(aiResult.content || '{"keywords":[]}');
-    return (parsed.keywords || []).map((k: any) => ({
+    const keywords = (parsed.keywords || []).map((k: any) => ({
       term: k.term,
       normalizedTerm: k.term?.toLowerCase().trim(),
       category: k.category || 'general',
@@ -200,9 +243,10 @@ Focus on terms that would need source traceability in a regulatory submission. M
       definitionText: k.definitionText,
       synonyms: k.synonyms,
     }));
+    return {keywords,available:true};
   } catch (error) {
     console.error('[KeywordExtraction] AI extraction failed:', error);
-    return [];
+    return {keywords:[],available:false};
   }
 }
 
@@ -385,105 +429,83 @@ async function linkKeywordsToSources(
   try {
     // Load sources
     const sources = await pool.query(
-      `SELECT id, title, evidence_type as type,
-              COALESCE(excerpt, LEFT(description, 500)) as excerpt,
-              source_reference as document_path
-       FROM evidence_objects
-       WHERE organization_id = $1
-       ORDER BY created_at DESC LIMIT 100`,
-      [organizationId]
+      `SELECT e.id, e.title, 'evidence_object' as source_kind,
+              COALESCE(e.excerpt, LEFT(e.description, 500)) as excerpt
+       FROM evidence_objects e
+       JOIN projects p ON p.regulatory_program_id = e.program_id AND p.organization_id = e.organization_id
+       WHERE e.organization_id = $1 AND p.id = $2 AND e.status NOT IN ('deleted','archived','superseded','withdrawn')
+       ORDER BY e.created_at DESC, e.id LIMIT 100`,
+      [organizationId, projectId]
     );
 
     const artifacts = await pool.query(
-      `SELECT artifact_id as id, title, type,
-              LEFT(content, 500) as excerpt
-       FROM concept2cure_artifacts
-       WHERE project_id = $1 AND organization_id = $2 AND status != 'deleted'
-       LIMIT 100`,
+      `SELECT a.artifact_id as id, a.title, 'artifact' as source_kind,
+              LEFT(a.content, 500) as excerpt
+       FROM concept2cure_artifacts a
+       WHERE a.project_id = $1 AND a.organization_id = $2 AND a.status NOT IN ('deleted','archived','superseded','withdrawn')
+         AND ${artifactDataEligibleSql('a')}
+       ORDER BY a.id LIMIT 100`,
       [projectId, organizationId]
     );
 
     const allSources = [...sources.rows, ...artifacts.rows];
-
-    // For each keyword, find sources that mention it
     for (const kw of keywords) {
       const termRegex = new RegExp(escapeRegex(kw.term), 'i');
-
       for (const source of allSources) {
         const searchText = `${source.title} ${source.excerpt || ''}`;
         if (termRegex.test(searchText)) {
           kw.linkedSources.push({
             sourceId: source.id,
-            sourceType: source.type?.includes('artifact') ? 'artifact' : 'evidence_object',
+            sourceType: source.source_kind,
             title: source.title,
-            relevance: 0.7, // Base relevance for keyword match
+            relevance: null,
             excerpt: extractRelevantExcerpt(source.excerpt || '', kw.term),
             linkType: 'references',
           });
         }
       }
-
-      // Sort by relevance and limit
-      kw.linkedSources.sort((a, b) => b.relevance - a.relevance);
       kw.linkedSources = kw.linkedSources.slice(0, 10);
     }
-  } catch (error) {
-    console.warn('[KeywordExtraction] Failed to link sources:', error);
+    return keywords;
+  } catch {
+    throw new KeywordInputRefusal(503,'KEYWORD_LINKAGE_UNAVAILABLE','Keyword source linkage is unavailable. No extraction receipt was recorded.');
   }
-
-  return keywords;
 }
 
 /**
- * Check keyword consistency across multiple documents in a project.
+ * The terms the given documents share, and where each uses them.
+ *
+ * Nothing here compares how a term is used, so no term is called consistent:
+ * `isConsistent` is null and `assessed` false. Until 2026-10-15 this read the
+ * organisation's last 20 'keywords_extracted' audit rows — whatever documents
+ * those were — marked every shared term consistent ("Default — would need
+ * deeper analysis"), and turned any failure into [] ("no inconsistencies").
+ * Terms come from the deterministic regulatory-pattern pass only.
  */
 export async function checkKeywordConsistency(
-  projectId: number,
-  organizationId: number
-): Promise<KeywordConsistencyCheck[]> {
-  const checks: KeywordConsistencyCheck[] = [];
-
-  try {
-    // Load keyword extractions from audit_logs
-    const result = await pool.query(
-      `SELECT entity_id as document_id, details
-       FROM audit_logs
-       WHERE organization_id = $1 AND action = 'keywords_extracted'
-       ORDER BY created_at DESC LIMIT 20`,
-      [organizationId]
-    );
-
-    // Build keyword → documents map
-    const keywordDocs = new Map<string, Array<{ documentId: string; usage: string }>>();
-
-    for (const row of result.rows) {
-      const details = typeof row.details === 'string' ? JSON.parse(row.details) : row.details;
-      for (const kw of details?.keywords || []) {
-        const normalized = kw.normalizedTerm || kw.term?.toLowerCase();
-        if (!normalized) continue;
-        if (!keywordDocs.has(normalized)) keywordDocs.set(normalized, []);
-        keywordDocs.get(normalized)!.push({
-          documentId: row.document_id,
-          usage: kw.occurrences?.[0]?.context || kw.term,
-        });
-      }
+  documents: Array<{ id: string; title?: string; content: string }>
+): Promise<{ assessed: false; note: string; terms: KeywordConsistencyCheck[] }> {
+  const byTerm = new Map<string, Array<{ documentId: string; usage: string }>>();
+  for (const doc of documents) {
+    const content = typeof doc.content === 'string' ? doc.content : '';
+    for (const kw of extractKeywordsViaPatterns(content)) {
+      const normalized = kw.normalizedTerm ?? kw.term?.toLowerCase();
+      if (!normalized || !kw.term) continue;
+      const at = content.toLowerCase().indexOf(normalized);
+      const usage = at < 0 ? kw.term : content.slice(Math.max(0, at - 50), at + normalized.length + 50);
+      if (!byTerm.has(normalized)) byTerm.set(normalized, []);
+      byTerm.get(normalized)!.push({ documentId: doc.id, usage });
     }
-
-    // Check terms that appear in multiple documents
-    for (const [term, docs] of keywordDocs) {
-      if (docs.length > 1) {
-        checks.push({
-          term,
-          documents: docs,
-          isConsistent: true, // Default — would need deeper analysis for real inconsistency
-        });
-      }
-    }
-  } catch {
-    // Non-critical
   }
-
-  return checks;
+  const terms: KeywordConsistencyCheck[] = [];
+  for (const [term, docs] of byTerm) {
+    if (new Set(docs.map((d) => d.documentId)).size > 1) terms.push({ term, documents: docs, isConsistent: null });
+  }
+  return {
+    assessed: false,
+    note: 'Lists where each shared term is used; how it is used is not compared, so consistency is not assessed.',
+    terms,
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -506,13 +528,15 @@ async function storeKeywordExtraction(
   documentId: string,
   projectId: number,
   organizationId: number,
-  keywords: ExtractedKeyword[]
-): Promise<void> {
+  keywords: ExtractedKeyword[],
+  userId?: number
+): Promise<AuditRowOutcome> {
   // Chained via auditService — the previous raw INSERT used columns audit_logs
   // does not have (organization_id / entity_type / entity_id / details), so it
   // raised 42703 into a bare catch and never recorded anything.
-  await auditService.logAction({
+  return recordAuditRow({
     organizationId,
+    userId,
     action: 'keywords_extracted',
     resourceType: 'document',
     resourceId: documentId,

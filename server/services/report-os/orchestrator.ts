@@ -13,12 +13,17 @@ import {
   type ProjectArtifactData,
 } from '../regulatory/submissionPackageBuilder';
 import { resolveRegistryId } from '../regulatory/registry/legacySubmissionTypeMapper';
+import { getApplicationType } from '../../../shared/regulatory/global-document-registry';
+import { explicitReportRegistry } from './registry-context';
+import type { InsightAtomRef } from './providers/types';
 
 export interface ProviderResult {
   provider: string;
   observedAt: string;
   status: 'ready' | 'partial' | 'missing';
   blocker?: string;
+  atoms?: InsightAtomRef[];
+  calculation?: Record<string, unknown>;
 }
 
 export interface RunComputationResult {
@@ -48,9 +53,12 @@ export async function computeInitialRun(
     explicitSubmissionType?: string;
   }
 ): Promise<RunComputationResult> {
+  const explicitRegistryId = explicitReportRegistry(options);
   const providers: ProviderResult[] = [];
   const blockers: string[] = [];
   const criticalBlockers: string[] = [];
+  const observedAt = new Date().toISOString();
+  const lifecycleSources: unknown[] = [];
 
   // Provider 1: artifact availability
   let artifactCount = 0;
@@ -63,6 +71,7 @@ export async function computeInitialRun(
       .select({
         status: concept2cureArtifacts.status,
         count: sql<number>`count(*)::int`,
+        sources: sql<unknown[]>`jsonb_agg(jsonb_build_object('id', ${concept2cureArtifacts.id}, 'status', ${concept2cureArtifacts.status}, 'version', ${concept2cureArtifacts.version}, 'contentHash', ${concept2cureArtifacts.contentHash}, 'updatedAt', ${concept2cureArtifacts.updatedAt}) ORDER BY ${concept2cureArtifacts.id})`,
       })
       .from(concept2cureArtifacts)
       .where(
@@ -76,6 +85,7 @@ export async function computeInitialRun(
     for (const row of rows) {
       const status = (row.status || '').toLowerCase();
       const count = row.count ?? 0;
+      lifecycleSources.push({ status: row.status, count, records: row.sources ?? [] });
       artifactCount += count;
       if (status === 'approved' || status === 'locked') approvedOrLockedCount += count;
       else if (status === 'review' || status === 'in_review' || status === 'in-review') reviewCount += count;
@@ -115,22 +125,27 @@ export async function computeInitialRun(
     blockers.push(blocker);
   };
 
-  // Provider 3: compliance/audit derived from governed lifecycle evidence.
+  // Approval is lifecycle evidence, not an assessment of compliance controls.
   const complianceStatus: ProviderResult['status'] =
     approvedOrLockedCount > 0 ? 'ready' : reviewCount > 0 ? 'partial' : 'missing';
   const complianceBlocker =
     complianceStatus === 'ready'
       ? undefined
       : complianceStatus === 'partial'
-        ? 'Artifacts are in review but not approved/locked for regulated audit posture'
-        : 'No governed artifacts available for compliance evidence';
+        ? 'Artifacts are in review but not approved/locked'
+        : 'No approved or locked governed artifacts';
   providers.push({
-    provider: 'compliance_audit',
+    provider: 'artifact_approval',
     observedAt: new Date().toISOString(),
     status: complianceStatus,
     blocker: complianceBlocker,
   });
   if (complianceBlocker) blockers.push(complianceBlocker);
+  const lifecycleAtoms: InsightAtomRef[] = [{ sourceTable: 'concept2cure_artifacts', sourceField: 'status', transformation: 'aggregation' }];
+  for (const provider of providers) {
+    provider.atoms = lifecycleAtoms;
+    provider.calculation = { method: provider.provider === 'artifact_state' ? 'Count governed artifacts' : 'Count approved or locked governed artifacts', organizationId, scopeType, scopeId };
+  }
 
   // Provider 4/5: regional registry readiness + package completeness (project scopes)
   if (scopeType === 'project') {
@@ -146,7 +161,7 @@ export async function computeInitialRun(
       const rawRegistryId = typeof metadata.registryId === 'string' ? metadata.registryId : undefined;
       const rawSubmissionType =
         typeof metadata.submissionType === 'string' ? metadata.submissionType : undefined;
-      const registryId = rawRegistryId || (rawSubmissionType ? resolveRegistryId(rawSubmissionType) : null);
+      const registryId = explicitRegistryId || rawRegistryId || (rawSubmissionType ? resolveRegistryId(rawSubmissionType) : null);
 
       if (!registryId) {
         readinessNotComputed('the project records no registry context (registryId or submissionType).');
@@ -155,6 +170,8 @@ export async function computeInitialRun(
           db
             .select({
               sectionId: sections.sectionId,
+              id: sections.id,
+              updatedAt: sections.updatedAt,
               status: sections.status,
               metadata: sections.metadata,
               title: sections.title,
@@ -166,6 +183,10 @@ export async function computeInitialRun(
           db
             .select({
               type: concept2cureArtifacts.type,
+              id: concept2cureArtifacts.id,
+              version: concept2cureArtifacts.version,
+              contentHash: concept2cureArtifacts.contentHash,
+              updatedAt: concept2cureArtifacts.updatedAt,
               status: concept2cureArtifacts.status,
               title: concept2cureArtifacts.title,
               templateId: concept2cureArtifacts.templateId,
@@ -256,6 +277,12 @@ export async function computeInitialRun(
           })),
         };
         const readiness = evaluateReadiness(readinessInput);
+        const readinessAtoms: InsightAtomRef[] = [
+          explicitRegistryId ? { sourceTable: 'report_request', sourceField: options?.explicitRegistryId ? 'registryId' : 'submissionType', transformation: 'manual_entry' }
+            : { sourceTable: 'projects', sourceField: rawRegistryId ? 'metadata.registryId' : 'metadata.submissionType', recordId: projectId, transformation: 'direct_copy' },
+          ...sectionRows.map((row) => ({ sourceTable: 'sections', recordId: row.id, sourceField: 'status', transformation: 'calculation' as const })),
+          ...artifactRows.map((row) => ({ sourceTable: 'concept2cure_artifacts', recordId: row.id, sourceField: 'status', transformation: 'calculation' as const })),
+        ];
         const packageManifest = buildPackageManifest(
           registryId,
           String(projectId),
@@ -265,6 +292,8 @@ export async function computeInitialRun(
 
         providers.push({
           provider: 'submission_readiness',
+          atoms: readinessAtoms,
+          calculation: { method: 'evaluateReadiness', registryId, explicitRegistry: explicitRegistryId != null },
           observedAt: new Date().toISOString(),
           status:
             readiness.level === 'ready'
@@ -288,6 +317,8 @@ export async function computeInitialRun(
 
         providers.push({
           provider: 'regional_package_manifest',
+          atoms: readinessAtoms,
+          calculation: { method: 'buildPackageManifest', registryId },
           observedAt: new Date().toISOString(),
           status: packageManifest?.metadata.packageComplete ? 'ready' : 'partial',
           blocker: packageManifest?.metadata.packageComplete
@@ -300,6 +331,8 @@ export async function computeInitialRun(
 
         const readinessSummary = {
           registryId,
+          regionCode: getApplicationType(registryId)?.region ?? null,
+          agency: getApplicationType(registryId)?.agency ?? null,
           applicationDisplayName: readiness.applicationDisplayName,
           dossierStandard: readiness.dossierStandard,
           readinessScore: readiness.score,
@@ -308,7 +341,29 @@ export async function computeInitialRun(
           completedSections: readiness.sectionReadiness.completed,
           requiredArtifacts: readiness.artifactReadiness.required,
           presentArtifacts: readiness.artifactReadiness.present,
-          missingArtifacts: readiness.artifactReadiness.missing.slice(0, 8),
+          missingArtifacts: readiness.artifactReadiness.missing,
+          /* WHETHER THE ARTIFACT HALF WAS ASSESSED AT ALL.
+             `missingArtifacts` is `[]` both for a filing whose required
+             artifacts are all present and for one this repo has no matrix for
+             — and the second is the common case (9 matrices against the
+             application registry). The renderer read the empty list as "no
+             gaps" and printed, and sealed, "No gaps detected as of <ts>" over
+             an assessment that never ran. `evaluateReadiness` already knows
+             which it was; it just never travelled. */
+          artifactsAssessed: readiness.artifactReadiness.assessed !== false,
+          /* THE RUN'S OWN GAP LIST, so the gaps section can be the gaps.
+             Before this only `missingArtifacts` reached the renderer, so
+             section gaps and the evaluator's `critical` not-assessed markers
+             appeared as blockers and were then contradicted by "No gaps
+             detected" in the same document. Not truncated: a gap list capped
+             without saying so is the same defect one step further on. */
+          gaps: readiness.gaps.map(gap => ({
+            type: gap.type,
+            code: gap.code,
+            title: gap.title,
+            severity: gap.severity,
+            message: gap.message,
+          })),
           regionalWarnings: readiness.regionalWarnings,
         };
 
@@ -320,6 +375,8 @@ export async function computeInitialRun(
           summary: {
             scopeType,
             scopeId,
+            computedScope: 'project',
+            complianceAssessment: 'not_evaluated',
             artifactCount,
             lifecycle: {
               approvedOrLockedCount,
@@ -327,6 +384,8 @@ export async function computeInitialRun(
               draftCount,
             },
             regulatory: readinessSummary,
+            provenance: { observedAt, organizationId, method: 'evaluateReadiness', registryId, registryContext: getApplicationType(registryId), inputs: readinessInput,
+              sources: { lifecycle: lifecycleSources, sections: sectionRows, artifacts: artifactRows }, result: readiness, packageManifest },
           },
         };
       }
@@ -351,12 +410,15 @@ export async function computeInitialRun(
     summary: {
       scopeType,
       scopeId,
+      computedScope: scopeType,
+      complianceAssessment: 'not_evaluated',
       artifactCount,
       lifecycle: {
         approvedOrLockedCount,
         reviewCount,
         draftCount,
       },
+      provenance: { observedAt, organizationId, method: 'governed_artifact_lifecycle_counts', sources: lifecycleSources },
     },
   };
 }

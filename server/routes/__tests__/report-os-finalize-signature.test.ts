@@ -23,6 +23,14 @@ import request from 'supertest';
 
 const h = await vi.hoisted(async () => (await import('./_report-os-route-harness')).createReportOsHarness());
 
+
+// These suites isolate audit/compute contracts; sharing itself is exercised
+// against SQL in run-history and scheduling project-access integration tests.
+vi.mock('../../services/report-os/project-access', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/report-os/project-access')>()),
+  getAccessibleReportProjectIds: async () => [1, 2, 3, 7, 11, 12, 14, 17, 21, 41, 52, 99, 100, 101],
+  canAccessReportScope: async () => true,
+}));
 vi.mock('../../db', () => ({ db: h.db, pool: h.pool, getPool: () => h.pool, getDb: () => h.db, query: vi.fn(), transaction: vi.fn() }));
 vi.mock('../../auth', () => ({ authMiddleware: (_req: unknown, _res: unknown, next: () => void) => next() }));
 vi.mock('../../utils/authedOrgId', async (importOriginal) => ({
@@ -62,7 +70,7 @@ vi.mock('../../services/auditService', async (importOriginal) => ({
 }));
 
 import reportOsRouter from '../report-os';
-import { resetReportOsHarness } from './_report-os-route-harness';
+import { tenantStampSql, resetReportOsHarness } from './_report-os-route-harness';
 import { verifySeal } from '../../services/report-os/sealing/seal';
 
 const app = express();
@@ -77,7 +85,6 @@ app.use((req, _res, next) => {
 });
 app.use('/api/report-os', reportOsRouter);
 
-const STAMP = "SELECT set_config('app.current_tenant_id', $1, true)";
 const TYPE = { typeId: 'readiness.executive_digest', label: 'Executive Readiness Digest', family: 'readiness', allowedScopes: ['program', 'project', 'submission'] };
 const RUN = {
   id: 41, runUuid: '00000000-0000-4000-8000-000000000041', organizationId: 7, scopeType: 'submission', scopeId: 'sub-1',
@@ -161,7 +168,7 @@ describe('POST /runs/:id/finalize (DP-47)', () => {
     });
     // One connection, one transaction: the lock, both writes and the row sit between BEGIN and COMMIT.
     const s = h.statements;
-    expect(s.slice(0, 2)).toEqual(['BEGIN', STAMP]);
+    expect(s.slice(0, 2)).toEqual(['BEGIN', tenantStampSql()]);
     expect(s.slice(-2)).toEqual(['COMMIT', '<released>']);
     const at = (re: RegExp) => s.findIndex((x) => re.test(x));
     expect(at(/FROM report_runs .*FOR UPDATE/)).toBeGreaterThan(1);
@@ -218,27 +225,34 @@ describe('POST /runs/:id/finalize is an electronic signature (reporting review 2
 
 /*
  * P1-44b (2026-10-01). Finalizing is the run's signature, so the signer needs
- * the authority to sign (§11.10(g)) as well as finalize's tier: every other
- * signing route asks (governed-signed-act.ts step 3a, the QMS approval, the
- * submission release); this one did not. The role is the membership row's,
- * never the token's or the body's, and the refusal comes before the run is
- * read or a password is compared, so it spends no guess and writes nothing.
+ * the authority to sign (§11.10(g)) as well as finalize's tier. The role is
+ * the membership row's, never the token's or the body's.
+ *
+ * Follow-up decision "Report finalize" (docs/LAUNCH_DEFINITION_OF_DONE.md):
+ * finalize keeps ONE authority check, the ceremony's floor
+ * (governed-signature-ceremony assertSigningAuthority, 505f71263). The route
+ * carried its own copy ahead of it, so the membership was read twice and the
+ * two copies could drift. With the copy removed, these refusals come from the
+ * ceremony: after the run is read, before any password is compared or any
+ * transaction is opened, so they spend no guess and write nothing.
  */
-describe('POST /runs/:id/finalize needs signing authority (P1-44b, 21 CFR 11.10(g))', () => {
+const CEREMONY_NO_AUTHORITY =
+  'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed.';
+
+describe('POST /runs/:id/finalize needs signing authority from the canonical ceremony (P1-44b, 21 CFR 11.10(g))', () => {
   it.each(['owner', 'manager'])(
-    'refuses the role %s, which the default signing policy does not admit: 403, before anything is read',
+    'refuses the role %s, which the default signing policy does not admit: the ceremony\'s 403, before any password or transaction',
     async (role) => {
       h.memberRole.mockResolvedValue(role);
       eligible();
       lockedAs('completed');
       const res = await finalize(role);
       expect(res.status).toBe(403);
-      expect(res.body).toMatchObject({ success: false, error: { code: 'ESIGNATURE_NO_AUTHORITY' } });
-      expect(res.body.error.message).toMatch(/Nothing was finalized/);
+      expect(res.body).toEqual({ success: false, error: { code: 'ESIGNATURE_NO_AUTHORITY', message: CEREMONY_NO_AUTHORITY } });
+      expect(h.memberRole, 'one authority check').toHaveBeenCalledTimes(1);
       expect(h.memberRole).toHaveBeenCalledWith(5, 7);
-      expect(h.reads.select, 'the run is not read').toBe(0);
       expect(h.reauth, 'no password is compared').not.toHaveBeenCalled();
-      expect(h.statements).toEqual([]);
+      expect(h.statements, 'no transaction is opened').toEqual([]);
       nothingWritten();
     },
   );
@@ -246,23 +260,37 @@ describe('POST /runs/:id/finalize needs signing authority (P1-44b, 21 CFR 11.10(
   it.each([
     ['a viewer membership under a token saying admin (the role is the membership\'s)', 'viewer'],
     ['no membership in the organization', null],
-  ])('refuses %s', async (_label, member) => {
+  ])('refuses %s, through the ceremony', async (_label, member) => {
     h.memberRole.mockResolvedValue(member);
     eligible();
     const res = await finalize('admin');
     expect(res.status).toBe(403);
-    expect(res.body.error.code).toBe('ESIGNATURE_NO_AUTHORITY');
+    expect(res.body.error).toEqual({ code: 'ESIGNATURE_NO_AUTHORITY', message: CEREMONY_NO_AUTHORITY });
+    expect(h.memberRole).toHaveBeenCalledTimes(1);
     nothingWritten();
   });
 
-  it('a membership that cannot be read is a 500 with no detail, and nothing is written', async () => {
+  it('a membership that cannot be read signs nothing: the ceremony\'s 503, with no detail', async () => {
     h.memberRole.mockRejectedValue(new Error('organization_users unreadable: secret-detail'));
     eligible();
     const res = await finalize('admin');
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(503);
+    expect(res.body.error.code).toBe('SIGNING_AUTHORITY_UNVERIFIED');
     expect(JSON.stringify(res.body)).not.toContain('secret-detail');
     expect(h.reauth).not.toHaveBeenCalled();
+    expect(h.statements).toEqual([]);
     nothingWritten();
+  });
+
+  it('a role with authority is checked before credentials and again on the signing transaction', async () => {
+    h.memberRole.mockResolvedValue('admin');
+    eligible();
+    lockedAs('completed');
+    const res = await finalize('admin');
+    expect(res.status).toBe(200);
+    expect(h.memberRole).toHaveBeenCalledTimes(2);
+    expect(h.memberRole).toHaveBeenNthCalledWith(1, 5, 7);
+    expect(h.memberRole).toHaveBeenNthCalledWith(2, 5, 7, expect.objectContaining({ query: expect.any(Function) }));
   });
 });
 

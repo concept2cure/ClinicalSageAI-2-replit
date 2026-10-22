@@ -1,0 +1,437 @@
+Concept2Cure v2
+Code-Grounded Reassessment and Next Cleanup Work Orders
+Prepared from the current repo state, the verified stage workstream, and the outstanding merge backlog into concept2cure-v2
+Code-grounded reality check. The workstream branch is now 33 commits ahead and 50 commits behind concept2cure-v2. That means the next work orders must treat merge risk as a first-class product risk, not a background detail.
+1. Executive Reassessment
+This report translates the current code reality into the next cleanup and integration program. It is based on the current cleanup workstream against concept2cure-v2, including verified stage evidence through Stage 7, the live shell/workspace files, and the current compare state between the workstream and the base branch.
+What is now clearly true in the code:
+• The shell truth is materially better: /client-portal is fenced back into /concept2cure, root entry is quieter, and the primary beta path is more believable.
+• ZenApp is the real shell and ProjectWorkspaceShell is still the strongest governed surface in the product.
+• The test net is better than before: shell tripwires, auth/db contract tests, backend route smoke, governed workspace tripwires, and Stage 7 Playwright route heartbeat checks.
+• The workstream also introduced new product-facing shell and UI work beyond the earlier cleanup notes, especially in ZenApp, ZenSidebar, top-nav behavior, and the pulse-test layer.
+What is still true and still dangerous:
+• The cleanup branch is now materially diverged from concept2cure-v2. This is now a merge problem, not just a cleanup problem.
+• ZenApp.tsx remains the largest client blast-radius file. It has improved, but it still concentrates project identity, shell routing, embedded module hosting, handoff state, and chat context shaping in one place.
+• App.jsx still carries too many secondary and compatibility routes. It is less dishonest than before, but it is still a route museum.
+• Most of the new test coverage is still contract or tripwire coverage. The product needs more authenticated pulse checks before deeper surgery.
+• Documentation discipline remains weaker than code discipline. Stage evidence often proves the work, but not always with a clean single commit chain.
+Verified workstream conclusion:
+2. Current Outstanding Work to Reconcile Before Merge
+The current workstream contains a mix of merge-critical product improvements, compatibility fences, test assets, and proof documentation. The next plan must classify these explicitly so the team does not merge everything as one blob.
+3. The Next Cleanup Program — Overview
+4. Stage 8 — Merge Reconciliation and Canonical State Lock
+Mission
+Stop treating the cleanup branch like a forever sandbox. Turn the current workstream into a classified integration program so the team can merge the right work back into concept2cure-v2 without dragging in stale conflicts, hidden regressions, or documentation fog.
+Why this stage exists
+• The workstream is materially ahead and materially behind the base branch.
+• The product now has enough real progress that silent merge drift would be worse than pausing to reconcile.
+• There is no single canonical current-state document yet; the truth is spread across stage notes and changed files.
+Files / surfaces in scope
+• Git compare between cursor/critical-files-management-f38a and concept2cure-v2
+• All changed product-critical files in classes A–F above
+• All docs/beta-work stage artifacts
+• Base-branch versions of App.jsx, ZenApp.tsx, ProjectWorkspaceShell.tsx, auth/db files, route files, shared nav files
+Protected in this stage
+• Do not attempt a blind merge of the whole workstream.
+• Do not rewrite product files during the classification pass.
+• Do not widen into new features.
+• Do not delete workstream evidence docs until their content is consolidated elsewhere.
+Multi-agent roster
+Required work order steps
+1. Create docs/beta-work/CURRENT_CANONICAL_STATE.md.
+2. Build a complete changed-file ledger from the current workstream versus concept2cure-v2.
+3. Classify every changed file or file family as merge-now, re-review, defer, drop, or docs-only.
+4. Create docs/beta-work/stage-8-merge-risk-matrix.md with conflict-risk, owner, and proposed merge method for each class-A and class-B file.
+5. Create docs/beta-work/stage-8-protected-organs-lock.md listing files that may not be deeply rewritten until later stages pass.
+6. Open the current base-branch versions of App.jsx, ZenApp.tsx, ProjectWorkspaceShell.tsx, server/index.ts, server/auth.ts, server/db.ts, server/db.js, server/middleware/auth.ts, server/middleware/auth.js, and server/routes/concept2cure.ts and note drift points.
+7. Decide whether the correct next landing pattern is merge base into cleanup branch, rebase cleanup branch onto base, or create a fresh release-candidate branch and cherry-pick validated cleanup slices.
+8. Return a founder-ready merge recommendation that is explicit about why.
+Required outputs
+• docs/beta-work/CURRENT_CANONICAL_STATE.md
+• docs/beta-work/stage-8-merge-risk-matrix.md
+• docs/beta-work/stage-8-protected-organs-lock.md
+• A file-classification table listing merge-now / re-review / defer / drop
+• Founder summary with recommended integration path
+Validation / proof requirements
+• The canonical-state doc must match the live code, not just prior stage notes.
+• The merge-risk matrix must explicitly cover App.jsx, ZenApp.tsx, ProjectWorkspaceShell.tsx, auth/db files, route files, and test net files.
+• The final recommendation must state one preferred path: merge, rebase, cherry-pick into RC, or mixed strategy.
+Stop conditions
+• Stop if the stage starts drifting into product rewrites.
+• Stop if the team cannot classify a high-risk file family without opening both branch versions.
+• Stop if the merge recommendation is based on convenience instead of blast radius.
+Founder approval gate
+Founder approves when there is one explicit current-state map, one explicit outstanding-merge ledger, and one believable plan for how the cleanup stream will land back into concept2cure-v2.
+Paste-ready orchestrator prompt
+Founder summary template
+• Stage: Stage 8 — Merge Reconciliation and Canonical State Lock
+• Branch / commits reviewed
+• Files opened for evidence
+• Files classified as merge-now / re-review / defer / drop
+• Protected organs locked
+• Evidence docs created
+• Conflict risks found
+• Recommendation
+• Unlock next stage? Yes / No
+5. Stage 9 — Authenticated Browser Pulse Certification
+Mission
+Turn the current shell and workspace cleanup from good anatomy into a real heartbeat. Extend the existing Playwright pulse pack so the team can prove the beta-safe click path works with seeded auth, project selection, governed workspace entry, and document-open flows.
+Why this stage exists
+• Current shell tests and workspace verifiers are useful, but many are still source-shape or route-policy tests.
+• Stage 7 added real route heartbeat checks; the next move is to deepen them along the actual beta path.
+• Human beta should not start before the product can prove root entry, login redirect, project route, workspace load, and governed open flows.
+Files / surfaces in scope
+• tests/e2e/workspace-smoke.e2e.ts
+• client/src/App.jsx
+• client/src/concept2cure/router/ZenRouter.tsx
+• client/src/concept2cure/ZenApp.tsx
+• client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx
+• Any seeded auth helpers or token utilities used by the current pulse tests
+Protected in this stage
+• Do not redesign the shell.
+• Do not widen into full feature-depth end-to-end coverage.
+• Do not use brittle test hacks that certify the wrong thing.
+Multi-agent roster
+Required work order steps
+1. Create docs/beta-work/stage-9-authenticated-pulse-certification.md.
+2. Expand the current PULSE suite to cover: root entry, login alias redirect, /client-portal/* fence, authenticated /concept2cure/project/:projectId entry, project selection from the shell, workspace shell visibility, open existing artifact, return to workspace without losing state.
+3. Capture screenshots or trace artifacts for each pulse step.
+4. Separate route truth, workspace truth, and document-open truth so the proof pack is understandable.
+5. Document any environment assumptions used by the pulse pack, including seeded auth, token injection, local storage state, and project seeding.
+6. Flag any remaining step that still relies on structural test proof rather than browser proof.
+Required outputs
+• docs/beta-work/stage-9-authenticated-pulse-certification.md
+• Updated tests/e2e/workspace-smoke.e2e.ts or a new focused pulse file
+• Screenshots / traces for root, login, fence, project-route, workspace shell, artifact-open, return-state
+• Founder summary with pulse pass/fail status
+Validation / proof requirements
+• Root entry must never settle into /client-portal/*.
+• Login redirect must preserve a usable returnTo for protected project routes.
+• Authenticated project route must land in the real shell, not a placeholder screen.
+• At least one document-open flow must be proven from the workspace shell.
+• At least one return-to-workspace continuity check must be proven after opening a document.
+Stop conditions
+• Stop if the pulse pack starts certifying mocked behavior that a human beta user will not actually see.
+• Stop if the test helper bypasses the very redirect or shell logic it is supposed to prove.
+• Stop if the team starts calling these tests full E2E when they are still pulse checks.
+Founder approval gate
+Founder approves when the beta-safe click path has a visible heartbeat: root entry, login, shell landing, project route, workspace shell, and one governed document-open flow.
+6. Stage 10 — ZenApp Domain-Seam Extraction Without Behavior Drift
+Mission
+Reduce ZenApp blast radius without breaking the product shell. This is not a rewrite. It is a disciplined separation of safe domain seams so the shell can be maintained and merged without every change touching one monster file.
+Why this stage exists
+• ZenApp is now clearly the real shell, but it still concentrates too many concerns.
+• The branch already fixed one real ZenApp runtime failure, which proves the file is sensitive.
+• Future cleanup will be safer if the file is organized by domain seams instead of endless conditional rendering.
+Files / surfaces in scope
+• client/src/concept2cure/ZenApp.tsx
+• Small new helpers or child renderers under client/src/concept2cure/components/ or hooks/
+• Route-policy and shell tests that protect the extracted seams
+Protected in this stage
+• Do not rewrite the shell URL contract.
+• Do not change project identity behavior.
+• Do not move governed workspace orchestration out of ProjectWorkspaceShell.
+• Do not redesign visible UX beyond what falls out of safer seam extraction.
+Required work order steps
+1. Create docs/beta-work/stage-10-zenapp-seam-map.md.
+2. Map ZenApp responsibilities into at least these categories: project identity, route policy / embedded module host, project-home rendering, workspace launcher / handoff state, side drawers / modals, and AnA context shaping.
+3. Mark which seams are extractable now and which must remain in ZenApp for the current beta cycle.
+4. Perform only safe extractions such as render helpers, small hooks, or mapping modules. No shell rewrites.
+5. Add or update tests so the extracted seams remain contract-protected.
+6. Return a founder summary that says whether ZenApp is safer to maintain and merge, not whether it is prettier.
+No-go zones
+• Project identity source-of-truth
+• Pending editor content / openArtifact handoff semantics
+• Embedded module route detection and canonical project-route behavior
+• Top-level shell layout mode contract
+• AnA context pack derivation that active product surfaces already rely on
+Founder approval gate
+Founder approves when ZenApp is still the same shell, still proves the same beta path, and is materially less likely to break from future cleanup or merge work.
+7. Stage 11 — Backend Route Ownership Convergence and API De-duplication
+Mission
+Reduce backend ambiguity now that the shell is telling a cleaner story. Identify duplicate or overlapping route families, pick canonical owners, retain compatibility shims only where needed, and add integration tests that prove the selected canonical families actually work.
+Why this stage exists
+• Earlier backend manifest work already identified major duplicate-route and auth-boundary hazards.
+• The frontend is now honest enough that backend duplication is a more visible risk.
+• This is the right time to replace route overlap with declared ownership, not more route sprawl.
+Files / surfaces in scope
+• server/index.ts (manifest reading and mount ownership only; avoid deep surgery unless proven safe)
+• server/routes/concept2cure.ts
+• server/routes/index.ts
+• server/routes/chat.ts
+• any duplicate IND, documents, or v1 auth route families surfaced by the manifest
+• server/__tests__/routes/smoke.test.ts and any new integration tests
+Protected in this stage
+• Do not rip apart server/index.ts without mount-order proof.
+• Do not delete compatibility routes unless importer and traffic assumptions are explicit.
+• Do not widen into model or DB rewrites.
+Required work order steps
+1. Create docs/beta-work/stage-11-backend-route-convergence.md.
+2. Rebuild the route ownership table from the live mounts, not prior notes.
+3. Identify duplicate or ambiguous route families, especially for IND, documents, chat/RI, and /api/v1 auth boundaries.
+4. For each ambiguous family, declare: canonical owner, compatibility shim, or deferred legacy path.
+5. Implement only small, test-backed route ownership reductions or explicit redirects/shims.
+6. Add real integration checks for a selected green set: one auth path, one concept2cure project path, one AnA/RI path, one documents/vault path, and one IND/eCTD path.
+Required outputs
+• docs/beta-work/stage-11-backend-route-convergence.md
+• Updated backend route ownership matrix
+• Integration tests for selected green families
+• Founder summary with canonical route decisions
+Stop conditions
+• Stop if the stage starts pretending every duplicate route can be safely deleted at once.
+• Stop if the team cannot explain mount order and auth boundary consequences.
+• Stop if a compatibility shim is doing real product work but is being labeled dead.
+Founder approval gate
+Founder approves when the backend can tell one believable API story for the beta-safe path and the chosen canonical routes are proven by behavior, not just by file-content assertions.
+8. Stage 12 — AnA / Artifact / Governed Work Contract Enforcement
+Mission
+Make AnA the enforced system law for meaningful generation, not just the visible guide. Every valid AI generation path must either route through AnA orchestration or land in the same artifact + editor + lifecycle + audit contract. Anything else is a bypass and must be eliminated or fenced.
+Why this stage exists
+• The shell and workspace are cleaner, but the real moat is governed work, not just better navigation.
+• AnA is already central in the shell, but the system still needs a single enforced document action contract.
+• This stage protects against silent fragmentation and future regressions.
+Files / surfaces in scope
+• server/routes/ana-ri.ts and associated AnA service layers
+• client AnA entry surfaces including AnaPersistentPanel and any remaining AI generation entry points
+• artifact creation and editor handoff routes used by AI-driven flows
+• tests for AI entry points and artifact creation behavior
+Protected in this stage
+• Do not widen into prompt-theory rewrites without enforcement value.
+• Do not create parallel artifact pipelines.
+• Do not bless preview-only generation flows as acceptable.
+Required work order steps
+1. Create docs/beta-work/stage-12-ana-artifact-contract.md.
+2. Audit all AI entry points across chat, inline actions, editor actions, submission tools, templates, and exports.
+3. Define the required document action contract fields, including document type, project, source, intent, content, provenance, version, and status.
+4. Add enforcement or logging so generation without artifact creation is flagged or blocked.
+5. Add artifact quality gates for minimum structure, no placeholder filler, and evidence-classification expectations where applicable.
+6. Add tests that prove a representative set of AI entry points create governed artifacts that open in editor and initialize lifecycle state.
+Required outputs
+• docs/beta-work/stage-12-ana-artifact-contract.md
+• AI entry-point audit table
+• Artifact quality gate implementation
+• Tests for no-bypass AI generation
+• Founder summary with remaining bypass paths, if any
+Founder approval gate
+Founder approves when meaningful generation can no longer bypass artifact creation, editor handoff, and lifecycle/audit readiness.
+9. Stage 13 — Release-Candidate Merge-Back and Human Beta Readiness
+Mission
+Land the validated cleanup work into a clean release-candidate path for concept2cure-v2, then package the product for human viewing and human beta testing. This is where the cleanup stream becomes a shippable story instead of a long-running side branch.
+Why this stage exists
+• Progress is only real once it is merge-safe and can be shown to humans.
+• The product now has a believable beta-safe path, but still needs a clean release-candidate branch, proof packs, seeded data, and manual test guidance.
+• This stage prevents the team from declaring victory on a branch nobody can safely demo or hand to human testers.
+Files / surfaces in scope
+• Release-candidate branch created from concept2cure-v2 after Stage 8 merge decision
+• Validated stage outputs and selected workstream slices
+• Proof docs and screenshot packs
+• Manual human beta scripts
+• Feature-flag or exposure-policy adjustments needed to hide unfinished paths
+Protected in this stage
+• Do not merge unclassified or unvalidated work just to move fast.
+• Do not expose dead or deceptive UI paths to human testers.
+• Do not confuse demo-path proof with full production readiness.
+Required work order steps
+1. Create a release-candidate branch from current concept2cure-v2 using the Stage 8 merge recommendation.
+2. Bring in validated cleanup slices in the approved order.
+3. Re-run pulse tests, shell truth tests, governed workspace verifier, and selected backend green-family checks on the RC branch.
+4. Create docs/proof/RC_BETA_PROOF_PACK.md and docs/proof/HUMAN_BETA_TEST_SCRIPT.md.
+5. Capture screenshots for the founder demo path and for the human test path.
+6. Create a known-issues ledger that distinguishes tolerated beta debt from blocker defects.
+7. Hide, fence, or visibly label any remaining partial paths that would deceive a human tester.
+Required outputs
+• Release-candidate branch
+• docs/proof/RC_BETA_PROOF_PACK.md
+• docs/proof/HUMAN_BETA_TEST_SCRIPT.md
+• Known-issues ledger
+• Founder demo click path
+• Human beta go / no-go recommendation
+Validation / proof requirements
+• A human can enter from the canonical path, sign in, select a project, reach the real shell, and open the governed workspace without route confusion.
+• At least one governed document create/open/edit/return flow is proven in the RC branch.
+• The visible beta path contains no obvious dead-end CTA or legacy portal confusion.
+• The team can explain what is intentionally hidden, what is compatibility-only, and what is ready for humans.
+Founder approval gate
+Founder approves when the cleanup work is no longer just a better branch. It is a merge-safe release candidate with a believable human beta path.
+10. Cross-Stage Rules for All Remaining Cleanup Work
+• No net-new shell. Reduce ambiguity inside the existing canonical shell.
+• No deep rewrite of ProjectWorkspaceShell orchestration until the browser pulse pack and RC branch are stronger.
+• No route deletion without ownership proof.
+• No AI path may be called acceptable if it bypasses artifact creation and lifecycle initialization.
+• No more broad theory documents unless they are a canonical state document, proof pack, or release document.
+• Every stage must clearly distinguish contract-tripwire tests from pulse checks and from deeper integration proof.
+11. Final Priority Stack
+Prepared for
+Founder execution planning and coding-agent work orchestration
+Current conclusion
+The cleanup stream has produced real progress, but the next bottleneck is no longer discovery. It is branch reconciliation, canonical state locking, authenticated flow proof, and controlled merge-back.
+Reassessed one-line truth. Concept2Cure is no longer a route graveyard pretending to be a product. It is now a real but overgrown product branch whose next risk is integration and drift, not lack of core capability.
+Area
+Current assessment
+Meaning for next work orders
+Stages evidenced in current branch
+Stages 1–7 are evidenced in the current workstream; Stage 8 is not evidenced in the current branch snapshot.
+Next work orders must start from verified reality, not from assumed completion.
+Branch state vs base
+Workstream is 33 commits ahead and 50 commits behind concept2cure-v2.
+Integration and merge discipline now become top priority.
+Shell truth
+Improved and materially more honest.
+Protect gains and extend with browser-level authenticated checks.
+Governed workspace
+Still the strongest believable product surface.
+Do not rewrite its orchestration; harden and test it.
+ZenApp
+Real shell, but still too large and too central.
+Refactor only by domain seams, not by aesthetics.
+Backend/API ownership
+Still contains duplicate or overlapping route families.
+Converge route ownership after the shell and browser pulse proof are safer.
+Merge class
+Representative files / surfaces
+Disposition
+Reason
+A — Merge-critical product truth
+client/src/App.jsx; client/src/concept2cure/ZenApp.tsx; client/src/concept2cure/components/sidebar/ZenSidebar.tsx; client/src/concept2cure/components/chat/AnaPersistentPanel.tsx; client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx; SectionRequirementsPanel.tsx
+Carry forward intentionally
+These changes directly affect shell truth, workspace behavior, module embedding, and user-visible beta flow.
+B — Test and proof net
+tests/e2e/workspace-smoke.e2e.ts; client/src/__tests__/shellTruthRoutes.test.ts; client/src/concept2cure/router/__tests__/projectModuleRoutePolicy.smoke.test.ts; tests/stage6-governed-workspace-verifier.test.ts; server/__tests__/routes/smoke.test.ts; security auth/db tests
+Carry forward selectively and extend
+These protect the cleanup gains and provide the basis for the next pulse-check stages.
+C — Compatibility / infrastructure shims
+server/db.js; server/middleware/auth.js; client/src/main.jsx fence comments; portal-v2 fence files; server/routes/index.ts wording; redirect utils
+Keep but reduce ambiguity
+These are not final-state architecture, but they protect the app while convergence work proceeds.
+D — Pure cleanup wins
+server/routes_update.ts deletion; client/src/hooks/use-auth.jsx deletion; tsconfig cleanup
+Merge quickly
+These are low-risk, evidence-backed cleanup wins.
+E — Documentation / stage evidence
+docs/beta-work/*; docs/reports/*
+Merge but do not treat as source of truth by themselves
+Useful audit trail, but should be consolidated into one canonical current-state document.
+F — Re-review required because of behind-base drift
+Any base-touched versions of App.jsx, ZenApp.tsx, auth/db files, route mounts, workspace shell, shared navs
+Reconcile before merge
+These are the files most likely to produce painful integration conflicts and silent regressions.
+Immediate planning consequence. No further broad cleanup should be treated as safe until the team does a merge-risk pass and classifies what in the workstream is merge-now, re-review, defer, or drop.
+Stage
+Mission
+Why now
+Primary outputs
+Stage 8
+Merge reconciliation and canonical state lock
+The branch is now ahead and behind. Integration risk is the next bottleneck.
+Merge matrix, conflict forecast, canonical-state doc, protected-file lock list
+Stage 9
+Authenticated browser pulse certification
+Tripwires improved, but live path proof is still too thin.
+Playwright pulse pack, screenshots, seeded auth flow proof, beta click path certification
+Stage 10
+ZenApp domain-seam extraction
+ZenApp is still too large to be safely maintained without modular seams.
+Seam map, safe extractions, behavior-preserving tests
+Stage 11
+Backend route ownership convergence
+The shell is more truthful; backend duplication now matters more.
+Route ownership matrix, canonical route decisions, shims/redirects, integration tests
+Stage 12
+AnA + artifact contract enforcement
+The product moat is governed work, not generic generation.
+No-bypass AI audit, document action contract, artifact quality gates, enforcement tests
+Stage 13
+Release-candidate merge-back and human beta readiness
+Progress only matters if it lands cleanly in concept2cure-v2 and can be seen by humans.
+RC branch, proof packs, manual beta script, known-issues ledger, merge-back plan
+Agent
+Instruction
+Lead Orchestrator
+Own the stage plan, define merge classes, and decide what must be reconciled before any merge-back.
+Evidence Mapper
+Build the changed-file inventory, compare base vs workstream, and classify keep / re-review / defer / drop.
+Merge Strategist
+Forecast conflicts and propose the safest merge, rebase, cherry-pick, or fresh-RC path.
+Implementer
+Only make changes that support canonical-state locking or proof capture; no speculative rewrites.
+Verifier
+Run the compare sanity checks and confirm the canonical-state document matches actual code reality.
+Prompt You are the lead coding agent for Stage 8 — Merge Reconciliation and Canonical State Lock. Work only on the current concept2cure-v2 base and the current cleanup workstream branch. Do not start new feature work. Re-open the current product-critical files on both sides, classify every outstanding change, create the canonical-state document and merge-risk matrix, and return a founder-ready recommendation for how validated cleanup work should land back into concept2cure-v2.
+Agent
+Instruction
+Lead Orchestrator
+Define the exact beta-safe pulse path that must be certified.
+Evidence Mapper
+Map the current pulse coverage, what it already proves, and what it still misses.
+Implementer
+Extend Playwright and helper code only where needed to prove real authenticated flow.
+Verifier
+Run the pulse pack, capture screenshots, and block completion if the proof is soft.
+UI Truth Agent
+Confirm the tested path is the same one a human beta user would actually see.
+Prompt You are the lead coding agent for Stage 9 — Authenticated Browser Pulse Certification. Work only on the current live code and existing pulse pack. Deepen the real browser checks for the beta-safe path, capture screenshots and traces, and return only proof that a human beta user would actually trust.
+Agent
+Instruction
+Lead Orchestrator
+Define the exact ZenApp domain seams that are safe to extract now.
+Evidence Mapper
+Map ZenApp responsibilities and identify no-go zones vs extractable seams.
+Implementer
+Extract only safe helper layers or render blocks while keeping behavior and URLs stable.
+Verifier
+Run existing shell/workspace tests plus any new seam guards.
+Prompt You are the lead coding agent for Stage 10 — ZenApp Domain-Seam Extraction Without Behavior Drift. Treat ZenApp as a live organ. Your job is not to rewrite it. Your job is to map it, extract only safe seams, preserve all route and handoff contracts, and prove the shell is now less fragile.
+Agent
+Instruction
+Lead Orchestrator
+Choose canonical owners for duplicated route families and define allowed compatibility shims.
+Evidence Mapper
+Rebuild the route ownership matrix from the actual mounts and route files.
+Contract Auditor
+Define the green-family API contract set that must pass after convergence.
+Implementer
+Convert ambiguity into explicit ownership with small, test-backed changes.
+Verifier
+Run supertest/smoke checks and block stage completion if canonical families are not behaviorally healthy.
+Prompt You are the lead coding agent for Stage 11 — Backend Route Ownership Convergence and API De-duplication. Use the actual mounted code, not old notes. Your job is to turn duplicate route families into explicit canonical ownership with shims where needed, then prove the chosen green families still work.
+Agent
+Instruction
+Lead Orchestrator
+Define the one allowed AI-to-artifact pattern for the product.
+Evidence Mapper
+Audit all visible and hidden AI entry points and classify them as valid, bypass, or ambiguous.
+Contract Auditor
+Define the required document action contract fields and artifact quality gates.
+Implementer
+Add enforcement, shims, or fences without destabilizing the core artifact loop.
+Verifier
+Add tests that fail loudly if generation bypasses artifact creation or lifecycle initialization.
+Prompt You are the lead coding agent for Stage 12 — AnA / Artifact / Governed Work Contract Enforcement. There is only one valid pattern: intent -> AnA orchestration or equivalent governed pipeline -> artifact -> editor -> lifecycle -> audit. Audit every AI entry point, remove or fence bypasses, add contract tests, and return the one-line truth: AnA is the enforced system standard, or it still has bypass paths.
+Agent
+Instruction
+Lead Orchestrator
+Own the RC branch formation, staged merge order, and final beta-safe exposure policy.
+Merge Strategist
+Execute the selected merge/cherry-pick plan from Stage 8.
+Verifier
+Re-run pulse tests, shell truth checks, workspace checks, and selected green-family API tests on the RC branch.
+UI Truth Agent
+Confirm the visible product path a human will see is honest and beta-safe.
+Beta Packager
+Create proof packs, tester scripts, screenshots, known-issues ledger, and founder demo path.
+Prompt You are the lead coding agent for Stage 13 — Release-Candidate Merge-Back and Human Beta Readiness. Build the RC branch from concept2cure-v2, land only the validated cleanup slices, re-run the proof net, and package the product so a human can see the right thing instead of the whole graveyard.
+Priority
+Why it is next
+1. Stage 8 — Merge reconciliation and canonical state lock
+Because branch divergence is now the top product risk.
+2. Stage 9 — Authenticated browser pulse certification
+Because the shell/workspace cleanup now needs a real heartbeat.
+3. Stage 10 — ZenApp domain-seam extraction
+Because ZenApp remains the biggest client blast-radius file.
+4. Stage 11 — Backend route ownership convergence
+Because a cleaner shell will only stay believable if the API story is also cleaned up.
+5. Stage 12 — AnA / artifact contract enforcement
+Because governed work is the real moat and must not fragment.
+6. Stage 13 — RC merge-back and human beta readiness
+Because progress only counts when it lands in concept2cure-v2 and can be seen by humans.
+Closing instruction to the team. From this point forward, every cleanup move must be judged by three questions: Does it survive merge-back? Does it strengthen the canonical beta path? Does it preserve the governed document loop? If the answer is not yes to all three, it is not next.

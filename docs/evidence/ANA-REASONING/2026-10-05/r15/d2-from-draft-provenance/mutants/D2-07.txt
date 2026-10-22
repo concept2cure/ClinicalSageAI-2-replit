@@ -1,0 +1,8 @@
+mutant D2-07: the run-id path is dropped, so every document the AnA tool creates is unverified
+verdict: KILLED
+Tests  2 failed | 9 passed (11)
+
+ × server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > resolves the AnA tool’s turnId, which is a RUN id, not a record id 87ms
+ × server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a run named by more than one record is refused, not guessed at 79ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 9 passed (11)

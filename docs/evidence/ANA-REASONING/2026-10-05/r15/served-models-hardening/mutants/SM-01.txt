@@ -1,0 +1,8 @@
+mutant SM-01: the array guard is dropped: a string calls list invents an unknown author
+verdict: KILLED
+Tests  2 failed | 7 passed (9)
+
+ × server/services/ana/__tests__/turn-record-served-models.test.ts > servedModelsOf: a malformed record body yields a verdict, never a fault > tolerates a `calls` that is not an array 5ms
+ × server/services/ana/__tests__/turn-record-served-models.test.ts > servedModelsOf: a malformed record body yields a verdict, never a fault > falls back to the turn’s own model when `calls` is unusable 6ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 7 passed (9)

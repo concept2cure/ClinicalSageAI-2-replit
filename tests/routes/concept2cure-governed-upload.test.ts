@@ -52,6 +52,12 @@ vi.mock('../../server/middleware/tenantContext', () => ({
 vi.mock('../../server/middleware/redisRateLimiter', () => ({
   createRedisRateLimiter: () => (_req: any, _res: any, next: any) => next(),
 }));
+// Isolate this downstream governed-contract refusal. Mounted real-PGlite
+// regressions qualify current project membership/edit admission separately.
+vi.mock('../../server/routes/c2c/project-access', async importOriginal => ({
+  ...await importOriginal<typeof import('../../server/routes/c2c/project-access')>(),
+  requireProjectAdmission: vi.fn(async()=>({id:1,organizationId:1,settings:{}})),
+}));
 
 import concept2cureRouter from '../../server/routes/c2c/knowledge-sources';
 
@@ -127,6 +133,37 @@ describe('Concept2Cure knowledge upload governance', () => {
         }),
       })
     );
+    expect(mockDbInsert).not.toHaveBeenCalled();
+    expect(mockDbUpdate).not.toHaveBeenCalled();
+  });
+
+  /* A file whose text could not be read was stored as a placeholder:
+     "[application/pdf document X]" became the governed source_document's
+     content, hash and version row, an embedded retrieval atom, and a
+     knowledge entry marked 'processed' (2026-10-15). */
+  // Both pass the type, name and signature checks; neither yields text.
+  it.each([
+    ['a PDF whose text cannot be read', { originalname: 'Protocol.pdf', mimetype: 'application/pdf', buffer: Buffer.from('%PDF-1.4\n1 0 obj\nnot a document\n%%EOF\n', 'latin1') }],
+    ['a text file with no text in it', { originalname: 'blank.txt', mimetype: 'text/plain', buffer: Buffer.from('   \n\t  \n') }],
+  ])('refuses %s with TEXT_NOT_EXTRACTED and stores nothing', async (_case, file) => {
+    mockResolveGovernedContext.mockReturnValue({
+      validation: { valid: true, errors: [], warnings: [] },
+      resolved: {},
+      contract: { exportEligibility: { gateChecks: [], blockingReasons: [], readinessOutcome: 'exploratory' } },
+    });
+    const req = createMockRequest({ body: { projectId: 'proj_1' } }) as any;
+    req.userId = 42;
+    req.tenantContext = { organizationId: '1', clientWorkspaceId: '1' };
+    req.file = { ...file, size: file.buffer.length };
+    const res = createMockResponse();
+
+    await getRouteHandler('/documents/upload', 'post')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(422);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ success: false, error: expect.objectContaining({ code: 'TEXT_NOT_EXTRACTED' }) }),
+    );
+    expect(mockResolveGovernedContext).not.toHaveBeenCalled();
     expect(mockDbInsert).not.toHaveBeenCalled();
     expect(mockDbUpdate).not.toHaveBeenCalled();
   });

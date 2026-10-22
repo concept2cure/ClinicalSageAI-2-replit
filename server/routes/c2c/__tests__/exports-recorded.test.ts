@@ -35,6 +35,15 @@ vi.mock('../shared', async () => {
     getUserId: () => 3,
   };
 });
+// These tests isolate the governed delivery audit, with an admitted principal.
+// Current membership and persisted role refusal are exercised by the mounted
+// real-PGlite workspace suite; this file has no membership database fixture.
+vi.mock('../project-access', async original => ({
+  ...await original<typeof import('../project-access')>(),
+  requireCurrentProjectActor: async(req:Request) => {
+    req.userRole='admin';return {userId:3,role:'admin'};
+  },
+}));
 const DOCX = Buffer.from('PK\u0003\u0004 a docx body');
 vi.mock('../../../services/docxGenerator', () => ({ generateDocxBuffer: vi.fn(async () => DOCX) }));
 

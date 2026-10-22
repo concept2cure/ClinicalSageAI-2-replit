@@ -1,0 +1,23 @@
+The wider regression green.txt said would be recorded here when it landed.
+
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run \
+  server/routes/__tests__/authoring-atomic-mutations.test.ts \
+  tests/schema-contract/
+
+ Test Files  103 passed (103)
+      Tests  1359 passed (1359)
+
+WHICH TREE THIS RAN ON, stated precisely rather than implied. It ran on the
+revert change plus the trunk it was developed against — after the
+restoredMachineAuthor extraction, so it describes the code that shipped, but
+BEFORE the merge of newer trunk commits that preceded the push. So it is not a
+run on the exact pushed commit.
+
+What covers the pushed commit instead: the full pre-push gate suite, which ran
+on the merged result and passed every gate (including ci:pushed-lint-errors and
+ci:typecheck-no-regression, which read the merged tree).
+
+An earlier attempt at this same run was KILLED and discarded rather than
+reported. It had been started before the helper extraction, and both the router
+and the contract suite were edited while it was in flight — so its numbers would
+have described a tree that never existed. Re-run clean instead.

@@ -1,0 +1,272 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts > flagged sign permission follows the current reserved transaction > refuses a current reviewer’s resource deny after an earlier allowed admin role 30ms
+   → promise resolved "{ domainWritten: true, …(6) }" instead of rejecting
+ × server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts > flagged sign permission follows the current reserved transaction > admits the current reviewer instead of denying a stale caller viewer role 6ms
+   → Your role does not hold sign permission for protocol-document. Nothing was signed.
+ × server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts > flagged sign permission follows the current reserved transaction > rolls back when the actual grant store becomes unavailable during preparation 11ms
+   → promise resolved "{ domainWritten: true, …(6) }" instead of rejecting
+ ✓ server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts > flagged sign permission follows the current reserved transaction > refuses a non-signing membership before comparing credentials or opening a transaction 6ms
+ ✓ server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts > flagged sign permission follows the current reserved transaction > does not change the dark flag’s off behavior or query grant overrides 14ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > evaluate — pure, deny-by-default, explicit-deny-wins > denies when no grant matches 2ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > evaluate — pure, deny-by-default, explicit-deny-wins > allows when an allow grant matches 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > evaluate — pure, deny-by-default, explicit-deny-wins > explicit deny wins over allow 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > evaluate — pure, deny-by-default, explicit-deny-wins > a null grant dimension is a wildcard matching any query value 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > evaluate — pure, deny-by-default, explicit-deny-wins > role mismatch denies 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > can — default policy (DB empty) > applies the canonical defaults per role 1ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > can — default policy (DB empty) > a per-org DB deny override wins over the default allow 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > whoCan — the projection of RBAC > returns the org users whose role grants the action 1ms
+ × server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > uses only the supplied executor and applies its explicit deny 7ms
+   → expected true to be false // Object.is equality
+ × server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses an unavailable grant store (42P01) instead of using a default allow 3ms
+   → promise resolved "true" instead of rejecting
+ × server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses an unavailable grant store (57P01) instead of using a default allow 2ms
+   → promise resolved "true" instead of rejecting
+ × server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses malformed grant data without inventing an allow: {"role":"admin","action":"sign","effect":"unknown"} 3ms
+   → promise resolved "[ { role: 'admin', …(5) }, …(8) ]" instead of rejecting
+ × server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses malformed grant data without inventing an allow: {"role":"admin","action":"sign","effect":"allow","resource_type":3} 1ms
+   → promise resolved "[ { role: 'admin', …(5) }, …(8) ]" instead of rejecting
+ × server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses malformed grant data without inventing an allow: {"role":"admin","action":null,"effect":"allow"} 2ms
+   → promise resolved "[ { role: 'admin', …(5) }, …(8) ]" instead of rejecting
+ × server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses malformed grant data without inventing an allow: {"role":"foreign-role","action":"sign","effect":"deny"} 1ms
+   → promise resolved "[ { role: 'admin', …(5) }, …(8) ]" instead of rejecting
+ × server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > retains valid custom action and dimension strings with null wildcards 1ms
+   → expected false to be true // Object.is equality
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > preserves ordinary callers’ defaults-only fallback for an unmigrated store 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > uses only the supplied executor and applies its explicit deny
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/governance/__tests__/permissions.test.ts:83:65
+     81|     ] }));
+     82|     expect(await can(42, 'reviewer', { action: 'sign', resourceType: '…
+     83|       { executor: { query: transactionQuery }, strict: true })).toBe(f…
+       |                                                                 ^
+     84|     expect(query).not.toHaveBeenCalled();
+     85|     expect(transactionQuery).toHaveBeenCalledWith(expect.stringContain…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses an unavailable grant store (42P01) instead of using a default allow
+ FAIL  server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses an unavailable grant store (57P01) instead of using a default allow
+AssertionError: promise resolved "true" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+true
+
+ ❯ server/services/governance/__tests__/permissions.test.ts:90:82
+     88|   it.each(['42P01', '57P01'])('refuses an unavailable grant store (%s)…
+     89|     const executor = { query: vi.fn(async () => { throw Object.assign(…
+     90|     await expect(can(42, 'admin', { action: 'sign' }, { executor, stri…
+       |                                                                                  ^
+     91|       .rejects.toMatchObject({ name: 'GovernanceGrantStoreUnavailableE…
+     92|     expect(query).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses malformed grant data without inventing an allow: {"role":"admin","action":"sign","effect":"unknown"}
+ FAIL  server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses malformed grant data without inventing an allow: {"role":"admin","action":"sign","effect":"allow","resource_type":3}
+ FAIL  server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses malformed grant data without inventing an allow: {"role":"admin","action":null,"effect":"allow"}
+ FAIL  server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses malformed grant data without inventing an allow: {"role":"foreign-role","action":"sign","effect":"deny"}
+AssertionError: promise resolved "[ { role: 'admin', …(5) }, …(8) ]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[
+  {
+    "action": "view",
+    "classification": null,
+    "ctdModule": null,
+    "effect": "allow",
+    "resourceType": null,
+    "role": "admin",
+  },
+  {
+    "action": "author",
+    "classification": null,
+    "ctdModule": null,
+    "effect": "allow",
+    "resourceType": null,
+    "role": "admin",
+  },
+  {
+    "action": "review",
+    "classification": null,
+    "ctdModule": null,
+    "effect": "allow",
+    "resourceType": null,
+    "role": "admin",
+  },
+  {
+    "action": "approve",
+    "classification": null,
+    "ctdModule": null,
+    "effect": "allow",
+    "resourceType": null,
+    "role": "admin",
+  },
+  {
+    "action": "sign",
+    "classification": null,
+    "ctdModule": null,
+    "effect": "allow",
+    "resourceType": null,
+    "role": "admin",
+  },
+  {
+    "action": "lock",
+    "classification": null,
+    "ctdModule": null,
+    "effect": "allow",
+    "resourceType": null,
+    "role": "admin",
+  },
+  {
+    "action": "submit",
+    "classification": null,
+    "ctdModule": null,
+    "effect": "allow",
+    "resourceType": null,
+    "role": "admin",
+  },
+  {
+    "action": "assign",
+    "classification": null,
+    "ctdModule": null,
+    "effect": "allow",
+    "resourceType": null,
+    "role": "admin",
+  },
+  {
+    "action": "manage_permissions",
+    "classification": null,
+    "ctdModule": null,
+    "effect": "allow",
+    "resourceType": null,
+    "role": "admin",
+  },
+]
+
+ ❯ server/services/governance/__tests__/permissions.test.ts:102:72
+    100|   ])('refuses malformed grant data without inventing an allow: %j', as…
+    101|     const executor = { query: vi.fn(async () => ({ rows: [row] })) };
+    102|     await expect(resolveGrants(42, 'admin', { executor, strict: true }…
+       |                                                                        ^
+    103|       .rejects.toMatchObject({ name: 'GovernanceGrantStoreUnavailableE…
+    104|     expect(query).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > retains valid custom action and dimension strings with null wildcards
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/governance/__tests__/permissions.test.ts:114:65
+    112|     const grants = await resolveGrants(42, 'custom-quality', { executo…
+    113|     expect(evaluate(grants, 'custom-quality', { action: 'sign', resour…
+    114|       ctdModule: 'M2', classification: 'Sponsor restricted' })).toBe(t…
+       |                                                                 ^
+    115|     expect(evaluate(grants, 'custom-quality', { action: 'sign', resour…
+    116|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts > flagged sign permission follows the current reserved transaction > refuses a current reviewer’s resource deny after an earlier allowed admin role
+AssertionError: promise resolved "{ domainWritten: true, …(6) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "actionId": "action",
++   "auditId": "audit",
++   "domainWritten": true,
++   "meaning": "approval",
++   "sha256Chain": "chain",
++   "signatureId": 1,
++   "signedAt": "2026-10-14T00:00:00.000Z",
+  }
+
+ ❯ server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts:79:58
+     77|     await pg.exec("INSERT INTO c2c_governance_grants(org_id,role,actio…
+     78|     const prepare = async (client: PoolClient) => { await client.query…
+     79|     await expect(signGovernedAct(input('admin', prepare))).rejects.toM…
+       |                                                          ^
+     80|     await expectNoSignedEffect();
+     81|     expect(grantReads()).toEqual([expect.objectContaining({ executor: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts > flagged sign permission follows the current reserved transaction > admits the current reviewer instead of denying a stale caller viewer role
+GovernedSignatureRefusal: Your role does not hold sign permission for protocol-document. Nothing was signed.
+ ❯ Module.signGovernedAct server/services/part11/governed-signature-ceremony.ts:213:13
+    211|     const resourceType = target.split(':')[0];
+    212|     if (!(await can(orgId, input.role, { action: 'sign', resourceType …
+    213|       throw new GovernedSignatureRefusal(403, 'NOT_AUTHORIZED', `Your …
+       |             ^
+    214|     }
+    215|   }
+ ❯ server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts:87:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 403, code: 'NOT_AUTHORIZED' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts > flagged sign permission follows the current reserved transaction > rolls back when the actual grant store becomes unavailable during preparation
+AssertionError: promise resolved "{ domainWritten: true, …(6) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "actionId": "action",
++   "auditId": "audit",
++   "domainWritten": true,
++   "meaning": "approval",
++   "sha256Chain": "chain",
++   "signatureId": 1,
++   "signedAt": "2026-10-14T00:00:00.000Z",
+  }
+
+ ❯ server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts:95:58
+     93|   it('rolls back when the actual grant store becomes unavailable durin…
+     94|     const prepare = async (client: PoolClient) => { await client.query…
+     95|     await expect(signGovernedAct(input('admin', prepare))).rejects.toM…
+       |                                                          ^
+     96|     await expectNoSignedEffect();
+     97|     expect(grantReads()).toEqual([expect.objectContaining({ executor: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  11 failed | 11 passed (22)
+   Start at  06:50:25
+   Duration  7.14s (transform 1.03s, setup 169ms, import 1.67s, tests 4.60s, environment 0ms)

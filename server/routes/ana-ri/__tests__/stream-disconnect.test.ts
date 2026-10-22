@@ -35,10 +35,10 @@ vi.mock('../../../services/ana/run-control.js', async importOriginal => {
   const control = (await harnessModule()).mocks.runControl(original);
   return {
     ...control,
-    beginRun: async () => {
+    beginRun: async (input: Record<string, unknown>) => {
       io.beginEntered?.();
       if (io.beginGate) await io.beginGate;
-      return control.beginRun();
+      return control.beginRun(input);
     },
     localOnlyRunHandle: () => {
       const handle = original.localOnlyRunHandle() as RunHandle & { abortLocally: () => void };

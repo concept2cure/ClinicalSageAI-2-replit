@@ -30,7 +30,7 @@ export function submissionErrorMessage(code: string | undefined): string {
 }
 
 // ── Workspace map ─────────────────────────────────────────────────────────────
-// The seven workspaces (spec §4) as data: route pattern, the primary endpoints
+// The native workspaces (spec §4 plus required-deliverables coverage) as data: route pattern, the primary endpoints
 // each consumes, and the AnA tools surfaced there. The UI scaffolds nav + routing
 // from this; it does not hard-code the list.
 export interface WorkspaceDef {
@@ -70,6 +70,13 @@ export const SUBMISSION_WORKSPACES: WorkspaceDef[] = [
     anaTools: ['classify_submission_document', 'extract_submission_document', 'compute_lifecycle_operations', 'check_ectd_cross_references', 'generate_stf', 'trace_provenance'],
   },
   {
+    id: 'required-deliverables',
+    label: 'Required deliverables',
+    routePattern: '/submissions/:id/required-deliverables',
+    endpoints: ['GET /api/submissions/:id/sequences', 'GET /api/submissions/sequences/:seqId/pathway-manifest'],
+    anaTools: [],
+  },
+  {
     id: 'sequences',
     label: 'Sequences',
     routePattern: '/submissions/:id/sequences',
@@ -93,13 +100,6 @@ export const SUBMISSION_WORKSPACES: WorkspaceDef[] = [
       'GET /api/submissions/shadow-review/:runId/findings',
     ],
     anaTools: ['run_shadow_review'],
-  },
-  {
-    id: 'cross-region',
-    label: 'Cross-region',
-    routePattern: '/submissions/:id/cross-region',
-    endpoints: ['POST /api/submissions/:id/cross-region', 'GET /api/region-profiles'],
-    anaTools: ['cross_region_gap_analysis'],
   },
   {
     id: 'dispatch',

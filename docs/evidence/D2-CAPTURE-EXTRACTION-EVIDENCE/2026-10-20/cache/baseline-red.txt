@@ -1,0 +1,225 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > CONTROL: reuses a valid original/text/method-bound receipt without a fresh extraction 75ms
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with original digest 48ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with text digest 38ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with method 38ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with future version 41ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with nonpositive page 37ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with reversed source pages 37ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with overlapping spans 38ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with out-of-text span 35ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with fractional span 35ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with split surrogate pair 36ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with confidence below scale 35ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with confidence above scale 36ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with nonfinite confidence 36ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with empty page map 37ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of treating malformed provided evidence as legacy absence: null 36ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of treating malformed provided evidence as legacy absence: {} 35ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of treating malformed provided evidence as legacy absence: undefined 35ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of treating malformed provided evidence as legacy absence: "untrusted receipt" 33ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts when an otherwise matching non-OCR receipt claims an OCR confidence 39ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ ✓ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > CONTROL: supports a bound legacy pre-extraction without a receipt 34ms
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cache snapshots before asynchronous admission > keeps the original receipt when the caller mutates it during admission 40ms
+   → expected { …(8) } to match object { …(3) }
+(5 matching properties omitted from actual)
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cache snapshots before asynchronous admission > keeps the original spans when the caller mutates it during admission 37ms
+   → expected { …(8) } to match object { …(3) }
+(5 matching properties omitted from actual)
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cache snapshots before asynchronous admission > keeps the original coverage when the caller mutates it during admission 38ms
+   → expected { …(8) } to match object { …(3) }
+(5 matching properties omitted from actual)
+ ✓ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > existing original and current-source authority controls > CONTROL: a matching cache never bypasses a foreign-tenant source refusal 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > existing original and current-source authority controls > CONTROL: a matching cache never bypasses a superseded source refusal 13ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > existing original and current-source authority controls > CONTROL: a matching cache still requires verified original bytes 37ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 22 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with original digest
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with text digest
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with method
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with future version
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with nonpositive page
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with reversed source pages
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with overlapping spans
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with out-of-text span
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with fractional span
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with split surrogate pair
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with confidence below scale
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with confidence above scale
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with nonfinite confidence
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of reusing a cached receipt with empty page map
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts:142:26
+    140|     const result = await processCapturedSource(org, id, input(candidat…
+    141|     expect(result.status).toBe('completed');
+    142|     expect(seam.extract).toHaveBeenCalledTimes(1);
+       |                          ^
+    143|     expect(result.extracted?.text).toBe(FRESH);
+    144|     expect((await state(id)).extracted_text).toBe(FRESH);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/22]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of treating malformed provided evidence as legacy absence: null
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of treating malformed provided evidence as legacy absence: {}
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of treating malformed provided evidence as legacy absence: undefined
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts instead of treating malformed provided evidence as legacy absence: "untrusted receipt"
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts:152:26
+    150|     const result = await processCapturedSource(org, id, input(candidat…
+    151|     expect(result.status).toBe('completed');
+    152|     expect(seam.extract).toHaveBeenCalledTimes(1);
+       |                          ^
+    153|     expect(result.extracted?.text).toBe(FRESH);
+    154|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/22]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cached extraction receipt binding > re-extracts when an otherwise matching non-OCR receipt claims an OCR confidence
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts:162:26
+    160|     const result = await processCapturedSource(org, id, input(candidat…
+    161|     expect(result.status).toBe('completed');
+    162|     expect(seam.extract).toHaveBeenCalledTimes(1);
+       |                          ^
+    163|     expect(result.extracted?.text).toBe(FRESH);
+    164|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/22]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cache snapshots before asynchronous admission > keeps the original receipt when the caller mutates it during admission
+AssertionError: expected { …(8) } to match object { …(3) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -3,13 +3,13 @@
+      "limitedBy": null,
+      "pageCount": 2,
+      "pagesRead": 2,
+    },
+    "extractionEvidence": {
+-     "extractedTextSha256": "7abaf671a05795c325eb53b28774e9d5726aeb279980d84bb02c9660e0cbfd38",
++     "extractedTextSha256": "0f3fb186e8b88528be0faf4f7d5669146a44693b20a1d35c68c2ce8bd70f74af",
+      "method": "pdf-ocr",
+-     "ocrConfidence": 85,
++     "ocrConfidence": 1,
+      "pageSpans": [
+        {
+          "end": 23,
+          "page": 3,
+          "start": 0,
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts:202:30
+    200|     expect(result.status).toBe('completed');
+    201|     expect(seam.extract).not.toHaveBeenCalled();
+    202|     expect(result.extracted).toMatchObject({ text: CACHED, extractionE…
+       |                              ^
+    203|     expect(result.reasonCode).toBeUndefined();
+    204|     expect((await state(id)).provenance.extractionCoverage).toEqual(or…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/22]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cache snapshots before asynchronous admission > keeps the original spans when the caller mutates it during admission
+AssertionError: expected { …(8) } to match object { …(3) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -8,18 +8,23 @@
+      "extractedTextSha256": "7abaf671a05795c325eb53b28774e9d5726aeb279980d84bb02c9660e0cbfd38",
+      "method": "pdf-ocr",
+      "ocrConfidence": 85,
+      "pageSpans": [
+        {
+-         "end": 23,
++         "end": 8,
+          "page": 3,
+          "start": 0,
+        },
+        {
+          "end": 67,
+          "page": 5,
+          "start": 24,
++       },
++       {
++         "end": 67,
++         "page": 9,
++         "start": 67,
+        },
+      ],
+      "sourceSha256": "75c5e6879e044160d2d58f8a8e2913db36c0f14903c4240f8ffb049278f83a6a",
+      "version": 1,
+    },
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts:202:30
+    200|     expect(result.status).toBe('completed');
+    201|     expect(seam.extract).not.toHaveBeenCalled();
+    202|     expect(result.extracted).toMatchObject({ text: CACHED, extractionE…
+       |                              ^
+    203|     expect(result.reasonCode).toBeUndefined();
+    204|     expect((await state(id)).provenance.extractionCoverage).toEqual(or…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/22]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts > cache snapshots before asynchronous admission > keeps the original coverage when the caller mutates it during admission
+AssertionError: expected { …(8) } to match object { …(3) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,10 +1,10 @@
+  {
+    "coverage": {
+-     "limitedBy": null,
+-     "pageCount": 2,
+-     "pagesRead": 2,
++     "limitedBy": "time_budget",
++     "pageCount": 30,
++     "pagesRead": 1,
+    },
+    "extractionEvidence": {
+      "extractedTextSha256": "7abaf671a05795c325eb53b28774e9d5726aeb279980d84bb02c9660e0cbfd38",
+      "method": "pdf-ocr",
+      "ocrConfidence": 85,
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts:202:30
+    200|     expect(result.status).toBe('completed');
+    201|     expect(seam.extract).not.toHaveBeenCalled();
+    202|     expect(result.extracted).toMatchObject({ text: CACHED, extractionE…
+       |                              ^
+    203|     expect(result.reasonCode).toBeUndefined();
+    204|     expect((await state(id)).provenance.extractionCoverage).toEqual(or…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/22]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  22 failed | 5 passed (27)
+   Start at  22:02:47
+   Duration  4.33s (transform 742ms, setup 86ms, import 1.21s, tests 2.80s, environment 0ms)
+

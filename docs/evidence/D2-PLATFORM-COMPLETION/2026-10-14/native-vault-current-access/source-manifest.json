@@ -1,0 +1,466 @@
+{
+  "qualification": "New bounded evidence phase. Original hosted/failed/posture/source phases retained privately with actual checksums. Current1111 native source records are separately listed in source-inputs.json using explicit source records. No older sealed artifact or scanner/baseline was changed.",
+  "normalization": "Only new repository log copies strip ANSI/URLs, trailing whitespace and extra EOF; raw private originals are unchanged. Bounded green copy retains exact actual file/case counts/start/duration; red excerpt retains all three actual failure assertions.",
+  "sources": [
+    {
+      "path": "docs/design/NATIVE_VAULT_CURRENT_ACCESS_FIXTURE.md",
+      "bytes": 8551,
+      "digestAlgorithm": "sha256",
+      "digest": "59ff723c89f71ae2a7271a40dd06b930ad602331d10aed0b4f1ff1a77b1ebacb"
+    },
+    {
+      "path": "docs/design/NATIVE_VAULT_CURRENT_ACCESS_FIXTURE_OBSERVED.md",
+      "bytes": 3929,
+      "digestAlgorithm": "sha256",
+      "digest": "8ec4430feb24c00fb642723b8ff325da6e491ddc6d4cbd9be41edfba66d37972"
+    },
+    {
+      "path": "tests/db/actor-displays.dbtest.ts",
+      "bytes": 18958,
+      "digestAlgorithm": "sha256",
+      "digest": "ff7eef073efaa5d8d39f68269516059ae06adfba41ac9915845768760c671a4c"
+    },
+    {
+      "path": "tests/db/vault-version-checkin.dbtest.ts",
+      "bytes": 16614,
+      "digestAlgorithm": "sha256",
+      "digest": "f82240ee01808c3abee0dad1f5f0d48c356b3d8b0a587d60bceed99cca13a65b"
+    },
+    {
+      "path": "tests/db/vault-version-compare.dbtest.ts",
+      "bytes": 7857,
+      "digestAlgorithm": "sha256",
+      "digest": "0f0da51ddfb2779429d00360e665bd6f20dce62e1f410ef8b973a4367df63526"
+    },
+    {
+      "path": "tests/db/vault-versions.dbtest.ts",
+      "bytes": 12877,
+      "digestAlgorithm": "sha256",
+      "digest": "1ce4a5cb5687510d35fc911ac82385abc304c3e1d12199c9faff7c3983644c52"
+    },
+    {
+      "path": "tests/db/vault-where-used.dbtest.ts",
+      "bytes": 16317,
+      "digestAlgorithm": "sha256",
+      "digest": "262c352f76de43a6a71c358e8d1ec3dadc83017a746025b591ff7b7db9d4ad25"
+    },
+    {
+      "path": "tests/db/vault-current-access-fixture.ts",
+      "bytes": 7436,
+      "digestAlgorithm": "sha256",
+      "digest": "203fa05d37c735303ef6a55ad0ac4c8a654b0ade3e5ae3d42c68cb2e32e6eed0"
+    },
+    {
+      "path": "migrations/20260905_vault_documents_organization_id.sql",
+      "bytes": 6959,
+      "digestAlgorithm": "sha256",
+      "digest": "9d32429490ea1fb4e553851ee968bfb6c668bbd96e9d95ba380f59f01179eb0a"
+    },
+    {
+      "path": "db/migrations/044c_gcc_vault_schema.sql",
+      "bytes": 6456,
+      "digestAlgorithm": "sha256",
+      "digest": "fdb52449a03ae73869dd4bdc82af5b50f2a431d53a4f06eab48517868038b1eb"
+    },
+    {
+      "path": "migrations/0021_enable_rls_everywhere.sql",
+      "bytes": 11700,
+      "digestAlgorithm": "sha256",
+      "digest": "9aa2b34bc2fc93f9b0f791c0ca9b0db1ce6d14c9b980e5a63c033c6c3a56ab2d"
+    },
+    {
+      "path": "scripts/db/rls-coverage-check.sql",
+      "bytes": 11219,
+      "digestAlgorithm": "sha256",
+      "digest": "528ecbb4270c81977b66306b63171597ae2f6e2e684dc4f5bfdf51b20139f1a7"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/native-vault-current-access/README.md",
+      "bytes": 3605,
+      "digestAlgorithm": "sha256",
+      "digest": "0ec424c20aecb81e17e9f0556c85e01c214f45f902461dd81f4a6ee5516f4f66"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/native-vault-current-access/canonical-installation-and-qualification.txt",
+      "bytes": 1057,
+      "digestAlgorithm": "sha256",
+      "digest": "e9b36830e6b25249be358b09363df724ddbb80f754ee61de1b2c6547c4505325"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/native-vault-current-access/hosted-baseline-scope.json",
+      "bytes": 3786,
+      "digestAlgorithm": "sha256",
+      "digest": "e913d38461fbbbb2d1d0bf9ee0b5eb29bce445b506c48b58475bc1ca2408771c"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/native-vault-current-access/native44-3-red-excerpt.txt",
+      "bytes": 3042,
+      "digestAlgorithm": "sha256",
+      "digest": "f20dc2ac4f98e2e951255b2bb30b94b13e392b35c514832a342a6aeeb0ad896c"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/native-vault-current-access/native47-green.txt",
+      "bytes": 8219,
+      "digestAlgorithm": "sha256",
+      "digest": "589cb3556f368de337c5ad3ee51d3e8dca8e8a090dd01d69ac21c636804ee2b7"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/native-vault-current-access/qualification.json",
+      "bytes": 2231,
+      "digestAlgorithm": "sha256",
+      "digest": "499216f9cf1909c0f81e73b8f8af273326a096268bda73291dfb7496584b104b"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/native-vault-current-access/qualified-posture-snapshots.json",
+      "bytes": 18057,
+      "digestAlgorithm": "sha256",
+      "digest": "4bd372f4d8527fd0d7f087c2da6bd155f2ccc3df2b3812cdaf88d65c71263f88"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/native-vault-current-access/scoped-lint-history.json",
+      "bytes": 5984,
+      "digestAlgorithm": "sha256",
+      "digest": "d53dc90de6c61e00c1e23c998644332c062e83eb7c2a81c39fa0ad047c516975"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/native-vault-current-access/source-inputs.json",
+      "bytes": 239522,
+      "digestAlgorithm": "sha256",
+      "digest": "c0a7531f55b6bb1490721f6883052190c358fbc0e0454af4b38acc5493ea0bb8"
+    }
+  ],
+  "privateRaw": [
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/runner-preparation-metadata.json",
+      "bytes": 2704,
+      "digestAlgorithm": "sha256",
+      "digest": "925ca58c1849b693d1fdc39764dc0d1f15ec2b71453e6985a25deeb760a22853"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/allocation.json",
+      "bytes": 471,
+      "digestAlgorithm": "sha256",
+      "digest": "11128fa2773ee1a4841037ed3cf91993923cf8a7f5cd026e85e3311b3eb978a6"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/reserved-alias-followup.json",
+      "bytes": 802,
+      "digestAlgorithm": "sha256",
+      "digest": "a2a8caf48d4ef02b0e3ad4d419fef8d4c4573ed6a71b2c65c8f946859e6b6f4d"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/force-posture-followup.json",
+      "bytes": 1233,
+      "digestAlgorithm": "sha256",
+      "digest": "d48cb38fc4fe9d24ade4408a1a2ba81715ad194377fc36df30d45895f4972d11"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/where-used-correspondence-source-followup.json",
+      "bytes": 1174,
+      "digestAlgorithm": "sha256",
+      "digest": "8133df39d7cb425c7a156d07143aa7947cf26cce2f2bed86071e3ef79d9cc35e"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/where-used-native-first-source.json",
+      "bytes": 427,
+      "digestAlgorithm": "sha256",
+      "digest": "2f9c353c54c8765ed411ae7650dc8f7aea8d93a019594141fc02403fda7457ee"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/vault-where-used.actual-44pass-3fail-source.ts",
+      "bytes": 16487,
+      "digestAlgorithm": "sha256",
+      "digest": "50971d460cc7eacb8cea7f9263fb372432127f70cc293347e018216a7dc0bb95"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/applied-source-pins.actual-44pass-3fail.json",
+      "bytes": 233607,
+      "digestAlgorithm": "sha256",
+      "digest": "eb37bf9d1db848c13ff08a9f9d46960a1966cd4371300aae07a4849f52e61ee9"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/applied-source-pins.json",
+      "bytes": 233607,
+      "digestAlgorithm": "sha256",
+      "digest": "94f4eac11bd2448fb3396f20048166c1b68181e9b3a47f37a23ff9c4e29b09bb"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/isolated-native.before-reserved-alias-fix.py",
+      "bytes": 18739,
+      "digestAlgorithm": "sha256",
+      "digest": "b2bd9f070c68b901f0ada2e1306401dc2ee32a9d010bdb551cfe80057d5d1741"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/isolated-native.before-force-posture-followup.py",
+      "bytes": 18749,
+      "digestAlgorithm": "sha256",
+      "digest": "9678ffb8d98f7c321c53b3f70731bea22fe467009ff93d075fa0b580191ebefe"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/isolated-native.py",
+      "bytes": 21495,
+      "digestAlgorithm": "sha256",
+      "digest": "cafd5fbb46217c340f8f137b538d9a8826b15b70a8498d19bbc0d06ae736d9a6"
+    },
+    {
+      "path": "/tmp/host-native-fixture-reconciliation/isolated-native.py",
+      "bytes": 13299,
+      "digestAlgorithm": "sha256",
+      "digest": "9620e12bef7b3d0a5115b5f71d63334b9c677000bdfa7e7dab8201d7d572256f"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-retained-fixture-prep/prepared-source-manifest.json",
+      "bytes": 12530,
+      "digestAlgorithm": "sha256",
+      "digest": "74ac242412095a046e64f114594e8ece389d9aab276ede61600c68b64e923bd0"
+    },
+    {
+      "path": "/tmp/fa39-stream-vault-family-cases.json",
+      "bytes": 22576,
+      "digestAlgorithm": "sha256",
+      "digest": "70e7c8f31b5176574f52ee74d38273dbad42d97e42a207dd5ce96af156445afb"
+    },
+    {
+      "path": "/tmp/fa39-hosted-native-failure-census.json",
+      "bytes": 222961,
+      "digestAlgorithm": "sha256",
+      "digest": "6b1c6f0198233fb39a1e9ef7f2564e69b7815fd7b9f15ae28f2b526f7405f3f3"
+    },
+    {
+      "path": "/tmp/fa39-real-database-results.raw.json",
+      "bytes": 797688,
+      "digestAlgorithm": "sha256",
+      "digest": "5438770e603b036d81034680245bf3412bc973bf45eb186dd201a132e2cb674a"
+    },
+    {
+      "path": "/tmp/fa39-real-database-results.zip",
+      "bytes": 99436,
+      "digestAlgorithm": "sha256",
+      "digest": "0b343b94e2150de5eb0be8f2a124db0c8d16db58b1219f407dc8d30adf7c301e"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/install-20261014T203931703492Z/create-fresh.txt",
+      "bytes": 59,
+      "digestAlgorithm": "sha256",
+      "digest": "1442636b47e6f10f9cf4bdf6494f1778ae6abdb2539339bb53a23a11bbd996c1"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/install-20261014T203931703492Z/deploy-migrate.txt",
+      "bytes": 67254,
+      "digestAlgorithm": "sha256",
+      "digest": "2ebb401a1bb3a8dbc7fe2a9d95f1d7c2712dae1ed123d9889e4bdd9a4ce7ba3f"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/install-20261014T203931703492Z/grant-audit.json",
+      "bytes": 463,
+      "digestAlgorithm": "sha256",
+      "digest": "36b2bf022a5b3a6a9364ab20798d9d6e45805dc48c31cf9f78bae0b5aa5dc132"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/install-20261014T203931703492Z/grant-audit.txt",
+      "bytes": 469,
+      "digestAlgorithm": "sha256",
+      "digest": "68fd3848d68eff33c2f62847430ac6ea5e938dd332a816412ede3a7603b99c03"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/install-20261014T203931703492Z/install-final-posture.txt",
+      "bytes": 441,
+      "digestAlgorithm": "sha256",
+      "digest": "ed343ace8d666ae06e6a353915adb0f6e9c9fcd96dd7e4fa63a9e31657ad1b5b"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/install-20261014T203931703492Z/install-fresh.txt",
+      "bytes": 8216,
+      "digestAlgorithm": "sha256",
+      "digest": "84ffa3b22dfb3c52a448b93c608922d891c4e9c2c635a410c9fec047a1cff17d"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/install-20261014T203931703492Z/install-global-after.txt",
+      "bytes": 271,
+      "digestAlgorithm": "sha256",
+      "digest": "b9e5c6f2e387b25ce14e3781d0de60a279f214c097ac9f090b5dede4439320ed"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/install-20261014T203931703492Z/install-global-before.txt",
+      "bytes": 271,
+      "digestAlgorithm": "sha256",
+      "digest": "b9e5c6f2e387b25ce14e3781d0de60a279f214c097ac9f090b5dede4439320ed"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/install-20261014T203931703492Z/install-posture.txt",
+      "bytes": 441,
+      "digestAlgorithm": "sha256",
+      "digest": "ed343ace8d666ae06e6a353915adb0f6e9c9fcd96dd7e4fa63a9e31657ad1b5b"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/install-20261014T203931703492Z/result.json",
+      "bytes": 249004,
+      "digestAlgorithm": "sha256",
+      "digest": "8ab8fb2057942840e05505f346b1d180889806df4581c514e2795622da2bb53c"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/qualify-installed-20261014T204309159423Z/qualify-installed-final-posture.txt",
+      "bytes": 3244,
+      "digestAlgorithm": "sha256",
+      "digest": "54c5376e0833b6f5627a3dbe59dd3526e7699ef041afa88cc251439f253fc670"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/qualify-installed-20261014T204309159423Z/qualify-installed-global-after.txt",
+      "bytes": 271,
+      "digestAlgorithm": "sha256",
+      "digest": "b9e5c6f2e387b25ce14e3781d0de60a279f214c097ac9f090b5dede4439320ed"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/qualify-installed-20261014T204309159423Z/qualify-installed-global-before.txt",
+      "bytes": 271,
+      "digestAlgorithm": "sha256",
+      "digest": "b9e5c6f2e387b25ce14e3781d0de60a279f214c097ac9f090b5dede4439320ed"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/qualify-installed-20261014T204309159423Z/qualify-installed-posture.txt",
+      "bytes": 3244,
+      "digestAlgorithm": "sha256",
+      "digest": "54c5376e0833b6f5627a3dbe59dd3526e7699ef041afa88cc251439f253fc670"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/qualify-installed-20261014T204309159423Z/result.json",
+      "bytes": 257986,
+      "digestAlgorithm": "sha256",
+      "digest": "955330cccc0da94d8ba04cf33c53358fc011af1788b50f240d18a36a2fd22a12"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/run-20261014T204315480822Z/bounded-failure-excerpt.txt",
+      "bytes": 3043,
+      "digestAlgorithm": "sha256",
+      "digest": "ba0ba8edcdeda7e255ff411643721fa60d3ed682619714f0526da109e33c540c"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/run-20261014T204315480822Z/native-original-assertions.txt",
+      "bytes": 34122,
+      "digestAlgorithm": "sha256",
+      "digest": "f22cdc4cccb2c2460d07500c881c01e7b8711291caeb257bf1f5afe3925bf541"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/run-20261014T204315480822Z/result.json",
+      "bytes": 257954,
+      "digestAlgorithm": "sha256",
+      "digest": "d269826dd31a63b2d2335c21985ca7db2d0a655f542e2f63d5774dac351dc150"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/run-20261014T204315480822Z/run-final-posture.txt",
+      "bytes": 3244,
+      "digestAlgorithm": "sha256",
+      "digest": "54c5376e0833b6f5627a3dbe59dd3526e7699ef041afa88cc251439f253fc670"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/run-20261014T204315480822Z/run-global-after.txt",
+      "bytes": 271,
+      "digestAlgorithm": "sha256",
+      "digest": "b9e5c6f2e387b25ce14e3781d0de60a279f214c097ac9f090b5dede4439320ed"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/run-20261014T204315480822Z/run-global-before.txt",
+      "bytes": 271,
+      "digestAlgorithm": "sha256",
+      "digest": "b9e5c6f2e387b25ce14e3781d0de60a279f214c097ac9f090b5dede4439320ed"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/run-20261014T204315480822Z/run-posture.txt",
+      "bytes": 3244,
+      "digestAlgorithm": "sha256",
+      "digest": "54c5376e0833b6f5627a3dbe59dd3526e7699ef041afa88cc251439f253fc670"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/run-20261014T204747054381Z/native-original-assertions.txt",
+      "bytes": 31070,
+      "digestAlgorithm": "sha256",
+      "digest": "bac1d9e1918e35ad2cfff991655e33a92ab377f02c8c44669952783d44c75e96"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/run-20261014T204747054381Z/result.json",
+      "bytes": 257882,
+      "digestAlgorithm": "sha256",
+      "digest": "f0b5e6a0555189324698cda747b1edd90ed3644a933e80c724947b4a971d85c7"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/run-20261014T204747054381Z/run-final-posture.txt",
+      "bytes": 3244,
+      "digestAlgorithm": "sha256",
+      "digest": "54c5376e0833b6f5627a3dbe59dd3526e7699ef041afa88cc251439f253fc670"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/run-20261014T204747054381Z/run-global-after.txt",
+      "bytes": 271,
+      "digestAlgorithm": "sha256",
+      "digest": "b9e5c6f2e387b25ce14e3781d0de60a279f214c097ac9f090b5dede4439320ed"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/run-20261014T204747054381Z/run-global-before.txt",
+      "bytes": 271,
+      "digestAlgorithm": "sha256",
+      "digest": "b9e5c6f2e387b25ce14e3781d0de60a279f214c097ac9f090b5dede4439320ed"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/attempts/run-20261014T204747054381Z/run-posture.txt",
+      "bytes": 3244,
+      "digestAlgorithm": "sha256",
+      "digest": "54c5376e0833b6f5627a3dbe59dd3526e7699ef041afa88cc251439f253fc670"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/original-fixtures-lint.json",
+      "bytes": 1243,
+      "digestAlgorithm": "sha256",
+      "digest": "4b88b2bb731ac5322edd7727629993069340adba8dff6835490ba53e3f1b07bd"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/original-fixtures-lint.stderr.txt",
+      "bytes": 0,
+      "digestAlgorithm": "sha256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/current-fixtures-lint.json",
+      "bytes": 27478,
+      "digestAlgorithm": "sha256",
+      "digest": "cd3f505d86460f553ee82f8ad3c93a7ea02ed15806a58ebcdc2b1042d18f1347"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/current-fixtures-lint.stderr.txt",
+      "bytes": 0,
+      "digestAlgorithm": "sha256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/final-fixtures-lint.json",
+      "bytes": 1495,
+      "digestAlgorithm": "sha256",
+      "digest": "afd1ef3896ad967b52c39d6db36aec9cf8a8cb636377c856fa80c9118d1360d0"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/final-fixtures-lint.stderr.txt",
+      "bytes": 0,
+      "digestAlgorithm": "sha256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/correspondence-final-fixtures-lint.json",
+      "bytes": 1495,
+      "digestAlgorithm": "sha256",
+      "digest": "afd1ef3896ad967b52c39d6db36aec9cf8a8cb636377c856fa80c9118d1360d0"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/correspondence-final-fixtures-lint.stderr.txt",
+      "bytes": 0,
+      "digestAlgorithm": "sha256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/project-vault-fa39-vault-native/static-fixture-review.json",
+      "bytes": 2164,
+      "digestAlgorithm": "sha256",
+      "digest": "c2cc6c693ff56d16b42887db6c320b2d46d2ca349d3bcd6558d5b589fd55b128"
+    }
+  ]
+}

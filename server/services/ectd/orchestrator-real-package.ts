@@ -37,6 +37,7 @@ import {
   packageEctdSubmission,
   type EctdLeaf,
   type FdaRegionalAdmin,
+  type FdaApplicantContact,
 } from '../submission-gateways/regional-packager';
 import type { ECTDLeaf } from './ectd4-validator';
 import type { ComposedSection } from '../module3Composer';
@@ -77,14 +78,22 @@ export interface RealAssemblyContext {
   /** FDA Module 1 admin block. For region 'fda' the backbone must state an
    *  application type; see regional-packager.buildFdaBackbone. */
   fda?: FdaRegionalAdmin;
+  contacts?: FdaApplicantContact[];
   /**
    * The applicant's own identifier — DUNS for FDA, the EMA organisation id, the
    * PMDA applicant id. It is NOT the application number: `sponsorId` was filled
    * with `applicationNumber`, so the backbone's <id> / <pmda-applicant-id> /
    * <company-id> carried the IND/NDA number as the applicant's identity.
+   *
+   * Required, with sponsorName, since 2026-10-08 (P-27 follow-up): this module
+   * filled both with its own UNASSIGNED placeholders, and the regional backbone
+   * they went into is a checksummed leaf of the index.xml the release signature
+   * binds. The caller (the orchestrator's assembleForValidation) now passes the
+   * recorded applicant, or the dry-run placeholder for an assembly it will not
+   * let be signed.
    */
-  applicantId?: string;
-  sponsorName?: string;
+  applicantId: string;
+  sponsorName: string;
   productName?: string;
 }
 
@@ -189,12 +198,11 @@ export async function assembleRealPackage(
          latter. Passing it in the right slot is what stopped an original IND
          from being coded fdast9 ("IND Safety Reports") by a lookup in the wrong
          vocabulary. An explicit block always wins. */
-      fda: ctx.fda ?? { applicationType: ctx.submissionType },
-      // An absent identity says it is absent. 'Sponsor' and 'Product' read as
-      // real values in the backbone; regulatory-identifiers.ts' rule is that a
-      // missing identifier must SAY it is unassigned.
-      sponsorId: ctx.applicantId ?? 'UNASSIGNED-APPLICANT',
-      sponsorName: ctx.sponsorName ?? 'UNASSIGNED (applicant)',
+      fda: { ...(ctx.fda ?? { applicationType: ctx.submissionType }), ...(ctx.contacts ? { contacts: ctx.contacts } : {}) },
+      // The caller's: the recorded applicant, or a dry run's placeholder.
+      sponsorId: ctx.applicantId,
+      sponsorName: ctx.sponsorName,
+      // An absent product name says it is absent; 'Product' would read as a real one.
       productName: ctx.productName ?? 'UNASSIGNED (product)',
       outputDir: path.join(work, 'out'),
       environment: 'staging',

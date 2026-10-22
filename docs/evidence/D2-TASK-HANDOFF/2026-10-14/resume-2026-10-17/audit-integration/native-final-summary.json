@@ -1,0 +1,14 @@
+{
+  "total": 311,
+  "passed": 311,
+  "failed": 0,
+  "pending": 0,
+  "physicalFiles": 36,
+  "frozenRuntimeSourcePinsVerified": 4630,
+  "pinMismatches": [],
+  "runtimeAuditKeysConfigured": true,
+  "sourceUnchangedFromFirstRed": true,
+  "sourceBaseCommit": "2d9d0d83e720c99ee75828e2567033af529d9f1e",
+  "incomingCanonical": "c5d278add74085cb629c70fa9286d04e39664d9b",
+  "boundary": "Actual retained isolated PostgreSQL15.19, app_service NOSUPERUSER/NOBYPASSRLS, tenant scope and RLS on. Synthetic accounts/bytes/keys; no human acceptance or deployed key provisioning."
+}

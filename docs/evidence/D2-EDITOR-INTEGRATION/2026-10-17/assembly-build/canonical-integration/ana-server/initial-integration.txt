@@ -1,0 +1,233 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+stderr | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:14:38.944Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:14:41.426Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:14:41.427Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:14:41.427Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > captures the saved section, ignores client base claims and scopes retrieval to its admitted project
+[Authoring] Data Room retrieval failed (non-fatal): Current project access could not be verified. No project data was supplied.
+
+stderr | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > refuses a concurrent saved edit before consuming the candidate or writing lineage
+[Authoring] Data Room retrieval failed (non-fatal): Current project access could not be verified. No project data was supplied.
+
+stderr | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > also refuses a changed title when the text itself remains empty
+[Authoring] Data Room retrieval failed (non-fatal): Current project access could not be verified. No project data was supplied.
+
+stderr | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > also refuses a changed code when the text itself remains empty
+[Authoring] Data Room retrieval failed (non-fatal): Current project access could not be verified. No project data was supplied.
+
+ × server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > captures the saved section, ignores client base claims and scopes retrieval to its admitted project 315ms
+   → expected [] to have a length of 1 but got +0
+ ✓ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > refuses a concurrent saved edit before consuming the candidate or writing lineage 49ms
+ ✓ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > also refuses a changed title when the text itself remains empty 32ms
+stderr | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > also refuses a changed updated_at when the text itself remains empty
+[Authoring] Data Room retrieval failed (non-fatal): Current project access could not be verified. No project data was supplied.
+
+stderr | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > accepts the unchanged base once, then retains the existing 410 single-use contract
+[Authoring] Data Room retrieval failed (non-fatal): Current project access could not be verified. No project data was supplied.
+
+stdout | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > accepts the unchanged base once, then retains the existing 410 single-use contract
+{
+  "timestamp": "2026-10-17T23:14:43.186Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a5510000-0000-4000-8000-000000000001 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > also refuses a changed code when the text itself remains empty 33ms
+ ✓ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > also refuses a changed updated_at when the text itself remains empty 34ms
+stderr | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > a standalone draft never searches across other projects and reports the missing retrieval scope
+[Authoring] Data Room retrieval failed (non-fatal): This document has no verified project scope. No Data Room sources were read.
+
+ ✓ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > accepts the unchanged base once, then retains the existing 410 single-use contract 72ms
+ ✓ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > refuses a legacy candidate without a saved base before consuming it 15ms
+ ✓ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > refuses newly private project access before retrieval or generation 11ms
+ ✓ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > a standalone draft never searches across other projects and reports the missing retrieval scope 16ms
+stderr | server/routes/__tests__/authoringAiDraftStructured.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringAiDraftStructured.test.ts
+{
+  "timestamp": "2026-10-17T23:14:44.349Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringAiDraftStructured.test.ts
+{
+  "timestamp": "2026-10-17T23:14:45.337Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:14:45.337Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringAiDraftStructured.test.ts
+{
+  "timestamp": "2026-10-17T23:14:45.337Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringAiDraftStructured.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/authoringAiDraftStructured.test.ts > authoring AI-draft — structured generation (Phase 4b) > parks the model’s SRC-mapped paraphrase assertions from a JSON envelope
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoringAiDraftStructured.test.ts > authoring AI-draft — structured generation (Phase 4b) > degrades to plain prose with no assertions when the model does not return JSON
+[turn-record] could not write the turn record: pool.connect is not a function
+
+ ✓ server/routes/__tests__/authoringAiDraftStructured.test.ts > authoring AI-draft — structured generation (Phase 4b) > parks the model’s SRC-mapped paraphrase assertions from a JSON envelope 67ms
+ ✓ server/routes/__tests__/authoringAiDraftStructured.test.ts > authoring AI-draft — structured generation (Phase 4b) > degrades to plain prose with no assertions when the model does not return JSON 15ms
+stderr | server/routes/__tests__/authoring-draft-program-sources.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoring-draft-program-sources.test.ts
+{
+  "timestamp": "2026-10-17T23:14:46.697Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-draft-program-sources.test.ts
+{
+  "timestamp": "2026-10-17T23:14:47.944Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:14:47.944Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-draft-program-sources.test.ts
+{
+  "timestamp": "2026-10-17T23:14:47.945Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-draft-program-sources.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/authoring-draft-program-sources.test.ts > section draft uses current program evidence > reports unavailable scope without searching every program as a fallback
+[Authoring] Data Room retrieval failed (non-fatal): This document has no verified project scope. No Data Room sources were read.
+
+stderr | server/routes/__tests__/authoring-draft-program-sources.test.ts > section draft uses current program evidence > reports unavailable scope without searching every program as a fallback
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-program-sources.test.ts > section draft uses current program evidence > reports unavailable scope without searching every program as a fallback
+[Authoring] draft-candidate creation failed (non-fatal): [vitest] No "savedSectionDraftBase" export is defined on the "../../services/clinical-regulatory-evidence/draft-candidate-store.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+ × server/routes/__tests__/authoring-draft-program-sources.test.ts > section draft uses current program evidence > searches program Vault passages and parks the exact version receipt without invented citations 60ms
+   → expected 404 to be 200 // Object.is equality
+ ✓ server/routes/__tests__/authoring-draft-program-sources.test.ts > section draft uses current program evidence > reports unavailable scope without searching every program as a fallback 33ms
+ × server/routes/__tests__/authoring-draft-program-sources.test.ts > section draft uses current program evidence > rejects a returned passage whose current document belongs to another program 5ms
+   → Cannot read properties of undefined (reading 'metadata')
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoring-draft-program-sources.test.ts > section draft uses current program evidence > searches program Vault passages and parks the exact version receipt without invented citations
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/routes/__tests__/authoring-draft-program-sources.test.ts:77:24
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/routes/__tests__/authoring-draft-program-sources.test.ts > section draft uses current program evidence > rejects a returned passage whose current document belongs to another program
+TypeError: Cannot read properties of undefined (reading 'metadata')
+ ❯ server/routes/__tests__/authoring-draft-program-sources.test.ts:100:27
+     98|     h.load.mockResolvedValue({ id: VAULT_DOC, programId: 'aaaaaaaa-aaa…
+     99|     const res = await draft();
+    100|     expect(res.body.draft.metadata.retrievalStatus).toBe('failed');
+       |                           ^
+    101|     expect(h.route.mock.calls[0][0].messages[0].content).not.toContain…
+    102|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > captures the saved section, ignores client base claims and scopes retrieval to its admitted project
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts:113:24
+    111|       'SELECT generator FROM authoring_ai_draft_candidates WHERE id=$1…
+    112|     expect(candidate.generator.savedSectionBase).toMatchObject({ versi…
+    113|     expect(h.searches).toHaveLength(1);
+       |                        ^
+    114|     expect(h.searches[0].projectId).toBe('42');
+    115|     expect(h.prompts[0]).toContain('PROJECT DATA ROOM EVIDENCE');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  3 failed | 11 passed (14)
+   Start at  23:14:33
+   Duration  14.57s (transform 4.31s, setup 114ms, import 5.17s, tests 8.73s, environment 0ms)

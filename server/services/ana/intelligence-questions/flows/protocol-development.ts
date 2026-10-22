@@ -12,6 +12,13 @@
  * @module server/services/ana/intelligence-questions/flows/protocol-development
  */
 
+import { consentElementsFor } from '../../../../../shared/regulatory/informed-consent-elements.js';
+
+/** The 50.25(a) elements, in order, from the one record. */
+const FDA_REQUIRED_CONSENT = consentElementsFor('fda')
+  .filter((e) => e.applicability === 'required')
+  .map((e) => `${e.label.toLowerCase()} (${e.cfr50})`)
+  .join('; ');
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
 
 export function createProtocolDevelopmentFlow(): FlowDefinition {
@@ -108,7 +115,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
         question:
           "Let's begin with the study identity. What is the working title, therapeutic area, target indication, and study phase for this trial?",
         guidance:
-          'Per ICH E6(R2) Section 6.1, the protocol should include a descriptive title. ICH E8(R1) Section 4 recommends the title convey the intervention, condition, phase, and design. A well-structured title accelerates regulatory review and improves ClinicalTrials.gov discoverability.',
+          'Per ICH E6(R3) Appendix B, the protocol should include a descriptive title. ICH E8(R1) Section 4 recommends the title convey the intervention, condition, phase, and design. A well-structured title accelerates regulatory review and improves ClinicalTrials.gov discoverability.',
         fields: [
           {
             id: 'study_title',
@@ -126,7 +133,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             placeholder: 'e.g., ABC-001-2024',
             required: false,
             helpText:
-              'Sponsor-assigned protocol identifier per ICH E6(R2) Section 6.1.1.',
+              'Sponsor-assigned protocol identifier per ICH E6(R3) Appendix B.',
           },
           {
             id: 'therapeutic_area',
@@ -148,8 +155,8 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               { value: 'ophthalmology', label: 'Ophthalmology' },
               { value: 'hematology', label: 'Hematology' },
               { value: 'gene_cell_therapy', label: 'Gene / Cell Therapy' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'indication',
@@ -193,7 +200,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
         question:
           'Who is the sponsor of this study, and what is the current regulatory filing status?',
         guidance:
-          'ICH E6(R2) Section 5.1 requires clear identification of the sponsor. 21 CFR 312.23 details IND application contents. For EMA submissions, the EudraCT number is required per Regulation (EU) No 536/2014 (Clinical Trials Regulation).',
+          'ICH E6(R3) Appendix B (protocol) requires clear identification of the sponsor. 21 CFR 312.23 details IND application contents. For EMA submissions, the EudraCT number is required per Regulation (EU) No 536/2014 (Clinical Trials Regulation).',
         fields: [
           {
             id: 'sponsor_name',
@@ -247,8 +254,8 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               { value: 'oligonucleotide', label: 'Oligonucleotide (ASO, siRNA)' },
               { value: 'radiopharmaceutical', label: 'Radiopharmaceutical' },
               { value: 'combination_product', label: 'Combination Product' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
         ],
         defaultNext: 'design_type',
@@ -395,8 +402,8 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               { value: 'lan_demets', label: 'Lan-DeMets Spending Function' },
               { value: 'combination_pvalues', label: 'Combination P-Values' },
               { value: 'conditional_error', label: 'Conditional Error Function' },
-              { value: 'other', label: 'Other (describe in notes)' },
             ],
+            allowOther: { label: 'Other (describe in notes)' },
           },
           {
             id: 'simulation_study_completed',
@@ -493,7 +500,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               value: ['double_blind', 'triple_blind'],
             },
             helpText:
-              'ICH E6(R2) Section 6.4.4 requires documented procedures for breaking the blind in emergencies.',
+              'ICH E6(R3) Appendix B and Annex 1 §2.11 (Randomisation Procedures and Unblinding) require documented procedures for breaking the blind in emergencies.',
           },
         ],
         issueChecks: [
@@ -592,7 +599,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
         question:
           'Describe the target population, including age range, key eligibility criteria, and any vulnerable populations.',
         guidance:
-          'ICH E8(R1) emphasizes that the study population should reflect the intended therapeutic indication. ICH E6(R2) Section 6.5.1 requires clearly defined eligibility criteria. FDA Guidance on Broadening Eligibility Criteria (2020) encourages removing unnecessarily restrictive criteria to improve diversity and generalizability. ICH E7 provides specific guidance on geriatric populations.',
+          'ICH E8(R1) emphasizes that the study population should reflect the intended therapeutic indication. ICH E6(R3) Appendix B requires clearly defined eligibility criteria. FDA Guidance on Broadening Eligibility Criteria (2020) encourages removing unnecessarily restrictive criteria to improve diversity and generalizability. ICH E7 provides specific guidance on geriatric populations.',
         fields: [
           {
             id: 'target_population_description',
@@ -886,8 +893,8 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               { value: 'imwg', label: 'IMWG (Myeloma)' },
               { value: 'eln', label: 'ELN (Leukemia)' },
               { value: 'pcwg', label: 'PCWG (Prostate Cancer)' },
-              { value: 'other', label: 'Other Disease-Specific Criteria' },
             ],
+            allowOther: { label: 'Other Disease-Specific Criteria' },
           },
           {
             id: 'oncology_primary_endpoint_type',
@@ -1038,8 +1045,8 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               { value: 'cmi_wilcoxon', label: 'Wilcoxon Rank-Sum' },
               { value: 'gee', label: 'GEE (Generalized Estimating Equations)' },
               { value: 'bayesian', label: 'Bayesian Analysis' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'alpha_level',
@@ -1113,8 +1120,8 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               { value: 'locf', label: 'LOCF (Last Observation Carried Forward)' },
               { value: 'worst_case', label: 'Worst-Case Imputation' },
               { value: 'complete_case', label: 'Complete Case Analysis' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
         ],
         issueChecks: [
@@ -1181,8 +1188,8 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               { value: 'odds_ratio', label: 'Odds Ratio' },
               { value: 'risk_ratio', label: 'Risk Ratio' },
               { value: 'restricted_mean', label: 'Restricted Mean Survival Time' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'intercurrent_events_strategy',
@@ -1216,7 +1223,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
         question:
           'What is the planned approach for safety monitoring, adverse event collection, and dose-limiting toxicity assessment?',
         guidance:
-          'ICH E6(R2) Sections 6.5.3 and 6.5.4 require protocols to specify how adverse events and serious adverse events are collected, classified, and reported. 21 CFR 312.32 requires initial SAE reports within 15 calendar days (7 days for fatal/life-threatening unexpected events). ICH E2A defines the classification of adverse events. For first-in-human studies, consider MABEL-based dosing per EMA Guideline EMEA/CHMP/SWP/28367/07.',
+          'ICH E6(R3) Appendix B and Annex 1 §3.13 (Safety Assessment and Reporting) require protocols to specify how adverse events and serious adverse events are collected, classified, and reported. 21 CFR 312.32 requires IND safety reports of serious and unexpected suspected adverse reactions within 15 calendar days (7 calendar days for unexpected fatal or life-threatening suspected adverse reactions). ICH E2A defines the classification of adverse events. For first-in-human studies, consider MABEL-based dosing per EMA Guideline EMEA/CHMP/SWP/28367/07.',
         fields: [
           {
             id: 'ae_grading_scale',
@@ -1261,8 +1268,8 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               { value: 'ewoc', label: 'EWOC (Escalation with Overdose Control)' },
               { value: 'mabel', label: 'MABEL-Based (First-in-Human)' },
               { value: 'accelerated_titration', label: 'Accelerated Titration' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'dlt_criteria',
@@ -1414,7 +1421,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
         question:
           'Will an independent Data Safety Monitoring Board (DSMB / DMC) oversee this study?',
         guidance:
-          'FDA Guidance on Establishment and Operation of Clinical Trial DSMBs (2006) recommends DMCs for: (1) controlled trials with mortality or major morbidity endpoints, (2) trials with interim efficacy analyses, (3) large simple trials. Phase 3 confirmatory trials almost always require a DSMB. Per ICH E6(R2) Section 5.5, the DMC should operate under a formal charter specifying membership, procedures, and decision rules.',
+          'FDA Guidance on Establishment and Operation of Clinical Trial DSMBs (2006) recommends DMCs for: (1) controlled trials with mortality or major morbidity endpoints, (2) trials with interim efficacy analyses, (3) large simple trials. Phase 3 confirmatory trials almost always require a DSMB. Per ICH E6(R3) Annex 1 §3 (Sponsor), the DMC should operate under a formal charter specifying membership, procedures, and decision rules.',
         fields: [
           {
             id: 'dsmb_required',
@@ -1670,7 +1677,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
         question:
           'Describe the informed consent process, including use of electronic consent (eConsent) and any additional consent elements.',
         guidance:
-          '21 CFR 50.25 specifies required elements of informed consent including: nature and purpose of the study, risks and benefits, alternatives, confidentiality, compensation, and contact information. 21 CFR 50.27 requires documentation of consent. FDA Guidance on Use of Electronic Informed Consent (2016) allows eConsent with appropriate regulatory safeguards. ICH E6(R2) Section 4.8 requires IRB/IEC-approved consent before any study procedures.',
+          `21 CFR 50.25(a) requires every one of these elements: ${FDA_REQUIRED_CONSENT}; 50.25(b) adds six when appropriate, and 50.25(c) the ClinicalTrials.gov statement for an applicable clinical trial (citations recall). 21 CFR 50.27 requires documentation of consent. FDA Guidance on Use of Electronic Informed Consent (2016) allows eConsent with appropriate regulatory safeguards. ICH E6(R3) Annex 1 §2.8 requires IRB/IEC-approved consent before any study procedures.`,
         fields: [
           {
             id: 'econsent_planned',
@@ -1707,7 +1714,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             type: 'multi_select',
             required: false,
             helpText:
-              'Subjects are told of significant new findings that may relate to their willingness to continue (45 CFR 46.116(c)(5); 21 CFR 50.25(b)(5)). Whether and how enrolled subjects are informed or re-consented is the IRB\'s determination (45 CFR 46.109(b); 21 CFR 56.109(b)); ICH E6(R3) 2.8.2 asks that new information be assessed to decide whether re-consent is needed. These are the events that trigger that assessment, not an automatic re-consent.',
+              'Subjects are told of significant new findings that may relate to their willingness to continue (45 CFR 46.116(c)(5); 21 CFR 50.25(b)(5)). Whether and how enrolled subjects are informed or re-consented is the IRB\'s determination (45 CFR 46.109(b); 21 CFR 56.109(b)); ICH E6(R3) Annex 1 §2.8 asks that new information be assessed to decide whether re-consent is needed. These are the events that trigger that assessment, not an automatic re-consent.',
             options: [
               { value: 'protocol_amendment', label: 'Protocol Amendment' },
               { value: 'new_safety_info', label: 'New Safety Information' },
@@ -1798,7 +1805,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
         question:
           'Describe the clinical monitoring strategy, including risk-based monitoring and source data verification approach.',
         guidance:
-          'ICH E6(R3) (draft 2023) emphasizes a quality-by-design approach with risk-proportionate monitoring. FDA Guidance on A Risk-Based Approach to Monitoring of Clinical Investigations (2013) supports risk-based monitoring (RBM) as an alternative to 100% on-site SDV. Central statistical monitoring (CSM) uses statistical algorithms to detect data anomalies and site-level quality issues. The monitoring plan should be documented per ICH E6(R2) Section 5.18.',
+          'ICH E6(R3) (Step 4, 2025-01-06) emphasizes a quality-by-design approach with risk-proportionate monitoring. FDA Guidance on A Risk-Based Approach to Monitoring of Clinical Investigations (2013) supports risk-based monitoring (RBM) as an alternative to 100% on-site SDV. Central statistical monitoring (CSM) uses statistical algorithms to detect data anomalies and site-level quality issues. The monitoring plan should be documented per ICH E6(R3) Annex 1 §3.11.4 (Monitoring).',
         fields: [
           {
             id: 'monitoring_model',
@@ -1840,7 +1847,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             type: 'yes_no',
             required: true,
             helpText:
-              'ICH E6(R3) requires identification of critical data and processes that are essential to ensuring human subject protection and reliability of trial results.',
+              'ICH E6(R3) requires identification of critical data and processes that are essential to ensuring participant protection and reliability of trial results.',
           },
           {
             id: 'monitoring_visit_frequency',
@@ -1868,7 +1875,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             title: 'No Central Monitoring Planned',
             message:
               'ICH E6(R3) emphasizes centralized monitoring as a key component of risk-based quality management. Central statistical monitoring can detect fabrication, systematic errors, and protocol deviations that on-site monitoring may miss.',
-            reference: 'ICH E6(R3) Draft Guideline (2023), Section 5.2',
+            reference: 'ICH E6(R3) Annex 1 §3.11.4 (Monitoring)',
           },
         ],
         defaultNext: 'edc_data_management',
@@ -1880,7 +1887,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
         question:
           'What Electronic Data Capture (EDC) system and data management approach will be used?',
         guidance:
-          '21 CFR Part 11 governs electronic records and electronic signatures. ICH E6(R2) Section 5.5.3 requires that electronic data systems have adequate validation, audit trails, access controls, and backup. FDA Guidance on Electronic Source Data (2013) defines requirements for direct data entry into EDC systems.',
+          '21 CFR Part 11 governs electronic records and electronic signatures. ICH E6(R3) Annex 1 §4.3 (Computerised Systems) requires that electronic data systems have adequate validation, audit trails, access controls, and backup. FDA Guidance on Electronic Source Data (2013) defines requirements for direct data entry into EDC systems.',
         fields: [
           {
             id: 'edc_system',
@@ -1894,8 +1901,8 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               { value: 'castor', label: 'Castor EDC' },
               { value: 'redcap', label: 'REDCap' },
               { value: 'openclinica', label: 'OpenClinica' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'edc_21cfr11_validated',
@@ -2012,7 +2019,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
         question:
           'Describe the clinical supply chain, including IRT/RTSM system, storage requirements, and drug accountability procedures.',
         guidance:
-          'Per ICH E6(R2) Section 5.14, the sponsor is responsible for ensuring investigational products are manufactured per GMP (21 CFR 211), properly labeled (21 CFR 312.6), and adequately supplied. An Interactive Response Technology (IRT) / Randomization and Trial Supply Management (RTSM) system manages randomization, drug assignment, and supply logistics. 21 CFR 312.62 requires drug accountability records at each investigational site.',
+          'Per ICH E6(R3) Annex 1 §3.15, the sponsor is responsible for ensuring investigational products are manufactured per GMP (21 CFR 211), properly labeled (21 CFR 312.6), and adequately supplied. An Interactive Response Technology (IRT) / Randomization and Trial Supply Management (RTSM) system manages randomization, drug assignment, and supply logistics. 21 CFR 312.62 requires drug accountability records at each investigational site.',
         fields: [
           {
             id: 'irt_system',
@@ -2027,8 +2034,8 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               { value: 'almac', label: 'Almac Clinical Technologies' },
               { value: 'n_of_one', label: 'N-of-One / Endpoint Clinical' },
               { value: 'manual', label: 'Manual (No IRT)' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'storage_conditions',
@@ -2099,7 +2106,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             title: 'No IRT System — Randomization and Supply Risk',
             message:
               'Manual randomization and supply management without an IRT/RTSM system increases the risk of randomization errors, unblinding, and drug supply shortages. FDA expects validated automated systems for Phase 2b and Phase 3 trials.',
-            reference: 'ICH E6(R2) Section 5.14 — Supply and Management of Investigational Products',
+            reference: 'ICH E6(R3) Annex 1 §3.15 — Investigational Product(s)',
           },
           {
             id: 'ultra_cold_chain_check',
@@ -2370,8 +2377,8 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               { value: 'argus', label: 'Oracle Argus Safety' },
               { value: 'aris_g', label: 'ArisGlobal LifeSphere' },
               { value: 'veeva_vault_safety', label: 'Veeva Vault Safety' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'dsur_preparation',

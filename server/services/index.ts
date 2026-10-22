@@ -15,7 +15,11 @@
 export * as ai from './ai';
 export * as documents from './documents';
 export * as cortex from './cortex';
-export * as fda from './fda';
+// `export * as fda from './fda'` was here. That barrel's only importer was this
+// file, which has none; it re-exported FDAComplianceTracker (progress
+// percentages over hard-coded step lists) and fdaIntegrationService (a mock
+// certificate check behind "FDA credentials validated successfully"). All three
+// were deleted 2026-10-15. FDAFormGenerator is exported below.
 export * as cer from './cer';
 export * as csr from './csr';
 
@@ -66,7 +70,6 @@ export { default as sapGeneratorService } from './sap-generator-service';
 // ANALYTICS / INTELLIGENCE SERVICES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export { MonteCarloService as monteCarloService } from './monte-carlo-service';
 export { default as reportGeneratorService } from './report-generator-service';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -114,12 +117,13 @@ export * as grdhe from './grdhe';
 export const SERVICE_REGISTRY = {
   // AI
   'ai.completion': 'ai/openai-orchestrator',
-  'ai.assistant': 'openai-service',
-  // 'ai.regulatory': removed — was a stub
+  // 'ai.regulatory': removed — was a stub. 'ai.assistant' → 'openai-service',
+  // 'documents.pdf' → 'pdfGenerator' and 'fda.service' → 'fdaService' were
+  // removed 2026-10-15: no such module exists, so the registry advertised three
+  // capabilities nothing provides.
 
   // Documents
   'documents.crud': 'documentService',
-  'documents.pdf': 'pdfGenerator',
   'documents.ingestion': 'unifiedDocumentIngestion',
 
   // Cortex
@@ -127,7 +131,6 @@ export const SERVICE_REGISTRY = {
   'cortex.memory': 'memory-orchestrator',
 
   // FDA
-  'fda.service': 'fdaService',
   'fda.forms': 'FDAFormGenerator',
   // 'fda.510k': removed — legacy fda510kDocumentGenerator deleted; canonical
   // 510(k) drafting is /api/510k/estar/* over cerv2_510k_sections.

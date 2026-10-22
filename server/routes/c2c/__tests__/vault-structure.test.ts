@@ -16,13 +16,31 @@ vi.mock('../../../db', () => ({
   pool: { query: (...args: unknown[]) => queryMock(...args) },
 }));
 
+/* The current-access gate (installProjectRouteAccess, 14362ef00) admits every
+   Projects /:id on a current member of the caller's organization, and only a
+   uuid program id is a program. Its reads are answered from seats
+   (support/current-member.ts); an unseated caller or program is refused as the
+   real gate refuses. */
+vi.mock('../../../services/c2c/current-program-access', async (original) => {
+  const real = await original<typeof import('../../../services/c2c/current-program-access')>();
+  return { ...real, ...(await import('./support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
+
 import router from '../projects';
+import { clearSeats, seatMember, seatProgram } from './support/current-member';
+
+const P1 = '11111111-1111-4111-8111-111111111111';
+const P2 = '22222222-2222-4222-8222-222222222222';
+const USER = 41;
 
 function app(orgId: number | null) {
   const a = express();
   a.use(express.json());
   a.use((req: any, _res, next) => {
     if (orgId != null) req.organizationId = orgId;
+    req.userId = USER;
+    // The request's own connection, which the production request scope supplies.
+    req.dbClient = { query: (...args: unknown[]) => queryMock(...args) };
     next();
   });
   a.use('/api/c2c/projects', router);
@@ -31,13 +49,17 @@ function app(orgId: number | null) {
 
 beforeEach(() => {
   queryMock.mockReset();
+  clearSeats();
+  seatMember(7, USER, 'member');
+  seatProgram(7, P1);
+  seatProgram(7, P2);
 });
 
 describe('GET /api/c2c/projects/:id/vault-structure', () => {
   it('derives the DEVICE view + eSTAR section tree for a device project', async () => {
     queryMock
       // 1) project lookup → device product type
-      .mockResolvedValueOnce({ rows: [{ id: 'p1', name: 'Dev', product_type: 'device' }] })
+      .mockResolvedValueOnce({ rows: [{ id: P1, name: 'Dev', product_type: 'device' }] })
       // 2) documents on the project (one 510(k) filing with a 2-section rule pack)
       .mockResolvedValueOnce({
         rows: [{
@@ -52,7 +74,7 @@ describe('GET /api/c2c/projects/:id/vault-structure', () => {
       // 3) live section statuses for doc1 (one drafted, one absent → todo)
       .mockResolvedValueOnce({ rows: [{ section_key: 'device-description', status: 'drafted', version: 2, has_content: true }] });
 
-    const res = await request(app(7)).get('/api/c2c/projects/p1/vault-structure');
+    const res = await request(app(7)).get(`/api/c2c/projects/${P1}/vault-structure`);
     expect(res.status).toBe(200);
     expect(res.body.view).toBe('device');
     // Device folder spine (not the CTD modules).
@@ -74,13 +96,13 @@ describe('GET /api/c2c/projects/:id/vault-structure', () => {
   it('falls back to the service view when the project has no product type', async () => {
     queryMock
       // 1) project lookup → null product type
-      .mockResolvedValueOnce({ rows: [{ id: 'p2', name: 'CRO study', product_type: null }] })
+      .mockResolvedValueOnce({ rows: [{ id: P2, name: 'CRO study', product_type: null }] })
       // 2) org fallback distinct product types → none
       .mockResolvedValueOnce({ rows: [] })
       // 3) documents → none
       .mockResolvedValueOnce({ rows: [] });
 
-    const res = await request(app(7)).get('/api/c2c/projects/p2/vault-structure');
+    const res = await request(app(7)).get(`/api/c2c/projects/${P2}/vault-structure`);
     expect(res.status).toBe(200);
     expect(res.body.view).toBe('service');
     // TMF zone folders for the service view.
@@ -94,8 +116,27 @@ describe('GET /api/c2c/projects/:id/vault-structure', () => {
     expect(res.status).toBe(404);
   });
 
-  it('403s without an organization context', async () => {
-    const res = await request(app(null)).get('/api/c2c/projects/p1/vault-structure');
-    expect(res.status).toBe(403);
+  it('404s a program the gate admits whose project lookup finds nothing', async () => {
+    queryMock.mockResolvedValueOnce({ rows: [] }); // project lookup empty
+    const res = await request(app(7)).get(`/api/c2c/projects/${P1}/vault-structure`);
+    expect(res.status).toBe(404);
+  });
+
+  it('refuses without an organization context, concealed as 404 on a read, and reads nothing', async () => {
+    // The current-access gate refuses a caller with no organization actor
+    // (403 PROJECT_ACTOR_REQUIRED) and, on a GET, conceals every 403 as the 404
+    // a missing project answers (sendProjectAccessFailure, 14362ef00).
+    const res = await request(app(null)).get(`/api/c2c/projects/${P1}/vault-structure`);
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('PROJECT_NOT_FOUND');
+    expect(queryMock).not.toHaveBeenCalled();
+  });
+
+  it('refuses a caller who is not a current member, concealed as 404, and reads nothing', async () => {
+    clearSeats();
+    seatProgram(7, P1);
+    const res = await request(app(7)).get(`/api/c2c/projects/${P1}/vault-structure`);
+    expect(res.status).toBe(404);
+    expect(queryMock).not.toHaveBeenCalled();
   });
 });

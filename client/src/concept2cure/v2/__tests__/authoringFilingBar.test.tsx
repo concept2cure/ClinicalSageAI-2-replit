@@ -45,6 +45,7 @@ vi.mock('../C2CForm', () => ({
 }));
 
 import { AuthoringFilingBar } from '../surfaces/AuthoringFilingBar';
+import type { WorkflowImportOrigin } from '@shared/authoring/source-import';
 
 function ok(payload: unknown, status = 200) {
   return { ok: status < 400, status, json: async () => payload } as Response;
@@ -374,5 +375,55 @@ describe('AuthoringFilingBar — the server’s refusal, before the dialog', () 
     expect((screen.getByRole('button', { name: /E-sign/ }) as HTMLButtonElement).disabled).toBe(false);
     expect(screen.queryByTestId('freeze-refusal')).toBeNull();
     expect(screen.queryByTestId('esign-refusal')).toBeNull();
+  });
+});
+
+const WORKFLOW_ORIGIN: WorkflowImportOrigin = {
+  kind: 'csr', id: '14', selection: { kind: 'csr', jobId: 14, sectionNumbers: ['11'] }, programId: '11111111-1111-4111-8111-111111111111',
+  title: 'Saved CSR', fingerprint: 'ab'.repeat(32), version: null, conversion: 'ich-e3-sections', documentType: null, sectionCode: null, gaps: [],
+  sourceScope: { level: 'project', projectId: 1, programId: null }, association: { mode: 'recorded', reason: null },
+  sectionOrigins: [{ code: 'CSR_11', sourceRowId: '31', contentSha256: 'cd'.repeat(32), originalAuthorship: 'machine', model: null, modelEvidence: 'unrecorded' }],
+};
+function renderWorkflowBar() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const body = (revision: string) => <QueryClientProvider client={client}><AuthoringFilingBar docId="W1" docTitle="CSR copy" docStatus="draft"
+    workflowOrigin={WORKFLOW_ORIGIN} docRevision={revision} onChanged={vi.fn()} fireToast={vi.fn()} /></QueryClientProvider>;
+  const view = render(body('revision-1'));
+  return { rerender: (revision: string) => view.rerender(body(revision)) };
+}
+async function openWorkflowReview() {
+  fireEvent.click(screen.getByRole('button', { name: /E-sign/ }));
+  return await screen.findByRole('dialog');
+}
+function commitWorkflowReview(dialog: HTMLElement) {
+  fireEvent.change(within(dialog).getByLabelText(/Reason for this action/), { target: { value: 'Reviewed the saved working copy' } });
+  fireEvent.change(within(dialog).getByLabelText(/Password/), { target: { value: 'test reviewer password' } });
+  fireEvent.click(within(dialog).getByRole('button', { name: /Sign and commit/ }));
+}
+describe('workflow adoption is a deliberate reviewer act in the existing ceremony', () => {
+  it('starts unchecked, discloses the assignment/model boundary and sends no adoption by default', async () => {
+    stubSignerChecks(); apiRequest.mockResolvedValue(ok({ signedAt: '2026-10-13T10:00:00Z', documentHash: 'current-hash' }));
+    renderWorkflowBar(); const dialog = await openWorkflowReview();
+    const checkbox = within(dialog).getByRole('checkbox'); expect((checkbox as HTMLInputElement).checked).toBe(false);
+    expect(within(dialog).getByText(/Requires your current approved review assignment/)).toBeTruthy();
+    expect(within(dialog).getByText(/Known machine content remains held/)).toBeTruthy();
+    commitWorkflowReview(dialog);
+    await waitFor(() => expect(apiRequest.mock.calls.find(c => c[1] === '/api/authoring/docs/W1/e-sign')?.[2]).toEqual({ password: 'test reviewer password', meaning: 'REVIEWER', intent: 'Reviewed the saved working copy' }));
+  });
+  it('posts adoption only after explicit consent for REVIEWER', async () => {
+    stubSignerChecks(); apiRequest.mockResolvedValue(ok({ signedAt: '2026-10-13T10:00:00Z', documentHash: 'current-hash' }));
+    renderWorkflowBar(); const dialog = await openWorkflowReview(); fireEvent.click(within(dialog).getByRole('checkbox'));
+    commitWorkflowReview(dialog);
+    await waitFor(() => expect(apiRequest.mock.calls.find(c => c[1] === '/api/authoring/docs/W1/e-sign')?.[2]).toMatchObject({ meaning: 'REVIEWER', adoptWorkflowSource: true }));
+  });
+  it('resets consent when the current document changes, even with unchanged source fingerprint', async () => {
+    const view = renderWorkflowBar(); const dialog = await openWorkflowReview(); fireEvent.click(within(dialog).getByRole('checkbox'));
+    expect((within(dialog).getByRole('checkbox') as HTMLInputElement).checked).toBe(true);
+    view.rerender('revision-2'); expect((within(dialog).getByRole('checkbox') as HTMLInputElement).checked).toBe(false);
+  });
+  it('does not carry reviewer adoption into another meaning or back into review', async () => {
+    renderWorkflowBar(); const dialog = await openWorkflowReview(); fireEvent.click(within(dialog).getByRole('checkbox'));
+    fireEvent.click(within(dialog).getByRole('radio', { name: /Approval/ })); expect(within(dialog).queryByRole('checkbox')).toBeNull();
+    fireEvent.click(within(dialog).getByRole('radio', { name: /^Review$/ })); expect((within(dialog).getByRole('checkbox') as HTMLInputElement).checked).toBe(false);
   });
 });

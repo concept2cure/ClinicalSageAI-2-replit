@@ -50,6 +50,18 @@ describe('non-production posture', () => {
     expect(p.mode).toBe('kms');
     expect(p.kms).toEqual({ keyId: 'alias/x', region: 'us-east-1', signingAlgorithm: 'RSASSA_PKCS1_V1_5_SHA_256' });
   });
+  it('retained verify keys (SOP §5): comma-separated, trimmed, never the current key, absent when none', () => {
+    const base = { NODE_ENV: 'development', CONCEPT2CURE_SIGNER_MODE: 'kms', CONCEPT2CURE_SIGNER_KMS_KEY_ID: 'alias/k-2027', AWS_REGION: 'us-east-1' };
+    const listed = resolveSignerPosture(env({
+      ...base,
+      CONCEPT2CURE_SIGNER_KMS_VERIFY_KEY_IDS: ' arn:aws:kms:us-east-1:1:key/2026 , ,alias/k-2027, arn:aws:kms:us-east-1:1:key/2025 ',
+    }));
+    // The current key is the signing key, not a retained one: it is dropped from the list.
+    expect(listed.kms?.verifyKeyIds).toEqual(['arn:aws:kms:us-east-1:1:key/2026', 'arn:aws:kms:us-east-1:1:key/2025']);
+    // None configured: the field is absent, so the posture is exactly what it was before.
+    expect(resolveSignerPosture(env(base)).kms).not.toHaveProperty('verifyKeyIds');
+    expect(resolveSignerPosture(env({ ...base, CONCEPT2CURE_SIGNER_KMS_VERIFY_KEY_IDS: ' , ' })).kms).not.toHaveProperty('verifyKeyIds');
+  });
   it('an unsupported KMS signing algorithm is refused', () => {
     expect(() => resolveSignerPosture(env({ CONCEPT2CURE_SIGNER_MODE: 'kms', CONCEPT2CURE_SIGNER_KMS_KEY_ID: 'k', AWS_REGION: 'r', CONCEPT2CURE_SIGNER_KMS_SIGNING_ALGORITHM: 'ECDSA_SHA_256' }))).toThrow(/not supported/);
   });

@@ -1,0 +1,31 @@
+{
+  "phase": "evidence-only native baseline against unmodified original protocol services",
+  "head": "fa5597ffb94832ff617a017f32e9718903106eca",
+  "database": "platform_ci_native_recheck_20261013",
+  "runtimeRole": "app_service NOSUPERUSER NOBYPASSRLS; forced RLS on public protocol/signature/action stores",
+  "testRunner": "Node 22; Vitest native config with actual pg, no mocks",
+  "tests": {
+    "passed": 1,
+    "failed": 2,
+    "skipped": 0,
+    "total": 3,
+    "durationSeconds": 8.65
+  },
+  "qualification": "Local QA proof only; no scientific approval, production qualification or agency acceptance",
+  "sourceSha256": {
+    "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/protocol-finalization/native-baseline.probe.ts": "a7dbe37562a58bf4b4f6d425bff4ee79401bec9272d2359474a3e255193d2363",
+    "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/protocol-finalization/vitest.probe.config.ts": "ccafd7b7fd7728b46d3b216d673fb4a1167266e9cd1a068a463363ddd384113d",
+    "server/services/protocol-development/protocol-development-service.ts": "8e6e4a72ba404285b3f7dcc358784b334de1e8d0340838ea9874998d0fc7401e",
+    "server/routes/protocol-development.ts": "477643afe1ab868e867b20d3cb353ffac02d20889593b0977b9cb251a475eed7",
+    "server/services/protocol-development/protocol-signature.ts": "703a4b65871e4158a9eb236e50a90c55ddfc552d0122ccd4dbbfa45e7c869392",
+    "server/services/part11/governed-signature-ceremony.ts": "006e3ff2c2c214eb0a2473483ef94105107b5e5d9fa91cf67702241ba7d1d674",
+    "server/services/part11/governed-target-binders.ts": "dbd7fe70a51a115eac07aa7ab26abdfec6acf9b46b05faa5947fee071be9465d",
+    "server/services/part11/signature-persistence.ts": "e82d1454f80bf541fdb90a6dd1a215ef024cbe56de0f9e89e96f76698d90f5e2",
+    "server/services/clinical-regulatory-evidence/lineage-gate.ts": "ab61ef7f5df67c92e7139588bc93c51b22d8c8136d521952152ebbed60d0c35f",
+    "server/services/protocol-development/protocol-development-logic.ts": "b7f5cee08556dfcc4ee99a52a7f6ca64e06d561d1537ce6f511e2a669292958a",
+    "server/auth.ts": "d8222cdfcb6c601d5d757fbf144fbeaa18535a3d611e60a7b0b35421d1238945",
+    "server/services/part11/signing-authority-gate.ts": "7d3beea44d52e336ccc9e5b9ae9154c25fc46fa370655105b3ce64abd9fc818c"
+  },
+  "command": "npx vitest run --config docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/protocol-finalization/vitest.probe.config.ts",
+  "syntheticAuditSecret": "Explicit test-only AUDIT_HMAC_SECRET supplied; no production qualification claim."
+}

@@ -1,0 +1,365 @@
+{
+  "observed_at": "2026-10-10T06:35:24.297Z",
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "run": {
+    "id": 38031251355,
+    "name": "CI",
+    "head_sha": "de61922a9351080fdcd76a231c5abd8182054831",
+    "head_branch": "concept2cure-v2",
+    "event": "push",
+    "run_attempt": 1,
+    "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38031251355",
+    "created_at": "2026-10-10T06:31:45Z"
+  },
+  "job": {
+    "id": 114152480619,
+    "name": "Security Scan",
+    "status": "completed",
+    "conclusion": "success",
+    "run_id": 38031251355,
+    "logs_url": null,
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1
+      },
+      {
+        "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2
+      },
+      {
+        "name": "Setup Node.js",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3
+      },
+      {
+        "name": "Install dependencies",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4
+      },
+      {
+        "name": "Generate SBOM (CycloneDX)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5
+      },
+      {
+        "name": "Upload SBOM artifact",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 6
+      },
+      {
+        "name": "Run lockfile audit and dependency-risk ledger gate",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 7
+      },
+      {
+        "name": "Prove dependency-risk gate fail-closed behavior",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 8
+      },
+      {
+        "name": "Prove PPTX image parser is unreachable",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 9
+      },
+      {
+        "name": "Upload exact npm audit evidence",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 10
+      },
+      {
+        "name": "Trivy exceptions are attached, owned and dated (with selftests)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 11
+      },
+      {
+        "name": "Trivy filesystem scan (deps + secrets)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 12
+      },
+      {
+        "name": "Trivy config scan (Dockerfile/IaC)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 13
+      },
+      {
+        "name": "Post Trivy config scan (Dockerfile/IaC)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 23
+      },
+      {
+        "name": "Post Trivy filesystem scan (deps + secrets)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 24
+      },
+      {
+        "name": "Post Setup Node.js",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 25
+      },
+      {
+        "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 26
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 27
+      }
+    ]
+  },
+  "observations": {
+    "checked_out_sha": "de61922a9351080fdcd76a231c5abd8182054831",
+    "gate_status": "PASS",
+    "critical_high_advisory_occurrences": 3,
+    "occurrences": [
+      {
+        "advisory": "GHSA-VFJ7-8CJW-P6XM",
+        "package": "braces",
+        "severity": "high",
+        "decision": "unreachable"
+      },
+      {
+        "advisory": "GHSA-5P2G-FCMC-QVQQ",
+        "package": "image-size",
+        "severity": "high",
+        "decision": "unreachable"
+      },
+      {
+        "advisory": "GHSA-W3RX-R6R6-PGPR",
+        "package": "image-size",
+        "severity": "high",
+        "decision": "unreachable"
+      }
+    ],
+    "handlebars_in_complete_gate_occurrence_list": false,
+    "scanner": "npm audit 10.9.9",
+    "node": "v22.23.3",
+    "lockfile_sha256": "529a8e5889cf500959484df70c561d27746437aa3a4c7d043cd70a5c551e3961",
+    "dependency_tests": {
+      "tests": 36,
+      "pass": 36,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "npm_install_summary": {
+      "total": 76,
+      "low": 2,
+      "moderate": 43,
+      "high": 31
+    },
+    "gate_reported_at": "2026-10-10T06:33:02.3705282Z",
+    "tests_summary_at": "2026-10-10T06:33:04.2965151Z"
+  },
+  "artifacts": [
+    {
+      "id": 11661994176,
+      "node_id": "MDg6QXJ0aWZhY3QxMTY2MTk5NDE3Ng==",
+      "name": "npm-audit-lockfile-evidence",
+      "size_in_bytes": 6451,
+      "url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/actions/artifacts/11661994176",
+      "archive_download_url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/actions/artifacts/11661994176/zip",
+      "expired": false,
+      "digest": "sha256:07eb16c9334280b42e20204329eabfc91df0e8ba514843b947fac776cdec8976",
+      "created_at": "2026-10-10T06:33:05Z",
+      "updated_at": "2026-10-10T06:33:05Z",
+      "expires_at": "2027-01-08T06:31:45Z",
+      "workflow_run": {
+        "id": 38031251355,
+        "repository_id": 1096040843,
+        "head_repository_id": 1096040843,
+        "head_branch": "concept2cure-v2",
+        "head_sha": "de61922a9351080fdcd76a231c5abd8182054831"
+      }
+    },
+    {
+      "id": 11661474487,
+      "node_id": "MDg6QXJ0aWZhY3QxMTY2MTQ3NDQ4Nw==",
+      "name": "sbom-cyclonedx",
+      "size_in_bytes": 207542,
+      "url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/actions/artifacts/11661474487",
+      "archive_download_url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/actions/artifacts/11661474487/zip",
+      "expired": false,
+      "digest": "sha256:58d66a82ba6d4d19f7fc88c75e52db00536b4ca5cb680b86cef6bcfdc0ffa996",
+      "created_at": "2026-10-10T06:32:59Z",
+      "updated_at": "2026-10-10T06:32:59Z",
+      "expires_at": "2027-01-08T06:31:45Z",
+      "workflow_run": {
+        "id": 38031251355,
+        "repository_id": 1096040843,
+        "head_repository_id": 1096040843,
+        "head_branch": "concept2cure-v2",
+        "head_sha": "de61922a9351080fdcd76a231c5abd8182054831"
+      }
+    }
+  ],
+  "evidence_file": "remote-security-excerpts.txt",
+  "evidence_scope": "Selected original lines in original order; omitted log lines are not claimed to be reproduced.",
+  "full_decoded_log": {
+    "encoding": "UTF-8",
+    "sha256": "f5da0a52bba62a2e6af996ed64adc183d4c47c3f196521af8b9c1591ca4fffa5",
+    "bytes": 102801,
+    "line_count": 1133
+  },
+  "coverage_caveats": [
+    "Trivy suppresses development/testing dependencies and reports existing ignored/suppressed findings.",
+    "Secret scanning logs a 14 MB file-size warning; this warning alone does not say the file was skipped.",
+    "Python site-packages were not available for license detection.",
+    "Terraform variable values were not available; evaluation may be incomplete.",
+    "Helm rendering failed for charts/concept2cure-app and charts/trialsage-cer because declared postgresql and redis dependencies were absent."
+  ],
+  "retained_original_line_numbers": [
+    102,
+    103,
+    104,
+    105,
+    106,
+    174,
+    175,
+    176,
+    177,
+    178,
+    230,
+    231,
+    232,
+    233,
+    234,
+    235,
+    236,
+    237,
+    238,
+    277,
+    278,
+    279,
+    280,
+    281,
+    282,
+    283,
+    284,
+    285,
+    286,
+    287,
+    488,
+    489,
+    490,
+    491,
+    492,
+    493,
+    494,
+    495,
+    496,
+    497,
+    498,
+    499,
+    500,
+    501,
+    502,
+    503,
+    504,
+    505,
+    506,
+    507,
+    508,
+    509,
+    510,
+    511,
+    512,
+    513,
+    514,
+    515,
+    516,
+    517,
+    518,
+    519,
+    520,
+    521,
+    522,
+    523,
+    524,
+    525,
+    526,
+    527,
+    528,
+    529,
+    530,
+    531,
+    532,
+    546,
+    547,
+    548,
+    549,
+    550,
+    551,
+    552,
+    553,
+    554,
+    555,
+    578,
+    579,
+    580,
+    581,
+    582,
+    583,
+    584,
+    601,
+    602,
+    789,
+    790,
+    791,
+    792,
+    793,
+    794,
+    795,
+    796,
+    797,
+    798,
+    799,
+    800,
+    801,
+    802,
+    803,
+    804,
+    805,
+    806,
+    807,
+    1027,
+    1028,
+    1029,
+    1030,
+    1031,
+    1032,
+    1033,
+    1034,
+    1039,
+    1040,
+    1041,
+    1042,
+    1043,
+    1044,
+    1045,
+    1046
+  ]
+}

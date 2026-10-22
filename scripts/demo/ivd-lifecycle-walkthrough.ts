@@ -16,13 +16,11 @@ import {
 } from '../../server/services/stats/analytical-performance-extensions';
 import { assessTraceability } from '../../server/services/regulatory/iso-17511-traceability';
 import { assessScientificValidity } from '../../server/services/regulatory/scientific-validity';
-import {
-  classifySoftwareSafety, assessCybersecurity,
-} from '../../server/services/regulatory/iec-62304-software';
+import { classifySoftware } from '../../server/services/market-specs/software-lifecycle';
+import { assess524bArtifacts } from '../../server/services/regulatory/cybersecurity-524b';
 import { computeProcessCapability, evaluateLotRelease } from '../../server/services/regulatory/process-validation';
 import { assessFdaChange } from '../../server/services/regulatory/change-assessment';
 import { computeDisproportionality } from '../../server/services/stats/signal-disproportionality';
-import { buildPsur } from '../../server/services/postmarket/report-authoring';
 import { assessEuRegistration } from '../../server/services/regulatory/registration-listing';
 
 const h = (t: string) => console.log(`\n=== ${t} ===`);
@@ -77,9 +75,13 @@ const sv = assessScientificValidity({
 console.log(`Scientific validity: ${sv.verdict} (${(sv.validityScore * 100).toFixed(0)}%)`);
 
 h('5. Software lifecycle — IEC 62304 + cybersecurity');
-const sc = classifySoftwareSafety({ canContributeToHazard: true, worstCaseHarm: 'serious_death', externalRiskControlRemovesHazard: false });
-const cyber = assessCybersecurity(['threat_model', 'security_risk_assessment', 'sbom', 'vulnerability_management_plan']);
-console.log(`Software safety class: ${sc.safetyClass}; cybersecurity submission-ready: ${cyber.submissionReady}`);
+const sc = classifySoftware({ canContributeToDeathOrSeriousInjury: true });
+// The scenario does not say whether the device is a cyber device, so §524B is undetermined.
+const cyber = assess524bArtifacts({}, ['threat_model', 'cybersecurity_risk_assessment', 'sbom', 'cybersecurity_management_plan']);
+const cyberLine = cyber.status === 'required'
+  ? `§524B artifacts missing: ${cyber.gaps.join(', ') || 'none'}`
+  : `§524B: ${cyber.status} — ${cyber.rationale}`;
+console.log(`Software safety class: ${sc.class}; ${cyberLine}`);
 
 h('6. Manufacturing — capability + lot release');
 const cap = computeProcessCapability({ measurements: [10, 10.01, 9.99, 10.0, 10.02, 9.98], lowerSpecLimit: 9, upperSpecLimit: 11 });
@@ -99,12 +101,14 @@ const signal = computeDisproportionality({ a: 30, b: 100, c: 10, d: 10000 });
 console.log(`PRR=${signal.prr} χ²=${signal.chiSquaredYates} — signal: ${signal.signal}`);
 
 h('9. Post-market authoring — PSUR');
-const psur = buildPsur({
-  deviceName: 'AcmeTest', riskClass: 'C', reportingPeriodStart: '2025-01-01', reportingPeriodEnd: '2025-12-31',
-  unitsSold: 100000, complaintCount: 40, seriousIncidentCount: 5, fscaCount: 0, signalsDetected: signal.signal ? 1 : 0,
-  benefitRiskConclusion: 'Benefit continues to outweigh residual risk.',
-});
-console.log(`PSUR valid: ${psur.valid}; incident rate: ${psur.payload.incidentRate}`);
+// 2026-10-15: this called report-authoring.ts buildPsur, retired 2026-10-05, so the
+// script failed at import. The one PSUR builder persists a program document, which
+// this database-free walkthrough does not do, so the step names it and runs nothing.
+console.log(
+  'Not run here: a PSUR is authored as the program\'s post-market document — ' +
+    'POST /api/post-market/programs/:programId/documents/psur/generate ' +
+    '(gspr-postmarket/post-market-authoring.ts authorPostMarketDocument, validated by validatePsur).',
+);
 
 h('10. EU market access — IVDR registration');
 const reg = assessEuRegistration({

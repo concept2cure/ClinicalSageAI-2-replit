@@ -1,0 +1,66 @@
+PM-03 compatibility green: canonical object names and historical strings remain unlinked recorded names.
+Command: npx vitest run --config vitest.config.ts server/services/c2c/__tests__/project-team.test.ts
+Focused service tests mock final canonical admission; native HTTP evidence is separate.
+v22.23.3
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/c2c/__tests__/project-team.test.ts
+{
+  "timestamp": "2026-10-21T00:21:43.501Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T00:21:43.503Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/c2c/__tests__/project-team.test.ts
+{
+  "timestamp": "2026-10-21T00:21:43.503Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/c2c/__tests__/project-team.test.ts
+[database] Database connection successful
+
+ ✓ server/services/c2c/__tests__/project-team.test.ts > recorded responsibility and canonical sharing remain separate > uses each recorded source and never infers contributor, reviewer, approver, or observer 6ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > recorded responsibility and canonical sharing remain separate > deduplicates only IDs while preserving lead, owner, creator, and durable member sources 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > recorded responsibility and canonical sharing remain separate > ignores revoked rows but retains an independent owner or lead reference 2ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > recorded responsibility and canonical sharing remain separate > does not take access roles from legacy JSON sharing when durable membership was read 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > current identity and recorded names > keeps same-name accounts and a same-name legacy entry distinct, without matching email 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > current identity and recorded names > retains unconfirmed account references without names, emails, or sharing 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > current identity and recorded names > uses the shared member label convention for same names with distinct email addresses 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > current identity and recorded names > uses an account reference when an active member has no display name or email 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > current identity and recorded names > retains canonical profile object names and legacy strings only as unlinked recorded names 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > current identity and recorded names > never turns freeform profile roles or matching object identity claims into account assignments 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > current identity and recorded names > returns an actual empty roster with canonical scope and skips the account lookup 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > binds the admitted program, organization, project, and subject IDs on the supplied executor 2ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses an access snapshot changed during loading: {"projectId":12} 2ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses an access snapshot changed during loading: {"clientWorkspaceId":72} 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses an access snapshot changed during loading: {"actor":{"userId":5,"role":"viewer"}} 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses an access snapshot changed during loading: {"actor":{"userId":6,"role":"member"}} 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > propagates canonical denial after membership revocation without returning the roster 1ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > reports failed roster verification as unavailable, never an empty team 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > reports failed members verification as unavailable, never an empty team 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > reports failed accounts verification as unavailable, never an empty team 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses a parent/anchor association that disappeared while loading 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses malformed recorded account IDs rather than publishing an invented account 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses a malformed durable sharing role 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses an ambiguous or invalid current membership: {"people":[{"id":5,"membership_role":""}]} 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses an ambiguous or invalid current membership: {"people":[{"id":5,"membership_role":null}]} 0ms
+ ✓ server/services/c2c/__tests__/project-team.test.ts > request SQL and final canonical admission > refuses an ambiguous or invalid current membership: {"people":[{"id":5},{"id":5}]} 0ms
+
+ Test Files  1 passed (1)
+      Tests  26 passed (26)
+   Start at  00:21:40
+   Duration  2.86s (transform 1.34s, setup 121ms, import 2.38s, tests 26ms, environment 0ms)
+

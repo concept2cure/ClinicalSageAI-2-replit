@@ -42,7 +42,11 @@ vi.mock('../../services/auditService', () => ({
 }));
 // Neither the lineage gate nor the filing commit is under test here.
 vi.mock('../../services/clinical-regulatory-evidence/lineage-gate', () => ({
-  enforceAuthorLineage: vi.fn(async () => {}),
+  /* Its RESULT is read by the save door — `clausesInAcceptedText` decides
+     whether the revision and the filing name a machine contributor (round
+     15, SEC-A-7 door 1) — so a stand-in has to return the shape, not
+     nothing. Zero is right here: these saves accept no machine text. */
+  enforceAuthorLineage: vi.fn(async () => ({ clausesInAcceptedText: 0 })),
 }));
 vi.mock('../../services/c2c/commit-section-to-filing.js', () => ({
   commitSectionToFiling: vi.fn(async () => ({ committed: false, reason: 'unbound' })),
@@ -50,6 +54,7 @@ vi.mock('../../services/c2c/commit-section-to-filing.js', () => ({
 // A numeric account's membership re-check has its own suite.
 vi.mock('../../middleware/orgMembership', () => ({
   enforceOrgMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
+  requireEditorAccess: (_req: unknown, _res: unknown, next: () => void) => next(),
   invalidateOrgMembershipCache: () => undefined,
 }));
 
@@ -96,15 +101,44 @@ function writes(): string[] {
 beforeEach(() => {
   vi.clearAllMocks();
   h.connect.mockImplementation(async () => ({ query: h.clientQuery, release: vi.fn() }));
-  h.clientQuery.mockImplementation(async (sql: string) => {
+  h.clientQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
     const s = String(sql);
+    const statement = s.replace(/\s+/g, ' ').trim();
     if (/^\s*(BEGIN|COMMIT|ROLLBACK)/i.test(s)) return {};
+    // The save reserves the real parent before writing the child. Model its
+    // actual read/receipt instead of treating every SELECT as an empty object.
+    if (/SELECT doc_id::text FROM authoring_sections/i.test(s)) {
+      return { rowCount: 1, rows: [{ doc_id: 'D1' }] };
+    }
+    if (/SELECT status, locked_at FROM authoring_documents/i.test(s)) {
+      return { rowCount: 1, rows: [{ status: 'draft', locked_at: null }] };
+    }
+    if (/UPDATE authoring_documents[\s\S]*RETURNING id/i.test(s)) {
+      return { rowCount: 1, rows: [{ id: 'D1' }] };
+    }
     if (/UPDATE authoring_sections/i.test(s)) {
       return { rowCount: 1, rows: [{ id: 'S1', doc_id: 'D1', content: 'saved' }] };
     }
+    if (statement === 'SELECT id, code, order_index FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index, created_at FOR UPDATE') {
+      expect(params).toEqual(['D1', 7]);
+      return { rowCount: 0, rows: [] };
+    }
+    if (statement === 'INSERT INTO authoring_sections (id, doc_id, code, title, content, order_index, created_at, updated_at, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW(), $7) RETURNING *') {
+      const [id, doc_id, code, title, content, order_index, tenant_id] = params;
+      return { rowCount: 1, rows: [{ id, doc_id, code, title, content, order_index, tenant_id }] };
+    }
     return { rowCount: 1, rows: [{}] };
   });
-  h.poolQuery.mockImplementation(async (sql: string) => {
+  h.poolQuery.mockImplementation(async (sql: string, params?: unknown[]) => {
+    const statement = String(sql).replace(/\s+/g, ' ').trim();
+    if (statement === 'SELECT status FROM authoring_documents WHERE id = $1 AND tenant_id = $2') {
+      expect(params).toEqual(['D1', 7]);
+      return { rowCount: 1, rows: [{ status: 'draft' }] };
+    }
+    if (statement === "SELECT 1 FROM authoring_documents a JOIN c2c_documents d ON d.id = to_jsonb(a)->>'c2c_document_id' AND d.org_id = a.tenant_id WHERE a.id = $1 AND a.tenant_id = $2 AND to_jsonb(d)->>'filing_scope' = 'market' LIMIT 1") {
+      expect(params).toEqual(['D1', 7]);
+      return { rowCount: 0, rows: [] };
+    }
     if (/FROM authoring_sections WHERE id = \$1/i.test(sql)) {
       return { rowCount: 1, rows: [{ id: 'S1', doc_id: 'D1', content: '<p>old</p>' }] };
     }
@@ -174,6 +208,10 @@ describe('PATCH /sections/:id refuses an image that is not an uploaded figure', 
     expect(update).toBeDefined();
     // Not rewritten: the stored value is the value sent.
     expect((update?.[1] as unknown[])[0]).toBe(content);
+    const reservation = h.clientQuery.mock.calls.findIndex((call) => /SELECT status, locked_at FROM authoring_documents[\s\S]*FOR UPDATE/i.test(String(call[0])));
+    const saved = h.clientQuery.mock.calls.findIndex((call) => /UPDATE authoring_sections/i.test(String(call[0])));
+    expect(reservation).toBeGreaterThanOrEqual(0);
+    expect(saved).toBeGreaterThan(reservation);
   });
 
   it('leaves a metadata-only save alone', async () => {
@@ -356,6 +394,6 @@ describe('POST /docs refuses an organization template whose section holds a non-
     const res = await createFromTemplate();
 
     expect(res.status, JSON.stringify(res.body)).toBe(201);
-    expect(sectionInserts().map((c) => (c[1] as unknown[])[3])).toEqual(['<p>Clean.</p>', figures]);
+    expect(sectionInserts().map((c) => (c[1] as unknown[])[4])).toEqual(['<p>Clean.</p>', figures]);
   });
 });

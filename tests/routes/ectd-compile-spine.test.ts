@@ -34,7 +34,7 @@ vi.mock('../../server/services/ectd/assemble-from-core', async (importOriginal) 
 import ectdCompileRoutes from '../../server/routes/ectd-compile';
 
 import {
-  ORG, UUID, PROGRAM, REAL_BACKBONE, selfContained, handlerOf, mockSpineOn,
+  ORG, UUID, PROGRAM, SPONSOR, REAL_BACKBONE, selfContained, handlerOf, mockSpineOn,
   makeBundleZip, makeFdaPackageZip, assembledResult, makeReq,
 } from './ectd-compile-spine.harness';
 
@@ -60,7 +60,7 @@ describe('POST /:projectIdent/compile — spine-backed compiles run the real gen
     const payload = res.json.mock.calls[0][0];
     // The canonical assembler ran against the resolved sequence, org-scoped.
     expect(assembleSequenceMock).toHaveBeenCalledWith(
-      expect.objectContaining({ sequenceId: 9, organizationId: ORG, applicationId: 'BX-204' }),
+      expect.objectContaining({ sequenceId: 9, organizationId: ORG, applicationId: '000204' }),
     );
     // The backbone is the assembled package's actual index.xml — not the draft.
     expect(payload.xmlBackbone).toBe(REAL_BACKBONE);
@@ -164,8 +164,9 @@ describe('POST /:projectIdent/compile — spine-backed compiles run the real gen
 
     const insert = poolQuery.mock.calls.find((c) => /INSERT INTO ectd_compilations/i.test(String(c[0])));
     expect(insert).toBeTruthy();
-    // application_number + sequence_number recorded (params 7 and 8).
-    expect(insert![1][6]).toBe('BX-204');
+    // application_number + sequence_number recorded (params 7 and 8): the
+    // project's RECORDED number, which the backbone carries — never its code.
+    expect(insert![1][6]).toBe('000204');
     expect(insert![1][7]).toBe('0000');
     // The stored backbone is the real one.
     expect(insert![1][4]).toBe(REAL_BACKBONE);
@@ -216,9 +217,12 @@ describe('GET /:projectIdent/status — spine leaf state drives the blockers', (
    application_number` does now, so a filing whose IND number is recorded must
    carry THAT, not an internal code the agency has never seen.
 
-   The fallback chain is unchanged in spirit and is the point of these tests:
-   recorded agency number, else the program code, else a handle that says
-   plainly it is unassigned. Nothing is ever invented. */
+   2026-10-08 (QA j6): the RECORDED number and nothing else. With none recorded
+   the package fell back to the program code (PLR-606 shipped as the FDA
+   application number), and the applicant was "UNASSIGNED (organization N)".
+   Now the compile names the organisation's recorded name as the applicant, and
+   with either missing the assembly is refused by name (package-identity.ts):
+   a failed compilation that says what to record. */
 describe('POST /:projectIdent/compile — which identifier reaches <application-number>', () => {
   it('stamps the RECORDED agency application number when the program has one', async () => {
     mockSpine({ program: { ...PROGRAM, application_number: '000512' } });
@@ -239,7 +243,7 @@ describe('POST /:projectIdent/compile — which identifier reaches <application-
     expect(insert?.[1]).toContain('000512');
   });
 
-  it('falls back to the program code when no agency number is recorded — never invents one', async () => {
+  it('names the organisation’s recorded name as the applicant, never a placeholder', async () => {
     mockSpine();
     const { zipPath } = await makeBundleZip(REAL_BACKBONE);
     assembleSequenceMock.mockResolvedValue(assembledResult(zipPath));
@@ -247,31 +251,35 @@ describe('POST /:projectIdent/compile — which identifier reaches <application-
     const res = createMockResponse() as any;
     await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
 
-    expect(assembleSequenceMock).toHaveBeenCalledWith(
-      expect.objectContaining({ applicationId: 'BX-204' }),
-    );
+    expect(assembleSequenceMock).toHaveBeenCalledWith(expect.objectContaining({ sponsorName: SPONSOR, sponsorId: '123456789',
+      contacts: [{ type: 'regulatory', name: 'Regulatory Contact', phone: '+1 617 555 0100', email: 'regulatory@example.test' }],
+      recordedPackageIdentity: { version: 1, identity: expect.objectContaining({ applicantId: '123456789', applicantName: SPONSOR }) } }));
+    expect(JSON.stringify(assembleSequenceMock.mock.calls[0][0])).not.toMatch(/UNASSIGNED \(organization/);
   });
 
-  it('says "unassigned" when the program has neither a number nor a code', async () => {
-    mockSpine({ program: { ...PROGRAM, code: null, application_number: null } });
-    const { zipPath } = await makeBundleZip(REAL_BACKBONE);
-    assembleSequenceMock.mockResolvedValue(assembledResult(zipPath));
-
+  it.each([
+    ['no agency number is recorded', { program: { ...PROGRAM, application_number: null } }, /records no agency application number/],
+    ['the recorded number is only whitespace', { program: { ...PROGRAM, application_number: '   ' } }, /records no agency application number/],
+    ['the organisation has no name on record', { organizationName: null }, /organization's record has no usable name/],
+    ['the sponsor records no DUNS', { identity: { duns: null } }, /D-U-N-S/],
+    ['the sponsor records a malformed DUNS', { identity: { duns: '12-345-6789' } }, /D-U-N-S/],
+    ['the sponsor records a partial contact', { identity: { contact_phone: null } }, /telephone/],
+    ['the FDA number has a pathway prefix', { program: { ...PROGRAM, application_number: 'IND000204' } }, /six digits/],
+  ])('when %s, nothing is assembled: a failed compilation that says so — the program code is never used', async (_label, opts, says) => {
+    mockSpine(opts);
     const res = createMockResponse() as any;
     await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
 
-    expect(assembleSequenceMock.mock.calls[0][0].applicationId).toMatch(/^UNASSIGNED-SEQ-/);
-  });
-
-  it('an empty or whitespace application_number is not a recorded number', async () => {
-    mockSpine({ program: { ...PROGRAM, application_number: '   ' } });
-    const { zipPath } = await makeBundleZip(REAL_BACKBONE);
-    assembleSequenceMock.mockResolvedValue(assembledResult(zipPath));
-
-    const res = createMockResponse() as any;
-    await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
-
-    expect(assembleSequenceMock.mock.calls[0][0].applicationId).toBe('BX-204');
+    expect(assembleSequenceMock).not.toHaveBeenCalled();
+    const payload = res.json.mock.calls[0][0];
+    expect(payload.status).toBe('failed');
+    expect(payload.submissionReady).toBe(false);
+    const refusal = payload.validationResults.find((v: any) => v.rule === 'ASSEMBLY_REFUSED');
+    expect(refusal?.message).toMatch(says);
+    expect(JSON.stringify(payload)).not.toMatch(/<application-number[^>]*>BX-204</);
+    // Recorded as failed, under no number at all rather than the program code.
+    const insert = poolQuery.mock.calls.find(([sql]) => /INSERT INTO ectd_compilations/i.test(String(sql)));
+    expect(insert?.[1]).not.toContain('BX-204');
   });
 });
 
@@ -475,7 +483,9 @@ describe('GET /:projectIdent/status — a program\'s readiness comes from what i
     expect(m3).toMatchObject({ requiredSections: 2, completedRequired: 1 });
     // Placement, not approval: the basis is stated so 100% is never read as "approved".
     expect(payload.readinessBasis).toBe('placed');
-    expect(payload.sequence).toEqual({ sequenceNumber: '0000', region: 'fda', leafCount: 2 });
+    // 2026-10-08 (FILING_SPINE.md F14): the sequence carries its id, so the
+    // compile screen can name the sequence it was opened on.
+    expect(payload.sequence).toEqual({ id: 9, sequenceNumber: '0000', region: 'fda', leafCount: 2 });
   });
 });
 

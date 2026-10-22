@@ -405,7 +405,9 @@ describe('finalize is the run\'s signed act (P1-44b)', () => {
       .set(auth(accessToken(managerId, ORG_B, 'manager')))
       .send(SIGNED);
     expect(res.status, JSON.stringify(res.body)).toBe(403);
-    expect(res.body.error.code).toBe('ESIGNATURE_NO_AUTHORITY');
+    // The ceremony's own refusal: finalize keeps one authority check, the
+    // ceremony's floor (follow-up decision "Report finalize").
+    expect(res.body.error).toEqual({ code: 'ESIGNATURE_NO_AUTHORITY', message: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed.' });
     expect(await runState(own)).toEqual({ status: 'completed', seal_hash: null });
     expect(await signatureRows(own)).toEqual([]);
   });

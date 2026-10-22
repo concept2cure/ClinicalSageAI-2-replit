@@ -1,0 +1,62 @@
+Current browser run: 34 cases, supported Node 22, synthetic local PostgreSQL and dev-login identities. Host-only FONTCONFIG_FILE supplies browser fonts; no product styling was changed. This verifies the catalog and governed draft journey, not clinical source ingestion or agency transmission.
+
+[DEBUG 2026-10-14T20:02:53.355Z] Audit trail middleware skipped (AUDIT_TRAIL_ENABLED is not "true"). Tamper-proof logging is inactive. 
+{"level":40,"time":"2026-10-14T20:02:59.098Z","pid":33477,"hostname":"a5f657cec57d","context":{"summary":"jwt_secret_strength=pass jwt_rotation_status=pass csp_middleware_active=pass clamav_connectivity=skipped(CLAMAV_HOST not set — virus scan bypassed (intentional in non-prod)) audit_chain_integrity=pass audit_immutability_triggers=pass audit_event_coverage=warn(8 event type(s) have no rows in last 24h) cer_report_migration=pass(no CER reports directory yet — fresh deployment)"},"msg":"[security-health] Security self-test degraded"}
+{"level":40,"time":"2026-10-14T20:02:59.114Z","pid":33477,"hostname":"a5f657cec57d","context":{"criticalFailures":1,"warnings":1,"failed":["redis_connectivity","ana_ai_provider"]},"msg":"[startup-invariants] STARTUP INVARIANT FAILURES"}
+⏭️  Clinical-regulatory evidence routes skipped (ENABLE_CLINICAL_REGULATORY_GRAPH off)
+ℹ️ Audit chain integrity monitor skipped (AUDIT_TRAIL_ENABLED is not "true")
+{"level":30,"time":"2026-10-14T20:03:01.092Z","pid":33477,"hostname":"a5f657cec57d","context":{"scanned":0,"ran":0,"skippedEntitlement":0,"failed":0},"msg":"[report-subscription-sweep] subscription sweep complete"}
+Running 2 tests using 1 worker
+  ✓  1 [chromium] › tests/e2e/authenticated-app-smoke.e2e.spec.ts:39:3 › Tier 5 — authenticated app smoke (live server) › an authenticated session renders protected surfaces (landing + projects) (7.5s)
+  ✓  2 [chromium] › tests/e2e/authenticated-app-smoke.e2e.spec.ts:76:3 › Tier 5 — authenticated app smoke (live server) › negative control: the SAME protected route bounces an unauthenticated visitor to /login (3.5s)
+  2 passed (12.0s)
+Running 22 tests using 1 worker
+  ✓   1 [chromium] › tests/e2e/launch-surface-access-control.e2e.spec.ts:50:5 › OQ — 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor › negative control — /projects (Projects) bounces a visitor with no session (3.4s)
+  ✓   2 [chromium] › tests/e2e/launch-surface-access-control.e2e.spec.ts:66:5 › OQ — 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor › /projects (Projects) renders for an authenticated session (3.8s)
+  ✓   3 [chromium] › tests/e2e/launch-surface-access-control.e2e.spec.ts:50:5 › OQ — 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor › negative control — /vault (Vault) bounces a visitor with no session (3.0s)
+  ✓   4 [chromium] › tests/e2e/launch-surface-access-control.e2e.spec.ts:66:5 › OQ — 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor › /vault (Vault) renders for an authenticated session (3.4s)
+{"level":50,"time":"2026-10-14T20:03:30.396Z","pid":33477,"hostname":"a5f657cec57d","context":{"err":"Request-scoped database context is required","correlationId":"9c1cbac0-4c6f-4672-9a9d-4434237bfecf","code":"REQUEST_DB_CONTEXT_REQUIRED"},"msg":"[mdx-notifications] unread-count failed"}
+  ✓   5 [chromium] › tests/e2e/launch-surface-access-control.e2e.spec.ts:50:5 › OQ — 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor › negative control — /document-authoring (Authoring) bounces a visitor with no session (1.5s)
+  ✓   6 [chromium] › tests/e2e/launch-surface-access-control.e2e.spec.ts:66:5 › OQ — 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor › /document-authoring (Authoring) renders for an authenticated session (3.2s)
+{"level":50,"time":"2026-10-14T20:03:35.071Z","pid":33477,"hostname":"a5f657cec57d","context":{"err":"Request-scoped database context is required","correlationId":"22401923-8300-4e78-8c22-ed0631fad58f","code":"REQUEST_DB_CONTEXT_REQUIRED"},"msg":"[mdx-notifications] unread-count failed"}
+  ✓   7 [chromium] › tests/e2e/launch-surface-access-control.e2e.spec.ts:50:5 › OQ — 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor › negative control — /submission-center (Submission Center) bounces a visitor with no session (2.8s)
+  ✓   8 [chromium] › tests/e2e/launch-surface-access-control.e2e.spec.ts:66:5 › OQ — 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor › /submission-center (Submission Center) renders for an authenticated session (3.6s)
+  ✓   9 [chromium] › tests/e2e/launch-surface-access-control.e2e.spec.ts:50:5 › OQ — 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor › negative control — /dispatch-readiness (Submission Readiness) bounces a visitor with no session (2.8s)
+  ✓  10 [chromium] › tests/e2e/launch-surface-access-control.e2e.spec.ts:66:5 › OQ — 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor › /dispatch-readiness (Submission Readiness) renders for an authenticated session (3.2s)
+  ✓  11 [chromium] › tests/e2e/launch-surface-access-control.e2e.spec.ts:50:5 › OQ — 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor › negative control — /quality (QMS controlled documents) bounces a visitor with no session (3.0s)
+  ✓  12 [chromium] › tests/e2e/launch-surface-access-control.e2e.spec.ts:66:5 › OQ — 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor › /quality (QMS controlled documents) renders for an authenticated session (4.1s)
+  ✓  13 [chromium] › tests/e2e/launch-surface-access-control.e2e.spec.ts:50:5 › OQ — 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor › negative control — /cmc (CMC / Module 3) bounces a visitor with no session (3.6s)
+  ✓  14 [chromium] › tests/e2e/launch-surface-access-control.e2e.spec.ts:66:5 › OQ — 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor › /cmc (CMC / Module 3) renders for an authenticated session (4.1s)
+  ✓  15 [chromium] › tests/e2e/launch-surface-access-control.e2e.spec.ts:50:5 › OQ — 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor › negative control — /insights (Reporting & analytics) bounces a visitor with no session (2.2s)
+  ✓  16 [chromium] › tests/e2e/launch-surface-access-control.e2e.spec.ts:66:5 › OQ — 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor › /insights (Reporting & analytics) renders for an authenticated session (3.2s)
+  ✓  17 [chromium] › tests/e2e/launch-surface-access-control.e2e.spec.ts:50:5 › OQ — 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor › negative control — /compliance-reports (Audit and compliance reports) bounces a visitor with no session (3.1s)
+  ✓  18 [chromium] › tests/e2e/launch-surface-access-control.e2e.spec.ts:66:5 › OQ — 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor › /compliance-reports (Audit and compliance reports) renders for an authenticated session (3.4s)
+  ✓  19 [chromium] › tests/e2e/launch-surface-access-control.e2e.spec.ts:50:5 › OQ — 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor › negative control — /audit-trail (21 CFR §11.10(e): the audit trail is never switchable) bounces a visitor with no session (2.6s)
+  ✓  20 [chromium] › tests/e2e/launch-surface-access-control.e2e.spec.ts:66:5 › OQ — 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor › /audit-trail (21 CFR §11.10(e): the audit trail is never switchable) renders for an authenticated session (4.1s)
+  ✓  21 [chromium] › tests/e2e/launch-surface-access-control.e2e.spec.ts:50:5 › OQ — 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor › negative control — /part11-console (how Part 11 compliance is evidenced; never switchable) bounces a visitor with no session (3.0s)
+  ✓  22 [chromium] › tests/e2e/launch-surface-access-control.e2e.spec.ts:66:5 › OQ — 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor › /part11-console (how Part 11 compliance is evidenced; never switchable) renders for an authenticated session (3.0s)
+  22 passed (1.2m)
+Running 9 tests using 1 worker
+  ✓  1 [chromium] › tests/e2e/launch-surface-keyboard.e2e.spec.ts:251:3 › Keyboard pass — sign-in and the launch catalog › sign-in page (3.0s)
+  ✓  2 [chromium] › tests/e2e/launch-surface-keyboard.e2e.spec.ts:264:5 › Keyboard pass — sign-in and the launch catalog › /projects (Projects) (4.1s)
+  ✓  3 [chromium] › tests/e2e/launch-surface-keyboard.e2e.spec.ts:264:5 › Keyboard pass — sign-in and the launch catalog › /vault (Vault) (4.0s)
+  ✓  4 [chromium] › tests/e2e/launch-surface-keyboard.e2e.spec.ts:264:5 › Keyboard pass — sign-in and the launch catalog › /document-authoring (Authoring) (4.0s)
+  ✓  5 [chromium] › tests/e2e/launch-surface-keyboard.e2e.spec.ts:264:5 › Keyboard pass — sign-in and the launch catalog › /submission-center (Submission Center) (4.4s)
+  ✓  6 [chromium] › tests/e2e/launch-surface-keyboard.e2e.spec.ts:264:5 › Keyboard pass — sign-in and the launch catalog › /dispatch-readiness (Submission Readiness) (4.2s)
+{"level":50,"time":"2026-10-14T20:04:54.841Z","pid":33477,"hostname":"a5f657cec57d","context":{"err":"Request-scoped database context is required","correlationId":"ef644843-e972-42d7-9e1a-d5b641372878","code":"REQUEST_DB_CONTEXT_REQUIRED"},"msg":"[mdx-qms] doc-list failed"}
+{"level":50,"time":"2026-10-14T20:04:54.866Z","pid":33477,"hostname":"a5f657cec57d","context":{"err":"Request-scoped database context is required","correlationId":"476273c1-a35a-48a4-9fd3-90cef02e8d2b","code":"REQUEST_DB_CONTEXT_REQUIRED"},"msg":"[mdx-qms] change-list failed"}
+{"level":50,"time":"2026-10-14T20:04:54.870Z","pid":33477,"hostname":"a5f657cec57d","context":{"err":"Request-scoped database context is required","correlationId":"da69270a-2b50-4b6e-af4c-5929353b266a","code":"REQUEST_DB_CONTEXT_REQUIRED"},"msg":"[mdx-qms] training-compliance failed"}
+  ✓  7 [chromium] › tests/e2e/launch-surface-keyboard.e2e.spec.ts:264:5 › Keyboard pass — sign-in and the launch catalog › /quality (QMS controlled documents) (4.1s)
+  ✓  8 [chromium] › tests/e2e/launch-surface-keyboard.e2e.spec.ts:264:5 › Keyboard pass — sign-in and the launch catalog › /cmc (CMC / Module 3) (5.2s)
+  ✓  9 [chromium] › tests/e2e/launch-surface-keyboard.e2e.spec.ts:264:5 › Keyboard pass — sign-in and the launch catalog › /insights (Reporting & analytics) (4.8s)
+  9 passed (38.5s)
+{"level":30,"time":"2026-10-14T20:05:10.327Z","pid":33477,"hostname":"a5f657cec57d","context":{"userId":4},"msg":"[auth] Dev mode — MFA skipped"}
+{"level":30,"time":"2026-10-14T20:05:12.775Z","pid":33477,"hostname":"a5f657cec57d","context":{"userId":3},"msg":"[auth] Dev mode — MFA skipped"}
+{"level":40,"time":"2026-10-14T20:05:31.227Z","pid":33477,"hostname":"a5f657cec57d","context":{"artifactId":"artifact_1792008314624_28e9a7d3625a","error":"Connection error."},"msg":"[concept2cure-artifacts] Auto-embedding failed for new artifact"}
+{"level":40,"time":"2026-10-14T20:05:38.351Z","pid":33477,"hostname":"a5f657cec57d","context":{"artifactId":"artifact_1792008331839_bc280c6835cc","error":"Connection error."},"msg":"[concept2cure-artifacts] Auto-embedding failed for new artifact"}
+{"level":40,"time":"2026-10-14T20:05:41.162Z","pid":33477,"hostname":"a5f657cec57d","context":{"error":"Connection error."},"msg":"[concept2cure-artifacts] Re-embedding failed on update (non-fatal)"}
+[citation-run-prune] tick failed (will retry next interval): Cannot use a pool after calling end on the pool
+{"level":50,"time":"2026-10-14T20:07:16.137Z","pid":30141,"hostname":"a5f657cec57d","context":{"reason":"Cannot use a pool after calling end on the pool"},"msg":"[report-subscription-sweep] subscription sweep failed"}
+{"level":30,"time":"2026-10-14T20:05:44.325Z","pid":33477,"hostname":"a5f657cec57d","context":{"userId":2},"msg":"[auth] Dev mode — MFA skipped"}
+  ✓  1 [chromium] › tests/e2e/golden-customer-journey.e2e.ts:87:1 › fixture-free golden journey persists evidence, content edits, review, provenance, and governed draft export (39.1s)
+  1 passed (39.8s)

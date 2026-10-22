@@ -1,0 +1,15 @@
+ × shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > ind resolves to no class, so the person is asked 7ms
+ × shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > IND resolves to no class, so the person is asked 1ms
+ × shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > cta resolves to no class, so the person is asked 1ms
+ × shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > maa resolves to no class, so the person is asked 1ms
+ × shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > jnda resolves to no class, so the person is asked 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > ind resolves to no class, so the person is asked
+ FAIL  shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > IND resolves to no class, so the person is asked
+AssertionError: expected 'biologic' to be null
+ FAIL  shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > cta resolves to no class, so the person is asked
+ FAIL  shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > maa resolves to no class, so the person is asked
+ FAIL  shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > jnda resolves to no class, so the person is asked
+AssertionError: expected 'drug' to be null
+ Test Files  1 failed (1)
+      Tests  5 failed | 38 passed (43)

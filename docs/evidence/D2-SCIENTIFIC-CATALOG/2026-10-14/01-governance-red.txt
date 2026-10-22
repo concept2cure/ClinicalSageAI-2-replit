@@ -1,0 +1,325 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses a stale session editor after the persisted membership becomes viewer 10ms
+   → expected { ok: true, embeddingStatus: 'failed' } to match object { ok: false }
+(1 matching property omitted from actual)
+ × server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses missing actor before catalog DML 1ms
+   → expected { ok: true, embeddingStatus: 'failed' } to match object { ok: false }
+(1 matching property omitted from actual)
+ × server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses wrong tenant before catalog DML 1ms
+   → expected { ok: true, embeddingStatus: 'failed' } to match object { ok: false }
+(1 matching property omitted from actual)
+ × server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses inactive membership before catalog DML 1ms
+   → expected { ok: true, embeddingStatus: 'failed' } to match object { ok: false }
+(1 matching property omitted from actual)
+ × server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed text at the locked source boundary 1ms
+   → expected { ok: true, embeddingStatus: 'failed' } to match object { ok: false }
+(1 matching property omitted from actual)
+ × server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed withdrawal at the locked source boundary 1ms
+   → expected { ok: true, embeddingStatus: 'failed' } to match object { ok: false }
+(1 matching property omitted from actual)
+ × server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed superseded at the locked source boundary 1ms
+   → expected { ok: true, embeddingStatus: 'failed' } to match object { ok: false }
+(1 matching property omitted from actual)
+ × server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed scope at the locked source boundary 1ms
+   → expected { ok: true, embeddingStatus: 'failed' } to match object { ok: false }
+(1 matching property omitted from actual)
+ × server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed hash at the locked source boundary 2ms
+   → expected { ok: true, embeddingStatus: 'failed' } to match object { ok: false }
+(1 matching property omitted from actual)
+ × server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses a key-data value not stated in the freshly locked text 1ms
+   → expected { ok: true, embeddingStatus: 'failed' } to match object { ok: false }
+(1 matching property omitted from actual)
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > does not replace a human-confirmed record 1ms
+ × server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > reserves catalog then documents before source admission and audits exact hashes 1ms
+   → expected -1 to be greater than -1
+ × server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > refuses zero-row vector writes without successful audit 1ms
+   → expected { ok: true, …(1) } to match object { ok: false }
+(1 matching property omitted from actual)
+ × server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > refuses zero-row plain writes without successful audit 1ms
+   → expected { ok: true, embeddingStatus: 'failed' } to match object { ok: false }
+(1 matching property omitted from actual)
+ × server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > does not turn vector SQL 42501 into plain success 2ms
+   → promise resolved "{ ok: true, embeddingStatus: 'failed' }" instead of rejecting
+ × server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > does not turn vector SQL 22P02 into plain success 1ms
+   → promise resolved "{ ok: true, embeddingStatus: 'failed' }" instead of rejecting
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > permits only the missing vector type fallback and still obtains a row receipt 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > rolls back and reports no completion if chained audit fails 2ms
+ × server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses changed extraction even when header revision and original bytes match 1ms
+   → expected { ok: true, state: 'confirmed', …(1) } to match object { ok: false, …(1) }
+(2 matching properties omitted from actual)
+ × server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses review after viewer and audits no decision 1ms
+   → expected { ok: true, state: 'confirmed', …(1) } to match object { ok: false }
+(2 matching properties omitted from actual)
+ × server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses review after withdrawn and audits no decision 1ms
+   → expected { ok: true, state: 'confirmed', …(1) } to match object { ok: false }
+(2 matching properties omitted from actual)
+ × server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses review after zero rows and audits no decision 1ms
+   → expected { ok: true, state: 'confirmed', …(1) } to match object { ok: false }
+(2 matching properties omitted from actual)
+ × server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > preserves a historical human decision while disclosing withdrawn current use 1ms
+   → expected { …(16) } to match object { state: 'confirmed', …(3) }
+(17 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 20 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses a stale session editor after the persisted membership becomes viewer
+AssertionError: expected { ok: true, embeddingStatus: 'failed' } to match object { ok: false }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ server/services/vault/__tests__/catalog-governance-integrity.test.ts:68:69
+     66|   it('refuses a stale session editor after the persisted membership be…
+     67|     h.memberRole = 'viewer';
+     68|     expect(await scope(() => writeCatalogSuggestion(suggestion()))).to…
+       |                                                                     ^
+     69|     expect(h.audit).not.toHaveBeenCalled();
+     70|     expect(h.query.mock.calls.some(([sql]) => sql.includes('UPDATE vau…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/20]⎯
+
+ FAIL  server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses missing actor before catalog DML
+ FAIL  server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses wrong tenant before catalog DML
+ FAIL  server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses inactive membership before catalog DML
+AssertionError: expected { ok: true, embeddingStatus: 'failed' } to match object { ok: false }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ server/services/vault/__tests__/catalog-governance-integrity.test.ts:75:98
+     73|     const args = suggestion(); if (mode === 'missing actor') args.user…
+     74|     if (mode === 'inactive membership') h.memberRole = null;
+     75|     expect(await scope(() => writeCatalogSuggestion(args), mode === 'w…
+       |                                                                                                  ^
+     76|     expect(h.audit).not.toHaveBeenCalled();
+     77|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/20]⎯
+
+ FAIL  server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed text at the locked source boundary
+ FAIL  server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed withdrawal at the locked source boundary
+ FAIL  server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed superseded at the locked source boundary
+ FAIL  server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed scope at the locked source boundary
+ FAIL  server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed hash at the locked source boundary
+AssertionError: expected { ok: true, embeddingStatus: 'failed' } to match object { ok: false }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ server/services/vault/__tests__/catalog-governance-integrity.test.ts:84:69
+     82|     if (mode === 'scope') h.source.organization_id = 8;
+     83|     if (mode === 'hash') h.source.content_hash = 'b'.repeat(64);
+     84|     expect(await scope(() => writeCatalogSuggestion(suggestion()))).to…
+       |                                                                     ^
+     85|     expect(h.audit).not.toHaveBeenCalled();
+     86|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/20]⎯
+
+ FAIL  server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses a key-data value not stated in the freshly locked text
+AssertionError: expected { ok: true, embeddingStatus: 'failed' } to match object { ok: false }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ server/services/vault/__tests__/catalog-governance-integrity.test.ts:89:61
+     87|   it('refuses a key-data value not stated in the freshly locked text',…
+     88|     const args = suggestion(); args.keyData.sensitivity = '99.2%';
+     89|     expect(await scope(() => writeCatalogSuggestion(args))).toMatchObj…
+       |                                                             ^
+     90|     expect(h.audit).not.toHaveBeenCalled();
+     91|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/20]⎯
+
+ FAIL  server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > reserves catalog then documents before source admission and audits exact hashes
+AssertionError: expected -1 to be greater than -1
+ ❯ server/services/vault/__tests__/catalog-governance-integrity.test.ts:103:21
+    101|     const documents = calls.findIndex(sql => sql.includes('LOCK TABLE …
+    102|     const loaded = calls.findIndex(sql => sql.includes('SELECT d.') &&…
+    103|     expect(catalog).toBeGreaterThan(-1); expect(documents).toBeGreater…
+       |                     ^
+    104|     expect(h.audit.mock.calls[0][1].details).toMatchObject({ contentHa…
+    105|       checkScope: { kind: 'legacy_value_presence', context: 'not_recor…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/20]⎯
+
+ FAIL  server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > refuses zero-row vector writes without successful audit
+AssertionError: expected { ok: true, …(1) } to match object { ok: false }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ server/services/vault/__tests__/catalog-governance-integrity.test.ts:112:61
+    110|   it.each(['vector', 'plain'])('refuses zero-row %s writes without suc…
+    111|     h.zero = true; const args = suggestion(); if (mode === 'vector') a…
+    112|     expect(await scope(() => writeCatalogSuggestion(args))).toMatchObj…
+       |                                                             ^
+    113|     expect(h.audit).not.toHaveBeenCalled();
+    114|     expect(h.query.mock.calls.filter(([sql]) => sql.includes('UPDATE v…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/20]⎯
+
+ FAIL  server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > refuses zero-row plain writes without successful audit
+AssertionError: expected { ok: true, embeddingStatus: 'failed' } to match object { ok: false }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ server/services/vault/__tests__/catalog-governance-integrity.test.ts:112:61
+    110|   it.each(['vector', 'plain'])('refuses zero-row %s writes without suc…
+    111|     h.zero = true; const args = suggestion(); if (mode === 'vector') a…
+    112|     expect(await scope(() => writeCatalogSuggestion(args))).toMatchObj…
+       |                                                             ^
+    113|     expect(h.audit).not.toHaveBeenCalled();
+    114|     expect(h.query.mock.calls.filter(([sql]) => sql.includes('UPDATE v…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/20]⎯
+
+ FAIL  server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > does not turn vector SQL 42501 into plain success
+ FAIL  server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > does not turn vector SQL 22P02 into plain success
+AssertionError: promise resolved "{ ok: true, embeddingStatus: 'failed' }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "embeddingStatus": "failed",
++   "ok": true,
+  }
+
+ ❯ server/services/vault/__tests__/catalog-governance-integrity.test.ts:119:59
+    117|     h.vectorError = Object.assign(new Error('Vector operation failed')…
+    118|     const args = suggestion(); args.embeddingLiteral = '[1,2,3]';
+    119|     await expect(scope(() => writeCatalogSuggestion(args))).rejects.to…
+       |                                                           ^
+    120|     expect(h.audit).not.toHaveBeenCalled();
+    121|     expect(h.query.mock.calls.filter(([sql]) => sql.includes('UPDATE v…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/20]⎯
+
+ FAIL  server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses changed extraction even when header revision and original bytes match
+AssertionError: expected { ok: true, state: 'confirmed', …(1) } to match object { ok: false, …(1) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "EXTRACTION_CHANGED",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ server/services/vault/__tests__/catalog-governance-integrity.test.ts:140:62
+    138|   it('refuses changed extraction even when header revision and origina…
+    139|     h.source.extracted_text = 'Assay A sensitivity: 99.2%.';
+    140|     expect(await scope(() => reviewCatalogRecord(review()))).toMatchOb…
+       |                                                              ^
+    141|     expect(h.audit).not.toHaveBeenCalled();
+    142|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/20]⎯
+
+ FAIL  server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses review after viewer and audits no decision
+ FAIL  server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses review after withdrawn and audits no decision
+ FAIL  server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses review after zero rows and audits no decision
+AssertionError: expected { ok: true, state: 'confirmed', …(1) } to match object { ok: false }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ server/services/vault/__tests__/catalog-governance-integrity.test.ts:147:62
+    145|     if (mode === 'withdrawn') h.source.data_eligible = false;
+    146|     if (mode === 'zero rows') h.zero = true;
+    147|     expect(await scope(() => reviewCatalogRecord(review()))).toMatchOb…
+       |                                                              ^
+    148|     expect(h.audit).not.toHaveBeenCalled();
+    149|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/20]⎯
+
+ FAIL  server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > preserves a historical human decision while disclosing withdrawn current use
+AssertionError: expected { …(16) } to match object { state: 'confirmed', …(3) }
+(17 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "canWrite": false,
+-   "checkScope": {
+-     "context": "not_recorded",
+-     "kind": "legacy_value_presence",
+-     "scientificQualification": "unassessed",
+-   },
+-   "currentUse": {
+-     "eligible": false,
+-     "reasonCode": "SOURCE_DATA_WITHDRAWN",
+-   },
++   "canWrite": true,
+    "state": "confirmed",
+  }
+
+ ❯ server/services/vault/__tests__/catalog-governance-integrity.test.ts:154:20
+    152|     h.source.data_eligible = false;
+    153|     const record = await scope(() => readCatalogRecord({ programId: PR…
+    154|     expect(record).toMatchObject({ state: 'confirmed', canWrite: false…
+       |                    ^
+    155|       currentUse: { eligible: false, reasonCode: 'SOURCE_DATA_WITHDRAW…
+    156|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/20]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  20 failed | 3 passed (23)
+   Start at  06:20:52
+   Duration  572ms (transform 227ms, setup 65ms, import 214ms, tests 36ms, environment 0ms)
+

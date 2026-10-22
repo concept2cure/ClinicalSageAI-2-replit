@@ -3,7 +3,7 @@
  *
  *   · Corpus panel — the program's year-bucketed literature corpus from
  *     /api/regulatory-programs/:id/literature (fetched once by CerSurface via
- *     useProgramExtras and passed down); fixtures only under sample mode.
+ *     useProgramExtras and passed down).
  *   · Search panel — on-demand PubMed search through the real backend
  *     (GET /api/cerv2/literature/search → pubmed-client), with a per-row
  *     "Record" action that persists hits to the org corpus through
@@ -30,8 +30,6 @@
 import * as React from 'react';
 import { I } from '../../icons';
 import { AskAnaChip } from '../AskAnaChip';
-import { CER_LITERATURE } from '../../data/cer';
-import type { LiteratureBucket as KitLiteratureBucket } from '../../data/cer';
 import type { LiteratureBucket as LiveLiteratureBucket } from '../../hooks/useProgramExtras';
 import {
   useCerLiteratureSearch,
@@ -47,9 +45,6 @@ import type {
   CerScreeningStage,
   CerScreeningDecisionValue,
 } from '../../hooks/useCerLiterature';
-import { SampleDataBanner } from '../../components/SampleDataBanner';
-import { useSampleMode } from '../../components/DataGate';
-import { useSampleRows } from '../../lib/useSampleRows';
 
 export interface LiteratureTabProps {
   literature: LiveLiteratureBucket[] | null;
@@ -182,7 +177,6 @@ export function LiteratureTab({
   programTitle,
   onAskAna,
 }: LiteratureTabProps) {
-  const sampleOn = useSampleMode();
   const [query, setQuery] = React.useState('');
   const [years, setYears] = React.useState('');
   const [studyType, setStudyType] = React.useState<CerLiteratureStudyType>('any');
@@ -207,11 +201,7 @@ export function LiteratureTab({
     [decisions],
   );
 
-  const sourceLiterature = useSampleRows<LiveLiteratureBucket | KitLiteratureBucket>(
-    literature && literature.length > 0 ? literature : null,
-    CER_LITERATURE,
-  );
-  const usingSample = sampleOn && (literature === null || literature.length === 0) && sourceLiterature.length > 0;
+  const sourceLiterature: LiveLiteratureBucket[] = literature ?? [];
   const maxHits = Math.max(1, ...sourceLiterature.map((l) => l.hits));
   const corpusTotal = literatureTotal > 0
     ? literatureTotal
@@ -247,7 +237,6 @@ export function LiteratureTab({
 
   return (
     <>
-      <SampleDataBanner show={usingSample} loading={loading} label="literature corpus" />
       <div className="col2">
         <div>
           <div className="panel">
@@ -382,6 +371,10 @@ export function LiteratureTab({
                     style={{ padding: '6px 16px', fontSize: 11, color: 'var(--err, #c0392b)' }}
                   >
                     {screenError}
+                    <button className="section-more" type="button" disabled={screeningLoading || !!savingKey}
+                      onClick={() => void reloadScreening(result.articles.map((article) => article.pmid))}>
+                      Refresh screening decisions
+                    </button>
                   </div>
                 )}
                 {trailUnavailable && (
@@ -558,7 +551,12 @@ export function LiteratureTab({
               </div>
             </div>
             <div style={{ padding: '12px 0' }}>
-              {literature !== null && corpusTotal === 0 && !usingSample ? (
+              {literature === null ? (
+                /* null is "not read" — still loading, or the feed failed. */
+                <div role="status" style={{ padding: '24px 16px', textAlign: 'center', fontSize: 12, color: 'var(--text-300)' }}>
+                  {loading ? 'Loading the literature corpus…' : 'The literature corpus could not be loaded for this program.'}
+                </div>
+              ) : corpusTotal === 0 ? (
                 <div
                   role="status"
                   style={{

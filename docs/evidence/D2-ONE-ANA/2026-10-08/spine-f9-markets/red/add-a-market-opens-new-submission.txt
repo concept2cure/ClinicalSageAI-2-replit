@@ -1,0 +1,5 @@
+ × client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > "Add a market" opens New submission on arrival (F9) > with the project open, the form is open on arrival with its filing preselected 5063ms
+   → Unable to find a label with the text of: /Title/
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > "Add a market" opens New submission on arrival (F9) > with no project open, nothing opens on its own 186ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 1 passed | 9 skipped (11)

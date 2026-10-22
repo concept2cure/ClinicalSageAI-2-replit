@@ -10,7 +10,8 @@ import { linkToModule3 } from '../../services/cmc/link-to-module3';
 import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
 import { BINDING_BASIS, persistGovernedActionSignature } from '../../services/part11/signature-persistence';
 import { signMeaningRefusal, type GovernedSignMeaning } from '../../services/part11/signature-meanings';
-import { refusedWithoutSigningAuthority, verifiedReauthFactors } from './cmc-signer';
+import { verifiedReauthFactors } from './cmc-signer';
+import { checkSigningAuthority } from '../../services/part11/signing-authority-gate';
 import { clientIpOf } from '../../utils/client-ip';
 import { resolveActorUserId } from './governance';
 import { batchReleaseRefusal, batchWriteRefusal } from '../../services/cmc/signed-record';
@@ -22,6 +23,9 @@ import {
   readRecordedReleaseTests,
 } from '../../services/cmc/batch-release-evidence';
 import { filedProjectOnCreate, RegisterWriteRefusal } from '../../services/cmc/register-writes';
+/* The batch record and the record of WHO recorded it, on one pinned connection
+   and one transaction (§11.10(e); services/cmc/register-audit.ts). */
+import { createOnConnection } from '../../services/cmc/register-audit';
 /* The CANONICAL org resolver. This module defined its own, reading two of the
    four places the canonical one reads, in its own order — and a second answer
    to "which organization is this" is a tenant-isolation decision, not a helper
@@ -225,36 +229,41 @@ router.post('/', async (req, res) => {
     if ('refusal' in filing) return res.status(409).json(filing.refusal);
     const { projectId } = filing;
 
-    const result = await pool.query(
-      `INSERT INTO cmc_batch_records (
-        project_id, tenant_id, organization_id, batch_number, product_name, batch_size,
-        manufacturing_date, expiry_date, manufacturing_site,
-        status, process_parameters, in_process_controls,
-        yield_data, deviations
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-      RETURNING *`,
-      [
-        projectId,
-        // organization_id is NOT NULL on the provisioned table (migrations/0006)
-        // and IS the tenant — the same value, written to both columns so reads
-        // scoped by either agree. tenantParams supplies it in each column's own
-        // type; see its note.
-        ...tenantParams(orgId),
-        data.batchNumber,
-        data.productName,
-        data.batchSize || null,
-        data.manufacturingDate || null,
-        data.expiryDate || null,
-        data.manufacturingSite || null,
-        data.status || 'in-progress',
-        JSON.stringify(data.processParameters || null),
-        JSON.stringify(data.inProcessControls || null),
-        JSON.stringify(data.yieldData || null),
-        JSON.stringify(data.deviations || null),
-      ]
+    const batch = await createOnConnection(
+      pool,
+      { organizationId: orgId, actor: { userId: resolveActorUserId(req) }, register: 'batch_record', table: 'cmc_batch_records' },
+      async (client) => {
+        const result = await client.query(
+          `INSERT INTO cmc_batch_records (
+            project_id, tenant_id, organization_id, batch_number, product_name, batch_size,
+            manufacturing_date, expiry_date, manufacturing_site,
+            status, process_parameters, in_process_controls,
+            yield_data, deviations
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+          RETURNING *`,
+          [
+            projectId,
+            // organization_id is NOT NULL on the provisioned table (migrations/0006)
+            // and IS the tenant — the same value, written to both columns so reads
+            // scoped by either agree. tenantParams supplies it in each column's own
+            // type; see its note.
+            ...tenantParams(orgId),
+            data.batchNumber,
+            data.productName,
+            data.batchSize || null,
+            data.manufacturingDate || null,
+            data.expiryDate || null,
+            data.manufacturingSite || null,
+            data.status || 'in-progress',
+            JSON.stringify(data.processParameters || null),
+            JSON.stringify(data.inProcessControls || null),
+            JSON.stringify(data.yieldData || null),
+            JSON.stringify(data.deviations || null),
+          ]
+        );
+        return result.rows[0] as { id: number | string };
+      },
     );
-
-    const batch = result.rows[0];
     console.log(`[CMC Batch] Created batch record ${batch.id}: ${data.batchNumber}`);
     const linkage = await linkToModule3('write_through_batch', orgId, batch, writeThroughBatchRecord);
 
@@ -481,7 +490,8 @@ router.post('/:id/release', async (req, res) => {
   const { meaning } = declared;
 
   // Signing authority (§11.10(g)), then the re-auth gate, before any write.
-  if (await refusedWithoutSigningAuthority(res, { userId, orgId })) return;
+  const authority = await checkSigningAuthority(userId, orgId);
+  if (authority) return res.status(authority.status).json({ success: false, error: authority.code, message: authority.message });
   const reauthResult = await verifyReauth(userId, data.reauth);
   if (!reauthResult.ok) {
     res.setHeader('WWW-Authenticate', 'ReAuth required');

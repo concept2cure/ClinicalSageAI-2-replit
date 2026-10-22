@@ -13,8 +13,8 @@
  * identical output.
  *
  * Regulatory grounding (citations are returned verbatim in the engine output):
- *   - ICH E6(R3) Good Clinical Practice (Step 4, 2023; FDA adoption 2025),
- *     including the Annex on data governance and computerised systems.
+ *   - ICH E6(R3) Good Clinical Practice (Step 4, 2025-01-06; FDA adoption 2025),
+ *     including Annex 1 §4 (data governance) and §4.3 (computerised systems).
  *   - ICH E8(R1) General Considerations for Clinical Studies (2021) —
  *     quality-by-design, critical-to-quality (CtQ) factors.
  *   - FDA Guidance: Oversight of Clinical Investigations — A Risk-Based
@@ -31,6 +31,35 @@
  *
  * @module server/services/gcp-operations/gcp-operations-knowledge
  */
+import {
+  consentElementCitation,
+  INFORMED_CONSENT_ELEMENTS,
+  type InformedConsentElement,
+} from '../../../shared/regulatory/informed-consent-elements';
+// The reference tables (E6(R3) principles, common Form FDA-483 observations,
+// essential records and TMF zones) live in the sibling data module, same
+// purity contract; their types are re-exported so this module's surface is unchanged.
+import {
+  COMMON_483_FINDINGS,
+  E6R3_PRINCIPLES,
+  ESSENTIAL_DOCUMENTS,
+  TMF_ZONES,
+  type Common483Finding,
+  type E6Principle,
+  type EssentialDocument,
+  type InspectionTarget,
+  type TmfZone,
+  type TrialStage,
+} from './gcp-operations-reference';
+
+export type {
+  Common483Finding,
+  E6Principle,
+  EssentialDocument,
+  InspectionTarget,
+  TmfZone,
+  TrialStage,
+} from './gcp-operations-reference';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared primitive types
@@ -70,88 +99,27 @@ function uniq(items: string[]): string[] {
   return out;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 0. ICH E6(R3) Unifying Principles — Reference Data
-// ─────────────────────────────────────────────────────────────────────────────
-
-export interface E6Principle {
-  id: string;
-  title: string;
-  statement: string;
-  citation: string;
+/** Whether a fact was left out (undefined or null). Absent and false are different facts. */
+function unstated(value: unknown): boolean {
+  return value === undefined || value === null;
 }
 
-/**
- * The ICH E6(R3) "Principles of ICH GCP." R3 reorganises the historic 13
- * principles of E6(R2) into a set of overarching, media-neutral principles
- * built on quality-by-design and proportionate effort. The statements below
- * are paraphrased operational summaries, each carrying its own citation.
- */
-const E6R3_PRINCIPLES: E6Principle[] = [
-  {
-    id: 'P1',
-    title: 'Ethical conduct',
-    statement:
-      'Clinical trials are conducted in accordance with ethical principles originating in the Declaration of Helsinki, consistent with GCP and applicable regulatory requirements.',
-    citation: 'ICH E6(R3) Principle 1; Declaration of Helsinki',
-  },
-  {
-    id: 'P2',
-    title: 'Informed consent & rights of participants',
-    statement:
-      'Freely given informed consent is obtained from every participant prior to participation; the rights, safety and well-being of participants prevail over the interests of science and society.',
-    citation: 'ICH E6(R3) Principle 2; 21 CFR 50.20',
-  },
-  {
-    id: 'P3',
-    title: 'Independent ethics review',
-    statement:
-      'Trials are subject to objective review by an IRB/IEC that is adequately constituted and operates independently of the investigator and sponsor.',
-    citation: 'ICH E6(R3) Principle 3; 21 CFR Part 56',
-  },
-  {
-    id: 'P4',
-    title: 'Scientific soundness & quality by design',
-    statement:
-      'Trials are scientifically sound and described in a clear, detailed protocol; quality is built into the design and conduct by identifying factors critical to quality (CtQ) and managing risks to those factors proportionately.',
-    citation: 'ICH E6(R3) Principle 4; ICH E8(R1)',
-  },
-  {
-    id: 'P5',
-    title: 'Proportionate, fit-for-purpose processes',
-    statement:
-      'Trial processes and the effort applied to them are proportionate to the risks to participants and to the reliability of trial results; activities that do not add value are avoided.',
-    citation: 'ICH E6(R3) Principle 5',
-  },
-  {
-    id: 'P6',
-    title: 'Roles, responsibilities & oversight',
-    statement:
-      'Roles and responsibilities are clear; the sponsor maintains oversight of delegated activities and service providers; investigators retain responsibility for the trial at their site.',
-    citation: 'ICH E6(R3) Principle 6; 21 CFR 312.50; 312.60',
-  },
-  {
-    id: 'P7',
-    title: 'Qualified personnel',
-    statement:
-      'Persons conducting the trial are qualified by education, training and experience to perform their respective tasks.',
-    citation: 'ICH E6(R3) Principle 7; 21 CFR 312.53(c)',
-  },
-  {
-    id: 'P8',
-    title: 'Investigational product quality & handling',
-    statement:
-      'Investigational products are manufactured under GMP and handled and stored in accordance with the protocol and product specifications, with accountability maintained.',
-    citation: 'ICH E6(R3) Principle 8; ICH E6(R3) §3.16 (IP management)',
-  },
-  {
-    id: 'P9',
-    title: 'Reliable results & data governance',
-    statement:
-      'Trial processes and data governance support the generation of reliable results; data are attributable, legible, contemporaneous, original, accurate and complete (ALCOA+) throughout the data life cycle, regardless of medium.',
-    citation: 'ICH E6(R3) Principle 9; ICH E6(R3) Annex (computerised systems)',
-  },
-];
+/** Three-valued OR: true if any fact is true, false only when every one is stated, else undefined (not assessed). */
+function anyOf(...facts: Array<boolean | null | undefined>): boolean | undefined {
+  if (facts.some((f) => f === true)) return true;
+  return facts.some(unstated) ? undefined : false;
+}
+
+/** Three-valued AND: false if any stated fact is not true, true only when every one is true, else undefined. */
+function allOf(...facts: Array<boolean | null | undefined>): boolean | undefined {
+  if (facts.some((f) => !unstated(f) && f !== true)) return false;
+  return facts.some(unstated) ? undefined : true;
+}
+
+/** `test` applied to a stated input; undefined (not assessed) when the input was left out. */
+function stated<T>(value: T | null | undefined, test: (v: T) => boolean): boolean | undefined {
+  return value === undefined || value === null ? undefined : test(value);
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. RISK-BASED MONITORING PLAN DESIGN
@@ -205,15 +173,20 @@ export interface MonitoringMix {
 }
 
 export interface MonitoringPlanResult {
-  overallRiskLevel: RiskLevel;
-  riskScore: number;
+  /** 'not_assessed' while the unstated factors (notAssessed) could move the score into another band. */
+  overallRiskLevel: RiskLevel | 'not_assessed';
+  /** Sum of the active weights; null unless every risk factor is stated. */
+  riskScore: number | null;
   criticalToQualityFactors: CriticalToQualityFactor[];
-  monitoringMix: MonitoringMix;
+  /** null while the risk level is not assessed: the mix, SDV and visit frequency scale with it. */
+  monitoringMix: MonitoringMix | null;
   keyRiskIndicators: KeyRiskIndicator[];
   triggeredVisitCriteria: string[];
   centralMonitoringActivities: string[];
   planComponents: string[];
   regulatoryCitations: string[];
+  /** Risk-factor inputs that were not stated. */
+  notAssessed: Array<keyof MonitoringPlanParams>;
   warnings: string[];
   notes: string[];
 }
@@ -221,7 +194,10 @@ export interface MonitoringPlanResult {
 interface RiskContributor {
   label: string;
   weight: number;
-  active: boolean;
+  /** undefined when an input that decides it was not stated. */
+  active: boolean | undefined;
+  /** The inputs that decide it. */
+  inputs: Array<keyof MonitoringPlanParams>;
   citation: string;
 }
 
@@ -243,7 +219,7 @@ const CTQ_LIBRARY: CriticalToQualityFactor[] = [
     rationale:
       'Enrolling ineligible participants exposes them to undue risk and undermines the interpretability of safety and efficacy data.',
     riskLevel: 'high',
-    citation: 'ICH E8(R1) Annex; ICH E6(R3) §2.3 (investigator)',
+    citation: 'ICH E8(R1) Annex; ICH E6(R3) Annex 1 §2.3 (investigator responsibilities)',
   },
   {
     id: 'CTQ-SAFETY-REPORTING',
@@ -252,7 +228,7 @@ const CTQ_LIBRARY: CriticalToQualityFactor[] = [
     rationale:
       'Timely, complete safety reporting is essential to participant protection and to the sponsor safety-oversight obligation.',
     riskLevel: 'critical',
-    citation: '21 CFR 312.32; 312.64(b); ICH E6(R3) §2.x (safety)',
+    citation: '21 CFR 312.32; 312.64(b); ICH E6(R3) Annex 1 §2.7 (participant medical care and safety reporting)',
   },
   {
     id: 'CTQ-PRIMARY-ENDPOINT',
@@ -270,7 +246,7 @@ const CTQ_LIBRARY: CriticalToQualityFactor[] = [
     rationale:
       'Incorrect dosing, compromised product, or accountability gaps affect both safety and the validity of exposure data.',
     riskLevel: 'high',
-    citation: 'ICH E6(R3) Principle 8; 21 CFR 312.62(a)',
+    citation: 'ICH E6(R3) Principle 11; Annex 1 §2.10 (IP management); 21 CFR 312.62(a)',
   },
   {
     id: 'CTQ-RANDOMIZATION',
@@ -279,7 +255,7 @@ const CTQ_LIBRARY: CriticalToQualityFactor[] = [
     rationale:
       'Breaks in randomization or blinding introduce bias that cannot be corrected analytically.',
     riskLevel: 'high',
-    citation: 'ICH E6(R3) §1 (design); ICH E9 (statistical principles)',
+    citation: 'ICH E6(R3) Annex 1 §2.11 (randomisation procedures and unblinding); ICH E9 (statistical principles)',
   },
   {
     id: 'CTQ-DATA-GOVERNANCE',
@@ -288,110 +264,24 @@ const CTQ_LIBRARY: CriticalToQualityFactor[] = [
     rationale:
       'Reliable results depend on attributable, contemporaneous, original and accurate records and on validated, access-controlled systems with audit trails.',
     riskLevel: 'high',
-    citation: 'ICH E6(R3) Annex (data governance & computerised systems); 21 CFR Part 11',
+    citation: 'ICH E6(R3) Annex 1 §4 (data governance) and §4.3 (computerised systems); 21 CFR Part 11',
   },
 ];
 
+/** The risk band a monitoring-plan score falls in. */
+function riskBand(score: number): RiskLevel {
+  if (score >= 60) return 'critical';
+  if (score >= 40) return 'high';
+  if (score >= 20) return 'medium';
+  return 'low';
+}
+
 /**
- * Design a risk-based, quality-by-design monitoring plan per ICH E6(R3) and
- * E8(R1) and the FDA 2013 RBM guidance. Pure and deterministic.
+ * Monitoring mix (centralized vs on-site vs remote) for an assessed risk level.
+ * Higher risk shifts effort toward on-site; centralized monitoring is the
+ * backbone in all cases per FDA 2013 guidance.
  */
-export function designMonitoringPlan(params: MonitoringPlanParams): MonitoringPlanResult {
-  const phase: TrialPhase = params.phase ?? 'phase3';
-  const numberOfSites = num(params.numberOfSites, 1);
-  const enrollment = num(params.plannedEnrollment, 0);
-  const warnings: string[] = [];
-  const notes: string[] = [];
-
-  // ── Risk scoring (weighted contributors) ──
-  const contributors: RiskContributor[] = [
-    {
-      label: 'First-in-human study',
-      weight: 30,
-      active: params.isFirstInHuman === true || phase === 'phase1',
-      citation: 'FDA RBM Guidance (2013) §III.A; ICH E8(R1)',
-    },
-    {
-      label: 'First-in-class or novel intervention',
-      weight: 20,
-      active: params.noveltyOfIntervention === 'first_in_class' || params.noveltyOfIntervention === 'novel',
-      citation: 'ICH E8(R1) (prior knowledge informs risk)',
-    },
-    {
-      label: 'Vulnerable population',
-      weight: 18,
-      active: params.vulnerablePopulation === true,
-      citation: '21 CFR 50 Subpart B/D; ICH E6(R3) Principle 2',
-    },
-    {
-      label: 'Complex protocol design',
-      weight: 14,
-      active: params.complexProtocol === true,
-      citation: 'ICH E8(R1) Annex (CtQ); FDA RBM Guidance (2013)',
-    },
-    {
-      label: 'Subjective primary endpoint',
-      weight: 12,
-      active: params.endpointObjectivity === 'subjective' || params.endpointObjectivity === 'mixed',
-      citation: 'FDA RBM Guidance (2013) §III.B (data quality risk)',
-    },
-    {
-      label: 'Multi-regional trial',
-      weight: 10,
-      active: params.isMultiRegional === true,
-      citation: 'ICH E17 (MRCT); ICH E6(R3) (oversight of distributed conduct)',
-    },
-    {
-      label: 'Large number of sites (>30)',
-      weight: 10,
-      active: numberOfSites > 30,
-      citation: 'FDA RBM Guidance (2013) (centralized monitoring scales)',
-    },
-    {
-      label: 'Investigational device involved',
-      weight: 8,
-      active: params.usesInvestigationalDevice === true,
-      citation: '21 CFR 812 (IDE); FDA RBM Guidance (2013)',
-    },
-    {
-      label: 'Inexperienced sites',
-      weight: 8,
-      active: params.experiencedSites === false,
-      citation: 'FDA RBM Guidance (2013) §III.A (site experience)',
-    },
-    {
-      label: 'No validated EDC / paper-based data',
-      weight: 8,
-      active: params.electronicDataCapture === false,
-      citation: 'ICH E6(R3) Annex (data governance); FDA RBM Guidance (2013)',
-    },
-    {
-      label: 'Prior inspection findings at sponsor/sites',
-      weight: 10,
-      active: params.priorInspectionFindings === true,
-      citation: 'FDA BIMO CPGM 7348.810 (risk-based site selection)',
-    },
-  ];
-
-  let riskScore = 0;
-  const activeRationale: string[] = [];
-  for (const c of contributors) {
-    if (c.active) {
-      riskScore += c.weight;
-      activeRationale.push(`${c.label} (+${c.weight}; ${c.citation})`);
-    }
-  }
-  riskScore = clamp(riskScore, 0, 100);
-
-  let overallRiskLevel: RiskLevel;
-  if (riskScore >= 60) overallRiskLevel = 'critical';
-  else if (riskScore >= 40) overallRiskLevel = 'high';
-  else if (riskScore >= 20) overallRiskLevel = 'medium';
-  else overallRiskLevel = 'low';
-
-  // ── Monitoring mix (centralized vs on-site vs remote) ──
-  // Higher risk shifts effort toward on-site; centralized monitoring is the
-  // backbone in all cases per FDA 2013 guidance.
+function monitoringMixFor(overallRiskLevel: RiskLevel, rationale: string[]): MonitoringMix {
   let centralizedPercent: number;
   let onSitePercent: number;
   let remotePercent: number;
@@ -424,7 +314,7 @@ export function designMonitoringPlan(params: MonitoringPlanParams): MonitoringPl
       : 'Reduced, sample-based SDV concentrated on critical-to-quality data only; central monitoring substitutes for routine 100% SDV.';
 
   const sdrStrategy =
-    'Source data review (SDR) — review of the broader medical record for protocol compliance, safety and quality signals — prioritized over exhaustive SDV per FDA RBM guidance and ICH E6(R3) proportionate-effort principle.';
+    'Source data review (SDR) — review of the broader medical record for protocol compliance, safety and quality signals — prioritized over exhaustive SDV per FDA RBM guidance and ICH E6(R3) Principle 7 (proportionality).';
 
   const samplingApproach =
     overallRiskLevel === 'low'
@@ -438,7 +328,7 @@ export function designMonitoringPlan(params: MonitoringPlanParams): MonitoringPl
     return 'Initiation visit, then primarily centralized/remote oversight with on-site visits driven by KRI triggers and a close-out visit.';
   })();
 
-  const monitoringMix: MonitoringMix = {
+  return {
     centralizedPercent,
     onSitePercent,
     remotePercent,
@@ -446,13 +336,143 @@ export function designMonitoringPlan(params: MonitoringPlanParams): MonitoringPl
     sourceDataReviewStrategy: sdrStrategy,
     samplingApproach,
     onSiteVisitFrequencyGuidance: visitFrequency,
-    rationale: [
-      `Overall risk assessed as ${overallRiskLevel} (score ${riskScore}/100).`,
-      'Centralized monitoring is the analytic backbone across all risk levels (FDA RBM Guidance 2013 §IV).',
-      'On-site effort scales with risk to participants and to result reliability (ICH E6(R3) Principle 5).',
-      ...activeRationale,
-    ],
+    rationale,
   };
+}
+
+/**
+ * Design a risk-based, quality-by-design monitoring plan per ICH E6(R3) and
+ * E8(R1) and the FDA 2013 RBM guidance. Pure and deterministic.
+ */
+export function designMonitoringPlan(params: MonitoringPlanParams): MonitoringPlanResult {
+  // 2026-10-15: the phase used to default to 'phase3' and every factor was read
+  // with `=== true`, so `{}` scored 0/100, "low", with the low-risk mix. An
+  // unstated factor now leaves the level 'not_assessed' (score and mix null)
+  // unless it cannot change the band; notAssessed names the inputs.
+  const numberOfSites =
+    typeof params.numberOfSites === 'number' && Number.isFinite(params.numberOfSites) ? params.numberOfSites : undefined;
+  const enrollment = num(params.plannedEnrollment, 0);
+  const warnings: string[] = [];
+  const notes: string[] = [];
+
+  // ── Risk scoring (weighted contributors) ──
+  const contributors: RiskContributor[] = [
+    {
+      label: 'First-in-human study',
+      weight: 30,
+      active: anyOf(params.isFirstInHuman, stated(params.phase, (p) => p === 'phase1')),
+      inputs: ['isFirstInHuman', 'phase'],
+      citation: 'FDA RBM Guidance (2013) §III.A; ICH E8(R1)',
+    },
+    {
+      label: 'First-in-class or novel intervention',
+      weight: 20,
+      active: stated(params.noveltyOfIntervention, (n) => n === 'first_in_class' || n === 'novel'),
+      inputs: ['noveltyOfIntervention'],
+      citation: 'ICH E8(R1) (prior knowledge informs risk)',
+    },
+    {
+      label: 'Vulnerable population',
+      weight: 18,
+      active: anyOf(params.vulnerablePopulation),
+      inputs: ['vulnerablePopulation'],
+      citation: '21 CFR 50 Subpart B/D; ICH E6(R3) Principle 2',
+    },
+    {
+      label: 'Complex protocol design',
+      weight: 14,
+      active: anyOf(params.complexProtocol),
+      inputs: ['complexProtocol'],
+      citation: 'ICH E8(R1) Annex (CtQ); FDA RBM Guidance (2013)',
+    },
+    {
+      label: 'Subjective primary endpoint',
+      weight: 12,
+      active: stated(params.endpointObjectivity, (e) => e === 'subjective' || e === 'mixed'),
+      inputs: ['endpointObjectivity'],
+      citation: 'FDA RBM Guidance (2013) §III.B (data quality risk)',
+    },
+    {
+      label: 'Multi-regional trial',
+      weight: 10,
+      active: anyOf(params.isMultiRegional),
+      inputs: ['isMultiRegional'],
+      citation: 'ICH E17 (MRCT); ICH E6(R3) Annex 1 §3.9 (sponsor oversight of distributed conduct)',
+    },
+    {
+      label: 'Large number of sites (>30)',
+      weight: 10,
+      active: stated(numberOfSites, (n) => n > 30),
+      inputs: ['numberOfSites'],
+      citation: 'FDA RBM Guidance (2013) (centralized monitoring scales)',
+    },
+    {
+      label: 'Investigational device involved',
+      weight: 8,
+      active: anyOf(params.usesInvestigationalDevice),
+      inputs: ['usesInvestigationalDevice'],
+      citation: '21 CFR 812 (IDE); FDA RBM Guidance (2013)',
+    },
+    {
+      label: 'Inexperienced sites',
+      weight: 8,
+      active: stated(params.experiencedSites, (e) => e === false),
+      inputs: ['experiencedSites'],
+      citation: 'FDA RBM Guidance (2013) §III.A (site experience)',
+    },
+    {
+      label: 'No validated EDC / paper-based data',
+      weight: 8,
+      active: stated(params.electronicDataCapture, (e) => e === false),
+      inputs: ['electronicDataCapture'],
+      citation: 'ICH E6(R3) Annex 1 §4 (data governance); FDA RBM Guidance (2013)',
+    },
+    {
+      label: 'Prior inspection findings at sponsor/sites',
+      weight: 10,
+      active: anyOf(params.priorInspectionFindings),
+      inputs: ['priorInspectionFindings'],
+      citation: 'FDA BIMO CPGM 7348.810 (risk-based site selection)',
+    },
+  ];
+
+  let statedScore = 0;
+  let unstatedWeight = 0;
+  const activeRationale: string[] = [];
+  for (const c of contributors) {
+    if (c.active === true) {
+      statedScore += c.weight;
+      activeRationale.push(`${c.label} (+${c.weight}; ${c.citation})`);
+    } else if (c.active === undefined) {
+      unstatedWeight += c.weight;
+    }
+  }
+  statedScore = clamp(statedScore, 0, 100);
+  // No input decides two contributors, so this list has no duplicates.
+  const notAssessed = contributors
+    .filter((c) => c.active === undefined)
+    .flatMap((c) => c.inputs.filter((k) => unstated(params[k])));
+  const riskScore = unstatedWeight === 0 ? statedScore : null;
+  const lowestBand = riskBand(statedScore);
+  const overallRiskLevel: RiskLevel | 'not_assessed' =
+    lowestBand === riskBand(clamp(statedScore + unstatedWeight, 0, 100)) ? lowestBand : 'not_assessed';
+
+  const monitoringMix: MonitoringMix | null =
+    overallRiskLevel === 'not_assessed'
+      ? null
+      : monitoringMixFor(overallRiskLevel, [
+          riskScore === null
+            ? `Overall risk assessed as ${overallRiskLevel} (stated factors score ${statedScore}/100; the unstated ones cannot change the band).`
+            : `Overall risk assessed as ${overallRiskLevel} (score ${riskScore}/100).`,
+          'Centralized monitoring is the analytic backbone across all risk levels (FDA RBM Guidance 2013 §IV).',
+          'On-site effort scales with risk to participants and to result reliability (ICH E6(R3) Principle 7).',
+          ...activeRationale,
+        ]);
+  if (monitoringMix === null) {
+    warnings.push(
+      `Overall risk not assessed: ${notAssessed.join(', ')} not stated, and they could move the score (${statedScore}/100 from the stated factors) into another band. The monitoring mix, SDV strategy and visit frequency scale with risk, so none is recommended until they are stated.`,
+    );
+  }
 
   // ── Critical-to-quality factors (select + augment by context) ──
   const ctq: CriticalToQualityFactor[] = CTQ_LIBRARY.map((c) => ({ ...c }));
@@ -463,7 +483,7 @@ export function designMonitoringPlan(params: MonitoringPlanParams): MonitoringPl
       factor: 'Maintenance of blinding and controlled, documented unblinding',
       rationale: 'Trial is blinded; uncontrolled unblinding biases assessments and endpoint ascertainment.',
       riskLevel: 'high',
-      citation: 'ICH E6(R3) §1; ICH E9',
+      citation: 'ICH E6(R3) Annex 1 §4.1 (safeguard blinding) and §2.11 (unblinding); ICH E9',
     });
   }
   if (params.vulnerablePopulation === true) {
@@ -572,7 +592,7 @@ export function designMonitoringPlan(params: MonitoringPlanParams): MonitoringPl
     'Review of data entry timeliness, query metrics and protocol-deviation trends.',
     'Safety-data review in conjunction with the safety/medical-monitoring function.',
     'Reconciliation of essential-document/TMF completeness signals against site activity.',
-    'Risk re-assessment at defined intervals and at protocol amendments (ICH E6(R3) iterative risk review).',
+    'Risk re-assessment at defined intervals and at protocol amendments (ICH E6(R3) Annex 1 §3.10.1, risk management).',
   ];
 
   // ── Plan components (FDA RBM 2013 expected content of a monitoring plan) ──
@@ -588,14 +608,14 @@ export function designMonitoringPlan(params: MonitoringPlanParams): MonitoringPl
     'Process for amending the monitoring plan as risks evolve.',
   ];
 
-  if (enrollment > 0 && numberOfSites > 0 && enrollment / numberOfSites < 3) {
+  if (enrollment > 0 && numberOfSites !== undefined && numberOfSites > 0 && enrollment / numberOfSites < 3) {
     warnings.push(
       `Low planned enrollment per site (~${round(enrollment / numberOfSites, 1)} participants/site) may dilute statistical signal in central monitoring; consider central monitoring at the program level.`,
     );
   }
   if (params.electronicDataCapture === false) {
     warnings.push(
-      'Paper-based or non-validated data capture limits centralized monitoring effectiveness and increases reliance on on-site SDV; consider EDC adoption (ICH E6(R3) Annex).',
+      'Paper-based or non-validated data capture limits centralized monitoring effectiveness and increases reliance on on-site SDV; consider EDC adoption (ICH E6(R3) Annex 1 §4.3).',
     );
   }
   if (overallRiskLevel === 'critical') {
@@ -603,14 +623,14 @@ export function designMonitoringPlan(params: MonitoringPlanParams): MonitoringPl
   }
 
   const regulatoryCitations = uniq([
-    'ICH E6(R3) Good Clinical Practice (2023; FDA adoption 2025) — Principles 4, 5, 9',
+    'ICH E6(R3) Good Clinical Practice (Step 4, 2025-01-06; FDA adoption 2025) — Principles 4, 6, 7, 9; Annex 1 §3.10 (quality management), §3.11.4 (monitoring)',
     'ICH E8(R1) General Considerations for Clinical Studies (2021) — critical-to-quality factors',
     'FDA Guidance: Oversight of Clinical Investigations — A Risk-Based Approach to Monitoring (2013)',
     'FDA Guidance: A Risk-Based Approach to Monitoring of Clinical Investigations — Q&A (2023)',
-    'ICH E6(R3) Annex — data governance and computerised systems',
+    'ICH E6(R3) Annex 1 §4 — data governance and computerised systems (§4.3)',
     'TransCelerate BioPharma Risk-Based Monitoring methodology',
     '21 CFR 312.50; 312.56 (sponsor monitoring obligations)',
-    ...contributors.filter((c) => c.active).map((c) => c.citation),
+    ...contributors.filter((c) => c.active === true).map((c) => c.citation),
   ]);
 
   return {
@@ -623,6 +643,7 @@ export function designMonitoringPlan(params: MonitoringPlanParams): MonitoringPl
     centralMonitoringActivities,
     planComponents,
     regulatoryCitations,
+    notAssessed,
     warnings,
     notes,
   };
@@ -632,19 +653,11 @@ export function designMonitoringPlan(params: MonitoringPlanParams): MonitoringPl
 // 2. INSPECTION READINESS (FDA BIMO / Sponsor)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type InspectionTarget = 'sponsor' | 'cro' | 'clinical_investigator' | 'irb';
-
-export interface Common483Finding {
-  area: string;
-  finding: string;
-  citation: string;
-  preventiveAction: string;
-}
-
 export interface ReadinessAreaScore {
   area: string;
-  score: number;
-  status: 'ready' | 'gaps' | 'not_ready';
+  /** null when the input(s) for this area were not provided. */
+  score: number | null;
+  status: 'ready' | 'gaps' | 'not_ready' | 'not_assessed';
   gaps: string[];
   citation: string;
 }
@@ -670,8 +683,10 @@ export interface InspectionReadinessParams {
 
 export interface InspectionReadinessResult {
   inspectionTarget: InspectionTarget;
-  overallReadiness: 'ready' | 'gaps' | 'not_ready';
-  readinessScore: number;
+  /** 'not_assessed' while an area is not assessed, unless the assessed areas already make it 'not_ready'. */
+  overallReadiness: 'ready' | 'gaps' | 'not_ready' | 'not_assessed';
+  /** Mean of the area scores; null while any area is not assessed. */
+  readinessScore: number | null;
   areaScores: ReadinessAreaScore[];
   common483Findings: Common483Finding[];
   capaPosture: string[];
@@ -681,119 +696,53 @@ export interface InspectionReadinessResult {
   warnings: string[];
 }
 
-/** Common BIMO 483 / Form FDA-483 observations by inspection target. */
-const COMMON_483_FINDINGS: Record<InspectionTarget, Common483Finding[]> = {
-  clinical_investigator: [
-    {
-      area: 'Protocol adherence',
-      finding: 'Failure to conduct the investigation in accordance with the signed Statement of Investigator / protocol.',
-      citation: '21 CFR 312.60; FDA-1572',
-      preventiveAction: 'Maintain a current deviation log with root-cause and CAPA; train staff on protocol amendments before implementation.',
-    },
-    {
-      area: 'Informed consent',
-      finding: 'Inadequate informed consent — missing signatures/dates, consent obtained after procedures, outdated consent version.',
-      citation: '21 CFR 50.20; 50.27; 56.109',
-      preventiveAction: 'Consent QC checklist; confirm IRB-approved version; verify consent precedes any study procedure.',
-    },
-    {
-      area: 'Records & data',
-      finding: 'Inadequate or inaccurate case histories / source records (ALCOA+ deficiencies).',
-      citation: '21 CFR 312.62(b); ICH E6(R3) Principle 9',
-      preventiveAction: 'Contemporaneous documentation, controlled corrections, validated systems with audit trails.',
-    },
-    {
-      area: 'Investigational product',
-      finding: 'Failure to maintain adequate drug/device disposition and accountability records.',
-      citation: '21 CFR 312.62(a); 812.140',
-      preventiveAction: 'Reconcile receipt, dispensing, return and destruction; periodic accountability checks.',
-    },
-    {
-      area: 'Safety reporting',
-      finding: 'Failure to report adverse events / promptly report to sponsor and IRB.',
-      citation: '21 CFR 312.64(b); 312.66',
-      preventiveAction: 'Standardize AE ascertainment and reporting timelines; reconcile against safety database.',
-    },
-    {
-      area: 'Delegation & oversight',
-      finding: 'Inadequate supervision of the clinical investigation / delegation to unqualified or untrained staff.',
-      citation: '21 CFR 312.60; ICH E6(R3) §2.x (investigator oversight)',
-      preventiveAction: 'Maintain a current delegation-of-authority log mapped to training and qualification records.',
-    },
-  ],
-  sponsor: [
-    {
-      area: 'Monitoring & oversight',
-      finding: 'Failure to monitor the investigation adequately / to ensure proper monitoring.',
-      citation: '21 CFR 312.50; 312.56; FDA RBM Guidance (2013)',
-      preventiveAction: 'Document a risk-based monitoring plan, evidence of execution and follow-up on findings.',
-    },
-    {
-      area: 'Vendor oversight',
-      finding: 'Inadequate oversight of delegated parties (CRO/vendors) without documented sponsor retention of responsibility.',
-      citation: '21 CFR 312.52; ICH E6(R3) Principle 6 (oversight of service providers)',
-      preventiveAction: 'Written transfer-of-obligation agreements; documented governance and KPI oversight of vendors.',
-    },
-    {
-      area: 'Safety reporting',
-      finding: 'Failure to submit IND safety reports (SUSARs) within required timeframes.',
-      citation: '21 CFR 312.32',
-      preventiveAction: 'Pharmacovigilance SOPs with timeline controls; reconciliation of expedited reports.',
-    },
-    {
-      area: 'Investigator selection & control',
-      finding: 'Failure to ensure investigators were qualified and that the IP was shipped/controlled appropriately.',
-      citation: '21 CFR 312.53; 312.57',
-      preventiveAction: 'Qualification documentation; IP shipment/accountability records retained centrally.',
-    },
-    {
-      area: 'TMF / records',
-      finding: 'Incomplete or non-contemporaneous Trial Master File; essential documents missing.',
-      citation: 'ICH E6(R3) §3.x (essential records); 21 CFR 312.57',
-      preventiveAction: 'TMF completeness/QC plan with periodic reconciliation against the reference model.',
-    },
-  ],
-  cro: [
-    {
-      area: 'Delegated obligations',
-      finding: 'Performing transferred obligations without adequate procedures or documented sponsor oversight interface.',
-      citation: '21 CFR 312.52; ICH E6(R3) Principle 6',
-      preventiveAction: 'Map each transferred obligation to an SOP and to evidence of execution.',
-    },
-    {
-      area: 'Monitoring execution',
-      finding: 'Monitoring visit reports missing, untimely, or lacking documented issue follow-up.',
-      citation: 'FDA RBM Guidance (2013); 21 CFR 312.56',
-      preventiveAction: 'Standardize monitoring report templates, timelines and issue-tracking to closure.',
-    },
-    {
-      area: 'Data management',
-      finding: 'Query management and database controls not adequately documented or validated.',
-      citation: 'ICH E6(R3) Annex (computerised systems); 21 CFR Part 11',
-      preventiveAction: 'Validation evidence, audit-trail review, and documented data-handling procedures.',
-    },
-  ],
-  irb: [
-    {
-      area: 'Membership & quorum',
-      finding: 'IRB membership/quorum deficiencies or conflicting members voting.',
-      citation: '21 CFR 56.107; 56.108',
-      preventiveAction: 'Maintain roster with expertise; document quorum and recusal at each meeting.',
-    },
-    {
-      area: 'Continuing review',
-      finding: 'Failure to conduct continuing review at appropriate intervals.',
-      citation: '21 CFR 56.108(a); 56.109(f)',
-      preventiveAction: 'Tracking system for review intervals and expirations.',
-    },
-    {
-      area: 'Records',
-      finding: 'Inadequate IRB records (minutes lacking required detail, no documentation of determinations).',
-      citation: '21 CFR 56.115',
-      preventiveAction: 'Minutes capturing votes, rationale for controverted issues, and required determinations.',
-    },
-  ],
-};
+/** An inspection-readiness area's status from its score; 'not_assessed' when nothing was provided for it. */
+function readinessStatus(score: number | null): ReadinessAreaScore['status'] {
+  if (score === null) return 'not_assessed';
+  return score >= 85 ? 'ready' : score >= 60 ? 'gaps' : 'not_ready';
+}
+
+/** The essential-documents / TMF area: it needs both the completeness figure and contemporaneous filing. */
+function tmfArea(docPct: number | null, contemporaneous: boolean | undefined): { score: number | null; gap: string } {
+  if (contemporaneous === false) {
+    return { score: 0, gap: 'TMF not maintained contemporaneously; reconcile and document timeliness.' };
+  }
+  if (docPct === null) {
+    return {
+      score: null,
+      gap: `Essential-document completeness${contemporaneous === true ? '' : ' and contemporaneous TMF filing'} not provided — measure against the essential-records list and close outstanding items before inspection.`,
+    };
+  }
+  if (contemporaneous !== true) {
+    return {
+      score: null,
+      gap: `Essential-document completeness at ${docPct}%; contemporaneous TMF filing not provided — verify it and close outstanding items before inspection.`,
+    };
+  }
+  return { score: docPct, gap: `Essential-document completeness at ${docPct}% — close outstanding items before inspection.` };
+}
+
+/** The CAPA lines of an inspection-readiness result; what was not provided is said to be not provided. */
+function capaPostureFor(params: InspectionReadinessParams): string[] {
+  const capaPosture: string[] = [];
+  if (params.capaProcessInPlace === true) {
+    capaPosture.push('CAPA process in place — ensure each finding has a documented root cause, corrective action, preventive action and effectiveness verification.');
+  } else if (params.capaProcessInPlace === false) {
+    capaPosture.push('No documented CAPA process — establish a CAPA SOP with root-cause analysis, effectiveness checks and closure tracking.');
+  } else {
+    capaPosture.push('CAPA process status not provided — confirm a documented CAPA SOP (root-cause analysis, effectiveness checks, closure tracking) is in place.');
+  }
+  if (typeof params.openCapas !== 'number' || !Number.isFinite(params.openCapas)) {
+    capaPosture.push('Number of open CAPAs not provided — confirm the open-CAPA count and closure status before inspection.');
+  } else if (params.openCapas > 0) {
+    capaPosture.push(`${params.openCapas} open CAPA(s) — prioritize closure or document interim controls and a realistic closure timeline before inspection.`);
+  }
+  if (params.priorInspectionFindings === true) {
+    capaPosture.push('Prior inspection findings present — prepare evidence that previous CAPAs were implemented and verified effective; inspectors commonly verify recurrence.');
+  }
+  capaPosture.push('Maintain a chronological inspection-readiness binder: organizational charts, SOP index, deviation/CAPA log, and a back-room/front-room SOP.');
+  return capaPosture;
+}
 
 /**
  * Assess FDA BIMO / sponsor inspection readiness. Pure and deterministic.
@@ -804,125 +753,117 @@ export function assessInspectionReadiness(
   const target: InspectionTarget = params.inspectionTarget ?? 'sponsor';
   const warnings: string[] = [];
 
-  const docPct = clamp(num(params.essentialDocsCompletePercent, 100), 0, 100);
+  // 2026-10-15: essentialDocsCompletePercent used to default to 100, openCapas
+  // to 0 and an unstated flag to a score of 50, so ten true flags and no
+  // completeness figure read 'ready', "No material gaps detected", and `{}`
+  // read "No documented CAPA process detected". What was not provided is now
+  // 'not_assessed' with a null score, and says so.
+  const docPct =
+    typeof params.essentialDocsCompletePercent === 'number' && Number.isFinite(params.essentialDocsCompletePercent)
+      ? clamp(params.essentialDocsCompletePercent, 0, 100)
+      : null;
 
-  // Helper: boolean to component score, undefined treated as a gap (unverified).
-  const flag = (v: boolean | undefined): number => (v === true ? 100 : v === false ? 0 : 50);
+  // Helper: boolean to component score; null when not provided.
+  const flag = (v: boolean | undefined): number | null => (v === true ? 100 : v === false ? 0 : null);
 
   const areaScores: ReadinessAreaScore[] = [];
 
   const pushArea = (
     area: string,
-    score: number,
+    score: number | null,
     citation: string,
     gapText: string,
     isGap: boolean,
   ): void => {
-    const status: ReadinessAreaScore['status'] = score >= 85 ? 'ready' : score >= 60 ? 'gaps' : 'not_ready';
     areaScores.push({
       area,
-      score: round(score, 0),
-      status,
+      score: score === null ? null : round(score, 0),
+      status: readinessStatus(score),
       gaps: isGap ? [gapText] : [],
       citation,
     });
   };
+  const pushFlag = (area: string, value: boolean | undefined, citation: string, gapText: string): void => {
+    const score = flag(value);
+    pushArea(area, score, citation, score === null ? `Status not provided — verify before inspection. ${gapText}` : gapText, value !== true);
+  };
 
+  const tmf = tmfArea(docPct, params.tmfContemporaneous);
   pushArea(
     'Essential documents / TMF completeness',
-    Math.min(docPct, flag(params.tmfContemporaneous)),
-    'ICH E6(R3) §3.x (essential records); 21 CFR 312.57',
-    params.tmfContemporaneous === false
-      ? 'TMF not maintained contemporaneously; reconcile and document timeliness.'
-      : `Essential-document completeness at ${docPct}% — close outstanding items before inspection.`,
-    docPct < 100 || params.tmfContemporaneous !== true,
+    tmf.score,
+    'ICH E6(R3) Appendix C (essential records); 21 CFR 312.57',
+    tmf.gap,
+    tmf.score === null || tmf.score < 100,
   );
-  pushArea(
+  pushFlag(
     'Informed consent documentation',
-    flag(params.consentDocumentationComplete),
+    params.consentDocumentationComplete,
     '21 CFR 50.20; 50.27',
     'Complete consent QC: signatures/dates present, correct IRB-approved version, consent precedes procedures.',
-    params.consentDocumentationComplete !== true,
   );
-  pushArea(
+  pushFlag(
     'Delegation of authority',
-    flag(params.delegationLogCurrent),
-    '21 CFR 312.60; ICH E6(R3) (oversight)',
+    params.delegationLogCurrent,
+    '21 CFR 312.60; ICH E6(R3) Annex 1 §2.3 (investigator responsibilities)',
     'Bring the delegation-of-authority log current and reconcile with training/qualification records.',
-    params.delegationLogCurrent !== true,
   );
-  pushArea(
+  pushFlag(
     'Training & qualification records',
-    flag(params.trainingRecordsComplete),
-    '21 CFR 312.53(c); ICH E6(R3) Principle 7',
+    params.trainingRecordsComplete,
+    '21 CFR 312.53(c); ICH E6(R3) Principle 5',
     'Complete training/CV/qualification records for all delegated personnel.',
-    params.trainingRecordsComplete !== true,
   );
-  pushArea(
+  pushFlag(
     'Investigational product accountability',
-    flag(params.ipAccountabilityReconciled),
+    params.ipAccountabilityReconciled,
     '21 CFR 312.62(a); 812.140',
     'Reconcile IP receipt/dispensing/return/destruction; resolve discrepancies.',
-    params.ipAccountabilityReconciled !== true,
   );
-  pushArea(
+  pushFlag(
     'Safety reporting currency',
-    flag(params.safetyReportingCurrent),
+    params.safetyReportingCurrent,
     '21 CFR 312.32; 312.64(b)',
     'Reconcile AE/SAE reporting against safety database; confirm timelines met.',
-    params.safetyReportingCurrent !== true,
   );
-  pushArea(
+  pushFlag(
     'Protocol deviation management',
-    flag(params.protocolDeviationsLogged),
-    'ICH E6(R3) §2.x; 21 CFR 312.60',
+    params.protocolDeviationsLogged,
+    'ICH E6(R3) Annex 1 §2.5 (compliance with protocol); 21 CFR 312.60',
     'Ensure deviations are logged with root-cause and CAPA, and reported per IRB/sponsor policy.',
-    params.protocolDeviationsLogged !== true,
   );
-  pushArea(
+  pushFlag(
     'Monitoring evidence',
-    flag(params.monitoringReportsCurrent),
+    params.monitoringReportsCurrent,
     '21 CFR 312.56; FDA RBM Guidance (2013)',
     'Ensure monitoring visit reports are current with documented issue follow-up to closure.',
-    params.monitoringReportsCurrent !== true,
   );
-  pushArea(
+  pushFlag(
     'Data traceability',
-    flag(params.dataTraceabilityVerified),
-    'ICH E6(R3) Principle 9; Annex (data life cycle)',
+    params.dataTraceabilityVerified,
+    'ICH E6(R3) Principle 9; Annex 1 §4.2 (data life cycle elements)',
     'Verify end-to-end traceability from source to eCRF to database/listings (ALCOA+).',
-    params.dataTraceabilityVerified !== true,
   );
-  pushArea(
+  pushFlag(
     'Computerised-systems validation',
-    flag(params.computerizedSystemsValidated),
-    'ICH E6(R3) Annex (computerised systems); 21 CFR Part 11',
+    params.computerizedSystemsValidated,
+    'ICH E6(R3) Annex 1 §4.3 (computerised systems); 21 CFR Part 11',
     'Confirm validation, access controls and audit-trail review for systems holding trial data.',
-    params.computerizedSystemsValidated !== true,
   );
 
-  const readinessScore = round(
-    areaScores.reduce((acc, a) => acc + a.score, 0) / areaScores.length,
-    0,
-  );
+  const assessedTotal = areaScores.reduce((acc, a) => acc + (a.score ?? 0), 0);
+  const unassessedAreas = areaScores.filter((a) => a.score === null).length;
+  const readinessScore = unassessedAreas === 0 ? round(assessedTotal / areaScores.length, 0) : null;
+  // With areas unassessed, only a verdict they cannot change: below 60 even if each of them scored 100.
   const overallReadiness: InspectionReadinessResult['overallReadiness'] =
-    readinessScore >= 85 ? 'ready' : readinessScore >= 60 ? 'gaps' : 'not_ready';
+    readinessScore !== null
+      ? readinessStatus(readinessScore)
+      : (assessedTotal + 100 * unassessedAreas) / areaScores.length < 60
+        ? 'not_ready'
+        : 'not_assessed';
 
   // ── CAPA posture ──
-  const openCapas = num(params.openCapas, 0);
-  const capaPosture: string[] = [];
-  if (params.capaProcessInPlace !== true) {
-    capaPosture.push('No documented CAPA process detected — establish a CAPA SOP with root-cause analysis, effectiveness checks and closure tracking.');
-  } else {
-    capaPosture.push('CAPA process in place — ensure each finding has a documented root cause, corrective action, preventive action and effectiveness verification.');
-  }
-  if (openCapas > 0) {
-    capaPosture.push(`${openCapas} open CAPA(s) — prioritize closure or document interim controls and a realistic closure timeline before inspection.`);
-  }
-  if (params.priorInspectionFindings === true) {
-    capaPosture.push('Prior inspection findings present — prepare evidence that previous CAPAs were implemented and verified effective; inspectors commonly verify recurrence.');
-  }
-  capaPosture.push('Maintain a chronological inspection-readiness binder: organizational charts, SOP index, deviation/CAPA log, and a back-room/front-room SOP.');
+  const capaPosture = capaPostureFor(params);
 
   // ── Data traceability checks ──
   const dataTraceabilityChecks: string[] = [
@@ -934,28 +875,32 @@ export function assessInspectionReadiness(
     'Confirm certified-copy procedures for any source converted to another medium.',
   ];
 
-  // ── Prioritized actions (gaps first, severity-ordered) ──
+  // ── Prioritized actions (not ready, then not assessed, then gaps; lowest score first) ──
+  const rank: Record<ReadinessAreaScore['status'], number> = { not_ready: 0, not_assessed: 1, gaps: 2, ready: 3 };
   const prioritized = areaScores
     .filter((a: ReadinessAreaScore) => a.status !== 'ready')
-    .sort((a: ReadinessAreaScore, b: ReadinessAreaScore) => a.score - b.score)
-    .map((a: ReadinessAreaScore) => `[${a.status === 'not_ready' ? 'P1' : 'P2'}] ${a.area}: ${a.gaps[0] ?? 'Close gap before inspection.'}`);
+    .sort((a: ReadinessAreaScore, b: ReadinessAreaScore) => rank[a.status] - rank[b.status] || (a.score ?? 0) - (b.score ?? 0))
+    .map((a: ReadinessAreaScore) => `[${a.status === 'gaps' ? 'P2' : 'P1'}] ${a.area}: ${a.gaps[0] ?? 'Close gap before inspection.'}`);
 
   const prioritizedActions = prioritized.length > 0
     ? prioritized
-    : ['No material gaps detected — conduct a mock inspection to confirm readiness and rehearse front-room/back-room roles.'];
+    : ['No material gaps in the facts provided — conduct a mock inspection to confirm readiness and rehearse front-room/back-room roles.'];
 
-  if (params.essentialDocsCompletePercent !== undefined && docPct < 90) {
+  if (docPct !== null && docPct < 90) {
     warnings.push('Essential-document completeness below 90% is a frequent inspection trigger; prioritize TMF reconciliation.');
   }
   if (params.computerizedSystemsValidated === false) {
-    warnings.push('Unvalidated computerised systems are a high-visibility finding under the ICH E6(R3) Annex and 21 CFR Part 11.');
+    warnings.push('Unvalidated computerised systems are a high-visibility finding under ICH E6(R3) Annex 1 §4.3 and 21 CFR Part 11.');
+  }
+  if (params.inspectionTarget === undefined) {
+    warnings.push('Inspection target not stated — the common Form FDA-483 findings listed are those for a sponsor inspection; state inspectionTarget for an investigator, CRO or IRB inspection.');
   }
 
   const regulatoryCitations = uniq([
     'FDA BIMO Compliance Program Guidance Manual 7348.810 (Sponsors/CROs/Monitors)',
     'FDA BIMO Compliance Program Guidance Manual 7348.811 (Clinical Investigators)',
     'FDA BIMO Compliance Program Guidance Manual 7348.809 (IRBs)',
-    'ICH E6(R3) Good Clinical Practice (2023) — Principles 6, 7, 9; Annex',
+    'ICH E6(R3) Good Clinical Practice (Step 4, 2025-01-06) — Principles 5, 9, 10; Annex 1 §4',
     '21 CFR Part 312 (IND); 21 CFR Part 50; 21 CFR Part 56; 21 CFR Part 11',
     'FDA Guidance: Oversight of Clinical Investigations — Risk-Based Monitoring (2013)',
   ]);
@@ -980,6 +925,8 @@ export function assessInspectionReadiness(
 
 export interface GCPComplianceParams {
   ethicsApprovalCurrent?: boolean;
+  /** P3: IRB/IEC adequately constituted and independent of investigator and sponsor (21 CFR 56.107). */
+  independentEthicsReviewDocumented?: boolean;
   informedConsentProcessCompliant?: boolean;
   sponsorOversightDocumented?: boolean;
   vendorOversightDocumented?: boolean;
@@ -992,6 +939,8 @@ export interface GCPComplianceParams {
   computerizedSystemsValidated?: boolean;
   auditTrailReviewPerformed?: boolean;
   riskBasedQualityManagement?: boolean;
+  /** P5: trial processes and effort documented as proportionate to the risks (E6(R3) Principle 7). */
+  proportionateProcessesDocumented?: boolean;
   recordRetentionCompliant?: boolean;
   organizationId?: string | number;
 }
@@ -1073,9 +1022,12 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
     'Informed-consent process compliant with regulatory requirements.',
     'Informed-consent process non-compliant or unverified — a critical participant-protection gap.',
   );
+  // 2026-10-15: P3 used to be scored from ethicsApprovalCurrent (P1's input) and
+  // P5 from riskBasedQualityManagement (P4's), reporting conformance for
+  // principles no input addressed. Each now has its own input.
   pushPrinciple(
     principleById('P3'),
-    conformOf(params.ethicsApprovalCurrent),
+    conformOf(params.independentEthicsReviewDocumented),
     'Independent ethics review evidenced.',
     'Independent ethics review not evidenced — confirm IRB/IEC composition and review records.',
   );
@@ -1087,7 +1039,7 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
   );
   pushPrinciple(
     principleById('P5'),
-    conformOf(params.riskBasedQualityManagement),
+    conformOf(params.proportionateProcessesDocumented),
     'Processes are proportionate and fit-for-purpose.',
     'Proportionate, fit-for-purpose process design not evidenced.',
   );
@@ -1095,7 +1047,7 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
     principleById('P6'),
     conformOf(params.sponsorOversightDocumented),
     'Sponsor oversight of delegated activities is documented.',
-    'Sponsor oversight not documented — a frequent and serious deficiency under E6(R3) Principle 6.',
+    'Sponsor oversight not documented — a frequent and serious deficiency under E6(R3) Principle 10 and Annex 1 §3.9 (sponsor oversight).',
   );
   pushPrinciple(
     principleById('P7'),
@@ -1123,10 +1075,10 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
       severity: params.sponsorOversightDocumented === false ? 'major' : 'moderate',
       description: 'Sponsor oversight of trial conduct and delegated activities is not documented.',
       remediation: 'Document an oversight framework: governance meetings, KPIs/KRIs, escalation paths and review of delegated-party performance.',
-      citation: 'ICH E6(R3) Principle 6; 21 CFR 312.50',
+      citation: 'ICH E6(R3) Annex 1 §3.9 (sponsor oversight); 21 CFR 312.50',
     });
   } else {
-    strengths.push('Sponsor oversight of delegated activities is documented (E6(R3) Principle 6).');
+    strengths.push('Sponsor oversight of delegated activities is documented (E6(R3) Annex 1 §3.9).');
   }
 
   if (params.vendorOversightDocumented === false) {
@@ -1135,7 +1087,7 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
       severity: 'major',
       description: 'Oversight of service providers / CROs is not documented despite delegation of obligations.',
       remediation: 'Maintain written transfer-of-obligation agreements (21 CFR 312.52) and documented governance of each delegated obligation.',
-      citation: 'ICH E6(R3) Principle 6; 21 CFR 312.52',
+      citation: 'ICH E6(R3) Annex 1 §3.3 (allocation of activities) and §3.9 (sponsor oversight); 21 CFR 312.52',
     });
   }
 
@@ -1145,7 +1097,7 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
       severity: params.delegationDocumented === false ? 'major' : 'moderate',
       description: 'Delegation of authority is not adequately documented and reconciled with qualification/training.',
       remediation: 'Maintain a current delegation-of-authority log mapping each task to a qualified, trained individual.',
-      citation: 'ICH E6(R3) (investigator oversight); 21 CFR 312.60',
+      citation: 'ICH E6(R3) Annex 1 §2.3 (investigator responsibilities); 21 CFR 312.60',
     });
   } else {
     strengths.push('Delegation of authority is documented and reconciled with qualifications.');
@@ -1157,7 +1109,7 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
       severity: params.dataGovernanceAlcoaPlus === false ? 'major' : 'moderate',
       description: 'Data governance across the data life cycle (ALCOA+) is not evidenced.',
       remediation: 'Define data-flow and governance: source identification, certified copies, retention, and controls ensuring attributable/contemporaneous/original/accurate records.',
-      citation: 'ICH E6(R3) Principle 9; Annex',
+      citation: 'ICH E6(R3) Principle 9; Annex 1 §4 (data governance)',
     });
   } else {
     strengths.push('ALCOA+ data governance is evidenced across the data life cycle.');
@@ -1168,8 +1120,8 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
       domain: 'computerized_systems',
       severity: params.computerizedSystemsValidated === false ? 'major' : 'moderate',
       description: 'Computerised systems holding trial data are not evidenced as validated and access-controlled.',
-      remediation: 'Provide validation evidence, role-based access control, and enabled audit trails per the E6(R3) Annex and 21 CFR Part 11.',
-      citation: 'ICH E6(R3) Annex (computerised systems); 21 CFR Part 11',
+      remediation: 'Provide validation evidence, role-based access control, and enabled audit trails per E6(R3) Annex 1 §4.3 and 21 CFR Part 11.',
+      citation: 'ICH E6(R3) Annex 1 §4.3 (computerised systems); 21 CFR Part 11',
     });
   } else {
     strengths.push('Computerised systems are validated with access controls and audit trails.');
@@ -1181,7 +1133,7 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
       severity: 'moderate',
       description: 'Audit-trail review is not performed, weakening detection of unauthorized or implausible data changes.',
       remediation: 'Institute risk-based audit-trail review focused on critical data and on metadata indicative of data-integrity concerns.',
-      citation: 'ICH E6(R3) Annex; 21 CFR Part 11',
+      citation: 'ICH E6(R3) Annex 1 §4.3 (computerised systems); 21 CFR Part 11',
     });
   }
 
@@ -1211,10 +1163,10 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
       severity: params.riskBasedQualityManagement === false ? 'moderate' : 'minor',
       description: 'Risk-based quality management (CtQ identification, risk control, QTLs) is not evidenced.',
       remediation: 'Implement the E8(R1)/E6(R3) quality-by-design cycle: identify CtQ factors, assess and control risks, set QTLs, and review iteratively.',
-      citation: 'ICH E6(R3) Principles 4–5; ICH E8(R1)',
+      citation: 'ICH E6(R3) Principles 6–7; Annex 1 §3.10 (quality management); ICH E8(R1)',
     });
   } else {
-    strengths.push('Risk-based, quality-by-design management is implemented (E6(R3) Principles 4–5).');
+    strengths.push('Risk-based, quality-by-design management is implemented (E6(R3) Principles 6–7; Annex 1 §3.10).');
   }
 
   if (params.recordRetentionCompliant === false) {
@@ -1222,8 +1174,8 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
       domain: 'data_governance',
       severity: 'moderate',
       description: 'Record retention does not meet regulatory minimums.',
-      remediation: 'Retain essential documents per 21 CFR 312.62(c) / ICH E6(R3) (at least 2 years after marketing application approval or program discontinuation).',
-      citation: '21 CFR 312.62(c); ICH E6(R3) §3.x (retention)',
+      remediation: 'Retain essential records per 21 CFR 312.62(c) (2 years after a marketing application is approved for the indication or, if none is filed or approved, 2 years after the investigation is discontinued and FDA is notified) and ICH E6(R3) Annex 1 §2.12 and Appendix C.',
+      citation: '21 CFR 312.62(c); ICH E6(R3) Annex 1 §2.12 (investigator records) and §3.16 (sponsor data and records), retention',
     });
   }
 
@@ -1236,10 +1188,13 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
   const hasCritical = gaps.some((g: GCPGap) => g.severity === 'critical');
   const majorCount = gaps.filter((g: GCPGap) => g.severity === 'major').length;
 
+  // 2026-10-15: 'compliant' used to allow one principle to be a gap or
+  // unverified (8/9 scores 89); P3 sharing P1's flag hid that for a lapsed
+  // ethics approval. It now requires every principle to conform.
   let overallStatus: GCPComplianceResult['overallStatus'];
   if (hasCritical) overallStatus = 'critical_gaps';
   else if (majorCount >= 2 || complianceScore < 55) overallStatus = 'major_gaps';
-  else if (gaps.length > 0 || complianceScore < 85) overallStatus = 'minor_gaps';
+  else if (gaps.length > 0 || conformingPrinciples < principleAssessments.length) overallStatus = 'minor_gaps';
   else overallStatus = 'compliant';
 
   if (gaps.some((g: GCPGap) => g.severity === 'critical')) {
@@ -1248,7 +1203,7 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
   notes.push('"Unverified" principles reflect inputs not provided; absence of evidence is itself an inspection risk under E6(R3).');
 
   const regulatoryCitations = uniq([
-    'ICH E6(R3) Good Clinical Practice (2023; FDA adoption 2025) — Principles 1–9 and Annex',
+    'ICH E6(R3) Good Clinical Practice (Step 4, 2025-01-06; FDA adoption 2025) — Principles and Annex 1',
     'ICH E8(R1) General Considerations for Clinical Studies (2021)',
     '21 CFR Part 312 (sponsor & investigator responsibilities)',
     '21 CFR Part 11 (electronic records / electronic signatures)',
@@ -1290,6 +1245,8 @@ export interface InformedConsentParams {
   electronicConsent?: boolean;
   remoteConsent?: boolean;
   commercialProfitPotential?: boolean;
+  /** Whether the trial is an applicable clinical trial (42 U.S.C. 282(j)); decides 21 CFR 50.25(c). */
+  applicableClinicalTrial?: boolean;
   targetReadingGradeLevel?: number;
   organizationId?: string | number;
 }
@@ -1313,31 +1270,25 @@ export interface InformedConsentResult {
   warnings: string[];
 }
 
-/** The eight basic required elements of informed consent — 21 CFR 50.25(a). */
-const REQUIRED_CONSENT_ELEMENTS: ConsentElement[] = [
-  { id: 'RE1', category: 'required', element: 'Statement that the study involves research, its purpose, expected duration of participation, description of procedures, and identification of any experimental procedures.', citation: '21 CFR 50.25(a)(1)' },
-  { id: 'RE2', category: 'required', element: 'Description of any reasonably foreseeable risks or discomforts to the subject.', citation: '21 CFR 50.25(a)(2)' },
-  { id: 'RE3', category: 'required', element: 'Description of any benefits to the subject or to others that may reasonably be expected.', citation: '21 CFR 50.25(a)(3)' },
-  { id: 'RE4', category: 'required', element: 'Disclosure of appropriate alternative procedures or courses of treatment, if any, that might be advantageous to the subject.', citation: '21 CFR 50.25(a)(4)' },
-  { id: 'RE5', category: 'required', element: 'Statement describing the extent to which confidentiality of records will be maintained, and noting the possibility that FDA may inspect the records.', citation: '21 CFR 50.25(a)(5)' },
-  { id: 'RE6', category: 'required', element: 'For more-than-minimal-risk research, explanation of any compensation and whether medical treatments are available if injury occurs.', citation: '21 CFR 50.25(a)(6)' },
-  { id: 'RE7', category: 'required', element: 'Explanation of whom to contact for questions about the research, subject rights, and research-related injury.', citation: '21 CFR 50.25(a)(7)' },
-  { id: 'RE8', category: 'required', element: 'Statement that participation is voluntary, refusal involves no penalty or loss of benefits, and the subject may discontinue at any time without penalty.', citation: '21 CFR 50.25(a)(8)' },
-];
-
-/** Additional elements, when appropriate — 21 CFR 50.25(b). */
-const ADDITIONAL_CONSENT_ELEMENTS: ConsentElement[] = [
-  { id: 'AE1', category: 'additional', element: 'Statement that the particular treatment or procedure may involve unforeseeable risks to the subject (or to the embryo/fetus, if applicable).', citation: '21 CFR 50.25(b)(1)' },
-  { id: 'AE2', category: 'additional', element: 'Anticipated circumstances under which the subject’s participation may be terminated by the investigator without the subject’s consent.', citation: '21 CFR 50.25(b)(2)' },
-  { id: 'AE3', category: 'additional', element: 'Any additional costs to the subject that may result from participation.', citation: '21 CFR 50.25(b)(3)' },
-  { id: 'AE4', category: 'additional', element: 'Consequences of a subject’s decision to withdraw and procedures for orderly termination of participation.', citation: '21 CFR 50.25(b)(4)' },
-  { id: 'AE5', category: 'additional', element: 'Statement that significant new findings developed during the research that may affect willingness to continue will be provided to the subject.', citation: '21 CFR 50.25(b)(5)' },
-  { id: 'AE6', category: 'additional', element: 'Approximate number of subjects involved in the study.', citation: '21 CFR 50.25(b)(6)' },
-  { id: 'AE7', category: 'additional', element: 'Clinicaltrials.gov statement (for applicable clinical trials): a description of the trial will be available on the public registry.', citation: '21 CFR 50.25(c)' },
-  { id: 'AE8', category: 'additional', element: 'Statement regarding whether biospecimens may be used for commercial profit and whether the subject will share in that profit.', citation: '21 CFR 50.25(b)(7) (2018 Common Rule alignment)' },
-  { id: 'AE9', category: 'additional', element: 'Statement regarding whether clinically relevant research results, including individual results, will be returned to subjects.', citation: '21 CFR 50.25(b)(8) (Common Rule alignment)' },
-  { id: 'AE10', category: 'additional', element: 'Statement on whether the research will or might include whole-genome sequencing of biospecimens.', citation: '21 CFR 50.25(b)(9) (Common Rule alignment)' },
-];
+/**
+ * The elements, from the one record (shared/regulatory/informed-consent-elements.ts).
+ * Until 2026-10-15 this file kept its own copy, which cited "21 CFR 50.25(b)(7)–(9)"
+ * — paragraphs 50.25(b) does not have — for the 45 CFR 46.116(c)(7)–(9) elements,
+ * and treated 50.25(c) as optional by study type.
+ */
+const asElement = (el: InformedConsentElement, category: ConsentElement['category']): ConsentElement => ({
+  id: el.id,
+  category,
+  element: el.statement,
+  citation: el.applicability === 'common_rule'
+    ? `${consentElementCitation(el)} (Common Rule; not a 21 CFR 50.25 element)`
+    : consentElementCitation(el),
+});
+const REQUIRED_CONSENT_ELEMENTS: ConsentElement[] = INFORMED_CONSENT_ELEMENTS
+  .filter((e) => e.applicability === 'required').map((e) => asElement(e, 'required'));
+const ACT_STATEMENT: ConsentElement = asElement(INFORMED_CONSENT_ELEMENTS.find((e) => e.id === 'clinicaltrials_gov')!, 'required');
+const ADDITIONAL_CONSENT_ELEMENTS: ConsentElement[] = INFORMED_CONSENT_ELEMENTS
+  .filter((e) => e.applicability === 'when_appropriate' || e.applicability === 'common_rule').map((e) => asElement(e, 'additional'));
 
 /**
  * Design an informed-consent specification per 21 CFR 50.25. Pure and
@@ -1352,16 +1303,22 @@ export function designInformedConsent(params: InformedConsentParams): InformedCo
     const el = ADDITIONAL_CONSENT_ELEMENTS.find((e: ConsentElement) => e.id === id);
     if (el) applicable.push(el);
   };
-  if (params.moreThanMinimalRisk === true) add('AE1');
-  add('AE2'); // investigator-initiated termination is broadly appropriate
-  add('AE3');
-  add('AE4');
-  add('AE5'); // new findings disclosure
-  add('AE6');
-  if (params.studyType !== 'observational') add('AE7'); // applicable clinical trial registry statement
-  if (params.collectsBiospecimens === true && params.commercialProfitPotential === true) add('AE8');
-  if (params.collectsBiospecimens === true) add('AE9');
-  if (params.genomicData === true || params.collectsBiospecimens === true) add('AE10');
+  if (params.moreThanMinimalRisk === true) add('unforeseeable_risks');
+  add('investigator_termination'); // investigator-initiated termination is broadly appropriate
+  add('costs');
+  add('withdrawal_consequences');
+  add('new_findings'); // new findings disclosure
+  add('number_subjects');
+  // Common Rule-only elements (45 CFR 46.116(c)(7)–(9)), for HHS-conducted or -supported research.
+  if (params.collectsBiospecimens === true && params.commercialProfitPotential === true) add('commercial_profit');
+  if (params.collectsBiospecimens === true) add('return_of_results');
+  if (params.genomicData === true || params.collectsBiospecimens === true) add('genome_sequencing');
+  // 50.25(c) is required for an applicable clinical trial; the study type does not decide that.
+  const requiredElements = REQUIRED_CONSENT_ELEMENTS.map((e) => ({ ...e }));
+  if (params.applicableClinicalTrial === true) requiredElements.push({ ...ACT_STATEMENT });
+  else if (params.applicableClinicalTrial == null && params.studyType !== 'observational') {
+    warnings.push('Whether this is an applicable clinical trial (42 U.S.C. 282(j)) was not stated. If it is, 21 CFR 50.25(c) requires the ClinicalTrials.gov statement in the consent.');
+  }
 
   // ── Readability ──
   const targetGrade = clamp(num(params.targetReadingGradeLevel, 8), 4, 12);
@@ -1499,7 +1456,7 @@ export function designInformedConsent(params: InformedConsentParams): InformedCo
   ]);
 
   return {
-    requiredElements: REQUIRED_CONSENT_ELEMENTS.map((e) => ({ ...e })),
+    requiredElements,
     additionalElements: ADDITIONAL_CONSENT_ELEMENTS.map((e) => ({ ...e })),
     applicableAdditionalElements: uniq(applicable.map((e: ConsentElement) => e.id)).map(
       (id: string) => ADDITIONAL_CONSENT_ELEMENTS.find((e: ConsentElement) => e.id === id) as ConsentElement,
@@ -1544,22 +1501,51 @@ export interface ProtocolDeviationParams {
   organizationId?: string | number;
 }
 
+/**
+ * A verdict an unstated fact could change is 'not_assessed' (or, for
+ * reportability, 'undetermined'); the unstated facts are in notAssessed. An
+ * impact level is the one the stated facts establish ('potential' does not
+ * rule out 'actual' while affectsParticipantSafety is unstated); 'none' needs
+ * every deciding fact stated false.
+ */
 export interface DeviationClassificationResult {
-  importance: 'important' | 'non_important';
-  severity: Severity;
-  participantSafetyImpact: 'none' | 'potential' | 'actual';
-  dataIntegrityImpact: 'none' | 'minor' | 'significant';
+  importance: 'important' | 'non_important' | 'not_assessed';
+  severity: Severity | 'not_assessed';
+  participantSafetyImpact: 'none' | 'potential' | 'actual' | 'not_assessed';
+  dataIntegrityImpact: 'none' | 'minor' | 'significant' | 'not_assessed';
   reportability: {
-    reportToIRB: boolean;
-    reportToSponsor: boolean;
-    reportToFDA: boolean;
-    promptReportingRequired: boolean;
+    reportToIRB: boolean | 'undetermined';
+    reportToSponsor: boolean | 'undetermined';
+    reportToFDA: boolean | 'undetermined';
+    promptReportingRequired: boolean | 'undetermined';
     rationale: string[];
   };
   correctiveActions: string[];
   preventiveActions: string[];
   regulatoryCitations: string[];
+  /** Deciding facts that were not stated. */
+  notAssessed: Array<keyof ProtocolDeviationParams>;
   notes: string[];
+}
+
+/** The facts that decide a deviation's importance, impact and reportability. */
+const DEVIATION_FACTS: Array<keyof ProtocolDeviationParams> = [
+  'category',
+  'affectsParticipantSafety',
+  'involvedUnreportedSAE',
+  'increasedRiskToSubjects',
+  'affectsConsentValidity',
+  'affectsPrimaryEndpoint',
+  'affectsEligibilityCriticalCriterion',
+  'deviationFromIRBApprovedProtocol',
+  'isRecurring',
+];
+
+/** An impact level: the highest the stated facts establish, 'none' only when every deciding fact is false. */
+function impactLevel<T extends string>(levels: [high: T, low: T, none: T], high?: boolean, low?: boolean): T | 'not_assessed' {
+  if (high === true) return levels[0];
+  if (low === true) return levels[1];
+  return high === false && low === false ? levels[2] : 'not_assessed';
 }
 
 /**
@@ -1569,61 +1555,59 @@ export interface DeviationClassificationResult {
 export function classifyProtocolDeviation(
   params: ProtocolDeviationParams,
 ): DeviationClassificationResult {
+  // 2026-10-15: every fact used to be read with `=== true` and both impacts
+  // started at 'none', so a deviation nobody had assessed came back
+  // 'non_important', 'minor', "no individual prompt IRB report required". A
+  // true fact still settles a verdict; a negative one now needs every deciding
+  // fact stated false, else 'not_assessed' / 'undetermined' (see notAssessed).
   const notes: string[] = [];
-  const category: DeviationCategory = params.category ?? 'other';
   const affected = num(params.numberOfParticipantsAffected, 1);
+  const notAssessed = DEVIATION_FACTS.filter((k) => unstated(params[k]));
+  const isCategory = (...categories: DeviationCategory[]): boolean | undefined =>
+    stated(params.category, (c) => categories.includes(c));
 
   // ── Safety impact ──
-  let participantSafetyImpact: DeviationClassificationResult['participantSafetyImpact'] = 'none';
-  if (params.affectsParticipantSafety === true || params.involvedUnreportedSAE === true) {
-    participantSafetyImpact = 'actual';
-  } else if (
-    params.increasedRiskToSubjects === true ||
-    category === 'safety_reporting' ||
-    params.affectsConsentValidity === true
-  ) {
-    participantSafetyImpact = 'potential';
-  }
+  const safetyActual = anyOf(params.affectsParticipantSafety, params.involvedUnreportedSAE);
+  const safetyPotential = anyOf(params.increasedRiskToSubjects, isCategory('safety_reporting'), params.affectsConsentValidity);
+  const participantSafetyImpact = impactLevel(['actual', 'potential', 'none'], safetyActual, safetyPotential);
 
   // ── Data integrity impact ──
-  let dataIntegrityImpact: DeviationClassificationResult['dataIntegrityImpact'] = 'none';
-  if (
-    params.affectsPrimaryEndpoint === true ||
-    params.affectsEligibilityCriticalCriterion === true ||
-    category === 'randomization'
-  ) {
-    dataIntegrityImpact = 'significant';
-  } else if (category === 'study_procedure' || category === 'visit_window' || category === 'investigational_product') {
-    dataIntegrityImpact = 'minor';
-  }
+  const dataSignificant = anyOf(
+    params.affectsPrimaryEndpoint,
+    params.affectsEligibilityCriticalCriterion,
+    isCategory('randomization'),
+  );
+  const dataMinor = isCategory('study_procedure', 'visit_window', 'investigational_product');
+  const dataIntegrityImpact = impactLevel(['significant', 'minor', 'none'], dataSignificant, dataMinor);
 
-  // ── Importance (ICH E6(R3): an "important" deviation is one that may
+  // ── Importance (ICH E6(R3) Annex 1 §2.5: an "important" deviation is one that may
   // significantly affect participant rights/safety/well-being or the
   // reliability of trial results). ──
-  const isImportant =
-    participantSafetyImpact !== 'none' ||
-    dataIntegrityImpact === 'significant' ||
-    params.affectsConsentValidity === true ||
-    params.affectsEligibilityCriticalCriterion === true ||
-    params.deviationFromIRBApprovedProtocol === true ||
-    params.isRecurring === true;
+  const isImportant = anyOf(
+    safetyActual,
+    safetyPotential,
+    dataSignificant,
+    params.affectsConsentValidity,
+    params.affectsEligibilityCriticalCriterion,
+    params.deviationFromIRBApprovedProtocol,
+    params.isRecurring,
+  );
 
-  const importance: DeviationClassificationResult['importance'] = isImportant ? 'important' : 'non_important';
+  const importance: DeviationClassificationResult['importance'] =
+    isImportant === true ? 'important' : isImportant === false ? 'non_important' : 'not_assessed';
 
   // ── Severity ──
-  let severity: Severity;
-  if (
-    participantSafetyImpact === 'actual' ||
-    params.involvedUnreportedSAE === true ||
-    params.affectsConsentValidity === true
-  ) {
+  const critical = anyOf(safetyActual, params.affectsConsentValidity);
+  const major = anyOf(dataSignificant, safetyPotential);
+  let severity: DeviationClassificationResult['severity'];
+  if (critical === true) {
     severity = 'critical';
-  } else if (importance === 'important' && (dataIntegrityImpact === 'significant' || participantSafetyImpact === 'potential')) {
-    severity = 'major';
-  } else if (importance === 'important') {
-    severity = 'moderate';
-  } else {
+  } else if (critical === undefined || isImportant === undefined) {
+    severity = 'not_assessed';
+  } else if (!isImportant) {
     severity = 'minor';
+  } else {
+    severity = major === true ? 'major' : major === false ? 'moderate' : 'not_assessed';
   }
   if (params.isRecurring === true && severity === 'minor') {
     severity = 'moderate';
@@ -1638,42 +1622,53 @@ export function classifyProtocolDeviation(
   // To IRB: deviations to eliminate apparent immediate hazard are reportable;
   // changes/deviations affecting rights/safety/welfare, and "unanticipated
   // problems involving risks," must be reported promptly.
-  const reportToIRB =
-    importance === 'important' ||
-    participantSafetyImpact !== 'none' ||
-    params.deviationFromIRBApprovedProtocol === true ||
-    params.affectsConsentValidity === true;
-  if (reportToIRB) {
+  const reportToIRB = anyOf(
+    isImportant,
+    safetyActual,
+    safetyPotential,
+    params.deviationFromIRBApprovedProtocol,
+    params.affectsConsentValidity,
+  );
+  if (reportToIRB === true) {
     rationale.push('Reportable to the IRB: deviation affects participant rights/safety/welfare or departs from the IRB-approved protocol (21 CFR 56.108(a)(3)–(4); 50.25; investigator obligation 312.66).');
-  } else {
+  } else if (reportToIRB === false) {
     rationale.push('Non-important deviation with no safety or IRB-protocol impact: log internally; report per protocol/sponsor policy and in aggregate (no individual prompt IRB report required).');
   }
 
-  const reportToSponsor =
-    importance === 'important' ||
-    participantSafetyImpact !== 'none' ||
-    dataIntegrityImpact !== 'none';
-  if (reportToSponsor) {
-    rationale.push('Reportable to the sponsor: investigator must keep the sponsor informed of deviations affecting safety or data reliability (21 CFR 312.60; ICH E6(R3) investigator obligations).');
+  const reportToSponsor = anyOf(isImportant, safetyActual, safetyPotential, dataSignificant, dataMinor);
+  if (reportToSponsor === true) {
+    rationale.push('Reportable to the sponsor: investigator must keep the sponsor informed of deviations affecting safety or data reliability (21 CFR 312.60; ICH E6(R3) Annex 1 §2.5, compliance with protocol).');
   }
 
   // To FDA: routine deviations are not individually reported by the sponsor,
   // but an unreported SAE / SUSAR signal triggers IND safety reporting, and
   // emergency-deviation reporting obligations may apply to the investigator.
-  const reportToFDA =
-    params.involvedUnreportedSAE === true ||
-    (participantSafetyImpact === 'actual' && category === 'safety_reporting');
-  if (reportToFDA) {
+  const reportToFDA = anyOf(params.involvedUnreportedSAE, allOf(safetyActual, isCategory('safety_reporting')));
+  if (reportToFDA === true) {
     rationale.push('FDA notification implicated: a serious, unexpected, drug-related event triggers IND safety reporting by the sponsor (21 CFR 312.32); an investigator deviation to protect life may require FDA/IRB notice (312.66; 50.23/50.24 where applicable).');
   }
 
-  const promptReportingRequired =
-    participantSafetyImpact === 'actual' ||
-    params.affectsConsentValidity === true ||
-    params.involvedUnreportedSAE === true ||
-    params.deviationFromIRBApprovedProtocol === true;
-  if (promptReportingRequired) {
+  const promptReportingRequired = anyOf(
+    safetyActual,
+    params.affectsConsentValidity,
+    params.involvedUnreportedSAE,
+    params.deviationFromIRBApprovedProtocol,
+  );
+  if (promptReportingRequired === true) {
     rationale.push('Prompt (expedited) reporting required — do not wait for the next periodic report.');
+  }
+  const openDecisions = Object.entries({
+    IRB: reportToIRB,
+    sponsor: reportToSponsor,
+    FDA: reportToFDA,
+    'prompt reporting': promptReportingRequired,
+  })
+    .filter(([, decided]) => decided === undefined)
+    .map(([decision]) => decision);
+  if (openDecisions.length > 0) {
+    rationale.push(
+      `Not determined (${openDecisions.join(', ')}): ${notAssessed.join(', ')} not stated, and any of them can make the deviation reportable. State each before deciding (21 CFR 56.108(a)(3)–(4); 312.66).`,
+    );
   }
 
   // ── Corrective / preventive actions ──
@@ -1681,6 +1676,9 @@ export function classifyProtocolDeviation(
   const preventiveActions: string[] = [];
 
   correctiveActions.push('Document the deviation in the deviation log with date, participants affected, and immediate actions taken.');
+  if (notAssessed.length > 0) {
+    correctiveActions.push(`Establish and record the facts not yet stated (${notAssessed.join(', ')}) before closing the classification and the reporting decision.`);
+  }
   if (participantSafetyImpact !== 'none') {
     correctiveActions.push('Assess and protect the affected participant(s); medical evaluation if indicated; notify the medical monitor.');
   }
@@ -1693,7 +1691,7 @@ export function classifyProtocolDeviation(
   if (dataIntegrityImpact === 'significant') {
     correctiveActions.push('Flag affected data; pre-specify handling in the SAP (e.g., per-protocol exclusion); ensure transparency in the CSR.');
   }
-  if (category === 'investigational_product') {
+  if (params.category === 'investigational_product') {
     correctiveActions.push('Reconcile IP accountability; quarantine affected product; assess dosing impact.');
   }
 
@@ -1705,7 +1703,7 @@ export function classifyProtocolDeviation(
   preventiveActions.push('Track CAPA to closure and verify effectiveness; review trend in central monitoring.');
 
   const regulatoryCitations = uniq([
-    'ICH E6(R3) Good Clinical Practice (2023) — important vs. non-important deviations; investigator obligations',
+    'ICH E6(R3) Good Clinical Practice (Step 4, 2025-01-06) — Annex 1 §2.5 (compliance with protocol): important vs. non-important deviations; investigator obligations',
     '21 CFR 312.60; 312.66 (investigator compliance and prompt reporting)',
     '21 CFR 56.108(a)(3)–(4) (IRB reporting of changes/deviations and unanticipated problems)',
     '21 CFR 312.32 (IND safety reporting) — where a deviation implicates an SAE/SUSAR',
@@ -1719,15 +1717,16 @@ export function classifyProtocolDeviation(
     participantSafetyImpact,
     dataIntegrityImpact,
     reportability: {
-      reportToIRB,
-      reportToSponsor,
-      reportToFDA,
-      promptReportingRequired,
+      reportToIRB: reportToIRB ?? 'undetermined',
+      reportToSponsor: reportToSponsor ?? 'undetermined',
+      reportToFDA: reportToFDA ?? 'undetermined',
+      promptReportingRequired: promptReportingRequired ?? 'undetermined',
       rationale,
     },
     correctiveActions,
     preventiveActions,
     regulatoryCitations,
+    notAssessed,
     notes,
   };
 }
@@ -1735,18 +1734,6 @@ export function classifyProtocolDeviation(
 // ─────────────────────────────────────────────────────────────────────────────
 // 6. ESSENTIAL DOCUMENTS / TMF PLANNING
 // ─────────────────────────────────────────────────────────────────────────────
-
-export type TrialStage = 'before' | 'during' | 'after';
-
-export interface EssentialDocument {
-  id: string;
-  name: string;
-  stage: TrialStage;
-  tmfZone: string;
-  heldBy: Array<'sponsor' | 'investigator'>;
-  purpose: string;
-  citation: string;
-}
 
 export interface EssentialDocumentsParams {
   stage?: TrialStage | 'all';
@@ -1756,12 +1743,6 @@ export interface EssentialDocumentsParams {
   usesInvestigationalDevice?: boolean;
   multiSite?: boolean;
   organizationId?: string | number;
-}
-
-export interface TmfZone {
-  zone: string;
-  description: string;
-  exampleSections: string[];
 }
 
 export interface QcCheckItem {
@@ -1784,54 +1765,7 @@ export interface EssentialDocumentsResult {
 }
 
 /**
- * Essential-document library aligned to ICH E6 essential-records concepts and
- * the DIA TMF Reference Model zone structure.
- */
-const ESSENTIAL_DOCUMENTS: EssentialDocument[] = [
-  // ── Before the trial begins ──
-  { id: 'ED-IB', name: 'Investigator’s Brochure (current version)', stage: 'before', tmfZone: 'IP & Trial Information', heldBy: ['sponsor', 'investigator'], purpose: 'Documents the available nonclinical/clinical information relevant to the IP.', citation: 'ICH E6(R3) §3.x (essential records); 21 CFR 312.55' },
-  { id: 'ED-PROTOCOL', name: 'Signed protocol and amendments', stage: 'before', tmfZone: 'Trial Management', heldBy: ['sponsor', 'investigator'], purpose: 'Documents agreement to the protocol and any changes.', citation: 'ICH E6(R3); 21 CFR 312.23(a)(6)' },
-  { id: 'ED-CONSENT', name: 'IRB-approved informed consent form(s) and any subject information', stage: 'before', tmfZone: 'Ethics', heldBy: ['sponsor', 'investigator'], purpose: 'Documents the consent materials approved for use.', citation: '21 CFR 50.25; 56.111' },
-  { id: 'ED-IRB-APPROVAL', name: 'IRB/IEC approval and composition/statement', stage: 'before', tmfZone: 'Ethics', heldBy: ['sponsor', 'investigator'], purpose: 'Documents independent ethics review and approval before enrollment.', citation: '21 CFR 56.108; 56.115' },
-  { id: 'ED-1572', name: 'Statement of Investigator (Form FDA-1572) and signed agreement', stage: 'before', tmfZone: 'Central & Site Management', heldBy: ['sponsor'], purpose: 'Documents the investigator’s commitments and qualifications.', citation: '21 CFR 312.53(c)' },
-  { id: 'ED-CV', name: 'Curriculum vitae / qualification of investigator(s) and sub-investigators', stage: 'before', tmfZone: 'Central & Site Management', heldBy: ['sponsor', 'investigator'], purpose: 'Documents qualifications and eligibility to conduct the trial.', citation: 'ICH E6(R3) Principle 7; 21 CFR 312.53(c)' },
-  { id: 'ED-FINANCIAL', name: 'Financial disclosure information (Form FDA-3454/3455)', stage: 'before', tmfZone: 'Central & Site Management', heldBy: ['sponsor'], purpose: 'Documents financial interests for disclosure to FDA.', citation: '21 CFR Part 54' },
-  { id: 'ED-LAB-CERT', name: 'Normal ranges and laboratory certification/accreditation', stage: 'before', tmfZone: 'Central & Site Management', heldBy: ['sponsor', 'investigator'], purpose: 'Documents competence of facilities to perform required tests.', citation: 'ICH E6(R3) §3.x; CLIA where applicable' },
-  { id: 'ED-IP-RELEASE', name: 'IP labeling, instructions, shipping and handling records', stage: 'before', tmfZone: 'IP & Trial Information', heldBy: ['sponsor'], purpose: 'Documents proper labeling and conditions for IP.', citation: 'ICH E6(R3) Principle 8; 21 CFR 312.57' },
-  { id: 'ED-RANDOM', name: 'Randomization/blinding procedures and code (sponsor-held)', stage: 'before', tmfZone: 'Trial Management', heldBy: ['sponsor'], purpose: 'Documents the randomization method and emergency unblinding procedure.', citation: 'ICH E6(R3); ICH E9' },
-
-  // ── During the trial ──
-  { id: 'ED-IB-UPDATE', name: 'Updates to Investigator’s Brochure and other current documents', stage: 'during', tmfZone: 'IP & Trial Information', heldBy: ['sponsor', 'investigator'], purpose: 'Documents revisions made available during conduct.', citation: 'ICH E6(R3) §3.x' },
-  { id: 'ED-IRB-CONTINUING', name: 'IRB continuing-review approvals and correspondence', stage: 'during', tmfZone: 'Ethics', heldBy: ['sponsor', 'investigator'], purpose: 'Documents ongoing ethics oversight.', citation: '21 CFR 56.108(a); 56.109(f)' },
-  { id: 'ED-CONSENT-SIGNED', name: 'Signed informed-consent forms (source/site)', stage: 'during', tmfZone: 'Ethics / Site (ISF)', heldBy: ['investigator'], purpose: 'Documents that consent was obtained before procedures.', citation: '21 CFR 50.27' },
-  { id: 'ED-SOURCE', name: 'Source documents and case-report forms / eCRFs', stage: 'during', tmfZone: 'Site (ISF)', heldBy: ['investigator'], purpose: 'Documents trial data (ALCOA+).', citation: '21 CFR 312.62(b); ICH E6(R3) Principle 9' },
-  { id: 'ED-SAE', name: 'Safety reports, SAE source and reporting documentation', stage: 'during', tmfZone: 'Safety', heldBy: ['sponsor', 'investigator'], purpose: 'Documents AE/SAE ascertainment and reporting.', citation: '21 CFR 312.32; 312.64(b)' },
-  { id: 'ED-MONITORING', name: 'Monitoring visit reports and follow-up letters', stage: 'during', tmfZone: 'Trial Management', heldBy: ['sponsor'], purpose: 'Documents sponsor monitoring and issue follow-up.', citation: '21 CFR 312.56; FDA RBM Guidance (2013)' },
-  { id: 'ED-DELEGATION', name: 'Delegation-of-authority / signature and training logs', stage: 'during', tmfZone: 'Site (ISF)', heldBy: ['investigator'], purpose: 'Documents who performed and was qualified for each delegated task.', citation: 'ICH E6(R3) (oversight); 21 CFR 312.60' },
-  { id: 'ED-IP-ACCOUNT', name: 'IP accountability (receipt, dispensing, return, destruction)', stage: 'during', tmfZone: 'IP & Trial Information', heldBy: ['sponsor', 'investigator'], purpose: 'Documents IP control throughout the trial.', citation: '21 CFR 312.62(a); 812.140' },
-  { id: 'ED-DEVIATION', name: 'Protocol-deviation log and CAPA records', stage: 'during', tmfZone: 'Trial Management', heldBy: ['sponsor', 'investigator'], purpose: 'Documents deviations, importance and corrective actions.', citation: 'ICH E6(R3); 21 CFR 312.60' },
-
-  // ── After completion ──
-  { id: 'ED-IP-RECON', name: 'Final IP accountability and destruction records', stage: 'after', tmfZone: 'IP & Trial Information', heldBy: ['sponsor', 'investigator'], purpose: 'Documents final reconciliation of IP.', citation: 'ICH E6(R3) §3.x' },
-  { id: 'ED-CLOSEOUT', name: 'Audit certificate / monitoring close-out report', stage: 'after', tmfZone: 'Trial Management', heldBy: ['sponsor'], purpose: 'Documents close-out of the site and trial.', citation: 'ICH E6(R3) §3.x' },
-  { id: 'ED-FINAL-IRB', name: 'Final IRB notification of study completion', stage: 'after', tmfZone: 'Ethics', heldBy: ['investigator'], purpose: 'Documents notification of completion to the IRB.', citation: '21 CFR 56.108(a)' },
-  { id: 'ED-DB-LOCK', name: 'Database lock documentation and final datasets', stage: 'after', tmfZone: 'Statistics / Data', heldBy: ['sponsor'], purpose: 'Documents the controlled finalization of trial data.', citation: 'ICH E6(R3) Annex (data governance)' },
-  { id: 'ED-CSR', name: 'Clinical Study Report (CSR)', stage: 'after', tmfZone: 'Statistics / Data', heldBy: ['sponsor'], purpose: 'Documents trial results and conclusions.', citation: 'ICH E3; ICH E6(R3) §3.x' },
-];
-
-/** DIA TMF Reference Model zone concepts (abridged). */
-const TMF_ZONES: TmfZone[] = [
-  { zone: 'Trial Management', description: 'Oversight, planning, monitoring and reporting of the trial.', exampleSections: ['Trial oversight', 'Monitoring', 'Deviations & CAPA', 'Meetings'] },
-  { zone: 'Central & Site Management', description: 'Site identification, qualification, and investigator documentation.', exampleSections: ['Site qualification', 'Form FDA-1572', 'CVs/qualifications', 'Financial disclosure'] },
-  { zone: 'Ethics', description: 'IRB/IEC review, approvals, consent materials and correspondence.', exampleSections: ['IRB approvals', 'Consent forms', 'Continuing review'] },
-  { zone: 'IP & Trial Information', description: 'Investigational product handling, labeling, accountability and the IB.', exampleSections: ['Investigator’s Brochure', 'IP accountability', 'Labeling/shipping'] },
-  { zone: 'Safety', description: 'Adverse-event and safety-reporting documentation.', exampleSections: ['SAE reports', 'Safety correspondence', 'DSMB materials'] },
-  { zone: 'Statistics / Data', description: 'Data management, statistics, database lock and the CSR.', exampleSections: ['SAP', 'Database lock', 'Final datasets', 'CSR'] },
-  { zone: 'Site (ISF)', description: 'The Investigator Site File: site-held source and essential records.', exampleSections: ['Signed consents', 'Source documents', 'Delegation log', 'Site IP records'] },
-];
-
-/**
- * Plan the Trial Master File / essential-document set per ICH E6 and the DIA
+ * Plan the Trial Master File / essential-document set per ICH E6(R3) Appendix C and the DIA
  * TMF Reference Model. Pure and deterministic.
  */
 export function planEssentialDocuments(
@@ -1880,19 +1814,19 @@ export function planEssentialDocuments(
   };
 
   const completenessAndQcPlan: QcCheckItem[] = [
-    { check: 'Define the expected document set (TMF index) by zone/section before first-patient-in; track expected vs. present.', citation: 'ICH E6(R3) §3.x; DIA TMF Reference Model' },
-    { check: 'Confirm essential documents exist before the trial begins (consent, IRB approval, 1572, IB, protocol).', citation: 'ICH E6(R3); 21 CFR 312.53; 56.108' },
+    { check: 'Define the expected document set (TMF index) by zone/section before first-patient-in; track expected vs. present.', citation: 'ICH E6(R3) Appendix C; DIA TMF Reference Model' },
+    { check: 'Confirm essential documents exist before the trial begins (consent, IRB approval, 1572, IB, protocol).', citation: 'ICH E6(R3) Appendix C (essential records); 21 CFR 312.53; 56.108' },
     { check: 'Verify documents are filed contemporaneously (timeliness metric per document type).', citation: 'ICH E6(R3) Principle 9 (contemporaneous)' },
-    { check: 'QC each filed document for completeness, legibility, correct version, and required signatures/dates.', citation: 'ICH E6(R3) §3.x' },
-    { check: 'Reconcile the Investigator Site File against the sponsor TMF for completeness and consistency.', citation: 'ICH E6(R3) (sponsor/investigator records)' },
-    { check: 'For an electronic TMF, validate the system, control access, and ensure audit trails and certified copies.', citation: 'ICH E6(R3) Annex; 21 CFR Part 11' },
-    { check: 'Perform periodic TMF completeness reviews and a pre-inspection/pre-close-out reconciliation.', citation: 'ICH E6(R3) §3.x; FDA BIMO CPGM 7348.810' },
+    { check: 'QC each filed document for completeness, legibility, correct version, and required signatures/dates.', citation: 'ICH E6(R3) Appendix C' },
+    { check: 'Reconcile the Investigator Site File against the sponsor TMF for completeness and consistency.', citation: 'ICH E6(R3) Annex 1 §2.12 (investigator records) / §3.16 (sponsor data and records)' },
+    { check: 'For an electronic TMF, validate the system, control access, and ensure audit trails and certified copies.', citation: 'ICH E6(R3) Annex 1 §4.3 (computerised systems); 21 CFR Part 11' },
+    { check: 'Perform periodic TMF completeness reviews and a pre-inspection/pre-close-out reconciliation.', citation: 'ICH E6(R3) Appendix C; FDA BIMO CPGM 7348.810' },
   ];
 
   if (params.electronicTmf === true) {
     completenessAndQcPlan.push({
       check: 'Document the eTMF validation status, user access matrix, and audit-trail review cadence.',
-      citation: 'ICH E6(R3) Annex (computerised systems); 21 CFR Part 11',
+      citation: 'ICH E6(R3) Annex 1 §4.3 (computerised systems); 21 CFR Part 11',
     });
   }
   if (params.multiSite === true) {
@@ -1900,14 +1834,14 @@ export function planEssentialDocuments(
   }
 
   const retentionGuidance: string[] = [
-    'Retain essential documents for at least 2 years after the last marketing-application approval in an ICH region, or 2 years after formal discontinuation of clinical development (21 CFR 312.62(c)).',
+    'Retain essential records for the period applicable regulation sets (ICH E6(R3) Annex 1 §2.12 and Appendix C). Under 21 CFR 312.62(c): 2 years after a marketing application is approved for the indication or, if none is filed or approved, 2 years after the investigation is discontinued and FDA is notified.',
     'Do not destroy records without sponsor notification; honor any longer retention required by the agreement or local law.',
     'Ensure records remain retrievable, legible and (if electronic) readable for the full retention period.',
   ];
 
   const regulatoryCitations = uniq([
-    'ICH E6(R3) Good Clinical Practice (2023) — essential records (before/during/after), §3.x',
-    'ICH E6(R3) Annex — data governance and computerised systems (eTMF)',
+    'ICH E6(R3) Good Clinical Practice (Step 4, 2025-01-06) — Appendix C, essential records (before/during/after)',
+    'ICH E6(R3) Annex 1 §4 — data governance and computerised systems (§4.3, eTMF)',
     '21 CFR 312.57; 312.62 (record retention and case histories)',
     '21 CFR 312.53(c) (1572, CVs); 21 CFR Part 54 (financial disclosure)',
     '21 CFR Part 56 (IRB records); 21 CFR Part 11 (electronic records)',

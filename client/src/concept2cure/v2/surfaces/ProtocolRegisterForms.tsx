@@ -66,13 +66,15 @@ const SEVERITY_OPTIONS = [
 const FORMS: Record<RegisterKind, C2CFormConfig> = {
   risk: {
     eyebrow: 'Protocol · risk register', title: 'Add protocol risk',
-    sub: 'ICH E6(R2) §5.0 — risk-based quality management. Recorded as a governed action.',
+    sub: 'ICH E6(R3) Annex 1 §3.10 — risk-based quality management. Recorded as a governed action.',
     governed: true, submitLabel: 'Record risk',
     fields: [
       { key: 'description', label: 'Risk description', type: 'textarea', required: true, placeholder: 'e.g. Site staff turnover threatens visit-window compliance' },
       { key: 'category', label: 'Category', type: 'select', options: ['participant_safety', 'data_integrity', 'regulatory', 'operational', 'privacy', 'other'], default: 'operational', half: true },
-      { key: 'likelihood', label: 'Likelihood', type: 'select', options: ['rare', 'unlikely', 'possible', 'likely', 'almost_certain'], default: 'possible', half: true },
-      { key: 'impact', label: 'Impact', type: 'select', options: ['negligible', 'minor', 'moderate', 'major', 'severe'], default: 'moderate', half: true },
+      /* No preselected rating: "possible" × "moderate" was submitted as an
+         assessment — 9, high — whether or not anyone made one. */
+      { key: 'likelihood', label: 'Likelihood', type: 'select', options: ['rare', 'unlikely', 'possible', 'likely', 'almost_certain'], required: true, half: true },
+      { key: 'impact', label: 'Impact', type: 'select', options: ['negligible', 'minor', 'moderate', 'major', 'severe'], required: true, half: true },
       { key: 'owner', label: 'Owner', type: 'text', half: true, placeholder: 'e.g. Clinical operations lead' },
       { key: 'mitigation', label: 'Mitigation', type: 'textarea', placeholder: 'Planned mitigation / monitoring' },
       REASON_FIELD,
@@ -109,7 +111,7 @@ const FORMS: Record<RegisterKind, C2CFormConfig> = {
   },
   deviation: {
     eyebrow: 'Protocol · deviations', title: 'Report deviation',
-    sub: 'Every deviation is documented and explained (ICH E6(R2) 4.5.3). Severity and safety impact are your assessment — leave them "Not assessed" if you have not made one. Recorded as a governed action.',
+    sub: 'Every deviation is documented and explained (ICH E6(R3) Annex 1 §2.5). Severity and safety impact are your assessment — leave them "Not assessed" if you have not made one. Recorded as a governed action.',
     governed: true, submitLabel: 'Report deviation',
     fields: [
       { key: 'description', label: 'What happened', type: 'textarea', required: true, placeholder: 'Describe the deviation from the protocol' },

@@ -1,0 +1,239 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> concept2cure-riai@1.0.0 test:dependency-risk
+> node --test scripts/ci/__tests__/dependency-risk-gate.test.mjs tests/security/handlebars-upgrade.test.mjs
+
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+TAP version 13
+# (node:25) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: passes a reviewed unreachable advisory
+ok 1 - passes a reviewed unreachable advisory
+  ---
+  duration_ms: 51.126408
+  type: 'test'
+  ...
+# Subtest: passes the npm transitive wrapper for a reviewed advisory
+ok 2 - passes the npm transitive wrapper for a reviewed advisory
+  ---
+  duration_ms: 44.550924
+  type: 'test'
+  ...
+# Subtest: passes a diamond: two wrappers sharing one reviewed transitive
+ok 3 - passes a diamond: two wrappers sharing one reviewed transitive
+  ---
+  duration_ms: 48.819532
+  type: 'test'
+  ...
+# Subtest: passes a reviewed high cause alongside a separately reported moderate-only branch
+ok 4 - passes a reviewed high cause alongside a separately reported moderate-only branch
+  ---
+  duration_ms: 59.106251
+  type: 'test'
+  ...
+# Subtest: blocks an uncovered high cause even when its wrapper claims moderate severity
+ok 5 - blocks an uncovered high cause even when its wrapper claims moderate severity
+  ---
+  duration_ms: 62.18715
+  type: 'test'
+  ...
+# Subtest: blocks an uncovered critical advisory even when every wrapper claims moderate severity
+ok 6 - blocks an uncovered critical advisory even when every wrapper claims moderate severity
+  ---
+  duration_ms: 50.433811
+  type: 'test'
+  ...
+# Subtest: passes a well-formed moderate-only scanner graph without a high decision
+ok 7 - passes a well-formed moderate-only scanner graph without a high decision
+  ---
+  duration_ms: 63.906753
+  type: 'test'
+  ...
+# Subtest: blocks a truncated moderate branch beside a reviewed high cause
+ok 8 - blocks a truncated moderate branch beside a reviewed high cause
+  ---
+  duration_ms: 61.241559
+  type: 'test'
+  ...
+# Subtest: blocks a cycle in a moderate branch beside a reviewed high cause
+ok 9 - blocks a cycle in a moderate branch beside a reviewed high cause
+  ---
+  duration_ms: 59.579928
+  type: 'test'
+  ...
+# Subtest: blocks malformed advisory metadata in a moderate branch
+ok 10 - blocks malformed advisory metadata in a moderate branch
+  ---
+  duration_ms: 47.288481
+  type: 'test'
+  ...
+# Subtest: blocks a high wrapper with no reported high or critical cause
+ok 11 - blocks a high wrapper with no reported high or critical cause
+  ---
+  duration_ms: 58.79371
+  type: 'test'
+  ...
+# Subtest: fails closed on a true via cycle
+ok 12 - fails closed on a true via cycle
+  ---
+  duration_ms: 55.215358
+  type: 'test'
+  ...
+# Subtest: fails closed on a via-string naming a package absent from the report
+ok 13 - fails closed on a via-string naming a package absent from the report
+  ---
+  duration_ms: 56.664371
+  type: 'test'
+  ...
+# Subtest: fails closed on a new high advisory
+ok 14 - fails closed on a new high advisory
+  ---
+  duration_ms: 55.976109
+  type: 'test'
+  ...
+# Subtest: fails closed when the scanner is unavailable
+ok 15 - fails closed when the scanner is unavailable
+  ---
+  duration_ms: 63.137518
+  type: 'test'
+  ...
+# Subtest: fails closed on an expired exception
+ok 16 - fails closed on an expired exception
+  ---
+  duration_ms: 47.001186
+  type: 'test'
+  ...
+# Subtest: fails closed on a malformed validation clock instead of bypassing expiration
+ok 17 - fails closed on a malformed validation clock instead of bypassing expiration
+  ---
+  duration_ms: 49.38214
+  type: 'test'
+  ...
+# Subtest: fails closed on an invalid decision expiry instead of accepting NaN
+ok 18 - fails closed on an invalid decision expiry instead of accepting NaN
+  ---
+  duration_ms: 52.635855
+  type: 'test'
+  ...
+# Subtest: fails closed on an impossible calendar date in a decision expiry
+ok 19 - fails closed on an impossible calendar date in a decision expiry
+  ---
+  duration_ms: 51.641028
+  type: 'test'
+  ...
+# Subtest: fails closed on a malformed decision review date
+ok 20 - fails closed on a malformed decision review date
+  ---
+  duration_ms: 48.10031
+  type: 'test'
+  ...
+# Subtest: fails closed on a malformed exception approval timestamp
+ok 21 - fails closed on a malformed exception approval timestamp
+  ---
+  duration_ms: 49.550394
+  type: 'test'
+  ...
+# Subtest: fails closed when the ledger seal does not match the lockfile
+ok 22 - fails closed when the ledger seal does not match the lockfile
+  ---
+  duration_ms: 51.062142
+  type: 'test'
+  ...
+# Subtest: reseal refuses a new advisory and writes nothing
+ok 23 - reseal refuses a new advisory and writes nothing
+  ---
+  duration_ms: 135.682164
+  type: 'test'
+  ...
+# Subtest: reseal refuses when a covered finding vanishes from the audit
+ok 24 - reseal refuses when a covered finding vanishes from the audit
+  ---
+  duration_ms: 141.311254
+  type: 'test'
+  ...
+# Subtest: reseal refuses when a covered finding's installed version changed
+ok 25 - reseal refuses when a covered finding's installed version changed
+  ---
+  duration_ms: 123.3635
+  type: 'test'
+  ...
+# Subtest: reseal refuses when the scanner is unavailable
+ok 26 - reseal refuses when the scanner is unavailable
+  ---
+  duration_ms: 133.649062
+  type: 'test'
+  ...
+# Subtest: reseal rebinds an unchanged finding set and the gate passes again
+ok 27 - reseal rebinds an unchanged finding set and the gate passes again
+  ---
+  duration_ms: 228.607256
+  type: 'test'
+  ...
+# Subtest: security patch: a mapped IPv6 subnet cannot trust every IPv4 client
+ok 28 - security patch: a mapped IPv6 subnet cannot trust every IPv4 client
+  ---
+  duration_ms: 4.477877
+  type: 'test'
+  ...
+# Subtest: security patch: shell quoting rejects line terminators after a comment
+ok 29 - security patch: shell quoting rejects line terminators after a comment
+  ---
+  duration_ms: 2.084255
+  type: 'test'
+  ...
+# Subtest: security patch: an extreme indexed source-map offset is rejected in a bounded child
+ok 30 - security patch: an extreme indexed source-map offset is rejected in a bounded child
+  ---
+  duration_ms: 47.025518
+  type: 'test'
+  ...
+# Subtest: security patch: an aborted compressed response destroys its zlib stream
+ok 31 - security patch: an aborted compressed response destroys its zlib stream
+  ---
+  duration_ms: 66.094885
+  type: 'test'
+  ...
+# Subtest: integration: committed ledger seals the committed package-lock.json
+ok 32 - integration: committed ledger seals the committed package-lock.json
+  ---
+  duration_ms: 64.308367
+  type: 'test'
+  ...
+# (node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Handlebars rejects the blockParams AST injection bypass (GHSA-8r5x-fm3f-whwj)
+ok 33 - Handlebars rejects the blockParams AST injection bypass (GHSA-8r5x-fm3f-whwj)
+  ---
+  duration_ms: 3.583274
+  type: 'test'
+  ...
+# Subtest: Handlebars blocks Function constructor lookup through own properties (GHSA-p8wg-vrv2-v86f)
+ok 34 - Handlebars blocks Function constructor lookup through own properties (GHSA-p8wg-vrv2-v86f)
+  ---
+  duration_ms: 2.632825
+  type: 'test'
+  ...
+# Subtest: Handlebars precompiled templates cannot terminate an inline script (GHSA-xw65-4hp5-5hc7)
+ok 35 - Handlebars precompiled templates cannot terminate an inline script (GHSA-xw65-4hp5-5hc7)
+  ---
+  duration_ms: 0.310099
+  type: 'test'
+  ...
+# Subtest: Handlebars retains ordinary string rendering and HTML escaping
+ok 36 - Handlebars retains ordinary string rendering and HTML escaping
+  ---
+  duration_ms: 1.510376
+  type: 'test'
+  ...
+1..36
+# tests 36
+# suites 0
+# pass 36
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2222.656213

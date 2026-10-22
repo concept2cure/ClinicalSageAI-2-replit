@@ -1,0 +1,33 @@
+The new refusal reason, measured rather than assumed.
+
+Round 13 measured its two refusal reasons at 5.21:1 (light) and 6.82:1 (dark) in
+real Chromium under the shipped stylesheets. Door 5's reason uses the same values
+(12px, var(--text-300)) but sits in a DIFFERENT container — the artifact card,
+`.ct-art`, which declares its own background — so round 13's measurement does not
+carry over by assumption. A token that is AA on one surface can fail on another;
+that is exactly what round 13's capture found in lineage/palette.ts, whose "AA"
+claim had only ever been measured in light mode.
+
+Surface, from app-v2.css:2921:
+  .c2c-v2 .ct-art{ ... background:var(--bg-000); ... }
+
+Tokens, from design-system/colors_and_type.css (:root and .dark/[data-theme=dark]):
+  light  --text-300 #6b6963   --bg-000 #faf9f5
+  dark   --text-300 #b0aea5   --bg-000 #262624
+
+Computed with the repo's own single copy of the arithmetic, scripts/lib/wcag.mjs
+(contrastRatio over sRGB triples):
+
+  light  --text-300 on --bg-000    5.21:1   PASS (AA, normal text, needs 4.5:1)
+  dark   --text-300 on --bg-000    6.82:1   PASS
+
+Both figures match round 13's measured pair exactly, which also establishes what
+was not previously written down: the conversation's refusal reason sits on the
+same --bg-000 surface.
+
+What this does NOT cover, stated so it is not read as more than it is: this is
+the static token arithmetic, not a live pixel measurement in Chromium. The
+artifact card's refused state is not in any visual-qa capture, so no gate
+measures it. Round 13 added the conversation and pane states to
+scripts/visual-qa/dump-insert-gate.spec.tsx; adding the card's state belongs with
+that capture and is recorded as not done.

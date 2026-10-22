@@ -119,4 +119,3 @@ Real at aff7eae16 for four of the five sites. Line 414 is wrong, and the severit
 (5) Correction: line 414 (the user_login_mfa_challenge success event) is NOT affected. authEnterprise.ts:386 returns 403 NO_ORGANIZATION whenever !user.defaultOrganizationId, before the partial token and the MFA-challenge event. That event is only reached when defaultOrganizationId is non-null, and it is then a valid tenant. For the same reason, such a colleague can never complete a sign-in through this door.
 
 Severity: medium rather than high. The door is API-only with no catalog UI, only refusal events are affected, and the rows are not lost, only written to tenant 0. It is still a real gap in the per-tenant audit trail, and it is a duplicate path that F-41 missed. Not reproduced live against the DB: the code path is deterministic and follows from the lines above.
-

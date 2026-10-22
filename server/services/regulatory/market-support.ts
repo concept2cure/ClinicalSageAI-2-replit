@@ -28,10 +28,13 @@
  * Pure apart from `readMarketSupport`, which reads the active packs once.
  */
 import {
+  documentAgencyCandidates,
+  NOTIFIED_BODY,
   AGENCY_TO_CODE,
   PROGRAM_TO_DOC_TYPE,
   describeUnmappedClass,
 } from '../c2c/document-class.js';
+import { workstreamForFilingType } from '../../../shared/constants/domain/product-types.js';
 import { listActiveRulePacks, type RulePackQueryable } from '../c2c/rule-pack-lookup.js';
 import { module1ShapeOf, type Module1Shape } from '../ectd/regional-backbone-readiness.js';
 import { pmdaEctdV4Fact } from '../ectd/dispatch-readiness.js';
@@ -42,14 +45,21 @@ import {
   FDA_ESG_NOT_PROVEN,
   PMDA_PROTOCOL_UNVERIFIED,
 } from '../submission-gateways/transport-refusals.js';
+// Health Canada's adapter no longer posts anywhere (2026-10-08, F19b), so
+// ADAPTER_UNSOURCED, "its adapter posts to an endpoint…", is not true of it.
+// The adapter's own sentence is the channel detail; re-exported for readers.
+import { HEALTH_CANADA_NO_TRANSPORT } from '../submission-gateways/health-canada-gateway.js';
+export { HEALTH_CANADA_NO_TRANSPORT };
 import {
   REGION_IDENTITY,
   canonicalRegionOf,
   type CanonicalRegion,
 } from '../../../shared/regulatory/region-identity.js';
-import { getByAgency } from '../../../shared/regulatory/global-document-registry.js';
+import { getApplicationType, getByAgency } from '../../../shared/regulatory/global-document-registry.js';
+import { classNotSequencedReason, filingDocumentClassOf, type FilingDocumentClass } from '../../../shared/regulatory/filing-document-classes.js';
 import type { RegulatoryApplicationType } from '../../../shared/regulatory/document-taxonomy.js';
 import { resolveToRegistryEntry } from '../../../shared/regulatory/submission-type-bridge.js';
+import { regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog.js';
 
 /** The active rule packs, by (doc_type, agency code). Injected so the composition stays pure. */
 export interface ActiveRulePacks {
@@ -61,6 +71,13 @@ export interface MarketInput {
   applicationType: string;
   /** The market: an agency ('EMA', 'Health_Canada'), a region code ('EU', 'CA') or a submission region ('eu', 'ca'). */
   market: string;
+  /**
+   * True when the application is already on file with the agency (an
+   * agency-assigned number exists), so the filing is its continuing lifecycle,
+   * not a new application. Only the offer reads it (PMDA: a new application
+   * needs eCTD v4.0, a continuing one does not). Absent means a new application.
+   */
+  continuingLifecycle?: boolean;
 }
 
 export type OutlineState = 'outline' | 'no_outline' | 'unmapped';
@@ -89,14 +106,158 @@ export interface MarketSupport {
   /** True when the gate checks this region's Module 1 against a region profile. */
   regionProfile: boolean;
   channel: { state: ChannelState; detail: string };
-  /** The short statement: "Structured Module 1", "Flat Module 1, no channel", "No outline, no channel", "Unmapped", "Not offered". */
+  /** The short statement: "Module 1 to the agency's headings", "Module 1 without the agency's headings, no transmit channel", "No outline, no transmit channel",
+   *  "Outline only, no package" (a device filing), "Not supported", "Not offered". */
   summary: string;
   /** The sentence a market row says (FILING_SPINE.md §3, "Market row says"). */
   line: string;
   /** A region-correct dossier can be built: an outline, and Module 1 to the agency's own headings. */
   buildable: boolean;
-  /** False when the platform refuses the market at creation or does not offer it. */
+  /** False when the platform maps no outline or channel for the market, or the agency has no such application. */
   offered: boolean;
+  /**
+   * What the product offers for a filing in this market, read from the fields
+   * above (WORKFLOW_DECISION_2026-10-08.md §4 Q2 and §5): build and sequence,
+   * author documents only, or not offered, with the reason. Project creation
+   * (POST /api/c2c/projects) refuses a filing that is not offered, and the New
+   * project picker lists only offered filings, both from this field.
+   */
+  offer: FilingOffer;
+}
+
+// ── What the product offers for a filing (added 2026-10-08, F19b) ───────────
+// The product never offers a filing it cannot finish, it says why, and it keeps
+// authoring value (WORKFLOW_DECISION_2026-10-08.md §5). The tier is derived from
+// the statement above only; no reader keeps its own copy of the rule.
+
+export type FilingOfferTier = 'build_and_sequence' | 'author_only' | 'not_offered';
+
+export interface FilingOffer {
+  tier: FilingOfferTier;
+  /** The short label a picker or market row shows next to the filing. */
+  label: string;
+  /** One plain sentence: what the product does for this filing, or why not. */
+  reason: string;
+  /**
+   * The registered filings (registry ids) the tier is stated for, or null when
+   * it holds for every filing that creates this application type in this
+   * market. Build and sequence is stated only for the application itself and
+   * the registered filings of its own family with an eCTD dossier: an NDA, a
+   * 505(b)(2), a rolling NDA. A meeting request, a designation, a supplement, a
+   * safety report or a QMS record that a picker files under the same
+   * application type is not that application, and no sequence is claimed for it.
+   * (Added 2026-10-08, F19b review: the picker showed "Build and sequence" for
+   * a Type A meeting because it creates an NDA project.)
+   */
+  appliesTo: string[] | null;
+}
+
+export const FILING_OFFER_LABEL: Readonly<Record<FilingOfferTier, string>> = {
+  build_and_sequence: 'Build and sequence',
+  author_only: 'Author documents for this market',
+  not_offered: 'Not offered',
+};
+
+/** Registry families that are an application a sequence belongs to. A device
+ *  clearance, a master file or a designation is authored, not sequenced here. */
+const SEQUENCED_FAMILIES: ReadonlySet<string> = new Set(['clinical_trial', 'marketing_authorization']);
+
+function offerOf(tier: FilingOfferTier, reason: string, appliesTo: string[] | null = null): FilingOffer {
+  return { tier, label: FILING_OFFER_LABEL[tier], reason, appliesTo };
+}
+
+/** The registered filings a build-and-sequence offer covers: the judged
+ *  application and every filing registered at its agency in the same family
+ *  with an eCTD dossier. */
+function sequencedFilingsLike(entry: RegulatoryApplicationType): string[] {
+  return getByAgency(entry.agency as never)
+    .filter((e) => e.applicationFamily === entry.applicationFamily && e.dossierStandard === 'eCTD')
+    .map((e) => e.id)
+    .sort();
+}
+
+/** The agency as a person reads it ('Health_Canada' → 'Health Canada'). */
+const agencyName = (agency: string | null, market: string): string => (agency ?? market).replace(/_/g, ' ');
+
+/** "IND", "NDA", "MAA": the application type as a person reads it. */
+const applicationName = (applicationType: string): string => applicationType.replace(/_/g, ' ').toUpperCase();
+
+/** Why this market's filing is not offered, or null when it is. */
+function notOfferedReason(
+  s: Omit<MarketSupport, 'offer'>,
+  pmdaBlocked: boolean,
+  continuing: boolean,
+): string | null {
+  // Not supported (an unmapped market) or not offered (MHRA "IND"): the statement's own line.
+  if (!s.offered) return `${s.line.replace(/\.$/, '')}.`;
+  if (s.outline.state !== 'outline') {
+    const noChannel = NO_CHANNEL_STATES.has(s.channel.state) ? ' and no channel to send it' : '';
+    return `${agencyName(s.agency, s.market)} has no governed ${applicationName(s.applicationType)} outline here, ` +
+      `so a project would have nothing to author${noChannel}.`;
+  }
+  // The sentence names only what blocks the filing. A continuing application
+  // (MarketInput.continuingLifecycle) lifts it for an API caller that sends the
+  // approval number, but no screen sends one yet, so no screen is told it can.
+  if (pmdaBlocked && !continuing) {
+    return 'PMDA requires eCTD v4.0 for new applications, and this platform builds eCTD v3.2.2 only.';
+  }
+  return null;
+}
+
+/** The offer for one statement. `entry` is the registered filing the channel was judged from. */
+function filingOfferFor(
+  s: Omit<MarketSupport, 'offer'>,
+  entry: RegulatoryApplicationType | null,
+  pmdaBlocked: boolean,
+  continuing: boolean,
+): FilingOffer {
+  const refused = notOfferedReason(s, pmdaBlocked, continuing);
+  if (refused) return offerOf('not_offered', refused);
+  const agency = agencyName(s.agency, s.market);
+  // A filing that is a document, not an application, is authored here and never
+  // claimed as a sequence, whatever family its registry row has (an IND
+  // amendment's is clinical_trial). Added 2026-10-18 with the classes.
+  const documentClass = filingDocumentClassOf(s.applicationType);
+  if (documentClass) return offerOf('author_only', classAuthorOnlyReason(documentClass, agency));
+  const sequenced = !!entry && entry.dossierStandard === 'eCTD' && SEQUENCED_FAMILIES.has(String(entry.applicationFamily));
+  if (s.buildable && sequenced && s.channel.state !== 'refused') {
+    return offerOf(
+      'build_and_sequence',
+      `Authored, built and frozen here as an eCTD sequence for ${agency}. ${s.line.replace(/\.$/, '')}.`,
+      sequencedFilingsLike(entry as RegulatoryApplicationType),
+    );
+  }
+  if (!sequenced) {
+    return offerOf('author_only', `Author the documents here. This platform builds no ${agency} sequence for a ${applicationName(s.applicationType)}.`);
+  }
+  return offerOf('author_only', `Author the documents here. ${s.module1.detail}, so no ${agency} sequence is built.`);
+}
+
+/**
+ * What the product does for a filing document class. A supplement says why no
+ * sequence is built (an FDA supplement has no sequence type yet, FILING_SPINE.md
+ * §3); a harmonised document says where it goes; every other class says that
+ * this platform sends nothing for it on its own.
+ */
+function classAuthorOnlyReason(c: FilingDocumentClass, agency: string): string {
+  return `Author the documents here. ${classNotSequencedReason(c, agency)}`;
+}
+
+/** Why an FDA sequence is never a 'variation' (WORKFLOW_DECISION_2026-10-08.md §5). */
+export const FDA_VARIATION_REASON =
+  "'Variation' is the EU term. An FDA post-approval change is a supplement (PAS, CBE-30 or CBE-0), which is not built " +
+  'yet. Coding it as an amendment to the original application would misfile it.';
+
+/**
+ * Why a sequence of this type is not offered in this market, or null when it
+ * is. Today one rule: FDA has no 'variation'. Read by createSequence (a direct
+ * API caller) and by the FDA coding in core-to-packager.ts, so neither keeps
+ * its own copy.
+ */
+export function sequenceTypeRefusal(market: string | null | undefined, type: string | null | undefined): string | null {
+  const t = String(type ?? '').trim().toLowerCase();
+  if (t !== 'variation') return null;
+  return regionOfMarket(String(market ?? '')) === 'US' ? FDA_VARIATION_REASON : null;
 }
 
 const MODULE1_DETAIL: Record<Module1Shape, string> = {
@@ -105,10 +266,13 @@ const MODULE1_DETAIL: Record<Module1Shape, string> = {
   placeholder: "Module 1 reuses another region's backbone structure as a placeholder",
 };
 
+/* The short form, in a filer's words (filing-spine design review, item 7,
+   2026-10-15): "Flat" and "Structured" were the builder's words for whether
+   Module 1 sits under the agency's own headings, which is what a filer asks. */
 const MODULE1_LABEL: Record<Module1Shape, string> = {
-  structured: 'Structured Module 1',
-  flat: 'Flat Module 1',
-  placeholder: 'Placeholder Module 1',
+  structured: "Module 1 to the agency's headings",
+  flat: "Module 1 without the agency's headings",
+  placeholder: "Module 1 on another region's structure",
 };
 
 /** The region profile's key for a canonical region (region-profile-service.ts REGION_MAP). */
@@ -137,7 +301,8 @@ export function channelSupportFor(entry: RegulatoryApplicationType | null): { st
       const name = `${ch.region}:${ch.name}`;
       if (ch.region === 'pmda') return { state: 'refused', detail: PMDA_PROTOCOL_UNVERIFIED, channel: name };
       if (ch.region === 'fda' && ch.name === 'esg') return { state: 'unproven', detail: FDA_ESG_NOT_PROVEN, channel: name };
-      if (ch.region === 'ema') return { state: 'unproven', detail: `the ${name} adapter is wired and nothing has been accepted through it`, channel: name };
+      if (ch.region === 'ema') return { state: 'unproven', detail: 'the EMA gateway is connected and no submission has been accepted through it', channel: name };
+      if (ch.region === 'ca') return { state: 'none', detail: HEALTH_CANADA_NO_TRANSPORT, channel: name };
       return { state: 'none', detail: ADAPTER_UNSOURCED, channel: name };
     }
   }
@@ -166,7 +331,9 @@ export const NO_CHANNEL_STATES: ReadonlySet<ChannelState> = new Set(['applicant_
 
 function channelLine(channel: { state: ChannelState; detail: string; channel: string | null }): string {
   switch (channel.state) {
-    case 'unproven': return `Transmit not proven: ${channel.detail}`;
+    case 'unproven': return channel.channel === 'fda:esg'
+      ? 'Transmit not proven: FDA onboarding, submission requirements and an accepted test submission have not been verified'
+      : `Transmit not proven: ${channel.detail}`;
     case 'applicant_uploads': return `Applicant uploads through the ${channel.channel}`;
     case 'portal': return `${(channel.channel ?? 'Portal').split(' — ')[0]} portal only`;
     case 'refused': return `Not sent: ${channel.detail}`;
@@ -178,36 +345,119 @@ type Base = Pick<MarketSupport, 'applicationType' | 'market' | 'region' | 'agenc
 type Identity = (typeof REGION_IDENTITY)[CanonicalRegion];
 type JudgedChannel = ReturnType<typeof channelSupportFor>;
 
+const marketKey = (market: string) => market.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+
+/** The existing regional application identifies both its jurisdiction and recipient. */
+function regionalIdentity(applicationType: string, market: string): ReturnType<typeof identify> | null {
+  const regional = regionalDeviceApplicationClassOf(applicationType);
+  if (regional) {
+    const entry = getApplicationType(regional.registryId)!;
+    const registeredBody = new Set(['registered_certification_body', 'jp_rcb']).has(marketKey(market));
+    const matches = entry.agency === 'Registered_Certification_Body'
+      ? registeredBody : !registeredBody && regionOfMarket(market) === entry.region;
+    const region = matches ? entry.region as CanonicalRegion : regionOfMarket(market);
+    const identity = region ? REGION_IDENTITY[region] : null;
+    return {
+      base: { applicationType, market, region, agency: matches ? entry.agency : identity?.agency ?? null },
+      identity, agencyCode: matches ? regional.packAgency : null,
+    };
+  }
+  return null;
+}
+
 /** The market's region, identity and agency code, from whatever the caller named it. */
 function identify(input: MarketInput): { base: Base; identity: Identity | null; agencyCode: string | null } {
   const applicationType = String(input.applicationType ?? '').trim();
   const market = String(input.market ?? '').trim();
+  const regional = regionalIdentity(applicationType, market);
+  if (regional) return regional;
+  if (NOTIFIED_BODY.keys.has(marketKey(market))) {
+    const docType = PROGRAM_TO_DOC_TYPE[applicationType.toLowerCase()] ?? null;
+    const agencyCode = docType && NOTIFIED_BODY.docTypes.has(docType)
+      ? AGENCY_TO_CODE[NOTIFIED_BODY.documentAgency] ?? null
+      : null;
+    return {
+      base: { applicationType, market, region: NOTIFIED_BODY.region, agency: NOTIFIED_BODY.agency },
+      identity: REGION_IDENTITY[NOTIFIED_BODY.region],
+      agencyCode,
+    };
+  }
   const region = regionOfMarket(market);
   const identity = region ? REGION_IDENTITY[region] : null;
   const agencyCode = identity ? AGENCY_TO_CODE[identity.agency.toUpperCase().replace(/[\s-]+/g, '_')] ?? null : null;
   return { base: { applicationType, market, region, agency: identity?.agency ?? null }, identity, agencyCode };
 }
 
-/** Refused at creation: the agency is one the platform maps to no governed class. */
+/**
+ * The agency name the document class should be resolved from for a market, so
+ * project creation scaffolds against the market the verdict judged: 'us' and
+ * 'US' read as 'FDA', 'eu' as 'EMA', and a Notified Body device filing as
+ * 'EMA' (its packs' key, above). Null when the market names no region, or a
+ * Notified Body is asked for a class it does not assess; the caller then keeps
+ * what it was given and the class stays unmapped.
+ */
+export function documentAgencyFor(input: MarketInput): string | null {
+  if (HARMONISED_MARKET_KEYS.has(marketKey(String(input.market ?? '')))) {
+    return filingDocumentClassOf(input.applicationType)?.packAgency === 'ich' ? 'ICH' : null;
+  }
+  const { base, identity, agencyCode } = identify(input);
+  if (!identity || !agencyCode) return null;
+  return base.agency === NOTIFIED_BODY.agency ? NOTIFIED_BODY.documentAgency : base.agency;
+}
+
+/**
+ * A market the platform maps to no governed document class: no outline and no
+ * channel, so it is not offered (project creation refuses it, F19b). The line
+ * states what is missing in the platform's terms, not its internals, and claims
+ * no refusal: a submission row for such a market can exist, and read "Refused
+ * at creation" beside the row nothing refused (design review, 2026-10-08). A
+ * Notified Body asked for a class it does not assess is the agency's limit,
+ * not the platform's: "Not offered", with the Notified Body's reason.
+ */
 function unmappedSupport(base: Base, identity: Identity | null): MarketSupport {
-  const reason = describeUnmappedClass(base.applicationType, identity?.agency ?? base.market);
+  const nbClass = base.agency === NOTIFIED_BODY.agency && PROGRAM_TO_DOC_TYPE[base.applicationType.toLowerCase()];
+  const reason = nbClass
+    ? `A Notified Body assesses EU MDR and IVDR technical documentation and clinical evaluation reports; it takes no ${applicationName(base.applicationType)}.`
+    : describeUnmappedClass(base.applicationType, base.agency ?? identity?.agency ?? base.market);
   const shape = identity ? module1ShapeOf(identity.gatewaySlug) : null;
+  const summary = nbClass ? 'Not offered' : 'Not supported';
+  // Which half is unmapped decides whose limit the line names: the application
+  // type's (no document class for it) or the market's.
+  const typeUnmapped = !PROGRAM_TO_DOC_TYPE[base.applicationType.trim().toLowerCase()];
+  const line = nbClass
+    ? `Not offered: ${reason.replace(/\.$/, '')}`
+    : typeUnmapped
+      ? `Not supported: the platform has no filing outline for the application type '${base.applicationType || 'none'}'`
+      : `Not supported: the platform has no filing outline or channel for ${agencyName(base.agency, base.market || 'this market')}`;
   return {
     ...base,
     outline: { state: 'unmapped', pack: null, detail: reason },
     module1: { state: shape, detail: shape ? MODULE1_DETAIL[shape] : 'no region' },
     regionProfile: false,
-    channel: { state: 'none', detail: 'the market is refused at creation' },
-    summary: 'Unmapped',
-    line: `Refused at creation: ${reason}`,
+    channel: { state: 'none', detail: 'the platform maps no channel for this market' },
+    summary,
+    line,
     buildable: false,
     offered: false,
+    offer: offerOf('not_offered', `${line.replace(/\.$/, '')}.`),
   };
 }
 
-/** The agency's own pack, never a neighbour's. */
+/**
+ * The agency's own pack, never a neighbour's; then the harmonised ICH baseline,
+ * which is no jurisdiction (document-class.ts AGENCY_FALLBACKS).
+ *
+ * 2026-10-08 (F19b): the fallback is the scaffolder's own order
+ * (scaffold-project-documents.ts tries [agency, ...AGENCY_FALLBACKS]). Without
+ * it a master file (dmf → mod3) read "No outline" here while project creation
+ * bound it to mod3:ich, and the two disagreed about the same filing.
+ */
 function outlineFor(docType: string | null, agencyCode: string, applicationType: string, packs: ActiveRulePacks): MarketSupport['outline'] {
-  const pack = docType ? packs.find(docType, agencyCode) : null;
+  let pack: { version: string; label: string } | null = null;
+  for (const candidate of docType ? documentAgencyCandidates(docType, agencyCode) : []) {
+    pack = packs.find(docType as string, candidate);
+    if (pack) break;
+  }
   if (pack) return { state: 'outline', pack, detail: `governed outline ${pack.label} (${pack.version})` };
   return {
     state: 'no_outline',
@@ -218,22 +468,116 @@ function outlineFor(docType: string | null, agencyCode: string, applicationType:
   };
 }
 
-/** PMDA takes only eCTD v4.0 for new applications from the dated fact's effective date. */
-function pmdaNewApplicationsBlocked(code: CanonicalRegion, asOf: string): boolean {
-  if (code !== 'JP') return false;
-  const fact = pmdaEctdV4Fact(asOf);
-  return !!fact && fact.status === 'in_force' && asOf >= fact.effectiveDate;
+/**
+ * A device filing (510(k), De Novo, PMA, IDE, MDR, IVDR, CER) is not eCTD, and
+ * the platform builds no device package or transmit yet (FILING_SPINE.md §4).
+ * Its outline is stated and nothing more is claimed: it read "Structured
+ * Module 1. Transmit not proven…" and buildable (design review, 2026-10-08).
+ */
+function deviceStatement(
+  shared: Omit<MarketSupport, 'outline' | 'summary' | 'line' | 'buildable' | 'offered' | 'offer'>,
+  outline: MarketSupport['outline'],
+): Omit<MarketSupport, 'offer'> {
+  const lead = outline.state === 'outline' ? 'Outline only' : 'No outline';
+  return {
+    ...shared,
+    outline,
+    module1: { state: null, detail: 'a device filing is not eCTD, so it has no Module 1' },
+    channel: { state: 'none', detail: 'the platform transmits no device filing yet' },
+    summary: `${lead}, no package`,
+    line: `${lead}: device filings are not eCTD, and the platform builds no device package or transmit yet`,
+    buildable: false,
+    offered: true,
+  };
 }
 
-function lineFor(outline: MarketSupport['outline'], ch: JudgedChannel, pmdaBlocked: boolean): string {
-  if (pmdaBlocked) return 'New applications blocked: eCTD v4.0 required';
+/** The date from which PMDA takes only eCTD v4.0 for new applications, when
+ *  that dated fact is in force on `asOf`; null otherwise. The line names it:
+ *  a statement true only from a date says the date (2026-10-08). */
+function pmdaV4RequiredFrom(code: CanonicalRegion, asOf: string): string | null {
+  if (code !== 'JP') return null;
+  const fact = pmdaEctdV4Fact(asOf);
+  return fact && fact.status === 'in_force' && asOf >= fact.effectiveDate ? fact.effectiveDate : null;
+}
+
+function lineFor(outline: MarketSupport['outline'], ch: JudgedChannel, pmdaFrom: string | null): string {
+  if (pmdaFrom) return `New applications blocked: eCTD v4.0 required from ${pmdaFrom}`;
   if (outline.state === 'outline') return channelLine(ch);
-  return `No outline; ${NO_CHANNEL_STATES.has(ch.state) ? 'no channel' : channelLine(ch)}`;
+  return `No outline; ${NO_CHANNEL_STATES.has(ch.state) ? 'no transmit channel' : channelLine(ch)}`;
 }
 
 function summaryFor(outline: MarketSupport['outline'], shape: Module1Shape, ch: JudgedChannel): string {
-  const noChannel = NO_CHANNEL_STATES.has(ch.state) ? ', no channel' : '';
+  // "no transmit channel", not "no channel": the review's microcopy lens read
+  // the bare word as ambiguous (filing-spine design review, item 7, 2026-10-15).
+  const noChannel = NO_CHANNEL_STATES.has(ch.state) ? ', no transmit channel' : '';
   return outline.state === 'outline' ? `${MODULE1_LABEL[shape]}${noChannel}` : `No outline${noChannel}`;
+}
+
+/** The statement for a filing document class: its outline, no Module 1, no package, no channel of its own. */
+function classStatement(
+  shared: Omit<MarketSupport, 'outline' | 'summary' | 'line' | 'buildable' | 'offered' | 'offer'>,
+  outline: MarketSupport['outline'],
+): Omit<MarketSupport, 'offer'> {
+  const lead = outline.state === 'outline' ? 'Outline only' : 'No outline';
+  return {
+    ...shared,
+    outline,
+    module1: { state: null, detail: 'a document, not an application, so this platform builds no Module 1 for it' },
+    channel: { state: 'none', detail: 'this platform sends nothing for it on its own' },
+    summary: `${lead}, no package`,
+    line: `${lead}: authored here; this platform builds and sends no sequence for it`,
+    buildable: false,
+    offered: true,
+  };
+}
+
+/**
+ * ICH as the market: the catalog files its harmonised documents (the CSR, the
+ * protocol, the IB, the SAP, the ICF, the DSUR) under 'ICH / Global'. ICH is no
+ * jurisdiction, so it has no region identity and every such filing read "Not
+ * supported" (added 2026-10-18). A filing document class whose pack is the
+ * harmonised one is stated here: its outline from the 'ich' pack, no Module 1,
+ * no channel, authored only. Anything else asked of ICH keeps the unmapped
+ * statement: ICH takes no application.
+ */
+const HARMONISED_MARKET_KEYS: ReadonlySet<string> = new Set(['ich', 'ich_global']);
+
+function harmonisedSupport(input: MarketInput, packs: ActiveRulePacks): MarketSupport | null {
+  const market = String(input.market ?? '').trim();
+  if (!HARMONISED_MARKET_KEYS.has(marketKey(market))) return null;
+  const applicationType = String(input.applicationType ?? '').trim();
+  const documentClass = filingDocumentClassOf(applicationType);
+  if (!documentClass || documentClass.packAgency !== 'ich') return null;
+  const outline = outlineFor(documentClass.docType, 'ich', applicationType, packs);
+  const lead = outline.state === 'outline' ? 'Outline only' : 'No outline';
+  const statement: Omit<MarketSupport, 'offer'> = {
+    applicationType,
+    market,
+    region: null,
+    agency: 'ICH',
+    outline,
+    module1: { state: null, detail: 'a harmonised document is not an application, so it has no Module 1 of its own' },
+    regionProfile: false,
+    channel: { state: 'none', detail: "a harmonised document is placed into an application's sequence and is not sent on its own" },
+    summary: `${lead}, no package`,
+    line: `${lead}: a harmonised document is authored here and placed into an application's sequence`,
+    buildable: false,
+    offered: true,
+  };
+  return { ...statement, offer: filingOfferFor(statement, null, false, false) };
+}
+
+/** The registered filing a document class was created from, when it is registered at this agency. */
+function classEntryFor(applicationType: string, agency: string): RegulatoryApplicationType | null {
+  const regional = regionalDeviceApplicationClassOf(applicationType);
+  if (regional) {
+    const entry = getApplicationType(regional.registryId);
+    return entry?.agency === agency ? entry : null;
+  }
+  const documentClass = filingDocumentClassOf(applicationType);
+  if (!documentClass) return null;
+  const entry = getApplicationType(documentClass.registryIds[0]);
+  return entry && entry.agency === agency ? entry : null;
 }
 
 /**
@@ -241,6 +585,8 @@ function summaryFor(outline: MarketSupport['outline'], shape: Module1Shape, ch: 
  * with time, today PMDA's end of eCTD v3.2.2 for new applications.
  */
 export function marketSupport(input: MarketInput, packs: ActiveRulePacks, asOf: string = new Date().toISOString().slice(0, 10)): MarketSupport {
+  const harmonised = harmonisedSupport(input, packs);
+  if (harmonised) return harmonised;
   const { base, identity, agencyCode } = identify(input);
   if (!identity || !agencyCode) return unmappedSupport(base, identity);
   const { applicationType } = base;
@@ -248,30 +594,71 @@ export function marketSupport(input: MarketInput, packs: ActiveRulePacks, asOf: 
   const docType = PROGRAM_TO_DOC_TYPE[applicationType.toLowerCase()] ?? null;
   const shape = module1ShapeOf(identity.gatewaySlug);
   const regionProfile = getSubmissionRegionProfile(PROFILE_KEY[identity.code] ?? identity.code.toLowerCase()) != null;
-  const ch = channelSupportFor(registryEntryFor(identity.agency, applicationType));
+  const agencyOfEntry = base.agency ?? identity.agency;
+  const entry = classEntryFor(applicationType, agencyOfEntry) ?? registryEntryFor(agencyOfEntry, applicationType);
+  const ch = channelSupportFor(entry);
+  const pmdaFrom = pmdaV4RequiredFrom(identity.code, asOf);
+  const pmdaBlocked = pmdaFrom !== null;
+  const continuing = input.continuingLifecycle === true;
   const shared = { ...base, module1: { state: shape, detail: MODULE1_DETAIL[shape] }, regionProfile, channel: { state: ch.state, detail: ch.detail } };
 
   // The UK has no IND. The ind:mhra pack exists and is mislabelled (FILING_SPINE.md §3).
   if (agencyCode === 'mhra' && docType === 'ind') {
-    return {
+    const mhra: Omit<MarketSupport, 'offer'> = {
       ...shared,
       outline: { state: 'no_outline', pack: null, detail: 'the ind:mhra rule pack is mislabelled: the UK has no IND' },
       summary: 'Not offered',
-      line: 'Not offered: the UK has no IND, and the ind:mhra rule pack is mislabelled',
+      line: 'Not offered: the UK has no IND application type',
       buildable: false,
       offered: false,
     };
+    return { ...mhra, offer: filingOfferFor(mhra, entry, pmdaBlocked, continuing) };
   }
 
   const outline = outlineFor(docType, agencyCode, applicationType, packs);
-  return {
+  // A filing document class at an agency (a PAS, a meeting package, a REMS, the
+  // EU PSUR) is authored, not built: it read "Module 1 to the agency's
+  // headings. Transmit not proven…" and buildable, beside an offer saying
+  // nothing is built or sent (review finding, 2026-10-18). Stated as the
+  // harmonised documents are: its outline, and nothing more claimed.
+  if (filingDocumentClassOf(applicationType)) {
+    const authored = classStatement(shared, outline);
+    return { ...authored, offer: filingOfferFor(authored, entry, false, continuing) };
+  }
+  if (workstreamForFilingType(applicationType) === 'MDX') {
+    // A device filing is not eCTD, so PMDA's eCTD v4.0 rule does not block it.
+    const device = deviceStatement(shared, outline);
+    return { ...device, offer: filingOfferFor(device, entry, false, continuing) };
+  }
+  const statement: Omit<MarketSupport, 'offer'> = {
     ...shared,
     outline,
     summary: summaryFor(outline, shape, ch),
-    line: lineFor(outline, ch, pmdaNewApplicationsBlocked(identity.code, asOf)),
+    line: lineFor(outline, ch, pmdaFrom),
     buildable: outline.state === 'outline' && shape === 'structured',
     offered: true,
   };
+  return { ...statement, offer: filingOfferFor(statement, entry, pmdaBlocked, continuing) };
+}
+
+/**
+ * The offer for one market whose outline the caller has already resolved
+ * through rule-pack-lookup.ts, in the scaffolder's order ([agency,
+ * ...AGENCY_FALLBACKS], as outlineFor reads it). Project creation uses it so the
+ * pack is read once, by the scaffold that binds it, and not again here:
+ *   - before anything is written, with `outlineFound: true`, a refusal that no
+ *     pack could lift (an unmapped agency, an MHRA "IND", a new Japanese
+ *     application) is final; an outline only ever raises the offer;
+ *   - after the scaffold, with `outlineFound: false` when it found no pack, the
+ *     filing has nothing to author and is not offered.
+ * Only the offer is returned: its tier and reason never read the pack's label
+ * or version, so none is invented here.
+ */
+export function marketOfferGivenOutline(input: MarketInput, outlineFound: boolean, asOf?: string): FilingOffer {
+  const resolved: ActiveRulePacks = {
+    find: () => (outlineFound ? { version: 'resolved-by-caller', label: 'resolved-by-caller' } : null),
+  };
+  return marketSupport(input, resolved, asOf).offer;
 }
 
 /** The statement for each market, with the active packs read once. */
@@ -281,6 +668,10 @@ export async function readMarketSupport(
   asOf?: string,
 ): Promise<MarketSupport[]> {
   const rows = await listActiveRulePacks(client);
+  /* No active pack at all is a store that was not read (unseeded, or emptied),
+     not a platform with no outline for any market: said as a failure, it
+     reaches the caller's error state instead of "No outline" on every row. */
+  if (rows.length === 0) throw new Error('No active rule pack could be read, so no market can be judged.');
   const byKey = new Map(rows.map((r) => [`${r.doc_type}:${r.agency}`, { version: r.version, label: r.label }]));
   const packs: ActiveRulePacks = { find: (docType, agency) => byKey.get(`${docType}:${agency}`) ?? null };
   return inputs.map((input) => marketSupport(input, packs, asOf));

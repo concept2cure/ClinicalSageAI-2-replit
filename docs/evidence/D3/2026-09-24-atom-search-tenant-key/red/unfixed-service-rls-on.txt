@@ -73,4 +73,3 @@ AssertionError: expected [] to be an instance of TenantScopeMismatchError
       Tests  3 failed | 4 passed (7)
    Start at  21:06:08
    Duration  2.94s (transform 1.02s, setup 85ms, import 2.06s, tests 442ms, environment 0ms)
-

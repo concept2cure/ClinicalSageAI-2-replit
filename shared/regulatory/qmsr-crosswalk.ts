@@ -16,10 +16,12 @@
  * "formerly", so a record indexed to the QSR stays findable; before it, the
  * QSR section alone.
  *
- * BASIS: rows whose QMSR citation is stated in the eCFR text of 21 CFR 820 are
- * `regulator-text`; rows that rely on the ISO 13485:2016 subclause numbering
- * (ISO text, not a regulator page) are `recall`. Every legacy QSR section is
- * recall of the removed 1996 text. See
+ * BASIS: every row is `recall`. Rows whose QMSR citation was seen in a search
+ * extract of the eCFR text of 21 CFR 820 say so in their note (they were
+ * `regulator-text` until 2026-10-15, though the page was never read); rows that
+ * rely on the ISO 13485:2016 subclause numbering (ISO text, not a regulator
+ * page) are recall of the standard. Every legacy QSR section is recall of the
+ * removed 1996 text. See
  * docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-qmsr-crosswalk-assess-qms-facts.md.
  *
  * No IO, no clock: identical input gives identical output. Client- and
@@ -73,13 +75,12 @@ export interface QmsrCrosswalkRow {
   basis: RegulatoryBasis;
 }
 
-const CHECKED = '2026-10-05';
 const ECFR_820_10 = 'https://www.ecfr.gov/current/title-21/chapter-I/subchapter-H/part-820/subpart-A/section-820.10';
 const ECFR_820_35 = 'https://www.ecfr.gov/current/title-21/chapter-I/subchapter-H/part-820/subpart-B/section-820.35';
 const ECFR_820 = 'https://www.ecfr.gov/current/title-21/chapter-I/subchapter-H/part-820';
-const SEARCH_EXTRACT = 'search extract of the eCFR page; verbatim re-read owed';
+const SEARCH_EXTRACT = 'search extract of the eCFR page on 2026-10-05; the page itself was not read. Verbatim re-read owed';
 const ISO_RECALL =
-  '21 CFR 820.10 incorporating ISO 13485:2016 is regulator text (eCFR, checked 2026-10-05); the ISO subclause numbering is from the standard, not a regulator page, and the legacy QSR section is recall of the removed 1996 text.';
+  '21 CFR 820.10 incorporating ISO 13485:2016 was seen in a search extract of the eCFR page on 2026-10-05 (the page itself was not read); the ISO subclause numbering is from the standard, not a regulator page, and the legacy QSR section is recall of the removed 1996 text.';
 
 function recall(ref: string): RegulatoryBasis {
   return { ref, confidence: 'recall', url: ECFR_820, factId: QMSR_FACT_ID, note: ISO_RECALL };
@@ -128,9 +129,8 @@ export const QMSR_CROSSWALK: readonly QmsrCrosswalkRow[] = Object.freeze([
     legacyQsr: '21 CFR 820.30',
     basis: {
       ref: '21 CFR 820.10(c) (design and development, ISO 13485:2016 clause 7.3 and its subclauses)',
-      confidence: 'regulator-text',
+      confidence: 'recall',
       url: ECFR_820_10,
-      checked: CHECKED,
       factId: QMSR_FACT_ID,
       note: `${SEARCH_EXTRACT}. Applies to class II and III devices and the class I devices listed in 820.10(c).`,
     },
@@ -170,9 +170,8 @@ export const QMSR_CROSSWALK: readonly QmsrCrosswalkRow[] = Object.freeze([
     legacyQsr: '21 CFR 820.198',
     basis: {
       ref: '21 CFR 820.35 (records of complaints: device name, date received, any UDI or UPC)',
-      confidence: 'regulator-text',
+      confidence: 'recall',
       url: ECFR_820_35,
-      checked: CHECKED,
       factId: QMSR_FACT_ID,
       note: `${SEARCH_EXTRACT}. The ISO 13485:2016 §8.2 numbering is from the standard (recall).`,
     },

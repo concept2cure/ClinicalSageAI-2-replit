@@ -69,6 +69,18 @@ describe('the authoring context block cannot carry instructions (SEC-A-4)', () =
     expect(buildAuthoringContextBlock(null)).toBe('');
     expect(buildAuthoringContextBlock('title')).toBe('');
   });
+
+  it('carries saved section identity and evidence pointers as capped untrusted data', () => {
+    const block = buildAuthoringContextBlock({ sectionId: 'section-1', sectionUpdatedAt: '2026-10-13T10:00:00Z', dossierId: 'filing-1', regulatorBody: 'FDA', linkedSectionCodes: ['3.2.P.8', ESCAPE], sourceArtifactIds: Array.from({ length: 100 }, (_, i) => String(i)) });
+    expect(block).toContain('<section_id>section-1</section_id>');
+    expect(block).toContain('<section_updated_at>2026-10-13T10:00:00Z</section_updated_at>');
+    expect(block).toContain('<dossier_id>filing-1</dossier_id>');
+    expect(block).toContain('<regulator_body>FDA</regulator_body>');
+    expect(block).toContain('<linked_section_code>3.2.P.8</linked_section_code>');
+    expect(block.match(/<source_artifact_id>/g)).toHaveLength(24);
+    expect(block).not.toMatch(/^\s*SYSTEM:/m);
+    expect(block).toContain('&lt;/section_title&gt;');
+  });
 });
 
 describe('the route context block is held to the same rule (SEC-A-4)', () => {

@@ -129,7 +129,7 @@ stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stay
  ✓ tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the sentinel still reports the leaver's over-allocation, by name 11ms
  ✓ tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the CRO portfolio keeps the leaver as lead of record, not the next assignee 14ms
 stderr | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the RBM board names the approver and owners who left, and never calls an owned action "Unassigned"
-[recommendation-engine] Generator failed: DrizzleQueryError: Failed query: 
+[recommendation-engine] Generator failed: DrizzleQueryError: Failed query:
       SELECT id, name, target_date, status, progress
       FROM program_milestones
       WHERE program_id IN (
@@ -142,7 +142,7 @@ stderr | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stay
       AND target_date < NOW() + INTERVAL '14 days'
       ORDER BY target_date ASC
       LIMIT 5
-    
+
 params: 417,90301
     at NodePgPreparedQuery.queryWithCache (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:41:15)
     at processTicksAndRejections (node:internal/process/task_queues:103:5)
@@ -208,4 +208,3 @@ params: 417,90301
       Tests  30 passed (30)
    Start at  18:02:34
    Duration  9.72s (transform 2.25s, setup 167ms, import 6.37s, tests 2.45s, environment 0ms)
-

@@ -7,6 +7,7 @@
  */
 
 import type { DetectedRisk, RiskFactor } from './risk-factors';
+import { CapabilityUnavailableError } from '../capability-unavailable';
 import { 
   getRiskFactorsForSubmissionType, 
   getAllRiskFactorsBySeverity,
@@ -86,6 +87,13 @@ export interface MitigationRecommendation {
  * Core service for generating regulatory submission predictions
  */
 export class PredictiveIntelligenceEngine {
+  /** Retained reference algorithms use literal priors and illustrative interval
+   * widths. They cannot produce an asserted product prediction. The governed
+   * report catalog remains authoritative for supported computation. */
+  constructor() {
+    throw new CapabilityUnavailableError('PREDICTIVE_ENGINE_UNAVAILABLE',
+      'This retained predictor is unavailable: its literal approval rates and illustrative intervals have no authoritative calibration or tenant-scoped evidence contract. No prediction was generated.');
+  }
   private readonly baseReviewTimes: Record<SubmissionType, number> = {
     '510k': 90,
     'DE_NOVO': 150,

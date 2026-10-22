@@ -91,7 +91,7 @@ describe('the reviewer name once an account is chosen', () => {
     session.user = { id: '11', email: 'me@c2c.test', organizationId: '42' };
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'GET' && url === '/api/tenant-users/42') {
-        return { ok: true, status: 200, json: async () => [{ id: 21, name: 'Dr Amara Okafor', email: 'okafor@c2c.test', role: 'member' }] } as Response;
+        return { ok: true, status: 200, json: async () => [{ id: 21, name: 'Dr Amara Okafor', email: 'okafor@c2c.test', role: 'reviewer', canSign: true }] } as Response;
       }
       return { ok: true, status: 201, json: async () => ({ assignmentId: 1 }) } as Response;
     });

@@ -1,0 +1,86 @@
+# RED — HEAD e79cca4d9 code; insights-canvas tests carry the two new request-scoped assertions; other three tests as committed at HEAD
+# cmd: RLS_ENFORCE=off CI=true npx vitest run --config vitest.config.ts <files>
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=false 36ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=true 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > warns when requested enrichment is unavailable and retains its model availability notice 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > reports unavailable optional context to the person and includes it in the model input 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > Continue receives the visible partial draft even when stored history lacks it 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > encapsulates the handoff with the request and never sends an unguarded duplicate 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > does not attach a continuation draft to an unrelated request 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > the tool the previous turn ran is offered on the first call and on every round after it 12ms
+ × server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was 37ms
+   → expected [ 'list_platform_commands', …(3) ] to not include 'get_cmc_requirements'
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > reads memory only with the resolved thread ID 64ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails 28ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs 26ms
+ ✓ server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > leads with the open program’s anchored project, not the flagship 21ms
+ × server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > resolves the open program on the request-scoped client, not the shared pool 752ms
+   → expected { __db: true } to be NodePgDatabase{ …(8) } // Object.is equality
+ × server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > with no request-scoped client the open program is not read at all — no shared-pool fallback 23ms
+   → expected 200 to be 500 // Object.is equality
+ ✓ server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > a program with no project record has no lead — and is not given the flagship 5ms
+ ✓ server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > an anchored project outside the computed portfolio is named as such, with no lead 4ms
+ ✓ server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > a programId that is not a program UUID is refused, not guessed 20ms
+ ✓ server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > with no program open no program leads — the flagship does not stand in 15ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > keeps every phase in order, times the steps, and closes on post_done 146ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > records a stopped turn as stopped in the phase it was cut short 85ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > holds a steer as pending from acceptance until the server confirms it landed 98ms
+   → expected [ 'Focus on the safety endpoints' ] to deeply equal []
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > drops a steer the run never reached when the run ends 57ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > reopening a conversation restores the work record > maps the persisted tool trace and steers back onto the turn 14ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > reopening a conversation restores the work record > hydrates nothing from a turn that has no trace 0ms
+ ✓ server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts > GET /overview and the portfolio read > answers 503 PORTFOLIO_UNAVAILABLE when the portfolio read fails, never the empty answer 20ms
+ ✓ server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts > GET /overview and the portfolio read > still answers 200 with leadProgram null for an organisation that has no program 6ms
+ ✓ server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts > GET /overview and the portfolio read > answers 200 with the open program when there are programs 4ms
+ ✓ server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts > GET /overview and the portfolio read > names the lead program as the project its readiness was computed for 3ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > with no program open > leads with no program — not project 1 — and lists the programs to open 31ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > the catalog follows the open program’s product type > offers no device-only report for a biologic program 10ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > the catalog follows the open program’s product type > offers it for a device program 6ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > each type says whether an engine computes it over a program > marks the digest and the registers runnable, and the rest not 5ms
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > programIdForThread > accepts a UUID (normalised to lower case) and nothing else 2ms
+ × server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > lists the org's threads bound to the program, newest first, with the first user message as title 8ms
+   → expected [ 7, …(4) ] to deeply equal [ 7, …(3) ]
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > refuses a program id that is not a UUID rather than querying with it 0ms
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > returns nothing without an organization — never a cross-tenant list 0ms
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > reports a failed read as a failure, not as no threads 1ms
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads lists only the caller's own conversations > scopes the recents list to the signed-in person 1ms
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads lists only the caller's own conversations > scopes the project list to the signed-in person 0ms
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads lists only the caller's own conversations > lists nothing for a caller it cannot identify, rather than the organisation's 0ms
+ FAIL  server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > resolves the open program on the request-scoped client, not the shared pool
+ Test Files  4 failed | 2 passed (6)
+      Tests  5 failed | 36 passed (41)
+ FAIL  server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > with no request-scoped client the open program is not read at all — no shared-pool fallback
+ FAIL  server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was
+ FAIL  server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > lists the org's threads bound to the program, newest first, with the first user message as title
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > holds a steer as pending from acceptance until the server confirms it landed
+
+# cmd: node scripts/ci/audit-requestdb-coverage.mjs --strict-no-regression   (HEAD e79cca4d9)
+[ci:requestdb-coverage] RLS request-scoped DB adoption
+  route files touching the DB : 270
+  using requestDb(req)        : 41
+  still on the shared pool    : 228 (migration backlog)
+    JWT boundary auto-scoped  : 226
+    explicit pre-tenant scope : 2
+    unclassified              : 0
+[ci:requestdb-coverage] 1 route(s) migrated off the shared pool — re-run with --write-baseline to ratchet the backlog down.
+[ci:requestdb-coverage] FAIL — 1 NEW route(s) on the shared pool above baseline of 228. New tenant-facing routes must use requestDb(req):
+  server/routes/insights-canvas-routes.ts
+exit=1
+
+# RED (proof tier) — HEAD e79cca4d9: tests/schema-contract/biopharma-programs-router-columns.contract.test.ts
+ × tests/schema-contract/biopharma-programs-router-columns.contract.test.ts > biopharma/programs.ts SQL matches the schema > the fixture table matches the Drizzle definition column-for-column 30ms
+   → expected [ 'actual_submission_date', …(41) ] to deeply equal [ 'actual_submission_date', …(43) ]
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+
+# RED — HEAD e79cca4d9: tests/routes/ind-forms-artifact-ident.test.ts as committed (CI run 37771675884 Test job shows the same 4)
+ × tests/routes/ind-forms-artifact-ident.test.ts > POST /:formId/artifact — program-spine ident (audited-unplaced degradation) > resolves the program org-scoped, audit-logs the content hash, and says the registry placement is pending 6ms
+   → expected "vi.fn()" to be called with arguments: [ 200 ]
+ × tests/routes/ind-forms-artifact-ident.test.ts > POST /:formId/artifact — program-spine ident (audited-unplaced degradation) > keeps the audited-unplaced path when the program has NO anchor 1ms
+   → expected "vi.fn()" to be called with arguments: [ 200 ]
+ × tests/routes/ind-forms-artifact-ident.test.ts > POST /:formId/artifact — program-spine ident (audited-unplaced degradation) > FAILS CLOSED when the audit write fails — never claims audited:true over nothing 1ms
+   → expected "vi.fn()" to be called with arguments: [ 500 ]
+ × tests/routes/ind-forms-artifact-ident.test.ts > POST /:formId/artifact — program-spine ident (audited-unplaced degradation) > FAILS CLOSED when the audit write resolves unpersisted — the real service reports failure this way 1ms
+   → expected "vi.fn()" to be called with arguments: [ 500 ]
+ Test Files  1 failed (1)
+      Tests  4 failed | 5 passed (9)

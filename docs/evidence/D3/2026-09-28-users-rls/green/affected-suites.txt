@@ -785,4 +785,3 @@ stdout | tests/db/control-plane-access.dbtest.ts > The control plane gives platf
       Tests  178 passed (178)
    Start at  16:57:39
    Duration  37.23s (transform 2.34s, setup 477ms, import 7.59s, tests 26.91s, environment 1ms)
-

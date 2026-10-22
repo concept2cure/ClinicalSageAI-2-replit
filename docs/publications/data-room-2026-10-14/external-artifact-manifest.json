@@ -1,0 +1,855 @@
+{
+  "scope": "Authored deliverables and historical execution/probe/render artifacts. Dependencies, caches and original downloaded source materials are excluded.",
+  "files": [
+    {
+      "original": "/workspace/reports/Concept2Cure-artifact-integrity-changes.patch",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-artifact-integrity-changes.patch",
+      "bytes": 30235,
+      "sha256": "6c22dd0c2d376b566afefe81534a544424c60f0ed67b7fc9d2ed46baf8c2686c"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-bundle-README.md",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-bundle-README.md",
+      "bytes": 4334,
+      "sha256": "0a84d63f1b85a7bf62ab70ea14732abffd8e5ed209692ca49dd26b74d18e12a3"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-enhancements.patch",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-enhancements.patch",
+      "bytes": 1137771,
+      "sha256": "a6351af33959903abe61552f794974884cf1fc962c55bd6f40f50078750fabe1"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14-complete.zip",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14-complete.zip",
+      "bytes": 5083325,
+      "sha256": "4b563f802358b1f0aaf0b719da389516c9755e605910a4a6f0c657d63459e9a2"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/DATA_ROOM_ENHANCEMENT_DELIVERY_PLAN_2026-10-14.md",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/DATA_ROOM_ENHANCEMENT_DELIVERY_PLAN_2026-10-14.md",
+      "bytes": 20996,
+      "sha256": "4f5116e60c4399b374bc48dd2a4ddcfa30938007b2fd794b5228dcd62bf48d69"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/PR-148-targeted-review.md",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/PR-148-targeted-review.md",
+      "bytes": 9814,
+      "sha256": "85a5af49d7943f833b17aca8f914cb8e3eb2d5f0fc633577daceb3b6bc4e5cbd"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/README.txt",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/README.txt",
+      "bytes": 1527,
+      "sha256": "7a0f8d56e9a0a17ab820032e3a604c8575cc517eedb3154d82d722dec9bf20cc"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/ai-architecture.md",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/ai-architecture.md",
+      "bytes": 23162,
+      "sha256": "7d8b598df00635de9d0695e89302f37276ca595b0ae6567a48fa41caf299e94a"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/ana-code-audit.md",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/ana-code-audit.md",
+      "bytes": 15953,
+      "sha256": "1de0b3dda126668038d2e73bb228563b9c4c5727fb9f842dcf091d6e588ec6ca"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/ana-retrieval-spec.md",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/ana-retrieval-spec.md",
+      "bytes": 28747,
+      "sha256": "50716a856c658c913d42112f91d1df89a8b35dbd3020f91ea147d4302edbe227"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/catalog-context-probe-result.json",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/catalog-context-probe-result.json",
+      "bytes": 471,
+      "sha256": "ec86c284507f0540b0e6fb365d32bd1414b252f7c94439141183c50d97615310"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/catalog-context-probe.mjs",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/catalog-context-probe.mjs.txt",
+      "bytes": 965,
+      "sha256": "b9b3621211b7fba0c12ae6872d470dcc120266e3aa57cdb2e47c9ae3b3a32532",
+      "archiveKind": "historical source text; not an active repository module"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/competitors.md",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/competitors.md",
+      "bytes": 35353,
+      "sha256": "de2cc3912d57270097843eb7edf2838fa5812c44796f92f515100bbf31ef48fe"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/current-data-management-assessment.md",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/current-data-management-assessment.md",
+      "bytes": 15769,
+      "sha256": "40a5cbd47887014ab30bd8bf9fa4dccbd47b8d4e385a57cc11bff76e283f13bb"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/filing-adapter-plan.md",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/filing-adapter-plan.md",
+      "bytes": 42287,
+      "sha256": "710188e3f29a7b218949cbfb0e67b80a03b4653fc09fded9c2dff6e92b855796"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/filing-code-audit.md",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/filing-code-audit.md",
+      "bytes": 19008,
+      "sha256": "de6b9b8f1ff33b9a0c5b7e0d3f71b08e60533ec8987db6478d9d24ba023da098"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/moat-benchmark-plan.md",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/moat-benchmark-plan.md",
+      "bytes": 35016,
+      "sha256": "00fe0834b3281feacd6d0bb0cbdff49cded592d3d27e167e714db53f9839c9d3"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/pr148-local-storage-result.json",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/pr148-local-storage-result.json",
+      "bytes": 354,
+      "sha256": "622c0c7249631e4e3550ad41bc67865951c7c1f7a1776da123733527e50c371c"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/pr148-tdz-result.json",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/pr148-tdz-result.json",
+      "bytes": 190,
+      "sha256": "04c9e1237b2ef936b145a567976204268c1e4c4120ea82f121a36e3602a5b8e5"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/regulatory-rule-packs.md",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/regulatory-rule-packs.md",
+      "bytes": 37262,
+      "sha256": "0006cf88efc4d3949fa7eb9e48ce9d29837ed146cfe9441380e8bb5cf5f360de"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/regulatory.md",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/regulatory.md",
+      "bytes": 33790,
+      "sha256": "7f9c5738e55662abf594d226763b03eef8fd13c000fd85bfcef1ef39293bbc1a"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/scientific-catalog-spec.md",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/scientific-catalog-spec.md",
+      "bytes": 36435,
+      "sha256": "20327a06323badf72478ee0d0a24e5112711c0f342f5cf8a89121ccc95469f93"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/validator-classification-probe-result.json",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/validator-classification-probe-result.json",
+      "bytes": 1055,
+      "sha256": "5ebd0032ae3849ccb268284696bda3431e5d8c77041cd079224e91e538301234"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/validator-classification-probe.mts",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/validator-classification-probe.mts.txt",
+      "bytes": 4619,
+      "sha256": "f95c8deecd406fb4333b7c5248b4ccc5fccec0c87c06d496bca88bfb82410e6a",
+      "archiveKind": "historical source text; not an active repository module"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/validator-classification-verification.md",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14-supporting-notes/validator-classification-verification.md",
+      "bytes": 5399,
+      "sha256": "362dde203daf89ad98584c12487dc15a9fc66bbc6ee42274aa60ced8e3f5a83e"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14.docx",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14.docx",
+      "bytes": 58182,
+      "sha256": "06f99360467640353b6de451624100ef4d7bedfee7b6d614cb16a68856a1c19d"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14.md",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14.md",
+      "bytes": 52362,
+      "sha256": "d536f83701af69b3b7e19d8676cd4c931d3a355468f3898c2a8024215872a49f"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-data-room-study-2026-10-14.pdf",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14.pdf",
+      "bytes": 131537,
+      "sha256": "e75e3d6d5a5f0ed6ef89b0dfc98d2b1b19765a374983b0fb5ee067ae0494b121"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-durable-receipts-final-summary.json",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-durable-receipts-final-summary.json",
+      "bytes": 2909,
+      "sha256": "9e798f0f1a11b3b3acb7401bb5959421b61d3407e4d2eae7f820dda638e9fe9e"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-enhancement-delivery-plan-2026-10-14.docx",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-enhancement-delivery-plan-2026-10-14.docx",
+      "bytes": 50303,
+      "sha256": "7a966a73282ab5f414d766501bedcebbf1214cf165a7cddd9592a197197ab0f0"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-enhancement-delivery-plan-2026-10-14.md",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-enhancement-delivery-plan-2026-10-14.md",
+      "bytes": 31652,
+      "sha256": "575118601692adc24cbe12dc0491f7467f5931114bdd9f49d4b931e985d2e626"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-enhancement-delivery-plan-2026-10-14.pdf",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-enhancement-delivery-plan-2026-10-14.pdf",
+      "bytes": 94122,
+      "sha256": "640ecbe0472b5930ac4e2225f67df12234e2d82d5a7dc5f00d7b1916333ff890"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-integrity-and-validation-changes.patch",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-integrity-and-validation-changes.patch",
+      "bytes": 138854,
+      "sha256": "81dff4f4ac910ea0f69084e566f0f7305b22801938bb0f30a6eba68e0fe552fc"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-integrity-validation-and-recovery-changes.patch",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-integrity-validation-and-recovery-changes.patch",
+      "bytes": 369495,
+      "sha256": "4d6d4afb3cad4d3309cceb4818fd8597ed29ee3c83ae432deb57a1fccfabd364"
+    },
+    {
+      "original": "/workspace/reports/Concept2Cure-source-access-final-summary.json",
+      "repository": "docs/publications/data-room-2026-10-14/exports/Concept2Cure-source-access-final-summary.json",
+      "bytes": 1058,
+      "sha256": "b299ae283f7b8e5d47858f403e5c556a1ef61d375af1b45f8048fd6e6552426f"
+    },
+    {
+      "original": "/workspace/reports/PR-148-targeted-review.md",
+      "repository": "docs/publications/data-room-2026-10-14/exports/PR-148-targeted-review.md",
+      "bytes": 9814,
+      "sha256": "85a5af49d7943f833b17aca8f914cb8e3eb2d5f0fc633577daceb3b6bc4e5cbd"
+    },
+    {
+      "original": "/workspace/reports/catalog-context-probe-result.json",
+      "repository": "docs/publications/data-room-2026-10-14/exports/catalog-context-probe-result.json",
+      "bytes": 471,
+      "sha256": "ec86c284507f0540b0e6fb365d32bd1414b252f7c94439141183c50d97615310"
+    },
+    {
+      "original": "/workspace/reports/qa-delivery-plan-recovery.png",
+      "repository": "docs/publications/data-room-2026-10-14/exports/qa-delivery-plan-recovery.png",
+      "bytes": 123397,
+      "sha256": "5f573118d8353fe6af1d687ef6a133bccd6d72aba3d926b2389a0c564bf0d4e2"
+    },
+    {
+      "original": "/workspace/reports/qa-page-1.png",
+      "repository": "docs/publications/data-room-2026-10-14/exports/qa-page-1.png",
+      "bytes": 136943,
+      "sha256": "0e553951c5ea0904ef462614ea4643857461cf01a5106af4e437cbe8cd24c202"
+    },
+    {
+      "original": "/workspace/reports/qa-page-10.png",
+      "repository": "docs/publications/data-room-2026-10-14/exports/qa-page-10.png",
+      "bytes": 49687,
+      "sha256": "800983daedbec8aacf4fb0616b3d78d1270455a7cb02c9accbb75406353b9979"
+    },
+    {
+      "original": "/workspace/reports/qa-page-2.png",
+      "repository": "docs/publications/data-room-2026-10-14/exports/qa-page-2.png",
+      "bytes": 144008,
+      "sha256": "d840039b7687b1fdf089fcfcfe40c1fecfdb3b31e852449a1c7ff24ab1d89d1a"
+    },
+    {
+      "original": "/workspace/reports/qa-page-8.png",
+      "repository": "docs/publications/data-room-2026-10-14/exports/qa-page-8.png",
+      "bytes": 137383,
+      "sha256": "09e74c75d4ab0ae3a1f05cc75ea346ad52a68980c660c3139ab1d8a5c2ab3505"
+    },
+    {
+      "original": "/workspace/scratch/Concept2Cure-data-room-study-2026-10-14-durable-page-5.png",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/Concept2Cure-data-room-study-2026-10-14-durable-page-5.png",
+      "bytes": 238307,
+      "sha256": "791a61490f00abab95e25d491729f669a86f1094877879a1aee4696a0931a112"
+    },
+    {
+      "original": "/workspace/scratch/Concept2Cure-data-room-study-2026-10-14-durable-page-6.png",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/Concept2Cure-data-room-study-2026-10-14-durable-page-6.png",
+      "bytes": 190004,
+      "sha256": "54ead7783c70863b10b2f407cf963b9ff28ae8d63728553e48e8ef63f95a4f6e"
+    },
+    {
+      "original": "/workspace/scratch/Concept2Cure-data-room-study-2026-10-14-page-1.png",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/Concept2Cure-data-room-study-2026-10-14-page-1.png",
+      "bytes": 93285,
+      "sha256": "1a4afbf11fc518ea36ebee43f862a0386520b910e36749ed40c42b8f33cddb51"
+    },
+    {
+      "original": "/workspace/scratch/Concept2Cure-data-room-study-2026-10-14-page-11.png",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/Concept2Cure-data-room-study-2026-10-14-page-11.png",
+      "bytes": 17900,
+      "sha256": "6b43e2a0885ec93d876bc70561c70d2aac381ff0d91a982efa87de55f50c5bf4"
+    },
+    {
+      "original": "/workspace/scratch/Concept2Cure-data-room-study-2026-10-14-page-4.png",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/Concept2Cure-data-room-study-2026-10-14-page-4.png",
+      "bytes": 176645,
+      "sha256": "cf82f05204e8064b2daec311a8909536e4ea529c35cd6caf9f9ed95666c28884"
+    },
+    {
+      "original": "/workspace/scratch/Concept2Cure-data-room-study-2026-10-14-source-access-final.png",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/Concept2Cure-data-room-study-2026-10-14-source-access-final.png",
+      "bytes": 224742,
+      "sha256": "27dcedbc78ec203aa17062f040db7d3e065e732910032b5c13ac98636c6acb61"
+    },
+    {
+      "original": "/workspace/scratch/Concept2Cure-data-room-study-2026-10-14-source-access-proof-final.png",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/Concept2Cure-data-room-study-2026-10-14-source-access-proof-final.png",
+      "bytes": 229253,
+      "sha256": "d848b813cc65d82aa80293a4b31d27a2b5874aa31d682afb4eab268ac6d5bb9b"
+    },
+    {
+      "original": "/workspace/scratch/Concept2Cure-enhancement-delivery-plan-2026-10-14-durable-page-4.png",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/Concept2Cure-enhancement-delivery-plan-2026-10-14-durable-page-4.png",
+      "bytes": 257718,
+      "sha256": "9d8923b28e23d91d3324b64218484564c76522f1b707bca1876af541a76393e8"
+    },
+    {
+      "original": "/workspace/scratch/Concept2Cure-enhancement-delivery-plan-2026-10-14-durable-page-5.png",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/Concept2Cure-enhancement-delivery-plan-2026-10-14-durable-page-5.png",
+      "bytes": 193777,
+      "sha256": "5c351ed2727130fc1ca1f1c39bb4ac09b185ef2a493824433e93801c8b5d65ac"
+    },
+    {
+      "original": "/workspace/scratch/Concept2Cure-enhancement-delivery-plan-2026-10-14-page-1.png",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/Concept2Cure-enhancement-delivery-plan-2026-10-14-page-1.png",
+      "bytes": 100106,
+      "sha256": "6de1c45cd1fbc2add2e6efebbeed113c2024a552fc4078714fb9992b9e275262"
+    },
+    {
+      "original": "/workspace/scratch/Concept2Cure-enhancement-delivery-plan-2026-10-14-page-3.png",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/Concept2Cure-enhancement-delivery-plan-2026-10-14-page-3.png",
+      "bytes": 186017,
+      "sha256": "a63564e2212b76a9171990104ddfd0f591e71be34c85479587c7d1c4fcaf676e"
+    },
+    {
+      "original": "/workspace/scratch/Concept2Cure-enhancement-delivery-plan-2026-10-14-page-5.png",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/Concept2Cure-enhancement-delivery-plan-2026-10-14-page-5.png",
+      "bytes": 83562,
+      "sha256": "304834296bc1379d80a9ec51079123907d4b08fc0141d6af04327ffaaca4388c"
+    },
+    {
+      "original": "/workspace/scratch/Concept2Cure-enhancement-delivery-plan-2026-10-14-source-access-final.png",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/Concept2Cure-enhancement-delivery-plan-2026-10-14-source-access-final.png",
+      "bytes": 255905,
+      "sha256": "cf17249bb517d4849fc32341d617c46068e21c1f4059fb8bebbbccf4b8f5ef64"
+    },
+    {
+      "original": "/workspace/scratch/Concept2Cure-enhancement-delivery-plan-2026-10-14-source-access-proof-final.png",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/Concept2Cure-enhancement-delivery-plan-2026-10-14-source-access-proof-final.png",
+      "bytes": 222423,
+      "sha256": "3b326050ed42dced3f4f2496ebc73255bf14eae5e9c89ac4cfe8c0ee3ec0069e"
+    },
+    {
+      "original": "/workspace/scratch/ai-architecture.md",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/ai-architecture.md",
+      "bytes": 23162,
+      "sha256": "7d8b598df00635de9d0695e89302f37276ca595b0ae6567a48fa41caf299e94a"
+    },
+    {
+      "original": "/workspace/scratch/ana-code-audit.md",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/ana-code-audit.md",
+      "bytes": 15953,
+      "sha256": "1de0b3dda126668038d2e73bb228563b9c4c5727fb9f842dcf091d6e588ec6ca"
+    },
+    {
+      "original": "/workspace/scratch/combined-storage-download-green.log",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/combined-storage-download-green.log",
+      "bytes": 18307,
+      "sha256": "f74fabcf5b5b497c5e69e472247f394aa29ca0455a01f9689fbb291634baa138"
+    },
+    {
+      "original": "/workspace/scratch/competitors.md",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/competitors.md",
+      "bytes": 35353,
+      "sha256": "de2cc3912d57270097843eb7edf2838fa5812c44796f92f515100bbf31ef48fe"
+    },
+    {
+      "original": "/workspace/scratch/current-data-management-assessment.md",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/current-data-management-assessment.md",
+      "bytes": 15769,
+      "sha256": "40a5cbd47887014ab30bd8bf9fa4dccbd47b8d4e385a57cc11bff76e283f13bb"
+    },
+    {
+      "original": "/workspace/scratch/d2-core-dbtest-baseline.ts",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d2-core-dbtest-baseline.ts.txt",
+      "bytes": 14172,
+      "sha256": "d35c40ee3db81f7803b7b496a537e802048ff4e0d4314de6afd7768032f1ec71",
+      "archiveKind": "historical source text; not an active repository module"
+    },
+    {
+      "original": "/workspace/scratch/d2-core-processing-baseline.ts",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d2-core-processing-baseline.ts.txt",
+      "bytes": 13741,
+      "sha256": "332b5afe00c71ce94baffcd531dbc51f68067ff5d8d45a6d3e6534cce943c0c9",
+      "archiveKind": "historical source text; not an active repository module"
+    },
+    {
+      "original": "/workspace/scratch/d2-core-typecheck.json",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d2-core-typecheck.json",
+      "bytes": 1729,
+      "sha256": "3bc0c0c02dec08bab73b17f88db8d8f2536a374de3a8d58c7d5298f5bab837e0"
+    },
+    {
+      "original": "/workspace/scratch/d2-entry-adoption-baseline.txt",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d2-entry-adoption-baseline.txt",
+      "bytes": 12471,
+      "sha256": "b2b525e1bae7228d6fc239e060cd3af5f5b28dddf117782b275ef63a78686720"
+    },
+    {
+      "original": "/workspace/scratch/d2-postgres16-pull.txt",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d2-postgres16-pull.txt",
+      "bytes": 2004,
+      "sha256": "ec2543fcb53427e44eb9da0d322936fd7acc29cf4034d8ac38831118365dc46b"
+    },
+    {
+      "original": "/workspace/scratch/d2-read-side-lint-after.json",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d2-read-side-lint-after.json",
+      "bytes": 386884,
+      "sha256": "5ae17dfb06e85522101be5285bc0bc4ba712d6e9592554adc684d29038814481"
+    },
+    {
+      "original": "/workspace/scratch/d2-read-side-lint-before.json",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d2-read-side-lint-before.json",
+      "bytes": 381984,
+      "sha256": "b774b9acf17ae26a7a8e14f32b56a9b7f7c5f764c864130a627fea14c694fc2c"
+    },
+    {
+      "original": "/workspace/scratch/d2-recovery-cli-eslint.txt",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d2-recovery-cli-eslint.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "/workspace/scratch/d2-recovery-cli-green-current.txt",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d2-recovery-cli-green-current.txt",
+      "bytes": 12481,
+      "sha256": "7de299b2402b9539abcd90353f47df02e44b4ddc1acf1bcb3883bb9d3f9cebf7"
+    },
+    {
+      "original": "/workspace/scratch/d2-recovery-cli-green-initial.txt",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d2-recovery-cli-green-initial.txt",
+      "bytes": 11889,
+      "sha256": "9d99f1e15dde9728cf330b7d0ecb348fe7c8d2906621ce38b0706f11f6bffa46"
+    },
+    {
+      "original": "/workspace/scratch/d2-recovery-cli-green-isolated.txt",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d2-recovery-cli-green-isolated.txt",
+      "bytes": 11495,
+      "sha256": "a534cc186f4d476f74950673cb1922b6b01388b76a5e063ce2b6b0bd0979a526"
+    },
+    {
+      "original": "/workspace/scratch/d2-recovery-cli-node-check.txt",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d2-recovery-cli-node-check.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "/workspace/scratch/d2-recovery-cli-red.txt",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d2-recovery-cli-red.txt",
+      "bytes": 44229,
+      "sha256": "8268aa39944845ce53841205c2a6917b932683535e9c91d19cf1eec40a75588a"
+    },
+    {
+      "original": "/workspace/scratch/d2-recovery-cli-startup-before-log-control.json",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d2-recovery-cli-startup-before-log-control.json",
+      "bytes": 430,
+      "sha256": "3e11063dd8465a57eb7fcd0acc423a036a7127d1c846f89bb979d5252f812ad7"
+    },
+    {
+      "original": "/workspace/scratch/d2-recovery-cli-startup-red.txt",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d2-recovery-cli-startup-red.txt",
+      "bytes": 12478,
+      "sha256": "b88b2fcd3f3ce5b1de4fab6684e453090a3044810bd2ffbe39af79b7a17bc027"
+    },
+    {
+      "original": "/workspace/scratch/d2-recovery-cli-test-typecheck.txt",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d2-recovery-cli-test-typecheck.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "/workspace/scratch/d2-recovery-cli-typecheck.txt",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d2-recovery-cli-typecheck.txt",
+      "bytes": 5164,
+      "sha256": "1f1727b2dbc0570c59e9c93a3ebcaf44941b92b045595b0b934c3aaaa5796a5d"
+    },
+    {
+      "original": "/workspace/scratch/d7-assessor-classification-proposal.md",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d7-assessor-classification-proposal.md",
+      "bytes": 6375,
+      "sha256": "db11cf8c8cf3dafbfe9cbe049bb567fb733b4c10e45d7781c92f4c315b98e635"
+    },
+    {
+      "original": "/workspace/scratch/d7-assessor-lint-after.json",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d7-assessor-lint-after.json",
+      "bytes": 71915,
+      "sha256": "294dcefb6b7bea1c0ce9daaa76ea7ad3197dd6fec84071b96c5ede9387af1831"
+    },
+    {
+      "original": "/workspace/scratch/d7-assessor-lint-before.json",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d7-assessor-lint-before.json",
+      "bytes": 63686,
+      "sha256": "6006ee289b11c89cc8ac239c9a565a1dcd4f9f27e41444dcd9d9bc589ead31f3"
+    },
+    {
+      "original": "/workspace/scratch/d7-independent-integration-green.log",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d7-independent-integration-green.log",
+      "bytes": 909,
+      "sha256": "99e140977fabc9db78b2939df8b0833a45f9b92240e0eb302246a416eb0727b0"
+    },
+    {
+      "original": "/workspace/scratch/d7-independent-integration.config.mts",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d7-independent-integration.config.mts.txt",
+      "bytes": 438,
+      "sha256": "a910ea4979b08e1cfcea1424fe83289ba58f1a25e9d002d73485e41220c82b38",
+      "archiveKind": "historical source text; not an active repository module"
+    },
+    {
+      "original": "/workspace/scratch/d7-independent-integration.test.ts",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d7-independent-integration.test.ts.txt",
+      "bytes": 3808,
+      "sha256": "c6c66e892b831a42dca361754a4fe61f10502a78c2b6be95c2d28a6442fbb2e7",
+      "archiveKind": "historical source text; not an active repository module"
+    },
+    {
+      "original": "/workspace/scratch/d7-independent-pretransmit-green.json",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d7-independent-pretransmit-green.json",
+      "bytes": 3446,
+      "sha256": "ea4e0a63172e6a280a4e287c594b2748665887cf43dcdf118240fd3cf5ce3897"
+    },
+    {
+      "original": "/workspace/scratch/d7-independent-pretransmit-review.mts",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d7-independent-pretransmit-review.mts.txt",
+      "bytes": 3941,
+      "sha256": "166a43a0446d7f26634097471ee18c270f074d35280a4a519f84aba352e7f31f",
+      "archiveKind": "historical source text; not an active repository module"
+    },
+    {
+      "original": "/workspace/scratch/d7-independent-runtime-green.json",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d7-independent-runtime-green.json",
+      "bytes": 14962,
+      "sha256": "4dcaa499a4fff935e8cab046645026ee2a1f84cc4f3da8d92fc108bbda53130d"
+    },
+    {
+      "original": "/workspace/scratch/d7-independent-runtime-red.json",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d7-independent-runtime-red.json",
+      "bytes": 3890,
+      "sha256": "e77b4d21874a32a3abf70b3dc84bf8f7d67700ffee7cf0e9e6d3eed53b3895b5"
+    },
+    {
+      "original": "/workspace/scratch/d7-independent-runtime-review.mts",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d7-independent-runtime-review.mts.txt",
+      "bytes": 4069,
+      "sha256": "3e0a802d4420e1d367823081f77d12beb8f3061fe90499dbad46287b4fb2149b",
+      "archiveKind": "historical source text; not an active repository module"
+    },
+    {
+      "original": "/workspace/scratch/d7-rooted-typecheck.cjs",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d7-rooted-typecheck.cjs.txt",
+      "bytes": 1778,
+      "sha256": "6b8b2ec32ea7753d35bc0d75cc1885edd2addf5e3d2adabeff48f866cd5fc6f7",
+      "archiveKind": "historical source text; not an active repository module"
+    },
+    {
+      "original": "/workspace/scratch/d7-scoped-typecheck.cjs",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/d7-scoped-typecheck.cjs.txt",
+      "bytes": 1502,
+      "sha256": "c2ee21d71b080c798249041017c3d6d39165f9d8f6a6f8e7fd751134abc315a6",
+      "archiveKind": "historical source text; not an active repository module"
+    },
+    {
+      "original": "/workspace/scratch/evidence/baseline1.txt",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/evidence/baseline1.txt",
+      "bytes": 22607,
+      "sha256": "fdd1da3bbdad0af9326f36b4f11f1cb90fad51106f76a941744c6bf3a4f68be6"
+    },
+    {
+      "original": "/workspace/scratch/evidence/baseline2.txt",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/evidence/baseline2.txt",
+      "bytes": 59125,
+      "sha256": "00ccb6e2bba7bfd4bf8edb9104036871013af9abc2cabf9cc886912c8d02d1b6"
+    },
+    {
+      "original": "/workspace/scratch/evidence/internal3.txt",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/evidence/internal3.txt",
+      "bytes": 14491,
+      "sha256": "556a37dc501bb42d818fc5d5ca9114812b4cff10347077c2a8c11a833a423d0c"
+    },
+    {
+      "original": "/workspace/scratch/evidence/internal4.txt",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/evidence/internal4.txt",
+      "bytes": 9286,
+      "sha256": "ea3e30f4663788a03700fa6a4f0c8de9adb4a3ef99a0a3d1763d30a782d86426"
+    },
+    {
+      "original": "/workspace/scratch/evidence/new-baseline0.txt",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/evidence/new-baseline0.txt",
+      "bytes": 31411,
+      "sha256": "2805e82eaad6ec4988aedb7cc9d3326e9cd5622f559bcb9a0102cf224b21c6f0"
+    },
+    {
+      "original": "/workspace/scratch/evidence/new-baseline1.txt",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/evidence/new-baseline1.txt",
+      "bytes": 20486,
+      "sha256": "d00f7bc4b993085144850980c8e118a430136d6cc7434e7d5fb4ee63e5934421"
+    },
+    {
+      "original": "/workspace/scratch/filing-code-audit.md",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/filing-code-audit.md",
+      "bytes": 19758,
+      "sha256": "930b6cc50b55d0cecaaed1736e481b76be9b3bce6f276cc0c201d240b7a4e128"
+    },
+    {
+      "original": "/workspace/scratch/internal-data-management.md",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/internal-data-management.md",
+      "bytes": 5345,
+      "sha256": "90f7d3b87148f7576bf511ed24842c208ecbd7495d837a7633bc83602b54ced3"
+    },
+    {
+      "original": "/workspace/scratch/ivdr-binder-eslint-baseline.json",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/ivdr-binder-eslint-baseline.json",
+      "bytes": 36664,
+      "sha256": "20c8f47f5455b239b691de35913dd7e2b31fcd6d291198f748572ec6d0234713"
+    },
+    {
+      "original": "/workspace/scratch/ivdr-binder-eslint-current.json",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/ivdr-binder-eslint-current.json",
+      "bytes": 39504,
+      "sha256": "a90ede895a24162dd4d754908360fe39592b7ebd7a150ebed226c7275cefed71"
+    },
+    {
+      "original": "/workspace/scratch/ivdr-binder-routes-baseline.ts",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/ivdr-binder-routes-baseline.ts.txt",
+      "bytes": 34599,
+      "sha256": "51b21196016ff44dfa3062903f66612ded358db694fa15da9a577f9c9858e397",
+      "archiveKind": "historical source text; not an active repository module"
+    },
+    {
+      "original": "/workspace/scratch/ivdr-download-eslint.log",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/ivdr-download-eslint.log",
+      "bytes": 568,
+      "sha256": "71f6afb916576d01e65c6fb223107f48ac855686b2b92ae90975ff8c3bc185b5"
+    },
+    {
+      "original": "/workspace/scratch/ivdr-download-green.log",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/ivdr-download-green.log",
+      "bytes": 3926,
+      "sha256": "1ced69c70cc5c78fb37fe99a54f0d40d207f571e47a9a5ad7d9553526410aeec"
+    },
+    {
+      "original": "/workspace/scratch/ivdr-download-red.log",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/ivdr-download-red.log",
+      "bytes": 14199,
+      "sha256": "e2c3b8c0a113cfcfe8aab32094328e47064a0f238724a76218b9390bf3664b65"
+    },
+    {
+      "original": "/workspace/scratch/ivdr-download-review-red.log",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/ivdr-download-review-red.log",
+      "bytes": 8962,
+      "sha256": "9aa3d270bd29667a437d53765e66a9d6108bb7833f6c2a90f52f49fa8039dac1"
+    },
+    {
+      "original": "/workspace/scratch/ivdr-download-typecheck.log",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/ivdr-download-typecheck.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "/workspace/scratch/package_data_room_study.py",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/package_data_room_study.py",
+      "bytes": 3622,
+      "sha256": "4b280bd406d78b55daec35f6b3b8909dbb390974aacd0c1937e0d22a32bdf951"
+    },
+    {
+      "original": "/workspace/scratch/pr148-data-room-review.md",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/pr148-data-room-review.md",
+      "bytes": 8405,
+      "sha256": "cb0c3b6618b499de49abc5da33cb7d920c1ae8f4e1d33b40c851c1b29b227766"
+    },
+    {
+      "original": "/workspace/scratch/pr148-frontend-review.md",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/pr148-frontend-review.md",
+      "bytes": 7873,
+      "sha256": "4a985f97b24e67f77267b8c7aa24bdf0c702d62feda063917f0f1217665c5140"
+    },
+    {
+      "original": "/workspace/scratch/pr148-local-storage-probe.mjs",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/pr148-local-storage-probe.mjs.txt",
+      "bytes": 2009,
+      "sha256": "18efb63da2a2710db7273c137474f46bd247d74da6bb4465348866664207e8f4",
+      "archiveKind": "historical source text; not an active repository module"
+    },
+    {
+      "original": "/workspace/scratch/pr148-local-storage-result.json",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/pr148-local-storage-result.json",
+      "bytes": 354,
+      "sha256": "622c0c7249631e4e3550ad41bc67865951c7c1f7a1776da123733527e50c371c"
+    },
+    {
+      "original": "/workspace/scratch/pr148-tdz-probe.js",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/pr148-tdz-probe.js.txt",
+      "bytes": 396,
+      "sha256": "85ebd900f5e0c982b386f3528cb6e05a1ff3c001851d362dbac55a974c64eb6b",
+      "archiveKind": "historical source text; not an active repository module"
+    },
+    {
+      "original": "/workspace/scratch/pr148-tdz-result.json",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/pr148-tdz-result.json",
+      "bytes": 190,
+      "sha256": "04c9e1237b2ef936b145a567976204268c1e4c4120ea82f121a36e3602a5b8e5"
+    },
+    {
+      "original": "/workspace/scratch/processing-recovery-continuation.md",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/processing-recovery-continuation.md",
+      "bytes": 18612,
+      "sha256": "8a79af57cf8e7de0283bdef6a06cd51ff98db7de67a0302fc9c1a66606b05746"
+    },
+    {
+      "original": "/workspace/scratch/processing-recovery-probe.txt",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/processing-recovery-probe.txt",
+      "bytes": 7249,
+      "sha256": "f45445aee8a4885414156741638ef358b2dfc8b7df936ccc74715fb9895a16a1"
+    },
+    {
+      "original": "/workspace/scratch/processing-recovery.probe.test.ts",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/processing-recovery.probe.test.ts.txt",
+      "bytes": 10761,
+      "sha256": "1f86c4cebca0302f8c6dc10ab9595470f128a54a66065fda1f8067b11cdd49cf",
+      "archiveKind": "historical source text; not an active repository module"
+    },
+    {
+      "original": "/workspace/scratch/processing-recovery.vitest.config.mjs",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/processing-recovery.vitest.config.mjs.txt",
+      "bytes": 542,
+      "sha256": "7e184a03cfa53ccb026a7691e7d6c332c24eb4254ed66787c2e1ff8d0f79d3d5",
+      "archiveKind": "historical source text; not an active repository module"
+    },
+    {
+      "original": "/workspace/scratch/publication-first-commit.log",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/publication-first-commit.log",
+      "bytes": 66209,
+      "sha256": "9f5c4e48b31e4df709f31e64593ed0f9297de5255fa941036f55d6fe94b58245"
+    },
+    {
+      "original": "/workspace/scratch/publication-merge.log",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/publication-merge.log",
+      "bytes": 5739,
+      "sha256": "3f8d0dfb92b5bda77d2fdec5b69b96491cc4a12b4821ec3672cd0587820c860b"
+    },
+    {
+      "original": "/workspace/scratch/regulatory.md",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/regulatory.md",
+      "bytes": 33790,
+      "sha256": "7f9c5738e55662abf594d226763b03eef8fd13c000fd85bfcef1ef39293bbc1a"
+    },
+    {
+      "original": "/workspace/scratch/render_data_room_study.py",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/render_data_room_study.py",
+      "bytes": 8389,
+      "sha256": "f988de183bee2310d575bb64ccae2abfeb562bf1ab863baa67fa5883bb9c6293"
+    },
+    {
+      "original": "/workspace/scratch/study-final-scientific.png",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/study-final-scientific.png",
+      "bytes": 185906,
+      "sha256": "d4ce12906df7aea5ab238e56bd356c2fcdb6cd7560715daea71d4a4fe0b60ade"
+    },
+    {
+      "original": "/workspace/scratch/team-ana-retrieval-spec.md",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/team-ana-retrieval-spec.md",
+      "bytes": 28987,
+      "sha256": "14d81464c1848cbbe760a05e966ad7be7c21942519456993109084446e8dfaec"
+    },
+    {
+      "original": "/workspace/scratch/team-filing-adapter-plan.md",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/team-filing-adapter-plan.md",
+      "bytes": 42735,
+      "sha256": "07f547c15fa75b5fc3ce43627ae202748582d28b28c82fd3863771ad720f5829"
+    },
+    {
+      "original": "/workspace/scratch/team-moat-benchmark-plan.md",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/team-moat-benchmark-plan.md",
+      "bytes": 35537,
+      "sha256": "b52760e5f78fee7e2cef6f1983cd874149aebf2adec3c3d81ff7a3c6b47db7d2"
+    },
+    {
+      "original": "/workspace/scratch/team-regulatory-rule-packs.md",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/team-regulatory-rule-packs.md",
+      "bytes": 37262,
+      "sha256": "0006cf88efc4d3949fa7eb9e48ce9d29837ed146cfe9441380e8bb5cf5f360de"
+    },
+    {
+      "original": "/workspace/scratch/team-scientific-catalog-spec.md",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/team-scientific-catalog-spec.md",
+      "bytes": 36435,
+      "sha256": "20327a06323badf72478ee0d0a24e5112711c0f342f5cf8a89121ccc95469f93"
+    },
+    {
+      "original": "/workspace/scratch/team-validator-classification-fixture/index.xml",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/team-validator-classification-fixture/index.xml",
+      "bytes": 22,
+      "sha256": "e0c08081925b423c706329cae9cf46de3c51729a646b7ee7ab4cb036e815041b"
+    },
+    {
+      "original": "/workspace/scratch/team-validator-classification-fixture/m1/us/us-regional.xml",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/team-validator-classification-fixture/m1/us/us-regional.xml",
+      "bytes": 22,
+      "sha256": "36d4dca543db0dd756ee2367195faf659c975ff90500945e544296a09c171b6d"
+    },
+    {
+      "original": "/workspace/scratch/team-validator-classification-fixture/util/index-md5.txt",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/team-validator-classification-fixture/util/index-md5.txt",
+      "bytes": 40,
+      "sha256": "50dca03ecf6916ad0ef8da28c9e81d1477a4ad5aa02f52be31e4273bfee24bcf"
+    },
+    {
+      "original": "/workspace/scratch/team-validator-classification-probe-result.json",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/team-validator-classification-probe-result.json",
+      "bytes": 746,
+      "sha256": "68b910a998f9eb6f31a2db03fb5edaf4455e9b650861def994729aeae3732fbe"
+    },
+    {
+      "original": "/workspace/scratch/team-validator-classification-probe.mts",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/team-validator-classification-probe.mts.txt",
+      "bytes": 3732,
+      "sha256": "0eeda73f74505c545a222c13187f2a12862476f7ee82e4722813912d6e3dfa64",
+      "archiveKind": "historical source text; not an active repository module"
+    },
+    {
+      "original": "/workspace/scratch/team-validator-classification-verification.md",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/team-validator-classification-verification.md",
+      "bytes": 4330,
+      "sha256": "60544935a147b0627922bb68261eded975b76b97c6cd15a4aa031d444b3b8cf6"
+    },
+    {
+      "original": "/workspace/scratch/validator-client-acceptance.md",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/validator-client-acceptance.md",
+      "bytes": 8905,
+      "sha256": "1d946c49df1d4c42d93338d607a64e78775c7ea9de8bd84a858f142493a2129c"
+    },
+    {
+      "original": "/workspace/scratch/validator-qualification-claims.md",
+      "repository": "docs/publications/data-room-2026-10-14/authored-history/validator-qualification-claims.md",
+      "bytes": 10296,
+      "sha256": "e822d37a5a7d2bcf35d3c6e906cb37af3728964e13f1d33c707c1b0494644b36"
+    }
+  ],
+  "exclusions": [
+    {
+      "original": "/workspace/scratch/dependency-install.log",
+      "classification": "dependency installation log"
+    },
+    {
+      "original": "/workspace/scratch/node_modules",
+      "classification": "dependencies and Vitest runtime cache"
+    },
+    {
+      "original": "/workspace/scratch/management-sources",
+      "classification": "original downloaded source materials"
+    },
+    {
+      "original": "/workspace/shared/downloads",
+      "classification": "original downloaded source materials; not authored deliverables"
+    }
+  ]
+}

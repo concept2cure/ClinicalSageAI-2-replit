@@ -1,0 +1,36 @@
+{
+  "baseCommit": "e62320e0a",
+  "node": "v22.23.3",
+  "memoryMb": 4096,
+  "final": {
+    "files": 3,
+    "passed": 60,
+    "failed": 0,
+    "newSavedSourceCases": 36,
+    "existingAssemblyCases": 12,
+    "existingSelectedSourceCases": 12
+  },
+  "baseline": {
+    "failed": 3,
+    "qualified": "Actual existing controller missing checkSavedSources; actual existing build disclosure missing Check saved sources. Test source was not separately hashed at baseline; raw failure is retained."
+  },
+  "firstCandidate": {
+    "passed": 2,
+    "failed": 1,
+    "qualified": "The UI query succeeded; unsupported jest-dom toBeInTheDocument assertion caused the sole failure. Replaced with native null assertions; no product fix from this failure."
+  },
+  "lint": {
+    "scopedFiles": 8,
+    "errors": 0,
+    "warnings": 0,
+    "workbenchErrors": 0,
+    "workbenchWarnings": 13,
+    "baselineWorkbenchWarnings": 13,
+    "workbenchRuleSequenceUnchanged": true
+  },
+  "limits": [
+    "Synthetic HTTP for controller/transport tests; actual Workbench integration and browser evidence are in sibling packets.",
+    "No live provider requests or human testing.",
+    "No compiler/build/ratchet or Git mutation run by this owner."
+  ]
+}

@@ -1,0 +1,9 @@
+Scope: 6 owned roots plus repository ambient declarations and imported dependencies; compiler options from repository tsconfig.json. This is not a whole-repository typecheck.
+server/routes/c2c/project-vault.ts: 0 target diagnostics
+server/routes/c2c/__tests__/vault-catalog-source-review.test.ts: 0 target diagnostics
+server/services/ana-session-bootstrap-format.ts: 0 target diagnostics
+server/services/__tests__/ana-session-bootstrap.test.ts: 0 target diagnostics
+server/services/ana/document-tools-shared.ts: 0 target diagnostics
+server/services/ana/__tests__/document-catalog-safe-errors.test.ts: 0 target diagnostics
+Loaded imported/ambient sources: 4692
+Total selected-scope diagnostics: 0

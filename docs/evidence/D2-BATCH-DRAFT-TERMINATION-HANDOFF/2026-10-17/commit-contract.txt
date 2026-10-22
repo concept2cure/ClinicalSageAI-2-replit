@@ -1,0 +1,9 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+✅ Pre-commit checks complete
+[concept2cure-v2 788f8a118] Define D2 BatchDraft termination handoff contract
+ 4 files changed, 1012 insertions(+)
+ create mode 100644 docs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/CONTRACT.md
+ create mode 100644 docs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/baseline-BatchDraft.tsx.txt
+ create mode 100644 docs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/baseline-bindings.json
+ create mode 100644 docs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/baseline-finish-reason.ts.txt

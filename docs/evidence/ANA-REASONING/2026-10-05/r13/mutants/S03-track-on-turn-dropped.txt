@@ -1,0 +1,12 @@
+Mutant S03-track-on-turn-dropped: with track changes on, a paste loses the turn its words came from
+
+--- client/src/concept2cure/v2/editor/suggestions.ts
+- const turns = ui === 'paste' || ui === 'drop' ? pastedTurns(fix.doc, from, to) : [];
++ const turns: Array<[number, number, string]> = [];
+
+Tests run: client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts > pasting an AnA suggestion > track changes on: the paste is the person’s, naming the turn its words came from 24ms
+      Tests  1 failed | 6 passed (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -147,7 +147,6 @@ const routeCtx = {
   app,
   pool,
   experimentalRoutesEnabled: flags.experimentalRoutesEnabled,
-  demoRoutesEnabled: flags.demoRoutesEnabled,
   testRoutesEnabled: flags.testRoutesEnabled,
 };
 

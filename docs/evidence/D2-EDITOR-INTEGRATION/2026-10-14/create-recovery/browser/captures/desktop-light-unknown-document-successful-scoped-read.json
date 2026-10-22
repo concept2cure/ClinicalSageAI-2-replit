@@ -1,0 +1,36 @@
+{
+  "name": "successful-scoped-read",
+  "metrics": {
+    "visibleEditableViewport": null,
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "page": {
+      "clientWidth": 1440,
+      "scrollWidth": 1440
+    },
+    "canvas": null,
+    "editor": null,
+    "documentScroll": null,
+    "editorScroll": null,
+    "sectionHeading": null,
+    "editorCount": 0
+  },
+  "axe": {
+    "violations": [],
+    "incomplete": [],
+    "passes": 14
+  },
+  "notices": [
+    {
+      "text": "Check the refreshed working documents before starting another document. This read does not identify which request created a record.",
+      "x": 0,
+      "y": 67,
+      "width": 1440,
+      "height": 50.140625,
+      "scrollWidth": 1436,
+      "clientWidth": 1436
+    }
+  ]
+}

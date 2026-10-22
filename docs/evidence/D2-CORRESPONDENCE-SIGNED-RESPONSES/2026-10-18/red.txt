@@ -1,0 +1,14 @@
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the record an agency answer is approved on > runs as a role RLS applies to (not the owner, not BYPASSRLS) 7ms
+ × tests/db/agency-response-signed-approval.dbtest.ts > the record an agency answer is approved on > records a question on a letter, with its ledger row, as unanswered 201ms
+ × tests/db/agency-response-signed-approval.dbtest.ts > the record an agency answer is approved on > refuses a second question with the same agency number on one letter 48ms
+ × tests/db/agency-response-signed-approval.dbtest.ts > the record an agency answer is approved on > a viewer can read the questions and write none 52ms
+ × tests/db/agency-response-signed-approval.dbtest.ts > tenant isolation > another organization's member cannot reach this project's questions 59ms
+ × tests/db/agency-response-signed-approval.dbtest.ts > tenant isolation > under RLS, the runtime role in another tenant scope reads none of these rows 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: {}: expected 404 to be 201 // Object.is equality
+AssertionError: expected 404 to be 201 // Object.is equality
+AssertionError: expected 404 to be 201 // Object.is equality
+AssertionError: expected 404 to be 201 // Object.is equality
+AssertionError: expected 0 to be greater than 0
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed | 15 skipped (21)

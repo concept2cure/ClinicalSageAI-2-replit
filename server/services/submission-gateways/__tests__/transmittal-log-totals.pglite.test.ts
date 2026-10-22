@@ -101,6 +101,7 @@ describe('GET /api/mdx/gateways/transmittals — totals over every matching row'
       byStatus: { received: 100, in_transit: 30, rejected: 1, rolled_back: 1 },
       // Not the rejected or rolled-back rows: the agency acknowledges neither.
       awaitingAcknowledgement: 30,
+      signing: expect.any(Object),
     });
   });
 
@@ -110,6 +111,7 @@ describe('GET /api/mdx/gateways/transmittals — totals over every matching row'
     expect(res.body.data).toHaveLength(30);
     expect(res.body.meta).toEqual({
       count: 30, total: 30, hasMore: false, byStatus: { in_transit: 30 }, awaitingAcknowledgement: 30,
+      signing: expect.any(Object),
     });
   });
 
@@ -122,6 +124,6 @@ describe('GET /api/mdx/gateways/transmittals — totals over every matching row'
   it('an empty log is a count of zero, not a missing one', async () => {
     const res = await request(app()).get('/api/mdx/gateways/transmittals?region=ema');
     expect(res.status).toBe(200);
-    expect(res.body.meta).toEqual({ count: 0, total: 0, hasMore: false, byStatus: {}, awaitingAcknowledgement: 0 });
+    expect(res.body.meta).toEqual({ count: 0, total: 0, hasMore: false, byStatus: {}, awaitingAcknowledgement: 0, signing: expect.any(Object) });
   });
 });

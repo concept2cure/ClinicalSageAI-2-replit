@@ -1,0 +1,25 @@
+Round 15, SEC-A-7 door 2 (from-draft provenance).
+Test: server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts
+
+baseline: Tests  11 passed (11)
+
+D2-01   KILLED    the parser accepts a caller-named model again (trunk behaviour)
+        Tests  3 failed | 8 passed (11)
+D2-02   KILLED    the record does not set the model, so the document names none
+        Tests  2 failed | 9 passed (11)
+D2-03   KILLED    a record naming NO model is admitted (the empty-list trap)
+        Tests  1 failed | 10 passed (11)
+D2-04   KILLED    an unqualified model is admitted as long as the list is not empty
+        Tests  3 failed | 8 passed (11)
+D2-05   KILLED    an unresolved turn is recorded as ALLOWED, the fail-open direction
+        Tests  3 failed | 8 passed (11)
+D2-09   KILLED    the reason the turn did not resolve is dropped, so the record says only "unverified"
+        Tests  2 failed | 9 passed (11)
+D2-10   KILLED    a run reference is not rewritten to the record it resolved to
+        Tests  1 failed | 10 passed (11)
+D2-06   KILLED    a seed or an import is given a machine verdict it has no business carrying
+        Tests  1 failed | 10 passed (11)
+D2-07   KILLED    the run-id path is dropped, so every document the AnA tool creates is unverified
+        Tests  2 failed | 9 passed (11)
+D2-08   KILLED    a run naming several records picks whichever sorted first
+        Tests  1 failed | 10 passed (11)

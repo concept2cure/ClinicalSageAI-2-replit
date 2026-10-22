@@ -1,0 +1,52 @@
+ × tests/seed/seeded-organisation-gets-its-workspace.test.ts > a seeded organisation has its own workspace, so a program can be created > seed-admin: the organisation it writes gets the marked workspace the anchor prefers 328ms
+ × tests/seed/seeded-organisation-gets-its-workspace.test.ts > a seeded organisation has its own workspace, so a program can be created > seed-founder: the same 308ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > a seeded organisation has its own workspace, so a program can be created > never gives an organisation that already has a workspace a second one 313ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed-admin.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed-founder.mjs 5ms
+ × tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed-ga-demo.mjs 8ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/10-risk.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/100-agency-meetings.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/101-design-controls.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/102-cro-portfolio.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/103-reg-change.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/104-decision-lineage.mjs 4ms
+ × tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/105-dossier-map.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/106-ind-checklist.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/107-shadow-review.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/108-market-access.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/109-program-journey.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/110-labeling-pi.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/111-ind-program.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/111-protocol-dev.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/112-ind-authoring-doc.mjs 6ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/114-research-admin.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/115-nda-m1-docs.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/116-nda-rtf.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/117-maa-module1.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/118-smpc-sections.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/119-bla-assessments.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/120-lifecycle-obligations.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/121-cmc-changes.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/122-pediatric-orphan-cards.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/123-qms-quality.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/124-investigator-brochure.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/125-demo-scenarios.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/20-tasks-approvals.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/21-task-graph.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/22-task-templates.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/40-submission-udi.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/50-postmarket.mjs 5ms
+ × tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/60-mdx-aggregates.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/65-collab-review.mjs 4ms
+ × tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/70-vault-memory-symbols.mjs 5ms
+ × tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/80-programs-tlf-pdev.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/90-evidence-objects.mjs 5ms
+ × tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/94-haq.mjs 5ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/95-human-factors.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/96-safety-narrative.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/97-nda-cockpit.mjs 4ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/98-evidence-asks.mjs 6ms
+ ✓ tests/seed/seeded-organisation-gets-its-workspace.test.ts > one writer: no seed script inserts a workspace of its own > scripts/seed/ga-demo.d/99-doc-journey.mjs 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  8 failed | 41 passed (49)

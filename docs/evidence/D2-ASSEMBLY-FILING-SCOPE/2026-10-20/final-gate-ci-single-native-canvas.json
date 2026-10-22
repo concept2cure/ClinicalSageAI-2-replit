@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-21T00:01:10.106475+00:00",
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:single-native-canvas"
+  ],
+  "elapsedSeconds": 0.241,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-final.json",
+  "rawOutput": "final-gate-ci-single-native-canvas-output.txt.gz",
+  "outputSha256": "e005e420c519ceb9c1162e60f62f8656da5a384a03db00db90dfbf58955800bd",
+  "stdout": "[single-native-canvas] ok \u2014 @napi-rs/canvas 0.1.80: one copy\n"
+}

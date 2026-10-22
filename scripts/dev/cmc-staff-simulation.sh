@@ -52,7 +52,16 @@ CMC_ENTITLED=$(cat "$OUT/nav.json" | JQ '(.data.entitlements // .entitlements //
 [ "$CODE" = 200 ] && ok "navigation verdicts served ($CODE); cmc entitled=$CMC_ENTITLED" || bad "navigation failed ($CODE)"
 
 step "2. Regulatory lead creates the program (one project: spine + anchor)"
-CODE=$(req program POST /api/c2c/projects '{"name":"BX-701 IND","productName":"BX-701","programType":"ind","primaryAgency":"FDA","priority":"high","indication":"Relapsed multiple myeloma"}')
+# productType is the person's own statement of the product class (P-21): an IND
+# covers drugs and biologics alike, so the create must say which, and the
+# composition boundary asks it first (services/cmc/composition-scope.ts).
+# applicationNumber is the number FDA assigned this IND. The eCTD assembly
+# refuses a package that cannot name its application from the record — "never a
+# placeholder" (P-27) — and the staffer compiling sequence 0001 has it. Recorded
+# as the bare number the backbone's <application-number> carries: the
+# identifier pattern (services/ectd/regulatory-identifiers.ts) admits no space,
+# so a prose "IND 161204" is not a usable identifier.
+CODE=$(req program POST /api/c2c/projects '{"name":"BX-701 IND","productName":"BX-701","programType":"ind","productType":"drug","applicationNumber":"161204","primaryAgency":"FDA","priority":"high","indication":"Relapsed multiple myeloma"}')
 PROGRAM=$(cat "$OUT/program.json" | JQ '.data.id // .id // empty')
 [ "$CODE" = 201 ] && [ -n "$PROGRAM" ] && ok "program $PROGRAM created" || { bad "program create failed ($CODE): $(head -c400 "$OUT/program.json")"; exit 1; }
 echo "   meta: $(cat "$OUT/program.json" | JQ '.meta // .data.meta // empty' | head -c 400)"
@@ -66,14 +75,59 @@ ANCHOR=$(cat "$OUT/program.json" | JQ '.meta.projectAnchorId // .data.meta.proje
   || bad "program created with NO PM-spine anchor: $(cat "$OUT/program.json" | JQ '.meta.projectAnchorSkipped // empty') - $(cat "$OUT/program.json" | JQ '.meta.projectAnchorDetail // empty' | head -c 220)"
 
 step "3. Process development registers the drug substance (feeds 3.2.S.1/S.2)"
-CODE=$(req ds POST /api/cmc/drug-substances "{\"substanceName\":\"BX-701\",\"inn\":\"belantezumab\",\"casNumber\":\"1234-56-7\",\"molecularFormula\":\"C6H8O6\",\"manufacturingProcess\":{\"manufacturer\":\"Acme Biologics\",\"route\":\"CHO cell culture\",\"site\":\"Basel\"},\"status\":\"development\",\"developmentPhase\":\"phase1\",\"projectId\":\"$PROGRAM\",\"modality\":\"biologic\",\"biologicalOrigin\":\"CHO cell culture, fed-batch\",\"cellLine\":\"CHO-K1; MCB lot MCB-2401, WCB lot WCB-2403\",\"sourceOrganism\":\"Cricetulus griseus (Chinese hamster ovary)\",\"viralSafetyEvaluation\":\"Two orthogonal clearance steps validated per ICH Q5A(R2): low-pH hold (>= 4.8 log10 X-MuLV) and 20 nm nanofiltration (>= 5.2 log10 MVM). In-process bioburden, mycoplasma and adventitious-agent testing at harvest.\",\"tseStatus\":\"Chemically defined, animal-component-free media throughout; no animal-derived raw material enters the process. EMA EMEA/410/01 rev. 3 risk assessment on file.\"}")
+# A SMALL MOLECULE, which is what this platform composes Module 3 for (P-28,
+# 2026-10-05). This program used to register a monoclonal antibody -
+# modality "biologic", route "CHO cell culture", INN "belantezumab" - and the
+# compile composed twenty-one small-molecule Module 3 sections for it, ICH Q3A
+# impurity reasoning and all. The composition boundary
+# (services/cmc/composition-scope.ts) now refuses that, and step 3c below
+# proves it on a program of its own, which is also where the biologic register
+# fields keep their coverage.
+CODE=$(req ds POST /api/cmc/drug-substances "{\"substanceName\":\"BX-701\",\"inn\":\"bexanistat\",\"casNumber\":\"1234-56-7\",\"molecularFormula\":\"C17H19N3O2\",\"molecularWeight\":\"297.36\",\"manufacturingProcess\":{\"manufacturer\":\"Acme Fine Chemicals\",\"route\":\"Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water\",\"site\":\"Basel\"},\"status\":\"development\",\"developmentPhase\":\"phase1\",\"projectId\":\"$PROGRAM\",\"modality\":\"small_molecule\"}")
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "drug substance registered ($CODE)" || bad "drug substance failed ($CODE): $(head -c300 "$OUT/ds.json")"
 
-# §3.2.A.2 must now be composed from what the register holds, not from the
-# substance's name: the section's biologic branch used to assert a control
-# strategy, viral clearance and cell-bank characterisation over nothing.
-A2CHECK=$(cat "$OUT/ds.json" | jq -r '.data.viralSafetyEvaluation // empty' 2>/dev/null)
-[ -n "$A2CHECK" ] && ok "the drug substance carries its ICH Q5A(R2) record" || bad "the substance's viral safety evaluation did not persist"
+# The route is what §3.2.S.2.2 describes and what the modality rule reads
+# (services/cmc/substance-modality.ts): a recorded chemical synthesis with no
+# biological origin is what makes this program composable at all.
+DSROUTE=$(cat "$OUT/ds.json" | jq -r '.data.manufacturingProcess.route // .data.manufacturingRoute // empty' 2>/dev/null)
+echo "$DSROUTE" | grep -q "chemical synthesis" && ok "the drug substance carries its recorded synthetic route" \
+  || bad "the substance's manufacturing route did not persist: '$DSROUTE'"
+
+step "3c. A biologic program is refused Module 3 composition, and told where to author it"
+# The composition boundary, end to end (services/cmc/composition-scope.ts,
+# P-28 2026-10-05). This platform composes small-molecule Module 3 for a US
+# IND; ICH Q6B, Q5A(R2) and Q5C are not modelled, and composing anyway applied
+# Q3A impurity reasoning to a biologic. Until this step the simulation's own
+# program WAS a CHO cell-culture mAb and composed twenty-one sections for it.
+#
+# The biologic register fields keep their coverage here: §3.2.A.2's inputs are
+# recorded and asserted to persist, which is what the register owes them even
+# though the composer refuses the program.
+CODE=$(req bioprog POST /api/c2c/projects '{"name":"BX-902 IND","productName":"BX-902","programType":"ind","productType":"biologic","primaryAgency":"FDA","priority":"medium","indication":"Relapsed multiple myeloma"}')
+BIOPROG=$(cat "$OUT/bioprog.json" | JQ '.data.id // .id // empty')
+[ "$CODE" = 201 ] && [ -n "$BIOPROG" ] && ok "a second program $BIOPROG created for the biologic" \
+  || bad "biologic program create failed ($CODE): $(head -c300 "$OUT/bioprog.json")"
+
+CODE=$(req bio_ds POST /api/cmc/drug-substances "{\"substanceName\":\"BX-902\",\"inn\":\"belantezumab\",\"manufacturingProcess\":{\"manufacturer\":\"Acme Biologics\",\"route\":\"CHO cell culture\",\"site\":\"Basel\"},\"status\":\"development\",\"developmentPhase\":\"phase1\",\"projectId\":\"$BIOPROG\",\"modality\":\"biologic\",\"biologicalOrigin\":\"CHO cell culture, fed-batch\",\"cellLine\":\"CHO-K1; MCB lot MCB-2401, WCB lot WCB-2403\",\"sourceOrganism\":\"Cricetulus griseus (Chinese hamster ovary)\",\"viralSafetyEvaluation\":\"Two orthogonal clearance steps validated per ICH Q5A(R2): low-pH hold (>= 4.8 log10 X-MuLV) and 20 nm nanofiltration (>= 5.2 log10 MVM). In-process bioburden, mycoplasma and adventitious-agent testing at harvest.\",\"tseStatus\":\"Chemically defined, animal-component-free media throughout; no animal-derived raw material enters the process. EMA EMEA/410/01 rev. 3 risk assessment on file.\"}")
+[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "the biologic drug substance registered ($CODE)" \
+  || bad "biologic drug substance failed ($CODE): $(head -c300 "$OUT/bio_ds.json")"
+A2CHECK=$(cat "$OUT/bio_ds.json" | jq -r '.data.viralSafetyEvaluation // empty' 2>/dev/null)
+[ -n "$A2CHECK" ] && ok "the biologic substance carries its ICH Q5A(R2) record" \
+  || bad "the substance's viral safety evaluation did not persist"
+
+# The compile must refuse it, by code, and name the path that does author it.
+CODE=$(req bio_compile POST "/api/cmc/module3-os/compile/$BIOPROG" '{}')
+BIOCODE=$(cat "$OUT/bio_compile.json" | jq -r '.code // empty' 2>/dev/null)
+BIOERR=$(cat "$OUT/bio_compile.json" | jq -r '.error // empty' 2>/dev/null)
+BIOSECT=$(cat "$OUT/bio_compile.json" | jq -r '.compiledCount // 0' 2>/dev/null)
+if [ "$CODE" = 409 ] && [ "$BIOCODE" = "CMC_PRODUCT_CLASS_OUT_OF_SCOPE" ] && [ "${BIOSECT:-0}" = "0" ]; then
+  ok "a biologic program is refused 409 CMC_PRODUCT_CLASS_OUT_OF_SCOPE and composes nothing"
+else
+  bad "biologic compile: http=$CODE code=$BIOCODE compiled=$BIOSECT err=$(echo "$BIOERR" | head -c 200)"
+fi
+echo "$BIOERR" | grep -q "Q6B" && echo "$BIOERR" | grep -q "Document editor & authoring" \
+  && ok "the refusal names the guidelines it does not model and where to author it instead" \
+  || bad "the refusal does not name Q6B and the authoring path: $(echo "$BIOERR" | head -c 240)"
 
 step "3b. A read-only colleague reads the CMC registers and writes none of them"
 # The org admin adds a viewer through the members API (the product path); the
@@ -104,8 +158,32 @@ else
 fi
 
 step "4. Analytical development registers the assay method (feeds 3.2.S.4)"
-CODE=$(req method POST /api/cmc/analytical-methods "{\"methodCode\":\"AM-001\",\"title\":\"RP-HPLC Assay\",\"purpose\":\"assay\",\"analyte\":\"BX-701\",\"matrix\":\"drug substance\",\"technique\":\"HPLC\",\"status\":\"validated\",\"validationDate\":\"2026-06-01T00:00:00.000Z\",\"ichQ2Parameters\":{\"characteristics\":[\"accuracy\",\"precision\",\"specificity\"]},\"projectId\":\"$PROGRAM\"}")
-[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "method registered ($CODE)" || bad "method failed ($CODE): $(head -c300 "$OUT/method.json")"
+# A method is not born validated. Until 2026-10-18 this step created AM-001 with
+# status 'validated' and a validationDate straight from the body, which is what
+# the §3.2.S.4.3 'Validation Status' column, the ICH Q2 engine and the
+# contradiction sweep all read as a completed Q2 exercise. It is now a signature.
+CODE=$(req methodbad POST /api/cmc/analytical-methods "{\"methodCode\":\"AM-000\",\"title\":\"Self-declared method\",\"purpose\":\"assay\",\"analyte\":\"BX-701\",\"matrix\":\"drug substance\",\"technique\":\"HPLC\",\"status\":\"validated\",\"validatedBy\":1,\"validationDate\":\"2026-06-01T00:00:00.000Z\",\"projectId\":\"$PROGRAM\"}")
+[ "$CODE" = 409 ] && ok "a method claiming 'validated' on create is refused, and the refusal names the signature ($CODE)" \
+  || bad "a self-declared method validation was accepted ($CODE): $(head -c300 "$OUT/methodbad.json")"
+CODE=$(req method POST /api/cmc/analytical-methods "{\"methodCode\":\"AM-001\",\"title\":\"RP-HPLC Assay\",\"purpose\":\"assay\",\"analyte\":\"BX-701\",\"matrix\":\"drug substance\",\"technique\":\"HPLC\",\"status\":\"validation\",\"ichQ2Parameters\":{\"characteristics\":[\"accuracy\",\"precision\",\"specificity\"]},\"projectId\":\"$PROGRAM\"}")
+[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "method registered, under validation ($CODE)" || bad "method failed ($CODE): $(head -c300 "$OUT/method.json")"
+
+step "4b. The Q2 validation is a signature, with its own precondition"
+METHODID=$(cat "$OUT/method.json" | JQ '.data.id // .id // empty')
+CODE=$(req methodnoq2 POST /api/cmc/analytical-methods "{\"methodCode\":\"AM-002\",\"title\":\"Method with no Q2 package\",\"purpose\":\"assay\",\"analyte\":\"BX-701\",\"matrix\":\"drug substance\",\"technique\":\"HPLC\",\"status\":\"development\",\"projectId\":\"$PROGRAM\"}")
+NOQ2ID=$(cat "$OUT/methodnoq2.json" | JQ '.data.id // .id // empty')
+CODE=$(req methodv0 POST "/api/cmc/analytical-methods/$NOQ2ID/validate" '{"reason":"Attempting to validate a method with no Q2 parameters on file.","meaning":"approval","reauth":{"password":"pass-word"}}')
+[ "$CODE" = 409 ] && ok "a method with no ICH Q2 parameters cannot be validated — the signature has nothing to accept ($CODE)" \
+  || bad "a method with no Q2 package was validated ($CODE): $(head -c250 "$OUT/methodv0.json")"
+CODE=$(req methodv1 POST "/api/cmc/analytical-methods/$METHODID/validate" '{"reason":"Q2 report AM-RPT-001 accepted; accuracy, precision and specificity met their criteria.","meaning":"approval","reauth":{"password":"pass-word"}}')
+MSTAT=$(cat "$OUT/methodv1.json" | JQ '.data.status // empty')
+MBY=$(cat "$OUT/methodv1.json" | JQ '.data.validatedBy // empty')
+[ "$CODE" = 200 ] && [ "$MSTAT" = "validated" ] && [ -n "$MBY" ] \
+  && ok "AM-001 validated under signature; the record names who validated it ($MBY)" \
+  || bad "the method validation failed ($CODE, status=$MSTAT, validatedBy=$MBY): $(head -c250 "$OUT/methodv1.json")"
+CODE=$(req methodedit PUT "/api/cmc/analytical-methods/$METHODID" '{"title":"Rewritten after the signature"}')
+[ "$CODE" = 409 ] && ok "a validated method is closed to ordinary edits ($CODE)" \
+  || bad "a validated method accepted a content edit ($CODE): $(head -c250 "$OUT/methodedit.json")"
 
 step "5. QC runs the test; a second person reviews (feeds 3.2.S.4)"
 CODE=$(req qc POST /api/cmc/qc-testing "{\"sampleId\":\"S-2026-001\",\"batchNumber\":\"B-2026-001\",\"sampleType\":\"drug substance\",\"testMethod\":\"AM-001\",\"testDate\":\"2026-07-01T00:00:00.000Z\",\"testResults\":{\"value\":\"99.2\",\"unit\":\"%\"},\"specifications\":{\"acceptanceCriteria\":\"98.0-102.0%\"},\"passFailStatus\":\"pass\",\"projectId\":\"$PROGRAM\"}")
@@ -331,7 +409,14 @@ CODE=$(req dprstd POST /api/cmc/reference-standards "{\"projectId\":\"$PROGRAM\"
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "drug-product working standard recorded with its CoA ($CODE)" || bad "DP reference standard failed ($CODE): $(head -c200 "$OUT/dprstd.json")"
 CODE=$(req dpstab POST /api/cmc/stability-studies "{\"productName\":\"BX-701 5 mg film-coated tablet\",\"batchNumber\":\"DP-B-001\",\"dosageForm\":\"tablet\",\"scope\":\"DP\",\"climaticZone\":\"II\",\"studyType\":\"long_term\",\"storageConditions\":[\"25C/60%RH\"],\"duration\":24,\"testParameters\":[\"assay\",\"degradant D1\"],\"timePoints\":[\"0\",\"3\",\"6\",\"12\",\"24\"],\"shelfLife\":\"24 months at 25C/60%RH (proposed)\",\"status\":\"ACTIVE\",\"startDate\":\"2026-02-01T00:00:00.000Z\",\"projectId\":\"$PROGRAM\"}")
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "drug-product stability study registered with its proposed claim ($CODE)" || bad "DP stability failed ($CODE): $(head -c200 "$OUT/dpstab.json")"
-CODE=$(req comp POST /api/cmc/comparability-studies "{\"projectId\":\"$PROGRAM\",\"title\":\"Pre-/post-granulation-scale comparability of BX-701 tablets\",\"type\":\"process\",\"product\":\"BX-701 5 mg film-coated tablet\",\"methods\":[\"AM-001\",\"dissolution\"],\"outcome\":\"Comparable on assay, degradation and dissolution across three batches per scale\",\"status\":\"comparable\"}")
+# 'approved' on this register is §3.2.P.8's own Status column, and `reviewed_by`
+# is the 'Reviewed By' name beside it — a free-text field with no user behind it
+# until 2026-10-18. Both are the approval signature's now, so the create records
+# the assessment and the signature concludes it.
+CODE=$(req compbad POST /api/cmc/comparability-studies "{\"projectId\":\"$PROGRAM\",\"title\":\"Self-declared comparability\",\"type\":\"process\",\"product\":\"BX-701\",\"status\":\"approved\",\"owner\":\"Dr Nobody\",\"outcome\":\"Comparable\"}")
+[ "$CODE" = 409 ] && ok "an assessment claiming 'approved' on create is refused ($CODE)" \
+  || bad "a self-declared comparability approval was accepted ($CODE): $(head -c250 "$OUT/compbad.json")"
+CODE=$(req comp POST /api/cmc/comparability-studies "{\"projectId\":\"$PROGRAM\",\"title\":\"Pre-/post-granulation-scale comparability of BX-701 tablets\",\"type\":\"process\",\"product\":\"BX-701 5 mg film-coated tablet\",\"methods\":[\"AM-001\",\"dissolution\"],\"outcome\":\"Comparable on assay, degradation and dissolution across three batches per scale\",\"status\":\"completed\"}")
 COMPLINK=$(cat "$OUT/comp.json" | JQ '.module3Linked // empty')
 # The register write is only half of it: linkToModule3 never throws and never
 # changes the status code, so a row that reached the table and NOT the canonical
@@ -342,7 +427,10 @@ COMPLINK=$(cat "$OUT/comp.json" | JQ '.module3Linked // empty')
   || bad "comparability failed ($CODE, module3Linked=$COMPLINK): $(head -c250 "$OUT/comp.json")"
 
 step "9. Change manager proposes a governed change WITH project (marks 3.2 stale)"
-CODE=$(req change POST /api/cmc-changes "{\"title\":\"Bioreactor scale-up 500L→2000L\",\"dosageFormFamily\":\"biologic\",\"changeCategory\":\"scale_up\",\"scaleChangeFactor\":\"within_10x\",\"touchesCriticalStep\":true,\"affects\":\"drug_substance\",\"cmcProjectId\":\"$PROGRAM\"}")
+# A small-molecule change, matching the program's substance: this used to be a
+# bioreactor scale-up with dosageFormFamily "biologic", which no longer
+# describes BX-701.
+CODE=$(req change POST /api/cmc-changes "{\"title\":\"Final-step crystallisation scale-up 50 kg→200 kg\",\"dosageFormFamily\":\"immediate_release_oral_solid\",\"changeCategory\":\"scale_up\",\"scaleChangeFactor\":\"within_10x\",\"touchesCriticalStep\":true,\"affects\":\"drug_substance\",\"cmcProjectId\":\"$PROGRAM\"}")
 WT=$(cat "$OUT/change.json" | JQ '.meta.module3WriteThrough // empty')
 [ "$CODE" = 201 ] && ok "governed change proposed; module3WriteThrough=$WT" || bad "change failed ($CODE): $(head -c300 "$OUT/change.json")"
 
@@ -570,16 +658,19 @@ A3COMPLETE=$(echo "$A3" | jq -r '.completeness // 0' 2>/dev/null)
 [ "${A3GEL:-0}" = "1" ] && [ "${A3FREE:-0}" = "0" ] && echo "$A3CERT" | grep -q "CEP" && [ "${A3COMPLETE:-0}" = "100" ] \
   && ok "§3.2.A.3 lists the animal-origin excipient once, with the certificate the register holds ($A3CERT)" \
   || bad "§3.2.A.3: gelatinRows=$A3GEL animalFreeClaim=$A3FREE cert='$A3CERT' completeness=$A3COMPLETE"
-# §3.2.A.2 is the appendix next door and the product is a CHO cell-culture mAb:
-# it must not file the chemical-substance branch, and it must never claim raw
-# materials it does not read.
+# §3.2.A.2 is the appendix next door. This substance records a chemical
+# synthesis and no biological origin, so the section says the question does not
+# apply to the SUBSTANCE - and it must still never certify the raw materials or
+# excipients it does not read. That sentence is the one §3.2.A.3 owns, and this
+# section claiming it was the defect.
 A2=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.A.2")][0]' 2>/dev/null)
 A2NARR=$(echo "$A2" | jq -r '.narrativeDraft // ""' 2>/dev/null)
 A2CHEM=$(echo "$A2NARR" | grep -c "does not apply to the drug substance")
 A2RAW=$(echo "$A2NARR" | grep -c "no animal- or human-derived raw materials")
-[ "${A2CHEM:-1}" = "0" ] && [ "${A2RAW:-1}" = "0" ] \
-  && ok "§3.2.A.2 does not file a chemical-substance all-clear for a cell-culture product" \
-  || bad "§3.2.A.2: notApplicableClaim=$A2CHEM rawMaterialClaim=$A2RAW"
+A2SCOPED=$(echo "$A2NARR" | grep -c "statement about the SUBSTANCE")
+[ "${A2CHEM:-0}" -ge 1 ] && [ "${A2RAW:-1}" = "0" ] && [ "${A2SCOPED:-0}" -ge 1 ] \
+  && ok "§3.2.A.2 answers for the substance only, and certifies no raw material" \
+  || bad "§3.2.A.2: notApplicableClaim=$A2CHEM rawMaterialClaim=$A2RAW scopedToSubstance=$A2SCOPED"
 
 
 step "11g. §3.2.S.2 and §3.2.S.3 compose from the process and characterisation registers"
@@ -684,6 +775,41 @@ echo "$RMDTXT" | head -1 | grep -q '^## ' \
 CODE=$(req read404 GET "/api/cmc/module3-os/sections/$PROGRAM/3.2.Z.9")
 [ "$CODE" = 404 ] && ok "an uncompiled section refuses to be read (404), rather than serving an empty one to sign" || bad "uncompiled section read: $CODE"
 
+step "15. A QA approver — a second person — is added, because the recorder may not approve"
+# Four-eyes on a section approval (services/governance/separation-of-duties.ts,
+# 2026-10-18): the signer may not be one of the people who ENTERED the register
+# records the section cites. Every register above was recorded by the signed-in
+# staffer, so the approvals below are made by a QA approver added here — which
+# is not a test contrivance but the predicate rule the control enforces
+# (21 CFR 211.22, 211.100(a): the quality unit approves what others recorded).
+# `approver` is one of the three roles that may sign at all (P-18,
+# services/part11/signing-authority.ts).
+QA_EMAIL="cmc-qa-sim@concept2cure.pro"
+CODE=$(req qa_create POST /api/tenant-users "{\"email\":\"$QA_EMAIL\",\"name\":\"CMC QA Approver\",\"role\":\"approver\"}")
+echo "   meta: add QA approver → $CODE $(head -c 160 "$OUT/qa_create.json")"
+# FIXTURE — the one step in this script that is not an API call. The members
+# API leaves `password_hash` as an invitation placeholder, and a real second
+# person sets their own password from the invitation link, which a script cannot
+# click. The signature path re-authenticates (Â§11.10(g)/Â§11.200), so without a
+# password the approver cannot sign at all: the first run of this step produced
+# twenty REAUTH_PASSWORD_INVALID refusals and then REAUTH_ACCOUNT_LOCKED, which
+# is the platform behaving correctly. Both are reset here, as the invitation
+# link would.
+PGURL="${DATABASE_URL:-postgresql://c2c@127.0.0.1/clinicalsage}"
+QA_HASH=$(node -e "process.stdout.write(require('bcryptjs').hashSync(process.argv[1], 12))" 'pass-word' 2>/dev/null)
+if [ -n "$QA_HASH" ] && psql "$PGURL" -q -v ON_ERROR_STOP=1 \
+     -c "UPDATE users SET password_hash='$QA_HASH', failed_login_attempts=0, locked_until=NULL WHERE email='$QA_EMAIL'" >/dev/null 2>&1; then
+  ok "the QA approver can re-authenticate (fixture: a password set as the invitation link would)"
+else
+  bad "could not set the QA approver's password; every approval below will refuse re-authentication"
+fi
+QCODE=$(curl -sS -X POST "$BASE/api/auth/dev-login" -H 'Content-Type: application/json' \
+  -d "{\"email\":\"$QA_EMAIL\"}" -o "$OUT/qa_login.json" -w '%{http_code}')
+QA_TOKEN=$(cat "$OUT/qa_login.json" | JQ '.accessToken // empty')
+[ "$QCODE" = 200 ] && [ -n "$QA_TOKEN" ] \
+  && ok "a QA approver of this organization is signed in" \
+  || bad "no QA approver session ($QCODE): $(head -c 200 "$OUT/qa_login.json")"
+
 step "15. QA approves every COMPLETE compiled section (Part 11 re-auth each time); an incomplete one is refused"
 # An approval is a claim about content that was reviewed. The approve route
 # reads the section's own compiled record and refuses when the compiler says
@@ -695,7 +821,9 @@ approve_section() { # approve_section SECTION_KEY [MEANING] -> writes approve-KE
   # token, not a 11.50(a)(3) meaning -- and the route silently recorded
   # 'approval' instead, so every assertion below passed against a signed record
   # that said something the caller never declared.
-  req "approve-$1" POST "/api/cmc/module3-os/sections/$PROGRAM/$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$1")/approve" \
+  # The QA approver signs, not the staffer who recorded the registers: the
+  # route refuses a signer who entered the data the section cites.
+  TOKEN="${3:-$QA_TOKEN}" req "approve-$1" POST "/api/cmc/module3-os/sections/$PROGRAM/$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$1")/approve" \
     "{\"reason\":\"Section content verified against source data\",\"meaning\":\"${2:-approval}\",\"reauth\":{\"password\":\"pass-word\"}}"
 }
 complete_sections()   { jq -r '.sections[]? | select((.completeness == 100) and (((.missingInputs // []) | length) == 0)) | .sectionKey' "$1" 2>/dev/null; }
@@ -728,6 +856,23 @@ BADMEAN=$(cat "$OUT/approve-$FIRSTSEC.json" | JQ '.error // empty')
 [ "$CODE" = 400 ] && [ "$BADMEAN" = "INVALID_SIGNATURE_MEANING" ] \
   && ok "a meaning outside 11.50(a)(3) is refused (400 INVALID_SIGNATURE_MEANING), not rewritten" \
   || bad "an out-of-vocabulary signature meaning was accepted ($CODE, error=$BADMEAN)"
+
+step "15b. The person who entered the data cannot approve the section, and an approval is not authorship"
+# The control the record-level operator rows of 2026-10-18 were for. The
+# signed-in staffer recorded every register this programme cites, so their
+# approval is refused by name — and the one meaning that would switch the check
+# off, "authorship", is not accepted at this endpoint at all.
+SODSEC=$(complete_sections "$OUT/compile.json" | head -1)
+CODE=$(approve_section "$SODSEC" approval "$TOKEN")
+SODERR=$(cat "$OUT/approve-$SODSEC.json" | JQ '.error // empty')
+[ "$CODE" = 403 ] && [ "$SODERR" = "SEPARATION_OF_DUTIES" ] \
+  && ok "the staffer who recorded the records cannot approve the section (403 $SODERR)" \
+  || bad "a self-approval of §$SODSEC landed ($CODE, error=$SODERR): $(head -c 220 "$OUT/approve-$SODSEC.json")"
+CODE=$(approve_section "$SODSEC" authorship)
+AUTHERR=$(cat "$OUT/approve-$SODSEC.json" | JQ '.error // empty')
+[ "$CODE" = 400 ] && [ "$AUTHERR" = "APPROVAL_IS_NOT_AUTHORSHIP" ] \
+  && ok "an authorship-meaning signature is refused at the approve endpoint (400 $AUTHERR)" \
+  || bad "an authorship-meaning approval was accepted ($CODE, error=$AUTHERR)"
 # And the meaning that WAS declared is the meaning on the record.
 SIGMEAN=$(PGPASSWORD=c2c_local psql -h 127.0.0.1 -U c2c -d clinicalsage -tAc \
   "SELECT DISTINCT payload->>'meaning' FROM c2c_ana_actions WHERE surface = 'cmc-module3-section-approve'" 2>/dev/null | tr -d ' ')
@@ -890,7 +1035,7 @@ OPS=$(req lv3 GET "/api/submissions/sequences/$SEQ2/leaves" >/dev/null; cat "$OU
   || bad "amendment placement: seq=$SEQ2 code=$CODE ops=$OPS $(head -c300 "$OUT/place4.json")"
 
 step "22. Governed change marked sections stale → gate refuses again (fail closed end-to-end)"
-CODE=$(req change2 POST /api/cmc-changes "{\"title\":\"Filter membrane change\",\"dosageFormFamily\":\"biologic\",\"changeCategory\":\"manufacturing_process\",\"processChangeKind\":\"minor_adjustment\",\"cmcProjectId\":\"$PROGRAM\"}")
+CODE=$(req change2 POST /api/cmc-changes "{\"title\":\"Filter membrane change\",\"dosageFormFamily\":\"immediate_release_oral_solid\",\"changeCategory\":\"manufacturing_process\",\"processChangeKind\":\"minor_adjustment\",\"cmcProjectId\":\"$PROGRAM\"}")
 WT2=$(cat "$OUT/change2.json" | JQ '.meta.module3WriteThrough // empty')
 CODE=$(req gate3 POST "/api/cmc/module3-os/guard/final-export/$PROGRAM" '{}')
 if [ "$WT2" = "recorded" ] && [ "$CODE" = 409 ]; then
@@ -899,64 +1044,61 @@ else
   bad "convergence loop: writeThrough=$WT2 gate=$CODE"
 fi
 
-step "23. Regulatory lead logs an agency question (the correspondence WRITE half)"
-CODE=$(req qlog POST /api/cmc/agency-questions '{"questionText":"[SIM] Provide leachables data for the container closure system.","sectionReference":"3.2.P.7","region":"EMA","priority":"high","dueDate":"2027-01-15"}')
-QID=$(cat "$OUT/qlog.json" | JQ '.data.id // empty')
-[ "$CODE" = 201 ] && [ -n "$QID" ] && ok "question logged (id=$QID, OPEN, org-stamped)" || bad "log question: $CODE $(head -c150 "$OUT/qlog.json")"
+# Steps 23-25 rewritten 2026-10-19 (rows D2 and D5; decisions P-38, P-39 item 1).
+# They exercised CMC's own question file (reg_questions): log, draft link,
+# send for review, close by status update, reopen. Agency questions now have
+# one home, the letter: recorded, answered and approved by signature in
+# Communication; CMC reads them and writes nothing; the earlier file is
+# read-only (its writes answer 410, the database refuses them).
+step "23. Regulatory lead logs the agency's letter on the program and records its question at §3.2.P.7 (the letter is the record)"
+CODE=$(req letter POST "/api/concept2cure/projects/$PROGRAM/agency-communications" '{"sourceType":"uploaded_official_correspondence","communicationType":"[SIM] Information request: container closure","sourceChannel":"esg","urgency":"high","responseRequired":true,"dueDate":"2027-01-15T00:00:00.000Z","visibilityTier":"shared_client_c2c"}')
+LETTER=$(cat "$OUT/letter.json" | JQ '.data.id // empty')
+[ "$CODE" = 200 ] && [ -n "$LETTER" ] && ok "letter logged ($LETTER, response required)" || bad "log letter: $CODE $(head -c200 "$OUT/letter.json")"
+CODE=$(req qrec POST "/api/concept2cure/projects/$PROGRAM/agency-communications/$LETTER/questions" '{"questionRef":"Q1","questionText":"[SIM] Provide leachables data for the container closure system.","discipline":"CMC","ctdSection":"m3.2.p.7","severity":"major","reason":"Recording the information request as the agency worded it."}')
+QID=$(cat "$OUT/qrec.json" | JQ '.data.id // empty')
+QSEC=$(cat "$OUT/qrec.json" | JQ '.data.ctdSection // empty')
+[ "$CODE" = 201 ] && [ -n "$QID" ] && [ "$QSEC" = "3.2.P.7" ] && ok "question recorded on the letter (id=$QID, §$QSEC, with a reason)" || bad "record question: $CODE section=$QSEC $(head -c200 "$OUT/qrec.json")"
 
-step "24. The board's correspondence lists it, ordered into the open set"
+step "24. CMC's Module 3 view lists it from the letter: unanswered, §3.2.P.7, not overdue; the board serves no correspondence of its own"
+CODE=$(req m3q GET "/api/concept2cure/projects/$PROGRAM/agency-questions?ctdModule=3")
+ROW=$(cat "$OUT/m3q.json" | jq -c --argjson id "${QID:-0}" '[.data.questions[]? | select(.id == $id)][0] // empty' 2>/dev/null)
+QSTATE=$(echo "$ROW" | JQ '.state // empty'); QSECT=$(echo "$ROW" | JQ '.section // empty'); QLATE=$(echo "$ROW" | JQ '.overdue')
+[ "$CODE" = 200 ] && [ "$QSTATE" = "unanswered" ] && [ "$QSECT" = "3.2.P.7" ] && [ "$QLATE" = "false" ] \
+  && ok "Module 3 view: $QSTATE at §$QSECT, overdue=$QLATE" || bad "Module 3 view: code=$CODE row=$ROW"
 CODE=$(req board2 GET /api/cmc/module3-board)
-LISTED=$(cat "$OUT/board2.json" | jq --argjson id "${QID:-0}" '[.data.correspondence[]? | select(.id == $id)] | length' 2>/dev/null)
-[ "$CODE" = 200 ] && [ "${LISTED:-0}" = 1 ] && ok "board correspondence lists question $QID" || bad "board listing: code=$CODE listed=$LISTED"
+HASCORR=$(cat "$OUT/board2.json" | jq -r '.data | has("correspondence")' 2>/dev/null)
+[ "$CODE" = 200 ] && [ "$HASCORR" = "false" ] && ok "the Module 3 board serves no correspondence" || bad "board: code=$CODE hasCorrespondence=$HASCORR"
 
-step "25. Triage: DRAFTED with a LINKED response draft, then CLOSED — the row leaves the open list, stays in the record"
-# The response draft is a real governed authoring document; the link is
-# refused unless the doc exists in THIS org (a dangling "Open draft" would be
-# a door that opens nothing).
-# A document belongs to a project (PF-07): the response draft is created in
-# the program the CMC module is working in.
-CODE=$(req rdoc POST /api/authoring/docs "{\"title\":\"[SIM] Response to agency question — §3.2.P.7\",\"module\":\"M3\",\"client_program_id\":\"$PROGRAM\"}")
-RDOC=$(cat "$OUT/rdoc.json" | JQ '.document.id // empty')
-[ "$CODE" = 200 -o "$CODE" = 201 ] && [ -n "$RDOC" ] && ok "response draft created ($RDOC)" || bad "response draft create: $CODE $(head -c150 "$OUT/rdoc.json")"
-# A bogus link is refused outright — nothing recorded.
-CODE=$(req qbadlink PATCH "/api/cmc/agency-questions/$QID" '{"responseDocId":"00000000-0000-4000-8000-000000000000"}')
-[ "$CODE" = 400 ] && ok "dangling responseDocId refused (400, nothing linked)" || bad "dangling link accepted?! code=$CODE"
-CODE=$(req qdraft PATCH "/api/cmc/agency-questions/$QID" "{\"status\":\"DRAFTED\",\"assignedTo\":\"reg.author@sim\",\"responseDocId\":\"$RDOC\"}")
-ST=$(cat "$OUT/qdraft.json" | JQ '.data.status // empty')
-LNK=$(cat "$OUT/qdraft.json" | JQ '.data.responseDocId // empty')
-[ "$CODE" = 200 ] && [ "$ST" = "DRAFTED" ] && [ "$LNK" = "$RDOC" ] && ok "status → DRAFTED, response draft linked" || bad "draft patch: $CODE $ST link=$LNK"
-# The board serves the link, so "Open draft" works after any reload.
-CODE=$(req board2b GET /api/cmc/module3-board)
-BLNK=$(cat "$OUT/board2b.json" | jq -r --argjson id "${QID:-0}" '[.data.correspondence[]? | select(.id == $id)][0].responseDocId // empty' 2>/dev/null)
-[ "$CODE" = 200 ] && [ "$BLNK" = "$RDOC" ] && ok "board serves the linked draft id" || bad "board link: code=$CODE link=$BLNK"
-# The review leg: DRAFTED → IN_REVIEW, guarded on the status the screen read.
-CODE=$(req qreview PATCH "/api/cmc/agency-questions/$QID" '{"status":"IN_REVIEW","expectedStatus":"DRAFTED"}')
-ST=$(cat "$OUT/qreview.json" | JQ '.data.status // empty')
-[ "$CODE" = 200 ] && [ "$ST" = "IN_REVIEW" ] && ok "sent for review (IN_REVIEW)" || bad "send for review: $CODE $ST"
-# A STALE transition (a screen that still thought DRAFTED) is a stated 409 —
-# never a silent overwrite of the reviewer's state.
-CODE=$(req qstale PATCH "/api/cmc/agency-questions/$QID" '{"status":"IN_REVIEW","expectedStatus":"DRAFTED"}')
-[ "$CODE" = 409 ] && ok "stale transition answers 409 (row is IN_REVIEW now)" || bad "stale transition: $CODE"
-CODE=$(req qclose PATCH "/api/cmc/agency-questions/$QID" '{"status":"CLOSED"}')
-ST=$(cat "$OUT/qclose.json" | JQ '.data.status // empty')
-CODE2=$(req board3 GET /api/cmc/module3-board)
-GONE=$(cat "$OUT/board3.json" | jq --argjson id "${QID:-0}" '[.data.correspondence[]? | select(.id == $id)] | length' 2>/dev/null)
-# The board READ has to have succeeded: an error body carries no correspondence
-# array, and jq counts zero — which is indistinguishable from "the closed row is
-# gone" unless the code is checked. It was not, and a 429 passed this step.
-[ "$CODE" = 200 ] && [ "$CODE2" = 200 ] && [ "$ST" = "CLOSED" ] && [ "${GONE:-1}" = 0 ] \
-  && ok "closed: off the open list ($GONE), kept in the store" \
-  || bad "close: code=$CODE boardCode=$CODE2 st=$ST stillListed=$GONE"
-# "Stays in the record" is now READABLE: the closed file serves the row…
-CODE=$(req qclosedlist GET "/api/cmc/agency-questions?status=CLOSED")
-INFILE=$(cat "$OUT/qclosedlist.json" | jq --argjson id "${QID:-0}" '[.data[]? | select(.id == $id)] | length' 2>/dev/null)
-[ "$CODE" = 200 ] && [ "${INFILE:-0}" = 1 ] && ok "closed file lists the answered question" || bad "closed file: code=$CODE listed=$INFILE"
-# …and a mistaken close can be UNDONE, guarded on CLOSED, back to the truthful
-# state (DRAFTED — its response draft is linked).
-CODE=$(req qreopen PATCH "/api/cmc/agency-questions/$QID" '{"status":"DRAFTED","expectedStatus":"CLOSED"}')
-ST=$(cat "$OUT/qreopen.json" | JQ '.data.status // empty')
-[ "$CODE" = 200 ] && [ "$ST" = "DRAFTED" ] && ok "reopened to DRAFTED (guarded on CLOSED)" || bad "reopen: $CODE $ST"
-req qreclose PATCH "/api/cmc/agency-questions/$QID" '{"status":"CLOSED","expectedStatus":"DRAFTED"}' >/dev/null
+step "25. The earlier CMC file is read-only; the response is written on the letter and approved by a second person"
+CODE=$(req qlegacy POST /api/cmc/agency-questions '{"questionText":"[SIM] A question CMC may no longer log.","sectionReference":"3.2.P.7"}')
+LCODE=$(cat "$OUT/qlegacy.json" | JQ '.error.code // empty')
+[ "$CODE" = 410 ] && [ "$LCODE" = "CMC_QUESTION_FILE_READ_ONLY" ] && ok "legacy POST answers 410 ($LCODE), nothing written" || bad "legacy POST: $CODE $LCODE"
+CODE=$(req qlegacypatch PATCH /api/cmc/agency-questions/1 '{"status":"CLOSED"}')
+[ "$CODE" = 410 ] && ok "legacy PATCH answers 410" || bad "legacy PATCH: $CODE"
+CODE=$(req qlegacyget GET /api/cmc/agency-questions)
+LTOTAL=$(cat "$OUT/qlegacyget.json" | JQ '.meta.total // empty')
+[ "$CODE" = 200 ] && [ -n "$LTOTAL" ] && ok "legacy GET answers 200 (history: $LTOTAL row(s))" || bad "legacy GET: $CODE"
+CODE=$(req qresp PUT "/api/concept2cure/projects/$PROGRAM/agency-communications/$LETTER/questions/$QID/response" '{"responseText":"[SIM] Leachables data are provided in 3.2.P.7, Table 4.","expectedRevision":0,"reason":"Drafting the response from the E&L study."}')
+QSTATE=$(cat "$OUT/qresp.json" | JQ '.data.state // empty')
+[ "$CODE" = 200 ] && [ "$QSTATE" = "drafted" ] && ok "response saved on the letter (state $QSTATE)" || bad "save response: $CODE $QSTATE"
+# The approval is a Part 11 signature by someone who did not write the text.
+# The simulation signs in as one person; a second identity is supplied with
+# SIM_SIGNER_EMAIL (and SIM_SIGNER_PASSWORD). Without it the step is NOT RUN,
+# never reported as a pass.
+if [ -n "${SIM_SIGNER_EMAIL:-}" ]; then
+  curl -sS -X POST "$BASE/api/auth/dev-login" -H 'Content-Type: application/json' \
+    -d "{\"email\":\"$SIM_SIGNER_EMAIL\"}" -o "$OUT/signer-login.json"
+  SIGNER_TOKEN=$(cat "$OUT/signer-login.json" | JQ '.accessToken // .data.accessToken // .token // empty')
+  CODE=$(curl -sS -X POST "$BASE/api/concept2cure/projects/$PROGRAM/agency-communications/$LETTER/questions/$QID/approve" \
+    -H "Authorization: Bearer $SIGNER_TOKEN" -H 'Content-Type: application/json' \
+    -d "{\"reason\":\"I reviewed the response against the E&L study.\",\"meaning\":\"approval\",\"password\":\"${SIM_SIGNER_PASSWORD:-pass-word}\",\"expectedRevision\":1}" \
+    -o "$OUT/qapprove.json" -w '%{http_code}')
+  CODE2=$(req m3q2 GET "/api/concept2cure/projects/$PROGRAM/agency-questions?ctdModule=3")
+  QSTATE=$(cat "$OUT/m3q2.json" | jq -r --argjson id "${QID:-0}" '[.data.questions[]? | select(.id == $id)][0].state // empty' 2>/dev/null)
+  [ "$CODE" = 201 ] && [ "$QSTATE" = "approved" ] && ok "approved by the second person; the Module 3 view reads approved" || bad "approval: $CODE state=$QSTATE $(head -c200 "$OUT/qapprove.json")"
+else
+  echo "   – NOT RUN: the approval needs a second identity (SIM_SIGNER_EMAIL); counted neither pass nor fail"
+fi
 
 step "26. A signed record is not changed under its signature"
 # Last, because it retires and re-signs records the Module 3 steps above read.

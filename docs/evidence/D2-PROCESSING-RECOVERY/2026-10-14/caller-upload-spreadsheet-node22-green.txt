@@ -1,0 +1,799 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts
+{
+  "timestamp": "2026-10-14T04:07:51.019Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts
+{
+  "timestamp": "2026-10-14T04:07:51.532Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T04:07:51.532Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts
+{
+  "timestamp": "2026-10-14T04:07:51.532Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'UUID project' > refuses mkdir failure before metadata, extraction, capture, audit or retrieval
+{
+  "timestamp": "2026-10-14T04:07:54.744Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — original bytes could not be stored",
+  "context": {
+    "fileId": "file_1791950874744_8b3rp8",
+    "reason": "ENOSPC private-storage:/private/original e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'UUID project' > refuses writeFile failure before metadata, extraction, capture, audit or retrieval
+{
+  "timestamp": "2026-10-14T04:07:54.761Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — original bytes could not be stored",
+  "context": {
+    "fileId": "file_1791950874760_7owyg1",
+    "reason": "ENOSPC private-storage:/private/original e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'numeric workspace' > refuses mkdir failure before metadata, extraction, capture, audit or retrieval
+{
+  "timestamp": "2026-10-14T04:07:54.767Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — original bytes could not be stored",
+  "context": {
+    "fileId": "file_1791950874766_mn416y",
+    "reason": "ENOSPC private-storage:/private/original e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'numeric workspace' > refuses writeFile failure before metadata, extraction, capture, audit or retrieval
+{
+  "timestamp": "2026-10-14T04:07:54.773Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — original bytes could not be stored",
+  "context": {
+    "fileId": "file_1791950874773_vpz1s7",
+    "reason": "ENOSPC private-storage:/private/original e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'conversation without a project' > refuses mkdir failure before metadata, extraction, capture, audit or retrieval
+{
+  "timestamp": "2026-10-14T04:07:54.781Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — original bytes could not be stored",
+  "context": {
+    "fileId": "file_1791950874781_8s45el",
+    "reason": "ENOSPC private-storage:/private/original e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'conversation without a project' > refuses writeFile failure before metadata, extraction, capture, audit or retrieval
+{
+  "timestamp": "2026-10-14T04:07:54.785Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — original bytes could not be stored",
+  "context": {
+    "fileId": "file_1791950874785_jcmkht",
+    "reason": "ENOSPC private-storage:/private/original e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'UUID project' > refuses mkdir failure before metadata, extraction, capture, audit or retrieval 27ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'UUID project' > refuses writeFile failure before metadata, extraction, capture, audit or retrieval 11ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'numeric workspace' > refuses mkdir failure before metadata, extraction, capture, audit or retrieval 6ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'numeric workspace' > refuses writeFile failure before metadata, extraction, capture, audit or retrieval 9ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'conversation without a project' > refuses mkdir failure before metadata, extraction, capture, audit or retrieval 5ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'conversation without a project' > refuses writeFile failure before metadata, extraction, capture, audit or retrieval 5ms
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves UUID-project capture with the original digest and bytes, only after storage
+{
+  "timestamp": "2026-10-14T04:07:54.849Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950874792_s2nm4f",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves UUID-project capture with the original digest and bytes, only after storage
+{
+  "timestamp": "2026-10-14T04:07:54.850Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791950874792_s2nm4f",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves UUID-project capture with the original digest and bytes, only after storage
+{
+  "timestamp": "2026-10-14T04:07:54.850Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950874792_s2nm4f",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves conversation upload without claiming a project source
+{
+  "timestamp": "2026-10-14T04:07:54.858Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950874857_v4m6sk",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves the numeric artifact/provenance path after successful storage
+{
+  "timestamp": "2026-10-14T04:07:54.864Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950874864_n7zvh1",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves the numeric artifact/provenance path after successful storage
+{
+  "timestamp": "2026-10-14T04:07:54.865Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791950874864_n7zvh1",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > still refuses flagged bytes before storage or any downstream consequence
+{
+  "timestamp": "2026-10-14T04:07:54.876Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected by virus scanner",
+  "context": {
+    "filename": "protocol.txt",
+    "declaredMime": "text/plain",
+    "signature": "private-scanner-signature"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for completed
+{
+  "timestamp": "2026-10-14T04:07:54.886Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950874886_32rflu",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for completed
+{
+  "timestamp": "2026-10-14T04:07:54.886Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791950874886_32rflu",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for completed
+{
+  "timestamp": "2026-10-14T04:07:54.887Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950874886_32rflu",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for already_complete
+{
+  "timestamp": "2026-10-14T04:07:54.891Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950874890_5im6n9",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for already_complete
+{
+  "timestamp": "2026-10-14T04:07:54.891Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791950874890_5im6n9",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for already_complete
+{
+  "timestamp": "2026-10-14T04:07:54.891Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950874890_5im6n9",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for extraction_failed
+{
+  "timestamp": "2026-10-14T04:07:54.894Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950874894_hcaj1q",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for extraction_failed
+{
+  "timestamp": "2026-10-14T04:07:54.895Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791950874894_hcaj1q",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for extraction_failed
+{
+  "timestamp": "2026-10-14T04:07:54.895Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950874894_hcaj1q",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retryable_failure
+{
+  "timestamp": "2026-10-14T04:07:54.898Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950874897_w7j7lz",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retryable_failure
+{
+  "timestamp": "2026-10-14T04:07:54.898Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791950874897_w7j7lz",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retryable_failure
+{
+  "timestamp": "2026-10-14T04:07:54.898Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950874897_w7j7lz",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for blocked
+{
+  "timestamp": "2026-10-14T04:07:54.901Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950874901_1nmxbi",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for blocked
+{
+  "timestamp": "2026-10-14T04:07:54.901Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791950874901_1nmxbi",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for blocked
+{
+  "timestamp": "2026-10-14T04:07:54.901Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950874901_1nmxbi",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for stale_source
+{
+  "timestamp": "2026-10-14T04:07:54.907Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950874907_38w1lf",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for stale_source
+{
+  "timestamp": "2026-10-14T04:07:54.908Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791950874907_38w1lf",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for stale_source
+{
+  "timestamp": "2026-10-14T04:07:54.908Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950874907_38w1lf",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for busy
+{
+  "timestamp": "2026-10-14T04:07:54.912Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950874911_uofbpw",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for busy
+{
+  "timestamp": "2026-10-14T04:07:54.912Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791950874911_uofbpw",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for busy
+{
+  "timestamp": "2026-10-14T04:07:54.912Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950874911_uofbpw",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_not_due
+{
+  "timestamp": "2026-10-14T04:07:54.916Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950874916_68awn4",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_not_due
+{
+  "timestamp": "2026-10-14T04:07:54.916Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791950874916_68awn4",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_not_due
+{
+  "timestamp": "2026-10-14T04:07:54.916Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950874916_68awn4",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_exhausted
+{
+  "timestamp": "2026-10-14T04:07:54.919Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950874919_t6bqyb",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_exhausted
+{
+  "timestamp": "2026-10-14T04:07:54.919Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791950874919_t6bqyb",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_exhausted
+{
+  "timestamp": "2026-10-14T04:07:54.919Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950874919_t6bqyb",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > does not deny a committed capture when processing unexpectedly rejects
+{
+  "timestamp": "2026-10-14T04:07:54.924Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950874923_cmc6hi",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > does not deny a committed capture when processing unexpectedly rejects
+{
+  "timestamp": "2026-10-14T04:07:54.924Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791950874923_cmc6hi",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > does not deny a committed capture when processing unexpectedly rejects
+{
+  "timestamp": "2026-10-14T04:07:54.924Z",
+  "level": "warn",
+  "message": "[chat-upload] Captured upload processing unavailable",
+  "context": {
+    "fileId": "file_1791950874923_cmc6hi",
+    "sourceId": 41,
+    "err": "private processing storage /private/original"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > does not deny a committed capture when processing unexpectedly rejects
+{
+  "timestamp": "2026-10-14T04:07:54.924Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950874923_cmc6hi",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves UUID-project capture with the original digest and bytes, only after storage 67ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves conversation upload without claiming a project source 4ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves the numeric artifact/provenance path after successful storage 8ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > still refuses flagged bytes before storage or any downstream consequence 11ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > still checks project ownership before storing original bytes 5ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for completed 5ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for already_complete 4ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for extraction_failed 3ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retryable_failure 3ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for blocked 3ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for stale_source 7ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for busy 4ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_not_due 4ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_exhausted 3ms
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('11111111-1111-1111-1111-111111111111')
+{
+  "timestamp": "2026-10-14T04:07:54.927Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950874927_o08mw3",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('11111111-1111-1111-1111-111111111111')
+{
+  "timestamp": "2026-10-14T04:07:54.928Z",
+  "level": "info",
+  "message": "[chat-upload] Upload resolved to an existing source identity",
+  "context": {
+    "fileId": "file_1791950874927_o08mw3",
+    "sourceId": 16,
+    "checksum": "e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('11111111-1111-1111-1111-111111111111')
+{
+  "timestamp": "2026-10-14T04:07:54.928Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950874927_o08mw3",
+    "sourceId": 16,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('proj_12')
+{
+  "timestamp": "2026-10-14T04:07:54.931Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950874931_prn58c",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('proj_12')
+{
+  "timestamp": "2026-10-14T04:07:54.931Z",
+  "level": "info",
+  "message": "[chat-upload] Upload resolved to an existing source identity",
+  "context": {
+    "fileId": "file_1791950874931_prn58c",
+    "sourceId": 16,
+    "checksum": "e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports a historical duplicate as stale without recreating or rebinding it
+{
+  "timestamp": "2026-10-14T04:07:54.935Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950874935_c3u5am",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports a historical duplicate as stale without recreating or rebinding it
+{
+  "timestamp": "2026-10-14T04:07:54.935Z",
+  "level": "info",
+  "message": "[chat-upload] Upload resolved to an existing source identity",
+  "context": {
+    "fileId": "file_1791950874935_c3u5am",
+    "sourceId": 16,
+    "checksum": "e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports a historical duplicate as stale without recreating or rebinding it
+{
+  "timestamp": "2026-10-14T04:07:54.935Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950874935_c3u5am",
+    "sourceId": 16,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > does not deny a committed capture when processing unexpectedly rejects 5ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('11111111-1111-1111-1111-111111111111') 4ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('proj_12') 4ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports a historical duplicate as stale without recreating or rebinding it 3ms
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > returns the committed capture when processing unexpectedly rejects
+{
+  "timestamp": "2026-10-14T04:07:55.113Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] Captured spreadsheet processing unavailable",
+  "context": {
+    "sourceId": 77,
+    "err": "private extractor storage /private/workbook"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > hides a foreign upload before deriving any bytes
+{
+  "timestamp": "2026-10-14T04:07:55.124Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_original",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > leaves the pre-existing authoring image save contract intact
+{
+  "timestamp": "2026-10-14T04:07:55.125Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1791950875125_hntdox",
+    "bytes": 5
+  }
+}
+
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > reports readable completed separately from the edit receipt 10ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > reports readable already_complete separately from the edit receipt 2ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for extraction_failed 2ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for retryable_failure 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for blocked 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for stale_source 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for busy 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for retry_not_due 2ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for retry_exhausted 2ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > returns the committed capture when processing unexpectedly rejects 3ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > does not process a conversation-only derivation 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > captures the edited copy and its parent/hash/edit receipt atomically without retiring the original 2ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > persists lineage but explicitly does not capture a conversation-only edit 0ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > refuses a requested foreign/missing project before storing bytes or rows 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > refuses if the source bytes no longer match the bytes that were edited 0ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > rechecks source eligibility on the transaction before an edited copy is written 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > reserves capture/upload mutation locks before the eligibility recheck, including no-project edits (a1111111-1111-4111-8111-111111111111) 0ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > reserves capture/upload mutation locks before the eligibility recheck, including no-project edits () 0ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > rolls back the upload and capture if capture fails and removes only the newly written bytes 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > rolls back the upload and capture if audit fails and removes only the newly written bytes 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > requires an identified tenant and actor for a derivation receipt 0ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > never removes source or derived bytes after an ambiguous COMMIT failure 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > retains honest unverifiable status for an original with no recorded checksum 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > hides a foreign upload before deriving any bytes 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > leaves the pre-existing authoring image save contract intact 2ms
+
+ Test Files  2 passed (2)
+      Tests  49 passed (49)
+   Start at  04:07:45
+   Duration  10.12s (transform 6.58s, setup 88ms, import 9.48s, tests 252ms, environment 0ms)
+

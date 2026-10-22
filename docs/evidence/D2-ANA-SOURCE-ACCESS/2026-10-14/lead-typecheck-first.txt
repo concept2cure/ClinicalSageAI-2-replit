@@ -1,0 +1,52 @@
+Scope: 9 owned roots plus repository ambient declarations and imported dependencies; compiler options from repository tsconfig.json. This is not a whole-repository typecheck.
+server/services/ana-session-bootstrap.ts: 0 target diagnostics
+server/services/ana-session-bootstrap-format.ts: 0 target diagnostics
+server/services/ana/source-context-admission.ts: 0 target diagnostics
+server/routes/chat/send-message.ts: 0 target diagnostics
+server/routes/ana-ri/stream.ts: 0 target diagnostics
+server/services/ana/AnaToolExecutor.ts: 0 target diagnostics
+server/services/__tests__/ana-session-bootstrap-latency.test.ts: 0 target diagnostics
+server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts: 4 target diagnostics
+server/routes/ana-ri/__tests__/stream-read-delivery.test.ts: 0 target diagnostics
+Loaded imported/ambient sources: 4788
+[96mserver/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts[0m:[93m9[0m:[93m44[0m - [91merror[0m[90m TS2345: [0mArgument of type '{ query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; }>; connect: () => Promise<{ query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; }>; release: () => undefined; }>; }' is not assignable to parameter of type 'RequestSqlClient'.
+  The types returned by 'query(...)' are incompatible between these types.
+    Type 'Promise<{ rows: unknown[]; }>' is not assignable to type 'Promise<{ rows: Record<string, unknown>[]; }>'.
+      Type '{ rows: unknown[]; }' is not assignable to type '{ rows: Record<string, unknown>[]; }'.
+        Types of property 'rows' are incompatible.
+          Type 'unknown[]' is not assignable to type 'Record<string, unknown>[]'.
+            Type 'unknown' is not assignable to type 'Record<string, unknown>'.
+
+[7m9[0m const upload = () => assertAnaUploadAccess(harness.db, { ...actor(), fileIds: [f.upload] });
+[7m [0m [91m                                           ~~~~~~~~~~[0m
+[96mserver/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts[0m:[93m10[0m:[93m48[0m - [91merror[0m[90m TS2345: [0mArgument of type '{ query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; }>; connect: () => Promise<{ query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; }>; release: () => undefined; }>; }' is not assignable to parameter of type 'RequestSqlClient'.
+  The types returned by 'query(...)' are incompatible between these types.
+    Type 'Promise<{ rows: unknown[]; }>' is not assignable to type 'Promise<{ rows: Record<string, unknown>[]; }>'.
+      Type '{ rows: unknown[]; }' is not assignable to type '{ rows: Record<string, unknown>[]; }'.
+        Types of property 'rows' are incompatible.
+          Type 'unknown[]' is not assignable to type 'Record<string, unknown>[]'.
+            Type 'unknown' is not assignable to type 'Record<string, unknown>'.
+
+[7m10[0m const selected = () => admitAnaSelectedSources(harness.db, { ...actor(), sourceIds: [f.capture] });
+[7m  [0m [91m                                               ~~~~~~~~~~[0m
+[96mserver/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts[0m:[93m48[0m:[93m40[0m - [91merror[0m[90m TS2345: [0mArgument of type '{ query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; }>; connect: () => Promise<{ query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; }>; release: () => undefined; }>; }' is not assignable to parameter of type 'RequestSqlClient'.
+  The types returned by 'query(...)' are incompatible between these types.
+    Type 'Promise<{ rows: unknown[]; }>' is not assignable to type 'Promise<{ rows: Record<string, unknown>[]; }>'.
+      Type '{ rows: unknown[]; }' is not assignable to type '{ rows: Record<string, unknown>[]; }'.
+        Types of property 'rows' are incompatible.
+          Type 'unknown[]' is not assignable to type 'Record<string, unknown>[]'.
+            Type 'unknown' is not assignable to type 'Record<string, unknown>'.
+
+[7m48[0m     await expect(assertAnaUploadAccess(harness.db, { organizationId: f.org, userId: 42, fileIds: [f.upload] })).rejects.toMatchObject({ status: 403 });
+[7m  [0m [91m                                       ~~~~~~~~~~[0m
+[96mserver/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts[0m:[93m49[0m:[93m42[0m - [91merror[0m[90m TS2345: [0mArgument of type '{ query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; }>; connect: () => Promise<{ query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; }>; release: () => undefined; }>; }' is not assignable to parameter of type 'RequestSqlClient'.
+  The types returned by 'query(...)' are incompatible between these types.
+    Type 'Promise<{ rows: unknown[]; }>' is not assignable to type 'Promise<{ rows: Record<string, unknown>[]; }>'.
+      Type '{ rows: unknown[]; }' is not assignable to type '{ rows: Record<string, unknown>[]; }'.
+        Types of property 'rows' are incompatible.
+          Type 'unknown[]' is not assignable to type 'Record<string, unknown>[]'.
+            Type 'unknown' is not assignable to type 'Record<string, unknown>'.
+
+[7m49[0m     await expect(admitAnaSelectedSources(harness.db, { organizationId: f.org, userId: 42, sourceIds: [f.capture] })).rejects.toMatchObject({ status: 403 });
+[7m  [0m [91m                                         ~~~~~~~~~~[0m
+Total selected-scope diagnostics: 4

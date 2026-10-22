@@ -39,7 +39,10 @@
  */
 import React from 'react';
 import { I } from '../icons';
-import { mutateVerbatim, type MutateResult } from './SubmissionSeqWorkspaces';
+import { mutateVerbatim, mutationUnconfirmed, type MutateResult } from './SubmissionSeqWorkspaces';
+import { StudyTaggingInputFields, studyTaggingPlacement, type StudyTaggingValues } from './StudyTaggingInputFields';
+import { useSubmissionReadSession, type SubmissionReadSession } from './submissionScopedRead';
+import { authService } from '@/services/portal/authService';
 import { SC_LIFECYCLE_OPS } from '../fixtures/submission';
 import { useLiveData } from '../dataConnect';
 import { shellProgramId, useShellProject } from '../shellProject';
@@ -304,7 +307,7 @@ function placementAllowed(seq: { status: string } | null, inputsReady: boolean, 
 }
 
 function vaultPlacementFailure(put: MutateResult<unknown>, sequence: string, section: string) {
-  const unconfirmed = !!put.unconfirmed || put.data != null;
+  const unconfirmed = !!put.unconfirmed || put.data != null || mutationUnconfirmed(put.status, put.code);
   return { unconfirmed, verdict: { kind: 'error' as const, message: unconfirmed
     ? `We cannot confirm whether this document was placed in sequence ${sequence} at ${section}. Check filing status before retrying.`
     : put.error ?? 'The server refused the placement without a reason.' } };
@@ -390,11 +393,14 @@ function VaultPlaceIntoSubmissionForDocument({
   mimeType,
   projectId,
   filing,
-}: VaultPlaceIntoSubmissionProps) {
+  session,
+}: VaultPlaceIntoSubmissionProps & { session: SubmissionReadSession }) {
   // Refused here, before anything loads (see NotPdfNotice).
   const notPdf = isNotPdf(mimeType);
   const [verdict, setVerdict] = React.useState<Verdict>(null);
-  const target = useFilingTarget(() => setVerdict(null), projectId);
+  const [studyValues, setStudyValues] = React.useState<StudyTaggingValues>({ studyId: '', stfFileTag: '' });
+  const resetStudyValues = () => setStudyValues({ studyId: '', stfFileTag: '' });
+  const target = useFilingTarget(() => { setVerdict(null); resetStudyValues(); }, projectId);
   const { seq } = target;
   const stage = useVersionStage(projectId, documentUuid, !notPdf);
   // The leaves of the chosen sequence: read to say what the section already holds.
@@ -405,12 +411,14 @@ function VaultPlaceIntoSubmissionForDocument({
   const [section, setSection] = React.useState(confirmedSection ?? '');
   const [op, setOp] = React.useState('new');
   const [reason, setReason] = React.useState('');
+  React.useEffect(() => { setStudyValues({ studyId: '', stfFileTag: '' }); }, [confirmedSection]);
   const [placing, setPlacing] = React.useState(false);
   const [placed, setPlaced] = React.useState<PlacedLeaf | null>(null);
   const [needsReconciliation, setNeedsReconciliation] = React.useState(false);
   const pending = React.useRef(false);
   const generation = React.useRef(0);
-  React.useEffect(() => () => { generation.current += 1; }, []);
+  const active = React.useRef(true);
+  React.useEffect(() => { active.current = true; return () => { active.current = false; generation.current += 1; }; }, []);
 
   /* Dialog behaviour the surrounding pattern does not carry. `aria-modal` is a
      claim that everything outside is inert; making it without trapping focus
@@ -480,6 +488,7 @@ function VaultPlaceIntoSubmissionForDocument({
   const vocabulary = vocabularyForApplicationType(submission?.applicationType);
   const judged = judgeSectionCode(section, vocabulary);
   const sectionUsable = judged.placeable;
+  const studyTagging = studyTaggingPlacement(judged.canonical ?? '', op, seq?.region, studyValues);
 
   const reasonOk = placementReasonOk(reason);
   const occupancy = occupancyOf({
@@ -488,15 +497,16 @@ function VaultPlaceIntoSubmissionForDocument({
   const alreadyPlaced = occupancy.kind === 'same';
   const canPlace = placementAllowed(
     seq,
-    sectionUsable && reasonOk,
+    sectionUsable && reasonOk && studyTagging.valid,
     placementBlocked({ notPdf, placing, placed: Boolean(placed), needsReconciliation, alreadyPlaced }),
   );
 
   const place = async () => {
-    if (!canPlace || !seq || !judged.canonical || pending.current) return;
+    if (!canPlace || !seq || !judged.canonical || pending.current || !active.current || !session.sameRevision()) return;
     pending.current = true;
     const started = generation.current;
-    const current = () => started === generation.current;
+    const sessionGuard = authService.captureSessionReadGuard();
+    const current = () => active.current && started === generation.current && session.sameRevision() && sessionGuard.sameRevision();
     setPlacing(true);
     setVerdict(null);
     try {
@@ -509,11 +519,13 @@ function VaultPlaceIntoSubmissionForDocument({
         documentTable: 'vault_documents',
         documentUuid,
         reason: reason.trim(),
+        ...studyTagging.payload,
       });
       if (!current()) return;
       if (!matchingLeafReceipt(put.data, {
         sequenceId: seq.id, sectionCode: judged.canonical, lifecycleOp: op,
         documentTable: 'vault_documents', documentUuid,
+        ...studyTagging.payload,
       })) {
         const failure = vaultPlacementFailure(put, seq.sequenceNumber, judged.canonical);
         setNeedsReconciliation(failure.unconfirmed);
@@ -547,7 +559,7 @@ function VaultPlaceIntoSubmissionForDocument({
         <div className="de-h">
           <div>
             <div className="de-h-eye">Vault → filing</div>
-            <div className="de-h-t" id="vpf-title">Place into submission</div>
+            <div className="de-h-t" id="vpf-title">Place into filing</div>
             <div className="de-h-s">
               The vault copy is filed as itself — the leaf points at this document, so what is
               assembled is what is stored here. Nothing is copied.
@@ -573,10 +585,13 @@ function VaultPlaceIntoSubmissionForDocument({
           ) : (
             <>
               <fieldset disabled={fieldsDisabled(placing, needsReconciliation, Boolean(placed))} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
-                <FilingTargetFields target={target} idPrefix="vpf" />
+                <FilingTargetFields target={{ ...target, setSeqId: id => { resetStudyValues(); setVerdict(null); target.setSeqId(id); } }} idPrefix="vpf" />
                 <SectionFields
                   section={section}
-                  onSection={(value) => { setSection(value); setVerdict(null); }}
+                  onSection={(value) => {
+                    if (judgeSectionCode(value, vocabulary).canonical !== judged.canonical) resetStudyValues();
+                    setSection(value); setVerdict(null);
+                  }}
                   vocabulary={vocabulary}
                   judged={judged}
                   op={op}
@@ -591,6 +606,9 @@ function VaultPlaceIntoSubmissionForDocument({
                   sequenceNumber={seq?.sequenceNumber}
                   op={op}
                 />
+                {studyTagging.show && <StudyTaggingInputFields value={studyValues} onChange={setStudyValues} idPrefix="vpf-study"
+                  required={studyTagging.required} variant="dialog" disabled={fieldsDisabled(placing, needsReconciliation, Boolean(placed))} />}
+                {studyTagging.problem && <div className="de-err" role="status">{studyTagging.problem}</div>}
                 <PlacementReasonField value={reason} onChange={setReason} idPrefix="vpf" />
               </fieldset>
             </>
@@ -610,7 +628,7 @@ function VaultPlaceIntoSubmissionForDocument({
             disabled={!canPlace}
             title={placeBlockedReason(Boolean(seq), sectionUsable, vocabulary, reasonOk, alreadyPlaced)}
           >
-            {placing ? 'Filing…' : 'Place into submission'}
+            {placing ? 'Filing…' : 'Place into filing'}
           </button>
         </div>
       </div>
@@ -622,6 +640,7 @@ function VaultPlaceIntoSubmissionForDocument({
 /** Switching source or project starts a fresh dialog; old receipts cannot confirm the new source. */
 export function VaultPlaceIntoSubmission(props: VaultPlaceIntoSubmissionProps) {
   const shellProject = useShellProject();
+  const session = useSubmissionReadSession();
   const projectId = props.projectId ?? shellProgramId(shellProject);
-  return <VaultPlaceIntoSubmissionForDocument key={JSON.stringify([props.documentUuid, projectId])} {...props} projectId={projectId} />;
+  return <VaultPlaceIntoSubmissionForDocument key={JSON.stringify([props.documentUuid, projectId, session.key])} {...props} projectId={projectId} session={session} />;
 }

@@ -40,6 +40,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // load; their factories close over these references.
 
 const hoisted = vi.hoisted(() => ({
+  inputRows: new Map<string, { organizationId: number; inputs: unknown; outputs?: unknown }>(),
   // ── Pool query mock ────────────────────────────────────────────────────────
   // Per-row capture so a test can assert that a CHECK violation is re-thrown
   // by inspecting both the rejection AND the parameters the orchestrator
@@ -83,6 +84,26 @@ const hoisted = vi.hoisted(() => ({
 // The orchestrator imports its DB via `../db.js`; mock BOTH the .js and the
 // extensionless path so the resolver matches regardless of how the test
 // loader normalizes the suffix.
+
+
+// P-27 (2026-10-08): a run's package names its recorded identity, or its
+// assembly is a dry run that package.sign refuses. This suite is about the
+// steps, not the record, so the record names the run's own application number
+// (tests/unit/orchestrator-dry-run-identity.test.ts drives the real reader).
+const { recordedRunIdentity } = vi.hoisted(() => ({
+  recordedRunIdentity: async (i: { applicationNumber: string; region?: string }) => ({
+    recorded: true as const, applicationNumber: i.applicationNumber, applicantName: 'Test Sponsor Inc',
+    applicantId: i.region === 'US' ? '123456789' : null,
+    contact: { name: 'Regulatory Contact', phone: '+1 555 0100', email: 'ra@example.test' },
+    ...(i.region === 'US' ? { recordedPackageIdentity: { version: 1 as const, identity: {
+      programId: '11111111-1111-4111-8111-111111111111', applicationNumber: i.applicationNumber,
+      applicantSponsorId: '22222222-2222-4222-8222-222222222222', applicantName: 'Test Sponsor Inc',
+      applicantId: '123456789', contact: { name: 'Regulatory Contact', phone: '+1 555 0100', email: 'ra@example.test' },
+    } } } : {}),
+  }),
+}));
+vi.mock('../../server/services/ectd/run-package-identity.js', () => ({ resolveRunPackageIdentity: recordedRunIdentity }));
+vi.mock('../../server/services/ectd/run-package-identity', () => ({ resolveRunPackageIdentity: recordedRunIdentity }));
 
 vi.mock('../../server/db.js', () => {
   const pool = {
@@ -254,6 +275,16 @@ function defaultPoolQuery(
   params?: unknown[],
 ): Promise<{ rows: unknown[]; rowCount?: number }> {
   const p = params ?? [];
+  if (/INSERT INTO submission_orchestrator_inputs/i.test(sql)) {
+    hoisted.inputRows.set(String(p[0]), { organizationId: Number(p[1]), inputs: JSON.parse(String(p[3])) });
+    return Promise.resolve({ rows: [], rowCount: 1 });
+  }
+  if (/UPDATE submission_orchestrator_inputs/i.test(sql)) {
+    const row = hoisted.inputRows.get(String(p[0]));
+    if (!row || row.organizationId !== Number(p[1]) || row.outputs) return Promise.resolve({ rows: [], rowCount: 0 });
+    row.outputs = JSON.parse(String(p[2]));
+    return Promise.resolve({ rows: [{ run_id: p[0] }], rowCount: 1 });
+  }
   // INSERT runs (or ON CONFLICT UPDATE)
   if (/INSERT INTO submission_orchestrator_runs/i.test(sql)) {
     const [
@@ -322,6 +353,7 @@ beforeEach(() => {
   hoisted.poolQuery.mockReset();
   hoisted.poolQuery.mockImplementation(defaultPoolQuery);
   hoisted.runRows.clear();
+  hoisted.inputRows.clear();
   hoisted.buildModule3WithNarrative.mockReset();
   hoisted.launchCSRBuildAsync.mockReset();
   hoisted.getCSRBuildJobStatus.mockReset();
@@ -369,7 +401,7 @@ describe('Phase-1 IND e2e — happy path', () => {
     // Assembly contract.
     expect(outputs.assembly).toBeDefined();
     expect(outputs.assembly!.leaves.length).toBeGreaterThan(0);
-    expect(outputs.assembly!.applicationNumber).toBe('IND-TEST-001');
+    expect(outputs.assembly!.applicationNumber).toBe('123456');
     expect(outputs.assembly!.region).toBe('US');
   });
 });

@@ -29,6 +29,12 @@
  * @module client/src/concept2cure/v2/editorTarget
  */
 
+import { NOTICE_UUID, noticeSafeSectionCode } from '@shared/types/notification-navigation';
+import { readAssemblySourceSelectors, type AssemblySourceSelector } from '@shared/authoring/assembly-sources';
+import { captureEditorDraftGuard } from './editor/authoringDraftTransport';
+
+export const EDITOR_TARGET_EVENT = 'c2c:editor-target';
+
 /** The document families a sender can name — the mdx `ProgramPathway`
  *  vocabulary, which is also the governed `c2c_documents.doc_type` value for
  *  each family (server/services/c2c/document-class.ts). One vocabulary on
@@ -86,6 +92,7 @@ export interface EditorSectionRef {
 }
 
 export interface EditorTarget {
+  assemblySources?: EditorAssemblySources;
   /** The document family the target belongs to, or null when the sender holds
    *  a real section but cannot name a family in this vocabulary — the Vault's
    *  governed dossiers are `ind`/`nda`/`bla`/… as often as they are device
@@ -119,6 +126,23 @@ export interface EditorTarget {
   returnTo: EditorReturnTo | null;
   /** Epoch ms the target was written. Entries older than the TTL are dead. */
   setAt: number;
+}
+
+export interface EditorAssemblySources { version: 1; sources: AssemblySourceSelector[] }
+/** Source handoffs keep the sender's context even before the editor mounts. */
+const assemblyOwners = new WeakMap<object, () => boolean>();
+function readAssemblyIntent(value: unknown, docId: unknown, programId: unknown): EditorAssemblySources | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)
+    || typeof docId !== 'string' || !NOTICE_UUID.test(docId)
+    || typeof programId !== 'string' || !NOTICE_UUID.test(programId)) return null;
+  const intent = value as { version?: unknown; sources?: unknown };
+  const sources = readAssemblySourceSelectors(intent.sources);
+  return intent.version === 1 && sources ? { version: 1, sources } : null;
+}
+function readOwnedAssemblyIntent(raw: Partial<EditorTarget>): EditorAssemblySources | null | undefined {
+  if (raw.assemblySources === undefined) return undefined;
+  const intent = readAssemblyIntent(raw.assemblySources, raw.docId, raw.programId);
+  return intent && assemblyOwners.get(raw)?.() === true ? intent : null;
 }
 
 /** The one return route a sender can name today: the conversation thread the
@@ -155,10 +179,15 @@ export function setEditorTarget(
     programId?: string | null;
     programTitle?: string | null;
     returnTo?: EditorReturnTo | null;
+    assemblySources?: EditorAssemblySources;
   },
 ): void {
   if (typeof window === 'undefined') return;
-  window.C2C_EDITOR_TARGET = {
+  const assemblySources = target.assemblySources === undefined ? undefined
+    : readAssemblyIntent(target.assemblySources, target.docId, target.programId);
+  if (assemblySources === null) { clearEditorTarget(); return; }
+  const published: EditorTarget = {
+    ...(assemblySources ? { assemblySources } : {}),
     docType: str(target.docType),
     docId: str(target.docId),
     sectionCode: str(target.code),
@@ -168,6 +197,22 @@ export function setEditorTarget(
     returnTo: normalizeReturnTo(target.returnTo),
     setAt: Date.now(),
   };
+  if (assemblySources) assemblyOwners.set(published, captureEditorDraftGuard({ programId: published.programId }));
+  window.C2C_EDITOR_TARGET = published;
+  window.dispatchEvent(new CustomEvent(EDITOR_TARGET_EVENT));
+}
+
+/** Copied notification links carry an exact canonical document, never an artifact id. */
+export function editorTargetFromSearch(search: string): EditorTarget | null {
+  const params = new URLSearchParams(search);
+  const documentId = params.get('documentId');
+  const sectionCode = params.get('sectionCode');
+  const programId = params.get('program');
+  if (!documentId || !NOTICE_UUID.test(documentId) || params.getAll('documentId').length !== 1) return null;
+  if (sectionCode && (!noticeSafeSectionCode(sectionCode) || params.getAll('sectionCode').length !== 1)) return null;
+  if (programId && (!NOTICE_UUID.test(programId) || params.getAll('program').length !== 1)) return null;
+  return { docType: null, docId: documentId, sectionCode, sectionLabel: null, programId,
+    programTitle: null, returnTo: null, setAt: Date.now() };
 }
 
 /** A return route is honoured only when it names the one surface this channel
@@ -214,7 +259,10 @@ export function peekEditorTarget(now: number = Date.now()): EditorTarget | null 
   // Stale (unconsumed from an earlier visit) or stamped in the future (a
   // clock that cannot be trusted) — either way, no claim is honoured.
   if (now - t.setAt > EDITOR_TARGET_TTL_MS || t.setAt - now > EDITOR_TARGET_TTL_MS) return null;
+  const assemblySources = readOwnedAssemblyIntent(t);
+  if (assemblySources === null) return null;
   return {
+    ...(assemblySources ? { assemblySources } : {}),
     docType: str(t.docType),
     docId: str(t.docId),
     sectionCode: str(t.sectionCode),

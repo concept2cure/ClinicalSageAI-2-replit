@@ -32,6 +32,7 @@
  */
 import React, { useMemo } from 'react';
 import { renderSafeMarkdown } from '../components/ana/renderSafeMarkdown';
+import { readableReplyText } from './anaReplyText';
 
 const MD_TAGS: Record<string, keyof React.JSX.IntrinsicElements> = {
   P: 'p',
@@ -132,20 +133,23 @@ export function AnaMarkdown({
   text: string;
   className?: string;
 }): React.ReactElement {
+  /* A tool status code the model repeated ("action_ready") is said in words
+     here, where every host renders an answer (QA 2026-10-08, walk 2, j5). */
+  const readable = useMemo(() => readableReplyText(text), [text]);
   const nodes = useMemo(() => {
-    if (!text) return null;
+    if (!readable) return null;
     try {
-      const html = renderSafeMarkdown(text);
+      const html = renderSafeMarkdown(readable);
       if (!html) return null;
       const doc = new DOMParser().parseFromString(html, 'text/html');
       return mdChildren(doc.body, 'md');
     } catch {
       return null;
     }
-  }, [text]);
+  }, [readable]);
   return (
     <div className={className}>
-      {nodes ?? <span style={{ whiteSpace: 'pre-wrap' }}>{text}</span>}
+      {nodes ?? <span style={{ whiteSpace: 'pre-wrap' }}>{readable}</span>}
     </div>
   );
 }

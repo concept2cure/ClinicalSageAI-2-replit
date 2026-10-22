@@ -2,7 +2,7 @@
  * Submission Center — kit app/submission-center.jsx ported (registry id
  * `submission-center`, contract-ready).
  *
- * Real-data standard (no mock in product): the 8 workspaces are scaffolded from
+ * Real-data standard (no mock in product): the workspaces are scaffolded from
  * the REAL contract SUBMISSION_WORKSPACES (@shared/types/submission-ui). The
  * portfolio list binds live to GET /api/submissions and the per-submission
  * sequences to GET /api/submissions/:id/sequences (both DB-backed via
@@ -24,8 +24,8 @@
  *
  * Per-sequence workspaces (SubmissionSeqWorkspaces.tsx) are REAL: a sequence
  * selector feeds Builder (GET/PUT leaves), Validation (dispatch-readiness
- * findings + AI explain), Shadow Review (runs + persisted findings),
- * Cross-region (gap computation off the real leaves) and Dispatch (the
+ * findings + AI explain), Shadow Review (runs + persisted findings) and
+ * Dispatch (the
  * server-computed gate + AI QC advisory). Sequence lifecycle transitions POST
  * the real /sequences/:seqId/transition endpoint and surface the server's
  * verdict verbatim. The irreversible transitions — freeze and dispatch — run
@@ -47,9 +47,9 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { listedChoices, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { AnswerLead } from '../AnswerLead';
 import { assessmentStateFor } from '../assessmentState';
-import { useLiveRows, useLiveData, hasKeys, liveMutateOrNull, EmptyState } from '../dataConnect';
+import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveMutateOrNull, EmptyState } from '../dataConnect';
 import { EsignModal } from '../../_shared/components/EsignModal';
-import { readShellProject, shellProgramId, type ShellProject } from '../shellProject';
+import { useShellProject, shellProgramId, type ShellProject } from '../shellProject';
 import { notOfferedCount, programSubmissionsPath, SUB_STATUS_LABEL, SUB_STATUS_TONE } from './programSequence';
 import type { EsigMeaning } from '../../hooks/useEsignature';
 import {
@@ -65,7 +65,6 @@ import {
 import {
   BuilderWorkspace,
   Chip,
-  CrossRegionWorkspace,
   DispatchWorkspace,
   SeqPicker,
   ShadowReviewWorkspace,
@@ -80,10 +79,27 @@ import {
   type TransmitRequest,
 } from './SubmissionSeqWorkspaces';
 import '../styles/submission-v2.css';
-import { C2CForm } from '../C2CForm';
+import { NewSubmissionForm } from './NewSubmissionForm';
 import { gatewayLabel } from '../gatewayLabels';
 import { SubmissionProgramAnchor } from './SubmissionProgramAnchor';
 import { useSurfaceAvailable } from '../surfaceAvailable';
+import { consumeNavParams, stashNavParamsForTarget, NAV_PARAMS_EVENT } from '../navParams';
+import { ceremonyOpen } from '../ceremony';
+import { readSubmissionNavTarget, useOpenOnNavTarget } from './submissionNavTarget';
+import { TrackedFilingDetail } from './TrackedFilingDetail';
+import { isTrackedFilingId } from '@shared/types/task-filing-home';
+import { SubmissionRequiredDeliverables, type SubmissionCoverageSequence } from './SubmissionRequiredDeliverables';
+import { useSubmissionReadSession, useSubmissionScopedRows } from './submissionScopedRead';
+import { SHADOW_WAIVER_ACTION, SHADOW_WAIVER_MEANINGS, shadowWaiverTargetLine, submitShadowWaiver, type WaiverRequest } from './ShadowReviewWaiver';
+import {
+  SHADOW_DISPOSITION_MEANINGS,
+  dispositionFields,
+  shadowDispositionAction,
+  shadowDispositionDefaultMeaning,
+  shadowDispositionTargetLine,
+  submitFindingDisposition,
+  type DispositionRequest,
+} from './ShadowFindingDisposition';
 
 /* ── Display types aligned to the canonical submission core's ACTUAL columns
    (shared/schema/submissions.ts; server/services/submission-service). Only
@@ -297,6 +313,40 @@ function reviewClock(f: DeviceFilingRow): string {
 
 // (Chip is imported from SubmissionSeqWorkspaces — one implementation.)
 
+/** What the create says. A market added to the project says what was recorded, and why (Part 11
+ *  review, 2026-10-15): the reason is in the project's audit record. A refusal of the add by role
+ *  says who may add one. */
+function newSubmissionNotice(ok: boolean, inProject: boolean, v: Record<string, string>, r: { status?: number; error?: string | null }): Notice {
+  const what = `${SC_APPTYPES.find((x) => x.v === v.applicationType)?.l ?? v.applicationType} · ${SC_REGIONS.find((x) => x.v === v.primaryRegion)?.l ?? v.primaryRegion}`;
+  if (ok && inProject) {
+    return { tone: 'ok', text: `Market added to the project — ${what}. Recorded on the project with your reason: "${(v.reason ?? '').trim()}".` };
+  }
+  if (ok) return { tone: 'ok', text: `Submission created — ${what}.` };
+  if (inProject && r.status === 403) {
+    return { tone: 'err', text: "Market not added — only this project's lead or an organization manager can add a market to it." };
+  }
+  return { tone: 'err', text: `Submission not created — ${r.error ?? 'the request failed'}.` };
+}
+
+/** The create request: with a project open, a market of that project (F22) through
+ *  the project's route, for the stated reason; else the organisation's create. */
+function postNewSubmission(
+  openProgramId: string | null,
+  programme: { id: string; title?: string | null; code?: string | null },
+  v: Record<string, string>,
+) {
+  const title = (v.title ?? '').trim();
+  if (openProgramId) {
+    return mutateVerbatim<{ submissionId?: number }>('POST', `/api/c2c/projects/${openProgramId}/markets`, {
+      title, applicationType: v.applicationType, agency: v.primaryRegion, clientType: v.clientType, reason: (v.reason ?? '').trim(),
+    });
+  }
+  return mutateVerbatim<SubRow>('POST', '/api/submissions', {
+    title, programId: programme.id, productName: programme.title || programme.code || undefined,
+    applicationType: v.applicationType, clientType: v.clientType, primaryRegion: v.primaryRegion,
+  });
+}
+
 /** Follow-up sequence types: the server's createSequence enum, less 'original' (that is 0000). */
 const FOLLOW_UP_SEQ_TYPES = ['amendment', 'response', 'annual', 'variation', 'withdrawal'] as const;
 
@@ -332,10 +382,17 @@ function NextSequenceControl({ sub, rows, type, onType, busy, onStart }: {
   );
 }
 
-/** A governed step in flight: what is signed, and for a transmit where it goes. */
-type GovernedFlow = { seq: SeqRow; kind: GovernedKind; transmit?: TransmitRequest };
-const GOVERNED_LABEL: Record<GovernedKind, string> = { freeze: 'Freeze', dispatch: 'Dispatch', transmit: 'Transmit' };
-const GOVERNED_PAST: Record<GovernedKind, string> = { freeze: 'frozen', dispatch: 'dispatched', transmit: 'transmitted' };
+/** A governed step in flight: what is signed, for a transmit where it goes, for
+ *  a Shadow Review waiver (P-34) the failed run it answers, and for a finding
+ *  disposition (P-35) the finding and how it is closed. */
+type GovernedFlow = { seq: SeqRow; kind: GovernedKind; transmit?: TransmitRequest; waiver?: WaiverRequest; disposition?: DispositionRequest };
+const GOVERNED_LABEL: Record<GovernedKind, string> = {
+  freeze: 'Freeze', dispatch: 'Dispatch', transmit: 'Transmit', 'shadow-waiver': 'Shadow Review waiver',
+  'shadow-finding-disposition': 'Closing a critical finding',
+};
+const GOVERNED_PAST: Record<GovernedKind, string> = {
+  freeze: 'frozen', dispatch: 'dispatched', transmit: 'transmitted', 'shadow-waiver': 'waived', 'shadow-finding-disposition': 'closed',
+};
 
 /** What POST /sequences/:id/transmit answers. `signatureVoided`: on a
  *  transmit that sent nothing, whether the signature given for it is now void
@@ -346,9 +403,7 @@ type TransmitAnswer = { transmitted?: boolean; reason?: string; gateway?: string
 function notTransmittedSentence(a: TransmitAnswer, environment: string | undefined): string {
   const sentence = a.reason === 'gateway_not_configured'
     ? `Not transmitted — ${gatewayLabel(a.gateway)} has no ${environment ?? ''} credentials configured for this organization. Nothing was sent; the attempt is recorded.`
-    : a.reason === 'transport_not_verified'
-      ? `Not transmitted — this deployment sends to ${gatewayLabel(a.gateway)} over a transport that has not been verified with the agency. Nothing was sent; the attempt is recorded. An administrator can switch it to the verified transport.`
-      : `Not transmitted — ${clause(a.reason ?? 'the server did not send it')}. Nothing was sent.`;
+    : `Not transmitted — ${clause(a.reason ?? 'the server did not send it')}. Nothing was sent.`;
   return a.signatureVoided ? `${sentence} The signature given for it is now void; a new attempt is signed again.` : sentence;
 }
 
@@ -426,7 +481,18 @@ function scopedMissReason(wanted: string, projectName: string | null, notOffered
 }
 
 /** The workspaces that operate on ONE selected sequence (fed by SeqPicker). */
-const PER_SEQ_WS = new Set(['builder', 'validation', 'shadow-review', 'cross-region', 'dispatch']);
+const PER_SEQ_WS = new Set(['builder', 'validation', 'shadow-review', 'dispatch', 'required-deliverables']);
+interface ScopedBuilderNotice extends Notice { builderGeneration?: number; builderSequenceId?: number }
+
+function visibleSubmissionNotice(notice: ScopedBuilderNotice | null, generation: number, sequenceId: number | undefined): Notice | null {
+  if (notice?.builderGeneration === undefined) return notice;
+  return notice.builderGeneration === generation && (sequenceId === undefined || sequenceId === notice.builderSequenceId) ? notice : null;
+}
+
+/** A US IND: the filing the IND forms screen (21 CFR 312, FDA forms) serves. */
+export function isUsInd(s: Pick<SubRow, 'applicationType' | 'primaryRegion'>): boolean {
+  return String(s.applicationType ?? '').toLowerCase() === 'ind' && String(s.primaryRegion ?? '').toLowerCase() === 'fda';
+}
 
 export function SubmissionCenter({
   onAsk,
@@ -453,15 +519,21 @@ export function SubmissionCenter({
      whose submissions these are and how many others the organization has, as
      the server counted them, with a control to list them all. With no project
      open, or one that is not a regulatory_programs uuid, nothing changes. */
-  const shell = readShellProject();
+  const shell = useShellProject();
   const openProgramId = shellProgramId(shell);
   const [orgWide, setOrgWide] = React.useState(false);
   const scopedTo = openProgramId && !orgWide ? openProgramId : null;
+  const readSession = useSubmissionReadSession();
+  const selectorContext = JSON.stringify([openProgramId, orgWide]);
 
   // GET /api/submissions — real DB rows, honest empty, honest error (no fixture).
   const [subsBump, setSubsBump] = React.useState(0);
   const subsPath = scopedTo ? programSubmissionsPath(scopedTo) : '/api/submissions';
-  const subs = useLiveRows<SubRow>(subsPath, [subsPath, subsBump]);
+  /* A 200 with no list in it is a failed read, not "no submissions": unguarded
+     it was flattened to zero rows, and New submission preselected the
+     project's region as if that market did not exist (design review
+     2026-10-08, honest-state lens). */
+  const subs = useSubmissionScopedRows<SubRow>(subsPath, selectorContext, subsBump, readSession, isRowsWith<SubRow>('id', 'applicationType', 'primaryRegion'));
   const notOffered = scopedTo && !subs.loading && !subs.error ? notOfferedCount(subs.meta) : null;
   /* The org's programmes, so the required programId is PICKED rather than
      typed as a uuid — createSubmissionSchema requires one (the submission's
@@ -552,7 +624,8 @@ export function SubmissionCenter({
   // the rendered status always comes from the server, never an optimistic guess.
   const [seqBump, setSeqBump] = React.useState(0);
   const seqPath = sub ? `/api/submissions/${sub.id}/sequences` : null;
-  const seqs = useLiveRows<SeqRow>(seqPath, [seqPath, seqBump]);
+  const sequenceContext = JSON.stringify([selectorContext, subs.loadedScope, sub?.id, sub?.programId]);
+  const seqs = useSubmissionScopedRows<SubmissionCoverageSequence>(seqPath, sequenceContext, seqBump, readSession, isRowsWith<SubmissionCoverageSequence>('id', 'sequenceNumber', 'region'));
 
   /* ── The Planner's region profile ────────────────────────────────────────
      The Planner named this profile's contents in prose — "required modules,
@@ -591,16 +664,30 @@ export function SubmissionCenter({
   });
 
   // The selected working sequence — the selector feeding Builder / Validation /
-  // Shadow Review / Cross-region / Dispatch. Defaults to the first real row.
+  // Shadow Review / Dispatch. Defaults to the first real row.
   const [selSeq, setSelSeq] = React.useState<number | null>(null);
   const seq = seqs.rows.find((r) => r.id === selSeq) ?? seqs.rows[0] ?? null;
 
   // Server-verdict line (transitions, governed outcomes) — verbatim, role=status.
-  const [notice, setNotice] = React.useState<Notice | null>(null);
+  const [notice, setNotice] = React.useState<ScopedBuilderNotice | null>(null);
+  const builderContext = JSON.stringify([readSession.key, selectorContext, sub?.id, sub?.programId, selSeq]);
+  const builderOwner = React.useRef({ context: builderContext, generation: 0 });
+  if (builderOwner.current.context !== builderContext) builderOwner.current = { context: builderContext, generation: builderOwner.current.generation + 1 };
+  const builderGeneration = builderOwner.current.generation;
+  const currentSequence = React.useRef(seq);
+  currentSequence.current = seq;
+  const builderIsCurrent = () => Boolean(seq && builderOwner.current.generation === builderGeneration && currentSequence.current === seq && seqs.isCurrent() && readSession.sameRevision());
+  const builderSequenceChanged = (verdict: Notice) => {
+    if (!seq || !builderIsCurrent()) return;
+    setNotice({ ...verdict, builderGeneration, builderSequenceId: seq.id });
+    setSeqBump(value => value + 1);
+  };
   // The in-flight governed flow (freeze | dispatch | transmit) driving the EsignModal.
   const [flow, setFlow] = React.useState<GovernedFlow | null>(null);
   // Sequence id with a transition POST in flight (buttons disable, no double-fire).
   const [acting, setActing] = React.useState<number | null>(null);
+  // Re-reads the Dispatch tab's readiness after a waive, which moves no status.
+  const [readinessBump, setReadinessBump] = React.useState(0);
 
   // Changing submission invalidates the sequence selection and any verdict.
   const subId = sub?.id;
@@ -608,6 +695,25 @@ export function SubmissionCenter({
     setSelSeq(null);
     setNotice(null);
   }, [subId]);
+
+  /* F10: opened on the submission, sequence and tab a sender named (Place into
+     filing's "Open in Submission Center"). Read once on mount; opened against
+     the rows the server returned, after the reset above, never guessed. */
+  const [navParams] = React.useState(() => consumeNavParams('submission-center'));
+  const navFollowUp = (FOLLOW_UP_SEQ_TYPES as readonly string[]).includes(navParams?.followUp ?? '') ? navParams?.followUp ?? null : null;
+  const [navTarget, setNavTarget] = React.useState(() => {
+    const query = new URLSearchParams(window.location.search);
+    return readSubmissionNavTarget(navParams ?? {
+      submissionId: query.getAll('submissionId').length === 1 ? query.get('submissionId') ?? undefined : undefined,
+      sequenceId: query.getAll('sequenceId').length === 1 ? query.get('sequenceId') ?? undefined : undefined,
+      ws: query.get('ws') ?? undefined,
+    });
+  });
+  const [filingTarget, setFilingTarget] = React.useState<string | null>(null);
+  const [filingLinkError, setFilingLinkError] = React.useState<string | null>(null);
+  const navMiss = useOpenOnNavTarget(navTarget, {
+    subs, sub, seqs, ws, selSeq, selectSubmission: setSelSub, selectSequence: setSelSeq, openWorkspace: setWs,
+  });
 
   /**
    * Create a submission — POST /api/submissions.
@@ -628,7 +734,9 @@ export function SubmissionCenter({
    * body targeted a different, unmounted router's schema; every submit
    * answered 400 VALIDATION.)
    */
-  const [newOpen, setNewOpen] = React.useState(false);
+  /* F9: the project page's "Add a market" opens this form on arrival — only
+     with a project open, since the submission is that project's (F20). */
+  const [newOpen, setNewOpen] = React.useState(() => navParams?.newSubmission === '1' && !!openProgramId);
   const [creating, setCreating] = React.useState(false);
   const createSubmission = async (v: Record<string, string>) => {
     if (creating) return;
@@ -654,27 +762,20 @@ export function SubmissionCenter({
        one and then drop the id, so a submission created here had no project
        and reached one only by a product-name match. The server refuses a
        programme of another organization (404). */
-    const r = await mutateVerbatim<SubRow>('POST', '/api/submissions', {
-      title: (v.title ?? '').trim(),
-      programId: programme.id,
-      productName: programme.title || programme.code || undefined,
-      applicationType: v.applicationType,
-      clientType: v.clientType,
-      primaryRegion: v.primaryRegion,
-    });
+    /* With a project open the submission is a market of that project (F22):
+       the project's own route writes its regional modules, the market and the
+       submission together, for the stated reason. */
+    const r = await postNewSubmission(openProgramId, programme, v);
     setCreating(false);
-    if (r.data && (r.data as { id?: unknown }).id != null) {
+    const created = r.data as { id?: unknown; submissionId?: unknown } | null | undefined;
+    const ok = !!created && (created.id ?? created.submissionId) != null;
+    if (ok) {
       setNewOpen(false);
       // Re-read rather than appending a client-built row: what appears is the
       // record the server created.
       setSubsBump((b) => b + 1);
-      setNotice({
-        tone: 'ok',
-        text: `Submission created — ${SC_APPTYPES.find((x) => x.v === v.applicationType)?.l ?? v.applicationType} · ${SC_REGIONS.find((x) => x.v === v.primaryRegion)?.l ?? v.primaryRegion}.`,
-      });
-    } else {
-      setNotice({ tone: 'err', text: `Submission not created — ${r.error ?? 'the request failed'}.` });
     }
+    setNotice(newSubmissionNotice(ok, !!openProgramId, v, r));
   };
 
   /**
@@ -690,6 +791,43 @@ export function SubmissionCenter({
    * ask the user for. The verdict is the server's, verbatim.
    */
   const [creatingSeq, setCreatingSeq] = React.useState(false);
+  const entryBusy = React.useRef<() => boolean>(() => false);
+  entryBusy.current = () => ceremonyOpen() || flow !== null || acting !== null || newOpen || creating || creatingSeq;
+  const initialFilingLinkRead = React.useRef(false);
+  React.useEffect(() => {
+    const openFiling = (id: string) => {
+      if (!isTrackedFilingId(id)) {
+        setFilingLinkError('The linked tracked filing identifier is invalid or ambiguous. Open a filing from the portfolio.');
+        return;
+      }
+      setFilingLinkError(null); setNavTarget(null); setWs('portfolio'); setFilingTarget(id);
+    };
+    if (!initialFilingLinkRead.current) {
+      initialFilingLinkRead.current = true;
+      const queryIds = new URLSearchParams(window.location.search).getAll('filingId');
+      const id = navParams ? navParams.filingId : queryIds.length === 1 ? queryIds[0] : queryIds.length > 1 ? '' : undefined;
+      if (id !== undefined) {
+        if (entryBusy.current()) setNotice({ tone: 'err', text: 'Finish or cancel the open governed form, then retry the linked tracked filing.' });
+        else openFiling(id);
+      }
+    }
+    const handoff = (event: Event) => {
+      if ((event as CustomEvent<{ surfaceId?: string }>).detail?.surfaceId !== 'submission-center') return;
+      const params = consumeNavParams('submission-center');
+      if (!params) return;
+      if (entryBusy.current()) {
+        setNotice({ tone: 'err', text: 'Finish or cancel the open governed form, then retry the linked submission or tracked filing.' });
+        return;
+      }
+      if (params.filingId !== undefined) openFiling(params.filingId);
+      else {
+        setFilingTarget(null); setFilingLinkError(null); setNavTarget(readSubmissionNavTarget(params));
+        if ((FOLLOW_UP_SEQ_TYPES as readonly string[]).includes(params.followUp ?? '')) setNextSeqType(params.followUp!);
+      }
+    };
+    window.addEventListener(NAV_PARAMS_EVENT, handoff);
+    return () => window.removeEventListener(NAV_PARAMS_EVENT, handoff);
+  }, [navParams]);
   const startSequence = async (target: SubRow, sequenceNumber: string, type: string) => {
     if (creatingSeq) return;
     setCreatingSeq(true);
@@ -711,7 +849,7 @@ export function SubmissionCenter({
   /* A follow-up sequence (WO-9 Click 6). Its number follows the highest in the
      submission's own region — numbering restarts per region — and its type is
      the author's to state; the server's enum, less 'original', which is 0000. */
-  const [nextSeqType, setNextSeqType] = React.useState<string>('amendment');
+  const [nextSeqType, setNextSeqType] = React.useState<string>(navFollowUp ?? 'amendment');
 
   /** Non-governed lifecycle transition — the REAL endpoint, verdict verbatim.
    *  The server refuses frozen/dispatched here (GOVERNED_REQUIRED); those two
@@ -740,12 +878,23 @@ export function SubmissionCenter({
    *  opened the e-signature with no gate shown, the signature was recorded, and
    *  only then did the freeze refuse. A refusal or an unreadable answer is
    *  returned as the sentence to show; null means the gates clear. */
-  const precheckRefusal = async (s: SeqRow, kind: GovernedKind, transmit?: TransmitRequest): Promise<string | null> => {
+  const precheckRefusal = async (
+    s: SeqRow,
+    kind: GovernedKind,
+    transmit?: TransmitRequest,
+    waiver?: WaiverRequest,
+    disposition?: DispositionRequest,
+  ): Promise<string | null> => {
+    // A waiver answers one failed run; without it there is nothing to sign (P-34).
+    if (kind === 'shadow-waiver' && !waiver) return 'No failed Shadow Review run is named for this waiver. Nothing was signed.';
+    // A disposition closes one named finding (P-35).
+    if (kind === 'shadow-finding-disposition' && !disposition) return 'No finding is named to close. Nothing was signed.';
     // A transmit's typed number is judged against the program record here,
     // before the signature, by the rule transmit applies (P-23).
     const r = await mutateVerbatim<GovernedPrecheck>('POST', `/api/submissions/sequences/${s.id}/governed-precheck`, {
       step: kind,
       ...(transmit ? { environment: transmit.environment, applicationId: transmit.applicationId } : {}),
+      ...dispositionFields(disposition),
     });
     if (!r.data || typeof r.data.cleared !== 'boolean') {
       return `Whether the server would accept this could not be checked — ${clause(r.error ?? 'no answer')}. Nothing was signed.`;
@@ -755,17 +904,23 @@ export function SubmissionCenter({
 
   /** Open the e-signature for a governed step only when its gates clear. The
    *  Sequences row and the Dispatch tab both come here: one path to a signature. */
-  const requestGoverned = async (s: SeqRow, kind: GovernedKind, transmit?: TransmitRequest) => {
+  const requestGoverned = async (
+    s: SeqRow,
+    kind: GovernedKind,
+    transmit?: TransmitRequest,
+    waiver?: WaiverRequest,
+    disposition?: DispositionRequest,
+  ) => {
     if (acting != null || flow != null) return;
     setActing(s.id);
     setNotice(null);
-    const refusal = await precheckRefusal(s, kind, transmit);
+    const refusal = await precheckRefusal(s, kind, transmit, waiver, disposition);
     setActing(null);
     if (refusal) {
       setNotice({ tone: 'err', text: `${GOVERNED_LABEL[kind]} of sequence ${s.sequenceNumber} not started — ${refusal}` });
       return;
     }
-    setFlow({ seq: s, kind, ...(transmit ? { transmit } : {}) });
+    setFlow({ seq: s, kind, ...(transmit ? { transmit } : {}), ...(waiver ? { waiver } : {}), ...(disposition ? { disposition } : {}) });
   };
 
   /** The governed freeze/dispatch/transmit chain, run from inside the EsignModal AFTER
@@ -783,7 +938,7 @@ export function SubmissionCenter({
     f: GovernedFlow,
     input: { meaning: EsigMeaning; reason: string; password: string; totp?: string },
   ) => {
-    const refusal = await precheckRefusal(f.seq, f.kind, f.transmit);
+    const refusal = await precheckRefusal(f.seq, f.kind, f.transmit, f.waiver, f.disposition);
     if (refusal) throw new Error(refusal);
     const sign = await mutateVerbatim<{ actionId?: string; sha256Chain?: string }>(
       'POST',
@@ -791,7 +946,8 @@ export function SubmissionCenter({
       {
         target: `ectd-sequence:${f.seq.id}`,
         reason: input.reason,
-        payload: { intent: f.kind, meaning: input.meaning },
+        // A disposition's signature names the finding and how it is closed (P-35).
+        payload: { intent: f.kind, meaning: input.meaning, ...dispositionFields(f.disposition) },
         reauth: { password: input.password, ...(input.totp ? { totp: input.totp } : {}) },
       },
     );
@@ -800,9 +956,15 @@ export function SubmissionCenter({
         `The e-signature was not recorded — ${sign.error ?? 'no actionId returned'}. Nothing was ${GOVERNED_PAST[f.kind]}.`,
       );
     }
-    if (f.kind === 'transmit') {
-      return runTransmit(f, sign.data.actionId, input, sign.data.sha256Chain);
-    }
+    // Transmit, the Shadow Review waiver (P-34) and closing a finding (P-35)
+    // each have their own act after the signature; freeze and dispatch share one.
+    const ownAct: Partial<Record<GovernedKind, typeof runTransmit>> = {
+      transmit: runTransmit,
+      'shadow-waiver': runWaiver,
+      'shadow-finding-disposition': runDisposition,
+    };
+    const act = ownAct[f.kind];
+    if (act) return act(f, sign.data.actionId, input, sign.data.sha256Chain);
     const done = await mutateVerbatim<SeqRow>(
       'POST',
       `/api/submissions/sequences/${f.seq.id}/${f.kind}`,
@@ -851,6 +1013,48 @@ export function SubmissionCenter({
       text: `${transmittedSentence(f.seq, done.data, f.transmit?.environment)}, signed by ${signerLabel} (${input.meaning}), server-confirmed under signature ${signatureActionId}.`,
     });
     return { meaning: input.meaning, reason: input.reason, signedAt: new Date().toISOString(), hash };
+  };
+
+  /** The Shadow Review waiver (P-34): POST /sequences/:id/shadow-review/waive
+   *  with the signature and the failed run it answers. A refusal or an
+   *  unconfirmed answer throws (the modal shows it; no success). The Dispatch
+   *  tab is read again whatever the answer: a waive moves no status. */
+  const runWaiver = async (
+    f: GovernedFlow,
+    signatureActionId: string,
+    input: { meaning: EsigMeaning; reason: string },
+    hash: string | undefined,
+  ) => {
+    // precheckRefusal refused a waiver flow without its run before anything was signed.
+    if (!f.waiver) throw new Error('No failed Shadow Review run is named for this waiver. Nothing was waived.');
+    try {
+      const done = await submitShadowWaiver(f.seq, signatureActionId, f.waiver);
+      setNotice({ tone: 'ok', text: `${done} — signed by ${signerLabel} (${input.meaning}), server-confirmed under signature ${signatureActionId}.` });
+      return { meaning: input.meaning, reason: input.reason, signedAt: new Date().toISOString(), hash };
+    } finally {
+      setReadinessBump((b) => b + 1);
+    }
+  };
+
+  /** Closing a critical finding (P-35): POST …/findings/:findingId/disposition
+   *  with the signature and the disposition. A refusal or an unconfirmed
+   *  answer throws (the modal shows it; no success). The findings are read
+   *  again whatever the answer: a disposition moves no sequence status. */
+  const runDisposition = async (
+    f: GovernedFlow,
+    signatureActionId: string,
+    input: { meaning: EsigMeaning; reason: string },
+    hash: string | undefined,
+  ) => {
+    // precheckRefusal refused a disposition flow without its finding before anything was signed.
+    if (!f.disposition) throw new Error('No finding is named to close. Nothing was closed.');
+    try {
+      const done = await submitFindingDisposition(f.seq, signatureActionId, f.disposition);
+      setNotice({ tone: 'ok', text: `${done} — signed by ${signerLabel} (${input.meaning}), server-confirmed under signature ${signatureActionId}.` });
+      return { meaning: input.meaning, reason: input.reason, signedAt: new Date().toISOString(), hash };
+    } finally {
+      setReadinessBump((b) => b + 1);
+    }
   };
 
   /* AnA's hands on this screen — the surface-action bus (shared registry:
@@ -976,7 +1180,7 @@ export function SubmissionCenter({
   const regL = (v: string) => SC_REGIONS.find((a) => a.v === v)?.l ?? v;
 
   /* What AnA can see of this screen.
-     The Submission Center is eight workspaces over one selected submission and
+     The Submission Center is seven workspaces over one selected submission and
      one selected sequence, and every question a user asks here is about THAT
      pair — "is this ready to dispatch?", "what is blocking 0002?". Until now she
      was told only that the surface was called "submission-center", so she could
@@ -1013,7 +1217,7 @@ export function SubmissionCenter({
         `Submission Center, "${SUBMISSION_WORKSPACES.find((w) => w.id === ws)?.label ?? ws}" workspace: ` +
         portfolioCountLine +
         (sub
-          ? `, "${sub.title}" selected — a ${regL(sub.primaryRegion)} ${appL(sub.applicationType)} at the ` +
+          ? `, "${sub.title}" selected — ${appL(sub.applicationType)} · ${regL(sub.primaryRegion)}, at the ` +
             `${sub.lifecycleStage} stage, ${seqLine}` +
             (seq ? `, working sequence ${seq.sequenceNumber} (${seq.status})` : '')
           : ', none selected'),
@@ -1087,7 +1291,7 @@ export function SubmissionCenter({
                 },
       },
       availableActions: [
-        'Switch workspace — planner, sequences, builder, validation, shadow review, cross-region, dispatch',
+        'Switch workspace — planner, sequences, builder, validation, shadow review, dispatch',
         'Select a different submission from the portfolio picker',
         ...(openProjectName ? ["List all of the organization's submissions, or only the open project's"] : []),
         'Select the working sequence the build and validation workspaces act on',
@@ -1111,8 +1315,7 @@ export function SubmissionCenter({
           <div className="sp-eyebrow">Submission</div>
           <h1 className="sp-title">Submission center</h1>
           <p className="sp-state">
-            Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2
-            / v4.0, eSTAR, MDR/IVDR. Eight workspaces scaffolded from the submission contract.
+            Plan, build, validate and dispatch each market&apos;s eCTD v3.2.2 sequences.
           </p>
         </div>
         {list.length > 0 && (
@@ -1147,8 +1350,10 @@ export function SubmissionCenter({
           headline={
             <>
               {sub.title}
-              {sub.productName ? ` (${sub.productName})` : ''} — a {regL(sub.primaryRegion)}{' '}
-              {appL(sub.applicationType)} at the <b>{sub.lifecycleStage}</b> stage.
+              {/* No article: "a FDA", "a EU" read wrong, and an initialism's
+                  article depends on how it is said (design review 2026-10-08). */}
+              {sub.productName ? ` (${sub.productName})` : ''} — {appL(sub.applicationType)} · {regL(sub.primaryRegion)}, at
+              the <b>{sub.lifecycleStage}</b> stage.
             </>
           }
           body={
@@ -1192,13 +1397,31 @@ export function SubmissionCenter({
           secondary="Or move through the workspaces below — plan, build, validate, dispatch."
         />
       )}
+      {/* P-32: the IND forms and letters are a feature of this app, reached
+          from the US IND they are filed in (audit 2026-10-17: nothing opened
+          them). The IND screen reads { submissionId } once on mount and opens
+          that submission's checklist, or says it has none. */}
+      {sub && onNav && isUsInd(sub) && available('ind-checklist') && (
+        <div className="scaf-note sc-mb" role="note">
+          Form FDA 1571, the cover letter and the Letter of Authorization for this IND are built on the IND screen, opened on
+          this submission.{' '}
+          <button
+            type="button"
+            className="sc-trans-b"
+            onClick={() => {
+              stashNavParamsForTarget('ind-checklist', { submissionId: String(sub.id) });
+              onNav('ind-checklist');
+            }}
+          >
+            {I.right} Forms and letters (1571, cover letter, LOA)
+          </button>
+        </div>
+      )}
       {/* P-14's remedy: a submission the server records with no project is
           anchored here (POST /api/submissions/:id/program-anchor). */}
       {sub && sub.programId === null && (
         <SubmissionProgramAnchor
           submission={sub}
-          programmes={programmes.rows}
-          programmesUnreadable={Boolean(programmes.error)}
           onAnchored={(n) => {
             setNotice(n);
             setSubsBump((b) => b + 1);
@@ -1222,57 +1445,27 @@ export function SubmissionCenter({
       </div>
 
       {/* The latest server verdict (transition / governed outcome) — verbatim. */}
-      <VerdictNote notice={notice} />
+      <VerdictNote notice={visibleSubmissionNotice(notice, builderOwner.current.generation, seq?.id)} />
+      <VerdictNote notice={navMiss} />
+      {filingLinkError && <p role="alert" className="sp-state">{filingLinkError}</p>}
+      {filingTarget && ws === 'portfolio' && <TrackedFilingDetail filingId={filingTarget} onClose={() => setFilingTarget(null)} />}
+      {navMiss?.tone === 'err' && <button type="button" className="btn ghost"
+        onClick={() => {
+          if (ceremonyOpen() || flow || acting !== null) return;
+          setSubsBump(value => value + 1);
+          setSeqBump(value => value + 1);
+        }}>Retry linked submission</button>}
 
       {newOpen && (
-        <C2CForm
-          config={{
-            eyebrow: 'Submission',
-            title: 'Create a submission',
-            sub: 'The canonical submission record. Its sequences, validation profile and regional Module 1 are derived from the type and agency chosen here.',
-            submitLabel: creating ? 'Creating…' : 'Create submission',
-            fields: [
-              {
-                key: 'title', label: 'Title', type: 'text',
-                placeholder: 'e.g. BX-701 — Initial IND', required: true,
-              },
-              {
-                key: 'applicationType', label: 'Application type', type: 'select',
-                // The canonical vocabulary the rest of this surface renders —
-                // including the non-US applications (MAA, CTA) a global team
-                // opens as its second market.
-                options: SC_APPTYPES.map((a) => ({ value: a.v, label: a.l })),
-                default: 'ind', required: true, half: true,
-              },
-              {
-                key: 'primaryRegion', label: 'Primary region', type: 'select',
-                options: SC_REGIONS.map((r0) => ({ value: r0.v, label: r0.l })),
-                default: 'fda', required: true, half: true,
-              },
-              {
-                key: 'clientType', label: 'Client type', type: 'select',
-                options: [
-                  { value: 'pharma', label: 'Pharma' },
-                  { value: 'biotech', label: 'Biotech' },
-                  { value: 'mdx', label: 'Medical device' },
-                  { value: 'ivd', label: 'IVD' },
-                ],
-                default: 'biotech', required: true, half: true,
-              },
-              /* With a project open the submission is that project's: it is
-                 named here, read-only, and there is no picker. */
-              openProjectName
-                ? { key: 'project', label: 'Project', type: 'text', half: true, derive: () => openProjectName }
-                : {
-                    key: 'projectId', label: 'Programme', type: 'select',
-                    options: programmes.rows.map((p) => ({
-                      value: p.id,
-                      label: [p.code, p.title].filter(Boolean).join(' · ') || p.id,
-                    })),
-                    required: true, half: true,
-                  },
-            ],
-          }}
+        <NewSubmissionForm
+          openProgramId={openProgramId}
+          openProjectName={openProjectName}
+          workspace={shell?.ws}
+          projectSubmissions={openProgramId ? list.filter((x) => x.programId === openProgramId) : []}
+          submissionsSettled={!subs.loading}
+          submissionsUnread={!!subs.error}
+          programmes={programmes.rows}
+          creating={creating}
           onCancel={() => setNewOpen(false)}
           onSubmit={createSubmission}
         />
@@ -1403,7 +1596,10 @@ export function SubmissionCenter({
               <EmptyState
                 icon={I.fileText}
                 title="No device filings tracked yet"
-                hint="Start tracking an eSTAR filing (510(k), De Novo, PMA, Q-Sub…) from the 510(k) surface's filing panel — its status and review clock appear here."
+                hint={available('device-510k')
+                  ? "Start tracking an eSTAR filing (510(k), De Novo, PMA, Q-Sub…) from the 510(k) surface's filing panel — its status and review clock appear here."
+                  /* The surface it names is not in this release (F16: no dead ends). */
+                  : 'Device filings are tracked from the 510(k) workbench, which is not part of this release.'}
               />
             ) : (
               <table className="ub-inv">
@@ -1423,9 +1619,6 @@ export function SubmissionCenter({
                       <td>
                         <b>{f.title ?? f.catalogKey}</b>
                         {f.title ? <span className="sp-row-s"> · {f.catalogKey}</span> : null}
-                        {f.projectId != null ? (
-                          <span className="sp-row-s"> · {programmes.rows.find((p) => p.id === String(f.projectId))?.title ?? 'programme not resolved'}</span>
-                        ) : null}
                       </td>
                       <td>
                         {DEVICE_PROGRAM_LABEL[f.programType] ?? f.programType} <span className="sc-cap">· {f.variant}</span>
@@ -1437,6 +1630,24 @@ export function SubmissionCenter({
                       <td>{f.fdaTrackingNumber ?? '—'}</td>
                       <td>{reviewClock(f)}</td>
                       <td>
+                        <button
+                          type="button"
+                          className="sc-trans-b"
+                          aria-label={`Open tracked filing ${f.title ?? f.catalogKey}`}
+                          onClick={() => {
+                            if (entryBusy.current()) {
+                              setNotice({ tone: 'err', text: 'Finish or cancel the open governed form, then open this tracked filing.' });
+                              return;
+                            }
+                            if (!isTrackedFilingId(f.id)) {
+                              setFilingLinkError('This tracked filing has an invalid identifier and could not be opened.');
+                              return;
+                            }
+                            setFilingLinkError(null); setNavTarget(null); setFilingTarget(f.id);
+                          }}
+                        >
+                          Open recorded filing
+                        </button>
                         {/* Offered only where the 510(k) surface can be opened:
                             outside this release it led to the locked panel
                             (FILING_SPINE.md F16). */}
@@ -1646,7 +1857,7 @@ export function SubmissionCenter({
         </div>
       )}
 
-      {/* Builder / Validation / Shadow review / Cross-region / Dispatch — the
+      {/* Builder / Validation / Shadow review / Dispatch — the
           per-sequence workspaces. One selector (SeqPicker) chooses the working
           sequence; each workspace then reads/writes the REAL endpoints for it. */}
       {/* ── "No submission selected" is a claim about the reader's portfolio ──
@@ -1685,17 +1896,31 @@ export function SubmissionCenter({
           {!seqs.loading && !seqs.error && seq && (
             <>
               {ws === 'builder' && (
-                <BuilderWorkspace key={seq.id} seq={seq} onSequenceChanged={() => setSeqBump((b) => b + 1)} onNav={onNav} />
+                <BuilderWorkspace key={`${readSession.key}:${builderGeneration}:${seq.id}`} seq={seq} submission={sub}
+                  session={readSession} scopeContext={`${builderContext}:${builderGeneration}`} isScopeCurrent={builderIsCurrent}
+                  onSequenceChanged={builderSequenceChanged} onNav={onNav} />
               )}
               {ws === 'validation' && <ValidationWorkspace key={seq.id} sub={sub} seq={seq} />}
-              {ws === 'shadow-review' && <ShadowReviewWorkspace key={seq.id} seq={seq} />}
-              {ws === 'cross-region' && <CrossRegionWorkspace key={seq.id} sub={sub} seq={seq} />}
+              {ws === 'shadow-review' && (
+                <ShadowReviewWorkspace
+                  key={seq.id}
+                  seq={seq}
+                  reread={readinessBump}
+                  onDisposition={(s, d) => void requestGoverned(s, 'shadow-finding-disposition', undefined, undefined, d)}
+                />
+              )}
+              {ws === 'required-deliverables' && <SubmissionRequiredDeliverables
+                key={`${readSession.key}:${sequenceContext}:${seq.id}`}
+                sub={sub} seq={seq} session={readSession} context={sequenceContext} openProgramId={openProgramId}
+                onNav={onNav} onValidation={() => setWs('validation')}
+              />}
               {ws === 'dispatch' && (
                 <DispatchWorkspace
-                  key={`${seq.id}:${seq.status}`}
+                  key={`${seq.id}:${seq.status}:${readinessBump}`}
                   sub={sub}
                   seq={seq}
-                  onGoverned={(s, kind, transmit) => void requestGoverned(s, kind, transmit)}
+                  onNav={onNav}
+                  onGoverned={(s, kind, transmit, waiver) => void requestGoverned(s, kind, transmit, waiver)}
                 />
               )}
             </>
@@ -1745,8 +1970,8 @@ export function SubmissionCenter({
                   Transitions POST the real lifecycle endpoint and the server&#39;s verdict is shown
                   verbatim. Freeze and Dispatch are irreversible — the generic endpoint refuses
                   them, so those two open the Part 11 e-signature chain instead. Selecting a row
-                  sets the working sequence for the Builder, Validation, Shadow review,
-                  Cross-region and Dispatch workspaces.
+                  sets the working sequence for the Builder, Validation, Shadow review
+                  and Dispatch workspaces.
                 </div>
                 <div className="sp-list">
                   {seqs.rows.map((s) => (
@@ -1841,20 +2066,48 @@ export function SubmissionCenter({
       {flow && sub && (
         <EsignModal
           open
-          action={`${GOVERNED_LABEL[flow.kind]} sequence`}
+          action={
+            flow.kind === 'shadow-waiver'
+              ? SHADOW_WAIVER_ACTION
+              : flow.kind === 'shadow-finding-disposition'
+                ? shadowDispositionAction(flow.disposition)
+                : `${GOVERNED_LABEL[flow.kind]} sequence`
+          }
           target={`Sequence ${flow.seq.sequenceNumber} · ${sub.title}`}
           targetMeta={`${regL(flow.seq.region)} · ectd-sequence:${flow.seq.id} · ${
             flow.kind === 'freeze'
               ? 'irreversible content lock'
               : flow.kind === 'dispatch'
                 ? 'records dispatch; the package is sent by a separate, signed transmit'
-                : `sends the package to the agency gateway (${flow.transmit?.environment ?? 'environment not chosen'}), application ${flow.transmit?.applicationId ?? 'not given'}`
+                : flow.kind === 'shadow-waiver'
+                  ? shadowWaiverTargetLine(flow.waiver)
+                  : flow.kind === 'shadow-finding-disposition'
+                    ? shadowDispositionTargetLine(flow.disposition)
+                    : `sends the package to the agency gateway (${flow.transmit?.environment ?? 'environment not chosen'}), application ${flow.transmit?.applicationId ?? 'not given'}`
           }`}
-          defaultMeaning={flow.kind === 'freeze' ? 'approval' : 'release'}
+          defaultMeaning={
+            flow.kind === 'freeze'
+              ? 'approval'
+              : flow.kind === 'shadow-waiver'
+                ? 'responsibility'
+                : flow.kind === 'shadow-finding-disposition'
+                  ? shadowDispositionDefaultMeaning(flow.disposition)
+                  : 'release'
+          }
           // Freeze and dispatch are approval and release acts. "Authorship"
           // is not offered: the sign route skips separation of duties for it,
-          // and the step refuses a signature that declares it (Gate 1).
-          meanings={flow.kind === 'freeze' ? ['approval', 'responsibility'] : ['release', 'approval', 'responsibility']}
+          // and the step refuses a signature that declares it (Gate 1). A
+          // Shadow Review waiver is responsibility or approval (P-34), and so is
+          // closing a critical finding (P-35).
+          meanings={
+            flow.kind === 'shadow-waiver'
+              ? SHADOW_WAIVER_MEANINGS
+              : flow.kind === 'shadow-finding-disposition'
+                ? SHADOW_DISPOSITION_MEANINGS
+                : flow.kind === 'freeze'
+                  ? ['approval', 'responsibility']
+                  : ['release', 'approval', 'responsibility']
+          }
           signer={authUser ? { name: authUser.displayName || `${authUser.firstName} ${authUser.lastName ?? ''}`.trim() || authUser.email, email: authUser.email } : undefined}
           // The server's re-authentication demands the authenticator code
           // whenever the signer has one enrolled; without this the modal never

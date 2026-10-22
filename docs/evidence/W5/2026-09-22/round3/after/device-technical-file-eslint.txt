@@ -9,4 +9,3 @@
   313:11  warning  'match' is assigned a value but never used  @typescript-eslint/no-unused-vars
 
 ✖ 3 problems (0 errors, 3 warnings)
-

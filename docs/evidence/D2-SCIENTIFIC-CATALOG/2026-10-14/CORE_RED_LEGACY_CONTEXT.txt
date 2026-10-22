@@ -1,0 +1,76 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > failure-first source context regression against legacy value presence > faithful transcription control 2ms
+ × server/services/vault/__tests__/catalog-fact-verification.test.ts > failure-first source context regression against legacy value presence > another assay cannot establish assay A context 5ms
+   → expected true to be false // Object.is equality
+ × server/services/vault/__tests__/catalog-fact-verification.test.ts > failure-first source context regression against legacy value presence > another configuration cannot establish firmware v1 context 1ms
+   → expected true to be false // Object.is equality
+ × server/services/vault/__tests__/catalog-fact-verification.test.ts > failure-first source context regression against legacy value presence > a bound cannot establish an exact scalar result 1ms
+   → expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/vault/__tests__/catalog-fact-verification.test.ts > failure-first source context regression against legacy value presence > another assay cannot establish assay A context
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/vault/__tests__/catalog-fact-verification.test.ts:7:143
+      5|   const text = 'Assay A sensitivity: 95.0%. Assay B sensitivity: 99.2%…
+      6|   it('faithful transcription control', () => expect(verifyKeyDataAgain…
+      7|   it('another assay cannot establish assay A context', () => expect(ve…
+       |                                                                                                                                               ^
+      8|   it('another configuration cannot establish firmware v1 context', () …
+      9|   it('a bound cannot establish an exact scalar result', () => expect(v…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/vault/__tests__/catalog-fact-verification.test.ts > failure-first source context regression against legacy value presence > another configuration cannot establish firmware v1 context
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/vault/__tests__/catalog-fact-verification.test.ts:8:153
+      6|   it('faithful transcription control', () => expect(verifyKeyDataAgain…
+      7|   it('another assay cannot establish assay A context', () => expect(ve…
+      8|   it('another configuration cannot establish firmware v1 context', () …
+       |                                                                                                                                                         ^
+      9|   it('a bound cannot establish an exact scalar result', () => expect(v…
+     10| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/vault/__tests__/catalog-fact-verification.test.ts > failure-first source context regression against legacy value presence > a bound cannot establish an exact scalar result
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/vault/__tests__/catalog-fact-verification.test.ts:9:160
+      7|   it('another assay cannot establish assay A context', () => expect(ve…
+      8|   it('another configuration cannot establish firmware v1 context', () …
+      9|   it('a bound cannot establish an exact scalar result', () => expect(v…
+       |                                                                                                                                                                ^
+     10| });
+     11|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  06:17:05
+   Duration  450ms (transform 81ms, setup 81ms, import 28ms, tests 12ms, environment 0ms)
+

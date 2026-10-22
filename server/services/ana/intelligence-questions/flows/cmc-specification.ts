@@ -202,8 +202,8 @@ export function createCmcSpecificationFlow(): FlowDefinition {
               { value: 'ophthalmology', label: 'Ophthalmology' },
               { value: 'hematology', label: 'Hematology' },
               { value: 'dermatology', label: 'Dermatology' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
             helpText: 'Primary therapeutic area for the drug product.',
           },
           {
@@ -268,8 +268,8 @@ export function createCmcSpecificationFlow(): FlowDefinition {
               { value: 'liquid', label: 'Liquid' },
               { value: 'lyophilized', label: 'Lyophilized Powder' },
               { value: 'suspension', label: 'Suspension' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
             helpText: 'The predominant physical form of the drug substance as manufactured.',
           },
           {
@@ -626,8 +626,8 @@ export function createCmcSpecificationFlow(): FlowDefinition {
               { value: 'peptide_map', label: 'Peptide Mapping' },
               { value: 'glycan', label: 'Glycan Analysis' },
               { value: 'bioassay', label: 'Bioassay / Potency Assay' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
             helpText: 'Select all analytical methods used to confirm the drug substance structure and identity.',
           },
           {
@@ -859,8 +859,8 @@ export function createCmcSpecificationFlow(): FlowDefinition {
               { value: 'patch', label: 'Transdermal Patch' },
               { value: 'inhaler', label: 'Inhaler (MDI / DPI)' },
               { value: 'ophthalmic', label: 'Ophthalmic Solution / Suspension' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
             helpText: 'Select the intended commercial dosage form.',
           },
           {
@@ -885,8 +885,8 @@ export function createCmcSpecificationFlow(): FlowDefinition {
               { value: 'inhalation', label: 'Inhalation' },
               { value: 'ophthalmic', label: 'Ophthalmic' },
               { value: 'intrathecal', label: 'Intrathecal' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
             helpText: 'Primary intended route of administration.',
           },
           {

@@ -1,0 +1,133 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-21T01:21:36.310Z","pid":17480,"hostname":"c9501410c5f6","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-21T01:21:36.313Z","pid":17480,"hostname":"c9501410c5f6","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-21T01:21:36.314Z","pid":17480,"hostname":"c9501410c5f6","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/project-sharing-team-setup.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":50,"time":"2026-10-21T01:21:37.825Z","pid":17480,"hostname":"c9501410c5f6","context":{"error":"[AuditLog] audit.tamper_proof_log does not exist. The 21 CFR Part 11 tamper-proof store is owned by db/migrations/20260813_audit_tamper_proof_log.sql and applied by `node scripts/db/deploy-migrate.mjs`, which runs as the database OWNER. The runtime role is deliberately append-only on the audit schema and cannot create it. Run the deploy migration.","stack":"Error: [AuditLog] audit.tamper_proof_log does not exist. The 21 CFR Part 11 tamper-proof store is owned by db/migrations/20260813_audit_tamper_proof_log.sql and applied by `node scripts/db/deploy-migrate.mjs`, which runs as the database OWNER. The runtime role is deliberately append-only on the audit schema and cannot create it. Run the deploy migration.\n    at TamperProofAuditLog.initialize (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:405:13)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at ensureInitialized (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:182:5)"},"msg":"[audit-service] Failed to initialize tamper-proof audit table (non-fatal):"}
+stdout | tests/db/project-sharing-team-setup.dbtest.ts
+[database] Database connection successful
+
+ × tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > reaches actual same-name accounts for the current owner and persists an audited Edit grant 123ms
+   → {"success":false,"error":{"message":"Project not found.","code":"PROJECT_NOT_FOUND"}}: expected 404 to be 200 // Object.is equality
+ × tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > revokes the durable share, retains provenance and removes future private program reads 93ms
+   → {"success":false,"error":"PROJECT_NOT_FOUND","message":"Project not found."}: expected 404 to be 200 // Object.is equality
+{"level":20,"time":"2026-10-21T01:21:45.793Z","pid":17480,"hostname":"c9501410c5f6","context":{"auditId":"audit_1792545705776_9b82ae8d1ef94577","action":"UPDATE","entityType":"project","entityId":"11"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > can clean up a departed account’s share without erasing its identity or original grant 119ms
+ × tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > does not mistake a claimed admin role or a read-only owner for current management rights 91ms
+   → expected 404 to be 200 // Object.is equality
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > refuses inactive/foreign recipient 10 without a grant 166ms
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > refuses inactive/foreign recipient 11 without a grant 84ms
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > refuses a mismatched program/anchor and a second client owned by another current member 92ms
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > rejects an explicit different client workspace even when the UUID and integer anchor match 83ms
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > protects implicit owner/creator access and archived projects 89ms
+ × tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > reports a lost COMMIT acknowledgement as unconfirmed while the actual saved grant can be re-read 114ms
+   → {"success":false,"error":{"message":"Project not found.","code":"PROJECT_NOT_FOUND"}}: expected 404 to be 200 // Object.is equality
+ × tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > refuses unverified member-store reads instead of returning a verified empty state 60ms
+   → expected 404 to be 503 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > reaches actual same-name accounts for the current owner and persists an audited Edit grant
+AssertionError: {"success":false,"error":{"message":"Project not found.","code":"PROJECT_NOT_FOUND"}}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/project-sharing-team-setup.dbtest.ts:119:54
+    117|   it('reaches actual same-name accounts for the current owner and pers…
+    118|     const state = await request(app()).get(sharing());
+    119|     expect(state.status, JSON.stringify(state.body)).toBe(200);
+       |                                                      ^
+    120|     expect(state.body.data).toMatchObject({ projectId: 'proj_11', prog…
+    121|     const choices = state.body.data.candidates as {userId: number; lab…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > revokes the durable share, retains provenance and removes future private program reads
+AssertionError: {"success":false,"error":"PROJECT_NOT_FOUND","message":"Project not found."}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/project-sharing-team-setup.dbtest.ts:135:60
+    133|   it('revokes the durable share, retains provenance and removes future…
+    134|     const admitted = await request(app(8)).get(`/api/c2c/projects/${PR…
+    135|     expect(admitted.status, JSON.stringify(admitted.body)).toBe(200);
+       |                                                            ^
+    136|     const before = (await env.owner.query(`SELECT * FROM ${env.t('proj…
+    137|     const removed = await request(app()).delete(member(8));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > does not mistake a claimed admin role or a read-only owner for current management rights
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/project-sharing-team-setup.dbtest.ts:152:27
+    150|   it('does not mistake a claimed admin role or a read-only owner for c…
+    151|     const reader = await request(app(8)).get(sharing());
+    152|     expect(reader.status).toBe(200);
+       |                           ^
+    153|     expect(reader.body.data).toMatchObject({canManage:false,candidates…
+    154|     expect((await request(app(8)).put(member(9)).send({role:'edit'})).…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > reports a lost COMMIT acknowledgement as unconfirmed while the actual saved grant can be re-read
+AssertionError: {"success":false,"error":{"message":"Project not found.","code":"PROJECT_NOT_FOUND"}}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/project-sharing-team-setup.dbtest.ts:191:54
+    189|     expect((await env.owner.query(`SELECT role,status FROM ${env.t('pr…
+    190|     const state = await request(app()).get(sharing());
+    191|     expect(state.status, JSON.stringify(state.body)).toBe(200);
+       |                                                      ^
+    192|     expect(state.body.data.members.find((row: {userId:number}) => row.…
+    193|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > refuses unverified member-store reads instead of returning a verified empty state
+AssertionError: expected 404 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 404
+
+ ❯ tests/db/project-sharing-team-setup.dbtest.ts:197:29
+    195|     failMembers = true;
+    196|     const response = await request(app()).get(sharing());
+    197|     expect(response.status).toBe(503);
+       |                             ^
+    198|     expect(response.body.data).toBeUndefined();
+    199|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 6 passed (11)
+   Start at  01:21:32
+   Duration  13.98s (transform 7.98s, setup 140ms, import 326ms, tests 12.87s, environment 0ms)

@@ -1,0 +1,29 @@
+# Trimmed: the full run log was 36072 lines. Kept: the failures and the totals.
+ × client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > sends the typed name and product, trimmed, exactly as the review showed them 5246ms
+ × client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > with no product name, the review says the project name will be recorded as the product 5189ms
+ × client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > never sends the filing type label as the name or the product 5188ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > reports a FAILED search as a failure, never as zero matches 222ms
+ ✓ client/src/concept2cure/v2/__tests__/irbPackage.test.tsx > protocol-dev — IRB package tab > says the read FAILED rather than drawing an empty manifest 269ms
+ ✓ client/src/concept2cure/v2/__tests__/irbPackage.test.tsx > protocol-dev — IRB package tab > says the read FAILED when the IRB register itself does not answer 219ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > ReportGovernance — the register publishes itself honestly > a FAILED register read publishes the failure, never an empty org 59ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > keeps a FAILED plan call as a failed row — a failure is never folded away 17ms
+ ✓ client/src/concept2cure/v2/__tests__/registrationDossierExpands.test.tsx > Registrations — an expandable row expands > reports a FAILED dossier read as a failed read, never as "no labels on file" 228ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — header document count > states no count over a FAILED read 37ms
+ ✓ client/src/concept2cure/v2/__tests__/ndaCockpitNoFixtures.test.tsx > NdaCockpit — the KPI strip reports no figure it does not have > shows no figures when the reads FAIL, rather than a clean zero 40ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > NDA cockpit over a FAILED read > says the read failed rather than narrating a clean program 23ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > NDA cockpit over a FAILED read > renders no number for a quantity it could not read 29ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > NDA cockpit over a FAILED read > never renders a failed Refuse-to-File read in the language of clearance 23ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > NDA cockpit over a FAILED read > offers no next step that would carry the failure into AnA 17ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — the summary line stays honest when the read fails > renders no percentage at all over a FAILED portfolio read 71ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchB.test.tsx > Shadow review — an empty findings list is not a clean review > does not report a clean run when the run FAILED 103ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingPiZeroState.test.tsx > LabelingPi KPIs on a FAILED read > states no count at all, rather than zero 69ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingPiZeroState.test.tsx > LabelingPi KPIs on a FAILED read > never renders a bare 0 next to "Boxed warning proposed" when the read failed 20ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingPiZeroState.test.tsx > LabelingPi KPIs on a FAILED read > still surfaces the failure itself — the row going quiet is not the whole fix 28ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaTargetSize.test.ts > the visit-header rename and remove buttons (A-C-8) > are each at least 24 × 24px 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > sends the typed name and product, trimmed, exactly as the review showed them
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > with no product name, the review says the project name will be recorded as the product
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > never sends the filing type label as the name or the product
+ Test Files  1 failed | 486 passed (487)
+      Tests  3 failed | 5163 passed (5166)
+   Duration  1617.53s (transform 31.81s, setup 47.27s, import 194.54s, tests 979.07s, environment 294.89s)

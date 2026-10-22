@@ -1,0 +1,230 @@
+v22.23.3
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > does not acquire a connection when deterministic generation fails 4ms
+ × server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > propagates connection acquisition failure without a pool write 15ms
+   → promise resolved "{ plan: null, milestones: [], …(3) }" instead of rejecting
+ × server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > commits after its response reads and releases a healthy connection 4ms
+   → expected undefined to be 'BEGIN' // Object.is equality
+ × server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > rolls back a response-load failure and preserves the original error 3ms
+   → promise resolved "{ plan: null, milestones: [], …(3) }" instead of rejecting
+ × server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > evicts the connection if BEGIN cannot be confirmed 1ms
+   → promise resolved "{ plan: null, milestones: [], …(3) }" instead of rejecting
+ × server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > evicts on rollback failure without masking the write failure 1ms
+   → promise resolved "{ plan: null, milestones: [], …(3) }" instead of rejecting
+ × server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > rejects and evicts an uncertain COMMIT even if cleanup succeeds 1ms
+   → promise resolved "{ plan: null, milestones: [], …(3) }" instead of rejecting
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > propagates connection acquisition failure without a pool write
+AssertionError: promise resolved "{ plan: null, milestones: [], …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "goals": [],
++   "health": {
++     "assessedAt": "2026-10-17T23:39:24.216Z",
++     "atRisk": 0,
++     "completed": 0,
++     "milestones": [],
++     "onTrack": 0,
++     "overallStatus": "not_assessed",
++     "slipped": 0,
++     "summary": "No milestones are scheduled.",
++     "total": 0,
++     "undated": 0,
++   },
++   "milestones": [],
++   "plan": null,
++   "revisions": [],
+  }
+
+ ❯ server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts:45:49
+     43|     const failure = new Error('No connection available');
+     44|     H.connect.mockRejectedValue(failure);
+     45|     await expect(generateProjectSchedule(params)).rejects.toBe(failure…
+       |                                                 ^
+     46|     expect(H.query).not.toHaveBeenCalled();
+     47|     expect(H.release).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > commits after its response reads and releases a healthy connection
+AssertionError: expected undefined to be 'BEGIN' // Object.is equality
+
+- Expected:
+"BEGIN"
+
++ Received:
+undefined
+
+ ❯ server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts:53:24
+     51|     await generateProjectSchedule(params);
+     52|     const queries = H.clientQuery.mock.calls.map(([sql]) => String(sql…
+     53|     expect(queries[0]).toBe('BEGIN');
+       |                        ^
+     54|     expect(queries.at(-1)).toBe('COMMIT');
+     55|     expect(queries.slice(1, -1).some(sql => sql.includes('SELECT * FRO…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > rolls back a response-load failure and preserves the original error
+AssertionError: promise resolved "{ plan: null, milestones: [], …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "goals": [],
++   "health": {
++     "assessedAt": "2026-10-17T23:39:24.234Z",
++     "atRisk": 0,
++     "completed": 0,
++     "milestones": [],
++     "onTrack": 0,
++     "overallStatus": "not_assessed",
++     "slipped": 0,
++     "summary": "No milestones are scheduled.",
++     "total": 0,
++     "undated": 0,
++   },
++   "milestones": [],
++   "plan": null,
++   "revisions": [],
+  }
+
+ ❯ server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts:66:49
+     64|       return reply(sql);
+     65|     });
+     66|     await expect(generateProjectSchedule(params)).rejects.toBe(failure…
+       |                                                 ^
+     67|     expect(H.clientQuery).toHaveBeenCalledWith('ROLLBACK');
+     68|     expect(H.clientQuery).not.toHaveBeenCalledWith('COMMIT');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > evicts the connection if BEGIN cannot be confirmed
+AssertionError: promise resolved "{ plan: null, milestones: [], …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "goals": [],
++   "health": {
++     "assessedAt": "2026-10-17T23:39:24.236Z",
++     "atRisk": 0,
++     "completed": 0,
++     "milestones": [],
++     "onTrack": 0,
++     "overallStatus": "not_assessed",
++     "slipped": 0,
++     "summary": "No milestones are scheduled.",
++     "total": 0,
++     "undated": 0,
++   },
++   "milestones": [],
++   "plan": null,
++   "revisions": [],
+  }
+
+ ❯ server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts:78:49
+     76|       return reply(sql);
+     77|     });
+     78|     await expect(generateProjectSchedule(params)).rejects.toBe(failure…
+       |                                                 ^
+     79|     expect(H.release).toHaveBeenCalledExactlyOnceWith(true);
+     80|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > evicts on rollback failure without masking the write failure
+AssertionError: promise resolved "{ plan: null, milestones: [], …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "goals": [],
++   "health": {
++     "assessedAt": "2026-10-17T23:39:24.237Z",
++     "atRisk": 0,
++     "completed": 0,
++     "milestones": [],
++     "onTrack": 0,
++     "overallStatus": "not_assessed",
++     "slipped": 0,
++     "summary": "No milestones are scheduled.",
++     "total": 0,
++     "undated": 0,
++   },
++   "milestones": [],
++   "plan": null,
++   "revisions": [],
+  }
+
+ ❯ server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts:89:49
+     87|       return reply(sql);
+     88|     });
+     89|     await expect(generateProjectSchedule(params)).rejects.toBe(failure…
+       |                                                 ^
+     90|     expect(H.release).toHaveBeenCalledExactlyOnceWith(true);
+     91|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > rejects and evicts an uncertain COMMIT even if cleanup succeeds
+AssertionError: promise resolved "{ plan: null, milestones: [], …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "goals": [],
++   "health": {
++     "assessedAt": "2026-10-17T23:39:24.239Z",
++     "atRisk": 0,
++     "completed": 0,
++     "milestones": [],
++     "onTrack": 0,
++     "overallStatus": "not_assessed",
++     "slipped": 0,
++     "summary": "No milestones are scheduled.",
++     "total": 0,
++     "undated": 0,
++   },
++   "milestones": [],
++   "plan": null,
++   "revisions": [],
+  }
+
+ ❯ server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts:99:49
+     97|       return reply(sql);
+     98|     });
+     99|     await expect(generateProjectSchedule(params)).rejects.toBe(failure…
+       |                                                 ^
+    100|     expect(H.clientQuery).toHaveBeenCalledWith('ROLLBACK');
+    101|     expect(H.release).toHaveBeenCalledExactlyOnceWith(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 1 passed (7)
+   Start at  23:39:23
+   Duration  924ms (transform 200ms, setup 112ms, import 157ms, tests 35ms, environment 0ms)
+

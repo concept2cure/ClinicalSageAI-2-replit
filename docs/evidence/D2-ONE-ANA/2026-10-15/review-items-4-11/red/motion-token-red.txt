@@ -1,0 +1,27 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × tests/ui/motion-token.test.ts > the motion tokens > --ease is an ease-out with no overshoot 4ms
+   → expected 0.4 to be less than or equal to 0
+ ✓ tests/ui/motion-token.test.ts > the motion tokens > the default duration is 200ms 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/ui/motion-token.test.ts > the motion tokens > --ease is an ease-out with no overshoot
+AssertionError: expected 0.4 to be less than or equal to 0
+ ❯ tests/ui/motion-token.test.ts:24:16
+     22|     const [x1, y1, , y2] = m!.slice(1).map(Number);
+     23|     // Starts at or above the diagonal: it moves at once, then deceler…
+     24|     expect(x1).toBeLessThanOrEqual(y1);
+       |                ^
+     25|     // Arrives at rest, and never passes the target.
+     26|     expect(y2).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  03:55:10
+   Duration  386ms (transform 87ms, setup 98ms, import 10ms, tests 8ms, environment 0ms)
+

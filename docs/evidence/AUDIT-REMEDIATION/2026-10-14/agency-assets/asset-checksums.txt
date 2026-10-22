@@ -1,0 +1,3 @@
+eSTAR-510k-non-ivd.pdf: OK
+eSTAR-510k-ivd.pdf: OK
+PreSTAR-q-sub.pdf: OK

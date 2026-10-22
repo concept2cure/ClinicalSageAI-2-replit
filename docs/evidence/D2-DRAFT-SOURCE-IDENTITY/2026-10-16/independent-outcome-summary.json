@@ -1,0 +1,26 @@
+{
+  "final": {
+    "testsPassed": 70,
+    "testsFailed": 0,
+    "exitCode": 0,
+    "bindings": 14,
+    "sourceFreezeVerified": true
+  },
+  "counterfactual": {
+    "testsFailed": 6,
+    "positiveControlsPassed": 3,
+    "exitCode": 1,
+    "bindings": 17,
+    "sourceFreezeVerified": true
+  },
+  "sameSharedInputsAcrossRuns": true,
+  "finalBindingsStillMatch": true,
+  "runnerLint": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "scope": "Mocked catalog and authority seams; actual parser, verifier and producer. Counterfactual substitutes one app module plus byte-exact original test fixture. No production DB, provider or agency use.",
+  "canonicalMergeCheckpoint": "fa7ea5bc3598849ce59fe07c19d10fc79b204efc",
+  "recordedAt": "2026-10-17T22:25:46.750207+00:00",
+  "qualification": "Postmerge reruns; premerge transcripts and bindings preserved under finish-review-premerge-checkpoint"
+}

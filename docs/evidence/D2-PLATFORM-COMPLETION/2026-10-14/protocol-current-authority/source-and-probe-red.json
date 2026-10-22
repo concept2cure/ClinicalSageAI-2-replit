@@ -1,0 +1,131 @@
+{
+  "capturedAtUtc": "2026-10-14T06:19:26.728142+00:00",
+  "qualification": "Exact pre-repair source and executed-probe digests for genuine one-case red. Raw files remain private and unchanged; filed copies have only EOF normalization. This snapshot does not describe the repaired sources.",
+  "sources": [
+    {
+      "path": "server/services/part11/governed-signature-ceremony.ts",
+      "bytes": 13132,
+      "digestAlgorithm": "sha256",
+      "digest": "67f674b631e1411043303cc2d912af5a3f99288c3979d47e116fbfac59044e4e"
+    },
+    {
+      "path": "server/services/part11/signing-authority-gate.ts",
+      "bytes": 2920,
+      "digestAlgorithm": "sha256",
+      "digest": "7d3beea44d52e336ccc9e5b9ae9154c25fc46fa370655105b3ce64abd9fc818c"
+    },
+    {
+      "path": "server/services/part11/resolve-signer-role.ts",
+      "bytes": 1580,
+      "digestAlgorithm": "sha256",
+      "digest": "27add6805c8ba054280269c50957ea608ebdb3b5b65fbb65313def8cba25794b"
+    },
+    {
+      "path": "server/services/part11/signing-authority.ts",
+      "bytes": 1858,
+      "digestAlgorithm": "sha256",
+      "digest": "126acf712fdf68a55f57f1f9fe5a8418bd8c5015db32c838736f4ac43e7194fd"
+    },
+    {
+      "path": "server/services/protocol-development/protocol-development-service.ts",
+      "bytes": 29725,
+      "digestAlgorithm": "sha256",
+      "digest": "f949d70cd92c6878af3ee63de5aff88741c972598e82e9cdfe0712d20bf82313"
+    },
+    {
+      "path": "server/routes/protocol-development.ts",
+      "bytes": 31317,
+      "digestAlgorithm": "sha256",
+      "digest": "3ced310b3394a23bd49177939284fb89490d80341c192cd9ca7ddd58ac2b49b0"
+    },
+    {
+      "path": "server/services/part11/resolve-signer-identity.ts",
+      "bytes": 4925,
+      "digestAlgorithm": "sha256",
+      "digest": "de8774ee5bf459834d36c8b0d77289359725549a86b9956e710596255f101e37"
+    },
+    {
+      "path": "server/services/part11/signature-persistence.ts",
+      "bytes": 48363,
+      "digestAlgorithm": "sha256",
+      "digest": "e82d1454f80bf541fdb90a6dd1a215ef024cbe56de0f9e89e96f76698d90f5e2"
+    }
+  ],
+  "preparedTestArtifacts": [
+    {
+      "path": "/tmp/protocol-authority-after-parent.portable.dbtest.ts",
+      "bytes": 21609,
+      "digestAlgorithm": "sha256",
+      "digest": "7f0c041cceca89bbf16e4da64719536886471f095ec58c59dd3740dd973110bb"
+    },
+    {
+      "path": "/tmp/protocol-authority-after-parent.executed.dbtest.ts",
+      "bytes": 21986,
+      "digestAlgorithm": "sha256",
+      "digest": "af4e6d15c7bb562c522da6a7784a4cbfee372a51d7209965b6ba9c955fd4d72a"
+    },
+    {
+      "path": "/tmp/protocol-authority-after-parent.native.config.mjs",
+      "bytes": 676,
+      "digestAlgorithm": "sha256",
+      "digest": "0edffc798e30e1d873d1ef5020661a570ef0abc5ea1eb5b69c867dff456cee95"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "/tmp/protocol-authority-after-parent-red-native.txt",
+      "bytes": 7204,
+      "digestAlgorithm": "sha256",
+      "digest": "581370f078925251c7e2941dc46c0a534d2a9f02819b7db0da4f1505f70c8061"
+    },
+    {
+      "path": "/tmp/protocol-authority-after-parent-red-observations.json",
+      "bytes": 3213,
+      "digestAlgorithm": "sha256",
+      "digest": "5758b10dd9175b250115b1ba1c85500fbc9fb0563389fcb826cf7242faecf3ee"
+    },
+    {
+      "path": "/tmp/protocol-authority-after-parent-red-preservation.json",
+      "bytes": 912,
+      "digestAlgorithm": "sha256",
+      "digest": "39a818f0360ab5bffa5b74a25ba975114d5190756d64f7ab4bd161c8ef68311b"
+    },
+    {
+      "path": "/tmp/protocol-authority-retained-red-fixture.json",
+      "bytes": 288,
+      "digestAlgorithm": "sha256",
+      "digest": "486a062f2cdb9ff112bb74ee8b900d595a7bc5ada3c76290c52f222f5ecd7687"
+    },
+    {
+      "path": "/tmp/protocol-authority-retained-red-hash.py",
+      "bytes": 2416,
+      "digestAlgorithm": "sha256",
+      "digest": "9749085f2978e6fd10a9f7827af77acc4cee96d8fd1ca8ad0520d7ead3b19d16"
+    },
+    {
+      "path": "/tmp/run-protocol-authority-after-parent-red.py",
+      "bytes": 4972,
+      "digestAlgorithm": "sha256",
+      "digest": "3255bd23f00e26594897f5a71b2c8c6b18dac0218a2ef8eb62e8bf79fd5e0af2"
+    }
+  ],
+  "testResult": {
+    "filesFailed": 1,
+    "testsFailed": 1,
+    "testsSkipped": 0,
+    "durationSeconds": 5.74
+  },
+  "newRetainedRedState": {
+    "database": "platform_test",
+    "organizationId": 1179328,
+    "protocolId": 93,
+    "signatureId": 27,
+    "sha256": "05dcfc3d85cec6eb2e8a041faf7c3ce337dad065ec2bae81e450abb478c38e9a",
+    "sectionCount": 13,
+    "versionCount": 1,
+    "signatureCount": 1,
+    "lineageRows": 26,
+    "actionCount": 16,
+    "auditCount": 16
+  }
+}

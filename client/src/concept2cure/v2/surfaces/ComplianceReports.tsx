@@ -36,6 +36,7 @@ import {
 import { NotRecorded, ReportResult } from './ComplianceReportResult';
 import { VerifySavedReport } from './ComplianceReportsVerify';
 import { ReviewRecords } from './ComplianceReviewRecords';
+import { AuditAttestation } from './ComplianceAttestation';
 import '../styles/project-home-v2.css';
 
 const CATALOG_PATH = '/api/audit/reports';
@@ -103,7 +104,7 @@ type ReportRun = ReturnType<typeof useReportRun>;
 
 /* ── The surface ────────────────────────────────────────────────────────── */
 
-export function ComplianceReports(_props: SurfaceViewProps) {
+export function ComplianceReports({ onNav }: SurfaceViewProps) {
   const { st, load } = useCatalog();
   const run = useReportRun();
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -145,6 +146,7 @@ export function ComplianceReports(_props: SurfaceViewProps) {
           <h1 className="ph-title">Audit & compliance reports</h1>
           <div className="ph-sub">Deterministic reports drawn from the organisation's own records, sealed and recorded on the audit trail when run.</div>
         </div>
+        {onNav && <button type="button" className="btn ghost small" onClick={() => onNav('setup')}>Company letterhead &amp; legal documents</button>}
       </div>
       {st.state === 'loading' && <EmptyState busy icon={I.scroll} title="Loading the report catalog…" />}
       {st.state === 'error' && (
@@ -157,6 +159,11 @@ export function ComplianceReports(_props: SurfaceViewProps) {
         />
       )}
       {catalog && <ReviewRecords canRun={catalog.canRun} result={result} />}
+      {/* The eight reports above answer "what happened"; the attestation
+          answers "and can you prove the record of it is intact" — the question
+          an inspector asks first. GET /api/tenant-export/attestation had no
+          caller anywhere in the client (see ComplianceAttestation.tsx). */}
+      {catalog && <AuditAttestation canRun={catalog.canRun} />}
       <VerifySavedReport />
     </div>
   );

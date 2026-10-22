@@ -106,4 +106,3 @@ stderr | server/services/ana-ri/__tests__/response-register.test.ts
       Tests  58 passed (58)
    Start at  17:51:22
    Duration  5.23s (transform 3.37s, setup 151ms, import 5.00s, tests 60ms, environment 0ms)
-

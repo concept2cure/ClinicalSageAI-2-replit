@@ -1,0 +1,16 @@
+# mg-no-gap: --config vitest.config.ts client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx -t gap
+# exit 1
+ × client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > a gap in the mirror is said once, never in place of the rows 106ms
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §3.5, §3.6: what the mirror could not show > a missing seq is a gap 12ms
+   → expected [] to deeply equal [ Array(1) ]
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §3.5, §3.6: what the mirror could not show > a released run whose owner emitted more than was mirrored is a gap 2ms
+   → expected [] to deeply equal [ Array(1) ]
+ Test Files  2 failed (2)
+      Tests  3 failed | 26 skipped (29)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §3.5, §3.6: what the mirror could not show > a missing seq is a gap
+AssertionError: expected [] to deeply equal [ Array(1) ]
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §3.5, §3.6: what the mirror could not show > a released run whose owner emitted more than was mirrored is a gap
+AssertionError: expected [] to deeply equal [ Array(1) ]
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > a gap in the mirror is said once, never in place of the rows
+TestingLibraryElementError: Unable to find an element with the text: Some steps could not be shown live. The full list appears when the turn is recorded.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.

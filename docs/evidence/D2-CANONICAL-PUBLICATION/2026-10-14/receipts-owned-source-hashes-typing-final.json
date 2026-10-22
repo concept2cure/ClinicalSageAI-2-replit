@@ -1,0 +1,37 @@
+{
+  "scope": "Eight frozen receipt-owner application/test paths after optional query-parameter fixture correction; whole semantic publication gate remains root-owned.",
+  "files": [
+    {
+      "path": "server/services/ana/read-receipts.ts",
+      "sha256": "1a3d09867945190cbf212eb4de58ab5a93d0e73e9ade98f83389e3ffa6d5cb86"
+    },
+    {
+      "path": "server/services/ana/source-context-admission.ts",
+      "sha256": "9c0428730f9a57c05d6c2e2511e9fbb4b85a4893a081befebd6b09ca99e6680f"
+    },
+    {
+      "path": "server/services/ana/step-presentation.ts",
+      "sha256": "4cf884f74caf416bdee568ecbd10de52d67280c885d1b3198dd3fe2f4834c804"
+    },
+    {
+      "path": "server/services/ana/__tests__/step-document-titles.pglite.test.ts",
+      "sha256": "2e14ab418c858fde79dc4b582c42504042cd4fdde71ba4fdf23050bebd4b1393"
+    },
+    {
+      "path": "server/services/ana/__tests__/step-title-current-access.test.ts",
+      "sha256": "56cc650570ac9baa6a8196d73e9963904eedbff08f5171c32190b6349bc65433"
+    },
+    {
+      "path": "server/services/ana/__tests__/read-receipts.test.ts",
+      "sha256": "9862520d539b24a430846f2364a0289022650184718ad4d48e3f52993a44b429"
+    },
+    {
+      "path": "server/services/ana/__tests__/source-context-admission.pglite.test.ts",
+      "sha256": "d904522f43fb787b5b5ff7d467877bbc4dd87d57b20301f16cf878738a95eef2"
+    },
+    {
+      "path": "server/routes/ana-ri/__tests__/stream-step-presentation.test.ts",
+      "sha256": "4032b42dd78b953802055f99d65b88bcfdb6d502dd0ece458ee05638ad46c19e"
+    }
+  ]
+}

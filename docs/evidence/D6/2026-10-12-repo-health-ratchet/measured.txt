@@ -1,0 +1,39 @@
+MEASURED 2026-10-12T11:09:30Z
+
+$ git show HEAD:docs/reports/repo-health-scan-latest.json   (refreshed by the workflow at 10:17 UTC)
+   largeFilesByBytes: 57  largeFilesByLines: 114
+   generatedAt: 2026-10-12T10:17:57.235Z
+
+$ npm run audit:repo-health:no-regression   — green, with the tree 32 files above the strict ceiling
+- duplicate basenames: 217   [reported, not gated]
+- files over byte threshold: 57
+- files over line threshold: 114
+- baseline: docs/reports/repo-health-scan-latest.json
+- delta content-duplicate groups: 0
+- delta duplicate basenames: 0
+- delta files over byte threshold: 0
+- delta files over line threshold: 0
+
+$ npm run audit:repo-health:full-strict   — what the nightly job reports
+❌ repo health strict gate failed:
+
+   • 57 files exceed 100000 bytes, above the ceiling of 33. The ceiling in package.json moves DOWN only.
+
+   • 114 files exceed 1500 lines, above the ceiling of 82. The ceiling in package.json moves DOWN only.
+
+
+$ npm run audit:repo-health:ceiling   — the new gate, at the measured count
+- files over line threshold: 114
+
+✅ repo health strict gate passed.
+
+── MUTATION: one 1,600-line file added ─────────────────────────────────
+- files over line threshold: 115
+
+❌ repo health strict gate failed:
+
+   • 115 files exceed 1500 lines, above the ceiling of 114. The ceiling in package.json moves DOWN only.
+
+   (file removed → gate green again)
+
+$ time   -> 1.224s real (Node builtins, tracked files only)

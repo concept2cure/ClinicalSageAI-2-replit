@@ -78,7 +78,7 @@ describe('describeCatalogToggles', () => {
     expect(viaToggle).toContain('ON (feature toggle)');
   });
 
-  it('says passage search has no index when the catalog is on but chunking is not', () => {
+  it('says passages are searched by text, and nothing embedded, when the catalog is on but chunking is not', () => {
     // The half-on state is the confusing one: the tools work, and
     // search_document_passages truthfully finds nothing because nothing was
     // ever indexed. Saying so at boot is cheaper than diagnosing it later.
@@ -86,8 +86,9 @@ describe('describeCatalogToggles', () => {
       catalog: { enabled: true, source: 'toggle' },
       chunking: { enabled: false, source: 'off' },
     });
-    expect(out).toContain('passage search has no index');
-    expect(out).toContain('says so rather than returning nothing');
+    // Keyless passage search (2026-10-08): the index exists; chunking off means no embedding.
+    expect(out).toContain('searched by text');
+    expect(out).toContain('none is sent for embedding');
   });
 
   it('confirms the whole surface when both are on', () => {
@@ -157,4 +158,17 @@ describe('bootstrapDocumentCatalogToggles — a row it could not create is said,
     expect(said).toContain('permission denied for table feature_toggles');
   });
 });
-
+describe('bootstrapDocumentCatalogToggles — the catalog row is created on (S4, 2026-10-08)', () => {
+  /* Founder decision: the catalog is on by default, now that AnA's writes are
+     suggestions a person confirms. The per-upload embedding stays off. Only a
+     missing row takes the default; initializeFeatureToggle leaves an existing
+     row's state alone, so an operator's off stays off. */
+  it('creates ana.document_catalog ON and ana.vault_chunking OFF', async () => {
+    initializeFeatureToggle.mockReset().mockResolvedValue(undefined);
+    readFeatureState.mockResolvedValue({ enabled: true, readable: true });
+    await bootstrapDocumentCatalogToggles();
+    const byKey = new Map(initializeFeatureToggle.mock.calls.map((c) => [c[0], c[2]]));
+    expect(byKey.get(DOCUMENT_CATALOG_FEATURE_KEY)).toBe(true);
+    expect(byKey.get(VAULT_CHUNKING_FEATURE_KEY)).toBe(false);
+  });
+});

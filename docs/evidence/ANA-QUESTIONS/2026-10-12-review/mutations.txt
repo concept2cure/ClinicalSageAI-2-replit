@@ -1,0 +1,33 @@
+# 11 mutations, all red
+# driver: scratchpad/mutate19.py + mutate20.py (apply, run the named test, restore)
+
+RED       a branch onto its own node is taken, and the question repeats for ever
+          test: server/services/ana/intelligence-questions/__tests__/branch-reads-every-answer.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/branch-reads-every-answer.test.ts > a branch on what the programme already said it is > is refused where it targets its own node, because that can only loop 18ms
+RED       the self-branch is left in the flow
+          test: server/services/ana/intelligence-questions/__tests__/branch-and-check-loops.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/branch-and-check-loops.test.ts > a branch onto its own node > exists in no flow any more 43ms
+RED       an issue check reads only the answers to its own question
+          test: server/services/ana/intelligence-questions/__tests__/branch-and-check-loops.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/branch-and-check-loops.test.ts > an issue check that reads an earlier answer > fires — it is the one cross-node check in the repository, and it is critical 21ms
+RED       a programme with no clinical investigation is made to answer ten questions about one
+          test: server/services/ana/intelligence-questions/__tests__/branch-and-check-loops.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/branch-and-check-loops.test.ts > an issue check that reads an earlier answer > fires — it is the one cross-node check in the repository, and it is critical 12ms
+RED       the two De Novo conditions are cited to each other's subsection again
+          test: shared/regulatory/__tests__/predicate-positions.test.ts
+          first failures: × shared/regulatory/__tests__/predicate-positions.test.ts > the positions > names the two conditions a De Novo has, each to ITS OWN subsection 10ms
+RED       the De Novo entry is cited to the request's content rule
+          test: shared/regulatory/__tests__/predicate-positions.test.ts
+          first failures: × shared/regulatory/__tests__/predicate-positions.test.ts > the positions > names the two conditions a De Novo has, each to ITS OWN subsection 7ms
+RED       an MDR conformity route is called a filing to EMA
+          test: shared/regulatory/__tests__/pathway-availability.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-availability.test.ts > the agency the sponsor named > closes a filing to a regulator they did not name, and says how to open it 20ms
+RED       the device route question says these are EMA's routes
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > offers a project that named EMA the MDR conformity routes instead, not FDA’s marked 14ms
+RED       a multi-country DEVICE project never reaches the timeline question
+          test: server/services/ana/intelligence-questions/__tests__/branch-and-check-loops.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/branch-and-check-loops.test.ts > a multi-country device project > reaches the timeline question, which the region slice claimed and did not deliver 11ms
+RED       a multi-country MEDICINES project never reaches the timeline question
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the order the questions are asked in > still sends a medicines project straight on, and a multi-country one to its timeline 15ms

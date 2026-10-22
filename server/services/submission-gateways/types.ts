@@ -171,7 +171,10 @@ export interface SubmissionBundle {
      * gate must read its absence as "not itemised", never as "none missing".
      */
     missingStylesheets?: string[];
+    requiredStylesheets?: string[];
+    presentStylesheets?: string[];
     selfContained: boolean;
+    validation?: import('../../../shared/regulatory/ectd-dtd-validation').DtdValidationEvidence;
   };
   /**
    * Optional regional Module 1 backbone status: whether the region has its OWN
@@ -279,6 +282,14 @@ export interface GatewayTransmitRequest {
   submissionType?: string;
   /** Free-form metadata stored on the transmittal row. */
   metadata?: Record<string, unknown>;
+  /** Internal server binding; public transmit routes do not accept this field. */
+  dispatchBinding?: {
+    attemptId: string;
+    organizationId: number;
+    sequenceId: number;
+    signatureActionId: string;
+    bundleSha256: string;
+  };
   /**
    * The organisation's chosen account for this gateway and environment —
    * the platform's or its own (gateway-accounts.ts). Set by the guard in
@@ -342,7 +353,10 @@ export interface GatewayAcknowledgment {
   transmissionId: string;
   contentType: string;
   buffer: Buffer;
-  receivedAt: Date;
+  /** Actual recorded receipt time; null when unknown, never the download time. */
+  receivedAt: Date | null;
+  /** When this platform generated its own summary, separate from agency receipt. */
+  generatedAt?: Date;
   /**
    * Who authored these bytes.
    *
@@ -371,12 +385,6 @@ export interface SubmissionGateway {
    *  transmit / status / ack. The kit surfaces this as a "gateway
    *  not configured" state. */
   isConfigured(organizationId: number, environment: 'staging' | 'production'): Promise<boolean>;
-
-  /** True when the transport this deployment selects for `environment` has no
-   *  verified wire contract, so isConfigured answers false whatever
-   *  credentials resolve. Lets a caller say "transport not verified" rather
-   *  than "no credentials". 2026-10-08 (W5/D7, sweep HS-4). */
-  transportUnverified?(environment: 'staging' | 'production'): boolean;
 
   /** Transmit the bundle. Real wire-level activity happens here. */
   transmit(req: GatewayTransmitRequest): Promise<GatewayTransmitResult>;

@@ -1,0 +1,119 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × server/services/csr/__tests__/csr-latest-completed-generation.pglite.test.ts > CSR sources supplied to CTD summaries > uses one latest completed generation per study after tenant/project/status filtering, with deterministic ties 23ms
+   → expected [ { studyId: 'STUDY-A', …(7) }, …(3) ] to have a length of 2 but got 4
+ ✓ server/services/csr/__tests__/csr-latest-completed-generation.pglite.test.ts > CSR sources supplied to CTD summaries > retains all historical generations and their section records 11ms
+stderr | tests/routes/ectd-readiness-boundaries.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-readiness-boundaries.test.ts
+{
+  "timestamp": "2026-10-13T19:00:42.225Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × tests/routes/ectd-readiness-boundaries.test.ts > eCTD section boundaries and unavailable reads > does not count adjacent numeric section codes as the required node in readiness or validation 43ms
+   → expected { projectId: 42, …(14) } to match object { totalCompleted: +0, …(1) }
+(14 matching properties omitted from actual)
+ × tests/routes/ectd-readiness-boundaries.test.ts > eCTD section boundaries and unavailable reads > counts a true child using the same normalized CTD boundary rule as placed leaves 5ms
+   → expected { projectId: 42, …(14) } to match object { totalCompleted: 1, …(2) }
+(13 matching properties omitted from actual)
+ × tests/routes/ectd-readiness-boundaries.test.ts > eCTD section boundaries and unavailable reads > returns a contained error when the section store is unreadable instead of zero-percent readiness 8ms
+   → expected "vi.fn()" to be called with arguments: [ 500 ]
+
+Number of calls: 0
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/routes/ectd-readiness-boundaries.test.ts > eCTD section boundaries and unavailable reads > does not count adjacent numeric section codes as the required node in readiness or validation
+AssertionError: expected { projectId: 42, …(14) } to match object { totalCompleted: +0, …(1) }
+(14 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "contentComplete": false,
+-   "totalCompleted": 0,
++   "contentComplete": true,
++   "totalCompleted": 1,
+  }
+
+ ❯ tests/routes/ectd-readiness-boundaries.test.ts:33:42
+     31|     h.sections = [{ section_code: '3.2.S.30', module: 'm3', status: 'a…
+     32|     const status = await call();
+     33|     expect(status.json.mock.calls[0][0]).toMatchObject({ totalComplete…
+       |                                          ^
+     34|     const validation = await call('post');
+     35|     expect(validation.json.mock.calls[0][0].results).toContainEqual(ex…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/routes/ectd-readiness-boundaries.test.ts > eCTD section boundaries and unavailable reads > counts a true child using the same normalized CTD boundary rule as placed leaves
+AssertionError: expected { projectId: 42, …(14) } to match object { totalCompleted: 1, …(2) }
+(13 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "contentComplete": true,
++   "contentComplete": false,
+    "submissionReady": false,
+-   "totalCompleted": 1,
++   "totalCompleted": 0,
+  }
+
+ ❯ tests/routes/ectd-readiness-boundaries.test.ts:39:50
+     37|   it('counts a true child using the same normalized CTD boundary rule …
+     38|     h.sections = [{ section_code: 'm3.2.s.3.1', module: 'm3', status: …
+     39|     expect((await call()).json.mock.calls[0][0]).toMatchObject({ total…
+       |                                                  ^
+     40|   });
+     41|   it('returns a contained error when the section store is unreadable i…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/routes/ectd-readiness-boundaries.test.ts > eCTD section boundaries and unavailable reads > returns a contained error when the section store is unreadable instead of zero-percent readiness
+AssertionError: expected "vi.fn()" to be called with arguments: [ 500 ]
+
+Number of calls: 0
+
+ ❯ tests/routes/ectd-readiness-boundaries.test.ts:44:24
+     42|     h.failure = true;
+     43|     const res = await call();
+     44|     expect(res.status).toHaveBeenCalledWith(500);
+       |                        ^
+     45|     expect(res.json.mock.calls[0][0].error).toBe('INTERNAL_ERROR');
+     46|     expect(JSON.stringify(res.json.mock.calls)).not.toContain('SENTINE…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/csr/__tests__/csr-latest-completed-generation.pglite.test.ts > CSR sources supplied to CTD summaries > uses one latest completed generation per study after tenant/project/status filtering, with deterministic ties
+AssertionError: expected [ { studyId: 'STUDY-A', …(7) }, …(3) ] to have a length of 2 but got 4
+
+- Expected
++ Received
+
+- 2
++ 4
+
+ ❯ server/services/csr/__tests__/csr-latest-completed-generation.pglite.test.ts:32:20
+     30|   it('uses one latest completed generation per study after tenant/proj…
+     31|     const inputs = await loadCsrInputsForProject(7, 11);
+     32|     expect(inputs).toHaveLength(2);
+       |                    ^
+     33|     expect(inputs.find(s => s.studyId === 'STUDY-A')).toMatchObject({ …
+     34|     expect(inputs.find(s => s.studyId === 'STUDY-B')?.csrSections[0].c…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 1 passed (5)
+   Start at  19:00:16
+   Duration  36.10s (transform 12.94s, setup 718ms, import 20.56s, tests 13.35s, environment 0ms)

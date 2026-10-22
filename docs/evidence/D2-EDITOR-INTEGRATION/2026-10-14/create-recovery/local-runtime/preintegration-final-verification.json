@@ -1,0 +1,31 @@
+{
+  "automated": true,
+  "sourceFilesVerified": 20,
+  "differences": [],
+  "node": "v22.23.3",
+  "finalResult": "passed-local-manual-api-scope",
+  "requests": 115,
+  "documents": 11,
+  "seededSections": 714,
+  "jwtOrLocalCredentialUrlMatches": [],
+  "cleanup": {
+    "serverStopped": true,
+    "ownContainerAndAnonymousVolumeRemoved": true,
+    "temporaryWrapperRemoved": true,
+    "ownProjectBytesRemoved": true
+  },
+  "serverLogNormalization": [
+    {
+      "path": "initial-server.txt",
+      "onlyChange": "removed trailing horizontal whitespace at line ends",
+      "sha256": "6b3fb742270575a2e1e0373e2c28a257d67076bc9dbed460f2a17383e0c22a13"
+    },
+    {
+      "path": "final-node22/server.txt",
+      "onlyChange": "removed trailing horizontal whitespace at line ends",
+      "sha256": "cd1f433c4b1b41beb53c392dfc6f0086789959742688b890d785425063c09e36"
+    }
+  ],
+  "installerLogEofNormalization": "installer-log-eof-normalization.json",
+  "qualification": "Historical runtime result unchanged. The stored install-fresh log now has one final LF; its original operation receipt hash remains in final-node22/summary.json and the before/after copy hashes are mapped separately."
+}

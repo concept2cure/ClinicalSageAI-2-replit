@@ -46,6 +46,7 @@ import { findExportReceipt, type ExportReceipt } from '../tenant-export/tenant-f
 import { VAULT_DOCUMENT_TENANCY } from './vault-tenancy';
 import { getStorageProviderFor } from '../storage';
 import { recordPurge, type PurgeAuditContext } from './tenant-purge-audit';
+import { reserveSourceReadReceiptPurge } from './tenant-source-read-receipt-purge';
 
 const logger = createScopedLogger('tenant-offboarding');
 
@@ -446,8 +447,9 @@ async function purgeChildTable(
  * checks is still seen. A deployment without the vault schema has no hold
  * table, and so no holds; any other failure to read aborts the purge.
  */
-async function assertNoActiveLegalHold(client: PoolClient, organizationId: number): Promise<void> {
+async function assertNoActiveLegalHold(client: PoolClient, organizationId: number, strict = false): Promise<void> {
   const present = await client.query(`SELECT to_regclass('vault.legal_holds') IS NOT NULL AS present`);
+  if (strict) requireKnownHoldPresence(present.rows);
   if (!present.rows[0]?.present) return;
   const { rows } = await client.query(
     `SELECT count(*)::int AS active
@@ -455,7 +457,7 @@ async function assertNoActiveLegalHold(client: PoolClient, organizationId: numbe
       WHERE organization_id = $1 AND lifted_at IS NULL`,
     [organizationId]
   );
-  const active = rows[0]?.active ?? 0;
+  const active = strict ? confirmedActiveHoldCount(rows) : rows[0]?.active ?? 0;
   if (active > 0) {
     throw new OffboardingStateError(
       'LEGAL_HOLD_ACTIVE',
@@ -463,6 +465,77 @@ async function assertNoActiveLegalHold(client: PoolClient, organizationId: numbe
         'destroyed; lift each hold, with a reason, before purging.'
     );
   }
+}
+
+function assertPendingPurgeOrganization(organization: { status: string; purged_at: Date | null } | undefined): void {
+  if (!organization) throw new OffboardingStateError('TENANT_NOT_FOUND', 'Organization not found');
+  if (organization.status === 'purged' || organization.purged_at) {
+    throw new OffboardingStateError('TENANT_ALREADY_PURGED', 'This organization is already purged');
+  }
+  if (organization.status !== 'pending_deletion') {
+    throw new OffboardingStateError('TENANT_NOT_PENDING_DELETION', 'A tenant must remain scheduled for deletion before it can be purged');
+  }
+}
+
+/**
+ * These immutable stores contain regulated content, including signed prose and
+ * private frozen inputs. No reviewed erasure path exists yet. A populated
+ * tenant must remain pending deletion, with its export available, rather than
+ * receive a purge success while retaining content or failing midway on an FK.
+ *
+ * The organization lock conflicts with the stores' FK insertion locks. An
+ * insertion already in flight settles before these fresh reads; the lock stays
+ * on the same transaction through any permitted purge. New governed writes to
+ * pending-deletion organizations are refused by the lifecycle boundary.
+ */
+async function assertRegulatedContentDisposition(client: PoolClient, organizationId: number): Promise<void> {
+  const locked = await client.query<{ status: string; purged_at: Date | null }>(
+    'SELECT id, status, purged_at FROM organizations WHERE id = $1 FOR UPDATE',
+    [organizationId],
+  );
+  assertPendingPurgeOrganization(locked.rows[0]);
+
+  try {
+    const present = await client.query<{ qms_versions: boolean; frozen_inputs: boolean }>(
+      `SELECT to_regclass('public.qms_document_versions') IS NOT NULL AS qms_versions,
+              to_regclass('public.submission_orchestrator_inputs') IS NOT NULL AS frozen_inputs`,
+    );
+    if (present.rows[0]?.qms_versions !== true || present.rows[0]?.frozen_inputs !== true) {
+      throw new OffboardingStateError('REGULATED_RETENTION_CHECK_UNAVAILABLE', 'Regulated-content retention could not be verified. Restore the required stores before retrying. Nothing was purged.');
+    }
+    const retained = await client.query<{ qms_versions: boolean; frozen_inputs: boolean }>(
+      `SELECT EXISTS (SELECT 1 FROM public.qms_document_versions WHERE organization_id = $1) AS qms_versions,
+              EXISTS (SELECT 1 FROM public.submission_orchestrator_inputs WHERE organization_id = $1) AS frozen_inputs`,
+      [organizationId],
+    );
+    const content = retained.rows[0];
+    if (typeof content?.qms_versions !== 'boolean' || typeof content?.frozen_inputs !== 'boolean') {
+      throw new OffboardingStateError('REGULATED_RETENTION_CHECK_UNAVAILABLE', 'Regulated-content retention could not be verified. Retry after the retained stores can be read. Nothing was purged.');
+    }
+    if (content.qms_versions || content.frozen_inputs) {
+      throw new OffboardingStateError(
+        'REGULATED_CONTENT_RETENTION_REVIEW_REQUIRED',
+        'Controlled QMS versions or frozen submission inputs require governed retention review before physical erasure. This organization remains pending deletion and exportable. Nothing was purged.',
+      );
+    }
+  } catch (error) {
+    if (error instanceof OffboardingStateError) throw error;
+    logger.warn('Regulated retention preflight unavailable', { organizationId });
+    throw new OffboardingStateError('REGULATED_RETENTION_CHECK_UNAVAILABLE', 'Regulated-content retention could not be verified. Retry after the retained stores can be read. Nothing was purged.');
+  }
+}
+
+function requireKnownHoldPresence(rows: any[]): void {
+  if (rows.length !== 1 || rows[0]?.present !== true) {
+    throw new OffboardingStateError('SOURCE_READ_RECEIPT_PURGE_UNAVAILABLE', 'The legal-hold state could not be verified. Nothing was purged.');
+  }
+}
+
+function confirmedActiveHoldCount(rows: any[]): number {
+  if (rows.length !== 1 || typeof rows[0]?.active !== 'number' || !Number.isSafeInteger(rows[0].active) || rows[0].active < 0) {
+    throw new OffboardingStateError('SOURCE_READ_RECEIPT_PURGE_UNAVAILABLE', 'The active legal-hold count could not be verified. Nothing was purged.');
+  }
+  return rows[0].active;
 }
 
 /** What the purge did to the vault's stored bytes, which live outside the database. */
@@ -534,6 +607,14 @@ export interface TurnRecordErasure {
   blobs: number;
 }
 
+/** What the purge erased of the tenant's live AnA run-event mirror (public.ana_run_events). */
+export interface RunEventErasure {
+  events: number;
+}
+
+/** Tenant-owned exact-source host-admission metadata erased through its door. */
+export interface SourceReadReceiptErasure { receipts: number; }
+
 /** What the purge erased of the tenant's artifact signatures and lock snapshots. */
 export interface ArtifactRecordErasure {
   signatures: number;
@@ -557,17 +638,35 @@ export interface ArtifactRecordErasure {
  *     (migrations/20260929_concept2cure_signatures_append_only.sql, amended
  *     2026-10-01). It runs before `projects`, whose cascade to the artifacts
  *     those triggers refuse.
+ *   - The live mirror of AnA turns: public.purge_tenant_run_events, as
+ *     ana_run_events_purger (migrations/20261008f_ana_run_events.sql, AnA
+ *     detach DT1). It runs before `ana_runs`, which its rows reference. Working
+ *     data, not a record; the sealed turn record is erased by the first door.
  *
  * A deployment without a door's tables has nothing to erase. One with the
  * tables but not the door is refused: their records would survive.
  */
 export const PURGE_DOORS = Object.freeze([
   {
+    tables: ['ana_source_read_receipts'],
+    fn: 'purge_tenant_source_read_receipts',
+    columns: ['receipts'],
+    erasure: 'sourceReadReceiptErasure',
+    unavailable: 'SOURCE_READ_RECEIPT_PURGE_UNAVAILABLE',
+  },
+  {
     tables: ['ana_turn_records', 'ana_record_blobs'],
     fn: 'purge_tenant_turn_records',
     columns: ['records', 'blobs'],
     erasure: 'turnRecordErasure',
     unavailable: 'TURN_RECORD_PURGE_UNAVAILABLE',
+  },
+  {
+    tables: ['ana_run_events'],
+    fn: 'purge_tenant_run_events',
+    columns: ['events'],
+    erasure: 'runEventErasure',
+    unavailable: 'RUN_EVENT_PURGE_UNAVAILABLE',
   },
   {
     tables: ['concept2cure_signatures', 'concept2cure_submission_snapshots'],
@@ -580,13 +679,16 @@ export const PURGE_DOORS = Object.freeze([
 type PurgeDoor = (typeof PURGE_DOORS)[number];
 
 /** Erase a door's tables for the tenant; the counts it returns, by column. */
-async function eraseThroughDoor(client: PoolClient, door: PurgeDoor, organizationId: number): Promise<Record<string, number>> {
-  const zero = Object.fromEntries(door.columns.map((c) => [c, 0]));
+async function eraseThroughDoor(client: PoolClient, door: PurgeDoor, organizationId: number): Promise<Record<string, number> | null> {
   const present = await client.query(
     'SELECT to_regclass($1) IS NOT NULL AS present, to_regprocedure($2) IS NOT NULL AS door',
     [`public.${door.tables[0]}`, `public.${door.fn}(integer)`]
   );
-  if (!present.rows[0]?.present) return zero;
+  const strict = door.fn === 'purge_tenant_source_read_receipts';
+  if (strict && (present.rows.length !== 1 || typeof present.rows[0].present !== 'boolean' || typeof present.rows[0].door !== 'boolean')) {
+    throw new OffboardingStateError(door.unavailable, 'The source receipt purge schema could not be verified. Nothing was purged.');
+  }
+  if (!present.rows[0]?.present) return strict ? null : Object.fromEntries(door.columns.map((c) => [c, 0]));
   if (!present.rows[0]?.door) {
     throw new OffboardingStateError(
       door.unavailable,
@@ -595,7 +697,15 @@ async function eraseThroughDoor(client: PoolClient, door: PurgeDoor, organizatio
   }
   // Identifiers from the frozen list above, never from input.
   const { rows } = await client.query(`SELECT ${door.columns.join(', ')} FROM public.${door.fn}($1)`, [organizationId]);
+  if (strict && (rows.length !== 1 || !confirmedDoorCount(rows[0]?.receipts))) {
+    throw new OffboardingStateError('SOURCE_READ_RECEIPT_PURGE_UNCONFIRMED', 'Source receipt erasure could not be confirmed. Nothing was purged.');
+  }
   return Object.fromEntries(door.columns.map((c) => [c, Number(rows[0]?.[c] ?? 0)]));
+}
+
+function confirmedDoorCount(value: unknown): boolean {
+  return (typeof value === 'number' || (typeof value === 'string' && /^\d+$/.test(value)))
+    && Number.isSafeInteger(Number(value)) && Number(value) >= 0;
 }
 
 /**
@@ -625,8 +735,10 @@ interface PurgeTally {
   tablesAbsent: string[];
   /** The deleted vault versions' stored bytes, erased after COMMIT. */
   storedObjects: StoredObject[];
-  /** What each door erased (PURGE_DOORS): AnA turn records; artifact signatures and lock snapshots. */
+  /** What each door erased (PURGE_DOORS): AnA turn records; the run-event mirror; artifact signatures and lock snapshots. */
   turnRecordErasure: TurnRecordErasure;
+  runEventErasure: RunEventErasure;
+  sourceReadReceiptErasure: SourceReadReceiptErasure;
   artifactRecordErasure: ArtifactRecordErasure;
 }
 
@@ -641,6 +753,8 @@ async function deleteTenantRows(
     tablesAbsent: [],
     storedObjects: [],
     turnRecordErasure: { records: 0, blobs: 0 },
+    runEventErasure: { events: 0 },
+    sourceReadReceiptErasure: { receipts: 0 },
     artifactRecordErasure: { signatures: 0, snapshots: 0 },
   };
   const opened = new Set<string>();
@@ -652,6 +766,10 @@ async function deleteTenantRows(
       if (!opened.has(door.fn)) {
         opened.add(door.fn);
         const counts = await eraseThroughDoor(client, door, organizationId);
+        if (counts === null) {
+          tally.tablesAbsent.push(...door.tables);
+          continue;
+        }
         Object.assign(tally, { [door.erasure]: counts });
         door.tables.forEach((t, k) => {
           tally.deletedRows[t] = counts[door.columns[k]] ?? 0;
@@ -684,9 +802,10 @@ async function markPurged(
   client: PoolClient,
   organizationId: number,
   purgedByUserId: number,
-  digest: string
+  digest: string,
+  confirmStatus = false
 ): Promise<Date | null> {
-  const { rows } = await client.query(
+  const { rows, rowCount } = await client.query(
     `UPDATE organizations
         SET status                 = 'purged',
             purged_at              = NOW(),
@@ -702,7 +821,18 @@ async function markPurged(
       RETURNING purged_at`,
     [organizationId, purgedByUserId, digest]
   );
+  if (confirmStatus) return confirmedPurgedStatus(rows, rowCount);
   return rows[0]?.purged_at ?? null;
+}
+
+function confirmedPurgedStatus(rows: any[], rowCount: number | null): Date {
+  const value = rows[0]?.purged_at;
+  const isTimestamp = value instanceof Date || typeof value === 'string';
+  const instant = isTimestamp ? new Date(value).getTime() : Number.NaN;
+  if (rowCount !== 1 || rows.length !== 1 || !Number.isFinite(instant)) {
+    throw new OffboardingStateError('SOURCE_READ_RECEIPT_PURGE_STATUS_UNCONFIRMED', 'Tenant purge status persistence could not be confirmed. Nothing was purged.');
+  }
+  return new Date(instant);
 }
 
 function isDocumentDispositionRetentionConflict(error: unknown): boolean {
@@ -737,9 +867,13 @@ async function purgeInOneTransaction(
   try {
     await client.query('BEGIN');
     try {
-      await assertNoActiveLegalHold(client, organizationId);
+      const receiptPurgeReserved = await reserveSourceReadReceiptPurge(client, {
+        organizationId, childTables: input.childTables, receipt: input.receipt, preconditions: input.preconditions,
+      });
+      await assertRegulatedContentDisposition(client, organizationId);
+      await assertNoActiveLegalHold(client, organizationId, receiptPurgeReserved);
       const tally = await deleteTenantRows(client, organizationId, input.childTables);
-      const purgedAt = await markPurged(client, organizationId, input.purgedByUserId, input.receipt.digest);
+      const purgedAt = await markPurged(client, organizationId, input.purgedByUserId, input.receipt.digest, receiptPurgeReserved);
       await recordPurge(client, {
         existing: input.existing,
         receipt: input.receipt,
@@ -777,6 +911,7 @@ async function purgeInOneTransaction(
  *   3. `purge_eligible_at` has passed, OR an explicit override reason is given;
  *   4. a final export digest is supplied and matches this tenant's receipt;
  *   5. no legal hold on the tenant is active.
+ *   6. no controlled QMS versions or frozen submission inputs await retention review.
  *
  * The organization ROW SURVIVES, in status `purged`, carrying the offboarding
  * evidence — who requested it, when, why, which export was handed over, who
@@ -802,6 +937,8 @@ export async function purgeTenant(
     storageErasure: StorageErasure;
     deletedRows: Record<string, number>;
     turnRecordErasure: TurnRecordErasure;
+    runEventErasure: RunEventErasure;
+    sourceReadReceiptErasure: SourceReadReceiptErasure;
     artifactRecordErasure: ArtifactRecordErasure;
   }
 > {
@@ -838,6 +975,8 @@ export async function purgeTenant(
     finalExportDigest: receipt.digest,
     deletedRows: tally.deletedRows,
     turnRecordErasure: tally.turnRecordErasure,
+    runEventErasure: tally.runEventErasure,
+    sourceReadReceiptErasure: tally.sourceReadReceiptErasure,
     artifactRecordErasure: tally.artifactRecordErasure,
   });
 
@@ -849,19 +988,24 @@ export async function purgeTenant(
     storageErasure,
     deletedRows: tally.deletedRows,
     turnRecordErasure: tally.turnRecordErasure,
+    runEventErasure: tally.runEventErasure,
+    sourceReadReceiptErasure: tally.sourceReadReceiptErasure,
     artifactRecordErasure: tally.artifactRecordErasure,
   };
 }
 
-/** Immutable evidence of an attributed disposition, retained with its audit trail.
- * POLICY-DR-007 section 1 keeps audit trails at least as long as their records.
- * These receipts contain hashes, linked IDs, decisions and chained audit evidence;
- * they are not the original file or extracted content. No tenant purge may erase
- * them, including through an injected or accidentally expanded table list.
+/** Exact records that the generic tenant purge cannot erase.
+ * Disposition receipts contain hashes and audit evidence, retained under
+ * POLICY-DR-007 section 1. Controlled QMS versions and frozen submission inputs
+ * contain actual regulated content; their erasure needs governed review and an
+ * approved disposition path. Nonempty content stores block purge completion.
+ * No injected or accidentally expanded table list may bypass either policy.
  * The coverage gate reads this same literal policy; keep it JSON-shaped.
  */
 export const PURGE_RETAINED_RECORDS: Readonly<Record<string, string>> = Object.freeze({
   "document_data_dispositions": "Immutable attributed disposition receipts retained with the audit trail under POLICY-DR-007 section 1; UPDATE, DELETE and TRUNCATE are refused by the 20261006 migration.",
+  "qms_document_versions": "Immutable controlled-document snapshots contain signed prose or legacy registry content. Physical erasure requires governed retention review; a populated tenant is refused before any purge write.",
+  "submission_orchestrator_inputs": "Private immutable input snapshots and suspended outputs contain frozen submission and clinical content. Physical erasure requires governed retention review; a populated tenant is refused before any purge write.",
 });
 
 function assertNoRetainedRecords(tables: readonly string[]): void {
@@ -884,6 +1028,16 @@ function assertNoRetainedRecords(tables: readonly string[]): void {
  * billing records are needed for revenue recognition after the account closes.
  */
 export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
+  // Immutable customer admission metadata, erased through its narrow door
+  // before the actor/programme/source parents. Its audit/export history stays.
+  'ana_source_read_receipts',
+  // Per-member read/archive state is ordinary customer data. Its notice parent
+  // has a restrictive FK, so erase these children before the shared notices.
+  'mdx_notification_receipts',
+  'mdx_notifications',
+  // The deployed feedback store holds tenant-owned ratings and comments;
+  // canonical audit receipts remain in the retained audit trail.
+  'ai_feedback',
   // Access requests contain the member's free-text business justification and
   // the administrator's decision reason. The canonical audit event survives;
   // this tenant-owned working record does not.
@@ -891,6 +1045,11 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
   // A tenant's AnA run-control records: the pauses, steers and stops their
   // people issued mid-turn. Tenant-owned working data, not the audit trail —
   // the Part 11 rows for those actions live elsewhere and outlive the account.
+  //
+  // Its live timeline mirror first, through its PURGE_DOORS entry (AnA detach
+  // DT1): the rows reference ana_runs, and the table refuses a plain DELETE
+  // from every role, so purgeChildTable could not erase them.
+  'ana_run_events',
   'ana_runs',
   // CMC/project workflow payloads are customer plans and assignments. Delete
   // them before their project parents; workflow_tasks cascade where the
@@ -905,6 +1064,21 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      Each signing's chained ledger row is its audit-trail record and stays. */
   'concept2cure_signatures',
   'concept2cure_submission_snapshots',
+  /* Answers to agency letters and the commitments made in them (2026-10-18,
+     migrations/20261018b_agency_response_questions.sql), BEFORE `projects`:
+     each names its project with no cascade, and a commitment names the
+     question it came from. Milestones before their commitment; commitments
+     before the questions they cite; the questions then take their response
+     history with them (ON DELETE CASCADE, run as the owner through the
+     append-only ceiling). A response's signatures and ledger rows are the audit
+     trail and stay. Since 2026-10-19 a fulfilled commitment also names the
+     sequence and the Vault version that met it (NO ACTION keys,
+     migrations/20261019_commitment_fulfilment_evidence.sql), so it goes before
+     vault.documents below too; sequences are not purged. Its fulfilment
+     signature stays with the others. */
+  'commitment_milestones',
+  'regulatory_commitments',
+  'agency_communication_questions',
   /* `projects` BEFORE `client_workspaces` (fixed 2026-10-01): a project
      references its workspace with no cascade, so deleting the workspaces first
      failed with 23503 for every tenant that had a project, which is every real
@@ -929,6 +1103,14 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      rendered_leaf_files holds version ids with no recorded provider. */
   'vault.document_chunks',
   'vault.documents',
+  /* One row per deterministic engine run whose figure a tenant's document or
+     report cites: its inputs, its outputs and their hashes
+     (migrations/20261008f_stats_computation_runs.sql). Customer content — the
+     inputs are the tenant's own study and program data. Its organization_id FK
+     carries no CASCADE, and its program and study FKs are ON DELETE SET NULL,
+     so nothing erased it: a purged tenant kept every run here. Before
+     regulatory_programs and cdisc_prm_studies, the two it references. */
+  'stats_computation_runs',
   'regulatory_programs',
   'file_uploads',
   // Digital-twin simulations. Customer content: each row stores the tenant's
@@ -1061,12 +1243,15 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
        sign-in audit rows are kept elsewhere; the estate's organisation-0 rows
        are not this tenant's and are not touched.
      - coordination_leases (20261001f): the per-organisation lock and
-       concurrency leases of AnA governed actions. Operational.
-     - relation_extraction_log (0006_regulatory_atoms): what relation
-       extraction found in the tenant's documents. Its FK to organizations is
-       RESTRICT, which a purge never trips because it updates that row. */
+       concurrency leases of AnA governed actions. Operational. */
   'organization_gateway_accounts',
   'session_activity',
   'coordination_leases',
-  'relation_extraction_log',
+  /* citation_chains: which of the tenant's documents cite which. It became
+     org-keyed in 15af6bc4 (20260813_knowledge_graph_tenant_keys.sql, amended
+     2026-10-12), and ci:purge-coverage then failed every Blank DB run: an
+     erased tenant kept its citation rows. No foreign key, so a leaf. Rows the
+     backfill could not attribute stay NULL and belong to no tenant, so a purge
+     does not touch them (2026-10-13). */
+  'citation_chains',
 ]);

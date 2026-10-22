@@ -1,0 +1,9 @@
+# mutation: no-process-heartbeat
+# test: server/services/ana/__tests__/run-events.pglite.test.ts -t "7. the heartbeat"
+ × server/services/ana/__tests__/run-events.pglite.test.ts > 7. the heartbeat needs no socket > heartbeat_at advances one interval after the run opened, with no request in sight 129ms
+   → expected false to be true // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/run-events.pglite.test.ts > 7. the heartbeat needs no socket > heartbeat_at advances one interval after the run opened, with no request in sight
+AssertionError: expected false to be true // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 skipped (16)

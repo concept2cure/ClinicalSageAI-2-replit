@@ -2,7 +2,6 @@ import { db } from '../db';
 import { fda510kDocuments, fda510kStageProgress, fda510kProjects } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 import { smartFieldLinking } from './SmartFieldLinking.js';
-import CrossReferenceMapper from './CrossReferenceMapping.js';
 
 interface AssemblySection {
   id: string;
@@ -61,11 +60,10 @@ export class ProjectAccessError extends Error {
 }
 
 export class DynamicContentAssembly {
-  private crossReferenceMapper: CrossReferenceMapper;
+  // 2026-10-15: held a CrossReferenceMapper it never called (CrossReferenceMapping.ts, deleted).
   private conditionalRules: Map<string, ConditionalRule[]> = new Map();
-  
+
   constructor() {
-    this.crossReferenceMapper = new CrossReferenceMapper();
     this.initializeConditionalRules();
   }
   
@@ -267,7 +265,6 @@ export class DynamicContentAssembly {
     let totalFields = 0;
     
     // Get field mappings for this section
-    // Since CrossReferenceMapper doesn't have getFieldMappingsForSection, we'll use a simple mapping
     const fieldMappings = this.getFieldMappingsForSection(section.id);
     
     // Replace placeholders with actual data

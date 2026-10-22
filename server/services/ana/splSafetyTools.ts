@@ -31,6 +31,19 @@ export const GENERATE_SPL_XML: AnaTool = {
         type: 'string',
         description: 'National Drug Code (NDC) in 10-digit format (optional).',
       },
+      // 2026-10-15: neither was declared, so every SPL AnA built carried version 1
+      // and the generation date — the generator's stand-ins, named in its `warnings`.
+      version: {
+        type: 'integer',
+        minimum: 1,
+        description:
+          'Version of this labeling under its setId; FDA expects it to advance with each new version of the same label. State it when known — if omitted the SPL carries 1 and the result warns.',
+      },
+      effectiveDate: {
+        type: 'string',
+        description:
+          "The labeling's effective date, YYYY-MM-DD. State it when known — if omitted the SPL carries the generation date and the result warns.",
+      },
       activeIngredients: {
         type: 'array',
         description: 'List of active ingredients with name and optional strength.',

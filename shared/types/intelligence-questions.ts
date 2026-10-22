@@ -25,13 +25,129 @@ export type QuestionFieldType =
   | 'country_select'
   | 'agency_select';
 
+/**
+ * Whether a position is one this programme can actually take, judged against
+ * the answers the programme itself has given (founder's decision, 2026-10-12).
+ *
+ * A regulated platform must not quietly drop a position a sponsor may have
+ * reasons to want: an absent option is a question lying by omission, and this
+ * engine has already been bitten once by hidden options — a wrong client
+ * segment silently removed whole interviews. Nor may it offer a position the
+ * sponsor's own answers contradict as though it were neutral; that invites a
+ * filing on a basis they cannot support.
+ *
+ * So every position stays selectable and the contradicted ones are MARKED:
+ *   'available'     nothing in the answers speaks against it (the default,
+ *                   and what an unknown fact means — not knowing is not a
+ *                   contradiction);
+ *   'needs_basis'   it remains open, but only with a justification the
+ *                   answers do not yet contain;
+ *   'inapplicable'  the answers contradict it outright.
+ *
+ * Marking, not hiding: the person keeps the choice, and taking a marked
+ * position is recorded on the interview's issue trail.
+ */
+export type PositionAvailability = 'available' | 'needs_basis' | 'inapplicable';
+
+/**
+ * Why a position is marked. Written in a governed catalogue, never by a
+ * model, and never without the authority that makes the contradiction one.
+ */
+export interface PositionCaution {
+  availability: Exclude<PositionAvailability, 'available'>;
+  /** The contradiction, naming the answer that creates it. One or two sentences. */
+  reason: string;
+  /** The part, section or annex the contradiction comes from. */
+  authority: string;
+  /**
+   * Which governed rule produced this, named rather than numbered. It goes on
+   * the record with the choice, so a reviewer can see what judged it — and a
+   * gate holds that every rule can actually fire, which a per-position check
+   * cannot: a new rule whose positions another rule already marks would
+   * otherwise pass without ever running.
+   */
+  ruleId: string;
+}
+
 export interface QuestionOption {
   value: string;
   label: string;
   description?: string;
   /** When true, selecting this option triggers an issue flag. */
   flagsIssue?: boolean;
+  /**
+   * What taking this position commits the programme to, in one line — the
+   * consequence, not a restatement of the label. A person choosing between
+   * 505(b)(1) and 505(b)(2), or between a 510(k) and a De Novo, is choosing
+   * what evidence they will owe and whose data they may rely on; the option
+   * should say that much before they pick it.
+   */
+  commits?: string;
+  /**
+   * What makes this a real position: the part, annex or guideline it comes
+   * from (e.g. '21 CFR 314.54', 'ICH M4Q', 'MDR Annex IX'). Never a model's
+   * paraphrase — these are written in the flow or the governed catalogue.
+   */
+  authority?: string;
+  /**
+   * Set where the programme's own answers speak against this position. The
+   * option is still offered — see {@link PositionAvailability} for why — and
+   * the engine records the choice of a cautioned position on the issue trail.
+   */
+  caution?: PositionCaution;
 }
+
+/**
+ * The value a field carries when the person took a position the list did not
+ * offer. No listed option may use it; an invariant test over every flow holds
+ * that. Their words travel beside it, under {@link otherFieldId}.
+ */
+export const OTHER_POSITION = '__other__';
+
+/** Where the person's own words for `fieldId` are carried in an answer. */
+export function otherFieldId(fieldId: string): string {
+  return `${fieldId}__other`;
+}
+
+/** The most AnA will take as a position written in the person's own words. */
+export const OWN_POSITION_MAX_CHARS = 2_000;
+
+/**
+ * A question's list is rarely the whole world. Where a field declares this,
+ * the person may take a position of their own and write it down, and AnA
+ * records it as their wording rather than as one of the positions she offered
+ * (founder's directive, 2026-10-12).
+ *
+ * Absent, the list is closed: an unlisted answer is refused, and the refusal
+ * says the list is closed rather than calling the person's answer invalid.
+ */
+export interface OwnPositionAllowed {
+  /** The label on the escape hatch. Default: 'Something else'. */
+  label?: string;
+  /** What AnA needs in their own words. Shown beside the box, and in the refusal when it is empty. */
+  prompt?: string;
+  /** Whether words are required when this is chosen. Default true: an unexplained 'other' is not an answer. */
+  required?: boolean;
+}
+
+/**
+ * A governed catalogue a question's positions come from, resolved as the
+ * question is drawn rather than written into the flow.
+ *
+ * Some positions depend on an answer the person has already given: which
+ * routes to market exist depends on the regulator they named, and no static
+ * list in a flow file can know it. A field names the catalogue; the engine
+ * resolves it for the facts the interview holds, and the SAME resolution is
+ * what the validator judges the answer against — a question that offers
+ * positions the validator does not enforce is not a closed list at all.
+ */
+export type GovernedOptionSource =
+  /** The routes to market for a device or diagnostics programme, by region. */
+  | 'device_pathway_positions'
+  /** The routes a medicine may take, by region and by the modality's own frame. */
+  | 'medicine_pathway_positions'
+  /** The IVDR risk classes, each stating the Article 48 route that follows from it. */
+  | 'ivdr_class_positions';
 
 export interface QuestionField {
   id: string;
@@ -41,11 +157,21 @@ export interface QuestionField {
   helpText?: string;
   required?: boolean;
   options?: QuestionOption[];
+  /**
+   * The governed catalogue these positions come from, resolved per draw from
+   * the answers already given (see {@link GovernedOptionSource}). A field that
+   * declares it carries no static list: the resolver is the only source, and
+   * where the catalogue holds nothing for this programme the field says so
+   * rather than drawing an empty select.
+   */
+  optionsFrom?: GovernedOptionSource;
+  /** The person may take a position this list does not offer (see OwnPositionAllowed). */
+  allowOther?: OwnPositionAllowed;
   validation?: FieldValidation;
   /** Default value pre-filled from project context or prior answers. */
   defaultValue?: string | string[] | number | boolean;
   /** Condition that must be met for this field to be visible. */
-  visibleWhen?: FieldPredicate;
+  visibleWhen?: QuestionPredicate;
 }
 
 export interface FieldValidation {
@@ -64,6 +190,30 @@ export interface FieldPredicate {
   operator: 'eq' | 'neq' | 'in' | 'not_in' | 'gt' | 'lt' | 'contains' | 'exists';
   value: string | string[] | number | boolean;
 }
+
+/**
+ * Several predicates taken together — `anyOf` satisfied by one of them,
+ * `allOf` by every one.
+ *
+ * One field and one operator could not express a gate that two answers decide,
+ * and the notified-body question is one: it belongs to a device programme that
+ * stated an MDR class other than "no EU filing planned", AND to a diagnostics
+ * programme that stated an IVDR class — whose MDR question is hidden, so its
+ * answer is absent and `neq 'na'` read TRUE for every one of them. Writing the
+ * gate as one predicate meant either asking a US-only programme who its
+ * notified body is, or never asking a diagnostics programme at all (2026-10-12
+ * review, deferred there with that reason).
+ *
+ * A group with neither key, or an empty one, is NOT satisfied: a gate nobody
+ * wrote must not read as open.
+ */
+export interface PredicateGroup {
+  anyOf?: QuestionPredicate[];
+  allOf?: QuestionPredicate[];
+}
+
+/** A field's own predicate, or several taken together. */
+export type QuestionPredicate = FieldPredicate | PredicateGroup;
 
 export interface BranchRule {
   when: FieldPredicate;
@@ -144,7 +294,14 @@ export interface FlowDefinition {
   name: string;
   description: string;
   /** Which client types this flow applies to. Empty = all. */
-  clientTypes: Array<'pharma' | 'biotech' | 'medtech'>;
+  /**
+   * Who the flow is for. 'ivd' is its own value: a diagnostics programme files
+   * 510(k)s and PMAs like a device but classifies and performs like an assay,
+   * and before this it had no value at all — so it was coerced to 'pharma' and
+   * the device flows became unavailable to it (founder's directive, 2026-10-12).
+   * An empty array means no restriction.
+   */
+  clientTypes: Array<'pharma' | 'biotech' | 'medtech' | 'ivd'>;
   /** Starting node id. */
   entryNode: string;
   /** All question nodes in this flow. */
@@ -171,6 +328,14 @@ export interface FlowState {
   currentNodeId: string;
   /** All collected answers keyed by nodeId → { fieldId: value }. */
   answers: Record<string, Record<string, unknown>>;
+  /**
+   * Positions the person wrote themselves, keyed nodeId → fieldId → their
+   * words. Kept apart from `answers` on purpose: a consumer reading `answers`
+   * sees OTHER_POSITION and cannot mistake their wording for a position AnA
+   * offered, and a document built from this interview can say which answers
+   * were the person's own.
+   */
+  ownWords?: Record<string, Record<string, string>>;
   /** Node ids that have been completed. */
   completedNodes: string[];
   /** Issues detected so far. */
@@ -218,6 +383,8 @@ export interface IntelligenceFlowCompleteEvent {
   flowCategory: FlowCategory;
   /** All collected answers. */
   answers: Record<string, Record<string, unknown>>;
+  /** Positions the person wrote themselves (FlowState.ownWords). */
+  ownWords?: Record<string, Record<string, string>>;
   /** All issues detected. */
   issues: DetectedIssue[];
   /** Summary of what was collected. */

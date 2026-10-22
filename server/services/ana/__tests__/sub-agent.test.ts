@@ -67,7 +67,8 @@ function host(over: Partial<SubAgentHost> = {}): SubAgentHost & { frames: AgentE
     ...over,
   } as SubAgentHost & { frames: AgentEventFrame[] };
 }
-const CTX = { organizationId: 7, userId: 3, projectId: null, projectRef: 'prog-uuid', humanConfirmed: true } as any;
+const SQL_CLIENT = { query: vi.fn() };
+const CTX = { organizationId: 7, userId: 3, sqlClient: SQL_CLIENT, projectId: null, projectRef: 'prog-uuid', humanConfirmed: true } as any;
 const RESEARCH = { role: 'research', objective: 'Find the pivotal trial', instructions: 'Search PubMed for the pivotal trial of drug X.' };
 const inTenant = <T>(fn: () => Promise<T>, tenantId = '7') =>
   runWithTenantScope({ tenantId, source: 'test', caller: 'sub-agent-test' } as any, fn);
@@ -156,6 +157,7 @@ describe('the child is governed', () => {
     expect(ctx.modelCalls).toBe('refuse');
     expect(ctx.organizationId).toBe(7);
     expect(ctx.projectRef).toBe('prog-uuid');
+    expect(ctx.sqlClient).toBe(SQL_CLIENT);
     expect(ctx.signal).toBeInstanceOf(AbortSignal);
     expect(seen[0].refusal).not.toBeNull();
   });
@@ -306,7 +308,7 @@ describe('caps', () => {
   });
 });
 
-describe('budgets and the person\'s controls', () => {
+describe('the budgets a child stops at', () => {
   it('the token budget stops the child, at most two calls past it (D23)', async () => {
     gw.fallback = () => ({ ...toolCall('search_literature', { query: `q${Math.random()}` }), usage: { inputTokens: 100_000, outputTokens: 20_000 } });
     const r = await run(RESEARCH);
@@ -321,6 +323,9 @@ describe('budgets and the person\'s controls', () => {
     const r = await run(RESEARCH);
     expect(r).toMatchObject({ status: 'incomplete', stoppedReason: 'max_rounds', budget: 'rounds' });
   });
+});
+
+describe("the person's controls over a running child", () => {
   it('a pause before the start delays the first call; a run that will not resume starts nothing', async () => {
     let resume!: (o: 'running') => void;
     const held = host({ hold: () => new Promise(r => (resume = r)) });
@@ -363,10 +368,19 @@ describe('budgets and the person\'s controls', () => {
   it('an expired hold stops the child, and says so', async () => {
     const expired = new AbortController();
     expired.abort();
-    const r = await run(RESEARCH, host({ expiredSignal: expired.signal }));
+    const h = host({ expiredSignal: expired.signal });
+    const out = await inTenant(() => runSubAgent(RESEARCH, CTX, h));
+    const r = JSON.parse(out);
     expect(r.status).toBe('cancelled');
     expect(r.note).toMatch(/paused past its limit/);
     expect(gw.calls).toHaveLength(0);
+    /* Named on the result, not only described in the note: the step's own
+       sentence is written from this, and a pause nobody answered must not be
+       recorded as a Stop the person pressed (review 2026-10-11). */
+    expect(r.endedBy).toBe('hold_expired');
+    const { finishedStep } = await import('../step-presentation');
+    const step = finishedStep({ name: 'run_agent', input: RESEARCH }, null, { status: 'cancelled', result: out });
+    expect(step.message).toBe('Running an agent was ended because the run stayed paused past its limit.');
   });
   it('a call still running at the active-time limit is aborted: incomplete, time budget', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
@@ -383,6 +397,10 @@ describe('budgets and the person\'s controls', () => {
       const r = await pending;
       expect(r).toMatchObject({ status: 'incomplete', budget: 'time' });
       expect(gw.calls[0].signal.aborted).toBe(true);
+      // Aborted mid-call: there is no report, so the note must not offer one.
+      expect(r.report.text).toBe('');
+      expect(r.note).toMatch(/before it reported anything/);
+      expect(r.note).not.toMatch(/Use what it found/);
     } finally {
       vi.useRealTimers();
     }
@@ -406,6 +424,64 @@ describe('budgets and the person\'s controls', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("a child's failed or refused read is never a good step (review 2026-10-11)", () => {
+  /*
+   * A handler that cannot do the thing RETURNS `{error}` — it does not throw.
+   * The dispatch sets `errorMessage` only for a throw, a tool that was not
+   * offered, or lost input, so judging a step by that alone recorded a failed
+   * Vault read as `ok: true`. It then entered the answer-grounding corpus as a
+   * result the answer had been "checked against", and the parent model read
+   * `ok: true` for it. The parent's own path has always demoted the same
+   * string with `refusalOf`.
+   */
+  it('a refused read is recorded not-ok, and is not evidence for the answer', async () => {
+    registerToolHandler('search_literature', async () =>
+      JSON.stringify({ error: 'The project documents could not be read.', code: 'VAULT_UNAVAILABLE' }),
+    );
+    gw.script = [toolCall('search_literature', { query: 'x' })];
+    const h = host();
+    const full = await inTenant(() => runSubAgent(RESEARCH, CTX, h));
+    const parsed = JSON.parse(full);
+    expect(parsed.trace.steps).toHaveLength(1);
+    expect(parsed.trace.steps[0].ok).toBe(false);
+    const { agentEvidenceEntries } = await import('../sub-agent-stream');
+    expect(agentEvidenceEntries(full)).toEqual([]);
+    expect(h.frames.find(f => f.phase === 'step' && 'ok' in f)).toMatchObject({ ok: false });
+  });
+
+  it('control: a real result is recorded ok, and is evidence', async () => {
+    gw.script = [toolCall('search_literature', { query: 'x' })];
+    const full = await inTenant(() => runSubAgent(RESEARCH, CTX, host()));
+    expect(JSON.parse(full).trace.steps[0].ok).toBe(true);
+    const { agentEvidenceEntries } = await import('../sub-agent-stream');
+    expect(agentEvidenceEntries(full).map(e => e.source)).toEqual(['tool:search_literature']);
+  });
+});
+
+describe("a child's own gateway calls are attributed to the child (review 2026-10-11)", () => {
+  /*
+   * A child's tools embed their queries, and an embedding carries no run id of
+   * its own: the gateway reads the ambient run scope instead. The child ran
+   * inside the PARENT's scope, so every embedding an agent caused was ledgered
+   * as the parent's, with no parent link — and the cost read by `parent_run_id`
+   * that ADR-0015 §2 requires before production would have missed all of them.
+   */
+  it('a tool running inside the child sees the child run, with the parent named', async () => {
+    const scopes: Array<{ runId?: string; parentRunId?: string } | undefined> = [];
+    registerToolHandler('search_literature', async () => {
+      const { currentRunScope } = await import('../../ai-gateway/run-scope.js');
+      scopes.push(currentRunScope());
+      return JSON.stringify({ results: [] });
+    });
+    gw.script = [toolCall('search_literature', { query: 'x' })];
+    const full = await inTenant(() => runSubAgent(RESEARCH, CTX, host()));
+    expect(scopes).toHaveLength(1);
+    expect(scopes[0]?.runId).toBe(JSON.parse(full).agent.runId);
+    expect(scopes[0]?.runId).toMatch(/^agent_/);
+    expect(scopes[0]?.parentRunId).toBe('run_p');
   });
 });
 

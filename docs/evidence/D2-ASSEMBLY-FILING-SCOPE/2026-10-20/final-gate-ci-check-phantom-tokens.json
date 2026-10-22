@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-21T00:01:12.201225+00:00",
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:check-phantom-tokens"
+  ],
+  "elapsedSeconds": 0.728,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-final.json",
+  "rawOutput": "final-gate-ci-check-phantom-tokens-output.txt.gz",
+  "outputSha256": "5987d5b2210172338e60cb869a90af062185a93df186c004a832d962a65d17b1",
+  "stdout": "[ci:phantom-tokens] 9 phantom token(s) across 55 site(s) (baseline 9).\n[ci:phantom-tokens] OK \u2014 no new phantom tokens.\n"
+}

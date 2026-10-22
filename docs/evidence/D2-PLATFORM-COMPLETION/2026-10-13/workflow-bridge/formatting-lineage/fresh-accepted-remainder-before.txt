@@ -1,0 +1,54 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T23:43:24.287Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ↓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts > retained lineage survives supported formatting without manufacturing human review > preserves the exact QA imported prose across figure insertion and TipTap table normalization
+ ↓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts > retained lineage survives supported formatting without manufacturing human review > retains original acceptance, signature, usage and confidence across formatting by another editor
+ × server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts > retained lineage survives supported formatting without manufacturing human review > records newly accepted independent machine prose beside retained acceptance in the same current clause 124ms
+   → expected +0 to be 1 // Object.is equality
+ ↓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts > retained lineage survives supported formatting without manufacturing human review > attributes genuinely changed clauses to the editor and retains unchanged imported clauses
+ ↓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts > retained lineage survives supported formatting without manufacturing human review > bounds repeated prose to verified original occurrences and refuses changed scientific characters
+ ↓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts > retained lineage survives supported formatting without manufacturing human review > keeps exact untouched table cells while treating changed units or meaning as changed complete values
+ ↓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts > retained lineage survives supported formatting without manufacturing human review > fails closed and rolls back instead of converting a corrupt prior machine receipt into human authority
+ ↓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts > retained lineage survives supported formatting without manufacturing human review > preserves an unknown original requester instead of naming the current saver
+ ↓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts > retained lineage survives supported formatting without manufacturing human review > refuses unverified caller markup atomically rather than creating a human claim: <p title="Additional statement">The visit schedule remains unchanged for the study population.</p>
+ ↓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts > retained lineage survives supported formatting without manufacturing human review > refuses unverified caller markup atomically rather than creating a human claim: <p data-custom="Unknown reader semantics">The visit schedule remains unchanged for the study population.</p>
+ ↓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts > retained lineage survives supported formatting without manufacturing human review > refuses unverified caller markup atomically rather than creating a human claim: <figure><p>The visit schedule remains unchanged for the study population.</p></figure>
+ ↓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts > retained lineage survives supported formatting without manufacturing human review > refuses unverified caller markup atomically rather than creating a human claim: <p><xmp>The visit schedule remains unchanged for the study population.</xmp></p>
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts > retained lineage survives supported formatting without manufacturing human review > records newly accepted independent machine prose beside retained acceptance in the same current clause
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts:105:42
+    103|     const options = {previousContent:prior,acceptedMachineText:[{autho…
+    104|     const result = await enforceAuthorLineage(exec,ORG,ref(id),next,ED…
+    105|     expect(result.clausesInAcceptedText).toBe(1);
+       |                                          ^
+    106|     const rows = await raw(id);
+    107|     expect(rows.some(span => span.provenance_kind==='accepted_machine_…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+   Start at  23:43:21
+   Duration  8.21s (transform 1.87s, setup 95ms, import 2.77s, tests 4.89s, environment 0ms)

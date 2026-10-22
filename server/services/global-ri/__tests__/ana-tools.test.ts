@@ -73,6 +73,7 @@ describe('dispatchGlobalRiTool routing', () => {
       serious: true,
       unexpected: true,
       suspectedCausality: true,
+      fatalOrLifeThreatening: false,
     }) as { reportable: boolean; timelineDays: number };
     expect(r.reportable).toBe(true);
     expect(r.timelineDays).toBe(15);

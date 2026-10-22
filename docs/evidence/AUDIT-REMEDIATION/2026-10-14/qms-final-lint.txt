@@ -1,0 +1,38 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/quality/App.tsx
+   69:8   warning  Function 'QualityApp' has too many lines (228). Maximum allowed is 100  max-lines-per-function
+  228:39  warning  Arrow function has a complexity of 16. Maximum allowed is 15            complexity
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/quality/ChangeControl.tsx
+  106:8   warning  Function 'ChangeControl' has too many lines (373). Maximum allowed is 100  max-lines-per-function
+  106:8   warning  Function 'ChangeControl' has a complexity of 24. Maximum allowed is 15     complexity
+  281:28  warning  Arrow function has too many lines (129). Maximum allowed is 100            max-lines-per-function
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/quality/ControlledDocumentDialogs.tsx
+  20:8   warning  Function 'ControlledDocumentSetup' has a complexity of 40. Maximum allowed is 15  complexity
+  43:20  warning  Async arrow function has a complexity of 18. Maximum allowed is 15                complexity
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/quality/SopRegister.tsx
+  118:8   warning  Function 'SopRegister' has too many lines (495). Maximum allowed is 100  max-lines-per-function
+  118:8   warning  Function 'SopRegister' has a complexity of 53. Maximum allowed is 15     complexity
+  395:28  warning  Arrow function has too many lines (102). Maximum allowed is 100          max-lines-per-function
+  599:1   warning  File has too many lines (562). Maximum allowed is 500                    max-lines
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx
+  64:69  warning  Arrow function has too many lines (121). Maximum allowed is 100  max-lines-per-function
+
+/workspace/ClinicalSageAI-2-replit/server/routes/mdx-qms.ts
+  723:1   warning  File has too many lines (1109). Maximum allowed is 500              max-lines
+  788:88  warning  Async arrow function has a complexity of 16. Maximum allowed is 15  complexity
+
+/workspace/ClinicalSageAI-2-replit/server/services/ana/__tests__/qms-change-tools.test.ts
+  13:58  warning  'QMS_TEST_PROGRAM' is defined but never used  @typescript-eslint/no-unused-vars
+
+/workspace/ClinicalSageAI-2-replit/server/services/qms/controlled-document-service.ts
+  119:8  warning  Async function 'updateControlledQmsDocument' has a complexity of 19. Maximum allowed is 15  complexity
+
+/workspace/ClinicalSageAI-2-replit/server/services/qms/document-approval-signature.ts
+  261:1  warning  Async function 'applyApproval' has too many parameters (6). Maximum allowed is 5  max-params
+
+✖ 17 problems (0 errors, 17 warnings)
+

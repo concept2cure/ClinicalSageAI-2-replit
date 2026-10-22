@@ -137,17 +137,71 @@ rows, D1–D10, each with named evidence. Until every row is green:
 - A session that cannot produce that evidence reports **blocked**, not done.
 - No session adds a surface, module, tool, model or integration outside the
   launch catalog (Projects, Vault, Authoring, Submission Center, Submission
-  Readiness, QMS controlled documents, Reporting & analytics) or the
-  gateway/connector scope named in that file. Reporting & analytics joined the
-  catalog by the founder's decision of 2026-09-26, as a central service for
-  every client type (`shared/constants/launch-scope.ts`). The regulatory
-  digital twin, epistemic / causal / self-evolving engines, federated learning
-  and the manufacturing digital twin get no sessions.
+  Readiness, QMS controlled documents, Reporting & analytics, CMC / Module 3)
+  or the gateway/connector scope named in that file. Submission Readiness is the
+  one dispatch verdict per sequence, shown inside Submit; its name stays as a
+  catalog and entitlement entry (P-33). The IND lifecycle and forms
+  tools are features of Submission Center (P-32). Reporting & analytics
+  joined the catalog by the founder's decision of 2026-09-26, as a central
+  service for every client type. CMC / Module 3 joined it by decision P-28
+  (2026-10-12, under the founder's delegation of 2026-10-07) **with a
+  composition boundary**: it composes small-molecule Module 3 for a US IND, and
+  refuses a biologic, a marketing application or a non-US clinical-trial
+  application by name (`services/cmc/composition-scope.ts`). Widening that
+  boundary is a founder decision, not a session's
+  (`shared/constants/launch-scope.ts`). The regulatory digital twin, epistemic
+  / causal / self-evolving engines, federated learning and the manufacturing
+  digital twin get no sessions.
 - Numbers, verdicts and governed content come from deterministic engines; the
   model narrates. A tool that asks a model for a figure is a defect.
 - Multi-model is governance, not marketing: a model is selectable only as an
   approved-models entry with a pinned version, rationale and eval reference, and
   only PQ-passed models serve high-risk regulatory drafting.
+
+---
+
+## RULE 3 — never build what we already have. Search first, and prove it.
+
+Before anyone designs, plans, describes or builds a capability (a surface, screen,
+route, service, component, table, AnA tool, parser, viewer, register), they establish
+what already exists. A capability that exists in any form is **extended, completed,
+reached or fixed**. It is never rebuilt beside itself, and it is never described as
+new. This binds every session, human or AI, and every subagent and workflow it starts.
+
+Before the first line of a design, a plan or a worker prompt:
+
+1. **Search the code by every name the capability could have**: the user's noun ("eCTD
+   viewer", "question extraction"), the domain terms (backbone, leaf, sequence,
+   lifecycle, deficiency, commitment), component and file names, routes
+   (`server/routes`, `server/api`, `server/src`), services, tables (`migrations/`,
+   `db/migrations/`, `shared/schema*`), AnA tools, client surfaces
+   (`client/src/concept2cure/**/surfaces`), and code nothing reaches (a route with no
+   client caller, a surface outside the launch catalog).
+2. **Search what was deleted**: `git log --all --diff-filter=D` on the same names.
+3. **Write it down.** The design and the evidence README each carry a section headed
+   **"What already exists"**: every existing piece by path, what it does today and what
+   it does not. If nothing was found, list the searches that were run.
+4. **Name the work for what it is**: "complete X (`path`)", "reach X", "fix X",
+   "converge Y onto X". Never "build X" when X exists in any form, in a plan, a commit,
+   a status report or a message to the founder.
+5. **An existing implementation that is unreachable, outside the catalog or wrong is
+   reached, admitted or corrected, not replaced.** A second implementation is allowed
+   only when the first cannot be fixed. The design must say why, and the first must be
+   migrated onto the second and deleted in the same change (zero duplication).
+
+A design, slice, plan or worker prompt that proposes work without its "What already
+exists" section is not ready to build, and any session that receives one returns it.
+A reviewer's first question on any design is "what already exists, and where?".
+
+**Why this is a rule.** On 2026-10-19 a session told the founder its next slice was
+"the eCTD viewer". But Submission Center's `EctdCompile.tsx` already renders a compiled
+sequence's leaf hierarchy (`index.xml` and the regional Module 1), its lifecycle acts
+against the filed state, the package's files and SHA-256, the compilation history and
+the agency validator's results. The Builder (`SubmissionSeqWorkspaces.tsx`) already lists
+every sequence's leaves. `/api/ind-lifecycle/sequence/:id/diff` and `/manifest` already
+exist, with no caller. The work was a completion, and it was presented as new. The
+founder caught it, not the session. The working agreement's five editor generations,
+each deleted and rebuilt, are the same failure at a larger scale.
 
 ---
 

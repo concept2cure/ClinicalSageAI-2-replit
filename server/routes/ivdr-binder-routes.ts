@@ -19,6 +19,14 @@
 import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
 import { getStorageProvider } from '../services/storage/index.js';
+import { assertStoredContentIntegrity, computeSha256, StorageIntegrityError, type StorageGetResult } from '../services/storage/storage-provider.js';
+import { stableStringify } from '../../shared/canonical-json.js';
+
+// PostgreSQL BIGINT defaults to a decimal string. Normalize only its canonical
+// integer form; malformed/unsafe values are refused by the integrity checker.
+function normalizePackArtifactSize(size: unknown): unknown {
+  return typeof size === 'string' && /^(0|[1-9]\d*)$/.test(size) ? Number(size) : size;
+}
 
 export default function createIVDRBinderRoutes(pool: Pool): Router {
   const router = Router();
@@ -44,6 +52,12 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
 
   // ── Safe error response ────────────────────────────────────────────────────
   function safeError(res: Response, error: any, code: string, label: string): Response {
+    if (error instanceof StorageIntegrityError) {
+      return res.status(409).json({
+        error: 'This pack artifact failed its integrity check. No file was served.',
+        code: 'PACK_ARTIFACT_INTEGRITY_FAILED',
+      });
+    }
     if (error?.code === '42P01') {
       console.warn(`[IVDR-Binder] ${label}: table not found — denying until migrated`);
       return res.status(503).json({
@@ -919,7 +933,11 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
       const orgId = getServerOrgId(req);
       const userId = getUserId(req);
       const { packId } = req.params;
-      const format = (req.query.format as string) || 'manifest';
+      const requestedFormat = req.query.format ?? 'manifest';
+      if (typeof requestedFormat !== 'string' || !['pdf', 'docx', 'zip', 'manifest'].includes(requestedFormat)) {
+        return res.status(400).json({ error: 'Choose pdf, docx, zip or manifest.', code: 'PACK_DOWNLOAD_FORMAT_INVALID' });
+      }
+      const format = requestedFormat as 'pdf' | 'docx' | 'zip' | 'manifest';
 
       const packResult = await pool.query(
         `SELECT id, project_id, pack_type, pack_version, status,
@@ -927,7 +945,11 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
                 manifest_vault_version_id,
                 pdf_vault_version_id,
                 docx_vault_version_id,
-                zip_vault_version_id
+                zip_vault_version_id,
+                manifest_sha256, manifest_size_bytes,
+                pdf_sha256, pdf_size_bytes,
+                docx_sha256, docx_size_bytes,
+                zip_sha256, zip_size_bytes
          FROM ivdr_packs
          WHERE id = $1 AND organization_id = $2`,
         [packId, orgId]
@@ -939,30 +961,40 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
 
       const pack = packResult.rows[0];
 
-      // Log download event
-      await emitAuditEvent(req, orgId, pack.project_id, userId, 'PACK_DOWNLOADED', {
-        packId,
-        packVersion: pack.pack_version,
-        format,
+      // Storage self-consistency is not the approved pack identity: a sidecar
+      // and its file can change together. Bind loaded bytes to this pack's
+      // recorded format receipt, and never audit a refused read as downloaded.
+      const recordDownload = () => emitAuditEvent(req, orgId, pack.project_id, userId, 'PACK_DOWNLOADED', {
+        packId, packVersion: pack.pack_version, format,
       });
+      const serveStored = async (artifact: StorageGetResult) => {
+        const sizeBytes = normalizePackArtifactSize(pack[`${format}_size_bytes`]);
+        assertStoredContentIntegrity(artifact.bytes, { sha256: pack[`${format}_sha256`], sizeBytes });
+        await recordDownload();
+        res.setHeader('Content-Type', artifact.mime);
+        res.setHeader('Content-Length', String(artifact.bytes.length));
+        res.setHeader('Content-Disposition', `attachment; filename="${artifact.filename}"`);
+        res.setHeader('X-Content-SHA256', computeSha256(artifact.bytes));
+        return res.send(artifact.bytes);
+      };
 
       // For now, return the manifest JSON from the snapshot
       if (format === 'manifest') {
-        // Try vault first, fall back to snapshot table
+        // A recorded original must be served as itself; a missing original
+        // must never be replaced by a different snapshot rendering.
         if (pack.manifest_vault_version_id) {
           const vaultResult = await getStorageProvider().get(pack.manifest_vault_version_id, orgId);
           if (vaultResult) {
-            res.setHeader('Content-Type', vaultResult.mime);
-            res.setHeader('Content-Length', String(vaultResult.sizeBytes));
-            res.setHeader('Content-Disposition', `attachment; filename="${vaultResult.filename}"`);
-            res.setHeader('X-Content-SHA256', vaultResult.sha256);
-            return res.send(vaultResult.bytes);
+            return await serveStored(vaultResult);
           }
+          return res.status(404).json({ error: 'The recorded manifest file is missing.', code: 'PACK_ARTIFACT_MISSING' });
         }
 
+        // Legacy packs with no original manifest retain their snapshot view,
+        // after its canonical content is checked against both recorded hashes.
         const snapResult = await pool.query(
-          `SELECT snapshot_json FROM ivdr_pack_snapshots WHERE pack_id = $1`,
-          [packId]
+          `SELECT snapshot_json, snapshot_hash_sha256 FROM ivdr_pack_snapshots WHERE pack_id = $1 AND organization_id = $2`,
+          [packId, orgId]
         );
 
         if (snapResult.rows.length === 0) {
@@ -971,12 +1003,21 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
             .json({ error: 'Manifest not available', code: 'PACK_NO_MANIFEST' });
         }
 
+        const snapshot = snapResult.rows[0];
+        const canonicalBytes = Buffer.from(stableStringify(snapshot.snapshot_json), 'utf8');
+        for (const digest of [snapshot.snapshot_hash_sha256, pack.snapshot_hash_sha256]) {
+          assertStoredContentIntegrity(canonicalBytes, { sha256: digest, sizeBytes: canonicalBytes.length });
+        }
+        const rendered = Buffer.from(JSON.stringify(snapshot.snapshot_json, null, 2), 'utf8');
+        await recordDownload();
         res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Length', String(rendered.length));
+        res.setHeader('X-Content-SHA256', computeSha256(rendered));
         res.setHeader(
           'Content-Disposition',
           `attachment; filename="IVDR_Pack_v${pack.pack_version}_manifest.json"`
         );
-        return res.send(JSON.stringify(snapResult.rows[0].snapshot_json, null, 2));
+        return res.send(rendered);
       }
 
       // PDF / DOCX / ZIP — stream from vault
@@ -1006,11 +1047,7 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
         });
       }
 
-      res.setHeader('Content-Type', vaultResult.mime);
-      res.setHeader('Content-Length', String(vaultResult.sizeBytes));
-      res.setHeader('Content-Disposition', `attachment; filename="${vaultResult.filename}"`);
-      res.setHeader('X-Content-SHA256', vaultResult.sha256);
-      return res.send(vaultResult.bytes);
+      return await serveStored(vaultResult);
     } catch (error) {
       return safeError(res, error, 'PACK_DOWNLOAD_FAILED', 'Download pack');
     }

@@ -67,8 +67,8 @@ import type {
  *                     or the filing's channel is one the platform has no
  *                     connector for (`submissionChannelFor` → `unconnected`,
  *                     e.g. a centralised MAA and the EMA eSubmission Gateway,
- *                     an orphan designation and EMA IRIS, or an EMA filing
- *                     whose channel is not modelled at all).
+ *                     an orphan designation and EMA IRIS, an EMA filing whose
+ *                     channel is not modelled at all, or a Notified Body file).
  */
 export type SubmittabilityTier =
   | 'submittable'
@@ -157,9 +157,10 @@ const EMA_CENTRALISED_STEP =
  * submissions EMA names (MAAs, variations, renewals, PSURs, ASMFs). Nothing
  * else is sent to the eSubmission Gateway by this module. Fix round 2
  * (2026-10-05): the round-1 rule was "EU + EMA + eCTD", which also caught
- * EU_ORPHAN, EU_SCIENTIFIC_ADVICE, EU_PIP and EU_PRIME — they carry
- * submissionFormat 'eCTD' in the registry — and told an orphan-designation
- * applicant the centralised procedure applied.
+ * EU_ORPHAN, EU_SCIENTIFIC_ADVICE, EU_PIP and EU_PRIME — they carried
+ * submissionFormat 'eCTD' in the registry then (they declare 'IRIS' since
+ * g-eu-medicines-dated-facts) — and told an orphan-designation applicant the
+ * centralised procedure applied.
  */
 const EMA_CENTRALISED_FAMILIES = new Set([
   'marketing_authorization',
@@ -170,18 +171,25 @@ const EMA_CENTRALISED_FAMILIES = new Set([
 ]);
 
 /**
- * EMA filings received through IRIS, keyed by registry id rather than family:
- * `pre_submission` and `designation` also hold EU_REF_LAB and EU_ACCEL_ASSESS,
- * which nothing on record routes to IRIS. Each row is regulator text
- * (ema.europa.eu search results, facts rows 4-5). The platform has no IRIS
- * connector (Rule 2), so these are `unconnected`, not `portal`: this module does
- * not assert that no machine channel exists.
+ * EMA filings received through IRIS: the entries whose registry record declares
+ * `submissionFormat: 'IRIS'`. Not keyed by family — `pre_submission` and
+ * `designation` also hold EU_REF_LAB and EU_ACCEL_ASSESS, which nothing on
+ * record routes to IRIS — and not by a list of ids beside the registry: until
+ * 2026-10-05 (step g-eu-medicines-dated-facts) the registry declared these
+ * filings 'eCTD' and only this module knew better. The registry entry is now
+ * the one statement; the map below only words each filing's reason. Each row
+ * is regulator text (ema.europa.eu search results, g-submission-channel-function
+ * facts rows 4-5; g-eu-medicines-dated-facts facts). The platform has no IRIS
+ * connector (Rule 2), so these are `unconnected`, not `portal`: this module
+ * does not assert that no machine channel exists, so IRIS is deliberately not
+ * in PORTAL_ONLY_FORMATS.
  */
 const EMA_IRIS_CHANNEL = 'EMA IRIS (Regulatory & Scientific Information Management Platform)';
-const EMA_IRIS_FILINGS: ReadonlyMap<string, string> = new Map([
+const EMA_IRIS_REASON_DEFAULT = 'The filing type is submitted to EMA through IRIS';
+const EMA_IRIS_REASONS: ReadonlyMap<string, string> = new Map([
   ['EU_ORPHAN', 'Orphan designation applications are submitted to EMA through IRIS (EMA, since 2018)'],
   ['EU_SCIENTIFIC_ADVICE', 'Scientific advice requests are submitted to EMA through IRIS (EMA, since 2020-10-19)'],
-  ['EU_PIP', 'Paediatric investigation plan applications are submitted to EMA through IRIS (EMA)'],
+  ['EU_PIP', 'Paediatric investigation plan, waiver and compliance-check applications are submitted to EMA through IRIS (EMA)'],
   ['EU_PRIME', 'PRIME eligibility requests are submitted to EMA through IRIS (EMA)'],
 ]);
 const EMA_IRIS_STEP =
@@ -200,7 +208,35 @@ const EMA_UNMODELLED_REASON =
 const EMA_UNMODELLED_STEP =
   'The platform prepares the content; the applicant submits it through the channel EMA specifies.';
 
+/**
+ * A Notified Body file (agency 'Notified_Body': EU MDR/IVDR technical
+ * documentation, CER, SSCP, a Notified Body opinion or consultation, …) goes to
+ * the Notified Body that assesses it. Until 2026-10-15 these entries fell through
+ * to the EU region default and were reported submittable through CESP, EMA's
+ * medicines-dossier gateway. No Notified Body's channel is modelled, and none is
+ * invented.
+ */
+const NOTIFIED_BODY_CHANNEL = 'Notified Body — channel not modelled';
+const NOTIFIED_BODY_REASON =
+  'A Notified Body file goes to the Notified Body that assesses it, not to EMA; no Notified Body submission ' +
+  'channel is modelled on the platform. The EU region default (CESP) is not assumed';
+const NOTIFIED_BODY_STEP =
+  'The platform prepares the content; the applicant submits it to the Notified Body through the channel that Notified Body specifies.';
+
 const DEVICE_FAMILIES = new Set(['device_approval', 'device_clearance']);
+
+/** Regional gateways do not establish a channel to these device recipients.
+ * Medicinal DCP/NCA filings retain the existing regional CESP route. */
+function unmodelledDeviceRecipient(entry: RegulatoryApplicationType): string | null {
+  if (entry.agency === 'Registered_Certification_Body') return 'Registered certification body';
+  const device = ['medical_devices', 'diagnostics_ivd'].includes(entry.segment ?? '')
+    || DEVICE_FAMILIES.has(entry.applicationFamily);
+  if (entry.region !== 'EU' || !device) return null;
+  if (entry.agency === 'National_Competent_Authority') return 'National competent authority';
+  if (entry.agency === 'EU_Reference_Laboratory') return 'EU reference laboratory';
+  if (entry.agency === 'EMA') return 'EMA';
+  return 'Applicable device or IVD recipient';
+}
 
 export function submissionChannelFor(entry: RegulatoryApplicationType): SubmissionChannel {
   // The entry's own declared format first: a registered gateway for the region
@@ -208,13 +244,31 @@ export function submissionChannelFor(entry: RegulatoryApplicationType): Submissi
   const portal = PORTAL_ONLY_FORMATS.get(String(entry.submissionFormat ?? ''));
   if (portal) return { kind: 'portal', channel: portal };
 
+  if (entry.agency === 'Notified_Body') {
+    return {
+      kind: 'unconnected',
+      channel: NOTIFIED_BODY_CHANNEL,
+      reason: NOTIFIED_BODY_REASON,
+      applicantStep: NOTIFIED_BODY_STEP,
+    };
+  }
+
+  const recipient = unmodelledDeviceRecipient(entry);
+  if (recipient) return {
+    kind: 'unconnected',
+    channel: `${recipient} — channel not modelled`,
+    reason: `This device or IVD recipient's submission channel is not modelled on the platform; the regional default gateway is not assumed`,
+    applicantStep: `Confirm whether and where submission is required, then submit through the channel specified by the ${recipient}.`,
+  };
+
   if (entry.region === 'EU' && entry.agency === 'EMA') {
-    if (DEVICE_FAMILIES.has(String(entry.applicationFamily))) {
-      return { kind: 'gateway', region: 'ema', name: 'eudamed' };
-    }
-    const iris = EMA_IRIS_FILINGS.get(entry.id);
-    if (iris) {
-      return { kind: 'unconnected', channel: EMA_IRIS_CHANNEL, reason: iris, applicantStep: EMA_IRIS_STEP };
+    if (entry.submissionFormat === 'IRIS') {
+      return {
+        kind: 'unconnected',
+        channel: EMA_IRIS_CHANNEL,
+        reason: EMA_IRIS_REASONS.get(entry.id) ?? EMA_IRIS_REASON_DEFAULT,
+        applicantStep: EMA_IRIS_STEP,
+      };
     }
     if (entry.submissionFormat === 'eCTD' && EMA_CENTRALISED_FAMILIES.has(String(entry.applicationFamily))) {
       return {

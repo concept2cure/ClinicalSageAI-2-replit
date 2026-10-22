@@ -1,0 +1,178 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | tests/routes/ectd-compile-sequence.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-sequence.test.ts
+{
+  "timestamp": "2026-10-08T20:48:35.011Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > the MAA sequence id compiles the MAA, not the NDA project's latest NDA sequence
+[eCTD Compile] Program ONC-221: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > another project's sequence (or none) is 404, and nothing is assembled
+[eCTD Compile] Program ONC-221: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > a malformed sequence id is refused, not read as "none named"
+[eCTD Compile] Program ONC-221: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > a named sequence with nothing placed in it is refused, not compiled from another store
+[eCTD Compile] Program ONC-221: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > with no sequence named, the spine rule stands: the NDA sequence compiles
+[eCTD Compile] Program ONC-221: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ × tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > the MAA sequence id compiles the MAA, not the NDA project's latest NDA sequence 1480ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
++   {
++     "applicationId": "ONC-221",
+      "organizationId": 7,
+-     "sequenceId": 21,
++     "priorState": "filed",
++     "sequenceId": 9,
++     "sponsorId": "UNASSIGNED-ORG-7",
++     "sponsorName": "UNASSIGNED (organization 7)",
++     "userId": 3,
+    },
+  ]
+
+
+Number of calls: 1
+
+ × tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > another project's sequence (or none) is 404, and nothing is assembled 4ms
+   → expected "vi.fn()" to be called with arguments: [ 404 ]
+
+Number of calls: 0
+
+ × tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > a malformed sequence id is refused, not read as "none named" 3ms
+   → expected "vi.fn()" to be called with arguments: [ 400 ]
+
+Number of calls: 0
+
+ × tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > a named sequence with nothing placed in it is refused, not compiled from another store 2ms
+   → expected "vi.fn()" to be called with arguments: [ 409 ]
+
+Number of calls: 0
+
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > with no sequence named, the spine rule stands: the NDA sequence compiles 5ms
+ × tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > the status read names the sequence asked for, with its recorded region 3ms
+   → expected '{"projectId":null,"projectIdent":"2b6…' to match /"region":"eu"/
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > the MAA sequence id compiles the MAA, not the NDA project's latest NDA sequence
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
++   {
++     "applicationId": "ONC-221",
+      "organizationId": 7,
+-     "sequenceId": 21,
++     "priorState": "filed",
++     "sequenceId": 9,
++     "sponsorId": "UNASSIGNED-ORG-7",
++     "sponsorName": "UNASSIGNED (organization 7)",
++     "userId": 3,
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ tests/routes/ectd-compile-sequence.test.ts:76:34
+     74|     await compile(makeReq({ submissionType: 'initial', sequenceId: 21 …
+     75|     expect(res.status).not.toHaveBeenCalledWith(404);
+     76|     expect(assembleSequenceMock).toHaveBeenCalledWith(expect.objectCon…
+       |                                  ^
+     77|   });
+     78|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > another project's sequence (or none) is 404, and nothing is assembled
+AssertionError: expected "vi.fn()" to be called with arguments: [ 404 ]
+
+Number of calls: 0
+
+ ❯ tests/routes/ectd-compile-sequence.test.ts:82:24
+     80|     const res = createMockResponse() as any;
+     81|     await compile(makeReq({ submissionType: 'initial', sequenceId: 99 …
+     82|     expect(res.status).toHaveBeenCalledWith(404);
+       |                        ^
+     83|     expect(res.json.mock.calls[0][0].error.code).toBe('SEQUENCE_NOT_FO…
+     84|     expect(assembleSequenceMock).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > a malformed sequence id is refused, not read as "none named"
+AssertionError: expected "vi.fn()" to be called with arguments: [ 400 ]
+
+Number of calls: 0
+
+ ❯ tests/routes/ectd-compile-sequence.test.ts:90:24
+     88|     const res = createMockResponse() as any;
+     89|     await compile(makeReq({ submissionType: 'initial', sequenceId: 'ni…
+     90|     expect(res.status).toHaveBeenCalledWith(400);
+       |                        ^
+     91|     expect(assembleSequenceMock).not.toHaveBeenCalled();
+     92|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > a named sequence with nothing placed in it is refused, not compiled from another store
+AssertionError: expected "vi.fn()" to be called with arguments: [ 409 ]
+
+Number of calls: 0
+
+ ❯ tests/routes/ectd-compile-sequence.test.ts:97:24
+     95|     const res = createMockResponse() as any;
+     96|     await compile(makeReq({ submissionType: 'initial', sequenceId: 22 …
+     97|     expect(res.status).toHaveBeenCalledWith(409);
+       |                        ^
+     98|     expect(res.json.mock.calls[0][0].error.code).toBe('SEQUENCE_EMPTY'…
+     99|     expect(assembleSequenceMock).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > the status read names the sequence asked for, with its recorded region
+AssertionError: expected '{"projectId":null,"projectIdent":"2b6…' to match /"region":"eu"/
+
+- Expected:
+/"region":"eu"/
+
++ Received:
+"{\"projectId\":null,\"projectIdent\":\"2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70\",\"programId\":\"2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70\",\"overallReadiness\":11,\"contentComplete\":false,\"submissionReady\":false,\"submissionBlockers\":[\"Required sections are not all complete.\",\"2 document(s) are placed in the submission's eCTD sequence. Run Compile to render the leaf files and verify the package before it can be considered submission-ready.\"],\"modules\":[{\"moduleCode\":\"m1\",\"moduleName\":\"Administrative Information\",\"totalSections\":0,\"requiredSections\":2,\"completedRequired\":0,\"completionPct\":0,\"ready\":false},{\"moduleCode\":\"m2\",\"moduleName\":\"CTD Summaries\",\"totalSections\":1,\"requiredSections\":8,\"completedRequired\":1,\"completionPct\":13,\"ready\":false},{\"moduleCode\":\"m3\",\"moduleName\":\"Quality (CMC)\",\"totalSections\":1,\"requiredSections\":3,\"completedRequired\":1,\"completionPct\":33,\"ready\":false},{\"moduleCode\":\"m4\",\"moduleName\":\"Nonclinical Study Reports\",\"totalSections\":0,\"requiredSections\":3,\"completedRequired\":0,\"completionPct\":0,\"ready\":false},{\"moduleCode\":\"m5\",\"moduleName\":\"Clinical Study Reports\",\"totalSections\":0,\"requiredSections\":2,\"completedRequired\":0,\"completionPct\":0,\"ready\":false}],\"readinessBasis\":\"placed\",\"sequence\":{\"sequenceNumber\":\"0001\",\"region\":\"fda\",\"leafCount\":2},\"requiredSectionSource\":{\"source\":\"fallback\",\"reason\":\"No live rule pack exists for nda at ich; the ICH CTD marketing-application baseline is in force.\"},\"totalSections\":0,\"totalRequired\":18,\"totalCompleted\":2,\"lastUpdated\":null}"
+
+ ❯ tests/routes/ectd-compile-sequence.test.ts:115:34
+    113|     await status(req, res);
+    114|     const body = res.json.mock.calls[0][0];
+    115|     expect(JSON.stringify(body)).toMatch(/"region":"eu"/);
+       |                                  ^
+    116|     expect(body.sequence?.id ?? body.spine?.sequence?.id).toBe(21);
+    117|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)
+   Start at  20:48:33
+   Duration  4.89s (transform 2.29s, setup 102ms, import 2.92s, tests 1.50s, environment 0ms)
+

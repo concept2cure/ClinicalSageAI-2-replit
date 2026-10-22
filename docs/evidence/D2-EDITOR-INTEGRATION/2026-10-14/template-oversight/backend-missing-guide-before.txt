@@ -1,0 +1,12 @@
+Focused missing-guidance behavior run before the gap fix.
+Source: template-oversight-missing-guide-before.log
+Source SHA-256: 6831cb2e187d1250f3834892e5dec2d9c3efeeb557f8140adbe00a5b3f098efe
+Selected verbatim runner header, failure headings/assertions and summary. Setup logs and repeated stack traces omitted.
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+ FAIL  server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > template legacy records and bounded context retain honest scope > reports missing exact section guidance while preserving the complete writing-only review
+AssertionError: expected [] to deeply equal [ { …(5) }, { …(5) } ]
+ Test Files  1 failed (1)
+      Tests  1 failed | 25 skipped (26)
+   Start at  19:41:17
+   Duration  16.63s (transform 9.61s, setup 118ms, import 13.14s, tests 3.03s, environment 0ms)

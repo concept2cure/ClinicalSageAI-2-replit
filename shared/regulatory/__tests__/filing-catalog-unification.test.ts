@@ -25,6 +25,21 @@ import {
   resolveFilingCatalogEntry,
 } from '../filing-catalog';
 
+describe('regional device applications retain exact initialization identities', () => {
+  it.each([
+    ['US_HDE', 'hde', 'FDA'], ['CA_MDL', 'mdl', 'Health Canada'],
+    ['CA_IVD_LICENCE', 'ivd_licence', 'Health Canada'],
+    ['JP_SHONIN', 'shonin', 'PMDA'],
+    ['JP_NINTEI', 'ninsho', 'Registered certification body'],
+    ['JP_TODOKEDE', 'todokede', 'PMDA'],
+    ['JP_IVD_APPROVAL', 'ivd_approval', 'PMDA'], ['JP_CDX', 'jp_cdx', 'PMDA'],
+  ])('%s initializes its own application rather than a generic device', (id, pathway, agency) => {
+    const entry = resolveFilingCatalogEntry(id)!;
+    expect(entry.pathwayKey).toBe(pathway);
+    expect(entry.agency).toBe(agency);
+  });
+});
+
 describe('one catalog, one count', () => {
   it('the catalog is exactly the active registry', () => {
     const active = GLOBAL_REGISTRY.filter((e) => e.active);

@@ -38,6 +38,7 @@ import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest, extractApiError, redactInternals, serverMessage, type ApiRequestError } from '@/lib/queryClient';
 import { EsignModal, type EsigSignedManifest, type EsignSigner } from '../../_shared/components/EsignModal';
 import type { EsigMeaning } from '../../hooks/useEsignature';
+import type { WorkflowImportOrigin } from '@shared/authoring/source-import';
 
 export interface AuthoringFilingBarProps {
   docId: string;
@@ -68,6 +69,8 @@ export interface AuthoringFilingBarProps {
    *  offers that one meaning. QA 2026-10-08 (j4): the reviewer a review was
    *  assigned to could not sign it. */
   reviewOnly?: boolean;
+  workflowOrigin?: WorkflowImportOrigin;
+  docRevision?: string;
 }
 
 type Dialog = 'freeze' | 'freeze-unsettled' | 'esign' | null;
@@ -160,11 +163,17 @@ interface SignInput {
  * POST the signature to the authoring store. The same credentials the dialog
  * checked go with it, and the server re-verifies them inside the transaction
  * that writes the signature. A refusal is thrown as the sentence to show.
+ *
+ * EXPORTED for its test, with `signedToast` and `notApprovedNote`. D-29-C was a
+ * field this function silently dropped and a sentence that was true only when
+ * the approval covered everything; neither had a seam a test could hold, which
+ * is part of why it survived. The component's use of all three is unchanged.
  */
-async function postAuthoringSignature(
+export async function postAuthoringSignature(
   docId: string,
   input: SignInput,
-): Promise<{ meaning: 'AUTHOR' | 'REVIEWER' | 'APPROVER'; hash?: string; signedAt?: string }> {
+  adoptWorkflowSource = false,
+): Promise<{ meaning: 'AUTHOR' | 'REVIEWER' | 'APPROVER'; hash?: string; signedAt?: string; notApproved: string[] }> {
   const meaning = AUTHORING_MEANING[input.meaning];
   if (!meaning) throw new Error('This document cannot carry that meaning. Nothing was signed.');
   const res = await apiRequest('POST', `/api/authoring/docs/${docId}/e-sign`, {
@@ -172,14 +181,71 @@ async function postAuthoringSignature(
     ...(input.totp ? { mfaToken: input.totp } : {}),
     meaning,
     intent: input.reason,
+    ...(meaning === 'REVIEWER' && adoptWorkflowSource ? { adoptWorkflowSource: true } : {}),
   });
-  const json = (await res.json().catch(() => null)) as { documentHash?: string; signedAt?: string } | null;
+  /* `filingApproval` is read, not dropped (P-29, D-29-C). An APPROVER signature
+     moves a bound filing section to `approved` only when its filed text is
+     exactly the text signed, and the server reports every key it could not move
+     in `filingApproval.notApproved`. This response was typed as
+     `{ documentHash, signedAt }`, so the approver saw an unqualified "approved
+     and frozen" and was never told which sections their signature did not
+     cover. A correct gate nobody is shown is a finding in its own right. */
+  const json = (await res.json().catch(() => null)) as {
+    documentHash?: string;
+    signedAt?: string;
+    filingApproval?: { approved?: string[]; notApproved?: string[] } | null;
+  } | null;
   /* apiRequest RETURNS a 401 rather than throwing it. Here a 401 is the
      signing ceremony refusing the password or code, not a lost session. */
   if (res.status === 401) {
     throw new Error((serverMessage(json) ?? 'Your password or code was not verified.') + ' Nothing was signed.');
   }
-  return { meaning, hash: json?.documentHash, signedAt: json?.signedAt };
+  const notApproved = (json?.filingApproval?.notApproved ?? []).map(String).filter((k) => k !== '');
+  return { meaning, hash: json?.documentHash, signedAt: json?.signedAt, notApproved };
+}
+
+/**
+ * The sentence an approver is owed when their signature did not cover every
+ * bound filing section — never a count alone, because the keys are what they
+ * open.
+ */
+/**
+ * The signed manifest both ceremonies return — one shape, built once. The
+ * freeze and the e-signature differ in what they call the timestamp
+ * (`frozenAt` / `signedAt`) and in nothing else.
+ */
+function signedManifest(input: SignInput, at: string | undefined, hash: string | undefined): EsigSignedManifest {
+  return {
+    meaning: input.meaning,
+    reason: input.reason,
+    signedAt: at ?? new Date().toISOString(),
+    ...(hash ? { hash } : {}),
+  };
+}
+
+/**
+ * What the confirmation says. "approved and frozen" is said only when the
+ * approval actually reached every bound filing section; saying it over an
+ * approval that left sections behind is the green tick D-29-C removes.
+ */
+export function signedToast(signed: { meaning: string; hash?: string; notApproved: string[] }): string {
+  const approved = signed.meaning === 'APPROVER';
+  const covered = signed.notApproved.length === 0;
+  return (
+    'Document signed (' + signed.meaning.toLowerCase() + ')'
+    + (approved && covered ? ' — approved and frozen' : '')
+    + (approved && !covered ? ' — approved and frozen, but ' + signed.notApproved.length + ' filing section(s) were not approved' : '')
+    + (signed.hash ? ' · ' + String(signed.hash).slice(0, 12) + '…' : '') + '.'
+  );
+}
+
+export function notApprovedNote(keys: readonly string[]): string {
+  const one = keys.length === 1;
+  return (
+    `The approval did not cover ${one ? 'section' : 'sections'} ${keys.join(', ')}: ` +
+    `${one ? 'its' : 'their'} filed text is not the text you signed, so ${one ? 'it was' : 'they were'} ` +
+    'left unapproved in the filing. Open ' + (one ? 'it' : 'them') + ' in the editor and save to re-file, then approve again.'
+  );
 }
 
 /** What the freeze endpoint answered: sealed, or refused as not settled. */
@@ -262,13 +328,20 @@ function RefusalNote({ id, testId, text }: { id: string; testId: string; text: s
   );
 }
 
-export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fireToast, signer, freezeRefusal, esignRefusal, reviewOnly }: AuthoringFilingBarProps) {
+export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fireToast, signer, freezeRefusal, esignRefusal, reviewOnly, workflowOrigin, docRevision }: AuthoringFilingBarProps) {
   const freezeNoteId = useId();
   const esignNoteId = useId();
   const [dialog, setDialog] = useState<Dialog>(null);
+  /** Set when an APPROVER signature could not move every bound filing section
+   *  (P-29, D-29-C). Persistent, not a toast: the approver has to be able to
+   *  read the keys and act on them after the confirmation has gone. */
+  const notApprovedNoteId = useId();
+  const [notApprovedKeys, setNotApprovedKeys] = useState<string[]>([]);
   /** Set when the server refused the freeze because work is outstanding. */
   const [unresolved, setUnresolved] = useState<Unresolved | null>(null);
   const frozen = FROZEN_STATES.has(docStatus);
+  const consentToken = workflowConsentToken(docId, docRevision, docStatus, workflowOrigin);
+  const { adoptRef, onMeaningChange, renderMeaningDetails } = useWorkflowAdoption(consentToken, dialog, workflowOrigin);
 
   /** The not-settled form's answer: go back, or reopen the signature to seal it as it stands. */
   const onUnsettledChoice = (v: Record<string, string>) => {
@@ -298,27 +371,17 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
     fireToast('Document frozen and sealed' + (out.hash ? ' · ' + String(out.hash).slice(0, 12) + '…' : '') + '.');
     setUnresolved(null);
     onChanged();
-    return {
-      meaning: input.meaning,
-      reason: input.reason,
-      signedAt: out.frozenAt ?? new Date().toISOString(),
-      ...(out.hash ? { hash: out.hash } : {}),
-    };
+    return signedManifest(input, out.frozenAt, out.hash);
   };
 
   /* Runs after the dialog has checked the password (and code) with the server.
      A throw is shown in the dialog, which stays open; nothing is signed. */
   const doSign = async (input: SignInput): Promise<EsigSignedManifest> => {
-    const signed = await postAuthoringSignature(docId, input);
-    const approved = signed.meaning === 'APPROVER';
-    fireToast('Document signed (' + signed.meaning.toLowerCase() + ')' + (approved ? ' — approved and frozen' : '') + (signed.hash ? ' · ' + String(signed.hash).slice(0, 12) + '…' : '') + '.');
+    const signed = await postAuthoringSignature(docId, input, input.meaning === 'review' && adoptRef.current);
+    setNotApprovedKeys(signed.notApproved);
+    fireToast(signedToast(signed));
     onChanged();
-    return {
-      meaning: input.meaning,
-      reason: input.reason,
-      signedAt: signed.signedAt ?? new Date().toISOString(),
-      ...(signed.hash ? { hash: signed.hash } : {}),
-    };
+    return signedManifest(input, signed.signedAt, signed.hash);
   };
 
   return (
@@ -335,6 +398,9 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
         {I.penLine} E-sign
       </button>
       {esignRefusal && <RefusalNote id={esignNoteId} testId="esign-refusal" text={esignRefusal} />}
+      {notApprovedKeys.length > 0 && (
+        <RefusalNote id={notApprovedNoteId} testId="esign-not-approved" text={notApprovedNote(notApprovedKeys)} />
+      )}
 
       {dialog === 'freeze' && (
         <EsignModal
@@ -364,6 +430,7 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
           targetMeta={esignOffer(reviewOnly).targetMeta}
           defaultMeaning="review"
           meanings={esignOffer(reviewOnly).meanings}
+          onMeaningChange={onMeaningChange} renderMeaningDetails={renderMeaningDetails}
           signer={signer}
           onClose={() => setDialog(null)}
           onSign={doSign}
@@ -371,4 +438,33 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
       )}
     </>
   );
+}
+
+function WorkflowAdoption({ origin, checked, disabled, onChecked }: {
+  origin: WorkflowImportOrigin; checked: boolean; disabled: boolean; onChecked: (checked: boolean) => void;
+}) {
+  return <div className="ed-workflow-adoption">
+    <label className="ed-workflow-adoption-label"><input type="checkbox" checked={checked} disabled={disabled} onChange={e => onChecked(e.target.checked)} />
+      <span>I have reviewed and consciously adopt the current saved working copy for this review.</span></label>
+    <p className="ed-workflow-adoption-hint">Requires your current approved review assignment. Recorded machine, template and unknown origins remain. This does not certify model qualification or PQ.</p>
+    {origin.sectionOrigins.some(s => s.originalAuthorship === 'machine') && <p className="ed-workflow-adoption-hint">Known machine content remains held unless its qualification requirements are met or the affected passages are replaced by human writing.</p>}
+  </div>;
+}
+
+function adoptionDetails(meaning: EsigMeaning, disabled: boolean, origin: WorkflowImportOrigin | undefined, checked: boolean, onChecked: (checked: boolean) => void) {
+  return meaning === 'review' && origin ? <WorkflowAdoption origin={origin} checked={checked} disabled={disabled} onChecked={onChecked} /> : null;
+}
+
+function useWorkflowAdoption(token: string, dialog: Dialog, origin: WorkflowImportOrigin | undefined) {
+  const [adoption, setAdoption] = React.useState({ token: '', checked: false });
+  const adoptRef = React.useRef(false);
+  adoptRef.current = !!origin && adoption.token === token && adoption.checked;
+  React.useEffect(() => { setAdoption({ token, checked: false }); }, [token, dialog]);
+  return { adoptRef, onMeaningChange: () => setAdoption({ token, checked: false }),
+    renderMeaningDetails: (meaning: EsigMeaning, committing: boolean) => adoptionDetails(meaning, committing, origin,
+      adoptRef.current, checked => setAdoption({ token, checked })) };
+}
+
+function workflowConsentToken(docId: string, revision: string | undefined, status: string, origin: WorkflowImportOrigin | undefined) {
+  return `${docId}:${revision ?? status}:${origin?.fingerprint ?? ''}`;
 }

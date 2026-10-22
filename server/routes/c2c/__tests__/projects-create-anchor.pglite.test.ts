@@ -72,6 +72,7 @@ beforeAll(async () => {
       'migrations/20260524_program_workbench_schema.sql',
       'migrations/20260907_regulatory_programs_application_number.sql',
       'migrations/20260903_regulatory_programs_estar_device_fields.sql',
+      'migrations/20261012b_regulatory_programs_eu_device_classes.sql',
       'migrations/20260814_projects_regulatory_program_anchor.sql',
       'migrations/20261001b_projects_one_anchor_per_program.sql',
     ],
@@ -83,6 +84,13 @@ beforeAll(async () => {
        (${MARKED}, 'marked', 'marked', 'standard', 10), (${NONE}, 'none', 'none', 'standard', 10)`,
   );
   await jdb.pool.query(`INSERT INTO users (id, email, name, password_hash) VALUES (${USER}, 'lead@p19.example', 'Lead', 'x')`);
+  // POST / admits only a current active member whose role may create a
+  // program (requireProjectCreationAccess -> readCsrProjectActor): the lead is
+  // a manager of every organisation it creates in, as the harness claims.
+  await jdb.pool.query(
+    `INSERT INTO organization_users (organization_id, user_id, role)
+       SELECT o, ${USER}, 'manager' FROM unnest(ARRAY[${ONE_WS}, ${AMBIGUOUS}, ${MARKED}, ${NONE}]) AS o`,
+  );
   await jdb.pool.query(
     `INSERT INTO client_workspaces (id, organization_id, name, slug, metadata) VALUES
        (1, ${ONE_WS}, 'Default Workspace', 'default', NULL),
@@ -148,6 +156,28 @@ async function holdings(orgId: number) {
 }
 
 describe('POST /api/c2c/projects — the program and its project record are one creation', () => {
+  it.each([
+    { programType: 'mdr', productType: 'device', submissionTypeId: 'eu_mdr_techdoc', field: 'euMdrClass', value: 'IIa', column: 'eu_mdr_class', other: 'eu_ivdr_class' },
+    { programType: 'ivdr', productType: 'ivd', submissionTypeId: 'eu_ivdr', field: 'euIvdrClass', value: 'D', column: 'eu_ivdr_class', other: 'eu_mdr_class' },
+  ] as const)('$programType keeps its stated class on the regional column with the anchored creation and audit record', async ({ programType, productType, submissionTypeId, field, value, column, other }) => {
+    const res = await request(app).post('/api/c2c/projects').set('x-org', String(ONE_WS)).send({
+      name: `P19 EU ${programType} file`, productName: 'Regional meter', programType, productType,
+      primaryAgency: 'EU / Notified Body', submissionTypeId, [field]: value,
+    });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    const programId = String(res.body.data.id);
+    const [row] = await rows<{ eu_mdr_class: string | null; eu_ivdr_class: string | null; device_class: string | null }>(
+      'SELECT eu_mdr_class, eu_ivdr_class, device_class FROM regulatory_programs WHERE id = $1 AND organization_id = $2',
+      [programId, ONE_WS],
+    );
+    expect(row[column]).toBe(value); expect(row[other]).toBeNull(); expect(row.device_class).toBeNull();
+    expect(await resolveStrict(programId, ONE_WS)).toBe(res.body.meta.projectAnchorId);
+    const [audit] = await rows<{ details: Record<string, unknown> }>(
+      "SELECT new_values AS details FROM audit_logs WHERE action = 'c2c.project.create' AND record_id = $1 AND tenant_id = $2", [programId, ONE_WS],
+    );
+    expect(audit.details[column]).toBe(value); expect(audit.details[other]).toBeNull();
+  });
+
   it('a created program resolves, strict, to its own projects row with intake\'s values', async () => {
     const res = await create(ONE_WS, 'P19 Glucose Sensor');
     expect(res.status, JSON.stringify(res.body)).toBe(201);

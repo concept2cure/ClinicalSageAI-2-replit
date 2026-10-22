@@ -155,6 +155,9 @@ vi.mock('../../server/db', () => {
     delete: vi.fn(() => ({
       where: vi.fn().mockResolvedValue(undefined),
     })),
+    // Ordinary create/archive now enlist their related business writes together.
+    // Real rollback behavior is proved by o01-core-project-audits.pglite.test.ts.
+    transaction: vi.fn(async (run: (tx: unknown) => Promise<unknown>) => run(db)),
   };
 
   /*
@@ -253,6 +256,14 @@ vi.mock('../../server/services/part11/reverify-signer-deps', () => ({
     warn: () => {},
   }),
   loadPasswordHash: async () => 'stored-hash',
+}));
+
+/* §11.10(g): the signing route asks the platform's one policy
+   (checkSigningAuthority, P-27), which reads the signer's role from the
+   membership row. User 1 is an admin of org 1, as the session says. */
+vi.mock('../../server/services/part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: async (userId: number, organizationId: number) =>
+    userId === 1 && organizationId === 1 ? 'admin' : null,
 }));
 
 vi.mock('../../server/middleware/redisRateLimiter', () => ({

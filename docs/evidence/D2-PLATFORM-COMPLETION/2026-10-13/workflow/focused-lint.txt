@@ -1,0 +1,47 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/BiopharmaProject.tsx
+  132:1   warning  Function 'RegulatoryPanel' has too many lines (162). Maximum allowed is 100                                                                                                                       max-lines-per-function
+  328:1   warning  Function 'CsrWorkflowBoard' has too many lines (207). Maximum allowed is 100                                                                                                                      max-lines-per-function
+  328:1   warning  Function 'CsrWorkflowBoard' has a complexity of 28. Maximum allowed is 15                                                                                                                         complexity
+  338:9   warning  The 'sections' conditional could make the dependencies of useMemo Hook (at line 451) change on every render. To fix this, wrap the initialization of 'sections' in its own useMemo() Hook         react-hooks/exhaustive-deps
+  349:9   warning  The 'findings' logical expression could make the dependencies of useMemo Hook (at line 383) change on every render. To fix this, wrap the initialization of 'findings' in its own useMemo() Hook  react-hooks/exhaustive-deps
+  349:9   warning  The 'findings' logical expression could make the dependencies of useMemo Hook (at line 451) change on every render. To fix this, wrap the initialization of 'findings' in its own useMemo() Hook  react-hooks/exhaustive-deps
+  397:39  warning  Arrow function has a complexity of 16. Maximum allowed is 15                                                                                                                                      complexity
+  590:8   warning  Function 'RegulatoryWorkspace' has too many lines (177). Maximum allowed is 100                                                                                                                   max-lines-per-function
+  598:9   warning  The 'tree' conditional could make the dependencies of useEffect Hook (at line 608) change on every render. To fix this, wrap the initialization of 'tree' in its own useMemo() Hook               react-hooks/exhaustive-deps
+  598:9   warning  The 'tree' conditional could make the dependencies of useMemo Hook (at line 677) change on every render. To fix this, wrap the initialization of 'tree' in its own useMemo() Hook                 react-hooks/exhaustive-deps
+  599:9   warning  The 'intel' conditional could make the dependencies of useMemo Hook (at line 677) change on every render. To fix this, wrap the initialization of 'intel' in its own useMemo() Hook               react-hooks/exhaustive-deps
+  632:1   warning  File has too many lines (648). Maximum allowed is 500                                                                                                                                             max-lines
+
+/workspace/ClinicalSageAI-2-replit/server/routes/csr-builder-routes.ts
+  311:72  warning  Async arrow function has a complexity of 18. Maximum allowed is 15  complexity
+
+/workspace/ClinicalSageAI-2-replit/server/routes/csr-workflow-routes.ts
+  198:60  warning  Async arrow function has a complexity of 20. Maximum allowed is 15  complexity
+
+/workspace/ClinicalSageAI-2-replit/server/routes/ectd-compile.ts
+   527:75  warning  Async arrow function has too many lines (175). Maximum allowed is 100                    max-lines-per-function
+   527:75  warning  Async arrow function has a complexity of 31. Maximum allowed is 15                       complexity
+   756:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+   833:1   warning  File has too many lines (1373). Maximum allowed is 500                                   max-lines
+   863:1   warning  Function 'leafPlacementFindings' has a complexity of 19. Maximum allowed is 15           complexity
+   976:1   warning  Async function 'compileFromSpine' has too many lines (230). Maximum allowed is 100       max-lines-per-function
+   976:1   warning  Async function 'compileFromSpine' has a complexity of 53. Maximum allowed is 15          complexity
+  1265:3   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+/workspace/ClinicalSageAI-2-replit/server/routes/submission-orchestrator.ts
+  403:58  warning  Async arrow function has too many lines (164). Maximum allowed is 100  max-lines-per-function
+  403:58  warning  Async arrow function has a complexity of 36. Maximum allowed is 15     complexity
+  827:1   warning  File has too many lines (586). Maximum allowed is 500                  max-lines
+
+/workspace/ClinicalSageAI-2-replit/server/services/csr-builder.ts
+  359:3  warning  'setImmediate' is not defined                                                       no-undef
+  396:8  warning  Async function 'generateCSRSections' has a complexity of 18. Maximum allowed is 15  complexity
+  780:1  warning  File has too many lines (605). Maximum allowed is 500                               max-lines
+  851:1  warning  Function 'generateSectionTemplate' has a complexity of 19. Maximum allowed is 15    complexity
+
+/workspace/ClinicalSageAI-2-replit/server/services/csr/csr-job-runner.ts
+  190:8  warning  Async function 'runCSRBuildJob' has too many lines (195). Maximum allowed is 100  max-lines-per-function
+  190:8  warning  Async function 'runCSRBuildJob' has a complexity of 31. Maximum allowed is 15     complexity
+
+✖ 31 problems (0 errors, 31 warnings)

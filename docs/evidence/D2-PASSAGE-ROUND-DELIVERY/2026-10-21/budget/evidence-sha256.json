@@ -1,0 +1,20 @@
+{
+  "algorithm": "sha256",
+  "scope": "Budget owner evidence, excludes this manifest itself. Raw logs are byte-preserved.",
+  "files": {
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/README.md": "f6e3c5ae34db44076c2fd9ce5e93be0f286ee2e0458882c3c292d2734a4d4f58",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/baseline-command.json": "b43b44e6f0b569573de760670a46408bed1faee52c4d57a81da77c11864ad8b1",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/baseline-red.txt": "ffec01f8ac3d54f74fc1cc478e0edef1befb5bcc760b9601604c65f7775d4b94",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/baseline-result.json": "3fda2c0597af2a6f667817d65462ea7437a4bf81372db5489edebd58a14f9e97",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/frozen-test.json": "26c7ce525f72168bf349c8389b5bdf77f85d5d58ab350b343ce26d8deabbdaa7",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/initial-baseline-command.json": "db4f03c24d2ac38540337b44a8f03a009ed5cea4899b25cd99da1e647e1cf3c9",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/initial-baseline-red.txt": "c13dbde51b9e75b83c5282b8e2044817d45f37bbef34cc2abcef7aff03f91764",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/initial-baseline-result.json": "3b99fd8a8a8d97ee8b7a90f76a9542535b24b5b955dd66ed66de3f2a313d68d9",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/initial-lint-command.json": "cc8391b1c7afa2204313aba5abd4ae6fce2baf6dfe50e5e3986598fde50a2558",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/initial-lint-raw.txt": "b4646e9d1afdcb695ebd92b2ecc096eddd8223ade74f426304a711714a05dce8",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/initial-lint-stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/lint-command.json": "c88b1713bc9c420126eb14e51cbc22f29a532d9b53ab3a392472eb8ba954db04",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/lint-raw.txt": "b4646e9d1afdcb695ebd92b2ecc096eddd8223ade74f426304a711714a05dce8",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget/lint-stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

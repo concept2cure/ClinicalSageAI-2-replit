@@ -1,0 +1,94 @@
+ ✓ tests/routes/510k-device-routes.test.ts > 510(k) device profile + openFDA lookups > serves the org-scoped device profile 7ms
+ ✓ tests/routes/510k-device-routes.test.ts > 510(k) device profile + openFDA lookups > 404s a profile outside the caller org without leaking data 2ms
+ ✓ tests/routes/510k-device-routes.test.ts > 510(k) device profile + openFDA lookups > updates intake fields and returns the fresh profile 4ms
+ ✓ tests/routes/510k-device-routes.test.ts > 510(k) device profile + openFDA lookups > rejects an invalid device class instead of writing it 2ms
+ ✓ tests/routes/510k-device-routes.test.ts > 510(k) device profile + openFDA lookups > accepts the US 510(k) class I 3ms
+ ✓ tests/routes/510k-device-routes.test.ts > 510(k) device profile + openFDA lookups > accepts the US 510(k) class II 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > 510(k) device profile + openFDA lookups > accepts the US 510(k) class III 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > 510(k) device profile + openFDA lookups > refuses regional class Is in the US 510(k) field 2ms
+ ✓ tests/routes/510k-device-routes.test.ts > 510(k) device profile + openFDA lookups > refuses regional class Im in the US 510(k) field 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > 510(k) device profile + openFDA lookups > refuses regional class Ir in the US 510(k) field 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > 510(k) device profile + openFDA lookups > refuses regional class IIa in the US 510(k) field 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > 510(k) device profile + openFDA lookups > refuses regional class IIb in the US 510(k) field 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > 510(k) device profile + openFDA lookups > refuses regional class A in the US 510(k) field 0ms
+ ✓ tests/routes/510k-device-routes.test.ts > 510(k) device profile + openFDA lookups > refuses regional class D in the US 510(k) field 0ms
+ ✓ tests/routes/510k-device-routes.test.ts > 510(k) device profile + openFDA lookups > passes through an honest unavailable classification result 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > 510(k) device profile + openFDA lookups > labels predicate fallback results as reduced 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > runs the role gate BEFORE the entitlement gate 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a viewer is refused 403 and NO row is updated and NO audit row is written 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a guest is refused 403 and NO row is updated and NO audit row is written 0ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a  is refused 403 and NO row is updated and NO audit row is written 0ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a admin succeeds 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a manager succeeds 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a member succeeds 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a approver succeeds 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a reviewer succeeds 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a owner succeeds 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a super_admin succeeds 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a successful patch writes exactly ONE audit row naming the changed fields 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a rejected patch writes NO audit row 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a program outside the caller org writes no audit row either 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > refuses the write when no actor resolves — never audits an invented id 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > leaves the READS open — a viewer can still read the profile 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — current program identity is rechecked before audit > refuses a program that disappears before the governed pre-write snapshot 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — current program identity is rechecked before audit > refuses a zero-row update and records no audit claim that the program changed 4ms
+ ✓ tests/routes/510k-device-routes.test.ts > GET /standards — recognized consensus standards for a product code > refuses without an organization context 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > GET /standards — recognized consensus standards for a product code > rejects a query naming neither a program nor a product code 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > GET /standards — recognized consensus standards for a product code > resolves the org's own program to its product code 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > GET /standards — recognized consensus standards for a product code > 404s a program outside the caller org without looking anything up or leaking it 0ms
+ ✓ tests/routes/510k-device-routes.test.ts > GET /standards — recognized consensus standards for a product code > prefers an explicit product code over the saved one — an unsaved edit is checkable 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > GET /standards — recognized consensus standards for a product code > answers 200 with the labelled unavailable envelope, not an error or an empty list 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > GET /standards — recognized consensus standards for a product code > passes a real, empty answer through as available — distinct from no dataset 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the predicate of record > persists a claimed predicate and audits which one was claimed 2ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the predicate of record > drops a blank optional fact instead of storing an empty string 2ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the predicate of record > CLEARS the claim on null — no predicate is not a stale predicate 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the predicate of record > refuses a nameless predicate instead of writing it 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the predicate of record > refuses an idless predicate instead of writing it 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the predicate of record > refuses two entries claiming the same device instead of writing it 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the predicate of record > refuses a bare string list instead of writing it 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > accepts an empty patch: every field is optional 4ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > accepts a fully populated, valid patch 1ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > refuses deviceName = "" 4ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > refuses deviceName = "   " 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > refuses deviceName = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx [long parameter display truncated]
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > refuses deviceClass = "IV" 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > refuses deviceClass = "" 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > refuses deviceClass = "A" 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > refuses deviceClass = "D" 4ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > refuses deviceClass = "2" 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > refuses manufacturer = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx [long parameter display truncated]
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > refuses intendedUse = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx [long parameter display truncated]
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > refuses attachedDocuments = "doc-1" 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > refuses attachedDocuments = {"a":1} 4ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > refuses state = [] 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > refuses state = null 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > refuses state = "draft" 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > refuses progress = -1 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > refuses progress = 101 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > refuses progress = "50" 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > refuses status = "bogus" 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > refuses status = 2 1ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > accepts deviceName = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx [long parameter display truncated]
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > accepts deviceName = "  padded  " 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > accepts deviceClass = "I" 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > accepts deviceClass = "II" 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > accepts deviceClass = "III" 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > accepts deviceClass = "Is" 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > accepts deviceClass = "Im" 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > accepts deviceClass = "Ir" 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > accepts deviceClass = "IIa" 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > accepts deviceClass = "IIb" 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > accepts deviceClass = null 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > accepts manufacturer = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx [long parameter display truncated]
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > accepts attachedDocuments = [] 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > accepts state = {} 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > accepts progress = 0 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > accepts progress = 100 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > accepts status = "archived" 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > reports the FIRST failing field, in declaration order 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > an explicit undefined is treated as absent, not as a bad value 0ms
+ ✓ tests/routes/device-projects-patch-validation.test.ts > validatePatch — the PUT field rules > accepts progress: NaN, as the rules it replaced did — see the file header 0ms
+ Test Files  2 passed (2)
+      Tests  90 passed (90)
+   Start at  22:59:20
+   Duration  5.01s (transform 1.86s, setup 170ms, import 4.00s, tests 97ms, environment 0ms)

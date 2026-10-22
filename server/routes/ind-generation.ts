@@ -36,11 +36,12 @@ import { serverError } from '../lib/api-response.js';
 import { createScopedLogger } from '../utils/logger.js';
 import { resolveOrgId, resolveUserId } from '../types/auth-request.js';
 
-// Also import device registry
-let getDeviceSections: ((type: '510K' | 'PMA' | 'DE_NOVO' | 'CER') => Array<{ code: string; title: string; required: boolean; guidance: string }>) | null = null;
+// Also import device registry. CER and IVDR answer from the canonical outlines
+// (market-specs/cer-structure.ts, per-structure.ts) through its projection.
+type DeviceRegistry = typeof import('../services/device/device-section-registry.js');
+let deviceRegistry: Pick<DeviceRegistry, 'getDeviceSections' | 'isDeviceSubmissionType' | 'DEVICE_SUBMISSION_TYPES'> | null = null;
 try {
-  const deviceMod = await import('../services/device/device-section-registry.js');
-  getDeviceSections = deviceMod.getDeviceSections;
+  deviceRegistry = await import('../services/device/device-section-registry.js');
 } catch {
   // Device registry not available
 }
@@ -185,6 +186,22 @@ function sendBadProjectRef(res: Response): Response {
   });
 }
 
+/**
+ * The section counts /status and /device-status answer with. 2026-10-15: they
+ * answered `completedSections`, every section whose status was not
+ * 'not_started', so a draft counted as completed. A section with an artifact
+ * is drafted; only an approved or locked one counts toward the required total.
+ */
+function sectionCounts(sections: Array<{ required: boolean; status: string }>) {
+  const approved = (s: { status: string }) => s.status === 'approved' || s.status === 'locked';
+  return {
+    draftedSections: sections.filter(s => s.status !== 'not_started').length,
+    approvedSections: sections.filter(approved).length,
+    requiredSections: sections.filter(s => s.required).length,
+    requiredApprovedSections: sections.filter(s => s.required && approved(s)).length,
+  };
+}
+
 // ─── GET /api/ind/structure ───────────────────────────────────────────────────
 
 router.get('/structure', (_req: Request, res: Response) => {
@@ -283,22 +300,30 @@ router.get('/guidance', (_req: Request, res: Response) => {
 });
 
 // ─── GET /api/ind/device-status/:type/:projectId ──────────────────────────────
-// Universal section status for device submissions (510K, PMA, CER, DE_NOVO)
+// Universal section status for device submissions (510K, PMA, DE_NOVO, CER, IVDR)
 
 router.get('/device-status/:type/:projectId', async (req: Request, res: Response) => {
   try {
     const { type } = req.params;
     const projectRef = projectRefOf(req.params.projectId);
     if (!projectRef) return sendBadProjectRef(res);
-    const deviceType = String(type).toUpperCase() as '510K' | 'PMA' | 'DE_NOVO' | 'CER';
+    const deviceType = String(type).toUpperCase();
 
-    if (!getDeviceSections) {
-      return res.json({ success: true, data: { sections: [], totalSections: 0, completedSections: 0 } });
+    // No registry is this server's failure, and a type with no outline is the
+    // caller's: neither is a project with nothing drafted.
+    if (!deviceRegistry) {
+      return res.status(503).json({ success: false, error: 'Device section registry unavailable' });
+    }
+    if (!deviceRegistry.isDeviceSubmissionType(deviceType)) {
+      return res.status(400).json({
+        success: false,
+        error: `Unknown device submission type. Known: ${deviceRegistry.DEVICE_SUBMISSION_TYPES.join(', ')}`,
+      });
     }
 
-    const sections = getDeviceSections(deviceType);
+    const sections = deviceRegistry.getDeviceSections(deviceType);
     if (!sections || sections.length === 0) {
-      return res.json({ success: true, data: { sections: [], totalSections: 0, completedSections: 0 } });
+      return res.json({ success: true, data: { sections: [], totalSections: 0, ...sectionCounts([]) } });
     }
 
     const read = await readProjectArtifacts(req, projectRef);
@@ -322,8 +347,7 @@ router.get('/device-status/:type/:projectId', async (req: Request, res: Response
       data: {
         sections: sectionStatus,
         totalSections: sections.length,
-        completedSections: sectionStatus.filter(s => s.status !== 'not_started').length,
-        approvedSections: sectionStatus.filter(s => s.status === 'approved' || s.status === 'locked').length,
+        ...sectionCounts(sectionStatus),
       },
     });
   } catch (error) {
@@ -367,8 +391,7 @@ router.get('/status/:projectId', async (req: Request, res: Response) => {
         sections: sectionStatus,
         modules: moduleStatus,
         totalSections: IND_SECTIONS.length,
-        completedSections: sectionStatus.filter(s => s.status !== 'not_started').length,
-        approvedSections: sectionStatus.filter(s => s.status === 'approved' || s.status === 'locked').length,
+        ...sectionCounts(sectionStatus),
       },
     });
   } catch (error) {

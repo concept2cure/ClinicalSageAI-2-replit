@@ -474,6 +474,21 @@ describe('MFA Service', () => {
       const result = mfaModule.verifyMfaChallengeToken('invalid.token.here');
       expect(result).toBeNull();
     });
+
+    it('preserves signed SAML tenant, role and logout context without granting a session', () => {
+      const token = mfaModule.createSamlMfaChallengeToken({ userId: 7, email: 'alice@acme.test', organizationId: '42', role: 'manager' }, '_session_1');
+      expect(mfaModule.verifyMfaChallengeToken(token)).toEqual({
+        userId: '7', email: 'alice@acme.test', organizationId: '42', organizationUuid: null,
+        role: 'manager', provider: 'saml', sessionIndex: '_session_1',
+      });
+      const parts = token.split('.');
+      const claims = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
+      expect(claims.type).toBe('mfa_challenge');
+      expect(claims.exp - claims.iat).toBe(300);
+      claims.organizationId = '99';
+      parts[1] = Buffer.from(JSON.stringify(claims)).toString('base64url');
+      expect(mfaModule.verifyMfaChallengeToken(parts.join('.'))).toBeNull();
+    });
   });
 });
 

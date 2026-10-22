@@ -2,7 +2,7 @@
 # TLS Postgres 16, a database built from blank by install-fresh + deploy-migrate, the CI boot smoke's env otherwise
 
 ## baseline
-AUDIT_TRAIL_ENABLED is not 
+AUDIT_TRAIL_ENABLED is not
 immutability triggers in force (8/8 present and enabled)
 integrity sweep scheduled (0 2 * * *)
 tamper-proof audit interceptor is NOT recording mutations and the chain-integrity monit

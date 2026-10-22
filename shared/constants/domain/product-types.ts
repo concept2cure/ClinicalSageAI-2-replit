@@ -28,7 +28,7 @@
  * ── The device family, and why CDx and SaMD are listed separately ────────────
  * `cdx` and `samd` are NOT regulatory siblings of `device` and `ivd`. A
  * companion diagnostic IS an in-vitro diagnostic — in the US usually a Class III
- * PMA, under the EU IVDR usually Class D — and software as a medical device IS
+ * PMA; under EU IVDR Rule 3(f), Class C subject to other applicable rules — and software as a medical device IS
  * a device. They are stored distinctly because the platform must route them
  * differently (a CDx carries a drug-pairing obligation; SaMD carries IEC 62304
  * and FD&C §524B cybersecurity), not because they sit outside the classes they
@@ -43,6 +43,8 @@
 
 import { toQuestionOptions as sharedToQuestionOptions, type DomainEntry } from './types.js';
 import type { QuestionOption } from '../../types/intelligence-questions.js';
+import { filingDocumentClassOf, filingDocumentClassTypes } from '../../regulatory/filing-document-classes.js';
+import { regionalDeviceApplicationClassOf, regionalDeviceApplicationClassTypes } from '../../regulatory/filing-catalog.js';
 
 // ─── Vocabulary ─────────────────────────────────────────────────────────────
 
@@ -81,7 +83,7 @@ export const PRODUCT_TYPES: DomainEntry<ProductType>[] = [
     value: 'cdx',
     label: 'Companion diagnostic',
     description:
-      'In-vitro diagnostic essential to the safe and effective use of a paired therapeutic product. Regulated AS an IVD — usually a Class III PMA in the US and Class D under the IVDR — with an additional co-development obligation to the paired drug.',
+      'In-vitro diagnostic essential to the safe and effective use of a paired therapeutic product. Regulated as an IVD, with classification determined by intended use and applicable regional rules, and an additional co-development obligation to the paired therapy.',
     regulatoryRefs: ['21 CFR 809', 'EU IVDR 2017/746', 'IVDR Annex I'],
   },
   {
@@ -147,7 +149,6 @@ const FILING_TYPE_PRODUCT_CLASS: Record<string, ProductType> = {
   '510k': 'device',
   de_novo: 'device',
   pma: 'device',
-  hde: 'device',
   ide: 'device',
   device: 'device',
   // ── Device, EU ──
@@ -160,14 +161,20 @@ const FILING_TYPE_PRODUCT_CLASS: Record<string, ProductType> = {
   ivd: 'ivd',
   ivdr: 'ivd',
   // ── Medicinal ──
-  ind: 'biologic',
+  // Only the filings that fix the class. An NDA or ANDA is a drug application
+  // (21 CFR 314) and a BLA a biologics licence (21 CFR 601).
+  //
+  // `ind`, `cta`, `maa` and `jnda` were listed here as 'biologic' / 'drug' /
+  // 'drug' / 'drug' until 2026-10-08, and they are not facts: an IND goes to
+  // CDER for a drug and to CBER for a biologic, and an EU MAA, an EU CTA and a
+  // Japanese J-NDA each cover both. The wizard recorded an inhaled small
+  // molecule as a biologic because of the first of them (QA 2026-10-08, second
+  // walk, j1/j7). They are absent now, so they resolve to null and the person
+  // states the class (P-21: regulated choices start unstated).
   bla: 'biologic',
   biologic: 'biologic',
   nda: 'drug',
   anda: 'drug',
-  jnda: 'drug',
-  maa: 'drug',
-  cta: 'drug',
 };
 
 /**
@@ -195,15 +202,18 @@ export function productTypeForFilingType(
   lane?: string | null,
 ): ProductType | null {
   const key = String(filingType ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_');
-  const base = FILING_TYPE_PRODUCT_CLASS[key];
+  const regional = regionalDeviceApplicationClassOf(key);
+  if (regional && !regional.refineFromIvdLane) return regional.defaultProductType;
+  const base = regional?.defaultProductType ?? FILING_TYPE_PRODUCT_CLASS[key];
   if (!base) return null;
-  if (base === 'device' && IVD_LANES.has(String(lane ?? '').trim().toLowerCase())) return 'ivd';
+  // MDR and CER are device-only instruments; their IVD counterpart is IVDR/PER.
+  if (base === 'device' && key !== 'mdr' && key !== 'cer' && IVD_LANES.has(String(lane ?? '').trim().toLowerCase())) return 'ivd';
   return base;
 }
 
 /** Every filing type this vocabulary can classify. */
 export function listClassifiableFilingTypes(): string[] {
-  return Object.keys(FILING_TYPE_PRODUCT_CLASS);
+  return [...new Set([...Object.keys(FILING_TYPE_PRODUCT_CLASS), ...regionalDeviceApplicationClassTypes()])];
 }
 
 // ─── Workstream ─────────────────────────────────────────────────────────────
@@ -223,17 +233,31 @@ export const WORKSTREAM_FILING_TYPES: Record<Workstream, readonly string[]> = {
   // from the server's bucketing and fell through to a title-cased echo of the
   // filing type — an EU MDR programme listed under a "Mdr" workstream, which
   // matches none of the grid's filter tabs, so it was invisible in the MDX view.
-  MDX: ['510k', 'de_novo', 'pma', 'hde', 'ide', 'device', 'ivd', 'cer', 'mdr', 'ivdr'],
+  MDX: ['510k', 'de_novo', 'pma', 'ide', 'device', 'ivd', 'cer', 'mdr', 'ivdr', ...regionalDeviceApplicationClassTypes()],
   Biotech: ['ind', 'bla', 'biologic'],
   Pharma: ['nda', 'maa', 'jnda', 'anda', 'cta'],
 };
 
-/** The portfolio workstream a filing type belongs to, or null if unclassified. */
-export function workstreamForFilingType(filingType: string | null | undefined): Workstream | null {
+/**
+ * A filing document class (a supplement, an annual report, a CSR, a meeting
+ * package — shared/regulatory/filing-document-classes.ts) covers drugs and
+ * biologics alike, so its workstream is its product class's: a biologic is
+ * Biotech, a drug Pharma. Added 2026-10-18 with the classes; without it they
+ * bucketed as a title-cased echo ("Pas", "Csr") that matches no grid tab.
+ */
+const WORKSTREAM_BY_PRODUCT_CLASS: Readonly<Record<string, Workstream>> = { biologic: 'Biotech', drug: 'Pharma' };
+
+/** The portfolio workstream a filing type belongs to, or null if unclassified. A
+ *  filing document class reads it from the product class, when one is given. */
+export function workstreamForFilingType(
+  filingType: string | null | undefined,
+  productType?: string | null,
+): Workstream | null {
   const key = String(filingType ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_');
   for (const [ws, types] of Object.entries(WORKSTREAM_FILING_TYPES) as [Workstream, readonly string[]][]) {
     if (types.includes(key)) return ws;
   }
+  if (filingDocumentClassOf(key)) return WORKSTREAM_BY_PRODUCT_CLASS[String(productType ?? '').trim().toLowerCase()] ?? null;
   return null;
 }
 
@@ -247,13 +271,22 @@ export function workstreamForFilingType(filingType: string | null | undefined): 
  * know is shown as itself rather than silently folded into a bucket it may not
  * belong to.
  */
-export function workstreamSqlCase(column: string): string {
+export function workstreamSqlCase(column: string, productTypeColumn?: string): string {
   const branch = (ws: Workstream) =>
     `WHEN lower(${column}) IN (${WORKSTREAM_FILING_TYPES[ws].map((t) => `'${t}'`).join(',')}) THEN '${ws}'`;
+  // A filing document class buckets by its product class (workstreamForFilingType).
+  const byClass = (ws: Workstream) => Object.entries(WORKSTREAM_BY_PRODUCT_CLASS)
+    .filter(([, w]) => w === ws).map(([cls]) => `'${cls}'`).join(',');
+  const classes = filingDocumentClassTypes().map((t) => `'${t}'`).join(',');
+  const classBranch = productTypeColumn
+    ? `WHEN lower(${column}) IN (${classes}) AND lower(${productTypeColumn}) IN (${byClass('Biotech')}) THEN 'Biotech'
+         WHEN lower(${column}) IN (${classes}) AND lower(${productTypeColumn}) IN (${byClass('Pharma')}) THEN 'Pharma'`
+    : '';
   return `CASE
          ${branch('MDX')}
          ${branch('Biotech')}
          ${branch('Pharma')}
+         ${classBranch}
          ELSE initcap(replace(${column}, '_', ' '))
        END`;
 }

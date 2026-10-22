@@ -1,0 +1,33 @@
+# 10 mutations, all red
+# driver: scratchpad/mutate11.py + mutate12.py (apply, run the named test, restore)
+
+RED       the split predicate is offered as if FDA accepted it
+          test: shared/regulatory/__tests__/predicate-positions.test.ts
+          first failures: × shared/regulatory/__tests__/predicate-positions.test.ts > the positions > offers the split predicate and says FDA does not accept it 5ms
+RED       a reference device is read as a predicate
+          test: shared/regulatory/__tests__/predicate-positions.test.ts
+          first failures: × shared/regulatory/__tests__/predicate-positions.test.ts > what the answers say about the device being compared to > says nothing where nothing was said, which is not the same as "there is none" 6ms
+RED       silence is read as 'there is no predicate'
+          test: shared/regulatory/__tests__/predicate-positions.test.ts
+          first failures: × shared/regulatory/__tests__/predicate-positions.test.ts > what the answers say about the device being compared to > says nothing where nothing was said, which is not the same as "there is none" 5ms
+RED       a named predicate overrides the sponsor saying there is none
+          test: shared/regulatory/__tests__/predicate-positions.test.ts
+          first failures: × shared/regulatory/__tests__/predicate-positions.test.ts > what the answers say about the device being compared to > prefers the stated strategy over a name left in an earlier box 8ms
+RED       a 510(k) with nothing to compare to is not marked
+          test: shared/regulatory/__tests__/pathway-availability.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-availability.test.ts > a programme with nothing to compare to > closes the 510(k), which is the stronger half of the De Novo pair 6ms | × shared/regulatory/__tests__/pathway-availability.test.ts > a programme with nothing to compare to > says the other thing when FDA has already found the device not equivalent 1ms | × shared/regulatory/__tests__/pathway-availability.test.ts > what every rule must satisfy > can fire: every RULE fires on some fact a flow can state 9ms
+RED       the predicate state is not read from the strategy answer
+          test: server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > which answer states which fact > reads the class and the predicate the flows actually ask for 8ms
+RED       the strategy is asked after the predicate's details again
+          test: server/services/ana/intelligence-questions/__tests__/predicate-strategy.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/predicate-strategy.test.ts > the question > is asked before the predicate’s name, number and manufacturer 11ms | × server/services/ana/intelligence-questions/__tests__/predicate-strategy.test.ts > the question > offers the governed positions, each with its consequence and authority 2ms
+RED       the predicate's name is demanded of a programme that has none
+          test: server/services/ana/intelligence-questions/__tests__/predicate-strategy.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/predicate-strategy.test.ts > a programme with no predicate > is not asked for the predicate it has just said does not exist 8ms | × server/services/ana/intelligence-questions/__tests__/predicate-strategy.test.ts > a programme with no predicate > can get past the question without inventing one 7ms
+RED       the split predicate passes without a word on the record
+          test: server/services/ana/intelligence-questions/__tests__/predicate-strategy.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/predicate-strategy.test.ts > a split predicate > is recorded as the refusal it will draw, at critical 4ms
+RED       no predicate passes without a word on the record (the check's own condition can never match)
+          test: server/services/ana/intelligence-questions/__tests__/predicate-strategy.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/predicate-strategy.test.ts > a programme with no predicate > is told plainly that this is not a 510(k), and what the route is 5ms

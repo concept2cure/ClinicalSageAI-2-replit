@@ -1,0 +1,20 @@
+[
+  {
+    "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+    "bytes": 16017,
+    "digestAlgorithm": "sha256",
+    "digest": "306f19661793263f83964e72c97f8ef81d9ab3bac36aabdc266f7143c2f20800"
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+    "bytes": 122493,
+    "digestAlgorithm": "sha256",
+    "digest": "5e2adeace0a18a01aa868eb0c2cb9993fd404b9f468f5254cd3493ae257b3019"
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/InsightsCatalogPanel.tsx",
+    "bytes": 15617,
+    "digestAlgorithm": "sha256",
+    "digest": "55a00802cd223074a95d9e2282696075ce8fa3f3e8296d249ef6151ac29a3514"
+  }
+]

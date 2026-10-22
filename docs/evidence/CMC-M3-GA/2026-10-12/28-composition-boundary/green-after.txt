@@ -1,0 +1,36 @@
+ ✓ composition-scope.pglite.test.ts > the compose path consults the boundary before it composes > refuses a program the person recorded as a biologic, whatever its substance says 70ms
+ ✓ composition-scope.pglite.test.ts > the compose path consults the boundary before it composes > composes a small molecule for a US IND 41ms
+ ✓ composition-scope.pglite.test.ts > the compose path consults the boundary before it composes > refuses the simulation’s monoclonal antibody, and composes nothing 27ms
+ ✓ composition-scope.pglite.test.ts > the compose path consults the boundary before it composes > refuses the same small molecule when the program files an NDA 30ms
+ ✓ composition-scope.pglite.test.ts > the compose path consults the boundary before it composes > refuses an NDA program that has no submission row yet 23ms
+ ✓ composition-scope.pglite.test.ts > the compose path consults the boundary before it composes > composes for an IND program that has no submission row yet 23ms
+ ✓ composition-scope.pglite.test.ts > the compose path consults the boundary before it composes > refuses a program whose substance records no route and no biological origin 29ms
+ ✓ composition-scope.pglite.test.ts > the compose path consults the boundary before it composes > leaves the caller’s transaction usable after a refusal 29ms
+ ✓ composition-scope.test.ts > classifySubstanceModality — one rule, shared with §3.2.A.2 > honours an explicit modality, either way 4ms
+ ✓ composition-scope.test.ts > classifySubstanceModality — one rule, shared with §3.2.A.2 > reads any biological signal as biologic, and says which one 1ms
+ ✓ composition-scope.test.ts > classifySubstanceModality — one rule, shared with §3.2.A.2 > catches an expression system in the route, and an INN stem in the name 2ms
+ ✓ composition-scope.test.ts > classifySubstanceModality — one rule, shared with §3.2.A.2 > does not fire on a chemical substance whose text incidentally says tissue or plasma 0ms
+ ✓ composition-scope.test.ts > classifySubstanceModality — one rule, shared with §3.2.A.2 > reads a recorded chemical process with no biological signal as a small molecule 1ms
+ ✓ composition-scope.test.ts > classifySubstanceModality — one rule, shared with §3.2.A.2 > reads NOTHING recorded as unknown — never as an assumed small molecule 0ms
+ ✓ composition-scope.test.ts > the product class the person recorded is asked first > refuses a biologic, a device, an IVD and a combination product 1ms
+ ✓ composition-scope.test.ts > the product class the person recorded is asked first > refuses a program recorded as a biologic even while its substance register says small molecule 0ms
+ ✓ composition-scope.test.ts > the product class the person recorded is asked first > composes a program recorded as a drug 1ms
+ ✓ composition-scope.test.ts > the product class the person recorded is asked first > falls through to the substance record when no class is recorded (pre-P-21 data) 1ms
+ ✓ composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > composes a small molecule for a US IND, however the type is cased 0ms
+ ✓ composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > composes for an IND program that has no submission row yet 0ms
+ ✓ composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > refuses a CTA or NDA program that has no submission row yet 1ms
+ ✓ composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > refuses when the program row itself could not be read 0ms
+ ✓ composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > refuses the simulation’s own monoclonal antibody 1ms
+ ✓ composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > refuses a biologic on each signal alone, so one missing field does not open the door 0ms
+ ✓ composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > refuses a substance whose modality the record does not establish, and asks for the route 0ms
+ ✓ composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > refuses a program that records no drug substance at all, and says so differently 0ms
+ ✓ composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > refuses every application that is not a US IND 1ms
+ ✓ composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > says what a marketing application needs that is not produced here 0ms
+ ✓ composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > judges the modality BEFORE the application — the substance is the stronger refusal 0ms
+ ✓ composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > judges the NEWEST drug substance, as the source read orders them 0ms
+ ✓ composition-scope.test.ts > every refusal names the path that does author it > points at Authoring, Vault and the Submission center 0ms
+ ✓ composition-scope.test.ts > every refusal names the path that does author it > carries the code and the hint in the 409 body 1ms
+ ✓ composition-scope.test.ts > a refusal cannot be mistaken for an empty result > is a typed error, recognised by its own guard 1ms
+ ✓ composition-scope.test.ts > a refusal cannot be mistaken for an empty result > an unreadable submission refuses rather than composing on an unestablished application 0ms
+ Test Files  2 passed (2)
+      Tests  34 passed (34)

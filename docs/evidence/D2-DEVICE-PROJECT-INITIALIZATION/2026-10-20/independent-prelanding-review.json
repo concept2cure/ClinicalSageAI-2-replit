@@ -1,0 +1,24 @@
+{
+  "at": "2026-10-20T22:52:02.308019+00:00",
+  "reviewer": "/root/regional_initialization_review",
+  "mode": "Read-only documentation and incoming code review; no edits or tests",
+  "documentationReview": {
+    "conclusion": "No blockers; preparation, submission qualification and human acceptance remain distinct",
+    "manualCasesNotRun": 49,
+    "sourcePinsMatch": 126,
+    "linksResolve": true
+  },
+  "incomingCanonicalReview": {
+    "range": "76c60846d..5d18c395084a8decb8514aed586e0c0de8a14ea4",
+    "conclusion": "No behavioral interaction blocker; leaf metadata does not alter regional creation or governed authoring binding",
+    "mergeRequirements": [
+      "Preserve DEVICE_PREPARATION_ONLY 422 and STALE_LEAF 409",
+      "Preserve regionalDeviceApplicationClassOf and stfFileName imports"
+    ],
+    "qualification": "Focused incoming Builder, route, leaf, signing/freeze/dispatch and regional creation regressions after merge; compiler/build/static/warnings on combined sources. The 85-suite run belongs to the earlier frozen tree; do not claim it ran after the merge."
+  },
+  "observedByRoot": {
+    "sourceFreeze": "source-freeze-final.json",
+    "sourceFreezeSha256": "1c82fbeea3ef1310f47ccd4cba041b3ff5fee29e22fa9be566661e95d01ddab5"
+  }
+}

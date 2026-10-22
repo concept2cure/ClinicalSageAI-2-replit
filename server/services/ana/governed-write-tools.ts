@@ -1,3 +1,4 @@
+import { requestsReadOnly } from './read-only-turn.js';
 /**
  * Which AnA tools persist MODEL-AUTHORED text into a governed record.
  *
@@ -45,7 +46,7 @@ export const GOVERNED_CONTENT_WRITE_TOOLS: Readonly<Record<string, string>> = {
   insert_document_content:
     'Writes model-authored insertions into an edited .docx that is an exportable deliverable, with no audit trail.',
   save_document_to_vault:
-    'Stores model-authored content as a versioned, audited vault document.',
+    'Stores model-authored content as a one-section authoring document in the editor (not the vault), which can later be filed to the vault.',
   update_biosketch_section:
     'Stores model-authored content in a biosketch section that is later finalized and submitted.',
   update_consent_element:
@@ -131,7 +132,7 @@ export const GOVERNED_DRAFT_REQUEST =
   /\b(draft|redraft|write|rewrite|author|compose|prepare|generate)\b(?:\W+\w+){0,6}?\W+(document|section|sections|summary|overview|narrative|letter|response|module|report|protocol|plan|sop|label|labeling|consent|briefing|submission|amendment|biosketch)\b/i;
 
 export function requestsGovernedDraft(message: string | null | undefined): boolean {
-  return typeof message === 'string' && GOVERNED_DRAFT_REQUEST.test(message);
+  return typeof message === 'string' && !requestsReadOnly(message) && GOVERNED_DRAFT_REQUEST.test(message);
 }
 
 export function isGovernedContentWriteTool(name: string): boolean {

@@ -18,6 +18,7 @@
 
 import type { Pool, PoolClient } from 'pg';
 import { createScopedLogger } from '../utils/logger';
+import { clearSessionScope } from '../db/sessionScope';
 
 const logger = createScopedLogger('lazy-request-db-client');
 
@@ -44,6 +45,7 @@ export type RequestDbClient = {
 export class LazyRequestDbClient implements RequestDbClient {
   private acquired: Promise<PoolClient> | null = null;
   private released = false;
+  private discardReason: Error | null = null;
 
   // Declared as a field so its overload signature is structurally identical
   // to `pg.Pool['query']` — a method with a single overload wouldn't satisfy
@@ -55,9 +57,10 @@ export class LazyRequestDbClient implements RequestDbClient {
     private readonly applySessionVars: (client: PoolClient) => Promise<void>,
   ) {
     this.query = ((...args: unknown[]) => {
-      return this.ensure().then((client) =>
-        (client.query as (...a: unknown[]) => unknown)(...args),
-      );
+      return this.ensure().then((client) => {
+        if (this.discardReason) throw new Error('Cannot query a discarded request DB client');
+        return (client.query as (...a: unknown[]) => unknown)(...args);
+      });
     }) as Pool['query'];
   }
 
@@ -69,7 +72,9 @@ export class LazyRequestDbClient implements RequestDbClient {
       this.acquired = (async () => {
         const client = await this.pool.connect();
         try {
+          if (this.discardReason) throw this.discardReason;
           await this.applySessionVars(client);
+          if (this.discardReason) throw this.discardReason;
         } catch (err) {
           // Session setup may have failed after setting only some variables.
           // Evict the connection instead of returning indeterminate tenant
@@ -81,6 +86,19 @@ export class LazyRequestDbClient implements RequestDbClient {
       })();
     }
     return this.acquired;
+  }
+
+  /** An uncertain COMMIT must never be reset and returned to the pool. Mark
+   * unusable synchronously, then evict the physical connection without SQL. */
+  async discard(reason: Error): Promise<void> {
+    if (this.released) return;
+    this.discardReason = reason;
+    this.released = true;
+    if (!this.acquired) return;
+    let client: PoolClient;
+    try { client = await this.acquired; }
+    catch { return; } // failed acquisition/setup already evicted its client
+    client.release(reason);
   }
 
   async release(): Promise<void> {
@@ -98,9 +116,8 @@ export class LazyRequestDbClient implements RequestDbClient {
 
     let cleanupError: Error | null = null;
     try {
-      await client.query("SELECT set_config('app.current_tenant_id', '', false)");
-      await client.query("SELECT set_config('app.current_user_role', '', false)");
-      await client.query("SELECT set_config('app.current_org_id', '', false)");
+      // The tenant variables and the isolation switches (sessionScope.ts).
+      await clearSessionScope(client);
     } catch (err) {
       cleanupError = asError(err, 'Failed to clear tenant session variables');
       logger.warn('Failed to clear tenant session vars on release', {

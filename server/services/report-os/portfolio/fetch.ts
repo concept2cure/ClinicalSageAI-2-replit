@@ -12,7 +12,7 @@
  * unit-testable; the fetch itself is a thin, org-scoped query loop.
  */
 
-import { and, eq, isNull, ne } from 'drizzle-orm';
+import { and, eq, inArray, isNull, ne } from 'drizzle-orm';
 import { db } from '../../../db';
 import { projects } from '@shared/schema';
 import {
@@ -146,6 +146,7 @@ export async function fetchPortfolioSummary(
 /** Top-level programs (roots of the project hierarchy) for an org, capped. */
 async function fetchOrgPrograms(
   organizationId: number,
+  accessibleProjectIds?: readonly number[],
 ): Promise<{ rows: Array<{ projectId: number; name: string; code: string | null; indication: string | null; programId: string | null }>; truncated: boolean }> {
   const rows = await db
     .select({
@@ -163,6 +164,7 @@ async function fetchOrgPrograms(
         // under it, so counting them too would double-count the portfolio.
         isNull(projects.parentProjectId),
         ne(projects.status, 'archived'),
+        ...(accessibleProjectIds ? [inArray(projects.id, [...accessibleProjectIds])] : []),
       ),
     )
     .limit(ORG_ROLLUP_CAP + 1);
@@ -192,8 +194,9 @@ async function fetchOrgPrograms(
  */
 export async function fetchOrgPortfolioSummary(
   organizationId: number,
+  options?: { accessibleProjectIds?: readonly number[] },
 ): Promise<OrgPortfolioSummary | null> {
-  const { rows, truncated } = await fetchOrgPrograms(organizationId);
+  const { rows, truncated } = await fetchOrgPrograms(organizationId, options?.accessibleProjectIds);
   if (rows.length === 0) return null;
 
   /* ── Readiness runs are independent, so they are not serialized ───────────

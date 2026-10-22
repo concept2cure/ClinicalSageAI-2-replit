@@ -6,8 +6,9 @@
  * agency's TEST environment holds the first PRODUCTION send of the same bytes.
  * The refusal told that production send the bundle "is with the agency" and
  * that a rollback "does not retract it": untrue, since production never
- * received it, and rolling the test send back is the only way to free the
- * lock. The real findActiveTransmittal SQL and assertNoActiveTransmittal run
+ * received it. Since 2026-10-17 (6ef0ef121) no rollback is offered: a resend is
+ * a new sequence from Submission Center. The real findActiveTransmittal SQL and
+ * assertNoActiveTransmittal run
  * here on PGlite with the real DDL; the route-level wording is pinned in
  * tests/mdx-submission-gateway-transmit-bundle-guard.test.ts.
  */
@@ -72,7 +73,7 @@ async function refusal(environment: 'staging' | 'production'): Promise<GovernedT
 }
 
 describe('assertNoActiveTransmittal — a send to the other environment holding the bytes', () => {
-  it('a received TEST send holding a first production send: names the test environment and how to free the lock', async () => {
+  it('a received TEST send holding a first production send: names the test environment and where a resend goes', async () => {
     const id = await held('received', { sequence: '0000', environment: 'staging' });
     const err = await refusal('production');
     expect(err.code).toBe('ACTIVE_TRANSMITTAL');
@@ -80,7 +81,7 @@ describe('assertNoActiveTransmittal — a send to the other environment holding 
     expect(err.message).toBe(
       `This bundle is held by transmittal #${id}, sent to the agency's test environment, whose gateway acknowledged receipt. ` +
         'A send to the test environment does not file it in production. ' +
-        `Roll transmittal #${id} back from its row in the transmittal log, then send.`,
+        'These bytes cannot be sent to production while that transmittal is active; to file there, send it as a new sequence from Submission Center.',
     );
     expect(err.details).toEqual({ transmittalId: id, status: 'received', holderEnvironment: 'staging' });
   });
@@ -89,7 +90,7 @@ describe('assertNoActiveTransmittal — a send to the other environment holding 
     const id = await held('received', { sequence: '0000', environment: 'production' });
     const err = await refusal('production');
     expect(err.message).toMatch(new RegExp(`acknowledged receipt of transmittal #${id}, so this bundle is with the agency`));
-    expect(err.message).not.toMatch(/roll .*back/i);
+    expect(err.message).not.toMatch(/roll .*back|rollback/i);
     expect(err.details).toEqual({ transmittalId: id, status: 'received' });
   });
 

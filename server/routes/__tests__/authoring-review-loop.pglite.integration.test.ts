@@ -21,12 +21,13 @@
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import request from 'supertest';
-import type express from 'express';
+import express from 'express';
 import { randomUUID } from 'node:crypto';
+import { AUTHORING_REVIEW_BINDING_BASIS, authoringReviewReadSchema } from '@shared/authoring/peer-review';
 
 import { createJourneyDb, extractTableDdl, type JourneyDb } from '../../../tests/golden-journeys/harness';
 import { GOVERNED_ACTION_LEDGER_PGLITE_DDL } from '../../services/ana-ri/__tests__/governed-action-ledger.fixture';
-import { PREREQ, AUTHOR, ORG, OTHER_ORG, mint, makeApp, asToken } from './_authoring-canvas-fixture';
+import { PREREQ, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, ORG, OTHER_ORG, mint, makeApp, asToken } from './_authoring-canvas-fixture';
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown, notified: [] as unknown[] }));
 vi.mock('../../db', () => ({
@@ -51,6 +52,7 @@ const WHY = 'Section 2.5.4 cites the wrong SAP version.';
 
 let jdb: JourneyDb;
 let app: express.Express;
+let authoringRouter: express.Router;
 let author: (r: request.Test) => request.Test;
 let reviewer: (r: request.Test) => request.Test;
 
@@ -62,9 +64,9 @@ async function rows<R = Row>(sql: string, params: unknown[] = []): Promise<R[]> 
 async function seedDoc(): Promise<string> {
   const docId = randomUUID();
   await jdb.pool.query(
-    `INSERT INTO authoring_documents (id, title, module, status, created_by, tenant_id)
-     VALUES ($1, $2, 'M2', 'draft', $3, $4)`,
-    [docId, `Module 2.5 — review loop ${docId.slice(0, 8)}`, AUTHOR.id, ORG],
+    `INSERT INTO authoring_documents (id, title, module, status, created_by, tenant_id, client_program_id, version)
+     VALUES ($1, $2, 'M2', 'draft', $3, $4, $5, '0.4')`,
+    [docId, `Module 2.5 — review loop ${docId.slice(0, 8)}`, AUTHOR.id, ORG, PROGRAM],
   );
   return docId;
 }
@@ -97,20 +99,37 @@ const transitionsOf = async (taskId: string) =>
     [`task:${taskId}`],
   );
 
-const verdict = (docId: string, body: Record<string, unknown>, as = reviewer) =>
-  as(request(app).post(`/api/authoring/documents/${docId}/review`)).send(body);
+const verdict = async (docId: string, body: Record<string, unknown>, as = reviewer) =>
+  as(request(app).post(`/api/authoring/documents/${docId}/review`)).send({
+    ...body, expected: body.expected ?? await expectedRead(docId, as),
+  });
 const ask = (docId: string, people = [REVIEWER]) =>
   author(request(app).post(`/api/authoring/documents/${docId}/request-review`)).send({
     reviewers: people.map(p => ({ id: p.id, name: p.name })),
     reason: 'Ready for medical review before the pre-IND package.',
   });
 
+/** A structurally valid expected basis also reaches the old route, which ignores it. */
+async function expectedRead(docId: string, as = reviewer) {
+  const read = await as(request(app).get(`/api/authoring/documents/${docId}/reviews`));
+  const context = read.body.reviewContext;
+  return {
+    reviewId: context?.myReview?.reviewId ?? randomUUID(),
+    requestedAt: context?.myReview?.requestedAt ?? new Date().toISOString(),
+    snapshotHash: context?.snapshotHash ?? '0'.repeat(64),
+    bindingBasis: AUTHORING_REVIEW_BINDING_BASIS,
+  };
+}
+
 beforeAll(async () => {
   jdb = await createJourneyDb({
-    prereqSql: `${PREREQ}\n${extractTableDdl('migrations/0000_sweet_joseph.sql', ['unified_tasks', 'task_dependencies', 'cross_module_task_links'])}`,
+    prereqSql: `${PREREQ}\n${AUTHORING_ACCESS_DDL}
+      ALTER TABLE organizations ADD COLUMN payment_status text NOT NULL DEFAULT 'active';
+      ${extractTableDdl('migrations/0000_sweet_joseph.sql', ['unified_tasks', 'task_dependencies', 'cross_module_task_links'])}`,
     migrations: [
       // The authoring subsystem unit, in the durable applier's order.
       'db/migrations/20260725_authoring_document_loop_tables.sql',
+      'migrations/20260727_authoring_document_program_scope.sql',
       'db/migrations/20260725_authoring_audit_trail.sql',
       'db/migrations/20260725_authoring_signatures_and_workflow.sql',
       'db/migrations/20260725_authoring_signature_freeze_binding.sql',
@@ -141,7 +160,14 @@ beforeAll(async () => {
   author = asToken(await mint(AUTHOR));
   reviewer = asToken(await mint(REVIEWER));
   const { default: router } = await import('../authoring.router');
-  app = makeApp(router);
+  authoringRouter = router;
+  const pinned = express.Router();
+  pinned.use((req, _res, next) => {
+    req.dbClient = { query: async (text: string, params?: unknown[]) => jdb.pool.query(text, params) } as typeof req.dbClient;
+    next();
+  });
+  pinned.use(router);
+  app = makeApp(pinned);
 }, T);
 
 afterAll(async () => {
@@ -152,9 +178,123 @@ beforeEach(() => {
   h.notified = [];
 });
 
+describe('bound human review — old native-route security regressions', () => {
+  it('refuses an unassigned direct verdict without creating a review or audit', async () => {
+    const docId = await seedDoc();
+    await jdb.pool.query(`INSERT INTO doc_permissions (doc_id, tenant_id, principal_id, email, role, granted_by)
+      VALUES ($1, $2, $3, $4, 'REVIEWER', $5)`, [docId, ORG, REVIEWER.id, REVIEWER.email, AUTHOR.id]);
+    const res = await verdict(docId, { review_status: 'approved', expected: await expectedRead(docId) });
+    expect(res.status, JSON.stringify(res.body)).toBe(403);
+    expect(await rows('SELECT 1 FROM authoring_reviews WHERE doc_id = $1', [docId])).toEqual([]);
+    expect(await rows("SELECT 1 FROM authoring_audit_trail WHERE doc_id = $1 AND operation_type = 'document_reviewed'", [docId])).toEqual([]);
+  }, T);
+
+  it('refuses an original author deciding their own document directly', async () => {
+    const docId = await seedDoc();
+    const res = await verdict(docId, { review_status: 'approved', expected: await expectedRead(docId, author) }, author);
+    expect(res.status, JSON.stringify(res.body)).toBe(403);
+    expect(await rows('SELECT 1 FROM authoring_reviews WHERE doc_id = $1', [docId])).toEqual([]);
+  }, T);
+
+  it('returns complete bound context and does not count a legacy unbound approval as current', async () => {
+    const docId = await seedDoc();
+    const sectionIds = [randomUUID(), randomUUID()];
+    await jdb.pool.query(`INSERT INTO doc_permissions (doc_id, tenant_id, principal_id, email, role, granted_by)
+      VALUES ($1, $2, $3, $4, 'REVIEWER', $5)`, [docId, ORG, REVIEWER.id, REVIEWER.email, AUTHOR.id]);
+    for (const [index, id] of sectionIds.entries()) {
+      await jdb.pool.query(`INSERT INTO authoring_sections (id, doc_id, code, title, content, order_index, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [id, docId, `2.5.${index + 1}`, `Section ${index + 1}`, `<p>Complete saved section ${index + 1}.</p>`, index, ORG]);
+    }
+    await jdb.pool.query(`INSERT INTO authoring_reviews
+      (id, doc_id, reviewer_id, reviewer_name, reviewer_email, review_status, requested_by, reviewed_at, tenant_id)
+      VALUES ($1, $2, $3, $4, $5, 'approved', $6, NOW(), $7)`,
+    [randomUUID(), docId, REVIEWER.id, REVIEWER.name, REVIEWER.email, AUTHOR.email, ORG]);
+    const read = await reviewer(request(app).get(`/api/authoring/documents/${docId}/reviews`));
+    expect(read.status, JSON.stringify(read.body)).toBe(200);
+    expect(authoringReviewReadSchema.safeParse(read.body).success).toBe(true);
+    expect(read.body.reviewContext.snapshot.sections.map((section: { id: string }) => section.id)).toEqual(sectionIds);
+    expect(read.body.stats).toMatchObject({ approved: 0, unbound: 1 });
+    expect(read.body.canApprove).toBe(false);
+    expect(read.body.reviews[0]).toMatchObject({ review_status: 'approved', standing: 'unbound', reviewed_snapshot: null });
+    const upper = await reviewer(request(app).get(`/api/authoring/documents/${docId.toUpperCase()}/reviews`));
+    expect(upper.status).toBe(200);
+    expect(upper.body.reviewContext).toMatchObject({ documentId: docId,
+      snapshot: read.body.reviewContext.snapshot, snapshotHash: read.body.reviewContext.snapshotHash });
+  }, T);
+
+  it('resolves reviewer names and emails from actual membership instead of the supplied label', async () => {
+    const docId = await seedDoc();
+    const res = await author(request(app).post(`/api/authoring/documents/${docId}/request-review`)).send({
+      reviewers: [{ id: REVIEWER.id, name: 'Forged display label', email: OTHER_REVIEWER.email }],
+      reason: 'Request the actual assigned reviewer.',
+    });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.reviews[0]).toMatchObject({ reviewer_id: REVIEWER.id, reviewer_name: REVIEWER.name, reviewer_email: REVIEWER.email });
+  }, T);
+});
+
+describe('a native heading-only writer remains a protected contributor', () => {
+  it('refuses the actual secondary title writer at request and verdict gates without changing the original author', async () => {
+    const docId = await seedDoc(); const sectionId = randomUUID();
+    const secondary = asToken(await mint(OTHER_REVIEWER));
+    await jdb.pool.query(`INSERT INTO authoring_sections (id,doc_id,tenant_id,code,title,content)
+      VALUES ($1,$2,$3,'2.5.1','Original heading','<p>Original saved body.</p>')`, [sectionId, docId, ORG]);
+    await jdb.pool.query(`INSERT INTO doc_revisions (id,section_id,content,created_by,tenant_id)
+      VALUES ($1,$2,'<p>Original saved body.</p>',$3,$4)`, [randomUUID(), sectionId, AUTHOR.id, ORG]);
+    await jdb.pool.query(`INSERT INTO doc_permissions (doc_id,tenant_id,principal_id,email,role,granted_by)
+      VALUES ($1,$2,$3,$4,'AUTHOR',$5)`, [docId, ORG, OTHER_REVIEWER.id, OTHER_REVIEWER.email, AUTHOR.id]);
+    const previous = process.env.AUTH_ENFORCE_SECTION_PERMS;
+    process.env.AUTH_ENFORCE_SECTION_PERMS = '1';
+    let changed: request.Response;
+    try {
+      changed = await secondary(request(app).patch(`/api/authoring/sections/${sectionId}`))
+        .send({ title: 'Secondary writer authored heading' });
+    } finally {
+      if (previous === undefined) delete process.env.AUTH_ENFORCE_SECTION_PERMS;
+      else process.env.AUTH_ENFORCE_SECTION_PERMS = previous;
+    }
+    expect(changed.status, JSON.stringify(changed.body)).toBe(200);
+    expect(await rows('SELECT title,content FROM authoring_sections WHERE id=$1', [sectionId]))
+      .toEqual([{ title: 'Secondary writer authored heading', content: '<p>Original saved body.</p>' }]);
+    expect(await rows('SELECT created_by FROM authoring_documents WHERE id=$1', [docId])).toEqual([{ created_by: AUTHOR.id }]);
+    expect(await rows('SELECT DISTINCT created_by FROM doc_revisions WHERE section_id=$1', [sectionId])).toEqual([{ created_by: AUTHOR.id }]);
+    expect((await rows("SELECT actor_id,metadata FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type='RENAME'", [docId]))[0])
+      .toMatchObject({ actor_id: OTHER_REVIEWER.id, metadata: { source: 'section-metadata', changes: [
+        { field: 'title', from: 'Original heading', to: 'Secondary writer authored heading' },
+      ] } });
+    expect(await rows("SELECT user_id FROM audit_logs WHERE action='authoring.section.RENAME' AND record_id=$1", [sectionId]))
+      .toEqual([{ user_id: Number(OTHER_REVIEWER.id) }]);
+    const requested = await ask(docId, [OTHER_REVIEWER]);
+    expect(requested.status, JSON.stringify(requested.body)).toBe(409);
+    expect(requested.body.error).toMatchObject({ code: 'REVIEWER_IS_AUTHOR' });
+    expect(await rows('SELECT 1 FROM authoring_reviews WHERE doc_id=$1', [docId])).toEqual([]);
+    // A historical assignment cannot grant independence after this edit.
+    await jdb.pool.query(`INSERT INTO authoring_reviews (id,doc_id,reviewer_id,review_status,requested_by,tenant_id)
+      VALUES ($1,$2,$3,'pending',$4,$5)`, [randomUUID(), docId, OTHER_REVIEWER.id, AUTHOR.id, ORG]);
+    await jdb.pool.query(`INSERT INTO doc_permissions (doc_id,tenant_id,principal_id,email,role,granted_by)
+      VALUES ($1,$2,$3,$4,'REVIEWER',$5)`, [docId, ORG, OTHER_REVIEWER.id, OTHER_REVIEWER.email, AUTHOR.id]);
+    await seedTask('TASK-HEADING-WRITER', { docId, status: 'in-progress', assignee: Number(OTHER_REVIEWER.id) });
+    const read = await secondary(request(app).get(`/api/authoring/documents/${docId}/reviews`));
+    expect(read.status).toBe(200);
+    expect(read.body.reviewContext.canReview).toBe(false);
+    expect(read.body.reviewContext.snapshot.sections[0].title).toBe('Secondary writer authored heading');
+    const refused = await verdict(docId, { review_status: 'approved' }, secondary);
+    expect(refused.status).toBe(403);
+    expect(refused.body.error).toMatchObject({ code: 'REVIEWER_IS_AUTHOR' });
+    expect((await taskOf('TASK-HEADING-WRITER')).status).toBe('in-progress');
+    expect(await transitionsOf('TASK-HEADING-WRITER')).toEqual([]);
+    expect((await rows('SELECT review_status,reviewed_snapshot_hash FROM authoring_reviews WHERE doc_id=$1', [docId]))[0])
+      .toEqual({ review_status: 'pending', reviewed_snapshot_hash: null });
+    expect(await rows("SELECT 1 FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type='document_reviewed'", [docId])).toEqual([]);
+    expect(h.notified).toEqual([]);
+  }, T);
+});
+
 describe('E — the verdict completes the reviewer’s review task on the same transaction', () => {
   it('an in-progress review task is completed, with its task.transition row naming the verdict', async () => {
     const docId = await seedDoc();
+    expect((await ask(docId)).status).toBe(200);
     await seedTask('TASK-E1', { docId, status: 'in-progress' });
 
     const res = await verdict(docId, { review_status: 'approved' });
@@ -176,6 +316,7 @@ describe('E — the verdict completes the reviewer’s review task on the same t
 
   it('a pending review task is started, then completed: two legal moves, two ledger rows, the reviewer’s reason on each', async () => {
     const docId = await seedDoc();
+    expect((await ask(docId)).status).toBe(200);
     await seedTask('TASK-E2', { docId, status: 'pending' });
 
     const res = await verdict(docId, { review_status: 'changes_requested', review_comments: WHY });
@@ -194,6 +335,7 @@ describe('E — the verdict completes the reviewer’s review task on the same t
 
   it('only this reviewer’s open review task on this document moves', async () => {
     const docId = await seedDoc();
+    expect((await ask(docId)).status).toBe(200);
     const otherDoc = await seedDoc();
     await seedTask('TASK-MINE', { docId, status: 'in-progress' });
     await seedTask('TASK-THEIRS', { docId, status: 'in-progress', assignee: Number(OTHER_REVIEWER.id) });
@@ -214,6 +356,7 @@ describe('E — the verdict completes the reviewer’s review task on the same t
 
   it('an approval-gated task is left open: completing it is the reviewer’s signature, which a verdict is not', async () => {
     const docId = await seedDoc();
+    expect((await ask(docId)).status).toBe(200);
     await seedTask('TASK-GATED', { docId, status: 'in-progress', approvalRequired: true });
 
     const res = await verdict(docId, { review_status: 'approved' });
@@ -224,8 +367,29 @@ describe('E — the verdict completes the reviewer’s review task on the same t
     expect(res.body.tasks).toEqual({ completed: [], leftOpen: [{ taskId: 'TASK-GATED', why: 'signature-required' }] });
   }, T);
 
+});
+
+describe('E — dependency and atomic rollback guards', () => {
+  it('a blocked dependent review stays open while its unfinished predecessor is retained', async () => {
+    const docId = await seedDoc();
+    expect((await ask(docId)).status).toBe(200);
+    await seedTask('TASK-PREDECESSOR', { docId, status: 'in-progress', taskType: 'action' });
+    await seedTask('TASK-DEPENDENT', { docId, status: 'blocked' });
+    await jdb.pool.query(`INSERT INTO task_dependencies
+      (dependency_id,predecessor_task_id,successor_task_id,dependency_type,organization_id)
+      VALUES ($1,$2,$3,'finish-to-start',$4)`, ['DEP-REVIEW-LOOP', 'TASK-PREDECESSOR', 'TASK-DEPENDENT', ORG]);
+    const res = await verdict(docId, { review_status: 'approved' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.tasks).toEqual({ completed: [], leftOpen: [{ taskId: 'TASK-DEPENDENT', why: 'blocked' }] });
+    expect((await taskOf('TASK-DEPENDENT')).status).toBe('blocked');
+    expect((await taskOf('TASK-PREDECESSOR')).status).toBe('in-progress');
+    expect(await transitionsOf('TASK-DEPENDENT')).toEqual([]);
+    expect(await transitionsOf('TASK-PREDECESSOR')).toEqual([]);
+  }, T);
+
   it('a verdict with no review task is recorded exactly as before', async () => {
     const docId = await seedDoc();
+    expect((await ask(docId)).status).toBe(200);
     const res = await verdict(docId, { review_status: 'approved' });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body.review).toMatchObject({ doc_id: docId, reviewer_id: REVIEWER.id, review_status: 'approved' });
@@ -235,6 +399,7 @@ describe('E — the verdict completes the reviewer’s review task on the same t
 
   it('the verdict and the task cannot disagree: when the task’s ledger row cannot be written, neither is recorded', async () => {
     const docId = await seedDoc();
+    expect((await ask(docId)).status).toBe(200);
     await seedTask('TASK-ATOMIC', { docId, status: 'in-progress' });
     await jdb.pglite.exec('ALTER TABLE c2c_ana_actions RENAME TO c2c_ana_actions_down');
     let res: request.Response;
@@ -243,9 +408,11 @@ describe('E — the verdict completes the reviewer’s review task on the same t
     } finally {
       await jdb.pglite.exec('ALTER TABLE c2c_ana_actions_down RENAME TO c2c_ana_actions');
     }
-    expect(res.status, JSON.stringify(res.body)).toBe(500);
+    expect(res.status, JSON.stringify(res.body)).toBe(503);
+    expect(res.body.error).toMatchObject({ code: 'REVIEW_UNAVAILABLE' });
+    expect(JSON.stringify(res.body)).not.toContain('c2c_ana_actions');
     expect((await taskOf('TASK-ATOMIC')).status).toBe('in-progress');
-    expect(await rows(`SELECT 1 FROM authoring_reviews WHERE doc_id = $1`, [docId])).toEqual([]);
+    expect(await rows(`SELECT review_status, reviewed_snapshot, reviewed_snapshot_hash FROM authoring_reviews WHERE doc_id = $1`, [docId])).toEqual([{ review_status: 'pending', reviewed_snapshot: null, reviewed_snapshot_hash: null }]);
     expect(await rows(`SELECT 1 FROM authoring_audit_trail WHERE doc_id = $1 AND operation_type = 'document_reviewed'`, [docId])).toEqual([]);
     expect(h.notified).toEqual([]);
   }, T);
@@ -255,11 +422,13 @@ describe('D — asking a reviewer again reopens their recorded verdict', () => {
   it('the row is pending again, with no verdict time and no comments', async () => {
     const docId = await seedDoc();
     expect((await ask(docId)).status).toBe(200);
-    expect((await verdict(docId, { review_status: 'changes_requested', review_comments: WHY })).status).toBe(200);
+    const decided = await verdict(docId, { review_status: 'changes_requested', review_comments: WHY });
+    expect(decided.status).toBe(200);
 
     const again = await ask(docId);
     expect(again.status, JSON.stringify(again.body)).toBe(200);
     expect(again.body.reviews).toEqual([expect.objectContaining({ reviewer_id: REVIEWER.id, review_status: 'pending', reviewed_at: null, review_comments: null })]);
+    expect(again.body.reviews[0].id).not.toBe(decided.body.review.id);
 
     const read = await author(request(app).get(`/api/authoring/documents/${docId}/reviews`));
     expect(read.status).toBe(200);
@@ -285,7 +454,7 @@ describe('D — asking a reviewer again reopens their recorded verdict', () => {
     expect(requests).toHaveLength(2);
     expect(requests[0].metadata.reopenedVerdicts).toEqual([]);
     expect(requests[1].metadata.reopenedVerdicts).toEqual([
-      { reviewId: decided.body.review.id, reviewerId: REVIEWER.id, verdict: 'changes_requested', reviewedAt: expect.any(String) },
+      expect.objectContaining({ reviewId: decided.body.review.id, reviewerId: REVIEWER.id, verdict: 'changes_requested', reviewedAt: expect.any(String) }),
     ]);
   }, T);
 
@@ -304,5 +473,60 @@ describe('D — asking a reviewer again reopens their recorded verdict', () => {
     expect((await taskOf('TASK-ROUND-2')).status).toBe('completed');
     expect((await transitionsOf('TASK-ROUND-1')).map(r => r.payload.verdict)).toEqual(['changes_requested', 'changes_requested']);
     expect(await rows(`SELECT review_status FROM authoring_reviews WHERE doc_id = $1`, [docId])).toEqual([{ review_status: 'approved' }]);
+  }, T);
+});
+
+describe('request connection and uncertain commit remain honest at the native boundary', () => {
+  it('refuses a missing request database client while the shared pool is healthy', async () => {
+    const docId = await seedDoc(); expect((await ask(docId)).status).toBe(200);
+    await seedTask('TASK-NO-REQUEST-CLIENT', { docId, status: 'in-progress' });
+    const captured = await expectedRead(docId);
+    const unpinned = makeApp(authoringRouter);
+    const res = await reviewer(request(unpinned).post(`/api/authoring/documents/${docId}/review`))
+      .send({ review_status: 'approved', expected: captured });
+    expect(res.status).toBe(503);
+    expect(res.body.error).toMatchObject({ code: 'REVIEW_UNAVAILABLE' });
+    expect(await rows('SELECT 1 AS healthy')).toEqual([{ healthy: 1 }]);
+    expect((await taskOf('TASK-NO-REQUEST-CLIENT')).status).toBe('in-progress');
+    expect(await transitionsOf('TASK-NO-REQUEST-CLIENT')).toEqual([]);
+    expect((await rows('SELECT review_status,reviewed_snapshot_hash FROM authoring_reviews WHERE doc_id=$1', [docId]))[0])
+      .toEqual({ review_status: 'pending', reviewed_snapshot_hash: null });
+    expect(await rows("SELECT 1 FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type='document_reviewed'", [docId])).toEqual([]);
+    expect(h.notified).toEqual([]);
+  }, T);
+
+  it('reports an uncertain COMMIT safely without notifying, even when that commit reached Postgres', async () => {
+    const docId = await seedDoc(); expect((await ask(docId)).status).toBe(200);
+    await seedTask('TASK-UNCERTAIN-COMMIT', { docId, status: 'in-progress' });
+    const captured = await expectedRead(docId);
+    const privateMarker = 'fixture internal commit transport detail';
+    const internalCode = 'FIXTURE_DATABASE_COMMIT_CODE';
+    class FixtureCommitTransportFailure extends Error { readonly code = internalCode; }
+    const transport = express.Router();
+    transport.use((req, _res, next) => {
+      req.dbClient = { query: async (text: string, params?: unknown[]) => {
+        const result = await jdb.pool.query(text, params);
+        // The database committed; the client did not receive confirmation.
+        if (text === 'COMMIT') throw new FixtureCommitTransportFailure(privateMarker);
+        return result;
+      } } as typeof req.dbClient;
+      next();
+    });
+    transport.use(authoringRouter);
+    const uncertain = makeApp(transport);
+    const res = await reviewer(request(uncertain).post(`/api/authoring/documents/${docId}/review`))
+      .send({ review_status: 'approved', expected: captured });
+    expect(res.status).toBe(503);
+    expect(res.body.error).toMatchObject({ code: 'REVIEW_COMMIT_UNCONFIRMED' });
+    for (const privateFact of [privateMarker, internalCode, 'FixtureCommitTransportFailure']) {
+      expect(JSON.stringify(res.body)).not.toContain(privateFact);
+    }
+    expect(h.notified).toEqual([]);
+    expect((await taskOf('TASK-UNCERTAIN-COMMIT')).status).toBe('completed');
+    expect(await transitionsOf('TASK-UNCERTAIN-COMMIT')).toHaveLength(1);
+    const recovered = await reviewer(request(app).get(`/api/authoring/documents/${docId}/reviews`));
+    expect(recovered.status).toBe(200);
+    expect(recovered.body.reviews[0]).toMatchObject({ review_status: 'approved', standing: 'current' });
+    expect(await rows("SELECT 1 FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type='document_reviewed'", [docId])).toHaveLength(1);
   }, T);
 });

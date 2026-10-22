@@ -1,0 +1,152 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 held-out stage coherence > keeps malformed missing_reason metadata out of runnable slots 170ms
+   → expected [ 1 ] to deeply equal [ 2 ]
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 held-out stage coherence > keeps malformed normalized_hour metadata out of runnable slots 108ms
+   → expected [ 3 ] to deeply equal [ 4 ]
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 held-out stage coherence > keeps malformed normalized_second metadata out of runnable slots 102ms
+   → expected [ 5 ] to deeply equal [ 6 ]
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 held-out stage coherence > refuses same-token stage identity changes before completion or failure journaling 51ms
+   → expected { ok: true, processed: true, …(2) } to match object { ok: false, processed: false, …(2) }
+(7 matching properties omitted from actual)
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > loads the recorded original; correct duplicate bytes do not mask missing original
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses independently invalid/different upload digest null
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses independently invalid/different upload digest bad
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses independently invalid/different upload digest bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses wrong caller project and a missing live project
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > rejects project deletion after claim/extraction
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > rejects mutable original association after extraction even with equal bytes
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > owns the caller Buffer before any await
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > reuses only byte/revision-bound extraction and clears old error on success
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > does not trust arbitrary supplied pre-extracted content
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > same bytes with changed extraction behavior cannot reuse cached text {"fileName":"Renamed.csv"}
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > same bytes with changed extraction behavior cannot reuse cached text {"mimeType":"text/csv"}
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > healthy same identity is idempotent without extraction or new attempt
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > blocks malformed/future stage without resetting it {"version":2}
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > blocks malformed/future stage without resetting it {"version":1,"state":"running","leaseExpiresAt":"not-a-date"}
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > blocks malformed/future stage without resetting it {"version":1,"state":"failed","attempts":-1}
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > a live claim excludes a second worker before it extracts
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > lease takeover fences late original worker success
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > lease takeover fences late original worker failure
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > expired ownership without takeover cannot finalize
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > failed extraction is named and requires explicit retry, then clears its error
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > dry-run is read-only and strict invalid options refuse before I/O
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > legacy readable text is already complete without fabricated stage history
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > diagnostic malformed rows do not starve runnable slots
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > legacy Unicode blank text remains repairable " "
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > legacy Unicode blank text remains repairable "﻿"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > legacy Unicode blank text remains repairable " \n\t"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > exact already-readable dryrun observes completion without claiming a processed count
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > final-write outage records bounded due retry and never marks readable completion
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > final and failure-journal outage leaves the durable running lease reclaimable
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > automatic attempt budget is bounded; explicit expired-claim retry never resets it
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > busy and not-due diagnostics cannot consume runnable slots
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > a lost completion COMMIT reply is resolved by durable readable state on retry
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: an upload capture claiming extracted with a failed derived UPDATE must remain recoverable
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > CONTROL: pending capture is selected, one successful derived UPDATE makes text searchable, then leaves retry set
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > CONTROL: foreign organization and deleted capture are refused at the derived writer
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > CONTROL: a pending intake survives the shared processor persistence exception and stays retryable
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: shared processor must bind supplied bytes to the recorded capture digest before deriving text
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: a source superseded while processing was in flight must refuse the stale derived commit
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: current-source recovery must exclude a superseded pending source
+ ↓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: failed extraction must be named as failed, rather than counted as processed success
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 held-out stage coherence > keeps malformed missing_reason metadata out of runnable slots
+AssertionError: expected [ 1 ] to deeply equal [ 2 ]
+
+- Expected
++ Received
+
+  [
+-   2,
++   1,
+  ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:115:97
+    113|     const runnable = await seed('pending');
+    114|     const report = await processPendingSources(ORG, { db: transactiona…
+    115|     expect(report.items.filter(item => item.status === 'candidate').ma…
+       |                                                                                                 ^
+    116|     expect(report.items).toContainEqual({ sourceId: poisoned, status: …
+    117|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 held-out stage coherence > keeps malformed normalized_hour metadata out of runnable slots
+AssertionError: expected [ 3 ] to deeply equal [ 4 ]
+
+- Expected
++ Received
+
+  [
+-   4,
++   3,
+  ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:115:97
+    113|     const runnable = await seed('pending');
+    114|     const report = await processPendingSources(ORG, { db: transactiona…
+    115|     expect(report.items.filter(item => item.status === 'candidate').ma…
+       |                                                                                                 ^
+    116|     expect(report.items).toContainEqual({ sourceId: poisoned, status: …
+    117|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 held-out stage coherence > keeps malformed normalized_second metadata out of runnable slots
+AssertionError: expected [ 5 ] to deeply equal [ 6 ]
+
+- Expected
++ Received
+
+  [
+-   6,
++   5,
+  ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:115:97
+    113|     const runnable = await seed('pending');
+    114|     const report = await processPendingSources(ORG, { db: transactiona…
+    115|     expect(report.items.filter(item => item.status === 'candidate').ma…
+       |                                                                                                 ^
+    116|     expect(report.items).toContainEqual({ sourceId: poisoned, status: …
+    117|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 held-out stage coherence > refuses same-token stage identity changes before completion or failure journaling
+AssertionError: expected { ok: true, processed: true, …(2) } to match object { ok: false, processed: false, …(2) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "ok": false,
+-   "processed": false,
+-   "reasonCode": "SOURCE_IDENTITY_CHANGED",
+-   "status": "stale_source",
++   "ok": true,
++   "processed": true,
++   "status": "completed",
+  }
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:125:67
+    123|       return { text: BODY, method: 'plain-text' };
+    124|     });
+    125|     expect(await processCapturedSource(ORG, id, input(), opts())).toMa…
+       |                                                                   ^
+    126|       ok: false, processed: false, status: 'stale_source', reasonCode:…
+    127|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 41 skipped (45)
+   Start at  04:52:04
+   Duration  3.08s (transform 197ms, setup 66ms, import 192ms, tests 2.63s, environment 0ms)
+

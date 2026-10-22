@@ -6,6 +6,7 @@ import { LIFECYCLE_DOCUMENT_TYPES } from '../../../ind/ctd/lifecycle-document-ty
 import * as japan from '../blueprints/japanCtnBlueprint';
 import * as amendment from '../blueprints/usIndAmendmentBlueprint';
 import * as nonclinical from '../blueprints/nonclinicalSummaryBlueprint';
+import { ctdRecordSubtree } from '../../../market-specs/ctd-component-outlines';
 
 describe('Japan clinical trial notification — its own notification record', () => {
   it('does not send a trial notification through a full marketing CTD', () => {
@@ -63,16 +64,47 @@ describe('US IND amendments — subtype determines the evidence', () => {
 describe('Nonclinical summaries — only the canonical CTD 2.6 subtree', () => {
   it('projects canonical summaries without adding all Module 2 or a second heading tree', () => {
     const outline = nonclinical.sectionBlueprint;
+    // Both halves of the ICH M2–M5 record (2026-10-20): the guidance half's
+    // briefed codes keep their content type; the structural leaves are new.
     const canonical = Object.values(CTD_AUTHORING_GUIDANCE).filter(s => s.code.startsWith('2.6.'));
     expect(outline.id).toBe(getApplicationType('ICH_NONCLIN_SUMMARY')!.defaultSectionBlueprint);
-    expect(outline.sections.map(s => [s.code, s.title, s.contentType])).toEqual(canonical.map(s => [s.code, s.title, s.contentType]));
-    expect(outline.sections.map(s => s.code)).toEqual(['2.6.1', '2.6.2', '2.6.3', '2.6.4', '2.6.5', '2.6.6', '2.6.7']);
+    expect(outline.sections.map(s => [s.code, s.title])).toEqual(ctdRecordSubtree('2.6').map(h => [h.code, h.title]));
+    expect(outline.sections.filter(s => canonical.some(c => c.code === s.code)).map(s => [s.code, s.title, s.contentType]))
+      .toEqual(canonical.map(s => [s.code, s.title, s.contentType]));
+    /* The pin stays written out rather than derived from the guidance, so an
+       emptied or re-coded guidance table cannot make the equality above pass
+       vacuously. ICH M4S gives 2.6.2 (Pharmacology Written Summary) seven
+       leaves, 2.6.4 (Pharmacokinetics) ten and 2.6.6 (Toxicology) ten, and
+       the outline projects them. The 2.6.4 and 2.6.6 leaves were not in the
+       guidance table; since 2026-10-20 the outline reads them from the
+       structural half of the record (ich-m4-headings.ts). Update this list
+       with the record, never the other way round. */
+    expect(outline.sections.map(s => s.code)).toEqual([
+      '2.6.1',
+      '2.6.2', '2.6.2.1', '2.6.2.2', '2.6.2.3', '2.6.2.4', '2.6.2.5', '2.6.2.6', '2.6.2.7',
+      '2.6.3',
+      '2.6.4', '2.6.4.1', '2.6.4.2', '2.6.4.3', '2.6.4.4', '2.6.4.5', '2.6.4.6', '2.6.4.7', '2.6.4.8', '2.6.4.9', '2.6.4.10',
+      '2.6.5',
+      '2.6.6', '2.6.6.1', '2.6.6.2', '2.6.6.3', '2.6.6.4', '2.6.6.5', '2.6.6.6', '2.6.6.7', '2.6.6.8', '2.6.6.9', '2.6.6.10',
+      '2.6.7',
+    ]);
     expect(outline.sections.every(s => s.module === 2)).toBe(true);
+    /* "Only the canonical subtree" means no orphan leaf: every leaf's parent
+       is itself a section of this outline. A leaf whose parent is absent would
+       render under a heading the author never sees. */
+    const codes = new Set(outline.sections.map(s => s.code));
+    for (const section of outline.sections) {
+      const parent = section.code.split('.').slice(0, -1).join('.');
+      if (parent.split('.').length < 3) continue; // 2.6.x is a top-level leaf of the subtree
+      expect(codes.has(parent), `${section.code} has no parent section`).toBe(true);
+    }
   });
 });
 
 describe('Repaired blueprint provenance and applicability', () => {
-  it.each([['JP_CTN', japan, 'platform-convention'], ['US_IND_AMENDMENT', amendment, 'platform-convention'], ['ICH_NONCLIN_SUMMARY', nonclinical, 'regulator-text']] as const)('%s distinguishes checked source facts from scaffold obligations', (_id, record, confidence) => {
+  // ICH_NONCLIN_SUMMARY is recall since 2026-10-20: its 2.6.4.x and 2.6.6.x leaves rest on a search
+  // extract; the note keeps the 2026-10-07 check of 2.6.1–2.6.7 (an outline is as checked as its rows).
+  it.each([['JP_CTN', japan, 'platform-convention'], ['US_IND_AMENDMENT', amendment, 'platform-convention'], ['ICH_NONCLIN_SUMMARY', nonclinical, 'recall']] as const)('%s distinguishes checked source facts from scaffold obligations', (_id, record, confidence) => {
     expect(basisProblems(record.outlineBasis)).toEqual([]);
     expect(record.outlineBasis.confidence).toBe(confidence);
     expect(record.outlineLimitations.join(' ')).toMatch(/[Rr]equired flags.*platform/);

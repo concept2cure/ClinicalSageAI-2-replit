@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-14T19:45:54.257Z",
+  "results": [
+    {
+      "scenario": "light-desktop",
+      "viewport": 1440,
+      "fullSavedSectionsVisible": 2,
+      "posts": 1,
+      "receiptConfirmed": true,
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "syntheticApi": true
+    },
+    {
+      "scenario": "dark-phone",
+      "viewport": 390,
+      "fullSavedSectionsVisible": 2,
+      "posts": 1,
+      "receiptConfirmed": true,
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "syntheticApi": true
+    },
+    {
+      "scenario": "stale-content",
+      "viewport": 1440,
+      "fullSavedSectionsVisible": 2,
+      "posts": 1,
+      "receiptConfirmed": false,
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "syntheticApi": true
+    },
+    {
+      "scenario": "account-changed",
+      "viewport": 390,
+      "fullSavedSectionsVisible": 2,
+      "posts": 0,
+      "receiptConfirmed": false,
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "syntheticApi": true
+    }
+  ]
+}

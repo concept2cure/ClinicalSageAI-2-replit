@@ -14,15 +14,16 @@
  * delegates to the appropriate service, and returns JSON with error handling.
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { adaptiveTrialOperationsService } from '../services/adaptive-trial-operations-service';
 import biostatKnowledgeGraphService from '../services/biostat-knowledge-graph-service';
 import statisticalContinuumService from '../services/statistical-continuum-service';
+import { SapInputRefusal } from '../services/sap-generator-service';
 import { regulatoryOutcomeOptimizerService } from '../services/regulatory-outcome-optimizer-service';
 import { estimandEngineService } from '../services/estimand-engine-service';
 import { CollaborativeSapService } from '../services/collaborative-sap-service';
-import { ExternalControlArmService } from '../services/external-control-arm-service';
+import { ExternalControlArmService, type SynthesisMethod } from '../services/external-control-arm-service';
 import biostatDesignStatsRouter from './biostat-design-stats';
 import {
   runJudgmentPipeline,
@@ -30,18 +31,43 @@ import {
   runPipelineForRole,
 } from '../services/biostatistics-judgment';
 import type { StudyDesignInput, StakeholderRole, StatisticalArtifactType } from '../services/biostatistics-judgment';
-import { serverError } from '../lib/api-response';
+import { clientError, serverError } from '../lib/api-response';
+import {
+  AdaptiveDecisionRefusal,
+  signAdaptiveDecision,
+  signerIpAddress,
+} from '../services/adaptive-decision-signature';
 import { createScopedLogger } from '../utils/logger';
 
 const collaborativeSapService = new CollaborativeSapService();
 const externalControlArmService = new ExternalControlArmService();
+const SYNTHESIS_METHODS: readonly SynthesisMethod[] = ['propensity_score', 'ipw', 'bayesian_borrowing', 'naive_pooling'];
 
 const router = Router();
 
 const logger = createScopedLogger('biostat-platform');
 
-// All routes require authentication
-const authMiddleware = authenticateToken;
+/**
+ * The signed-in user's id, or null. resolveUserId answered 0 for a request
+ * with none until 2026-10-15, so what it created — a synthetic control, a SAP
+ * version, a comment — was recorded as user 0's.
+ */
+function signedInUserId(req: Request): number | null {
+  const id = Number(req.user?.userId || req.user?.id);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+/** Every route here acts for a signed-in user; a request with none is answered 401. */
+function requireSignedInUser(req: Request, res: Response, next: NextFunction): void {
+  if (signedInUserId(req) == null) {
+    clientError(res, 401, 'A signed-in user is required.');
+    return;
+  }
+  next();
+}
+
+// All routes require authentication, and a user to act for
+const authMiddleware = [authenticateToken, requireSignedInUser];
 
 /**
  * Helper to resolve the organization ID from the authenticated request.
@@ -56,11 +82,13 @@ function resolveOrganizationId(req: Request): number {
 }
 
 /**
- * Helper to resolve the authenticated user's ID.
+ * The signed-in user's ID. authMiddleware has already answered 401 for a
+ * request without one; it is never 0.
  */
 function resolveUserId(req: Request): number {
-  const user = (req as any).user;
-  return Number(user?.userId || user?.id || user?.sub || 0);
+  const id = signedInUserId(req);
+  if (id == null) throw new Error('No signed-in user on the request');
+  return id;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -77,8 +105,22 @@ router.post('/continuum/initialize', authMiddleware, async (req: Request, res: R
     const userId = resolveUserId(req);
     const { title, indication, phase, designType, endpoints, regulatoryContext } = req.body;
 
+    /* The sample size is the protocol's or absent. It was `sampleSize || 200`
+       until 2026-10-15, so every thread opened without one carried 200 into
+       the SAPs drafted from it; a SAP for such a thread is now refused by name. */
+    const { sampleSize } = req.body ?? {};
+    if (sampleSize != null && sampleSize !== '' && !(Number.isInteger(sampleSize) && sampleSize > 0)) {
+      return clientError(res, 400, 'sampleSize must be a positive whole number of participants, or omitted.');
+    }
+
     const result = await statisticalContinuumService.initializeThread(
-      { title, indication, phase, primaryEndpoint: endpoints?.[0], sampleSize: req.body.sampleSize || 200 },
+      {
+        title,
+        indication,
+        phase,
+        primaryEndpoint: endpoints?.[0],
+        sampleSize: Number.isInteger(sampleSize) ? sampleSize : undefined,
+      },
       orgId,
       userId
     );
@@ -138,6 +180,11 @@ router.put('/continuum/:threadId/sap', authMiddleware, async (req: Request, res:
     const result = await statisticalContinuumService.generateSAP(threadId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
+    // The thread's protocol lacks an input the SAP is built on: the caller's
+    // answer, by name — not a 500, and not a SAP drafted around a default.
+    if (error instanceof SapInputRefusal) {
+      return clientError(res, 422, error.message, { fields: error.fields });
+    }
     return serverError(res, logger, 'updating SAP', error);
   }
 });
@@ -281,16 +328,35 @@ router.post('/estimand/define', authMiddleware, async (req: Request, res: Respon
   try {
     const orgId = resolveOrganizationId(req);
     const userId = resolveUserId(req);
-    const { population, treatment, endpoint, intercurrentEvents, summaryMeasure, threadId } = req.body;
+    const { population, treatment, endpoint, intercurrentEvents, summaryMeasure, strategy, threadId } = req.body;
+
+    /* The summary measure and strategy are the sponsor's ICH E9(R1) choices. A
+       missing one was filled with 'difference_in_means' / 'treatment_policy'
+       until 2026-10-15 — before the engine's own completeness check, which
+       then judged the estimand ichE9R1Compliant on attributes nobody chose.
+       The endpoint is the variable (below), so it is required too. */
+    const unstated = (['endpoint', 'summaryMeasure', 'strategy'] as const).filter(
+      (k) => typeof req.body?.[k] !== 'string' || req.body[k].trim() === '',
+    );
+    if (unstated.length > 0) {
+      return clientError(res, 400, `Required to define an estimand: ${unstated.join(', ')}.`, { fields: unstated });
+    }
+    /* The ICH E9(R1) variable IS the endpoint. `treatment` — the treatment
+       condition, another attribute — was stored as the variable until
+       2026-10-15. An estimand here has no treatment attribute to record it
+       in, so a stated one is refused rather than stored as something else. */
+    if (treatment != null && treatment !== '') {
+      return clientError(res, 400, 'treatment is not recorded: this estimand has no treatment-condition attribute, and the variable is the endpoint.', { fields: ['treatment'] });
+    }
 
     const result = await estimandEngineService.defineEstimand({
       threadId,
       endpointName: endpoint,
       population,
-      variable: treatment || endpoint,
-      summaryMeasure: summaryMeasure || 'difference_in_means',
+      variable: endpoint,
+      summaryMeasure,
       intercurrentEvents: intercurrentEvents || [],
-      strategy: req.body.strategy || 'treatment_policy',
+      strategy,
     }, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
@@ -519,7 +585,14 @@ router.post('/sap/:sapVersionId/lock', authMiddleware, async (req: Request, res:
   try {
     const orgId = resolveOrganizationId(req);
     const userId = resolveUserId(req);
+    /* A non-numeric id used to reach the service as NaN and surface as a 500
+       from Postgres (`id = NaN`). `userId` is resolved and not passed: the
+       service records no locker, which is noted beside the route. */
+    void userId;
     const sapVersionId = Number(req.params.sapVersionId);
+    if (!Number.isInteger(sapVersionId) || sapVersionId <= 0) {
+      return clientError(res, 400, 'A SAP version id must be a positive integer.');
+    }
 
     const result = await collaborativeSapService.lockVersion(sapVersionId, orgId);
     res.json({ success: true, data: result });
@@ -609,13 +682,34 @@ router.post('/external-control/synthesize', authMiddleware, async (req: Request,
     const userId = resolveUserId(req);
     const { sourceIds, method, matchingVariables, threadId } = req.body;
 
+    /* Each is the sponsor's to state. A missing method was built as
+       'propensity_score', and a missing indication or endpoint stored as '',
+       until 2026-10-15; an unknown method reached the service as a 500. */
+    const stated = (v: unknown): boolean => typeof v === 'string' && v.trim() !== '';
+    const inputs: Array<[string, boolean]> = [
+      ['method', SYNTHESIS_METHODS.some((m) => m === method)],
+      ['indication', stated(req.body.indication)],
+      ['endpoint', stated(req.body.endpoint)],
+      ['sourceIds', Array.isArray(sourceIds) && sourceIds.length > 0],
+    ];
+    const unstated = inputs.filter(([, ok]) => !ok).map(([field]) => field);
+    if (unstated.length > 0) {
+      return clientError(res, 400, `Required to synthesize an external control: ${unstated.join(', ')} (method is one of ${SYNTHESIS_METHODS.join(', ')}).`, { fields: unstated });
+    }
+    /* matchingVariables is the request's name for the service's covariates.
+       It was destructured and dropped until 2026-10-15. */
+    if (matchingVariables != null && !(Array.isArray(matchingVariables) && matchingVariables.every(stated))) {
+      return clientError(res, 400, 'matchingVariables must be a list of covariate names, or omitted.', { fields: ['matchingVariables'] });
+    }
+
     const result = await externalControlArmService.synthesizeControl(
       {
-        name: req.body.name || `${req.body.indication || 'External'} Control`,
-        indication: req.body.indication || '',
-        endpoint: req.body.endpoint || '',
-        method: method || 'propensity_score',
-        sourceArmIds: sourceIds || [],
+        name: req.body.name || `${req.body.indication} Control`,
+        indication: req.body.indication,
+        endpoint: req.body.endpoint,
+        method,
+        sourceArmIds: sourceIds,
+        covariates: matchingVariables ?? undefined,
       },
       orgId,
       userId
@@ -780,22 +874,75 @@ router.post('/adaptive/:planId/ssr/:snapshotId', authMiddleware, async (req: Req
  * POST /api/biostat/adaptive/:planId/decision
  * Record an adaptation decision.
  */
+/**
+ * POST /api/biostat/adaptive/:planId/decision
+ *
+ * Sign an interim decision. A GOVERNED, SIGNED act since 2026-10-13: it runs
+ * the platform's one ceremony (services/adaptive-decision-signature.ts →
+ * part11/governed-signature-ceremony.ts), which re-authenticates the signer,
+ * checks their signing authority and separation of duties, writes the decision
+ * on its own transaction, and records the ledger pair and the
+ * electronic_signatures manifest bound to the interim look's data.
+ *
+ * Until then it was a Drizzle insert that set `approved_by` from the session's
+ * user id and `approved_at` from the wall clock, verifying nothing — the defect
+ * POST /api/biostat/sap/:id/sign was removed for on 2026-10-08. An interim
+ * decision stops a trial, resizes it, drops an arm or enriches a population,
+ * on unblinded data; a regulator asks who decided and on what.
+ *
+ * Body: { snapshotId, adaptationType, decision, rationale, meaning,
+ *         reauth: { password, totp? }, parameters? }
+ */
 router.post('/adaptive/:planId/decision', authMiddleware, async (req: Request, res: Response) => {
+  const orgId = resolveOrganizationId(req);
+  const userId = resolveUserId(req);
+  const planId = Number(req.params.planId);
+  if (!Number.isInteger(planId) || planId <= 0) {
+    return clientError(res, 400, 'An adaptive plan id must be a positive integer.');
+  }
+  const snapshotId = Number(req.body?.snapshotId);
+  if (!Number.isInteger(snapshotId) || snapshotId <= 0) {
+    return clientError(res, 400, 'A decision is taken on an interim look: snapshotId must be a positive integer.');
+  }
+
   try {
-    const orgId = resolveOrganizationId(req);
-    const userId = resolveUserId(req);
-    const planId = Number(req.params.planId);
-    const { snapshotId, adaptationType, decision, rationale, parameters } = req.body;
-
-    const result = await adaptiveTrialOperationsService.recordDecision(
-      { planId, snapshotId, adaptationType, decision, rationale, parameters },
+    const signed = await signAdaptiveDecision({
       orgId,
-      userId
-    );
-
-    res.json({ success: true, data: result });
+      userId,
+      /* The SNAPSHOT is the target: an IDMC approves a decision about a
+         specific look, so that look's data is what the signature binds. */
+      target: `interim-snapshot:${snapshotId}`,
+      reason: typeof req.body?.rationale === 'string' ? req.body.rationale : '',
+      meaning: req.body?.meaning,
+      reauth: req.body?.reauth,
+      ipAddress: signerIpAddress(req),
+      // The role as the canonical ceremony call sites read it; the gate
+      // itself re-reads it from the membership row, never from this.
+      role: String((req as any).userRole ?? (req as any).user?.role ?? ''),
+      write: (client) =>
+        adaptiveTrialOperationsService.writeDecisionOnSignedTransaction(
+          client,
+          {
+            planId,
+            snapshotId,
+            adaptationType: req.body?.adaptationType,
+            decision: req.body?.decision,
+            rationale: req.body?.rationale,
+            parameters: req.body?.parameters,
+          },
+          orgId,
+          userId,
+        ),
+    });
+    return res.json({ success: true, data: signed });
   } catch (error: any) {
-    return serverError(res, logger, 'saving decision', error);
+    /* The ceremony's refusals are the signer's own answer — "re-enter your
+       password", "you cannot sign your own work", "your role may not sign" —
+       and must reach them verbatim rather than as a 500. */
+    if (error instanceof AdaptiveDecisionRefusal) {
+      return clientError(res, error.status as 400, error.code, { message: error.message });
+    }
+    return serverError(res, logger, 'signing the interim decision', error);
   }
 });
 
@@ -861,18 +1008,42 @@ router.use(biostatDesignStatsRouter);
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
+ * A knowledge-graph refusal is the caller's own answer, not a fault.
+ *
+ * `queryGraph` refuses an empty question with a `ComputationRefusal`, which
+ * `serverError` would have logged and returned as a 500 — telling the sponsor
+ * the server broke when the server declined. 422 carries the sentence and the
+ * field, matching the mapper the AnA biostatistics routes use.
+ */
+function knowledgeError(res: Response, where: string, error: unknown): Response {
+  const e = error as { name?: unknown; code?: unknown; field?: unknown; message?: unknown };
+  if (e?.name === 'ComputationRefusal') {
+    return clientError(res, 422, String(e.message), {
+      refusal: true,
+      code: typeof e.code === 'string' ? e.code : 'missing_input',
+      ...(typeof e.field === 'string' ? { field: e.field } : {}),
+    });
+  }
+  return serverError(res, logger, where, error);
+}
+
+/**
  * POST /api/biostat/knowledge/query
  * Query the biostatistics knowledge graph.
  */
 router.post('/knowledge/query', authMiddleware, async (req: Request, res: Response) => {
   try {
     const orgId = resolveOrganizationId(req);
-    const { query, nodeTypes, maxDepth, limit } = req.body;
+    /* `nodeTypes`, `maxDepth` and `limit` were destructured here and passed to
+       nothing — queryGraph takes a question and an org. A request that set them
+       was answered as though they had been honoured. They are not read now, so
+       the route no longer advertises filters it drops (2026-10-13). */
+    const { query } = req.body ?? {};
 
-    const result = await biostatKnowledgeGraphService.queryGraph(query, orgId);
+    const result = await biostatKnowledgeGraphService.queryGraph(String(query ?? ''), orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    return serverError(res, logger, 'querying knowledge', error);
+    return knowledgeError(res, 'querying knowledge', error);
   }
 });
 
@@ -884,12 +1055,15 @@ router.get('/knowledge/method-landscape/:indication', authMiddleware, async (req
   try {
     const orgId = resolveOrganizationId(req);
     const indication = String(req.params.indication);
-    const { phase, agency } = req.query;
+    /* `phase` and `agency` were destructured from the query string and passed
+       to nothing: getMethodLandscape aggregates across both. A UI that offered
+       either filter would silently not filter, so neither is read (2026-10-13).
+       Adding them means adding them to the service first. */
 
     const result = await biostatKnowledgeGraphService.getMethodLandscape(indication, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    return serverError(res, logger, 'loading method landscape', error);
+    return knowledgeError(res, 'loading method landscape', error);
   }
 });
 
@@ -900,16 +1074,20 @@ router.get('/knowledge/method-landscape/:indication', authMiddleware, async (req
 router.get('/knowledge/endpoint-method-matrix', authMiddleware, async (req: Request, res: Response) => {
   try {
     const orgId = resolveOrganizationId(req);
-    const { indication, phase } = req.query;
+    const { indication, phase, agency } = req.query;
 
+    /* `agency` is passed through from 2026-10-13. The service has filtered on
+       it since it was written; this route read it off the query string and
+       dropped it, so an agency-scoped matrix silently spanned every agency. */
     const filters = {
-      indication: indication as string | undefined,
-      phase: phase as string | undefined,
+      indication: typeof indication === 'string' && indication.trim() ? indication.trim() : undefined,
+      phase: typeof phase === 'string' && phase.trim() ? phase.trim() : undefined,
+      agency: typeof agency === 'string' && agency.trim() ? agency.trim() : undefined,
     };
     const result = await biostatKnowledgeGraphService.getEndpointMethodMatrix(orgId, filters);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    return serverError(res, logger, 'loading endpoint method matrix', error);
+    return knowledgeError(res, 'loading endpoint method matrix', error);
   }
 });
 
@@ -920,13 +1098,19 @@ router.get('/knowledge/endpoint-method-matrix', authMiddleware, async (req: Requ
 router.post('/knowledge/ingest-csr', authMiddleware, async (req: Request, res: Response) => {
   try {
     const orgId = resolveOrganizationId(req);
-    const userId = resolveUserId(req);
-    const { csrId, sections, metadata } = req.body;
+    /* `sections` and `metadata` were destructured and passed to nothing:
+       ingestFromCSR reads the CSR and its details from the database, not from
+       the request. A caller that sent either was answered as though it had
+       been used. `userId` was resolved and unused (2026-10-13). */
+    const csrId = Number((req.body ?? {}).csrId);
+    if (!Number.isInteger(csrId) || csrId <= 0) {
+      return clientError(res, 400, 'A CSR id must be a positive integer.');
+    }
 
     const result = await biostatKnowledgeGraphService.ingestFromCSR(csrId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    return serverError(res, logger, 'saving ingest CSR', error);
+    return knowledgeError(res, 'ingesting the CSR', error);
   }
 });
 
@@ -938,12 +1122,14 @@ router.get('/knowledge/trend/:concept', authMiddleware, async (req: Request, res
   try {
     const orgId = resolveOrganizationId(req);
     const concept = String(req.params.concept);
-    const { startYear, endYear, granularity } = req.query;
+    /* `startYear`, `endYear` and `granularity` were destructured and passed to
+       nothing: getMethodTrend aggregates every recorded year. Not read, so the
+       route no longer advertises a window it ignores (2026-10-13). */
 
     const result = await biostatKnowledgeGraphService.getMethodTrend(concept, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    return serverError(res, logger, 'loading trend', error);
+    return knowledgeError(res, 'loading trend', error);
   }
 });
 

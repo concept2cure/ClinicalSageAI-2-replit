@@ -44,11 +44,11 @@
   RED    document-to-source-checksum — baselined AC-02, DR-ANA-13, AC-03 → LX-06 then LX-08; observed 0
   RED    source-to-documents — baselined AC-02, DR-ANA-13, AC-03, SUB-14 → LX-06 then LX-08; observed 0
   RED    data-room-shows-use — baselined DR-ANA-14 → LX-06 then LX-08 then LX-14; observed 0
- ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA 
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA
  ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) a
  ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal
  ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for
- ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, 
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix,
  ✓ tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > receives the bytes a real multipart request sends
  ✓ tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > records the real byte length, not zero
  ✓ tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > refuses a request carrying no file rather than recording a phantom document

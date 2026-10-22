@@ -453,6 +453,7 @@ def describe_deterministic(n):
 def family_of(n, verb):
     return 'engines'
 
+# nosemgrep: exec-detected -- one-off evidence generator running the table script it wrote beside itself; not product code
 exec(open(os.path.join(OUT, 'table_g.py')).read())
 
 def generate(n):

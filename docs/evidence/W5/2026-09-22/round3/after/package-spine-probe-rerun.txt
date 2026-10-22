@@ -104,4 +104,3 @@ same bundle WITH its manifest (sequence spine input) failed = []
       Tests  1 passed (1)
    Start at  07:10:49
    Duration  4.37s (transform 2.46s, setup 117ms, import 4.05s, tests 10ms, environment 0ms)
-

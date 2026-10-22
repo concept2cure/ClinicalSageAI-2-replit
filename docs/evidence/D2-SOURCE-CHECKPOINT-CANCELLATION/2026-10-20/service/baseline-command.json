@@ -1,0 +1,47 @@
+{
+  "startedAt": "2026-10-20T20:12:56.517830+00:00",
+  "baseline": "0793ee48ecee5dee014b266b2def014c38ea978e",
+  "contractCommit": "6ec38926c",
+  "cwd": "/workspace/Concept2Cure",
+  "command": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "server/services/ana/__tests__/draft-source-cancellation-checkpoint.test.ts"
+  ],
+  "environment": {
+    "PATH_prefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "nodeVersion": "v22.23.3",
+  "beforeSha256": {
+    "server/services/ana/__tests__/draft-source-cancellation-checkpoint.test.ts": "fdaff67d6433e9d3dcef84a512a3aa3284b55f90ed10540aea3fb7572fee3f49",
+    "server/services/ana/draft-project-sources.ts": "ecc39eec0bf741a62e3135d117a9f3003706fc7d05bdd0f70c15895f3abe81f2",
+    "server/services/ana/AnaDocumentDraftingService.ts": "0ba1d6951222e44b334b033c586a3c316ae641d9eeb8be099561379b8944e70c",
+    "server/services/ana/batch-draft-result.ts": "fa8c9a6db5e2c0f47b6f82914e694b0b431a3cf1db67c76494da59220169d762",
+    "server/services/ai-gateway/gateway.ts": "c386323b2d8cabb58701692494f503a22ded7aad257664700b789077ce5348e6"
+  },
+  "finishedAt": "2026-10-20T20:13:02.647265+00:00",
+  "exitCode": 1,
+  "afterSha256": {
+    "server/services/ana/__tests__/draft-source-cancellation-checkpoint.test.ts": "fdaff67d6433e9d3dcef84a512a3aa3284b55f90ed10540aea3fb7572fee3f49",
+    "server/services/ana/draft-project-sources.ts": "ecc39eec0bf741a62e3135d117a9f3003706fc7d05bdd0f70c15895f3abe81f2",
+    "server/services/ana/AnaDocumentDraftingService.ts": "0ba1d6951222e44b334b033c586a3c316ae641d9eeb8be099561379b8944e70c",
+    "server/services/ana/batch-draft-result.ts": "fa8c9a6db5e2c0f47b6f82914e694b0b431a3cf1db67c76494da59220169d762",
+    "server/services/ai-gateway/gateway.ts": "c386323b2d8cabb58701692494f503a22ded7aad257664700b789077ce5348e6"
+  },
+  "rawLogSha256": "dd9b15183d0bf946a1a50ad6e27fe9e18c1f22f86a4bd85b9bf918df5925a60d",
+  "testRealDatabaseEnabled": false,
+  "frozenTestSha256": "fdaff67d6433e9d3dcef84a512a3aa3284b55f90ed10540aea3fb7572fee3f49",
+  "baselineResult": {
+    "passed": 4,
+    "failed": 4,
+    "total": 8,
+    "intendedFailure": "post-Stop source operation counts only"
+  },
+  "sourceHashesMatchBaselinePins": true
+}

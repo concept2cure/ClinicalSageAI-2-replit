@@ -1,0 +1,38 @@
+{
+  "rawArtifact": {
+    "artifact": "oct17-source-identity-batch-sync-tests.json",
+    "sha256": "cba313b8cecff67d07165c5b9a0f62289a36d6c6315d20ccc571550e23854c80",
+    "bytes": 13294
+  },
+  "success": true,
+  "passedCases": 32,
+  "failedCases": 0,
+  "pendingCases": 0,
+  "files": 2,
+  "rows": [
+    {
+      "file": "server/services/ana/__tests__/batch-draft-sections.test.ts",
+      "status": "passed",
+      "cases": 13,
+      "counts": {
+        "passed": 13,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana/__tests__/blueprint-grounded-drafting.test.ts",
+      "status": "passed",
+      "cases": 19,
+      "counts": {
+        "passed": 19,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    }
+  ]
+}

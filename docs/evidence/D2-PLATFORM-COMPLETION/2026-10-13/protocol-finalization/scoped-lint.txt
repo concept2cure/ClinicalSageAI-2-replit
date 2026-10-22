@@ -1,0 +1,2 @@
+Evidence probe/config ESLint: exit 0, zero errors and zero warnings.
+(No diagnostics.)

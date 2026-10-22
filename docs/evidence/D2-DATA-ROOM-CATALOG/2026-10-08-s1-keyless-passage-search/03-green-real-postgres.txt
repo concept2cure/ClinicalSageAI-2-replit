@@ -1,0 +1,6 @@
+# real PostgreSQL 16 with pgvector, RLS_ENFORCE=on as app_service: every vault, chunk, passage, catalog and RAG dbtest (retrieval-floor excluded: it fails identically at HEAD, see README)
+ Test Files  35 passed (35)
+      Tests  299 passed (299)
+# the founder-path walk
+ Test Files  1 passed (1)
+      Tests  15 passed (15)

@@ -28,9 +28,11 @@
  *     section approval).
  *   - `persistGovernedSignatureRevocation(client, params)` closes the §11.70
  *     supersession chain for the governed `revoke-signature` action: it resolves
- *     the live signature on that target (org-scoped), records the revocation as
- *     its own attributable row, and points the revoked row's `superseded_by` at
- *     it. A revocation that cannot resolve what it revokes REFUSES.
+ *     the ONE live signature on that target (org-scoped) that the payload names
+ *     — by `signatureId`, `signatureActionId` or `intent` — records the
+ *     revocation as its own attributable row, and points the revoked row's
+ *     `superseded_by` at it. A revocation that resolves nothing, or more than
+ *     one signature, REFUSES.
  *
  * Ledger L37 folded the LAST remaining second INSERT in.
  * `part11ComplianceService.createElectronicSignature` — the writer behind
@@ -62,6 +64,14 @@ import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { resolveSignerIdentity } from './resolve-signer-identity.js';
 import { GOVERNED_SIGN_MEANINGS, signMeaningRefusal, type GovernedSignMeaning } from './signature-meanings.js';
 import { CONTENT_BINDERS } from './governed-target-binders.js';
+import type { RecordedPackageIdentitySnapshot } from '../ectd/package-identity';
+import { deriveEctdSequenceBinding } from './ectd-sequence-binding';
+import {
+  chooseSignatureToRevoke,
+  revocationCandidateOf,
+  revocationSelectorOf,
+  SignatureRevocationUnresolvedError,
+} from './revocation-selection.js';
 
 /** Minimal pg-compatible client: node-pg Pool, PoolClient, or a test shim. */
 export interface SignatureDbClient {
@@ -114,6 +124,38 @@ export const BINDING_BASIS = {
   TRANSMITTED_BUNDLE_SHA256: 'transmitted-bundle-sha256',
   /** sha256 over the certified financial-disclosure snapshot (21 CFR 54 Form 3454/3455). */
   FINANCIAL_DISCLOSURE_CONTENT: 'financial-disclosure-content-sha256',
+  /**
+   * sha256 over the interim data snapshot an adaptive decision is taken on:
+   * the look number, information fraction, enrolment, summary statistics, test
+   * statistic, conditional and predictive power, and the boundary at that look.
+   *
+   * An IDMC does not approve "a decision"; it approves a decision ABOUT a
+   * specific interim look, so that look's data is what the signature binds
+   * (§11.70). Added 2026-10-13, when the adaptive decision stopped being a
+   * Drizzle insert that stamped `approved_by` from the session user with no
+   * ceremony at all.
+   */
+  INTERIM_SNAPSHOT_CONTENT: 'interim-snapshot-content-sha256',
+  /**
+   * sha256 over one answer to an agency: the inbox letter's id, the question as
+   * the agency numbered and worded it, and the exact response text
+   * (agency-responses/response-logic.ts agencyResponseDigest, the one recipe the
+   * approval read uses too). No revision, author or time, so the signature
+   * stops approving the response the moment its words change, and only then.
+   * Added 2026-10-18 with agency_communication_questions.
+   */
+  AGENCY_RESPONSE_CONTENT: 'agency-response-content-sha256',
+  /**
+   * sha256 (recipe commitment-fulfilment/v1, ha-interactions/ha-logic.ts
+   * commitmentFulfilmentDigest) over a regulatory commitment's fulfilment: the
+   * commitment's type, words, basis and due date, the date it was met, and
+   * what met it, the sequence (id, number, submission) and the Vault version
+   * (id and the sha256 of its bytes). Signed on `regulatory-commitment:<id>`
+   * when a PMR, PMC or REMS is recorded fulfilled (P-41, 2026-10-19). The
+   * database refuses that fulfilment at COMMIT unless its signature carries
+   * this basis (migrations/20261019_commitment_fulfilment_evidence.sql).
+   */
+  COMMITMENT_FULFILMENT_CONTENT: 'commitment-fulfilment-content-sha256',
   /**
    * sha256 over the eCTD release package the submission orchestrator assembled:
    * leaf-manifest digest || validator-outcome digest || tenant-scoped submission
@@ -248,7 +290,10 @@ export function isSignatureWithdrawn(row: {
  * written: nobody signed the void. Its cause, the refusal, is recorded on the
  * audit row the caller writes. One statement, so it needs no transaction; the
  * predicate makes it a compare-and-set, and a second void of the same row
- * matches nothing.
+ * matches nothing. The immutability trigger permits exactly this transition and
+ * freezes the row after it (db/migrations/20260730_esign_audit_db_level_immutability.sql,
+ * amended 2026-10-15: until then it refused the statement, so the void reached
+ * the audit chain only and the row kept reading is_valid = true).
  */
 export async function voidSignatureForRefusedAct(
   client: SignatureDbClient,
@@ -481,6 +526,11 @@ export interface GovernedBinding {
   basis: BindingBasis;
   /** Honest human-readable note recorded in the signature manifest. */
   note: string;
+  /** Exact FDA applicant/application facts included in this digest. Internal
+   *  consumers must package this captured proof, never a later mutable read. */
+  recordedPackageIdentity?: RecordedPackageIdentitySnapshot;
+  /** Original sequence/leaf digest, retained to distinguish stale identity from changed content. */
+  sequenceContentDigest?: string;
 }
 
 /**
@@ -516,82 +566,10 @@ export async function deriveGovernedTargetBinding(
 
   try {
     switch (prefix) {
-      case 'ectd-sequence': {
-        /* ── `status` is deliberately NOT bound (amended 2026-09-21) ──────────
-           It used to be in this SELECT, and that made a signature destroy
-           itself through the act it authorized. applyGovernedSequenceTransition
-           signs for 'dispatch' while the sequence is frozen and then UPDATEs
-           status to 'dispatched'. Gate 1 never sees it, because each signature
-           is verified BEFORE its own transition. The release-signature gate
-           re-derives that same dispatch signature at TRANSMIT time, after the
-           status has moved, so the digest could not match: verdict 'invalid' —
-           the TAMPERING verdict, which blocks unconditionally — reported as
-           "the sequence changed after it was signed" when no content had
-           changed at all. Transmit was unreachable for every submission type
-           that requires a release signature. Reproduced against the real
-           migrations in sequence-release-signature.pglite.integration.test.ts
-           ("survives the dispatch it authorized").
-
-           What remains is identity and content: the sequence's id, submission,
-           region, number and type, plus its ordered leaf manifest below. That
-           is what the basis name and note have always claimed
-           (`ectd-sequence-leaf-manifest-sha256`), and what a §11.70 signature
-           is for — a signature that stops verifying the moment it is used is
-           not durable evidence of anything. The workflow state it was signed
-           under is still recorded, on the governed action and the audit chain,
-           which is where an event belongs rather than inside a content hash.
-           `frozen_at`, `dispatch_status` and `updated_at` were already
-           excluded on the same reasoning; `status` was the one mutable column
-           left in.
-
-           NOTE: a signature taken before this change binds the old digest and
-           will now be refused — honestly, by Gate 1, with "re-sign the current
-           content". The dispatch-intent signatures it affects were already
-           unverifiable the instant they were used, so nothing that worked
-           stops working.
-
-           The `document:` and `section:` branches below select a `status`
-           column of their own and have the same shape, but no caller
-           re-derives either binding after a status transition (the only two
-           consumers of this function, sequence-release-signature.ts:181 and
-           submission-service.ts:503, are both ectd-sequence). They are left
-           alone rather than changed on an unproven hunch. */
-        const seq = await client.query(
-          `SELECT id, submission_id, region, sequence_number, type
-             FROM ectd_sequences
-            WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL
-            LIMIT 1`,
-          [rest, orgId],
-        );
-        if (seq.rows.length === 0) return ledgerFallback('sequence row not readable at signing time');
-        /* ── document_uuid and document_content_sha256 are bound (2026-09-22,
-           W5/D7) ──────────────────────────────────────────────────────────────
-           A vault leaf names its document by document_uuid (its document_id is
-           NULL), and the content pin records what the source held when it was
-           placed. Neither was digested, so re-pointing a signed vault leaf at a
-           different PDF — upsertLeaf re-pins, so DOCUMENT_CONTENT_MISMATCH does
-           not fire either — left this digest byte-identical, and Gate 1 accepted
-           a signature over a document the signer never saw. Both columns are
-           written only by upsertLeaf, when a leaf is placed or changed, never by
-           a workflow transition, so this cannot recreate the self-invalidating
-           signature described above. A signature taken before this change binds
-           the old digest and is refused by Gate 1 with "re-sign the current
-           content", as with the 2026-09-21 amendment. */
-        const leaves = await client.query(
-          `SELECT id, section_code, lifecycle_op, document_table, document_id, document_uuid,
-                  document_content_sha256, checksum, title
-             FROM submission_leaves
-            WHERE sequence_id = $1::int AND organization_id = $2 AND deleted_at IS NULL
-            ORDER BY section_code, id`,
-          [rest, orgId],
-        );
-        const payload = canonicalJson({ sequence: seq.rows[0], leaves: leaves.rows });
-        return {
-          digest: sha256Hex(payload),
-          basis: BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST,
-          note: `sha256 over the ectd_sequences identity (id, submission, region, sequence number, type — not its workflow status) and its ${leaves.rows.length} submission_leaves row(s) (ordered by section_code, id; each with its document pointer, uuid and content pin) at signing time.`,
-        };
-      }
+      case 'ectd-sequence':
+        return await deriveEctdSequenceBinding(client, rest, orgId, {
+          basis: BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST, hashPayload: sha256CanonicalJson, ledgerFallback,
+        });
       case 'document': {
         const doc = await client.query(
           `SELECT id, doc_type, agency, rule_pack_version, title, status
@@ -698,7 +676,7 @@ export interface GovernedSignParams {
  */
 export interface GovernedActionSignatureParams extends GovernedSignParams {
   /** Explicit, honest binding. `digest: null` ⇒ the audit chain hash is bound. */
-  binding: GovernedBinding | { digest: string | null; basis: string; note: string };
+  binding: Omit<GovernedBinding, 'basis'> & { basis: string };
   /** electronic_signatures.signature_type. Default 'governed-action'. */
   signatureType?: string;
   /** manifest `kind` discriminator. Default 'governed-sign'. */
@@ -800,6 +778,7 @@ export async function persistGovernedActionSignature(
     bindingBasis: binding.basis,
     bindingNote: binding.note,
     ...(params.extraManifest ?? {}),
+    ...(binding.recordedPackageIdentity ? { recordedPackageIdentity: binding.recordedPackageIdentity, sequenceContentDigest: binding.sequenceContentDigest } : {}),
   };
   const signatureHash = manifestSignatureHash(signatureManifest);
 
@@ -849,20 +828,6 @@ export async function persistGovernedSignSignature(
 // ── §11.70 supersession (governed revoke-signature) ──────────────────────────
 
 /**
- * A governed revocation could not identify the signature it revokes. Fail
- * closed: a revocation that cannot name what it revokes revokes nothing, and
- * recording it would leave the supersession chain claiming an act that never
- * landed.
- */
-export class SignatureRevocationUnresolvedError extends Error {
-  readonly code = 'REVOCATION_TARGET_UNRESOLVED';
-  constructor(message: string) {
-    super(message);
-    this.name = 'SignatureRevocationUnresolvedError';
-  }
-}
-
-/**
  * Persist the §11.70 supersession for a governed `revoke-signature` action, on
  * the SAME client/transaction as the revocation's ledger write.
  *
@@ -899,32 +864,53 @@ export class SignatureRevocationUnresolvedError extends Error {
  * revoked target's content digest — otherwise it would collide with the
  * (organization_id, bound_payload_digest, superseded_by IS NULL) lookup and a
  * revoked release would read as freshly signed.
+ *
+ * WHICH SIGNATURE (amended 2026-10-15, row D5). This resolved "the newest live
+ * row on the target", whatever it was given for. Since P-34 a sequence carries
+ * live signatures for several acts at once — freeze, dispatch, transmit, a
+ * Shadow Review waiver and, per P-35, one disposition per critical finding — so
+ * a revocation meant for the release could withdraw the waiver, or the
+ * reverse, and this row would then name the wrong signature as revoked
+ * (§11.10(e), §11.70). The payload now names the signature: `signatureId`,
+ * `signatureActionId` or `intent` (RevocationSelector), and exactly one live
+ * signature must answer, or nothing is written (chooseSignatureToRevoke) —
+ * on every target, whether or not its signatures declare an intent.
  */
 export async function persistGovernedSignatureRevocation(
   client: SignatureDbClient,
   params: GovernedSignParams,
 ): Promise<{ revocationId: number; revokedSignatureId: number }> {
-  // Resolve the signature under revocation: org-scoped, anchored on the same
-  // governed target the ledger records, still live. Revocation rows themselves
-  // are excluded — a revocation is not a signature that can be revoked.
+  // A malformed name refuses before any query (SignatureRevocationSelectorError).
+  const selector = revocationSelectorOf(params.payload);
+
+  // The signatures on the target — org-scoped, anchored on the same governed
+  // target the ledger records, not superseded, newest first — each with the
+  // intent its sign action declared. Revocation rows themselves are excluded:
+  // a revocation is not a signature that can be revoked. One voided for a
+  // refused act (P-23) is out of force too, by the canonical predicate.
   const found = await client.query(
-    `SELECT id, signature_hash, signature_type, signed_at, signer_id
-       FROM electronic_signatures
-      WHERE organization_id = $1
-        AND signed_target = $2
-        AND signature_type <> $3
-        AND superseded_by IS NULL
-      ORDER BY signed_at DESC, id DESC
-      LIMIT 1`,
+    `SELECT es.id, es.signature_hash, es.signature_type, es.signed_at, es.signer_id,
+            es.superseded_by, es.is_valid, es.verification_status,
+            (es.signature_manifest::jsonb ->> 'actionId') AS action_id,
+            (a.payload ->> 'intent') AS intent
+       FROM electronic_signatures es
+       LEFT JOIN c2c_ana_actions a
+         ON a.id = (es.signature_manifest::jsonb ->> 'actionId')
+        AND a.org_id = es.organization_id
+      WHERE es.organization_id = $1
+        AND es.signed_target = $2
+        AND es.signature_type <> $3
+        AND es.superseded_by IS NULL
+      ORDER BY es.signed_at DESC, es.id DESC`,
     [params.orgId, params.target, GOVERNED_REVOCATION_SIGNATURE_TYPE],
   );
-  if (found.rows.length === 0) {
-    throw new SignatureRevocationUnresolvedError(
-      `revoke-signature: no active electronic signature is anchored to target '${params.target}' in organization ${params.orgId} — refusing to record a revocation of nothing (§11.70).`,
-    );
-  }
-  const revoked = found.rows[0];
-  const revokedId = Number(revoked.id);
+  const liveRows = found.rows.filter((r) => !isSignatureWithdrawn(r));
+  const chosen = chooseSignatureToRevoke(liveRows.map(revocationCandidateOf), selector, {
+    target: params.target,
+    orgId: params.orgId,
+  });
+  const revoked = liveRows.find((r) => Number(r.id) === chosen.signatureId);
+  const revokedId = chosen.signatureId;
 
   const revocation = await persistGovernedActionSignature(client, {
     ...params,
@@ -944,9 +930,13 @@ export async function persistGovernedSignatureRevocation(
       '(21 CFR Part 11 §11.50/§11.70/§11.200); the superseded signature is retained unaltered and linked via superseded_by.',
     extraManifest: {
       revokedSignatureId: revokedId,
-      revokedSignatureHash: revoked.signature_hash ?? null,
-      revokedSignatureType: revoked.signature_type ?? null,
-      revokedSignatureSignerId: revoked.signer_id == null ? null : Number(revoked.signer_id),
+      revokedSignatureHash: revoked?.signature_hash ?? null,
+      revokedSignatureType: revoked?.signature_type ?? null,
+      revokedSignatureSignerId: revoked?.signer_id == null ? null : Number(revoked.signer_id),
+      // What the signature was given for, so the record states which act's
+      // authorization was withdrawn (§11.10(e)).
+      revokedSignatureActionId: chosen.signatureActionId,
+      revokedSignatureIntent: chosen.intent,
     },
   });
 

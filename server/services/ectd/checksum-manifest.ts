@@ -61,6 +61,34 @@ export async function verifyChecksumManifest(
   manifestName = 'checksums.txt',
   extensions: string[] = ['.dtd', '.xsd', '.xsl'],
 ): Promise<ChecksumVerifyResult> {
+  let manifestText = '';
+  try { manifestText = await fs.readFile(path.join(dir, manifestName), 'utf8'); } catch { /* Unrecorded files remain unverified. */ }
+  let names: string[] = [];
+  try { names = (await fs.readdir(dir)).filter(name => extensions.some(ext => name.toLowerCase().endsWith(ext))); } catch { /* Pre-vendoring directory may be absent. */ }
+  const files: Array<{ fileName: string; content: Buffer }> = [];
+  const unreadable: string[] = [];
+  for (const fileName of names) {
+    try { files.push({ fileName, content: await fs.readFile(path.join(dir, fileName)) }); }
+    catch { unreadable.push(fileName); }
+  }
+  const result = verifyChecksumBuffers(files, manifestText, extensions);
+  const entries = new Map(parseManifest(manifestText).map(entry => [entry.fileName, entry.sha256]));
+  for (const fileName of unreadable) {
+    const expected = entries.get(fileName);
+    if (expected) result.mismatched.push({ fileName, expected, actual: '' });
+    else result.unlistedFiles.push(fileName);
+  }
+  result.missingFiles = result.missingFiles.filter(fileName => !unreadable.includes(fileName));
+  result.ok = result.ok && unreadable.length === 0;
+  return result;
+}
+
+/** Verify the exact supportive buffers captured for a package, without rereading their source. */
+export function verifyChecksumBuffers(
+  files: Array<{ fileName: string; content: Buffer }>,
+  manifestText: string,
+  extensions: string[] = ['.dtd', '.xsd', '.xsl'],
+): ChecksumVerifyResult {
   const result: ChecksumVerifyResult = {
     verified: [],
     mismatched: [],
@@ -69,22 +97,12 @@ export async function verifyChecksumManifest(
     ok: true,
   };
 
-  let manifestText = '';
-  try {
-    manifestText = await fs.readFile(path.join(dir, manifestName), 'utf8');
-  } catch {
-    manifestText = '';
-  }
   const entries = parseManifest(manifestText);
   const entryByName = new Map(entries.map((e) => [e.fileName, e.sha256]));
 
-  // Actual vendored artifact files present.
-  let names: string[] = [];
-  try {
-    names = (await fs.readdir(dir)).filter((n) => extensions.some((e) => n.toLowerCase().endsWith(e)));
-  } catch {
-    names = [];
-  }
+  const selected = files.filter(file => extensions.some(ext => file.fileName.toLowerCase().endsWith(ext)));
+  const byName = new Map(selected.map(file => [file.fileName, file.content]));
+  const names = [...byName.keys()];
 
   for (const name of names.sort()) {
     const expected = entryByName.get(name);
@@ -92,12 +110,7 @@ export async function verifyChecksumManifest(
       result.unlistedFiles.push(name);
       continue;
     }
-    let actual = '';
-    try {
-      actual = createHash('sha256').update(await fs.readFile(path.join(dir, name))).digest('hex');
-    } catch {
-      actual = '';
-    }
+    const actual = createHash('sha256').update(byName.get(name)!).digest('hex');
     if (actual === expected) result.verified.push(name);
     else result.mismatched.push({ fileName: name, expected, actual });
   }
@@ -115,4 +128,4 @@ export async function verifyChecksumManifest(
   return result;
 }
 
-export default { parseManifest, verifyChecksumManifest };
+export default { parseManifest, verifyChecksumManifest, verifyChecksumBuffers };

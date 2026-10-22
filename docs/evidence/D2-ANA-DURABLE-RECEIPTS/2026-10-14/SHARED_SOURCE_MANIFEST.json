@@ -1,0 +1,30 @@
+{
+  "branch": "concept2cure-v2",
+  "files": [
+    {
+      "file": "shared/ana/source-admission-receipts.ts",
+      "bytes": 8761,
+      "sha256": "62710ab0555de812b41c60f2ec31b705508f9358bbce75d6a7bfde3766de6391"
+    },
+    {
+      "file": "shared/ana/__tests__/source-admission-receipts.test.ts",
+      "bytes": 14969,
+      "sha256": "41fc750ceb018d72d6f068651cebc4182dea4201e521065c22862754e7712e15"
+    },
+    {
+      "file": "shared/canonical-json.ts",
+      "bytes": 4281,
+      "sha256": "06ac6544f1422fead32f85b6ead22b3efe4571cf046d335006440dca7366a4c4"
+    },
+    {
+      "file": "docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/CONTRACT.md",
+      "bytes": 13448,
+      "sha256": "cf62df9b2412d17892fa2f2ea8a6d0820726dccf2b2e5d8dfe320d5f8dd9f54d"
+    },
+    {
+      "file": "docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/SHARED_ADVERSARIES.md",
+      "bytes": 2112,
+      "sha256": "de3c9b460ba3fa7a546b4051000910d2cad3612fbb7b20e4b8d158ad6366091d"
+    }
+  ]
+}

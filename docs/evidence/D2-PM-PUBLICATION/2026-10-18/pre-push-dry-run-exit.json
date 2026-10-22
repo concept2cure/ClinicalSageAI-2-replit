@@ -1,0 +1,13 @@
+{
+  "command": [
+    "git",
+    "push",
+    "--dry-run",
+    "origin",
+    "concept2cure-v2"
+  ],
+  "exitCode": 1,
+  "elapsedSeconds": 69.86,
+  "sourceUnchanged": true,
+  "sourceBindings": "source-bindings-before-test-global.json"
+}

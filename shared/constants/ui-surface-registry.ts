@@ -31,6 +31,7 @@
  */
 
 import { GLOBAL_RI_GROUPS } from './global-ri-ui';
+import { deferredSurfaceDescription } from './deferred-capability-inventory';
 import { UI_V2_SURFACES } from './ui-surface-registry.ui-v2';
 
 // ── Taxonomy ──────────────────────────────────────────────────────────────────
@@ -280,7 +281,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Generic 3-pane shell (tree · canvas · intelligence). Substrate for documents/editor.',
+    notes: deferredSurfaceDescription('regulatory-workspace'),
   },
   {
     id: 'vault',
@@ -293,8 +294,8 @@ export const UI_SURFACES: UiSurface[] = [
     // Launch-scope API (2026-09-25, ci:launch-scope-api): MdxSurfaceHost (useMdxPrograms, useWorkbench, useSubmissions) calls these for the Vault too.
     // '/api/mdx/vault' (2026-09-26): mdx/hooks/useVault.ts, the list and version reads.
     // '/api/vault/legal-holds' (2026-10-01, P1-22; ADR-0014 §6): the legal-hold list, place and lift
-    // (server/routes/vault-legal-holds.ts). No screen calls them yet, so ci:launch-scope-api could not
-    // see they were unclaimed, and production refused every one 403 LAUNCH_SCOPE. Its /retention
+    // (server/routes/vault-legal-holds.ts). Setup's LegalHoldsCard now calls them;
+    // Vault retains the preservation API family for its records. Its /retention
     // sub-path is Setup's, below.
     // /api/regulatory/documents: a Vault version's review and approval, on the
     // one document lifecycle (VR-13).
@@ -378,21 +379,33 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'rocket',
     group: 'submission',
     uiKit: 'submission',
-    // Launch-scope API (2026-09-25, ci:launch-scope-api): GatewayTransmittals.tsx assembles, preflights and reads identifiers through the package model.
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): GatewayTransmittals.tsx assembled, preflighted and read identifiers through the package model (until 2026-10-17, below).
     // 2026-09-26: '/api/mdx' narrowed to '/api/mdx/gateways' (the routes this
     // surface owns, per `engineering` below). The whole namespace made every
     // device-kit API — risk items, clinical studies, IVD, labeling — answer as
     // launch in production. The other launch callers under /api/mdx are
     // claimed by their own surfaces (vault, admin-console) or on
     // LAUNCH_PLATFORM_API (industry profile, notifications).
-    apiPrefixes: ['/api/mdx/gateways', '/api/submission-ops'],
+    // 2026-10-17 (audit; FILING_SPINE F12, LX-13): a read-only transmittal log.
+    // Transmit runs on the sequence (Submission Center's Dispatch tab, POST
+    // /api/submissions/sequences/:id/transmit). The package picker, assemble,
+    // identifiers, package transmit and rollback left this screen, so it claims
+    // only the log and its per-row reads and signed act: /status, /ack and
+    // /technical-rejection sit under it. With the bare /api/mdx/gateways gone,
+    // the package transmit (/api/mdx/gateways/:region/:gateway/transmit), the
+    // gateway roster and the transmit-independence dry run fall to the device
+    // kit's /api/mdx claim and production refuses them (pinned in
+    // server/middleware/__tests__/launch-scope-api-gate.test.ts).
+    // /api/submission-ops is no longer called here; Vault and Tasks claim it
+    // for their own reads.
+    apiPrefixes: ['/api/mdx/gateways/transmittals'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Multi-region agency dispatch: gateway roster + credential status, governed transmit (§11 re-auth + reason), transmittal log, live status poll, ACK download, governed rollback.',
-    engineering: 'Routes: /api/mdx/gateways.',
+    notes: 'Read-only transmittal log across the organisation: status, live status poll, ACK download, and the signed technical rejection. Transmit is on the sequence (Submission Center, Dispatch).',
+    engineering: 'Routes: /api/mdx/gateways/transmittals.',
   },
   {
     id: 'ectd-coauthor',
@@ -408,7 +421,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'eCTD tree + section authoring. Back-half pipeline (format→assemble→validate→transmit) is production-grade.',
+    notes: deferredSurfaceDescription('ectd-coauthor'),
   },
   {
     id: 'ectd-compile',
@@ -418,8 +431,21 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'gitBranch',
     group: 'submission',
     uiKit: 'ectd_coauthor',
-    // Launch-scope API (2026-09-25, ci:launch-scope-api): EctdCompile reads orchestrator runs and their audit.
-    apiPrefixes: ['/api/ectd-compile', '/api/ectd', '/api/submission-orchestrator'],
+    /* Launch-scope API (2026-09-25, ci:launch-scope-api): EctdCompile reads
+       orchestrator runs and their audit — `/runs`, not the mount root.
+       Attribution is by longest prefix at a segment boundary, so
+       '/api/submission-orchestrator' admitted every handler under the mount,
+       including five standalone builders no screen calls (/m2/nonclinical,
+       /m2/clinical, /m2/clinical-overview, /csr/tabulate, /validate/hardened),
+       each of which composes regulated submission content from arrays in the
+       REQUEST BODY. Narrowed to the segment the screens read, so the rest are
+       unmapped and production refuses them 403 LAUNCH_SCOPE (GA plan item 1,
+       decision 2026-10-05; /m2/qos, the CMC one, is deleted outright). */
+    // The package screen reads source readiness, selects Vault supporting JSON
+    // and previews deterministic tables. Attribute only these exact endpoints;
+    // standalone CSR/Module 2 content builders retain their launch fences.
+    apiPrefixes: ['/api/ectd-compile', '/api/ectd', '/api/submission-orchestrator/runs', '/api/submission-orchestrator/csr/readiness',
+      '/api/submission-orchestrator/csr/sources', '/api/submission-orchestrator/csr/source-preview', '/api/submission-orchestrator/csr/source-contract'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/submission-api',
     discoveryCatalog: null,
@@ -442,7 +468,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'eCTD publishing engine — version-aware (v3.2.2 + v4.0/HL7 RPS): controlled-vocabulary browser, RPS/backbone validation, v3->v4 forward-compat preview, and the exact spec versions each package is qualified against.',
+    notes: deferredSurfaceDescription('ectd-publishing'),
     engineering: 'Routes: /api/ectd/controlled-vocab, /api/ectd/v4/*, /api/ectd/qualification.',
   },
   {
@@ -487,7 +513,62 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'beaker',
     group: 'quality-cmc',
     uiKit: 'cmc',
-    apiPrefixes: ['/api/cmc', '/api/cmc/module3-os', '/api/cmc/specifications', '/api/cmc/stability'],
+    // 2026-10-05 (decision P-28, CMC / Module 3 joins the launch catalog): the
+    // bare '/api/cmc' and '/api/cmc/module3-os' replaced by the segments the
+    // CMC screens call, and the dead '/api/cmc/stability' mount dropped.
+    // Attribution is by longest prefix, so the bare claim made every handler
+    // under it answer as launch at the flip, called or not. Everything else
+    // under /api/cmc is unmapped, which production refuses: deliberately so
+    // for /projects/:id/process-capability until a launch screen calls it.
+    // The deferred /variations/classify caller is claimed narrowly below,
+    // with its own launch-scope refusal in the route. Each prefix needs a caller in the CMC
+    // screens (server/middleware/__tests__/launch-scope-api-gate.test.ts;
+    // docs/evidence/CMC-M3-GA/2026-10-05/20-cmc-api-allowlist/).
+    apiPrefixes: [
+      '/api/cmc/drug-substances',
+      '/api/cmc/drug-products',
+      '/api/cmc/analytical-methods',
+      '/api/cmc/qc-testing',
+      '/api/cmc/stability-studies',
+      '/api/cmc/process-validation',
+      '/api/cmc/change-control',
+      '/api/cmc/comparability-studies',
+      '/api/cmc/container-closures',
+      '/api/cmc/reference-standards',
+      '/api/cmc/impurity-profiles',
+      '/api/cmc/dissolution-profiles',
+      '/api/cmc/material-specs',
+      '/api/cmc/formulation-records',
+      '/api/cmc/manufacturing-processes',
+      '/api/cmc/characterization-studies',
+      /* The §11.10(e) change history of one register record — who recorded it,
+         who changed it, and what each change moved (URS-CMC-025). Its own
+         namespace because the register is a path PARAMETER: a path whose first
+         segment is a variable normalises to '/api/cmc/:p/:p/history', which no
+         prefix can claim, and the only prefix that would have covered it is the
+         bare '/api/cmc' that P-28 deliberately does not claim. */
+      '/api/cmc/register-history',
+      '/api/cmc/quality/qbd',
+      '/api/cmc/ich-compliance',
+      '/api/cmc/control-strategy',
+      // Deferred UI caller; the route itself refuses when launch scope is on.
+      '/api/cmc/variations/classify',
+      '/api/cmc/specifications',
+      '/api/cmc/batch-records',
+      '/api/cmc/module3-board',
+      '/api/cmc/agency-questions',
+      '/api/cmc/module3-os/sections',
+      '/api/cmc/module3-os/compile',
+      '/api/cmc/module3-os/contradictions',
+      '/api/cmc/module3-os/readiness',
+      '/api/cmc/module3-os/provenance',
+      '/api/cmc/module3-os/guard',
+      '/api/cmc/module3-os/place-into-submission',
+      '/api/cmc/module3-os/build-state',
+      '/api/cmc/module3-os/build-section',
+      '/api/cmc/module3-os/source-evidence',
+      '/api/cmc/module3-os/register-links',
+    ],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -506,13 +587,42 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'clipboardList',
     group: 'submission',
     uiKit: 'pdev',
-    apiPrefixes: ['/api/ind-lifecycle', '/api/ind-forms', '/api/ind-master-data'],
+    // Decision P-32, 2026-10-15: this surface is a feature of the Submission
+    // Center launch app, and claims only the paths its screens call
+    // (IndLifecycle.tsx and the IndFormsPanel.tsx it embeds). Attribution is
+    // by longest prefix at a segment boundary, so the bare /api/ind-lifecycle
+    // it claimed until then would have put every route under it in the
+    // release: the 312.32 safety report, the E2B(R3) ICSR and the ICSR
+    // transmit among them. Those are claimed by `pharmacovigilance`, outside
+    // the release; the sequence, portfolio and /submission/:id register routes
+    // stay unclaimed (a prefix cannot admit the registers without the safety
+    // registers beside them). /api/ind-master-data has no screen caller.
+    // /api/ind-lifecycle/clock is the server's evaluateRegulatoryClock, which
+    // the screen calls in place of the client copy it carried until 2026-10-15;
+    // /readiness is not claimed — the screen's readiness verdict comes with the
+    // checklist read.
+    // Pinned by server/services/entitlements/__tests__/ind-launch-claim.test.ts.
+    apiPrefixes: [
+      '/api/ind-checklist',
+      '/api/ind-forms',
+      '/api/ind-lifecycle/clock',
+      '/api/ind-lifecycle/cover-letter',
+      '/api/ind-lifecycle/briefing-book',
+      '/api/ind-lifecycle/loa',
+      '/api/ind-lifecycle/right-of-reference',
+      '/api/ind-lifecycle/annual-report',
+      '/api/ind-lifecycle/amendment-plan',
+      '/api/ind-lifecycle/amendment',
+    ],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'IND checklist, forms (1571/1572/3674), master data, amendments, annual reports, safety reports.',
+    notes:
+      'IND checklist and Module 1 forms (1571, 1572, 3674); cover letter, briefing book, Letter of ' +
+      'Authorization and right of reference; annual reports and amendments placed into the IND eCTD sequence. ' +
+      'IND safety reports are not part of this release.',
   },
   {
     id: 'pdev',
@@ -554,7 +664,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Full REST (list/extract-preview/extract+save/create-from-spec/update/render docx|pdf), org-scoped, audited. No UI yet — strongest backend without a surface.',
+    notes: deferredSurfaceDescription('template-library'),
   },
   {
     id: 'tasks',
@@ -594,7 +704,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
-    notes: 'CTD/eCTD module map with completeness + readiness overlay.',
+    notes: deferredSurfaceDescription('dossier-map'),
   },
   {
     id: 'investigator-brochure',
@@ -610,7 +720,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
-    notes: 'ICH E6(R2) §7 IB section tree with per-section readiness over ib-builder.',
+    notes: 'ICH E6(R3) Appendix A IB section tree with per-section readiness over ib-builder.',
   },
   {
     id: 'csr-workflow',
@@ -742,7 +852,8 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'barChart',
     group: 'evidence',
     uiKit: null,
-    apiPrefixes: ['/api/haq-manager', '/api/intelligence'],
+    // '/api/haq-manager' removed 2026-10-18 with the store it named; the report engine never called it.
+    apiPrefixes: ['/api/intelligence'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/intelligence',
     discoveryCatalog: null,
@@ -873,8 +984,9 @@ export const UI_SURFACES: UiSurface[] = [
     uiKit: null,
     // Launch-scope API (2026-09-25, ci:launch-scope-api): AdminSurfaces.tsx Setup reads the GAMP 5 validation kit.
     // 2026-10-01 (P1-22; ADR-0014 §6): Setup's Records retention card (RetentionPeriodCard.tsx)
-    // reads and sets the organisation's retention period.
-    apiPrefixes: ['/api/setup', '/api/admin', '/api/users', '/api/api-keys', '/api/validation-kit', '/api/vault/legal-holds/retention'],
+    // reads and sets the organisation's retention period. LegalHoldsCard (2026-10-14, D2)
+    // lists, places and lifts holds, using named project and Vault document choices.
+    apiPrefixes: ['/api/setup', '/api/admin', '/api/users', '/api/api-keys', '/api/validation-kit', '/api/vault/legal-holds/retention', '/api/vault/legal-holds', '/api/regulatory-programs', '/api/c2c/project-vault'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -913,7 +1025,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Quality-management plan lifecycle (list/create/activate) + completeness/gate-level/risk-factor dashboard.',
+    notes: deferredSurfaceDescription('qmp'),
     engineering: 'Routes: /api/quality.',
   },
   {
@@ -996,7 +1108,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Browse/search knowledge atoms, pin/unpin, confidence scores.',
+    notes: deferredSurfaceDescription('ana-memory'),
   },
 
 

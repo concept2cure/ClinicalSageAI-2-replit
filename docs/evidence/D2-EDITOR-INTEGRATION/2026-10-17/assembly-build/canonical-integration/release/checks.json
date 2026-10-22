@@ -1,0 +1,125 @@
+{
+  "qualificationBase": "accf8c6bacfdc2d89b5de9098e22a67fe3f27914",
+  "officialToolchainNode": "22.23.3",
+  "scope": "Local Codespaces only; no deployment or live provider calls. Test counts overlap.",
+  "sourcePins": {
+    "receipt": "source-pins.json",
+    "verification": "source-pin-verification.json",
+    "rootPassed": 44,
+    "rootTotal": 44
+  },
+  "tests": {
+    "frontend": {
+      "passed": 242,
+      "files": 11,
+      "receipt": "../frontend/summary.json",
+      "qualification": "Before final equivalent navigation state updater; final39-case replay includes all17 Workbench cases after that change."
+    },
+    "anaVault": {
+      "passed": 75,
+      "files": 11,
+      "receipt": "../ana-server/proof.json"
+    },
+    "backendPreFinal": {
+      "passed": 127,
+      "files": 10,
+      "receipt": "../backend/verification.json"
+    },
+    "backendFinalAffectedReplay": {
+      "passed": 33,
+      "receipt": "../backend/README.md"
+    },
+    "rootRelatedRegression": {
+      "passed": 313,
+      "files": 12,
+      "receipt": "related-regression.json"
+    },
+    "finalFocused": {
+      "passed": 39,
+      "files": 3,
+      "receipt": "focused-final.json"
+    },
+    "backendSqlFinal": {
+      "passed": 127,
+      "files": 10,
+      "receipt": "../sql-gate/verification.json"
+    }
+  },
+  "browser": {
+    "passed": 9,
+    "stages": 25,
+    "captures": 23,
+    "syntheticAuthHttp": true,
+    "mobileManualWheel": "pass",
+    "receipt": "../browser/README.md"
+  },
+  "build": {
+    "exitCode": 0,
+    "receipt": "build-final.json"
+  },
+  "editorUiGates": [
+    {
+      "name": "single-native-canvas",
+      "exitCode": 0,
+      "receipt": "single-native-canvas.json"
+    },
+    {
+      "name": "canvas-path",
+      "exitCode": 0,
+      "receipt": "canvas-path.json"
+    },
+    {
+      "name": "check-editor-integrity",
+      "exitCode": 0,
+      "receipt": "check-editor-integrity.json"
+    },
+    {
+      "name": "design-system",
+      "exitCode": 0,
+      "receipt": "design-system.json"
+    },
+    {
+      "name": "token-cascade",
+      "exitCode": 0,
+      "receipt": "token-cascade.json"
+    },
+    {
+      "name": "token-contrast",
+      "exitCode": 0,
+      "receipt": "token-contrast.json"
+    },
+    {
+      "name": "check-phantom-tokens",
+      "exitCode": 0,
+      "receipt": "check-phantom-tokens.json"
+    },
+    {
+      "name": "gateway-bypass",
+      "exitCode": 0,
+      "receipt": "gateway-bypass.json"
+    }
+  ],
+  "typecheck": {
+    "exitCode": 0,
+    "errors": 0,
+    "receipt": "typecheck-final.json"
+  },
+  "warningRatchet": {
+    "exitCode": 0,
+    "netWarnings": -3,
+    "filesWithGrowth": 0,
+    "receipt": "warning-ratchet.json"
+  },
+  "manualTesting": {
+    "cases": 27,
+    "status": "Not run"
+  },
+  "providerTesting": "Not run; approved provider lane required for live tests.",
+  "sqlGate": {
+    "exitCode": 0,
+    "receipt": "../sql-gate/verification.json",
+    "baselinesChanged": false
+  },
+  "publicationBase": "70cb68971",
+  "finalCanonicalSync": "One concurrent documentation-only commit rebased before publication; five evidence paths, zero production/test/config changes. All44 root pins unchanged."
+}

@@ -20,7 +20,10 @@
  *   - 21 CFR 3.2(e)        — The four statutory/regulatory categories of
  *                            combination product (single-entity, co-packaged,
  *                            two cross-labeled variants).
- *   - 21 CFR 3.2(m)        — Definition of "mode of action."
+ *   - 21 CFR 3.2(k)        — Definition of "mode of action."
+ *   - 21 CFR 3.2(m)        — Definition of "primary mode of action."
+ *   - 21 CFR 3.7 / 3.8     — Request for designation (RFD) and the letter of
+ *                            designation.
  *   - 21 CFR Part 4        — cGMP for combination products: the "streamlined"
  *                            approach (Subpart A) and post-marketing safety
  *                            reporting (Subpart B).
@@ -65,6 +68,8 @@ export interface RegulatoryCitation {
   id: string;
   /** Human-readable description of what the citation establishes. */
   description: string;
+  /** Provenance of the description (shared/regulatory/regulatory-basis.ts), where one has been checked. */
+  basis?: RegulatoryBasis;
 }
 
 /** The three FDA lead Centers that can take a combination product. */
@@ -84,35 +89,89 @@ export type DecisionConfidence = 'high' | 'moderate' | 'low';
 interface CitationEntry {
   id: string;
   description: string;
+  basis?: RegulatoryBasis;
+}
+
+const ECFR_PART_3 = 'https://www.ecfr.gov/current/title-21/chapter-I/subchapter-A/part-3/subpart-A';
+
+/**
+ * Basis of a 21 CFR Part 3 section on eCFR. The wording was confirmed only
+ * from search extracts of the eCFR section pages (the container cannot reach
+ * ecfr.gov), so it is recall; see docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/
+ * 2026-10-05-record/g-combination-product-one-engine-facts.md. 2026-10-15: this
+ * and cfr44b1 were labelled regulator-text over a note saying "search extract".
+ */
+function part3Basis(section: string, paragraph = ''): RegulatoryBasis {
+  return {
+    ref: `21 CFR ${section}${paragraph}`,
+    confidence: 'recall',
+    url: `${ECFR_PART_3}/section-${section}`,
+    note: 'search extract of the eCFR section page on 2026-10-05; the page itself was not read. Verbatim re-read owed.',
+  };
 }
 
 const CITATIONS: CitationEntry[] = [
   {
     id: '21 CFR 3.2(e)',
+    // Scoped deliberately: the "two different article types" wording is in the
+    // text of (e)(1) ("drug/device, biologic/device, drug/biologic, or
+    // drug/device/biologic") and (e)(2) ("comprised of drug and device products,
+    // device and biological products, or biological and drug products"). (e)(3)
+    // and (e)(4) do not restate it, so this description does not attribute it to
+    // them; the engine's reading of the cross-labeled forms is labelled where it
+    // is made (classifyCombinationProduct, SECTION 2).
     description:
-      'Definition of "combination product": single-entity, co-packaged, and two ' +
-      'cross-labeled forms.',
+      'Definition of "combination product": the single-entity form, 3.2(e)(1) ' +
+      '(drug/device, biologic/device, drug/biologic, or drug/device/biologic), the ' +
+      'co-packaged form, 3.2(e)(2) (drug and device, device and biological, or ' +
+      'biological and drug products), and the two cross-labeled forms, 3.2(e)(3) ' +
+      'and 3.2(e)(4).',
+    basis: part3Basis('3.2', '(e)'),
+  },
+  {
+    id: '21 CFR 3.2(k)',
+    description:
+      'Definition of "mode of action" — the means by which a product achieves an ' +
+      'intended therapeutic effect or action.',
+    basis: part3Basis('3.2', '(k)'),
   },
   {
     id: '21 CFR 3.2(m)',
     description:
-      'Definition of "mode of action" — the means by which a constituent part ' +
-      'achieves its intended therapeutic effect or action.',
+      'Definition of "primary mode of action" — the single mode of action of a ' +
+      'combination product that provides its most important therapeutic action, i.e. ' +
+      'the one expected to make the greatest contribution to its overall intended ' +
+      'therapeutic effects.',
+    basis: part3Basis('3.2', '(m)'),
   },
   {
     id: '21 CFR 3.4',
     description:
-      'Assignment of combination products and the algorithm used when the PMOA ' +
+      'Designated agency component: assignment of a combination product to the Center ' +
+      'with primary jurisdiction by its PMOA, and the algorithm used when the PMOA ' +
       'cannot be determined with reasonable certainty.',
+    basis: part3Basis('3.4'),
   },
   {
     id: '21 CFR 3.5',
-    description: 'Submission of a Request for Designation (RFD) to FDA OCP.',
+    description:
+      'Procedures for identifying the designated agency component: the intercenter ' +
+      'agreements, and the § 3.7 procedure where jurisdiction is unclear or in dispute.',
+    basis: part3Basis('3.5'),
   },
   {
     id: '21 CFR 3.7',
     description:
-      'Timeline and procedures for an FDA letter of designation in response to an RFD.',
+      'Request for designation (RFD) of the agency component with primary jurisdiction, ' +
+      'filed with the Office of Combination Products before any premarket application.',
+    basis: part3Basis('3.7'),
+  },
+  {
+    id: '21 CFR 3.8',
+    description:
+      'Letter of designation: completeness review of an RFD and the designation letter ' +
+      'issued within 60 days of the filing date.',
+    basis: part3Basis('3.8'),
   },
   {
     id: '21 CFR Part 4 Subpart A',
@@ -212,11 +271,16 @@ const CITATIONS: CitationEntry[] = [
   },
 ];
 
+/** A registry entry as a RegulatoryCitation, carrying its basis when it has one. */
+function toCitation(c: CitationEntry): RegulatoryCitation {
+  return c.basis ? { id: c.id, description: c.description, basis: { ...c.basis } } : { id: c.id, description: c.description };
+}
+
 /** Look up a canonical citation by id; returns a fully-typed RegulatoryCitation. */
 function cite(id: string): RegulatoryCitation {
   const found = CITATIONS.find((c: CitationEntry): boolean => c.id === id);
   if (found) {
-    return { id: found.id, description: found.description };
+    return toCitation(found);
   }
   return { id, description: '(citation text not catalogued)' };
 }
@@ -228,7 +292,7 @@ function citeAll(ids: string[]): RegulatoryCitation[] {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 1 — Primary Mode of Action (PMOA) → lead Center assignment
-// 21 CFR 3.2(m), 21 CFR 3.4, 21 USC 353(g)
+// 21 CFR 3.2(k), 21 CFR 3.2(m), 21 CFR 3.4, 21 USC 353(g)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** A single constituent part described for PMOA purposes. */
@@ -284,6 +348,20 @@ export interface PmoaResult {
   notes: string[];
 }
 
+const CONSTITUENT_TYPES: readonly ConstituentType[] = ['drug', 'device', 'biologic'];
+
+/** Whether `value` is one of the three regulated article types. */
+export function isConstituentType(value: unknown): value is ConstituentType {
+  return typeof value === 'string' && (CONSTITUENT_TYPES as readonly string[]).includes(value);
+}
+
+/** Throw on anything that is not drug, device or biologic: no Center is guessed for it. */
+function assertConstituentType(value: unknown, field: string): asserts value is ConstituentType {
+  if (!isConstituentType(value)) {
+    throw new Error(`${field} must be one of ${CONSTITUENT_TYPES.join(', ')}; got ${JSON.stringify(value)}.`);
+  }
+}
+
 /**
  * Map a PMOA constituent type to its default lead FDA Center.
  *
@@ -293,6 +371,9 @@ export interface PmoaResult {
  *                      but the statutory lead-Center construct is CBER for the
  *                      biologic article type)
  *   - device PMOA    → CDRH
+ *
+ * This is the one PMOA → Center map in the codebase; every other combination
+ * classifier reads it through `determinePrimaryModeOfAction`.
  */
 function centerForPmoaType(type: ConstituentType): FdaCenter {
   switch (type) {
@@ -303,7 +384,7 @@ function centerForPmoaType(type: ConstituentType): FdaCenter {
     case 'device':
       return 'CDRH';
     default:
-      return 'CDRH';
+      throw new Error(`No FDA Center for constituent type ${JSON.stringify(type)}.`);
   }
 }
 
@@ -312,9 +393,9 @@ function centerForPmoaType(type: ConstituentType): FdaCenter {
  * resulting lead FDA Center, implementing the 21 CFR 3.2(m) PMOA construct and
  * the 21 CFR 3.4 assignment algorithm.
  *
- * The "mode of action" (21 CFR 3.2(m)) is the means by which a constituent part
- * achieves its intended therapeutic effect. The "primary mode of action"
- * (21 USC 353(g)(1); 21 CFR 3.4(a)) is the single mode of action that provides
+ * The "mode of action" (21 CFR 3.2(k)) is the means by which a product
+ * achieves an intended therapeutic effect. The "primary mode of action"
+ * (21 CFR 3.2(m); 21 USC 353(g)(1)) is the single mode of action that provides
  * the MOST IMPORTANT therapeutic action of the combination product as a whole.
  * The Center with primary jurisdiction over a constituent that provides the
  * PMOA is assigned as the lead.
@@ -328,6 +409,11 @@ function centerForPmoaType(type: ConstituentType): FdaCenter {
  *       significant safety and effectiveness questions.
  */
 export function determinePrimaryModeOfAction(params: PmoaParams): PmoaResult {
+  (params.constituents ?? []).forEach((c: ConstituentDescriptor, i: number): void =>
+    assertConstituentType(c?.type, `constituents[${i}].type`),
+  );
+  if (params.assertedPmoaType !== undefined) assertConstituentType(params.assertedPmoaType, 'assertedPmoaType');
+
   const rationale: string[] = [];
   const notes: string[] = [];
 
@@ -339,13 +425,14 @@ export function determinePrimaryModeOfAction(params: PmoaParams): PmoaResult {
   );
 
   rationale.push(
-    'Mode of action (21 CFR 3.2(m)) is the means by which a constituent part achieves ' +
-      'its intended therapeutic effect or action.',
+    'Mode of action (21 CFR 3.2(k)) is the means by which a product achieves an intended ' +
+      'therapeutic effect or action.',
   );
   rationale.push(
-    'Primary mode of action (PMOA, 21 USC 353(g)(1); 21 CFR 3.4(a)) is the single mode of ' +
+    'Primary mode of action (PMOA, 21 CFR 3.2(m); 21 USC 353(g)(1)) is the single mode of ' +
       'action expected to make the GREATEST contribution to the overall intended ' +
-      'therapeutic effects of the combination product.',
+      'therapeutic effects of the combination product; 21 CFR 3.4(a) assigns the product to ' +
+      'the Center with jurisdiction over that mode of action.',
   );
 
   // 1. Explicit assertion path.
@@ -446,7 +533,7 @@ export function determinePrimaryModeOfAction(params: PmoaParams): PmoaResult {
   if (recommendRequestForDesignation) {
     notes.push(
       'Because the assignment is not unambiguous, submit a Request for Designation (RFD) under ' +
-        '21 CFR 3.5 to obtain a binding FDA letter of designation (21 CFR 3.7), or request a ' +
+        '21 CFR 3.7 to obtain a binding FDA letter of designation (21 CFR 3.8), or request a ' +
         'Pre-RFD informal feedback meeting with OCP.',
     );
   }
@@ -460,11 +547,12 @@ export function determinePrimaryModeOfAction(params: PmoaParams): PmoaResult {
     constituentModes,
     recommendRequestForDesignation,
     citations: citeAll([
+      '21 CFR 3.2(k)',
       '21 CFR 3.2(m)',
       '21 CFR 3.4',
       '21 USC 353(g)',
-      '21 CFR 3.5',
       '21 CFR 3.7',
+      '21 CFR 3.8',
       'FDA OCP Guidance (Jan 2017)',
     ]),
     notes,
@@ -555,15 +643,23 @@ export function classifyCombinationProduct(params: ClassifyParams): ClassifyResu
   let definitionSubparagraph: string;
   let isCombinationProduct = true;
 
-  if (!isMultiType && params.relationship !== 'co-packaged') {
-    // A product of a single article type that is merely co-packaged with more of
-    // the same type is generally NOT a combination product unless types differ.
+  if (!isMultiType) {
+    // 21 CFR 3.2(e)(1) and (e)(2) state the permitted pairings in their own text
+    // ("drug/device, biologic/device, drug/biologic, or drug/device/biologic";
+    // "comprised of drug and device products, device and biological products, or
+    // biological and drug products"). (e)(3) and (e)(4) do not restate the
+    // requirement; reading it into them is this engine's reading, not § 3.2 text,
+    // and the rationale says so. Either way a single article type, however
+    // combined or co-packaged, is not a combination product.
     category = 'not-a-combination-product';
     definitionSubparagraph = 'n/a';
     isCombinationProduct = false;
     rationale.push(
-      'Only a single regulated article type is present and the parts are physically combined; ' +
-        'this does not meet the two-or-more-different-article-type element of 21 CFR 3.2(e). ' +
+      'Only a single regulated article type is present. 21 CFR 3.2(e)(1) and 3.2(e)(2) state ' +
+        'the permitted pairings in their own text — drug and device, device and biological ' +
+        'product, or biological product and drug — and the cross-labeled forms, 3.2(e)(3) and ' +
+        '3.2(e)(4), are read the same way here (this reading is not restated in the text of ' +
+        'those two subparagraphs). ' +
         'NOTE: two devices, or a device with software, are typically regulated as one device, not a combination.',
     );
   } else if (params.relationship === 'physically-combined') {
@@ -663,7 +759,7 @@ export function classifyCombinationProduct(params: ClassifyParams): ClassifyResu
   );
   notes.push(
     'If category or combination-product status is uncertain, OCP can confirm via a Request for ' +
-      'Designation (21 CFR 3.5) or an informal Pre-RFD.',
+      'Designation (21 CFR 3.7) or an informal Pre-RFD.',
   );
 
   return {
@@ -676,7 +772,7 @@ export function classifyCombinationProduct(params: ClassifyParams): ClassifyResu
     citations: citeAll([
       '21 CFR 3.2(e)',
       'FDA OCP Guidance (Jan 2017)',
-      '21 CFR 3.5',
+      '21 CFR 3.7',
     ]),
     notes,
   };
@@ -709,12 +805,11 @@ const ECFR_4_4 = 'https://www.ecfr.gov/current/title-21/chapter-I/subchapter-A/p
 function cfr44b1(item: string): RegulatoryBasis {
   return {
     ref: `21 CFR 4.4(b)(1), ${item}`,
-    confidence: 'regulator-text',
+    confidence: 'recall',
     url: ECFR_4_4,
-    checked: '2026-10-05',
     factId: QMSR_FACT_ID,
     note:
-      'search extract of the eCFR page (as amended by the QMSR final rule, FR 2024-01709); verbatim re-read owed. ' +
+      'search extract of the eCFR page on 2026-10-05 (as amended by the QMSR final rule, FR 2024-01709); the page itself was not read. Verbatim re-read owed. ' +
       'ISO 13485:2016 clause titles are the standard\'s, not a regulator page.',
   };
 }
@@ -1924,7 +2019,7 @@ export function selectCombinationSubmissionPathway(
 
 /** Public, read-only view of the canonical citation registry. */
 export function listCitations(): RegulatoryCitation[] {
-  return CITATIONS.map((c: CitationEntry): RegulatoryCitation => ({ id: c.id, description: c.description }));
+  return CITATIONS.map(toCitation);
 }
 
 /**

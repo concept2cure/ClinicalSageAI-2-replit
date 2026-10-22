@@ -1,0 +1,37 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses facts without explicit preview mode before catalog persistence 2ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field document_kind instead of silently granting or dropping it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field purpose instead of silently granting or dropping it 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field summary instead of silently granting or dropping it 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field key_data instead of silently granting or dropping it 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field user_id instead of silently granting or dropping it 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field actor instead of silently granting or dropping it 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field reviewState instead of silently granting or dropping it 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field organization_id instead of silently granting or dropping it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field program_id instead of silently granting or dropping it 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > is off by default and makes no document or preview call 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > keeps the catalog gate and write-role gate on preview 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > requires an identified actor and open project 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > uses serving actor/project context and reports diagnostic checks without scientific approval 2ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > a failed verification is a refusal, never an empty successful result 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > reports an unconfirmed preview exception without leaking SQL or private metadata 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses an oversized complete preview rather than clipping diagnostic results 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > rejects an unknown operation 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > legacy descriptions retain suggestion attribution and disclose value-only checks 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > tool schema advertises the same explicit mutually exclusive branches 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered read exact extraction envelope > a stale metadata undercount does not clip the source or claim a complete read 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered read exact extraction envelope > identifies stored text and bytes without minting a read receipt 1ms
+ ✓ server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > keeps private SQL/storage failures out of catalog_project_document results 3ms
+ ✓ server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > keeps private SQL/storage failures out of read_project_document results 0ms
+ ✓ server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > keeps private SQL/storage failures out of list_project_documents results 0ms
+ ✓ server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > keeps private SQL/storage failures out of search_project_documents results 0ms
+ ✓ server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > does not claim rollback when an exception occurs after a persistence receipt 1ms
+ ✓ server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > passes an explicit structured refusal through unchanged 0ms
+
+ Test Files  2 passed (2)
+      Tests  28 passed (28)
+   Start at  06:57:05
+   Duration  1.28s (transform 694ms, setup 85ms, import 843ms, tests 25ms, environment 0ms)
+

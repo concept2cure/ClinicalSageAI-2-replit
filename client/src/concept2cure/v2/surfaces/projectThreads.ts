@@ -10,7 +10,7 @@
  * so and keeps what is shown; it is never shown as the end of the list.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { liveGetOrNull, useLiveData, type DataState } from '../dataConnect';
+import { hasKeys, liveGetOrNull, useLiveData, type DataState } from '../dataConnect';
 
 /** One persisted AnA thread of this program (GET /api/chat/threads?program_id=). */
 export interface ThreadRow { id: string; title: string | null; created_at: string | null; updated_at: string | null; program_id?: string | null }
@@ -37,7 +37,9 @@ export interface ProjectThreads {
 }
 
 export function useProjectThreads(pid: string | null): ProjectThreads {
-  const state = useLiveData<{ threads: ThreadRow[] }>(pid ? threadsUrl(pid, 0) : null, [pid]);
+  /* A reply with no `threads` is a failed read, never an empty list (design
+     review 2026-10-08, honest-state lens). */
+  const state = useLiveData<{ threads: ThreadRow[] }>(pid ? threadsUrl(pid, 0) : null, [pid], hasKeys<{ threads: ThreadRow[] }>('threads'));
   const first = state.data?.threads ?? [];
   const [older, setOlder] = useState<{ rows: ThreadRow[]; more: boolean | null }>({ rows: [], more: null });
   const [loadingOlder, setLoadingOlder] = useState(false);

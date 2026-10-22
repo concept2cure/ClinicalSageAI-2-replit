@@ -1,0 +1,20 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > saved references reopen in the one actual editor > checks history without selecting it, freshly reuses it and previews before building (AnA=false) 1412ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > saved references reopen in the one actual editor > checks history without selecting it, freshly reuses it and previews before building (AnA=true) 1108ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > distinguishes an admitted empty history from a failed read without selecting or changing text 495ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > does not publish or adopt malformed manifest 349ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > does not publish or adopt foreign scoped success 344ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > refuses a newer saved event during reuse instead of silently selecting it 540ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > reuse respects the current editor and selection owner > lets dirty authors inspect but blocks reuse while text or a ceremony owns the editor 975ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > reuse respects the current editor and selection owner > gives a new catalogue selection precedence over a delayed historical check 399ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > reuse respects the current editor and selection owner > keeps an unresolved structural write held after checking historical references 1031ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > late saved references cannot revive a prior scope > suppresses a doubled check across project visit ABA 232ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > late saved references cannot revive a prior scope > suppresses a doubled check across account session ABA 253ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > manual draft review retains its buffer during a saved-source reuse > blocks late reuse after the draft pane opens, then permits a fresh explicit check after closing it 1108ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  00:29:19
+   Duration  11.27s (transform 1.77s, setup 158ms, import 2.22s, tests 8.25s, environment 470ms)

@@ -50,7 +50,32 @@ const STOP_LINES: ReadonlyMap<string, string> = new Map<AnaStoppedReason, string
   ['approval_timeout', 'Stopped: an approval was not answered'],
   ['hold_expired', 'Stopped waiting for you'],
   ['hold_unavailable', 'Stopped: Manual was unavailable'],
+  // A locked phone or a closed tab ended the run (ANA-SUMMARY S4).
+  ['client_disconnected', 'Stopped: this page lost its connection'],
+  // The run row's reasons (AnA detach §2.10, §5.3). A follower reads them off
+  // the run when a turn ended without a record; the server writes the first
+  // four from DT3.
+  ['unattended_limit', 'Stopped: nobody was watching for 15 minutes'],
+  ['session_ended', 'Stopped: the session that started this turn ended'],
+  ['server_shutdown', 'Stopped: the server restarted for an update'],
+  ['orphaned', 'Stopped: the server handling this turn stopped responding'],
+  ['error', 'Stopped: the turn ended with an error'],
+  // The admin-cancel variant of `cancelled` (§2.5). The run read carries no
+  // one's identity (controlsOf drops who took a control), so nothing produces
+  // this reason yet: DT3, which accepts an admin's cancel, must say on the
+  // run which kind of cancel it was. The line is here so it has one home.
+  ['admin_cancelled', 'Stopped by an administrator'],
 ]);
+
+/**
+ * The stop line for a reason, as a sentence: the Summary's closing row
+ * ("Stopped: this page lost its connection."). Null for a reason with none —
+ * she finished, or the person's own Stop, which its own branch says.
+ */
+export function stopLineText(reason: AnaStoppedReason | string | null | undefined): string | null {
+  const line = reason ? STOP_LINES.get(reason) : undefined;
+  return line ? `${line}.` : null;
+}
 
 /** A live turn's state line: working, paused, waiting for you, or stopping. */
 /**
@@ -143,6 +168,13 @@ function partialResponseNote(interruptedWithPartialResponse?: boolean): string |
     : null;
 }
 
+/** The stop notes that are one fixed sentence, whatever the turn's numbers or steps. */
+const FIXED_STOP_NOTES: ReadonlyMap<string, string> = new Map<AnaStoppedReason, string>([
+  ['duplicate_thrash', 'AnA stopped because she was repeating the same step. Tell her what to change.'],
+  ['answer_cut_off', "AnA's answer was cut off before she finished it. It ends where it stopped."],
+  ['client_disconnected', 'This page lost its connection, so the run was stopped before AnA finished. Continue picks it up.'],
+]);
+
 /**
  * What the transcript says under a turn the loop or the run policy stopped
  * before she was done, or null when there is nothing to say: she finished
@@ -157,15 +189,16 @@ export function stoppedNoteText(
   interruptedWithPartialResponse?: boolean,
 ): string | null {
   const steps = stepList(pendingSteps);
+  const fixed = reason ? FIXED_STOP_NOTES.get(reason) : undefined;
+  if (fixed) return fixed;
+  // A limit, the session, a restart or a dead server ended work that was
+  // going somewhere; none was a person's decision (§5.3). A `cancelled`,
+  // by the person or an administrator, stays not continuable.
   switch (reason) {
     case 'max_rounds':
       return typeof rounds === 'number' && rounds > 0
         ? `AnA reached this turn's round limit (${rounds} ${rounds === 1 ? 'round' : 'rounds'}) before she said she was done.`
         : "AnA reached this turn's round limit before she said she was done.";
-    case 'duplicate_thrash':
-      return 'AnA stopped because she was repeating the same step. Tell her what to change.';
-    case 'answer_cut_off':
-      return "AnA's answer was cut off before she finished it. It ends where it stopped.";
     case 'budget_exhausted':
       return `AnA reached this turn's time limit (${AUTO_TIME_WORDS}) before she said she was done.`;
     case 'approval_timeout':
@@ -206,6 +239,11 @@ export function isContinuable(reason: AnaStoppedReason | undefined, interruptedW
     case 'approval_timeout':
     case 'hold_expired':
     case 'hold_unavailable':
+    case 'client_disconnected':
+    case 'unattended_limit':
+    case 'session_ended':
+    case 'server_shutdown':
+    case 'orphaned':
       return true;
     default:
       return interruptedWithPartialResponse && (reason === undefined || reason === 'no_more_tools');
@@ -505,4 +543,76 @@ function contextRow(messages: AnaChatMessage[], context: AnaWorkContext | undefi
   );
   if (parts.length === 0) return null;
   return { key: 'context', icon: 'folder', label: context?.project ? 'Project' : 'Context', detail: parts.join(' · ') };
+}
+
+/* ── Following a turn from another device (AnA detach DT2, §5.1) ──────────── */
+
+/**
+ * The lines a followed turn says about itself, beside its rows. Fixed words;
+ * nothing here is a model's, an estimate or a reassurance.
+ */
+export const FOLLOW_LINES = {
+  /** This reader's own network is failing. The last known state stays on screen. */
+  unreachable: "Can't reach the server. Retrying.",
+  /** Stop was pressed and the server has not confirmed it (§5.2). */
+  stopUnconfirmed: 'Stop not confirmed. Retrying.',
+  /** An admin watching a run held for the person who asked. */
+  waitingForAsker: 'Waiting for the person who asked.',
+  /** An admin watching a run that waits on the asker's approval. */
+  approvalForAsker: 'Waiting for the person who asked to approve a step.',
+  /** An admin's composer. */
+  adminCannotSteer: 'Only the person who asked can steer AnA.',
+} as const;
+
+/** The owner is stale after this long without a heartbeat: four missed 15 s beats (§5.1). */
+export const OWNER_STALE_MS = 60_000;
+
+/** "AnA hasn't reported for 2 min. …", read from the run's last beat against the server's clock. */
+export function staleOwnerLine(lastBeatAt: number | null, serverNow: number): string | null {
+  if (lastBeatAt === null) return null;
+  const silent = serverNow - lastBeatAt;
+  if (!(silent > OWNER_STALE_MS)) return null;
+  const minutes = Math.max(1, Math.floor(silent / 60_000));
+  return `AnA hasn't reported for ${minutes} min. The server handling this turn may have stopped.`;
+}
+
+/** The steps a followed turn has announced: each step once, her plan updates aside (they are the plan). */
+export function announcedSteps(timeline: AnaChatMessage['timeline']): number {
+  const steps = new Set<string>();
+  for (const e of timeline ?? []) if (e.kind === 'step' && e.source !== 'plan') steps.add(e.step);
+  return steps.size;
+}
+
+/**
+ * The follower's phase line: "Working · step 7 · 4m 12s". The step is the
+ * count of steps announced; the time is the run's start against the server's
+ * clock (`skewMs`), never this device's. No live prose: a follower has none.
+ * Held, it says who is being waited on. Null once the run has ended.
+ */
+export function followPhaseLine(m: Pick<AnaChatMessage, 'follow' | 'timeline'>, now: number): string | null {
+  const f = m.follow;
+  if (!f || f.forbidden || !['running', 'paused', 'awaiting_approval'].includes(f.status)) return null;
+  const admin = f.scope === 'cancel';
+  if (admin && f.approvalWaiting) return FOLLOW_LINES.approvalForAsker;
+  if (admin && f.status === 'paused') return FOLLOW_LINES.waitingForAsker;
+  const steps = announcedSteps(m.timeline);
+  const parts = [f.status === 'paused' ? 'Paused' : 'Working', steps > 0 ? `step ${steps}` : null];
+  if (f.startedAt !== null) parts.push(formatElapsed(Math.max(0, now + f.skewMs - f.startedAt)));
+  return parts.filter(Boolean).join(' · ');
+}
+
+/**
+ * The one alert a live turn carries, when it has one, most urgent first: the
+ * server refused this reader; a Stop not yet confirmed; this reader's network;
+ * an owner that stopped beating. Each is the reader's own state, shown beside
+ * the last known rows, which stay.
+ */
+export function liveAlertLine(m: Pick<AnaChatMessage, 'follow' | 'stopUnconfirmed'>, now: number): string | null {
+  const f = m.follow;
+  if (f?.forbidden) return f.forbidden;
+  if (m.stopUnconfirmed) return FOLLOW_LINES.stopUnconfirmed;
+  if (!f) return null;
+  if (f.unreachable) return FOLLOW_LINES.unreachable;
+  if (!['running', 'paused', 'awaiting_approval'].includes(f.status)) return null;
+  return staleOwnerLine(f.lastBeatAt, now + f.skewMs);
 }

@@ -1,0 +1,2646 @@
+# clinical-claims RED — 2026-10-05T04:12:05Z
+# command: npx vitest run server/services/truth-engine/__tests__/clinical-claims.test.ts
+# state: test + corpus + row annotations written; server/services/truth-engine/clinical-claims.ts does not exist yet
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts [ server/services/truth-engine/__tests__/clinical-claims.test.ts ]
+Error: Cannot find module '../clinical-claims' imported from /home/user/ClinicalSageAI-2-replit/server/services/truth-engine/__tests__/clinical-claims.test.ts
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:32:1
+     30| import { describe, expect, it } from 'vitest';
+     31|
+     32| import {
+       | ^
+     33|   agreeAsWritten,
+     34|   compareClaims,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  04:12:06
+   Duration  656ms (transform 174ms, setup 126ms, import 0ms, tests 0ms, environment 0ms)
+
+
+
+================================================================================
+# clinical-claims RED — hardening round 2 — 2026-10-11T23:11:15Z
+# command: npx vitest run server/services/truth-engine/__tests__/clinical-claims.test.ts
+# state: 85 round-2 cases (ids r2-*) appended to the corpus with their row annotations;
+#        engine unchanged. 85 failed, 382 passed — every new case breaks the engine and
+#        nothing that passed before fails. The four lenses: phrasing (37), scope (19),
+#        numbers (17), label (12).
+================================================================================
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > annotates every expected row of every case, and nothing else 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-01 238ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-02 32ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-03 36ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-04 32ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-05 17ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-06 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-07 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-08 18ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-09 16ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-10 17ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-11 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-12 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-13 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-14 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-15 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-16 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-17 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-18 15ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-19 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-20 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-21 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-22 28ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-23 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-24 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-25 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-26 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-27 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-28 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-29 65ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-30 17ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-31 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-32 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-33 25ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-34 16ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-35 17ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-36 19ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-37 26ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-38 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-39 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-40 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-001-randomized-total-transposition 16ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-002-randomized-active-vs-passive-voice 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-003-disposition-table-vs-synopsis-trailing-zero 27ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-004-treatment-vs-study-discontinuation 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-005-rescue-medication-treated 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-006-primary-and-key-secondary-consistent-comma-p 22ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-007-two-decimal-ci-conflict 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-008-ci-bound-zero-vs-negative 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-009-hr-consistent-coarser-precision 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-010-hr-true-conflict 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-011-hr-vs-risk-difference 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-012-stratified-vs-unstratified-hr 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-013-bicr-vs-investigator 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-014-fas-vs-pp-and-sensitivity 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-015-timepoint-week26-vs-week52 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-017-response-difference-scale 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-019-teae-with-most-common-and-severity 15ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-020-sae-single-arm-most-commonly 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-021-sae-transposed-digits 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-023-sae-and-death-rates-same-clause 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-024-per-arm-deaths-vs-total 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-025-single-arm-deaths 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-026-deaths-treatment-emergent-vs-all 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-027-deaths-true-conflict 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-029-open-label-extension-period 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-030-exposure-adjusted-vs-incidence 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-031-pooled-vs-single-study 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-032-different-studies-randomized 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-033-n-percent-layout 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-034-ambiguous-overall-rate 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-035-enrolled-vs-randomized-screened 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-036-completed-true-conflict 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-038-p-values-bound-and-exact 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-039-ci-level-90-vs-95 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-040-coarser-precision-agreement 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-041-per-arm-ls-means-vs-difference 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-042-randomized-vs-treated-n 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-01 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-02 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-04 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-05 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-06 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-07 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-08 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-09 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-10 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-11 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-12 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-13 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-14 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-15 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-16 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-17 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-18 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-19 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-20 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-21 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-22 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-23 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-24 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-25 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-26 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-27 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-28 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-29 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-30 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-31 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-32 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-33 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-34 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-35 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-36 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-37 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-38 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-39 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-01-table1-placebo-first-columns-consistent 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-02-table1-nausea-and-header-n-conflict 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-03-gi-narrative-subrates-and-event-shares 30ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-04-exposure-sentence-pooled-vs-single-study-csr 19ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-05-exposure-sentence-vs-iss-same-pool-subset-conflict 18ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-06-approximate-and-bound-exposure-statements 16ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-07-pooled-label-table-vs-single-study-csr-table 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-08-threshold-omission-is-not-a-value 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-09-threshold-boundary-rounded-row 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-10-grouped-term-vs-preferred-term 32ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-11-oncology-narrative-sae-fatal-grade-discontinuation 37ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-12-adverse-reaction-causality-basis-ambiguous 19ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-13-orr-bicr-vs-investigator 21ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-14-os-hazard-ratio-conflict 18ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-15-stratified-vs-unstratified-hr 16ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-16-ci-level-differs-alpha-split 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-17-trial-designation-not-bound-to-study 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-18-section14-hba1c-table-rounding-consistent 24ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-19-estimand-differs 15ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-20-percent-change-vs-absolute-change-weight 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-21-geriatric-subgroup-vs-overall 17ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-22-hypoglycemia-levels-and-explicit-zero 18ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-23-lab-threshold-and-trailing-zero-conflict 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-24-oncology-lab-table-vs-shift-table-and-ae-term 16ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-25-per-arm-deaths-vs-total 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-26-highlights-threshold-list-has-no-figures 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-27-upper-bound-is-not-a-value 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-28-adjudicated-vs-investigator-reported 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-29-per-dose-columns-vs-all-doses-column 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-30-section14-randomized-transposition-conflict 19ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-31-randomized-vs-treated-and-rescue-medication 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-32-section14-demographics-duration-conflict 18ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-33-two-trials-in-label-one-csr 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-34-discontinuation-and-sub-rate-consistent 16ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-35-precision-as-written-trailing-zero-conflict 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-36-pediatric-label-section-vs-adult-csr 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-37-sae-overall-vs-regional-subgroup 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-38-period-week52-vs-week26 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-01 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-02 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-04 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-05 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-06 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-07 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-11 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-12 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-15 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-16 15ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-17 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-18 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-20 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-22 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-23 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-24 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-25 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-26 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-27 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-30 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-31 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-32 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-33 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-34 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-35 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-36 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-37 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-38 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-39 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-40 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-01 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-02 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-03 17ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-04 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-05 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-06 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-07 15ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-08 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-09 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-10 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-11 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-12 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-13 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-14 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-15 15ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-16 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-17 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-18 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-19 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-20 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-21 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-22 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-23 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-24 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-25 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-26 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-27 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-28 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-29 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-31 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-32 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-33 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-34 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-35 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-36 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-37 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-38 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-ci-stated-before-estimate 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-paired-list-without-respectively 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-control-named-first-comparative 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-n-of-N-inline 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-causality-trailing-clause 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-causality-parenthetical 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-excluding-leading-clause 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-other-than-restriction 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-sae-requiring-hospitalisation 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-post-treatment-sae 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-sae-onset-after-week 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-sae-within-30-days-of-last-dose 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-more-than-one-sae 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-teae-trailing-led-to 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-non-fatal-read-as-fatal 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-serious-cardiac-read-as-any-ae 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-subgroup-trailing-among 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-period-trailing-second-year 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-hr-trailing-region 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-effect-trailing-sensitivity-method 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-effect-trailing-dose 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-randomized-trailing-region 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-randomized-in-country 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-randomized-after-amendment 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-table-pct-n-column-order 4ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-randomly-assigned 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-randomly-allocated 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-enrolled-and-randomized 4ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-randomization-noun 4ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-sentence-split-by-line-break 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-of-the-patients-receiving 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-colon-semicolon-list 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-percentage-of-patients-with 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-reported-by-passive 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-similar-between-groups-paren 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-parenthetical-comparator 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-bulleted-list 15ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-counts-in-words 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-tab-separated-table 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-markdown-pipe-table 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-table-flattened-to-one-line 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-per-arm-shorthand 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-discontinued-study-per-arm 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-treated-passive-administered 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-respectively-across-measures 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-respectively-measures-and-arms 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-01 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-02 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-03 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-04 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-05 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-06 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-07 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-08 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-09 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-10 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-11 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-12 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-13 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-14 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-15 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-16 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-17 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-18 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-19 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-20 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-21 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-22 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-23 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-24 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-25 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-26 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-27 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-28 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-29 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-30 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-31 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-32 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-33 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-34 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-35 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-36 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-37 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-38 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-39 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-40 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-41 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-42 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-43 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-44 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-45 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-46 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-47 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-48 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-49 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-50 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-51 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-52 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-56 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-57 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-58 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-59 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-01 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-02 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-03 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-04 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-05 15ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-06 15ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-07 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-08 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-09 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-10 18ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-11 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-12 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-13 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-14 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-15 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-16 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-17 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-18 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-19 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-20 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-21 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-22 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-23 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-24 5ms
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-ae-leading-to-withdrawal-read-as-any-ae 11ms
+   → expected [ …(7) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-ae-leading-to-death-read-as-any-ae 4ms
+   → expected [ …(7) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-ae-leading-to-dose-reduction-read-as-any-ae 4ms
+   → expected [ …(7) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-withdrew-owing-to-read-as-any-ae 3ms
+   → expected [ …(7) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-ae-leading-to-withdrawal-vs-discontinued 3ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-resulted-verb-read-as-arm 3ms
+   → expected [ …(7) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-lower-in-placebo-than-in-drug-x 3ms
+   → expected [ …(4) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-fewer-patients-in-placebo-than-in-drug-x 3ms
+   → expected [ …(4) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-n-of-N-patients-trailing-percent 4ms
+   → expected [ …(4) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-n-slash-N-patients-trailing-percent 3ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-ci-comma-nejm-style-hr 3ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-ci-comma-nejm-style-ls-mean-difference 4ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-ci-confidence-limits 3ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-ci-interval-of-x-to-y-prose 4ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-randomised-population-comprised 3ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-total-number-randomised-was 4ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-randomised-ratio-then-n-equals 3ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-n-in-total-were-randomised 3ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-randomised-paren-screened-aside 3ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-randomised-paren-sites-aside 4ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-disposition-table-row-n-column 3ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-table-row-label-n-pct-unaligned 7ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-table-row-label-colon 3ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-percent-then-count-prose 4ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-all-cause-mortality 4ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-arm-active-treatment-group 3ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-arm-those-assigned-to 3ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-corresponding-figure-for 3ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-respectively-arms-named-first 3ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-former-and-latter 5ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-hyphenation-across-line-break-safety 4ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-hyphenation-across-line-break-hazard-ratio 8ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-footnote-markers-on-values 6ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-arm-list-one-per-line-en-dash 5ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-arm-list-numbered-ordinals-as-figures 7ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-nonnative-has-been-randomized 4ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-nonnative-inverted-subject 4ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-01-pool-scope-name-all-exposure 6ms
+   → expected [ …(13) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-02-pool-scope-name-long-term 6ms
+   → expected [ …(13) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-03-pool-control-type 6ms
+   → expected [ …(14) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-04-period-duration-prose 5ms
+   → expected [ …(14) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-05-period-sub-window 9ms
+   → expected [ …(14) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-06-db-period-duration 5ms
+   → expected [ …(14) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-07-parenthetical-region-leak 6ms
+   → expected [ …(10) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-08-parenthetical-region-leak-false-consistent 10ms
+   → expected [ …(10) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-09-parenthetical-age-leak 10ms
+   → expected [ …(10) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-10-parenthetical-regional-n-leak 4ms
+   → expected [ …(5) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-11-primary-vs-final-analysis 6ms
+   → expected [ …(9) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-12-interim-occasion 5ms
+   → expected [ …(9) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-13-table-footnote-subgroup 6ms
+   → expected [ …(10) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-14-as-treated-stated-as-prose 5ms
+   → expected [ …(14) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-15-mitt-not-read 4ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-16-population-definition-appositive 4ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-17-arm-letter-labels 4ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-18-same-stratum-both-sides 4ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-19-combined-dose-arm-both-sides 4ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-01 7ms
+   → expected [ …(7) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-02 7ms
+   → expected [ …(6) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-03 5ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-04 5ms
+   → expected [ …(3) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-05 11ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-06 4ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-07 5ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-08 4ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-09 4ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-10 3ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-11 3ms
+   → expected [ …(4) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-12 3ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-13 3ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-14 4ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-15 3ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-16 3ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-17 3ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-01-table-unit-in-title-false-consistent 7ms
+   → expected [ …(5) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-02-table-unit-in-title-false-conflicts 10ms
+   → expected [ …(8) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-03-whitespace-label-table-units-row 4ms
+   → expected [ …(12) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-04-smpc-4-8-never-compared-with-csr 3ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-05-smpc-4-8-adr-table-misleading-verdict 3ms
+   → expected [ …(4) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-06-uspi-6-1-most-common-ar-list 3ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-07-smpc-4-8-most-commonly-reported-list 8ms
+   → expected [ …(3) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-08-exposure-sentence-exposed-to-dose 4ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-09-exposure-sentence-per-arm-read-as-total 4ms
+   → expected [ …(3) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-10-exposure-duration-subset-sentence 5ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-11-all-grades-vs-any-grade 3ms
+   → expected [ …(4) ] to deeply equal []
+ × server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-12-section14-responder-row-unit-in-stub 3ms
+   → expected [ …(2) ] to deeply equal []
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 4.0 vs 4.4: differ 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 2.0 vs 2.4: differ 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 8 vs 8.2: agree 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 8 vs 8.6: differ 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 7.5 vs 8: agree 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 8.5 vs 8: agree 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 0.72 vs 0.723: agree 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 0.10 vs 0.14: differ 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 0.00 vs -0.40: differ 4ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 0.00 vs -0.01: differ 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > -0.8 vs -0.80: agree 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > -1.0 vs -0.98: agree 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 612 vs 621: differ 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 0 vs 0.0: agree 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > <0.001 vs <0.001: agree 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > <0.001 vs 0.0004 is not compared (bound_not_value) 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > <0.001 vs <0.0001 is not compared (bounds_differ) 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > approximately 600 vs 612 is not compared (approximate_value) 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 0% vs 0.3% is not compared (zero_precision_ambiguous) 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > 4.0 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > 0.00 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > −0.62 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > 1 227 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > 1,227 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > Six hundred and twelve 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > <0.001 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > 4.6 per cent 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > reads a decimal comma in a comma-convention source and a period thousands separator in a count slot 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > extractClaims: a figure is a claim only with its whole frame > reads the verb-first and the passive randomized total as the same measure (F5, F19) 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > extractClaims: a figure is a claim only with its whole frame > never reads rescue-medication "treated" as the treated population (F2) 1ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > extractClaims: a figure is a claim only with its whole frame > keeps a subgroup qualifier in the frame, never the overall figure (F15, F18) 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > extractClaims: a figure is a claim only with its whole frame > reads per-arm deaths as per-arm, never as the total (F14) 2ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > extractClaims: a figure is a claim only with its whole frame > keeps sub-rates as preferred-term claims, never as more arm rates (F6) 2ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > extractClaims: a figure is a claim only with its whole frame > frames an effect by type, endpoint, population, timepoint and CI, and cuts a p-value from the interval (F12, F13) 2ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > extractClaims: a figure is a claim only with its whole frame > reports a figure it cannot frame as not compared, with the missing slot, never drops it (F13) 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 85 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-ae-leading-to-withdrawal-read-as-any-ae
+AssertionError: expected [ …(7) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-ae-leading-to-withdrawal-read-as-any-ae#0 paired 86.4 with 6.4 (conflict, incidence:any) — must not be compared",
++   "r2-pv-ae-leading-to-withdrawal-read-as-any-ae#0: docA 86.4 is not reported as not compared",
++   "r2-pv-ae-leading-to-withdrawal-read-as-any-ae#0: docA 86.4 is compared, but the row says it is not",
++   "r2-pv-ae-leading-to-withdrawal-read-as-any-ae#0: docB 6.4 is not reported as not compared",
++   "r2-pv-ae-leading-to-withdrawal-read-as-any-ae#0: docB 6.4 is compared, but the row says it is not",
++   "must_not conflict: incidence:any · drug x — \"Safety (Safety Population): any adverse event was reported in 86.4% of Drug X patients.\" (A, chars 23–110) vs \"In the safety population of Study DX-301, adverse events leading to withdrawal of study drug were reported in 6.4% of th\" (B, chars 24–159): percent 86.4% vs 6.4% (differ at 1 dp).",
++   "unexpected conflict: incidence:any · drug x — \"Safety (Safety Population): any adverse event was reported in 86.4% of Drug X patients.\" (A, chars 23–110) vs \"In the safety population of Study DX-301, adverse events leading to withdrawal of study drug were reported in 6.4% of th\" (B, chars 24–159): percent 86.4% vs 6.4% (differ at 1 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-ae-leading-to-death-read-as-any-ae
+AssertionError: expected [ …(7) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-ae-leading-to-death-read-as-any-ae#0 paired 86.4 with 1.2 (conflict, incidence:any) — must not be compared",
++   "r2-pv-ae-leading-to-death-read-as-any-ae#0: docA 86.4 is not reported as not compared",
++   "r2-pv-ae-leading-to-death-read-as-any-ae#0: docA 86.4 is compared, but the row says it is not",
++   "r2-pv-ae-leading-to-death-read-as-any-ae#0: docB 1.2 is not reported as not compared",
++   "r2-pv-ae-leading-to-death-read-as-any-ae#0: docB 1.2 is compared, but the row says it is not",
++   "must_not conflict: incidence:any · drug x — \"Safety (Safety Population): any adverse event was reported in 86.4% of Drug X patients.\" (A, chars 23–110) vs \"In the safety population of Study DX-301, adverse events leading to death were reported in 1.2% of the Drug X group.\" (B, chars 16–132): percent 86.4% vs 1.2% (differ at 1 dp).",
++   "unexpected conflict: incidence:any · drug x — \"Safety (Safety Population): any adverse event was reported in 86.4% of Drug X patients.\" (A, chars 23–110) vs \"In the safety population of Study DX-301, adverse events leading to death were reported in 1.2% of the Drug X group.\" (B, chars 16–132): percent 86.4% vs 1.2% (differ at 1 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-ae-leading-to-dose-reduction-read-as-any-ae
+AssertionError: expected [ …(7) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-ae-leading-to-dose-reduction-read-as-any-ae#0 paired 86.4 with 12.1 (conflict, incidence:any) — must not be compared",
++   "r2-pv-ae-leading-to-dose-reduction-read-as-any-ae#0: docA 86.4 is not reported as not compared",
++   "r2-pv-ae-leading-to-dose-reduction-read-as-any-ae#0: docA 86.4 is compared, but the row says it is not",
++   "r2-pv-ae-leading-to-dose-reduction-read-as-any-ae#0: docB 12.1 is not reported as not compared",
++   "r2-pv-ae-leading-to-dose-reduction-read-as-any-ae#0: docB 12.1 is compared, but the row says it is not",
++   "must_not conflict: incidence:any · drug x — \"Safety (Safety Population): any adverse event was reported in 86.4% of Drug X patients.\" (A, chars 23–110) vs \"In the safety population of Study DX-301, adverse events leading to dose reduction were reported in 12.1% of the Drug X \" (B, chars 26–152): percent 86.4% vs 12.1% (differ at 1 dp).",
++   "unexpected conflict: incidence:any · drug x — \"Safety (Safety Population): any adverse event was reported in 86.4% of Drug X patients.\" (A, chars 23–110) vs \"In the safety population of Study DX-301, adverse events leading to dose reduction were reported in 12.1% of the Drug X \" (B, chars 26–152): percent 86.4% vs 12.1% (differ at 1 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-withdrew-owing-to-read-as-any-ae
+AssertionError: expected [ …(7) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-withdrew-owing-to-read-as-any-ae#0 paired 86.4 with 6.4 (conflict, incidence:any) — must not be compared",
++   "r2-pv-withdrew-owing-to-read-as-any-ae#0: docA 86.4 is not reported as not compared",
++   "r2-pv-withdrew-owing-to-read-as-any-ae#0: docA 86.4 is compared, but the row says it is not",
++   "r2-pv-withdrew-owing-to-read-as-any-ae#0: docB 6.4 is not reported as not compared",
++   "r2-pv-withdrew-owing-to-read-as-any-ae#0: docB 6.4 is compared, but the row says it is not",
++   "must_not conflict: incidence:any · drug x — \"Safety (Safety Population): any adverse event was reported in 86.4% of Drug X patients.\" (A, chars 23–110) vs \"In the safety population of Study DX-301, 6.4% of the Drug X group withdrew from study drug owing to an adverse event.\" (B, chars 24–142): percent 86.4% vs 6.4% (differ at 1 dp).",
++   "unexpected conflict: incidence:any · drug x — \"Safety (Safety Population): any adverse event was reported in 86.4% of Drug X patients.\" (A, chars 23–110) vs \"In the safety population of Study DX-301, 6.4% of the Drug X group withdrew from study drug owing to an adverse event.\" (B, chars 24–142): percent 86.4% vs 6.4% (differ at 1 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-ae-leading-to-withdrawal-vs-discontinued
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-ae-leading-to-withdrawal-vs-discontinued#0 conflict not reported: incidence:disc_treatment 4.6 vs 6.4 (drug x) — proportion:discontinuation of study drug due to an AE, Drug X arm",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-resulted-verb-read-as-arm
+AssertionError: expected [ …(7) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-resulted-verb-read-as-arm#0 paired 4.6 with 3.3 (conflict, incidence:serious) — must not be compared",
++   "r2-pv-resulted-verb-read-as-arm#0: docA 4.6 is not reported as not compared",
++   "r2-pv-resulted-verb-read-as-arm#0: docA 4.6 is compared, but the row says it is not",
++   "r2-pv-resulted-verb-read-as-arm#0: docB 3.3 is not reported as not compared",
++   "r2-pv-resulted-verb-read-as-arm#0: docB 3.3 is compared, but the row says it is not",
++   "must_not conflict: incidence:serious · resulted — \"Safety (Safety Population): for the Drug X group, the incidence of serious adverse events resulted 4.6%.\" (A, chars 23–127) vs \"For the placebo group of Study DX-301 (safety population), the incidence of serious adverse events resulted 3.3%.\" (B, chars 32–145): percent 4.6% vs 3.3% (differ at 1 dp).",
++   "unexpected conflict: incidence:serious · resulted — \"Safety (Safety Population): for the Drug X group, the incidence of serious adverse events resulted 4.6%.\" (A, chars 23–127) vs \"For the placebo group of Study DX-301 (safety population), the incidence of serious adverse events resulted 3.3%.\" (B, chars 32–145): percent 4.6% vs 3.3% (differ at 1 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-lower-in-placebo-than-in-drug-x
+AssertionError: expected [ …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-lower-in-placebo-than-in-drug-x#0 conflict not reported: incidence:serious 4.6 vs 6.4 (drug x) — proportion:SAE incidence, Drug X arm",
++   "r2-pv-lower-in-placebo-than-in-drug-x#1 consistent not reported: incidence:serious 3.3 vs 3.3 (placebo) — proportion:SAE incidence, placebo arm",
++   "unexpected conflict: incidence:serious · drug x — \"Safety (Safety Population): SAEs were reported in 4.6% of Drug X patients and 3.3% of placebo patients.\" (A, chars 23–126) vs \"In the safety population of Study DX-301, the incidence of serious adverse events was lower in the placebo group than in\" (B, chars 32–185): percent 4.6% vs 3.3% (differ at 1 dp).",
++   "unexpected conflict: incidence:serious · placebo — \"Safety (Safety Population): SAEs were reported in 4.6% of Drug X patients and 3.3% of placebo patients.\" (A, chars 23–126) vs \"In the safety population of Study DX-301, the incidence of serious adverse events was lower in the placebo group than in\" (B, chars 32–185): percent 3.3% vs 6.4% (differ at 1 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-fewer-patients-in-placebo-than-in-drug-x
+AssertionError: expected [ …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-fewer-patients-in-placebo-than-in-drug-x#0 conflict not reported: incidence:serious 4.6 vs 6.4 (drug x) — proportion:SAE incidence, Drug X arm",
++   "r2-pv-fewer-patients-in-placebo-than-in-drug-x#1 consistent not reported: incidence:serious 3.3 vs 3.3 (placebo) — proportion:SAE incidence, placebo arm",
++   "unexpected conflict: incidence:serious · drug x — \"Safety (Safety Population): SAEs were reported in 4.6% of Drug X patients and 3.3% of placebo patients.\" (A, chars 23–126) vs \"In the safety population of Study DX-301, fewer patients in the placebo group than in the Drug X group reported a seriou\" (B, chars 32–183): percent 4.6% vs 3.3% (differ at 1 dp).",
++   "unexpected conflict: incidence:serious · placebo — \"Safety (Safety Population): SAEs were reported in 4.6% of Drug X patients and 3.3% of placebo patients.\" (A, chars 23–126) vs \"In the safety population of Study DX-301, fewer patients in the placebo group than in the Drug X group reported a seriou\" (B, chars 32–183): percent 3.3% vs 6.4% (differ at 1 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-n-of-N-patients-trailing-percent
+AssertionError: expected [ …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-n-of-N-patients-trailing-percent#0 conflict not reported: incidence:serious 14 vs 19 (drug x) — count/proportion:SAE incidence, Drug X arm",
++   "r2-pv-n-of-N-patients-trailing-percent#1 consistent not reported: incidence:serious 10 vs 10 (placebo) — count/proportion:SAE incidence, placebo arm",
++   "unexpected conflict: incidence:serious · drug x — \"SAEs (Safety Population): Drug X 14 (4.6%), placebo 10 (3.3%).\" (A, chars 23–85) vs \"In Study DX-303 (safety population), serious adverse events occurred in 19 of 298 Drug X patients (6.4%) and in 10 of 30\" (B, chars 32–178): count 14 vs 298 (differ at 0 dp); percent 4.6% vs 6.4% (differ at 1 dp).",
++   "unexpected conflict: incidence:serious · placebo — \"SAEs (Safety Population): Drug X 14 (4.6%), placebo 10 (3.3%).\" (A, chars 23–85) vs \"In Study DX-303 (safety population), serious adverse events occurred in 19 of 298 Drug X patients (6.4%) and in 10 of 30\" (B, chars 32–178): count 10 vs 303 (differ at 0 dp); percent 3.3% vs 3.3% (agree at 1 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-n-slash-N-patients-trailing-percent
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-n-slash-N-patients-trailing-percent#1 conflict not reported: incidence:serious 4.6 vs 6.4 (drug x) — count/proportion:SAE incidence, Drug X arm (percentage)",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-ci-comma-nejm-style-hr
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-ci-comma-nejm-style-hr#1 conflict not reported: effect:hazard_ratio 0.60 vs 0.63 — 95% CI lower bound",
++   "r2-pv-ci-comma-nejm-style-hr#2 conflict not reported: effect:hazard_ratio 0.86 vs 0.91 — 95% CI upper bound",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-ci-comma-nejm-style-ls-mean-difference
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-ci-comma-nejm-style-ls-mean-difference#1 conflict not reported: effect:ls_mean_difference -1.00 vs -1.12 — 95% CI lower bound",
++   "r2-pv-ci-comma-nejm-style-ls-mean-difference#2 conflict not reported: effect:ls_mean_difference -0.60 vs -0.72 — 95% CI upper bound",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-ci-confidence-limits
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-ci-confidence-limits#1 conflict not reported: effect:hazard_ratio 0.60 vs 0.63 — 95% CI lower bound",
++   "r2-pv-ci-confidence-limits#2 conflict not reported: effect:hazard_ratio 0.86 vs 0.91 — 95% CI upper bound",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-ci-interval-of-x-to-y-prose
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-ci-interval-of-x-to-y-prose#1 conflict not reported: effect:hazard_ratio 0.60 vs 0.63 — 95% CI lower bound",
++   "r2-pv-ci-interval-of-x-to-y-prose#2 conflict not reported: effect:hazard_ratio 0.86 vs 0.91 — 95% CI upper bound",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-randomised-population-comprised
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-randomised-population-comprised#0 conflict not reported: n:randomized 612 vs 621 (total) — count:patients randomised",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-total-number-randomised-was
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-total-number-randomised-was#0 conflict not reported: n:randomized 612 vs 621 (total) — count:patients randomised",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-randomised-ratio-then-n-equals
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-randomised-ratio-then-n-equals#0 conflict not reported: n:randomized 612 vs 621 (total) — count:patients randomised",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-n-in-total-were-randomised
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-n-in-total-were-randomised#0 conflict not reported: n:randomized 612 vs 621 (total) — count:patients randomised",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-randomised-paren-screened-aside
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-randomised-paren-screened-aside#0 conflict not reported: n:randomized 612 vs 621 (total) — count:patients randomised",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-randomised-paren-sites-aside
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-randomised-paren-sites-aside#0 conflict not reported: n:randomized 612 vs 621 (total) — count:patients randomised",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-disposition-table-row-n-column
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-disposition-table-row-n-column#0 conflict not reported: n:randomized 612 vs 621 (total) — count:patients randomised",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-table-row-label-n-pct-unaligned
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-table-row-label-n-pct-unaligned#0 conflict not reported: incidence:serious 14 vs 19 (drug x) — count/proportion:SAE incidence, Drug X arm",
++   "r2-pv-table-row-label-n-pct-unaligned#1 consistent not reported: incidence:serious 10 vs 10 (placebo) — count/proportion:SAE incidence, placebo arm",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-table-row-label-colon
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-table-row-label-colon#0 conflict not reported: incidence:serious 14 vs 19 (drug x) — count/proportion:SAE incidence, Drug X arm",
++   "r2-pv-table-row-label-colon#1 consistent not reported: incidence:serious 10 vs 10 (placebo) — count/proportion:SAE incidence, placebo arm",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-percent-then-count-prose
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-percent-then-count-prose#0 conflict not reported: incidence:serious 14 vs 19 (drug x) — count/proportion:SAE incidence, Drug X arm",
++   "r2-pv-percent-then-count-prose#1 consistent not reported: incidence:serious 10 vs 10 (placebo) — count/proportion:SAE incidence, placebo arm",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-all-cause-mortality
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-all-cause-mortality#0 conflict not reported: deaths 4.6 vs 6.4 (drug x) — proportion:deaths, Drug X arm",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-arm-active-treatment-group
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-arm-active-treatment-group#0 conflict not reported: incidence:serious 4.6 vs 6.4 (drug x) — proportion:SAE incidence, Drug X arm",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-arm-those-assigned-to
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-arm-those-assigned-to#0 conflict not reported: incidence:serious 4.6 vs 6.4 (drug x) — proportion:SAE incidence, Drug X arm",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-corresponding-figure-for
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-corresponding-figure-for#1 conflict not reported: incidence:serious 4.6 vs 6.4 (drug x) — proportion:SAE incidence, Drug X arm",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-respectively-arms-named-first
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-respectively-arms-named-first#0 consistent not reported: incidence:serious 3.3 vs 3.3 (placebo) — proportion:SAE incidence, placebo arm",
++   "r2-pv-respectively-arms-named-first#1 conflict not reported: incidence:serious 4.6 vs 6.4 (drug x) — proportion:SAE incidence, Drug X arm",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-former-and-latter
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-former-and-latter#0 consistent not reported: incidence:serious 4.6 vs 4.6 (drug x) — proportion:SAE incidence, Drug X arm",
++   "r2-pv-former-and-latter#1 conflict not reported: incidence:serious 3.3 vs 3.6 (placebo) — proportion:SAE incidence, placebo arm",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-hyphenation-across-line-break-safety
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-hyphenation-across-line-break-safety#0 conflict not reported: incidence:serious 4.6 vs 6.4 (drug x) — proportion:SAE incidence, Drug X arm",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-hyphenation-across-line-break-hazard-ratio
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-hyphenation-across-line-break-hazard-ratio#0 conflict not reported: effect:hazard_ratio 0.72 vs 0.76 — effect:hazard ratio, PFS, Drug X vs placebo",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-footnote-markers-on-values
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-footnote-markers-on-values#0 conflict not reported: incidence:serious 14 vs 19 (drug x) — count/proportion:SAE incidence, Drug X arm",
++   "r2-pv-footnote-markers-on-values#1 consistent not reported: incidence:serious 10 vs 10 (placebo) — count/proportion:SAE incidence, placebo arm",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-arm-list-one-per-line-en-dash
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-arm-list-one-per-line-en-dash#0 conflict not reported: incidence:serious 14 vs 19 (drug x) — count/proportion:SAE incidence, Drug X arm",
++   "r2-pv-arm-list-one-per-line-en-dash#1 consistent not reported: incidence:serious 10 vs 10 (placebo) — count/proportion:SAE incidence, placebo arm",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-arm-list-numbered-ordinals-as-figures
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-arm-list-numbered-ordinals-as-figures#0 conflict not reported: incidence:serious 14 vs 19 (drug x) — count/proportion:SAE incidence, Drug X arm",
++   "r2-pv-arm-list-numbered-ordinals-as-figures#1 consistent not reported: incidence:serious 10 vs 10 (placebo) — count/proportion:SAE incidence, placebo arm",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-nonnative-has-been-randomized
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-nonnative-has-been-randomized#0 conflict not reported: n:randomized 612 vs 621 (total) — count:patients randomised",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-nonnative-inverted-subject
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-pv-nonnative-inverted-subject#0 conflict not reported: n:randomized 612 vs 621 (total) — count:patients randomised",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-01-pool-scope-name-all-exposure
+AssertionError: expected [ …(13) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-scope-01-pool-scope-name-all-exposure#0 paired 5.0 with 9.7 (conflict, incidence:serious) — must not be compared",
++   "r2-scope-01-pool-scope-name-all-exposure#0 paired 3.1 with 3.1 (consistent, incidence:serious) — must not be compared",
++   "r2-scope-01-pool-scope-name-all-exposure#0: docA 5.0 is not reported as not compared",
++   "r2-scope-01-pool-scope-name-all-exposure#0: docA 5.0 is compared, but the row says it is not",
++   "r2-scope-01-pool-scope-name-all-exposure#0: docA 3.1 is not reported as not compared",
++   "r2-scope-01-pool-scope-name-all-exposure#0: docA 3.1 is compared, but the row says it is not",
++   "r2-scope-01-pool-scope-name-all-exposure#0: docB 9.7 is not reported as not compared",
++   "r2-scope-01-pool-scope-name-all-exposure#0: docB 9.7 is compared, but the row says it is not",
++   "r2-scope-01-pool-scope-name-all-exposure#0: docB 3.1 is not reported as not compared",
++   "r2-scope-01-pool-scope-name-all-exposure#0: docB 3.1 is compared, but the row says it is not",
++   "must_not conflict: incidence:serious · lorinastat — \"JK-301 and JK-302; safety population), serious adverse events were reported in 5.0% of patients in the lorinastat group \" (A, chars 39–202) vs \"In the All-Exposure Pool (Studies JK-301 and JK-302; safety population), serious adverse events were reported in 9.7% of\" (B, chars 0–196): percent 5.0% vs 9.7% (differ at 1 dp).",
++   "must_not consistent: incidence:serious · placebo — \"adverse events were reported in 5.0% of patients in the lorinastat group and 3.1% of patients in the placebo group.\" (A, chars 86–202) vs \"In the All-Exposure Pool (Studies JK-301 and JK-302; safety population), serious adverse events were reported in 9.7% of\" (B, chars 0–196): percent 3.1% vs 3.1% (agree at 1 dp).",
++   "unexpected conflict: incidence:serious · lorinastat — \"JK-301 and JK-302; safety population), serious adverse events were reported in 5.0% of patients in the lorinastat group \" (A, chars 39–202) vs \"In the All-Exposure Pool (Studies JK-301 and JK-302; safety population), serious adverse events were reported in 9.7% of\" (B, chars 0–196): percent 5.0% vs 9.7% (differ at 1 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-02-pool-scope-name-long-term
+AssertionError: expected [ …(13) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-scope-02-pool-scope-name-long-term#0 paired 5.0 with 12.8 (conflict, incidence:serious) — must not be compared",
++   "r2-scope-02-pool-scope-name-long-term#0 paired 3.1 with 3.1 (consistent, incidence:serious) — must not be compared",
++   "r2-scope-02-pool-scope-name-long-term#0: docA 5.0 is not reported as not compared",
++   "r2-scope-02-pool-scope-name-long-term#0: docA 5.0 is compared, but the row says it is not",
++   "r2-scope-02-pool-scope-name-long-term#0: docA 3.1 is not reported as not compared",
++   "r2-scope-02-pool-scope-name-long-term#0: docA 3.1 is compared, but the row says it is not",
++   "r2-scope-02-pool-scope-name-long-term#0: docB 12.8 is not reported as not compared",
++   "r2-scope-02-pool-scope-name-long-term#0: docB 12.8 is compared, but the row says it is not",
++   "r2-scope-02-pool-scope-name-long-term#0: docB 3.1 is not reported as not compared",
++   "r2-scope-02-pool-scope-name-long-term#0: docB 3.1 is compared, but the row says it is not",
++   "must_not conflict: incidence:serious · lorinastat — \"JK-301 and JK-302; safety population), serious adverse events were reported in 5.0% of patients in the lorinastat group \" (A, chars 39–202) vs \"In the Long-Term Pool (Studies JK-301 and JK-302; safety population), serious adverse events were reported in 12.8% of p\" (B, chars 0–194): percent 5.0% vs 12.8% (differ at 1 dp).",
++   "must_not consistent: incidence:serious · placebo — \"adverse events were reported in 5.0% of patients in the lorinastat group and 3.1% of patients in the placebo group.\" (A, chars 86–202) vs \"In the Long-Term Pool (Studies JK-301 and JK-302; safety population), serious adverse events were reported in 12.8% of p\" (B, chars 0–194): percent 3.1% vs 3.1% (agree at 1 dp).",
++   "unexpected conflict: incidence:serious · lorinastat — \"JK-301 and JK-302; safety population), serious adverse events were reported in 5.0% of patients in the lorinastat group \" (A, chars 39–202) vs \"In the Long-Term Pool (Studies JK-301 and JK-302; safety population), serious adverse events were reported in 12.8% of p\" (B, chars 0–194): percent 5.0% vs 12.8% (differ at 1 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-03-pool-control-type
+AssertionError: expected [ …(14) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-scope-03-pool-control-type#0 paired 2.1 with 4.6 (conflict, incidence:serious) — must not be compared",
++   "r2-scope-03-pool-control-type#0 paired 1.8 with 3.3 (conflict, incidence:serious) — must not be compared",
++   "r2-scope-03-pool-control-type#0: docA 2.1 is not reported as not compared",
++   "r2-scope-03-pool-control-type#0: docA 2.1 is compared, but the row says it is not",
++   "r2-scope-03-pool-control-type#0: docA 1.8 is not reported as not compared",
++   "r2-scope-03-pool-control-type#0: docA 1.8 is compared, but the row says it is not",
++   "r2-scope-03-pool-control-type#0: docB 4.6 is not reported as not compared",
++   "r2-scope-03-pool-control-type#0: docB 4.6 is compared, but the row says it is not",
++   "r2-scope-03-pool-control-type#0: docB 3.3 is not reported as not compared",
++   "r2-scope-03-pool-control-type#0: docB 3.3 is compared, but the row says it is not",
++   "must_not conflict: incidence:serious · lorinastat — \"JK-301 and JK-302; safety population), serious adverse events were reported in 2.1% of patients in the lorinastat group \" (A, chars 47–210) vs \"JK-301 and JK-302; safety population), serious adverse events were reported in 4.6% of patients in the lorinastat group \" (B, chars 46–209): percent 2.1% vs 4.6% (differ at 1 dp).",
++   "must_not conflict: incidence:serious · placebo — \"adverse events were reported in 2.1% of patients in the lorinastat group and 1.8% of patients in the placebo group.\" (A, chars 94–210) vs \"adverse events were reported in 4.6% of patients in the lorinastat group and 3.3% of patients in the placebo group.\" (B, chars 93–209): percent 1.8% vs 3.3% (differ at 1 dp).",
++   "unexpected conflict: incidence:serious · lorinastat — \"JK-301 and JK-302; safety population), serious adverse events were reported in 2.1% of patients in the lorinastat group \" (A, chars 47–210) vs \"JK-301 and JK-302; safety population), serious adverse events were reported in 4.6% of patients in the lorinastat group \" (B, chars 46–209): percent 2.1% vs 4.6% (differ at 1 dp).",
++   "unexpected conflict: incidence:serious · placebo — \"adverse events were reported in 2.1% of patients in the lorinastat group and 1.8% of patients in the placebo group.\" (A, chars 94–210) vs \"adverse events were reported in 4.6% of patients in the lorinastat group and 3.3% of patients in the placebo group.\" (B, chars 93–209): percent 1.8% vs 3.3% (differ at 1 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-04-period-duration-prose
+AssertionError: expected [ …(14) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-scope-04-period-duration-prose#0 paired 2.1 with 4.6 (conflict, incidence:serious) — must not be compared",
++   "r2-scope-04-period-duration-prose#0 paired 1.8 with 3.3 (conflict, incidence:serious) — must not be compared",
++   "r2-scope-04-period-duration-prose#0: docA 2.1 is not reported as not compared",
++   "r2-scope-04-period-duration-prose#0: docA 2.1 is compared, but the row says it is not",
++   "r2-scope-04-period-duration-prose#0: docA 1.8 is not reported as not compared",
++   "r2-scope-04-period-duration-prose#0: docA 1.8 is compared, but the row says it is not",
++   "r2-scope-04-period-duration-prose#0: docB 4.6 is not reported as not compared",
++   "r2-scope-04-period-duration-prose#0: docB 4.6 is compared, but the row says it is not",
++   "r2-scope-04-period-duration-prose#0: docB 3.3 is not reported as not compared",
++   "r2-scope-04-period-duration-prose#0: docB 3.3 is compared, but the row says it is not",
++   "must_not conflict: incidence:serious · lorinastat — \"Safety (Safety Population): During the 12-week placebo-controlled period, serious adverse events were reported in 2.1% o\" (A, chars 15–212) vs \"Safety (Safety Population): During the 24-week placebo-controlled period, serious adverse events were reported in 4.6% o\" (B, chars 15–212): percent 2.1% vs 4.6% (differ at 1 dp).",
++   "must_not conflict: incidence:serious · placebo — \"Safety (Safety Population): During the 12-week placebo-controlled period, serious adverse events were reported in 2.1% o\" (A, chars 15–212) vs \"Safety (Safety Population): During the 24-week placebo-controlled period, serious adverse events were reported in 4.6% o\" (B, chars 15–212): percent 1.8% vs 3.3% (differ at 1 dp).",
++   "unexpected conflict: incidence:serious · lorinastat — \"Safety (Safety Population): During the 12-week placebo-controlled period, serious adverse events were reported in 2.1% o\" (A, chars 15–212) vs \"Safety (Safety Population): During the 24-week placebo-controlled period, serious adverse events were reported in 4.6% o\" (B, chars 15–212): percent 2.1% vs 4.6% (differ at 1 dp).",
++   "unexpected conflict: incidence:serious · placebo — \"Safety (Safety Population): During the 12-week placebo-controlled period, serious adverse events were reported in 2.1% o\" (A, chars 15–212) vs \"Safety (Safety Population): During the 24-week placebo-controlled period, serious adverse events were reported in 4.6% o\" (B, chars 15–212): percent 1.8% vs 3.3% (differ at 1 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-05-period-sub-window
+AssertionError: expected [ …(14) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-scope-05-period-sub-window#0 paired 2.1 with 4.6 (conflict, incidence:serious) — must not be compared",
++   "r2-scope-05-period-sub-window#0 paired 1.8 with 3.3 (conflict, incidence:serious) — must not be compared",
++   "r2-scope-05-period-sub-window#0: docA 2.1 is not reported as not compared",
++   "r2-scope-05-period-sub-window#0: docA 2.1 is compared, but the row says it is not",
++   "r2-scope-05-period-sub-window#0: docA 1.8 is not reported as not compared",
++   "r2-scope-05-period-sub-window#0: docA 1.8 is compared, but the row says it is not",
++   "r2-scope-05-period-sub-window#0: docB 4.6 is not reported as not compared",
++   "r2-scope-05-period-sub-window#0: docB 4.6 is compared, but the row says it is not",
++   "r2-scope-05-period-sub-window#0: docB 3.3 is not reported as not compared",
++   "r2-scope-05-period-sub-window#0: docB 3.3 is compared, but the row says it is not",
++   "must_not conflict: incidence:serious · lorinastat — \"weeks of the placebo-controlled period, serious adverse events were reported in 2.1% of patients in the lorinastat group\" (A, chars 63–226) vs \"Safety (Safety Population): During the placebo-controlled period, serious adverse events were reported in 4.6% of patien\" (B, chars 15–204): percent 2.1% vs 4.6% (differ at 1 dp).",
++   "must_not conflict: incidence:serious · placebo — \"adverse events were reported in 2.1% of patients in the lorinastat group and 1.8% of patients in the placebo group.\" (A, chars 110–226) vs \"Safety (Safety Population): During the placebo-controlled period, serious adverse events were reported in 4.6% of patien\" (B, chars 15–204): percent 1.8% vs 3.3% (differ at 1 dp).",
++   "unexpected conflict: incidence:serious · lorinastat — \"weeks of the placebo-controlled period, serious adverse events were reported in 2.1% of patients in the lorinastat group\" (A, chars 63–226) vs \"Safety (Safety Population): During the placebo-controlled period, serious adverse events were reported in 4.6% of patien\" (B, chars 15–204): percent 2.1% vs 4.6% (differ at 1 dp).",
++   "unexpected conflict: incidence:serious · placebo — \"adverse events were reported in 2.1% of patients in the lorinastat group and 1.8% of patients in the placebo group.\" (A, chars 110–226) vs \"Safety (Safety Population): During the placebo-controlled period, serious adverse events were reported in 4.6% of patien\" (B, chars 15–204): percent 1.8% vs 3.3% (differ at 1 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-06-db-period-duration
+AssertionError: expected [ …(14) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-scope-06-db-period-duration#0 paired 4.6 with 8.4 (conflict, incidence:serious) — must not be compared",
++   "r2-scope-06-db-period-duration#0 paired 3.3 with 5.1 (conflict, incidence:serious) — must not be compared",
++   "r2-scope-06-db-period-duration#0: docA 4.6 is not reported as not compared",
++   "r2-scope-06-db-period-duration#0: docA 4.6 is compared, but the row says it is not",
++   "r2-scope-06-db-period-duration#0: docA 3.3 is not reported as not compared",
++   "r2-scope-06-db-period-duration#0: docA 3.3 is compared, but the row says it is not",
++   "r2-scope-06-db-period-duration#0: docB 8.4 is not reported as not compared",
++   "r2-scope-06-db-period-duration#0: docB 8.4 is compared, but the row says it is not",
++   "r2-scope-06-db-period-duration#0: docB 5.1 is not reported as not compared",
++   "r2-scope-06-db-period-duration#0: docB 5.1 is compared, but the row says it is not",
++   "must_not conflict: incidence:serious · lorinastat — \"Safety (Safety Population): During the 52-week double-blind period, serious adverse events were reported in 4.6% of pati\" (A, chars 15–206) vs \"Safety (Safety Population): During the 104-week double-blind period, serious adverse events were reported in 8.4% of pat\" (B, chars 15–207): percent 4.6% vs 8.4% (differ at 1 dp).",
++   "must_not conflict: incidence:serious · placebo — \"Safety (Safety Population): During the 52-week double-blind period, serious adverse events were reported in 4.6% of pati\" (A, chars 15–206) vs \"Safety (Safety Population): During the 104-week double-blind period, serious adverse events were reported in 8.4% of pat\" (B, chars 15–207): percent 3.3% vs 5.1% (differ at 1 dp).",
++   "unexpected conflict: incidence:serious · lorinastat — \"Safety (Safety Population): During the 52-week double-blind period, serious adverse events were reported in 4.6% of pati\" (A, chars 15–206) vs \"Safety (Safety Population): During the 104-week double-blind period, serious adverse events were reported in 8.4% of pat\" (B, chars 15–207): percent 4.6% vs 8.4% (differ at 1 dp).",
++   "unexpected conflict: incidence:serious · placebo — \"Safety (Safety Population): During the 52-week double-blind period, serious adverse events were reported in 4.6% of pati\" (A, chars 15–206) vs \"Safety (Safety Population): During the 104-week double-blind period, serious adverse events were reported in 8.4% of pat\" (B, chars 15–207): percent 3.3% vs 5.1% (differ at 1 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-07-parenthetical-region-leak
+AssertionError: expected [ …(10) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-scope-07-parenthetical-region-leak#0 paired 4.6 with 7.1 (conflict, incidence:serious) — must not be compared",
++   "r2-scope-07-parenthetical-region-leak#0 paired 3.3 with 2.8 (conflict, incidence:serious) — must not be compared",
++   "r2-scope-07-parenthetical-region-leak#0: docA 4.6 is not reported as not compared",
++   "r2-scope-07-parenthetical-region-leak#0: docA 4.6 is compared, but the row says it is not",
++   "r2-scope-07-parenthetical-region-leak#0: docA 3.3 is not reported as not compared",
++   "r2-scope-07-parenthetical-region-leak#0: docA 3.3 is compared, but the row says it is not",
++   "r2-scope-07-parenthetical-region-leak#1 conflict not reported: incidence:serious 5.9 vs 7.1 (lorinastat) — sae_rate, lorinastat arm, Japanese subgroup",
++   "r2-scope-07-parenthetical-region-leak#2 conflict not reported: incidence:serious 2.0 vs 2.8 (placebo) — sae_rate, placebo arm, Japanese subgroup",
++   "unexpected conflict: incidence:serious · lorinastat — \"Safety (Safety Population): Serious adverse events were reported in 4.6% of patients in the lorinastat group (5.9% in Ja\" (A, chars 14–211) vs \"Safety (Safety Population): In Japanese patients, serious adverse events were reported in 7.1% of patients in the lorina\" (B, chars 14–187): percent 4.6% vs 7.1% (differ at 1 dp).",
++   "unexpected conflict: incidence:serious · placebo — \"in 4.6% of patients in the lorinastat group (5.9% in Japanese patients) and 3.3% of patients in the placebo group (2.0% \" (A, chars 78–221) vs \"Safety (Safety Population): In Japanese patients, serious adverse events were reported in 7.1% of patients in the lorina\" (B, chars 14–187): percent 3.3% vs 2.8% (differ at 1 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-08-parenthetical-region-leak-false-consistent
+AssertionError: expected [ …(10) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-scope-08-parenthetical-region-leak-false-consistent#0 paired 4.6 with 4.6 (consistent, incidence:serious) — must not be compared",
++   "r2-scope-08-parenthetical-region-leak-false-consistent#0 paired 3.3 with 3.3 (consistent, incidence:serious) — must not be compared",
++   "r2-scope-08-parenthetical-region-leak-false-consistent#0: docA 4.6 is not reported as not compared",
++   "r2-scope-08-parenthetical-region-leak-false-consistent#0: docA 4.6 is compared, but the row says it is not",
++   "r2-scope-08-parenthetical-region-leak-false-consistent#0: docA 3.3 is not reported as not compared",
++   "r2-scope-08-parenthetical-region-leak-false-consistent#0: docA 3.3 is compared, but the row says it is not",
++   "r2-scope-08-parenthetical-region-leak-false-consistent#1 conflict not reported: incidence:serious 5.9 vs 4.6 (lorinastat) — sae_rate, lorinastat arm, Japanese subgroup",
++   "r2-scope-08-parenthetical-region-leak-false-consistent#2 conflict not reported: incidence:serious 2.0 vs 3.3 (placebo) — sae_rate, placebo arm, Japanese subgroup",
++   "must_not consistent: incidence:serious · lorinastat — \"Safety (Safety Population): Serious adverse events were reported in 4.6% of patients in the lorinastat group (5.9% in Ja\" (A, chars 14–211) vs \"Safety (Safety Population): In Japanese patients, serious adverse events were reported in 4.6% of patients in the lorina\" (B, chars 14–187): percent 4.6% vs 4.6% (agree at 1 dp).",
++   "must_not consistent: incidence:serious · placebo — \"in 4.6% of patients in the lorinastat group (5.9% in Japanese patients) and 3.3% of patients in the placebo group (2.0% \" (A, chars 78–221) vs \"Safety (Safety Population): In Japanese patients, serious adverse events were reported in 4.6% of patients in the lorina\" (B, chars 14–187): percent 3.3% vs 3.3% (agree at 1 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-09-parenthetical-age-leak
+AssertionError: expected [ …(10) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-scope-09-parenthetical-age-leak#0 paired 4.6 with 10.4 (conflict, incidence:serious) — must not be compared",
++   "r2-scope-09-parenthetical-age-leak#0 paired 3.3 with 6.2 (conflict, incidence:serious) — must not be compared",
++   "r2-scope-09-parenthetical-age-leak#0: docA 4.6 is not reported as not compared",
++   "r2-scope-09-parenthetical-age-leak#0: docA 4.6 is compared, but the row says it is not",
++   "r2-scope-09-parenthetical-age-leak#0: docA 3.3 is not reported as not compared",
++   "r2-scope-09-parenthetical-age-leak#0: docA 3.3 is compared, but the row says it is not",
++   "r2-scope-09-parenthetical-age-leak#1 conflict not reported: incidence:serious 8.2 vs 10.4 (lorinastat) — sae_rate, lorinastat arm, patients aged 65 years and older",
++   "r2-scope-09-parenthetical-age-leak#2 conflict not reported: incidence:serious 5.1 vs 6.2 (placebo) — sae_rate, placebo arm, patients aged 65 years and older",
++   "unexpected conflict: incidence:serious · lorinastat — \"Safety (Safety Population): Serious adverse events were reported in 4.6% of patients in the lorinastat group (8.2% in pa\" (A, chars 14–214) vs \"Safety (Safety Population): In patients aged 65 years and older, serious adverse events were reported in 10.4% of patien\" (B, chars 14–203): percent 4.6% vs 10.4% (differ at 1 dp).",
++   "unexpected conflict: incidence:serious · placebo — \"patients in the lorinastat group (8.2% in patients aged 65 years and older) and 3.3% of patients in the placebo group (5\" (A, chars 89–251) vs \"Safety (Safety Population): In patients aged 65 years and older, serious adverse events were reported in 10.4% of patien\" (B, chars 14–203): percent 3.3% vs 6.2% (differ at 1 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-10-parenthetical-regional-n-leak
+AssertionError: expected [ …(5) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-scope-10-parenthetical-regional-n-leak#0 paired 612 with 218 (conflict, n:randomized) — must not be compared",
++   "r2-scope-10-parenthetical-regional-n-leak#0: docA 612 is not reported as not compared",
++   "r2-scope-10-parenthetical-regional-n-leak#0: docA 612 is compared, but the row says it is not",
++   "r2-scope-10-parenthetical-regional-n-leak#1 conflict not reported: n:randomized 204 vs 218 — randomized_total",
++   "unexpected conflict: n:randomized · total — \"A total of 612 patients were randomised (204 in Japan).\" (A, chars 14–69) vs \"In Japanese patients, a total of 218 patients were randomised.\" (B, chars 14–76): count 612 vs 218 (differ at 0 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-11-primary-vs-final-analysis
+AssertionError: expected [ …(9) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-scope-11-primary-vs-final-analysis#0 paired 0.84 with 0.78 (conflict, effect:hazard_ratio:os) — must not be compared",
++   "r2-scope-11-primary-vs-final-analysis#0 paired 0.68 with 0.65 (conflict, effect:hazard_ratio:os) — must not be compared",
++   "r2-scope-11-primary-vs-final-analysis#0 paired 1.04 with 0.94 (conflict, effect:hazard_ratio:os) — must not be compared",
++   "r2-scope-11-primary-vs-final-analysis#0: docA 0.84 is not reported as not compared",
++   "r2-scope-11-primary-vs-final-analysis#0: docA 0.84 is compared, but the row says it is not",
++   "r2-scope-11-primary-vs-final-analysis#0: docB 0.78 is not reported as not compared",
++   "r2-scope-11-primary-vs-final-analysis#0: docB 0.78 is compared, but the row says it is not",
++   "must_not conflict: effect:hazard_ratio:os — \"At the primary analysis, the hazard ratio for overall survival was 0.84 (95% CI 0.68, 1.04).\" (A, chars 32–124) vs \"At the final analysis, the hazard ratio for overall survival was 0.78 (95% CI 0.65, 0.94).\" (B, chars 32–122): estimate 0.84 vs 0.78 (differ at 2 dp); lower 0.68 vs 0.65 (differ at 2 dp); upper 1.04 vs 0.94 (differ at 2 dp).",
++   "unexpected conflict: effect:hazard_ratio:os — \"At the primary analysis, the hazard ratio for overall survival was 0.84 (95% CI 0.68, 1.04).\" (A, chars 32–124) vs \"At the final analysis, the hazard ratio for overall survival was 0.78 (95% CI 0.65, 0.94).\" (B, chars 32–122): estimate 0.84 vs 0.78 (differ at 2 dp); lower 0.68 vs 0.65 (differ at 2 dp); upper 1.04 vs 0.94 (differ at 2 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-12-interim-occasion
+AssertionError: expected [ …(9) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-scope-12-interim-occasion#0 paired 0.84 with 0.78 (conflict, effect:hazard_ratio:os) — must not be compared",
++   "r2-scope-12-interim-occasion#0 paired 0.68 with 0.65 (conflict, effect:hazard_ratio:os) — must not be compared",
++   "r2-scope-12-interim-occasion#0 paired 1.04 with 0.94 (conflict, effect:hazard_ratio:os) — must not be compared",
++   "r2-scope-12-interim-occasion#0: docA 0.84 is not reported as not compared",
++   "r2-scope-12-interim-occasion#0: docA 0.84 is compared, but the row says it is not",
++   "r2-scope-12-interim-occasion#0: docB 0.78 is not reported as not compared",
++   "r2-scope-12-interim-occasion#0: docB 0.78 is compared, but the row says it is not",
++   "must_not conflict: effect:hazard_ratio:os — \"At the first interim analysis, the hazard ratio for overall survival was 0.84 (95% CI 0.68, 1.04).\" (A, chars 32–130) vs \"At the second interim analysis, the hazard ratio for overall survival was 0.78 (95% CI 0.65, 0.94).\" (B, chars 32–131): estimate 0.84 vs 0.78 (differ at 2 dp); lower 0.68 vs 0.65 (differ at 2 dp); upper 1.04 vs 0.94 (differ at 2 dp).",
++   "unexpected conflict: effect:hazard_ratio:os — \"At the first interim analysis, the hazard ratio for overall survival was 0.84 (95% CI 0.68, 1.04).\" (A, chars 32–130) vs \"At the second interim analysis, the hazard ratio for overall survival was 0.78 (95% CI 0.65, 0.94).\" (B, chars 32–131): estimate 0.84 vs 0.78 (differ at 2 dp); lower 0.68 vs 0.65 (differ at 2 dp); upper 1.04 vs 0.94 (differ at 2 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-13-table-footnote-subgroup
+AssertionError: expected [ …(10) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-scope-13-table-footnote-subgroup#0 paired 4.6 with 5.9 (conflict, incidence:serious) — must not be compared",
++   "r2-scope-13-table-footnote-subgroup#0 paired 3.3 with 2.0 (conflict, incidence:serious) — must not be compared",
++   "r2-scope-13-table-footnote-subgroup#0: docA 4.6 is not reported as not compared",
++   "r2-scope-13-table-footnote-subgroup#0: docA 4.6 is compared, but the row says it is not",
++   "r2-scope-13-table-footnote-subgroup#0: docA 3.3 is not reported as not compared",
++   "r2-scope-13-table-footnote-subgroup#0: docA 3.3 is compared, but the row says it is not",
++   "must_not conflict: incidence:serious · lorinastat — \"Safety (Safety Population): Serious adverse events were reported in 4.6% of patients in the lorinastat group and 3.3% of\" (A, chars 14–165) vs \"6 (5.9%)\" (B, chars 198–206): percent 4.6% vs 5.9% (differ at 1 dp).",
++   "must_not conflict: incidence:serious · placebo — \"Safety (Safety Population): Serious adverse events were reported in 4.6% of patients in the lorinastat group and 3.3% of\" (A, chars 14–165) vs \"2 (2.0%)\" (B, chars 219–227): percent 3.3% vs 2.0% (differ at 1 dp).",
++   "unexpected conflict: incidence:serious · lorinastat — \"Safety (Safety Population): Serious adverse events were reported in 4.6% of patients in the lorinastat group and 3.3% of\" (A, chars 14–165) vs \"6 (5.9%)\" (B, chars 198–206): percent 4.6% vs 5.9% (differ at 1 dp).",
++   "unexpected conflict: incidence:serious · placebo — \"Safety (Safety Population): Serious adverse events were reported in 4.6% of patients in the lorinastat group and 3.3% of\" (A, chars 14–165) vs \"2 (2.0%)\" (B, chars 219–227): percent 3.3% vs 2.0% (differ at 1 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-14-as-treated-stated-as-prose
+AssertionError: expected [ …(14) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-scope-14-as-treated-stated-as-prose#0 paired 4.6 with 4.9 (conflict, incidence:serious) — must not be compared",
++   "r2-scope-14-as-treated-stated-as-prose#0 paired 3.3 with 3.0 (conflict, incidence:serious) — must not be compared",
++   "r2-scope-14-as-treated-stated-as-prose#0: docA 4.6 is not reported as not compared",
++   "r2-scope-14-as-treated-stated-as-prose#0: docA 4.6 is compared, but the row says it is not",
++   "r2-scope-14-as-treated-stated-as-prose#0: docA 3.3 is not reported as not compared",
++   "r2-scope-14-as-treated-stated-as-prose#0: docA 3.3 is compared, but the row says it is not",
++   "r2-scope-14-as-treated-stated-as-prose#0: docB 4.9 is not reported as not compared",
++   "r2-scope-14-as-treated-stated-as-prose#0: docB 4.9 is compared, but the row says it is not",
++   "r2-scope-14-as-treated-stated-as-prose#0: docB 3.0 is not reported as not compared",
++   "r2-scope-14-as-treated-stated-as-prose#0: docB 3.0 is compared, but the row says it is not",
++   "must_not conflict: incidence:serious · lorinastat — \"Safety (Safety Population): Serious adverse events were reported in 4.6% of patients in the lorinastat group and 3.3% of\" (A, chars 14–165) vs \"Serious adverse events were reported in 4.9% of patients in the lorinastat group and 3.0% of patients in the placebo gro\" (B, chars 113–236): percent 4.6% vs 4.9% (differ at 1 dp).",
++   "must_not conflict: incidence:serious · placebo — \"Safety (Safety Population): Serious adverse events were reported in 4.6% of patients in the lorinastat group and 3.3% of\" (A, chars 14–165) vs \"Serious adverse events were reported in 4.9% of patients in the lorinastat group and 3.0% of patients in the placebo gro\" (B, chars 113–236): percent 3.3% vs 3.0% (differ at 1 dp).",
++   "unexpected conflict: incidence:serious · lorinastat — \"Safety (Safety Population): Serious adverse events were reported in 4.6% of patients in the lorinastat group and 3.3% of\" (A, chars 14–165) vs \"Serious adverse events were reported in 4.9% of patients in the lorinastat group and 3.0% of patients in the placebo gro\" (B, chars 113–236): percent 4.6% vs 4.9% (differ at 1 dp).",
++   "unexpected conflict: incidence:serious · placebo — \"Safety (Safety Population): Serious adverse events were reported in 4.6% of patients in the lorinastat group and 3.3% of\" (A, chars 14–165) vs \"Serious adverse events were reported in 4.9% of patients in the lorinastat group and 3.0% of patients in the placebo gro\" (B, chars 113–236): percent 3.3% vs 3.0% (differ at 1 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[51/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-15-mitt-not-read
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-scope-15-mitt-not-read#0 conflict not reported: effect:hazard_ratio:pfs 0.72 vs 0.80 — effect:hazard_ratio:pfs",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[52/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-16-population-definition-appositive
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-scope-16-population-definition-appositive#0 conflict not reported: effect:hazard_ratio:pfs 0.72 vs 0.80 — effect:hazard_ratio:pfs",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[53/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-17-arm-letter-labels
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-scope-17-arm-letter-labels#0 conflict not reported: incidence:serious 4.6 vs 6.4 (ravoxetine) — sae_rate",
++   "r2-scope-17-arm-letter-labels#1 consistent not reported: incidence:serious 3.3 vs 3.3 (placebo) — sae_rate",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[54/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-18-same-stratum-both-sides
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-scope-18-same-stratum-both-sides#0 conflict not reported: effect:hazard_ratio:pfs 0.61 vs 0.71 — effect:hazard_ratio:pfs",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[55/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-19-combined-dose-arm-both-sides
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-scope-19-combined-dose-arm-both-sides#0 conflict not reported: incidence:serious 4.6 vs 6.4 (lorinastat) — sae_rate",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[56/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-01
+AssertionError: expected [ …(7) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-num-01#0 paired 3.2 with 32 (conflict, eair:eair:serious:infection) — must not be compared",
++   "r2-num-01#0: docA 3.2 is not reported as not compared",
++   "r2-num-01#0: docA 3.2 is compared, but the row says it is not",
++   "r2-num-01#0: docB 32 is not reported as not compared",
++   "r2-num-01#0: docB 32 is compared, but the row says it is not",
++   "must_not conflict: eair:eair:serious:infection · drug x — \"Serious infections, Pool A (studies DX-301 and DX-302), safety population: the exposure-adjusted incidence rate of serio\" (A, chars 4–180) vs \"Pool A (studies DX-301 and DX-302), safety population: the exposure-adjusted incidence rate of serious infections was 32\" (B, chars 12–168): estimate 3.2 vs 32 (differ at 0 dp).",
++   "unexpected conflict: eair:eair:serious:infection · drug x — \"Serious infections, Pool A (studies DX-301 and DX-302), safety population: the exposure-adjusted incidence rate of serio\" (A, chars 4–180) vs \"Pool A (studies DX-301 and DX-302), safety population: the exposure-adjusted incidence rate of serious infections was 32\" (B, chars 12–168): estimate 3.2 vs 32 (differ at 0 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[57/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-02
+AssertionError: expected [ …(6) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-num-02#0 paired 6.4 with 5.8 (conflict, incidence:serious) — must not be compared",
++   "r2-num-02#0: docA 4.6 reported with [arm_unidentified], expected one of [range_not_value, figure_not_read, no_counterpart]",
++   "r2-num-02#0: docA 6.4 is not reported as not compared",
++   "r2-num-02#0: docA 6.4 is compared, but the row says it is not",
++   "must_not conflict: incidence:serious · drug x — \"Pool A (studies DX-301 and DX-302), safety population: serious adverse events were reported in 4.6% to 6.4% of Drug X-tr\" (A, chars 4–139) vs \"Pool A (studies DX-301 and DX-302), safety population: serious adverse events were reported in 5.8% of Drug X-treated pa\" (B, chars 12–139): percent 6.4% vs 5.8% (differ at 1 dp).",
++   "unexpected conflict: incidence:serious · drug x — \"Pool A (studies DX-301 and DX-302), safety population: serious adverse events were reported in 4.6% to 6.4% of Drug X-tr\" (A, chars 4–139) vs \"Pool A (studies DX-301 and DX-302), safety population: serious adverse events were reported in 5.8% of Drug X-treated pa\" (B, chars 12–139): percent 6.4% vs 5.8% (differ at 1 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[58/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-03
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-num-03#0 conflict not reported: effect:hazard_ratio 0.00014 vs 0.14 — hazard_ratio: primary composite endpoint (p-value component)",
++   "must_not consistent: effect:hazard_ratio · daplunercept vs placebo — \"Study DPL-301 (FAS): the hazard ratio for the primary composite endpoint (daplunercept vs placebo) was 0.72 (95% CI 0.61\" (A, chars 9–153) vs \"In Study DPL-301 (FAS), the hazard ratio for the primary composite endpoint (daplunercept vs placebo) was 0.72 (95% CI 0\" (B, chars 10–157): estimate 0.72 vs 0.72 (agree at 2 dp); lower 0.61 vs 0.61 (agree at 2 dp); upper 0.85 vs 0.85 (agree at 2 dp); p 1.4 vs 1.4 (agree at 1 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[59/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-04
+AssertionError: expected [ …(3) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-num-04#0 conflict not reported: effect:hazard_ratio 0.85 vs 0.95 — 95% CI upper bound",
++   "r2-num-04#1 conflict not reported: effect:hazard_ratio 0.000023 vs 0.023 — p-value",
++   "must_not consistent: effect:hazard_ratio · daplunercept vs placebo — \"Study DPL-301 (FAS): the hazard ratio for the primary composite endpoint (daplunercept vs placebo) was 0.72 (95% CI 0.61\" (A, chars 9–153) vs \"In Study DPL-301 (FAS), the hazard ratio for the primary composite endpoint (daplunercept vs placebo) was 0.72 (95% CI 0\" (B, chars 10–157): estimate 0.72 vs 0.72 (agree at 2 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[60/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-05
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-num-05#0 conflict not reported: effect:hazard_ratio 0.85 vs 0.95 — hazard_ratio: primary composite endpoint (95% CI upper bound)",
++   "must_not consistent: effect:hazard_ratio · daplunercept vs placebo — \"In Study DPL-301 (FAS), the hazard ratio for the primary composite endpoint (daplunercept vs placebo) was 0.72 (95% CI, \" (A, chars 10–144) vs \"In Study DPL-301 (FAS), the hazard ratio for the primary composite endpoint (daplunercept vs placebo) was 0.72 (95% CI, \" (B, chars 4–138): estimate 0.72 vs 0.72 (agree at 2 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[61/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-06
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-num-06#0 conflict not reported: effect:hazard_ratio 0.85 vs 0.95 — hazard_ratio: primary composite endpoint (95% CI upper bound)",
++   "must_not consistent: effect:hazard_ratio · daplunercept vs placebo — \"In Study DPL-301 (FAS), the hazard ratio for the primary composite endpoint (daplunercept vs placebo) was 0.72 (95% CI, \" (A, chars 5–136) vs \"In Study DPL-301 (FAS), the hazard ratio for the primary composite endpoint (daplunercept vs placebo) was 0.72 (95% CI 0\" (B, chars 10–140): estimate 0.72 vs 0.72 (agree at 2 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[62/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-07
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-num-07#0 conflict not reported: effect:hazard_ratio 0.85 vs 0.95 — hazard_ratio: primary composite endpoint (95% CI upper bound)",
++   "must_not consistent: effect:hazard_ratio · daplunercept vs placebo — \"In Study DPL-301 (FAS), the hazard ratio for the primary composite endpoint (daplunercept vs placebo) was 0.72 (95% conf\" (A, chars 10–164) vs \"In Study DPL-301 (FAS), the hazard ratio for the primary composite endpoint (daplunercept vs placebo) was 0.72 (95% CI 0\" (B, chars 4–135): estimate 0.72 vs 0.72 (agree at 2 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[63/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-08
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-num-08#0 conflict not reported: effect:hazard_ratio 0.85 vs 0.95 — hazard_ratio: primary composite endpoint (95% CI upper bound)",
++   "must_not consistent: effect:hazard_ratio · daplunercept vs placebo — \"In Study DPL-301 (FAS), the hazard ratio for the primary composite endpoint (daplunercept vs placebo) was 0.72 (95 perce\" (A, chars 10–168) vs \"In Study DPL-301 (FAS), the hazard ratio for the primary composite endpoint (daplunercept vs placebo) was 0.72 (95% CI 0\" (B, chars 4–135): estimate 0.72 vs 0.72 (agree at 2 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[64/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-09
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-num-09#0 conflict not reported: effect:hazard_ratio 0.85 vs 0.95 — hazard_ratio: primary composite endpoint (95% CI upper bound)",
++   "must_not consistent: effect:hazard_ratio · daplunercept vs placebo — \"The hazard ratio for the primary composite endpoint (daplunercept vs placebo) was 0.72 (0.61, 0.85).\" (A, chars 109–209) vs \"In Study DPL-301 (FAS), the hazard ratio for the primary composite endpoint (daplunercept vs placebo) was 0.72 (95% CI 0\" (B, chars 10–141): estimate 0.72 vs 0.72 (agree at 2 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[65/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-10
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-num-10#0 conflict not reported: effect:hazard_ratio 0.85 vs 0.95 — hazard_ratio: primary composite endpoint (95% CI upper bound)",
++   "must_not consistent: effect:hazard_ratio · daplunercept vs placebo — \"In Study DPL-301 (FAS), the hazard ratio for the primary composite endpoint (daplunercept vs placebo) was 0.72 (95.0% CI\" (A, chars 10–143) vs \"In Study DPL-301 (FAS), the hazard ratio for the primary composite endpoint (daplunercept vs placebo) was 0.72 (95% CI 0\" (B, chars 4–135): estimate 0.72 vs 0.72 (agree at 2 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[66/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-11
+AssertionError: expected [ …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-num-11#0 conflict not reported: effect:hazard_ratio 0.82 vs 0.91 — hazard_ratio: primary composite endpoint (90% CI upper bound)",
++   "r2-num-11#1: docA 0.61 is not reported as not compared",
++   "r2-num-11#1: docA 0.85 is not reported as not compared",
++   "must_not consistent: effect:hazard_ratio · daplunercept vs placebo — \"Study DPL-301 (FAS): the hazard ratio for the primary composite endpoint (daplunercept vs placebo) was 0.72 (95% CI 0.61\" (A, chars 9–156) vs \"In Study DPL-301 (FAS), the hazard ratio for the primary composite endpoint (daplunercept vs placebo) was 0.72 (90% CI 0\" (B, chars 10–141): estimate 0.72 vs 0.72 (agree at 2 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[67/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-12
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-num-12#0 conflict not reported: median:pfs 9.2 vs 7.4 — median:PFS, daplunercept arm",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[68/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-13
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-num-13#0 conflict not reported: incidence:serious 4.6 vs 5.8 (drug x) — incidence:serious, Drug X arm",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[69/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-14
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-num-14#0 conflict not reported: effect:rrr 54 vs 46 — relative reduction in the annualized relapse rate, ravalizumab vs placebo",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[70/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-15
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-num-15#0 conflict not reported: effect:hazard_ratio 0.003 vs 0.0310 — hazard_ratio: primary composite endpoint (p-value component)",
++   "must_not consistent: effect:hazard_ratio · daplunercept vs placebo — \"Study DPL-301 (FAS): the hazard ratio for the primary composite endpoint (daplunercept vs placebo) was 0.72 (95% CI 0.61\" (A, chars 9–163) vs \"In Study DPL-301 (FAS), the hazard ratio for the primary composite endpoint (daplunercept vs placebo) was 0.72 (95% CI 0\" (B, chars 10–153): estimate 0.72 vs 0.72 (agree at 2 dp); lower 0.61 vs 0.61 (agree at 2 dp); upper 0.85 vs 0.85 (agree at 2 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[71/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-16
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-num-16#0 conflict not reported: effect:ls_mean_difference 0.003 vs 0.0310 — effect:ls_mean_difference:DLQI (p-value component)",
++   "must_not consistent: effect:ls_mean_difference:dlqi · test vs placebo — \"Study PSO-301 (FAS), Week 16: the LS mean difference versus placebo in change from baseline in DLQI was -6.2 (95% CI -7.\" (A, chars 9–148) vs \"In Study PSO-301 (FAS) at Week 16, the LS mean difference versus placebo in change from baseline in DLQI was -6.2 (95% C\" (B, chars 10–156): estimate -6.2 vs -6.2 (agree at 1 dp); lower -7.1 vs -7.1 (agree at 1 dp); upper -5.3 vs -5.3 (agree at 1 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[72/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-17
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-num-17#0 conflict not reported: eair: 4.6 vs 6.4 — eair:SAE, Drug X arm",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[73/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-01-table-unit-in-title-false-consistent
+AssertionError: expected [ …(5) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-lbl-01-table-unit-in-title-false-consistent#0 conflict not reported: incidence:any:pt:nausea 11 vs 18.0 (dapralutide) — ae_rate_nausea",
++   "r2-lbl-01-table-unit-in-title-false-consistent#1 conflict not reported: incidence:any:pt:nausea 14 vs 4.6 (placebo) — ae_rate_nausea",
++   "r2-lbl-01-table-unit-in-title-false-consistent#4 paired 14 with 14 (consistent, incidence:any:pt:nausea) — must not be compared",
++   "r2-lbl-01-table-unit-in-title-false-consistent#4 paired 11 with 55 (conflict, incidence:any:pt:nausea) — must not be compared",
++   "unexpected conflict: incidence:any:pt:nausea · dapralutide 1.5 mg — \"11\" (A, chars 216–218) vs \"55 (18.0)\" (B, chars 197–206): count 11 vs 55 (differ at 0 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[74/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-02-table-unit-in-title-false-conflicts
+AssertionError: expected [ …(8) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-lbl-02-table-unit-in-title-false-conflicts#0 conflict not reported: incidence:any:pt:nausea 12 vs 18.0 (dapralutide) — ae_rate_nausea",
++   "r2-lbl-02-table-unit-in-title-false-conflicts#1 consistent not reported: incidence:any:pt:nausea 5 vs 4.6 (placebo) — ae_rate_nausea",
++   "r2-lbl-02-table-unit-in-title-false-conflicts#2 consistent not reported: incidence:any:pt:diarrhea 9 vs 8.9 (dapralutide) — ae_rate_diarrhea",
++   "r2-lbl-02-table-unit-in-title-false-conflicts#3 consistent not reported: incidence:any:pt:diarrhea 4 vs 4.3 (placebo) — ae_rate_diarrhea",
++   "unexpected conflict: incidence:any:pt:nausea · dapralutide 1.5 mg — \"12\" (A, chars 216–218) vs \"55 (18.0)\" (B, chars 197–206): count 12 vs 55 (differ at 0 dp).",
++   "unexpected conflict: incidence:any:pt:nausea · placebo — \"5\" (A, chars 221–222) vs \"14 (4.6)\" (B, chars 209–217): count 5 vs 14 (differ at 0 dp).",
++   "unexpected conflict: incidence:any:pt:diarrhea · dapralutide 1.5 mg — \"9\" (A, chars 234–235) vs \"27 (8.9)\" (B, chars 230–238): count 9 vs 27 (differ at 0 dp).",
++   "unexpected conflict: incidence:any:pt:diarrhea · placebo — \"4\" (A, chars 238–239) vs \"13 (4.3)\" (B, chars 241–249): count 4 vs 13 (differ at 0 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[75/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-03-whitespace-label-table-units-row
+AssertionError: expected [ …(12) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-lbl-03-whitespace-label-table-units-row#0 conflict not reported: incidence:any:pt:nausea 12 vs 18.0 (dapralutide) — ae_rate_nausea",
++   "r2-lbl-03-whitespace-label-table-units-row#1 consistent not reported: incidence:any:pt:nausea 5 vs 4.6 (placebo) — ae_rate_nausea",
++   "r2-lbl-03-whitespace-label-table-units-row#2 consistent not reported: incidence:any:pt:diarrhea 9 vs 8.9 (dapralutide) — ae_rate_diarrhea",
++   "r2-lbl-03-whitespace-label-table-units-row#3 consistent not reported: incidence:any:pt:diarrhea 4 vs 4.3 (placebo) — ae_rate_diarrhea",
++   "r2-lbl-03-whitespace-label-table-units-row#4 consistent not reported: incidence:any:pt:vomiting 8 vs 7.5 (dapralutide) — ae_rate_vomiting",
++   "r2-lbl-03-whitespace-label-table-units-row#5 consistent not reported: incidence:any:pt:vomiting 1 vs 1.3 (placebo) — ae_rate_vomiting",
++   "unexpected conflict: incidence:any:pt:nausea · dapralutide 1.5 mg — \"12\" (A, chars 311–313) vs \"55 (18.0)\" (B, chars 225–234): count 12 vs 55 (differ at 0 dp).",
++   "unexpected conflict: incidence:any:pt:nausea · placebo — \"5\" (A, chars 342–343) vs \"14 (4.6)\" (B, chars 237–245): count 5 vs 14 (differ at 0 dp).",
++   "unexpected conflict: incidence:any:pt:diarrhea · dapralutide 1.5 mg — \"9\" (A, chars 378–379) vs \"27 (8.9)\" (B, chars 258–266): count 9 vs 27 (differ at 0 dp).",
++   "unexpected conflict: incidence:any:pt:diarrhea · placebo — \"4\" (A, chars 408–409) vs \"13 (4.3)\" (B, chars 269–277): count 4 vs 13 (differ at 0 dp).",
++   "unexpected conflict: incidence:any:pt:vomiting · dapralutide 1.5 mg — \"8\" (A, chars 444–445) vs \"23 (7.5)\" (B, chars 289–297): count 8 vs 23 (differ at 0 dp).",
++   "unexpected conflict: incidence:any:pt:vomiting · placebo — \"1\" (A, chars 474–475) vs \"4 (1.3)\" (B, chars 300–307): count 1 vs 4 (differ at 0 dp).",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[76/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-04-smpc-4-8-never-compared-with-csr
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-lbl-04-smpc-4-8-never-compared-with-csr#0 conflict not reported: incidence:any:pt:nausea 12.0 vs 18.0 (dapralutide) — ae_rate_nausea",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[77/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-05-smpc-4-8-adr-table-misleading-verdict
+AssertionError: expected [ …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-lbl-05-smpc-4-8-adr-table-misleading-verdict#0 conflict not reported: incidence:any:pt:nausea 12.0 vs 18.0 (dapralutide) — ae_rate_nausea",
++   "r2-lbl-05-smpc-4-8-adr-table-misleading-verdict#1 consistent not reported: incidence:any:pt:nausea 4.6 vs 4.6 (placebo) — ae_rate_nausea",
++   "r2-lbl-05-smpc-4-8-adr-table-misleading-verdict#2 consistent not reported: incidence:any:pt:diarrhea 8.9 vs 8.9 (dapralutide) — ae_rate_diarrhea, dapralutide 1.5 mg arm",
++   "r2-lbl-05-smpc-4-8-adr-table-misleading-verdict#3 consistent not reported: incidence:any:pt:diarrhea 4.3 vs 4.3 (placebo) — ae_rate_diarrhea, placebo arm",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[78/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-06-uspi-6-1-most-common-ar-list
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-lbl-06-uspi-6-1-most-common-ar-list#0 conflict not reported: incidence:any:pt:nausea 12 vs 18.0 (dapralutide) — ae_rate_nausea",
++   "r2-lbl-06-uspi-6-1-most-common-ar-list#1: docA 9 reported with [arm_unidentified], expected one of [no_counterpart]",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[79/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-07-smpc-4-8-most-commonly-reported-list
+AssertionError: expected [ …(3) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-lbl-07-smpc-4-8-most-commonly-reported-list#0 conflict not reported: incidence:any:pt:nausea 12.0 vs 18.0 (dapralutide) — ae_rate_nausea",
++   "r2-lbl-07-smpc-4-8-most-commonly-reported-list#1 consistent not reported: incidence:any:pt:diarrhea 8.9 vs 8.9 (dapralutide) — ae_rate_diarrhea",
++   "r2-lbl-07-smpc-4-8-most-commonly-reported-list#2 consistent not reported: incidence:any:pt:vomiting 7.5 vs 7.5 (dapralutide) — ae_rate_vomiting",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[80/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-08-exposure-sentence-exposed-to-dose
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-lbl-08-exposure-sentence-exposed-to-dose#1 conflict not reported: n:treated 621 vs 612 (dapralutide) — treated_n_arm",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[81/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-09-exposure-sentence-per-arm-read-as-total
+AssertionError: expected [ …(3) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-lbl-09-exposure-sentence-per-arm-read-as-total#0 conflict not reported: n:treated 621 vs 612 (dapralutide) — treated_n_arm",
++   "r2-lbl-09-exposure-sentence-per-arm-read-as-total#1 consistent not reported: n:treated 607 vs 607 (placebo) — treated_n_arm",
++   "r2-lbl-09-exposure-sentence-per-arm-read-as-total#2: docB 1219 reported with [multiple_values_same_frame], expected one of [no_counterpart, per_arm_vs_total]",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[82/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-10-exposure-duration-subset-sentence
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-lbl-10-exposure-duration-subset-sentence#1 conflict not reported: exposure:duration 541 vs 514 — exposed_ge_24_weeks_n",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[83/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-11-all-grades-vs-any-grade
+AssertionError: expected [ …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-lbl-11-all-grades-vs-any-grade#0 conflict not reported: incidence:any:pt:fatigue 31 vs 44.2 — ae_rate_fatigue_all_grades",
++   "r2-lbl-11-all-grades-vs-any-grade#1 consistent not reported: incidence:any:pt:fatigue 6 vs 5.8 — ae_rate_fatigue_grade3_4",
++   "r2-lbl-11-all-grades-vs-any-grade#2 consistent not reported: incidence:any:pt:nausea 31 vs 30.8 — ae_rate_nausea_all_grades",
++   "r2-lbl-11-all-grades-vs-any-grade#3 consistent not reported: incidence:any:pt:nausea 2 vs 1.9 — ae_rate_nausea_grade3_4",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[84/85]⎯
+
+ FAIL  server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-12-section14-responder-row-unit-in-stub
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "r2-lbl-12-section14-responder-row-unit-in-stub#0 conflict not reported: responder:hba1c 49 vs 51.6 — responder_rate_hba1c_lt7",
++   "r2-lbl-12-section14-responder-row-unit-in-stub#1 consistent not reported: responder:hba1c 21 vs 20.9 — responder_rate_hba1c_lt7",
++ ]
+
+ ❯ server/services/truth-engine/__tests__/clinical-claims.test.ts:248:30
+    246|   it.each(CORPUS.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    247|     const r = run(c);
+    248|     expect(problemsOf(c, r)).toEqual([]);
+       |                              ^
+    249|     // Deterministic: the same input gives the same report.
+    250|     expect(run(c)).toEqual(r);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[85/85]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  85 failed | 382 passed (467)
+   Start at  23:10:41
+   Duration  4.81s (transform 367ms, setup 62ms, import 385ms, tests 4.04s, environment 0ms)
+

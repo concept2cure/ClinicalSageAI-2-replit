@@ -51,6 +51,18 @@ export interface VaultVersionLifecycle {
   approval: VaultSignOff | null;
 }
 
+/**
+ * Who may sign here, as the server decides it (GET …/versions `signing`; QA
+ * 2026-10-08, walk 2, j3). `canSign` is the reader's own authority from the
+ * check the sign route applies; null when it could not be read, and then the
+ * server decides. `signers` are the members whose role carries signing
+ * authority; null when the list could not be read.
+ */
+export interface VaultSigningPosture {
+  canSign: boolean | null;
+  signers: Array<{ id: number; name: string }> | null;
+}
+
 /** The stages at which a version is its document's approved one. */
 export const APPROVED_STAGES = ['approved', 'placed', 'packaged', 'submitted'];
 
@@ -190,16 +202,30 @@ function stepOf(lifecycle: VaultVersionLifecycle | null | undefined): Step {
   return lifecycle?.review ? 'approve' : 'review';
 }
 
+/**
+ * The server's answer, never the client's role list: a manager was offered
+ * "Sign review", gave a reason and a password, and was refused only then (403,
+ * §11.10(g); QA 2026-10-08, walk 2, j3). Unknown (null) is left to the server.
+ */
+function signingRefusal(step: 'review' | 'approve', signing: VaultSigningPosture | null | undefined): string | null {
+  if (signing?.canSign !== false) return null;
+  return `Your role does not carry signing authority (21 CFR Part 11 §11.10(g)), so you cannot ${step === 'review' ? 'sign the review of' : 'approve'} this version.`;
+}
+
 /** The next step for this version, and why this user cannot take it (if so). */
 function nextStep(
   lifecycle: VaultVersionLifecycle | null | undefined,
   me: Actor,
   uploaderId: number | null | undefined,
+  signing?: VaultSigningPosture | null,
 ): { step: Step; blocked: string | null } {
   const step = stepOf(lifecycle);
   if (!step) return { step, blocked: null };
   if (me.cannotAuthor) return { step, blocked: 'Your role does not send, review or approve documents. An organization admin can change your role.' };
-  if (step === 'send' || me.id === null) return { step, blocked: null };
+  if (step === 'send') return { step, blocked: null };
+  const noAuthority = signingRefusal(step, signing);
+  if (noAuthority) return { step, blocked: noAuthority };
+  if (me.id === null) return { step, blocked: null };
   const act = step === 'review' ? 'reviews' : 'approves';
   if (uploaderId === me.id) return { step, blocked: `You uploaded this version, so a different person ${act} it.` };
   if (lifecycle?.creatorId === me.id) return { step, blocked: `You sent this version for review, so a different person ${act} it.` };
@@ -207,6 +233,31 @@ function nextStep(
     return { step, blocked: 'You signed the review, so a different person approves it.' };
   }
   return { step, blocked: null };
+}
+
+/**
+ * Who may take a review or approval step, by name: the members with signing
+ * authority, less the people separation of duties excludes for this version.
+ * Null when the list was not read; then nothing is claimed.
+ */
+export function whoMaySign(
+  step: Step,
+  lifecycle: VaultVersionLifecycle | null | undefined,
+  uploaderId: number | null | undefined,
+  signing: VaultSigningPosture | null | undefined,
+): string | null {
+  if ((step !== 'review' && step !== 'approve') || !signing || signing.signers === null) return null;
+  const excluded = new Set<number>(
+    [uploaderId, lifecycle?.creatorId, step === 'approve' ? lifecycle?.review?.signerId : null]
+      .filter((v): v is number => typeof v === 'number'),
+  );
+  const names = signing.signers.filter((s) => !excluded.has(s.id)).map((s) => s.name);
+  const act = step === 'review' ? 'sign the review' : 'approve it';
+  if (names.length === 0) {
+    return `No one in this organization can ${act}: no member other than ${step === 'review' ? 'its uploader and the person who sent it' : 'its uploader, sender and reviewer'} holds a role with signing authority. An organization admin can give a member a role that carries it.`;
+  }
+  const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} or ${names[names.length - 1]}`;
+  return `Not assigned to one person. Can ${act}: ${list}.`;
 }
 
 function useActor(): { actor: Actor; authUser: AuthUser | null } {
@@ -310,6 +361,8 @@ interface ActionProps {
   onChanged: () => void;
   /** The project, so the dialogs can read the document's open review annotations. */
   projectId?: string;
+  /** Who may sign here, as the server read it with the versions. */
+  signing?: VaultSigningPosture | null;
 }
 
 /** The open annotations on every version of the document, as a sentence; null when they could not be read. */
@@ -331,8 +384,9 @@ export function VersionLifecycleActions(p: ActionProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [annotationNote, setAnnotationNote] = useState<string | undefined>(undefined);
-  const { step, blocked } = nextStep(p.lifecycle, actor, p.uploaderId);
+  const { step, blocked } = nextStep(p.lifecycle, actor, p.uploaderId, p.signing);
   if (!step) return null;
+  const who = whoMaySign(step, p.lifecycle, p.uploaderId, p.signing);
 
   /* What is open is read when the dialog is asked for, and said in it. It
      never blocks signing: no decision makes open annotations a refusal (FD13). */
@@ -382,6 +436,7 @@ export function VersionLifecycleActions(p: ActionProps) {
         />
       )}
       {blocked ? <span className="vd-ver-m">{blocked}</span> : null}
+      {who ? <span className="vd-ver-m" data-testid="vault-who-may-sign">{who}</span> : null}
       {error ? <span className="vd-dr-err" role="alert">{error}</span> : null}
       {signing && (
         <SignOffDialog signing={signing} p={p} authUser={authUser} annotationNote={annotationNote} onClose={() => setSigning(null)} />

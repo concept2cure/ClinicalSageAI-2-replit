@@ -1,3 +1,15 @@
+-- 2026-10-15 AMENDED IN PLACE (D2, Data Room catalog S5c;
+-- docs/evidence/D2-DATA-ROOM-CATALOG/2026-10-15-s5c-figure-lineage/): a fifth
+-- provenance kind, `vault_document` — a figure in a drafted section that the
+-- cited Vault document states, recorded with usage 'derived', reference_id =
+-- the vault.documents id, payload_sha256 = that version's content hash and no
+-- asserter (the source supports the figure; nobody asserted it). Both CHECKs
+-- below gain it, and their exact-definition guards are the new definitions.
+-- Amended here, not appended, because this file is the last definer of both
+-- (CLAUDE.md Rule 1, corollary 1): a later file replacing them would be
+-- undone by this one on every deploy. 20260907 still skips, since the live
+-- definition contains 'accepted_machine_draft'. Only widened: every row valid
+-- before is valid after.
 -- 2026-09-25 AMENDED IN PLACE (W2 / D1, docs/evidence/W2/2026-09-25-replay-rebuilds-nothing/):
 -- document_span_lineage_kind_valid, document_span_lineage_kind_shape are now replaced only when the live definition
 -- (pg_get_constraintdef) differs from the one below. Unconditional, every deploy dropped
@@ -80,7 +92,7 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint
      WHERE conrelid = to_regclass('public.document_span_lineage') AND conname = 'document_span_lineage_kind_valid'
-       AND pg_get_constraintdef(oid) = $def$CHECK ((provenance_kind = ANY (ARRAY['cre_evidence_source'::text, 'author_assertion'::text, 'accepted_machine_draft'::text, 'machine_draft'::text])))$def$
+       AND pg_get_constraintdef(oid) = $def$CHECK ((provenance_kind = ANY (ARRAY['cre_evidence_source'::text, 'author_assertion'::text, 'accepted_machine_draft'::text, 'machine_draft'::text, 'vault_document'::text])))$def$
   ) THEN
     ALTER TABLE public.document_span_lineage
       DROP CONSTRAINT IF EXISTS document_span_lineage_kind_valid;
@@ -90,7 +102,8 @@ BEGIN
           'cre_evidence_source',
           'author_assertion',
           'accepted_machine_draft',
-          'machine_draft'
+          'machine_draft',
+          'vault_document'
         ));
   END IF;
 
@@ -99,7 +112,7 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint
      WHERE conrelid = to_regclass('public.document_span_lineage') AND conname = 'document_span_lineage_kind_shape'
-       AND pg_get_constraintdef(oid) = $def$CHECK ((((provenance_kind = 'cre_evidence_source'::text) AND (reference_id IS NOT NULL) AND (payload_sha256 IS NOT NULL)) OR ((provenance_kind = 'author_assertion'::text) AND (asserted_by IS NOT NULL) AND (asserted_at IS NOT NULL)) OR ((provenance_kind = 'accepted_machine_draft'::text) AND (machine_author_id IS NOT NULL) AND (asserted_by IS NOT NULL) AND (asserted_at IS NOT NULL)) OR ((provenance_kind = 'machine_draft'::text) AND (machine_author_id IS NOT NULL) AND (asserted_by IS NULL) AND (asserted_at IS NULL))))$def$
+       AND pg_get_constraintdef(oid) = $def$CHECK ((((provenance_kind = 'cre_evidence_source'::text) AND (reference_id IS NOT NULL) AND (payload_sha256 IS NOT NULL)) OR ((provenance_kind = 'author_assertion'::text) AND (asserted_by IS NOT NULL) AND (asserted_at IS NOT NULL)) OR ((provenance_kind = 'accepted_machine_draft'::text) AND (machine_author_id IS NOT NULL) AND (asserted_by IS NOT NULL) AND (asserted_at IS NOT NULL)) OR ((provenance_kind = 'machine_draft'::text) AND (machine_author_id IS NOT NULL) AND (asserted_by IS NULL) AND (asserted_at IS NULL)) OR ((provenance_kind = 'vault_document'::text) AND (reference_id IS NOT NULL) AND (payload_sha256 IS NOT NULL) AND (asserted_by IS NULL))))$def$
   ) THEN
     ALTER TABLE public.document_span_lineage
       DROP CONSTRAINT IF EXISTS document_span_lineage_kind_shape;
@@ -124,6 +137,12 @@ BEGIN
             AND machine_author_id IS NOT NULL
             AND asserted_by IS NULL
             AND asserted_at IS NULL)
+          OR
+          -- A figure the cited Vault version states (2026-10-15, see the header).
+          (provenance_kind = 'vault_document'
+            AND reference_id IS NOT NULL
+            AND payload_sha256 IS NOT NULL
+            AND asserted_by IS NULL)
         );
   END IF;
 END

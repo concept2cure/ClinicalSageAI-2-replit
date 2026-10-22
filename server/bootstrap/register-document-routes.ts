@@ -53,7 +53,6 @@ export interface DocumentBootstrapContext {
   pool: Pool;
   isStaticDataEnabled: (flag: string) => boolean;
   mountStaticBusinessDataGuard: (path: string, routeName: string, requiredFlag: string) => void;
-  DEMO_ROUTES_ENABLED: boolean;
   EXPERIMENTAL_ROUTES_ENABLED: boolean;
 }
 
@@ -62,7 +61,6 @@ export async function registerDocumentRoutes({
   pool,
   isStaticDataEnabled,
   mountStaticBusinessDataGuard,
-  DEMO_ROUTES_ENABLED,
   EXPERIMENTAL_ROUTES_ENABLED,
 }: DocumentBootstrapContext) {
   // ── GCC Platform (eCTD, Vault, Signing, Site Intel, Labeling) ──
@@ -191,22 +189,17 @@ export async function registerDocumentRoutes({
     console.error('❌ Failed to mount Submission Release Signing routes:', error);
   }
 
-  // ── HAQ Response Manager (FDA IR, EMA D120, PMDA, HC question tracking) ──
+  // ── HAQ Response Manager: retired 2026-10-18 ──
   //
-  // Mounted unconditionally: every endpoint reads/writes org-scoped persisted
-  // data through the projectMemoryEntries feature store (createFeatureStore
-  // 'haq_question') — there is no static/mock business data here. The former
-  // ENABLE_HAQ_MANAGER_STATIC_DATA guard was mis-applied (it 503'd a governed
-  // persisted feature); per docs/ga-static-data-route-hardening.md the flag is
-  // removed once a route is backed by a governed persisted data source, which
-  // this is. Auth + tenant-scope live inside the router.
-  try {
-    const haqModule = await import('../routes/haq-manager');
-    app.use('/api/haq-manager', haqModule.default);
-    console.log('✅ HAQ Response Manager routes mounted (question tracking, AI drafting, review workflow)');
-  } catch (error) {
-    console.error('❌ Failed to mount HAQ Manager routes:', error);
-  }
+  // /api/haq-manager kept agency questions in a second store
+  // (project_memory_entries, category 'haq_question') whose "approve" set a
+  // status with no signature, reason or role check (P-32), and no endpoint
+  // could record a letter. The questions on an agency letter are now
+  // agency_communication_questions on the project's inbox, each response
+  // approved by a Part 11 signature: routes/c2c/agency-responses.ts, on the
+  // Communication Center router, used by Communication and Respond
+  // (client/.../surfaces/AgencyResponses.tsx). Proven by
+  // tests/db/agency-response-signed-approval.dbtest.ts.
 
   // The zero-caller IND helper routes formerly mounted here (/api/ind-autodraft,
   // /api/ind-pdf, /api/ind-sections) were deleted in the biotech-lifecycle
@@ -304,16 +297,14 @@ export async function registerDocumentRoutes({
     console.error('❌ Failed to mount programs gateway routes:', error);
   }
 
-  // ── Demo Seed routes ──
-  if (DEMO_ROUTES_ENABLED) {
-    try {
-      const seedDemoModule = await import('../routes/seed-demo.js');
-      app.use('/api/demo', seedDemoModule.default);
-      console.log('✅ Demo seeding API routes mounted successfully');
-    } catch (error) {
-      console.error('❌ Failed to mount Demo seed routes:', error);
-    }
-  }
+  // ── Demo Seed routes: REMOVED 2026-10-14 ──
+  // POST /api/demo/seed (server/routes/seed-demo.ts) wrote invented projects,
+  // workflow stages, tasks, medical devices and SharePoint file records — with
+  // random file sizes — into hard-coded organization 6 / workspace 26 whenever
+  // ENABLE_DEMO_ROUTES was set outside production. Demo and staging
+  // deployments are ones people sign into; no example record belongs in one
+  // (the owner's rule: no fake data anywhere). No client called it. The route,
+  // its test and the flag that mounted it are deleted.
 
   // Collaboration Center: removed. `GET /api/collaboration/team` and
   // `/activities` selected `.from(users).limit(N)` with NO organization filter,

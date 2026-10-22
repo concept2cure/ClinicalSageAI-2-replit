@@ -1,0 +1,8 @@
+{
+  "server/services/ana/__tests__/draft-source-operation-cancellation.test.ts": "939e4a342aef50792673f6417b9737bcc0389e01faa8bf6e81c79b0eaa32f5c9",
+  "docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/loader/README.md": "103dca32c333d4a51752ed01464d80549cf6ba080203a7a0a281650b80a1658d",
+  "docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/loader/baseline-command.json": "0e82eaabe2f9627d9280e6e369e07c3771522ac8c8d416eb1c659764a3ce1b67",
+  "docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/loader/baseline-red.txt": "c011782e364ef785bcff9719fddb1e31d6c0af29ab39d4d2a02e9f718c796b4c",
+  "docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/loader/fixture-import-diagnostic-baseline-command.json": "b8435945da7aa4d8a89ceb24fc8e0cc344909ce8b850553777c9a28cff385b37",
+  "docs/evidence/D2-SOURCE-CHECKPOINT-CANCELLATION/2026-10-20/loader/fixture-import-diagnostic-baseline-red.txt": "cab97ea62c1c77260f529b4b317e455c57f492bc1b9359b72d62075131438226"
+}

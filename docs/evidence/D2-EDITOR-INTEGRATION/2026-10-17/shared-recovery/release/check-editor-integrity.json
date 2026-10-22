@@ -1,0 +1,7 @@
+{
+  "command": "npm run --silent ci:check-editor-integrity",
+  "publicationBase": "d6a33d3a4a09e08a28d9a3b6047e30fe3a2532d1",
+  "exitCode": 0,
+  "rawSha256": "d7d07f752527d948ffc1c58b3d45ccdc0416ff0a878ec1cb161756ce516e9f36",
+  "rawOutput": "Found 30 @tiptap/* packages in package.json\nFound 14 unique @tiptap/* imports in client/src/\n\n\u2713 All @tiptap/* imports are satisfied by package.json\n\n  @tiptap/core (52 file(s))\n  @tiptap/extension-collaboration (1 file(s))\n  @tiptap/extension-document (1 file(s))\n  @tiptap/extension-highlight (1 file(s))\n  @tiptap/extension-paragraph (1 file(s))\n  @tiptap/extension-placeholder (1 file(s))\n  @tiptap/extension-subscript (2 file(s))\n  @tiptap/extension-superscript (2 file(s))\n  @tiptap/extension-table (11 file(s))\n  @tiptap/extension-text (1 file(s))\n  @tiptap/extension-text-align (1 file(s))\n  @tiptap/pm (14 file(s))\n  @tiptap/react (1 file(s))\n  @tiptap/starter-kit (17 file(s))\n\nEditor extension integrity check PASSED.\n"
+}

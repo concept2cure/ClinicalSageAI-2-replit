@@ -1,0 +1,310 @@
+{
+  "branch": "concept2cure-v2",
+  "publishedBase": "10f4e4557df94e3f5bf0f79d9a07c38465e770d2",
+  "capturedAtUtc": "2026-10-14T06:40:43.255470+00:00",
+  "qualification": "Actual PGlite SQL and signed HTTP fixture proof. No native RLS, independent-connection lock-through-COMMIT, source bytes, storage/provider performance, scientific validity or regulatory acceptance qualification. New log copies normalize trailing whitespace/EOF only; untouched exact raw logs remain in /tmp and have separate byte/digest records. Older sealed evidence is unchanged.",
+  "phases": [
+    {
+      "name": "initial fixture red",
+      "files": 2,
+      "failed": 15,
+      "passed": 1,
+      "deselected": 60,
+      "durationSeconds": 13.58,
+      "qualification": "Five service cases failed on the missing canonical created_by column; these are fixture errors, not admission proof."
+    },
+    {
+      "name": "canonical prospective red",
+      "files": 2,
+      "failed": 14,
+      "passed": 2,
+      "deselected": 60,
+      "durationSeconds": 12.94,
+      "qualification": "All 14 failures are success where admission refusal was expected; no fixture SQL errors. Production was unchanged."
+    },
+    {
+      "name": "first full regression green",
+      "files": 9,
+      "passed": 165,
+      "skipped": 0,
+      "durationSeconds": 73.15,
+      "casesByFile": [
+        {
+          "path": "server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts",
+          "passed": 33
+        },
+        {
+          "path": "server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts",
+          "passed": 43
+        },
+        {
+          "path": "server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts",
+          "passed": 13
+        },
+        {
+          "path": "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+          "passed": 6
+        },
+        {
+          "path": "server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts",
+          "passed": 13
+        },
+        {
+          "path": "server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts",
+          "passed": 17
+        },
+        {
+          "path": "server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts",
+          "passed": 5
+        },
+        {
+          "path": "server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts",
+          "passed": 28
+        },
+        {
+          "path": "server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts",
+          "passed": 7
+        }
+      ]
+    },
+    {
+      "name": "final source usage with late revocation green",
+      "files": 1,
+      "passed": 45,
+      "skipped": 0,
+      "durationSeconds": 9.55
+    },
+    {
+      "name": "final owned fixture lint",
+      "files": 5,
+      "errors": 0,
+      "warnings": 0
+    }
+  ],
+  "compositeCoverage": {
+    "distinctCases": 167,
+    "files": 9,
+    "unchangedOtherSuiteCases": 122,
+    "finalSourceUsageCases": 45,
+    "qualification": "165 first-phase cases included 43 source-usage cases. The final 45-case source-usage run replaces those 43 and adds two reservation-time revocation cases; this is a composite census, not one 167-case command."
+  },
+  "changesFromCanonicalRed": [
+    "server/services/clinical-regulatory-evidence/source-usage.service.ts",
+    "server/routes/authoring.router.ts",
+    "server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts"
+  ],
+  "sources": [
+    {
+      "path": "server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts",
+      "bytes": 38514,
+      "digestAlgorithm": "sha256",
+      "digest": "4d625b81dabc0e1e1584a61a4bd561fff76cb2689c76e079c3e7a985eb280352"
+    },
+    {
+      "path": "server/routes/authoring.router.ts",
+      "bytes": 402665,
+      "digestAlgorithm": "sha256",
+      "digest": "18ed2f0b503a27cae5596665a5bfde7b0f8166041809d37c2849d7421bb148d1"
+    },
+    {
+      "path": "server/routes/c2c/project-route-access.ts",
+      "bytes": 6142,
+      "digestAlgorithm": "sha256",
+      "digest": "5589334258db59d3989e0d342aacb77671fee3b2bf99cc50301f5bc123c5913c"
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts",
+      "bytes": 15011,
+      "digestAlgorithm": "sha256",
+      "digest": "bc8544a570c80a7c4f5c4163e72570fd68ade06b62dfdee2a2d798c037fd1169"
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+      "bytes": 12990,
+      "digestAlgorithm": "sha256",
+      "digest": "75478d687f131f55cfef43b21a1e5519dd44e6047e3b1caf7ddc679133b97826"
+    },
+    {
+      "path": "server/services/c2c/current-program-access.ts",
+      "bytes": 8717,
+      "digestAlgorithm": "sha256",
+      "digest": "5e6fb22586636a2c02d68581cfc4365aff3ffbbfce931258e90f85cd4b916bee"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/source-read-fixture.ts",
+      "bytes": 2629,
+      "digestAlgorithm": "sha256",
+      "digest": "75cec0068ff8b3dbe1e61d148c75b15f2c0cb4bf349ba81ba25eca3c96158456"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts",
+      "bytes": 41780,
+      "digestAlgorithm": "sha256",
+      "digest": "5ef486376b78e82323008d33da4e44f8006fe83a22ae0d4835ab4c4b47844e13"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts",
+      "bytes": 14801,
+      "digestAlgorithm": "sha256",
+      "digest": "ff0b2c3b9d0d707342225e19b4de758a728d98c53fcdb091dc2d02c2048374ce"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/citation-ends.ts",
+      "bytes": 2391,
+      "digestAlgorithm": "sha256",
+      "digest": "a357df6c659f4f8a2c8f578aac5ddf655b51386d9558fc6abbc10542fdad1987"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/citation-source-read.ts",
+      "bytes": 3008,
+      "digestAlgorithm": "sha256",
+      "digest": "fce0d49e5dade1d7602c719dbc3033c170529f97972aefac00ebcee19f386530"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/evidence-spine.service.ts",
+      "bytes": 47546,
+      "digestAlgorithm": "sha256",
+      "digest": "1c686369ba36ed8ad91e3f50caf0b901a6cd46d39b05ae3444f4a372e05fdd3a"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/source-read-access.ts",
+      "bytes": 8596,
+      "digestAlgorithm": "sha256",
+      "digest": "418e129df67cfa775a20a6f04464b82f460512026fcea1018dca54861953ab5c"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/source-usage.service.ts",
+      "bytes": 36741,
+      "digestAlgorithm": "sha256",
+      "digest": "6aa98459acb5223208f692d9da708c38cd5038858f18f76e4f7ec2e99ce25fc9"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts",
+      "bytes": 6963,
+      "digestAlgorithm": "sha256",
+      "digest": "57ea90e4126828bcafecf411c2be3ac5145a4c4681e665a3acaacdafd4251395"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts",
+      "bytes": 7238,
+      "digestAlgorithm": "sha256",
+      "digest": "73bc5eb818bba1b250266bb91dc0bac4801c59bb9c7d5f0127b0d167e95bb635"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/disposition-fixture.ts",
+      "bytes": 14339,
+      "digestAlgorithm": "sha256",
+      "digest": "9b0f0a1bae6a9ef0255a6c429378161932a4b352f8d91e9001780aa01d82c131"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts",
+      "bytes": 17233,
+      "digestAlgorithm": "sha256",
+      "digest": "c0d96cdb4360300ff71e612902a023413fd5d1f78abcbdb9b9d7f8a0b775db60"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/lineage-stores-fixture.ts",
+      "bytes": 1137,
+      "digestAlgorithm": "sha256",
+      "digest": "a7a774b05517b5861f28dcd8c7a221f2a95a86e58378ebc6c52cc8c2485b8a7e"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts",
+      "bytes": 12235,
+      "digestAlgorithm": "sha256",
+      "digest": "e6c0f3139020dac16b1cabfe99b14f315ae748bf0fd436db62461f8d5ccf4598"
+    },
+    {
+      "path": "server/services/document-data-disposition/eligibility.ts",
+      "bytes": 9446,
+      "digestAlgorithm": "sha256",
+      "digest": "b4d93194a0cdac02966b2b9bf0ca73e4dcf96fa6218ed259ecf4e469ce37db6f"
+    },
+    {
+      "path": "server/services/document-data-disposition/program-lock.ts",
+      "bytes": 556,
+      "digestAlgorithm": "sha256",
+      "digest": "04862a0cc8becdb04267ec08975fdfc5063ca39001fa07ef2d440fdec6071a42"
+    },
+    {
+      "path": "vitest.config.ts",
+      "bytes": 3983,
+      "digestAlgorithm": "sha256",
+      "digest": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/citation-writer-admission/red/initial-fixture-column.txt",
+      "bytes": 39129,
+      "digestAlgorithm": "sha256",
+      "digest": "a0539861779aeecffd26453ef39f155c23f583281e6d8b30667d6a399ab35cc7",
+      "raw": {
+        "path": "/tmp/project-vault-citation-writer-prospective-red.txt",
+        "bytes": 39130,
+        "digestAlgorithm": "sha256",
+        "digest": "ab08b0725280bc1178ca88284296ed70b4d6e978e6895c855a3859ab6b1873ef"
+      }
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/citation-writer-admission/red/canonical-current-production.txt",
+      "bytes": 42057,
+      "digestAlgorithm": "sha256",
+      "digest": "26137df6214e6d0d3cecdd5f9a135a9f5b3fbb5e390aefa0a8d26fd1cb775947",
+      "raw": {
+        "path": "/tmp/project-vault-citation-writer-prospective-canonical-red.txt",
+        "bytes": 42058,
+        "digestAlgorithm": "sha256",
+        "digest": "fe4752e5b3a38ce820eb1e5faa4856b036699cad0b4455e41ac517c6bc45833c"
+      }
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/citation-writer-admission/green/nine-suite-first-phase-165.txt",
+      "bytes": 85081,
+      "digestAlgorithm": "sha256",
+      "digest": "f072a9fcf91dc28b7ca8933134e77e374ef90daea2b8cd2d327a18ab7a25fcbe",
+      "raw": {
+        "path": "/tmp/project-vault-citation-writer-regressions-first-green.txt",
+        "bytes": 85082,
+        "digestAlgorithm": "sha256",
+        "digest": "8b367b8a0daee8824d2b14863eac19679eee7006d1c7bda7122b59e91563dba4"
+      }
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/citation-writer-admission/green/source-usage-final-45.txt",
+      "bytes": 10261,
+      "digestAlgorithm": "sha256",
+      "digest": "d9aae7e0c0c139adc719ce4830b4b0042d742573d6c0dcc0b883c476941bfb7c",
+      "raw": {
+        "path": "/tmp/project-vault-citation-writer-reservation-source-usage-final.txt",
+        "bytes": 10262,
+        "digestAlgorithm": "sha256",
+        "digest": "11c8f5e457e59ab2e1485b07e81384dfe4ec6fc780882c919a7695fcdabcf769"
+      }
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/citation-writer-admission/green/five-fixture-lint.txt",
+      "bytes": 0,
+      "digestAlgorithm": "sha256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw": {
+        "path": "/tmp/project-vault-citation-writer-fixtures-final-lint.txt",
+        "bytes": 0,
+        "digestAlgorithm": "sha256",
+        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/citation-writer-admission/red/source-pins.json",
+      "bytes": 2696,
+      "digestAlgorithm": "sha256",
+      "digest": "5414a41a5a417df76376a2ac01decf824c1c1f8bb1568501d36c34826d027704",
+      "raw": {
+        "path": "/tmp/project-vault-citation-writer-red-source-pins.json",
+        "bytes": 2696,
+        "digestAlgorithm": "sha256",
+        "digest": "5414a41a5a417df76376a2ac01decf824c1c1f8bb1568501d36c34826d027704"
+      }
+    }
+  ]
+}

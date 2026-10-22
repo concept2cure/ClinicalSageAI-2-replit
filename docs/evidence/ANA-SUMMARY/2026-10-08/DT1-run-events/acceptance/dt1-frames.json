@@ -1,0 +1,479 @@
+[
+  {
+    "at": "2026-10-08T17:10:16.070Z",
+    "type": "run_started",
+    "runId": "run_8ab6b0f9-2f37-46a9-87e6-fadfe16454a6"
+  },
+  {
+    "at": "2026-10-08T17:10:16.070Z",
+    "type": "status",
+    "phase": "orchestrating",
+    "message": "Planning response…"
+  },
+  {
+    "at": "2026-10-08T17:10:16.118Z",
+    "type": "status",
+    "phase": "loading_context",
+    "message": "Loading project memory…"
+  },
+  {
+    "at": "2026-10-08T17:10:17.655Z",
+    "type": "context_used",
+    "uploads": [],
+    "unresolvedUploads": 0,
+    "memory": [],
+    "memoryStatus": "unavailable"
+  },
+  {
+    "at": "2026-10-08T17:10:17.655Z",
+    "type": "status",
+    "phase": "generating",
+    "message": "Generating response…"
+  },
+  {
+    "at": "2026-10-08T17:10:17.655Z",
+    "type": "thread_id",
+    "thread_id": "ana-ri_1791479416068_wabq4iqx9"
+  },
+  {
+    "at": "2026-10-08T17:10:17.655Z",
+    "type": "orchestration",
+    "orchestration": {
+      "detectedIntent": {
+        "lens": "auto",
+        "confidence": 0,
+        "signals": []
+      },
+      "detectedSubmissionType": null,
+      "detectedDocumentTemplate": null,
+      "appliedRole": "general",
+      "activeWorkstream": {
+        "stream": "evidence_development",
+        "phase": "triage",
+        "objective": "s5 tasks: find the stability reports and summarise the shelf-life claims.",
+        "currentFocus": "Evidence chain and support gaps",
+        "blockers": [],
+        "nextStep": "Build an evidence inventory, mark critical gaps, and decide what can be defended now versus what needs new support.",
+        "collaborationMode": "advise"
+      },
+      "workstreamHandoff": null,
+      "suggestedActions": [
+        "Create Evidence Memo",
+        "Create Risk Memo",
+        "Rewrite Section",
+        "Create Strategy Note"
+      ]
+    }
+  },
+  {
+    "at": "2026-10-08T17:10:18.534Z",
+    "type": "text",
+    "content": "I will "
+  },
+  {
+    "at": "2026-10-08T17:10:18.659Z",
+    "type": "text",
+    "content": "take this "
+  },
+  {
+    "at": "2026-10-08T17:10:18.784Z",
+    "type": "text",
+    "content": "in four "
+  },
+  {
+    "at": "2026-10-08T17:10:18.910Z",
+    "type": "text",
+    "content": "parts."
+  },
+  {
+    "at": "2026-10-08T17:10:19.074Z",
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Running 1 step…"
+  },
+  {
+    "at": "2026-10-08T17:10:19.074Z",
+    "type": "step",
+    "round": 1,
+    "tools": [
+      "update_plan"
+    ],
+    "plan": [
+      {
+        "tool": "update_plan",
+        "label": "Updating the plan"
+      }
+    ]
+  },
+  {
+    "at": "2026-10-08T17:10:19.074Z",
+    "type": "tool_use",
+    "round": 1,
+    "name": "update_plan",
+    "toolUseId": "toolu_fake_4",
+    "label": "Updating the plan",
+    "source": "plan",
+    "preview": null,
+    "facts": [],
+    "input": {
+      "steps": [
+        {
+          "title": "Find the stability reports",
+          "status": "in_progress"
+        },
+        {
+          "title": "List the project documents",
+          "status": "pending"
+        },
+        {
+          "title": "Read the two archived reports",
+          "status": "pending"
+        },
+        {
+          "title": "Summarise the shelf-life claims",
+          "status": "pending"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-10-08T17:10:19.074Z",
+    "type": "timeline",
+    "event": {
+      "seq": 1,
+      "at": "2026-10-08T17:10:19.053Z",
+      "kind": "note",
+      "round": 1,
+      "text": "I will take this in four parts."
+    }
+  },
+  {
+    "at": "2026-10-08T17:10:19.074Z",
+    "type": "timeline",
+    "event": {
+      "seq": 2,
+      "at": "2026-10-08T17:10:19.053Z",
+      "kind": "step",
+      "round": 1,
+      "step": "s1",
+      "task": null,
+      "phase": "announced",
+      "label": "Updating the plan",
+      "source": "plan",
+      "preview": null
+    }
+  },
+  {
+    "at": "2026-10-08T17:10:19.074Z",
+    "type": "timeline",
+    "event": {
+      "seq": 3,
+      "at": "2026-10-08T17:10:19.053Z",
+      "kind": "step",
+      "round": 1,
+      "step": "s1",
+      "task": null,
+      "phase": "finished",
+      "label": "Updated the plan",
+      "source": "plan",
+      "preview": null,
+      "status": "success",
+      "heldBack": false,
+      "usedModel": false,
+      "ms": 0,
+      "facts": [
+        {
+          "name": "Took",
+          "value": "0 ms"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-10-08T17:10:19.074Z",
+    "type": "tool_result",
+    "round": 1,
+    "name": "update_plan",
+    "toolUseId": "toolu_fake_4",
+    "label": "Updated the plan",
+    "source": "plan",
+    "preview": null,
+    "facts": [
+      {
+        "name": "Took",
+        "value": "0 ms"
+      }
+    ],
+    "usedModel": false,
+    "status": "success",
+    "latencyMs": 0,
+    "result": "{\"ok\":true,\"steps\":[{\"title\":\"Find the stability reports\",\"status\":\"in_progress\"},{\"title\":\"List the project documents\",\"status\":\"pending\"},{\"title\":\"Read the two archived reports\",\"status\":\"pending\"},{\"title\":\"Summarise the shelf-life claims\",\"status\":\"pending\"}],\"total\":4,\"completed\":0,\"note\":\"Plan recorded as shown to the person. Keep it current as steps start and finish.\"}"
+  },
+  {
+    "at": "2026-10-08T17:10:19.074Z",
+    "type": "plan",
+    "round": 1,
+    "steps": [
+      {
+        "title": "Find the stability reports",
+        "status": "in_progress"
+      },
+      {
+        "title": "List the project documents",
+        "status": "pending"
+      },
+      {
+        "title": "Read the two archived reports",
+        "status": "pending"
+      },
+      {
+        "title": "Summarise the shelf-life claims",
+        "status": "pending"
+      }
+    ]
+  },
+  {
+    "at": "2026-10-08T17:10:19.074Z",
+    "type": "timeline",
+    "event": {
+      "seq": 4,
+      "at": "2026-10-08T17:10:19.057Z",
+      "kind": "task",
+      "round": 1,
+      "task": "t1",
+      "change": "added",
+      "title": "Find the stability reports"
+    }
+  },
+  {
+    "at": "2026-10-08T17:10:19.074Z",
+    "type": "timeline",
+    "event": {
+      "seq": 5,
+      "at": "2026-10-08T17:10:19.057Z",
+      "kind": "task",
+      "round": 1,
+      "task": "t2",
+      "change": "added",
+      "title": "List the project documents"
+    }
+  },
+  {
+    "at": "2026-10-08T17:10:19.074Z",
+    "type": "timeline",
+    "event": {
+      "seq": 6,
+      "at": "2026-10-08T17:10:19.057Z",
+      "kind": "task",
+      "round": 1,
+      "task": "t3",
+      "change": "added",
+      "title": "Read the two archived reports"
+    }
+  },
+  {
+    "at": "2026-10-08T17:10:19.074Z",
+    "type": "timeline",
+    "event": {
+      "seq": 7,
+      "at": "2026-10-08T17:10:19.057Z",
+      "kind": "task",
+      "round": 1,
+      "task": "t4",
+      "change": "added",
+      "title": "Summarise the shelf-life claims"
+    }
+  },
+  {
+    "at": "2026-10-08T17:10:19.074Z",
+    "type": "timeline",
+    "event": {
+      "seq": 8,
+      "at": "2026-10-08T17:10:19.057Z",
+      "kind": "task",
+      "round": 1,
+      "task": "t1",
+      "change": "started",
+      "title": "Find the stability reports"
+    }
+  },
+  {
+    "at": "2026-10-08T17:10:19.074Z",
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+  },
+  {
+    "at": "2026-10-08T17:10:19.919Z",
+    "type": "text",
+    "content": "\n\nFAKE: the "
+  },
+  {
+    "at": "2026-10-08T17:10:20.043Z",
+    "type": "text",
+    "content": "tool search_project_documents "
+  },
+  {
+    "at": "2026-10-08T17:10:20.168Z",
+    "type": "text",
+    "content": "was not "
+  },
+  {
+    "at": "2026-10-08T17:10:20.296Z",
+    "type": "text",
+    "content": "offered on "
+  },
+  {
+    "at": "2026-10-08T17:10:20.421Z",
+    "type": "text",
+    "content": "this turn."
+  },
+  {
+    "at": "2026-10-08T17:10:20.557Z",
+    "type": "timeline",
+    "event": {
+      "seq": 9,
+      "at": "2026-10-08T17:10:20.556Z",
+      "kind": "end",
+      "round": 1,
+      "outcome": "answered",
+      "stoppedReason": null
+    }
+  },
+  {
+    "at": "2026-10-08T17:10:20.557Z",
+    "type": "done",
+    "model": "claude-sonnet-5",
+    "provider": "anthropic",
+    "modelTier": "standard",
+    "effortUsed": "balanced",
+    "usage": {
+      "inputTokens": 100,
+      "outputTokens": 20,
+      "totalTokens": 120,
+      "estimatedCostUsd": 0.0004
+    },
+    "latencyMs": 1369,
+    "response": "I will take this in four parts.\n\nFAKE: the tool search_project_documents was not offered on this turn.",
+    "telemetry": {
+      "phases": {
+        "orchestrationMs": 53,
+        "contextMs": 1507,
+        "gatewayMs": 1386,
+        "firstTokenMs": 2471
+      },
+      "memory": {
+        "layerOutcomes": {
+          "workingMemory": "empty",
+          "clientMemory": "error",
+          "projectMemory": "skipped"
+        },
+        "workingMemoryMode": "none",
+        "semanticSearchMs": 1525
+      }
+    },
+    "stoppedReason": "no_more_tools",
+    "rounds": 1,
+    "runPolicy": "auto"
+  },
+  {
+    "at": "2026-10-08T17:10:20.627Z",
+    "type": "grounding_strip",
+    "evidence": {
+      "attempted": false,
+      "validated": false,
+      "source_count": 0,
+      "source_types": [],
+      "grounded_claim_count": 0,
+      "weak_or_ungrounded_claim_count": 0,
+      "missing_support_count": 0,
+      "provider": "ana-ri"
+    },
+    "check": {
+      "engine": "answer-check/2",
+      "basis": "sources",
+      "claims": 0,
+      "checked": 0,
+      "found": 0,
+      "notFound": [],
+      "unchecked": [],
+      "fromPerson": [],
+      "fromInput": [],
+      "sources": [
+        "tool:update_plan"
+      ],
+      "unreadable": [],
+      "verdicts": []
+    },
+    "trust_summary": "No specific claims to check against this turn's sources."
+  },
+  {
+    "at": "2026-10-08T17:10:20.627Z",
+    "type": "post_done",
+    "cleanedResponse": "I will take this in four parts.\n\nFAKE: the tool search_project_documents was not offered on this turn.",
+    "enrichmentMeta": {
+      "sourcesAttempted": 0,
+      "sourcesSucceeded": [],
+      "sourcesFailed": [],
+      "triggerType": "none",
+      "hasProjectContext": false
+    },
+    "evidence": {
+      "attempted": false,
+      "validated": false,
+      "source_count": 0,
+      "source_types": [],
+      "grounded_claim_count": 0,
+      "weak_or_ungrounded_claim_count": 0,
+      "missing_support_count": 0,
+      "provider": "ana-ri"
+    },
+    "check": {
+      "engine": "answer-check/2",
+      "basis": "sources",
+      "claims": 0,
+      "checked": 0,
+      "found": 0,
+      "notFound": [],
+      "unchecked": [],
+      "fromPerson": [],
+      "fromInput": [],
+      "sources": [
+        "tool:update_plan"
+      ],
+      "unreadable": [],
+      "verdicts": []
+    },
+    "evidenceDiscipline": {
+      "compliant": true,
+      "labels": 0,
+      "hasOverclaims": false
+    },
+    "structure": {
+      "valid": false,
+      "score": 0,
+      "maxScore": 6
+    },
+    "queueMeta": {
+      "thread_id": "ana-ri_1791479416068_wabq4iqx9",
+      "handoff_ready": true,
+      "turn_status": "completed",
+      "can_process_next": true,
+      "blocked_reason": null
+    },
+    "turnRecord": {
+      "status": "recorded",
+      "id": "8582cbca-fd1f-481e-bcc3-410eabfc4bb4",
+      "sha256": "35d94d1ceeed1368656adc02542372ecdc8dcf8db82b0eee063f9e315d3d5e62",
+      "servedBy": [
+        {
+          "provider": "anthropic",
+          "model": "claude-sonnet-5",
+          "qualified": false,
+          "approvedForHighRisk": false,
+          "pq": "pending"
+        }
+      ]
+    }
+  }
+]

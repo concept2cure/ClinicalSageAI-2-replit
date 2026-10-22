@@ -77,6 +77,66 @@ describe('readVerifiedVaultBytes reads from the recorded store', () => {
     expect(r.ok ? null : r.error).toBe('STORED_FILE_MISSING');
   });
 
+  it.each([
+    ['same-length changed bytes', Buffer.alloc(BYTES.length, 120)],
+    ['changed byte length', Buffer.from('altered')],
+  ])('reports %s as altered and returns no bytes', async (_label, changed) => {
+    const filename = path.resolve(process.cwd(), 'storage', 'vault', String(ORG), 'prog-recorded', 'versions', versionId, 'protocol.pdf');
+    await fs.writeFile(filename, changed);
+    try {
+      const result = await readVerifiedVaultBytes(source(ORG, 'local'), sha(BYTES), 'doc-local');
+      expect(result).toEqual({
+        ok: false, status: 409, error: 'CONTENT_HASH_MISMATCH',
+        message: expect.any(String),
+      });
+      expect(result).not.toHaveProperty('bytes');
+    } finally {
+      await fs.writeFile(filename, BYTES);
+    }
+  });
+
+  it('does not reveal a corrupt version to another organization', async () => {
+    const filename = path.resolve(process.cwd(), 'storage', 'vault', String(ORG), 'prog-recorded', 'versions', versionId, 'protocol.pdf');
+    await fs.writeFile(filename, Buffer.from('altered'));
+    try {
+      const result = await readVerifiedVaultBytes(source(OTHER_ORG, 'local'), sha(BYTES), 'doc-local');
+      expect(result).toEqual({
+        ok: false, status: 409, error: 'STORED_FILE_MISSING',
+        message: expect.any(String),
+      });
+      expect(result).not.toHaveProperty('bytes');
+    } finally {
+      await fs.writeFile(filename, BYTES);
+    }
+  });
+
+  it('still compares provider-verified bytes against the document hash', async () => {
+    const result = await readVerifiedVaultBytes(source(ORG, 'local'), '0'.repeat(64), 'doc-local');
+    expect(result).toEqual({
+      ok: false, status: 409, error: 'CONTENT_HASH_MISMATCH',
+      message: expect.any(String),
+    });
+    expect(result).not.toHaveProperty('bytes');
+  });
+
+  it('reports invalid recorded provider identity as unreadable and returns no bytes', async () => {
+    const filename = path.resolve(process.cwd(), 'storage', 'vault', String(ORG), 'prog-recorded', 'versions', versionId, '_meta.json');
+    const original = await fs.readFile(filename, 'utf8');
+    const invalid = JSON.parse(original);
+    delete invalid.sha256;
+    await fs.writeFile(filename, JSON.stringify(invalid));
+    try {
+      const result = await readVerifiedVaultBytes(source(ORG, 'local'), sha(BYTES), 'doc-local');
+      expect(result).toEqual({
+        ok: false, status: 409, error: 'STORED_FILE_UNREADABLE',
+        message: expect.any(String),
+      });
+      expect(result).not.toHaveProperty('bytes');
+    } finally {
+      await fs.writeFile(filename, original);
+    }
+  });
+
   it('refuses a recorded store this server does not implement, without asking the configured one', async () => {
     const r = await readVerifiedVaultBytes(source(ORG, 'gcs'), sha(BYTES), 'doc-gcs');
     expect(r.ok).toBe(false);

@@ -1,0 +1,12 @@
+PASS  ci:tenant-isolation
+PASS  ci:tenant-isolation:no-regression
+PASS  ci:tenant-isolation-justifications
+PASS  ci:tenant-entry-points
+PASS  ci:tenant-blind-models
+PASS  ci:tenant-resolvers
+PASS  ci:tenant-column-types
+PASS  ci:drizzle-tenant-scope
+PASS  ci:ai-tenant-binding
+PASS  ci:session-scoped-rls-bypass
+PASS  ci:rls-allowlist-sync
+PASS  ci:db-test-isolation

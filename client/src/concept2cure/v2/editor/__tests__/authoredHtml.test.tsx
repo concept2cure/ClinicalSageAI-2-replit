@@ -55,7 +55,7 @@ afterEach(() => {
 describe('AuthoredHtml', () => {
   it('renders sanitized prose and keeps a governed figure, resolved to displayable bytes', async () => {
     apiRequest.mockImplementation(okImage);
-    // Unique reference per test — the resolver caches per src for the module's lifetime.
+    // The mounted view owns its figure bytes and resolves current access.
     const ref = '/api/authoring/images/file_101_ok';
     const { container } = render(
       <AuthoredHtml

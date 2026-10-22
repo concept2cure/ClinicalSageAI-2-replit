@@ -184,6 +184,27 @@ export async function bridgeAuthoringToCanonical(
   }
 }
 
+/** A section as the assembler reads it. */
+export type AssemblableSection = { code?: unknown; title?: unknown; content?: unknown };
+
+/**
+ * Sections, in the order given, as one document body: "## code — title", a
+ * blank line, the section's text; sections separated by a blank line. The one
+ * assembler for an authored document's text — the filing copy
+ * (services/coauthor/coauthor-snapshot.ts) and the filing's own section for a
+ * document filed under one outline node (services/c2c/commit-section-to-filing.ts,
+ * 2026-10-08) both use it, and the placement dialog mirrors it.
+ */
+export function assembleAuthoredSections(sections: ReadonlyArray<AssemblableSection>): string {
+  return sections
+    .map((s) => {
+      const heading = [s.code, s.title].filter(Boolean).join(' — ');
+      return heading ? `## ${heading}\n\n${s.content ?? ''}` : String(s.content ?? '');
+    })
+    .join('\n\n')
+    .trim();
+}
+
 /** Production deps: load the working doc from Postgres, commit via the real spine. */
 export function defaultAuthoringBridgeDeps(): AuthoringBridgeDeps {
   return {
@@ -218,13 +239,7 @@ export function defaultAuthoringBridgeDeps(): AuthoringBridgeDeps {
           ORDER BY order_index, created_at, id`,
         [docId, organizationId],
       );
-      const content = (sections.rows as Array<{ code?: unknown; title?: unknown; content?: unknown }>)
-        .map((s) => {
-          const heading = [s.code, s.title].filter(Boolean).join(' — ');
-          return heading ? `## ${heading}\n\n${s.content ?? ''}` : String(s.content ?? '');
-        })
-        .join('\n\n')
-        .trim();
+      const content = assembleAuthoredSections(sections.rows as AssemblableSection[]);
       return {
         title: String(doc.rows[0].title ?? 'Untitled document'),
         content,

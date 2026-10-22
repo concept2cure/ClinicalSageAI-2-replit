@@ -59,6 +59,8 @@ interface ServerChange {
   links?: ServerLink[];
   /** The database's overdue verdict against CURRENT_DATE (changeControl.service). */
   implementation_overdue?: boolean;
+  /** CHANGE_TRANSITIONS for this row's status, sent by the register read. */
+  next_states?: unknown;
 }
 interface ServerLink {
   id: number;
@@ -100,6 +102,9 @@ function adaptChange(r: ServerChange): ChangeControl {
        string passed `r.links ?` and threw on `.map`. */
     links: Array.isArray(r.links) ? r.links.map(adaptLink) : undefined,
     implementationOverdue: typeof r.implementation_overdue === 'boolean' ? r.implementation_overdue : undefined,
+    nextStates: Array.isArray(r.next_states) && r.next_states.every((v) => typeof v === 'string')
+      ? (r.next_states as ChangeState[])
+      : undefined,
   };
 }
 

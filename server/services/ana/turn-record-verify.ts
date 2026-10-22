@@ -10,6 +10,8 @@
  */
 
 import { hashPayload } from '../audit/chain.js';
+import { qualifyServedModels, type QualifiedServedModel } from '../ai-governance/approved-models.js';
+import { servedModelsOf } from './turn-record-models.js';
 import {
   sha256Hex,
   TURN_RECORD_AUDIT_ACTION,
@@ -34,6 +36,8 @@ export function textRefsOf(body: TurnRecordBody): TextRef[] {
   }
   for (const s of body.steps) refs.push(s.input, s.result, s.sentToModel);
   for (const d of body.outputs.drafts) refs.push(d.content);
+  // From /4: each note's text is a reference like any other (turn-record.ts addEvent).
+  for (const e of body.timeline ?? []) if (e.kind === 'note') refs.push(e.text);
   return refs.filter((r): r is TextRef => Boolean(r));
 }
 
@@ -139,34 +143,87 @@ export interface StoredTurnRecord {
 
 const iso = (v: unknown): string => (v instanceof Date ? v.toISOString() : String(v));
 
+/** Optional transport budgets for a governed consumer, not a truncated export. */
+export interface TurnRecordReadLimits {
+  maxRecordBytes: number;
+  maxAuditBytes: number;
+  maxTextBytes: number;
+  maxTotalTextBytes: number;
+  maxTextRefs: number;
+}
+export class TurnRecordReadError extends Error {
+  constructor(public code: 'LIMIT_EXCEEDED' | 'INVALID_RECORD') {
+    super(code === 'LIMIT_EXCEEDED' ? 'Turn record exceeds the bounded read limits.' : 'Turn record references are invalid.');
+    this.name = 'TurnRecordReadError';
+  }
+}
+function boundedRefs(body: TurnRecordBody | null, limits: TurnRecordReadLimits): TextRef[] {
+  if (!body) throw new TurnRecordReadError('INVALID_RECORD');
+  let refs: TextRef[];
+  try { refs = textRefsOf(body); } catch { throw new TurnRecordReadError('INVALID_RECORD'); }
+  if (refs.length > limits.maxTextRefs) throw new TurnRecordReadError('LIMIT_EXCEEDED');
+  if (refs.some(r => typeof r.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(r.sha256) ||
+      !Number.isSafeInteger(r.chars) || r.chars < 0)) throw new TurnRecordReadError('INVALID_RECORD');
+  return refs;
+}
+function validReadLimits(limits: TurnRecordReadLimits): boolean {
+  const keys: Array<keyof TurnRecordReadLimits> = ['maxRecordBytes', 'maxAuditBytes', 'maxTextBytes', 'maxTotalTextBytes', 'maxTextRefs'];
+  return keys.every(key => Number.isInteger(limits[key]) && limits[key] > 0 && limits[key] <= 2_147_483_647);
+}
+function refsForRead(body: TurnRecordBody | null, limits?: TurnRecordReadLimits): TextRef[] {
+  if (limits) return boundedRefs(body, limits);
+  return body ? textRefsOf(body) : [];
+}
+function checkReferenceLengths(refs: TextRef[], texts: Map<string, string>, limits?: TurnRecordReadLimits): void {
+  if (limits && refs.some(r => texts.has(r.sha256) && texts.get(r.sha256)!.length !== r.chars)) {
+    throw new TurnRecordReadError('INVALID_RECORD');
+  }
+}
+
 /**
  * Read a record, its chain row and its texts, within one tenant. Null when the
  * tenant has no record with that id. Reads only — the verdict is
  * verifyTurnRecord's, over exactly what this returns.
  */
-export async function loadTurnRecord(q: Queryable, orgId: number, id: string): Promise<StoredTurnRecord | null> {
+export async function loadTurnRecord(
+  q: Queryable, orgId: number, id: string, limits?: TurnRecordReadLimits,
+): Promise<StoredTurnRecord | null> {
+  if (limits !== undefined && (!limits || !validReadLimits(limits))) {
+    throw new TurnRecordReadError('LIMIT_EXCEEDED');
+  }
   const rec = (
     await q.query(
       `SELECT id, organization_id, thread_id, run_id, actor_user_id, outcome, started_at, ended_at,
-              schema_version, record_text, record_sha256, created_at
+              schema_version, record_sha256, created_at, octet_length(record_text) AS record_bytes,
+              CASE WHEN $3::integer IS NULL OR octet_length(record_text) <= $3 THEN record_text END AS record_text
          FROM ana_turn_records
         WHERE organization_id = $1 AND id = $2`,
-      [orgId, id],
+      [orgId, id, limits?.maxRecordBytes ?? null],
     )
   ).rows[0];
   if (!rec) return null;
+  if (limits && Number(rec.record_bytes) > limits.maxRecordBytes) throw new TurnRecordReadError('LIMIT_EXCEEDED');
   const chainRow = (
     await q.query(
-      `SELECT id, chain_seq, sha256_chain, payload_hash, hmac_seal, occurred_at, new_values
+      `SELECT id, chain_seq, sha256_chain, payload_hash, hmac_seal, occurred_at,
+              octet_length(new_values::text) AS audit_bytes,
+              CASE WHEN $4::integer IS NULL OR octet_length(new_values::text) <= $4 THEN new_values END AS new_values
          FROM audit_logs
         WHERE tenant_id = $1 AND action = $2 AND record_id = $3
         ORDER BY occurred_at ASC
         LIMIT 1`,
-      [orgId, TURN_RECORD_AUDIT_ACTION, id],
+      [orgId, TURN_RECORD_AUDIT_ACTION, id, limits?.maxAuditBytes ?? null],
     )
   ).rows[0];
+  if (limits && chainRow && Number(chainRow.audit_bytes) > limits.maxAuditBytes) throw new TurnRecordReadError('LIMIT_EXCEEDED');
   const body = parseBody(rec.record_text);
-  const texts = await loadTexts(q, orgId, body ? [...new Set(textRefsOf(body).map((r) => r.sha256))] : []);
+  const refs = refsForRead(body, limits);
+  const texts = await loadTexts(q, orgId, [...new Set(refs.map(r => r.sha256))], limits);
+  checkReferenceLengths(refs, texts, limits);
+  return storedRecordOf(rec, chainRow, texts);
+}
+
+function storedRecordOf(rec: Record<string, any>, chainRow: Record<string, any> | undefined, texts: Map<string, string>): StoredTurnRecord {
   return {
     id: rec.id,
     organizationId: Number(rec.organization_id),
@@ -186,15 +243,33 @@ export async function loadTurnRecord(q: Queryable, orgId: number, id: string): P
 }
 
 /** The texts a record references, by hash, within one tenant. */
-async function loadTexts(q: Queryable, orgId: number, refs: string[]): Promise<Map<string, string>> {
+async function loadTexts(q: Queryable, orgId: number, refs: string[], limits?: TurnRecordReadLimits): Promise<Map<string, string>> {
   const texts = new Map<string, string>();
   if (refs.length === 0) return texts;
+  if (limits) return loadBoundedTexts(q, orgId, refs, limits);
   const blobs = await q.query(
     `SELECT sha256, text FROM ana_record_blobs WHERE organization_id = $1 AND sha256 = ANY($2::text[])`,
     [orgId, refs],
   );
   for (const b of blobs.rows) texts.set(b.sha256, b.text);
   return texts;
+}
+
+/** Evaluate the entire blob budget in one SQL snapshot, before transporting
+ * text. CASE masks all blob text if any per-blob or aggregate limit fails. */
+async function loadBoundedTexts(q: Queryable, orgId: number, refs: string[], limits: TurnRecordReadLimits): Promise<Map<string, string>> {
+  const { rows } = await q.query(`WITH selected AS MATERIALIZED (
+      SELECT sha256, text, octet_length(text) AS bytes FROM ana_record_blobs
+      WHERE organization_id=$1 AND sha256=ANY($2::text[])
+    ), budget AS (SELECT coalesce(sum(bytes),0) AS total_bytes, coalesce(max(bytes),0) AS largest FROM selected)
+    SELECT s.sha256, s.bytes, b.total_bytes, b.largest,
+      CASE WHEN b.total_bytes <= $3 AND b.largest <= $4 THEN s.text END AS text
+    FROM selected s CROSS JOIN budget b`, [orgId, refs, limits.maxTotalTextBytes, limits.maxTextBytes]);
+  if (rows.some(r => Number(r.total_bytes) > limits.maxTotalTextBytes || Number(r.largest) > limits.maxTextBytes)) {
+    throw new TurnRecordReadError('LIMIT_EXCEEDED');
+  }
+  if (rows.some(r => typeof r.text !== 'string')) throw new TurnRecordReadError('INVALID_RECORD');
+  return new Map(rows.map(r => [r.sha256, r.text]));
 }
 
 function chainOf(row: Record<string, any>): NonNullable<StoredTurnRecord['chain']> {
@@ -221,21 +296,63 @@ export function verifyStoredTurnRecord(r: StoredTurnRecord): TurnRecordVerdict {
   });
 }
 
-/** A tenant's records, newest first, optionally one thread's or one person's. */
-export async function listTurnRecords(
-  q: Queryable,
-  orgId: number,
-  filter: { threadId?: string | null; runId?: string | null; actorUserId?: number | null; limit?: number },
-): Promise<Array<{
+/** One row of a record listing. */
+export interface ListedTurnRecord {
   id: string;
   threadId: string | null;
+  /**
+   * The assistant message the turn saved, by its chat_messages id: how a
+   * reloaded conversation attaches each record to its message (S4). Null for a
+   * turn that saved none (a failed one).
+   */
+  assistantMessageId: number | null;
   actorUserId: number | null;
   outcome: TurnOutcome;
   startedAt: string;
   endedAt: string;
   recordSha256: string;
-}>> {
-  const params: unknown[] = [orgId];
+  /**
+   * Every model that served the turn, with RULE 2's verdict on each, read from
+   * the stored record text when it still matches its hash (SEC-A-7, door 3).
+   * Only when the caller asks (`withServedBy`); absent when the text does not
+   * match or does not parse, never guessed.
+   *
+   * This is what a RELOADED conversation needs to decide "Open as document"
+   * and the editor's insert: the live stream hands the same list to the turn
+   * it serves (`turn-record.ts`), and without it a reopened draft was refused
+   * as "this page has no record of which model wrote this answer". It is the
+   * browser's offer, not the authority: the hash check here does not walk the
+   * audit chain, so a record forged consistently with its hash still lists, and
+   * every server door re-reads the record in full (`servedModelsForTurn`,
+   * `verifyMachineText`) before it credits model prose.
+   *
+   * Only for a turn that finished (`answered`): a stopped or failed turn's saved
+   * text is not a whole answer, and its record says nothing that should open a
+   * door. And only for a record of at most 256 KiB, so a 500-row listing cannot
+   * pull 500 large bodies; a larger one lists without it, and the gate refuses.
+   */
+  servedBy?: QualifiedServedModel[];
+}
+
+/** RULE 2's verdict on each model a stored record names, when its text still matches its hash. */
+function listedServedBy(recordText: unknown, recordSha256: string): QualifiedServedModel[] | undefined {
+  if (typeof recordText !== 'string' || sha256Hex(recordText) !== recordSha256) return undefined;
+  const body = parseBody(recordText);
+  return body ? qualifyServedModels(servedModelsOf(body.model)) : undefined;
+}
+
+/** A tenant's records, newest first, optionally one thread's or one person's. */
+export async function listTurnRecords(
+  q: Queryable,
+  orgId: number,
+  filter: {
+    threadId?: string | null; runId?: string | null; actorUserId?: number | null; limit?: number;
+    /** Read each record's text to say which models served it (the record listing route). */
+    withServedBy?: boolean;
+  },
+): Promise<ListedTurnRecord[]> {
+  // $2 is whether to read each record's text (bound, never spliced into the SQL).
+  const params: unknown[] = [orgId, filter.withServedBy === true];
   const where = ['organization_id = $1'];
   if (filter.threadId) {
     params.push(filter.threadId);
@@ -251,7 +368,9 @@ export async function listTurnRecords(
   }
   params.push(Math.min(Math.max(Math.trunc(filter.limit ?? 100), 1), 500));
   const { rows } = await q.query(
-    `SELECT id, thread_id, actor_user_id, outcome, started_at, ended_at, record_sha256
+    `SELECT id, thread_id, assistant_message_id, actor_user_id, outcome, started_at, ended_at, record_sha256,
+            CASE WHEN $2::boolean AND outcome = 'answered' AND octet_length(record_text) <= 262144
+                 THEN record_text END AS record_text
        FROM ana_turn_records
       WHERE ${where.join(' AND ')}
       ORDER BY started_at DESC
@@ -261,10 +380,14 @@ export async function listTurnRecords(
   return rows.map((r) => ({
     id: r.id,
     threadId: r.thread_id ?? null,
+    assistantMessageId: r.assistant_message_id == null ? null : Number(r.assistant_message_id),
     actorUserId: r.actor_user_id == null ? null : Number(r.actor_user_id),
     outcome: r.outcome,
     startedAt: iso(r.started_at),
     endedAt: iso(r.ended_at),
     recordSha256: r.record_sha256,
+    ...(filter.withServedBy ? withServed(listedServedBy(r.record_text, r.record_sha256)) : {}),
   }));
 }
+
+const withServed = (servedBy: QualifiedServedModel[] | undefined) => (servedBy ? { servedBy } : {});

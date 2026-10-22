@@ -26,6 +26,16 @@
  *   - no submission is matched to the project by name (P-20 follow-up): one
  *     with no project recorded is not gated here, and the readiness panel
  *     says how many such submissions there are and how one is anchored.
+ *
+ * FILING_SPINE.md F9 (2026-10-08) generalised the two panels into one list:
+ * one row per market (submission), each with its own verdict from the same
+ * endpoint (ProjectMarkets.tsx, useProgramMarkets). These tests are
+ * re-pointed onto the rows; what they hold the page to is unchanged — the
+ * verdict is the server's, a cleared verdict says what was not assessed, an
+ * unanswered one is never cleared, and a submission is never matched to the
+ * project by name. The two panels cannot contradict each other any more,
+ * because there is one. The market-by-market cases are in
+ * projectMarkets.test.tsx.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -69,6 +79,8 @@ type Opts = {
   /** The organization's list, which discovery reads; defaults to `subs`. */
   orgSubs?: unknown[];
   program?: Record<string, unknown>;
+  /** The scoped read's meta.notOffered (the server's count). */
+  notOffered?: number;
 };
 function serve(opts: Opts = {}) {
   let subsFailures = opts.failSubs ?? 0;
@@ -78,7 +90,7 @@ function serve(opts: Opts = {}) {
     if (url === `/api/c2c/projects/${PID}`) return ok(opts.program ?? PROGRAM);
     if (url === SCOPED) {
       if (subsFailures > 0) { subsFailures -= 1; throw fail(); }
-      return ok({ data: opts.subs ?? [SUB], meta: { notOffered: 4 } });
+      return ok({ data: opts.subs ?? [SUB], meta: { notOffered: opts.notOffered ?? 4 } });
     }
     if (url === '/api/submissions') return ok(opts.orgSubs ?? opts.subs ?? [SUB]);
     if (url === `/api/submissions/${SUB.id}/sequences`) return ok({ data: opts.sequences ?? [{ id: 905, sequenceNumber: '0001' }] });
@@ -97,6 +109,12 @@ function openSubmit() {
   });
 }
 const urls = () => apiRequest.mock.calls.map((c) => String(c[1]));
+/** The market row of the project's submission, once its verdict is read. */
+async function verdictRow(): Promise<HTMLElement> {
+  const row = await screen.findByTestId('pj-submission');
+  await waitFor(() => expect(row.querySelector('[data-testid="pj-market-verdict"]')?.textContent).not.toBe('Checking…'));
+  return row;
+}
 
 beforeEach(() => {
   onNav.mockReset();
@@ -123,15 +141,15 @@ describe('Project home — the Submit stage lists the project’s submissions', 
   it('an empty project says so, which is not the same as a failure', async () => {
     serve({ subs: [] });
     await openSubmit();
-    expect(await screen.findByText('No submissions for this project yet')).toBeTruthy();
-    expect(screen.queryByText("Couldn't load this project's submissions")).toBeNull();
+    expect(await screen.findByText('No market for this project yet')).toBeTruthy();
+    expect(screen.queryByText("Couldn't load this project's markets")).toBeNull();
   });
 
   it('a failed read is a failure with a retry, and the retry reads again', async () => {
     serve({ failSubs: 1 });
     await openSubmit();
-    expect(await screen.findByText("Couldn't load this project's submissions")).toBeTruthy();
-    expect(screen.queryByText('No submissions for this project yet')).toBeNull();
+    expect(await screen.findByText("Couldn't load this project's markets")).toBeTruthy();
+    expect(screen.queryByText('No market for this project yet')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByTestId('pj-submission')).toBeTruthy();
   });
@@ -148,8 +166,8 @@ describe('Project home — the Submit stage shows the server’s dispatch verdic
   it('shows the server’s verdict, its blockers and its counts, from the readiness endpoint', async () => {
     serve();
     await openSubmit();
-    const verdict = await screen.findByTestId('pj-readiness-verdict');
-    expect(verdict.textContent).toContain('Dispatch blocked');
+    const verdict = await verdictRow();
+    expect(verdict.textContent).toContain('Dispatch blocked · 2 blockers');
     expect(verdict.textContent).toContain('2 open error-severity validation findings.');
     expect(verdict.textContent).toContain('No §11.70 release signature on this sequence.');
     expect(verdict.textContent).toContain('2 errors');
@@ -158,9 +176,8 @@ describe('Project home — the Submit stage shows the server’s dispatch verdic
     expect(verdict.textContent).toContain('Sequence 0001');
     expect(verdict.textContent).toContain('14 leaves');
     expect(urls()).toContain('/api/submissions/sequences/905/dispatch-readiness');
-    // Above the submissions, where a regulatory lead looks first.
-    const sections = Array.from(document.querySelectorAll('.pj-sec h2')).map((h) => h.textContent);
-    expect(sections.indexOf('Dispatch readiness')).toBeLessThan(sections.indexOf('Submissions'));
+    // On the submission's own row: the verdict and the list are one panel (F9).
+    expect(verdict.textContent).toContain('ONC-221 IND');
     fireEvent.click(screen.getByRole('button', { name: /Open readiness/ }));
     expect(onNav).toHaveBeenCalledWith('dispatch-readiness');
   });
@@ -168,9 +185,9 @@ describe('Project home — the Submit stage shows the server’s dispatch verdic
   it('a cleared verdict is the server’s, and says so in words', async () => {
     serve({ assessment: { ...ASSESSMENT, readiness: { errors: 0, warnings: 0, infos: 0, findings: [] }, gate: { cleared: true, blockers: [] } } });
     await openSubmit();
-    const verdict = await screen.findByTestId('pj-readiness-verdict');
+    const verdict = await verdictRow();
     expect(verdict.textContent).toContain('Cleared to dispatch');
-    expect(verdict.textContent).not.toContain('What must close');
+    expect(verdict.querySelector('.pj-mkt-blockers')).toBeNull();
   });
 
   it('a response with no gate is unanswered, never cleared', async () => {
@@ -178,7 +195,7 @@ describe('Project home — the Submit stage shows the server’s dispatch verdic
     delete noGate.gate;
     serve({ assessment: noGate });
     await openSubmit();
-    const verdict = await screen.findByTestId('pj-readiness-verdict');
+    const verdict = await verdictRow();
     expect(verdict.textContent).toContain('No verdict from the server');
     expect(verdict.textContent).toContain('The gate is unanswered, which is not the same as cleared.');
     expect(verdict.textContent).not.toContain('Cleared to dispatch');
@@ -187,15 +204,16 @@ describe('Project home — the Submit stage shows the server’s dispatch verdic
   it('no submission and no sequence are said in plain words', async () => {
     serve({ subs: [] });
     await openSubmit();
-    const panel = await screen.findByTestId('pj-readiness');
-    await waitFor(() => expect(panel.textContent).toContain('No submission for this project yet'));
-    expect(panel.textContent).toContain("The dispatch gate reads this project's IND submission, and none is recorded");
+    const panel = await screen.findByTestId('pj-markets');
+    await waitFor(() => expect(panel.textContent).toContain('No market for this project yet'));
+    expect(panel.textContent).toContain('A market is one submission: an application to one agency.');
     cleanup();
     serve({ sequences: [] });
     await openSubmit();
-    const again = await screen.findByTestId('pj-readiness');
-    await waitFor(() => expect(again.textContent).toContain('No sequence to gate yet'));
-    expect(again.textContent).toContain('Its submission "ONC-221 IND" has no eCTD sequence yet.');
+    const again = await verdictRow();
+    expect(again.textContent).toContain('ONC-221 IND');
+    expect(again.textContent).toContain('No sequence yet');
+    expect(again.textContent).not.toMatch(/Cleared|Dispatch blocked/);
   });
 });
 
@@ -209,26 +227,28 @@ const MAA = {
 const sectionText = (heading: string) =>
   Array.from(document.querySelectorAll('.pj-sec')).find((sec) => sec.querySelector('h2')?.textContent === heading)?.textContent ?? '';
 
-describe('Project home — the two Submit panels never contradict each other', () => {
-  it('an IND project whose only submission is an MAA is not told it has no submission', async () => {
+describe('Project home — the Submit tab never denies a submission the project has', () => {
+  it('an IND project whose only submission is an MAA shows the MAA as its market, with its own state', async () => {
     serve({ subs: [MAA] });
     await openSubmit();
-    expect((await screen.findByTestId('pj-submission')).textContent).toContain('ONC-221 EU MAA');
-    const panel = await screen.findByTestId('pj-readiness');
-    await waitFor(() => expect(panel.textContent).toContain('No IND submission for this project yet'));
-    expect(panel.textContent).not.toMatch(/No submission for this project/);
-    // It names the submission it does not gate, by type and title.
-    expect(panel.textContent).toContain('MAA "ONC-221 EU MAA"');
+    const row = await verdictRow();
+    expect(row.textContent).toContain('ONC-221 EU MAA');
+    expect(row.textContent).toContain('MAA · EU (EMA)');
+    // The MAA has no sequence: said on its row, never as the project having none.
+    expect(row.textContent).toContain('No sequence yet');
+    const panel = await screen.findByTestId('pj-markets');
+    expect(panel.textContent).not.toMatch(/No (market|submission) for this project/);
+    // No other submission's verdict is read for it.
     expect(urls().some((u) => u.endsWith('/dispatch-readiness'))).toBe(false);
   });
 
-  it('a CER project (no application type is CER) names its submissions instead of denying them', async () => {
+  it('a CER project (no application type is CER) lists its submissions as its markets', async () => {
     serve({ subs: [{ ...MAA, id: 63, title: 'Vorelinib CER', applicationType: 'cta' }], program: { ...PROGRAM, program_type: 'CER' } });
     await openSubmit();
-    const panel = await screen.findByTestId('pj-readiness');
-    await waitFor(() => expect(panel.textContent).toContain('No CER submission for this project yet'));
-    expect(panel.textContent).toContain('CTA "Vorelinib CER"');
-    expect(panel.textContent).not.toMatch(/No submission for this project/);
+    const row = await verdictRow();
+    expect(row.textContent).toContain('Vorelinib CER');
+    expect(row.textContent).toContain('CTA · EU (EMA)');
+    expect((await screen.findByTestId('pj-markets')).textContent).not.toMatch(/No (market|submission) for this project/);
   });
 
   /* P-20 follow-up (docs/LAUNCH_DEFINITION_OF_DONE.md): no screen matches a
@@ -237,13 +257,16 @@ describe('Project home — the two Submit panels never contradict each other', (
   it('a submission with no project recorded is not gated by name: no verdict, and the panels agree', async () => {
     // The scoped list (the server's anchor) is empty; the organization holds
     // a same-named IND with no project recorded.
-    serve({ subs: [], orgSubs: [{ ...SUB, programId: null }] });
+    // The server counts it among those the scope left out (meta.notOffered).
+    serve({ subs: [], orgSubs: [{ ...SUB, programId: null }], notOffered: 1 });
     await openSubmit();
-    await waitFor(() => expect(sectionText('Submissions')).toContain('No submissions for this project yet'));
-    expect(screen.queryByTestId('pj-readiness-verdict')).toBeNull();
+    await waitFor(() => expect(sectionText('Markets')).toContain('No market for this project yet'));
+    expect(screen.queryByTestId('pj-market-verdict')).toBeNull();
     expect(urls()).not.toContain('/api/submissions/sequences/905/dispatch-readiness');
-    expect(document.body.textContent).not.toMatch(/matched by name|matched to this one by name/);
-    expect(document.body.textContent).toMatch(/1 IND submission in this organisation has no program recorded/);
+    // The organisation's list is not read to find one by name.
+    expect(urls()).not.toContain('/api/submissions');
+    expect(sectionText('Markets')).toMatch(/1 submission in this organisation is not recorded to this project/);
+    expect(sectionText('Markets')).toContain('A submission is never matched to a project by name.');
   });
 });
 
@@ -275,9 +298,9 @@ describe('Project home — a cleared verdict carries what the server did not ass
       },
     });
     await openSubmit();
-    const verdict = await screen.findByTestId('pj-readiness-verdict');
-    expect(verdict.textContent).toContain('Cleared to dispatch');
-    const lines = screen.getAllByTestId('pj-readiness-not-assessed');
+    const verdict = await verdictRow();
+    expect(verdict.textContent).toContain('Cleared to dispatch · 1 gate not assessed');
+    const lines = screen.getAllByTestId('pj-market-not-assessed');
     expect(lines).toHaveLength(1);
     expect(lines[0].textContent).toContain('Agency validator report');
     expect(lines[0].textContent).toContain('not assessed');
@@ -287,7 +310,7 @@ describe('Project home — a cleared verdict carries what the server did not ass
   it('with no gate breakdown, says the external validator did not run', async () => {
     serve({ assessment: CLEARED });
     await openSubmit();
-    const verdict = await screen.findByTestId('pj-readiness-verdict');
+    const verdict = await verdictRow();
     expect(verdict.textContent).toContain('Cleared to dispatch');
     expect(verdict.textContent).toContain('External validator not run');
   });
@@ -295,8 +318,8 @@ describe('Project home — a cleared verdict carries what the server did not ass
   it('a cleared verdict whose validator ran says nothing it did not assess', async () => {
     serve({ assessment: { ...CLEARED, externalValidation: { configured: true, ran: true, errorCount: 0, cleared: true, blockers: [] } } });
     await openSubmit();
-    const verdict = await screen.findByTestId('pj-readiness-verdict');
+    const verdict = await verdictRow();
     expect(verdict.textContent).toContain('Cleared to dispatch');
-    expect(screen.queryByTestId('pj-readiness-not-assessed')).toBeNull();
+    expect(screen.queryByTestId('pj-market-not-assessed')).toBeNull();
   });
 });

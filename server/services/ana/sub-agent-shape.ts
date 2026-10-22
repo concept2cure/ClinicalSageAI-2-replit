@@ -25,6 +25,10 @@ export interface AgentStep {
   input: Record<string, unknown>;
   result: string;
   ok: boolean;
+  /** Server dispatch identity; absent on historical raw-only traces. */
+  toolUseId?: string;
+  /** Exact body staged by the host, not a provider-delivery receipt. */
+  modelContent?: string;
 }
 
 /** One child model call: what served it, and its approved-models standing (D10). */
@@ -70,7 +74,12 @@ function refusalCode(result: string): string | null {
 
 const labelOf = (s: AgentStep) => describeToolPlan([{ id: '', name: s.tool, input: s.input }])[0]?.label ?? s.tool;
 
-function statusNote(status: AgentStatus, budget: AgentBudget | null, heldExpired: boolean): string {
+function statusNote(status: AgentStatus, budget: AgentBudget | null, heldExpired: boolean, reported = true): string {
+  if (status === 'incomplete' && !reported) {
+    // Aborted mid-call at the hard limit: there is no report to use, and
+    // saying one "may be incomplete" would overstate it (review 2026-10-11).
+    return `Stopped at ${budget ? BUDGET_WORDS[budget] : 'a step it kept repeating'} before it reported anything. Nothing it found is available; do not start the same brief again.`;
+  }
   if (status === 'incomplete') {
     return (
       `Stopped at ${budget ? BUDGET_WORDS[budget] : 'a step it kept repeating'}; the report may be incomplete. ` +
@@ -103,7 +112,7 @@ export function shapeAgentResult(a: ShapeInput): string {
     .map(s => ({ s, code: refusalCode(s.result) }))
     .filter((x): x is { s: AgentStep; code: string } => x.code !== null)
     .map(({ s, code }) => ({ tool: s.tool, label: labelOf(s), code }));
-  const notes = [statusNote(a.status, a.budget, a.heldExpired)];
+  const notes = [statusNote(a.status, a.budget, a.heldExpired, a.reportText.trim().length > 0)];
   if (a.checks) notes.push('The verdict comes only from the checks; the agent\'s report is advisory.');
   if (notExecuted.length > 0) {
     notes.push(
@@ -115,6 +124,9 @@ export function shapeAgentResult(a: ShapeInput): string {
     agent: { runId: a.runId, role: a.brief.role, objective: a.brief.objective },
     status: a.status,
     stoppedReason: a.stoppedReason,
+    // Named, not only described in the note: a reader must be able to tell a
+    // pause nobody answered from a person's Stop (review 2026-10-11).
+    ...(a.heldExpired ? { endedBy: 'hold_expired' as const } : {}),
     ...(a.budget && a.status === 'incomplete' ? { budget: a.budget } : {}),
     ...(a.checks
       ? {
@@ -159,7 +171,10 @@ export type AgentFailureCode = 'MODEL_NOT_APPROVED' | 'MODEL_DECLINED' | 'RATE_O
  * D8: by code and name, never instanceof — route tests mock the gateway with
  * hand-listed classes. Zero model calls means it could not start.
  */
-export function classifyAgentFailure(err: unknown, modelCalls: number): { code: AgentFailureCode; message: string } {
+export function classifyAgentFailure(
+  err: unknown,
+  modelCalls: number,
+): { code: AgentFailureCode; message: string; started: boolean } {
   const e = (err ?? {}) as { code?: unknown; name?: unknown; message?: unknown };
   const detail = typeof e.message === 'string' ? e.message : String(err);
   const verb = modelCalls === 0 ? 'could not start' : 'could not finish';
@@ -178,14 +193,14 @@ export function classifyAgentFailure(err: unknown, modelCalls: number): { code: 
     code = 'ERROR';
     why = 'an error';
   }
-  return { code, message: `The agent ${verb}: ${why}. ${detail}` };
+  return { code, message: `The agent ${verb}: ${why}. ${detail}`, started: modelCalls > 0 };
 }
 
 /** The AGENT_FAILED result: a top-level string `error`, so the trace records it as a failed step. */
 export function agentFailure(
   runId: string,
   brief: AgentBrief,
-  failure: { code: AgentFailureCode; message: string },
+  failure: { code: AgentFailureCode; message: string; started?: boolean },
   models: readonly AgentModelRecord[],
   steps: readonly AgentStep[],
 ): string {
@@ -193,6 +208,9 @@ export function agentFailure(
     error: 'AGENT_FAILED',
     code: failure.code,
     message: failure.message,
+    // Whether any model call had been made: the difference between an agent
+    // that never ran and one that failed part-way (review 2026-10-11).
+    started: failure.started === true,
     agent: { runId, role: brief.role, objective: brief.objective },
     models,
     trace: { steps },

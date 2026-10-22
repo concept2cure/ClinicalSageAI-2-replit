@@ -1,3 +1,4 @@
+import { readOnlyAnswer } from '../../services/ana/read-only-turn.js';
 /**
  * Background post-processing for the AnA RI streaming turn.
  *
@@ -18,7 +19,7 @@ import type { Response } from 'express';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
 import type { UserRole } from '../../services/ana-ri/persona.js';
 import { buildAssistantMetadata, withTurnEnding, type ToolTraceEntry } from '../../services/ana/tool-trace.js';
-import type { AnaRunPolicy, HumanControlEvent, PolicyHold, TurnStoppedReason } from '../../services/ana/run-status.js';
+import { stoppedTurnReason, type AnaRunPolicy, type HumanControlEvent, type PolicyHold, type TurnStoppedReason } from '../../services/ana/run-status.js';
 import {
   checkEvidenceDiscipline,
   validateResponseStructure,
@@ -72,6 +73,7 @@ async function turnProjectId(
 const checkOf = (verification: { check: unknown } | null): unknown => (verification ? verification.check : null);
 
 export interface StreamPostProcessingContext {
+  readOnly?: boolean;
   res: Response;
   /** Raw model output for the turn (pre-cleaning). */
   fullContent: string;
@@ -301,14 +303,6 @@ export async function persistCollectedDrafts(args: {
   }
 }
 
-/**
- * Why a turn ended, as its saved answer says it: the person's Stop is
- * `cancelled` whatever the loop reported, unless the loop named a stop of its
- * own (a hold that ran out, the round limit) — that one says more.
- */
-function stoppedReasonOf(stopped: boolean | undefined, reason: TurnStoppedReason | undefined): TurnStoppedReason | undefined {
-  return stopped && (!reason || reason === 'no_more_tools') ? 'cancelled' : reason;
-}
 
 /**
  * Save the answer of a turn the person stopped, when the stop ended it before
@@ -317,8 +311,13 @@ function stoppedReasonOf(stopped: boolean | undefined, reason: TurnStoppedReason
  * and says it was stopped. Without it the conversation kept the question and
  * nothing after it, and a reload showed exactly that (QA 2026-10-08, j5).
  */
-export async function persistStoppedAnswer(threadId: string, streamed: string): Promise<number | null> {
-  const metadata = withTurnEnding(undefined, { stoppedReason: 'cancelled' }) as Record<string, unknown> | undefined;
+export async function persistStoppedAnswer(
+  threadId: string,
+  streamed: string,
+  // A person's Stop, or the page that lost its connection (S4): the answer says which.
+  stoppedReason: TurnStoppedReason = 'cancelled',
+): Promise<number | null> {
+  const metadata = withTurnEnding(undefined, { stoppedReason }) as Record<string, unknown> | undefined;
   return saveMessage(threadId, 'assistant', streamed, undefined, undefined, metadata);
 }
 
@@ -371,7 +370,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
 
   try {
     let executedActions: any[] = [];
-    let contentForCommandProcessing = fullContent;
+    let contentForCommandProcessing = ctx.readOnly ? readOnlyAnswer(fullContent) : fullContent;
     let executedCommands: any[] = [];
     // The turn's project, resolved once for every step below (PF-10 S6a).
     const projectId = await turnProjectId(streamProjectId, orgId, 'ana-ri.post-processing');
@@ -383,7 +382,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     // executedCommands, which is what the client's sign-off prompt reads. The
     // answer says what became of each block (settleActionBlocks, shared with
     // POST /api/chat): proposed and not yet saved, or not saved and why.
-    if (fullContent && orgId && isPositiveIntegerId(userId)) {
+    if (!ctx.readOnly && fullContent && orgId && isPositiveIntegerId(userId)) {
       try {
         const settled = await settleActionBlocks(fullContent, {
           // The turn's project, resolved once (PF-10 S6a).
@@ -425,7 +424,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     }
 
     // Command executor — execute operational commands (create project, artifact, task, etc.)
-    if (contentForCommandProcessing && orgId && isPositiveIntegerId(userId)) {
+    if (!ctx.readOnly && contentForCommandProcessing && orgId && isPositiveIntegerId(userId)) {
       try {
         const cmdCtx: CommandContext = {
           userId,
@@ -472,7 +471,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
       verification && verification.check.basis === 'sources' ? groundingResultOf(verification.check) : null;
     const assistantMetadata = withTurnEnding(
       buildAssistantMetadata(toolTrace, streamGrounding, reasoning, humanControls, plan),
-      { stoppedReason: stoppedReasonOf(stopped, stoppedReason), rounds, runPolicy, pendingSteps, policyHolds },
+      { stoppedReason: stoppedTurnReason(stopped, stoppedReason), rounds, runPolicy, pendingSteps, policyHolds },
     ) as Record<string, unknown> | undefined;
 
     // Run persistence concurrent with the synchronous evidence / structure
@@ -592,7 +591,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
       streamProjectId,
       userId,
       threadId,
-      collectedDrafts,
+      collectedDrafts: ctx.readOnly ? [] : collectedDrafts,
     });
 
     // The turn's record, completed and written before post_done so the client

@@ -27,11 +27,10 @@ import JSZip from 'jszip';
 import { packageEctdSubmission } from '../../submission-gateways/regional-packager';
 // Region is declared in the gateway's types module; regional-packager only
 // imports it (TS2459 if re-imported from there).
-import type { Region } from '../../submission-gateways/types';
+import type { Region, SubmissionBundle } from '../../submission-gateways/types';
 import { packageRpsSubmission, validateRpsMessage } from '../ectd4';
 import {
   checkWellFormed,
-  validateAgainstDtd,
   validateAgainstXsd,
   isXmllintAvailable,
 } from '../xml-validator';
@@ -39,6 +38,9 @@ import { validateFdaCriteria, fdaCriteriaFallbackEnabled } from '../external-val
 import { resolveExternalValidator, runExternalValidation } from '../external-validator';
 import type { EctdRegion } from '../external-validator/types';
 import { verifyChecksumManifest } from '../checksum-manifest';
+import { validateBackboneFile, tallyValidationReport as tally, type BackboneValidation, type ValidatorRunReport } from '../backbone-validation';
+export { validateBackboneFile } from '../backbone-validation';
+export type { BackboneValidation, ValidatorRunReport } from '../backbone-validation';
 import { resolveDtdDir, listVendoredDtds } from '../dtd-bundler';
 import { resolveSchemaDir, RPS_MESSAGE_XSD } from '../schema-bundler';
 import {
@@ -65,16 +67,6 @@ export const SPEC_VERSIONS = {
 } as const;
 
 export type EctdVersion = keyof typeof SPEC_VERSIONS;
-
-export interface ValidatorRunReport {
-  name: string;
-  ran: boolean;
-  passed: boolean;
-  errorCount: number;
-  warningCount: number;
-  /** First few messages, for the report (full findings are large). */
-  sample: string[];
-}
 
 export interface ChecksumVerification {
   manifest: string;
@@ -113,6 +105,24 @@ export interface QualificationReport {
   notes: string[];
 }
 
+/**
+ * The qualification row for Study Tagging File coverage. `untagged` on the
+ * bundle is the packager's count from the one coverage check
+ * (auditStfCoverage, ectd4-validator.ts): files in Module 4/5 study sections
+ * that no STF references. FDA rejects such a sequence (validation 1789), so a
+ * golden package carrying one is an error here, not a warning.
+ * 2026-10-05 (g-stf-1789-fail-closed): this was a warning over a count the
+ * packager always reported as 0.
+ */
+export function stfCoverageFindings(stf: { untagged: number }): Array<{ severity: 'error'; message: string }> {
+  return stf.untagged > 0
+    ? [{
+        severity: 'error',
+        message: `${stf.untagged} file(s) in Module 4/5 study sections are referenced by no Study Tagging File (FDA validation 1789).`,
+      }]
+    : [];
+}
+
 /** Reopen a ZIP and re-verify every entry against its util/index-md5.txt line. */
 async function verifyZipChecksums(zipPath: string): Promise<ChecksumVerification> {
   const buf = await fs.readFile(zipPath);
@@ -146,150 +156,6 @@ async function verifyZipChecksums(zipPath: string): Promise<ChecksumVerification
   }
   result.ok = result.mismatches.length === 0 && result.missing.length === 0;
   return result;
-}
-
-function tally(name: string, ran: boolean, findings: Array<{ severity: string; message: string }>): ValidatorRunReport {
-  const errors = findings.filter((f) => f.severity === 'error');
-  const warnings = findings.filter((f) => f.severity === 'warning');
-  return {
-    name,
-    ran,
-    passed: ran && errors.length === 0,
-    errorCount: errors.length,
-    warningCount: warnings.length,
-    sample: findings.slice(0, 5).map((f) => `[${f.severity}] ${f.message}`),
-  };
-}
-
-/**
- * What a backbone's own DOCTYPE declares, as a discriminated result.
- *
- * The system id is relative to the backbone (index.xml → `util/dtd/…`;
- * m1/us/us-regional.xml → `../../util/dtd/…`), so it is resolved from the
- * backbone's own directory, exactly as xmllint resolves it.
- *
- * EVERY non-`declared` outcome is a DEFECT, not an absence: an eCTD backbone
- * must reference the grammar it is written to, and that reference must resolve
- * to a file the package itself ships. Collapsing them to `null` (as the first
- * cut of the per-backbone activation did) makes a packager regression — a
- * dropped DOCTYPE line — indistinguishable from a clean run.
- */
-type BackboneDoctype =
-  | { kind: 'declared'; absPath: string; fileName: string; systemId: string }
-  /** The file was read but carries no `<!DOCTYPE …>` at all. */
-  | { kind: 'no-doctype' }
-  /** A DOCTYPE is present but declares no parseable `SYSTEM "…"` identifier. */
-  | { kind: 'no-system-id' }
-  /** The system id is an absolute URI (http:, file:, …): the grammar is fetched
-   *  from outside the package, so the package is not self-contained. */
-  | { kind: 'external-uri'; systemId: string }
-  /** The system id resolves outside the package directory. */
-  | { kind: 'outside-package'; systemId: string }
-  /** The backbone itself could not be read. */
-  | { kind: 'unreadable'; reason: string };
-
-async function referencedDtd(packageDir: string, relPath: string): Promise<BackboneDoctype> {
-  let xml: string;
-  try {
-    xml = await fs.readFile(path.join(packageDir, relPath), 'utf8');
-  } catch (err) {
-    return { kind: 'unreadable', reason: err instanceof Error ? err.message : String(err) };
-  }
-  if (!/<!DOCTYPE\s/i.test(xml)) return { kind: 'no-doctype' };
-  // Stop the scan at `[` so an internal subset cannot be mistaken for a system
-  // id, and accept either quote style (the packager emits double quotes; a
-  // single-quoted DOCTYPE is still a valid declaration and must not read as
-  // "no DTD declared").
-  const m = /<!DOCTYPE[^>[]*\sSYSTEM\s+(?:"([^"]+)"|'([^']+)')/i.exec(xml);
-  const systemId = m?.[1] ?? m?.[2];
-  if (!systemId) return { kind: 'no-system-id' };
-  if (/^[a-z][a-z0-9+.-]*:/i.test(systemId)) return { kind: 'external-uri', systemId };
-  const absPath = path.resolve(path.dirname(path.join(packageDir, relPath)), systemId);
-  // Containment: a system id that climbs out of the package would validate
-  // against a DTD the shipped ZIP does not carry — certifying a package that is
-  // not self-contained, on a build machine that happens to have the file.
-  const rel = path.relative(path.resolve(packageDir), absPath);
-  if (rel === '' || rel.startsWith('..') || path.isAbsolute(rel)) {
-    return { kind: 'outside-package', systemId };
-  }
-  return { kind: 'declared', absPath, fileName: path.basename(systemId), systemId };
-}
-
-/** The error message for each non-`declared` DOCTYPE outcome. One sentence of
- *  fact, then what it means for the package. */
-function doctypeDefect(relPath: string, d: Exclude<BackboneDoctype, { kind: 'declared' }>): string {
-  switch (d.kind) {
-    case 'no-doctype':
-      return `${relPath} declares no DOCTYPE. An eCTD backbone must reference the DTD it is written to (<!DOCTYPE … SYSTEM "util/dtd/…">); DTD validity cannot be attempted without it.`;
-    case 'no-system-id':
-      return `${relPath} has a DOCTYPE with no parseable SYSTEM identifier, so no DTD can be resolved for it.`;
-    case 'external-uri':
-      return `${relPath} declares an EXTERNAL DTD (SYSTEM "${d.systemId}"): the package does not ship the grammar it references and is not self-contained.`;
-    case 'outside-package':
-      return `${relPath} declares SYSTEM "${d.systemId}", which resolves outside the package directory — the shipped package does not contain that DTD.`;
-    case 'unreadable':
-      return `${relPath} could not be read (${d.reason}), so its DOCTYPE could not be examined.`;
-  }
-}
-
-export interface BackboneValidation {
-  reports: ValidatorRunReport[];
-  /** Set when DTD validity could NOT be attempted because the DTD this
-   *  backbone's DOCTYPE names is not in the package. Reported, never silent. */
-  dtdSkipped: { relPath: string; dtd: string } | null;
-}
-
-/**
- * Run xmllint well-formedness on a backbone, plus DTD validity when — and only
- * when — the DTD that backbone's OWN DOCTYPE names is present in the package.
- *
- * Activation used to be "does util/dtd/ hold any *.dtd at all?". That is
- * all-or-nothing across regions, and vendoring is not: the acquisition runbook
- * works agency by agency, so the ICH + FDA pair lands before EMA/PMDA/HC. Under
- * the old test a partial drop switched DTD validation ON for every region, and
- * xmllint --valid then reported "Validation failed: no DTD found !" against
- * each backbone whose DTD was legitimately not vendored yet — rendering an
- * un-acquired artifact as a validation FAILURE and failing the whole
- * qualification. Deciding per backbone lets each region light up exactly when
- * its own DTD arrives, and says so when it has not.
- *
- * Three outcomes, three different rows — never silence:
- *   • DOCTYPE resolves to a DTD IN the package  → `xmllint DTD (…)` runs;
- *   • DOCTYPE resolves to a DTD NOT vendored yet → `dtdSkipped`, stated in the
- *     run notes (an un-acquired artifact, not a failure);
- *   • no usable DOCTYPE at all (absent, unparseable, external, or escaping the
- *     package) → a FAILING `backbone DOCTYPE (…)` row. That case is a packager
- *     regression and must fail the qualification, exactly as it did under the
- *     old all-or-nothing activation.
- *
- * Exported for the negative tests: the DOCTYPE is written by the packager, so a
- * backbone without one cannot be produced through `qualifyV3`'s inputs.
- */
-export async function validateBackboneFile(packageDir: string, relPath: string): Promise<BackboneValidation> {
-  const filePath = path.join(packageDir, relPath);
-  const reports: ValidatorRunReport[] = [];
-  const wf = await checkWellFormed(filePath, true);
-  reports.push(tally(`xmllint well-formed (${relPath})`, wf.ran, wf.errors.map((m) => ({ severity: wf.valid ? 'info' : 'error', message: m }))));
-
-  // The DOCTYPE row is ALWAYS emitted, pass or fail. A backbone that declares no
-  // usable DTD is a defect and must be reported as one — never an early return
-  // that leaves the report byte-identical to a clean run (which is what a
-  // dropped DOCTYPE line used to look like once activation became per-backbone).
-  const referenced = await referencedDtd(packageDir, relPath);
-  if (referenced.kind !== 'declared') {
-    reports.push(tally(`backbone DOCTYPE (${relPath})`, true, [
-      { severity: 'error', message: doctypeDefect(relPath, referenced) },
-    ]));
-    return { reports, dtdSkipped: null };
-  }
-  reports.push(tally(`backbone DOCTYPE (${relPath})`, true, []));
-
-  const dtdPresent = await fs.access(referenced.absPath).then(() => true).catch(() => false);
-  if (!dtdPresent) return { reports, dtdSkipped: { relPath, dtd: referenced.fileName } };
-
-  const dtd = await validateAgainstDtd(filePath);
-  reports.push(tally(`xmllint DTD (${relPath})`, dtd.ran, dtd.valid ? [] : dtd.errors.map((m) => ({ severity: 'error', message: m }))));
-  return { reports, dtdSkipped: null };
 }
 
 /**
@@ -389,9 +255,18 @@ async function dtdSkipNote(skips: Array<{ relPath: string; dtd: string }>): Prom
   return (
     lead +
     `DTD *validity* is skipped for ${skips.map((sk) => `${sk.relPath} (needs ${sk.dtd})`).join(', ')} — ` +
-    'that DTD is not in the package. Those backbones remain well-formed-validated. ' +
+    'that DTD is not in the package. See the separate per-file well-formedness results. ' +
     'Drop the licensed DTD(s) into assets/ectd-dtd/ (or $ECTD_DTD_DIR) to enable it.'
   );
+}
+
+async function validateStudyTaggingFiles(packageDir: string, manifest: SubmissionBundle['leafManifest']) {
+  return Promise.all((manifest ?? []).filter(leaf => /(?:^|\/)stf-[^/]+\.xml$/.test(leaf.href))
+    .map(leaf => validateBackboneFile(packageDir, leaf.href)));
+}
+
+function sequenceDtdSkips(results: BackboneValidation[], sequence: string) {
+  return results.flatMap(result => result.dtdSkipped ? [{ ...result.dtdSkipped, relPath: `${sequence}/${result.dtdSkipped.relPath}` }] : []);
 }
 
 /** Qualify one region for eCTD v3.2.2. */
@@ -416,10 +291,12 @@ export async function qualifyV3(region: Region, workDir: string): Promise<Qualif
   const regionalRel = `m1/${sub}/${sub}-regional.xml`;
   const regionalBackbone = await validateBackboneFile(pkgDir, regionalRel);
   validators.push(...regionalBackbone.reports);
+  const stfBackbones = await validateStudyTaggingFiles(pkgDir, bundle.leafManifest);
+  validators.push(...stfBackbones.flatMap(result => result.reports));
   /** Backbones whose DTD validity could NOT be attempted because the DTD their
    *  own DOCTYPE names is not in the package. Stated in the notes below — a
    *  skipped check must never read as a passed one. */
-  const dtdSkips = [indexBackbone.dtdSkipped, regionalBackbone.dtdSkipped]
+  const dtdSkips = [indexBackbone.dtdSkipped, regionalBackbone.dtdSkipped, ...stfBackbones.map(result => result.dtdSkipped)]
     .filter((sk): sk is NonNullable<typeof sk> => sk !== null)
     // Prefixed with the sequence, because the lifecycle amendment below
     // validates a backbone of the SAME relPath in its OWN package directory and
@@ -469,8 +346,7 @@ export async function qualifyV3(region: Region, workDir: string): Promise<Qualif
   // 2c. STF cross-linking + intra-package cross-reference resolution evidence
   //     (surfaced by the packager on the bundle).
   if (bundle.stf) {
-    validators.push(tally('stf-cross-linking', true,
-      bundle.stf.untagged > 0 ? [{ severity: 'warning', message: `${bundle.stf.untagged} study leaf/leaves untagged` }] : []));
+    validators.push(tally('stf-cross-linking', true, stfCoverageFindings(bundle.stf)));
     notes.push(`STF: ${bundle.stf.studies} study tagging file(s) generated + cross-linked (${bundle.stf.leaves} tagged leaves).`);
   }
   if (bundle.crossReferenceStatus) {
@@ -486,8 +362,10 @@ export async function qualifyV3(region: Region, workDir: string): Promise<Qualif
   const lcBundle = await packageEctdSubmission(v3GoldenInput({ region, sequence: '0001', applicationId: app, outputDir: outDir, paths, lifecycle: true, priorSequence: '0000' }));
   const lcDir = path.join(outDir, `${app}-0001-${region}`);
   const lcRegional = await validateBackboneFile(lcDir, regionalRel);
+  const lcStfs = await validateStudyTaggingFiles(lcDir, lcBundle.leafManifest);
+  validators.push(...lcStfs.flatMap(result => result.reports.map(report => ({ ...report, name: `0001/${report.name}` }))));
   const lcChecksum = await verifyZipChecksums(lcBundle.path);
-  const lcPassed = lcRegional.reports.every((v) => v.passed) && lcChecksum.ok;
+  const lcPassed = [lcRegional, ...lcStfs].every(result => result.reports.every(v => v.passed)) && lcChecksum.ok;
   /* THE AMENDMENT'S SKIP IS ITS OWN FACT. `lcRegional.dtdSkipped` was computed
      here and discarded, and a skip emits NO row — so `lcPassed`, which is
      `reports.every(v => v.passed)`, stayed true and the report carried
@@ -499,9 +377,7 @@ export async function qualifyV3(region: Region, workDir: string): Promise<Qualif
      DTDs and this reads `lcDir`, not `pkgDir`, so a lifecycle packager that
      stops copying them into 0001 produces exactly this divergence — and
      produced a clean report. */
-  if (lcRegional.dtdSkipped) {
-    dtdSkips.push({ ...lcRegional.dtdSkipped, relPath: `0001/${lcRegional.dtdSkipped.relPath}` });
-  }
+  dtdSkips.push(...sequenceDtdSkips([lcRegional, ...lcStfs], '0001'));
   if (dtdSkips.length) notes.push(await dtdSkipNote(dtdSkips));
 
   // Read the operation attributes ACTUALLY emitted into the amendment's

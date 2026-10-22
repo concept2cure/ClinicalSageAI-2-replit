@@ -1,0 +1,33 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — the class namespace is its own > shares no class name with the Design Controls surface, whose stylesheet also owns a “.dc” family 85ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > names what the expand control does and what it controls, and moves focus into the region it opens 261ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > Escape collapses from anywhere in the expanded region — including with focus left on the body — and returns focus to the header control 190ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > Escape with a workbench rail open closes the rail first, then the canvas 432ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > offers exactly one way back while expanded 287ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > does not trap: every control in the collapsed card is reachable, and the card does not hold focus 25ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — the dialogs it opens are real dialogs > File to vault: labelled, modal, focus trapped while open, focus restored on close 37ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — the dialogs it opens are real dialogs > Send for review: labelled, modal, focus trapped while open, focus restored on close 47ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > the canvas stylesheet — motion > every transition and animation is at most 200ms and eases out — no spring, no bounce, no overshoot 2ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > the canvas stylesheet — motion > every animation and transition it declares is removed under prefers-reduced-motion 1ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > the canvas — microcopy > never exclaims and never cheers 2ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > the canvas — microcopy > never hedges in a user-facing string 3ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — acts the server will refuse > disables File to vault and Send for review with the reason as described text 18ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — acts the server will refuse > leaves them enabled when the document read returns no access 19ms
+ ✓ tests/ui/token-authority.test.ts > design-token authority > the entry graph resolves — the walker is not silently finding nothing 3ms
+ ✓ tests/ui/token-authority.test.ts > design-token authority > only the four authorised stylesheets declare tokens in the app graph 1ms
+ ✓ tests/ui/token-authority.test.ts > design-token authority > no orphaned token file has been wired back into the graph 0ms
+ ✓ tests/ui/token-authority.test.ts > design-token authority > canonical tokens are inlined exactly once 1ms
+ ✓ tests/ui/token-authority.test.ts > design-token authority > no two authorities disagree about the same token 87ms
+ ✓ tests/ui/token-authority.test.ts > design-token authority > declares each token at most once per file — no self-shadowing 78ms
+ ✓ tests/ui/token-authority.test.ts > the deleted stylesheets stay deleted > zen.css is gone — 799 lines with zero consumers 0ms
+ ✓ tests/ui/token-authority.test.ts > the deleted stylesheets stay deleted > no source file references a --zen-* token or a .zen-* class 778ms
+ ✓ tests/ui/motion-token.test.ts > the motion tokens > --ease is an ease-out with no overshoot 2ms
+ ✓ tests/ui/motion-token.test.ts > the motion tokens > the default duration is 200ms 0ms
+
+ Test Files  3 passed (3)
+      Tests  24 passed (24)
+   Start at  03:57:48
+   Duration  6.65s (transform 1.85s, setup 222ms, import 3.07s, tests 2.37s, environment 481ms)
+

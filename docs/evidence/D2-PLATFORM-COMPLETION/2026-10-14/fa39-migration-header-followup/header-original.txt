@@ -1,0 +1,30 @@
+🔍 Checking migrations for eCTD regulatory audit headers...
+   (Scope: 2026+ date-prefixed migrations + vault prerequisite, in db/migrations migrations)
+
+   (Base: HEAD~1)
+❌ Missing eCTD header: db/migrations/20260314_phase12_multi_user_review.sql
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+REQUIRED: Add the standard eCTD audit header to the files listed above.
+
+Template (paste at line 1 of migration):
+
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: <ONE SENTENCE: what this migration enables>
+--
+-- eCTD/CTD Context:
+--   - Module(s): <e.g., Module 1 / Module 2 / Module 5>
+--   - Integrity Risk Addressed: <e.g., broken cross-refs, tenant isolation>
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - RLS policies must enforce program_id isolation where applicable.
+--   - Migration must be idempotent where possible (IF EXISTS / IF NOT EXISTS).
+-- =============================================================================
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

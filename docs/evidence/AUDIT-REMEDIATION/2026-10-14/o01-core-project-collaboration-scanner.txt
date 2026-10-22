@@ -1,0 +1,9 @@
+Owned source measurement after remediation, 2026-10-14:
+server/routes/concept2cure.ts: 0 (previous 7)
+server/routes/inline-annotations.ts: 0 (previous 3)
+server/routes/cmc-changes.routes.ts: 0 (previous 1)
+server/routes/reg-change.routes.ts: 0 (previous 1)
+Canonical scanner: node scripts/ci/check-discarded-audit-write.mjs --list
+No baselines were modified by this workstream. Repository-wide counts are control-tower owned because other scopes are being repaired concurrently.
+
+Companion-file presence check: bash scripts/ai/verify-tests.sh completed in the established warning-only mode; it does not run or qualify tests. Actual execution is recorded in o01-core-project-collaboration-green.txt.

@@ -1,0 +1,36 @@
+{
+  "metrics": {
+    "visibleEditableViewport": null,
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "page": {
+      "clientWidth": 1440,
+      "scrollWidth": 1440
+    },
+    "canvas": null,
+    "editor": null,
+    "documentScroll": null,
+    "editorScroll": null,
+    "sectionHeading": null,
+    "editorCount": 0
+  },
+  "passage": null,
+  "axe": {
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "targets": [
+          [
+            "#_r_0_-template"
+          ]
+        ]
+      }
+    ],
+    "passes": 19
+  },
+  "qualification": "Pre-picker-copy diagnostic metadata on 9ba70078 plus the initial frozen feature. The tall regional picker description required a copy fix; final-path PNGs are replaced by the subsequent final replay and do not illustrate these earlier metrics."
+}

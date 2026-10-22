@@ -1,0 +1,29 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/report-os/__tests__/run-history.test.ts
+[database] Database connection test failed { error: "Cannot read properties of undefined (reading 'on')" }
+
+stdout | server/services/report-os/__tests__/run-history.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/report-os/__tests__/run-history.test.ts
+[database] Initial connection test failed: Cannot read properties of undefined (reading 'on')
+
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history > applies the canonical private-project policy before count and pagination 26ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history > uses current sharing membership and pending review assignments with the existing manager policy 15ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history > keeps historical program access bound to recorded members when current membership changes 32ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history query semantics > searches and exposes the regional engine market metadata 11ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history query semantics > finds a canonical run ID only inside the authenticated organization 6ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history query semantics > searches all tenant records before paging, including a match older than the latest 100 9ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history query semantics > keeps search wildcards literal and searches joined catalog labels 29ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history query semantics > filters scope/status/type/workspace before totals and preserves organization isolation 13ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history query semantics > sorts the full set before paging with deterministic ties and nulls last 17ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history query semantics > returns an accurate total even when the requested page is empty 5ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history query semantics > rejects invalid tenant and pagination without issuing a query 2ms
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  20:20:17
+   Duration  6.02s (transform 1.33s, setup 191ms, import 2.28s, tests 3.16s, environment 0ms)

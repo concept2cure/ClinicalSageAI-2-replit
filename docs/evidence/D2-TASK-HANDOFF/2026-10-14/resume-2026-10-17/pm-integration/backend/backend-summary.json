@@ -1,0 +1,169 @@
+{
+  "status": "completed-green-frozen",
+  "recorded_at_utc": "2026-10-18T00:44:34.543714+00:00",
+  "node_version": "v22.23.3",
+  "default_config": "vitest.config.ts",
+  "command": [
+    "node_modules/.bin/vitest",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/projects/schedule-of-events/__tests__/preservation.test.ts",
+    "server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts",
+    "server/routes/__tests__/project-schedule-of-events.test.ts",
+    "server/services/ana/__tests__/schedule-generation-reason.test.ts",
+    "server/services/projects/schedule-of-events/__tests__/schedule-read-fails-closed.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=/workspace/scratch/task-handoff-pm-backend-final.json"
+  ],
+  "result": {
+    "files_passed": 5,
+    "total_cases": 59,
+    "passed": 59,
+    "failed": 0,
+    "pending": 0,
+    "todo": 0,
+    "exit_code": 0,
+    "duration_seconds": 21.848922033999997,
+    "cases_per_file": {
+      "server/routes/__tests__/project-schedule-of-events.test.ts": 20,
+      "server/services/ana/__tests__/schedule-generation-reason.test.ts": 12,
+      "server/services/projects/schedule-of-events/__tests__/preservation.test.ts": 18,
+      "server/services/projects/schedule-of-events/__tests__/schedule-read-fails-closed.test.ts": 2,
+      "server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts": 7
+    }
+  },
+  "execution_tree": {
+    "type": "committed frozen merge",
+    "head_at_execution_start": "67db2cf5f14a48a5b694d2a2ea66bf174a926b2d",
+    "head_at_execution_end": "67db2cf5f14a48a5b694d2a2ea66bf174a926b2d",
+    "incoming_commit": "aad0eb124bab4e2b9bd80e3186fedfd319ab0471",
+    "incoming_delta_base": "61a14c5d9406501dcc05c188e3975dcce59317f0"
+  },
+  "source_integrity": {
+    "sha256_pin_count": 8032,
+    "all_before_after_sha256_match": true,
+    "changed_pinned_paths": [],
+    "scope": "all tracked server/shared/tests TS/JS/JSON/SQL plus package manifests and default Vitest config",
+    "incoming_pm_code_test_paths": 10,
+    "all_incoming_pm_blobs_match_merged_commit_and_worktree": true,
+    "pm_blob_bindings": [
+      {
+        "path": "server/routes/__tests__/project-schedule-of-events.test.ts",
+        "incoming_blob": "0505dae5271c1640364ab8d5554dec7bab25d491",
+        "merged_blob": "0505dae5271c1640364ab8d5554dec7bab25d491",
+        "worktree_blob": "0505dae5271c1640364ab8d5554dec7bab25d491"
+      },
+      {
+        "path": "server/routes/project-schedule-of-events.ts",
+        "incoming_blob": "b4d65b009f31f237cce3b87fe57fc2da0cb75371",
+        "merged_blob": "b4d65b009f31f237cce3b87fe57fc2da0cb75371",
+        "worktree_blob": "b4d65b009f31f237cce3b87fe57fc2da0cb75371"
+      },
+      {
+        "path": "server/services/ana/AnaToolExecutor.ts",
+        "incoming_blob": "70515e7f406cde333cf57b2fb944e5882b3e4f19",
+        "merged_blob": "70515e7f406cde333cf57b2fb944e5882b3e4f19",
+        "worktree_blob": "70515e7f406cde333cf57b2fb944e5882b3e4f19"
+      },
+      {
+        "path": "server/services/ana/__tests__/schedule-generation-reason.test.ts",
+        "incoming_blob": "c7bc05ffc714a709a03575eca7c86547271da1f8",
+        "merged_blob": "c7bc05ffc714a709a03575eca7c86547271da1f8",
+        "worktree_blob": "c7bc05ffc714a709a03575eca7c86547271da1f8"
+      },
+      {
+        "path": "server/services/ana/discovery-cheminformatics-tool-defs.ts",
+        "incoming_blob": "914140829ff513fcf830c4fb04ef243af56418a3",
+        "merged_blob": "914140829ff513fcf830c4fb04ef243af56418a3",
+        "worktree_blob": "914140829ff513fcf830c4fb04ef243af56418a3"
+      },
+      {
+        "path": "server/services/projects/schedule-of-events/__tests__/preservation.test.ts",
+        "incoming_blob": "f0b30c8600959d410d69192d6a01eba76c2edfec",
+        "merged_blob": "f0b30c8600959d410d69192d6a01eba76c2edfec",
+        "worktree_blob": "f0b30c8600959d410d69192d6a01eba76c2edfec"
+      },
+      {
+        "path": "server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts",
+        "incoming_blob": "49fa5116e28ca5f8966f9616c7e703c1b033aa83",
+        "merged_blob": "49fa5116e28ca5f8966f9616c7e703c1b033aa83",
+        "worktree_blob": "49fa5116e28ca5f8966f9616c7e703c1b033aa83"
+      },
+      {
+        "path": "server/services/projects/schedule-of-events/preservation.ts",
+        "incoming_blob": "0c230891befc4bd490cd5e58754f72bccc7dae11",
+        "merged_blob": "0c230891befc4bd490cd5e58754f72bccc7dae11",
+        "worktree_blob": "0c230891befc4bd490cd5e58754f72bccc7dae11"
+      },
+      {
+        "path": "server/services/projects/schedule-of-events/service.ts",
+        "incoming_blob": "ab99fa1a8cd3de5d27bc94fe55714061d1458159",
+        "merged_blob": "ab99fa1a8cd3de5d27bc94fe55714061d1458159",
+        "worktree_blob": "ab99fa1a8cd3de5d27bc94fe55714061d1458159"
+      },
+      {
+        "path": "tests/db/project-schedule-atomic.dbtest.ts",
+        "incoming_blob": "418a1efe9ba7f83fa66be3a332f2ebffb3786b75",
+        "merged_blob": "418a1efe9ba7f83fa66be3a332f2ebffb3786b75",
+        "worktree_blob": "418a1efe9ba7f83fa66be3a332f2ebffb3786b75"
+      }
+    ]
+  },
+  "scope": "18 preservation identity/actuals cases, 7 transaction lifecycle cases, 20 project schedule HTTP cases, 12 AnA schedule reason/admission cases, and 2 existing read-fails-closed cases. This verifies the changed PM helper/service/routes/tool reason plumbing and the overlapping existing GET loader behavior. Unchanged general generator/health/tool-register suites and previously qualified 33 concurrency cases were not replayed. Incoming publication proof retains its broader 163-case result and 29 native cases.",
+  "findings": "No focused integration failures. All incoming PM code and tests are preserved byte-for-byte, including the native test file; the native test was not executed in this task.",
+  "limits": "Default Vitest regression evidence with synthetic service/HTTP/tool fixtures. Transaction lifecycle tests observe query/release calls; they do not prove native SQL locking, rollback or persistence. No source edits, native database commands, live provider, compiler/build, deployment or human witness claim.",
+  "credential_scan": {
+    "files_scanned": 5,
+    "findings": 0,
+    "private_env_files_copied": 0
+  },
+  "archives": [
+    {
+      "archive": "task-handoff-pm-backend-final.log.gz",
+      "original_path": "/workspace/scratch/task-handoff-pm-backend-final.log",
+      "original_sha256": "0a759c7bf9bb5d271809ea6ab64adb0b2d9e214e65f182d4399eb399605bc32f",
+      "original_bytes": 14246,
+      "gzip_sha256": "b23f3014511c7370e56c3640a593bd38629ef6024dc697591c2b5ce227b69204",
+      "gzip_bytes": 2427,
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-pm-backend-final.json.gz",
+      "original_path": "/workspace/scratch/task-handoff-pm-backend-final.json",
+      "original_sha256": "dd6859ab7e31d29c05fc93b7be47df9af9defb6edfebbf62d61963b2fefd1736",
+      "original_bytes": 21485,
+      "gzip_sha256": "a91a5dd15967280d8ac87f820e667c0a32d2a14e0e841264b6716c1697bb30e0",
+      "gzip_bytes": 2990,
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-pm-backend-final.pins.json.gz",
+      "original_path": "/workspace/scratch/task-handoff-pm-backend-final.pins.json",
+      "original_sha256": "79ad7bb71e252e56e8e0b1706583f220997b8e9d4042229714420ab5d41aea10",
+      "original_bytes": 2117399,
+      "gzip_sha256": "73a4cfc4bf29b180f31847c234847eff64dcc36598ad6a638d8ad98b74cfdaed",
+      "gzip_bytes": 818919,
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-pm-backend-final.files.txt.gz",
+      "original_path": "/workspace/scratch/task-handoff-pm-backend-final.files.txt",
+      "original_sha256": "0d121acf5fe96d76ca74f3d3314800f08a211145898c6a382c0f7447843d2740",
+      "original_bytes": 370,
+      "gzip_sha256": "87894820cbf1b4e9c419cde784b18e392dfdb6670b1d69d95f680b31710b3de7",
+      "gzip_bytes": 143,
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-pm-backend-final.command.json.gz",
+      "original_path": "/workspace/scratch/task-handoff-pm-backend-final.command.json",
+      "original_sha256": "99afa72e40325346c9f5c44a11bdb5305ee6ed1c229a0b4f44d1d3cd47693e61",
+      "original_bytes": 919,
+      "gzip_sha256": "1ac310d1d56f02141c648b719efc8b643e8c9e95813cc40fe9f1d4b32983488a",
+      "gzip_bytes": 408,
+      "gzip_mtime": 0
+    }
+  ]
+}

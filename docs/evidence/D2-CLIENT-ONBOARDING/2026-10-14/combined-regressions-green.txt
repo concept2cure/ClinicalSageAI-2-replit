@@ -1,0 +1,605 @@
+Consolidated changed behavior and relevant existing regressions. Local HTTP/service recorders + real SQL/PGlite suites, not production E2E.
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > separates requested SSO from verified second-factor status and routes to existing setup 278ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > does not report enrolled when authentication was not verified 30ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > opens the canonical account panel and rereads security after closing 81ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingInvitations.test.tsx > onboarding invitation handover > distinguishes emailed, private-link, failed-delivery and existing-user invitations 2ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingInvitations.test.tsx > onboarding invitation handover > copies the chosen link only on request and provides a manual fallback 205ms
+ ✓ server/routes/__tests__/vault-legal-holds-labels.pglite.integration.test.ts > legal-hold target names on the tenant-scoped list query > names the tenant’s own stored projects and documents, with a file-name fallback 10ms
+ ✓ server/routes/__tests__/vault-legal-holds-labels.pglite.integration.test.ts > legal-hold target names on the tenant-scoped list query > keeps foreign records out and yields no foreign names from damaged target ids 6ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > reads only on request, previews context, and copies stated fields only after confirmation 674ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > preserves manually entered fields, including entries typed after the preview was loaded 620ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > allows a member to reuse a saved draft and never substitutes therapeutic area for indication 349ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > copies device purpose only into intended use and leaves classification fields unset 273ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > keeps project creation on the separate review step and sends the reviewed copied wording 400ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > shows an honest unstarted state while manual project entry remains usable 304ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > reports a network read failure and allows an explicit retry 336ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > reports a invalid read failure and allows an explicit retry 323ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > drops a late tenant read and never applies another organization’s preview 8ms
+stderr | server/routes/__tests__/discovery-settings.pglite.integration.test.ts > discovery with real SQL and tenant enforcement > rolls back the discovery and leaves no audit row if audit insertion is rejected
+{
+  "timestamp": "2026-10-14T03:23:49.371Z",
+  "level": "error",
+  "message": "[onboarding-discovery] Could not save organization discovery",
+  "context": {
+    "error": "column \"missing_column\" of relation \"discovery_audit_probe\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/discovery-settings.pglite.integration.test.ts > discovery with real SQL and tenant enforcement > persists the same record GET returns without changing security or connector policy 71ms
+ ✓ server/routes/__tests__/discovery-settings.pglite.integration.test.ts > discovery with real SQL and tenant enforcement > rolls back the discovery and leaves no audit row if audit insertion is rejected 20ms
+ ✓ server/routes/__tests__/discovery-settings.pglite.integration.test.ts > discovery with real SQL and tenant enforcement > does not overwrite a newer saved revision or add an audit row for a refused write 21ms
+ ✓ server/routes/__tests__/discovery-settings.pglite.integration.test.ts > discovery with real SQL and tenant enforcement > the non-superuser database refuses another tenant even if the application predicate is absent 6ms
+ ✓ server/routes/__tests__/discovery-settings.pglite.integration.test.ts > discovery with real SQL and tenant enforcement > the tenant-isolation assertion fails when its policy is widened (negative control) 7ms
+ ✓ server/routes/__tests__/discovery-settings.pglite.integration.test.ts > discovery with real SQL and tenant enforcement > the canonical writer refuses generic discovery creation, replacement, removal and null 46ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > the account menu offers the panel > lists Account, and choosing it opens the panel on the server's account 957ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > profile > shows name, e-mail, organisation and the membership role, as the server reports them 58ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > profile > a session with no organisation says so, and names none (P-25) 43ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > profile > a failed account read is an error with a way to retry, never an empty panel 53ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a wrong current password shows the server's refusal — not "Session expired" — and the session stays 86ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > shows every policy refusal the server lists, in its words 71ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a confirmation that differs is caught before anything is sent 84ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a change says that every session has ended, this one included, and signs out on request 107ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > enrolment shows the server's QR code and key, confirms a code, then shows the recovery codes once 145ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > a wrong confirmation code shows the server's refusal, not "Session expired", and keeps the key on screen 111ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > a refused setup is shown in the server's words 45ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > never loads a QR code from anywhere but the server's own data: URL 67ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > removal sends a current code; the server's refusal is shown, and a good code removes it 153ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app: what removal costs where signing needs it (P-25 follow-up) > where signing needs an authenticator, removal warns that it stops signing (P-25 follow-up) 36ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app: what removal costs where signing needs it (P-25 follow-up) > where signing does not need one, removal carries no such warning 61ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > asks drug and device follow-ups for combination products and service questions for service providers 869ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > keeps incomplete discovery on its step and moves focus to the new step heading 180ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > lets a nonadministrator review saved answers but makes no writes 223ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > validates invitations and defaults to least-privilege membership 294ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > stops activation before any organization, invitation or billing write if discovery cannot be completed 464ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > shows private setup links before checkout and never sends them or discovery narratives to AnA 416ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > honestly confirms invitation email delivery using the server vocabulary 404ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > clears activation secrets and tenant drafts when the active organization changes 377ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — Request Enterprise onboarding > files a real licence request carrying the contact and the configured plan 761ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — Request Enterprise onboarding > sends nothing — and says nothing was sent — when the intake refuses 478ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — Request Enterprise onboarding > cannot be fired at all without an address to reply to 343ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — the free tier activates a plan > provisions the free tier through the real checkout endpoint and does not redirect 326ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — the free tier activates a plan > reports no plan when the server refuses the free activation 348ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > governed document access > shows real names, scope, UTC dates and reasons from the open document 107ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > governed document access > offers duplicate names with the actual email so members can be distinguished 365ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > governed document access > posts the selected member, role, actual section, UTC expiry and required trimmed reason without a client-provided email 187ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access changes and refusals > requires a reason before changing access 161ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access changes and refusals > rejects past expiry dates and overlong reasons without sending 181ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access changes and refusals > confirms revocation through the governed reason form and displays the server record 103ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access changes and refusals > keeps the form and reason on an owner/admin refusal, without success or local grants 180ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access changes and refusals > states the last-owner refusal and keeps the reason for correction 94ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access changes and refusals > does not turn a forbidden or malformed access read into an empty list 24ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access changes and refusals > retains access history but offers no new grants when members cannot be read 32ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access history and uncertain outcomes > shows revoked and expired grants with their dates instead of calling them active 27ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access history and uncertain outcomes > requires a reload after a network or unverified receipt outcome and suppresses duplicate changes 257ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access history and uncertain outcomes > never confirms a changed row for another document or an unconfirmed audit entry 181ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access history and uncertain outcomes > isolates late read results after selecting another document 17ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access history and uncertain outcomes > does not invent a tenant or make requests without an open document 3ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > defaults the role filter from the self-only API without granting report execution 468ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > preserves a person’s explicit All filter when a slow profile read finishes 133ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > applies an Account save to an open catalog using the same identity-scoped query cache 350ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > resets the old account’s override and loads the new session’s own role 208ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > reports an unreadable persona honestly and retries without blocking the governed catalog 135ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > keeps All when a canonical saved persona is absent from this catalog’s report types 50ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > does not fetch an account persona without an authenticated session 41ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingProposalReview.test.tsx > OnboardingProposalReview — approval gate > commits ONLY approved, non-empty fields (with edits), never on zero approvals 454ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingProposalReview.test.tsx > OnboardingProposalReview — approval gate > never fabricates a reason: a blank/too-short reason blocks Apply 86ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingProposalReview.test.tsx > OnboardingProposalReview — approval gate > bulk approve never resurrects a field the human explicitly skipped 105ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingProposalReview.test.tsx > OnboardingProposalReview — approval gate > bulk approve excludes low-confidence fields flagged for review 77ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingProposalReview.test.tsx > OnboardingProposalReview — approval gate > editing an approved value drops the approval — approval attaches to content 83ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingProposalReview.test.tsx > OnboardingProposalReview — approval gate > marks a re-approved hand-typed value as humanEdited (no fabricated provenance) 75ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingProposalReview.test.tsx > OnboardingProposalReview — approval gate > resets review state when a new proposal set arrives (no cross-document provenance) 77ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingProposalReview.test.tsx > OnboardingProposalReview — approval gate > surfaces low-confidence fields as "needs review" 11ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingProposalReview.test.tsx > OnboardingProposalReview — approval gate > shows provenance for each proposed value 10ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > requires scopes and a reason before sending a request 645ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > creates with selected scopes and optional expiry, then shows the secret once without storage or AnA publication 533ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > keeps entered values when the server refuses creation 344ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > copies the secret only on request and reports clipboard failure truthfully 451ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > blocks duplicate submission and drawer dismissal while minting is pending 301ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > describes an accepted response without a secret before allowing a retry 332ms
+ ✓ client/src/concept2cure/v2/__tests__/adminLegalHolds.test.tsx > Setup legal-hold read states > distinguishes a successful empty register from an unknown hold state 231ms
+ ✓ client/src/concept2cure/v2/__tests__/adminLegalHolds.test.tsx > Setup legal-hold read states > failed/malformed/unprovisioned reads offer no hold controls: 500 32ms
+ ✓ client/src/concept2cure/v2/__tests__/adminLegalHolds.test.tsx > Setup legal-hold read states > failed/malformed/unprovisioned reads offer no hold controls: 200 24ms
+ ✓ client/src/concept2cure/v2/__tests__/adminLegalHolds.test.tsx > Setup legal-hold read states > failed/malformed/unprovisioned reads offer no hold controls: 200 21ms
+ ✓ client/src/concept2cure/v2/__tests__/adminLegalHolds.test.tsx > Setup legal-hold read states > preserves an authority refusal in the server’s words and offers no controls 16ms
+ ✓ client/src/concept2cure/v2/__tests__/adminLegalHolds.test.tsx > Setup legal-hold read states > shows the stored project name instead of a raw identifier in the hold list 25ms
+ ✓ client/src/concept2cure/v2/__tests__/adminLegalHolds.test.tsx > placing a legal hold > uses a named tenant project and the server’s accepted record; no caller-supplied tenant id 210ms
+ ✓ client/src/concept2cure/v2/__tests__/adminLegalHolds.test.tsx > placing a legal hold > validates the recorded reason before any request leaves the browser 132ms
+ ✓ client/src/concept2cure/v2/__tests__/adminLegalHolds.test.tsx > placing a legal hold > blocks duplicate writes and dismissal while an accepted hold is still pending 113ms
+ ✓ client/src/concept2cure/v2/__tests__/adminLegalHolds.test.tsx > placing a legal hold > retains a refused draft and never reports it as recorded 111ms
+ ✓ client/src/concept2cure/v2/__tests__/adminLegalHolds.test.tsx > placing a legal hold > refuses to claim success from a 200 response without the created active hold 95ms
+ ✓ client/src/concept2cure/v2/__tests__/adminLegalHolds.test.tsx > placing a legal hold > selects a stored Vault upload and sends only document scope, excluding authored sections 196ms
+ ✓ client/src/concept2cure/v2/__tests__/adminLegalHolds.test.tsx > placing a legal hold > rejects a document left over after switching project, rather than holding the wrong project’s document 181ms
+ ✓ client/src/concept2cure/v2/__tests__/adminLegalHolds.test.tsx > lifting a legal hold > requires a reason and typed confirmation; cancel sends no mutation 63ms
+ ✓ client/src/concept2cure/v2/__tests__/adminLegalHolds.test.tsx > lifting a legal hold > leaves an active hold visible after a refused lift and preserves the reason for retry 75ms
+ ✓ client/src/concept2cure/v2/__tests__/adminLegalHolds.test.tsx > lifting a legal hold > refreshes after an accepted lift and exposes the persisted lifted record when requested 77ms
+ ✓ client/src/concept2cure/v2/__tests__/adminPlatformGrants.test.tsx > platform grants in the active console > does not offer elevation when the server refuses platform standing 70ms
+ ✓ client/src/concept2cure/v2/__tests__/adminPlatformGrants.test.tsx > platform grants in the active console > offers only verified grantable roles and uses the governed form for a real existing account 448ms
+ ✓ client/src/concept2cure/v2/__tests__/adminPlatformGrants.test.tsx > platform grants in the active console > retains a refused grant form and its values 181ms
+ ✓ client/src/concept2cure/v2/__tests__/adminPlatformGrants.test.tsx > platform grants in the active console > requires a revoke reason and states a lost audit record without restoring the revoked access 119ms
+ ✓ client/src/concept2cure/v2/__tests__/adminPlatformGrants.test.tsx > platform grants in the active console > is reachable in the active AdminAccess Roles + scopes tab 251ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup reads the organization record > shows the organization’s real name, not an invented default 179ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup reads the organization record > seeds the translation policy from the persisted section 54ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup reads the organization record > addresses the org from the token claim, never the stale localStorage id 65ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup reads the organization record > writes nothing to the browser-local settings blob it replaced 76ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > sends nothing until something has changed 75ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > refuses to write without a reason, because the route audits one 88ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > PATCHes both governed routes with the reason and the token’s org id 85ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > never carries a stale record’s “guardrail off” claim back to the server 84ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > leaves a refused section dirty, and re-sends only that section 133ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > reports an unreachable server as unreachable, not as a refusal 71ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > offers the existing Vault legal-hold controls beside the retention period 49ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > has no switch for anything enforced elsewhere or per user 46ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > offers the agency gateway account choice (D7, founder decision 2026-10-01) 57ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > offers Require PDF/A, the organisation's own choice (D7, the PDF/A rule, 2026-10-01) 52ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > states the approval guardrails as always enforced 51ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > discloses that the editable translation preferences are not yet read 43ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > does not offer edits it cannot persist when the record fails to load 50ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > second factor — one answer on one screen > labels the count as authenticator enrolment and a member without one as "Emailed code" 134ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > second factor — one answer on one screen > shows the sign-in policy row as a fact, not a setting to change 58ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > API keys: "--" and "Couldn't load", not "0" and "No API keys" 69ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > audit: "Couldn't load the admin audit", not "No admin audit entries yet" 52ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > settings and SSO: say they could not be read 64ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > retries the read from the error 353ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > names and times, not ids and ISO strings > renders the audit band and Last seen for a reader 40ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > names and times, not ids and ISO strings > shows an API key by prefix and owner name, and revokes it by its numeric id 138ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > invited members are not counted as active > the Members KPI reads "1 active · 1 invited", and the Invited filter lists the invitee 39ms
+ ✓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > tenant-scoped organization discovery > requires authentication on reads and writes 64ms
+stderr | server/routes/__tests__/discovery-questionnaire-routes.test.ts > saved discovery revisions and unavailable data > fails closed on unreadable or invalid stored discovery instead of showing empty results
+{
+  "timestamp": "2026-10-14T03:24:25.177Z",
+  "level": "error",
+  "message": "[onboarding-discovery] Could not read organization discovery",
+  "context": {
+    "error": "sensitive database detail"
+  }
+}
+
+stderr | server/routes/__tests__/discovery-questionnaire-routes.test.ts > saved discovery revisions and unavailable data > fails closed on unreadable or invalid stored discovery instead of showing empty results
+{
+  "timestamp": "2026-10-14T03:24:25.180Z",
+  "level": "error",
+  "message": "[onboarding-discovery] Could not read organization discovery",
+  "context": {
+    "error": "Stored discovery does not match the supported contract."
+  }
+}
+
+stderr | server/routes/__tests__/discovery-questionnaire-routes.test.ts > saved discovery revisions and unavailable data > fails closed on unreadable or invalid stored discovery instead of showing empty results
+{
+  "timestamp": "2026-10-14T03:24:25.182Z",
+  "level": "error",
+  "message": "[onboarding-discovery] Could not save organization discovery",
+  "context": {
+    "error": "Stored discovery does not match the supported contract."
+  }
+}
+
+stderr | server/routes/__tests__/discovery-questionnaire-routes.test.ts > saved discovery revisions and unavailable data > never announces a saved discovery when its chained audit write fails
+{
+  "timestamp": "2026-10-14T03:24:25.184Z",
+  "level": "error",
+  "message": "[onboarding-discovery] Could not save organization discovery",
+  "context": {
+    "error": "chained audit insert rejected"
+  }
+}
+
+ ✓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > tenant-scoped organization discovery > refuses missing, zero and fractional organization context without touching storage 41ms
+ ✓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > tenant-scoped organization discovery > returns an honest unstarted assessment and allows members to read only 7ms
+ ✓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > tenant-scoped organization discovery > honors the current membership role rather than claimed role arrays or platform spellings 15ms
+ ✓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > tenant-scoped organization discovery > records draft answers with server attribution while preserving all unrelated settings 9ms
+ ✓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > tenant-scoped organization discovery > rejects caller-controlled ownership, metadata, short reasons and invalid answers 10ms
+ ✓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > tenant-scoped organization discovery > never marks an incomplete questionnaire complete and reports what is missing 2ms
+ ✓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > tenant-scoped organization discovery > persists a completed questionnaire without claiming a project exists or security is configured 2ms
+ ✓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > saved discovery revisions and unavailable data > refuses stale revisions rather than overwriting a teammate’s saved discovery 7ms
+ ✓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > saved discovery revisions and unavailable data > fails closed on unreadable or invalid stored discovery instead of showing empty results 6ms
+ ✓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > saved discovery revisions and unavailable data > never announces a saved discovery when its chained audit write fails 3ms
+ ✓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > saved discovery revisions and unavailable data > does not manufacture a user identity or successful write when the organization is missing 6ms
+ ✓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > saved discovery revisions and unavailable data > clears the completion marker on a new draft without changing existing security 3ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > reads the signed-in person’s inbox and reporting role; no fixture or invented organization name 405ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > accepts an invitation through the self-only endpoint, re-reads pending rows and keeps the current tenant 161ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > confirms a decline calmly and allows cancellation before the server mutation 187ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > shows quota or authorization refusals without claiming the invitation was accepted 121ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > keeps an inbox read error distinct from no pending invitations and retries it 74ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > refuses malformed pending rows instead of offering a mutation against a guessed organization 56ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > offers canonical reporting personas returned by the server and saves only the persona 83ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > can clear the reporting role without changing the membership role 67ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > does not offer persona controls if membership is refused or the server vocabulary is unknown 48ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding refuses unavailable sessions > refuses all reads and writes after a session identity change 25ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding refuses unavailable sessions > requires an authenticated access token even if the backend permits development fallbacks 14ms
+stderr | server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change whose record is refused is not made: 500, nothing claimed saved, no store text
+Error updating organization settings: audit_logs refused the row: secret-detail
+
+stderr | server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a lost row still answers 200 with the change, and says the row is missing
+{
+  "timestamp": "2026-10-14T03:24:29.223Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "data_modify",
+    "resourceType": "organization",
+    "resourceId": 7,
+    "reason": "relation \"audit_logs\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 403s an admin of a DIFFERENT organization (tenant scoping) 31ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 403s a non-admin member of the target org 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 400s when the reason is missing 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 400s when no profile field is provided 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > updates and audits for an org admin (reason recorded) 5ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > allows platform staff into any org 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 404s when the organization does not exist 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > platform staff acting on another organization > opens the system scope only for staff acting on ANOTHER org 6ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 403s a non-admin member 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 400s the governed form without a reason 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > writes through the one settings writer: laid over the stored settings, its sections and reason (DP-73) 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > still accepts the legacy bare-partial body (recorded with no reason) 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 404s when there is no such organization, and claims nothing 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change that would move the connector is refused by the writer: 403, nothing written 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change whose record is refused is not made: 500, nothing claimed saved, no store text 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 400s an empty settings object 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a lost row still answers 200 with the change, and says the row is missing 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a written row says so 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > GET /api/organizations lists only its own memberships, not every organization 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot read another organization: GET /api/organizations/7 is 403 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot patch another organization's profile: 403, nothing written, no system scope 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot patch another organization's settings: 403, the writer is never asked 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > GET /api/organizations lists only its own memberships, not every organization 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot read another organization: GET /api/organizations/7 is 403 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot patch another organization's profile: 403, nothing written, no system scope 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot patch another organization's settings: 403, the writer is never asked 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > GET /api/organizations lists every organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > membershipOnly=true lists actual memberships even for platform staff, for the account switcher 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > refuses a malformed membershipOnly filter before reading the organization directory 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > reads another organization: GET /api/organizations/7 is 200 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > patches another organization's profile, in the system scope, audited against that organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > GET /api/organizations lists every organization 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > membershipOnly=true lists actual memberships even for platform staff, for the account switcher 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > refuses a malformed membershipOnly filter before reading the organization directory 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > reads another organization: GET /api/organizations/7 is 200 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > patches another organization's profile, in the system scope, audited against that organization 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a grant for a role this router does not accept (support) is not staff 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an org admin reading their OWN organization costs no grant lookup 1ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > lists actual memberships, requires a calm confirmation, and can cancel without rotating the session 362ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > adopts the server-verified scoped session, clears predecessor context and opens a fresh shell without a program deep link 60ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > keeps a membership refusal visible and keeps the existing session 69ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > ends the spent session and offers sign-in if the replacement session cannot be verified 61ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > does not store a replacement token whose verified user or organization differs from the requested membership 73ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > does not retain a new session if fresh-shell navigation fails 56ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > ends an expired access-token session rather than allowing another switch attempt 58ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > requires sign-in when the select request has an unknown outcome after a network failure 60ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > prevents duplicate session rotations while a switch request is pending 54ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > shows a membership read error with retry rather than pretending there are no organizations 31ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > renders the organization identifier when the backend has no name 26ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > refuses a stale account identity before dispatching an organization change 41ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyUsage.test.tsx > admin API-key usage > shows the server request count, status and honest no-use state 122ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyUsage.test.tsx > admin API-key usage > treats a refused usage read as an error, never zero requests 16ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyUsage.test.tsx > admin API-key usage > opens usage for the numeric key id from the active admin table 423ms
+stdout | server/routes/__tests__/discovery-managed-setting.test.ts
+{
+  "timestamp": "2026-10-14T03:24:34.864Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T03:24:34.873Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/discovery-managed-setting.test.ts
+{
+  "timestamp": "2026-10-14T03:24:34.873Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/discovery-managed-setting.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/discovery-managed-setting.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/discovery-managed-setting.test.ts
+{
+  "timestamp": "2026-10-14T03:24:35.201Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/discovery-managed-setting.test.ts > discovery has one managed settings door > organization settings refuses bare and governed bodies naming discovery, including null 65ms
+ ✓ server/routes/__tests__/discovery-managed-setting.test.ts > discovery has one managed settings door > tenant configuration refuses a discovery key before its ordinary settings schema can strip it 9ms
+ ✓ server/routes/__tests__/discovery-managed-setting.test.ts > discovery has one managed settings door > AnA cannot replace discovery through generic updateSettings, even as a paid customer 1ms
+ ✓ server/routes/__tests__/discovery-managed-setting.test.ts > discovery has one managed settings door > general organization settings still works for its ordinary managed sections 3ms
+ ✓ server/routes/__tests__/discovery-managed-setting.test.ts > discovery has one managed settings door > the generic API gives a refused-door response if the canonical writer detects a discovery change 3ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingCurrentOrganization.test.tsx > the wizard names the organisation it will change > does not call itself a new organization 88ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingCurrentOrganization.test.tsx > the form starts from what the organisation records > prefills the recorded name 28ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingCurrentOrganization.test.tsx > the form starts from what the organisation records > pre-selects the archetype whose write-back is the recorded industry, not "Virtual biotech" 30ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingCurrentOrganization.test.tsx > the form starts from what the organisation records > never overwrites a name the person typed before the read answered 48ms
+ ✓ client/src/concept2cure/v2/__tests__/DiscoveryNextSteps.test.tsx > routes guidance to existing surfaces and leaves configured controls and project creation to those workflows 235ms
+stdout | server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts > POST /select-organization rotates > mints a token for the selected organisation, keeps the session, and revokes the presented token
+{
+  "timestamp": "2026-10-14T03:24:39.627Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T03:24:39.628Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts > POST /select-organization rotates > mints a token for the selected organisation, keeps the session, and revokes the presented token
+{
+  "timestamp": "2026-10-14T03:24:39.628Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts > POST /select-organization rotates > mints a token for the selected organisation, keeps the session, and revokes the presented token 132ms
+stdout | Object.info (/workspace/concept2cure/server/utils/logger.js:141:13)
+{
+  "timestamp": "2026-10-14T03:24:39.674Z",
+  "level": "info",
+  "message": "[audit] [AUDIT] authorization:organization_switch",
+  "context": {
+    "userId": "1",
+    "resourceType": "organization",
+    "resourceId": "7",
+    "success": true
+  }
+}
+
+stderr | Object.error (/workspace/concept2cure/server/utils/logger.js:156:13)
+{
+  "timestamp": "2026-10-14T03:24:39.677Z",
+  "level": "error",
+  "message": "[audit] Audit event NOT persisted to the canonical store",
+  "context": {
+    "auditEventId": "audit_1791948279674_k9mu5gics",
+    "action": "authorization.organization_switch",
+    "reason": "the canonical store returned no write result"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > requires an authenticated principal and organization for reads and writes 55ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses AUTHOR grants and revokes without document-owner authority 9ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses REVIEWER grants and revokes without document-owner authority 6ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses APPROVER grants and revokes without document-owner authority 5ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses VIEWER grants and revokes without document-owner authority 6ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > allows owners and administrators to read tenant-scoped permission history 5ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses a foreign tenant document even to an administrator 3ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > ignores spoofed tenant, granting actor, and email from the body 4ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses a principal who exists only in a different organization 3ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses a section in another tenant without mutation or audit 3ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses a section in a missing section without mutation or audit 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses a section belonging to another document in the same tenant 6ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects a malformed grant {} 3ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects a malformed grant {"principalId":"","role":"REVIEWER","reason":"Review assignment"} 5ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects a malformed grant {"principalId":"22","role":"QA","reason":"Review assignment"} 3ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects a malformed grant {"principalId":"22","role":"REVIEWER"} 3ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects a malformed grant {"principalId":"22","role":"REVIEWER","reason":"   "} 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects a malformed grant {"principalId":"22","role":"REVIEWER","reason":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} 3ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects malformed, expired, or non-ISO expiry not-a-date 3ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects malformed, expired, or non-ISO expiry 2026-01-01T00:00:00.000Z 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects malformed, expired, or non-ISO expiry 2999-01-01 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > requires a reason for revocation {} 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > requires a reason for revocation {"reason":" "} 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > requires a reason for revocation {"reason":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} 3ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > persists a normalized role, trimmed reason, valid expiry, and requested section 3ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > locks the document and verifies authority on the mutation client before granting and auditing 3ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > rolls back a grant when the chained audit cannot persist 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > revokes and audits on the same client before commit with server attribution 3ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > rolls back a revocation when its audit cannot persist 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > refuses removal of the last active document owner without an audit or write 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > does not let another section owner satisfy the last document-owner requirement 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > allows revoking a section owner while retaining the sole document owner 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > does not count an expired owner as a replacement for the active document owner 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > returns not found for a foreign or nonexistent permission without audit 2ms
+stderr | server/routes/admin/__tests__/access-management.test.ts > access boundary > 403s a non-platform user
+{
+  "timestamp": "2026-10-14T03:24:40.697Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 5,
+    "role": "member",
+    "email": "m***@x.io",
+    "path": "/api/admin/access/grants"
+  }
+}
+
+stderr | server/routes/admin/__tests__/access-management.test.ts > a grant is recorded in its transaction (DP-75) > when the row cannot be written nothing is granted: 503 GRANT_NOT_RECORDED, rolled back
+{
+  "timestamp": "2026-10-14T03:24:40.748Z",
+  "level": "error",
+  "message": "[admin-access-management] Grant not recorded; rolled back",
+  "context": {
+    "userId": 42,
+    "role": "support",
+    "error": "audit_logs refused the row: secret-detail"
+  }
+}
+
+stderr | server/routes/admin/__tests__/access-management.test.ts > a grant is recorded in its transaction (DP-75) > a failed grant write is a 500, and no row claims it
+{
+  "timestamp": "2026-10-14T03:24:40.752Z",
+  "level": "error",
+  "message": "[admin-access-management] Grant create failed",
+  "context": {}
+}
+
+stderr | server/routes/admin/__tests__/access-management.test.ts > revoke > a revocation stands when its row is lost, and says so (DP-75)
+{
+  "timestamp": "2026-10-14T03:24:40.757Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "data_modify",
+    "resourceType": "platform_role_grant",
+    "resourceId": "42:support",
+    "reason": "store down"
+  }
+}
+
+ ✓ server/routes/admin/__tests__/access-management.test.ts > access boundary > 401s an unauthenticated request 25ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > access boundary > 403s a non-platform user 5ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > access boundary > lists grants for a platform admin 5ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > access boundary > reports business-tier choices only for verified platform business standing 4ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > granting platform/support roles > lets a super_admin grant support (and audits it) 13ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > granting platform/support roles > 400s a grant without a reason 3ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > granting platform/support roles > 404s an unknown email 3ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > business-tier grants require a business-admin caller > 403s a platform admin whose tenant membership role is owner 3ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > business-tier grants require a business-admin caller > 403s when a support user tries to grant business_admin 5ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > business-tier grants require a business-admin caller > 403s when a platform_admin (not business) tries to grant business_admin 2ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > business-tier grants require a business-admin caller > 200s when a super_admin (platform + business) grants business_admin 2ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > business-tier grants require a business-admin caller > 200s when a business_admin holding an active platform grant grants business_admin 2ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > a grant is recorded in its transaction (DP-75) > writes the grant and its chained row on one transaction, row after the grant, then commits 4ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > a grant is recorded in its transaction (DP-75) > when the row cannot be written nothing is granted: 503 GRANT_NOT_RECORDED, rolled back 4ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > a grant is recorded in its transaction (DP-75) > a failed grant write is a 500, and no row claims it 3ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > revoke > revokes a grant and audits it, and says the row was written 3ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > revoke > a revocation stands when its row is lost, and says so (DP-75) 3ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > revoke > 404s revoking a non-existent / already-revoked grant 2ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > seeds every document creator as OWNER and AUTHOR atomically 4ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > allows the creator to edit and manage the document 6ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > denies a same-tenant user with no object permission 3ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > grants reviewer and approver authority explicitly, without edit escalation 13ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > does not let a permission on one section authorize a different section 3ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > rejects cross-tenant document and section permission links at the database boundary 6ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > blocks edits after the document becomes immutable 2ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > prevents revocation of the final active owner 3ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > a section owner cannot replace the last document owner, and may be revoked separately 9ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > loads a saved draft and preserves revision without browser persistence 82ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > saves a partial draft with a revision and audit reason, then advances revision 61ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > refuses completion locally for incomplete answers 60ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > cleans comma-input blanks before saving and requires an actual therapeutic area 57ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > rejects an incomplete server confirmation and retains unsaved answers for retry 57ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > requires reload after a concurrent edit and prevents blind overwrite 111ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > retains answers after network refusal and permits retry 57ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > disables writes for a viewer while exposing saved discovery 55ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > treats malformed reads as errors rather than as an empty editable draft 58ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > drops late read results across tenant changes 56ms
+stderr | server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > fails closed and returns no credential when the chained audit write fails
+{
+  "timestamp": "2026-10-14T03:24:46.411Z",
+  "level": "error",
+  "message": "[api-keys] Failed to create API key",
+  "context": {
+    "err": "audit unavailable"
+  }
+}
+
+stderr | server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > rolls revocation back when its chained audit cannot be written
+{
+  "timestamp": "2026-10-14T03:24:46.417Z",
+  "level": "error",
+  "message": "[api-keys] Failed to revoke API key",
+  "context": {
+    "err": "audit unavailable"
+  }
+}
+
+ ✓ server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > uses the authenticated tenant and actor, and records reason and scopes without the secret 44ms
+ ✓ server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > refuses invalid create fields before minting: {"scopes":[]} 6ms
+ ✓ server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > refuses invalid create fields before minting: {"scopes":["documents:write"]} 5ms
+ ✓ server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > refuses invalid create fields before minting: {"rateLimit":0} 4ms
+ ✓ server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > refuses invalid create fields before minting: {"expiresAt":"2020-01-01"} 5ms
+ ✓ server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > refuses invalid create fields before minting: {"reason":"   "} 4ms
+ ✓ server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > keeps existing API callers compatible when no reason is supplied 3ms
+ ✓ server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > requires admin access before minting 3ms
+ ✓ server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > fails closed and returns no credential when the chained audit write fails 8ms
+ ✓ server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > rolls revocation back when its chained audit cannot be written 5ms
+stderr | server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > fails closed with an honest response when ownership cannot be read, without opening a transaction
+{
+  "timestamp": "2026-10-14T03:24:47.551Z",
+  "level": "error",
+  "message": "[vault-legal-holds] Legal hold could not be placed",
+  "context": {
+    "orgId": 7,
+    "error": "program ownership check could not be run: target database unavailable"
+  }
+}
+
+stderr | server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > rolls the hold back when its audit row cannot be written (500): a hold nobody can account for is not placed
+{
+  "timestamp": "2026-10-14T03:24:47.575Z",
+  "level": "error",
+  "message": "[vault-legal-holds] Legal hold could not be placed",
+  "context": {
+    "orgId": 7,
+    "error": "chain unavailable"
+  }
+}
+
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > a member may not (403), and nothing is written 42ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > owner places a program hold: one transaction, the hold, then its chained audit row, then COMMIT (201) 10ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > admin places a program hold: one transaction, the hold, then its chained audit row, then COMMIT (201) 5ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > manager places a program hold: one transaction, the hold, then its chained audit row, then COMMIT (201) 4ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > refuses a program the organisation does not own (404) and writes nothing 3ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > fails closed with an honest response when ownership cannot be read, without opening a transaction 5ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > refuses a body that names no target or no reason (400) 18ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > rolls the hold back when its audit row cannot be written (500): a hold nobody can account for is not placed 6ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > lifting a hold > records who lifted it and why, with its chained audit row (200) 4ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > lifting a hold > needs a reason (400), and a hold that is not active in this organisation is 404 with nothing committed 7ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > lifting a hold > a member may not (403) 3ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > listing holds > lists the organisation's holds for the same roles, and refuses a member 7ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > adopts a session the server confirms: stored, policy kept, login raised, no refresh token 22ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > adopts nothing the server refuses 3ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > removes previous credentials from both storage tiers after a verified workspace adoption 4ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > does not adopt a confirmed token for the wrong selected organization or account 3ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > an old workspace refresh completing after adoption cannot replace the newly verified session 3ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivation.test.ts > archetypeToPrimaryIndustry > maps every selectable archetype into the PATCH /api/mdx/industry-profile enum 3ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivation.test.ts > archetypeToPrimaryIndustry > maps the specific archetype semantics 1ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivation.test.ts > archetypeToPrimaryIndustry > falls back to biotech_pharma for unknown archetypes 0ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivation.test.ts > inviteRoleToOrgRole > maps every wizard-selectable platform role into the POST /api/tenant-users enum 0ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivation.test.ts > inviteRoleToOrgRole > down-scopes business-tier roles to org admin and support to member 0ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivation.test.ts > inviteRoleToOrgRole > fails closed to least-privilege member for unknown roles 0ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivation.test.ts > inviteNameFromEmail > uses the email local part as the provisional display name 0ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivation.test.ts > inviteNameFromEmail > always satisfies the endpoint min-length of 2 0ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivation.test.ts > checkoutRequestFor > routes DTC paid tiers to POST /api/billing/dtc-checkout with a schema-valid body 2ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivation.test.ts > checkoutRequestFor > routes per-user (b2b) paid tiers to POST /api/billing/checkout with seats 1ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivation.test.ts > checkoutRequestFor > clamps seats to a positive integer (schema requires min 1) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivation.test.ts > checkoutRequestFor > normalizes any non-annual cycle to monthly (schema enum) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivation.test.ts > checkoutRequestFor > reports enterprise as unavailable — custom pricing has no self-service checkout 0ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivation.test.ts > checkoutRequestFor > sends the DTC free tier to checkout like any other self-service tier 1ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivation.test.ts > checkoutRequestFor > still refuses enterprise on the DTC path — custom pricing has no checkout 0ms
+ ✓ shared/types/__tests__/onboarding-discovery-contract.test.ts > organization-wide discovery contract > allows resumable blank drafts without pretending discovery is complete 8ms
+ ✓ shared/types/__tests__/onboarding-discovery-contract.test.ts > organization-wide discovery contract > requires the drug context, and ignores a device-only question for a drug sponsor 3ms
+ ✓ shared/types/__tests__/onboarding-discovery-contract.test.ts > organization-wide discovery contract > requires device purpose and provider services only for the applicable context 2ms
+ ✓ shared/types/__tests__/onboarding-discovery-contract.test.ts > organization-wide discovery contract > asks both drug and device follow-ups for a combination product 1ms
+ ✓ shared/types/__tests__/onboarding-discovery-contract.test.ts > organization-wide discovery contract > does not count transient blank therapeutic-area entries as answered 1ms
+ ✓ shared/types/__tests__/onboarding-discovery-contract.test.ts > organization-wide discovery contract > refuses unknown fields, policy injection, impossible dates and oversized values 5ms
+ ✓ shared/types/__tests__/onboarding-discovery-contract.test.ts > organization-wide discovery contract > requires a person’s reason and a nonnegative revision, with no caller-controlled ownership 2ms
+ ✓ shared/types/__tests__/onboarding-discovery-contract.test.ts > organization-wide discovery contract > refuses a stored completion marker that is not supported by complete answers 2ms
+ ✓ shared/types/__tests__/onboarding-discovery-contract.test.ts > organization-wide discovery contract > keeps recommendations in the reachable launch scope and gives no setup verdict from answers 3ms
+ ✓ shared/types/__tests__/onboarding-discovery-contract.test.ts > organization-wide discovery contract > does not recommend CMC composition outside its small-molecule US IND scope 1ms
+ ✓ server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > reads every route the router declares, the retention period included 2ms
+ ✓ server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > GET /api/vault/legal-holds reaches its route, not 403 LAUNCH_SCOPE 6ms
+ ✓ server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > POST /api/vault/legal-holds reaches its route, not 403 LAUNCH_SCOPE 1ms
+ ✓ server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > POST /api/vault/legal-holds/0b7c6a52-3f7e-4d4b-9a51-2c5e8f1d9a10/lift reaches its route, not 403 LAUNCH_SCOPE 1ms
+ ✓ server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > GET /api/vault/legal-holds/retention reaches its route, not 403 LAUNCH_SCOPE 3ms
+ ✓ server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > PUT /api/vault/legal-holds/retention reaches its route, not 403 LAUNCH_SCOPE 1ms
+ ✓ server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > attributes the retention period to Setup and the hold family to Setup and Vault 2ms
+ ✓ server/services/__tests__/api-key-service.transaction-client.test.ts > API-key writes enlist the audit transaction client > stores only the generated key hash on the caller client, without using the pool 3ms
+ ✓ server/services/__tests__/api-key-service.transaction-client.test.ts > API-key writes enlist the audit transaction client > revokes on the caller client within the authenticated organization 2ms
+
+ Test Files  36 passed (36)
+      Tests  354 passed (354)
+   Start at  03:23:32
+   Duration  78.12s (transform 5.27s, setup 3.01s, import 15.58s, tests 38.35s, environment 13.89s)
+

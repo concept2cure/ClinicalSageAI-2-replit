@@ -109,4 +109,3 @@ TypeError: Cannot convert undefined or null to object
       Tests  4 failed | 29 passed (33)
    Start at  03:39:32
    Duration  555ms (transform 198ms, setup 104ms, import 136ms, tests 47ms, environment 0ms)
-

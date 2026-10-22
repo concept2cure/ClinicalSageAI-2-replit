@@ -43,6 +43,7 @@ vi.mock('../../storage', () => {
 
 import { materializeLeafSources } from '../leaf-source-resolver';
 import { assembledTransmitBlockers } from '../assemble-from-core';
+import type { LegalDocumentContext } from '../../../../shared/company-documents';
 
 let harness: IndPgliteDb;
 let stageDir = '';
@@ -89,11 +90,12 @@ async function seedVersion(opts: {
   return id;
 }
 
-const run = (uuid: string) =>
+const run = (uuid: string, legalTarget?: LegalDocumentContext) =>
   materializeLeafSources({
     leaves: [{ documentTable: 'vault_documents', documentId: null, documentUuid: uuid }],
     organizationId: ORG,
     stageDir,
+    legalTarget,
   });
 
 beforeAll(async () => {
@@ -101,6 +103,7 @@ beforeAll(async () => {
   holder.db = harness.db;
   await harness.pglite.exec(`
     CREATE SCHEMA IF NOT EXISTS vault;
+    CREATE TABLE IF NOT EXISTS organizations (id INTEGER PRIMARY KEY, settings JSONB NOT NULL DEFAULT '{}');
     CREATE TABLE IF NOT EXISTS regulatory_programs (id UUID PRIMARY KEY, organization_id INTEGER, deleted_at TIMESTAMPTZ);
     CREATE TABLE IF NOT EXISTS vault.documents (
       id UUID PRIMARY KEY,
@@ -115,6 +118,7 @@ beforeAll(async () => {
       deleted_at TIMESTAMPTZ
     );
   `);
+  await harness.pglite.query('INSERT INTO organizations(id) VALUES($1)', [ORG]);
   // The real binary-availability predicate requires the existing disposition
   // ledger; apply its canonical constraints and guards to exercise that read.
   await harness.pglite.exec(readFileSync(new URL('../../../../migrations/20261006_document_data_dispositions.sql', import.meta.url), 'utf8'));
@@ -128,6 +132,28 @@ afterAll(async () => {
 });
 
 describe('a vault leaf is finalized only when its version is approved, current, and approved for these bytes', () => {
+  it('uses the existing assembled transmit blocker for a registered original outside the actual destination, while preserving its bytes and approval', async () => {
+    const uuid = await seedVersion({ label: 'company-authorization', stage: 'approved' });
+    const original = store.objects.get(`ver-${uuid}`)!;
+    const document = { id: uuid, title: 'Company authorization', kind: 'authorization', programId: PROGRAM, vaultDocumentId: uuid,
+      contentHash: sha(original), version: '1', agencies: ['FDA'], countries: ['US'], submissionTypes: ['IND'], language: 'en',
+      effectiveOn: null, expiresOn: null, active: true, registeredAt: '2026-10-01T00:00:00Z', registeredBy: '5' };
+    await harness.pglite.query('UPDATE organizations SET settings=$1::jsonb WHERE id=$2', [JSON.stringify({ companyDocuments: { legalDocuments: [document] } }), ORG]);
+    try {
+      const matching = await run(uuid, { programId: PROGRAM, agency: 'FDA', country: 'US', submissionType: 'IND' });
+      expect(matching.unfinalized).toBe(0);
+      const mismatched = await run(uuid, { programId: PROGRAM, agency: 'EMA', country: 'EU', submissionType: 'IND' });
+      expect(mismatched.materialized).toBe(1);
+      expect(mismatched.unfinalized).toBe(1);
+      const blockers = assembledTransmitBlockers({ skipped: [], unfinalized: mismatched.unfinalized, unfinalizedSections: mismatched.unfinalizedSections });
+      expect(blockers.join(' ')).toContain('selected agency is outside');
+      expect(await fs.readFile([...mismatched.byKey.values()][0].sourcePath)).toEqual(original);
+      expect((await run(uuid)).unfinalizedSections[0].status).toContain('target program');
+      const record = await harness.pglite.query('SELECT stage,content_hash FROM canonical_documents WHERE canonical_id=$1', [`cd-${uuid}`]);
+      expect(record.rows[0]).toEqual({ stage: 'approved', content_hash: sha(original) });
+    } finally { await harness.pglite.query("UPDATE organizations SET settings='{}'::jsonb WHERE id=$1", [ORG]); }
+  });
+
   it('an upload nobody reviewed is not finalized', async () => {
     const out = await run(await seedVersion({ label: 'never-reviewed' }));
     expect(out.materialized).toBe(1);

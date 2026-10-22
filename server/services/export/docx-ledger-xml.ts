@@ -182,7 +182,11 @@ export function serializeAnALedgerXml(ledger: ArtifactLedger): string {
   out.push(`  </Signatures>\n`);
   }
 
-  // Proposals
+  // Proposals, plan and runs — same rule. 2026-10-15: a failed read here used
+  // to render count="0" / xsi:nil / total="0" with an empty <ModelsUsed/>.
+  if (ledger.proposalsUnavailable) {
+    out.push(`  <Proposals unavailable="true"${attr('reason', ledger.proposalsUnavailable)}/>\n`);
+  } else {
   out.push(`  <Proposals count="${ledger.proposals.length}">\n`);
   for (const p of ledger.proposals) {
     out.push(`    <Proposal`);
@@ -202,9 +206,12 @@ export function serializeAnALedgerXml(ledger: ArtifactLedger): string {
     out.push(`    </Proposal>\n`);
   }
   out.push(`  </Proposals>\n`);
+  }
 
   // Authoring plan (Feature 2.4)
-  if (ledger.authoringPlan) {
+  if (ledger.authoringPlanUnavailable) {
+    out.push(`  <AuthoringPlan unavailable="true"${attr('reason', ledger.authoringPlanUnavailable)}/>\n`);
+  } else if (ledger.authoringPlan) {
     const ap = ledger.authoringPlan;
     out.push(`  <AuthoringPlan`);
     out.push(attr('planId', ap.planId));
@@ -231,6 +238,9 @@ export function serializeAnALedgerXml(ledger: ArtifactLedger): string {
   }
 
   // Runs summary
+  if (ledger.runsUnavailable || !ledger.runs) {
+    out.push(`  <Runs unavailable="true"${attr('reason', ledger.runsUnavailable)}/>\n`);
+  } else {
   out.push(`  <Runs`);
   out.push(attr('total', ledger.runs.totalRuns));
   out.push(attr('latestRunId', ledger.runs.latestRunId));
@@ -242,6 +252,7 @@ export function serializeAnALedgerXml(ledger: ArtifactLedger): string {
   }
   out.push(`    </ModelsUsed>\n`);
   out.push(`  </Runs>\n`);
+  }
 
   out.push(`</AnALedger>\n`);
   return out.join('');

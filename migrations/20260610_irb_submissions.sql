@@ -1,3 +1,32 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: IRB / IEC submissions, determinations, amendments and reportable
+--          events (45 CFR 46, 21 CFR 56).
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 5 (ethics approval threaded via provenance_links)
+--   - Integrity Risk Addressed: an unanswered screening question stored as
+--     the sponsor's "no"
+--
+-- Notes:
+--   - In C2C_MIGRATION_FILES: re-runs on every deploy (CLAUDE.md RULE 1).
+--   - Idempotent (IF NOT EXISTS throughout; the amendment below is conditional).
+-- =============================================================================
+-- ─── AMENDED 2026-10-15 — involves_vulnerable_populations is tri-state ──────
+-- It was `boolean NOT NULL DEFAULT false` and the writers sent `=== true`, so a
+-- submission nobody had asked about vulnerable subjects was stored as "none
+-- involved" and the 45 CFR 46.111(b) safeguards check (irb-logic.ts) never
+-- fired for it. Now nullable with no default: NULL = not recorded, which the
+-- gate reports as not assessed. The CREATE declares that; the conditional
+-- block after it drops NOT NULL and the default on a database created before
+-- this amendment. Amended in place, not a DROP: nothing is removed and nothing
+-- re-creates the old shape. Stored `false` values are kept — one written
+-- before this change cannot be told from a recorded "no". Supersedes the
+-- remark in 20260922d_irb_submission_context.sql that this sibling is
+-- correctly NOT NULL DEFAULT false.
+-- ─────────────────────────────────────────────────────────────────────────────
 -- ============================================================================
 -- IRB / IEC Submission & Amendment Management (Capability C2C-06)
 -- ============================================================================
@@ -32,7 +61,7 @@ CREATE TABLE IF NOT EXISTS irb_submissions (
   title                              text NOT NULL,
   review_type                        text CHECK (review_type IN ('exempt','expedited','full_board')),
   risk_level                         text NOT NULL DEFAULT 'minimal' CHECK (risk_level IN ('minimal','greater_than_minimal')),
-  involves_vulnerable_populations    boolean NOT NULL DEFAULT false,
+  involves_vulnerable_populations    boolean,  -- NULL = not recorded (2026-10-15)
   vulnerable_population_protections  text,
   is_single_irb                      boolean NOT NULL DEFAULT false,
   consent_waiver_requested           boolean NOT NULL DEFAULT false,
@@ -48,6 +77,22 @@ CREATE TABLE IF NOT EXISTS irb_submissions (
 CREATE INDEX IF NOT EXISTS idx_irb_submissions_org        ON irb_submissions(organization_id);
 CREATE INDEX IF NOT EXISTS idx_irb_submissions_study      ON irb_submissions(study_id);
 CREATE INDEX IF NOT EXISTS idx_irb_submissions_submission ON irb_submissions(submission_id);
+
+-- 2026-10-15: a database created before the amendment above still has NOT NULL
+-- DEFAULT false here. Conditional on the live shape, so it is a no-op (and takes
+-- no lock) on every deploy after the first.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+     WHERE table_schema = current_schema() AND table_name = 'irb_submissions'
+       AND column_name = 'involves_vulnerable_populations'
+       AND (is_nullable = 'NO' OR column_default IS NOT NULL)
+  ) THEN
+    ALTER TABLE irb_submissions ALTER COLUMN involves_vulnerable_populations DROP DEFAULT;
+    ALTER TABLE irb_submissions ALTER COLUMN involves_vulnerable_populations DROP NOT NULL;
+  END IF;
+END $$;
 
 -- ─── Participating sites (sIRB) ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS irb_sites (

@@ -94,6 +94,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { chainedParentPolicyTables } from './lib/chained-parent-policy.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -122,9 +123,32 @@ const TENANT_COLUMNS = /^(organization_id|org_id|tenant_id|workspace_id|company_
  *
  * Modelled explicitly rather than by parsing PL/pgSQL, because a regex over a
  * DO block that guesses wrong here fails in the dangerous direction: it would
- * mark a genuinely unkeyed table as covered. Each entry names the file so the
- * claim can be checked, and the self-test asserts the file still contains it.
+ * mark a genuinely unkeyed table as covered. The two entries added on
+ * 2026-10-12 match on a literal NAME SET rather than a pattern, which is
+ * stricter again: a new table cannot drift into an exemption by being named
+ * like an old one.
+ *
+ * Each entry names the file so the claim can be checked, and carries the exact
+ * `verify` string the file must still contain. Those claims are enforced by the
+ * loop below `isArchived`, on every run of this gate — not by the self-test.
+ * This comment said "the self-test asserts the file still contains it" from the
+ * day the list was introduced, and that was never true: nothing checked it, so
+ * an exemption could have outlived its migration indefinitely. Corrected
+ * 2026-10-12 by writing the check rather than the sentence.
  */
+/** The literal name lists the two DO blocks below loop over. */
+const KNOWLEDGE_GRAPH_KEYED = new Set([
+  'knowledge_graph_nodes',
+  'knowledge_graph_edges',
+  'lumen_knowledge_graph_edges',
+  'citation_chains',
+]);
+const LUMEN_COUNCIL_KEYED = new Set([
+  'council_sessions',
+  'agent_executions',
+  'data_verifications',
+]);
+
 const DYNAMIC_KEYERS = [
   {
     file: 'db/migrations/20260728_stability_tenant_isolation.sql',
@@ -132,12 +156,82 @@ const DYNAMIC_KEYERS = [
     //   EXECUTE format('ALTER TABLE %I.%I ADD COLUMN IF NOT EXISTS tenant_id INTEGER', …)
     match: (table) => /^stab_/.test(table),
     adds: 'tenant_id',
+    verify: 'ADD COLUMN IF NOT EXISTS tenant_id INTEGER',
     why: "sweeps every table named LIKE 'stab\\_%', adding tenant_id then ENABLE/FORCE RLS and tenant_isolation_policy",
+  },
+  {
+    // Added 2026-10-12. These four were sitting in the baseline as exempt with
+    // a note explaining that they are NOT unkeyed and this gate simply could not
+    // see the column. A standing note about a blind spot is a worse answer than
+    // closing it: the baseline then overstates the debt by four, and an
+    // overstated baseline hides the next real entry — the same parity rule the
+    // stale-entry check below enforces.
+    file: 'db/migrations/20260813_knowledge_graph_tenant_keys.sql',
+    //   tables text[] := ARRAY['knowledge_graph_nodes', 'knowledge_graph_edges',
+    //                          'lumen_knowledge_graph_edges', 'citation_chains'];
+    //   EXECUTE format('ALTER TABLE public.%I ADD COLUMN organization_id INTEGER', t)
+    // then ENABLE + FORCE ROW LEVEL SECURITY and tenant_isolation_policy, with an
+    // UNCONDITIONAL predicate so an unattributed row reaches nobody.
+    match: (table) => KNOWLEDGE_GRAPH_KEYED.has(table),
+    adds: 'organization_id',
+    verify: 'ADD COLUMN organization_id INTEGER',
+    why: 'keys and policies the four knowledge-graph tables by a literal name list in a DO block',
+  },
+  {
+    // Added 2026-10-12 alongside the knowledge-graph entry. Not in the baseline
+    // today — no per-request path names these three — so this entry prevents a
+    // false one rather than removing one.
+    file: 'migrations/20260724_lumen_council_provisioning.sql',
+    //   FOREACH t IN ARRAY ARRAY['council_sessions', 'agent_executions', 'data_verifications']
+    //     EXECUTE format('ALTER TABLE lumen.%I ADD COLUMN IF NOT EXISTS organization_id INTEGER', t)
+    match: (table) => LUMEN_COUNCIL_KEYED.has(table),
+    adds: 'organization_id',
+    verify: 'ADD COLUMN IF NOT EXISTS organization_id INTEGER',
+    why: 'adds organization_id to lumen.{council_sessions,agent_executions,data_verifications}',
   },
 ];
 
 const ARCHIVED = ['_legacy/', '_deprecated_migrations/', 'docs/archive/', '_consolidated/', 'node_modules/'];
 const isArchived = (p) => ARCHIVED.some((a) => p.includes(a));
+
+/**
+ * An exemption must not outlive the migration it cites.
+ *
+ * Each DYNAMIC_KEYERS entry suppresses a finding on the strength of a file this
+ * gate never executes. If that file is deleted, archived or rewritten, the
+ * exemption becomes a silent hole: tables permanently excused by a sweep that no
+ * longer exists. The list's own header has claimed since it was introduced that
+ * "the self-test asserts the file still contains it" — it did not, and nothing
+ * else did either. A standing claim with no check behind it is how the four
+ * knowledge-graph tables could have sat here forever.
+ *
+ * So each entry is checked here, on every run of the REAL gate rather than only
+ * under the self-test: the file must exist, must not be archived, and must still
+ * contain the ADD COLUMN it is cited for.
+ */
+for (const keyer of DYNAMIC_KEYERS) {
+  const full = path.join(repoRoot, keyer.file);
+  const problem = !fs.existsSync(full)
+    ? 'the file does not exist'
+    : isArchived(keyer.file)
+      ? 'the file is archived, so no applier runs it'
+      : !fs.readFileSync(full, 'utf8').includes(keyer.verify)
+        ? `the file no longer contains "${keyer.verify}"`
+        : null;
+  if (problem) {
+    console.error(
+      `\n[ci:unkeyed-request-tables] a dynamic-keyer exemption is no longer true:\n` +
+        `      ${keyer.file}\n` +
+        `      ${problem}\n\n` +
+        `  That entry excuses tables from this gate on the strength of that file adding ` +
+        `${keyer.adds}.\n` +
+        `  With the file gone or changed, the exemption is a silent hole.\n\n` +
+        `  Either restore the sweep, or remove the DYNAMIC_KEYERS entry and let the\n` +
+        `  affected tables be reported again (and classified in the baseline).`,
+    );
+    process.exit(1);
+  }
+}
 
 function walk(dir, exts, acc = []) {
   let entries;
@@ -157,6 +251,12 @@ function walk(dir, exts, acc = []) {
 }
 
 const stripSql = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/--[^\n]*/g, ' ');
+
+// The final deploy sweep installs literal chained child declarations through
+// one guarded generator, so no literal CREATE POLICY names their tables. Model
+// that existing mechanism rather than inventing tenant columns or debt entries.
+const chainedPolicyFile = 'db/migrations/20260813_child_table_parent_scoped_rls.sql';
+const chainedPolicies = chainedParentPolicyTables(fs.readFileSync(path.join(repoRoot, chainedPolicyFile), 'utf8'));
 
 // ── 1. What the SQL creates, and which tenant columns each table ends up with ──
 
@@ -273,7 +373,7 @@ for (const [table, files] of referencedBy) {
   const info = created.get(table);
   if ([...info.columns].some((c) => TENANT_COLUMNS.test(c))) continue;
   if (dynamicKeyerFor(table)) continue;
-  if (directlyPolicied.has(table)) continue;
+  if (directlyPolicied.has(table) || chainedPolicies.has(table.replace(/^public\./, ''))) continue;
   unkeyed.push({
     table,
     createdIn: [...new Set(info.files)].sort(),
@@ -286,12 +386,21 @@ unkeyed.sort((a, b) => a.table.localeCompare(b.table));
 // ── Baseline ─────────────────────────────────────────────────────────────────
 
 if (WRITE_BASELINE) {
-  let existing = {};
+  // Read the WHOLE prior file, not just .entries. This path used to build a
+  // fresh {$comment, generatedAt, total, entries} and write it, which preserved
+  // each table's reason (deliberately) but destroyed every other $-prefixed key
+  // — here, $reviewed_2026_10_12, the record that all 105 entries were
+  // classified and none left unreviewed. Enforcement reads only .entries, so
+  // nothing would have reported the loss. Same defect, same day, as
+  // scripts/ci/check-duplicate-table-ddl.mjs.
+  let prior = {};
   try {
-    existing = JSON.parse(fs.readFileSync(BASELINE_PATH, 'utf8')).entries ?? {};
+    prior = JSON.parse(fs.readFileSync(BASELINE_PATH, 'utf8'));
   } catch {
     /* first run */
   }
+  const existing = prior.entries ?? {};
+  const OWNED = new Set(['$comment', 'generatedAt', 'total', 'entries']);
   const baseline = {
     $comment:
       'Tables a per-request server path reads that carry NO tenant column, so no RLS ' +
@@ -308,12 +417,28 @@ if (WRITE_BASELINE) {
       unkeyed.map((u) => [u.table, existing[u.table] ?? 'unreviewed — no one has classified this table yet']),
     ),
   };
+  // Every other annotation the file carried, in the order it had them.
+  for (const [key, value] of Object.entries(prior)) {
+    if (!OWNED.has(key)) baseline[key] = value;
+  }
+
   fs.writeFileSync(BASELINE_PATH, JSON.stringify(baseline, null, 2) + '\n');
   const kept = unkeyed.filter((u) => existing[u.table]).length;
+  const dropped = Object.keys(existing).filter((t) => !unkeyed.some((u) => u.table === t));
+  const carried = Object.keys(baseline).filter((k) => k.startsWith('$') && k !== '$comment');
   console.log(
     `[ci:unkeyed-request-tables] baseline written: ${unkeyed.length} tables ` +
       `(${kept} existing reason(s) preserved)`,
   );
+  if (carried.length > 0) {
+    console.log(`[ci:unkeyed-request-tables] annotations carried over: ${carried.join(', ')}`);
+  }
+  if (dropped.length > 0) {
+    console.log(
+      `[ci:unkeyed-request-tables] ${dropped.length} entry(ies) dropped — no longer ` +
+        `unkeyed-and-read: ${dropped.join(', ')}`,
+    );
+  }
   process.exit(0);
 }
 

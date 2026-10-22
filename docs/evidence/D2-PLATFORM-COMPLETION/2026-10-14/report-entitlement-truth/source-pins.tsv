@@ -1,0 +1,5 @@
+sha256	path
+7a25b8d54c23b17c5f13088a35517e03745c1160f2f6f80d7550bdacdf6a52c0	server/services/entitlements/resolver.ts
+a20777e0a7222051dcab47d69edb847f866f3543affe1d0b0386ac122286e05a	server/services/report-os/entitlement-map.ts
+62f2e1f2b8f157aa11e3f497fe2d7a5be8612f98dd9ef0b889b14a8fe57e0480	server/services/__tests__/usage-alignment.test.ts
+565d5fec8fef7a2345d36f39fcfe25b851a3a0a8e86d915a7d793f530f36210b	server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts

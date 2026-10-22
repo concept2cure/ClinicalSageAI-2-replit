@@ -283,8 +283,8 @@ describe('Stage 4: Backend beta contract smoke net', () => {
     expect(inlineRoutes).toContain('etmfGateway.use(etmfCompletenessModule.default);');
     expect(inlineRoutes).toContain('etmfGateway.use(etmfGovernedModule.default);');
 
-    // HAQ Manager mounted unconditionally (guard removed — persisted data source).
-    expect(docRoutes).toContain("app.use('/api/haq-manager', haqModule.default);");
+    // The HAQ store is retired (2026-10-18): agency questions are answered on the inbox (routes/c2c/agency-responses.ts).
+    expect(docRoutes).not.toContain("app.use('/api/haq-manager'");
     expect(docRoutes).not.toContain("isStaticDataEnabled('ENABLE_HAQ_MANAGER_STATIC_DATA')");
     // The flag is gone as an active STATIC_DATA_FLAGS entry (quoted); an
     // explanatory comment may still name it unquoted.

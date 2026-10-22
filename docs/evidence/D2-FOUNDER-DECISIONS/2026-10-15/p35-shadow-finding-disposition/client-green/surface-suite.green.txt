@@ -1,0 +1,37 @@
+# Every client test importing SubmissionSeqWorkspaces, SubmissionCenter or ShadowFindingDisposition (33 files) — 2026-10-15
+# npx vitest run $(grep -rln 'SubmissionSeqWorkspaces\|surfaces/SubmissionCenter\|ShadowFindingDisposition' client/src --include=*.test.tsx --include=*.test.ts)
+  client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx
+  client/src/concept2cure/v2/__tests__/dispatchWorkspaceDispatchGate.test.tsx
+  client/src/concept2cure/v2/__tests__/dispatchWorkspaceFreezeGate.test.tsx
+  client/src/concept2cure/v2/__tests__/dispatchWorkspaceHonesty.test.tsx
+  client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx
+  client/src/concept2cure/v2/__tests__/driveQueue-react-selection.test.tsx
+  client/src/concept2cure/v2/__tests__/ectdCompileCarriesSequence.test.tsx
+  client/src/concept2cure/v2/__tests__/emptyStateBatchB.test.tsx
+  client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx
+  client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx
+  client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx
+  client/src/concept2cure/v2/__tests__/shadowReviewGateScore.test.tsx
+  client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx
+  client/src/concept2cure/v2/__tests__/submissionBuilderDocumentPicker.test.tsx
+  client/src/concept2cure/v2/__tests__/submissionBuilderHistory.test.tsx
+  client/src/concept2cure/v2/__tests__/submissionBuilderSourceDocument.test.tsx
+  client/src/concept2cure/v2/__tests__/submissionCenterAssemblyCaption.test.tsx
+  client/src/concept2cure/v2/__tests__/submissionCenterCreate.test.tsx
+  client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx
+  client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx
+  client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx
+  client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx
+  client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx
+  client/src/concept2cure/v2/__tests__/submissionCenterNoFixtures.test.tsx
+  client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx
+  client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx
+  client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx
+  client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts
+  client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx
+  client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx
+  client/src/concept2cure/v2/__tests__/submissionSelectorScope.test.tsx
+  client/src/concept2cure/v2/__tests__/submissionValidatedStage.test.tsx
+  client/src/concept2cure/v2/__tests__/validationExplainNarrates.test.tsx
+ Test Files  33 passed (33)
+      Tests  290 passed (290)

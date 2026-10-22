@@ -15,12 +15,11 @@ export const PMDA_PROTOCOL_UNVERIFIED =
   'gateway system directly.';
 
 /**
- * Why FDA ESG transmit is wired but not proven (fda-esg.ts header, "KNOWN
- * CONFORMANCE GAP"; launch row D7).
+ * Why engineered FDA ESG transport is not yet agency-qualified (launch row D7).
  */
 export const FDA_ESG_NOT_PROVEN =
-  'the ESG AS2 envelope is not PKCS#7 signed, so FDA would reject it, and no ESG account, DTDs or accepted test ' +
-  'sequence are in place';
+  'AS2 CMS signing/encryption and pinned MDN verification are engineered, but environment-specific FDA UAT, ' +
+  'credential onboarding, required submission artifacts and an accepted test sequence have not been verified';
 
 /**
  * Why an adapter that posts to an agency endpoint is not a channel: its
@@ -31,4 +30,4 @@ export const FDA_ESG_NOT_PROVEN =
  * not checked against agency documents.
  */
 export const ADAPTER_UNSOURCED =
-  'its adapter posts to an endpoint written from no agency source, so nothing is sent through it';
+  'its agency wire contract has no verified regulator source; the canonical transmit path refuses it before any bytes are sent';

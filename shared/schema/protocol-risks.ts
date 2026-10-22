@@ -4,7 +4,7 @@
  * Per-protocol risk assessment that complements the authoring layer: a register
  * of risks scored on a likelihood × impact matrix, with mitigations and a residual
  * score, soft-linked to a protocol document. Risk scoring is deterministic
- * (protocol-risks-logic.ts). Grounded in ICH E6(R2) §5.0 (quality risk management)
+ * (protocol-risks-logic.ts). Grounded in ICH E6(R3) Annex 1 §3.10.1 (risk management)
  * and ISO 14971 risk-assessment principles. Conventions match the platform;
  * status/type columns are CHECK-constrained. Mutations are governed + audited.
  *
@@ -27,8 +27,9 @@ export const protocolRisks = pgTable(
     protocolDocumentId: integer('protocol_document_id').notNull(),
     category: text('category').$type<RiskCategory>().notNull().default('operational'),
     description: text('description').notNull(),
-    likelihood: text('likelihood').$type<RiskLikelihood>().notNull().default('possible'),
-    impact: text('impact').$type<RiskImpact>().notNull().default('moderate'),
+    // No default: a rating is an assessment (defaults removed 2026-10-15).
+    likelihood: text('likelihood').$type<RiskLikelihood>().notNull(),
+    impact: text('impact').$type<RiskImpact>().notNull(),
     mitigation: text('mitigation'),
     residualLikelihood: text('residual_likelihood').$type<RiskLikelihood>(),
     residualImpact: text('residual_impact').$type<RiskImpact>(),

@@ -1,0 +1,21 @@
+{
+  "executionBase": "e79626c0849f0f8c2338b32f85d4bc69bccef8f5",
+  "note": "These pins cover final corrected inputs. Final backend46/3 includes the compiler null-revision refusal correction; wider backend150/13 is historical and precedes that correction. Final UI82/7, packager54/5 and seven-stage browser results are retained separately with actual execution logs.",
+  "sources": {
+    "client/src/concept2cure/v2/__tests__/_submission-deliverables-fixture.tsx": "d8fe032ea6255c82fc98599062bd9bdd6b137d84583e7a9669685c8743268466",
+    "client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx": "3c6ea709ff5f5e8b9e619d20ed4d8ef6943eb0d6195a1dc84bf263f35aac1647",
+    "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx": "86409ce5a919bf91cd9eb329aeba4c8597868e456d0160f0f4dd5dc8c7d56cbf",
+    "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx": "1c0189006fd5cb79fe1e6a047c958409df4fbe6c5dc7e518da5dc0c1aea95910",
+    "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx": "d32a5c9767e94d93ee790e14ee9c517f6d5032c025b1ac2b36e77b58501ec35f",
+    "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx": "15484257b26bca750059b8506b4265d869354f7f894b57fd3a94cb497c550040",
+    "server/routes/__tests__/submissions-leaf-study-tagging.test.ts": "b9c26a908271d7ab28903b7d21ba82a0935afec18a7c1b6ebb808271f549a2f1",
+    "server/routes/submissions.ts": "d20fac35c8dccd2a4a2049656b3dd22fb0047b4f3e171dd0024c93eec1a8b43b",
+    "server/services/ectd/__tests__/builder-study-tagging-route.pglite.test.ts": "06fc6f4f4bb65dc89b1194b47e4bfe00e9bd9c4ac76fed58f48845466acdcf4c",
+    "server/services/part11/__tests__/ectd-sequence-binding-document.pglite.test.ts": "5e0ede652af63ce6198f5bf3292f094bd65e988468ba52efc6dfd9ef5a6da2c1",
+    "server/services/part11/signature-persistence.ts": "82f3a41111c1513d3b175d948b7b5ed8170a3cf52490c65bb9cfaa127e26c88c",
+    "server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts": "d3e767211a37e50a881cd4551adf871e635e08a3f419403c7cff98f2da9d77b4",
+    "server/services/submission-service/submission-service.ts": "ad39612aa65295a075bedcaa9b8f1f25c72d9a6a50c15c77ac6a573374386895",
+    "shared/types/database.d.ts": "38e165080d8b8046d8f3490d67a96ab301315c3891be24fb7bf91f10449159b5"
+  },
+  "bodylessCorrectionBase": "3005e4f6d"
+}

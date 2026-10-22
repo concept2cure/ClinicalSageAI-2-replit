@@ -119,7 +119,7 @@ export async function launchResearchJob(request: DeepResearchRequest): Promise<D
     });
   });
 
-  return getJobStatus(jobId);
+  return getJobStatus(jobId, request.organizationId);
 }
 
 /**
@@ -411,15 +411,23 @@ function buildFallbackSynthesis(
 // JOB QUERIES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export async function getJobStatus(jobId: number, organizationId?: number): Promise<DeepResearchJob> {
-  // organizationId is optional only for internal callers that just created the
-  // job. Route handlers MUST pass the authenticated org so a caller can't read
-  // another tenant's job (results/synthesis included) by guessing ids.
+export async function getJobStatus(jobId: number, organizationId: number): Promise<DeepResearchJob> {
+  /* The organisation is REQUIRED, and the predicate is unconditional (D3,
+     2026-10-11). It used to be optional "only for internal callers", and the
+     SQL read `($2::int IS NULL OR organization_id = $2)`: a null lifted the
+     predicate over every tenant's row, and GET /jobs/:id/stream passed one
+     whenever it could not resolve an organisation. A caller that cannot name
+     an organisation has no job to read, so this refuses before the statement
+     rather than widening it. */
+  const orgId = Number(organizationId);
+  if (!Number.isInteger(orgId) || orgId <= 0) {
+    throw new Error(`Job ${jobId} not found`);
+  }
   const result = await pool.query(
     `SELECT id, uuid, organization_id, project_id, user_id, status, query, progress,
             results, synthesis, credits_used, connector_logs, created_at, completed_at
-     FROM deep_research_jobs WHERE id = $1 AND ($2::int IS NULL OR organization_id = $2)`,
-    [jobId, organizationId ?? null]
+     FROM deep_research_jobs WHERE id = $1 AND organization_id = $2`,
+    [jobId, orgId]
   );
 
   if (result.rows.length === 0) throw new Error(`Job ${jobId} not found`);

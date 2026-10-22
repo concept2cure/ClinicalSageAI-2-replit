@@ -133,6 +133,9 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'shadow-review', label: 'Shadow review', description: 'The simulated-reviewer surface — predicts Refuse-to-File / Complete-Response risk under a chosen regulator lens (FDA, EMA, PMDA, MDR/IVDR notified body) before filing.', scope: 'project', group: 'module' },
   { id: 'tasking', label: 'Tasking', description: 'The task board / list / kanban.', scope: 'project', group: 'module' },
   { id: 'submission-gateway', label: 'Submission Gateway', description: 'The submission gateway (transmittals, validation).', scope: 'project', group: 'module' },
+  // A launch-catalog Submission Center screen that no target reached, so AnA
+  // could not get to it at all; its compile controls are wave 7 actions.
+  { id: 'ectd-compile', label: 'eCTD Compile', description: 'The eCTD compile and publishing workspace for the project.', scope: 'project', group: 'module' },
   {
     id: 'intelligence', label: 'Intelligence', description: 'The intelligence surface (protocol, CMC, biostat, reports tabs).', scope: 'project', group: 'module',
     params: [{
@@ -170,7 +173,7 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'market-access', label: 'Market Access / HEOR', description: 'The health-economics & market-access workspace — budget-impact, cost-effectiveness (ICER), Markov, and PSA modeling for payer dossiers.', scope: 'project', group: 'module' },
   { id: 'nda-cockpit', label: 'NDA/BLA cockpit', description: 'The NDA/BLA marketing-application cockpit — CTD readiness, Module 1 admin, the PDUFA clock, Refuse-to-File risk, and biologics.', scope: 'project', group: 'module' },
   { id: 'maa-cockpit', label: 'MAA cockpit', description: 'The EU MAA marketing-application cockpit.', scope: 'project', group: 'module' },
-  { id: 'haq-manager', label: 'Health-authority questions', description: 'The HAQ manager — agency questions grouped by round, with analysis, drafts and commitments.', scope: 'project', group: 'module' },
+  { id: 'haq-manager', label: 'Health-authority questions', description: 'Agency letters that ask for a response: each question, its response and the signature that approved it.', scope: 'project', group: 'module' },
   // The Communication Center is not a rail item (product decision, 2026-07-28);
   // it is reached from the project home, ⌘K and deep link — and, from here,
   // by AnA. It was the one project surface `navigate_to` could not reach.

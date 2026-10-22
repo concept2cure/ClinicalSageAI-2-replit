@@ -1,0 +1,39 @@
+D-29-A — RED BEFORE GREEN
+=========================
+
+The case: `computeDocHash` read `authoring_sections` with `ORDER BY order_index`
+and no tiebreaker, while the digest it feeds (`sectionsDigest`) states in its own
+docstring that the rows must already be in "the caller's recorded order", and
+`fullVisibleAuthoringSnapshot` names that order: "Rows use signing's total
+order" — `order_index, created_at, id`.
+
+The assertion that fails is the invariant itself: the hash a signature stores
+IS the digest of the text the signing route read.
+
+$ env -u DATABASE_URL RLS_ENFORCE=off npx vitest run \
+    server/services/authoring/__tests__/authoring-doc-hash-total-order.pglite.test.ts
+
+ × computeDocHash is the digest of signing's total order >
+     agrees with the signing read over a tie group whose created_at order is
+     the reverse of insertion
+   -> expected '928e7772...' to be 'ceb8600e...'
+
+ AssertionError: expected '928e77724ca84c713728e43bf0877ce2e87e6...' to be
+                          'ceb8600ea8bb70e15e9bbaf430365c730c0be...'
+ Expected: "ceb8600ea8bb70e15e9bbaf430365c730c0be95d22f6f2bf1c5f4727e31d7939"
+ Received: "928e77724ca84c713728e43bf0877ce2e87e6eaf1e4843f4643372cc50a4a22b"
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+
+Two of the four cases in that first run PASS before the fix as well as after —
+the two heap-rewrite stability cases. They are recorded in the file as PINS, not
+as the red, and the file says so: the reordering PostgreSQL is free to perform
+over a tie is exactly what no test can force, which is why the red case asserts
+the invariant rather than hunting a reordering.
+
+AFTER THE FIX (`ORDER BY order_index, created_at, id`), with the two cases added
+by the mutant run:
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)

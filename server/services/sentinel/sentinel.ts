@@ -63,6 +63,26 @@ export const SENTINEL_PROJECT_HEALTH_SQL = `SELECT p.id, p.name,
        GROUP BY p.id, p.name
        HAVING COUNT(t.id) >= 5`;
 
+function normalizeConfig(
+  organizationId: number,
+  stored: Partial<SentinelConfig> | null | undefined
+): SentinelConfig {
+  return {
+    ...DEFAULT_SENTINEL_CONFIG,
+    ...stored,
+    organizationId,
+    analyzers: {
+      ...DEFAULT_SENTINEL_CONFIG.analyzers,
+      ...stored?.analyzers,
+      budget_burn: false,
+    },
+    thresholds: {
+      ...DEFAULT_SENTINEL_CONFIG.thresholds,
+      ...stored?.thresholds,
+    },
+  };
+}
+
 export class AISentinel {
   private configs = new Map<number, SentinelConfig>();
 
@@ -86,10 +106,7 @@ export class AISentinel {
       [organizationId]
     );
 
-    const config: SentinelConfig =
-      result.rows.length > 0
-        ? { organizationId, ...DEFAULT_SENTINEL_CONFIG, ...result.rows[0].sentinel_config }
-        : { organizationId, ...DEFAULT_SENTINEL_CONFIG };
+    const config = normalizeConfig(organizationId, result.rows[0]?.sentinel_config);
 
     this.configs.set(organizationId, config);
     return config;
@@ -100,7 +117,12 @@ export class AISentinel {
     update: Partial<SentinelConfig>
   ): Promise<SentinelConfig> {
     const current = await this.getConfig(organizationId);
-    const merged = { ...current, ...update, organizationId };
+    const merged = normalizeConfig(organizationId, {
+      ...current,
+      ...update,
+      analyzers: { ...current.analyzers, ...update.analyzers },
+      thresholds: { ...current.thresholds, ...update.thresholds },
+    });
 
     await this.pool.query(
       `INSERT INTO pm_settings (organization_id, ai_settings, updated_at)
@@ -151,11 +173,9 @@ export class AISentinel {
         // and found nothing — "0 findings from 0 projects" is the same sentence
         // for both, and the reason is the only thing that tells them apart.
         if (result.unavailable) {
-          console.warn(
-            `[Sentinel] ${analyzerType}: NOT ASSESSED — ${result.unavailable.reason}`
-          );
-        } else {
-          console.log(
+          console.warn(`[Sentinel] ${analyzerType}: NOT ASSESSED — ${result.unavailable.reason}`);
+        } else if (result.findings.length > 0) {
+          console.info(
             `[Sentinel] ${analyzerType}: ${result.findings.length} findings from ${result.projectsScanned} projects in ${result.durationMs}ms`
           );
         }
@@ -220,10 +240,10 @@ export class AISentinel {
       const severity: FindingSeverity = isOverdue
         ? 'critical'
         : daysLeft <= 3
-          ? 'high'
-          : daysLeft <= 7
-            ? 'medium'
-            : 'low';
+        ? 'high'
+        : daysLeft <= 7
+        ? 'medium'
+        : 'low';
 
       findings.push({
         findingId: uuidv4(),
@@ -234,7 +254,9 @@ export class AISentinel {
         title: isOverdue
           ? `Project "${proj.name}" is ${Math.abs(daysLeft)} days overdue`
           : `Project "${proj.name}" deadline in ${daysLeft} days`,
-        summary: `Project at ${proj.progress || 0}% progress with ${isOverdue ? 'expired' : 'approaching'} deadline. Current risk: ${proj.risk_level || 'unknown'}.`,
+        summary: `Project at ${proj.progress || 0}% progress with ${
+          isOverdue ? 'expired' : 'approaching'
+        } deadline. Current risk: ${proj.risk_level || 'unknown'}.`,
         details: {
           targetDate: proj.target_end_date,
           daysRemaining: daysLeft,
@@ -262,10 +284,7 @@ export class AISentinel {
     }
 
     // Overdue tasks across organization
-    const tasksResult = await this.pool.query(
-        SENTINEL_OVERDUE_TASKS_SQL,
-      [orgId]
-    );
+    const tasksResult = await this.pool.query(SENTINEL_OVERDUE_TASKS_SQL, [orgId]);
 
     if (tasksResult.rows.length > 0) {
       // Group by project
@@ -519,10 +538,7 @@ export class AISentinel {
     const threshold = config.thresholds.qualityDriftThreshold;
 
     // Per-project task health
-    const qualityResult = await this.pool.query(
-      SENTINEL_PROJECT_HEALTH_SQL,
-      [orgId]
-    );
+    const qualityResult = await this.pool.query(SENTINEL_PROJECT_HEALTH_SQL, [orgId]);
 
     for (const row of qualityResult.rows) {
       const completionRate = parseInt(row.completion_rate);
@@ -739,15 +755,27 @@ export class AISentinel {
     status: string,
     resolvedById?: number
   ): Promise<any> {
+    // Resolving or dismissing closes a finding, and the closer is recorded on
+    // the transition only (ledger L195): a repeat of the same status keeps the
+    // original closer and time. Any other status (open, acknowledged) means
+    // nobody has closed it, so the last closer is cleared rather than left to
+    // stand beside a state they did not set. Column references in SET read the
+    // row as it was before this UPDATE.
     const result = await this.pool.query(
       `UPDATE sentinel_findings SET
          status = $1,
-         resolved_at = CASE WHEN $1 = 'resolved' THEN NOW() ELSE resolved_at END,
-         resolved_by_id = CASE WHEN $1 = 'resolved' THEN $2 ELSE resolved_by_id END,
+         resolved_at = CASE
+           WHEN $1 IN ('resolved', 'dismissed') AND status IS DISTINCT FROM $1 THEN NOW()
+           WHEN $1 IN ('resolved', 'dismissed') THEN resolved_at
+           ELSE NULL END,
+         resolved_by_id = CASE
+           WHEN $1 IN ('resolved', 'dismissed') AND status IS DISTINCT FROM $1 THEN $2::integer
+           WHEN $1 IN ('resolved', 'dismissed') THEN resolved_by_id
+           ELSE NULL END,
          updated_at = NOW()
        WHERE finding_id = $3 AND organization_id = $4
        RETURNING *`,
-      [status, resolvedById || null, findingId, organizationId]
+      [status, resolvedById ?? null, findingId, organizationId]
     );
     return result.rows[0];
   }

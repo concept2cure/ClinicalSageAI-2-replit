@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-10-10T05:59:56.450Z",
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "subject": {
+    "implementation_commit": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+    "checked_tree": "f96f37cb70e1dfbe4ca87938d4b0556d6fd6a845"
+  },
+  "run": {
+    "id": 38028595001,
+    "name": "CI",
+    "head_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+    "event": "push",
+    "status": "in_progress",
+    "conclusion": null,
+    "run_attempt": 1,
+    "run_started_at": "2026-10-10T05:45:35Z",
+    "updated_at": "2026-10-10T05:45:37Z",
+    "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38028595001"
+  },
+  "jobs": [
+    {
+      "id": 114144600022,
+      "name": "Secret scan (full history)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38028595001/job/114144600022",
+      "completed_failed_steps": [],
+      "in_progress_steps": []
+    },
+    {
+      "id": 114144600131,
+      "name": "Lint",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38028595001/job/114144600131",
+      "completed_failed_steps": [
+        {
+          "name": "Proof tier — schema contracts + golden journeys + export contracts",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 33
+        },
+        {
+          "name": "No hand-rolled error-envelope reads",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 51
+        },
+        {
+          "name": "Guardrails — every in-scope AnA tool reads from its register entry (with selftest)",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 58
+        },
+        {
+          "name": "Guardrails — tenant-isolation in raw SQL (no regressions)",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 74
+        },
+        {
+          "name": "Guardrails — requestDb (RLS) adoption (no regressions)",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 84
+        }
+      ],
+      "in_progress_steps": [
+        {
+          "name": "Run ESLint",
+          "status": "in_progress",
+          "conclusion": null,
+          "number": 123
+        }
+      ]
+    },
+    {
+      "id": 114144600174,
+      "name": "Security Scan",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38028595001/job/114144600174",
+      "completed_failed_steps": [],
+      "in_progress_steps": []
+    },
+    {
+      "id": 114144600266,
+      "name": "Security Contract Tests",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38028595001/job/114144600266",
+      "completed_failed_steps": [],
+      "in_progress_steps": []
+    },
+    {
+      "id": 114144601109,
+      "name": "Nightly Governance Strict",
+      "status": "completed",
+      "conclusion": "skipped",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38028595001/job/114144601109",
+      "completed_failed_steps": [],
+      "in_progress_steps": []
+    }
+  ],
+  "ana_readiness": {
+    "job_name": "AnA Readiness Tests",
+    "listed": false,
+    "status": "not_listed_in_workflow_jobs_at_snapshot",
+    "conclusion": null
+  },
+  "completed_main_ci_failed_gate_count": 5,
+  "completed_main_ci_failed_gate_causes": null,
+  "raw_failed_gate_log_evidence": {
+    "available": false,
+    "job_id": 114144600131,
+    "last_download_attempt_at": "2026-10-10T05:59:56.3960634Z",
+    "last_download_http_status": 404,
+    "last_download_error": "BlobNotFound: this in-progress job's log archive does not yet exist."
+  },
+  "limitations": [
+    "The CI workflow and Lint job are in progress; no whole-CI pass is claimed.",
+    "Five completed failed Lint gates are freshly confirmed by job metadata; their exact causes are not inferred from prior-head logs while the current job archive is unavailable.",
+    "AnA Readiness Tests is not listed at this snapshot; no fresh pass is claimed.",
+    "Prior-head main-CI failures are historical evidence in PRIOR_HEAD_CI.md and are not assigned to this implementation commit.",
+    "Separate completed Semgrep failure with seven fresh delta findings is recorded in remote-semgrep.json; overall release remains uncleared."
+  ]
+}

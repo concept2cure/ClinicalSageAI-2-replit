@@ -1,0 +1,12 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:token-contrast"
+  ],
+  "executionBase": "8d06f7156",
+  "exitCode": 0,
+  "rawSha256": "600845bc50899b61feb89699c61c4e0df142cf41d9669700e9abd59036e6c599",
+  "output": "\u2705 token-contrast: 131 pairs checked \u2014 text \u2265 4.5:1, non-text \u2265 3:1.\n   15 documented exceptions (brand, muted-text ramp, structural borders) held at or above their recorded ratios.\n"
+}

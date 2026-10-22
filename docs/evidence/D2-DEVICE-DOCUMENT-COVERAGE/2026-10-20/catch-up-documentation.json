@@ -1,0 +1,11 @@
+{
+  "recordedAt": "2026-10-20T20:53:50.819791+00:00",
+  "from": "35f3db3469fb0c8f0236eda75bca43c2095487a2",
+  "to": "eb4ecf5aca3f171d170ec9051e38371c11bccd76",
+  "incomingCommits": 2,
+  "incomingChangedPaths": 84,
+  "allDocumentationOnly": true,
+  "ownedOverlap": [],
+  "sourceHashesUnchanged": true,
+  "qualification": "Documentation-only fast-forward; executed source bytes remain those qualified on35f3db346. Legacy rail fixture update is separately qualified."
+}

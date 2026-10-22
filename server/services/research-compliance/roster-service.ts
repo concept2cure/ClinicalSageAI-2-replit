@@ -74,6 +74,12 @@ export async function loadRosterForGate(orgId: number, personnelIds: number[]): 
     `SELECT id, full_name, role FROM research_personnel WHERE organization_id = $1 AND id = ANY($2::int[]) AND deleted_at IS NULL`,
     [orgId, personnelIds],
   );
+  // 2026-10-15: an id not found here (another organization's, deleted, mistyped) was
+  // dropped silently, and the gate then cleared the people it found as if it had
+  // checked everyone named. It is refused by name instead.
+  const found = new Set(p.rows.map((r) => Number(r.id)));
+  const notFound = Array.from(new Set(personnelIds.filter((id) => !found.has(id))));
+  if (notFound.length > 0) throw new RosterError('NOT_FOUND', `Personnel ${notFound.join(', ')} not found for this organization.`);
   const t = await pool.query(
     `SELECT t.personnel_id, p.full_name, t.training_type, t.completed_date, t.expires_date
        FROM personnel_training t JOIN research_personnel p ON p.id = t.personnel_id

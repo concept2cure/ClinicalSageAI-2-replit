@@ -1,0 +1,33 @@
+# 10 mutations, all red
+# driver: scratchpad/mutate3.py + mutate4.py (apply, run the named test, restore)
+
+RED       the agency question is a text box again
+          test: client/src/concept2cure/v2/__tests__/anaQuestionCard.test.tsx
+          first failures: × client/src/concept2cure/v2/__tests__/anaQuestionCard.test.tsx > a question whose type the card never implemented > draws an agency as positions, with what filing there commits the programme to 70ms
+RED       a route to a regulator nobody named is not marked
+          test: shared/regulatory/__tests__/pathway-availability.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-availability.test.ts > the agency the sponsor named > closes a filing to a regulator they did not name, and says how to open it 5ms | × shared/regulatory/__tests__/pathway-availability.test.ts > the agency the sponsor named > names every agency the sponsor gave, not just the first 1ms | × shared/regulatory/__tests__/pathway-availability.test.ts > the agency the sponsor named > comes before every other mark, because a filing is made to a regulator or not at all 5ms
+RED       the region is read from the primary agency alone
+          test: server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > which answer states which fact > reads every agency the project named, in whichever vocabulary 16ms | × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > a route to a regulator the project did not name > is not marked once that regulator is among the additional agencies 3ms
+RED       a value that names no region is guessed at
+          test: shared/regulatory/__tests__/agency-positions.test.ts
+          first failures: × shared/regulatory/__tests__/agency-positions.test.ts > the regions a set of answers names > resolves a value that belongs to no region to nothing, rather than a guess 7ms
+RED       the flow writes its own agency list again
+          test: server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > the agency question itself > offers the governed positions wherever a flow asks it, and is not a text box 28ms
+RED       every agency is claimed to have a Module 1 checklist
+          test: shared/regulatory/__tests__/agency-positions.test.ts
+          first failures: × shared/regulatory/__tests__/agency-positions.test.ts > what filing with an agency commits the programme to > says what AnA does NOT hold, which is the part nowhere else says 8ms
+RED       the agency answer is the label rather than the code
+          test: shared/regulatory/__tests__/agency-positions.test.ts
+          first failures: × shared/regulatory/__tests__/agency-positions.test.ts > the agencies this platform configures > are the canonical regions, in both directions 10ms | × shared/regulatory/__tests__/agency-positions.test.ts > the agencies this platform configures > answer with the code the platform keys on, not a label 1ms | × shared/regulatory/__tests__/agency-positions.test.ts > the agencies this platform configures > read an underscored registry name aloud 1ms
+RED       the agency question loses its escape hatch
+          test: server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > the agency question itself > offers the governed positions wherever a flow asks it, and is not a text box 36ms
+RED       every agency is assumed to take eCTD
+          test: shared/regulatory/__tests__/agency-positions.test.ts
+          first failures: × shared/regulatory/__tests__/agency-positions.test.ts > what filing with an agency commits the programme to > says the dossier standard the agency takes 7ms
+RED       the wrong regulator is reported after the class, not before (the rule block MOVED to the end of CAUTION_RULES)
+          test: shared/regulatory/__tests__/pathway-availability.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-availability.test.ts > the agency the sponsor named > comes before every other mark, because a filing is made to a regulator or not at all 8ms

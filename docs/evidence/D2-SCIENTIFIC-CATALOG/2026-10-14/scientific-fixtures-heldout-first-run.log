@@ -1,0 +1,82 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH01: Repeated equal values still have different assays 8ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH02: Repeated equal values still have different configurations 3ms
+ × server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH03: Source software qualifier cannot be silently omitted 4ms
+   → The source records software identity; omitting that material field cannot establish full context.: expected 'passed' not to be 'passed' // Object.is equality
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH04: Restricted population cannot inherit its broader label 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH05: Duplicate assay labels remain ambiguous 4ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH06: Clipped value anchor cannot borrow remote context 4ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH07: An extra source qualifier cannot be discarded 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH08: A negative value cannot supply a positive scalar 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH09: A scientific exponent cannot be clipped 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH10: Upper range endpoint cannot supply a scalar 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH11: Decimal digits cannot bind an integer result 1ms
+ × server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH12: Clipping a bound marker cannot establish a scalar 2ms
+   → The original source bound marker adjoins this clipped value anchor; source clipping cannot remove it.: expected true to be false // Object.is equality
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH13: Clipping a unit cannot establish unit binding 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH14: A witness with a different byte hash refuses 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH15: Server source object must bind its actual text hash 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH16: Unsupported semantic witness paths refuse 0ms
+ × server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH17: Earlier scalar occurrence cannot erase the named result bound 2ms
+   → An unbounded cutoff occurrence cannot supply the scalar form of the separately bounded named result.: expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH03: Source software qualifier cannot be silently omitted
+AssertionError: The source records software identity; omitting that material field cannot establish full context.: expected 'passed' not to be 'passed' // Object.is equality
+ ❯ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts:27:58
+     25|         expect(result.ok, item.rationale).toBe(true);
+     26|         expect(result.transcription.state, item.rationale).toBe('passe…
+     27|         expect(result.context.state, item.rationale).not.toBe('passed'…
+       |                                                          ^
+     28|         if (item.expected === 'not_established') expect(result.context…
+     29|         expect(result.context.reasons.length).toBeGreaterThan(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH12: Clipping a bound marker cannot establish a scalar
+AssertionError: The original source bound marker adjoins this clipped value anchor; source clipping cannot remove it.: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts:20:43
+     18|       expect(result.scientificQualification).toBe('unassessed');
+     19|       if (item.expected === 'transcription_refused') {
+     20|         expect(result.ok, item.rationale).toBe(false);
+       |                                           ^
+     21|         expect(result.transcription.state, item.rationale).toBe('faile…
+     22|         expect(result.transcription.reasons.length).toBeGreaterThan(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH17: Earlier scalar occurrence cannot erase the named result bound
+AssertionError: An unbounded cutoff occurrence cannot supply the scalar form of the separately bounded named result.: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts:20:43
+     18|       expect(result.scientificQualification).toBe('unassessed');
+     19|       if (item.expected === 'transcription_refused') {
+     20|         expect(result.ok, item.rationale).toBe(false);
+       |                                           ^
+     21|         expect(result.transcription.state, item.rationale).toBe('faile…
+     22|         expect(result.transcription.reasons.length).toBeGreaterThan(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 14 passed (17)
+   Start at  06:28:39
+   Duration  1.45s (transform 806ms, setup 239ms, import 734ms, tests 37ms, environment 0ms)
+

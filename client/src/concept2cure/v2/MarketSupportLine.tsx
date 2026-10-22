@@ -48,24 +48,35 @@ export function useMarketSupport(applicationType: string | null | undefined, mar
   return { ...state, retry: () => setBump((b) => b + 1) };
 }
 
-/** The summary, then the line when it says more than the summary does. */
+const sentence = (t: string): string => (/[.!?]$/.test(t) ? t : `${t}.`);
+
+/** The summary, then the line when it says more than the summary does; the
+ *  line alone when it already opens with the summary ("Not offered: …"). */
 export function marketSupportText(m: Pick<MarketSupportView, 'summary' | 'line'>): string {
-  const same = m.line.replace(/;/g, ',').toLowerCase() === m.summary.toLowerCase();
-  return same ? m.summary : `${m.summary}. ${m.line}`;
+  const summary = m.summary.toLowerCase();
+  const line = m.line.replace(/;/g, ',').toLowerCase();
+  if (line === summary) return sentence(m.summary);
+  if (line.startsWith(summary)) return sentence(m.line);
+  return `${sentence(m.summary)} ${sentence(m.line)}`;
 }
 
 export function MarketSupportLine({ applicationType, market }: { applicationType: string | null | undefined; market: string | null | undefined }) {
   const read = useMarketSupport(applicationType && market ? applicationType : null, market);
   if (!applicationType || !market) return null;
   if (read.loading) {
-    return <span data-testid="market-support" data-state="loading">Checking what the platform can carry for this market…</span>;
+    return <span data-testid="market-support" data-state="loading">Checking platform support for this market…</span>;
   }
   const m = read.data?.markets?.[0];
   if (read.error || !m) {
     return (
-      <span role="alert" data-testid="market-support" data-state="error">
-        What the platform can carry for this market could not be read.{' '}
-        <button type="button" className="nda-open" onClick={read.retry}>Retry</button>
+      /* status, not alert: a list of rows that failed together would raise one
+         alert per row. The Retry names its market for a screen reader, starting
+         with the visible word (WCAG 2.5.3). */
+      <span role="status" data-testid="market-support" data-state="error">
+        Platform support for this market could not be read.{' '}
+        <button type="button" className="btn ghost sm" aria-label={`Retry: platform support for ${applicationType.toUpperCase()} in ${market}`} onClick={read.retry}>
+          Retry
+        </button>
       </span>
     );
   }

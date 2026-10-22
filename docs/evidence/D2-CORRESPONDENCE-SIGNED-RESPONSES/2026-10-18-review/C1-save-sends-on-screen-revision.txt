@@ -1,0 +1,135 @@
+# mutation C1-save-sends-on-screen-revision
+# file: client/src/concept2cure/v2/surfaces/AgencyResponses.tsx
+# replaced: '{ responseText: text, expectedRevision: baseRevision, reason }'
+# with: '{ responseText: text, expectedRevision: q.responseRevision, reason }'
+# test filter: second Save
+# exit: 1
+
+id[39m=[32m"_r_0_"[39m
+                [33mrows[39m=[32m"6"[39m
+              [36m>[39m
+                [0mMy text.[0m
+              [36m</textarea>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"de-label"[39m
+                [33mfor[39m=[32m"_r_1_"[39m
+              [36m>[39m
+                [0mReason for this change[0m
+              [36m</label>[39m
+              [36m<input[39m
+                [33mclass[39m=[32m"cc-q-reason"[39m
+                [33mid[39m=[32m"_r_1_"[39m
+                [33mplaceholder[39m=[32m"e.g. Drafted from the 13-week toxicology report"[39m
+                [33mvalue[39m=[32m"Answering from the report"[39m
+              [36m/>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"cc-q-note"[39m
+                [33mdata-tone[39m=[32m"err"[39m
+              [36m>[39m
+                [0mSomeone saved revision [0m
+                [0m3[0m
+                [0m while you were editing revision [0m
+                [0m2[0m
+                [0m. Your save will be refused; copy your text, cancel, and start again from the current response.[0m
+              [36m</p>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"cc-comm-foot"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"cc-btn sm primary"[39m
+                [36m>[39m
+                  [0mSave response[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"cc-btn sm"[39m
+                [36m>[39m
+                  [0mCancel[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+        [36m</ol>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"cc-q-note"[39m
+          [33mrole[39m=[32m"note"[39m
+        [36m>[39m
+          [0mQ1 (not approved) must be approved before the letter is closed.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cc-comm-foot"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"cc-btn sm primary"[39m
+            [33mdisabled[39m=[32m""[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-download"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+              [36m/>[39m
+              [36m<polyline[39m
+                [33mpoints[39m=[32m"7 10 12 15 17 10"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"12"[39m
+                [33mx2[39m=[32m"12"[39m
+                [33my1[39m=[32m"15"[39m
+                [33my2[39m=[32m"3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Response package (.docx)[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"cc-btn sm"[39m
+            [33mdisabled[39m=[32m""[39m
+          [36m>[39m
+            [0mMarkdown[0m
+          [36m</button>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"cc-q-note"[39m
+          [36m>[39m
+            [0mAvailable when every response is approved. Outstanding:[0m
+            [0m [0m
+            [0mQ1 (Draft)[0m
+            [0m.[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+  [
+    2,
+-   2,
++   3,
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx:247:38
+    245|     expect(await screen.findByText(/Someone saved revision 3 while you…
+    246|     fireEvent.click(screen.getByRole('button', { name: 'Save response'…
+    247|     await waitFor(() => expect(sent).toEqual([2, 2]));
+       |                                      ^
+    248|     expect((screen.getByLabelText('Response') as HTMLTextAreaElement).…
+    249|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

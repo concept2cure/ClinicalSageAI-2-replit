@@ -1,0 +1,16 @@
+{
+  "status": "pass",
+  "command": "PATH=/workspace/scratch/editor-toolchain/node_modules/.bin:$PATH node_modules/.bin/eslint --no-ignore --max-warnings=0 <all seven executable fixture files>",
+  "node": "22.23.3",
+  "errors": 0,
+  "warnings": 0,
+  "executableFiles": {
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/browser.mjs": "e3ed3c9d61f17fbbf1baf19c0ae2777bb8e6bc63a032b733582686d786cb3ec9",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/generate.ts": "0e4a2c8e2506527373f2bf360b234a4bfac05dc1e964634dda22ae98b2761001",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/import-proof.mjs": "dcf74064d4ceef4acbee3ce5910cc00704c25c0b1452a4bae8bb770d876cc62f",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/mock-api.mjs": "225c66433a93174f0793df068b3162131ac3df09b919832920466e8d0d30223a",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/probe.tsx": "b7cbc3d11d0833b4e5e5cce40eca923d6b267116ddab8677ef1b54c6f342e615",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/server.mjs": "91e2f959485cd3d5ba66ab32506fa597135279db529de515bb53c10aedcefcdd",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/visual-checks.mjs": "2c07fc6b5753491bd8bb4d2cacb8fdac5e900bcb6d01e619398cebd86d5b850f"
+  }
+}

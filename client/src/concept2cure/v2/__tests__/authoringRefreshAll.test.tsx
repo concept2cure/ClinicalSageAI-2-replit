@@ -22,9 +22,18 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: { id: '7', email: 'ra@example.test', displayName: 'R. Author' } }),
-}));
+vi.mock('@/services/portal/authService', async original => {
+  const actual = await original<typeof import('@/services/portal/authService')>();
+  return {
+    ...actual,
+    authService: {
+      getUser: () => ({ id: 1, organizationId: 1 }),
+      captureSessionReadGuard: actual.authService.captureSessionReadGuard.bind(actual.authService),
+      on: actual.authService.on.bind(actual.authService),
+    },
+    useAuth: () => ({ user: { id: '7', email: 'ra@example.test', displayName: 'R. Author' } }),
+  };
+});
 
 /* jsdom has no layout; ProseMirror asks for client rects on mount. */
 const emptyRects = function () {
@@ -96,17 +105,18 @@ describe('document-wide source re-read', () => {
       refreshed: 5,
       changed: 1,
       skipped: [
-        { cite_id: 'c9', reason: 'source no longer exists' },
-        { cite_id: 'c10', reason: 'source is frozen' },
+        { cite_id: 'c9', reason: 'unresolved_source' },
+        { cite_id: 'c10', reason: 'frozen' },
       ],
     });
     await openSourcesAndRefresh();
 
     const panel = await screen.findByTestId('refresh-skipped');
     expect(panel.textContent).toMatch(/2 citations could not be re-read/i);
-    // The reason is the finding — not a count.
-    expect(panel.textContent).toMatch(/source no longer exists/);
-    expect(panel.textContent).toMatch(/source is frozen/);
+    // The service returns reason codes; each must retain its actionable meaning.
+    expect(panel.textContent).toMatch(/cited source no longer resolves in this organization/);
+    expect(panel.textContent).toMatch(/citation is frozen and cannot be re-resolved/);
+    expect(panel.textContent).not.toMatch(/recorded source could not be verified/);
   });
 
   it('shows nothing alarming when every citation re-read cleanly', async () => {

@@ -1,0 +1,104 @@
+{
+  "branch": "concept2cure-v2",
+  "capturedAtUtc": "2026-10-14T07:36:07.203838+00:00",
+  "qualification": "Test typing follow-up only: no production, permission, SQL, assertion or runtime behavior change. Original167/composite45 citation phase remains sealed. The root-owned whole compiler reported6 fixture errors; the excerpt records only this owned TS2345. This phase did not run a compiler or claim a compiler-green result.",
+  "priorFixtureSource": {
+    "path": "server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts",
+    "bytes": 41780,
+    "digestAlgorithm": "sha256",
+    "digest": "5ef486376b78e82323008d33da4e44f8006fe83a22ae0d4835ab4c4b47844e13"
+  },
+  "savedBeforeFile": {
+    "path": "/tmp/project-vault-citation-query-fixture.before.ts",
+    "bytes": 41780,
+    "digestAlgorithm": "sha256",
+    "digest": "5ef486376b78e82323008d33da4e44f8006fe83a22ae0d4835ab4c4b47844e13"
+  },
+  "compilerFailurePhase": {
+    "raw": {
+      "path": "/tmp/reporting-governed-pack-typecheck-solitary.txt",
+      "bytes": 2026,
+      "digestAlgorithm": "sha256",
+      "digest": "5158cb4f41019b183c5b9d93368775e33928165309c1a67dde8c7248089b8d5a"
+    },
+    "totalErrorsReported": 6,
+    "ownedErrors": 1,
+    "code": "TS2345",
+    "qualification": "Only the owned fixture diagnostic is copied; other lanes repair the other5 errors."
+  },
+  "green": {
+    "files": 1,
+    "passed": 45,
+    "skipped": 0,
+    "durationSeconds": 7.24,
+    "lintErrors": 0,
+    "lintWarnings": 0
+  },
+  "sources": [
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts",
+      "bytes": 41841,
+      "digestAlgorithm": "sha256",
+      "digest": "4dedd462b75978a2715638304c75498db4c9b2e4a7c6f50ef4adc1e9b617eec0"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/span-lineage.service.ts",
+      "bytes": 57213,
+      "digestAlgorithm": "sha256",
+      "digest": "66e5e89837cca8184fc0022f3904dd6e3090247155ac077830439ece92389863"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/source-usage.service.ts",
+      "bytes": 36741,
+      "digestAlgorithm": "sha256",
+      "digest": "6aa98459acb5223208f692d9da708c38cd5038858f18f76e4f7ec2e99ce25fc9"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/citation-writer-query-type-followup/red/compiler-owned-fixture-excerpt.txt",
+      "bytes": 307,
+      "digestAlgorithm": "sha256",
+      "digest": "a98e1af07a3ef8d24bf5c938811b233c41b412df8b99037f13ca0ed86c050e6e",
+      "raw": {
+        "path": "/tmp/project-vault-citation-query-fixture-compiler-excerpt.txt",
+        "bytes": 307,
+        "digestAlgorithm": "sha256",
+        "digest": "a98e1af07a3ef8d24bf5c938811b233c41b412df8b99037f13ca0ed86c050e6e"
+      },
+      "normalization": "Trailing whitespace/EOF only; exact original raw file retained."
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/citation-writer-query-type-followup/green/source-usage-45.txt",
+      "bytes": 10260,
+      "digestAlgorithm": "sha256",
+      "digest": "3e8bc371aeec3c431a941ee246e948ca6f4de2cd29dc094c6a7a6fc530382cba",
+      "raw": {
+        "path": "/tmp/project-vault-citation-query-fixture-final-45.txt",
+        "bytes": 10261,
+        "digestAlgorithm": "sha256",
+        "digest": "4d2e740c4be48ca3c97487b80b8489c3f3050c44d8fdc6a44f575fa357f25341"
+      },
+      "normalization": "Trailing whitespace/EOF only; exact original raw file retained."
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/citation-writer-query-type-followup/green/fixture-lint.txt",
+      "bytes": 0,
+      "digestAlgorithm": "sha256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw": {
+        "path": "/tmp/project-vault-citation-query-fixture-lint.txt",
+        "bytes": 0,
+        "digestAlgorithm": "sha256",
+        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "normalization": "Trailing whitespace/EOF only; exact original raw file retained."
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/citation-writer-query-type-followup/fixture-type.patch",
+      "bytes": 559,
+      "digestAlgorithm": "sha256",
+      "digest": "52e3a11bc815631852ccfb75af0da77c1b00446e5070f8fdddc1a1df9bc9c989"
+    }
+  ]
+}

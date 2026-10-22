@@ -68,7 +68,8 @@ export interface KeyDecision {
 export interface LearnedInsight {
   insight: string;
   source: string;
-  confidence: number;
+  /** Null unless something computed it; the writers used to stamp 0.95 / 0.7. */
+  confidence: number | null;
   extractedAt: string;
 }
 
@@ -146,7 +147,10 @@ export async function getProjectIntelligence(
   const [memCount] = await db
     .select({ count: sql<number>`COUNT(*)` })
     .from(projectMemoryEntries)
-    .where(eq(projectMemoryEntries.projectProfileId, profile.id));
+    .where(and(
+      eq(projectMemoryEntries.projectProfileId, profile.id),
+      sql`${projectMemoryEntries.sourceDocumentType} IS DISTINCT FROM 'report_os_state'`,
+    ));
 
   const risks = Array.isArray(profile.riskFactors) ? profile.riskFactors as unknown as RiskFactor[] : [];
   const questions = Array.isArray(profile.openQuestions) ? profile.openQuestions as unknown as OpenQuestion[] : [];
@@ -257,7 +261,8 @@ export async function getProjectMemory(
   category: string;
   title: string;
   content: string;
-  confidence: number;
+  /** Null when the entry records none. */
+  confidence: number | null;
   source: string | null;
 }>> {
   const limit = options?.limit ?? 20;
@@ -276,6 +281,7 @@ export async function getProjectMemory(
       eq(projectMemoryEntries.projectId, projectId),
       eq(projectMemoryEntries.organizationId, organizationId),
       eq(projectMemoryEntries.status, 'active'),
+      sql`${projectMemoryEntries.sourceDocumentType} IS DISTINCT FROM 'report_os_state'`,
       ...(options?.category ? [eq(projectMemoryEntries.category, options.category)] : []),
     ))
     .orderBy(desc(projectMemoryEntries.createdAt))
@@ -288,7 +294,7 @@ export async function getProjectMemory(
     category: r.category,
     title: r.title,
     content: r.content,
-    confidence: r.confidence ?? 0.8,
+    confidence: r.confidence, // 2026-10-15: was `?? 0.8` for an entry nobody scored
     source: r.source,
   }));
 }

@@ -101,8 +101,10 @@ export function assembleFormMetadata(records: FormContextRecords): IndProjectMet
  * filing. Structurally satisfied by the row the IND forms route reads.
  */
 export interface ProgramFormFacts {
-  /** `organizations.name` — the sponsor of record in this data model. */
+  /** Explicitly bound registry applicant, otherwise the legacy organization. */
   sponsorName?: string | null;
+  /** The existing registry selected as this program's applicant of record. */
+  boundSponsor?: Sponsor | null;
   /** `regulatory_programs.product_name`. */
   productName?: string | null;
   /** `regulatory_programs.indication`. */
@@ -167,7 +169,14 @@ export function programToFormMetadata(program: ProgramFormFacts): Partial<IndPro
   // held on the program too, where the 1571 build reads them (sponsor.address,
   // indType). They used to arrive only with each build request.
   const sponsorAddress = present(program.sponsorAddress);
-  if (sponsorAddress) meta.sponsor = { address: sponsorAddress };
+  if (program.boundSponsor) {
+    const registry = sponsorToInfo(program.boundSponsor);
+    // Name/contact/signatory come from the selected registry. Address remains
+    // the existing program fact; do not silently switch address authorities.
+    meta.sponsor = { ...registry, address: sponsorAddress ?? undefined };
+  } else if (sponsorAddress) {
+    meta.sponsor = { address: sponsorAddress };
+  }
 
   const programType = (present(program.programType) ?? '').toUpperCase();
   // The IND type is a Form 1571 box; a program that is not an IND has none.

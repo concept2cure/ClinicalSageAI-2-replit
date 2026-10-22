@@ -33,10 +33,11 @@ import { personsReasonFor } from './persons-reason.js';
 import { verifyGovernedESignature } from './governed-esignature.js';
 import {
   readPendingApproval,
+  isRunAwaitingApproval,
   recordApprovalDecision,
 } from '../../services/ana/run-control.js';
 import { resolveOrgId } from '../../types/auth-request.js';
-import { requestPgClient } from '../../db/requestDb';
+import { requestPgClient, type RequestSqlClient } from '../../db/requestDb';
 import { handleSealVerifiedVersion } from './seal-verified.js';
 import auditService from '../../services/auditService.js';
 import { governedActionTrace, recordGovernedExecution, withAuditTrail } from './governed-execution-audit.js';
@@ -68,12 +69,18 @@ const log = createScopedLogger('ana-ri/utility');
  * is precisely what breaks run ownership, so if they differ here the lookup
  * finds nothing and the request fails closed rather than guessing.
  *
+ * Only the person who asked (ana_runs.user_id) may approve or decline: any org
+ * member who knew a toolUseId could once decide a colleague's held step. A
+ * colleague gets 403 NOT_RUN_OWNER before anything is audited, written or run —
+ * decline included — and no admin override (see readPendingApproval).
+ *
  * Without a runId this is the original behaviour: the body is the request, as
  * it has always been for a client re-submitting a blocked chat command.
  */
 async function resolveAuthorisedAction(
   req: Request,
   body: Record<string, any>,
+  userId: number,
 ): Promise<
   | { error: string; status: number; code: string }
   | {
@@ -98,8 +105,12 @@ async function resolveAuthorisedAction(
   }
 
   const runOrgId = resolveOrgId(req);
-  const pendingForRun = runOrgId === null ? null : await readPendingApproval(requestPgClient(req), runId, runOrgId);
+  // Owner-scoped in the SQL. Another org still gets the 404: the 403 check is org-scoped too.
+  const pendingForRun = runOrgId === null ? null : await readPendingApproval(requestPgClient(req), runId, runOrgId, userId);
   if (!pendingForRun) {
+    if (runOrgId !== null && (await isRunAwaitingApproval(requestPgClient(req), runId, runOrgId))) {
+      return { error: 'Only the person who asked AnA for this step can approve or decline it', status: 403, code: 'NOT_RUN_OWNER' };
+    }
     return {
       error: 'That run is not waiting on an approval',
       status: 404,
@@ -228,9 +239,9 @@ async function runConfirmedTool(
   name: string,
   params: Record<string, unknown>,
   held: NonNullable<Awaited<ReturnType<typeof readPendingApproval>>>,
-  organizationId: number,
-  userId: number,
+  principal: { organizationId: number; userId: number; sqlClient: RequestSqlClient },
 ): Promise<unknown> {
+  const { organizationId, userId, sqlClient } = principal;
   const { getToolHandler } = await import('../../services/ana/AnaToolExecutor.js');
   const handler = getToolHandler(name);
   if (!handler) throw new Error(`${name} is not an available tool`);
@@ -238,6 +249,7 @@ async function runConfirmedTool(
   // conversation, turn and model the dispatch would have named (PF-10 S5).
   const out = await handler(params, {
     ...confirmedToolContext(held.toolContext, organizationId, userId),
+    sqlClient,
     humanConfirmed: true,
   });
   try {
@@ -313,7 +325,7 @@ async function declineHeldAction(
  * reads anything.
  */
 async function resolveConfirmedAction(req: Request, body: Record<string, any>, organizationId: number, userId: number) {
-  const authorised = await resolveAuthorisedAction(req, body);
+  const authorised = await resolveAuthorisedAction(req, body, userId);
   if ('error' in authorised) return authorised;
   const { params, proposer, refused } = proposalAsConfirmed(authorised, organizationId, userId);
   if (refused) return { error: refused, status: 403, code: 'MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE' };
@@ -623,11 +635,12 @@ export function mountUtilityRoutes(router: Router): void {
     // re-verify the signer server-side for the e-sign tier (never a client flag).
     const eSignRequired = tier === 'esignature';
 
-    // The signer's declared §11.50 meaning, then re-verification (§11.200), in
-    // that order and before the audit row — see governed-esignature.ts. An act
+    // The signer's declared §11.50 meaning, then signing authority (§11.10(g)),
+    // then re-verification (§11.200), in that order and before the audit row —
+    // see governed-esignature.ts. An act
     // that fixes its meaning (approving or locking an artifact) refuses any
     // other before the password is checked.
-    const esign = eSignRequired ? await verifyGovernedESignature(userId, body, isTool ? null : requiredSignatureMeaning(command, params)) : undefined;
+    const esign = eSignRequired ? await verifyGovernedESignature(userId, numericOrgId, body, isTool ? null : requiredSignatureMeaning(command, params)) : undefined;
     if (esign && !esign.ok) return sendError(res, esign.status, esign.error, esign.details, esign.code);
     const signatureMeaning = esign?.meaning;
     const secondFactorVerified = esign?.secondFactorVerified ?? false;
@@ -717,7 +730,7 @@ export function mountUtilityRoutes(router: Router): void {
     };
     const executedRow = { organizationId: numericOrgId, userId, command, trace, startedAt: Date.now() };
     try {
-      const [ran] = isTool ? [await runConfirmedTool(command, personsReason?.params ?? params, pendingForRun!, numericOrgId, userId)] : await executeCommands([{ command, params } as any], ctx);
+      const [ran] = isTool ? [await runConfirmedTool(command, personsReason?.params ?? params, pendingForRun!, { organizationId: numericOrgId, userId, sqlClient: requestPgClient(req) })] : await executeCommands([{ command, params } as any], ctx);
       const result = withAuditTrail(ran, await recordGovernedExecution(executedRow, { result: ran }));
       // The execution stays HERE, in the one place that stamps humanConfirmed.
       // The waiting turn is handed the RESULT, not the right to run the command

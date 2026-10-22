@@ -1,0 +1,30 @@
+     current_database     | current_user | ssl | version |         cipher         
+--------------------------+--------------+-----+---------+------------------------
+ c2c_audit_wave3_boot_tls | postgres     | t   | TLSv1.3 | TLS_AES_256_GCM_SHA384
+(1 row)
+
+ canonical_migration_receipts 
+------------------------------
+                          387
+(1 row)
+
+  nspname  |      relname       | relrowsecurity | relforcerowsecurity | app_select | app_insert | app_update | app_delete 
+-----------+--------------------+----------------+---------------------+------------+------------+------------+------------
+ predicate | defense_packets    | t              | t                   | t          | t          | t          | t
+ predicate | proof_pack_exports | t              | t                   | t          | t          | t          | t
+ predicate | render_jobs        | t              | t                   | t          | t          | t          | t
+(3 rows)
+
+ schemaname |     tablename      |       policyname        | cmd |  roles   |                                                                                                   qual                                                                                                    |                                                                                                with_check                                                                                                 
+------------+--------------------+-------------------------+-----+----------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ predicate  | defense_packets    | tenant_isolation_policy | ALL | {public} | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text) OR (EXISTS ( SELECT 1+| ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text) OR (EXISTS ( SELECT 1+
+            |                    |                         |     |          |    FROM regulatory_programs p                                                                                                                                                                            +|    FROM regulatory_programs p                                                                                                                                                                            +
+            |                    |                         |     |          |   WHERE (p.id = defense_packets.program_id))))                                                                                                                                                            |   WHERE (p.id = defense_packets.program_id))))
+ predicate  | proof_pack_exports | tenant_isolation_policy | ALL | {public} | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text) OR (EXISTS ( SELECT 1+| ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text) OR (EXISTS ( SELECT 1+
+            |                    |                         |     |          |    FROM regulatory_programs p                                                                                                                                                                            +|    FROM regulatory_programs p                                                                                                                                                                            +
+            |                    |                         |     |          |   WHERE (p.id = proof_pack_exports.program_id))))                                                                                                                                                         |   WHERE (p.id = proof_pack_exports.program_id))))
+ predicate  | render_jobs        | tenant_isolation_policy | ALL | {public} | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text) OR (EXISTS ( SELECT 1+| ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text) OR (EXISTS ( SELECT 1+
+            |                    |                         |     |          |    FROM predicate.proof_pack_exports p                                                                                                                                                                   +|    FROM predicate.proof_pack_exports p                                                                                                                                                                   +
+            |                    |                         |     |          |   WHERE (p.id = render_jobs.proof_pack_id))))                                                                                                                                                             |   WHERE (p.id = render_jobs.proof_pack_id))))
+(3 rows)
+

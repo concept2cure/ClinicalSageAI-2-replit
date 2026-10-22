@@ -10,9 +10,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { requireEditorAccess, sessionPermissions } from '../orgMembership';
 import {
+  AUDIT_ATTEST_PERMISSION,
+  AUDIT_ATTEST_ROLES,
   GOVERNED_WRITE_PERMISSION,
   REPORT_FINALIZE_PERMISSION,
   REPORT_FINALIZE_ROLES,
+  canAttestAuditTrail,
   canFinalizeReport,
   canGovernedWrite,
 } from '../../../shared/constants/permissions';
@@ -68,7 +71,14 @@ describe('sessionPermissions', () => {
 
   it('a member is not offered Finalize; under the default signing policy an admin is and a manager is not', () => {
     expect(sessionPermissions('member')).not.toContain(REPORT_FINALIZE_PERMISSION);
-    expect(sessionPermissions('admin')).toEqual([GOVERNED_WRITE_PERMISSION, REPORT_FINALIZE_PERMISSION]);
+    // audit:attest joined on 2026-10-12 (coverage review C-24): an admin may
+    // attest to the audit trail, and this exact-equality assertion is what
+    // makes a silently added permission visible rather than tolerated.
+    expect(sessionPermissions('admin')).toEqual([
+      GOVERNED_WRITE_PERMISSION,
+      REPORT_FINALIZE_PERMISSION,
+      AUDIT_ATTEST_PERMISSION,
+    ]);
     // The server refuses a manager's finalize with ESIGNATURE_NO_AUTHORITY unless the
     // signing policy names managers, so the canvas must not offer it (P1-44b R2).
     expect(sessionPermissions('manager')).toEqual([GOVERNED_WRITE_PERMISSION]);
@@ -82,6 +92,67 @@ describe('sessionPermissions', () => {
     } finally {
       if (before === undefined) delete process.env.ESIGNATURE_SIGNING_ROLES;
       else process.env.ESIGNATURE_SIGNING_ROLES = before;
+    }
+  });
+});
+
+/**
+ * The attestation permission and the attestation route's own gate agree, for
+ * every role (coverage review C-24).
+ *
+ * The Compliance Reports surface offered "Run attestation" on the catalog's
+ * READER verdict — owner, admin, manager, approver — while the route admits
+ * admin and owner. A manager pressed a control the server then refused. The
+ * session now derives the permission from the SAME list the route reads, so the
+ * two cannot drift; these cases are what holds that.
+ */
+describe('audit:attest', () => {
+  const ROLES = ['owner', 'admin', 'manager', 'approver', 'reviewer', 'member', 'viewer', 'user'];
+
+  it('is the admin|owner set exactly — `withExtendingRoles` must not widen it', () => {
+    // ROLE_EXTENDS maps approver→manager and reviewer→member, so neither
+    // extends owner or admin. If a future role extended admin, this fails and
+    // the widening is a decision rather than a side effect.
+    expect([...AUDIT_ATTEST_ROLES].sort()).toEqual(['admin', 'owner']);
+  });
+
+  it('is granted to exactly the roles the route admits, and to no other', () => {
+    for (const role of ROLES) {
+      const granted = sessionPermissions(role).includes(AUDIT_ATTEST_PERMISSION);
+      expect(granted, `${role}`).toBe(AUDIT_ATTEST_ROLES.includes(role));
+    }
+  });
+
+  it('is narrower than governed:write — a manager writes, and does not attest', () => {
+    const manager = sessionPermissions('manager');
+    expect(manager).toContain(GOVERNED_WRITE_PERMISSION);
+    // The gap that produced the doomed click: the catalog's reader verdict
+    // includes a manager, the attestation route does not.
+    expect(manager).not.toContain(AUDIT_ATTEST_PERMISSION);
+  });
+
+  it('an admin holds all three; the three gates are not the same gate', () => {
+    const admin = sessionPermissions('admin');
+    expect(admin).toContain(GOVERNED_WRITE_PERMISSION);
+    expect(admin).toContain(REPORT_FINALIZE_PERMISSION);
+    expect(admin).toContain(AUDIT_ATTEST_PERMISSION);
+  });
+
+  it('offers the control to a session that carries no permissions array, as the two precedents do', () => {
+    // An older session is unknown, not refused: the server still decides, and
+    // withholding an administrator's control on a guess is the worse failure.
+    expect(canAttestAuditTrail({})).toBe(true);
+    expect(canAttestAuditTrail(null)).toBe(true);
+    expect(canAttestAuditTrail({ permissions: [] })).toBe(false);
+    expect(canAttestAuditTrail({ permissions: [AUDIT_ATTEST_PERMISSION] })).toBe(true);
+  });
+
+  it('the client predicate agrees with the session for every role', () => {
+    for (const role of ROLES) {
+      const perms = sessionPermissions(role);
+      expect(canAttestAuditTrail({ permissions: perms }), `${role}`).toBe(
+        AUDIT_ATTEST_ROLES.includes(role),
+      );
     }
   });
 });

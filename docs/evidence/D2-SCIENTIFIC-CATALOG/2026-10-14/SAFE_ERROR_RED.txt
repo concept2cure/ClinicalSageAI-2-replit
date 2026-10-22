@@ -1,0 +1,142 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > keeps private SQL/storage failures out of catalog_project_document results 7ms
+   → expected { Object (error) } to match object { ok: false, …(2) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > keeps private SQL/storage failures out of read_project_document results 1ms
+   → expected { Object (error) } to match object { ok: false, …(2) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > keeps private SQL/storage failures out of list_project_documents results 1ms
+   → expected { Object (error) } to match object { ok: false, …(2) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > keeps private SQL/storage failures out of search_project_documents results 1ms
+   → expected { Object (error) } to match object { ok: false, …(2) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > does not claim rollback when an exception occurs after a persistence receipt 1ms
+   → expected undefined to be 'unconfirmed' // Object.is equality
+ ✓ server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > passes an explicit structured refusal through unchanged 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > keeps private SQL/storage failures out of catalog_project_document results
+AssertionError: expected { Object (error) } to match object { ok: false, …(2) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "DOCUMENT_REQUEST_FAILED",
+-   "ok": false,
+-   "outcome": "unconfirmed",
++   "error": "catalog_project_document failed: password=private-fixture-value; /private/customer/location; SELECT clinical_secret FROM vault.documents",
+  }
+
+ ❯ server/services/ana/__tests__/document-catalog-safe-errors.test.ts:11:35
+      9|       }, { safeOutcome: true });
+     10|       const encoded = await handler({});
+     11|       expect(JSON.parse(encoded)).toMatchObject({ ok: false, code: 'DO…
+       |                                   ^
+     12|       expect(encoded).not.toMatch(/private-fixture-value|customer\/loc…
+     13|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > keeps private SQL/storage failures out of read_project_document results
+AssertionError: expected { Object (error) } to match object { ok: false, …(2) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "DOCUMENT_REQUEST_FAILED",
+-   "ok": false,
+-   "outcome": "unconfirmed",
++   "error": "read_project_document failed: password=private-fixture-value; /private/customer/location; SELECT clinical_secret FROM vault.documents",
+  }
+
+ ❯ server/services/ana/__tests__/document-catalog-safe-errors.test.ts:11:35
+      9|       }, { safeOutcome: true });
+     10|       const encoded = await handler({});
+     11|       expect(JSON.parse(encoded)).toMatchObject({ ok: false, code: 'DO…
+       |                                   ^
+     12|       expect(encoded).not.toMatch(/private-fixture-value|customer\/loc…
+     13|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > keeps private SQL/storage failures out of list_project_documents results
+AssertionError: expected { Object (error) } to match object { ok: false, …(2) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "DOCUMENT_REQUEST_FAILED",
+-   "ok": false,
+-   "outcome": "unconfirmed",
++   "error": "list_project_documents failed: password=private-fixture-value; /private/customer/location; SELECT clinical_secret FROM vault.documents",
+  }
+
+ ❯ server/services/ana/__tests__/document-catalog-safe-errors.test.ts:11:35
+      9|       }, { safeOutcome: true });
+     10|       const encoded = await handler({});
+     11|       expect(JSON.parse(encoded)).toMatchObject({ ok: false, code: 'DO…
+       |                                   ^
+     12|       expect(encoded).not.toMatch(/private-fixture-value|customer\/loc…
+     13|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > keeps private SQL/storage failures out of search_project_documents results
+AssertionError: expected { Object (error) } to match object { ok: false, …(2) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "DOCUMENT_REQUEST_FAILED",
+-   "ok": false,
+-   "outcome": "unconfirmed",
++   "error": "search_project_documents failed: password=private-fixture-value; /private/customer/location; SELECT clinical_secret FROM vault.documents",
+  }
+
+ ❯ server/services/ana/__tests__/document-catalog-safe-errors.test.ts:11:35
+      9|       }, { safeOutcome: true });
+     10|       const encoded = await handler({});
+     11|       expect(JSON.parse(encoded)).toMatchObject({ ok: false, code: 'DO…
+       |                                   ^
+     12|       expect(encoded).not.toMatch(/private-fixture-value|customer\/loc…
+     13|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > does not claim rollback when an exception occurs after a persistence receipt
+AssertionError: expected undefined to be 'unconfirmed' // Object.is equality
+
+- Expected:
+"unconfirmed"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/document-catalog-safe-errors.test.ts:23:28
+     21|     const result = JSON.parse(await handler({}));
+     22|     expect(committed).toEqual(['synthetic receipt']);
+     23|     expect(result.outcome).toBe('unconfirmed');
+       |                            ^
+     24|     expect(result.persisted).toBeUndefined();
+     25|     expect(result.error).not.toMatch(/nothing (?:was )?(?:changed|save…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)
+   Start at  06:55:08
+   Duration  387ms (transform 107ms, setup 65ms, import 95ms, tests 14ms, environment 0ms)
+

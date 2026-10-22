@@ -1,0 +1,15 @@
+# Generic Part 11 device history — native proof
+
+The root changed generic device-history receipt handling, current access admission, integrity receipt propagation and truthful validation reporting. This native proof owns only `tests/db/part11-audit-receipts.dbtest.ts`. It does not qualify the electronic-signature path or introduce a UI/consumer.
+
+Eighteen cases pass on the provisioned canonical schema with verified TLS, app_service without superuser/bypass and explicit roleless organisation job ALS. It is a service/job harness, not a JWT/browser journey. Reserved synthetic organisations 98980/98981 and dedicated public fixture HMAC values keep repeated synthetic-chain writes consistent. No production secret, existing row, policy, grant, trigger or migration is changed for the proof. All immutable synthetic evidence remains retained.
+
+The healthy case reads back the actual device history plus both canonical audit stores, verifies exact organisation/user/entity attribution, verifies the chained audit HMAC seal and the selected tamper-proof row's content/HMAC. It does not claim verification of the entire mixed synthetic estate-wide chain.
+
+The mandatory device negative control retargets the actual INSERT's organisation parameter and PostgreSQL RLS refuses it with 42501 before any mirror attempt. The chained mirror negative control is refused earlier by its actual tenant-position trigger with 23000. The estate-wide `audit.tamper_proof_log` table intentionally has no RLS policy; it has append-only runtime grants and its canonical writer verifies the requested organisation against current ALS. That actual writer guard supplies the tamper negative control. The initial erroneous fixture assumption that every audit table used FORCE RLS was corrected rather than changing the database or weakening its existing policies. Initial low-level fault-control rows remain retained in this disposable synthetic database.
+
+The tests distinguish tamper-only fallback, both unavailable mirrors, a thrown ancillary writer and recovery while retaining the one committed device-history row. Current secondary-organisation membership overrides the user's default organisation; revocation, inactive users and insufficient permissions refuse access. Denied-event receipts name the actual requested organisation. Integrity retains its mirror outcome with explicit system actor zero. Validation reporting returns NOT_ASSESSED and four NOT_RUN cases, without fabricated executions.
+
+The additional request-owned audit test loses an acknowledgement only after a real native audit COMMIT. The row remains present; the outcome is `unconfirmed: true`. The helper sends no ROLLBACK, its borrowed real LazyRequestDbClient rejects further queries and its physical PostgreSQL backend is evicted. No network-loss simulation or HTTP-journey claim is made.
+
+Proofs are archived under `content-wave-3/part11-native-results.txt` and `content-wave-3/part11-native-lint.txt`. Scoped lint has zero errors and one describe-length warning. The unrelated content-fixture TypeScript correction uses the actual nullable string-array row type; its 20-case PGlite file passes again.

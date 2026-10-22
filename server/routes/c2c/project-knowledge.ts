@@ -26,12 +26,13 @@ import {
   getOrganizationId,
   getUserId,
   logAuditEntry,
+  auditTrailFromEntry,
   normalizeKnowledge,
   sanitizeContent,
   sendError,
   sendSuccess,
 } from './shared';
-import { getActorRole, getProjectScope, loadProjectAccessRow, normalizeProjectSettings, resolveClientWorkspaceId, verifyProjectAccess } from './project-access';
+import { getActorRole, getProjectScope, loadProjectAccessRow, normalizeProjectSettings, projectAdmissionMiddleware, resolveClientWorkspaceId, verifyProjectAccess } from './project-access';
 
 const logger = createScopedLogger('concept2cure-project-knowledge');
 // People are named through public.actor_name, not a join on users: since users
@@ -45,6 +46,7 @@ router.use(concept2cureRateLimiter);
 router.use(authMiddleware);
 router.use(tenantContextMiddleware);
 router.use(requireOrganizationContext);
+router.param('projectId', projectAdmissionMiddleware());
 
 const updateKnowledgeSchema = z
   .object({
@@ -190,8 +192,11 @@ router.get(
 /**
  * GET /api/concept2cure/projects/:projectId/linked
  * Returns all typed link relationships for a project (both directions).
- * Joins with concept2cure_projects for name/type/status of the other project.
- * If the table doesn't exist yet (pre-migration deploy), returns [].
+ * Joins `projects` for name/type/status of the other project — the integer
+ * spine these links are keyed to. (This said "concept2cure_projects", a table
+ * that exists nowhere in this repository; the SQL below has always joined
+ * `projects`.) If concept2cure_project_links does not exist yet (pre-migration
+ * deploy), returns [].
  */
 router.get('/projects/:projectId/linked', async (req: Request, res: Response) => {
   try {
@@ -215,6 +220,7 @@ router.get('/projects/:projectId/linked', async (req: Request, res: Response) =>
            lnk.kind,
            lnk.direction AS dir,
            lnk.created_at,
+           CASE WHEN lnk.source_id = $1 THEN lnk.target_id ELSE lnk.source_id END AS other_id,
            CASE
              WHEN lnk.source_id = $1 THEN p.name
              ELSE sp.name
@@ -244,6 +250,18 @@ router.get('/projects/:projectId/linked', async (req: Request, res: Response) =>
       throw tableErr;
     }
 
+    // A retained relationship is not a read grant on its other project.
+    // Re-evaluate canonical sharing now, including after a grant is revoked.
+    const visibleRows = [];
+    const clientWorkspaceId = await resolveClientWorkspaceId(req);
+    for (const row of rows) {
+      const projectId = parseIntegerProjectId(row.other_id);
+      if (projectId === null) continue;
+      const access = await loadProjectAccessRow({organizationId,clientWorkspaceId,projectId,
+        userId:getUserId(req),actorRole:getActorRole(req)});
+      if (access.project) visibleRows.push(row);
+    }
+
     const kindVia: Record<string, string> = {
       predicate:  'Predicate device',
       parent_ind: 'Parent IND',
@@ -252,7 +270,7 @@ router.get('/projects/:projectId/linked', async (req: Request, res: Response) =>
       supplier:   'Supplier',
     };
 
-    const links = rows.map((r: any) => ({
+    const links = visibleRows.map((r: any) => ({
       id:     r.id,
       kind:   r.kind,
       dir:    r.dir as 'in' | 'out',
@@ -302,6 +320,7 @@ router.post('/projects/:projectId/linked', async (req: Request, res: Response) =
     if (numericTargetId === null) {
       return sendError(res, 400, 'Invalid targetProjectId');
     }
+    if (!await verifyProjectAccess(req, String(numericTargetId))) return sendError(res, 404, 'Target project not found');
 
     const result = await pool.query(
       `INSERT INTO concept2cure_project_links (org_id, source_id, target_id, kind, direction)
@@ -383,8 +402,8 @@ router.patch('/projects/:projectId/knowledge', async (req: Request, res: Respons
       .where(and(eq(projects.id, scope.numericId), eq(projects.organizationId, organizationId)))
       .returning();
 
-    await logAuditEntry(req, 'UPDATE', 'project', req.params.projectId, project, updated);
-    return sendSuccess(res, updatedKnowledge);
+    const auditOutcome = await logAuditEntry(req, 'UPDATE', 'project', req.params.projectId, project, updated);
+    return sendSuccess(res, updatedKnowledge, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');

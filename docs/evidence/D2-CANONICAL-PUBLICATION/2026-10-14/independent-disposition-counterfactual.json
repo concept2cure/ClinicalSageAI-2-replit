@@ -1,0 +1,14 @@
+{
+  "runtime": "v22.23.3",
+  "testName": "disposition reserves impacts before holding actor rows and refuses a persisted downgrade after that checkpoint",
+  "mutation": "Only final scoped(q,input,true,true) omitted in evidence-directory shadow",
+  "exitCode": 1,
+  "expectedRed": true,
+  "sourceBeforeSha256": "2cd0f80dc0e867fe0e260267c666e7409858ed5314030c68abf2e0f82f7a0ec6",
+  "sourceAfterSha256": "2cd0f80dc0e867fe0e260267c666e7409858ed5314030c68abf2e0f82f7a0ec6",
+  "productionSourceUnchanged": true,
+  "shadowSourceSha256": "12fcededb5dee2c2fb51a517ae3d13f174b8d3e7677c6ce67e63a1ab96a2ae65",
+  "shadowTestSha256": "4436e7f65cbdfa70aa684b38e313990f80f1d90befc1aefd535fa7317fb47d57",
+  "logSha256": "9d527398d79684c6bc8366b8af632abdb6b247a2327832b47765000b18083f5a",
+  "proofScope": "Real PGlite persisted-policy checkpoint with audit test seam. No two-session PostgreSQL, provider or deployed-role qualification."
+}

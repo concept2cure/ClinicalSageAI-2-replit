@@ -9,7 +9,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 
-const PROGRAM_ID = '11111111-2222-3333-4444-000000000204';
 
 const queryFn = vi.fn();
 const connectFn = vi.fn();
@@ -55,6 +54,12 @@ vi.mock('../server/services/mfaService', () => ({
   // the answer cannot be read, so the fixture has to state it.
   isMfaEnabled: vi.fn().mockResolvedValue(false),
 }));
+
+/* §11.10(g): the signer's role is read from the membership row
+   (resolveSignerOrgRole), never the token. Each test states it; by default the
+   member row says what the session says. */
+const { signerRole } = vi.hoisted(() => ({ signerRole: vi.fn<(...a: unknown[]) => Promise<string | null>>() }));
+vi.mock('../server/services/part11/resolve-signer-role', () => ({ resolveSignerOrgRole: (...a: unknown[]) => signerRole(...a) }));
 
 /** Re-auth body that satisfies verifyReauth in these tests. */
 // §11.50: a transmit is signed under a meaning the signer declares; the body carries it.
@@ -126,8 +131,7 @@ vi.mock('../server/services/submission-gateways', () => {
     ValidationError: MockValidationError,
     // The route maps these too; their response shapes are pinned against the real
     // classes in server/services/submission-gateways/__tests__/gateway-route-response-shapes.test.ts.
-    PreTransmitBlockedError: class extends MockValidationError { readonly code = 'PRE_TRANSMIT_BLOCKED' as const; },
-    UnverifiedTransportError: class extends Error { name = 'UnverifiedTransportError'; },
+    PreTransmitBlockedError: class extends MockValidationError { readonly code = 'PRE_TRANSMIT_BLOCKED' as const; }, UnverifiedTransportError: class extends Error { name = 'UnverifiedTransportError'; },
   };
 });
 
@@ -158,6 +162,7 @@ beforeEach(() => {
   ackFn.mockReset();
   isConfigFn.mockReset();
   configStatusFn.mockReset();
+  signerRole.mockReset().mockResolvedValue('admin');
   // Default: empty result, except the re-auth password lookup which must find a
   // user with a password_hash so verifyReauth can run bcrypt.compare (mocked true).
   queryFn.mockImplementation((sql: string) => {
@@ -216,7 +221,6 @@ describe('submission gateway routes — auth gate', () => {
 describe('submission gateway routes — role gate', () => {
   const MUTATIONS: Array<[string, string, Record<string, unknown>]> = [
     ['POST', '/api/mdx/gateways/fda/esg/transmit', { ...REAUTH, environment: 'production', submissionType: 'estar', bundle: { hash: 'h' } }],
-    ['POST', '/api/mdx/gateways/transmittals/1/rollback', { ...REAUTH }],
     ['POST', '/api/mdx/gateways/transmittals/1/technical-rejection', { ...REAUTH }],
     ['POST', '/api/mdx/gateways/transmittals/1/findings', { code: 'X', message: 'y' }],
     ['PATCH', '/api/mdx/gateways/findings/1/resolve', { resolution: 'done' }],
@@ -236,7 +240,8 @@ describe('submission gateway routes — role gate', () => {
     expect(res.body.data.length).toBeGreaterThan(0);
   });
 
-  it.each(['admin', 'manager', 'member'])('a %s may still transmit', async (role) => {
+  it.each(['admin', 'approver', 'reviewer'])('a %s (a signing role) may still transmit', async (role) => {
+    signerRole.mockResolvedValue(role);
     transmitFn.mockResolvedValue({ transmissionId: 'T-1', status: 'sent', receipts: [] });
     const res = await request(makeApp({ withAuth: true, role }))
       .post('/api/mdx/gateways/fda/esg/transmit')
@@ -245,14 +250,16 @@ describe('submission gateway routes — role gate', () => {
   });
 });
 
+/* Signing authority (§11.10(g)) on the two signs here — transmit and technical
+   rejection — is pinned in tests/mdx-submission-gateway-signing-authority.test.ts. */
+
 /* ─── Gateways list + config status ──────────────────────────────── */
 
 describe('GET /api/mdx/gateways/transmittals', () => {
   it('resolves submitted_by to the person, so the log names who transmitted', async () => {
     let captured = '';
     queryFn.mockImplementation((sql: string) => {
-      // The page query, not the totals beside it (GROUP BY; pinned in
-      // transmittal-log-totals.pglite.test.ts).
+      // The page query, not the totals beside it (transmittal-log-totals.pglite.test.ts).
       if (typeof sql === 'string' && sql.includes('FROM submission_transmittals') && !sql.includes('GROUP BY')) {
         captured = sql;
         return Promise.resolve({ rows: [{ id: 3, region: 'fda', gateway: 'esg', status: 'received', submitted_by: 11, submitted_by_name: 'Dr Ada Lovelace' }], rowCount: 1 });

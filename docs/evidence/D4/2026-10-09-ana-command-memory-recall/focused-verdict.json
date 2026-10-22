@@ -1,0 +1,72 @@
+{
+  "scope": "The shared command memory SELECT used by analyzeCMSStrategy and assessDiagnosticsValidation only.",
+  "status": "PASS",
+  "base_head": "bf80e2fa922a0261edadf403da732983cc55c9b7",
+  "canonical_fixture": "Reader-facing columns are pinned to shared/schema.ts projectMemoryEntries, and every command SELECT executes in real PGlite. No obsolete columns or mocked SELECT rows are supplied.",
+  "red": {
+    "success": false,
+    "numTotalTests": 20,
+    "numPassedTests": 0,
+    "numFailedTests": 4,
+    "numPendingTests": 16
+  },
+  "green": {
+    "success": true,
+    "numTotalTests": 20,
+    "numPassedTests": 20,
+    "numFailedTests": 0,
+    "numPendingTests": 0
+  },
+  "source_restored_in_finally": true,
+  "contracts": [
+    "Canonical confidence/importance aliases appear in real returned SQL rows.",
+    "Exact healthy CMS coverage, two keyword risks, and undefined complete-coverage recommendations are preserved.",
+    "Exact partial CMS category coverage and recommendation text are preserved.",
+    "Diagnostics retains its existing four-component keyword coverage math and public formatting.",
+    "Both callers use their unchanged five-category arrays, bound organization/project arguments, and limits of 18 or 20.",
+    "Both callers exclude pending_review, superseded, archived, rejected, null, and unknown top-level statuses; inactive-only projects retain healthy absence.",
+    "Severity uses critical/high/medium/low ordering case-insensitively with newest-first ties and null/unknown severity last.",
+    "Tenant/project isolation, explicit project override, and missing/nonnumeric project guards remain intact.",
+    "Real missing-table and missing-column errors use the existing failure results and never become successful empty reports."
+  ],
+  "lint": [
+    {
+      "file": "server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "file": "server/services/ana-ri/command-executor.ts",
+      "errors": 0,
+      "warnings": 18
+    }
+  ],
+  "diff_check_exit": 0,
+  "pins": {
+    "original_source": {
+      "git_blob": "0cb11c5e1cb6ab6a55ff58540f120219c25b69a4",
+      "sha256": "5c5df291e6ef497c404683b1b5f956a9d790f09d3860df3c620cf902a0ed4fc0",
+      "bytes": 223786
+    },
+    "candidate_source": {
+      "git_blob": "76aa5d5822d97837587f8d0321cf738f1d9a7c60",
+      "sha256": "4e3eeec8705d4cba263b023c0584172b2a0c7b97f45556c6520d064c834d3652",
+      "bytes": 224112
+    },
+    "test": {
+      "git_blob": "ca042146891e99bdf58bd83a52e014d5ac344491",
+      "sha256": "da311ccac8dc248156ea323e4f5f748f64837de38e8dcbbf3b9227fcad25b02d",
+      "bytes": 13780
+    },
+    "canonical_schema": {
+      "git_blob": "ac0895f080039b9ee5724a95b6b5defbe153616a",
+      "sha256": "f4de0a6872d01edec764a6f75bf61f16306aa8d9e122ea507136d87e41f7c2b9",
+      "bytes": 862248
+    }
+  },
+  "limits": [
+    "The private unused importance field is typed string | null to match the canonical text column; neither public result consumes confidence or importance numerically.",
+    "The diagnostics readinessScore remains an existing keyword coverage score. These tests do not establish scientific validation readiness.",
+    "Filtering applies to top-level status for this shared command SELECT; other readers and JSON-only review metadata are outside this batch."
+  ]
+}

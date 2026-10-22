@@ -22,7 +22,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { evidenceClaims } from '../../../shared/schema';
 import type { CanonicalFact, FactBinding } from '../../../shared/schema/living-record-spine';
-import auditService from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import {
   factValueView,
   getFact,
@@ -36,6 +36,8 @@ import {
   bindingImpactInput,
   classifyBindingImpact,
   factChangeFailure as fail,
+  isIdentifiedUser,
+  livingRecordAuditActor,
   propagationEligibility,
   type FactChangeFailure,
   type PropagationSkipReason,
@@ -73,6 +75,7 @@ export interface PropagateFactResult {
   propagated: PropagatedCitation[];
   skipped: SkippedCitation[];
   driftResolved: number;
+  auditTrail: AuditRowOutcome;
 }
 
 /** Write the fact's value into one citing claim and heal its binding. */
@@ -138,6 +141,10 @@ export async function propagateFactToCitations(
 ): Promise<PropagateFactResult | FactChangeFailure> {
   const reason = (params.reason ?? '').trim();
   if (!reason) return fail('invalid', 'reason for change is required');
+  // 2026-10-15: claims were rewritten with no actor and audited as 'system'.
+  if (!isIdentifiedUser(params.actor)) {
+    return fail('invalid', 'an identified user is required to propagate a governed value');
+  }
 
   const fact = await getFact(params.factId);
   if (!fact || fact.organizationId !== params.organizationId) {
@@ -182,9 +189,9 @@ export async function propagateFactToCitations(
     params.actor
   );
 
-  await auditService.logAction({
+  const auditTrail = await recordAuditRow({
     tenantId: fact.organizationId,
-    userId: params.actor ?? 'system',
+    userId: livingRecordAuditActor(params.actor),
     action: 'canonical_fact.propagated',
     resourceType: 'canonical_fact',
     resourceId: fact.id,
@@ -201,5 +208,5 @@ export async function propagateFactToCitations(
     },
   });
 
-  return { ok: true, fact, propagated, skipped, driftResolved };
+  return { ok: true, fact, propagated, skipped, driftResolved, auditTrail };
 }

@@ -1,0 +1,37 @@
+# Mutation 6 — on a project's door, a sequence of another program is accepted (the project-program predicate in resolveFulfilmentEvidenceTx removed)
+#
+# Replaced in server/services/ha-interactions/commitment-fulfilment.ts:
+#   -     if (programId !== p.projectProgramId) throw new HaError('SEQUENCE_NOT_FOUND', SEQUENCE_NOT_HERE);# with:
+#   +     void 0; // MUTATION 6: any sequence of the organisation, whatever its program, on a project's door#
+# Test run with the mutation in place: db — tests/db/commitment-fulfilment-evidence.dbtest.ts (-t "another project's sequence")
+# Restored afterwards: sha256 before 285144917976251e7b96a6c5333cf8d08ed4d1ee07e2b161cee6f4233f06dd86, after 285144917976251e7b96a6c5333cf8d08ed4d1ee07e2b161cee6f4233f06dd86 (identical)
+
+## The mutation (git diff of the working tree while it was in place)
+(new, untracked file: diff -u of the file before and with the mutation)
+--- a/server/services/ha-interactions/commitment-fulfilment.ts
++++ b/server/services/ha-interactions/commitment-fulfilment.ts
+@@ -146,7 +146,7 @@
+   const programId = r.program_id == null ? null : String(r.program_id);
+   // Access first: nothing about a sequence is said to someone who may not open it.
+   if (p.projectDoor) {
+-    if (programId !== p.projectProgramId) throw new HaError('SEQUENCE_NOT_FOUND', SEQUENCE_NOT_HERE);
++    void 0; // MUTATION 6: any sequence of the organisation, whatever its program, on a project's door
+   } else if (programId !== null) {
+     try {
+       await requireCurrentProgramAccess(client, { organizationId: p.orgId, userId: p.userId, programId, forShare: p.lock });
+
+## The run
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another project's sequence, before the password, and records nothing 88ms
+   → {"error":{"code":"PASSWORD_VERIFICATION_FAILED","message":"Signature rejected: password verification failed (§11.200). Nothing was signed."}}: expected 401 to be 404 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another project's sequence, before the password, and records nothing
+AssertionError: {"error":{"code":"PASSWORD_VERIFICATION_FAILED","message":"Signature rejected: password verification failed (§11.200). Nothing was signed."}}: expected 401 to be 404 // Object.is equality
+- Expected
++ Received
+- 404
++ 401
+ Test Files  1 failed (1)
+      Tests  1 failed | 26 skipped (27)
+
+## Reading
+On a project's door a sequence of another program of the same organisation is no longer refused: "refuses another project's sequence, before the password, and records nothing" receives 401 (the request reached the credential check) instead of 404 SEQUENCE_NOT_FOUND. Only that case fails. The database's composite FK holds the organisation, not the program, so this rule is the code's alone and this test is its proof. Control: mutation-controls.txt, "M6 db", 1 passed.

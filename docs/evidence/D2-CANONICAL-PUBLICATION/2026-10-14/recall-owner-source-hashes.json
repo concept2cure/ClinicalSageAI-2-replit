@@ -1,0 +1,37 @@
+{
+  "baseline": "normal merge of reviewed six increments with origin/concept2cure-v2 at 9ba70078fb55520244b5376d5d17d5e3f09e4471",
+  "ownedFilesFrozen": true,
+  "sha256": {
+    "server/services/ana-session-bootstrap.ts": "d83f45adab109d626f8582b5ea95db8d22a8e4b1c67b3ff6d592ee4931f5d9b1",
+    "server/services/advancedRAGPipeline.ts": "fa15d9f6b8573e6fe94fe7527ff482ac96e0da4123a4def2c7d0da8b118c7dd2",
+    "server/services/__tests__/ana-session-bootstrap-latency.test.ts": "397f368a44cb9dc35043fdb37e70cf3be9dcddb6b6d51789767b8cba70b2e6c8",
+    "server/services/rag-filters.ts": "20f013c86e949f7ab5a080d1d4ced47680ab22d0d6dc192b5e16198a9b4077b6",
+    "server/services/ragRouter.ts": "44c13be63f61d7c76fbfeefc6381f6fbd5ea1b306d5649b52b3a752cf8096546",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts": "4e67c8047daf7f3b830e7ec4e8644d502dc5c5a1df5742298d87f5d2d7326a54",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.config.mts": "bcd8e126cfbc062fd749112f8fa40718002e51adadd53a362490150c6c97de16",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/run-recall-counterfactual.mjs": "a98f088a9d340ca3e27b5301e94d0482266d69e39875a2bac2f98ba2eb0bd838",
+    "server/services/ana-session-bootstrap-format.ts": "015110503e280ad85c403498df955c414a0203e0ab71391597c6f8f297dc4fbc",
+    "server/services/__tests__/ana-session-bootstrap.test.ts": "ab75c5388aeab487b2747eb99903eec19433e403fddcfb8ed53dc895ee61fafc",
+    "server/services/__tests__/rag-actor-programme-scope.test.ts": "5a870b622c06bcd243910f0e59483c5a40f9af3bc3309f6b401d6656b340ed80"
+  },
+  "focused": {
+    "tests": 87,
+    "files": 7,
+    "log": "recall-pagination-followup-green.txt"
+  },
+  "offlineComposition": {
+    "tests": 16,
+    "files": 1
+  },
+  "counterfactual": {
+    "expectedExitCode": 1,
+    "productionSourceUnchanged": true
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 10,
+    "log": "recall-pagination-followup-eslint.txt"
+  },
+  "postgresQualification": "Lead-owned genuine PostgreSQL proof required; this owner did not claim database isolation.",
+  "followup": "Whole-typecheck found two unsupported ChatUploadPage properties. Canonical limit+1 page has no total. Exhausted page count is derived exactly; a bounded sample leaves total unmeasured and says so. Three RAG fixture controls were adapted to merged interfaces without changing production safeguards."
+}

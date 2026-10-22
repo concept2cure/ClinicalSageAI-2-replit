@@ -1,0 +1,25 @@
+ × tests/unit/orchestrator-dry-run-identity.test.ts > orchestrator validation assembly — recorded identity or a dry run (P-27) > builds the backbone with the recorded applicant and application number, and proceeds to signature 246ms
+ × tests/unit/orchestrator-dry-run-identity.test.ts > orchestrator validation assembly — recorded identity or a dry run (P-27) > says it is a dry run, and package.sign refuses it, when the project records no application number 82ms
+ × tests/unit/orchestrator-dry-run-identity.test.ts > orchestrator validation assembly — recorded identity or a dry run (P-27) > is a dry run when the run names an application number the record does not 106ms
+ × tests/unit/orchestrator-dry-run-identity.test.ts > orchestrator validation assembly — recorded identity or a dry run (P-27) > is a dry run when the run names no submission on record 88ms
+ × server/services/submission-service/__tests__/packageability-dry-run.test.ts > the governed packageability check is a dry run (P-27) > asks the assembler for a dry run and supplies no identity of its own 1211ms
+ ✓ server/services/submission-service/__tests__/packageability-dry-run.test.ts > the governed packageability check is a dry run (P-27) > discards the dry-run bundle whether or not the check passes 2ms
+ × server/routes/__tests__/submissions-assemble-dry-run.test.ts > the sequence assemble route is a dry run (P-27) > asks for a dry run, names no identity, and says no package was produced 1110ms
+ × server/routes/__tests__/submissions-assemble-dry-run.test.ts > the sequence assemble route is a dry run (P-27) > refuses a body that names the application or the applicant, and assembles nothing 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/unit/orchestrator-dry-run-identity.test.ts > orchestrator validation assembly — recorded identity or a dry run (P-27) > builds the backbone with the recorded applicant and application number, and proceeds to signature
+AssertionError: expected 'UNASSIGNED (applicant)' to be 'Concept2Cure Therapeutics' // Object.is equality
+ FAIL  tests/unit/orchestrator-dry-run-identity.test.ts > orchestrator validation assembly — recorded identity or a dry run (P-27) > says it is a dry run, and package.sign refuses it, when the project records no application number
+AssertionError: expected undefined to be true // Object.is equality
+ FAIL  tests/unit/orchestrator-dry-run-identity.test.ts > orchestrator validation assembly — recorded identity or a dry run (P-27) > is a dry run when the run names an application number the record does not
+AssertionError: expected undefined to be true // Object.is equality
+ FAIL  tests/unit/orchestrator-dry-run-identity.test.ts > orchestrator validation assembly — recorded identity or a dry run (P-27) > is a dry run when the run names no submission on record
+AssertionError: expected undefined to be true // Object.is equality
+ FAIL  server/routes/__tests__/submissions-assemble-dry-run.test.ts > the sequence assemble route is a dry run (P-27) > asks for a dry run, names no identity, and says no package was produced
+AssertionError: expected { sequenceId: 11, …(5) } to match object { sequenceId: 11, …(2) }
+ FAIL  server/routes/__tests__/submissions-assemble-dry-run.test.ts > the sequence assemble route is a dry run (P-27) > refuses a body that names the application or the applicant, and assembles nothing
+AssertionError: expected 200 to be 400 // Object.is equality
+ FAIL  server/services/submission-service/__tests__/packageability-dry-run.test.ts > the governed packageability check is a dry run (P-27) > asks the assembler for a dry run and supplies no identity of its own
+AssertionError: expected { sequenceId: 1, …(5) } to match object { sequenceId: 1, …(2) }
+ Test Files  3 failed (3)
+      Tests  7 failed | 1 passed (8)

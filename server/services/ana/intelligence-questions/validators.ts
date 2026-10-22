@@ -8,6 +8,11 @@
  * @module server/services/ana/intelligence-questions/validators
  */
 
+import {
+  OTHER_POSITION,
+  OWN_POSITION_MAX_CHARS,
+  otherFieldId,
+} from '../../../../shared/types/intelligence-questions.js';
 import type { QuestionNode, QuestionField } from './types.js';
 import { evaluatePredicate } from './engine.js';
 
@@ -38,6 +43,16 @@ export function validateAnswers(
         errors.push({ fieldId: field.id, message: `${field.label} is required.` });
         continue;
       }
+    }
+
+    /* A position the list did not offer. Judged before the option check, which
+       would otherwise call the person's own answer invalid (founder's
+       directive, 2026-10-12). */
+    const ownPosition = takesOwnPosition(field, value);
+    if (ownPosition) {
+      const own = ownPositionError(field, answers);
+      if (own) errors.push(own);
+      continue;
     }
 
     if (value == null || value === '') continue;
@@ -80,22 +95,41 @@ export function validateAnswers(
       }
     }
 
-    if (field.type === 'select' || field.type === 'radio') {
-      if (field.options && typeof value === 'string') {
-        const validValues = field.options.map(o => o.value);
-        if (!validValues.includes(value)) {
-          errors.push({ fieldId: field.id, message: `${field.label}: "${value}" is not a valid option.` });
-        }
+    /* A question that OFFERS positions enforces them, whatever its field type.
+       This used to read `field.type === 'select' || 'radio'`, so
+       `agency_select` — the one answer the platform keys the Module 1
+       backbone, the validation profile and the gateway on — was never checked
+       against the twelve agencies it offers, and a caller could store prose
+       (2026-10-12 review). */
+    if (field.options && typeof value === 'string') {
+      const validValues = field.options.map(o => o.value);
+      if (!validValues.includes(value)) {
+        errors.push({ fieldId: field.id, message: `${field.label}: "${value}" is not a valid option.` });
       }
     }
 
-    if (field.type === 'multi_select' && Array.isArray(value) && field.options) {
+    if (Array.isArray(value) && field.options) {
       const validValues = field.options.map(o => o.value);
       for (const item of value) {
         if (typeof item === 'string' && !validValues.includes(item)) {
           errors.push({ fieldId: field.id, message: `${field.label}: "${item}" is not a valid option.` });
         }
       }
+    }
+
+    /* A question whose governed catalogue holds nothing for this programme —
+       AnA has no routes to market for PMDA — offers NO positions, so the check
+       above has nothing to check against and every string passed. The card
+       sends the person's own words under OTHER_POSITION; a tool or an API
+       caller could send prose that the record would then carry as though AnA
+       had offered it. Their words are the only answer here. */
+    if (field.optionsFrom && !field.options?.length && typeof value === 'string' && value !== OTHER_POSITION) {
+      errors.push({
+        fieldId: field.id,
+        message:
+          `${field.label}: AnA holds no positions for this programme, so she cannot record an answer as one of ` +
+          'hers. Describe it in your own words and she will record it as yours.',
+      });
     }
 
     if (field.type === 'date' && typeof value === 'string') {
@@ -249,4 +283,51 @@ function flattenAnswers(answers: Record<string, Record<string, unknown>>): Recor
     Object.assign(flat, nodeAnswers);
   }
   return flat;
+}
+
+/** Whether this answer is the person taking a position of their own. */
+function takesOwnPosition(field: QuestionField, value: unknown): boolean {
+  if (value === OTHER_POSITION) return true;
+  return Array.isArray(value) && value.includes(OTHER_POSITION);
+}
+
+/**
+ * Why AnA cannot take this as the person's own position, or null when she can.
+ *
+ * A field with no `allowOther` has a closed list, and the refusal says so:
+ * "not a valid option" would blame the person for an answer the question never
+ * invited. A field that does allow one needs the words, or it records nothing
+ * but the fact that the list was wrong.
+ */
+function ownPositionError(
+  field: QuestionField,
+  answers: Record<string, unknown>,
+): ValidationError | null {
+  if (!field.allowOther) {
+    const listed = (field.options ?? []).map(o => o.label).join(', ');
+    return {
+      fieldId: field.id,
+      message:
+        `${field.label}: ${listed ? `${listed} are` : 'the listed values are'} the only positions this question accepts. ` +
+        'Tell AnA what applies instead and she will take it up as a change to the question.',
+    };
+  }
+  const written = answers[otherFieldId(field.id)];
+  const text = typeof written === 'string' ? written.trim() : '';
+  if (!text) {
+    if (field.allowOther.required === false) return null;
+    return {
+      fieldId: otherFieldId(field.id),
+      message: field.allowOther.prompt
+        ? `${field.allowOther.prompt}`
+        : `${field.label}: say which position you are taking, in your own words.`,
+    };
+  }
+  if (text.length > OWN_POSITION_MAX_CHARS) {
+    return {
+      fieldId: otherFieldId(field.id),
+      message: `${field.label}: ${OWN_POSITION_MAX_CHARS} characters at most here — put the detail in the document, not the answer.`,
+    };
+  }
+  return null;
 }

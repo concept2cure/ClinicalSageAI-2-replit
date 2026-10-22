@@ -116,6 +116,14 @@ export interface ExportManifest {
     hashedEntries?: number;
     /** Rows carrying no record_hash. Absent on exports sealed before WO-16B. */
     unhashedEntries?: number;
+    /**
+     * Rows whose `previous_hash` is NULL although their predecessor WAS hashed,
+     * so the row cannot be placed in the chain and the link through it was not
+     * checked. The loop used to skip these silently and report `intact` over
+     * them (HS-1008-7). Not evidence of tampering, so not counted a break —
+     * a link that could not be verified. Absent on exports sealed before this.
+     */
+    unlinkedEntries?: number;
     brokenLinks: number;
     verifiedAt: string;
     /** Why the status is not a verdict, when it is not one. */
@@ -127,6 +135,8 @@ export interface ExportManifest {
    * on exports sealed before that change.
    */
   exportRecord?: { auditEventId: number };
+  /** A format conversion retains this verified source snapshot identity. */
+  sourceExport?: { exportId: string; dataHash: string; format: 'json'; exportedAt: string; exportRecord?: { auditEventId: number } };
   /**
    * How many rows each store contributed. The export used to read audit_events
    * only, so no event the launch apps write to audit_logs (Vault ingest, filing,
@@ -291,6 +301,7 @@ export async function snapshotChainIntegrity(
     let brokenLinks = 0;
     let hashedEntries = 0;
     let unhashedEntries = 0;
+    let unlinkedEntries = 0;
     const prevHashByOrg: Record<number, string | null> = {};
 
     for (const row of rows) {
@@ -308,14 +319,23 @@ export async function snapshotChainIntegrity(
         continue;
       }
       hashedEntries++;
-      if (row.previous_hash !== prevHash && prevHash !== null && row.previous_hash !== null) {
+      if (prevHash !== null && row.previous_hash === null) {
+        /* The predecessor was hashed, so this row is not the chain's genesis —
+           it claims no predecessor while one exists. The old condition required
+           `row.previous_hash !== null` before comparing, so this row passed as
+           a verified link and the chain read 'intact' over it (HS-1008-7). It
+           is not proof of tampering, so it is not counted a break: it is a link
+           that could not be checked, which this module already has a verdict
+           for. */
+        unlinkedEntries++;
+      } else if (row.previous_hash !== prevHash && prevHash !== null) {
         brokenLinks++;
       }
       prevHashByOrg[oid] = row.record_hash;
     }
 
     if (brokenLinks > 0) {
-      return { status: 'broken', totalEntries: rows.length, hashedEntries, unhashedEntries, brokenLinks, verifiedAt };
+      return { status: 'broken', totalEntries: rows.length, hashedEntries, unhashedEntries, unlinkedEntries, brokenLinks, verifiedAt };
     }
     if (hashedEntries === 0) {
       return {
@@ -328,18 +348,15 @@ export async function snapshotChainIntegrity(
         reason: 'no row carries a record_hash: the chain has never been hashed, so no link could be checked',
       };
     }
-    if (unhashedEntries > 0) {
-      return {
-        status: 'unverified',
-        totalEntries: rows.length,
-        hashedEntries,
-        unhashedEntries,
-        brokenLinks: 0,
-        verifiedAt,
-        reason: `${unhashedEntries} of ${rows.length} rows carry no record_hash; the links through them could not be checked`,
-      };
-    }
-    return { status: 'intact', totalEntries: rows.length, hashedEntries, unhashedEntries: 0, brokenLinks: 0, verifiedAt };
+    const unchecked =
+      unhashedEntries > 0
+        ? `${unhashedEntries} of ${rows.length} rows carry no record_hash; the links through them could not be checked`
+        : unlinkedEntries > 0
+          ? `${unlinkedEntries} of ${rows.length} rows carry no previous_hash although their predecessor was hashed; those links could not be checked`
+          : null;
+    const counts = { totalEntries: rows.length, hashedEntries, unhashedEntries, unlinkedEntries, brokenLinks: 0, verifiedAt };
+    if (unchecked) return { status: 'unverified', ...counts, reason: unchecked };
+    return { status: 'intact', ...counts };
   } catch (err) {
     // The honest branch, unchanged in meaning: the query did not run.
     return {
@@ -552,17 +569,21 @@ export function sanitizeCsvValue(val: unknown): string {
   return `"${str.replace(/"/g, '""')}"`;
 }
 
-function formatCSV(rows: any[]): string {
+export function formatAuditExportCsv(rows: Record<string, unknown>[]): string {
   const headers = [
     'source', 'id', 'timestamp', 'organization_id', 'event_type', 'entity_type', 'entity_id',
     'user_id', 'user_name', 'user_role', 'ip_address', 'reason',
     'regulatory_significant', 'gxp_relevant',
     'record_hash', 'previous_hash', 'sequence_number',
-    'sha256_chain', 'chain_seq', 'hmac_seal', 'payload_hash', 'target',
+    'sha256_chain', 'chain_seq', 'hmac_seal', 'payload_hash', 'target', 'comments', 'created_at',
   ];
 
   const csvRows = rows.map(row =>
-    headers.map(h => sanitizeCsvValue(row[h])).join(',')
+    headers.map(h => {
+      const value = row[h];
+      const text = value instanceof Date ? value.toISOString() : value != null && typeof value === 'object' ? JSON.stringify(value) : value;
+      return sanitizeCsvValue(text);
+    }).join(',')
   );
 
   return [headers.join(','), ...csvRows].join('\n');
@@ -600,7 +621,7 @@ export async function generateSignedAuditExport(
   const { rows, truncated, sources } = await queryAuditData(pool, request);
 
   // 2. Format
-  const data = request.format === 'csv' ? formatCSV(rows) : formatJSON(rows);
+  const data = request.format === 'csv' ? formatAuditExportCsv(rows) : formatJSON(rows);
   const dataHash = sha256Hex(data);
 
   // 3. Snapshot chain integrity at time of export

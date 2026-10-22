@@ -1,0 +1,8 @@
+ × tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — only a role that may sign transmits (SEC-1008-1) > refuses a member: 403 before the password is read, and nothing is 
+   → a password attempt was spent on a role that may not sign: expected [ [ …(2) ] ] to have a length of +0 but got 1
+ × tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — only a role that may sign transmits (SEC-1008-1) > refuses a manager: 403 before the password is read, and nothing is
+   → a password attempt was spent on a role that may not sign: expected [ [ …(2) ] ] to have a length of +0 but got 1
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: a password attempt was spent on a role that may not sign: expected [ [ …(2) ] ] to have a length of +0 but got 1
+    368|     expect(credentialReads, 'a password attempt was spent on a role th…
+      Tests  2 failed | 46 passed (48)

@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-20T22:45:46.454789+00:00",
+  "elapsedSeconds": 26.157,
+  "argv": [
+    "npm",
+    "run",
+    "build"
+  ],
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-final.json",
+  "sourceDrift": [],
+  "rawOutput": "canonical-build-output.txt.gz",
+  "outputSha256": "71e95b5b97ccd9374f2e2c06a68939c4645fb8beac93b2376b0a953bae49adbb"
+}

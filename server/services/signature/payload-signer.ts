@@ -165,11 +165,10 @@ export async function verifyPayloadSignature(
   if (envelope.algorithm !== posture.kms.signingAlgorithm) return 'failed';
   try {
     const kms = await deps.kms();
-    // Verify against the key the POSTURE names, not the key the envelope
-    // names: an attacker who can rewrite the envelope can also point it at a
-    // key they control. The envelope's keyId is recorded for inspection only.
+    const keyId = await trustedKeyForEnvelope(kms, posture.kms, envelope);
+    if (!keyId) return 'failed';
     const result = await kms.verify({
-      keyId: posture.kms.keyId,
+      keyId,
       digest: digestOfSignedInput(envelope.signedInput),
       signingAlgorithm: envelope.algorithm,
       signature: Buffer.from(envelope.signature, 'base64'),
@@ -178,6 +177,50 @@ export async function verifyPayloadSignature(
   } catch {
     return 'failed';
   }
+}
+
+/**
+ * The key, among those the POSTURE trusts, that signed this envelope — or null.
+ *
+ * Two rules, both kept:
+ *
+ *   1. Never the key the envelope names. An attacker who can rewrite the
+ *      envelope can point its keyId at a key they control, so the candidates
+ *      are only the posture's: the current signing key, then every retained
+ *      key (CONCEPT2CURE_SIGNER_KMS_VERIFY_KEY_IDS). The envelope's fingerprint
+ *      SELECTS among those; it cannot add one. And selecting a trusted key does
+ *      not make a forged signature valid — KMS still has to verify it.
+ *   2. Old signatures verify against the old key (SOP §5). Until 2026-10-18
+ *      this verified against the current key only, so the SOP's own rotation
+ *      procedure — a new key each year, the alias moved to it, the previous key
+ *      kept for Verify — would have made every release signed before it report
+ *      `failed` and blocked its export, while the SOP told an inspector the
+ *      opposite.
+ *
+ * Matched by the fingerprint of each key's public key, never by keyId text:
+ * the posture names an ALIAS (alias/fda-signing-key-2026) while the envelope
+ * records the ARN KMS returned from Sign, so the two strings never agree even
+ * for today's key. The fingerprint is the same as the one the offline verifier
+ * already checks. A retained key that cannot be read is skipped, not fatal: it
+ * can only matter to envelopes it signed, and those then fail closed.
+ */
+async function trustedKeyForEnvelope(
+  kms: KmsOps,
+  config: NonNullable<SignerPosture['kms']>,
+  envelope: PayloadSignatureEnvelope,
+): Promise<string | null> {
+  const candidates = [config.keyId, ...(config.verifyKeyIds ?? [])];
+  for (const [index, keyId] of candidates.entries()) {
+    let fingerprint: string;
+    try {
+      fingerprint = publicKeyFingerprint((await kms.getPublicKey(keyId)).spkiDer);
+    } catch (err) {
+      if (index === 0) throw err; // the current key unreadable is KMS unavailable, as before
+      continue;
+    }
+    if (fingerprint === envelope.publicKeySha256) return keyId;
+  }
+  return null;
 }
 
 /**

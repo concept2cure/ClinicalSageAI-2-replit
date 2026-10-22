@@ -16,6 +16,7 @@
 
 import { pool } from '../db.js';
 import { createScopedLogger } from '../utils/logger';
+import { DEPLOYED_CONFIDENCE_LEVELS } from '../../shared/constants/operating-system-vocab';
 import { assertDomainTrack, DEFAULT_DOMAIN_TRACK, type DomainTrack } from './domain-track.js';
 
 const log = createScopedLogger('assumption-registry');
@@ -29,26 +30,29 @@ const log = createScopedLogger('assumption-registry');
    `DomainTrack` from this module keep working. */
 export type { DomainTrack } from './domain-track.js';
 
-export type AssumptionCategory =
-  | 'efficacy'
-  | 'safety'
-  | 'statistical'
-  | 'design'
-  | 'population'
-  | 'endpoint'
-  | 'dosing'
-  | 'manufacturing'
-  | 'regulatory_pathway'
-  | 'comparator'
-  | 'dropout'
-  | 'missing_data'
-  | 'effect_size'
-  | 'prevalence'
-  | 'enrollment'
-  | 'timeline'
-  | 'cost';
+/* The CHECK lists of assumption_records.category and .source_type
+   (db/migrations/20260323_assumption_decision_contradiction.sql), as values so
+   create() can refuse anything else before the INSERT. Until 2026-10-15 they
+   were type unions only, and the SAP capture's 'analysis_population',
+   'attrition', 'ana_generated' and 'manual' reached the INSERT, failed the
+   CHECK, and were swallowed by the caller. The vocabulary test reads both
+   lists out of the DDL and asserts these match. */
+export const ASSUMPTION_CATEGORIES = [
+  'efficacy', 'safety', 'statistical', 'design', 'population',
+  'endpoint', 'dosing', 'manufacturing', 'regulatory_pathway',
+  'comparator', 'dropout', 'missing_data', 'effect_size',
+  'prevalence', 'enrollment', 'timeline', 'cost',
+] as const;
+export type AssumptionCategory = (typeof ASSUMPTION_CATEGORIES)[number];
 
-export type ConfidenceLevel = 'definitive' | 'high' | 'moderate' | 'low' | 'speculative';
+export const ASSUMPTION_SOURCE_TYPES = [
+  'protocol', 'sap', 'literature', 'precedent', 'expert_opinion',
+  'regulatory_guidance', 'historical_data', 'modeling', 'sponsor_decision',
+] as const;
+export type SourceType = (typeof ASSUMPTION_SOURCE_TYPES)[number];
+
+/** confidence_level's CHECK list, shared with decision_records. */
+export type ConfidenceLevel = (typeof DEPLOYED_CONFIDENCE_LEVELS)[number];
 
 export type AssumptionStatus =
   | 'active'
@@ -57,16 +61,68 @@ export type AssumptionStatus =
   | 'withdrawn'
   | 'challenged';
 
-export type SourceType =
-  | 'protocol'
-  | 'sap'
-  | 'literature'
-  | 'precedent'
-  | 'expert_opinion'
-  | 'regulatory_guidance'
-  | 'historical_data'
-  | 'modeling'
-  | 'sponsor_decision';
+/**
+ * A value the governance ledger will not record: missing, or outside its
+ * column's vocabulary. Raised at the service boundary before any write, and
+ * answered with 400 by the routes; nothing is recorded in its place.
+ */
+export class LedgerInputRefusal extends Error {
+  readonly status = 400 as const;
+  constructor(
+    readonly field: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'LedgerInputRefusal';
+  }
+}
+
+const isAbsent = (value: unknown): boolean =>
+  value === undefined || value === null || (typeof value === 'string' && value.trim() === '');
+
+/** One of `allowed`, or a refusal naming the field and the allowed values. */
+function memberOf<T extends string>(allowed: readonly T[], value: unknown, field: string, context: string): T {
+  if (typeof value === 'string' && (allowed as readonly string[]).includes(value)) return value as T;
+  throw new LedgerInputRefusal(
+    field,
+    `${context}: ${field} ${isAbsent(value) ? 'is required' : `${JSON.stringify(value)} is not a value the ledger records`}. ` +
+      `Allowed: ${allowed.join(', ')}.`,
+  );
+}
+
+/** Text the caller stated, or a refusal: the ledger records no stand-in for it. */
+function statedText(value: unknown, field: string, context: string): string {
+  if (typeof value === 'string' && value.trim() !== '') return value;
+  throw new LedgerInputRefusal(field, `${context}: ${field} is required; nothing is recorded in its place.`);
+}
+
+function positiveInteger(value: unknown, field: string, context: string): number {
+  const n = typeof value === 'string' && /^\d+$/.test(value.trim()) ? Number(value) : value;
+  if (typeof n === 'number' && Number.isInteger(n) && n > 0) return n;
+  throw new LedgerInputRefusal(field, `${context}: ${field} must be a positive integer (got ${JSON.stringify(value)}).`);
+}
+
+/**
+ * The confidence a caller stated, or null when it stated none — never a
+ * default. Shared with decision-record-service: both columns carry the same
+ * CHECK list.
+ */
+export function assertConfidenceLevel(value: unknown, field: string, context: string): ConfidenceLevel | null {
+  return isAbsent(value) ? null : memberOf(DEPLOYED_CONFIDENCE_LEVELS, value, field, context);
+}
+
+/** assertDomainTrack's refusal, as one the routes answer with 400. */
+function domainTrackOf(value: unknown, context: string): DomainTrack {
+  try {
+    return assertDomainTrack(value, context);
+  } catch (err) {
+    throw new LedgerInputRefusal('domainTrack', err instanceof Error ? err.message : String(err));
+  }
+}
+
+/** The first of `values` that is non-blank text, or undefined. */
+const firstText = (...values: unknown[]): string | undefined =>
+  values.find((v): v is string => typeof v === 'string' && v.trim() !== '');
 
 export interface AssumptionRecord {
   id: string;
@@ -81,7 +137,8 @@ export interface AssumptionRecord {
   rationale: string;
   sourceType: SourceType;
   sourceReference: string | null;
-  confidenceLevel: ConfidenceLevel;
+  /** As the caller stated it; null when nobody did (2026-10-15). */
+  confidenceLevel: ConfidenceLevel | null;
   applicableRegulators: string[];
   linkedArtifactId: number | null;
   linkedArtifactVersion: number | null;
@@ -108,7 +165,8 @@ export interface CreateAssumptionInput {
   rationale: string;
   sourceType: SourceType;
   sourceReference?: string;
-  confidenceLevel?: ConfidenceLevel;
+  /** Stated by the caller, or absent. It defaulted to 'moderate' (2026-10-15). */
+  confidenceLevel?: ConfidenceLevel | null;
   applicableRegulators?: string[];
   linkedArtifactId?: number;
   linkedArtifactVersion?: number;
@@ -128,30 +186,46 @@ export class AssumptionRegistryService {
     return AssumptionRegistryService.instance;
   }
 
+  /**
+   * The legacy input shape (name, description, value, confidence,
+   * createdById) mapped onto create(). Until 2026-10-15 it filled every input
+   * it was not given — category 'regulatory_pathway', source 'expert_opinion',
+   * confidence 'moderate', rationale 'No rationale provided', actor 'system',
+   * code `ASM-${Date.now()}`, title 'Assumption' — and recorded a stated 0 as
+   * '' (`0 || ''`). A missing input is now refused, by this shape's own name
+   * for it; a missing confidence is recorded as none.
+   */
   async createAssumption(input: Record<string, unknown>): Promise<AssumptionRecord> {
+    const context = 'assumptionRegistryService.createAssumption';
+    const value = [input.textValue, input.numericValue, input.value, input.assumedValue].find(
+      (v) => (typeof v === 'number' && Number.isFinite(v)) || (typeof v === 'string' && v.trim() !== ''),
+    );
+    const createdById = Number(input.createdById);
     return this.create({
       organizationId: Number(input.organizationId),
       projectId: Number(input.projectId),
-      assumptionCode: String(input.name || input.assumptionCode || `ASM-${Date.now()}`),
-      title: String(input.description || input.name || 'Assumption'),
-      // Absent stays the default; present-but-wrong is refused by create()
-      // rather than cast through `as DomainTrack`, which is the cast that let
-      // the modality vocabulary reach the INSERT.
-      domainTrack: input.domainTrack == null
-        ? DEFAULT_DOMAIN_TRACK
-        : assertDomainTrack(input.domainTrack, 'assumptionRegistryService.createAssumption'),
-      category: (input.category as AssumptionCategory) ?? 'regulatory_pathway',
-      assumedValue: String(input.textValue || input.numericValue || input.value || ''),
-      unit: (input.unit as string) || undefined,
-      rationale: String(input.rationale || 'No rationale provided'),
-      sourceType: (input.sourceType as SourceType) ?? 'expert_opinion',
-      sourceReference: (input.sourceDescription as string) || undefined,
-      confidenceLevel: (input.confidence as ConfidenceLevel) ?? 'moderate',
+      assumptionCode: statedText(firstText(input.name, input.assumptionCode), 'assumptionCode', context),
+      title: statedText(firstText(input.description, input.name, input.title), 'title', context),
+      // Absent stays the documented default (domain-track.ts); present-but-wrong
+      // is refused rather than cast through `as DomainTrack`, which is the cast
+      // that let the modality vocabulary reach the INSERT.
+      domainTrack: input.domainTrack == null ? DEFAULT_DOMAIN_TRACK : domainTrackOf(input.domainTrack, context),
+      category: memberOf(ASSUMPTION_CATEGORIES, input.category, 'category', context),
+      assumedValue: statedText(value === undefined ? undefined : String(value), 'assumedValue', context),
+      unit: firstText(input.unit),
+      rationale: statedText(input.rationale, 'rationale', context),
+      sourceType: memberOf(ASSUMPTION_SOURCE_TYPES, input.sourceType, 'sourceType', context),
+      sourceReference: firstText(input.sourceDescription, input.sourceReference),
+      confidenceLevel: assertConfidenceLevel(input.confidence ?? input.confidenceLevel, 'confidence', context),
       applicableRegulators: [],
       linkedArtifactId: (input.sourceArtifactId as number) || undefined,
       linkedArtifactVersion: undefined,
       linkedSectionCode: undefined,
-      createdBy: String(input.createdById || 'system'),
+      createdBy: statedText(
+        Number.isInteger(createdById) && createdById > 0 ? String(createdById) : undefined,
+        'createdBy',
+        context,
+      ),
     });
   }
 
@@ -321,13 +395,25 @@ export class AssumptionRegistryService {
       confidenceLevel: 'confidence_level',
       sourceReference: 'source_reference',
     };
+    // Refused here, not by the CHECK; a blank one clears it to "not stated".
+    const values: Record<string, unknown> =
+      input.confidenceLevel === undefined
+        ? input
+        : {
+            ...input,
+            confidenceLevel: assertConfidenceLevel(
+              input.confidenceLevel,
+              'confidenceLevel',
+              'assumptionRegistryService.updateAssumption',
+            ),
+          };
     const sets: string[] = [];
     const params: (string | number | null)[] = [];
     let idx = 1;
     for (const [key, column] of Object.entries(editable)) {
-      if (input[key] !== undefined) {
+      if (values[key] !== undefined) {
         sets.push(`${column} = $${idx++}`);
-        params.push(input[key] as string);
+        params.push(values[key] as string | null);
       }
     }
     if (sets.length === 0) return this.getById(id, organizationId);
@@ -371,12 +457,14 @@ export class AssumptionRegistryService {
     replacement: Record<string, unknown>,
     reason: string
   ): Promise<AssumptionRecord | null> {
+    // performedBy was `replacement.createdById ?? 'system'` (changed 2026-10-15):
+    // createAssumption now refuses a replacement with no actor, before any write.
     const created = await this.createAssumption({ ...replacement, organizationId });
     return this.supersede(id, {
       organizationId,
       replacementId: created.id,
       reason,
-      performedBy: String(replacement.createdById ?? 'system'),
+      performedBy: String(replacement.createdById),
     });
   }
 
@@ -398,13 +486,27 @@ export class AssumptionRegistryService {
   }
 
   async create(input: CreateAssumptionInput): Promise<AssumptionRecord> {
-    log.info('Creating assumption', { code: input.assumptionCode, project: input.projectId });
-
-    /* Same boundary as decisionRecordService.create, for the same reason: the
-       column's CHECK names nine disciplines, and a caller passing the
-       product-modality vocabulary instead got a constraint violation buried in
-       its own catch block while this registry stayed empty. */
-    const domainTrack = assertDomainTrack(input.domainTrack, 'assumptionRegistryService.create');
+    const context = 'assumptionRegistryService.create';
+    /* Same boundary as decisionRecordService.create, for the same reason: each
+       column below carries a CHECK or a NOT NULL, and a caller passing a value
+       outside it got a constraint violation buried in its own catch block while
+       this registry stayed empty. The domain track was checked here; category,
+       source and confidence were not, and a missing confidence was recorded as
+       'moderate' (2026-10-15). Each is refused now, naming the field. */
+    const domainTrack = domainTrackOf(input.domainTrack, context);
+    const stated = {
+      organizationId: positiveInteger(input.organizationId, 'organizationId', context),
+      projectId: positiveInteger(input.projectId, 'projectId', context),
+      assumptionCode: statedText(input.assumptionCode, 'assumptionCode', context),
+      title: statedText(input.title, 'title', context),
+      category: memberOf(ASSUMPTION_CATEGORIES, input.category, 'category', context),
+      assumedValue: statedText(input.assumedValue, 'assumedValue', context),
+      rationale: statedText(input.rationale, 'rationale', context),
+      sourceType: memberOf(ASSUMPTION_SOURCE_TYPES, input.sourceType, 'sourceType', context),
+      confidenceLevel: assertConfidenceLevel(input.confidenceLevel, 'confidenceLevel', context),
+      createdBy: statedText(input.createdBy, 'createdBy', context),
+    };
+    log.info('Creating assumption', { code: stated.assumptionCode, project: stated.projectId });
 
     const result = await pool!.query(
       `
@@ -418,23 +520,23 @@ export class AssumptionRegistryService {
       RETURNING *
     `,
       [
-        input.organizationId,
-        input.projectId,
-        input.assumptionCode,
-        input.title,
+        stated.organizationId,
+        stated.projectId,
+        stated.assumptionCode,
+        stated.title,
         domainTrack,
-        input.category,
-        input.assumedValue,
+        stated.category,
+        stated.assumedValue,
         input.unit ?? null,
-        input.rationale,
-        input.sourceType,
+        stated.rationale,
+        stated.sourceType,
         input.sourceReference ?? null,
-        input.confidenceLevel ?? 'moderate',
+        stated.confidenceLevel,
         input.applicableRegulators ?? [],
         input.linkedArtifactId ?? null,
         input.linkedArtifactVersion ?? null,
         input.linkedSectionCode ?? null,
-        input.createdBy,
+        stated.createdBy,
       ]
     );
 
@@ -442,7 +544,7 @@ export class AssumptionRegistryService {
 
     // Auto-detect assumption drift after creation
     // Runs async — does not block the create response
-    this.triggerDriftDetection(input.organizationId, input.projectId).catch(err => {
+    this.triggerDriftDetection(stated.organizationId, stated.projectId).catch(err => {
       log.warn('Assumption drift detection failed (non-blocking)', {
         error: err instanceof Error ? err.message : String(err),
       });
@@ -458,12 +560,17 @@ export class AssumptionRegistryService {
   private async triggerDriftDetection(organizationId: number, projectId: number): Promise<void> {
     try {
       const { contradictionEngineService } = await import('./contradiction-engine-service');
-      const findings = await contradictionEngineService.detectAssumptionDrift(
+      const { findings, coverage } = await contradictionEngineService.detectAssumptionDrift(
         organizationId,
         projectId
       );
       if (findings.length > 0) {
-        log.info('Assumption drift detected', { projectId, count: findings.length });
+        log.info('Assumption drift detected', { projectId, count: findings.length, coverage });
+      } else if (coverage.comparedNothing || coverage.readTruncated) {
+        /* No drift found is not the same as no drift: with one assumption per category there
+           is no pair to compare, and a read that stopped at its limit left records
+           uncompared. Logged so the breadcrumb is not "detected none". */
+        log.info('Assumption drift: nothing established', { projectId, coverage });
       }
     } catch {
       // Contradiction engine may not have tables yet — silently skip
@@ -537,7 +644,13 @@ export class AssumptionRegistryService {
       performedBy: string;
     }
   ): Promise<AssumptionRecord | null> {
-    log.info('Superseding assumption', { id, replacementId: input.replacementId });
+    // A supersession names its replacement, its reason and who performed it;
+    // a missing one is refused rather than written as NULL (2026-10-15).
+    const context = 'assumptionRegistryService.supersede';
+    const replacementId = statedText(input.replacementId, 'replacementId', context);
+    const reason = statedText(input.reason, 'reason', context);
+    statedText(input.performedBy, 'performedBy', context);
+    log.info('Superseding assumption', { id, replacementId });
 
     const result = await pool!.query(
       `
@@ -546,7 +659,7 @@ export class AssumptionRegistryService {
       WHERE id = $3 AND organization_id = $4
       RETURNING *
     `,
-      [input.replacementId, input.reason, id, input.organizationId]
+      [replacementId, reason, id, input.organizationId]
     );
 
     const record = result.rows.length ? this.map(result.rows[0]) : null;
@@ -666,7 +779,7 @@ export class AssumptionRegistryService {
       rationale: row.rationale as string,
       sourceType: row.source_type as SourceType,
       sourceReference: row.source_reference as string | null,
-      confidenceLevel: row.confidence_level as ConfidenceLevel,
+      confidenceLevel: (row.confidence_level as ConfidenceLevel | null) ?? null,
       applicableRegulators: (row.applicable_regulators as string[]) ?? [],
       linkedArtifactId: row.linked_artifact_id as number | null,
       linkedArtifactVersion: row.linked_artifact_version as number | null,

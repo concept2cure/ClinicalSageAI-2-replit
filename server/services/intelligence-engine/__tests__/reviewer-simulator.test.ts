@@ -28,8 +28,20 @@ vi.mock('../../../db', () => ({
   },
 }));
 
-import { runReviewerSimulation } from '../reviewer-simulator.service';
+import { runReviewerSimulation as runScopedReviewerSimulation } from '../reviewer-simulator.service';
 import type { PersonaProgramFacts } from '../reviewer-personas';
+
+vi.mock('../../authoring/authoring-program-access', async original => ({
+  ...(await original<typeof import('../../authoring/authoring-program-access')>()), authorizeAuthoringProgram: vi.fn(async () => undefined),
+}));
+const executor = { query: async (text: string, params: unknown[] = []) => {
+  if (!text.startsWith('INSERT INTO reviewer_simulation_runs')) throw new Error('Unexpected fixture read');
+  insertCalls.push({ values: { organizationId: params[0], programId: params[1], triggeredBy: params[2], trigger: params[3],
+    personaScope: JSON.parse(params[4] as string), inputsHash: params[5], questions: JSON.parse(params[6] as string), questionCount: params[7],
+    criticalCount: params[8], warningCount: params[9], infoCount: params[10], summary: JSON.parse(params[13] as string) } });
+  return { rows: [{ id: 'sim-run-1' }] };
+} };
+const runReviewerSimulation = (req: Parameters<typeof runScopedReviewerSimulation>[0]) => runScopedReviewerSimulation(req, { executor, userId: 3 });
 
 const ORG = 7;
 const PROGRAM = '00000000-0000-0000-0000-000000000001';
@@ -107,7 +119,7 @@ describe('runReviewerSimulation', () => {
     expect(v.personaScope).toEqual(result.personaScope);
     expect(v.inputsHash).toBe(result.inputsHash);
     expect(v.trigger).toBe('manual');
-    expect(v.triggeredBy).toBe('user-1');
+    expect(v.triggeredBy).toBe('3'); // The verified producer actor, never a caller-supplied label.
   });
 
   test('inputsHash is stable for identical inputs', async () => {
@@ -129,7 +141,11 @@ describe('runReviewerSimulation', () => {
     expect(a.inputsHash.length).toBe(64); // sha256 hex
   });
 
-  test('inputsHash differs when intel changes', async () => {
+  // 2026-10-15: this pinned caller-asserted intel as an input ("differs when
+  // intel changes"). Caller intel is set aside — the run reads its facts from
+  // the records (reviewer-simulation-reads-facts-from-records.test.ts) — so the
+  // hash follows the facts the personas read, not the request's intel.
+  test('inputsHash ignores set-aside caller intel and follows the program facts', async () => {
     const a = await runReviewerSimulation({
       organizationId: ORG,
       programId: PROGRAM,
@@ -144,7 +160,14 @@ describe('runReviewerSimulation', () => {
       intel: { ...baseIntel, contradictionCount: 5 },
       dryRun: true,
     });
-    expect(a.inputsHash).not.toBe(b.inputsHash);
+    const c = await runReviewerSimulation({
+      organizationId: ORG,
+      programId: PROGRAM,
+      program: { ...baseProgram, deviceClass: 'III' },
+      dryRun: true,
+    });
+    expect(a.inputsHash).toBe(b.inputsHash);
+    expect(a.inputsHash).not.toBe(c.inputsHash);
   });
 
   test('explicit persona list filters scope', async () => {

@@ -22,6 +22,10 @@
  * the form. Descriptors with no verified map stay `{}` and keep `estar-fill`
  * fail-closed.
  *
+ * 2026-10-14: every marketing primary/secondary SOM path was re-enumerated
+ * against the newly pinned official 7.1 PDFs, and actual form-script behaviour
+ * checks passed. Evidence: docs/evidence/AUDIT-REMEDIATION/2026-10-14/agency-assets/.
+ *
  * A populated map is a version-pinned DATA change, not new code: when FDA ships
  * a new eSTAR revision, re-enumerate and re-verify against the new template.
  *
@@ -116,7 +120,7 @@ const PRODUCT_CODES: OfficialPdfFieldSpec = {
 };
 
 /**
- * The pathway-NEUTRAL administrative fields of the nIVD eSTAR v7.0 — the
+ * The pathway-NEUTRAL administrative fields of the nIVD eSTAR v7.1 — the
  * applicant, correspondent, Declaration of Conformity, associated product code
  * and Indications-for-Use citation fields that every marketing pathway filed on
  * this template (510(k), De Novo, PMA) shares. Re-enumerated from the vendored
@@ -153,7 +157,7 @@ const NIVD_SHARED_ADMINISTRATIVE_FIELDS: OfficialPdfFieldMap = {
 };
 
 /**
- * The same pathway-neutral fields on the IVD eSTAR v7.0, re-enumerated from the
+ * The same pathway-neutral fields on the IVD eSTAR v7.1, re-enumerated from the
  * vendored `eSTAR-510k-ivd.pdf` on 2026-09-03. The IVD template does not declare
  * `Labeling.SpecificLabeling.LBTextField130`, so indicationsForUseCitation is
  * absent here rather than mapped to a path that does not exist.
@@ -236,15 +240,26 @@ const IVD_SHARED_ADMINISTRATIVE_FIELDS: OfficialPdfFieldMap = {
 
 /**
  * Per-descriptor field maps, keyed by descriptor id from ESTAR_TEMPLATE_MANIFEST.
- * Populated for the six marketing descriptors against nIVD/IVD eSTAR v7.0: the
+ * Populated for the six marketing descriptors against nIVD/IVD eSTAR v7.1: the
  * two 510(k) maps (2026-06-01) carry the full administrative set including the
  * 510(k) Summary page and predicate fields; the De Novo and PMA maps (2026-09-03)
  * carry only the pathway-neutral fields above. FDA ships one PDF per family that
  * carries all three pathways, so all three device maps address the same vendored
  * file (see ESTAR_TEMPLATE_MANIFEST). PreSTAR remains empty and fails closed.
  */
+/** PreSTAR 3.1 shared administrative cells, enumerated from its actual XFA
+ * template and datasets on 2026-10-14. They are direct applicant entries and
+ * have no rawValue writers in the template scripts. Request declarations,
+ * repeated questions and proposed regulatory answers are deliberately absent. */
+const PRESTAR_ADMINISTRATIVE_FIELDS: OfficialPdfFieldMap = {
+  applicantCompanyName: { xfaSomPath: 'root.AdministrativeInformation.ApplicantInformation.ADTextField210', type: 'text', caption: 'Company Name' },
+  applicantContactEmail: { xfaSomPath: 'root.AdministrativeInformation.ApplicantInformation.ADTextField160', type: 'text', caption: 'Email' },
+  correspondentCompanyName: { xfaSomPath: 'root.AdministrativeInformation.CorrespondentInformation.ADTextField410', type: 'text', caption: 'Company Name' },
+  correspondentContactEmail: { xfaSomPath: 'root.AdministrativeInformation.CorrespondentInformation.ADTextField360', type: 'text', caption: 'Email' },
+};
+
 export const ESTAR_FIELD_MAPS: Record<string, OfficialPdfFieldMap> = {
-  // ── 510(k), nIVD eSTAR v7.0 — 20 fields verified against the vendored template
+  // ── 510(k), nIVD eSTAR v7.1 — 20 fields verified against the vendored template
   '510k-device': {
     deviceTradeName: { xfaSomPath: 'root.AdministrativeDocumentation.PMNSummary.SSTextField220', type: 'text', caption: 'Device Trade Name' },
     deviceCommonName: { xfaSomPath: 'root.AdministrativeDocumentation.PMNSummary.SSTextField230', type: 'text', caption: 'Common Name' },
@@ -267,7 +282,7 @@ export const ESTAR_FIELD_MAPS: Record<string, OfficialPdfFieldMap> = {
     declarationDeviceTradeName: DECLARATION_DEVICE_TRADE_NAME,
     indicationsForUseCitation: { xfaSomPath: 'root.Labeling.SpecificLabeling.LBTextField130', type: 'text', caption: 'Please specifically cite the attachment and page number where the Indications for Use ex' },
   },
-  // ── 510(k), IVD eSTAR v7.0 — 19 fields verified. The IVD template does not
+  // ── 510(k), IVD eSTAR v7.1 — 19 fields verified. The IVD template does not
   //    declare Labeling.SpecificLabeling.LBTextField130, so indicationsForUseCitation
   //    is deliberately absent here rather than mapped to a path that does not exist.
   '510k-ivd': {
@@ -299,14 +314,33 @@ export const ESTAR_FIELD_MAPS: Record<string, OfficialPdfFieldMap> = {
   'pma-device': { ...NIVD_SHARED_ADMINISTRATIVE_FIELDS },
   'de_novo-ivd': { ...IVD_SHARED_ADMINISTRATIVE_FIELDS },
   'pma-ivd': { ...IVD_SHARED_ADMINISTRATIVE_FIELDS },
-  // PreSTAR2 is not vendored; unmapped, so estar-fill reports an honest blocker.
-  'q_sub-prestar': {},
-  'ide-prestar': {},
-  '513g-prestar': {},
+  // Shared administrative prefill only; capability/readiness never treat this
+  // as qualification of request-specific questions or applicant declarations.
+  'q_sub-prestar': { ...PRESTAR_ADMINISTRATIVE_FIELDS },
+  'ide-prestar': { ...PRESTAR_ADMINISTRATIVE_FIELDS },
+  '513g-prestar': { ...PRESTAR_ADMINISTRATIVE_FIELDS },
 };
 
+export interface EstarFieldMapCapability {
+  scope: 'registered-marketing-fields' | 'administrative-prefill' | 'unavailable';
+  requestSpecificAutomation: 'not-qualified' | 'not-applicable';
+  applicantCompletionRequired: boolean;
+}
+export const PRESTAR_COMPLETION_NOTE = 'PreSTAR administrative fields can be prepared. Choose the request type and complete its questions and declarations in a compatible PDF editor. Request-specific form behavior and attachment routing are not qualified for automated filing.';
+/** Prepared bytes must not be offered as a completed retained filing. */
+export const PRESTAR_PREFILL_CODE_PREFIX = 'PreSTAR-prefill-';
+
+export function getEstarFieldMapCapability(descriptorId: string): EstarFieldMapCapability {
+  const prestar = ['q_sub-prestar', 'ide-prestar', '513g-prestar'].includes(descriptorId);
+  return {
+    scope: !isFieldMapPopulated(descriptorId) ? 'unavailable' : prestar ? 'administrative-prefill' : 'registered-marketing-fields',
+    requestSpecificAutomation: prestar ? 'not-qualified' : 'not-applicable',
+    applicantCompletionRequired: prestar,
+  };
+}
+
 /**
- * WHICH MAPPED FIELDS THE FORM RECOMPUTES FOR ITSELF (nIVD eSTAR v7.0, measured
+ * WHICH MAPPED FIELDS THE FORM RECOMPUTES FOR ITSELF (nIVD eSTAR v7.1, measured
  * 2026-09-04). Not every mapped path is a place the applicant types. Twelve of
  * the twenty `510k-device` fields are AUTO-POPULATED SUMMARY CELLS: an FDA
  * script clears them (`X.rawValue = "";`) and rebuilds them from a SOURCE field

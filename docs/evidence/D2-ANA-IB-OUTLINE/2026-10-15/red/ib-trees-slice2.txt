@@ -1,0 +1,109 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/regulatory/ib-one-outline.test.ts > the IB AnA drafts in chat is the platform's one IB outline > has exactly the canonical headings, in order 3ms
+ ✓ tests/regulatory/ib-one-outline.test.ts > the IB AnA drafts in chat is the platform's one IB outline > cites the outline basis (ICH E6(R3) Appendix A), labelled as recall 1ms
+ ✓ tests/regulatory/ib-one-outline.test.ts > the legacy IND IB template > renders the canonical headings and files at M1 1.14.4.1 7ms
+stdout | tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the IB builder (Investigator’s Brochure surface)
+{
+  "timestamp": "2026-10-15T05:32:45.514Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-15T05:32:45.516Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the IB builder (Investigator’s Brochure surface)
+{
+  "timestamp": "2026-10-15T05:32:45.516Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the IB builder (Investigator’s Brochure surface)
+[database] Database connection successful
+
+ × tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the IB builder (Investigator’s Brochure surface) 2102ms
+   → expected 'Physical, Chemical, and Pharmaceutica…' to be 'Physical, Chemical and Pharmaceutical…' // Object.is equality
+ × tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the Authoring "Start from" seed 40ms
+   → Cannot read properties of undefined (reading 'find')
+ × tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the Projects blueprint is not module 5 and does not cite E6 §7 2ms
+   → expected 'Investigator\'s Brochure (ICH E6 §7)' not to match /E6 §7/
+ × tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the medical-writing advisor and the IND question flow list the canonical headings 26ms
+   → expected [ 'Summary', …(5) ] to include 'Introduction'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the IB builder (Investigator’s Brochure surface)
+AssertionError: expected 'Physical, Chemical, and Pharmaceutica…' to be 'Physical, Chemical and Pharmaceutical…' // Object.is equality
+
+Expected: "Physical, Chemical and Pharmaceutical Properties and Formulation"
+Received: "Physical, Chemical, and Pharmaceutical Properties and Formulation"
+
+ ❯ tests/regulatory/ib-one-outline.test.ts:58:89
+     56|   it('the IB builder (Investigator’s Brochure surface)', async () => {
+     57|     const { IB_STRUCTURE } = await import('../../server/services/autho…
+     58|     for (const s of IB_STRUCTURE.filter((x) => byNumber.has(x.number))…
+       |                                                                                         ^
+     59|   });
+     60|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the Authoring "Start from" seed
+TypeError: Cannot read properties of undefined (reading 'find')
+ ❯ tests/regulatory/ib-one-outline.test.ts:63:31
+     61|   it('the Authoring "Start from" seed', async () => {
+     62|     const { SEED_TEMPLATES } = await import('../../server/services/int…
+     63|     const ib = SEED_TEMPLATES.find((t) => t.templateCode === 'crossage…
+       |                               ^
+     64|     expect(ib.sections.map((s) => [s.sectionCode, s.sectionTitle])).to…
+     65|     expect(ib.sourceReference).toMatch(/recall/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the Projects blueprint is not module 5 and does not cite E6 §7
+AssertionError: expected 'Investigator\'s Brochure (ICH E6 §7)' not to match /E6 §7/
+
+- Expected:
+/E6 §7/
+
++ Received:
+"Investigator's Brochure (ICH E6 §7)"
+
+ ❯ tests/regulatory/ib-one-outline.test.ts:71:25
+     69|     const { SECTION_BLUEPRINTS } = await import('../../shared/regulato…
+     70|     const bp = SECTION_BLUEPRINTS.ich_ib_sections;
+     71|     expect(bp.name).not.toMatch(/E6 §7/);
+       |                         ^
+     72|     expect(bp.sections.every((s) => s.module !== 5)).toBe(true);
+     73|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the medical-writing advisor and the IND question flow list the canonical headings
+AssertionError: expected [ 'Summary', …(5) ] to include 'Introduction'
+ ❯ tests/regulatory/ib-one-outline.test.ts:78:84
+     76|     const { getDocumentTypeStandard } = await import('../../server/ser…
+     77|     const ib = getDocumentTypeStandard('ib')!;
+     78|     for (const h of canonical.sections.map((s) => s.heading)) expect(i…
+       |                                                                                    ^
+     79|     const src = (await import('node:fs')).readFileSync(require('node:p…
+     80|     expect(src).toMatch(/investigators_brochure/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 3 passed (7)
+   Start at  05:32:42
+   Duration  3.70s (transform 2.08s, setup 103ms, import 993ms, tests 2.19s, environment 0ms)
+

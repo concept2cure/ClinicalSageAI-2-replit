@@ -179,7 +179,7 @@ Cortex paths (`base-system-prompt.ts`, `ana-personality.ts`, `lumen-context-buil
 `section-identity.mjs` splits each pre-edit copy and the current file into
 `## ` sections and compares bytes. Output (`section-identity.txt`):
 
-    
+
     ### server/services/ana-ri/persona.ts
     byte-identical (22):
       = Constructive Dissent (NON-NEGOTIABLE)
@@ -217,7 +217,7 @@ Cortex paths (`base-system-prompt.ts`, `ana-personality.ts`, `lumen-context-buil
       - Momentum — close with a real next move
       - Document-State-Aware Behavior (NON-NEGOTIABLE)
     added (0):
-    
+
     ### server/services/lumen-context/base-system-prompt.ts
     byte-identical (10):
       = Core Identity
@@ -237,7 +237,7 @@ Cortex paths (`base-system-prompt.ts`, `ana-personality.ts`, `lumen-context-buil
       - Communication Principles
       - Personality & Tone
     added (0):
-    
+
     ### server/services/ana-personality.ts
     byte-identical (8):
       = Current Focus: 510(k) Medical Device Submission
@@ -256,7 +256,7 @@ Cortex paths (`base-system-prompt.ts`, `ana-personality.ts`, `lumen-context-buil
       - Your Voice
       - Formatting
     added (0):
-    
+
     ### server/services/ana-ri/personality-core.ts
     byte-identical (1):
       = (preamble before first ## section)

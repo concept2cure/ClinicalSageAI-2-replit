@@ -1,0 +1,114 @@
+{
+  "workstream": "W1 / D2",
+  "date": "2026-10-16",
+  "headAtEvaluation": "990a687c6eb31adb1becfa58d91fc9d2932f23ed",
+  "scope": "Independent actual specialist caller interaction regression; one existing writer and editor-target channel.",
+  "runtime": {
+    "node": "22.23.3",
+    "vitest": "4.1.7",
+    "environment": "jsdom",
+    "providerCalls": 0,
+    "newDependencies": 0
+  },
+  "red": {
+    "exitCode": 1,
+    "testFiles": 1,
+    "tests": 10,
+    "failed": 9,
+    "passed": 1,
+    "log": "red.txt",
+    "productionPinsMatchCanonicalHead": {
+      "client/src/concept2cure/v2/authoringHandoff.ts": true,
+      "client/src/concept2cure/v2/shellProject.ts": true,
+      "client/src/concept2cure/v2/surfaces/ReportEngine.tsx": true,
+      "client/src/concept2cure/v2/surfaces/Biostatistics.tsx": true,
+      "client/src/concept2cure/v2/editorTarget.ts": true,
+      "client/src/services/portal/authService.tsx": true
+    },
+    "qualification": "Initial log also contained a test query mistake: busy button label changed before the second lookup. Corrected by retaining the real DOM button; existing duplicate guard then passed. Initial receipt retained separately. Tests later expanded from 10 to 19 cases, so initial test-source pin is historical rather than final."
+  },
+  "expandedCandidate": {
+    "exitCode": 0,
+    "passed": 17,
+    "log": "expanded-caller.txt",
+    "qualification": "Candidate only; original 10-case unchanged-production RED is the defect evidence."
+  },
+  "green": {
+    "exitCode": 0,
+    "testFiles": 1,
+    "tests": 19,
+    "passed": 19,
+    "failed": 0,
+    "durationSeconds": 7.63,
+    "log": "green.txt",
+    "sourcePinCount": 11,
+    "allSourcePinsUnchangedDuringRun": true
+  },
+  "lint": {
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": 0,
+    "log": "lint-final.txt",
+    "initialQualification": "Initial strict lint refused one test transport-responder complexity warning; extracted a fixture response helper without changing product code or assertions."
+  },
+  "realCode": [
+    "all six specialist caller source modules",
+    "canonical saveToAuthoring/useAuthoringHandoff",
+    "canonical editorTarget writer and consumeEditorTarget reader",
+    "actual AuthService.adoptSession and revision guards",
+    "actual shell project publish/update and generation guard",
+    "actual AuthService.setToken/refreshToken with a successful synthetic refresh receipt while the write is pending"
+  ],
+  "syntheticBoundaries": [
+    "apiRequest transport responses only",
+    "fetch session-probe responses only",
+    "navigation callback consumes actual editor target; no mounted DocumentWorkbench in this suite",
+    "engine results are fixtures; this does not validate statistical or CMC engines"
+  ],
+  "limitations": [
+    "No real server, SQL, provider-backed AnA, independent human review, browser layout or agency acceptance claim.",
+    "The two-request writer remains non-idempotent after unknown or partial outcomes; no repeated-creation recovery or automatic retry is proved by these cases."
+  ],
+  "logs": {
+    "red-initial-includes-test-assumption.txt": {
+      "rawSha256BeforeTrailingWhitespaceNormalization": "a9fd9e87f874e5bf890ddf1f80ec9a728b7a1db3e497aac01928f853b09b2a11",
+      "storedSha256": "fa00785e53d034f4a31312ae0840aae1832d104ad6647995dbd2b03ff667c0a2",
+      "normalization": "Trailing whitespace at EOF only; all diagnostic lines retained."
+    },
+    "red.txt": {
+      "rawSha256BeforeTrailingWhitespaceNormalization": "75e29a7e24842474a0e1ab10b0e9a5e32cf8a75d9be7725892f4e784826ab2f5",
+      "storedSha256": "a5e16a3c98ae274f724b0414b176212d4fa5a3fed573b65dc9715e46cd85b3a0",
+      "normalization": "Trailing whitespace at EOF only; all diagnostic lines retained."
+    },
+    "expanded-caller.txt": {
+      "rawSha256BeforeTrailingWhitespaceNormalization": "1e0908223916d86cf132ff5bbdb57e83d8e22afe66184e6be01a30b55d3d9acf",
+      "storedSha256": "cf407a6a7a3cfe788f1410dc0e47c273b4d21f5b90635de82ade7535cc1a8606",
+      "normalization": "Trailing whitespace at EOF only; all diagnostic lines retained."
+    },
+    "green.txt": {
+      "rawSha256BeforeTrailingWhitespaceNormalization": "d7ddf197838f5088d5f5cdfbd086b44489782e11f248c0fef295e86f5fbeca63",
+      "storedSha256": "8a1c145e0b6fd7b6e1f41e74b270c8ae2390dabb73c805ac5e8a77668ee654e8",
+      "normalization": "Trailing whitespace at EOF only; all diagnostic lines retained."
+    },
+    "lint.txt": {
+      "rawSha256BeforeTrailingWhitespaceNormalization": "a2ab8ce865035d7d73ad87563874cbf5212e746f0a24a0eade82abfba31cf845",
+      "storedSha256": "a2ab8ce865035d7d73ad87563874cbf5212e746f0a24a0eade82abfba31cf845",
+      "normalization": "None."
+    },
+    "lint-final.txt": {
+      "rawSha256BeforeTrailingWhitespaceNormalization": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalization": "None."
+    },
+    "green-18-before-refresh-case.txt": {
+      "rawSha256BeforeTrailingWhitespaceNormalization": "2387a6b3a76e90c4a92138186622b310b29fff340acc69524dbb994228eef7a1",
+      "storedSha256": "7fdbe4beec1d07caad9014d10970f85a35058b7049737662cdc93da3ed99dccd",
+      "normalization": "Trailing whitespace at EOF only; all diagnostic lines retained."
+    }
+  },
+  "historicalGreen18": {
+    "passed": 18,
+    "log": "green-18-before-refresh-case.txt",
+    "qualification": "Prior final candidate before adding actual token-refresh positive; the19-case green.txt supersedes it."
+  }
+}

@@ -1,0 +1,65 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > offers only the shared chat candidates from its project-source picker 200ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > lists the project's real sources 88ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > says a document is readable only when its extraction succeeded 81ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > reports how many sources are actually usable 57ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > renders an honest empty state for a project with no sources 58ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > distinguishes a failed read from an empty data room 48ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > searches the whole room on the server, by title and text, and lists its answer 378ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a pending source search does not report zero matches 390ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a malformed source list is unavailable, not empty: null 43ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a malformed source list is unavailable, not empty: {"sources":{}} 40ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a malformed source list is unavailable, not empty: {"sources":[],"total":null} 40ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > offers a way to add sources 34ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > cannot pin a source whose text was never read 50ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > hands the pinned set to AnA 69ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > offers no pin action until something is pinned 41ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > reports the sections and documents a source is cited in 46ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > says plainly when nothing was written from a source 49ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > flags the sections written against content the source no longer has 57ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > shows nothing rather than a zero when the server sends no usage field 36ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > withholds a zero when the citation access scope is undefined 38ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > withholds a zero when the citation access scope is organization-wide 43ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":-1,"documents":0,"changedSections":0} 41ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":"0","documents":0,"changedSections":0} 39ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":0,"documents":1,"changedSections":0} 36ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":1,"documents":2,"changedSections":0} 27ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":1,"documents":1,"changedSections":2} 31ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > names the affected sections when a source has changed under them 33ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > shows no change banner when nothing is stale 29ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > two returned citations of one section are described as citations, not two sections 26ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > an unavailable or malformed change read preserves sources without implying no affected citations 28ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > an unavailable or malformed change read preserves sources without implying no affected citations 38ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > an unavailable or malformed change read preserves sources without implying no affected citations 30ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > counts a re-uploaded file once 28ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > shows what the catalog found: protocol, registry id, data cut-off, and a table's CDISC domain 32ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > a full page shows the exact total and pages to the older sources 61ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a failed search publishes failure without an empty finding or an unrelated selection 335ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a pending search does not publish a zero or stale selection 85ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a malformed search reply is unavailable, not zero matches: {"results":[],"total":null} 90ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a malformed search reply is unavailable, not zero matches: {"results":{},"total":0} 70ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a malformed search reply is unavailable, not zero matches: {"results":[{"id":"one","title":"One"}],"total":0} 78ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > an accessible-project library panel does not reuse the disabled project reader as a zero finding 64ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a verified empty project search can publish its returned zero 71ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — what AnA is told about the selected document > an upload has no completion figure — null, not 0% complete 34ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — "N documents" counts documents, not tree entries > one authored document with three sections is "1 document", to the user and to AnA 41ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > renders recorded citations with their server-computed standing 189ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > reports a changed source with both checksums, and asks — never redrafts 38ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > keeps a citation visible when its source no longer resolves 30ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > makes no claim for a citation that was never checked 22ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > renders no confidence percentage anywhere — recorded facts are not guesses 30ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > states the contract honestly when nothing is recorded yet 10ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > distinguishes a failed read from an empty library 9ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > does not turn an unverified/malformed read into an accessible zero: null 8ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > does not turn an unverified/malformed read into an accessible zero: {"sections":[],"total":0} 10ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > does not turn an unverified/malformed read into an accessible zero: {"sections":[],"total":0,"scope":"organization-wide"} 7ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > does not turn an unverified/malformed read into an accessible zero: {"sections":{},"total":0,"scope":"verified-accessible-authoring-sections"} 6ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > publishes the verified accessible scope without claiming the organization has no citations 10ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > hands unrecorded-claim analysis to AnA without inventing citations 22ms
+
+ Test Files  3 passed (3)
+      Tests  57 passed (57)
+   Start at  01:09:09
+   Duration  8.93s (transform 2.27s, setup 364ms, import 3.05s, tests 3.64s, environment 1.47s)

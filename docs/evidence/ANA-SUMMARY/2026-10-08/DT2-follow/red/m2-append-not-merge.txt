@@ -1,0 +1,9 @@
+# m2-append-not-merge: --config vitest.config.ts client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts -t overlapping
+# exit 1
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > 2. overlapping SSE frames and polled rows render once 117ms
+   → expected [ 1, 2, 2, 3, 4 ] to deeply equal [ 1, 2, 3, 4 ]
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 skipped (16)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > 2. overlapping SSE frames and polled rows render once
+AssertionError: expected [ 1, 2, 2, 3, 4 ] to deeply equal [ 1, 2, 3, 4 ]

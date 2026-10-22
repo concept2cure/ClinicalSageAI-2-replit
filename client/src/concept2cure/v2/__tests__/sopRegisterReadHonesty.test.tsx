@@ -58,7 +58,7 @@ const tileSub = (label: string) => tile(label).querySelector('.sub')?.textConten
 /** Wait until the four reads have settled (no tile still says Loading). */
 async function settled() {
   await waitFor(() => {
-    for (const l of ['Effective documents', 'Review overdue', 'Training compliance']) {
+    for (const l of ['Effective documents', 'Review overdue', 'Acknowledgement coverage']) {
       expect(tileSub(l)).not.toBe('Loading…');
     }
   });

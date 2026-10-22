@@ -15,8 +15,9 @@
  *     no `aiGateway.generate({task})`; we tag the logical task via promptVersion
  *     + metadata and load the versioned prompt template from disk. No prompt
  *     text is inlined here.
- *   - Audit is `auditService.logAction(...)` (default export), action
- *     'AI_GENERATE', per the iron audit rule.
+ *   - Audit is `recordAuditRow(...)` (over `auditService.logAction`), action
+ *     'AI_GENERATE', per the iron audit rule; its outcome is returned as
+ *     `auditTrail` (2026-10-15: it was awaited and discarded).
  *
  * TENANT ISOLATION: every read filters by the caller's organizationId (resolved
  * from the authenticated session by the route, never from the request body).
@@ -37,9 +38,13 @@ import {
   GatewayNoProviderError,
   GatewayAllProvidersFailedError,
 } from '../ai-gateway/gateway';
-import auditService from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { createScopedLogger } from '../../utils/logger';
 import { PROMPTS_DIR } from '../ai-gateway/prompts-dir';
+import {
+  validateSectionCode,
+  vocabularyForApplicationType,
+} from '../../../shared/regulatory/placement-vocabulary';
 
 const logger = createScopedLogger('ingestion-service');
 
@@ -51,6 +56,7 @@ export type IngestionErrorCode =
   | 'NOT_FOUND'
   | 'FORBIDDEN'
   | 'INVALID_AI_RESPONSE'
+  | 'INVALID_SECTION_CODE'
   | 'RATE_LIMITED'
   | 'PROVIDER_UNAVAILABLE'
   | 'TOKEN_LIMIT_EXCEEDED';
@@ -68,14 +74,29 @@ export class IngestionError extends Error {
 // ── Result shapes (mirror the prompt templates' JSON schemas) ─────────────────
 
 export interface ClassificationResult {
+  /** A CTD section code (validateSectionCode), or null. */
   sectionCode: string | null;
+  /**
+   * The model's proposed code when it names no CTD section a document can be
+   * filed at; sectionCode is then null. Computed here, never taken from the model.
+   */
+  sectionCodeRefused?: { proposed: string; reason: string };
   ctdModule: number | null;
   granularity: string | null;
   documentType: string | null;
-  confidence: number;
+  /**
+   * The model's own statement of its certainty — not a measured confidence.
+   * null unless it is a number in [0, 1]. 2026-10-15: this was returned and
+   * audited as `confidence`, cast from the model's JSON and unvalidated.
+   */
+  modelStatedConfidence: number | null;
+  /** Nothing here measured the classification; the number is the model's word. */
+  confidenceBasis: 'model_self_report';
   rationale: string;
   /** How much of the document the answer is actually based on. */
   readCoverage?: DocumentReadCoverage;
+  /** Whether the AI_GENERATE audit row for this call was written. */
+  auditTrail?: AuditRowOutcome;
   /**
    * The outcome of drafting a leaf placement into the requested sequence —
    * present only when a sequenceId was given, and computed here, never taken
@@ -124,6 +145,8 @@ export interface ExtractionResult {
   referencedSources: string[];
   /** How much of the document the answer is actually based on. */
   readCoverage?: DocumentReadCoverage;
+  /** Whether the AI_GENERATE audit row for this call was written. */
+  auditTrail?: AuditRowOutcome;
 }
 
 // ── How much of the document was actually read ───────────────────────────────
@@ -272,6 +295,25 @@ function stripHtml(input: string | null | undefined): string {
     .trim();
 }
 
+/** Lower-cased and whitespace-collapsed, so a locator matches across case and line breaks. */
+function normalizeForMatch(input: string): string {
+  return input.toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+/** Shorter locators ("1", "p2") occur in almost any text, so finding them proves nothing. */
+const MIN_LOCATOR_CHARS = 3;
+
+/**
+ * Whether a claim's locator (a heading, section number or anchor) is found in
+ * the text that was read. A page number does not occur in extracted text, and
+ * a locator the model wrote but the document does not contain does not count.
+ */
+function locatorFoundIn(locator: unknown, normalizedText: string): boolean {
+  if (typeof locator !== 'string') return false;
+  const needle = normalizeForMatch(locator);
+  return needle.length >= MIN_LOCATOR_CHARS && normalizedText.includes(needle);
+}
+
 /** Load a coauthor document, enforcing tenant ownership. Throws on miss. */
 async function loadOwnedDocument(documentId: number, organizationId: number) {
   const [doc] = await db
@@ -288,6 +330,53 @@ async function loadOwnedDocument(documentId: number, organizationId: number) {
     throw new IngestionError('NOT_FOUND', 'Document not found for this organization.');
   }
   return doc;
+}
+
+/**
+ * The fields of a classification this service decides rather than takes from
+ * the model. 2026-10-15: the model's `confidence` was returned and audited as
+ * the classification's confidence, and its section code was returned, audited
+ * and proposed unchecked. The number is now labelled as the model's own
+ * statement, and a code that names no CTD section is refused by name.
+ */
+function settleModelClassification(result: ClassificationResult): void {
+  const answer = result as ClassificationResult & { confidence?: unknown };
+  const stated = answer.confidence;
+  delete answer.confidence;
+  delete answer.sectionCodeRefused;
+  result.modelStatedConfidence =
+    typeof stated === 'number' && Number.isFinite(stated) && stated >= 0 && stated <= 1 ? stated : null;
+  result.confidenceBasis = 'model_self_report';
+  const proposedCode: unknown = result.sectionCode;
+  if (proposedCode == null) return;
+  const verdict = typeof proposedCode === 'string' ? validateSectionCode(proposedCode, 'ctd') : null;
+  if (verdict?.ok) return;
+  result.sectionCodeRefused = {
+    proposed: String(proposedCode),
+    reason: verdict?.message ?? 'The proposed section code is not text.',
+  };
+  result.sectionCode = null;
+}
+
+/**
+ * Refuses a section code outside the submission's own vocabulary, judged as
+ * upsertLeaf judges a placement. 2026-10-15: extract wrote it to
+ * target_section_code unchecked.
+ */
+function assertSectionCodeFor(applicationType: string | null, sectionCode: string): void {
+  const verdict = validateSectionCode(sectionCode, vocabularyForApplicationType(applicationType));
+  if (!verdict.ok) {
+    throw new IngestionError(
+      'INVALID_SECTION_CODE',
+      verdict.message ?? `Section code "${sectionCode}" is not valid for this submission.`
+    );
+  }
+}
+
+/** How many claims carry a locator found in the text that was read (locatorFoundIn). */
+function countVerifiedLocators(claims: ExtractionResult['extractedClaims'], readText: string): number {
+  const haystack = normalizeForMatch(readText);
+  return claims.filter(c => locatorFoundIn(c?.locator, haystack)).length;
 }
 
 function parseJsonResponse<T>(raw: string): T {
@@ -354,6 +443,7 @@ export async function classifyDocument(params: {
   // validated — a placement outcome it supplied is dropped before anything is
   // persisted or returned; only the one computed below is reported.
   delete (result as { leafPlacement?: unknown }).leafPlacement;
+  settleModelClassification(result);
 
   /* 2026-10-01 (D5, NEW-P11-B-1a): nothing is written to the document. This
      wrote the model's section code into module_number at confidence 0.5 or
@@ -392,7 +482,9 @@ export async function classifyDocument(params: {
     }
   }
 
-  await auditService.logAction({
+  // 2026-10-15: `await auditService.logAction(...)` discarded the outcome; the
+  // caller is now told whether the row exists (`auditTrail`).
+  const auditTrail = await recordAuditRow({
     organizationId,
     userId,
     action: 'AI_GENERATE',
@@ -402,7 +494,9 @@ export async function classifyDocument(params: {
       task: 'document-classify',
       promptVersion: 'document-classify@v1.0',
       sectionCode: result.sectionCode,
-      confidence: result.confidence,
+      sectionCodeRefused: result.sectionCodeRefused ?? null,
+      modelStatedConfidence: result.modelStatedConfidence,
+      confidenceBasis: result.confidenceBasis,
       sequenceId: sequenceId ?? null,
       leafPlacement: leafPlacement ?? null,
       proposedLeaf: proposedLeaf ?? null,
@@ -420,6 +514,7 @@ export async function classifyDocument(params: {
   };
   if (leafPlacement) result.leafPlacement = leafPlacement;
   if (proposedLeaf) result.proposedLeaf = proposedLeaf;
+  result.auditTrail = auditTrail;
   return result;
 }
 
@@ -451,6 +546,9 @@ export async function extractStructure(params: {
   if (!submission) {
     throw new IngestionError('NOT_FOUND', 'Submission not found for this organization.');
   }
+
+  // Judged before the model is asked or anything is written.
+  assertSectionCodeFor(submission.applicationType, sectionCode);
 
   const documentText = stripHtml(doc.content) || doc.title;
   // Same bound, same reporting. A heading or a claim that appears only after
@@ -496,23 +594,28 @@ export async function extractStructure(params: {
      is returned, and recorded in the AI_GENERATE audit row below. */
 
   // Seed a provenance edge: the target section derives_from this source document.
-  // confidence = fraction of extracted claims that carry a locator (a coarse
-  // grounding signal), null when there are no claims.
-  const located = claims.filter(c => c && c.locator).length;
-  const confidence = claims.length > 0 ? located / claims.length : null;
+  // confidence = fraction of extracted claims whose locator was FOUND in the text
+  // read (a coarse grounding signal), null when there are no claims. The edge is
+  // document-level, so it carries no locator.
+  // 2026-10-15: any non-empty locator string the model wrote was counted, never
+  // looked for in the document, and source_locator held "N claim(s), M
+  // source(s)" — a count, not a locator.
+  const verifiedLocators = countVerifiedLocators(claims, bounded.text);
+  const confidence = claims.length > 0 ? verifiedLocators / claims.length : null;
   await db.insert(submissionEvidenceLinks).values({
     submissionId,
     targetSectionCode: sectionCode,
     sourceDocumentTable: CANONICAL_DOCUMENT_TABLE,
     sourceDocumentId: documentId,
-    sourceLocator: `${claims.length} claim(s), ${result.referencedSources?.length ?? 0} source(s)`,
+    sourceLocator: null,
     direction: 'derives_from',
     confidence,
     organizationId,
     createdBy: userId,
   });
 
-  await auditService.logAction({
+  // 2026-10-15: the outcome was discarded; the caller is now told (`auditTrail`).
+  const auditTrail = await recordAuditRow({
     organizationId,
     userId,
     action: 'AI_GENERATE',
@@ -524,6 +627,7 @@ export async function extractStructure(params: {
       submissionId,
       sectionCode,
       claimCount: claims.length,
+      verifiedLocatorCount: verifiedLocators,
       sourceCount: result.referencedSources?.length ?? 0,
     },
   });
@@ -537,6 +641,7 @@ export async function extractStructure(params: {
     truncated: bounded.truncated,
     percentRead: bounded.percentRead,
   };
+  result.auditTrail = auditTrail;
   return result;
 }
 

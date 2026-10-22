@@ -8,7 +8,7 @@
  * error unnoticed. Forged inputs cover what a handler cannot be made to send
  * today but a reader must still refuse.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const dbState = vi.hoisted(() => ({ rows: [] as unknown[] }));
 
@@ -25,6 +25,7 @@ vi.mock('../../../db.js', async importOriginal => {
 
 import {
   HARNESS_CHECKS,
+  agentResultSummary,
   agentTraceStatus,
   aggregateVerdict,
   dossierCheckSkipped,
@@ -41,6 +42,14 @@ async function run(tool: string, input: Record<string, unknown>): Promise<string
 }
 const PAD = ' The analysis followed the prespecified statistical analysis plan for the study.';
 const artifact = (id: number, content: string) => ({ id, artifactId: `a-${id}`, title: `Doc ${id}`, content, ctdSection: null, status: 'draft' });
+
+/* The first getToolHandler pulls in the whole executor (21k lines and its
+   transitive modules), which takes about 10 s on a 4-CPU box — right on the
+   default per-test timeout, so whichever case ran first failed under load.
+   Paid once here, and attributed to what actually costs it. */
+beforeAll(async () => {
+  await import('../AnaToolExecutor');
+}, 120_000);
 
 beforeEach(() => {
   dbState.rows = [];
@@ -182,5 +191,40 @@ describe('HARNESS_CHECKS', () => {
   it('each is a registered tool', async () => {
     const { getToolHandler } = await import('../AnaToolExecutor');
     for (const name of HARNESS_CHECKS) expect(getToolHandler(name), name).toBeTypeOf('function');
+  });
+});
+
+/**
+ * What an agent's one-line summary says (review 2026-10-11). It is the line the
+ * person's row carries and the line the NEXT turn's context carries, so a word
+ * that overstates or understates is read twice.
+ */
+describe('agentResultSummary', () => {
+  const summary = (r: object) => agentResultSummary(JSON.stringify(r));
+  const agent = { runId: 'a', role: 'research', objective: 'trials' };
+
+  it('a failure after the agent had started says it did not finish, not that it never ran', () => {
+    expect(summary({ error: 'AGENT_FAILED', code: 'ERROR', started: true, agent })).toBe('agent: did not finish (AGENT_FAILED, ERROR)');
+  });
+  it('a refusal before anything started says it did not run', () => {
+    expect(summary({ error: 'AGENT_LIMIT_REACHED', agent })).toBe('agent: did not run (AGENT_LIMIT_REACHED)');
+  });
+  it('a stop with no budget names what stopped it', () => {
+    expect(summary({ agent, status: 'incomplete', stoppedReason: 'duplicate_thrash' })).toBe(
+      'agent: incomplete (a step it kept repeating)',
+    );
+  });
+  it('a budget stop names the budget', () => {
+    expect(summary({ agent, status: 'incomplete', budget: 'tokens' })).toBe('agent: incomplete (token budget)');
+  });
+  it("a verify verdict says how many checks compared anything, so a bare verdict cannot overstate", () => {
+    const checks = [
+      { check: 'check_grounding', outcome: 'see_result', statement: '' },
+      { check: 'check_numerical_integrity', outcome: 'pass', statement: '' },
+      { check: 'check_dossier_consistency', outcome: 'not_assessed', statement: '' },
+    ];
+    expect(summary({ agent: { ...agent, role: 'verify' }, status: 'completed', verdict: 'no_issues_found', checks })).toBe(
+      'verification agent: completed, no_issues_found (2 of 3 checks compared anything)',
+    );
   });
 });

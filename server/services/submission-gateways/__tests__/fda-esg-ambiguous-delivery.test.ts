@@ -15,8 +15,9 @@
  * Message-ID as the transmission id and an error that forbids a blind resend.
  * A failure before the request was written in full is still 'rejected'.
  *
- * Only node:https, the pool, fs and the bundle reader are stubbed; httpsPost's
- * own 'finish' / 'timeout' / 'error' handling runs.
+ * node:https, pool, fs, bundle reader and CMS primitives are explicit doubles;
+ * httpsPost's handling and the actual disposition/message/MIC parser run.
+ * Actual CMS crypto proofs remain in as2-cms.test.ts.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { readFileSync } from 'fs';
@@ -75,6 +76,10 @@ vi.mock('fs', async (orig) => {
 });
 
 vi.mock('../bundle-integrity', () => ({ readVerifiedBundle: vi.fn(async () => Buffer.from('zip-bytes')) }));
+vi.mock('../as2-cms', async original => {
+  const { semanticCmsDouble } = await import('./support/cms-semantic-double');
+  return semanticCmsDouble(await original<typeof import('../as2-cms')>());
+});
 
 vi.mock('node:https', async () => {
   const { EventEmitter } = await import('node:events');
@@ -109,7 +114,7 @@ vi.mock('node:https', async () => {
           const resHandlers: Record<string, (arg?: unknown) => void> = {};
           const res = {
             statusCode: 200,
-            headers: { 'message-id': '<mdn-msg-id@FDA-CESUB>' },
+            headers: { 'message-id': '<mdn-msg-id@FDA-CESUB>', 'content-type': 'multipart/report; boundary="----=_Part_FDA_MDN"' },
             on: (evt: string, h: (arg?: unknown) => void) => { resHandlers[evt] = h; return res; },
           };
           cb(res);

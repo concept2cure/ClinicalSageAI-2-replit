@@ -1,0 +1,17 @@
+{
+  "browser": "Chromium",
+  "requestMode": "Mocked APIs, actual UI and CSS",
+  "viewport": [
+    1280,
+    390
+  ],
+  "horizontalOverflow": false,
+  "consoleErrors": [],
+  "discoverySaved": true,
+  "writePaths": [
+    "/api/organizations/7/settings",
+    "/api/organizations/7/profile",
+    "/api/mdx/industry-profile",
+    "/api/billing/dtc-checkout"
+  ]
+}

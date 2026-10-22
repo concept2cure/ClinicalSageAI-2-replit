@@ -30,19 +30,20 @@ import {
 
 describe('ui-v2 registry model ↔ shared registry parity', () => {
   it('a rail entry that applies a screen action names a registered, ungoverned action on its own screen', () => {
-    // My work asks the task board for the person's own tasks as it opens it
-    // (Shell.tsx Rail). An action that no longer resolves, or that lands on
-    // another screen, would open the board unfiltered under a label that
-    // says otherwise.
+    // My work asks the task board for the person's own tasks as it opens it,
+    // and Tasking (on the rail by founder request, 2026-10-16) asks it for
+    // everyone's (Shell.tsx Rail). An action that no longer resolves, or that
+    // lands on another screen, would open the board under a label that says
+    // otherwise.
     const applying = RAIL_CORE.filter((s) => 'applies' in s && s.applies);
-    expect(applying.map((s) => s.id)).toEqual(['tasks']);
+    expect(applying.map((s) => s.id)).toEqual(['tasking', 'tasks']);
     for (const s of applying) {
       const a = (s as { applies: { actionId: string; params: Record<string, string> } }).applies;
       const res = resolveSurfaceAction(a.actionId, a.params);
       expect(res.ok, `${s.id}: ${a.actionId}`).toBe(true);
       if (!res.ok) continue;
       expect(res.directive.params).toEqual(a.params);
-      expect(resolveSurfaceIdForTarget(res.directive.surfaceId)).toBe(resolveSurfaceIdForTarget(s.id));
+      expect(resolveSurfaceIdForTarget(res.directive.surfaceId)).toBe(resolveSurfaceIdForTarget(s.target ?? s.id));
     }
   });
 
@@ -112,17 +113,29 @@ describe('ui-v2 registry model ↔ shared registry parity', () => {
     }
   });
 
-  // ── CMC: on the rail from 2026-08-23, off it from 2026-10-08 ─────────────
+  // ── CMC: on the rail 2026-08-23, off it 2026-10-08, in the catalog 2026-10-12
 
-  it('CMC / Module 3 is not a place in this release, and not a hidden surface either', () => {
+  it('CMC / Module 3 is a launch app, reachable, and still not a rail entry', () => {
     // 2026-08-23 promoted CMC from NAV_HIDDEN to a "Science & intelligence"
     // rail entry. 2026-10-08 (docs/SURFACE_DECISIONS_2026-10-08.md) put it
     // outside the launch scope, returning as a feature of Project home, and the
-    // rail now lists only the places (ONE_ANA_ONE_CANVAS.md §5). It stays a
-    // registered surface out of NAV_HIDDEN, so a deep link renders the honest
-    // "not in this release" panel rather than nothing.
+    // rail now lists only the places (ONE_ANA_ONE_CANVAS.md §5).
+    //
+    // 2026-10-12, decision P-28 (founder's delegation of 2026-10-07, commit
+    // f3927184a): the CMC operating system ships IN the launch catalog, with a
+    // composition boundary — small-molecule Module 3 for a US IND
+    // (services/cmc/composition-scope.ts). Until that entry the screen was
+    // refused to everyone, entitled or not.
+    //
+    // THREE DIFFERENT FACTS, and this test pins all three because the flip moved
+    // only the first: in the launch catalog, so the launch-scope lock no longer
+    // refuses it; NOT a rail place, because the rail lists places and CMC is
+    // reached from Project home and ⌘K; not NAV_HIDDEN, so a deep link renders
+    // the surface rather than nothing. The launch-scope entry also keeps
+    // `modules: []` on purpose, so the professional band still decides who sees
+    // it — listing the surface is not granting it.
+    expect(isLaunchSurface('cmc')).toBe(true);
     expect(RAIL_CORE.map((s) => s.id)).not.toContain('cmc');
-    expect(isLaunchSurface('cmc')).toBe(false);
     expect(NAV_HIDDEN.has('cmc')).toBe(false);
     expect(getSurface('cmc')).toBeDefined();
   });

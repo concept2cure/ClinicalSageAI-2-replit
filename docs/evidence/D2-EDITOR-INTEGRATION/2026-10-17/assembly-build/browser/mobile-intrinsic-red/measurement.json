@@ -1,0 +1,113 @@
+{
+  "qualification": "Prefreeze mobile intrinsic long-option diagnostic; actual Workbench and styles, synthetic API. This is a measured product layout finding, not a final frozen replay.",
+  "source": "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx",
+  "sha256": "a95aa8806603a2e8f20a5914bf837e393edc1449a7a9e76d11e8f7ed0ed90818",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "result": [
+    {
+      "tag": "SECTION",
+      "cls": "authoring-oversight",
+      "text": "Build document or sectionAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.Template Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheetBuild target Entire document Draft empty eligible sections with AnAReason for build Preview buildBuild document",
+      "scrollWidth": 698,
+      "clientWidth": 390,
+      "rect": {
+        "x": 0,
+        "y": 374,
+        "width": 390,
+        "height": 325.375,
+        "top": 374,
+        "right": 390,
+        "bottom": 699.375,
+        "left": 0
+      }
+    },
+    {
+      "tag": "DIV",
+      "cls": "ed-source-detail",
+      "text": "Assemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.Template Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheetBuild target Entire document Draft empty eligible sections with AnAReason for build Preview buildBuild document",
+      "scrollWidth": 686,
+      "clientWidth": 366,
+      "rect": {
+        "x": 12,
+        "y": 438,
+        "width": 366,
+        "height": 249.375,
+        "top": 438,
+        "right": 378,
+        "bottom": 687.375,
+        "left": 12
+      }
+    },
+    {
+      "tag": "P",
+      "cls": "",
+      "text": "Assemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.",
+      "scrollWidth": 686,
+      "clientWidth": 686,
+      "rect": {
+        "x": 12,
+        "y": 438,
+        "width": 686,
+        "height": 63.375,
+        "top": 438,
+        "right": 698,
+        "bottom": 501.375,
+        "left": 12
+      }
+    },
+    {
+      "tag": "DIV",
+      "cls": "ed-source-detail",
+      "text": "Template Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheetBuild target Entire document Draft empty eligible sections with AnAReason for build Preview buildBuild document",
+      "scrollWidth": 686,
+      "clientWidth": 686,
+      "rect": {
+        "x": 12,
+        "y": 517.375,
+        "width": 686,
+        "height": 170,
+        "top": 517.375,
+        "right": 698,
+        "bottom": 687.375,
+        "left": 12
+      }
+    },
+    {
+      "tag": "SELECT",
+      "cls": "",
+      "text": "Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheet",
+      "scrollWidth": 686,
+      "clientWidth": 686,
+      "rect": {
+        "x": 12,
+        "y": 535.375,
+        "width": 686,
+        "height": 20,
+        "top": 535.375,
+        "right": 698,
+        "bottom": 555.375,
+        "left": 12
+      }
+    },
+    {
+      "tag": "SELECT",
+      "cls": "",
+      "text": "Entire document",
+      "scrollWidth": 122,
+      "clientWidth": 122,
+      "rect": {
+        "x": 87.203125,
+        "y": 563.375,
+        "width": 122,
+        "height": 20,
+        "top": 563.375,
+        "right": 209.203125,
+        "bottom": 583.375,
+        "left": 87.203125
+      }
+    }
+  ]
+}

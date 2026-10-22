@@ -1,0 +1,10 @@
+# mn-no-not-authorised: --config vitest.config.ts client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts -t not authorised
+# exit 1
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.7, §5.3: the closing row counts the steps that were not authorised > one held-back step 10ms
+   → expected { kind: 'end', key: 'e-3', …(3) } to match object { kind: 'end', …(1) }
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.7, §5.3: the closing row counts the steps that were not authorised > the count, and nothing at zero 1ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 21 skipped (23)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.7, §5.3: the closing row counts the steps that were not authorised > one held-back step
+AssertionError: expected { kind: 'end', key: 'e-3', …(3) } to match object { kind: 'end', …(1) }

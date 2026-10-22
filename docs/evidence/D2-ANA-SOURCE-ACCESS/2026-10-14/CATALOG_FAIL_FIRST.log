@@ -1,0 +1,156 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × server/services/vault/__tests__/document-catalog-actor-access.test.ts > server-only catalog actor query filters > bounds a full-text selected source to authorized programs in SQL 9ms
+   → expected 'SELECT d.id, d.organization_id, d.pro…' to contain 'd.program_id = ANY('
+ × server/services/vault/__tests__/document-catalog-actor-access.test.ts > server-only catalog actor query filters > an empty authorized program list cannot widen to all tenant sources 3ms
+   → expected 'SELECT d.id, d.organization_id, d.pro…' to contain 'd.program_id = ANY('
+ × server/services/vault/__tests__/document-catalog-actor-access.test.ts > server-only catalog actor query filters > applies permitted programs before window totals and LIMIT 2ms
+   → expected 'SELECT d.id, d.organization_id, d.pro…' to contain 'd.program_id = ANY('
+ × server/services/vault/__tests__/document-catalog-actor-access.test.ts > server-only catalog actor query filters > runs source listing on the supplied protected executor, never the global pool 1ms
+   → expected "vi.fn()" to be called once, but got 0 times
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/vault/__tests__/document-catalog-actor-access.test.ts > server-only catalog actor query filters > bounds a full-text selected source to authorized programs in SQL
+AssertionError: expected 'SELECT d.id, d.organization_id, d.pro…' to contain 'd.program_id = ANY('
+
+- Expected
++ Received
+
+- d.program_id = ANY(
++ SELECT d.id, d.organization_id, d.program_id, d.document_code, d.document_title, d.document_type,
++             d.file_name, d.mime_type, d.content_hash, d.extracted_text,
++             (SELECT dd.choice FROM public.document_data_dispositions dd WHERE EXISTS (SELECT 1 FROM public.regulatory_programs dd_program WHERE dd_program.id=d.program_id AND dd_program.organization_id=dd.organization_id) AND dd.program_id = d.program_id
++     AND (dd.vault_document_id = d.id OR dd.linked_ids->'vaultDocumentIds' @> jsonb_build_array(d.id::text)
++       OR dd.source_sha256 = d.content_hash) ORDER BY dd.disposition_sequence DESC, dd.created_at DESC, dd.id DESC LIMIT 1) AS disposition,
++             NOT EXISTS (SELECT 1 FROM public.document_data_dispositions dd WHERE EXISTS (SELECT 1 FROM public.regulatory_programs dd_program WHERE dd_program.id=d.program_id AND dd_program.organization_id=dd.organization_id) AND dd.program_id = d.program_id
++     AND (dd.vault_document_id = d.id OR dd.linked_ids->'vaultDocumentIds' @> jsonb_build_array(d.id::text)
++       OR dd.source_sha256 = d.content_hash)) AS original_file_available,
++             d.folder_id, d.evidence_kind, d.ctd_section, d.placement_status,
++             c.catalog_status, c.content_hash AS catalog_content_hash, c.extraction_method, c.extraction_confidence,
++             c.extraction_error, c.char_count, c.word_count, c.page_count,
++             c.document_kind, c.purpose, c.summary, c.key_data, c.cataloged_at,
++             c.catalog_state, c.proposed_model
++        FROM vault.documents d
++        LEFT JOIN vault.document_catalog c ON c.document_id = d.id
++       WHERE d.id = $1 AND d.organization_id = $2 AND d.deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM public.document_data_dispositions dd WHERE EXISTS (SELECT 1 FROM public.regulatory_programs dd_program WHERE dd_program.id=d.program_id AND dd_program.organization_id=dd.organization_id) AND dd.program_id = d.program_id
++     AND (dd.vault_document_id = d.id OR dd.linked_ids->'vaultDocumentIds' @> jsonb_build_array(d.id::text)
++       OR dd.source_sha256 = d.content_hash) AND dd.choice IN ('remove_data', 'supersede'))
++         AND EXISTS (SELECT 1 FROM regulatory_programs rp
++                      WHERE rp.id = d.program_id AND rp.organization_id = $2 AND rp.deleted_at IS NULL)
++       LIMIT 1
+
+ ❯ server/services/vault/__tests__/document-catalog-actor-access.test.ts:12:38
+     10|   it('bounds a full-text selected source to authorized programs in SQL…
+     11|     await loadDocumentForOrg(doc, 42, { includeText: true, allowedProg…
+     12|     expect(h.query.mock.calls[0][0]).toContain('d.program_id = ANY(');
+       |                                      ^
+     13|     expect(h.query.mock.calls[0][1]).toContainEqual([program]);
+     14|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/vault/__tests__/document-catalog-actor-access.test.ts > server-only catalog actor query filters > an empty authorized program list cannot widen to all tenant sources
+AssertionError: expected 'SELECT d.id, d.organization_id, d.pro…' to contain 'd.program_id = ANY('
+
+- Expected
++ Received
+
+- d.program_id = ANY(
++ SELECT d.id, d.organization_id, d.program_id, d.document_code, d.document_title, d.document_type,
++             d.file_name, d.mime_type, d.content_hash, d.extracted_text,
++             (SELECT dd.choice FROM public.document_data_dispositions dd WHERE EXISTS (SELECT 1 FROM public.regulatory_programs dd_program WHERE dd_program.id=d.program_id AND dd_program.organization_id=dd.organization_id) AND dd.program_id = d.program_id
++     AND (dd.vault_document_id = d.id OR dd.linked_ids->'vaultDocumentIds' @> jsonb_build_array(d.id::text)
++       OR dd.source_sha256 = d.content_hash) ORDER BY dd.disposition_sequence DESC, dd.created_at DESC, dd.id DESC LIMIT 1) AS disposition,
++             NOT EXISTS (SELECT 1 FROM public.document_data_dispositions dd WHERE EXISTS (SELECT 1 FROM public.regulatory_programs dd_program WHERE dd_program.id=d.program_id AND dd_program.organization_id=dd.organization_id) AND dd.program_id = d.program_id
++     AND (dd.vault_document_id = d.id OR dd.linked_ids->'vaultDocumentIds' @> jsonb_build_array(d.id::text)
++       OR dd.source_sha256 = d.content_hash)) AS original_file_available,
++             d.folder_id, d.evidence_kind, d.ctd_section, d.placement_status,
++             c.catalog_status, c.content_hash AS catalog_content_hash, c.extraction_method, c.extraction_confidence,
++             c.extraction_error, c.char_count, c.word_count, c.page_count,
++             c.document_kind, c.purpose, c.summary, c.key_data, c.cataloged_at,
++             c.catalog_state, c.proposed_model
++        FROM vault.documents d
++        LEFT JOIN vault.document_catalog c ON c.document_id = d.id
++       WHERE d.id = $1 AND d.organization_id = $2 AND d.deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM public.document_data_dispositions dd WHERE EXISTS (SELECT 1 FROM public.regulatory_programs dd_program WHERE dd_program.id=d.program_id AND dd_program.organization_id=dd.organization_id) AND dd.program_id = d.program_id
++     AND (dd.vault_document_id = d.id OR dd.linked_ids->'vaultDocumentIds' @> jsonb_build_array(d.id::text)
++       OR dd.source_sha256 = d.content_hash) AND dd.choice IN ('remove_data', 'supersede'))
++         AND EXISTS (SELECT 1 FROM regulatory_programs rp
++                      WHERE rp.id = d.program_id AND rp.organization_id = $2 AND rp.deleted_at IS NULL)
++       LIMIT 1
+
+ ❯ server/services/vault/__tests__/document-catalog-actor-access.test.ts:17:38
+     15|   it('an empty authorized program list cannot widen to all tenant sour…
+     16|     await loadDocumentForOrg(doc, 42, { includeText: true, allowedProg…
+     17|     expect(h.query.mock.calls[0][0]).toContain('d.program_id = ANY(');
+       |                                      ^
+     18|     expect(h.query.mock.calls[0][1]).toContainEqual([]);
+     19|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/vault/__tests__/document-catalog-actor-access.test.ts > server-only catalog actor query filters > applies permitted programs before window totals and LIMIT
+AssertionError: expected 'SELECT d.id, d.organization_id, d.pro…' to contain 'd.program_id = ANY('
+
+- Expected
++ Received
+
+- d.program_id = ANY(
++ SELECT d.id, d.organization_id, d.program_id, rp.organization_id AS program_organization_id,
++             rp.deleted_at AS program_deleted_at, rp.name AS program_name, d.document_code, d.document_title,
++             d.document_type, d.file_name, d.folder_id, d.ctd_section, d.evidence_kind,
++             d.placement_status, d.created_at,
++             (SELECT dd.choice FROM public.document_data_dispositions dd WHERE EXISTS (SELECT 1 FROM public.regulatory_programs dd_program WHERE dd_program.id=d.program_id AND dd_program.organization_id=dd.organization_id) AND dd.program_id = d.program_id
++     AND (dd.vault_document_id = d.id OR dd.linked_ids->'vaultDocumentIds' @> jsonb_build_array(d.id::text)
++       OR dd.source_sha256 = d.content_hash) ORDER BY dd.disposition_sequence DESC, dd.created_at DESC, dd.id DESC LIMIT 1) AS disposition,
++             NOT EXISTS (SELECT 1 FROM public.document_data_dispositions dd WHERE EXISTS (SELECT 1 FROM public.regulatory_programs dd_program WHERE dd_program.id=d.program_id AND dd_program.organization_id=dd.organization_id) AND dd.program_id = d.program_id
++     AND (dd.vault_document_id = d.id OR dd.linked_ids->'vaultDocumentIds' @> jsonb_build_array(d.id::text)
++       OR dd.source_sha256 = d.content_hash)) AS original_file_available,
++             c.catalog_status, c.document_kind, c.purpose, c.extraction_error, c.char_count,
++             c.catalog_state,
++             COUNT(*) OVER () AS scope_total,
++             COUNT(*) FILTER (
++               WHERE c.catalog_status IS NULL OR c.catalog_status = 'extracted'
++             ) OVER () AS scope_not_studied,
++             COUNT(*) FILTER (WHERE c.catalog_status = 'extraction_failed')
++               OVER () AS scope_extraction_failed,
++             COUNT(*) FILTER (WHERE d.placement_status = 'unfiled')
++               OVER () AS scope_unfiled
++        FROM vault.documents d
++        JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1 AND rp.deleted_at IS NULL
++        LEFT JOIN vault.document_catalog c ON c.document_id = d.id AND c.content_hash = d.content_hash
++       WHERE d.organization_id = $1 AND d.deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM public.document_data_dispositions dd WHERE EXISTS (SELECT 1 FROM public.regulatory_programs dd_program WHERE dd_program.id=d.program_id AND dd_program.organization_id=dd.organization_id) AND dd.program_id = d.program_id
++     AND (dd.vault_document_id = d.id OR dd.linked_ids->'vaultDocumentIds' @> jsonb_build_array(d.id::text)
++       OR dd.source_sha256 = d.content_hash) AND dd.choice IN ('remove_data', 'supersede')) 
++       ORDER BY d.created_at DESC
++       LIMIT $2
+
+ ❯ server/services/vault/__tests__/document-catalog-actor-access.test.ts:23:17
+     21|     await listProjectDocuments(42, { limit: 1, allowedProgramIds: [pro…
+     22|     const [sql, args] = h.query.mock.calls[0];
+     23|     expect(sql).toContain('d.program_id = ANY(');
+       |                 ^
+     24|     expect(args).toContainEqual([program]);
+     25|     expect(sql.indexOf('d.program_id = ANY(')).toBeLessThan(sql.lastIn…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/vault/__tests__/document-catalog-actor-access.test.ts > server-only catalog actor query filters > runs source listing on the supplied protected executor, never the global pool
+AssertionError: expected "vi.fn()" to be called once, but got 0 times
+ ❯ server/services/vault/__tests__/document-catalog-actor-access.test.ts:31:21
+     29|     const q = { query: vi.fn().mockResolvedValue({ rows: [] }) };
+     30|     await listProjectDocuments(42, { executor: q, allowedProgramIds: […
+     31|     expect(q.query).toHaveBeenCalledOnce();
+       |                     ^
+     32|     expect(h.query).not.toHaveBeenCalled();
+     33|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  19:32:59
+   Duration  2.05s (transform 1.09s, setup 68ms, import 1.71s, tests 17ms, environment 0ms)
+

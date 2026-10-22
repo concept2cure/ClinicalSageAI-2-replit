@@ -41,10 +41,14 @@ import {
   type RegulatoryPath,
   type RecognizedStandardsResult,
 } from '../hooks/useDeviceProfile';
+import { DEVICE_CLASSES as US_DEVICE_CLASSES } from '@shared/regulatory/device-class';
 import { describeSaveFailure } from '../hooks/useFetchJson';
 import { notifyOfficialEstarFieldsChanged } from '../hooks/useEstarOfficialFields';
 
-const DEVICE_CLASSES: DeviceClass[] = ['I', 'II', 'III'];
+/* The governed vocabulary, not a fourth copy of it: this panel writes
+   regulatory_programs.device_class, and the list it offers must be the list
+   the write accepts. */
+const DEVICE_CLASSES: readonly DeviceClass[] = US_DEVICE_CLASSES;
 const REGULATORY_PATHS: Array<{ value: RegulatoryPath; label: string }> = [
   { value: '510k', label: '510(k)' },
   { value: 'de_novo', label: 'De Novo' },
@@ -159,13 +163,13 @@ export function standardsStatusLine(result: RecognizedStandardsResult | null): s
   }
   if (result.matched === 0) {
     return (
-      `FDA's recognition list holds no consensus standard against product code ` +
-      `${result.productCode ?? '—'}. This is the list's answer, not a gap in the lookup.`
+      `No explicit FDA product-code associations found for product code ` +
+      `${result.productCode ?? '—'}. Review broader published recognition scope separately.`
     );
   }
   const list = result.provenance?.recognitionListNumber;
   return (
-    `${result.matched} recognized standard${result.matched === 1 ? '' : 's'} for product code ` +
+    `${result.matched} recognized standard${result.matched === 1 ? '' : 's'} explicitly associated with product code ` +
     `${result.productCode ?? '—'}${list ? ` · FDA Recognition List ${list}` : ''}`
   );
 }
@@ -520,7 +524,9 @@ export function DeviceProfilePanel({ ident }: DeviceProfilePanelProps) {
                 <div style={{ fontSize: 11, color: 'var(--text-300)', marginTop: 8 }}>
                   Source: {standards.provenance.source} · retrieved{' '}
                   {standards.provenance.retrievedOn}. Recognition is FDA's; whether a standard
-                  applies to this device remains the submitter's determination.
+                  applies to this device remains the submitter's determination. This lookup covers
+                  explicit FDA product-code associations; broader published scope statements require
+                  separate regulatory review.
                 </div>
               )}
             </div>

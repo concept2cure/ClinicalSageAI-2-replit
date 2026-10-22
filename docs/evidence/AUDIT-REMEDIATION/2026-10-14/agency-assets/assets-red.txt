@@ -1,0 +1,113 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (a) every eSTAR version row carries its provenance > has an ISO lastVerified, an fda.gov sourceUrl and a confidence on every row 3ms
+ × server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (a) every eSTAR version row carries its provenance > names nIVD 7.1, IVD 7.1 and PreSTAR 3.1 current, verified against the verbatim official page 7ms
+   → expected 'recall' to be 'regulator-text' // Object.is equality
+ ✓ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (a) every eSTAR version row carries its provenance > demotes 7.0 / 3.0 to retiring without inventing a retirement date 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (b)-(d) filing readiness compares the template on file with FDA's current version > (b) a 7.0 template against current 7.1 cannot file, and the blocker names both versions 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (b)-(d) filing readiness compares the template on file with FDA's current version > (c) a template matching FDA's current version files — the gate is not stuck closed 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (b)-(d) filing readiness compares the template on file with FDA's current version > (d) an absent or unpinned template version fails closed 3ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (b)-(d) filing readiness compares the template on file with FDA's current version > the shared comparison is the one the template registry reports, from the manifest version 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (e) the table's age reuses the currency registry > ages from the oldest row with verificationAgeDays, and is stale past the registry maximum 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (e) the table's age reuses the currency registry > reports versionTableStale on the readiness result, failing closed without an as-of date 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (f) the human-factors slot cites FDA's final HF content guidance > names IEC 62366-1 and "Content of Human Factors Information in Medical Device Marketing Submissions" 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > resolves the drop-point dir from env or the default 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > maps every pathway+variant in the manifest to a descriptor 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > covers the whole eSTAR program: 510(k)/De Novo/PMA and the PreSTAR requests 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > assigns every descriptor to a template family 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > lists descriptors by family 0ms
+ × server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > reports available when the required template is present (case-insensitive) 5ms
+   → expected '7.0' to be '7.1' // Object.is equality
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > fails closed in production when the required template is missing and required 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > never blocks in staging or when not required (report-only) 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > reads the opt-in enforcement flag from the environment 0ms
+ × server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry — De Novo and PMA on the vendored files > files De Novo and PMA on the same vendored v7.1 PDFs as 510(k) — FDA ships one file per family 3ms
+   → expected { id: '510k-device', …(5) } to match object { family: 'nivd', …(2) }
+(3 matching properties omitted from actual)
+ × server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry — De Novo and PMA on the vendored files > reports De Novo and PMA available in production once the two vendored files are present 1ms
+   → expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > reports available when the required template is present (case-insensitive)
+AssertionError: expected '7.0' to be '7.1' // Object.is equality
+
+Expected: "7.1"
+Received: "7.0"
+
+ ❯ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts:64:31
+     62|     // and the newly pinned file matches it.
+     63|     expect(r.programVersion).toBe('7.1');
+     64|     expect(r.vendoredVersion).toBe('7.1');
+       |                               ^
+     65|     expect(r.versionCurrent).toBe(true);
+     66|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry — De Novo and PMA on the vendored files > files De Novo and PMA on the same vendored v7.1 PDFs as 510(k) — FDA ships one file per family
+AssertionError: expected { id: '510k-device', …(5) } to match object { family: 'nivd', …(2) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "expectedFileName": "eSTAR-510k-non-ivd.pdf",
+    "family": "nivd",
+-   "version": "7.1",
++   "version": "7.0",
+  }
+
+ ❯ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts:114:45
+    112|     // nIVD family: one physical file for all three marketing pathways.
+    113|     for (const type of ['510k', 'de_novo', 'pma'] as const) {
+    114|       expect(descriptorFor(type, 'device')).toMatchObject({
+       |                                             ^
+    115|         family: 'nivd',
+    116|         expectedFileName: 'eSTAR-510k-non-ivd.pdf',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry — De Novo and PMA on the vendored files > reports De Novo and PMA available in production once the two vendored files are present
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts:155:32
+    153|       expect(r.blockers).toEqual([]);
+    154|       expect(r.programVersion).toBe('7.1');
+    155|       expect(r.versionCurrent).toBe(true);
+       |                                ^
+    156|     }
+    157|     // The PreSTAR template is still absent, so a Q-Sub still fails cl…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (a) every eSTAR version row carries its provenance > names nIVD 7.1, IVD 7.1 and PreSTAR 3.1 current, verified against the verbatim official page
+AssertionError: expected 'recall' to be 'regulator-text' // Object.is equality
+
+Expected: "regulator-text"
+Received: "recall"
+
+ ❯ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts:107:48
+    105|     expect(currentVersionFor('prestar')?.version).toBe('3.1');
+    106|     for (const f of ['nivd', 'ivd', 'prestar'] as const) {
+    107|       expect(currentVersionFor(f)?.confidence).toBe('regulator-text');
+       |                                                ^
+    108|       expect(currentVersionFor(f)?.lastVerified).toBe('2026-10-14');
+    109|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 17 passed (21)
+   Start at  03:09:39
+   Duration  602ms (transform 197ms, setup 110ms, import 164ms, tests 37ms, environment 0ms)
+

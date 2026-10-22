@@ -1,0 +1,93 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T01:05:27.443Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T01:05:27.632Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T01:05:27.633Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T01:05:27.633Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > canonical sharing controls prove this fixture is genuinely private > denies the unassigned active member while admitting owner/public/explicit member/pending reviewer 63ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > canonical sharing controls prove this fixture is genuinely private > serves the public program through the actual detail and search endpoints 39ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > refuses private project metadata for an unassigned same-organization member 15ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > refuses private Vault content search before any count, snippet, or document identity 14ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > applies sharing before the portfolio page so private newest rows cannot consume public slots 21ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > bounds library search count and page by accessible programs before ranking/pagination 25ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > refuses project detail after organization membership is revoked even with a stale request role 13ms
+stderr | server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > requires explicit reconciliation for two live anchors rather than reading the lowest project
+{
+  "timestamp": "2026-10-14T01:05:34.248Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "current-program-access",
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "projectIds": [
+      11,
+      13
+    ]
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > requires explicit program-to-project reconciliation for a missing anchor 14ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > requires explicit reconciliation for two live anchors rather than reading the lowest project 14ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project  before child content queries 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /workstreams before child content queries 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /drafts before child content queries 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /team before child content queries 12ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /evidence before child content queries 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /activity before child content queries 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /records before child content queries 12ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /conversation-files before child content queries 11ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /vault-structure before child content queries 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /sources before child content queries 13ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /source-changes before child content queries 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /document-dispositions/preview?targetType=vault_document&targetId=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa before child content queries 11ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /versions before child content or bytes 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /compare before child content or bytes 12ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /history before child content or bytes 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /download before child content or bytes 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /catalog before child content or bytes 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /relationships before child content or bytes 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /annotations before child content or bytes 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /text before child content or bytes 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > keeps an unrelated missing private anchor out of the evaluated public page 17ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > requires reconciliation for a deleted anchor while retaining an archived readable anchor 16ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > refuses an inactive user despite a stale request role 8ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > refuses an inactive organization despite a stale request role 8ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > reports failed verification as unavailable instead of an empty portfolio 6ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > keeps public viewer reads while denying a now-viewer lead mutation 31ms
+
+ Test Files  1 passed (1)
+      Tests  35 passed (35)
+   Start at  01:05:24
+   Duration  9.74s (transform 3.56s, setup 105ms, import 6.09s, tests 3.15s, environment 0ms)

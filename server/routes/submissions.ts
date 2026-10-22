@@ -16,7 +16,7 @@ import { and, eq } from 'drizzle-orm';
 import { requireRole } from '../middleware/auth';
 import { isUuid } from '../middleware/uuidParam';
 import { ok } from '../lib/api-response';
-import { requestDb } from '../db/requestDb';
+import { requestDb, requestPgClient } from '../db/requestDb';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
 import {
@@ -27,15 +27,15 @@ import { createRateLimiter } from '../middleware/rateLimiter';
 import { GATEWAY_ERROR_HTTP_STATUS } from '../services/ai-gateway/gateway-error-map';
 import {
   createSubmission,
-  listSubmissions,
   getSubmission,
+  getSequence,
+  sequenceDispatchAuthorizationEligibility,
   createSequence,
-  listSequences,
   transitionSequence,
-  listLeaves,
   upsertLeaf,
   removeLeaf,
   anchorSubmissionToProgram,
+  listAnchorCandidates,
   SUBMISSION_ERROR_STATUS,
 } from '../services/submission-service/submission-service';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
@@ -47,7 +47,6 @@ import { assessPathwayReadiness, PATHWAYS, type Pathway } from '../services/path
 import {
   generateSubmissionPlan,
   explainValidation,
-  computeCrossRegionGap,
   runDispatchQc,
 } from '../services/submission-ai/submission-ai-service';
 import {
@@ -61,9 +60,19 @@ import {
   listShadowReviewRuns,
   getShadowReviewFindings,
 } from '../services/shadow-review/shadow-review-service';
-import { generateSection } from '../services/authoring/section-generation-service';
+import { SHADOW_FINDING_DISPOSITIONS, withShadowFindingDispositions } from '../services/ectd/shadow-finding-disposition';
+import { generateSection, AuthoringError } from '../services/authoring/section-generation-service';
 import { createScopedLogger } from '../utils/logger.js';
 import { requireGovernedReason } from './governed-reason';
+import { stfFileName } from '../services/ectd/stf-generator';
+import {
+  listSubmissionsForRequest, getSubmissionForRequest, listSequencesForRequest, readSubmissionSequenceForRequest,
+  readSubmissionLeavesForRequest, requireSubmissionReadStillCurrent, readDeliverableEvaluationInput, SubmissionReadError,
+} from '../services/submission-service/submission-request-read';
+import { readSubmissionHistoryForRequest } from '../services/submission-service/submission-history-read';
+import { ProgramReadAccessError } from '../services/c2c/current-program-access';
+import { AuthoringReadScopeError } from '../services/authoring/authoring-read-scope';
+import { readSubmissionLeafSourceEvidence, requireSubmissionLeafSourceEvidenceStillCurrent, SubmissionLeafSourceReadError } from '../services/ectd/submission-leaf-source-evidence';
 
 const logger = createScopedLogger('submissions-routes');
 const router = Router();
@@ -72,6 +81,8 @@ const limiter = createRateLimiter();
 interface Ctx {
   userId: number;
   organizationId: number;
+  /** The request's address, for governed-export provenance and audit rows. */
+  ipAddress: string | null;
 }
 function ctxOf(req: Request): Ctx | null {
   const r = req as any;
@@ -84,7 +95,7 @@ function ctxOf(req: Request): Ctx | null {
   if (!Number.isInteger(userId) || userId <= 0 || !Number.isInteger(organizationId) || organizationId <= 0) {
     return null;
   }
-  return { userId, organizationId };
+  return { userId, organizationId, ipAddress: req.ip ?? null };
 }
 
 const CODE_STATUS: Record<string, number> = {
@@ -95,13 +106,30 @@ const CODE_STATUS: Record<string, number> = {
   ...GATEWAY_ERROR_HTTP_STATUS,
 };
 
-function fail(res: Response, err: unknown): void {
+function isSubmissionReadRefusal(err: unknown): err is SubmissionReadError | ProgramReadAccessError | SubmissionLeafSourceReadError | AuthoringReadScopeError {
+  return err instanceof SubmissionReadError || err instanceof ProgramReadAccessError || err instanceof SubmissionLeafSourceReadError || err instanceof AuthoringReadScopeError;
+}
+function handleReadRefusal(res: Response, err: unknown): boolean {
+  if (!isSubmissionReadRefusal(err)) return false;
+  if (err.status === 503) {
+    logger.error('Submission read verification unavailable', { error: err });
+    res.status(503).json({ error: { code: err.code, message: 'The submission records could not be verified. Refresh and try again.' } });
+  } else res.status(err.status).json({ error: { code: err.code, message: err.message } });
+  return true;
+}
+function handleKnownCodeFailure(res: Response, err: unknown): boolean {
   // Any service error that carries a known `code` maps to a stable HTTP status.
   const code = (err as { code?: string } | null)?.code;
   if (code && CODE_STATUS[code]) {
     res.status(CODE_STATUS[code]).json({ error: { code, message: err instanceof Error ? err.message : 'Request failed.' } });
-    return;
+    return true;
   }
+  return false;
+}
+function fail(res: Response, err: unknown): void {
+  if (handleReadRefusal(res, err)) return;
+  if (handleKnownCodeFailure(res, err)) return;
+  const code = (err as { code?: string } | null)?.code;
 
   /* The support handle: `auditLog` (middleware/enterprise-security.ts) sets it
      before any route runs and echoes it as `X-Request-Id`, which is the
@@ -211,31 +239,72 @@ const upsertLeafSchema = z.object({
   documentUuid: z.string().uuid().optional(),
   documentType: z.string().max(64).optional(),
   parentLeafId: z.coerce.number().int().positive().optional(),
+  studyId: z.string().trim().min(1).refine((value) => {
+    try { stfFileName(value); return true; } catch { return false; }
+  }, 'Study id must form a valid Study Tagging File name.').nullable().optional(),
+  stfFileTag: z.string().refine((value) =>
+    !Array.from(value).some((char) => char.charCodeAt(0) < 32 || (char.charCodeAt(0) >= 127 && char.charCodeAt(0) <= 159)),
+  'STF file-tag must contain no control characters.').transform((value) => value.trim()).pipe(z.string().min(1).max(128)).nullable().optional(),
+  studyTaggingEdit: z.object({
+    expectedStudyId: z.string().nullable(),
+    expectedStfFileTag: z.string().nullable(),
+    expectedUpdatedAt: z.string().datetime({ offset: true }),
+  }).optional(),
+}).superRefine((value, ctx) => {
+  if (value.studyTaggingEdit && (!value.leafId || value.studyId === undefined || value.stfFileTag === undefined)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['studyTaggingEdit'],
+      message: 'A study metadata edit requires leafId and explicit studyId and stfFileTag values.' });
+  }
 });
 
 const AUTHOR = 'regulatory-author';
+const readSelectionSchema = z.object({ programId: z.string().uuid().optional(),
+  submissionId: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().positive().safe()).optional() });
+function readSelection(req: Request) {
+  const parsed = readSelectionSchema.safeParse(req.query);
+  if (!parsed.success) throw new SubmissionReadError(400, 'BAD_REQUEST', 'The selected submission scope is invalid.');
+  return { expectedProgramId: parsed.data.programId?.toLowerCase(), expectedSubmissionId: parsed.data.submissionId };
+}
+function requestedPathway(req: Request): Pathway | undefined {
+  if (req.query.pathway === undefined) return undefined;
+  if (typeof req.query.pathway !== 'string' || !(PATHWAYS as string[]).includes(req.query.pathway)) {
+    throw new SubmissionReadError(400, 'VALIDATION', 'Choose a supported framework.');
+  }
+  return req.query.pathway as Pathway;
+}
+function requestedMemberStates(req: Request): string | undefined {
+  if (req.query.memberStates !== undefined && typeof req.query.memberStates !== 'string') throw new SubmissionReadError(400, 'CTIS_MEMBER_STATES_INVALID', 'Choose valid EU member-state codes.');
+  return req.query.memberStates as string | undefined;
+}
+async function readCoverageInputs(req: Request, ctx: Ctx, sequenceId: number, regulation?: 'mdr' | 'ivdr') {
+  const q = requestPgClient(req);
+  const admitted = await readSubmissionSequenceForRequest(q, ctx, sequenceId, readSelection(req));
+  const evaluation = await readDeliverableEvaluationInput(q, admitted, { pathway: requestedPathway(req), memberStates: requestedMemberStates(req), regulation });
+  const leaves = await readSubmissionLeavesForRequest(q, admitted);
+  const sources = await readSubmissionLeafSourceEvidence(q, { ...admitted, leaves });
+  return { q, admitted, sources, ...evaluation };
+}
+async function finishCoverageRead(read: Awaited<ReturnType<typeof readCoverageInputs>>) {
+  await requireSubmissionLeafSourceEvidenceStillCurrent(read.q, read.sources.admission);
+  await requireSubmissionReadStillCurrent(read.q, read.admitted);
+}
 
 // ── Submissions ─────────────────────────────────────────────────────────────
 router.get('/', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
-  /* ?programId=<uuid> scopes the list to one program's submissions: the filing
-     picker's list, where an unanchored submission is not offered for a document
-     of a program (QA j3 finding (b)). The count of submissions the scope leaves
-     out rides in `meta.notOffered`, so the picker can say what it did not offer.
-     Without it the whole organization is listed, as the Submission Center reads it. */
+  // Current accessible records only. Hidden project counts are not a list fact.
   const programParam = req.query.programId;
   try {
     if (programParam === undefined) {
-      res.json(await listSubmissions(ctx));
+      res.json(await listSubmissionsForRequest(requestPgClient(req), ctx));
       return;
     }
     if (typeof programParam !== 'string' || !isUuid(programParam)) {
       return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'programId must be a program uuid.' } });
     }
     const programId = programParam.toLowerCase();
-    const [rows, all] = await Promise.all([listSubmissions(ctx, { programId }), listSubmissions(ctx)]);
-    ok(res, rows, { notOffered: all.length - rows.length });
+    ok(res, await listSubmissionsForRequest(requestPgClient(req), ctx, programId));
   } catch (err) {
     fail(res, err);
   }
@@ -246,6 +315,20 @@ router.post('/', limiter, requireRole(AUTHOR), async (req, res) => {
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const parsed = createSubmissionSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  /* A market the platform does not offer for this application type is refused
+     here as the market statement says it (filing-spine design review, item 6,
+     2026-10-15): a UK IND read "Not offered" and could still be created. An
+     unreadable statement creates nothing. */
+  let statement: { offered: boolean; line: string } | undefined;
+  try {
+    const { readMarketSupport } = await import('../services/regulatory/market-support.js');
+    [statement] = await readMarketSupport(requestPgClient(req), [{ applicationType: parsed.data.applicationType, market: parsed.data.primaryRegion }]);
+  } catch {
+    return res.status(503).json({ error: { code: 'MARKET_SUPPORT_UNAVAILABLE', message: 'Whether this market is offered could not be read. Nothing was created.' } });
+  }
+  if (statement && !statement.offered) {
+    return res.status(422).json({ error: { code: 'MARKET_NOT_OFFERED', message: `${statement.line}. Nothing was created.` } });
+  }
   try {
     res.status(201).json(await createSubmission(parsed.data, ctx));
   } catch (err) {
@@ -280,7 +363,6 @@ router.get('/capabilities', limiter, requireRole(AUTHOR), async (req, res) => {
         sequences: true,
         validation: true,
         'shadow-review': true,
-        'cross-region': true,
         dispatch: true,
       },
       // Capability flags (not workspaces). The assemble/publish BYTES are now
@@ -338,14 +420,22 @@ router.get('/market-support', limiter, requireRole(AUTHOR), async (req, res) => 
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'applicationType is required (at most 64 characters); market, when given, is at most 64.' } });
   }
   try {
-    const [{ readMarketSupport }, { REGION_IDENTITY }, { pool }] = await Promise.all([
+    const [{ readMarketSupport }, { REGION_IDENTITY }] = await Promise.all([
       import('../services/regulatory/market-support.js'),
       import('../../shared/regulatory/region-identity.js'),
-      import('../db.js'),
     ]);
     const markets = market ? [market] : Object.keys(REGION_IDENTITY);
     const asOf = new Date().toISOString().slice(0, 10);
-    const out = await readMarketSupport(pool, markets.map((m) => ({ applicationType, market: m })), asOf);
+    /* The request's own pinned connection, not the shared pool
+       (ci:requestdb-coverage). readMarketSupport reads the platform's active
+       rule packs — reference data, not this tenant's rows — but it reads them
+       on the caller's request scope like every other read in this router, so
+       the route holds no second path to the database. */
+    const out = await readMarketSupport(
+      requestPgClient(req),
+      markets.map((m) => ({ applicationType, market: m })),
+      asOf,
+    );
     res.json({ applicationType, asOf, markets: out });
   } catch (err) {
     fail(res, err);
@@ -897,7 +987,10 @@ router.post('/device/labeling', limiter, requireRole(AUTHOR), async (req, res) =
 router.get('/device/cer/:reportId/assess-stored', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
-  const equivalenceClaimed = req.query.equivalenceClaimed === 'true' || req.query.equivalenceClaimed === '1';
+  // 2026-10-15: only 'true'/'1' was read, so an absent answer reached the engine as
+  // "not claimed" and a CER with no Equivalence section came back ready.
+  const claim = req.query.equivalenceClaimed;
+  const equivalenceClaimed = claim === 'true' || claim === '1' ? true : claim === 'false' || claim === '0' ? false : undefined;
   try {
     const { assessStoredCer } = await import('../services/market-specs/stored-cer-assessment.js');
     res.json(await assessStoredCer({ reportId: String(req.params.reportId), organizationId: ctx.organizationId, equivalenceClaimed }));
@@ -910,7 +1003,7 @@ router.get('/:id', limiter, requireRole(AUTHOR), async (req, res) => {
   const id = idParam(req.params.id);
   if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
   try {
-    res.json(await getSubmission(id, ctx));
+    res.json(await getSubmissionForRequest(requestPgClient(req), ctx, id, readSelection(req)));
   } catch (err) {
     fail(res, err);
   }
@@ -923,7 +1016,7 @@ router.get('/:id/sequences', limiter, requireRole(AUTHOR), async (req, res) => {
   const id = idParam(req.params.id);
   if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
   try {
-    res.json(await listSequences(id, ctx));
+    res.json(await listSequencesForRequest(requestPgClient(req), ctx, id, readSelection(req)));
   } catch (err) {
     fail(res, err);
   }
@@ -950,6 +1043,20 @@ router.post('/:id/sequences', limiter, requireRole(AUTHOR), async (req, res) => 
 // a reason, on the audit chain (anchorSubmissionToProgram). The role is the
 // membership row's, never the token's or the body's.
 const anchorProgramSchema = z.object({ programId: z.string().uuid() });
+// The projects this submission may be anchored to: its own filing type, by the
+// rule the anchor applies (listAnchorCandidates). QA 2026-10-08 (j6): the
+// control offered every programme, a device programme for an NDA among them.
+router.get('/:id/program-anchor', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = idParam(req.params.id);
+  if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
+  try {
+    res.json(await listAnchorCandidates(id, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
 router.post('/:id/program-anchor', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
@@ -989,24 +1096,41 @@ router.post('/sequences/:seqId/transition', limiter, requireRole(AUTHOR), async 
 });
 
 // ── Builder leaves ──────────────────────────────────────────────────────────
-// Each leaf carries `sourceDocument`: what the leaf's document pointer resolves
-// to in this organization, from the SAME resolver the dispatch-readiness
-// assessment (and so the freeze / dispatch gate) uses. The Builder used to
-// decide "linked" on the client from `documentId != null`, which is null for
-// every vault leaf (uuid-keyed) — six leaves the platform had just filed read
-// "Source document: unlinked" (MDX demo pack, 2026-09-21, finding F5). The
-// resolution is computed here, once, so the column and the gate cannot
-// disagree.
+// Request-owned parent/source admission precedes leaf metadata. sourceDocument
+// reuses canonical pin, status, content, seal and retained-byte primitives;
+// missing evidence stays undetermined. Governed dispatch remains its separate
+// canonical assessment, and background resolver/service callers keep their ABI.
 router.get('/sequences/:seqId/leaves', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const seqId = idParam(req.params.seqId);
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
   try {
-    const leaves = await listLeaves(seqId, ctx);
-    const { resolveLeafDocuments } = await import('../services/ectd/leaf-document-resolver');
-    const sourceDocuments = await resolveLeafDocuments(leaves, ctx.organizationId);
-    res.json(leaves.map((leaf, i) => ({ ...leaf, sourceDocument: sourceDocuments[i] })));
+    const q = requestPgClient(req);
+    const admitted = await readSubmissionSequenceForRequest(q, ctx, seqId, readSelection(req));
+    const leaves = await readSubmissionLeavesForRequest(q, admitted);
+    const sources = await readSubmissionLeafSourceEvidence(q, { ...admitted, leaves });
+    await requireSubmissionLeafSourceEvidenceStillCurrent(q, sources.admission);
+    await requireSubmissionReadStillCurrent(q, admitted);
+    res.json(leaves.map((leaf, i) => ({ ...leaf, sourceDocument: sources.sourceDocuments[i], sourceRef: sources.leaves[i]?.sourceRef })));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/* The sequence's history: who created the submission, and every placement in
+   the sequence, removed ones included, from the one ledger with its chain
+   verdict (submission-history-read.ts; filing-spine review item 3). Admitted
+   as the leaves read is. */
+router.get('/sequences/:seqId/history', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  try {
+    const q = requestPgClient(req);
+    const admitted = await readSubmissionSequenceForRequest(q, ctx, seqId, readSelection(req));
+    res.json({ success: true, data: await readSubmissionHistoryForRequest(q, admitted) });
   } catch (err) {
     fail(res, err);
   }
@@ -1118,28 +1242,6 @@ router.post('/:id/validation/explain', limiter, requireRole(AUTHOR), async (req,
   try {
     await getSubmission(id, ctx);
     res.json(await explainValidation(parsed.data, { ...ctx, submissionId: id }));
-  } catch (err) {
-    fail(res, err);
-  }
-});
-
-// ── Cross-region gap (AI) ────────────────────────────────────────────────────
-const crossRegionSchema = z.object({
-  sourceRegion: z.enum(['fda', 'ema', 'eu', 'pmda', 'jp', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg']),
-  targetRegions: z.array(z.enum(['fda', 'ema', 'eu', 'pmda', 'jp', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg'])).min(1),
-  applicationType: z.string().min(1).max(64),
-  sectionsPresent: z.array(z.string()).optional(),
-});
-router.post('/:id/cross-region', limiter, requireRole(AUTHOR), async (req, res) => {
-  const ctx = ctxOf(req);
-  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
-  const id = idParam(req.params.id);
-  if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
-  const parsed = crossRegionSchema.safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  try {
-    await getSubmission(id, ctx);
-    res.json(await computeCrossRegionGap(parsed.data, { ...ctx, submissionId: id }));
   } catch (err) {
     fail(res, err);
   }
@@ -1272,7 +1374,73 @@ router.get('/shadow-review/:runId/findings', limiter, requireRole(AUTHOR), async
   const runId = idParam(req.params.runId);
   if (runId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid run id.' } });
   try {
-    res.json(await getShadowReviewFindings(runId, ctx));
+    // P-35: each finding with who closed it, how, when, why and under which
+    // signature, and what may be signed on it now — by the act's own rule.
+    const rows = await getShadowReviewFindings(runId, ctx);
+    res.json(await withShadowFindingDispositions(requestPgClient(req), { organizationId: ctx.organizationId, runId }, rows));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Shadow Review waiver (P-34, decided 2026-10-15) ─────────────────────────
+// Offered only after the sequence's newest run failed because every AI provider
+// failed or was overloaded (ask POST governed-precheck { step: 'shadow-waiver' }).
+// Sign first: POST /api/c2c/actions/sign, target "ectd-sequence:<seqId>",
+// payload { intent: 'shadow-waiver', meaning: 'responsibility' | 'approval' },
+// with the reason — the signature's reason is the waiver's. Then pass its
+// actionId and the failed run here. 403 GOVERNED_REQUIRED for a missing,
+// spent, void or wrong-intent signature; 409 SHADOW_WAIVER_NOT_ELIGIBLE, with
+// the reason, when no waiver is on offer; a refused waive voids its signature.
+// The act is waiveShadowReview's; no AnA tool reaches this door.
+const shadowWaiveSchema = z.object({
+  signatureActionId: z.string().min(1).max(128),
+  failedRunId: z.number().int().positive(),
+});
+router.post('/sequences/:seqId/shadow-review/waive', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const parsed = shadowWaiveSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { waiveShadowReview } = await import('../services/submission-service/submission-service');
+    res.json(await waiveShadowReview({ sequenceId: seqId, ...parsed.data }, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Closing a critical Shadow Review finding (P-35, decided 2026-10-15) ─────
+// Each open critical finding is closed on its own: 'accepted' (risk accepted)
+// or 'fixed' (offered only when a completed Shadow Review ran after the
+// finding's run; ask POST governed-precheck { step: 'shadow-finding-disposition',
+// findingId, disposition }). Sign first: POST /api/c2c/actions/sign, target
+// "ectd-sequence:<seqId>", payload { intent: 'shadow-finding-disposition',
+// meaning: 'approval' | 'responsibility', findingId, disposition }, with the
+// reason — the signature's reason is the disposition's. Then pass its actionId
+// here. 403 GOVERNED_REQUIRED for a missing, spent, void, wrong-intent or
+// other-finding signature; 409 SHADOW_FINDING_NOT_DISPOSABLE, with the reason;
+// a refused act voids its signature. The act is dispositionShadowFinding's; no
+// AnA tool reaches this door.
+const shadowFindingDispositionSchema = z.object({
+  signatureActionId: z.string().min(1).max(128),
+  disposition: z.enum(SHADOW_FINDING_DISPOSITIONS),
+});
+router.post('/sequences/:seqId/shadow-review/findings/:findingId/disposition', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  const findingId = idParam(req.params.findingId);
+  if (seqId === null || findingId === null) {
+    return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence or finding id.' } });
+  }
+  const parsed = shadowFindingDispositionSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { dispositionShadowFinding } = await import('../services/submission-service/submission-service');
+    res.json(await dispositionShadowFinding({ sequenceId: seqId, findingId, ...parsed.data }, ctx));
   } catch (err) {
     fail(res, err);
   }
@@ -1299,7 +1467,7 @@ router.post('/:id/sections/generate', limiter, requireRole(AUTHOR), async (req, 
   (res as unknown as { flushHeaders?: () => void }).flushHeaders?.();
   // Stop writing once the client disconnects (avoids EPIPE / write-after-end).
   let closed = false;
-  req.on('close', () => {
+  res.on('close', () => {
     closed = true;
   });
   const send = (event: string, data: unknown) => {
@@ -1310,9 +1478,10 @@ router.post('/:id/sections/generate', limiter, requireRole(AUTHOR), async (req, 
     const result = await generateSection({ submissionId: id, ...parsed.data }, ctx, (text) => send('chunk', { text }));
     send('done', result);
   } catch (err) {
-    const code = (err as { code?: string } | null)?.code ?? 'INTERNAL';
-    logger.error('section generation failed', { err: err instanceof Error ? err.message : String(err) });
-    send('error', { code, message: err instanceof Error ? err.message : 'Generation failed.' });
+    const known = err instanceof AuthoringError;
+    logger.error('section generation failed', { code: (err as { code?: string } | null)?.code ?? null });
+    send('error', { code: known ? err.code : 'GENERATION_FAILED',
+      message: known ? err.message : 'The section draft could not be completed. Its saved status has not been confirmed.' });
   } finally {
     res.end();
   }
@@ -1327,20 +1496,11 @@ router.get('/sequences/:seqId/pathway-readiness', limiter, requireRole(AUTHOR), 
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const seqId = idParam(req.params.seqId);
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
-  const pathway = String(Array.isArray(req.query.pathway) ? req.query.pathway[0] : req.query.pathway ?? '');
-  if (!(PATHWAYS as string[]).includes(pathway)) {
-    return res.status(400).json({ error: { code: 'VALIDATION', message: `pathway must be one of: ${PATHWAYS.join(', ')}.` } });
-  }
-  const msRaw = Array.isArray(req.query.memberStates) ? req.query.memberStates[0] : req.query.memberStates;
-  const memberStates = typeof msRaw === 'string' && msRaw ? msRaw.split(',').map((s) => s.trim()).filter(Boolean) : [];
   try {
-    const leaves = await listLeaves(seqId, ctx); // tenant-scoped
-    const result = assessPathwayReadiness({
-      pathway: pathway as Pathway,
-      leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, documentType: l.documentType ?? undefined })),
-      memberStates,
-    });
-    res.json(result);
+    const read = await readCoverageInputs(req, ctx, seqId);
+    const result = assessPathwayReadiness({ ...read.engine, leaves: read.sources.leaves, sourceAware: true });
+    await finishCoverageRead(read);
+    res.json({ ...result, scope: read.scope, sourceIssues: read.sources.sourceIssues });
   } catch (err) {
     fail(res, err);
   }
@@ -1355,21 +1515,13 @@ router.get('/sequences/:seqId/pathway-manifest', limiter, requireRole(AUTHOR), a
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const seqId = idParam(req.params.seqId);
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
-  const pathway = String(Array.isArray(req.query.pathway) ? req.query.pathway[0] : req.query.pathway ?? '');
-  if (!(PATHWAYS as string[]).includes(pathway)) {
-    return res.status(400).json({ error: { code: 'VALIDATION', message: `pathway must be one of: ${PATHWAYS.join(', ')}.` } });
-  }
-  const msRaw = Array.isArray(req.query.memberStates) ? req.query.memberStates[0] : req.query.memberStates;
-  const memberStates = typeof msRaw === 'string' && msRaw ? msRaw.split(',').map((s) => s.trim()).filter(Boolean) : [];
   try {
-    const leaves = await listLeaves(seqId, ctx); // tenant-scoped
+    const read = await readCoverageInputs(req, ctx, seqId);
     const { buildPathwayManifest } = await import('../services/pathway-engines/pathway-manifest');
-    const result = assessPathwayReadiness({
-      pathway: pathway as Pathway,
-      leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, documentType: l.documentType ?? undefined })),
-      memberStates,
-    });
-    res.json(buildPathwayManifest(pathway as Pathway, result.detail));
+    const result = assessPathwayReadiness({ ...read.engine, leaves: read.sources.leaves, sourceAware: true });
+    const manifest = buildPathwayManifest(read.engine.pathway, result.detail);
+    await finishCoverageRead(read);
+    res.json({ ...manifest, scope: read.scope, sourceIssues: read.sources.sourceIssues });
   } catch (err) {
     fail(res, err);
   }
@@ -1385,19 +1537,17 @@ router.get('/sequences/:seqId/technical-file', limiter, requireRole(AUTHOR), asy
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const seqId = idParam(req.params.seqId);
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
-  const regulation = String(Array.isArray(req.query.regulation) ? req.query.regulation[0] : req.query.regulation ?? '');
-  if (regulation !== 'mdr' && regulation !== 'ivdr') {
-    return res.status(400).json({ error: { code: 'VALIDATION', message: 'regulation must be one of: mdr, ivdr.' } });
-  }
   try {
-    const leaves = await listLeaves(seqId, ctx); // tenant-scoped
+    const regulation = req.query.regulation;
+    if (regulation !== undefined && regulation !== 'mdr' && regulation !== 'ivdr') throw new SubmissionReadError(400, 'VALIDATION', 'Choose mdr or ivdr.');
+    const read = await readCoverageInputs(req, ctx, seqId, regulation);
+    if (!read.scope.regulation) throw new SubmissionReadError(422, 'TECHNICAL_FILE_COVERAGE_UNAVAILABLE', 'Technical-file coverage is only available for recorded MDR or IVDR filings.');
     const { assembleTechDoc } = await import('../services/pathway-engines');
     const { buildTechnicalFileManifest } = await import('../services/pathway-engines/technical-file-manifest');
-    const result = assembleTechDoc({
-      regulation,
-      leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, documentType: l.documentType ?? undefined })),
-    });
-    res.json(buildTechnicalFileManifest(result));
+    const result = assembleTechDoc({ regulation: read.scope.regulation, leaves: read.sources.leaves, sourceAware: true });
+    const manifest = buildTechnicalFileManifest(result);
+    await finishCoverageRead(read);
+    res.json({ ...manifest, scope: read.scope, sourceIssues: read.sources.sourceIssues });
   } catch (err) {
     fail(res, err);
   }
@@ -1454,6 +1604,7 @@ async function deliverTechnicalFile(ctx: Ctx, d: TechnicalFileDelivery) {
       mimeType: 'application/zip',
       filename: d.filename,
       metadata,
+      ipAddress: ctx.ipAddress,
     });
   }
   return createAuditedUnplacedExport({
@@ -1584,6 +1735,7 @@ router.post('/sequences/:seqId/technical-file/assemble', limiter, requireRole(AU
       unfinalized: result.unfinalized,
       unfinalizedSections: result.unfinalizedSections,
       ...consequence,
+      meta: { auditTrail: result.auditTrail },
     });
   } catch (err) {
     technicalFileFail(res, err);
@@ -1680,48 +1832,64 @@ router.post('/programs/:programId/technical-file/export', limiter, requireRole(A
       unfinalized: result.unfinalized,
       unfinalizedSections: result.unfinalizedSections,
       ...consequence,
+      meta: { auditTrail: result.auditTrail },
     });
   } catch (err) {
     technicalFileFail(res, err);
   }
 });
 
-// ── Assemble (assemble step of assemble→submit→transmit) ──────────────────────
-// Drives the real eCTD publisher off the sequence's canonical leaves. Returns a
-// sanitized package descriptor (no server paths). Does NOT transmit — submit/
-// transmit stays behind the governed transmit_submission tool + Part 11 e-sign.
-const assembleSchema = z.object({
-  applicationId: z.string().min(1).max(128).optional(),
-  sponsorId: z.string().min(1).max(128).optional(),
-  sponsorName: z.string().min(1).max(256).optional(),
-});
+// ── Assemble (a dry run of the assemble step) ─────────────────────────────────
+// Drives the real eCTD publisher off the sequence's canonical leaves and reports
+// what the package would hold and what transmit would refuse. Returns a
+// sanitized descriptor (no server paths). Does NOT transmit — submit/transmit
+// stays behind the governed transmit_submission tool + Part 11 e-sign.
+//
+// 2026-10-08 (P-27 follow-up): it is a dry run, and says so. It filled the
+// backbone's identity from the body or from UNASSIGNED placeholders and answered
+// with the digest of bytes it then deleted. A package names only recorded
+// identity (package-identity.ts); this route produces none, so it takes no
+// identity — a body naming one is refused rather than silently ignored — and the
+// answer carries dryRun / packageProduced / notice.
+const DRY_RUN_IDENTITY_FIELDS = ['applicationId', 'sponsorId', 'sponsorName'] as const;
 router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const seqId = idParam(req.params.seqId);
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
-  const parsed = assembleSchema.safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  const named = DRY_RUN_IDENTITY_FIELDS.filter((f) => (req.body ?? {})[f] !== undefined);
+  if (named.length > 0) {
+    return res.status(400).json({
+      error: {
+        code: 'DRY_RUN_TAKES_NO_IDENTITY',
+        message:
+          `This assembly is a dry run and takes no identity (${named.join(', ')}). A package's application number and ` +
+          'applicant are read from the record when it is exported, compiled or sent. Nothing was assembled.',
+      },
+    });
+  }
   const assembly = await import('../services/ectd/assemble-from-core');
   try {
     const { assembleSequence, assembledTransmitBlockers } = assembly;
+    const { DRY_RUN_NOTICE } = await import('../services/ectd/package-identity');
     const result = await assembleSequence({
       sequenceId: seqId,
       organizationId: ctx.organizationId,
       userId: ctx.userId,
-      // Never fabricate an agency identifier — these reach the regional
-      // backbone and the package filename. Unassigned values say so.
-      applicationId: parsed.data.applicationId ?? `UNASSIGNED-SEQ-${seqId}`,
-      sponsorId: parsed.data.sponsorId ?? `UNASSIGNED-ORG-${ctx.organizationId}`,
-      sponsorName: parsed.data.sponsorName ?? `UNASSIGNED (organization ${ctx.organizationId})`,
+      dryRun: true,
     });
-    // Assemble-only: the response carries metadata, not bytes — the staged
-    // temp package is not needed once we've read the descriptor.
+    // A dry run: the response carries metadata, not bytes, and the staged
+    // bundle is discarded before answering — nothing of it is kept.
     await result.cleanup();
     // Sanitized — never expose the server temp path.
     res.json({
       ok: true,
-      sha256: result.bundle.sha256,
+      dryRun: true,
+      packageProduced: false,
+      notice: DRY_RUN_NOTICE,
+      // No sha256: a digest of discarded placeholder-identity bytes is exactly
+      // what could be recorded as a package's (P-27). Size and format describe
+      // the dry run; the digest of a package is its export's or its compile's.
       format: result.bundle.format,
       sizeBytes: result.bundle.sizeBytes,
       materialized: result.materialized,
@@ -1762,24 +1930,21 @@ router.get('/sequences/:seqId/dispatch-readiness', limiter, requireRole(AUTHOR),
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
   try {
     const { assessSequenceDispatchReadiness } = await import('../services/ectd/assess-dispatch-readiness');
-    const assessment = await assessSequenceDispatchReadiness({ sequenceId: seqId, organizationId: ctx.organizationId });
-    // Whether THIS user may sign the sequence's freeze and dispatch, answered
-    // in advance by the lookup the sign step enforces (resolveTargetAuthors),
+    const [assessment, sequence] = await Promise.all([
+      assessSequenceDispatchReadiness({ sequenceId: seqId, organizationId: ctx.organizationId }),
+      getSequence(seqId, ctx),
+    ]);
+    const dispatchAuthorization = sequenceDispatchAuthorizationEligibility(sequence);
+    // Whether THIS user may sign the sequence's freeze and dispatch, asked of
+    // the sign step's own separation-of-duties check (signerIndependenceOf),
     // so the Dispatch tab can say so before a password is typed rather than
-    // after the server refuses. Informational: the sign route and Gate 1 still
-    // decide. A failed lookup is 'unverified', never 'independent'.
-    let signer: { state: 'independent' | 'author' | 'unresolved' | 'unverified'; sources: string[] };
-    try {
-      const { resolveTargetAuthors } = await import('../services/governance/separation-of-duties');
-      const a = await resolveTargetAuthors(`ectd-sequence:${seqId}`, ctx.organizationId);
-      signer = {
-        state: !a.modelled || a.authors.length === 0 ? 'unresolved' : a.authors.includes(ctx.userId) ? 'author' : 'independent',
-        sources: a.sources,
-      };
-    } catch {
-      signer = { state: 'unverified', sources: [] };
-    }
-    res.json({ ...assessment, signer });
+    // after the server refuses — and cannot disagree with that refusal. It no
+    // longer re-derives the author rule here. Informational: the sign route
+    // and Gate 1 still decide. A failed lookup is 'unverified', never
+    // 'independent'.
+    const { signerIndependenceOf } = await import('../services/governance/separation-of-duties');
+    const signer = { state: await signerIndependenceOf(`ectd-sequence:${seqId}`, ctx.organizationId, ctx.userId) };
+    res.json({ ...assessment, signer, dispatchAuthorization });
   } catch (err) {
     fail(res, err);
   }
@@ -1799,13 +1964,25 @@ const governedTransitionSchema = z.object({ signatureActionId: z.string().min(1)
 // gates without a signature (precheckGovernedStep) and answers 200 with
 // { cleared, refusal } either way — a refusal here is the answer, not an error.
 // It authorizes nothing: the step re-runs every gate itself.
-const governedPrecheckSchema = z.object({
-  step: z.enum(['freeze', 'dispatch', 'transmit']),
-  environment: z.enum(['staging', 'production']).optional(),
-  // Transmit: the number the person typed, judged against the program record
-  // before anyone signs (P-23), by the rule transmit itself applies.
-  applicationId: z.string().min(1).max(128).optional(),
-});
+const governedPrecheckSchema = z
+  .object({
+    // 'shadow-waiver' (P-34): whether a Shadow Review waiver is on offer, and
+    // the failed run it would cite, before anyone signs one.
+    // 'shadow-finding-disposition' (P-35): whether the named finding may be
+    // closed that way now, before anyone signs.
+    step: z.enum(['freeze', 'dispatch', 'transmit', 'shadow-waiver', 'shadow-finding-disposition']),
+    environment: z.enum(['staging', 'production']).optional(),
+    // Transmit: the number the person typed, judged against the program record
+    // before anyone signs (P-23), by the rule transmit itself applies.
+    applicationId: z.string().min(1).max(128).optional(),
+    // Finding disposition: the finding and how it is to be closed.
+    findingId: z.number().int().positive().optional(),
+    disposition: z.enum(SHADOW_FINDING_DISPOSITIONS).optional(),
+  })
+  .refine((b) => b.step !== 'shadow-finding-disposition' || (b.findingId !== undefined && b.disposition !== undefined), {
+    message: "A 'shadow-finding-disposition' precheck names the finding (findingId) and the disposition (accepted or fixed).",
+    path: ['findingId'],
+  });
 router.post('/sequences/:seqId/governed-precheck', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
@@ -1819,6 +1996,8 @@ router.post('/sequences/:seqId/governed-precheck', limiter, requireRole(AUTHOR),
       await precheckGovernedStep(seqId, parsed.data.step, ctx, {
         environment: parsed.data.environment,
         applicationId: parsed.data.applicationId,
+        findingId: parsed.data.findingId,
+        disposition: parsed.data.disposition,
       }),
     );
   } catch (err) {
@@ -1868,7 +2047,7 @@ const transmitSchema = z.object({
   environment: z.enum(['staging', 'production']).optional(),
   applicationId: z.string().min(1).max(128).optional(),
   sponsorId: z.string().min(1).max(128).optional(),
-  sponsorName: z.string().min(1).max(256).optional(),
+  // No sponsorName: the package names the organisation's recorded name (QA j6).
 });
 router.post('/sequences/:seqId/transmit', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
@@ -1886,7 +2065,6 @@ router.post('/sequences/:seqId/transmit', limiter, requireRole(AUTHOR), async (r
       environment: parsed.data.environment,
       applicationId: parsed.data.applicationId,
       sponsorId: parsed.data.sponsorId,
-      sponsorName: parsed.data.sponsorName,
     });
     res.json(result);
   } catch (err) {

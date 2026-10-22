@@ -1,0 +1,56 @@
+{
+  "commit": "9474437e576e1b204b42b0e8de64af968d98394f",
+  "observed_at": "2026-10-08T20:22:51.718Z",
+  "workflows": [
+    {
+      "name": "CI",
+      "status": "queued",
+      "conclusion": null,
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37826284823"
+    },
+    {
+      "name": "Repo Health Baseline Refresh",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37826284564"
+    },
+    {
+      "name": "Tier 5 Browser Smoke",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37826284465"
+    },
+    {
+      "name": "C2C Agent — Validate & Audit",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37826284463"
+    },
+    {
+      "name": "Semgrep",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37826284562"
+    },
+    {
+      "name": "CodeQL",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37826284374"
+    }
+  ],
+  "semgrep": {
+    "finding_count": 7,
+    "paths": [
+      "client/src/concept2cure/v2/__tests__/accountPanel.test.tsx",
+      "client/src/concept2cure/v2/__tests__/shellNav.test.tsx",
+      "docs/evidence/ANA-SUMMARY/2026-10-08/S3-step-labels/review/generate_present.py",
+      "docs/evidence/QA-2026-10-08/projects/harness/home.mjs",
+      "server/routes/c2c/actions.ts",
+      "server/services/clinical-regulatory-evidence/dataset-profile.ts",
+      "server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts"
+    ],
+    "none_in_heartbeat_owned_source": true,
+    "scope": "Observed actual Semgrep blocking-scan log; no attribution beyond listed paths and no unrelated changes."
+  }
+}

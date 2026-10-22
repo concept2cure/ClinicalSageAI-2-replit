@@ -1,0 +1,116 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-08T20:21:13.709Z","pid":16111,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-08T20:21:13.710Z","pid":16111,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-08T20:21:13.710Z","pid":16111,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > stores the run in the apply, keyed to this design and project
+[database] Database connection successful
+
+stderr | tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > stores the run in the apply, keyed to this design and project
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ × tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > stores the run in the apply, keyed to this design and project 1094ms
+   → actual value must be number or bigint, received "undefined"
+ × tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > the design, the governed action and the SAP name the run 4ms
+   → the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ × tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > the stored inputs recompute to the stored outputs 10ms
+   → Cannot find module '/server/services/stats/computation-runs' imported from /home/user/ClinicalSageAI-2-replit/tests/db/stats-computation-run.dbtest.ts
+ × tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > a changed output is caught, not trusted 3ms
+   → relation "stats_computation_runs" does not exist
+ × tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > another organization's run is not found 3ms
+   → Cannot find module '/server/services/stats/computation-runs' imported from /home/user/ClinicalSageAI-2-replit/tests/db/stats-computation-run.dbtest.ts
+ × tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > the database refuses a run naming another organization's design 15ms
+   → expected '42P01' to be '23503' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > stores the run in the apply, keyed to this design and project
+TypeError: actual value must be number or bigint, received "undefined"
+ ❯ tests/db/stats-computation-run.dbtest.ts:130:19
+    128|     const out = await scoped(() => applySampleSizeToDesign({ organizat…
+    129|     runId = out.computationRunId;
+    130|     expect(runId).toBeGreaterThan(0);
+       |                   ^
+    131|     const { rows: [run] } = await owner.query('SELECT * FROM stats_com…
+    132|     const { rows: [study] } = await owner.query('SELECT id FROM cdisc_…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > the design, the governed action and the SAP name the run
+AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ ❯ tests/db/stats-computation-run.dbtest.ts:145:27
+    143|     const { rows: [s] } = await owner.query(`SELECT metadata->'design'…
+    144|     const stamp = (s.ev as Array<{ source: string; ref?: string }>).fi…
+    145|     expect(stamp?.source).toContain(`stored run #${runId}`);
+       |                           ^
+    146|     const { rows: [run] } = await owner.query('SELECT inputs_sha256 FR…
+    147|     expect(stamp?.ref).toBe(`sha256:${run.inputs_sha256}`);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > the stored inputs recompute to the stored outputs
+Error: Cannot find module '/server/services/stats/computation-runs' imported from /home/user/ClinicalSageAI-2-replit/tests/db/stats-computation-run.dbtest.ts
+ ❯ tests/db/stats-computation-run.dbtest.ts:160:41
+    158|
+    159|   it('the stored inputs recompute to the stored outputs', async () => {
+    160|     const { reproduceComputationRun } = await import('../../server/ser…
+       |                                         ^
+    161|     const out = await scoped(() => reproduceComputationRun(owner, orgI…
+    162|     expect(out).toMatchObject({ found: true, inputsIntact: true, outpu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > a changed output is caught, not trusted
+error: relation "stats_computation_runs" does not exist
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ tests/db/stats-computation-run.dbtest.ts:166:30
+    164|
+    165|   it('a changed output is caught, not trusted', async () => {
+    166|     const { rows: [orig] } = await owner.query('SELECT outputs FROM st…
+       |                              ^
+    167|     await owner.query(`UPDATE stats_computation_runs SET outputs = jso…
+    168|     try {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 121, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '21', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > another organization's run is not found
+Error: Cannot find module '/server/services/stats/computation-runs' imported from /home/user/ClinicalSageAI-2-replit/tests/db/stats-computation-run.dbtest.ts
+ ❯ tests/db/stats-computation-run.dbtest.ts:177:41
+    175|
+    176|   it("another organization's run is not found", async () => {
+    177|     const { reproduceComputationRun } = await import('../../server/ser…
+       |                                         ^
+    178|     expect(await reproduceComputationRun(owner, otherOrgId, runId)).to…
+    179|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > the database refuses a run naming another organization's design
+AssertionError: expected '42P01' to be '23503' // Object.is equality
+
+Expected: "23503"
+Received: "42P01"
+
+ ❯ tests/db/stats-computation-run.dbtest.ts:188:17
+    186|       [otherOrgId, study.id, 'a'.repeat(64)],
+    187|     ).then(() => 'ok', (e: { code?: string }) => e.code);
+    188|     expect(err).toBe('23503');
+       |                 ^
+    189|   });
+    190| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  20:21:11
+   Duration  3.82s (transform 1.76s, setup 88ms, import 44ms, tests 3.17s, environment 0ms)
+

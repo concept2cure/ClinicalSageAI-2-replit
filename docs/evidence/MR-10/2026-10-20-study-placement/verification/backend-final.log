@@ -1,0 +1,217 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > names the file after the study, not stf.xml 2ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > keeps the sponsor study-id verbatim in the XML and case-folds only the file name 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (S&1) instead of escaping it 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc 301) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc_301) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc/301) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses two studies whose ids fold to the same STF file name 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > exports the dataset and define.xml tag lists with the study-data TRC basis 2ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > throws citing 1735 for an .xpt dataset carrying a free-text tag 5ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > throws citing 1735 for a define.xml carrying a document tag 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > accepts the 1735 tags on .xpt and define.xml leaves 12ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > writes a doc-content per leaf pointing at its index.xml leaf, holding an info-type file-tag, and no <leaf> 2ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > refuses a leaf with no index.xml leaf ID or no path to index.xml 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > does not tag a deleted leaf: it ships no file to describe 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > writes the study title from metadata and never invents a category 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > warns, without refusing, on a document tag outside the recall list 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > escapes XML metacharacters in titles 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > skips and counts untagged (no studyId) leaves 2ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > throws when a tagged leaf is missing its file-tag 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > emits the DTD declaration and ectd/xlink namespaces, one file per study in sorted order 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > regional packager writes the STF under its spec name and links it to index.xml leaf IDs > ships m5/5-3-5-1/study-001/stf-study-001.xml whose doc-content resolves to the report leaf ID in index.xml 541ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > regional packager writes the STF under its spec name and links it to index.xml leaf IDs > refuses to package an .xpt study leaf tagged outside the 1735 list 24ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > canonical study metadata writes > persists explicit metadata on insert and records the values in the existing audit 45ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > canonical study metadata writes > ordinary updates preserve omitted metadata and explicit null clears it 75ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > canonical study metadata writes > changes only metadata and updatedAt, even when the source has changed and supplied pointers disagree 28ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > canonical study metadata writes > demotes a validated sequence on a real metadata edit 32ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > canonical study metadata writes > a no-op preserves validation, timestamps and audit history 27ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > refuses a null revision without auditing or demoting validation 30ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > refuses a stale expected snapshot: {"expectedStudyId":"other"} 62ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > refuses a stale expected snapshot: {"expectedStfFileTag":"other"} 53ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > refuses a stale expected snapshot: {"expectedUpdatedAt":"2000-01-01T00:00:00.000Z"} 87ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > refuses changed row identity: {"title":"another title"} 100ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > refuses changed row identity: {"sectionCode":"5.3.5.2"} 76ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > refuses metadata edits in frozen sequences 87ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > refuses metadata edits in dispatched sequences 17ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > does not expose another tenant or another sequence leaf 22ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > refuses duplicate placement with differing explicit metadata instead of discarding it 20ms
+stderr | server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > reports both unconfirmed audits without undoing committed metadata or its sequence transition
+{
+  "timestamp": "2026-10-20T23:49:03.301Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "LEAF_UPDATED",
+    "resourceType": "submission_leaf",
+    "resourceId": 17,
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > reports both unconfirmed audits without undoing committed metadata or its sequence transition
+{
+  "timestamp": "2026-10-20T23:49:03.304Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "SEQUENCE_TRANSITIONED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 18,
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > returns unchanged for a duplicate with matching explicit metadata 53ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > reports both unconfirmed audits without undoing committed metadata or its sequence transition 29ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > refuses malformed direct metadata edits: {} 17ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > refuses malformed direct metadata edits: {"reason":42} 45ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > refuses malformed direct metadata edits: {"studyTaggingEdit":{"expectedStudyId":null,"expectedStfFileTag":null,"expectedUpdatedAt":"October 20, 2026"}} 32ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > validates non-route callers before writing: {"studyId":"bad/id"} 16ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > validates non-route callers before writing: {"studyId":""} 4ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > validates non-route callers before writing: {"stfFileTag":""} 4ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > validates non-route callers before writing: {"stfFileTag":"a\nwrong-tag"} 4ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > validates non-route callers before writing: {"stfFileTag":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"} 5ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > validates non-route callers before writing: {"studyTaggingEdit":{},"studyId":null,"stfFileTag":null} 30ms
+stdout | server/services/ectd/__tests__/stf-coverage-1789.test.ts
+{
+  "timestamp": "2026-10-20T23:49:05.611Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-20T23:49:05.613Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/stf-coverage-1789.test.ts
+{
+  "timestamp": "2026-10-20T23:49:05.614Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/stf-coverage-1789.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > a 5.3.5.1 leaf whose only "id" is its lifecycle operator is an error citing 1789 13ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > is an error for a US sequence and a warning for an EU one 1ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > covers every M4/M5 section 1789 names, including 4.2.3.7 and 5.3.7 3ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > says nothing about 4.3, 5.2, 5.3.6 and 5.4, which need no STF, nor about M1-M3 6ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > a leaf with a real study id passes; a delete ships no file and is not checked 1ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStfCoverage — the one coverage check > is exported from the leaf validator 0ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStfCoverage — the one coverage check > when the caller models file-tags, a study id without a tag is still not covered 1ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: an untagged 5.3.5.1 report refuses the package, citing 1789 and naming the file 15ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: a study id with no file-tag is refused too (the leaf would be in no STF) 8ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: 5.3.6 postmarketing reports and 5.4 literature need no STF and package 574ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > EMA: the untagged report packages, and the bundle counts it instead of hiding it 476ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > qualify — an uncovered study file is an error, not a warning > stfCoverageFindings reports untagged study files as errors citing 1789 2ms
+stdout | server/services/ectd/__tests__/core-to-packager.test.ts
+{
+  "timestamp": "2026-10-20T23:49:09.370Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-20T23:49:09.372Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/core-to-packager.test.ts
+{
+  "timestamp": "2026-10-20T23:49:09.373Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/core-to-packager.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > toPackagerRegion > maps core regions to publisher regions 2ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > toPackagerRegion > throws on an unsupported region 2ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > mapCoreLeafToEctdLeaf > maps fields and prefers the resolved md5 over the leaf checksum 2ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > mapCoreLeafToEctdLeaf > never adopts the DB leaf.checksum as the manifest md5 — leaves it undefined for byte-hashing downstream 2ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > mapCoreLeafToEctdLeaf > refuses an unrecognised lifecycle op instead of filing it as new 0ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > mapCoreLeafToEctdLeaf > reads a differently-cased operation as itself 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > buildPackagerInputFromCore > builds a PackagerInput from core rows, mapping region and metadata 3ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > buildPackagerInputFromCore > skips leaves whose document does not resolve to a file, and reports them 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > buildPackagerInputFromCore > handles an empty product name 1ms
+ ✓ server/services/ectd/__tests__/builder-study-tagging-route.pglite.test.ts > Builder study metadata reaches the existing FDA package > retains the 1789 refusal for an untagged study placed through the real route 104ms
+ ✓ server/services/ectd/__tests__/builder-study-tagging-route.pglite.test.ts > Builder study metadata reaches the existing FDA package > persists explicit tags through the real route and emits the exact study STF 324ms
+stdout | server/services/ectd/__tests__/stf-1789-input-path.test.ts
+{
+  "timestamp": "2026-10-20T23:49:32.732Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-20T23:49:32.733Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/stf-1789-input-path.test.ts
+{
+  "timestamp": "2026-10-20T23:49:32.734Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/stf-1789-input-path.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ectd/__tests__/stf-1789-input-path.test.ts > a leaf carries the study it belongs to, and its STF file-tag > the submission_leaves projection reads both, so the packager can see them 3ms
+ ✓ server/services/ectd/__tests__/stf-1789-input-path.test.ts > a leaf carries the study it belongs to, and its STF file-tag > they reach the packager leaf, which is what auditStfCoverage reads 1ms
+ ✓ server/services/ectd/__tests__/stf-1789-input-path.test.ts > a leaf carries the study it belongs to, and its STF file-tag > a leaf that names neither carries neither — never a stand-in, which 1789 is about 0ms
+ ✓ server/services/ectd/__tests__/stf-1789-input-path.test.ts > the column exists, and reaches a deployed database > the schema declares both columns on submission_leaves 2ms
+ ✓ server/services/ectd/__tests__/stf-1789-input-path.test.ts > the column exists, and reaches a deployed database > the migration adds them additively, and is replay-safe (RULE 1) 3ms
+ ✓ server/services/ectd/__tests__/stf-1789-input-path.test.ts > the column exists, and reaches a deployed database > is in the migration set, before the tenant sweeps that must run last 5ms
+ ✓ server/services/ectd/__tests__/stf-1789-input-path.test.ts > AnA can supply them, so the tool it uses to package is not a dead end > the leaf schema offers both, and says when FDA requires them 2ms
+ ✓ server/services/ectd/__tests__/stf-1789-input-path.test.ts > AnA can supply them, so the tool it uses to package is not a dead end > the handler passes them through to the packager 19ms
+ ✓ shared/regulatory/__tests__/ectd-leaf-rules.test.ts > the existing eCTD leaf rules shared with placement > keeps server compatibility exports bound to the same values 2ms
+ ✓ shared/regulatory/__tests__/ectd-leaf-rules.test.ts > the existing eCTD leaf rules shared with placement > requires STF coverage for 4.2.3.2 1ms
+ ✓ shared/regulatory/__tests__/ectd-leaf-rules.test.ts > the existing eCTD leaf rules shared with placement > requires STF coverage for 5.3.5.1 0ms
+ ✓ shared/regulatory/__tests__/ectd-leaf-rules.test.ts > the existing eCTD leaf rules shared with placement > requires STF coverage for m5.3.5.1 0ms
+ ✓ shared/regulatory/__tests__/ectd-leaf-rules.test.ts > the existing eCTD leaf rules shared with placement > requires STF coverage for M4.2.1.1 0ms
+ ✓ shared/regulatory/__tests__/ectd-leaf-rules.test.ts > the existing eCTD leaf rules shared with placement > keeps 4.3 exempt from STF coverage 0ms
+ ✓ shared/regulatory/__tests__/ectd-leaf-rules.test.ts > the existing eCTD leaf rules shared with placement > keeps 4.3.1 exempt from STF coverage 0ms
+ ✓ shared/regulatory/__tests__/ectd-leaf-rules.test.ts > the existing eCTD leaf rules shared with placement > keeps 5.2 exempt from STF coverage 0ms
+ ✓ shared/regulatory/__tests__/ectd-leaf-rules.test.ts > the existing eCTD leaf rules shared with placement > keeps m5.2.1 exempt from STF coverage 0ms
+ ✓ shared/regulatory/__tests__/ectd-leaf-rules.test.ts > the existing eCTD leaf rules shared with placement > keeps 5.3.6 exempt from STF coverage 0ms
+ ✓ shared/regulatory/__tests__/ectd-leaf-rules.test.ts > the existing eCTD leaf rules shared with placement > keeps 5.3.6.1 exempt from STF coverage 0ms
+ ✓ shared/regulatory/__tests__/ectd-leaf-rules.test.ts > the existing eCTD leaf rules shared with placement > keeps 5.4 exempt from STF coverage 0ms
+ ✓ shared/regulatory/__tests__/ectd-leaf-rules.test.ts > the existing eCTD leaf rules shared with placement > keeps 3.2.S.4.1 exempt from STF coverage 0ms
+ ✓ shared/regulatory/__tests__/ectd-leaf-rules.test.ts > the existing eCTD leaf rules shared with placement > keeps cover-letter exempt from STF coverage 0ms
+ ✓ shared/regulatory/__tests__/ectd-leaf-rules.test.ts > the existing eCTD leaf rules shared with placement > keeps  exempt from STF coverage 0ms
+ ✓ shared/regulatory/__tests__/ectd-leaf-rules.test.ts > the existing eCTD leaf rules shared with placement > preserves exact case-folded naming and its 64-character file boundary 2ms
+ ✓ shared/regulatory/__tests__/ectd-leaf-rules.test.ts > the existing eCTD leaf rules shared with placement > retains the existing invalid-id message for STUDY 101 0ms
+ ✓ shared/regulatory/__tests__/ectd-leaf-rules.test.ts > the existing eCTD leaf rules shared with placement > retains the existing invalid-id message for STUDY_101 0ms
+ ✓ shared/regulatory/__tests__/ectd-leaf-rules.test.ts > the existing eCTD leaf rules shared with placement > retains the existing invalid-id message for ../STUDY 0ms
+ ✓ shared/regulatory/__tests__/ectd-leaf-rules.test.ts > the existing eCTD leaf rules shared with placement > retains the existing invalid-id message for STUDY&101 0ms
+
+ Test Files  7 passed (7)
+      Tests  100 passed (100)
+   Start at  23:48:46
+   Duration  46.79s (transform 9.72s, setup 353ms, import 23.79s, tests 20.24s, environment 1ms)
+
+JSON report written to /workspace/scratch/study-placement-20261020/backend-final.json

@@ -11,8 +11,8 @@
  * (orgId, projectId). Without this reader the orchestrator's CSR path is
  * unreachable from any UI: it requires hand-built server-internal payloads.
  *
- * This module closes that gap. For each completed CSR build job belonging
- * to the (org, project) pair, it produces one `CSRSummaryInput` row by:
+ * This module closes that gap. For the latest completed generation of each study
+ * belonging to the (org, project) pair, it produces one `CSRSummaryInput` row by:
  *   (1) reading the persisted `studyInfoSnapshot` JSON (the original
  *       CSRBuildRequest.studyInfo) for the deterministic header fields
  *       (protocolNumber, phase, studyDesign, primaryEndpoint, sampleSize), and
@@ -38,7 +38,7 @@
  *     2.7 input cross-references the same study identifier ANA uses.
  */
 
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq } from 'drizzle-orm';
 
 import { db } from '../../db';
 import {
@@ -48,6 +48,7 @@ import {
 } from '@shared/schema';
 import type { CSRSummaryInput } from '../m2-summary-builders';
 import type { CSRSection } from '../csr-builder';
+import { resolveCsrScope } from './project-scope';
 
 /**
  * Shape of the `studyInfoSnapshot` JSONB column on `csr_build_jobs`. Mirrors
@@ -109,7 +110,7 @@ function rowToCSRSection(row: CsrSectionOutput): CSRSection {
 }
 
 /**
- * Read all completed CSR jobs for a (organization, project) pair and return
+ * Read the latest completed generation per study for an (organization, project) pair and return
  * them in the shape consumed by the orchestrator's `m2.5` and `m2.7` steps.
  *
  * @param orgId      Positive integer organization id.
@@ -121,6 +122,7 @@ function rowToCSRSection(row: CsrSectionOutput): CSRSection {
 export async function loadCsrInputsForProject(
   orgId: number,
   projectId: number,
+  options: { actorUserId?: number } = {},
 ): Promise<CSRSummaryInput[]> {
   // ── Tenant-scope precondition (non-negotiable) ──────────────────────────
   if (!Number.isInteger(orgId) || orgId <= 0) {
@@ -136,12 +138,15 @@ export async function loadCsrInputsForProject(
   if (!db) {
     throw new Error('[loadCsrInputsForProject] Drizzle db is not initialized');
   }
+  await resolveCsrScope(db, orgId, { projectId }, { forWrite: false, actorUserId: options.actorUserId });
 
-  // ── Step 1: find all completed CSR jobs in scope ────────────────────────
+  // ── Step 1: choose the latest completed generation of each scoped study ──
+  // Historical jobs stay available by job id. A later failed/in-progress build
+  // does not replace the last completed generation used by these summaries.
   // We do not join here — section reads are issued per-job below so we can
   // group sections cleanly without a multi-row cross-product per job.
   const jobs = await db
-    .select({
+    .selectDistinctOn([csrBuildJobs.studyId], {
       id: csrBuildJobs.id,
       studyId: csrBuildJobs.studyId,
       studyInfoSnapshot: csrBuildJobs.studyInfoSnapshot,
@@ -153,7 +158,8 @@ export async function loadCsrInputsForProject(
         eq(csrBuildJobs.projectId, projectId),
         eq(csrBuildJobs.status, 'complete'),
       ),
-    );
+    )
+    .orderBy(asc(csrBuildJobs.studyId), desc(csrBuildJobs.createdAt), desc(csrBuildJobs.id));
 
   if (jobs.length === 0) {
     // Phase 1 IND or no CSR yet — perfectly valid; orchestrator skips m2.5/m2.7.
@@ -178,14 +184,14 @@ export async function loadCsrInputsForProject(
     const sections = sectionRows.map(rowToCSRSection);
     const info = readStudyInfo(job.studyInfoSnapshot);
 
-    // M2.5 / 2.7 narratives quote primaryResult; when the §11.4 section
-    // ("Efficacy Results and Tabulations") has been drafted, surface its
-    // content so the summary is grounded. Otherwise emit a stable
-    // see-also pointer rather than fabricating a result.
-    const efficacy = sectionRows.find(s => s.sectionNumber === '11.4');
-    const primaryResult = efficacy?.content?.trim()
-      ? efficacy.content
-      : 'See §11.4 (Efficacy Results) of the CSR for tabulated results.';
+    // M2.5 / 2.7 quote primaryResult. It is always the pointer to §11.4,
+    // never §11.4's text: every section row is a model draft from study
+    // metadata or a template (csr-job-runner.ts, source 'ai' | 'template'),
+    // and neither is a result anyone computed. Until 2026-10-05 the drafted
+    // §11.4 was copied in here, so a model's efficacy prose reached Module 2
+    // as the study's primary result (CLAUDE.md Rule 2). A result enters
+    // Module 2 when one is computed from the study's data and recorded.
+    const primaryResult = 'See §11.4 (Efficacy Results) of the CSR for tabulated results.';
 
     inputs.push({
       studyId: job.studyId,

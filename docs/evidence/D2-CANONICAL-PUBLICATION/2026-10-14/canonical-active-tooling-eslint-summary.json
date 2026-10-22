@@ -1,0 +1,20 @@
+{
+  "files": 12,
+  "errorCount": 0,
+  "warningCount": 0,
+  "runtimeExitCode": 0,
+  "sourceHashes": {
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/audit-catalog-sql-interpolations.mjs": "ad0df652f1bb06291455b17d35db9ad39962db3fe33fa23de62f6cb48368ac64",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/audit-recall-sql.mjs": "1944d999b363df5b16c9735bad914b5ccd594ceae71dc2170f1b3cbebc39194a",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/check-tooling-reconciliation.mjs": "36b05dc2293c3dcd2dba7b72763e314ed35c51bb68c5625d7b92df91e9867dbb",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/queries-narrowing-selftest.cjs": "63abff440c96cb3bee0c128bf77742ff555e5900478e63bdc3d8d549a3c7a02f",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/query-sql-fragment-audit.mjs": "fdd6356c20a02ce91aebfaff56eaa31fc9353a492cfcd4a3e9235f1734b13c8a",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/run-final-regression.mjs": "f0356a40d200a9175046f7472ddcfce050b0cb0347f332fb7e41c1fb3b010341",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/run-independent-disposition-counterfactual.mjs": "2db86d3181085731b2091957609af51ca57b8a022f9f1fc68c161b82755d439b",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/run-independent.mjs": "148638430675856c679d26ba15adf9fd50934b7053b1e8133c609639974adaea",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/run-owned-postgres-fixture.mjs": "f1e1ff605f285b08915c2be8d9741322f7ed09fd2635440c830b63195d837056",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/run-recall-counterfactual.mjs": "d92b9d5cedfa4182dcc87288bb8e06b6749585912925c4d1448d58c40113823e",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/run-routes-regression.mjs": "def89059e2c430687c653d21a7fed59d5568421e61c5275f326ef0ab9b8eb7b3",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/scientific-fixture-parity.cjs": "b6bfd29e5d06627e5df4bf1457c4154841bbcc64bdd13531ab0d4d66303e863b"
+  }
+}

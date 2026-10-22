@@ -14,6 +14,7 @@
  */
 
 import { pullEstarSections, type PulledSection } from './section-pull';
+import type { DeviceClass } from '../../../shared/regulatory/device-class.js';
 
 export interface K510Predicate {
   /** FDA K-number, e.g. 'K212284'. */
@@ -38,7 +39,7 @@ export interface K510SummaryInput {
   commonName: string | null;
   productCode: string | null;
   regulationNumber: string | null;
-  deviceClass: 'I' | 'II' | 'III';
+  deviceClass: DeviceClass;
   contactName: string | null;
   contactEmail: string | null;
   preparedDate: Date;

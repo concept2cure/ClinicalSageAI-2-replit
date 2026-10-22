@@ -1,0 +1,229 @@
+/**
+ * GET /api/insights-canvas/overview — which program the canvas is about, and
+ * which reports it offers for it (QA 2026-10-08, journey j8).
+ *
+ *   - "Reporting scope is fixed to project 1 with no program picker": with no
+ *     program open there is no lead (the flagship stood in, and with no
+ *     readiness computed anywhere it was the lowest project id); the overview
+ *     lists the programs a person can open the canvas on.
+ *   - "510(k) equivalence matrix (device-only) runs for this biopharma
+ *     organisation": the catalog follows the lead program's recorded product
+ *     type, not the organisation's union of segments.
+ *   - "Every typed report returns the same readiness digest": each type says
+ *     whether an engine computes it over a program (`runnable`).
+ */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import express from 'express';
+import request from 'supertest';
+
+const h = vi.hoisted(() => ({ summary: vi.fn(), gate: vi.fn(), orgSegments: vi.fn(), projectSegments: vi.fn(), anchor: vi.fn(), registry: vi.fn(), metadata: vi.fn(), scope: vi.fn(), scopeRecheck: vi.fn(), actualAnchor: vi.fn(), programLookup: vi.fn() }));
+
+
+// These suites isolate audit/compute contracts; sharing itself is exercised
+// against SQL in run-history and scheduling project-access integration tests.
+vi.mock('../../services/report-os/project-access', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/report-os/project-access')>()),
+  getAccessibleReportProjectIds: async () => [1, 2, 3, 7, 11, 12, 14, 17, 21, 41, 52, 99, 100, 101],
+  canAccessReportScope: async () => true,
+}));
+vi.mock('../../db', () => ({ db: { __db: true }, pool: {}, getPool: () => ({}), getDb: () => ({}), query: vi.fn(), transaction: vi.fn() }));
+vi.mock('../../utils/authedOrgId', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../utils/authedOrgId')>()),
+  authedOrgId: () => 7,
+}));
+vi.mock('../../services/report-os/entitlement-map', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/report-os/entitlement-map')>()),
+  requireReportEntitlement: h.gate,
+}));
+vi.mock('../../services/report-os/segment', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/report-os/segment')>()),
+  deriveOrgSegments: h.orgSegments,
+  deriveProjectSegments: h.projectSegments,
+}));
+vi.mock('../../services/report-os/portfolio/fetch', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/report-os/portfolio/fetch')>()),
+  fetchOrgPortfolioSummary: h.summary,
+}));
+vi.mock('../../services/c2c/program-project-anchor', () => ({ resolveProgramProjectAnchor: h.anchor, readProgramAnchorRow: h.actualAnchor }));
+vi.mock('../../services/c2c/current-program-access', async importOriginal => ({ ...(await importOriginal<typeof import('../../services/c2c/current-program-access')>()), getCurrentAccessibleProgramScope: h.scope, requireProgramScopeStillCurrent: h.scopeRecheck }));
+
+import createInsightsCanvasRoutes from '../insights-canvas-routes';
+import { ProgramReadAccessError } from '../../services/c2c/current-program-access';
+import { REPORT_TYPE_SEED } from '../../services/report-os/taxonomy';
+import { GLOBAL_REPORT_TYPE_SEED } from '../../services/report-os/taxonomy-global';
+import { PREDICTION_REPORT_TYPES } from '../../services/report-os/prediction/report-types';
+const deployedTypes = () => [...REPORT_TYPE_SEED, ...GLOBAL_REPORT_TYPE_SEED, ...PREDICTION_REPORT_TYPES].map(t => ({
+  type_id: t.typeId, label: t.label, family: t.family, allowed_scopes: t.allowedScopes,
+  allowed_personas: t.allowedPersonas, allowed_client_segments: t.allowedClientSegments,
+  governance_requirements: t.governanceRequirements, truthfulness_rules: t.truthfulnessRules, enabled: true,
+}));
+
+const currentScope = { scope: 'verified-accessible-programs', actor: { userId: 5, role: 'manager' }, programIds: ['d979e567-4622-46f1-8cb7-8bf434227f25'], reconciliationRequired: false };
+const client = { query: vi.fn(async (sql: string, params?: unknown[]) => ({ rows: /SELECT id FROM regulatory_programs/.test(sql) ? await h.programLookup(params) : /SELECT metadata FROM projects/.test(sql) ? [{ metadata: await h.metadata() }] : await h.registry() })) };
+const app = express();
+// The request-scoped client the production mount's authenticateToken installs
+// (establishRequestTenantScope); the open program's anchor is read on it.
+app.use((req, _res, next) => {
+  (req as unknown as { user: { id: number; role: string; organizationId: number } }).user = { id: 5, role: 'manager', organizationId: 7 };
+  (req as unknown as { dbClient: unknown }).dbClient = client;
+  next();
+});
+app.use('/api/insights-canvas', createInsightsCanvasRoutes());
+const HLV = 'd979e567-4622-46f1-8cb7-8bf434227f25';
+const CV = '11111111-2222-3333-4444-000000000117';
+const overview = (q = '') => request(app).get('/api/insights-canvas/overview' + q);
+
+const member = (projectId: number, name: string, code: string, programId: string | null) => ({
+  projectId, name, code, programId, indication: null, readinessScore: null, confidence: null,
+  status: 'missing', riskLevel: 'low', criticalBlockerCount: 0,
+});
+// Project 1 is a legacy record no program anchors; HLV-333 (biologic) and CV-117 (device) are programs.
+const SUMMARY = {
+  memberCount: 3,
+  attentionRanked: [member(1, 'C2C-001 IND Program', 'C2C-001', null), member(11, 'HLV-333 — IND', 'H', HLV), member(14, 'CV-117 ECG Patch', 'CV-117', CV)],
+  truncated: false,
+};
+
+beforeEach(() => {
+  client.query.mockClear();
+  h.programLookup.mockReset().mockImplementation(async params => [HLV, CV].includes(params?.[0]) && params?.[1] === 7 ? [{ id: params[0] }] : []);
+  h.metadata.mockReset().mockResolvedValue({ registryId: 'EU_MAA' });
+  h.scope.mockReset().mockResolvedValue(currentScope);
+  h.scopeRecheck.mockReset().mockResolvedValue(undefined);
+  h.actualAnchor.mockReset().mockResolvedValue({ id: 11 });
+  h.registry.mockReset().mockResolvedValue(deployedTypes());
+  h.gate.mockReset().mockResolvedValue({ entitled: true, feature: 'portfolio_rollup', requiredTier: 'enterprise', tier: 'enterprise', tierResolved: true });
+  h.orgSegments.mockReset().mockResolvedValue(['pharma', 'biotech', 'device', 'ivd']);
+  h.projectSegments.mockReset().mockImplementation(async (_org: number, projectId: number) => (projectId === 11 ? ['biotech'] : projectId === 14 ? ['device'] : null));
+  h.summary.mockReset().mockResolvedValue(SUMMARY);
+  h.anchor.mockReset().mockResolvedValue(11);
+});
+
+/** Filing metadata is scoped to the actual admitted selected lead. These
+ * focused doubles establish consumer behavior; they do not prove native RLS. */
+describe('regional overview uses the recorded authorized filing', () => {
+  const IND = 'usa_fda.ind_safety_readiness', NDA = 'usa_fda.nda_bla_filing_readiness';
+  const EMA = 'ema.maa_readiness_assessment', JAPAN = 'japan_pmda.jnda_shonin_readiness';
+  const selected = () => overview(`?programId=${HLV}`);
+  const regional = (result: request.Response) => result.body.data.reportTypes.filter((row: { typeId: string }) => [IND, NDA, EMA, JAPAN].includes(row.typeId));
+  it.each([
+    ['EU_MAA', [EMA]], ['US_IND', [IND]], ['US_NDA', [NDA]], ['US_BLA', [NDA]], ['JP_MKT_APPROVAL', [JAPAN]], ['US_ANDA', []], ['US_510K', []],
+  ])('offers only the existing binding for recorded %s', async (registryId, enabled) => {
+    h.metadata.mockResolvedValue({ registryId });
+    const result = await selected(); expect(result.status).toBe(200);
+    for (const row of regional(result)) {
+      expect(row.runnable).toBe(enabled.includes(row.typeId));
+      expect(row.availabilityState).toBe(enabled.includes(row.typeId) ? 'available' : 'not-applicable');
+      if (!row.runnable) expect(row.reasonCode).toMatch(/^REGIONAL_/);
+    }
+    expect(result.body.data.leadProgram.registryId).toBe(registryId);
+    expect(result.body.data.leadProgram.pdufa).toBeNull();
+  });
+  it('keeps a real empty filing distinct from unavailable metadata', async () => {
+    h.metadata.mockResolvedValue({});
+    const result = await selected();
+    for (const row of regional(result)) expect(row).toMatchObject({ runnable: false, availabilityState: 'filing-context-required', reasonCode: 'REGIONAL_FILING_CONTEXT_REQUIRED' });
+    expect(result.body.data.leadProgram).toMatchObject({ registryId: null, filing: null, agency: null });
+  });
+  it.each([{ registryId: 'UNKNOWN', submissionType: 'NDA' }, { registryId: 'EU_MAA', submissionType: 'NDA' }, '{broken', { registryId: 8 }])('keeps malformed/conflicting/unknown explicit metadata unavailable (%j)', async metadata => {
+    h.metadata.mockResolvedValue(metadata);
+    const result = await selected(); expect(result.status).toBe(200);
+    for (const row of regional(result)) expect(row).toMatchObject({ runnable: false, availabilityState: 'context-unavailable' });
+  });
+  it('preserves a failed actual metadata query as unavailable rather than missing', async () => {
+    h.metadata.mockRejectedValue(new Error('private SQL detail must not leave'));
+    const result = await selected(); expect(result.status).toBe(200);
+    for (const row of regional(result)) expect(row).toMatchObject({ runnable: false, availabilityState: 'context-unavailable', reasonCode: 'REGIONAL_FILING_CONTEXT_UNAVAILABLE' });
+    expect(JSON.stringify(result.body)).not.toContain('private SQL detail');
+  });
+  it('rejects declared market drift while preserving the engine scope', async () => {
+    h.metadata.mockResolvedValue({ registryId: 'US_NDA' });
+    h.registry.mockResolvedValue(deployedTypes().map(row => row.type_id === NDA ? { ...row, governance_requirements: { ...row.governance_requirements, region: 'EU_EMA' } } : row));
+    const result = await selected();
+    expect(regional(result).find((row: { typeId: string }) => row.typeId === NDA)).toMatchObject({ runnable: false, computedScopes: ['project'], availabilityState: 'context-unavailable', reasonCode: 'REGIONAL_TYPE_MARKET_INCONSISTENT' });
+  });
+  it.each(['free', 'enterprise'] as const)('keeps entitlement independent of applicability on %s', async tier => {
+    h.gate.mockResolvedValue({ entitled: tier === 'enterprise', feature: 'portfolio_rollup', requiredTier: 'enterprise', tier, tierResolved: true });
+    const result = await selected();
+    expect(regional(result).find((row: { typeId: string }) => row.typeId === IND)).toMatchObject({ runnable: false, availabilityState: 'not-applicable', entitled: tier === 'enterprise' });
+    expect(regional(result).find((row: { typeId: string }) => row.typeId === EMA)).toMatchObject({ runnable: true, availabilityState: 'available', entitled: tier === 'enterprise' });
+  });
+  it('honors an unresolved canonical tier without advertising a base-family entitlement', async () => {
+    h.gate.mockResolvedValue({ entitled: false, feature: 'portfolio_rollup', requiredTier: 'enterprise', tier: 'standard', tierResolved: false });
+    const result = await selected();
+    expect(result.status).toBe(200); expect(result.body.data.tierResolved).toBe(false);
+    expect(result.body.data.reportTypes.find((row: { typeId: string }) => row.typeId === 'readiness.executive_digest')).toMatchObject({ entitled: false });
+    expect(regional(result).every((row: { entitled: boolean }) => !row.entitled)).toBe(true);
+  });
+  it.each(['disabled', 'unregistered'] as const)('preserves %s precedence over missing regional filing', async state => {
+    h.metadata.mockResolvedValue({});
+    h.registry.mockResolvedValue(state === 'unregistered' ? deployedTypes().filter(row => row.type_id !== IND) : deployedTypes().map(row => row.type_id === IND ? { ...row, enabled: false } : row));
+    const result = await selected();
+    expect(regional(result).find((row: { typeId: string }) => row.typeId === IND)).toMatchObject({ runnable: false, availabilityState: state, reasonCode: null });
+  });
+  it('reads once on the owned current requester/exact parent and rechecks before supplying labels', async () => {
+    const result = await overview(`?programId=${HLV}&organizationId=99&registryId=US_IND`); expect(result.status).toBe(200);
+    expect(h.scope).toHaveBeenCalledWith(client, { organizationId: 7, userId: 5, programId: HLV });
+    expect(h.scopeRecheck).toHaveBeenCalledWith(client, { organizationId: 7, userId: 5, programId: HLV }, currentScope);
+    expect(h.metadata).toHaveBeenCalledTimes(1);
+    const metaReads = client.query.mock.calls.filter(([sql]) => /SELECT metadata FROM projects/.test(sql));
+    expect(metaReads).toHaveLength(1); expect(metaReads[0][1]).toEqual([11, 7, HLV]);
+    expect(result.body.data.leadProgram).toMatchObject({ registryId: 'EU_MAA', agency: 'EMA' });
+  });
+});
+
+describe('regional filing disclosure retains canonical current access refusal', () => {
+  it.each([[403, 'PROJECT_ACTOR_ACCESS_DENIED'], [403, 'PROJECT_PERMISSION_DENIED'], [404, 'PROJECT_NOT_FOUND'], [409, 'PROJECT_ANCHOR_UNRESOLVED']])('does not read filing after canonical refusal %s/%s', async (status, code) => {
+    h.scope.mockRejectedValue(new ProgramReadAccessError(status as 403 | 404 | 409, String(code), 'Current project access refused.'));
+    const result = await overview(`?programId=${HLV}`);
+    expect(result.status).toBe(status); expect(result.body.error.code).toBe(code);
+    expect(h.metadata).not.toHaveBeenCalled(); expect(result.body.data).toBeUndefined();
+    expect(JSON.stringify(result.body)).not.toContain('HLV-333');
+  });
+  it('does not return the earlier filing after an observed final sharing withdrawal', async () => {
+    h.scopeRecheck.mockRejectedValue(new ProgramReadAccessError(503, 'PROJECT_ACCESS_CHANGED', 'Current project access changed.'));
+    const result = await overview(`?programId=${HLV}`);
+    expect(result.status).toBe(503); expect(result.body.error.code).toBe('PROJECT_ACCESS_CHANGED');
+    expect(result.body.data).toBeUndefined(); expect(JSON.stringify(result.body)).not.toContain('EU_MAA');
+  });
+  it('refuses a stale lead/anchor mapping before reading metadata', async () => {
+    h.actualAnchor.mockResolvedValue({ id: 14 });
+    const result = await overview(`?programId=${HLV}`); expect(result.status).toBe(409);
+    expect(h.metadata).not.toHaveBeenCalled(); expect(result.body.data).toBeUndefined();
+  });
+  it('preserves no-lead scope-required and nonregional organization/document availability', async () => {
+    const result = await overview(); expect(result.status).toBe(200);
+    expect(result.body.data.reportTypes.find((row: { typeId: string }) => row.typeId === 'usa_fda.ind_safety_readiness')).toMatchObject({ availabilityState: 'scope-required', runnable: false });
+    expect(result.body.data.reportTypes.find((row: { typeId: string }) => row.typeId === 'provenance.evidence_trace_report')).toMatchObject({ availabilityState: 'scope-required', computedScopes: ['document'] });
+    expect(h.metadata).not.toHaveBeenCalled(); expect(h.scope).not.toHaveBeenCalled();
+  });
+});
+
+
+describe('explicit selected program tenancy precedes its anchor', () => {
+  it.each(['22222222-1111-4444-8888-111111111111', '33333333-1111-4444-8888-111111111111'])('refuses foreign/missing selected identity %s before anchor or filing reads', async programId => {
+    h.anchor.mockResolvedValue(null);
+    const result = await overview(`?programId=${programId}&organizationId=99`);
+    expect(result.status).toBe(404);
+    expect(result.body).toEqual({ success: false, error: 'Program not found' });
+    expect(h.anchor).not.toHaveBeenCalled(); expect(h.metadata).not.toHaveBeenCalled();
+    expect(h.programLookup).toHaveBeenCalledWith([programId, 7]);
+  });
+  it('retains a positively verified own-organization unanchored program', async () => {
+    h.anchor.mockResolvedValue(null);
+    const result = await overview(`?programId=${HLV}`);
+    expect(result.status).toBe(200);
+    expect(result.body.data).toMatchObject({ leadProgram: null, openProgram: { programId: HLV, state: 'unanchored' } });
+    expect(h.programLookup).toHaveBeenCalledWith([HLV, 7]); expect(h.metadata).not.toHaveBeenCalled();
+    const lookup = client.query.mock.calls.findIndex(([sql]) => /SELECT id FROM regulatory_programs/.test(sql));
+    expect(lookup).toBeGreaterThanOrEqual(0);
+    expect(client.query.mock.invocationCallOrder[lookup]).toBeLessThan(h.anchor.mock.invocationCallOrder[0]);
+  });
+  it('keeps tenancy verification failure unavailable rather than unanchored or missing', async () => {
+    h.programLookup.mockRejectedValue(new Error('private program lookup SQL detail'));
+    const result = await overview(`?programId=${HLV}`);
+    expect(result.status).toBe(503); expect(result.body.error.code).toBe('PROJECT_ACCESS_UNAVAILABLE');
+    expect(result.body.data).toBeUndefined(); expect(JSON.stringify(result.body)).not.toContain('private program lookup SQL detail');
+    expect(h.anchor).not.toHaveBeenCalled(); expect(h.metadata).not.toHaveBeenCalled();
+  });
+});

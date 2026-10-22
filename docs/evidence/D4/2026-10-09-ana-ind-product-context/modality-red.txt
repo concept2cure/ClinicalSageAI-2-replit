@@ -1,0 +1,18 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > leaves ambiguous modality __proto__ unassessed even with a CGT area
+ FAIL  server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > leaves ambiguous modality constructor unassessed even with a CGT area
+TypeError: Cannot read properties of undefined (reading 'cmcCore')
+ ❯ draftProductAdvisory server/services/ana/AnaDocumentDraftingService.ts:737:116
+
+ ❯ AnaDocumentDraftingService.draftDocument server/services/ana/AnaDocumentDraftingService.ts:818:29
+ ❯ server/services/ana/__tests__/drafting-product-advisory.test.ts:52:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed | 281 skipped (287)
+   Start at  16:11:49
+   Duration  7.93s (transform 5.57s, setup 77ms, import 7.58s, tests 18ms, environment 0ms)
+

@@ -34,11 +34,12 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { ApiRequestError } from '@/lib/queryClient';
 import {
   AUTH_IMG_ATTR,
   sanitizeAuthoringHtml,
 } from '../../components/ana/renderSafeMarkdown';
-import { FIGURE_NOT_UPLOADED_NOTE, NOT_A_FIGURE_REF, resolveImageSrc } from './imageNode';
+import { FIGURE_NOT_UPLOADED_NOTE, NOT_A_FIGURE_REF, releaseImageSrc, resolveImageSrc } from './imageNode';
 
 export function AuthoredHtml({
   html,
@@ -52,6 +53,7 @@ export function AuthoredHtml({
 
   useEffect(() => {
     let alive = true;
+    const displayUrls = new Set<string>();
     // Placeholders first — the content itself must never wait on image bytes.
     setDisplay(clean);
     if (!clean.includes(AUTH_IMG_ATTR)) return;
@@ -70,12 +72,15 @@ export function AuthoredHtml({
           if (!refSrc) return;
           try {
             const url = await resolveImageSrc(refSrc);
+            if (!alive) { releaseImageSrc(url); return; }
+            displayUrls.add(url);
             img.setAttribute('src', url);
           } catch (e) {
             // resolveImageSrc throws `HTTP <status>` on a refused fetch and
             // NOT_A_FIGURE_REF for a src that is not a figure — say the
             // actual cause instead of guessing.
-            const status = e instanceof Error ? /^HTTP (\d+)/.exec(e.message)?.[1] : null;
+            const status = e instanceof ApiRequestError ? String(e.status)
+              : e instanceof Error ? /^HTTP (\d+)/.exec(e.message)?.[1] : null;
             const reason =
               status === '401' || status === '403'
                 ? 'you don’t have access to it'
@@ -98,6 +103,7 @@ export function AuthoredHtml({
     })();
     return () => {
       alive = false;
+      for (const url of displayUrls) releaseImageSrc(url);
     };
   }, [clean]);
 

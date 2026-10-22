@@ -1,0 +1,7 @@
+Scope: 4 owned roots plus imported dependencies; compiler options from repository tsconfig.json. This is not a whole-repository typecheck.
+shared/ana/catalog-facts.ts: 0 target diagnostics
+server/services/vault/document-catalog-core.ts: 0 target diagnostics
+server/services/vault/catalog-fact-verification.ts: 0 target diagnostics
+server/services/vault/__tests__/catalog-fact-verification.test.ts: 0 target diagnostics
+Loaded imported/ambient sources: 469
+Total selected-scope diagnostics: 0

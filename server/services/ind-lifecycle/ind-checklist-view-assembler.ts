@@ -49,7 +49,9 @@ const FORM_PRESENTATION: Record<string, { title: string; label: string; ref: str
 
 /** Module-1 forms the surface renders separately from sections, keyed by the
  *  requirement's code. A form is "done" when its requirement is authored to a
- *  complete status, or a sponsor-completed copy of it is filed. */
+ *  complete status, or a sponsor-attached copy is filed that its uploader
+ *  attested is the completed, signed form and the forms engine checked
+ *  complete (resolveAttachedForms). */
 const FORM_SECTIONS: Array<{ code: string; id: string; title: string; label: string; ref: string }> =
   IND_FORM_REQUIREMENTS.map((f) => ({
     code: `m${f.requirement}`,
@@ -194,14 +196,75 @@ async function readAuthoredDocuments(orgId: number): Promise<CoauthorDoc[]> {
 
 const norm = (v: unknown): string => str(v).trim().toLowerCase();
 
-/** Shared empty set — a submission with no sponsor-completed form allocates none. */
-const EMPTY_FORM_IDS: ReadonlySet<string> = new Set<string>();
-
-/** `form_1571` → `FDA_1571`; null for a document type that names no FDA form. */
+/** An absent table (42P01) or column (42703, before 20261008e or the 2026-10-15
+ *  attestation columns): nothing is known complete. */
+function isUnprovisioned(err: unknown): boolean {
+  const code = (err as { code?: string } | null)?.code;
+  return code === '42P01' || code === '42703';
+}
 
 /**
- * Which FDA forms each submission has a sponsor-completed, retained document
- * for — keyed by submission id, valued by canonical form id.
+ * What the sponsor-attached file at a form's place amounts to, as the checklist
+ * reports it. The surface says "attached — not attested" for an unattested one.
+ */
+export interface FormAttachment {
+  /** The uploader stated, when attaching, that the file IS the completed, signed form. */
+  attested: boolean;
+  /** The forms engine's recorded check: [] nothing required missing; a list; null never checked. */
+  requiredFieldsMissing: string[] | null;
+}
+
+/** An attachment completes its form only when attested AND checked with nothing missing. */
+const attachmentCounts = (a: FormAttachment): boolean =>
+  a.attested && a.requiredFieldsMissing !== null && a.requiredFieldsMissing.length === 0;
+
+/** Of one form's several current attachments, the most complete is reported. */
+const attachmentRank = (a: FormAttachment): number => (attachmentCounts(a) ? 2 : a.attested ? 1 : 0);
+
+interface AttachedFileRow {
+  id: number | string;
+  required_fields_missing: unknown;
+  completed_signed_attested_by: number | null;
+  completed_signed_attested_at: Date | string | null;
+}
+
+/** A retained file, as the attachment it is: attested only when both who and when are recorded. */
+function attachmentOf(row: AttachedFileRow): FormAttachment {
+  return {
+    attested: row.completed_signed_attested_by != null && row.completed_signed_attested_at != null,
+    requiredFieldsMissing: Array.isArray(row.required_fields_missing) ? row.required_fields_missing.map(String) : null,
+  };
+}
+
+/** Keep the most complete of a form's attachments. */
+function keepMostComplete(forms: Map<string, FormAttachment>, formId: string, attachment: FormAttachment): void {
+  const prev = forms.get(formId);
+  if (!prev || attachmentRank(attachment) > attachmentRank(prev)) forms.set(formId, attachment);
+}
+
+/** Shared empty map — a submission with no attached form allocates none. */
+const NO_ATTACHMENTS: ReadonlyMap<string, FormAttachment> = new Map<string, FormAttachment>();
+
+/**
+ * The sponsor-attached, retained document each submission has for each FDA
+ * form — keyed by submission id, then canonical form id.
+ *
+ * COMPLETED, not merely attached (QA 2026-10-08, second walk, j7). Any attached
+ * file used to count: the product's own unedited 1571 and 1572 were marked
+ * COMPLETE while Build & check reported required fields missing on each, and
+ * readiness rose 0% → 8%. A file counts only when the forms engine's check
+ * recorded with it (`rendered_leaf_files.required_fields_missing`, written by
+ * the upload through services/ind-forms/attached-form-check.ts) found nothing
+ * missing. A file with fields missing, or with no check recorded (a server
+ * render, an attachment from before the check), is not a completed form; nor
+ * is anything when a column is absent here (42703).
+ *
+ * ATTESTED, too (2026-10-15, report_ind_ivd_irb #15). That check alone used to
+ * count, and it reads the program record, not the file: an edited, unsigned
+ * PDF counted as the signed form and raised readiness. A file now counts only
+ * when its uploader also stated it is the completed, signed form
+ * (`completed_signed_attested_by/_at`, recorded by official-upload); otherwise
+ * it is reported, and does not count.
  *
  * The tenant gate is the `rendered_leaf_files` row's own organization_id, read
  * here rather than inferred from the leaf: `submission_leaves.document_table` is
@@ -213,11 +276,11 @@ const EMPTY_FORM_IDS: ReadonlySet<string> = new Set<string>();
  * the target-date read does: a missing table means no sponsor-completed form is
  * known, never a failed checklist.
  */
-async function resolveSponsorCompletedForms(
+async function resolveAttachedForms(
   leaves: Array<{ sequence_id: number; document_table: string | null; document_id: number | null; document_type: string | null }>,
   seqToSub: Map<number, number>,
   orgId: number,
-): Promise<Map<number, Set<string>>> {
+): Promise<Map<number, Map<string, FormAttachment>>> {
   const byId = new Map<number, Array<{ subId: number; formId: string }>>();
   for (const l of leaves) {
     if (l.document_table !== 'rendered_leaf_files' || l.document_id == null) continue;
@@ -230,26 +293,29 @@ async function resolveSponsorCompletedForms(
     list.push({ subId, formId: form.formId });
     byId.set(docId, list);
   }
-  const out = new Map<number, Set<string>>();
+  const out = new Map<number, Map<string, FormAttachment>>();
   if (byId.size === 0) return out;
 
-  let ownedIds: number[];
+  let owned: AttachedFileRow[];
   try {
     const res = await pool.query(
-      `SELECT id FROM rendered_leaf_files WHERE id = ANY($1) AND organization_id = $2`,
+      `SELECT id, required_fields_missing, completed_signed_attested_by, completed_signed_attested_at
+         FROM rendered_leaf_files
+        WHERE id = ANY($1) AND organization_id = $2`,
       [[...byId.keys()], orgId],
     );
-    ownedIds = (res.rows as Array<{ id: number | string }>).map((r) => Number(r.id));
+    owned = res.rows as AttachedFileRow[];
   } catch (err) {
-    if ((err as { code?: string })?.code === '42P01') return out;
+    if (isUnprovisioned(err)) return out;
     throw err;
   }
 
-  for (const id of ownedIds) {
-    for (const { subId, formId } of byId.get(id) ?? []) {
-      const set = out.get(subId) ?? new Set<string>();
-      set.add(formId);
-      out.set(subId, set);
+  for (const row of owned) {
+    const attachment = attachmentOf(row);
+    for (const { subId, formId } of byId.get(Number(row.id)) ?? []) {
+      const forms = out.get(subId) ?? new Map<string, FormAttachment>();
+      keepMostComplete(forms, formId, attachment);
+      out.set(subId, forms);
     }
   }
   return out;
@@ -417,8 +483,10 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
      Module 1 leaf typed `form_<number>` backed by the retained bytes
      (rendered_leaf_files). Read only through those retained bytes, verified to
      be THIS org's: a leaf pointing at nothing, or at another tenant's file, is
-     a placement with no form behind it and must not read as a completed one. */
-  const uploadedFormsBySub = await resolveSponsorCompletedForms(leaves, seqToSub, orgId);
+     a placement with no form behind it and must not read as a completed one.
+     An attached file counts only when its uploader attested it is the
+     completed, signed form (2026-10-15). */
+  const attachedFormsBySub = await resolveAttachedForms(leaves, seqToSub, orgId);
 
   // Placed sections per submission: leaf.section_code (authoritative) → the referenced
   // coauthor doc's mapped status.
@@ -446,11 +514,16 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
       .map(([code, v]) => enrichSection(code, v.status, v.name))
       .sort((a, b) => compareSectionCode(a.code, b.code));
 
-    const sponsorCompleted = uploadedFormsBySub.get(subId) ?? EMPTY_FORM_IDS;
-    const forms = FORM_SECTIONS.map((f) => ({
-      id: f.id, title: f.title, label: f.label, ref: f.ref,
-      done: COMPLETE.has(statusByCode.get(f.code)?.status ?? '') || sponsorCompleted.has(f.id),
-    }));
+    const attachments = attachedFormsBySub.get(subId) ?? NO_ATTACHMENTS;
+    const forms = FORM_SECTIONS.map((f) => {
+      // The attached file's state; null when none is placed for the form.
+      const attachment = attachments.get(f.id) ?? null;
+      return {
+        id: f.id, title: f.title, label: f.label, ref: f.ref,
+        done: COMPLETE.has(statusByCode.get(f.code)?.status ?? '') || (attachment !== null && attachmentCounts(attachment)),
+        attachment,
+      };
+    });
 
     // Evaluate the full existing required set, not only placed sections. The
     // displayed section list remains an inventory; its length is not readiness.

@@ -1,0 +1,19 @@
+{
+  "productionPath": "server/services/ana-ri/workflow-orchestration.ts",
+  "productionSha256": "d72777acfdc08a2939d54355840a93b1901ad4d2662d88d9c8eee13a0f85b57d",
+  "productionBlob": "43c107b7e90871fef70dfc13f0b12caf99231342",
+  "testPath": "server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts",
+  "testSha256": "013daf3a3ab14735e17fd053afd4cc1c173d896cc731956333c54c54da7fa4e0",
+  "testBlob": "71339ca64b621840b26a256ed444e4d9ee158925",
+  "sqlTextPreserved": true,
+  "compiledProductionEquivalentToOriginalCandidate": true,
+  "green": {
+    "failed": 0,
+    "passed": 28,
+    "pending": 0
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 0
+  }
+}

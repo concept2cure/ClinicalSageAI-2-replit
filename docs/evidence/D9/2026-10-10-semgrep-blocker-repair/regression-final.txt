@@ -1,0 +1,252 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/324dc668b968/concept2cure-v2
+
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project
+{
+  "timestamp": "2026-10-10T06:11:31.214Z",
+  "level": "error",
+  "message": "[unified-work-view] unified work source could not be read",
+  "context": {
+    "table": "project_tasks",
+    "reason": "42P01: relation \"project_tasks\" does not exist"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project
+{
+  "timestamp": "2026-10-10T06:11:31.216Z",
+  "level": "error",
+  "message": "[unified-work-view] unified work source could not be read",
+  "context": {
+    "table": "c2c_project_work_items",
+    "reason": "42P01: relation \"c2c_project_work_items\" does not exist"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project
+{
+  "timestamp": "2026-10-10T06:11:31.217Z",
+  "level": "error",
+  "message": "[unified-work-view] unified work source could not be read",
+  "context": {
+    "table": "estar_submissions",
+    "reason": "42P01: relation \"estar_submissions\" does not exist"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > a review raised on an authoring document: its program’s project record 688ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > only within the caller’s organisation 2ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > nothing for a document with no program, an unanchored program, another source kind or a malformed id 2ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > is on the applier, before the tenant sweeps, and drops nothing 1ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the walk’s task 19 is recorded on TOLV’s project; nothing else moves 14ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > Rule 1: a second deploy changes nothing 11ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project 33ms
+(node:55) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'no assignments preserves the existing…' 7ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'all latest-round assignments withdraw…' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'one complete assigned approval for th…' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'two separate completed reviewer appro…' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'pending assignment refuses even with …' 3ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'in-progress assignment refuses' 3ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'a completed assignment with no decisi…' 3ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'one of two completed assignments with…' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'duplicate approvals cannot cover an u…' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'duplicate approvals on a single assig…' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'approval attributed to another review…' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'approval pointing to an unknown assig…' 3ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'a legitimate approval plus an orphan …' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'crossed reviewer identities do not co…' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'one mismatched duplicate cannot hide …' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'a rejection from an active reviewer s…' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'a request for changes still refuses' 3ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'stale decision for an active assignme…' 6ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'future decision version refuses' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'null reviewed version refuses' 7ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'withdrawn reviewer rejection does not…' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'withdrawn reviewer stale approval doe…' 4ms
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses service failures without exposing the failure detail or reading quorum
+Contradiction check unavailable: fixture private storage failure
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses missing verdict
+Contradiction check unavailable: Cannot destructure property 'blocked' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses null verdict
+Contradiction check unavailable: Cannot destructure property 'blocked' of '(intermediate value)' as it is null.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses missing fields
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses string false
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses numeric zero
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses missing finding arrays
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses null blocking array
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses null warning array
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses blocking finding despite clearance
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses blocked with no findings
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses service failures without exposing the failure detail or reading quorum
+Contradiction check unavailable: fixture private storage failure
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses missing verdict
+Contradiction check unavailable: Cannot destructure property 'blocked' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses null verdict
+Contradiction check unavailable: Cannot destructure property 'blocked' of '(intermediate value)' as it is null.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses missing fields
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses string false
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses numeric zero
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses missing finding arrays
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses null blocking array
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses null warning array
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses blocking finding despite clearance
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses blocked with no findings
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'withdrawn approvals do not fill missi…' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'withdrawn duplicates do not fill miss…' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'old round approval cannot fill a new-…' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'older rejected round does not block v…' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'old pending round does not block vali…' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'another tenant decision cannot fill a…' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'another artifact decision cannot fill…' 7ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'same tenant but wrong round decision …' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'other tenant assignments and decision…' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'other artifact newer round does not c…' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'historical departed reviewer identity…' 3ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'zero requested version never receives…' 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'negative requested version never rece…' 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'null requested version never receives…' 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'fractional requested version never re…' 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'out-of-range requested version never …' 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'zero organizationId never receives a …' 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'zero artifactPk never receives a no-r…' 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'assignment query failure propagates' 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'decision query failure propagates' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses service failures without exposing the failure detail or reading quorum 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses missing verdict 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses null verdict 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses missing fields 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses string false 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses numeric zero 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses missing finding arrays 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses null blocking array 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses null warning array 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses blocking finding despite clearance 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses blocked with no findings 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > preserves a real blocking finding and its 409 refusal 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > preserves the explicit-clear/no-review policy 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > does not elevate warnings into blocking findings 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses service failures without exposing the failure detail or reading quorum 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses missing verdict 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses null verdict 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses missing fields 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses string false 0ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses numeric zero 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses missing finding arrays 0ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses null blocking array 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses null warning array 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses blocking finding despite clearance 0ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses blocked with no findings 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > preserves a real blocking finding and its 409 refusal 0ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > preserves the explicit-clear/no-review policy 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > does not elevate warnings into blocking findings 0ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > shared signed-approval preflight refuses missing decisions 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > an uncovered lock remains refused before contradiction lookup 0ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > does not change ordinary draft-to-review or signing role permissions 1ms
+(node:67) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts
+{
+  "timestamp": "2026-10-10T06:11:35.743Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-10T06:11:35.744Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts
+{
+  "timestamp": "2026-10-10T06:11:35.744Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > takes no application number or applicant from its input, and asks for the project instead 2ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > writes the recorded application number and applicant, never the model-supplied ones 687ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > refuses by name when the project records no application number, and builds nothing 3ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > refuses by name when the organisation records no usable applicant name 1ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > refuses a call that names no project, even with model-supplied identity, and reads nothing 1ms
+(node:81) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > reads the server tree 1ms
+ ✓ server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > defines no local signing-authority wrapper by a retired name 181ms
+ ✓ server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > detects function, const and let declarations for every retired wrapper 1ms
+ ✓ server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > does not confuse calls or longer identifiers with retired declarations 0ms
+ ✓ server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > calls the policy predicate directly only where the answer is displayed or judges another person 16ms
+(node:91) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset > profiles an SDTM AE listing: columns, types, rows, standard and domain 144ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset > keeps no cell value: no subject id or term appears in the profile 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset > profiles a TSV, and a table with no CDISC signature as no standard 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset > reads the datasets a define.xml describes 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset > profiles paired and self-closing define elements without accepting longer element names 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset > profiles every invocation from the beginning without retaining matching state 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset > counts every define dataset while retaining only the existing table limit 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset > declines what it does not read: a PDF, or an XML that is not a define.xml 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > detectCdisc > recognises ADaM BDS and ADSL by their required variables 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > detectCdisc > names no domain it cannot see in the variables 0ms
+
+ Test Files  5 passed (5)
+      Tests  100 passed (100)
+   Start at  02:11:28
+   Duration  11.94s (transform 4.58s, setup 99ms, import 6.09s, tests 5.06s, environment 0ms)
+

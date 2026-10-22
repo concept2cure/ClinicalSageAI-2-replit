@@ -1,0 +1,90 @@
+{
+  "workstream": "W1 / D2",
+  "base": "eceb747d38042b5bf1d9cbb8eda2eef6b2fa17ca",
+  "node": "v22.23.3",
+  "finalCommand": "NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run --config vitest.config.ts server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts server/routes/__tests__/authoringAiDraftAccept.test.ts server/routes/__tests__/authoringAiDraftNoProvider.test.ts server/routes/__tests__/authoringAiDraftStructured.test.ts server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts",
+  "finalExitCode": 0,
+  "finalCounts": {
+    "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts": 9,
+    "server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts": 7,
+    "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts": 11,
+    "server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts": 10,
+    "server/routes/__tests__/authoringAiDraftAccept.test.ts": 9,
+    "server/routes/__tests__/authoringAiDraftNoProvider.test.ts": 5,
+    "server/routes/__tests__/authoringAiDraftStructured.test.ts": 2
+  },
+  "logs": [
+    {
+      "path": "initial-red.txt",
+      "exitCode": 1,
+      "result": "7 failed; 1 passed",
+      "rawSha256": "60cbda40a75eef18e546f288f3c38254e5e35af8f7a3456c1cbfa4dba5054754",
+      "storedSha256": "b636e39070e69c9019c5245f0505f49bea9a5da6db59048325cb73e36106f309",
+      "normalization": "UTF-8; trailing line whitespace removed; one final newline"
+    },
+    {
+      "path": "legacy-base-red.txt",
+      "exitCode": 1,
+      "result": "1 failed; 8 skipped",
+      "rawSha256": "32c6124fba0126aa1c3282534c3e88bfb8d7e0776267654b7fc788c05730bc5e",
+      "storedSha256": "659dc28f6df0f5005afc14a6c232921f921a1052f0524c542adf8ad776b2f117",
+      "normalization": "UTF-8; trailing line whitespace removed; one final newline"
+    },
+    {
+      "path": "fixture-regression-red.txt",
+      "exitCode": 1,
+      "result": "9 failed; 43 passed in 7 files; fixture module exports and admitted scope corrected",
+      "rawSha256": "c4e8a46b6f8b51e7e820dffd45886abdda9b22f5d48849d1c26119dfccbfcd22",
+      "storedSha256": "5be83285d98fdf4db88c8021a1f398699f141f0a617e8d974e7e365bd4d63a5d",
+      "normalization": "UTF-8; trailing line whitespace removed; one final newline"
+    },
+    {
+      "path": "final-green.txt",
+      "exitCode": 0,
+      "result": "53 passed in 7 files",
+      "rawSha256": "602757d7bb75985f3ccea8391c4ba645f9788faf0157df75afb9abd463aa0cfb",
+      "storedSha256": "2d5e2ed85f044baf99e7ba347540967d4139f616d0b8272b100be40d81f4b394",
+      "normalization": "UTF-8; trailing line whitespace removed; one final newline"
+    }
+  ],
+  "sourceBefore": {
+    "server/routes/authoring.router.ts": "57d4c421ff0573497c725aa986f9c3ea94fff1ce24fb09bc59f75f366a68d3e9",
+    "server/services/clinical-regulatory-evidence/draft-candidate-store.ts": "20cfc9b892839db153aee9d6b3aa0a1c4d7414772a5ac00f8736850f590ab524",
+    "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts": "b7c69999c7841dfc57eaed1137a8619c751711d678775e6ee28b5c48985d0a25",
+    "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts": "490c1885f1960c5b224243e9bd5ab29b361e711705762c078278f4e692b88300",
+    "server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts": "8a0c7c8b249e48ff30485281fa6e54e7742dad3bc5e50d575738fdca45e87685",
+    "server/routes/__tests__/authoringAiDraftAccept.test.ts": "9bf85bcbd3fbebf767c149a75c8b6ab94d5a9e78631e3ebe49abd6830d447793",
+    "server/routes/__tests__/authoringAiDraftNoProvider.test.ts": "9e03406cd481ebd34a76238dc0951cb9a2aaa9dcf2f91153183f480a9ef4ef09",
+    "server/routes/__tests__/authoringAiDraftStructured.test.ts": "f400e67e89d59e9d1e300779ee4915cafb0a867888e53be31139f8c6a12b29c7",
+    "server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts": "8bf67fc87e8c13b7d5cad20f4d386d386c6c258074993be0cf0cddf896c20dec"
+  },
+  "sourceAfter": {
+    "server/routes/authoring.router.ts": "57d4c421ff0573497c725aa986f9c3ea94fff1ce24fb09bc59f75f366a68d3e9",
+    "server/services/clinical-regulatory-evidence/draft-candidate-store.ts": "20cfc9b892839db153aee9d6b3aa0a1c4d7414772a5ac00f8736850f590ab524",
+    "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts": "b7c69999c7841dfc57eaed1137a8619c751711d678775e6ee28b5c48985d0a25",
+    "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts": "490c1885f1960c5b224243e9bd5ab29b361e711705762c078278f4e692b88300",
+    "server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts": "8a0c7c8b249e48ff30485281fa6e54e7742dad3bc5e50d575738fdca45e87685",
+    "server/routes/__tests__/authoringAiDraftAccept.test.ts": "9bf85bcbd3fbebf767c149a75c8b6ab94d5a9e78631e3ebe49abd6830d447793",
+    "server/routes/__tests__/authoringAiDraftNoProvider.test.ts": "9e03406cd481ebd34a76238dc0951cb9a2aaa9dcf2f91153183f480a9ef4ef09",
+    "server/routes/__tests__/authoringAiDraftStructured.test.ts": "f400e67e89d59e9d1e300779ee4915cafb0a867888e53be31139f8c6a12b29c7",
+    "server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts": "8bf67fc87e8c13b7d5cad20f4d386d386c6c258074993be0cf0cddf896c20dec"
+  },
+  "unchangedDuringFinalReplay": true,
+  "limits": [
+    "PGlite is not native PostgreSQL scheduling or RLS qualification.",
+    "Gateway and Data Room search are synthetic; current project policy and exact passed project argument are exercised.",
+    "Existing atomic accept fixture has no governed filing store and explicitly reports non-filing.",
+    "No live model/provider, deployment, human review or regulatory-readiness claim."
+  ],
+  "intermediateRuns": [
+    {
+      "result": "8/8 first candidate green before SQL trace assertion and missing-base hardening"
+    },
+    {
+      "result": "52/52 after focused fixture corrections; superseded by final 53-case run"
+    },
+    {
+      "result": "53/53 before honest missing-base refusal copy correction; final run repinned and repeated after correction"
+    }
+  ]
+}

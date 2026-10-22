@@ -1,0 +1,360 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > 'CER' is CER_SECTIONS: 12 sections, same order and required flags 10ms
+   → expected [ 'Executive Summary', …(7) ] to deeply equal [ 'Summary', …(11) ]
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > 'CER' carries equivalence, appraisal, evaluator qualification and references 3ms
+   → Equivalence (where claimed): expected [ 'Executive Summary', …(7) ] to include 'Equivalence (where claimed)'
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > 'CER' no longer files the PMCF plan as a CER section 1ms
+   → expected [ 'Executive Summary', …(7) ] to not include 'PMCF Plan'
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > 'IVDR' is PER_SECTIONS, not an empty list 1ms
+   → expected 0 to be greater than 0
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > the equivalence section applies only when equivalence is claimed 1ms
+   → expected undefined to be false // Object.is equality
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > codes are keyed on the record id, never a retired numeric CER.n code 1ms
+   → expected [ 'CER.1', 'CER.2', 'CER.3', …(5) ] to deeply equal [ 'CER.summary', 'CER.scope', …(10) ]
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > guidance comes from the record, not a restated citation 2ms
+   → expected 'MEDDEV 2.7/1 Rev 4' to be 'Concise summary of the clinical evalu…' // Object.is equality
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > getDeviceSectionByCode resolves a projected section 1ms
+   → expected undefined to be 'Appraisal of the Clinical Data' // Object.is equality
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > the 510(k), PMA and De Novo outlines are untouched by this step 1ms
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > the chat device block is rendered from the projection > isDeviceSubmissionType knows CER and IVDR and nothing it cannot answer for 1ms
+   → device-section-registry exports no isDeviceSubmissionType: expected 'undefined' to be 'function' // Object.is equality
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > the chat device block is rendered from the projection > the CER block lists all 12 sections and marks equivalence as conditional 3ms
+   → device-section-registry exports no renderDeviceContextBlock: expected 'undefined' to be 'function' // Object.is equality
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > the chat device block is rendered from the projection > the IVDR block lists the PER outline and does not pass it off as the whole IVDR file 1ms
+   → device-section-registry exports no renderDeviceContextBlock: expected 'undefined' to be 'function' // Object.is equality
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > the chat device block is rendered from the projection > an unknown type renders nothing 1ms
+   → device-section-registry exports no renderDeviceContextBlock: expected 'undefined' to be 'function' // Object.is equality
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > GET /device-status answers CER and IVDR from the canonical outlines > IVDR returns the PER sections 49ms
+   → expected [] to deeply equal [ …(8) ]
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > GET /device-status answers CER and IVDR from the canonical outlines > an artifact saved under a retired CER.n code does not mark a new section drafted 12ms
+   → expected 8 to be 12 // Object.is equality
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > GET /device-status answers CER and IVDR from the canonical outlines > refuses a type it does not know with 400, before reading artifacts 3ms
+   → expected 200 to be 400 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > 'CER' is CER_SECTIONS: 12 sections, same order and required flags
+AssertionError: expected [ 'Executive Summary', …(7) ] to deeply equal [ 'Summary', …(11) ]
+
+- Expected
++ Received
+
+  [
+-   "Summary",
+-   "Scope of the Clinical Evaluation",
+-   "Clinical Background, Current Knowledge, State of the Art",
+-   "Device Under Evaluation",
+-   "Equivalence (where claimed)",
+-   "Type, Generation and Sources of Clinical Data",
+-   "Appraisal of the Clinical Data",
+-   "Analysis of the Clinical Data",
+-   "Post-Market Clinical Follow-up (PMCF) Considerations",
++   "Executive Summary",
++   "Scope of Clinical Evaluation",
++   "Clinical Background",
++   "Literature Review",
++   "Clinical Investigations",
++   "Benefit-Risk Analysis",
+    "Conclusions",
+-   "Qualification of the Evaluators",
+-   "References and Appendices",
++   "PMCF Plan",
+  ]
+
+ ❯ server/services/ana/__tests__/device-chat-cer-per.test.ts:56:37
+     54|   it("'CER' is CER_SECTIONS: 12 sections, same order and required flag…
+     55|     const cer = sectionsFor('CER');
+     56|     expect(cer.map((s) => s.title)).toEqual(CER_SECTIONS.map((s) => s.…
+       |                                     ^
+     57|     expect(cer.map((s) => s.required)).toEqual(CER_SECTIONS.map((s) =>…
+     58|     expect(cer).toHaveLength(12);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > 'CER' carries equivalence, appraisal, evaluator qualification and references
+AssertionError: Equivalence (where claimed): expected [ 'Executive Summary', …(7) ] to include 'Equivalence (where claimed)'
+ ❯ server/services/ana/__tests__/device-chat-cer-per.test.ts:69:25
+     67|       'References and Appendices',
+     68|     ]) {
+     69|       expect(titles, t).toContain(t);
+       |                         ^
+     70|     }
+     71|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > 'CER' no longer files the PMCF plan as a CER section
+AssertionError: expected [ 'Executive Summary', …(7) ] to not include 'PMCF Plan'
+ ❯ server/services/ana/__tests__/device-chat-cer-per.test.ts:75:24
+     73|   it("'CER' no longer files the PMCF plan as a CER section", () => {
+     74|     const titles = sectionsFor('CER').map((s) => s.title);
+     75|     expect(titles).not.toContain('PMCF Plan');
+       |                        ^
+     76|     expect(titles).not.toContain('Executive Summary');
+     77|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > 'IVDR' is PER_SECTIONS, not an empty list
+AssertionError: expected 0 to be greater than 0
+ ❯ server/services/ana/__tests__/device-chat-cer-per.test.ts:81:24
+     79|   it("'IVDR' is PER_SECTIONS, not an empty list", () => {
+     80|     const per = sectionsFor('IVDR');
+     81|     expect(per.length).toBeGreaterThan(0);
+       |                        ^
+     82|     expect(per.map((s) => s.title)).toEqual(PER_SECTIONS.map((s) => s.…
+     83|     expect(per.map((s) => s.required)).toEqual(PER_SECTIONS.map((s) =>…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > the equivalence section applies only when equivalence is claimed
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/device-chat-cer-per.test.ts:89:26
+     87|   it('the equivalence section applies only when equivalence is claimed…
+     88|     const eq = sectionsFor('CER').find((s) => s.title === 'Equivalence…
+     89|     expect(eq?.required).toBe(false);
+       |                          ^
+     90|     expect(eq?.appliesWhen, 'equivalence rendered as merely optional')…
+     91|     for (const s of sectionsFor('CER').filter((x) => x.title !== 'Equi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > codes are keyed on the record id, never a retired numeric CER.n code
+AssertionError: expected [ 'CER.1', 'CER.2', 'CER.3', …(5) ] to deeply equal [ 'CER.summary', 'CER.scope', …(10) ]
+
+- Expected
++ Received
+
+  [
+-   "CER.summary",
+-   "CER.scope",
+-   "CER.clinical_background",
+-   "CER.device_description",
+-   "CER.equivalence",
+-   "CER.clinical_data",
+-   "CER.appraisal",
+-   "CER.analysis",
+-   "CER.pmcf",
+-   "CER.conclusions",
+-   "CER.evaluator_qualification",
+-   "CER.references",
++   "CER.1",
++   "CER.2",
++   "CER.3",
++   "CER.4",
++   "CER.5",
++   "CER.6",
++   "CER.7",
++   "CER.8",
+  ]
+
+ ❯ server/services/ana/__tests__/device-chat-cer-per.test.ts:99:36
+     97|     const cer = sectionsFor('CER');
+     98|     const per = sectionsFor('IVDR');
+     99|     expect(cer.map((s) => s.code)).toEqual(CER_SECTIONS.map((s) => `CE…
+       |                                    ^
+    100|     expect(per.map((s) => s.code)).toEqual(PER_SECTIONS.map((s) => `PE…
+    101|     for (const s of [...cer, ...per]) expect(s.code, s.title).not.toMa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > guidance comes from the record, not a restated citation
+AssertionError: expected 'MEDDEV 2.7/1 Rev 4' to be 'Concise summary of the clinical evalu…' // Object.is equality
+
+Expected: "Concise summary of the clinical evaluation: device, scope, evidence, and the benefit-risk conclusion."
+Received: "MEDDEV 2.7/1 Rev 4"
+
+ ❯ server/services/ana/__tests__/device-chat-cer-per.test.ts:108:60
+    106|   it('guidance comes from the record, not a restated citation', () => {
+    107|     const cer = sectionsFor('CER');
+    108|     CER_SECTIONS.forEach((s, i) => expect(cer[i].guidance).toBe(s.purp…
+       |                                                            ^
+    109|     const per = sectionsFor('IVDR');
+    110|     PER_SECTIONS.forEach((s, i) => expect(per[i].guidance).toBe(s.purp…
+ ❯ server/services/ana/__tests__/device-chat-cer-per.test.ts:108:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > getDeviceSectionByCode resolves a projected section
+AssertionError: expected undefined to be 'Appraisal of the Clinical Data' // Object.is equality
+
+- Expected:
+"Appraisal of the Clinical Data"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/device-chat-cer-per.test.ts:114:69
+    112|
+    113|   it('getDeviceSectionByCode resolves a projected section', () => {
+    114|     expect(registry.getDeviceSectionByCode('CER.appraisal')?.title).to…
+       |                                                                     ^
+    115|     expect(registry.getDeviceSectionByCode('PER.analytical_performance…
+    116|     expect(registry.getDeviceSectionByCode('CER.8')).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  server/services/ana/__tests__/device-chat-cer-per.test.ts > the chat device block is rendered from the projection > isDeviceSubmissionType knows CER and IVDR and nothing it cannot answer for
+AssertionError: device-section-registry exports no isDeviceSubmissionType: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ fn server/services/ana/__tests__/device-chat-cer-per.test.ts:49:66
+     47| function fn<T>(name: string): T {
+     48|   const f = reg[name];
+     49|   expect(typeof f, `device-section-registry exports no ${name}`).toBe(…
+       |                                                                  ^
+     50|   return f as T;
+     51| }
+ ❯ server/services/ana/__tests__/device-chat-cer-per.test.ts:128:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+ FAIL  server/services/ana/__tests__/device-chat-cer-per.test.ts > the chat device block is rendered from the projection > the CER block lists all 12 sections and marks equivalence as conditional
+AssertionError: device-section-registry exports no renderDeviceContextBlock: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ fn server/services/ana/__tests__/device-chat-cer-per.test.ts:49:66
+     47| function fn<T>(name: string): T {
+     48|   const f = reg[name];
+     49|   expect(typeof f, `device-section-registry exports no ${name}`).toBe(…
+       |                                                                  ^
+     50|   return f as T;
+     51| }
+ ❯ server/services/ana/__tests__/device-chat-cer-per.test.ts:134:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+
+ FAIL  server/services/ana/__tests__/device-chat-cer-per.test.ts > the chat device block is rendered from the projection > the IVDR block lists the PER outline and does not pass it off as the whole IVDR file
+AssertionError: device-section-registry exports no renderDeviceContextBlock: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ fn server/services/ana/__tests__/device-chat-cer-per.test.ts:49:66
+     47| function fn<T>(name: string): T {
+     48|   const f = reg[name];
+     49|   expect(typeof f, `device-section-registry exports no ${name}`).toBe(…
+       |                                                                  ^
+     50|   return f as T;
+     51| }
+ ❯ server/services/ana/__tests__/device-chat-cer-per.test.ts:145:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+
+ FAIL  server/services/ana/__tests__/device-chat-cer-per.test.ts > the chat device block is rendered from the projection > an unknown type renders nothing
+AssertionError: device-section-registry exports no renderDeviceContextBlock: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ fn server/services/ana/__tests__/device-chat-cer-per.test.ts:49:66
+     47| function fn<T>(name: string): T {
+     48|   const f = reg[name];
+     49|   expect(typeof f, `device-section-registry exports no ${name}`).toBe(…
+       |                                                                  ^
+     50|   return f as T;
+     51| }
+ ❯ server/services/ana/__tests__/device-chat-cer-per.test.ts:152:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/15]⎯
+
+ FAIL  server/services/ana/__tests__/device-chat-cer-per.test.ts > GET /device-status answers CER and IVDR from the canonical outlines > IVDR returns the PER sections
+AssertionError: expected [] to deeply equal [ …(8) ]
+
+- Expected
++ Received
+
+- [
+-   "Performance Evaluation Plan (PEP)",
+-   "Scientific Validity Report",
+-   "Analytical Performance Report",
+-   "Clinical Performance Report",
+-   "Performance Evaluation Report — Integration & Benefit-Risk",
+-   "Post-Market Performance Follow-up (PMPF) Considerations",
+-   "Qualification of the Evaluators",
+-   "References and Appendices",
+- ]
++ []
+
+ ❯ server/services/ana/__tests__/device-chat-cer-per.test.ts:187:73
+    185|     const r = await request(app()).get('/api/ind-generation/device-sta…
+    186|     expect(r.status).toBe(200);
+    187|     expect(r.body.data.sections.map((s: { title: string }) => s.title)…
+       |                                                                         ^
+    188|   });
+    189|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/15]⎯
+
+ FAIL  server/services/ana/__tests__/device-chat-cer-per.test.ts > GET /device-status answers CER and IVDR from the canonical outlines > an artifact saved under a retired CER.n code does not mark a new section drafted
+AssertionError: expected 8 to be 12 // Object.is equality
+
+- Expected
++ Received
+
+- 12
++ 8
+
+ ❯ server/services/ana/__tests__/device-chat-cer-per.test.ts:203:39
+    201|     const r = await request(app()).get('/api/ind-generation/device-sta…
+    202|     expect(r.status).toBe(200);
+    203|     expect(r.body.data.totalSections).toBe(12);
+       |                                       ^
+    204|     expect(r.body.data.completedSections).toBe(1);
+    205|     const appraisal = r.body.data.sections.find((s: { code: string }) …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/15]⎯
+
+ FAIL  server/services/ana/__tests__/device-chat-cer-per.test.ts > GET /device-status answers CER and IVDR from the canonical outlines > refuses a type it does not know with 400, before reading artifacts
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/services/ana/__tests__/device-chat-cer-per.test.ts:211:22
+    209|   it('refuses a type it does not know with 400, before reading artifac…
+    210|     const r = await request(app()).get('/api/ind-generation/device-sta…
+    211|     expect(r.status).toBe(400);
+       |                      ^
+    212|     expect(r.body.success).toBe(false);
+    213|     expect(fetchMock).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/15]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  15 failed | 1 passed (16)
+   Start at  13:40:36
+   Duration  2.94s (transform 1.30s, setup 195ms, import 1.52s, tests 97ms, environment 0ms)
+
+
+── 2026-10-11, re-landing against trunk: the reachability gate the first review asked for ──
+The first review (2026-10-05) passed this step but noted nothing pinned that
+send-message.ts calls renderDeviceContextBlock — so the inline device block this
+step deletes could come back unnoticed. Added
+"the chat route renders the block through the registry, not its own list".
+Run with server/routes/chat/send-message.ts restored to HEAD (its inline
+['510K','PMA','DE_NOVO'] list and hand-built "Required sections (" block present):
+
+ × the chat device block is rendered from the projection > the chat route renders the block through the registry, not its own list
+   ⎯⎯⎯ Failed Tests 1 ⎯⎯⎯
+   Tests  1 failed | 16 passed (17)
+
+With this step's route in place: Tests 17 passed (17).

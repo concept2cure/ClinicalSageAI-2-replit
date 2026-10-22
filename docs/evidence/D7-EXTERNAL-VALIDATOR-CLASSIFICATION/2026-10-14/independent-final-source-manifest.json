@@ -1,0 +1,27 @@
+{
+  "head": "87b27c897c5d1be20b0527009bcaf425ebbf3af6",
+  "node": "v24.19.0",
+  "fileSha256": {
+    "server/services/ectd/external-validator/gate.ts": "7b0db76efe38e864507e7470ec4c695735f539bf13a7c64564122f1e3df5739a",
+    "server/services/ectd/external-validator/types.ts": "f204e2c92cd3b354ddc460475910e7c4813a12a949d471669c8477ced4b1cb78",
+    "server/services/ectd/external-validator/index.ts": "81e5d7a9ae717f8e0eeeca656820c0aab60a3b04f99b21aad1f6a5b78eefa675",
+    "server/services/ectd/assess-dispatch-readiness.ts": "eb0203b30e4edd266f76c22382d3d4b50d1c32905cfc73792143a294e49b5b1c",
+    "server/services/submission-gateways/pre-transmit-check.ts": "39766d82059b5f4da7fb19b58eaaf8acaaee94cc0189adeb8b6b96d74177ebb5",
+    "server/mcp/tools/validation.ts": "f8675f2270e505df57a622dc53ed27488213328bfa77ff2bfaf17e41cb8d5b40",
+    "client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx": "4c83afdcd222ebcfae3e3bb0a847051db7b0f93892965d4c54b9e63c38075d58",
+    "client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx": "c071494286fdc7e1cf0acbbfb9b948451245efb6d74ecb6152728ba64786df1c",
+    "server/services/submission-ai/submission-ai-service.ts": "b86cabe0bd946e3f63cb7242ce7ce8bee2b4b8851e573b4db605810d5d992f9e"
+  },
+  "postRefactorReview": {
+    "file": "server/mcp/tools/validation.ts",
+    "previousSha256": "4885b81022974c24bb38c80adb1a8e31a8a4fbf5da18db5d645ed598df5ba7de",
+    "updatedSha256": "f8675f2270e505df57a622dc53ed27488213328bfa77ff2bfaf17e41cb8d5b40",
+    "change": "Adapter discovery, metadata and summary moved unchanged into private same-file helper for lint complexity.",
+    "review": "Semantic equivalence independently inspected; MCP 11-case owner rerun and strict lint evidence reviewed, not independently executed.",
+    "ownerEvidence": [
+      "mcp-validator-refactor-green.txt",
+      "mcp-validator-refactor-lint.txt"
+    ],
+    "otherRecordedProductionHashesUnchanged": true
+  }
+}

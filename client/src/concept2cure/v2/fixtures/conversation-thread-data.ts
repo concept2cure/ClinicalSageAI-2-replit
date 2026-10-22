@@ -42,6 +42,8 @@ export interface CtTurn {
   role: string;
   text?: string;
   answer?: string;
+  /** Real orchestration follow-up prompts, submitted only when the person chooses one. */
+  suggestedActions?: string[];
   /** AnA's turn has finished streaming; only a settled answer can be inserted into a document. */
   settled?: boolean;
   /** The retained turn record that produced the answer, when the server confirmed one. */
@@ -52,6 +54,8 @@ export interface CtTurn {
    * (anaInsertGate.ts, round 11). Absent when the server said nothing.
    */
   turnRecord?: AnaTurnRecordStatus;
+  /** The answer did not finish (anaInsertGate.ts answerUnfinished): it cannot go into a document (round 13). */
+  unfinished?: boolean;
   links?: CtLink[];
   /**
    * The context layers the platform added to the prompt this turn (names
@@ -62,6 +66,14 @@ export interface CtTurn {
   contextUsed?: string[];
   /** What went wrong around the answer (a failed save, a timeout), shown under it. */
   warnings?: string[];
+  /**
+   * The question AnA is asking, when this turn asked one: the interview
+   * engine's own node, with the positions it resolved for this programme
+   * (founder's directive, 2026-10-12). Drawn by AnaQuestionCard.
+   */
+  question?: import('@shared/types/intelligence-questions').IntelligenceQuestionEvent;
+  questionSessionId?: string | null;
+  questionFlowState?: unknown;
   /** The steers the person sent mid-run that AnA accepted, in order, shown under the answer they shaped. */
   interjections?: string[];
   /** The CRL/RTF pre-mortem artifact, when the turn assembled one (CrlPremortemPanel). */
@@ -177,20 +189,40 @@ export interface CtArtifact {
   content?: string;
   /** The message that drafted it, so the card can open that draft as a document. */
   messageId?: string;
+  /**
+   * The drafting turn's record status and whether its answer finished, so the
+   * card can apply the governed-write rule BEFORE it posts (round 14, SEC-A-7
+   * door 5). "Open as document" creates a whole governed authoring document
+   * whose content is model prose, so RULE 2 governs it exactly as it governs
+   * an insert; `anaInsertRefusal` is the one implementation of that rule.
+   *
+   * Absent means this view was not told, which the rule refuses — so these are
+   * carried whenever the draft came from a turn, never defaulted.
+   */
+  turnRecord?: AnaTurnRecordStatus | null;
+  unfinished?: boolean;
 }
 
 /* ---- Link maps ---- */
 
 export const CT_LINKMAP: Record<string, string> = {
-  doc: 'document-authoring', file: 'vault', task: 'task-board',
-  module: 'dossier-map', evidence: 'evidence-search',
-  review: 'review', submission: 'submission-center',
+  doc: 'document-authoring',
+  file: 'vault',
+  task: 'task-board',
+  module: 'dossier-map',
+  evidence: 'evidence-search',
+  review: 'review',
+  submission: 'submission-center',
 };
 
 export const CT_LINKIC: Record<string, string> = {
-  doc: 'fileText', file: 'vault', task: 'checkSquare',
-  module: 'network', evidence: 'search',
-  review: 'checkCircle', submission: 'rocket',
+  doc: 'fileText',
+  file: 'vault',
+  task: 'checkSquare',
+  module: 'network',
+  evidence: 'search',
+  review: 'checkCircle',
+  submission: 'rocket',
 };
 
 /* ── The fabricated artifact source is gone ──────────────────────────────────
@@ -213,7 +245,8 @@ export const CT_LINKIC: Record<string, string> = {
 /* `classification` / `predicate` / `estar` were the three deleted builders'
    kinds and had nothing left to key. A conversation produces documents. */
 export const CT_ARTIC: Record<string, string> = {
-  document: 'fileText', doc: 'fileText',
+  document: 'fileText',
+  doc: 'fileText',
 };
 
 /* Keyed by the server's own status values (see the VALID_TRANSITIONS map on
@@ -221,7 +254,12 @@ export const CT_ARTIC: Record<string, string> = {
    `unsaved` — the honest label for a draft that exists on screen and nowhere
    else. */
 export const CT_STATUS_LABEL: Record<string, string> = {
-  unsaved: 'Not in the record', draft: 'Draft', review: 'In review',
-  'in-review': 'In review', approved: 'Approved', locked: 'Locked',
-  submitted: 'Submitted', pending_structure: 'Pending structure',
+  unsaved: 'Not in the record',
+  draft: 'Draft',
+  review: 'In review',
+  'in-review': 'In review',
+  approved: 'Approved',
+  locked: 'Locked',
+  submitted: 'Submitted',
+  pending_structure: 'Pending structure',
 };

@@ -1,0 +1,8 @@
+# Guard (g) shown red by mutation. Added temporarily to assess-dispatch-readiness.ts after the IND program's findings are appended, then removed (file restored byte-for-byte):
+#   if (sequence.status === 'dispatched') appendReadinessFindings(readiness, [{ severity: 'error', code: 'ALREADY_DISPATCHED', sectionCode: null, message: 'This sequence has already been dispatched.' }]);
+# npx vitest run server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts -t "dispatched, clean"
+ × server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > what P-33 did not carry stays uncarried > (g) a dispatched, clean sequence keeps gate.cleared — transmit requires exactly that 45ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: 1 open error-severity validation finding(s) must be resolved before dispatch.: expected false to be true // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 skipped (15)

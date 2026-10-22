@@ -1,0 +1,11 @@
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > "Draft with AnA" opens the pane and shows the request in it 1573ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > an empty section shows BOTH draft controls, and the toolbar one still asks for the section 804ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > the pane composer sends into the same conversation 440ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > shows real work, evidence, and follow-up actions from AnA 804ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > shows an honest empty pane rather than pretending a conversation exists 983ms
+ × client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the answer is on screen after a turn > holds the work card to its share of the pane and shows the start of the newest answer 245ms
+ × client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the governed acts are never scrolled out of the header > Save is in the commit group, outside the panel scroller 274ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected false to be true // Object.is equality
+AssertionError: expected null not to be null
+      Tests  2 failed | 5 passed (7)

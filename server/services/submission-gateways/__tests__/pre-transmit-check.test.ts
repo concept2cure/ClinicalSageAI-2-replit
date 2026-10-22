@@ -8,6 +8,12 @@ import { promises as fsp } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { evaluatePreTransmit } from '../pre-transmit-check';
+import type { PreTransmitInput } from '../pre-transmit-check';
+import {
+  FdaCriteriaValidatorAdapter,
+  LorenzEValidatorAdapter,
+  type ExternalValidationReport,
+} from '../../ectd/external-validator';
 import { packageEctdSubmission } from '../regional-packager';
 import { getGateway } from '../index';
 import type { SubmissionBundle } from '../types';
@@ -17,6 +23,45 @@ import {
 } from '../../ectd/qualification/golden-fixtures';
 
 const GB = 1024 ** 3;
+
+const selectedExternalValidator = new LorenzEValidatorAdapter();
+const selectedSubsetValidator = new FdaCriteriaValidatorAdapter();
+
+/** Coherent report fixtures; constructing the descriptor does not run an engine. */
+function externalReport(over: Partial<ExternalValidationReport> = {}): ExternalValidationReport {
+  return {
+    validator: selectedExternalValidator.name,
+    profile: 'FDA eCTD 3.2.2',
+    ranAt: new Date('2026-10-14T00:00:00Z'),
+    ran: true,
+    findings: [],
+    errorCount: 0,
+    warningCount: 0,
+    passed: true,
+    ...over,
+  };
+}
+
+function externalInput(over: Partial<PreTransmitInput> = {}): PreTransmitInput {
+  return {
+    region: 'fda',
+    bundle: bundle({ builtRegion: 'fda' }),
+    environment: 'production',
+    selectedExternalValidator,
+    externalConfigured: true,
+    externalReport: externalReport(),
+    env: { ECTD_REQUIRE_EVALIDATOR: 'true' },
+    ...over,
+  };
+}
+
+function failedExternalReport(): ExternalValidationReport {
+  return externalReport({
+    findings: [{ ruleId: 'TEST-ERROR', severity: 'error', message: 'Synthetic error finding' }],
+    errorCount: 1,
+    passed: false,
+  });
+}
 
 function bundle(over: Partial<SubmissionBundle> = {}): SubmissionBundle {
   return {
@@ -47,6 +92,17 @@ describe('evaluatePreTransmit', () => {
     expect(blocker).toMatch(/limit of 10\.00 GB/);
     expect(blocker).toMatch(/physical media/);
     expect(blocker).not.toMatch(/e\.g\./);
+  });
+
+  // 2026-10-22 (merge review of sweep VP-6): CA, UK and the other regions with
+  // no published limit on file were refused on figures no agency publishes
+  // ("over the CA gateway limit of 4.29 GB"). Their size is not checked, and
+  // the check says so.
+  it.each(['ca', 'uk', 'cn', 'kr', 'au', 'ch', 'br', 'in'] as const)('%s: no limit on file, so the size is said to be unchecked, never refused', (region) => {
+    const r = evaluatePreTransmit({ region, bundle: bundle({ sizeBytes: 50 * GB }), environment: 'production', enforceExternal: false, env: {} });
+    expect(r.blockers.filter((b) => /gateway limit/.test(b))).toEqual([]);
+    expect(r.warnings.filter((w) => /GB/.test(w))).toEqual([]);
+    expect(r.checks.find((c) => c.name === 'gateway-size-limit')?.detail).toMatch(/^not checked: no published .* gateway size limit is on file/);
   });
 
   // 2026-10-08 (sweep VP-3): the passing detail said "the agency accepts plain
@@ -174,9 +230,9 @@ describe('evaluatePreTransmit', () => {
     expect(prod.blockers.join(' ')).toMatch(/not itemised/);
   });
 
-  it('warns (does not block) when a required flag is set but the bundle has no evidence', () => {
+  it('refuses absent DTD proof when required while preserving PDF/A warning semantics', () => {
     const r = evaluatePreTransmit({ region: 'fda', bundle: bundle(), environment: 'production', enforceExternal: false, env: { ECTD_REQUIRE_PDFA: 'true', ECTD_REQUIRE_DTD: 'true' } });
-    expect(r.cleared).toBe(true);
+    expect(r.cleared).toBe(false);
     // PDF/A, DTD — and the bundle records no region it was built for.
     expect(r.warnings.length).toBe(3);
     expect(r.warnings.some((w) => /no record of the region it was built for/.test(w))).toBe(true);
@@ -243,7 +299,124 @@ describe('evaluatePreTransmit', () => {
       env: { ECTD_REQUIRE_EVALIDATOR: 'true' },
     });
     expect(r.cleared).toBe(false); // required + could not run ⇒ block
-    expect(r.blockers.join(' ')).toMatch(/eValidator/);
+    expect(r.blockers.join(' ')).toMatch(/External validation/);
+  });
+});
+
+describe('pre-transmit external assessment classification', () => {
+  it('forwards the selected external descriptor so a matching clean report can pass the required gate', () => {
+    const result = evaluatePreTransmit(externalInput());
+    expect(result.cleared).toBe(true);
+    expect(result.checks.find(check => check.name === 'external-evalidator')).toMatchObject({
+      passed: true,
+      detail: expect.stringContaining('status=passed'),
+    });
+    expect(result.checks.find(check => check.name === 'external-evalidator')?.detail).toContain('kind=external_engine');
+    expect(result.checks.find(check => check.name === 'external-evalidator')?.detail).toContain('errorCountKnown=true');
+    expect(result.checks.find(check => check.name === 'external-evalidator')?.detail).toContain('errors=0');
+    expect(result.checks.find(check => check.name === 'external-evalidator')?.detail).toContain('enforced=true');
+    expect(result.warnings).toEqual([]);
+  });
+
+  it('reports a matching external error as a failed assessment and blocks required production', () => {
+    const result = evaluatePreTransmit(externalInput({ externalReport: failedExternalReport() }));
+    expect(result.cleared).toBe(false);
+    expect(result.blockers.join(' ')).toContain('1 error-severity finding');
+    const check = result.checks.find(item => item.name === 'external-evalidator');
+    expect(check?.passed).toBe(false);
+    expect(check?.detail).toContain('status=failed');
+    expect(check?.detail).toContain('errors=1');
+    expect(check?.detail).toContain('errorCountKnown=true');
+  });
+
+  it('keeps a clean selected subset from satisfying the required external assessment', () => {
+    const result = evaluatePreTransmit(externalInput({
+      selectedExternalValidator: selectedSubsetValidator,
+      externalReport: externalReport({ validator: selectedSubsetValidator.name }),
+    }));
+    expect(result.cleared).toBe(false);
+    expect(result.blockers.join(' ')).toContain('internal FDA criteria subset');
+    const check = result.checks.find(item => item.name === 'external-evalidator');
+    expect(check?.passed).toBe(false);
+    expect(check?.detail).toContain('status=not_assessed');
+    expect(check?.detail).toContain('kind=internal_subset');
+    expect(check?.detail).toContain('errorCountKnown=true');
+  });
+
+  it('refuses required external clearance without a trusted descriptor despite a clean engine-named report', () => {
+    const result = evaluatePreTransmit(externalInput({ selectedExternalValidator: undefined }));
+    expect(result.cleared).toBe(false);
+    expect(result.checks.find(check => check.name === 'external-evalidator')?.passed).toBe(false);
+    expect(result.checks.find(check => check.name === 'external-evalidator')?.detail).toContain('kind=unknown');
+    expect(result.checks.find(check => check.name === 'external-evalidator')?.detail).toContain('status=not_assessed');
+  });
+});
+
+describe('pre-transmit advisory assessment visibility', () => {
+  it.each(['production', 'staging'] as const)('keeps an advisory failed assessment visible without adding blockers in %s', environment => {
+    const result = evaluatePreTransmit(externalInput({
+      environment,
+      externalReport: failedExternalReport(),
+      env: environment === 'staging' ? { ECTD_REQUIRE_EVALIDATOR: 'true' } : {},
+    }));
+    expect(result.cleared).toBe(true);
+    expect(result.blockers).toEqual([]);
+    const check = result.checks.find(item => item.name === 'external-evalidator');
+    expect(check?.passed).toBe(false);
+    expect(check?.detail).toContain('status=failed');
+    expect(check?.detail).toContain('kind=external_engine');
+    expect(check?.detail).toContain('errors=1');
+    expect(check?.detail).toContain('enforced=false');
+    expect(result.warnings.join(' ')).toContain('status=failed');
+  });
+
+  it('keeps advisory unassessed execution distinct from a clean zero-error assessment', () => {
+    const result = evaluatePreTransmit(externalInput({ externalReport: null, env: {} }));
+    expect(result.cleared).toBe(true);
+    const check = result.checks.find(item => item.name === 'external-evalidator');
+    expect(check?.passed).toBe(false);
+    expect(check?.detail).toContain('status=not_assessed');
+    expect(check?.detail).toContain('errors=unknown');
+    expect(check?.detail).toContain('errorCountKnown=false');
+    expect(result.warnings.join(' ')).toContain('status=not_assessed');
+  });
+
+  it('surfaces an advisory mismatched report as invalid rather than passed', () => {
+    const result = evaluatePreTransmit(externalInput({
+      externalReport: externalReport({ validator: selectedSubsetValidator.name }),
+      env: {},
+    }));
+    expect(result.cleared).toBe(true);
+    expect(result.checks.find(check => check.name === 'external-evalidator')?.passed).toBe(false);
+    expect(result.checks.find(check => check.name === 'external-evalidator')?.detail).toContain('status=invalid');
+    expect(result.warnings.join(' ')).toContain('status=invalid');
+  });
+
+  it('retains valid internal subset error diagnostics without calling them an external assessment', () => {
+    const result = evaluatePreTransmit(externalInput({
+      selectedExternalValidator: selectedSubsetValidator,
+      externalReport: { ...failedExternalReport(), validator: selectedSubsetValidator.name },
+      env: {},
+    }));
+    expect(result.cleared).toBe(true);
+    const check = result.checks.find(item => item.name === 'external-evalidator');
+    expect(check?.passed).toBe(false);
+    expect(check?.detail).toContain('kind=internal_subset');
+    expect(check?.detail).toContain('status=not_assessed');
+    expect(check?.detail).toContain('errors=1');
+    expect(check?.detail).toContain('errorCountKnown=true');
+    expect(result.warnings.join(' ')).toContain('kind=internal_subset');
+  });
+
+  it('preserves low-level enforceExternal=false even when required with no descriptor', () => {
+    const result = evaluatePreTransmit(externalInput({
+      selectedExternalValidator: undefined,
+      externalReport: null,
+      enforceExternal: false,
+    }));
+    expect(result.cleared).toBe(true);
+    expect(result.checks.some(check => check.name === 'external-evalidator')).toBe(false);
+    expect(result.warnings).toEqual([]);
   });
 });
 
@@ -291,7 +464,7 @@ describe('guarded transmit', () => {
  * packager and this fails.
  */
 describe('packager → pre-transmit: the stylesheet gap survives the bundle', () => {
-  const DTDS = ['ich-ectd-3-2.dtd', 'us-regional-v3-3.dtd'];
+  const DTDS = ['ich-ectd-3-2.dtd', 'us-regional-v3-3.dtd', 'ich-stf-v2-2.dtd'];
   const STYLESHEETS = ['ectd-2-0.xsl', 'us-regional.xsl'];
 
   async function buildFdaBundle(dropFiles: string[]): Promise<SubmissionBundle> {
@@ -351,7 +524,7 @@ describe('packager → pre-transmit: the stylesheet gap survives the bundle', ()
     expect(blocker).not.toMatch(/not itemised/);
   }, 30000);
 
-  it('POSITIVE CONTROL: a complete drop-point clears the same gate', async () => {
+  it('a complete placeholder drop-point proves presence but cannot clear actual DTD validation', async () => {
     const built = await buildFdaBundle([...DTDS, ...STYLESHEETS]);
     expect(built.dtdStatus?.selfContained).toBe(true);
     expect(built.dtdStatus?.missingStylesheets).toEqual([]);
@@ -363,6 +536,8 @@ describe('packager → pre-transmit: the stylesheet gap survives the bundle', ()
       env: { ECTD_REQUIRE_DTD: 'true' },
     });
     expect(r.checks.find((c) => c.name === 'dtd-self-contained')?.passed).toBe(true);
+    expect(r.checks.find((c) => c.name === 'package-dtd-validation')?.passed).toBe(false);
+    expect(r.cleared).toBe(false);
     expect(r.blockers.join(' ')).not.toMatch(/self-contained/);
   }, 30000);
 });

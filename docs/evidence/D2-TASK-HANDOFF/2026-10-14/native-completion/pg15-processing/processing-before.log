@@ -1,0 +1,75 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+{"level":30,"time":"2026-10-14T22:47:45.104Z","pid":48985,"hostname":"a189527a215b","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T22:47:45.105Z","pid":48985,"hostname":"a189527a215b","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T22:47:45.105Z","pid":48985,"hostname":"a189527a215b","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/data-room-processing.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T22:47:45.187Z', poolSize: 1 }
+
+stdout | tests/db/data-room-processing.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/data-room-processing.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/data-room-processing.dbtest.ts > an adopted conversation file is read, classified and stored > adopt answers 201, and the source is extracted with its text, measure and declared version
+[database] Database connection successful { timestamp: '2026-10-14T22:47:47.936Z', poolSize: 2 }
+
+stdout | tests/db/data-room-processing.dbtest.ts > an adopted conversation file is read, classified and stored > adopt answers 201, and the source is extracted with its text, measure and declared version
+[database] Database connection successful { timestamp: '2026-10-14T22:47:47.986Z', poolSize: 3 }
+
+ ✓ tests/db/data-room-processing.dbtest.ts > an adopted conversation file is read, classified and stored > adopt answers 201, and the source is extracted with its text, measure and declared version 478ms
+ ✓ tests/db/data-room-processing.dbtest.ts > an adopted conversation file is read, classified and stored > a word only in its body finds it, with a snippet of where 269ms
+ × tests/db/data-room-processing.dbtest.ts > the pending sweep reads what was captured before > processes a pending capture from its stored bytes, and names one it cannot read 61ms
+   → function pg_input_is_valid(text, unknown) does not exist
+ × tests/db/data-room-processing.dbtest.ts > the pending sweep reads what was captured before > repairs legacy extracted-without-text and a same-identity rerun does not create an attempt 19ms
+   → function pg_input_is_valid(text, unknown) does not exist
+ ✓ tests/db/data-room-processing.dbtest.ts > the room pages past 200, and stays in its project > reports the real total and pages through it 3547ms
+ ✓ tests/db/data-room-processing.dbtest.ts > the room pages past 200, and stays in its project > a search never returns another project's source, nor another organization's 161ms
+ ✓ tests/db/data-room-processing.dbtest.ts > the room pages past 200, and stays in its project > filters by how far a source was read, and refuses a filter it cannot read rather than widening 238ms
+ ✓ tests/db/data-room-processing.dbtest.ts > the Vault lane counts every current source of the project > counts captured, classified, filed and needs-review over the whole room 752ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/data-room-processing.dbtest.ts > the pending sweep reads what was captured before > processes a pending capture from its stored bytes, and names one it cannot read
+error: function pg_input_is_valid(text, unknown) does not exist
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ runProcessingSweep server/services/clinical-regulatory-evidence/data-room-processing-sweep.ts:150:15
+    148|     :`${select},TRUE AS runnable ${join} WHERE ${base} AND ${ordinary}…
+    149|   const frame = JSON.stringify(await programWorkspaceFrame(q, org));
+    150|   const found=await q.query(sql,[org,sourceId??report.limit,frame]);
+       |               ^
+    151|   if(sourceId!==undefined&&!found.rows[0]) record(report,sourceId,'blo…
+    152|   for(const row of found.rows) {
+ ❯ tests/db/catalog-native-fixture.ts:71:14
+ ❯ tests/db/data-room-processing.dbtest.ts:198:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 228, severity: 'ERROR', code: '42883', detail: undefined, hint: 'No function matches the given name and argument types. You might need to add explicit type casts.', position: '56763', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_func.c', routine: 'ParseFuncOrColumn' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/data-room-processing.dbtest.ts > the pending sweep reads what was captured before > repairs legacy extracted-without-text and a same-identity rerun does not create an attempt
+error: function pg_input_is_valid(text, unknown) does not exist
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ runProcessingSweep server/services/clinical-regulatory-evidence/data-room-processing-sweep.ts:150:15
+    148|     :`${select},TRUE AS runnable ${join} WHERE ${base} AND ${ordinary}…
+    149|   const frame = JSON.stringify(await programWorkspaceFrame(q, org));
+    150|   const found=await q.query(sql,[org,sourceId??report.limit,frame]);
+       |               ^
+    151|   if(sourceId!==undefined&&!found.rows[0]) record(report,sourceId,'blo…
+    152|   for(const row of found.rows) {
+ ❯ tests/db/catalog-native-fixture.ts:71:14
+ ❯ tests/db/data-room-processing.dbtest.ts:225:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 228, severity: 'ERROR', code: '42883', detail: undefined, hint: 'No function matches the given name and argument types. You might need to add explicit type casts.', position: '56493', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_func.c', routine: 'ParseFuncOrColumn' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+   Start at  22:47:43
+   Duration  10.76s (transform 2.87s, setup 78ms, import 186ms, tests 10.24s, environment 0ms)
+
+JSON report written to /workspace/scratch/task-handoff-native/post-sync-processing-before.json

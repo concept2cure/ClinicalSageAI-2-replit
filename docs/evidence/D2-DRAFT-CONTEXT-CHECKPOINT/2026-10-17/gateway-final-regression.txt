@@ -1,0 +1,415 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/ai-gateway/__tests__/gateway-abort.test.ts
+{
+  "timestamp": "2026-10-17T22:41:49.060Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T22:41:49.061Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts
+{
+  "timestamp": "2026-10-17T22:41:49.061Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-abort.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-17T22:41:49.283Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] anthropic/claude-opus-5-5 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-17T22:41:49.286Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-opus-5 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-17T22:41:49.286Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Provider anthropic marked unhealthy after 3 failures — recovery in 60s",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T22:41:49.286Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-opus-4-8 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-17T22:41:49.287Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Provider anthropic marked unhealthy after 4 failures — recovery in 60s",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T22:41:49.287Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-17T22:41:49.288Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Provider anthropic marked unhealthy after 5 failures — recovery in 60s",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T22:41:49.288Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-4-6 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-17T22:41:49.288Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Provider anthropic marked unhealthy after 6 failures — recovery in 120s",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T22:41:49.288Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-haiku-4-5 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-17T22:41:49.288Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback openai/gpt-4o failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-17T22:41:49.289Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback openai/gpt-4o-mini failed: upstream 503",
+  "context": {}
+}
+
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the request stops > passes the abort signal through to the provider call 6ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the request stops > keeps the text already streamed when the user stops mid-answer 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the request stops > never opens a provider call for a run that is already cancelled 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the cancel is nobody's fault > never falls back to another model 6ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the cancel is nobody's fault > never counts against the provider circuit breaker 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the cancel is nobody's fault > is not retried by the backoff loop 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > an abort that lands mid-call (the SDK error) never counts against the circuit breaker 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > an abort that lands mid-call is not re-run on the next model 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > one Stop leaves Anthropic healthy for everyone — it used to count once per fallback rung 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors 8ms
+stdout | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts
+{
+  "timestamp": "2026-10-17T22:41:50.216Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T22:41:50.217Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts
+{
+  "timestamp": "2026-10-17T22:41:50.217Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > uses the captured guard on fallback even if the caller replaces the callback
+{
+  "timestamp": "2026-10-17T22:41:50.377Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: primary request shape unavailable",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > also rechecks before retrying a fallback provider
+{
+  "timestamp": "2026-10-17T22:41:50.378Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: primary request shape unavailable",
+  "context": {}
+}
+
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > leaves ordinary no-source calls on the existing path 16ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > runs the guard after capacity is granted, refuses queued revocation, and releases the permit 61ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > captures the original guard before the first route await 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > makes a synchronous guard refusal terminal and safe without provider-health accounting 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > makes a asynchronous guard refusal terminal and safe without provider-health accounting 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > rejects malformed callback null before placement or dispatch 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > rejects malformed callback "pretend guard" before placement or dispatch 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > rejects malformed callback 7 before placement or dispatch 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > rejects malformed callback {} before placement or dispatch 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > sanitizes a callback getter failure before any await 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > rechecks before a primary retry and never dispatches revoked retry work 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > uses the captured guard on fallback even if the caller replaces the callback 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > also rechecks before retrying a fallback provider 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > preserves a transient retry when the source remains current 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > honors cancellation during a guard wait (resolve), releases capacity and never dispatches canceled work 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > honors cancellation during a guard wait (reject), releases capacity and never dispatches canceled work 3ms
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore cancellation before dispatch > rejects an already aborted signal without spending a free permit 2ms
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore cancellation before dispatch > settles a queued abort while the current caller still holds its permit 1ms
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore cancellation before dispatch > checks cancellation between permit handoff and the callback microtask 1ms
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore FIFO and permit accounting > removes canceled waiters and admits live callers in FIFO order at the same cap 1ms
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore FIFO and permit accounting > does not release an active callback early when its signal is aborted 1ms
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore FIFO and permit accounting > releases a callback that throws and serves the next caller 1ms
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore abort listener lifetime > removes a queued listener on cancellation 1ms
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore abort listener lifetime > removes the queued listener when a live waiter receives its permit 1ms
+stdout | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts
+{
+  "timestamp": "2026-10-17T22:41:51.498Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T22:41:51.499Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts
+{
+  "timestamp": "2026-10-17T22:41:51.499Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 500
+{
+  "timestamp": "2026-10-17T22:41:51.546Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: 500 Simulated upstream 500",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 500
+{
+  "timestamp": "2026-10-17T22:41:51.546Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: 500 {\"error\":{\"type\":\"api_error\",\"message\":\"Simulated upstream 500\"}}",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 429
+{
+  "timestamp": "2026-10-17T22:41:51.591Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: 429 Simulated upstream 429",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 429
+{
+  "timestamp": "2026-10-17T22:41:51.591Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: 429 {\"error\":{\"type\":\"api_error\",\"message\":\"Simulated upstream 429\"}}",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > retains the four-attempt non-streaming overload budget without multiplying it in the SDK
+{
+  "timestamp": "2026-10-17T22:42:06.953Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] anthropic/claude-sonnet-5 failed: 429 {\"error\":{\"type\":\"api_error\",\"message\":\"Simulated upstream 429\"}}",
+  "context": {}
+}
+
+ ✓ server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 500 45ms
+ ✓ server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 429 5ms
+ ✓ server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > retains one gateway-owned retry for non-streaming transient failures 5ms
+ ✓ server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > retains the four-attempt non-streaming overload budget without multiplying it in the SDK 6ms
+ ✓ server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > OpenAI-compatible gateway client factories > local leaves streaming retries to the gateway 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > OpenAI-compatible gateway client factories > azure leaves streaming retries to the gateway 85ms
+stdout | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts
+{
+  "timestamp": "2026-10-17T22:41:52.680Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T22:41:52.681Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts
+{
+  "timestamp": "2026-10-17T22:41:52.681Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts
+[database] Database connection successful
+
+stdout | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=7 user=- caller=test:active req=29a36028-bd30-48e1-8e78-4d209270f42c
+
+stderr | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch
+{
+  "timestamp": "2026-10-17T22:41:52.844Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/usage-recorder.ts:104:16",
+    "queryPreview": "INSERT INTO api_usage_logs (organization_id, user_id, module, endpoint, model, request_count, tokens_used, cost_cents, metadata, created_at) VALUES ($1, $2, ...",
+    "enforcement": "off"
+  }
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=8 user=- caller=test:survivor req=701c38bb-3af8-4c98-85e0-4590f5618ea8
+
+stderr | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch
+[AI Gateway Audit] AI provenance ledger unusable: no database pool is available, so records exist only in a 100-entry in-memory buffer. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:9153) AuditWarning: AI provenance ledger unusable: no database pool is available, so records exist only in a 100-entry in-memory buffer. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:9153) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch 128ms
+stdout | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > custom abort reason is terminal before dispatch
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=7 user=- caller=test:active req=5bbd0383-bb06-46fa-82cf-3e97e9885fcd
+
+stdout | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > custom abort reason is terminal before dispatch
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=8 user=- caller=test:survivor req=f7aea845-a369-4eec-b9e9-b741cfbd14c6
+
+stderr | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > custom abort reason is terminal before dispatch
+[AI Gateway Audit] AI provenance ledger unusable: no database pool is available, so records exist only in a 100-entry in-memory buffer. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > custom abort reason is terminal before dispatch
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:9153) AuditWarning: AI provenance ledger unusable: no database pool is available, so records exist only in a 100-entry in-memory buffer. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:9153) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > custom abort reason is terminal before dispatch 120ms
+stdout | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts
+{
+  "timestamp": "2026-10-17T22:41:53.914Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T22:41:53.915Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts
+{
+  "timestamp": "2026-10-17T22:41:53.915Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a transient error
+{
+  "timestamp": "2026-10-17T22:41:53.998Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: primary unavailable",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a transient error
+{
+  "timestamp": "2026-10-17T22:41:53.998Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: upstream 500",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a silent stream
+{
+  "timestamp": "2026-10-17T22:41:54.006Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: primary unavailable",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a silent stream
+{
+  "timestamp": "2026-10-17T22:41:54.006Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: anthropic/claude-sonnet-5 went silent for 300s before it produced any text or tool call, so the stream was stopped.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > still retries a transient non-streaming fallback once and returns its recovery
+{
+  "timestamp": "2026-10-17T22:41:54.008Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: primary unavailable",
+  "context": {}
+}
+
+ ✓ server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a transient error 9ms
+ ✓ server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a silent stream 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > still retries a transient non-streaming fallback once and returns its recovery 2ms
+
+ Test Files  6 passed (6)
+      Tests  45 passed (45)
+   Start at  22:41:45
+   Duration  8.50s (transform 2.07s, setup 244ms, import 6.37s, tests 573ms, environment 1ms)
+

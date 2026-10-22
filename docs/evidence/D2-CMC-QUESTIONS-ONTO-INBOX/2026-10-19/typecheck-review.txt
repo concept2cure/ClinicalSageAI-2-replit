@@ -1,0 +1,7 @@
+# REVIEW 2026-10-19: npm run -s typecheck on the final tree after the review's fixes (HEAD 99acc88d + this slice, uncommitted).
+$ npm run -s typecheck
+
+real	6m14.810s
+user	6m41.864s
+sys	0m39.691s
+exit 0

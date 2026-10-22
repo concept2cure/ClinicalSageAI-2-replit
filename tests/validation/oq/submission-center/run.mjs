@@ -354,5 +354,78 @@ await step(
   },
 );
 
+/* ── OQ-SUBC-15 helpers (P-34): what is read, and what each answer must say ── */
+
+/** A sequence's Shadow Review runs, newest first, as GET …/shadow-review answers them. */
+async function shadowRuns(api, expect, seq) {
+  const r = await api('GET', `${seq}/shadow-review`);
+  expect(r.status === 200, `shadow-review list: expected 200, got ${r.status}`, r.json);
+  if (Array.isArray(r.json)) return r.json;
+  return r.json?.runs ?? r.json?.data ?? [];
+}
+
+const OUTAGE_CODES = ['provider_unavailable', 'provider_overloaded'];
+
+const presenceGateOf = (a) => (Array.isArray(a.gates) ? a.gates : []).find((g) => g.key === 'shadowPresence');
+
+/** No completed review: a waiver is offered exactly when the newest run failed for a provider outage, and the gate blocks. */
+function checkWaiverOffered(a, newest, expect) {
+  const w = a.shadowReviewWaivable;
+  expect(w && typeof w.eligible === 'boolean' && typeof w.reason === 'string', 'shadowReviewWaivable missing while no review has completed', a);
+  const outage = newest?.status === 'failed' && OUTAGE_CODES.includes(newest.failureCode);
+  expect(w.eligible === outage, `eligible=${w.eligible} for a newest run ${describeRun(newest)}`, { w, newest });
+  const presence = presenceGateOf(a);
+  expect(presence?.cleared === false && !presence.notAssessed, 'with no review and no waiver the presence gate must block', presence);
+  return `eligible=${w.eligible} (${w.reason})`;
+}
+
+/** A completed review: nothing is offered, and the gate clears with no note. */
+function checkNothingOffered(a, expect) {
+  expect(a.shadowReviewWaivable === undefined, 'a waiver offered over a completed review', a.shadowReviewWaivable);
+  const presence = presenceGateOf(a);
+  expect(presence?.cleared === true && !presence.notAssessed, 'a completed review clears the presence gate with no note', presence);
+  return 'not asked (a review completed)';
+}
+
+function describeRun(run) {
+  if (!run) return 'none';
+  return `#${run.id} ${run.status}${run.failureCode ? `/${run.failureCode}` : ''}`;
+}
+
+await step(
+  {
+    id: 'OQ-SUBC-15',
+    urs: ['URS-SUBC-006', 'URS-SUBC-007'],
+    title: 'A Shadow Review waiver is offered only after a provider outage, and only by signature (P-34)',
+    action:
+      'POST /api/submissions/sequences/:id/shadow-review; GET …/shadow-review; GET …/dispatch-readiness; ' +
+      'POST …/shadow-review/waive {signatureActionId:"oq-not-a-signature", failedRunId:<the newest run>}; GET …/shadow-review',
+    expected:
+      'dispatch-readiness reports shadowReviewWaiver.state "none". With no completed review: shadowReviewWaivable is present, and ' +
+      'eligible only when the newest run failed as provider_unavailable or provider_overloaded (on this installation, with no ' +
+      'provider configured, the run fails as no_provider_configured, which is not an outage: eligible false, with the reason), ' +
+      'and the shadowPresence gate blocks. With a completed review: no waiver is offered and the gate clears with no note. ' +
+      'Either way the waive without a signature is refused 4xx (403 GOVERNED_REQUIRED or 409 SHADOW_WAIVER_NOT_ELIGIBLE) and no ' +
+      'run reads "waived". The positive path, an outage waived by a credentialed signer, is proven over the real act in ' +
+      'server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts; an installation cannot be made to suffer one on demand.',
+    dependsOn: ['OQ-SUBC-03'],
+  },
+  async ({ api, expect }) => {
+    const seq = `/api/submissions/sequences/${state.sequence.id}`;
+    const ran = await api('POST', `${seq}/shadow-review`, {});
+    const [newest] = await shadowRuns(api, expect, seq);
+    const ready = await api('GET', `${seq}/dispatch-readiness`);
+    expect(ready.status === 200, `dispatch-readiness: expected 200, got ${ready.status}`, ready.json);
+    const a = ready.json ?? {};
+    expect(a.shadowReviewWaiver?.state === 'none', `expected no waiver, got ${JSON.stringify(a.shadowReviewWaiver)}`, a.shadowReviewWaiver);
+    const offered = a.shadowReviewRunCount === 0 ? checkWaiverOffered(a, newest, expect) : checkNothingOffered(a, expect);
+    const waive = await api('POST', `${seq}/shadow-review/waive`, { signatureActionId: 'oq-not-a-signature', failedRunId: Number(newest?.id ?? 1) });
+    expect(waive.status === 403 || waive.status === 409, `waive without a signature: expected 403/409, got ${waive.status}`, waive.json);
+    const after = await shadowRuns(api, expect, seq);
+    expect(!after.some((r) => r.status === 'waived'), 'a waived run was recorded without a signature', after);
+    return `review POST ${ran.status}; newest run ${describeRun(newest)}; waiver none; ${offered}; waive refused ${waive.status} ${waive.json?.error?.code ?? ''}; no waived run`;
+  },
+);
+
 const result = await run.finish();
 process.exit(result.counts.fail > 0 ? 1 : 0);

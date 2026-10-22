@@ -1,0 +1,12 @@
+{
+  "sourcePath": "server/services/vault/vault-search.ts",
+  "sourceSha256": "5af3f9a7bf4fb9fef1c341a17ba17566034e79baf4f4333137e7ff9ab4660022",
+  "negative": {
+    "expectedFailure": "A supplied private program widened a canonical current actor count or page."
+  },
+  "positive": {
+    "statements": 2,
+    "bindsOnlyCanonicalProgram": true
+  },
+  "scope": "isolated application binding control; does not qualify SQL-role RLS or deployment"
+}

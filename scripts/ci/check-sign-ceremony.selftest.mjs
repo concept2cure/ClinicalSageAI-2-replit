@@ -7,7 +7,7 @@
  * verbatim in shape: a `governed(req, res, 'sign', …)` call and nothing else.
  */
 import assert from 'node:assert/strict';
-import { evaluate, scanSource } from './check-sign-ceremony.mjs';
+import { evaluate, evaluateAuthority, scanAuthority, scanSource } from './check-sign-ceremony.mjs';
 
 let passed = 0;
 function test(name, fn) {
@@ -222,6 +222,79 @@ test('the same authoring approval stamp with no signature write fails', () => {
 test('clearing an approval (a revision) is not a stamp', () => {
   const src = "router.post('/x', async () => { await pool.query(`UPDATE qms_documents SET status = 'draft', approver_id = NULL, approved_at = NULL WHERE id = $1`, [id]); });";
   assert.deepEqual(scanSource(src), []);
+});
+
+// ── Signing authority (2026-10-08, QA j6) ─────────────────────────────────────
+// The Gateway transmit as it stood: the editor gate, then the password, then the
+// governed transmit. Nothing asked whether the signer's role may sign.
+const PRE_FIX_TRANSMIT = (authority) => `
+router.post('/gateways/:region/:gateway/transmit', requireEditorAccess, async (req, res) => {
+  const p = transmitBody.safeParse(req.body).data;
+  ${authority ? 'const authority = await checkSigningAuthority(userId, orgId);\n  if (authority) return signingAuthorityRefused(res, authority);' : ''}
+  const reauthResult = await verifyReauth(userId, p.reauth);
+  const outcome = await executeGovernedTransmit({ region, gateway, organizationId: orgId, userId, meaning: p.meaning });
+});`;
+const authorityFails = (src, section = { files: {} }) =>
+  evaluateAuthority({ 'server/routes/x.ts': scanAuthority(src) }, section).failures;
+
+test('the pre-fix Gateway transmit (re-authentication, no authority) fails the authority rule', () => {
+  const f = authorityFails(PRE_FIX_TRANSMIT(false));
+  assert.equal(f.length, 1);
+  assert.equal(f[0].sites[0].authority, false);
+});
+
+test('the same transmit asking checkSigningAuthority first passes', () => {
+  assert.equal(authorityFails(PRE_FIX_TRANSMIT(true)).length, 0);
+});
+
+test('reverifySigner is held to the rule too, and checkSigningAuthority satisfies it', () => {
+  const bare = "router.post('/s', async (req, res) => { const v = await reverifySigner(userId, creds, deps()); });";
+  assert.equal(authorityFails(bare).length, 1);
+  const asked = "router.post('/s', async (req, res) => { const a = await checkSigningAuthority(userId, orgId); if (a) return; const v = await reverifySigner(userId, creds, deps()); });";
+  assert.equal(authorityFails(asked).length, 0);
+});
+
+// P-27 (2026-10-08): one signing-authority policy. An inline copy of it — the
+// role read and the predicate written out in the handler, or a local wrapper
+// around them — does not satisfy the rule any more; only the gate does. Each
+// copy answered a failed role lookup its own way (500, a thrown error, or not
+// at all), and two read the role from the token instead of the membership row.
+test('an inline copy of the policy (isSigningAuthorized in the handler) no longer satisfies the rule', () => {
+  const inline = "router.post('/s', async (req, res) => { if (!isSigningAuthorized(await resolveSignerOrgRole(userId, orgId))) return; const v = await reverifySigner(userId, creds, deps()); });";
+  assert.equal(authorityFails(inline).length, 1);
+});
+
+test('the retired local wrappers no longer satisfy the rule', () => {
+  for (const wrapper of ['signingAuthorityRefusal(command, userId, orgId)', 'assertSigningAuthority(req, res)', 'refusedWithoutSigningAuthority(res, { userId, orgId })']) {
+    const src = `router.post('/s', async (req, res) => { if (await ${wrapper}) return; await verifyReauth(userId, req.body.reauth); });`;
+    assert.equal(authorityFails(src).length, 1, wrapper);
+  }
+});
+
+test('an authority check in another handler does not count for this one', () => {
+  const src = `
+router.post('/a', async (req, res) => {
+  const authority = await checkSigningAuthority(userId, orgId);
+});
+router.post('/b', async (req, res) => {
+  await verifyReauth(userId, req.body.reauth);
+});`;
+  assert.equal(authorityFails(src).length, 1);
+});
+
+test('a declaration of the primitive is not a call; a commented check is not a check', () => {
+  assert.deepEqual(scanAuthority('export async function verifyReauth(userId: number, reauth: unknown) { return { ok: true }; }'), []);
+  const commented = "router.post('/c', async () => {\n  // await checkSigningAuthority(userId, orgId);\n  await verifyReauth(userId, reauth);\n});";
+  assert.equal(authorityFails(commented).length, 1);
+});
+
+test('an authority baseline entry is a ceiling with a written reason, as the sign baseline is', () => {
+  const reason = 'A rollback signs nothing: it writes no signature row.';
+  assert.equal(authorityFails(PRE_FIX_TRANSMIT(false), { files: { 'server/routes/x.ts': { count: 1, reason } } }).length, 0);
+  const unreasoned = evaluateAuthority({ 'server/routes/x.ts': scanAuthority(PRE_FIX_TRANSMIT(false)) }, { files: { 'server/routes/x.ts': { count: 1 } } });
+  assert.deepEqual(unreasoned.unreasoned, ['server/routes/x.ts']);
+  const loose = evaluateAuthority({ 'server/routes/x.ts': scanAuthority(PRE_FIX_TRANSMIT(true)) }, { files: { 'server/routes/x.ts': { count: 1, reason } } });
+  assert.equal(loose.shrinkable.length, 1, 'a freed allowance must be lowered, not kept for the next site');
 });
 
 console.log(`[ci:sign-ceremony:selftest] ${passed} passed — the gate fails on what it exists to catch.`);

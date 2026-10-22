@@ -6,21 +6,25 @@
 
 import { Router } from 'express';
 import { requireRole } from '../../middleware/auth';
-import { validateSequenceLeaves, filingTypeForSequence } from '../../services/ind-lifecycle/ind-sequence-validation';
-import { buildPackageManifest } from '../../services/ind-lifecycle/ind-package-manifest';
-import { evaluateDispatchGate } from '../../services/ind-lifecycle/ind-dispatch-gate';
-import { deriveIndActionItems } from '../../services/ind-lifecycle/ind-action-items';
+import { assessSequenceDispatchReadiness } from '../../services/ectd/assess-dispatch-readiness';
 import { evaluateRegulatoryClock } from '../../services/ind-lifecycle/ind-regulatory-clock';
 import { buildIndTimeline } from '../../services/ind-lifecycle/ind-timeline-service';
 import { summarizeSequences } from '../../services/ind-lifecycle/ind-submission-overview';
 import { buildIndDashboard } from '../../services/ind-lifecycle/ind-dashboard';
-import { buildIndCockpit, annotateGateWithSnapshot, buildDriftDigest, type SequenceGateSummary } from '../../services/ind-lifecycle/ind-cockpit';
+import {
+  buildIndCockpit,
+  annotateGateWithSnapshot,
+  buildDriftDigest,
+  indVerdictFromAssessment,
+  sequenceGateOf,
+  type SequenceGateSummary,
+} from '../../services/ind-lifecycle/ind-cockpit';
 import { buildIndPortfolio, buildIndPortfolioEntry, isIndSubmission, buildPortfolioDrift, portfolioDriftToCsv } from '../../services/ind-lifecycle/ind-portfolio';
 import { getLatestDispatchSnapshot } from '../../services/ind-lifecycle/ind-dispatch-snapshot-service';
-import { getSubmission, listSubmissions, listSequences, listLeaves } from '../../services/submission-service/submission-service';
+import { getSubmission, listSubmissions, listSequences } from '../../services/submission-service/submission-service';
 import { getCrossReferenceRegister } from '../../services/ind-lifecycle/ind-cross-reference-persistence';
 import { listOverdueSafetyReports } from '../../services/ind-lifecycle/ind-safety-report-persistence';
-import { AUTHOR, limiter, ctxOf, body, fail, noAuth, readinessFrom, validationFrom, filingTypeParam, FILING_TYPE_VALUES } from './shared';
+import { AUTHOR, limiter, ctxOf, body, fail, noAuth, readinessFrom, validationFrom } from './shared';
 
 const router = Router();
 
@@ -32,66 +36,27 @@ function submissionIdOf(raw: string | string[] | undefined): number | null {
 }
 
 /**
- * Build a snapshot-annotated dispatch gate for every sequence in a submission.
- * Shared by the cockpit and drift routes. Each sequence is validated as the
- * filing type its stored type + leaves imply (filingTypeForSequence) unless the
- * body pins one for all of them.
+ * The dispatch verdict of every sequence in a submission, each annotated with
+ * its last snapshot. Shared by the cockpit, the drift digest and the portfolio
+ * drift sweep.
+ *
+ * One verdict per sequence (decision P-33, 2026-10-15): each is the
+ * sequence's own assessSequenceDispatchReadiness — the verdict Submit and the
+ * governed steps read — mapped by indVerdictFromAssessment. Nothing in the
+ * request body changes it; the IND gate this replaced read a clinical-hold
+ * clock and a filing type from the body and blocked every sequence whose
+ * caller did not describe them.
  */
 async function annotatedGatesForSubmission(
   sequences: Awaited<ReturnType<typeof listSequences>>,
-  b: any,
   ctx: Ctx,
 ): Promise<SequenceGateSummary[]> {
-  const explicitFilingType = filingTypeParam(b.filingType);
-  if (explicitFilingType === null) throw new Error(`VALIDATION: filingType must be one of ${FILING_TYPE_VALUES}.`);
-  const readiness = readinessFrom(b.readinessInput);
-  const clock = b.clockInput?.receiptDate ? evaluateRegulatoryClock(b.clockInput) : null;
-  const timeline = b.timelineInput?.receiptDate ? buildIndTimeline(b.timelineInput) : null;
-
-  // Unauthorized external dependencies hard-block dispatch for the whole
-  // submission; compute once from the cross-reference register.
-  const submissionId = (sequences[0] as { submissionId?: number } | undefined)?.submissionId;
-  const unauthorizedCrossReferences = submissionId
-    ? (await getCrossReferenceRegister(submissionId, ctx)).counts.missingLoa
-    : 0;
-  // The overdue safety-report count comes from the register, never from the
-  // request body: omitting the field (or sending 0) used to read as "no
-  // critical actions" while unfiled 7-/15-day reports sat past deadline.
-  const overdueSafetyReports = submissionId ? (await listOverdueSafetyReports(submissionId, ctx)).length : undefined;
-
   return Promise.all(
     sequences.map(async (seq) => {
-      const leaves = await listLeaves(seq.id, ctx);
-      const filingType = explicitFilingType ?? filingTypeForSequence(seq.type, leaves);
-      const sequenceValidation = validateSequenceLeaves({ filingType, leaves: leaves.map((l) => ({ sectionCode: l.sectionCode })) });
-      const manifest = buildPackageManifest({
-        sequenceNumber: seq.sequenceNumber,
-        submissionType: seq.type,
-        leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, lifecycleOp: l.lifecycleOp, checksum: l.checksum })),
-      });
-      const actions = deriveIndActionItems({ readiness, clock, timeline, sequenceValidation, overdueSafetyReports: overdueSafetyReports ?? b.overdueSafetyReports });
-      const verdict = evaluateDispatchGate({
-        sequenceValidation,
-        manifest,
-        criticalActions: actions.criticalCount,
-        clinicalHoldEvaluated: clock !== null,
-        sequenceStatus: seq.status,
-        unauthorizedCrossReferences,
-      });
-      const latest = await getLatestDispatchSnapshot(seq.id, ctx);
-      return annotateGateWithSnapshot(
-        {
-          sequenceId: seq.id,
-          sequenceNumber: seq.sequenceNumber,
-          type: seq.type,
-          status: seq.status,
-          canDispatch: verdict.canDispatch,
-          blockerCount: verdict.blockers.length,
-          warningCount: verdict.warnings.length,
-          blockerCodes: verdict.blockers.map((x) => x.code),
-        },
-        latest,
+      const verdict = indVerdictFromAssessment(
+        await assessSequenceDispatchReadiness({ sequenceId: seq.id, organizationId: ctx.organizationId }),
       );
+      return annotateGateWithSnapshot(sequenceGateOf(seq, verdict), await getLatestDispatchSnapshot(seq.id, ctx));
     }),
   );
 }
@@ -126,8 +91,7 @@ router.get('/portfolio', limiter, requireRole(AUTHOR), async (req, res) => {
 /**
  * Org-wide drift sweep — across every IND submission, the sequences whose live
  * dispatch verdict has drifted from their last snapshot, or were never verified.
- * The portfolio-level compliance feed. (Computes the structural live verdict; no
- * per-submission analysis inputs.)
+ * The portfolio-level compliance feed: each sequence's one verdict (P-33).
  */
 /** Compute the org-wide drift sweep across every IND submission. */
 async function computePortfolioDrift(ctx: Ctx) {
@@ -135,7 +99,7 @@ async function computePortfolioDrift(ctx: Ctx) {
   const inputs = await Promise.all(
     inds.map(async (submission) => {
       const sequences = await listSequences(submission.id, ctx);
-      const gates = await annotatedGatesForSubmission(sequences, {}, ctx);
+      const gates = await annotatedGatesForSubmission(sequences, ctx);
       return { submission, drift: buildDriftDigest(gates) };
     }),
   );
@@ -223,7 +187,7 @@ router.post('/submission/:id/cockpit', limiter, requireRole(AUTHOR), async (req,
   const b = body(req);
   try {
     const sequences = await listSequences(submissionId, ctx);
-    const sequenceGates = await annotatedGatesForSubmission(sequences, b, ctx);
+    const sequenceGates = await annotatedGatesForSubmission(sequences, ctx);
     const overdueSafetyReports = (await listOverdueSafetyReports(submissionId, ctx)).length;
     const dashboard = buildIndDashboard({
       sequenceSummary: summarizeSequences(sequences),
@@ -262,7 +226,7 @@ router.post('/submission/:id/drift', limiter, requireRole(AUTHOR), async (req, r
   if (!submissionId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
   try {
     const sequences = await listSequences(submissionId, ctx);
-    const gates = await annotatedGatesForSubmission(sequences, body(req), ctx);
+    const gates = await annotatedGatesForSubmission(sequences, ctx);
     res.json(buildDriftDigest(gates));
   } catch (err) {
     fail(res, err);

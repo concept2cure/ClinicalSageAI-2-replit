@@ -1,0 +1,148 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/csr-draft-source-honesty.test.ts
+{
+  "timestamp": "2026-10-14T06:06:21.023Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:06:21.025Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/csr-draft-source-honesty.test.ts
+{
+  "timestamp": "2026-10-14T06:06:21.025Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/csr-draft-source-honesty.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/csr-draft-source-honesty.test.ts > a provider refusal returns a template with its actual source instead of claiming an AI draft
+[CSR Builder] AI drafting failed for section 1, using template: Error: Synthetic gateway refusal
+    at /workspace/ClinicalSageAI-2-replit/server/routes/__tests__/csr-draft-source-honesty.test.ts:17:30
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+xxxx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/csr-draft-source-honesty.test.ts > a provider refusal returns a template with its actual source instead of claiming an AI draft
+AssertionError: expected { success: true, …(4) } to match object { isAI: false, provider: 'template' }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "isAI": false,
+-   "provider": "template",
++   "isAI": true,
++   "provider": "claude-ai-gateway",
+  }
+
+ ❯ server/routes/__tests__/csr-draft-source-honesty.test.ts:20:25
+     18|   const response = await draft();
+     19|   expect(response.status).toBe(200);
+     20|   expect(response.body).toMatchObject({ isAI: false, provider: 'templa…
+       |                         ^
+     21|   expect(response.body.content).toContain(studyInfo.title);
+     22| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/routes/__tests__/csr-draft-source-honesty.test.ts > empty model output has the same explicit template source as the provenance drafting path
+AssertionError: expected { success: true, …(4) } to match object { isAI: false, provider: 'template' }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "isAI": false,
+-   "provider": "template",
++   "isAI": true,
++   "provider": "claude-ai-gateway",
+  }
+
+ ❯ server/routes/__tests__/csr-draft-source-honesty.test.ts:27:25
+     25|   const response = await draft();
+     26|   expect(response.status).toBe(200);
+     27|   expect(response.body).toMatchObject({ isAI: false, provider: 'templa…
+       |                         ^
+     28|   expect(response.body.content).toContain(studyInfo.title);
+     29| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/routes/__tests__/csr-draft-source-honesty.test.ts > a refused unsupported statistical draft cannot be labelled as accepted AI output
+AssertionError: expected { success: true, …(4) } to match object { isAI: false, provider: 'template' }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "isAI": false,
+-   "provider": "template",
++   "isAI": true,
++   "provider": "claude-ai-gateway",
+  }
+
+ ❯ server/routes/__tests__/csr-draft-source-honesty.test.ts:34:25
+     32|   const response = await draft('11');
+     33|   expect(response.status).toBe(200);
+     34|   expect(response.body).toMatchObject({ isAI: false, provider: 'templa…
+       |                         ^
+     35|   expect(response.body.content).not.toContain('p=0.001');
+     36| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/routes/__tests__/csr-draft-source-honesty.test.ts > an accepted gateway draft retains the verified actor/organization without inventing a project or provider
+AssertionError: expected { success: true, …(4) } to match object { isAI: true, provider: 'ai-gateway' }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "isAI": true,
+-   "provider": "ai-gateway",
++   "provider": "claude-ai-gateway",
+  }
+
+ ❯ server/routes/__tests__/csr-draft-source-honesty.test.ts:41:25
+     39|   const response = await draft();
+     40|   expect(response.status).toBe(200);
+     41|   expect(response.body).toMatchObject({ isAI: true, provider: 'ai-gate…
+       |                         ^
+     42|   expect(complete).toHaveBeenCalledWith(expect.any(Array), expect.obje…
+     43|   const options = complete.mock.calls[0][1] as Record<string, unknown>;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  06:06:19
+   Duration  2.29s (transform 1.16s, setup 72ms, import 1.99s, tests 41ms, environment 0ms)
+

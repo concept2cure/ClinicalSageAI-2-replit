@@ -25,6 +25,19 @@ vi.mock('../../../db', () => ({
 vi.mock('../../../services/cmc/project-membership', () => ({
   projectBelongsToTenant: (params: unknown) => mockProjectOwned(params),
 }));
+/* Four-eyes on a section approval — the signer may not be one of the people who
+   ENTERED the register records the section cites — is a control with its own
+   suite, against a real Postgres and the real audit chain
+   (services/cmc/__tests__/section-approval-separation-of-duties.pglite.integration.test.ts),
+   and its own route cases (module3SectionApproveFourEyes.test.ts). Here it is a
+   pass-through, because these cases drive the SQL and audit sequence and would
+   otherwise all refuse on a fixture that cites no recorded source. */
+vi.mock('../../../services/governance/separation-of-duties', () => ({
+  assertSignerIsNotAuthor: async () => ({ checked: true, reason: 'stubbed in this suite' }),
+  cmcModule3SectionTarget: (projectId: string, sectionKey: string) =>
+    `cmc-module3-section:${projectId}:${sectionKey}`,
+  separationOfDutiesRefusal: () => null,
+}));
 vi.mock('../../../routes/c2c/actions', () => ({
   verifyReauth: vi.fn(async () => ({ ok: true })),
   recordGovernedAction: vi.fn(),
@@ -74,12 +87,12 @@ describe("Module 3 routers — another organization's project", () => {
     expect(mockQuery).not.toHaveBeenCalled();
   });
 
+  /* GET /uploaded-sources, POST /classify-artifact and GET /source-lineage
+     were deleted on 2026-10-05 with no caller (cmc-retired-routers.contract.
+     test.ts); what is left of these two routers is below. */
   it.each([
     ['get', '/api/cmc/module3-build/build-state/foreign-proj', undefined],
-    ['get', '/api/cmc/module3-build/uploaded-sources/foreign-proj', undefined],
-    ['post', '/api/cmc/module3-convergence/classify-artifact/foreign-proj', { artifactId: 'a-1', sourceType: 'batch' }],
     ['post', '/api/cmc/module3-convergence/build-section/foreign-proj/3.2.P.5', {}],
-    ['get', '/api/cmc/module3-convergence/source-lineage/foreign-proj/3.2.P.5', undefined],
   ] as const)('%s %s is not found — never an empty build state — and nothing is read or written', async (method, path, body) => {
     const r = request(appFor(1))[method](path);
     const res = await (body ? r.send(body) : r);

@@ -50,6 +50,8 @@ import coauthorRoutes from '../coauthor';
 const ORG = 7;
 const OTHER_ORG = 8;
 const OWN_ROWS = 5;
+/** The two named documents added for the search cases, in this organisation. */
+const NAMED_ROWS = 2;
 const FOREIGN_ROWS = 4;
 
 let h: IndPgliteDb;
@@ -76,6 +78,14 @@ beforeAll(async () => {
     INSERT INTO coauthor_documents (organization_id, title, status)
       SELECT ${OTHER_ORG}, 'foreign ' || g, 'draft' FROM generate_series(1, ${FOREIGN_ROWS}) g;
   `);
+  // QA 2026-10-08 (j6): the document the walk could not reach, and one by module.
+  await h.pglite.query(
+    `INSERT INTO coauthor_documents (organization_id, title, status, module_number, updated_at)
+     VALUES ($1, 'Pharmacokinetics', 'approved', '4.2.2', now() - interval '3 days'),
+            ($1, 'Clinical Overview', 'approved', '2.5', now() - interval '2 days'),
+            ($2, 'Pharmacokinetics (another organisation)', 'approved', '4.2.2', now())`,
+    [ORG, OTHER_ORG],
+  );
 }, 120_000);
 
 afterAll(async () => {
@@ -88,15 +98,50 @@ describe('GET /api/coauthor/documents total', () => {
     expect(res.status).toBe(200);
     expect(res.body.documents).toHaveLength(2);
     expect(res.body.total).toBeGreaterThan(res.body.documents.length);
-    expect(res.body.total).toBe(OWN_ROWS);
+    expect(res.body.total).toBe(OWN_ROWS + NAMED_ROWS);
     expect(res.body.returned).toBe(2);
   });
 
   it('total equals the page length when every row fits, and excludes other organisations', async () => {
     const res = await request(app).get('/api/coauthor/documents?limit=50');
     expect(res.status).toBe(200);
-    expect(res.body.documents).toHaveLength(OWN_ROWS);
-    expect(res.body.total).toBe(OWN_ROWS);
+    expect(res.body.documents).toHaveLength(OWN_ROWS + NAMED_ROWS);
+    expect(res.body.total).toBe(OWN_ROWS + NAMED_ROWS);
     expect(res.body.documents.every((d: any) => d.organizationId === ORG)).toBe(true);
+  });
+});
+
+/* QA 2026-10-08 (j6): the Builder's co-author picker showed 50 of 53 documents
+   with no search and no paging, so 'Pharmacokinetics · m4.2.2' could not be
+   placed. The list takes a search (title or module number) and an offset, and
+   `total` counts what the search matches, so a reader can say "n of total". */
+describe('GET /api/coauthor/documents search and paging', () => {
+  it('q finds a document by title, case-insensitively, in this organisation only, and total counts the matches', async () => {
+    const res = await request(app).get('/api/coauthor/documents?q=pharmaco');
+    expect(res.status).toBe(200);
+    expect(res.body.documents.map((d: any) => d.title)).toEqual(['Pharmacokinetics']);
+    expect(res.body.total).toBe(1);
+  });
+
+  it('q finds a document by its module number', async () => {
+    const res = await request(app).get('/api/coauthor/documents?q=4.2.2');
+    expect(res.body.documents.map((d: any) => d.moduleNumber)).toEqual(['4.2.2']);
+    expect(res.body.total).toBe(1);
+  });
+
+  it('a search is text, not a pattern: % and _ match themselves', async () => {
+    const res = await request(app).get('/api/coauthor/documents?q=%25');
+    expect(res.body.documents).toEqual([]);
+    expect(res.body.total).toBe(0);
+  });
+
+  it('offset pages through the list: two pages of 4 hold every document once', async () => {
+    const first = await request(app).get('/api/coauthor/documents?limit=4');
+    const second = await request(app).get('/api/coauthor/documents?limit=4&offset=4');
+    expect(first.body.offset).toBe(0);
+    expect(second.body.offset).toBe(4);
+    const ids = [...first.body.documents, ...second.body.documents].map((d: any) => d.id);
+    expect(new Set(ids).size).toBe(OWN_ROWS + NAMED_ROWS);
+    expect(second.body.total).toBe(OWN_ROWS + NAMED_ROWS);
   });
 });

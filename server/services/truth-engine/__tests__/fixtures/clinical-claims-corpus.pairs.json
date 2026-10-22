@@ -1,0 +1,10530 @@
+{
+ "_about": "Machine reading of each expected row of clinical-claims-corpus.json, written from the row's own `why` text (never from engine output). consistent/conflict rows: m = measureLabel prefix, a/b = the principal component as written in docA/docB (canonical: decimal point, no thousands separator, trailing zeros kept, \"<\"/\">\" bounds, \"~\" approximations), c = component, arm = substring of the compared arm, componentLevel = the corpus lists this component (a p-value or a count) as its own row, so its outcome is the component result inside its claim's comparison. not_compared rows: notPaired = docA/docB values that must never be paired in a consistent or conflict comparison; reported = values the engine must report as not compared on that side (and never compare); reasons = acceptable reason codes for that report.",
+ "fs-01#0": {
+  "m": "incidence:serious",
+  "a": "4.0",
+  "b": "4.4",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "fs-01#1": {
+  "m": "incidence:serious",
+  "a": "3.0",
+  "b": "3.4",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "fs-01#2": {
+  "m": "incidence:disc_treatment",
+  "a": "3.9",
+  "b": "3.9",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "fs-01#3": {
+  "m": "incidence:disc_treatment",
+  "a": "2.0",
+  "b": "2.4",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "fs-02#0": {
+  "m": "effect:ls_mean_difference:fev1_trough",
+  "a": "0.10",
+  "b": "0.14",
+  "c": "estimate"
+ },
+ "fs-02#1": {
+  "m": "effect:ls_mean_difference:fev1_auc",
+  "a": "0.00",
+  "b": "-0.40",
+  "c": "lower"
+ },
+ "fs-03#0": {
+  "m": "incidence:serious",
+  "a": "8",
+  "b": "8.2",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "fs-03#1": {
+  "m": "incidence:serious",
+  "a": "3",
+  "b": "3.0",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "fs-03#2": {
+  "m": "incidence:disc_treatment",
+  "a": "2",
+  "b": "2.0",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "fs-03#3": {
+  "m": "incidence:disc_treatment",
+  "a": "1",
+  "b": "1.0",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "fs-03#4": {
+  "m": "effect:ls_mean_difference:hba1c",
+  "a": "-0.8",
+  "b": "-0.80",
+  "c": "estimate"
+ },
+ "fs-04#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "612",
+  "c": "count"
+ },
+ "fs-04#1": {
+  "m": "n:treated",
+  "a": "608",
+  "b": "608",
+  "c": "count"
+ },
+ "fs-04#2": {
+  "reported": {
+   "b": [
+    "50"
+   ]
+  },
+  "notPaired": [
+   [
+    "608",
+    "50"
+   ]
+  ]
+ },
+ "fs-05#0": {
+  "m": "n:treated",
+  "a": "612",
+  "b": "608",
+  "c": "count"
+ },
+ "fs-05#1": {
+  "notPaired": [
+   [
+    "45",
+    "38"
+   ],
+   [
+    "612",
+    "38"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "45"
+   ],
+   "b": [
+    "38"
+   ]
+  }
+ },
+ "fs-06#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "ravoxitide"
+ },
+ "fs-06#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "fs-06#2": {
+  "m": "effect:risk_difference:ae:serious",
+  "a": "1.3",
+  "b": "1.3",
+  "c": "estimate"
+ },
+ "fs-07#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "ravoxitide"
+ },
+ "fs-07#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.6",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "fs-07#2": {
+  "m": "effect:risk_difference:ae:serious",
+  "a": "1.3",
+  "b": "1.0",
+  "c": "estimate"
+ },
+ "fs-08#0": {
+  "m": "effect:mean_difference:sbp_trough",
+  "a": "-6.2",
+  "b": "-6.2",
+  "c": "estimate"
+ },
+ "fs-08#1": {
+  "reported": {
+   "a": [
+    "-3.4"
+   ]
+  },
+  "notPaired": [
+   [
+    "-3.4",
+    "-6.2"
+   ]
+  ]
+ },
+ "fs-09#0": {
+  "m": "effect:hazard_ratio:pfs",
+  "a": "0.68",
+  "b": "0.68",
+  "c": "estimate"
+ },
+ "fs-09#1": {
+  "m": "effect:hazard_ratio:os",
+  "a": "0.84",
+  "b": "0.81",
+  "c": "estimate"
+ },
+ "fs-10#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "621",
+  "c": "count",
+  "arm": "total"
+ },
+ "fs-10#1": {
+  "m": "n:randomized",
+  "a": "306",
+  "b": "311",
+  "c": "count",
+  "arm": "nerantib"
+ },
+ "fs-10#2": {
+  "m": "n:randomized",
+  "a": "306",
+  "b": "310",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "fs-11#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "612",
+  "c": "count",
+  "arm": "total"
+ },
+ "fs-11#1": {
+  "m": "n:randomized",
+  "a": "306",
+  "b": "306",
+  "c": "count",
+  "arm": "obrelimab"
+ },
+ "fs-11#2": {
+  "m": "n:randomized",
+  "a": "306",
+  "b": "306",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "fs-12#0": {
+  "m": "incidence:any",
+  "a": "58.4",
+  "b": "58.4",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "fs-12#1": {
+  "m": "incidence:any",
+  "a": "51.2",
+  "b": "51.2",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "fs-12#2": {
+  "m": "incidence:any:pt:headache",
+  "a": "8.2",
+  "b": "8.5",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "fs-12#3": {
+  "m": "incidence:any:pt:headache",
+  "a": "4.0",
+  "b": "4.0",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "fs-13#0": {
+  "reported": {
+   "b": [
+    "4.6"
+   ]
+  },
+  "notPaired": [
+   [
+    "4.6",
+    "4.6"
+   ]
+  ],
+  "reasons": [
+   "arm_unidentified"
+  ]
+ },
+ "fs-13#1": {
+  "reported": {
+   "a": [
+    "1.0"
+   ]
+  },
+  "notPaired": [
+   [
+    "1.0",
+    "3.3"
+   ]
+  ]
+ },
+ "fs-14#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.9",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "fs-14#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "fs-14#2": {
+  "m": "incidence:serious:pt:pneumonia",
+  "a": "1.0",
+  "b": "1.0",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "fs-14#3": {
+  "m": "incidence:serious:pt:pneumonia",
+  "a": "0.3",
+  "b": "0.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "fs-14#4": {
+  "m": "incidence:serious:pt:atrial fibrillation",
+  "a": "0.7",
+  "b": "0.7",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "fs-14#5": {
+  "m": "incidence:serious:pt:atrial fibrillation",
+  "a": "0",
+  "b": "0",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "fs-15#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "4.9"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "4.6"
+   ]
+  },
+  "reasons": [
+   "pool_vs_study",
+   "pool_membership_unidentified"
+  ]
+ },
+ "fs-15#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "3.3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "3.3"
+   ]
+  },
+  "reasons": [
+   "pool_vs_study",
+   "pool_membership_unidentified"
+  ]
+ },
+ "fs-16#0": {
+  "notPaired": [
+   [
+    "0.12",
+    "0.14"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "0.12"
+   ]
+  },
+  "reasons": [
+   "pool_vs_study",
+   "pool_membership_unidentified"
+  ]
+ },
+ "fs-17#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "fs-17#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.8",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "fs-18#0": {
+  "m": "incidence:serious",
+  "a": "6.0",
+  "b": "6.0",
+  "c": "percent",
+  "arm": "tazoglitin"
+ },
+ "fs-18#1": {
+  "m": "incidence:serious",
+  "a": "4.0",
+  "b": "4.5",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "fs-18#2": {
+  "m": "incidence:any:pt:hypoglycemia",
+  "a": "8",
+  "b": "8.6",
+  "c": "percent",
+  "arm": "tazoglitin"
+ },
+ "fs-18#3": {
+  "m": "incidence:any:pt:hypoglycemia",
+  "a": "2",
+  "b": "2.0",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "fs-18#4": {
+  "m": "effect:mean_difference:hba1c",
+  "a": "-5.0",
+  "b": "-5.4",
+  "c": "lower"
+ },
+ "fs-20#0": {
+  "notPaired": [
+   [
+    "58",
+    "58"
+   ],
+   [
+    "60",
+    "62"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "60",
+    "58"
+   ]
+  }
+ },
+ "fs-20#1": {
+  "reported": {
+   "a": [
+    "45",
+    "40"
+   ]
+  },
+  "notPaired": [
+   [
+    "45",
+    "58.4"
+   ],
+   [
+    "40",
+    "51.2"
+   ]
+  ]
+ },
+ "fs-21#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "fs-21#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "fs-21#2": {
+  "notPaired": [
+   [
+    "90",
+    "85"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "90"
+   ],
+   "b": [
+    "85"
+   ]
+  },
+  "reasons": [
+   "event_share_not_incidence"
+  ]
+ },
+ "fs-22#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "fs-22#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "fs-22#2": {
+  "m": "deaths",
+  "a": "0.3",
+  "b": "0.7",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "fs-22#3": {
+  "m": "deaths",
+  "a": "0.3",
+  "b": "0.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "fs-23#0": {
+  "notPaired": [
+   [
+    "120",
+    "612"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "120"
+   ]
+  },
+  "reasons": [
+   "study_differs"
+  ]
+ },
+ "fs-23#1": {
+  "notPaired": [
+   [
+    "-0.40",
+    "-0.62"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "-0.40"
+   ]
+  }
+ },
+ "fs-24#0": {
+  "m": "n:randomized",
+  "a": "621",
+  "b": "612",
+  "c": "count"
+ },
+ "fs-24#1": {
+  "m": "effect:ls_mean_difference:hba1c",
+  "a": "-0.62",
+  "b": "-0.62",
+  "c": "estimate"
+ },
+ "fs-24#2": {
+  "reported": {
+   "a": [
+    "120",
+    "-0.40"
+   ]
+  },
+  "notPaired": [
+   [
+    "120",
+    "612"
+   ],
+   [
+    "-0.40",
+    "-0.62"
+   ]
+  ],
+  "reasons": [
+   "study_differs",
+   "no_counterpart"
+  ]
+ },
+ "fs-25#0": {
+  "notPaired": [
+   [
+    "0.75",
+    "-3.1"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "0.75"
+   ],
+   "b": [
+    "-3.1"
+   ]
+  }
+ },
+ "fs-25#1": {
+  "notPaired": [
+   [
+    "2.10",
+    "15.2"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "2.10"
+   ],
+   "b": [
+    "15.2"
+   ]
+  },
+  "reasons": [
+   "effect_type_differs"
+  ]
+ },
+ "fs-26#0": {
+  "notPaired": [
+   [
+    "15.2",
+    "0.152"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "15.2"
+   ]
+  },
+  "reasons": [
+   "scale_differs"
+  ]
+ },
+ "fs-27#0": {
+  "m": "effect:odds_ratio:acr20",
+  "a": "2.10",
+  "b": "2.01",
+  "c": "estimate"
+ },
+ "fs-27#1": {
+  "m": "effect:hazard_ratio:disease_flare",
+  "a": "0.75",
+  "b": "0.75",
+  "c": "estimate"
+ },
+ "fs-28#0": {
+  "m": "effect:mean_difference:hba1c",
+  "a": "-0.62",
+  "b": "-0.62",
+  "c": "estimate"
+ },
+ "fs-28#1": {
+  "reported": {
+   "a": [
+    "-1.2"
+   ]
+  },
+  "notPaired": [
+   [
+    "-1.2",
+    "-0.62"
+   ]
+  ]
+ },
+ "fs-29#0": {
+  "m": "effect:mean_difference:hba1c",
+  "a": "-0.46",
+  "b": "-0.44",
+  "c": "upper"
+ },
+ "fs-29#1": {
+  "m": "effect:mean_difference:body_weight",
+  "a": "-1.2",
+  "b": "-1.2",
+  "c": "estimate"
+ },
+ "fs-29#2": {
+  "reported": {
+   "b": [
+    "-1.9",
+    "-0.5"
+   ]
+  },
+  "reasons": [
+   "ci_unreadable"
+  ]
+ },
+ "fs-30#0": {
+  "reported": {
+   "a": [
+    "2",
+    "1"
+   ],
+   "b": [
+    "3"
+   ]
+  },
+  "notPaired": [
+   [
+    "2",
+    "3"
+   ]
+  ],
+  "reasons": [
+   "per_arm_vs_total"
+  ]
+ },
+ "fs-31#0": {
+  "m": "deaths",
+  "a": "2",
+  "b": "2",
+  "c": "count",
+  "arm": "drug x"
+ },
+ "fs-31#1": {
+  "reported": {
+   "b": [
+    "3"
+   ]
+  },
+  "notPaired": [
+   [
+    "2",
+    "3"
+   ]
+  ],
+  "reasons": [
+   "per_arm_vs_total",
+   "no_counterpart"
+  ]
+ },
+ "fs-32#0": {
+  "m": "deaths",
+  "a": "2",
+  "b": "3",
+  "c": "count",
+  "arm": "drug x"
+ },
+ "fs-32#1": {
+  "m": "deaths",
+  "a": "1",
+  "b": "1",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "fs-33#0": {
+  "notPaired": [
+   [
+    "6.0",
+    "4.6"
+   ],
+   [
+    "2.0",
+    "3.3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "2.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs"
+  ]
+ },
+ "fs-33#1": {
+  "notPaired": [
+   [
+    "6.0",
+    "4.6"
+   ],
+   [
+    "4.0",
+    "3.3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "4.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs"
+  ]
+ },
+ "fs-33#2": {
+  "reported": {
+   "a": [
+    "5.1",
+    "3.8"
+   ]
+  },
+  "notPaired": [
+   [
+    "5.1",
+    "4.6"
+   ],
+   [
+    "3.8",
+    "3.3"
+   ]
+  ],
+  "reasons": [
+   "exposure_adjusted_rate"
+  ]
+ },
+ "fs-33#3": {
+  "notPaired": [
+   [
+    "120",
+    "612"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "120"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs"
+  ]
+ },
+ "fs-34#0": {
+  "notPaired": [
+   [
+    "6.1",
+    "4.6"
+   ],
+   [
+    "5.0",
+    "3.3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "6.1",
+    "5.0"
+   ]
+  },
+  "reasons": [
+   "period_differs"
+  ]
+ },
+ "fs-34#1": {
+  "notPaired": [
+   [
+    "6.0",
+    "6.0"
+   ],
+   [
+    "4.0",
+    "4.0"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "6.0",
+    "4.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs"
+  ]
+ },
+ "fs-35#0": {
+  "m": "incidence:serious",
+  "a": "6.0",
+  "b": "6.4",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "fs-35#1": {
+  "m": "incidence:serious",
+  "a": "4.0",
+  "b": "4.0",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "fs-35#2": {
+  "m": "incidence:serious",
+  "a": "6.1",
+  "b": "6.1",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "fs-35#3": {
+  "m": "incidence:serious",
+  "a": "5.0",
+  "b": "5.0",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "fs-35#4": {
+  "reported": {
+   "b": [
+    "3.8",
+    "3.3"
+   ]
+  },
+  "reasons": [
+   "no_counterpart",
+   "subgroup_differs"
+  ]
+ },
+ "fs-36#0": {
+  "notPaired": [
+   [
+    "3",
+    "2"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "3"
+   ]
+  },
+  "reasons": [
+   "period_differs"
+  ]
+ },
+ "fs-36#1": {
+  "notPaired": [
+   [
+    "-0.80",
+    "-0.62"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "-0.80"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs"
+  ]
+ },
+ "fs-36#2": {
+  "notPaired": [
+   [
+    "2.10",
+    "2.10"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "2.10"
+   ]
+  },
+  "reasons": [
+   "effect_type_differs"
+  ]
+ },
+ "fs-37#0": {
+  "notPaired": [
+   [
+    "6.0",
+    "4.6"
+   ],
+   [
+    "2.0",
+    "3.3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "6.0",
+    "2.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs"
+  ]
+ },
+ "fs-37#1": {
+  "notPaired": [
+   [
+    "5.2",
+    "4.6"
+   ],
+   [
+    "3.1",
+    "3.3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "5.2",
+    "3.1"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs"
+  ]
+ },
+ "fs-37#2": {
+  "notPaired": [
+   [
+    "7.9",
+    "4.6"
+   ],
+   [
+    "4.4",
+    "3.3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "7.9",
+    "4.4"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs"
+  ]
+ },
+ "fs-37#3": {
+  "notPaired": [
+   [
+    "4.6",
+    "4.6"
+   ],
+   [
+    "3.3",
+    "3.3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "4.6"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs"
+  ]
+ },
+ "fs-37#4": {
+  "notPaired": [
+   [
+    "0.70",
+    "0.78"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "0.70"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs"
+  ]
+ },
+ "fs-38#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.9",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "fs-38#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "fs-38#2": {
+  "m": "incidence:serious",
+  "a": "6.6",
+  "b": "5.9",
+  "c": "percent",
+  "arm": "continued"
+ },
+ "fs-38#3": {
+  "m": "incidence:serious",
+  "a": "5.3",
+  "b": "5.3",
+  "c": "percent",
+  "arm": "switch"
+ },
+ "fs-39#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "fs-39#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "fs-39#2": {
+  "reported": {
+   "a": [
+    "8.8",
+    "2.9"
+   ]
+  },
+  "notPaired": [
+   [
+    "8.8",
+    "4.6"
+   ],
+   [
+    "2.9",
+    "3.3"
+   ]
+  ],
+  "reasons": [
+   "subgroup_differs"
+  ]
+ },
+ "fs-40#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "fs-40#1": {
+  "m": "incidence:serious",
+  "a": "11",
+  "b": "10",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "fs-40#2": {
+  "m": "incidence:fatal",
+  "a": "0.3",
+  "b": "0.3",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "fs-40#3": {
+  "m": "incidence:fatal",
+  "a": "0.3",
+  "b": "0.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "sbx-001-randomized-total-transposition#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "621",
+  "c": "count",
+  "arm": "total"
+ },
+ "sbx-001-randomized-total-transposition#1": {
+  "m": "n:randomized",
+  "a": "306",
+  "b": "311",
+  "c": "count",
+  "arm": "orbaglutide"
+ },
+ "sbx-001-randomized-total-transposition#2": {
+  "m": "n:randomized",
+  "a": "306",
+  "b": "310",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "sbx-002-randomized-active-vs-passive-voice#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "612",
+  "c": "count",
+  "arm": "total"
+ },
+ "sbx-003-disposition-table-vs-synopsis-trailing-zero#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "612",
+  "c": "count",
+  "arm": "total"
+ },
+ "sbx-003-disposition-table-vs-synopsis-trailing-zero#1": {
+  "m": "n:treated",
+  "a": "609",
+  "b": "609",
+  "c": "count",
+  "arm": "total"
+ },
+ "sbx-003-disposition-table-vs-synopsis-trailing-zero#2": {
+  "m": "completed_study",
+  "a": "551",
+  "b": "551",
+  "c": "count",
+  "arm": "total"
+ },
+ "sbx-003-disposition-table-vs-synopsis-trailing-zero#3": {
+  "m": "discontinued_study:adverse_event",
+  "a": "3.9",
+  "b": "3.9",
+  "c": "percent",
+  "arm": "orbaglutide"
+ },
+ "sbx-003-disposition-table-vs-synopsis-trailing-zero#4": {
+  "m": "discontinued_study:adverse_event",
+  "a": "2.4",
+  "b": "2.0",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "sbx-003-disposition-table-vs-synopsis-trailing-zero#5": {
+  "m": "discontinued_study:withdrawal_by_subject",
+  "a": "3.6",
+  "b": "3.6",
+  "c": "percent",
+  "arm": "orbaglutide"
+ },
+ "sbx-003-disposition-table-vs-synopsis-trailing-zero#6": {
+  "m": "discontinued_study:withdrawal_by_subject",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "sbx-004-treatment-vs-study-discontinuation#0": {
+  "notPaired": [
+   [
+    "5.2",
+    "3.9"
+   ],
+   [
+    "2.3",
+    "2.0"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "5.2",
+    "2.3"
+   ]
+  },
+  "reasons": [
+   "measure_differs"
+  ]
+ },
+ "sbx-005-rescue-medication-treated#0": {
+  "notPaired": [
+   [
+    "609",
+    "50"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "50"
+   ]
+  }
+ },
+ "sbx-006-primary-and-key-secondary-consistent-comma-p#0": {
+  "m": "effect:ls_mean_difference:hba1c",
+  "a": "-0.62",
+  "b": "-0.62",
+  "c": "estimate"
+ },
+ "sbx-006-primary-and-key-secondary-consistent-comma-p#1": {
+  "m": "effect:ls_mean_difference:hba1c",
+  "a": "<0.001",
+  "b": "<0.001",
+  "c": "p",
+  "componentLevel": true
+ },
+ "sbx-006-primary-and-key-secondary-consistent-comma-p#2": {
+  "m": "effect:ls_mean_difference:body_weight",
+  "a": "-2.1",
+  "b": "-2.1",
+  "c": "estimate"
+ },
+ "sbx-006-primary-and-key-secondary-consistent-comma-p#3": {
+  "m": "effect:ls_mean_difference:body_weight",
+  "a": "<0.001",
+  "b": "<0.001",
+  "c": "p",
+  "componentLevel": true
+ },
+ "sbx-007-two-decimal-ci-conflict#0": {
+  "m": "effect:ls_mean_difference:fev1_trough",
+  "a": "0.10",
+  "b": "0.14",
+  "c": "estimate"
+ },
+ "sbx-007-two-decimal-ci-conflict#1": {
+  "m": "effect:ls_mean_difference:fev1_trough",
+  "a": "0.32",
+  "b": "0.32",
+  "c": "p",
+  "componentLevel": true
+ },
+ "sbx-008-ci-bound-zero-vs-negative#0": {
+  "m": "effect:ls_mean_difference:acq7",
+  "a": "0.00",
+  "b": "0.04",
+  "c": "upper"
+ },
+ "sbx-008-ci-bound-zero-vs-negative#1": {
+  "m": "effect:ls_mean_difference:acq7",
+  "a": "0.050",
+  "b": "0.098",
+  "c": "p"
+ },
+ "sbx-009-hr-consistent-coarser-precision#0": {
+  "m": "effect:hazard_ratio:pfs",
+  "a": "0.72",
+  "b": "0.723",
+  "c": "estimate"
+ },
+ "sbx-009-hr-consistent-coarser-precision#1": {
+  "m": "effect:hazard_ratio:pfs",
+  "a": "<0.001",
+  "b": "<0.001",
+  "c": "p",
+  "componentLevel": true
+ },
+ "sbx-009-hr-consistent-coarser-precision#2": {
+  "m": "median:pfs",
+  "a": "7.4",
+  "b": "7.4",
+  "c": "estimate",
+  "arm": "fenrastat"
+ },
+ "sbx-009-hr-consistent-coarser-precision#3": {
+  "m": "median:pfs",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "estimate",
+  "arm": "docetaxel"
+ },
+ "sbx-010-hr-true-conflict#0": {
+  "m": "effect:hazard_ratio:pfs",
+  "a": "0.72",
+  "b": "0.76",
+  "c": "estimate"
+ },
+ "sbx-010-hr-true-conflict#1": {
+  "m": "effect:rrr:pfs",
+  "a": "28",
+  "b": "24",
+  "c": "estimate"
+ },
+ "sbx-011-hr-vs-risk-difference#0": {
+  "notPaired": [
+   [
+    "0.75",
+    "-3.1"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "0.75"
+   ],
+   "b": [
+    "-3.1"
+   ]
+  }
+ },
+ "sbx-012-stratified-vs-unstratified-hr#0": {
+  "notPaired": [
+   [
+    "0.81",
+    "0.83"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "0.81"
+   ],
+   "b": [
+    "0.83"
+   ]
+  },
+  "reasons": [
+   "model_differs"
+  ]
+ },
+ "sbx-012-stratified-vs-unstratified-hr#1": {
+  "m": "median:os",
+  "a": "15.2",
+  "b": "15.2",
+  "c": "estimate",
+  "arm": "fenrastat"
+ },
+ "sbx-012-stratified-vs-unstratified-hr#2": {
+  "m": "median:os",
+  "a": "12.9",
+  "b": "12.9",
+  "c": "estimate",
+  "arm": "docetaxel"
+ },
+ "sbx-013-bicr-vs-investigator#0": {
+  "m": "effect:hazard_ratio:pfs",
+  "a": "0.58",
+  "b": "0.58",
+  "c": "estimate"
+ },
+ "sbx-013-bicr-vs-investigator#1": {
+  "reported": {
+   "a": [
+    "0.62"
+   ]
+  },
+  "notPaired": [
+   [
+    "0.62",
+    "0.58"
+   ]
+  ],
+  "reasons": [
+   "assessor_differs",
+   "no_counterpart"
+  ]
+ },
+ "sbx-014-fas-vs-pp-and-sensitivity#0": {
+  "m": "effect:ls_mean_difference:hba1c",
+  "a": "-0.62",
+  "b": "-0.62",
+  "c": "estimate"
+ },
+ "sbx-014-fas-vs-pp-and-sensitivity#1": {
+  "reported": {
+   "b": [
+    "-0.66"
+   ]
+  },
+  "notPaired": [
+   [
+    "-0.62",
+    "-0.66"
+   ]
+  ]
+ },
+ "sbx-014-fas-vs-pp-and-sensitivity#2": {
+  "reported": {
+   "b": [
+    "-0.58"
+   ]
+  },
+  "notPaired": [
+   [
+    "-0.62",
+    "-0.58"
+   ]
+  ]
+ },
+ "sbx-015-timepoint-week26-vs-week52#0": {
+  "notPaired": [
+   [
+    "-0.62",
+    "-0.55"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "-0.62"
+   ],
+   "b": [
+    "-0.55"
+   ]
+  }
+ },
+ "sbx-017-response-difference-scale#0": {
+  "m": "responder:acr20",
+  "a": "62.4",
+  "b": "62.4",
+  "c": "percent",
+  "arm": "tazilimod"
+ },
+ "sbx-017-response-difference-scale#1": {
+  "m": "responder:acr20",
+  "a": "47.2",
+  "b": "47.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "sbx-017-response-difference-scale#2": {
+  "notPaired": [
+   [
+    "15.2",
+    "0.152"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "0.152"
+   ]
+  },
+  "reasons": [
+   "scale_differs"
+  ]
+ },
+ "sbx-017-response-difference-scale#3": {
+  "m": "effect:risk_difference:acr20",
+  "a": "<0.001",
+  "b": "<0.001",
+  "c": "p",
+  "componentLevel": true
+ },
+ "sbx-019-teae-with-most-common-and-severity#0": {
+  "m": "incidence:any",
+  "a": "58.4",
+  "b": "58.6",
+  "c": "percent",
+  "arm": "orbaglutide"
+ },
+ "sbx-019-teae-with-most-common-and-severity#1": {
+  "m": "incidence:any",
+  "a": "51.2",
+  "b": "51.1",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "sbx-019-teae-with-most-common-and-severity#2": {
+  "reported": {
+   "a": [
+    "45",
+    "40"
+   ],
+   "b": [
+    "52",
+    "39"
+   ]
+  },
+  "notPaired": [
+   [
+    "45",
+    "52"
+   ],
+   [
+    "40",
+    "39"
+   ]
+  ]
+ },
+ "sbx-020-sae-single-arm-most-commonly#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "orbaglutide"
+ },
+ "sbx-020-sae-single-arm-most-commonly#1": {
+  "reported": {
+   "b": [
+    "3.3"
+   ]
+  },
+  "notPaired": [
+   [
+    "1.0",
+    "3.3"
+   ]
+  ]
+ },
+ "sbx-021-sae-transposed-digits#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "6.4",
+  "c": "percent",
+  "arm": "orbaglutide"
+ },
+ "sbx-021-sae-transposed-digits#1": {
+  "m": "incidence:serious",
+  "a": "14",
+  "b": "14",
+  "c": "count",
+  "arm": "orbaglutide",
+  "componentLevel": true
+ },
+ "sbx-021-sae-transposed-digits#2": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "sbx-021-sae-transposed-digits#3": {
+  "m": "incidence:serious",
+  "a": "10",
+  "b": "10",
+  "c": "count",
+  "arm": "placebo",
+  "componentLevel": true
+ },
+ "sbx-023-sae-and-death-rates-same-clause#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "orbaglutide"
+ },
+ "sbx-023-sae-and-death-rates-same-clause#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "sbx-023-sae-and-death-rates-same-clause#2": {
+  "m": "deaths",
+  "a": "0.3",
+  "b": "0.7",
+  "c": "percent",
+  "arm": "orbaglutide"
+ },
+ "sbx-023-sae-and-death-rates-same-clause#3": {
+  "m": "deaths",
+  "a": "0.3",
+  "b": "0.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "sbx-024-per-arm-deaths-vs-total#0": {
+  "m": "deaths",
+  "a": "2",
+  "b": "2",
+  "c": "count",
+  "arm": "orbaglutide"
+ },
+ "sbx-024-per-arm-deaths-vs-total#1": {
+  "m": "deaths",
+  "a": "1",
+  "b": "1",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "sbx-024-per-arm-deaths-vs-total#2": {
+  "reported": {
+   "b": [
+    "3"
+   ]
+  },
+  "notPaired": [
+   [
+    "2",
+    "3"
+   ]
+  ],
+  "reasons": [
+   "no_counterpart",
+   "per_arm_vs_total"
+  ]
+ },
+ "sbx-025-single-arm-deaths#0": {
+  "notPaired": [
+   [
+    "2",
+    "3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "2"
+   ]
+  }
+ },
+ "sbx-026-deaths-treatment-emergent-vs-all#0": {
+  "notPaired": [
+   [
+    "3",
+    "5"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "3"
+   ],
+   "b": [
+    "5"
+   ]
+  }
+ },
+ "sbx-026-deaths-treatment-emergent-vs-all#1": {
+  "notPaired": [
+   [
+    "2",
+    "3"
+   ],
+   [
+    "1",
+    "2"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "2",
+    "1"
+   ]
+  }
+ },
+ "sbx-027-deaths-true-conflict#0": {
+  "m": "deaths",
+  "a": "4",
+  "b": "5",
+  "c": "count",
+  "arm": "total"
+ },
+ "sbx-027-deaths-true-conflict#1": {
+  "m": "deaths",
+  "a": "3",
+  "b": "3",
+  "c": "count",
+  "arm": "orbaglutide"
+ },
+ "sbx-027-deaths-true-conflict#2": {
+  "m": "deaths",
+  "a": "1",
+  "b": "2",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "sbx-029-open-label-extension-period#0": {
+  "notPaired": [
+   [
+    "6.6",
+    "4.6"
+   ],
+   [
+    "5.3",
+    "3.3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "6.6",
+    "5.3"
+   ]
+  }
+ },
+ "sbx-030-exposure-adjusted-vs-incidence#0": {
+  "notPaired": [
+   [
+    "5.1",
+    "4.6"
+   ],
+   [
+    "3.8",
+    "3.3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "5.1",
+    "3.8"
+   ]
+  }
+ },
+ "sbx-031-pooled-vs-single-study#0": {
+  "notPaired": [
+   [
+    "4.9",
+    "4.6"
+   ],
+   [
+    "3.5",
+    "3.3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "4.9",
+    "3.5"
+   ]
+  },
+  "reasons": [
+   "pool_vs_study"
+  ]
+ },
+ "sbx-031-pooled-vs-single-study#1": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "orbaglutide"
+ },
+ "sbx-031-pooled-vs-single-study#2": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "sbx-032-different-studies-randomized#0": {
+  "reported": {
+   "a": [
+    "120"
+   ]
+  },
+  "notPaired": [
+   [
+    "120",
+    "612"
+   ]
+  ],
+  "reasons": [
+   "study_differs",
+   "no_counterpart"
+  ]
+ },
+ "sbx-032-different-studies-randomized#1": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "612",
+  "c": "count",
+  "arm": "total"
+ },
+ "sbx-033-n-percent-layout#0": {
+  "m": "incidence:serious",
+  "a": "14",
+  "b": "14",
+  "c": "count",
+  "arm": "orbaglutide",
+  "componentLevel": true
+ },
+ "sbx-033-n-percent-layout#1": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "orbaglutide"
+ },
+ "sbx-033-n-percent-layout#2": {
+  "m": "incidence:serious",
+  "a": "10",
+  "b": "10",
+  "c": "count",
+  "arm": "placebo",
+  "componentLevel": true
+ },
+ "sbx-033-n-percent-layout#3": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "sbx-033-n-percent-layout#4": {
+  "m": "incidence:disc_treatment",
+  "a": "3.6",
+  "b": "3.6",
+  "c": "percent",
+  "arm": "orbaglutide"
+ },
+ "sbx-033-n-percent-layout#5": {
+  "m": "incidence:disc_treatment",
+  "a": "1.6",
+  "b": "1.6",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "sbx-034-ambiguous-overall-rate#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "4.6"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "4.6"
+   ]
+  }
+ },
+ "sbx-035-enrolled-vs-randomized-screened#0": {
+  "m": "n:screened",
+  "a": "1024",
+  "b": "1024",
+  "c": "count",
+  "arm": "total"
+ },
+ "sbx-035-enrolled-vs-randomized-screened#1": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "612",
+  "c": "count",
+  "arm": "total"
+ },
+ "sbx-035-enrolled-vs-randomized-screened#2": {
+  "reported": {
+   "b": [
+    "640"
+   ]
+  },
+  "notPaired": [
+   [
+    "612",
+    "640"
+   ]
+  ]
+ },
+ "sbx-036-completed-true-conflict#0": {
+  "m": "completed_study",
+  "a": "551",
+  "b": "515",
+  "c": "count",
+  "arm": "total"
+ },
+ "sbx-036-completed-true-conflict#1": {
+  "m": "completed_study",
+  "a": "271",
+  "b": "271",
+  "c": "count",
+  "arm": "orbaglutide"
+ },
+ "sbx-036-completed-true-conflict#2": {
+  "m": "completed_study",
+  "a": "280",
+  "b": "244",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "sbx-036-completed-true-conflict#3": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "612",
+  "c": "count",
+  "arm": "total"
+ },
+ "sbx-038-p-values-bound-and-exact#0": {
+  "notPaired": [
+   [
+    "<0.001",
+    "0.0004"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "<0.001"
+   ]
+  },
+  "reasons": [
+   "bound_not_value"
+  ]
+ },
+ "sbx-038-p-values-bound-and-exact#1": {
+  "m": "effect:",
+  "a": "0.003",
+  "b": "0.03",
+  "c": "p"
+ },
+ "sbx-038-p-values-bound-and-exact#2": {
+  "m": "effect:ls_mean_difference:hba1c",
+  "a": "-0.62",
+  "b": "-0.62",
+  "c": "estimate"
+ },
+ "sbx-038-p-values-bound-and-exact#3": {
+  "reported": {
+   "b": [
+    "-2.1"
+   ]
+  }
+ },
+ "sbx-039-ci-level-90-vs-95#0": {
+  "m": "effect:ls_mean_difference:hba1c",
+  "a": "-0.08",
+  "b": "-0.08",
+  "c": "estimate"
+ },
+ "sbx-039-ci-level-90-vs-95#1": {
+  "notPaired": [
+   [
+    "-0.21",
+    "-0.19"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "-0.21"
+   ]
+  },
+  "reasons": [
+   "ci_level_differs"
+  ]
+ },
+ "sbx-040-coarser-precision-agreement#0": {
+  "m": "incidence:disc_treatment",
+  "a": "4",
+  "b": "3.6",
+  "c": "percent",
+  "arm": "orbaglutide"
+ },
+ "sbx-040-coarser-precision-agreement#1": {
+  "m": "incidence:disc_treatment",
+  "a": "2",
+  "b": "1.6",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "sbx-041-per-arm-ls-means-vs-difference#0": {
+  "notPaired": [
+   [
+    "-1.10",
+    "-0.62"
+   ],
+   [
+    "-0.48",
+    "-0.62"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "-0.62"
+   ]
+  }
+ },
+ "sbx-042-randomized-vs-treated-n#0": {
+  "m": "n:treated",
+  "a": "609",
+  "b": "612",
+  "c": "count",
+  "arm": "total"
+ },
+ "sbx-042-randomized-vs-treated-n#1": {
+  "m": "n:treated",
+  "a": "304",
+  "b": "306",
+  "c": "count",
+  "arm": "orbaglutide"
+ },
+ "sbx-042-randomized-vs-treated-n#2": {
+  "m": "n:treated",
+  "a": "305",
+  "b": "306",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "sbx-042-randomized-vs-treated-n#3": {
+  "reported": {
+   "a": [
+    "612"
+   ]
+  },
+  "notPaired": [
+   [
+    "612",
+    "612"
+   ],
+   [
+    "306",
+    "306"
+   ]
+  ]
+ },
+ "pvs-01#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "5.0"
+   ],
+   [
+    "3.3",
+    "3.1"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "4.6",
+    "3.3"
+   ]
+  },
+  "reasons": [
+   "pool_vs_study"
+  ]
+ },
+ "pvs-02#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "4.9"
+   ],
+   [
+    "3.3",
+    "3.3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "4.6",
+    "3.3"
+   ]
+  },
+  "reasons": [
+   "pool_vs_study",
+   "pool_membership_unidentified"
+  ]
+ },
+ "pvs-04#0": {
+  "m": "effect:hazard_ratio:ttf_exacerbation",
+  "a": "0.76",
+  "b": "0.71",
+  "c": "estimate"
+ },
+ "pvs-04#1": {
+  "reported": {
+   "a": [
+    "0.72"
+   ]
+  },
+  "notPaired": [
+   [
+    "0.72",
+    "0.71"
+   ]
+  ],
+  "reasons": [
+   "pool_vs_study",
+   "pool_membership_unidentified"
+  ]
+ },
+ "pvs-04#2": {
+  "reported": {
+   "a": [
+    "0.69"
+   ]
+  },
+  "notPaired": [
+   [
+    "0.69",
+    "0.71"
+   ]
+  ],
+  "reasons": [
+   "study_differs",
+   "no_counterpart"
+  ]
+ },
+ "pvs-05#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "612",
+  "c": "count",
+  "arm": "total"
+ },
+ "pvs-05#1": {
+  "reported": {
+   "a": [
+    "1227"
+   ]
+  },
+  "notPaired": [
+   [
+    "1227",
+    "612"
+   ]
+  ],
+  "reasons": [
+   "pool_vs_study"
+  ]
+ },
+ "pvs-05#2": {
+  "reported": {
+   "a": [
+    "1219"
+   ]
+  },
+  "notPaired": [
+   [
+    "1219",
+    "608"
+   ]
+  ],
+  "reasons": [
+   "pool_vs_study"
+  ]
+ },
+ "pvs-06#0": {
+  "m": "n:randomized",
+  "a": "621",
+  "b": "612",
+  "c": "count",
+  "arm": "total"
+ },
+ "pvs-06#1": {
+  "reported": {
+   "a": [
+    "1227"
+   ]
+  },
+  "notPaired": [
+   [
+    "1227",
+    "612"
+   ]
+  ],
+  "reasons": [
+   "pool_vs_study"
+  ]
+ },
+ "pvs-07#0": {
+  "m": "n:randomized",
+  "a": "615",
+  "b": "615",
+  "c": "count",
+  "arm": "total"
+ },
+ "pvs-07#1": {
+  "m": "n:randomized",
+  "a": "310",
+  "b": "310",
+  "c": "count",
+  "arm": "tirnavotide"
+ },
+ "pvs-07#2": {
+  "m": "n:randomized",
+  "a": "305",
+  "b": "305",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "pvs-07#3": {
+  "reported": {
+   "a": [
+    "1227"
+   ]
+  },
+  "notPaired": [
+   [
+    "1227",
+    "615"
+   ]
+  ],
+  "reasons": [
+   "pool_vs_study",
+   "pool_membership_unidentified"
+  ]
+ },
+ "pvs-08#0": {
+  "m": "n:randomized",
+  "a": "615",
+  "b": "617",
+  "c": "count",
+  "arm": "total"
+ },
+ "pvs-08#1": {
+  "m": "n:randomized",
+  "a": "310",
+  "b": "312",
+  "c": "count",
+  "arm": "tirnavotide"
+ },
+ "pvs-08#2": {
+  "m": "n:randomized",
+  "a": "305",
+  "b": "305",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "pvs-08#3": {
+  "reported": {
+   "a": [
+    "1227"
+   ]
+  },
+  "notPaired": [
+   [
+    "1227",
+    "617"
+   ]
+  ],
+  "reasons": [
+   "pool_vs_study",
+   "pool_membership_unidentified"
+  ]
+ },
+ "pvs-09#0": {
+  "m": "incidence:serious",
+  "a": "5.1",
+  "b": "5.1",
+  "c": "percent",
+  "arm": "tirnavotide"
+ },
+ "pvs-09#1": {
+  "m": "incidence:serious",
+  "a": "3.1",
+  "b": "3.1",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "pvs-09#2": {
+  "m": "incidence:disc_treatment",
+  "a": "3.9",
+  "b": "3.9",
+  "c": "percent",
+  "arm": "tirnavotide"
+ },
+ "pvs-09#3": {
+  "m": "incidence:disc_treatment",
+  "a": "2.0",
+  "b": "2.0",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "pvs-10#0": {
+  "m": "incidence:serious",
+  "a": "6.4",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "tirnavotide"
+ },
+ "pvs-10#1": {
+  "m": "incidence:serious",
+  "a": "3.1",
+  "b": "3.1",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "pvs-11#0": {
+  "notPaired": [
+   [
+    "5.0",
+    "5.3"
+   ],
+   [
+    "3.1",
+    "3.4"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "5.0",
+    "3.1"
+   ]
+  },
+  "reasons": [
+   "pool_membership_differs"
+  ]
+ },
+ "pvs-12#0": {
+  "notPaired": [
+   [
+    "78.9",
+    "78.9"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "78.9"
+   ],
+   "b": [
+    "78.9"
+   ]
+  },
+  "reasons": [
+   "pool_membership_unidentified",
+   "pool_membership_differs"
+  ]
+ },
+ "pvs-12#1": {
+  "notPaired": [
+   [
+    "64.2",
+    "78.9"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "64.2"
+   ]
+  },
+  "reasons": [
+   "pool_membership_unidentified",
+   "pool_membership_differs"
+  ]
+ },
+ "pvs-13#0": {
+  "notPaired": [
+   [
+    "3.8",
+    "6.7"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "3.8"
+   ],
+   "b": [
+    "6.7"
+   ]
+  }
+ },
+ "pvs-14#0": {
+  "notPaired": [
+   [
+    "2.1",
+    "2.1"
+   ],
+   [
+    "1.0",
+    "1.0"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "2.1",
+    "1.0"
+   ]
+  },
+  "reasons": [
+   "exposure_adjusted_rate",
+   "measure_differs"
+  ]
+ },
+ "pvs-15#0": {
+  "m": "eair:",
+  "a": "2.1",
+  "b": "1.2",
+  "c": "estimate",
+  "arm": "ruxadolin"
+ },
+ "pvs-15#1": {
+  "m": "eair:",
+  "a": "1.0",
+  "b": "1.0",
+  "c": "estimate",
+  "arm": "placebo"
+ },
+ "pvs-16#0": {
+  "notPaired": [
+   [
+    "3.0",
+    "2.4"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "3.0"
+   ],
+   "b": [
+    "2.4"
+   ]
+  },
+  "reasons": [
+   "measure_differs",
+   "exposure_adjusted_rate"
+  ]
+ },
+ "pvs-17#0": {
+  "m": "exposure:patient_years",
+  "a": "2134",
+  "b": "2143",
+  "c": "estimate"
+ },
+ "pvs-17#1": {
+  "m": "exposure:duration",
+  "a": "812",
+  "b": "812",
+  "c": "count"
+ },
+ "pvs-17#2": {
+  "reported": {
+   "a": [
+    "1108"
+   ]
+  },
+  "notPaired": [
+   [
+    "1108",
+    "812"
+   ]
+  ]
+ },
+ "pvs-18#0": {
+  "notPaired": [
+   [
+    "2.1",
+    "2.1"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "2.1"
+   ],
+   "b": [
+    "2.1"
+   ]
+  }
+ },
+ "pvs-19#0": {
+  "m": "incidence:serious:pt:infection",
+  "a": "2.6",
+  "b": "2.6",
+  "c": "percent",
+  "arm": "ruxadolin"
+ },
+ "pvs-19#1": {
+  "m": "incidence:serious:pt:infection",
+  "a": "1.4",
+  "b": "1.6",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "pvs-20#0": {
+  "notPaired": [
+   [
+    "1245",
+    "1245"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "1245"
+   ],
+   "b": [
+    "1245"
+   ]
+  },
+  "reasons": [
+   "pool_membership_unidentified"
+  ]
+ },
+ "pvs-21#0": {
+  "reported": {
+   "b": [
+    "12.4"
+   ]
+  },
+  "reasons": [
+   "frequency_category",
+   "no_counterpart"
+  ]
+ },
+ "pvs-21#1": {
+  "reported": {
+   "b": [
+    "9.6"
+   ]
+  },
+  "reasons": [
+   "frequency_category",
+   "no_counterpart"
+  ]
+ },
+ "pvs-22#0": {
+  "m": "effect:ls_mean_difference:hba1c",
+  "a": "-0.71",
+  "b": "-0.71",
+  "c": "estimate"
+ },
+ "pvs-23#0": {
+  "notPaired": [
+   [
+    "-0.71",
+    "-0.71"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "-0.71"
+   ],
+   "b": [
+    "-0.71"
+   ]
+  },
+  "reasons": [
+   "pool_vs_study"
+  ]
+ },
+ "pvs-24#0": {
+  "m": "incidence:serious",
+  "a": "5.2",
+  "b": "5.2",
+  "c": "percent",
+  "arm": "zelbrutinib"
+ },
+ "pvs-24#1": {
+  "m": "incidence:serious",
+  "a": "3.4",
+  "b": "3.4",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "pvs-25#0": {
+  "notPaired": [
+   [
+    "5.2",
+    "4.9"
+   ],
+   [
+    "5.2",
+    "5.4"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "5.2"
+   ]
+  },
+  "reasons": [
+   "arm_differs"
+  ]
+ },
+ "pvs-25#1": {
+  "m": "incidence:serious",
+  "a": "3.4",
+  "b": "3.4",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "pvs-26#0": {
+  "notPaired": [
+   [
+    "9",
+    "12"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "9"
+   ],
+   "b": [
+    "12"
+   ]
+  },
+  "reasons": [
+   "cutoff_differs"
+  ]
+ },
+ "pvs-27#0": {
+  "m": "deaths",
+  "a": "9",
+  "b": "9",
+  "c": "count",
+  "arm": "total"
+ },
+ "pvs-27#1": {
+  "m": "deaths",
+  "a": "6",
+  "b": "6",
+  "c": "count",
+  "arm": "vexatinib"
+ },
+ "pvs-27#2": {
+  "m": "deaths",
+  "a": "3",
+  "b": "3",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "pvs-28#0": {
+  "m": "deaths",
+  "a": "3",
+  "b": "3",
+  "c": "count",
+  "arm": "total"
+ },
+ "pvs-28#1": {
+  "m": "deaths",
+  "a": "2",
+  "b": "2",
+  "c": "count",
+  "arm": "tirnavotide"
+ },
+ "pvs-28#2": {
+  "m": "deaths",
+  "a": "1",
+  "b": "1",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "pvs-28#3": {
+  "reported": {
+   "a": [
+    "14"
+   ]
+  },
+  "notPaired": [
+   [
+    "14",
+    "3"
+   ]
+  ],
+  "reasons": [
+   "pool_vs_study",
+   "pool_membership_unidentified"
+  ]
+ },
+ "pvs-29#0": {
+  "notPaired": [
+   [
+    "68.4",
+    "68.4"
+   ],
+   [
+    "61.0",
+    "61.0"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "68.4",
+    "61.0"
+   ]
+  },
+  "reasons": [
+   "pool_vs_study"
+  ]
+ },
+ "pvs-29#1": {
+  "notPaired": [
+   [
+    "5.0",
+    "4.6"
+   ],
+   [
+    "3.1",
+    "3.3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "5.0",
+    "3.1"
+   ]
+  },
+  "reasons": [
+   "pool_vs_study"
+  ]
+ },
+ "pvs-29#2": {
+  "notPaired": [
+   [
+    "4.2",
+    "3.9"
+   ],
+   [
+    "2.0",
+    "2.0"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "4.2"
+   ]
+  }
+ },
+ "pvs-30#0": {
+  "m": "responder:easi75",
+  "a": "41.3",
+  "b": "41",
+  "c": "percent",
+  "arm": "dupraxinab"
+ },
+ "pvs-30#1": {
+  "m": "responder:easi75",
+  "a": "22.8",
+  "b": "23",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "pvs-30#2": {
+  "m": "effect:risk_difference:easi75",
+  "a": "18.5",
+  "b": "18.5",
+  "c": "estimate"
+ },
+ "pvs-31#0": {
+  "notPaired": [
+   [
+    "17.9",
+    "18.5"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "17.9"
+   ],
+   "b": [
+    "18.5"
+   ]
+  },
+  "reasons": [
+   "effect_type_differs"
+  ]
+ },
+ "pvs-32#0": {
+  "notPaired": [
+   [
+    "44.0",
+    "41.3"
+   ],
+   [
+    "23.5",
+    "22.8"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "44.0",
+    "23.5"
+   ]
+  },
+  "reasons": [
+   "population_differs"
+  ]
+ },
+ "pvs-33#0": {
+  "m": "responder:orr",
+  "a": "38.6",
+  "b": "38.6",
+  "c": "percent"
+ },
+ "pvs-33#1": {
+  "reported": {
+   "b": [
+    "40.0"
+   ]
+  },
+  "notPaired": [
+   [
+    "38.6",
+    "40.0"
+   ]
+  ],
+  "reasons": [
+   "part_differs",
+   "no_counterpart"
+  ]
+ },
+ "pvs-34#0": {
+  "m": "n:randomized",
+  "a": "615",
+  "b": "615",
+  "c": "count",
+  "arm": "total"
+ },
+ "pvs-34#1": {
+  "m": "n:treated",
+  "a": "612",
+  "b": "612",
+  "c": "count",
+  "arm": "total"
+ },
+ "pvs-35#0": {
+  "notPaired": [
+   [
+    "3.8",
+    "3.1"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "3.8"
+   ],
+   "b": [
+    "3.1"
+   ]
+  }
+ },
+ "pvs-36#0": {
+  "m": "eair:",
+  "a": "2.1",
+  "b": "2.1",
+  "c": "estimate"
+ },
+ "pvs-36#1": {
+  "m": "eair:",
+  "a": "1.6",
+  "b": "1.9",
+  "c": "estimate"
+ },
+ "pvs-36#2": {
+  "reported": {
+   "a": [
+    "1.4",
+    "0.9"
+   ]
+  },
+  "notPaired": [
+   [
+    "1.4",
+    "1.9"
+   ],
+   [
+    "0.9",
+    "1.9"
+   ]
+  ],
+  "reasons": [
+   "no_counterpart",
+   "period_differs"
+  ]
+ },
+ "pvs-37#0": {
+  "m": "n:randomized",
+  "a": "1227",
+  "b": "1219",
+  "c": "count",
+  "arm": "total"
+ },
+ "pvs-37#1": {
+  "reported": {
+   "a": [
+    "1219"
+   ]
+  },
+  "notPaired": [
+   [
+    "1219",
+    "1219"
+   ]
+  ],
+  "reasons": [
+   "no_counterpart"
+  ]
+ },
+ "pvs-38#0": {
+  "notPaired": [
+   [
+    "5.5",
+    "4.6"
+   ],
+   [
+    "2.9",
+    "3.3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "5.5",
+    "2.9"
+   ]
+  },
+  "reasons": [
+   "study_differs"
+  ]
+ },
+ "pvs-39#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "621",
+  "c": "count",
+  "arm": "total"
+ },
+ "pvs-39#1": {
+  "reported": {
+   "a": [
+    "609"
+   ]
+  },
+  "notPaired": [
+   [
+    "609",
+    "621"
+   ]
+  ],
+  "reasons": [
+   "study_differs",
+   "no_counterpart"
+  ]
+ },
+ "lu-01-table1-placebo-first-columns-consistent#0": {
+  "m": "incidence:any:pt:nausea",
+  "a": "18",
+  "b": "18.0",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-01-table1-placebo-first-columns-consistent#1": {
+  "m": "incidence:any:pt:nausea",
+  "a": "5",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-01-table1-placebo-first-columns-consistent#2": {
+  "m": "incidence:any:pt:diarrhea",
+  "a": "9",
+  "b": "8.9",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-01-table1-placebo-first-columns-consistent#3": {
+  "m": "incidence:any:pt:diarrhea",
+  "a": "4",
+  "b": "4.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-01-table1-placebo-first-columns-consistent#4": {
+  "m": "incidence:any:pt:vomiting",
+  "a": "8",
+  "b": "7.5",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-01-table1-placebo-first-columns-consistent#5": {
+  "m": "incidence:any:pt:vomiting",
+  "a": "1",
+  "b": "1.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-01-table1-placebo-first-columns-consistent#6": {
+  "m": "incidence:any:pt:constipation",
+  "a": "6",
+  "b": "5.6",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-01-table1-placebo-first-columns-consistent#7": {
+  "m": "incidence:any:pt:constipation",
+  "a": "3",
+  "b": "2.6",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-01-table1-placebo-first-columns-consistent#8": {
+  "m": "n:treated",
+  "a": "305",
+  "b": "305",
+  "c": "count",
+  "arm": "dapralutide"
+ },
+ "lu-01-table1-placebo-first-columns-consistent#9": {
+  "m": "n:treated",
+  "a": "303",
+  "b": "303",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "lu-02-table1-nausea-and-header-n-conflict#0": {
+  "m": "incidence:any:pt:nausea",
+  "a": "16",
+  "b": "18.0",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-02-table1-nausea-and-header-n-conflict#1": {
+  "m": "incidence:any:pt:nausea",
+  "a": "5",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-02-table1-nausea-and-header-n-conflict#2": {
+  "m": "incidence:any:pt:diarrhea",
+  "a": "9",
+  "b": "8.9",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-02-table1-nausea-and-header-n-conflict#3": {
+  "m": "incidence:any:pt:diarrhea",
+  "a": "4",
+  "b": "4.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-02-table1-nausea-and-header-n-conflict#4": {
+  "m": "incidence:any:pt:vomiting",
+  "a": "8",
+  "b": "7.5",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-02-table1-nausea-and-header-n-conflict#5": {
+  "m": "incidence:any:pt:vomiting",
+  "a": "1",
+  "b": "1.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-02-table1-nausea-and-header-n-conflict#6": {
+  "m": "n:treated",
+  "a": "306",
+  "b": "305",
+  "c": "count",
+  "arm": "dapralutide"
+ },
+ "lu-02-table1-nausea-and-header-n-conflict#7": {
+  "m": "n:treated",
+  "a": "303",
+  "b": "303",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "lu-02-table1-nausea-and-header-n-conflict#8": {
+  "reported": {
+   "b": [
+    "306"
+   ]
+  },
+  "notPaired": [
+   [
+    "306",
+    "306"
+   ]
+  ]
+ },
+ "lu-03-gi-narrative-subrates-and-event-shares#0": {
+  "m": "incidence:any:soc:gastrointestinal",
+  "a": "38",
+  "b": "37.7",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-03-gi-narrative-subrates-and-event-shares#1": {
+  "m": "incidence:any:soc:gastrointestinal",
+  "a": "15",
+  "b": "15.2",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-03-gi-narrative-subrates-and-event-shares#2": {
+  "m": "incidence:any:pt:nausea",
+  "a": "18",
+  "b": "18.0",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-03-gi-narrative-subrates-and-event-shares#3": {
+  "m": "incidence:any:pt:nausea",
+  "a": "5",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-03-gi-narrative-subrates-and-event-shares#4": {
+  "m": "incidence:any:pt:diarrhea",
+  "a": "9",
+  "b": "8.9",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-03-gi-narrative-subrates-and-event-shares#5": {
+  "m": "incidence:any:pt:diarrhea",
+  "a": "4",
+  "b": "4.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-03-gi-narrative-subrates-and-event-shares#6": {
+  "m": "incidence:any:pt:vomiting",
+  "a": "8",
+  "b": "7.5",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-03-gi-narrative-subrates-and-event-shares#7": {
+  "m": "incidence:any:pt:vomiting",
+  "a": "1",
+  "b": "1.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-03-gi-narrative-subrates-and-event-shares#8": {
+  "m": "incidence:disc_treatment:soc:gastrointestinal",
+  "a": "3.0",
+  "b": "3.0",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-03-gi-narrative-subrates-and-event-shares#9": {
+  "m": "incidence:disc_treatment:soc:gastrointestinal",
+  "a": "0.3",
+  "b": "0.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-03-gi-narrative-subrates-and-event-shares#10": {
+  "reported": {
+   "a": [
+    "85"
+   ],
+   "b": [
+    "84.9"
+   ]
+  },
+  "notPaired": [
+   [
+    "85",
+    "84.9"
+   ]
+  ],
+  "reasons": [
+   "event_share_not_incidence"
+  ]
+ },
+ "lu-04-exposure-sentence-pooled-vs-single-study-csr#0": {
+  "notPaired": [
+   [
+    "1219",
+    "608"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "1219"
+   ]
+  },
+  "reasons": [
+   "pool_vs_study",
+   "pool_membership_unidentified"
+  ]
+ },
+ "lu-04-exposure-sentence-pooled-vs-single-study-csr#1": {
+  "notPaired": [
+   [
+    "612",
+    "305"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "612"
+   ]
+  }
+ },
+ "lu-04-exposure-sentence-pooled-vs-single-study-csr#2": {
+  "notPaired": [
+   [
+    "612",
+    "612"
+   ]
+  ]
+ },
+ "lu-04-exposure-sentence-pooled-vs-single-study-csr#3": {
+  "notPaired": [
+   [
+    "24.1",
+    "24.3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "24.1"
+   ]
+  }
+ },
+ "lu-05-exposure-sentence-vs-iss-same-pool-subset-conflict#0": {
+  "m": "n:treated",
+  "a": "1219",
+  "b": "1219",
+  "c": "count",
+  "arm": "total"
+ },
+ "lu-05-exposure-sentence-vs-iss-same-pool-subset-conflict#1": {
+  "m": "n:treated",
+  "a": "612",
+  "b": "612",
+  "c": "count",
+  "arm": "dapralutide"
+ },
+ "lu-05-exposure-sentence-vs-iss-same-pool-subset-conflict#2": {
+  "m": "n:treated",
+  "a": "607",
+  "b": "607",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "lu-05-exposure-sentence-vs-iss-same-pool-subset-conflict#3": {
+  "m": "exposure:duration",
+  "a": "541",
+  "b": "514",
+  "c": "count",
+  "arm": "dapralutide"
+ },
+ "lu-05-exposure-sentence-vs-iss-same-pool-subset-conflict#4": {
+  "m": "exposure:mean_duration",
+  "a": "24.1",
+  "b": "24.1",
+  "c": "estimate",
+  "arm": "dapralutide"
+ },
+ "lu-05-exposure-sentence-vs-iss-same-pool-subset-conflict#5": {
+  "reported": {
+   "b": [
+    "588"
+   ]
+  },
+  "notPaired": [
+   [
+    "541",
+    "588"
+   ]
+  ]
+ },
+ "lu-06-approximate-and-bound-exposure-statements#0": {
+  "reported": {
+   "a": [
+    "~1200"
+   ]
+  },
+  "notPaired": [
+   [
+    "~1200",
+    "1219"
+   ]
+  ],
+  "reasons": [
+   "approximate_value"
+  ]
+ },
+ "lu-06-approximate-and-bound-exposure-statements#1": {
+  "reported": {
+   "a": [
+    ">500"
+   ]
+  },
+  "notPaired": [
+   [
+    ">500",
+    "541"
+   ]
+  ],
+  "reasons": [
+   "bound_not_value"
+  ]
+ },
+ "lu-07-pooled-label-table-vs-single-study-csr-table#0": {
+  "notPaired": [
+   [
+    "17",
+    "18.0"
+   ],
+   [
+    "5",
+    "4.6"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "17"
+   ]
+  },
+  "reasons": [
+   "pool_vs_study",
+   "pool_membership_unidentified"
+  ]
+ },
+ "lu-07-pooled-label-table-vs-single-study-csr-table#1": {
+  "notPaired": [
+   [
+    "9",
+    "8.9"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "9"
+   ]
+  },
+  "reasons": [
+   "pool_vs_study",
+   "pool_membership_unidentified"
+  ]
+ },
+ "lu-07-pooled-label-table-vs-single-study-csr-table#2": {
+  "notPaired": [
+   [
+    "7",
+    "7.5"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "7"
+   ]
+  },
+  "reasons": [
+   "pool_vs_study",
+   "pool_membership_unidentified"
+  ]
+ },
+ "lu-07-pooled-label-table-vs-single-study-csr-table#3": {
+  "notPaired": [
+   [
+    "612",
+    "305"
+   ],
+   [
+    "607",
+    "303"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "612"
+   ]
+  },
+  "reasons": [
+   "pool_vs_study",
+   "pool_membership_unidentified"
+  ]
+ },
+ "lu-08-threshold-omission-is-not-a-value#0": {
+  "m": "incidence:any:pt:nausea",
+  "a": "18",
+  "b": "18.0",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-08-threshold-omission-is-not-a-value#1": {
+  "m": "incidence:any:pt:nausea",
+  "a": "5",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-08-threshold-omission-is-not-a-value#2": {
+  "m": "incidence:any:pt:diarrhea",
+  "a": "9",
+  "b": "8.9",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-08-threshold-omission-is-not-a-value#3": {
+  "m": "incidence:any:pt:diarrhea",
+  "a": "4",
+  "b": "4.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-08-threshold-omission-is-not-a-value#4": {
+  "m": "incidence:any:pt:vomiting",
+  "a": "8",
+  "b": "7.5",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-08-threshold-omission-is-not-a-value#5": {
+  "m": "incidence:any:pt:vomiting",
+  "a": "1",
+  "b": "1.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-08-threshold-omission-is-not-a-value#6": {
+  "reported": {
+   "b": [
+    "5.2",
+    "5.6"
+   ]
+  },
+  "reasons": [
+   "no_counterpart"
+  ]
+ },
+ "lu-08-threshold-omission-is-not-a-value#7": {
+  "reported": {
+   "b": [
+    "5.9",
+    "2.0"
+   ]
+  },
+  "reasons": [
+   "no_counterpart"
+  ]
+ },
+ "lu-08-threshold-omission-is-not-a-value#8": {
+  "reported": {
+   "b": [
+    "4.9"
+   ]
+  },
+  "reasons": [
+   "no_counterpart"
+  ]
+ },
+ "lu-08-threshold-omission-is-not-a-value#9": {
+  "m": "n:treated",
+  "a": "305",
+  "b": "305",
+  "c": "count",
+  "arm": "dapralutide"
+ },
+ "lu-08-threshold-omission-is-not-a-value#10": {
+  "m": "n:treated",
+  "a": "303",
+  "b": "303",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "lu-09-threshold-boundary-rounded-row#0": {
+  "m": "incidence:any:pt:headache",
+  "a": "5",
+  "b": "4.9",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-09-threshold-boundary-rounded-row#1": {
+  "m": "incidence:any:pt:headache",
+  "a": "3",
+  "b": "3.0",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-09-threshold-boundary-rounded-row#2": {
+  "m": "incidence:any:pt:nausea",
+  "a": "18",
+  "b": "18.0",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-09-threshold-boundary-rounded-row#3": {
+  "m": "incidence:any:pt:nausea",
+  "a": "5",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-10-grouped-term-vs-preferred-term#0": {
+  "m": "incidence:any:grouped:injection site reaction",
+  "a": "12",
+  "b": "11.7",
+  "c": "percent",
+  "arm": "lebranumab"
+ },
+ "lu-10-grouped-term-vs-preferred-term#1": {
+  "m": "incidence:any:grouped:injection site reaction",
+  "a": "4",
+  "b": "4.0",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-10-grouped-term-vs-preferred-term#2": {
+  "reported": {
+   "b": [
+    "6.2"
+   ]
+  },
+  "notPaired": [
+   [
+    "12",
+    "6.2"
+   ]
+  ],
+  "reasons": [
+   "measure_differs",
+   "no_counterpart"
+  ]
+ },
+ "lu-10-grouped-term-vs-preferred-term#3": {
+  "reported": {
+   "a": [
+    "9"
+   ]
+  },
+  "notPaired": [
+   [
+    "9",
+    "5.5"
+   ]
+  ],
+  "reasons": [
+   "measure_differs",
+   "no_counterpart"
+  ]
+ },
+ "lu-11-oncology-narrative-sae-fatal-grade-discontinuation#0": {
+  "m": "incidence:serious",
+  "a": "38",
+  "b": "37.8",
+  "c": "percent",
+  "arm": "total"
+ },
+ "lu-11-oncology-narrative-sae-fatal-grade-discontinuation#1": {
+  "m": "incidence:serious:pt:pneumonia",
+  "a": "5",
+  "b": "5.1",
+  "c": "percent"
+ },
+ "lu-11-oncology-narrative-sae-fatal-grade-discontinuation#2": {
+  "m": "incidence:serious:pt:pneumonitis",
+  "a": "3.2",
+  "b": "3.2",
+  "c": "percent"
+ },
+ "lu-11-oncology-narrative-sae-fatal-grade-discontinuation#3": {
+  "m": "incidence:serious:pt:sepsis",
+  "a": "2.6",
+  "b": "2.6",
+  "c": "percent"
+ },
+ "lu-11-oncology-narrative-sae-fatal-grade-discontinuation#4": {
+  "m": "incidence:fatal",
+  "a": "1.3",
+  "b": "1.3",
+  "c": "percent"
+ },
+ "lu-11-oncology-narrative-sae-fatal-grade-discontinuation#5": {
+  "reported": {
+   "a": [
+    "42"
+   ],
+   "b": [
+    "44.9"
+   ]
+  },
+  "notPaired": [
+   [
+    "42",
+    "44.9"
+   ]
+  ],
+  "reasons": [
+   "measure_differs"
+  ]
+ },
+ "lu-11-oncology-narrative-sae-fatal-grade-discontinuation#6": {
+  "m": "incidence:disc_treatment",
+  "a": "9",
+  "b": "9.6",
+  "c": "percent"
+ },
+ "lu-11-oncology-narrative-sae-fatal-grade-discontinuation#7": {
+  "reported": {
+   "a": [
+    "5.6"
+   ]
+  }
+ },
+ "lu-11-oncology-narrative-sae-fatal-grade-discontinuation#8": {
+  "reported": {
+   "a": [
+    "34"
+   ]
+  },
+  "reasons": [
+   "no_counterpart"
+  ]
+ },
+ "lu-11-oncology-narrative-sae-fatal-grade-discontinuation#9": {
+  "m": "n:treated",
+  "a": "156",
+  "b": "156",
+  "c": "count"
+ },
+ "lu-12-adverse-reaction-causality-basis-ambiguous#0": {
+  "notPaired": [
+   [
+    "38",
+    "37.8"
+   ],
+   [
+    "38",
+    "12.2"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "38"
+   ]
+  },
+  "reasons": [
+   "causality_ambiguous"
+  ]
+ },
+ "lu-12-adverse-reaction-causality-basis-ambiguous#1": {
+  "notPaired": [
+   [
+    "10",
+    "9.6"
+   ],
+   [
+    "10",
+    "3.8"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "10"
+   ]
+  }
+ },
+ "lu-13-orr-bicr-vs-investigator#0": {
+  "m": "responder:orr",
+  "a": "41",
+  "b": "40.6",
+  "c": "percent"
+ },
+ "lu-13-orr-bicr-vs-investigator#1": {
+  "m": "responder:cr",
+  "a": "5",
+  "b": "5.47",
+  "c": "percent"
+ },
+ "lu-13-orr-bicr-vs-investigator#2": {
+  "m": "responder:pr",
+  "a": "35",
+  "b": "35.16",
+  "c": "percent"
+ },
+ "lu-13-orr-bicr-vs-investigator#3": {
+  "reported": {
+   "b": [
+    "45.3"
+   ]
+  },
+  "notPaired": [
+   [
+    "41",
+    "45.3"
+   ]
+  ],
+  "reasons": [
+   "assessor_differs"
+  ]
+ },
+ "lu-13-orr-bicr-vs-investigator#4": {
+  "m": "median:dor",
+  "a": "11.1",
+  "b": "11.1",
+  "c": "estimate"
+ },
+ "lu-13-orr-bicr-vs-investigator#5": {
+  "m": "n:efficacy_evaluable",
+  "a": "128",
+  "b": "128",
+  "c": "count"
+ },
+ "lu-14-os-hazard-ratio-conflict#0": {
+  "m": "effect:hazard_ratio:os",
+  "a": "0.72",
+  "b": "0.76",
+  "c": "estimate"
+ },
+ "lu-14-os-hazard-ratio-conflict#1": {
+  "m": "deaths",
+  "a": "168",
+  "b": "168",
+  "c": "count",
+  "arm": "cendrolimab"
+ },
+ "lu-14-os-hazard-ratio-conflict#2": {
+  "m": "deaths",
+  "a": "191",
+  "b": "191",
+  "c": "count",
+  "arm": "docetaxel"
+ },
+ "lu-14-os-hazard-ratio-conflict#3": {
+  "m": "median:os",
+  "a": "12.6",
+  "b": "12.6",
+  "c": "estimate",
+  "arm": "cendrolimab"
+ },
+ "lu-14-os-hazard-ratio-conflict#4": {
+  "m": "median:os",
+  "a": "9.8",
+  "b": "9.8",
+  "c": "estimate",
+  "arm": "docetaxel"
+ },
+ "lu-14-os-hazard-ratio-conflict#5": {
+  "m": "effect:hazard_ratio:os",
+  "a": "0.0012",
+  "b": "0.0012",
+  "c": "p",
+  "componentLevel": true
+ },
+ "lu-14-os-hazard-ratio-conflict#6": {
+  "m": "n:itt",
+  "a": "287",
+  "b": "287",
+  "c": "count",
+  "arm": "cendrolimab"
+ },
+ "lu-14-os-hazard-ratio-conflict#7": {
+  "m": "n:itt",
+  "a": "287",
+  "b": "287",
+  "c": "count",
+  "arm": "docetaxel"
+ },
+ "lu-15-stratified-vs-unstratified-hr#0": {
+  "m": "effect:hazard_ratio:pfs",
+  "a": "0.58",
+  "b": "0.58",
+  "c": "estimate"
+ },
+ "lu-15-stratified-vs-unstratified-hr#1": {
+  "reported": {
+   "b": [
+    "0.61"
+   ]
+  },
+  "notPaired": [
+   [
+    "0.58",
+    "0.61"
+   ]
+  ]
+ },
+ "lu-15-stratified-vs-unstratified-hr#2": {
+  "reported": {
+   "b": [
+    "0.55"
+   ]
+  },
+  "notPaired": [
+   [
+    "0.58",
+    "0.55"
+   ]
+  ],
+  "reasons": [
+   "assessor_differs"
+  ]
+ },
+ "lu-15-stratified-vs-unstratified-hr#3": {
+  "m": "median:pfs",
+  "a": "7.9",
+  "b": "7.9",
+  "c": "estimate",
+  "arm": "ravoxertinib"
+ },
+ "lu-15-stratified-vs-unstratified-hr#4": {
+  "m": "median:pfs",
+  "a": "4.2",
+  "b": "4.2",
+  "c": "estimate",
+  "arm": "chemotherapy"
+ },
+ "lu-15-stratified-vs-unstratified-hr#5": {
+  "m": "effect:hazard_ratio:pfs",
+  "a": "<0.0001",
+  "b": "<0.0001",
+  "c": "p",
+  "componentLevel": true
+ },
+ "lu-16-ci-level-differs-alpha-split#0": {
+  "m": "effect:hazard_ratio:pfs",
+  "a": "0.58",
+  "b": "0.58",
+  "c": "estimate"
+ },
+ "lu-16-ci-level-differs-alpha-split#1": {
+  "notPaired": [
+   [
+    "0.46",
+    "0.44"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "0.46"
+   ]
+  },
+  "reasons": [
+   "ci_level_differs"
+  ]
+ },
+ "lu-17-trial-designation-not-bound-to-study#0": {
+  "notPaired": [
+   [
+    "612",
+    "612"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "612"
+   ]
+  },
+  "reasons": [
+   "study_unidentified"
+  ]
+ },
+ "lu-17-trial-designation-not-bound-to-study#1": {
+  "notPaired": [
+   [
+    "0.6",
+    "-0.62"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "0.6"
+   ]
+  }
+ },
+ "lu-18-section14-hba1c-table-rounding-consistent#0": {
+  "m": "n:randomized",
+  "a": "306",
+  "b": "306",
+  "c": "count",
+  "arm": "dapralutide"
+ },
+ "lu-18-section14-hba1c-table-rounding-consistent#1": {
+  "m": "n:randomized",
+  "a": "306",
+  "b": "306",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "lu-18-section14-hba1c-table-rounding-consistent#2": {
+  "m": "baseline_mean:hba1c",
+  "a": "8.1",
+  "b": "8.07",
+  "c": "estimate",
+  "arm": "dapralutide"
+ },
+ "lu-18-section14-hba1c-table-rounding-consistent#3": {
+  "m": "baseline_mean:hba1c",
+  "a": "8.1",
+  "b": "8.12",
+  "c": "estimate",
+  "arm": "placebo"
+ },
+ "lu-18-section14-hba1c-table-rounding-consistent#4": {
+  "m": "arm_change:hba1c",
+  "a": "-1.1",
+  "b": "-1.10",
+  "c": "estimate",
+  "arm": "dapralutide"
+ },
+ "lu-18-section14-hba1c-table-rounding-consistent#5": {
+  "m": "arm_change:hba1c",
+  "a": "-0.5",
+  "b": "-0.48",
+  "c": "estimate",
+  "arm": "placebo"
+ },
+ "lu-18-section14-hba1c-table-rounding-consistent#6": {
+  "m": "effect:ls_mean_difference:hba1c",
+  "a": "-0.6",
+  "b": "-0.62",
+  "c": "estimate"
+ },
+ "lu-18-section14-hba1c-table-rounding-consistent#7": {
+  "m": "effect:ls_mean_difference:hba1c",
+  "a": "<0.001",
+  "b": "<0.001",
+  "c": "p",
+  "componentLevel": true
+ },
+ "lu-18-section14-hba1c-table-rounding-consistent#8": {
+  "m": "responder:hba1c<7",
+  "a": "52",
+  "b": "51.6",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-18-section14-hba1c-table-rounding-consistent#9": {
+  "m": "responder:hba1c<7",
+  "a": "21",
+  "b": "20.9",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-19-estimand-differs#0": {
+  "notPaired": [
+   [
+    "-0.5",
+    "-0.62"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "-0.5"
+   ]
+  },
+  "reasons": [
+   "estimand_differs",
+   "effect_type_differs"
+  ]
+ },
+ "lu-19-estimand-differs#1": {
+  "notPaired": [
+   [
+    "-1.0",
+    "-1.10"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "-1.0"
+   ]
+  },
+  "reasons": [
+   "estimand_differs",
+   "effect_type_differs",
+   "measure_differs"
+  ]
+ },
+ "lu-19-estimand-differs#2": {
+  "notPaired": [
+   [
+    "-0.5",
+    "-0.48"
+   ]
+  ],
+  "reasons": [
+   "estimand_differs",
+   "effect_type_differs",
+   "measure_differs"
+  ]
+ },
+ "lu-20-percent-change-vs-absolute-change-weight#0": {
+  "notPaired": [
+   [
+    "-5.8",
+    "-5.6"
+   ],
+   [
+    "-1.2",
+    "-1.1"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "-5.8",
+    "-1.2"
+   ]
+  }
+ },
+ "lu-20-percent-change-vs-absolute-change-weight#1": {
+  "m": "responder:weight_loss>=5",
+  "a": "52",
+  "b": "51.8",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-20-percent-change-vs-absolute-change-weight#2": {
+  "m": "responder:weight_loss>=5",
+  "a": "14",
+  "b": "13.6",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-20-percent-change-vs-absolute-change-weight#3": {
+  "reported": {
+   "b": [
+    "-4.5"
+   ]
+  },
+  "reasons": [
+   "no_counterpart"
+  ]
+ },
+ "lu-21-geriatric-subgroup-vs-overall#0": {
+  "m": "incidence:any:pt:nausea",
+  "a": "24",
+  "b": "24.0",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-21-geriatric-subgroup-vs-overall#1": {
+  "m": "incidence:any:pt:nausea",
+  "a": "15",
+  "b": "15.1",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-21-geriatric-subgroup-vs-overall#2": {
+  "notPaired": [
+   [
+    "24",
+    "18.0"
+   ],
+   [
+    "15",
+    "18.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "18.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "no_counterpart"
+  ]
+ },
+ "lu-21-geriatric-subgroup-vs-overall#3": {
+  "m": "n:treated",
+  "a": "100",
+  "b": "100",
+  "c": "count",
+  "arm": "dapralutide"
+ },
+ "lu-21-geriatric-subgroup-vs-overall#4": {
+  "m": "n:treated",
+  "a": "305",
+  "b": "305",
+  "c": "count",
+  "arm": "dapralutide"
+ },
+ "lu-22-hypoglycemia-levels-and-explicit-zero#0": {
+  "m": "incidence:any:pt:hypoglycemia",
+  "a": "1.6",
+  "b": "1.6",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-22-hypoglycemia-levels-and-explicit-zero#1": {
+  "m": "incidence:any:pt:hypoglycemia",
+  "a": "0.7",
+  "b": "0.7",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-22-hypoglycemia-levels-and-explicit-zero#2": {
+  "m": "incidence:any:pt:hypoglycemia",
+  "a": "0.3",
+  "b": "0.3",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-22-hypoglycemia-levels-and-explicit-zero#3": {
+  "m": "incidence:any:pt:hypoglycemia",
+  "a": "0",
+  "b": "0",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "lu-22-hypoglycemia-levels-and-explicit-zero#4": {
+  "reported": {
+   "b": [
+    "4.9",
+    "2.3"
+   ]
+  },
+  "reasons": [
+   "no_counterpart"
+  ]
+ },
+ "lu-23-lab-threshold-and-trailing-zero-conflict#0": {
+  "m": "lab:lipase",
+  "a": "3.0",
+  "b": "2.6",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-23-lab-threshold-and-trailing-zero-conflict#1": {
+  "m": "lab:lipase",
+  "a": "1.0",
+  "b": "1.0",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-23-lab-threshold-and-trailing-zero-conflict#2": {
+  "reported": {
+   "b": [
+    "16.4",
+    "9.2"
+   ]
+  },
+  "reasons": [
+   "no_counterpart",
+   "measure_differs"
+  ]
+ },
+ "lu-24-oncology-lab-table-vs-shift-table-and-ae-term#0": {
+  "m": "lab:hemoglobin decreased",
+  "a": "52",
+  "b": "52.0",
+  "c": "percent"
+ },
+ "lu-24-oncology-lab-table-vs-shift-table-and-ae-term#1": {
+  "m": "lab:hemoglobin decreased",
+  "a": "8",
+  "b": "8.1",
+  "c": "percent"
+ },
+ "lu-24-oncology-lab-table-vs-shift-table-and-ae-term#2": {
+  "m": "lab:lymphocytes decreased",
+  "a": "41",
+  "b": "41.4",
+  "c": "percent"
+ },
+ "lu-24-oncology-lab-table-vs-shift-table-and-ae-term#3": {
+  "m": "lab:lymphocytes decreased",
+  "a": "12",
+  "b": "11.7",
+  "c": "percent"
+ },
+ "lu-24-oncology-lab-table-vs-shift-table-and-ae-term#4": {
+  "m": "lab:alt increased",
+  "a": "22",
+  "b": "21.9",
+  "c": "percent"
+ },
+ "lu-24-oncology-lab-table-vs-shift-table-and-ae-term#5": {
+  "m": "lab:alt increased",
+  "a": "1.4",
+  "b": "1.3",
+  "c": "percent"
+ },
+ "lu-24-oncology-lab-table-vs-shift-table-and-ae-term#6": {
+  "reported": {
+   "b": [
+    "34.0"
+   ]
+  },
+  "reasons": [
+   "no_counterpart",
+   "measure_differs"
+  ]
+ },
+ "lu-25-per-arm-deaths-vs-total#0": {
+  "m": "deaths",
+  "a": "3",
+  "b": "3",
+  "c": "count",
+  "arm": "dapralutide"
+ },
+ "lu-25-per-arm-deaths-vs-total#1": {
+  "m": "deaths",
+  "a": "2",
+  "b": "2",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "lu-25-per-arm-deaths-vs-total#2": {
+  "reported": {
+   "b": [
+    "5"
+   ]
+  },
+  "notPaired": [
+   [
+    "3",
+    "5"
+   ]
+  ],
+  "reasons": [
+   "per_arm_vs_total",
+   "no_counterpart"
+  ]
+ },
+ "lu-25-per-arm-deaths-vs-total#3": {
+  "reported": {
+   "a": [
+    "0.5",
+    "0.3"
+   ]
+  }
+ },
+ "lu-27-upper-bound-is-not-a-value#0": {
+  "reported": {
+   "a": [
+    "<1"
+   ]
+  },
+  "notPaired": [
+   [
+    "<1",
+    "0.7"
+   ]
+  ],
+  "reasons": [
+   "bound_not_value"
+  ]
+ },
+ "lu-28-adjudicated-vs-investigator-reported#0": {
+  "m": "incidence:any:pt:acute pancreatitis",
+  "a": "0.3",
+  "b": "0.3",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-28-adjudicated-vs-investigator-reported#1": {
+  "m": "incidence:any:pt:acute pancreatitis",
+  "a": "0",
+  "b": "0.0",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-28-adjudicated-vs-investigator-reported#2": {
+  "reported": {
+   "b": [
+    "0.7"
+   ]
+  },
+  "notPaired": [
+   [
+    "0.3",
+    "0.7"
+   ],
+   [
+    "0",
+    "0.3"
+   ]
+  ]
+ },
+ "lu-29-per-dose-columns-vs-all-doses-column#0": {
+  "m": "incidence:any:pt:nausea",
+  "a": "6",
+  "b": "6.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-29-per-dose-columns-vs-all-doses-column#1": {
+  "m": "incidence:any:pt:nausea",
+  "a": "14",
+  "b": "13.8",
+  "c": "percent",
+  "arm": "20 mg"
+ },
+ "lu-29-per-dose-columns-vs-all-doses-column#2": {
+  "m": "incidence:any:pt:nausea",
+  "a": "21",
+  "b": "21.3",
+  "c": "percent",
+  "arm": "40 mg"
+ },
+ "lu-29-per-dose-columns-vs-all-doses-column#3": {
+  "m": "incidence:any:pt:insomnia",
+  "a": "3",
+  "b": "3.4",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-29-per-dose-columns-vs-all-doses-column#4": {
+  "m": "incidence:any:pt:insomnia",
+  "a": "7",
+  "b": "7.1",
+  "c": "percent",
+  "arm": "20 mg"
+ },
+ "lu-29-per-dose-columns-vs-all-doses-column#5": {
+  "m": "incidence:any:pt:insomnia",
+  "a": "10",
+  "b": "10.1",
+  "c": "percent",
+  "arm": "40 mg"
+ },
+ "lu-29-per-dose-columns-vs-all-doses-column#6": {
+  "m": "incidence:any:pt:dry mouth",
+  "a": "4",
+  "b": "4.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-29-per-dose-columns-vs-all-doses-column#7": {
+  "m": "incidence:any:pt:dry mouth",
+  "a": "8",
+  "b": "8.1",
+  "c": "percent",
+  "arm": "20 mg"
+ },
+ "lu-29-per-dose-columns-vs-all-doses-column#8": {
+  "m": "incidence:any:pt:dry mouth",
+  "a": "12",
+  "b": "12.1",
+  "c": "percent",
+  "arm": "40 mg"
+ },
+ "lu-29-per-dose-columns-vs-all-doses-column#9": {
+  "reported": {
+   "b": [
+    "17.5",
+    "8.6"
+   ]
+  },
+  "reasons": [
+   "no_counterpart",
+   "arm_differs"
+  ]
+ },
+ "lu-29-per-dose-columns-vs-all-doses-column#10": {
+  "m": "n:treated",
+  "a": "208",
+  "b": "208",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "lu-29-per-dose-columns-vs-all-doses-column#11": {
+  "m": "n:treated",
+  "a": "210",
+  "b": "210",
+  "c": "count",
+  "arm": "20 mg"
+ },
+ "lu-29-per-dose-columns-vs-all-doses-column#12": {
+  "m": "n:treated",
+  "a": "207",
+  "b": "207",
+  "c": "count",
+  "arm": "40 mg"
+ },
+ "lu-30-section14-randomized-transposition-conflict#0": {
+  "m": "n:randomized",
+  "a": "621",
+  "b": "612",
+  "c": "count",
+  "arm": "total"
+ },
+ "lu-30-section14-randomized-transposition-conflict#1": {
+  "m": "n:randomized",
+  "a": "311",
+  "b": "306",
+  "c": "count",
+  "arm": "dapralutide"
+ },
+ "lu-30-section14-randomized-transposition-conflict#2": {
+  "m": "n:randomized",
+  "a": "310",
+  "b": "306",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "lu-30-section14-randomized-transposition-conflict#3": {
+  "reported": {
+   "b": [
+    "~600"
+   ]
+  },
+  "notPaired": [
+   [
+    "621",
+    "~600"
+   ]
+  ]
+ },
+ "lu-31-randomized-vs-treated-and-rescue-medication#0": {
+  "notPaired": [
+   [
+    "612",
+    "608"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "612"
+   ]
+  },
+  "reasons": [
+   "population_differs",
+   "measure_differs",
+   "no_counterpart"
+  ]
+ },
+ "lu-31-randomized-vs-treated-and-rescue-medication#1": {
+  "reported": {
+   "b": [
+    "45"
+   ]
+  },
+  "notPaired": [
+   [
+    "612",
+    "45"
+   ]
+  ]
+ },
+ "lu-32-section14-demographics-duration-conflict#0": {
+  "m": "demographic:age",
+  "a": "57",
+  "b": "57.4",
+  "c": "estimate"
+ },
+ "lu-32-section14-demographics-duration-conflict#1": {
+  "m": "demographic:female",
+  "a": "46",
+  "b": "45.9",
+  "c": "percent"
+ },
+ "lu-32-section14-demographics-duration-conflict#2": {
+  "m": "demographic:race:white",
+  "a": "71",
+  "b": "71.1",
+  "c": "percent"
+ },
+ "lu-32-section14-demographics-duration-conflict#3": {
+  "m": "demographic:race:black",
+  "a": "8",
+  "b": "8.0",
+  "c": "percent"
+ },
+ "lu-32-section14-demographics-duration-conflict#4": {
+  "m": "demographic:race:asian",
+  "a": "15",
+  "b": "15.0",
+  "c": "percent"
+ },
+ "lu-32-section14-demographics-duration-conflict#5": {
+  "m": "demographic:ethnicity:hispanic",
+  "a": "21",
+  "b": "20.9",
+  "c": "percent"
+ },
+ "lu-32-section14-demographics-duration-conflict#6": {
+  "m": "demographic:diabetes_duration",
+  "a": "8.2",
+  "b": "8.6",
+  "c": "estimate"
+ },
+ "lu-32-section14-demographics-duration-conflict#7": {
+  "m": "demographic:bmi",
+  "a": "33.1",
+  "b": "33.1",
+  "c": "estimate"
+ },
+ "lu-32-section14-demographics-duration-conflict#8": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "612",
+  "c": "count",
+  "arm": "total"
+ },
+ "lu-33-two-trials-in-label-one-csr#0": {
+  "m": "effect:ls_mean_difference:hba1c",
+  "a": "-0.7",
+  "b": "-0.71",
+  "c": "estimate"
+ },
+ "lu-33-two-trials-in-label-one-csr#1": {
+  "m": "arm_change:hba1c",
+  "a": "-1.2",
+  "b": "-1.19",
+  "c": "estimate",
+  "arm": "dapralutide"
+ },
+ "lu-33-two-trials-in-label-one-csr#2": {
+  "m": "arm_change:hba1c",
+  "a": "-0.5",
+  "b": "-0.48",
+  "c": "estimate",
+  "arm": "placebo"
+ },
+ "lu-33-two-trials-in-label-one-csr#3": {
+  "m": "responder:hba1c<7",
+  "a": "49",
+  "b": "47.2",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-33-two-trials-in-label-one-csr#4": {
+  "m": "responder:hba1c<7",
+  "a": "18",
+  "b": "18.1",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-33-two-trials-in-label-one-csr#5": {
+  "m": "n:randomized",
+  "a": "304",
+  "b": "304",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "lu-33-two-trials-in-label-one-csr#6": {
+  "m": "n:randomized",
+  "a": "303",
+  "b": "303",
+  "c": "count",
+  "arm": "dapralutide"
+ },
+ "lu-33-two-trials-in-label-one-csr#7": {
+  "reported": {
+   "a": [
+    "-0.6"
+   ]
+  },
+  "notPaired": [
+   [
+    "-0.6",
+    "-0.71"
+   ]
+  ],
+  "reasons": [
+   "study_differs",
+   "no_counterpart"
+  ]
+ },
+ "lu-34-discontinuation-and-sub-rate-consistent#0": {
+  "m": "incidence:disc_treatment",
+  "a": "4.3",
+  "b": "4.3",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-34-discontinuation-and-sub-rate-consistent#1": {
+  "m": "incidence:disc_treatment",
+  "a": "1.0",
+  "b": "1.0",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-34-discontinuation-and-sub-rate-consistent#2": {
+  "m": "incidence:disc_treatment:pt:nausea",
+  "a": "1.6",
+  "b": "1.6",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-34-discontinuation-and-sub-rate-consistent#3": {
+  "m": "incidence:disc_treatment:pt:nausea",
+  "a": "0",
+  "b": "0",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-34-discontinuation-and-sub-rate-consistent#4": {
+  "reported": {
+   "a": [
+    "7.2",
+    "2.3"
+   ]
+  },
+  "reasons": [
+   "no_counterpart"
+  ]
+ },
+ "lu-35-precision-as-written-trailing-zero-conflict#0": {
+  "m": "incidence:disc_treatment",
+  "a": "4.0",
+  "b": "4.3",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-35-precision-as-written-trailing-zero-conflict#1": {
+  "m": "incidence:disc_treatment",
+  "a": "1.0",
+  "b": "1.0",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-36-pediatric-label-section-vs-adult-csr#0": {
+  "reported": {
+   "a": [
+    "22",
+    "7"
+   ]
+  },
+  "notPaired": [
+   [
+    "22",
+    "18.0"
+   ],
+   [
+    "7",
+    "4.6"
+   ]
+  ],
+  "reasons": [
+   "study_differs"
+  ]
+ },
+ "lu-37-sae-overall-vs-regional-subgroup#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-37-sae-overall-vs-regional-subgroup#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "lu-37-sae-overall-vs-regional-subgroup#2": {
+  "reported": {
+   "b": [
+    "6.3",
+    "2.0"
+   ]
+  },
+  "notPaired": [
+   [
+    "4.6",
+    "6.3"
+   ],
+   [
+    "3.3",
+    "2.0"
+   ]
+  ],
+  "reasons": [
+   "subgroup_differs"
+  ]
+ },
+ "lu-38-period-week52-vs-week26#0": {
+  "m": "incidence:any:pt:nausea",
+  "a": "20",
+  "b": "20.3",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "lu-38-period-week52-vs-week26#1": {
+  "reported": {
+   "b": [
+    "18.0"
+   ]
+  },
+  "notPaired": [
+   [
+    "20",
+    "18.0"
+   ]
+  ],
+  "reasons": [
+   "period_differs"
+  ]
+ },
+ "em-01#0": {
+  "m": "effect:hazard_ratio:pfs",
+  "a": "0.72",
+  "b": "0.72",
+  "c": "estimate"
+ },
+ "em-01#1": {
+  "m": "median:pfs",
+  "a": "9.7",
+  "b": "9.7",
+  "c": "estimate",
+  "arm": "kitrabart"
+ },
+ "em-01#2": {
+  "m": "median:pfs",
+  "a": "6.4",
+  "b": "6.4",
+  "c": "estimate",
+  "arm": "docetaxel"
+ },
+ "em-02#0": {
+  "m": "effect:hazard_ratio:os",
+  "a": "0.72",
+  "b": "0.76",
+  "c": "estimate"
+ },
+ "em-04#0": {
+  "notPaired": [
+   [
+    "2.10",
+    "2.10"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "2.10"
+   ],
+   "b": [
+    "2.10"
+   ]
+  }
+ },
+ "em-05#0": {
+  "notPaired": [
+   [
+    "1.04",
+    "1.04"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "1.04"
+   ],
+   "b": [
+    "1.04"
+   ]
+  }
+ },
+ "em-06#0": {
+  "notPaired": [
+   [
+    "-1.8",
+    "-1.8"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "-1.8"
+   ],
+   "b": [
+    "-1.8"
+   ]
+  }
+ },
+ "em-07#0": {
+  "m": "effect:ls_mean_difference:hba1c",
+  "a": "-0.62",
+  "b": "-0.62",
+  "c": "estimate"
+ },
+ "em-11#0": {
+  "m": "effect:ls_mean_difference:sbp",
+  "a": "-8.26",
+  "b": "-8.3",
+  "c": "estimate"
+ },
+ "em-12#0": {
+  "m": "effect:ratio_geometric_means:uacr",
+  "a": "0.68",
+  "b": "0.7",
+  "c": "estimate"
+ },
+ "em-15#0": {
+  "m": "effect:ls_mean_difference:hba1c",
+  "a": "-0.51",
+  "b": "-0.57",
+  "c": "estimate"
+ },
+ "em-15#1": {
+  "m": "effect:ls_mean_difference:body_weight",
+  "a": "-3.2",
+  "b": "-3.2",
+  "c": "estimate"
+ },
+ "em-16#0": {
+  "m": "effect:risk_difference:clinical_cure",
+  "a": "3.6",
+  "b": "3.6",
+  "c": "estimate"
+ },
+ "em-16#1": {
+  "m": "effect:risk_difference:clinical_cure",
+  "a": "2.4",
+  "b": "2.6",
+  "c": "estimate"
+ },
+ "em-17#0": {
+  "notPaired": [
+   [
+    "7.9",
+    "6.8"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "7.9"
+   ],
+   "b": [
+    "6.8"
+   ]
+  }
+ },
+ "em-18#0": {
+  "m": "effect:rate_ratio:exacerbation_rate",
+  "a": "0.49",
+  "b": "0.49",
+  "c": "estimate"
+ },
+ "em-18#1": {
+  "m": "effect:ls_mean_difference:fev1_prebd",
+  "a": "0.11",
+  "b": "0.12",
+  "c": "estimate"
+ },
+ "em-18#2": {
+  "m": "effect:ls_mean_difference:acq5",
+  "a": "-0.42",
+  "b": "-0.42",
+  "c": "estimate"
+ },
+ "em-20#0": {
+  "notPaired": [
+   [
+    "0.81",
+    "0.81"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "0.81"
+   ],
+   "b": [
+    "0.81"
+   ]
+  }
+ },
+ "em-22#0": {
+  "m": "effect:ls_mean_difference:ldl_c",
+  "a": "-57.4",
+  "b": "-55.7",
+  "c": "estimate"
+ },
+ "em-23#0": {
+  "notPaired": [
+   [
+    "0.62",
+    "-0.62"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "0.62"
+   ],
+   "b": [
+    "-0.62"
+   ]
+  }
+ },
+ "em-24#0": {
+  "m": "effect:relative_risk:sustained_remission",
+  "a": "1.86",
+  "b": "1.68",
+  "c": "estimate"
+ },
+ "em-25#0": {
+  "m": "responder:clinical_remission",
+  "a": "31.5",
+  "b": "32",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "em-25#1": {
+  "m": "responder:clinical_remission",
+  "a": "14.8",
+  "b": "15",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "em-25#2": {
+  "notPaired": [
+   [
+    "16.6",
+    "17"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "16.6"
+   ],
+   "b": [
+    "17"
+   ]
+  },
+  "reasons": [
+   "effect_type_differs"
+  ]
+ },
+ "em-25#3": {
+  "m": "n:fas",
+  "a": "257",
+  "b": "257",
+  "c": "count",
+  "arm": "drug x"
+ },
+ "em-25#4": {
+  "m": "n:fas",
+  "a": "128",
+  "b": "128",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "em-26#0": {
+  "notPaired": [
+   [
+    "-3.1",
+    "3.1"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "-3.1"
+   ],
+   "b": [
+    "3.1"
+   ]
+  }
+ },
+ "em-27#0": {
+  "m": "effect:risk_difference:treatment_failure",
+  "a": "-3.1",
+  "b": "3.1",
+  "c": "estimate"
+ },
+ "em-30#0": {
+  "notPaired": [
+   [
+    "0.72",
+    "0.72"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "0.72"
+   ],
+   "b": [
+    "0.72"
+   ]
+  }
+ },
+ "em-31#0": {
+  "notPaired": [
+   [
+    "0.72",
+    "0.74"
+   ],
+   [
+    "0.74",
+    "0.74"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "0.74"
+   ]
+  }
+ },
+ "em-32#0": {
+  "notPaired": [
+   [
+    "0.69",
+    "0.74"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "0.69"
+   ],
+   "b": [
+    "0.74"
+   ]
+  }
+ },
+ "em-33#0": {
+  "m": "effect:hazard_ratio:os",
+  "a": "0.81",
+  "b": "0.81",
+  "c": "estimate"
+ },
+ "em-34#0": {
+  "m": "effect:hazard_ratio:pfs",
+  "a": "0.62",
+  "b": "0.62",
+  "c": "estimate"
+ },
+ "em-34#1": {
+  "m": "effect:hazard_ratio:os",
+  "a": "0.99",
+  "b": "0.98",
+  "c": "upper"
+ },
+ "em-35#0": {
+  "notPaired": [
+   [
+    "-3.6",
+    "-3.6"
+   ],
+   [
+    "-3.1",
+    "-3.6"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "-3.6"
+   ]
+  }
+ },
+ "em-36#0": {
+  "notPaired": [
+   [
+    "-0.81",
+    "0.81"
+   ],
+   [
+    "-0.62",
+    "0.81"
+   ],
+   [
+    "-0.81",
+    "-0.81"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "0.81"
+   ]
+  }
+ },
+ "em-37#0": {
+  "reported": {
+   "a": [
+    "0.72"
+   ]
+  },
+  "notPaired": [
+   [
+    "0.72",
+    "24"
+   ]
+  ],
+  "reasons": [
+   "no_counterpart"
+  ]
+ },
+ "em-37#1": {
+  "m": "effect:rrr:mace",
+  "a": "28",
+  "b": "24",
+  "c": "estimate"
+ },
+ "em-38#0": {
+  "m": "effect:hazard_ratio:ttf_exacerbation",
+  "a": "0.66",
+  "b": "0.71",
+  "c": "estimate"
+ },
+ "em-39#0": {
+  "m": "effect:",
+  "a": "-14.5",
+  "b": "-14.5",
+  "c": "estimate"
+ },
+ "em-39#1": {
+  "m": "arm_change:body_weight",
+  "a": "-16.9",
+  "b": "-16.9",
+  "c": "estimate",
+  "arm": "drug x"
+ },
+ "em-39#2": {
+  "m": "arm_change:body_weight",
+  "a": "-2.4",
+  "b": "-2.4",
+  "c": "estimate",
+  "arm": "placebo"
+ },
+ "em-40#0": {
+  "notPaired": [
+   [
+    "-0.31",
+    "-0.27"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "-0.31"
+   ],
+   "b": [
+    "-0.27"
+   ]
+  }
+ },
+ "euc-01#0": {
+  "m": "effect:hazard_ratio:pfs",
+  "a": "0.72",
+  "b": "0.72",
+  "c": "estimate"
+ },
+ "euc-02#0": {
+  "m": "effect:hazard_ratio:pfs",
+  "a": "0.72",
+  "b": "0.76",
+  "c": "estimate"
+ },
+ "euc-03#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "621",
+  "c": "count",
+  "arm": "total"
+ },
+ "euc-03#1": {
+  "m": "n:randomized",
+  "a": "408",
+  "b": "414",
+  "c": "count",
+  "arm": "zelnabart"
+ },
+ "euc-03#2": {
+  "m": "n:randomized",
+  "a": "204",
+  "b": "207",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "euc-04#0": {
+  "m": "n:randomized",
+  "a": "1227",
+  "b": "1227",
+  "c": "count",
+  "arm": "total"
+ },
+ "euc-04#1": {
+  "m": "n:randomized",
+  "a": "818",
+  "b": "818",
+  "c": "count",
+  "arm": "mivelistat"
+ },
+ "euc-04#2": {
+  "m": "n:randomized",
+  "a": "409",
+  "b": "409",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "euc-05#0": {
+  "m": "n:randomized",
+  "a": "1227",
+  "b": "1227",
+  "c": "count",
+  "arm": "total"
+ },
+ "euc-05#1": {
+  "m": "n:treated",
+  "a": "1219",
+  "b": "1219",
+  "c": "count",
+  "arm": "total"
+ },
+ "euc-06#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "corvaprazan"
+ },
+ "euc-06#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "euc-07#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "6.4",
+  "c": "percent",
+  "arm": "corvaprazan"
+ },
+ "euc-07#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "euc-08#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "612",
+  "c": "count",
+  "arm": "total"
+ },
+ "euc-08#1": {
+  "m": "deaths",
+  "a": "3",
+  "b": "4",
+  "c": "count",
+  "arm": "total"
+ },
+ "euc-08#2": {
+  "m": "deaths",
+  "a": "2",
+  "b": "3",
+  "c": "count",
+  "arm": "ondelimab"
+ },
+ "euc-08#3": {
+  "m": "deaths",
+  "a": "1",
+  "b": "1",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "euc-09#0": {
+  "reported": {
+   "a": [
+    "2",
+    "1"
+   ],
+   "b": [
+    "3"
+   ]
+  },
+  "notPaired": [
+   [
+    "2",
+    "3"
+   ]
+  ]
+ },
+ "euc-10#0": {
+  "m": "effect:ls_mean_difference:fev1_trough",
+  "a": "0.00",
+  "b": "-0.01",
+  "c": "lower"
+ },
+ "euc-11#0": {
+  "notPaired": [
+   [
+    "4.0",
+    "4.4"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "4.0"
+   ],
+   "b": [
+    "4.4"
+   ]
+  },
+  "reasons": [
+   "event_basis_differs",
+   "measure_differs"
+  ]
+ },
+ "euc-12#0": {
+  "m": "incidence:any:pt:diarrhea",
+  "a": "8.2",
+  "b": "8.2",
+  "c": "percent",
+  "arm": "corvaprazan"
+ },
+ "euc-12#1": {
+  "m": "incidence:any:pt:diarrhea",
+  "a": "4.0",
+  "b": "4.0",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "euc-12#2": {
+  "m": "incidence:any:pt:headache",
+  "a": "6.9",
+  "b": "6.9",
+  "c": "percent",
+  "arm": "corvaprazan"
+ },
+ "euc-12#3": {
+  "m": "incidence:any:pt:headache",
+  "a": "6.3",
+  "b": "6.6",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "euc-12#4": {
+  "m": "n:treated",
+  "a": "304",
+  "b": "304",
+  "c": "count",
+  "arm": "corvaprazan"
+ },
+ "euc-12#5": {
+  "m": "n:treated",
+  "a": "303",
+  "b": "303",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "euc-13#0": {
+  "reported": {
+   "b": [
+    "12.4"
+   ]
+  },
+  "reasons": [
+   "frequency_category",
+   "no_counterpart",
+   "event_basis_differs"
+  ]
+ },
+ "euc-13#1": {
+  "reported": {
+   "b": [
+    "8.2"
+   ]
+  },
+  "reasons": [
+   "frequency_category",
+   "no_counterpart",
+   "event_basis_differs"
+  ]
+ },
+ "euc-15#0": {
+  "m": "effect:hazard_ratio:os",
+  "a": "0.72",
+  "b": "0.72",
+  "c": "estimate"
+ },
+ "euc-16#0": {
+  "m": "effect:hazard_ratio:os",
+  "a": "0.85",
+  "b": "0.89",
+  "c": "upper"
+ },
+ "euc-17#0": {
+  "m": "responder:acr20",
+  "a": "58.1",
+  "b": "58.1",
+  "c": "percent",
+  "arm": "zelnabart"
+ },
+ "euc-17#1": {
+  "m": "responder:acr20",
+  "a": "31.4",
+  "b": "31.4",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "euc-17#2": {
+  "m": "effect:risk_difference:acr20",
+  "a": "26.7",
+  "b": "26.7",
+  "c": "estimate"
+ },
+ "euc-18#0": {
+  "notPaired": [
+   [
+    "26.7",
+    "26.7"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "26.7"
+   ],
+   "b": [
+    "26.7"
+   ]
+  }
+ },
+ "euc-19#0": {
+  "notPaired": [
+   [
+    "-0.8",
+    "-0.8"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "-0.8"
+   ]
+  },
+  "reasons": [
+   "timepoint_differs"
+  ]
+ },
+ "euc-19#1": {
+  "reported": {
+   "a": [
+    "-1.1",
+    "-0.3"
+   ]
+  },
+  "reasons": [
+   "no_counterpart"
+  ]
+ },
+ "euc-20#0": {
+  "notPaired": [
+   [
+    "12",
+    "-1.1"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "12"
+   ],
+   "b": [
+    "-1.1"
+   ]
+  }
+ },
+ "euc-21#0": {
+  "reported": {
+   "a": [
+    "612"
+   ]
+  },
+  "notPaired": [
+   [
+    "612",
+    "621"
+   ],
+   [
+    "612",
+    "615"
+   ],
+   [
+    "612",
+    "640"
+   ]
+  ]
+ },
+ "euc-22#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "612",
+  "c": "count",
+  "arm": "total"
+ },
+ "euc-22#1": {
+  "m": "n:randomized",
+  "a": "408",
+  "b": "408",
+  "c": "count",
+  "arm": "corvaprazan"
+ },
+ "euc-22#2": {
+  "m": "n:randomized",
+  "a": "204",
+  "b": "204",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "euc-23#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "corvaprazan"
+ },
+ "euc-23#1": {
+  "reported": {
+   "b": [
+    "3.3"
+   ]
+  },
+  "notPaired": [
+   [
+    "3.3",
+    "3.3"
+   ]
+  ],
+  "reasons": [
+   "no_counterpart"
+  ]
+ },
+ "euc-24#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "4.6"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "4.6",
+    "3.9",
+    "3.3"
+   ]
+  }
+ },
+ "euc-25#0": {
+  "notPaired": [
+   [
+    "~5",
+    "4.6"
+   ],
+   [
+    "~12",
+    "12.2"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "~5",
+    "~12"
+   ]
+  },
+  "reasons": [
+   "approximate_value"
+  ]
+ },
+ "euc-26#0": {
+  "m": "median:pfs",
+  "a": "11.2",
+  "b": "11.2",
+  "c": "estimate",
+  "arm": "velmitanib"
+ },
+ "euc-26#1": {
+  "m": "median:pfs",
+  "a": "7.4",
+  "b": "7.4",
+  "c": "estimate",
+  "arm": "placebo"
+ },
+ "euc-26#2": {
+  "m": "effect:hazard_ratio:pfs",
+  "a": "0.61",
+  "b": "0.64",
+  "c": "estimate"
+ },
+ "euc-26#3": {
+  "m": "n:fas",
+  "a": "408",
+  "b": "408",
+  "c": "count",
+  "arm": "velmitanib"
+ },
+ "euc-26#4": {
+  "m": "n:fas",
+  "a": "204",
+  "b": "204",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "euc-27#0": {
+  "notPaired": [
+   [
+    "0.58",
+    "0.64"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "0.58"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs"
+  ]
+ },
+ "euc-28#0": {
+  "notPaired": [
+   [
+    "6.0",
+    "4.6"
+   ],
+   [
+    "4.0",
+    "3.3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "6.0",
+    "4.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs"
+  ]
+ },
+ "euc-29#0": {
+  "m": "incidence:serious",
+  "a": "4.0",
+  "b": "4.4",
+  "c": "percent",
+  "arm": "corvaprazan"
+ },
+ "euc-29#1": {
+  "m": "incidence:serious",
+  "a": "3.0",
+  "b": "3.4",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "euc-31#0": {
+  "notPaired": [
+   [
+    "0.75",
+    "0.75"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "0.75"
+   ],
+   "b": [
+    "0.75"
+   ]
+  },
+  "reasons": [
+   "population_differs"
+  ]
+ },
+ "euc-32#0": {
+  "m": "effect:risk_difference:healing",
+  "a": "-1.2",
+  "b": "-1.2",
+  "c": "estimate"
+ },
+ "euc-32#1": {
+  "notPaired": [
+   [
+    "-5.9",
+    "-5.9"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "-5.9"
+   ]
+  },
+  "reasons": [
+   "ci_sidedness_differs",
+   "ci_level_differs"
+  ]
+ },
+ "euc-33#0": {
+  "m": "effect:hazard_ratio",
+  "a": "0.72",
+  "b": "0.72",
+  "c": "estimate"
+ },
+ "euc-33#1": {
+  "notPaired": [
+   [
+    "0.59",
+    "0.61"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "0.59"
+   ]
+  },
+  "reasons": [
+   "ci_level_differs"
+  ]
+ },
+ "euc-34#0": {
+  "notPaired": [
+   [
+    "1.2",
+    "4.6"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "1.2"
+   ]
+  }
+ },
+ "euc-35#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "corvaprazan"
+ },
+ "euc-35#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "euc-35#2": {
+  "reported": {
+   "a": [
+    "6.6"
+   ]
+  },
+  "notPaired": [
+   [
+    "6.6",
+    "4.6"
+   ]
+  ]
+ },
+ "euc-36#0": {
+  "reported": {
+   "a": [
+    "2",
+    "1"
+   ],
+   "b": [
+    "3"
+   ]
+  },
+  "notPaired": [
+   [
+    "2",
+    "3"
+   ]
+  ],
+  "reasons": [
+   "per_arm_vs_total"
+  ]
+ },
+ "euc-37#0": {
+  "m": "incidence:serious",
+  "a": "5.0",
+  "b": "5.0",
+  "c": "percent",
+  "arm": "tirnavotide"
+ },
+ "euc-37#1": {
+  "m": "incidence:serious",
+  "a": "3.1",
+  "b": "3.1",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "euc-38#0": {
+  "m": "incidence:any",
+  "a": "58.4",
+  "b": "58.4",
+  "c": "percent",
+  "arm": "corvaprazan"
+ },
+ "euc-38#1": {
+  "m": "incidence:any",
+  "a": "51.2",
+  "b": "51.2",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r1-pv-ci-stated-before-estimate#0": {
+  "m": "effect:hazard_ratio",
+  "a": "0.72",
+  "b": "0.72",
+  "c": "estimate"
+ },
+ "r1-pv-paired-list-without-respectively#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r1-pv-paired-list-without-respectively#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r1-pv-control-named-first-comparative#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r1-pv-control-named-first-comparative#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r1-pv-n-of-N-inline#0": {
+  "m": "incidence:serious",
+  "a": "14",
+  "b": "14",
+  "c": "count",
+  "arm": "drug x"
+ },
+ "r1-pv-n-of-N-inline#1": {
+  "m": "incidence:serious",
+  "a": "10",
+  "b": "10",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "r1-pv-causality-trailing-clause#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "1.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "1.0"
+   ]
+  },
+  "reasons": [
+   "measure_differs"
+  ]
+ },
+ "r1-pv-causality-trailing-clause#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "0.3"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "0.3"
+   ]
+  },
+  "reasons": [
+   "measure_differs"
+  ]
+ },
+ "r1-pv-causality-parenthetical#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "1.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "1.0"
+   ]
+  },
+  "reasons": [
+   "measure_differs"
+  ]
+ },
+ "r1-pv-causality-parenthetical#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "0.3"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "0.3"
+   ]
+  },
+  "reasons": [
+   "measure_differs"
+  ]
+ },
+ "r1-pv-excluding-leading-clause#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "3.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "3.0"
+   ]
+  },
+  "reasons": [
+   "measure_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-pv-excluding-leading-clause#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "2.3"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.3"
+   ]
+  },
+  "reasons": [
+   "measure_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-pv-other-than-restriction#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "3.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "3.0"
+   ]
+  },
+  "reasons": [
+   "measure_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-pv-other-than-restriction#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "2.3"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.3"
+   ]
+  },
+  "reasons": [
+   "measure_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-pv-sae-requiring-hospitalisation#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "3.9"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "3.9"
+   ]
+  },
+  "reasons": [
+   "measure_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-pv-sae-requiring-hospitalisation#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "2.6"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.6"
+   ]
+  },
+  "reasons": [
+   "measure_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-pv-post-treatment-sae#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "0.7"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "0.7"
+   ]
+  },
+  "reasons": [
+   "period_differs"
+  ]
+ },
+ "r1-pv-post-treatment-sae#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "0.3"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "0.3"
+   ]
+  },
+  "reasons": [
+   "period_differs"
+  ]
+ },
+ "r1-pv-sae-onset-after-week#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "2.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.0"
+   ]
+  },
+  "reasons": [
+   "period_differs"
+  ]
+ },
+ "r1-pv-sae-onset-after-week#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "1.3"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "1.3"
+   ]
+  },
+  "reasons": [
+   "period_differs"
+  ]
+ },
+ "r1-pv-sae-within-30-days-of-last-dose#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "1.6"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "1.6"
+   ]
+  },
+  "reasons": [
+   "period_differs"
+  ]
+ },
+ "r1-pv-sae-within-30-days-of-last-dose#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "1.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "1.0"
+   ]
+  },
+  "reasons": [
+   "period_differs"
+  ]
+ },
+ "r1-pv-more-than-one-sae#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "1.3"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "1.3"
+   ]
+  },
+  "reasons": [
+   "measure_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-pv-more-than-one-sae#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "0.7"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "0.7"
+   ]
+  },
+  "reasons": [
+   "measure_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-pv-teae-trailing-led-to#0": {
+  "notPaired": [
+   [
+    "58.4",
+    "3.9"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "3.9"
+   ]
+  },
+  "reasons": [
+   "measure_differs",
+   "no_counterpart",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-pv-teae-trailing-led-to#1": {
+  "notPaired": [
+   [
+    "51.2",
+    "2.4"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.4"
+   ]
+  },
+  "reasons": [
+   "measure_differs",
+   "no_counterpart",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-pv-non-fatal-read-as-fatal#0": {
+  "notPaired": [
+   [
+    "0.3",
+    "4.3"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "4.3"
+   ]
+  },
+  "reasons": [
+   "measure_differs",
+   "no_counterpart"
+  ]
+ },
+ "r1-pv-non-fatal-read-as-fatal#1": {
+  "notPaired": [
+   [
+    "0.3",
+    "3.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "3.0"
+   ]
+  },
+  "reasons": [
+   "measure_differs",
+   "no_counterpart"
+  ]
+ },
+ "r1-pv-serious-cardiac-read-as-any-ae#0": {
+  "notPaired": [
+   [
+    "58.4",
+    "1.3"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "1.3"
+   ]
+  },
+  "reasons": [
+   "measure_differs",
+   "no_counterpart"
+  ]
+ },
+ "r1-pv-serious-cardiac-read-as-any-ae#1": {
+  "notPaired": [
+   [
+    "51.2",
+    "1.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "1.0"
+   ]
+  },
+  "reasons": [
+   "measure_differs",
+   "no_counterpart"
+  ]
+ },
+ "r1-pv-subgroup-trailing-among#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "6.6"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "6.6"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-pv-subgroup-trailing-among#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "4.3"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "4.3"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-pv-period-trailing-second-year#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "2.6"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.6"
+   ]
+  },
+  "reasons": [
+   "period_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-pv-period-trailing-second-year#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "2.3"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.3"
+   ]
+  },
+  "reasons": [
+   "period_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-pv-hr-trailing-region#0": {
+  "notPaired": [
+   [
+    "0.72",
+    "0.65"
+   ],
+   [
+    "0.61",
+    "0.50"
+   ],
+   [
+    "0.85",
+    "0.85"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "0.65"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-pv-effect-trailing-sensitivity-method#0": {
+  "notPaired": [
+   [
+    "-0.62",
+    "-0.58"
+   ],
+   [
+    "-0.78",
+    "-0.75"
+   ],
+   [
+    "-0.46",
+    "-0.41"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "-0.58"
+   ]
+  },
+  "reasons": [
+   "imputation_differs",
+   "analysis_differs"
+  ]
+ },
+ "r1-pv-effect-trailing-dose#0": {
+  "notPaired": [
+   [
+    "-0.62",
+    "-0.41"
+   ],
+   [
+    "-0.78",
+    "-0.57"
+   ],
+   [
+    "-0.46",
+    "-0.25"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "-0.41"
+   ]
+  },
+  "reasons": [
+   "arm_differs",
+   "contrast_unidentified",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-pv-randomized-trailing-region#0": {
+  "notPaired": [
+   [
+    "612",
+    "214"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "214"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-pv-randomized-in-country#0": {
+  "notPaired": [
+   [
+    "612",
+    "48"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "48"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-pv-randomized-after-amendment#0": {
+  "notPaired": [
+   [
+    "612",
+    "388"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "388"
+   ]
+  },
+  "reasons": [
+   "period_differs",
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-pv-table-pct-n-column-order#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.9",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r1-pv-table-pct-n-column-order#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.6",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r1-pv-randomly-assigned#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "621",
+  "c": "count",
+  "arm": "total"
+ },
+ "r1-pv-randomly-allocated#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "621",
+  "c": "count",
+  "arm": "total"
+ },
+ "r1-pv-enrolled-and-randomized#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "621",
+  "c": "count",
+  "arm": "total"
+ },
+ "r1-pv-randomization-noun#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "621",
+  "c": "count",
+  "arm": "total"
+ },
+ "r1-pv-sentence-split-by-line-break#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r1-pv-sentence-split-by-line-break#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.6",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r1-pv-of-the-patients-receiving#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.4",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r1-pv-of-the-patients-receiving#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r1-pv-colon-semicolon-list#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.4",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r1-pv-colon-semicolon-list#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r1-pv-percentage-of-patients-with#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.4",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r1-pv-percentage-of-patients-with#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r1-pv-reported-by-passive#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.4",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r1-pv-reported-by-passive#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r1-pv-similar-between-groups-paren#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.4",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r1-pv-similar-between-groups-paren#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r1-pv-parenthetical-comparator#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.4",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r1-pv-parenthetical-comparator#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r1-pv-bulleted-list#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.4",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r1-pv-bulleted-list#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r1-pv-counts-in-words#0": {
+  "m": "incidence:serious",
+  "a": "14",
+  "b": "14",
+  "c": "count",
+  "arm": "drug x"
+ },
+ "r1-pv-counts-in-words#1": {
+  "m": "incidence:serious",
+  "a": "10",
+  "b": "11",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "r1-pv-tab-separated-table#0": {
+  "m": "incidence:serious",
+  "a": "14",
+  "b": "14",
+  "c": "count",
+  "arm": "drug x"
+ },
+ "r1-pv-tab-separated-table#1": {
+  "m": "incidence:serious",
+  "a": "10",
+  "b": "11",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "r1-pv-markdown-pipe-table#0": {
+  "m": "incidence:serious",
+  "a": "14",
+  "b": "14",
+  "c": "count",
+  "arm": "drug x"
+ },
+ "r1-pv-markdown-pipe-table#1": {
+  "m": "incidence:serious",
+  "a": "10",
+  "b": "11",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "r1-pv-table-flattened-to-one-line#0": {
+  "m": "incidence:serious",
+  "a": "14",
+  "b": "14",
+  "c": "count",
+  "arm": "drug x"
+ },
+ "r1-pv-table-flattened-to-one-line#1": {
+  "m": "incidence:serious",
+  "a": "10",
+  "b": "11",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "r1-pv-per-arm-shorthand#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "612",
+  "c": "count",
+  "arm": "total"
+ },
+ "r1-pv-per-arm-shorthand#1": {
+  "notPaired": [
+   [
+    "306",
+    "302"
+   ],
+   [
+    "306",
+    "310"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "306"
+   ]
+  },
+  "reasons": [
+   "arm_unidentified"
+  ]
+ },
+ "r1-pv-per-arm-shorthand#2": {
+  "notPaired": [
+   [
+    "306",
+    "302"
+   ],
+   [
+    "306",
+    "310"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "306"
+   ]
+  },
+  "reasons": [
+   "arm_unidentified"
+  ]
+ },
+ "r1-pv-discontinued-study-per-arm#0": {
+  "m": "discontinued_study",
+  "a": "22",
+  "b": "25",
+  "c": "count",
+  "arm": "drug x"
+ },
+ "r1-pv-treated-passive-administered#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "612",
+  "c": "count",
+  "arm": "total"
+ },
+ "r1-pv-treated-passive-administered#1": {
+  "m": "n:treated",
+  "a": "608",
+  "b": "604",
+  "c": "count",
+  "arm": "total"
+ },
+ "r1-pv-respectively-across-measures#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r1-pv-respectively-across-measures#1": {
+  "m": "deaths",
+  "a": "0.3",
+  "b": "0.7",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r1-pv-respectively-measures-and-arms#0": {
+  "m": "incidence:any",
+  "a": "58.4",
+  "b": "58.4",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r1-pv-respectively-measures-and-arms#1": {
+  "m": "incidence:any",
+  "a": "51.2",
+  "b": "52.1",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r1-pv-respectively-measures-and-arms#2": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r1-pv-respectively-measures-and-arms#3": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r1-sp-01#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "5.9"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "5.9"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-01#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "2.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-02#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "5.9"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "5.9"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-02#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "2.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-03#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "5.9"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "5.9"
+   ]
+  },
+  "reasons": [
+   "subgroup_context_unresolved",
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-03#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "2.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_context_unresolved",
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-04#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "5.9"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "5.9"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-04#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "2.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-05#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "5.9"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "5.9"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-05#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "2.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-06#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "5.9"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "5.9"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-06#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "2.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-07#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "5.9"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "5.9"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-07#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "2.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-08#0": {
+  "notPaired": [
+   [
+    "3.3",
+    "2.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-08#1": {
+  "notPaired": [
+   [
+    "4.6",
+    "5.9"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "5.9"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier",
+   "arm_differs",
+   "no_counterpart"
+  ]
+ },
+ "r1-sp-09#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "5.9"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "5.9"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-09#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "2.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-10#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "5.9"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "5.9"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-10#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "2.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-11#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "5.9"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "5.9"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-11#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "2.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-12#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "5.9"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "5.9"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-12#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "2.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-13#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "5.9"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "5.9"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-13#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "2.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-14#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "5.9"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "5.9"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "population_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-14#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "2.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "population_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-15#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "5.9"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "5.9"
+   ]
+  },
+  "reasons": [
+   "period_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-15#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "2.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.0"
+   ]
+  },
+  "reasons": [
+   "period_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-16#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "5.9"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "5.9"
+   ]
+  },
+  "reasons": [
+   "period_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-16#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "2.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.0"
+   ]
+  },
+  "reasons": [
+   "period_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-17#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "5.9"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "5.9"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "period_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-17#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "2.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "period_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-18#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "5.9"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "5.9"
+   ]
+  },
+  "reasons": [
+   "period_differs",
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-18#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "2.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.0"
+   ]
+  },
+  "reasons": [
+   "period_differs",
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-19#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "5.9"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "5.9"
+   ]
+  },
+  "reasons": [
+   "period_differs",
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-19#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "2.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "2.0"
+   ]
+  },
+  "reasons": [
+   "period_differs",
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-20#0": {
+  "notPaired": [
+   [
+    "0.72",
+    "0.81"
+   ],
+   [
+    "0.60",
+    "0.49"
+   ],
+   [
+    "0.86",
+    "1.34"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "0.81"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-21#0": {
+  "notPaired": [
+   [
+    "0.72",
+    "0.75"
+   ],
+   [
+    "0.60",
+    "0.62"
+   ],
+   [
+    "0.86",
+    "0.90"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "0.75"
+   ]
+  },
+  "reasons": [
+   "analysis_differs"
+  ]
+ },
+ "r1-sp-22#0": {
+  "notPaired": [
+   [
+    "0.72",
+    "0.75"
+   ],
+   [
+    "0.60",
+    "0.62"
+   ],
+   [
+    "0.86",
+    "0.90"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "0.75"
+   ]
+  },
+  "reasons": [
+   "imputation_differs",
+   "analysis_differs"
+  ]
+ },
+ "r1-sp-23#0": {
+  "notPaired": [
+   [
+    "0.72",
+    "0.75"
+   ],
+   [
+    "0.60",
+    "0.62"
+   ],
+   [
+    "0.86",
+    "0.90"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "0.75"
+   ]
+  },
+  "reasons": [
+   "analysis_differs",
+   "population_differs"
+  ]
+ },
+ "r1-sp-24#0": {
+  "notPaired": [
+   [
+    "0.72",
+    "0.74"
+   ],
+   [
+    "0.60",
+    "0.61"
+   ],
+   [
+    "0.86",
+    "0.89"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "0.74"
+   ]
+  },
+  "reasons": [
+   "model_differs",
+   "analysis_differs"
+  ]
+ },
+ "r1-sp-25#0": {
+  "notPaired": [
+   [
+    "0.72",
+    "0.74"
+   ],
+   [
+    "0.60",
+    "0.61"
+   ],
+   [
+    "0.86",
+    "0.89"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "0.74"
+   ]
+  },
+  "reasons": [
+   "estimand_differs",
+   "analysis_differs"
+  ]
+ },
+ "r1-sp-26#0": {
+  "notPaired": [
+   [
+    "0.72",
+    "0.95"
+   ],
+   [
+    "0.60",
+    "0.62"
+   ],
+   [
+    "0.86",
+    "1.40"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "0.95"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-27#0": {
+  "notPaired": [
+   [
+    "0.72",
+    "0.55"
+   ],
+   [
+    "0.60",
+    "0.41"
+   ],
+   [
+    "0.86",
+    "0.74"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "0.55"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-28#0": {
+  "notPaired": [
+   [
+    "0.72",
+    "0.69"
+   ],
+   [
+    "0.60",
+    "0.55"
+   ],
+   [
+    "0.86",
+    "0.86"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "0.69"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-29#0": {
+  "notPaired": [
+   [
+    "0.72",
+    "0.69"
+   ],
+   [
+    "0.60",
+    "0.55"
+   ],
+   [
+    "0.86",
+    "0.86"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "0.69"
+   ]
+  },
+  "reasons": [
+   "period_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-30#0": {
+  "notPaired": [
+   [
+    "0.72",
+    "0.69"
+   ],
+   [
+    "0.60",
+    "0.55"
+   ],
+   [
+    "0.86",
+    "0.86"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "0.69"
+   ]
+  },
+  "reasons": [
+   "period_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-31#0": {
+  "notPaired": [
+   [
+    "0.72",
+    "0.64"
+   ],
+   [
+    "0.60",
+    "0.50"
+   ],
+   [
+    "0.86",
+    "0.82"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "0.64"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-32#0": {
+  "notPaired": [
+   [
+    "612",
+    "204"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "204"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-32#1": {
+  "notPaired": [
+   [
+    "306",
+    "102"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "102"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-33#0": {
+  "notPaired": [
+   [
+    "612",
+    "204"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "204"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-33#1": {
+  "notPaired": [
+   [
+    "306",
+    "102"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "102"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-34#0": {
+  "notPaired": [
+   [
+    "612",
+    "204"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "204"
+   ]
+  },
+  "reasons": [
+   "period_differs",
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-34#1": {
+  "notPaired": [
+   [
+    "306",
+    "102"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "102"
+   ]
+  },
+  "reasons": [
+   "period_differs",
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-35#0": {
+  "notPaired": [
+   [
+    "612",
+    "204"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "204"
+   ]
+  },
+  "reasons": [
+   "part_differs",
+   "period_differs",
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-35#1": {
+  "notPaired": [
+   [
+    "306",
+    "102"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "102"
+   ]
+  },
+  "reasons": [
+   "part_differs",
+   "period_differs",
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-36#0": {
+  "notPaired": [
+   [
+    "612",
+    "302"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "302"
+   ]
+  },
+  "reasons": [
+   "part_differs",
+   "period_differs",
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-36#1": {
+  "notPaired": [
+   [
+    "306",
+    "151"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "151"
+   ]
+  },
+  "reasons": [
+   "part_differs",
+   "period_differs",
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-37#0": {
+  "notPaired": [
+   [
+    "612",
+    "604"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "604"
+   ]
+  },
+  "reasons": [
+   "population_differs",
+   "measure_differs",
+   "no_counterpart"
+  ]
+ },
+ "r1-sp-38#0": {
+  "notPaired": [
+   [
+    "58.2",
+    "61.4"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "61.4"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-38#1": {
+  "notPaired": [
+   [
+    "31.0",
+    "32.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "32.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-39#0": {
+  "notPaired": [
+   [
+    "58.2",
+    "61.4"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "61.4"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-39#1": {
+  "notPaired": [
+   [
+    "31.0",
+    "32.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "32.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-40#0": {
+  "notPaired": [
+   [
+    "58.2",
+    "61.4"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "61.4"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-40#1": {
+  "notPaired": [
+   [
+    "31.0",
+    "32.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "32.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-41#0": {
+  "notPaired": [
+   [
+    "58.2",
+    "49.4"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "49.4"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-41#1": {
+  "notPaired": [
+   [
+    "31.0",
+    "22.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "22.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-42#0": {
+  "notPaired": [
+   [
+    "58.2",
+    "61.4"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "61.4"
+   ]
+  },
+  "reasons": [
+   "imputation_differs",
+   "analysis_differs"
+  ]
+ },
+ "r1-sp-42#1": {
+  "notPaired": [
+   [
+    "31.0",
+    "32.0"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "32.0"
+   ]
+  },
+  "reasons": [
+   "imputation_differs",
+   "analysis_differs"
+  ]
+ },
+ "r1-sp-43#0": {
+  "notPaired": [
+   [
+    "38.6",
+    "52.0"
+   ],
+   [
+    "31.5",
+    "40.1"
+   ],
+   [
+    "46.1",
+    "63.7"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "52.0"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-44#0": {
+  "notPaired": [
+   [
+    "38.6",
+    "40.2"
+   ],
+   [
+    "31.5",
+    "33.0"
+   ],
+   [
+    "46.1",
+    "47.7"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "40.2"
+   ]
+  },
+  "reasons": [
+   "analysis_differs",
+   "cutoff_differs"
+  ]
+ },
+ "r1-sp-45#0": {
+  "notPaired": [
+   [
+    "38.6",
+    "33.2"
+   ],
+   [
+    "31.5",
+    "25.0"
+   ],
+   [
+    "46.1",
+    "42.1"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "33.2"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-46#0": {
+  "notPaired": [
+   [
+    "38.6",
+    "33.2"
+   ],
+   [
+    "31.5",
+    "25.0"
+   ],
+   [
+    "46.1",
+    "42.1"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "33.2"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-47#0": {
+  "notPaired": [
+   [
+    "-0.71",
+    "-0.79"
+   ],
+   [
+    "-0.86",
+    "-0.97"
+   ],
+   [
+    "-0.56",
+    "-0.61"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "-0.79"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-48#0": {
+  "notPaired": [
+   [
+    "-0.71",
+    "-0.79"
+   ],
+   [
+    "-0.86",
+    "-0.95"
+   ],
+   [
+    "-0.56",
+    "-0.63"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "-0.79"
+   ]
+  },
+  "reasons": [
+   "estimand_differs",
+   "analysis_differs"
+  ]
+ },
+ "r1-sp-49#0": {
+  "m": "deaths",
+  "a": "2",
+  "b": "3",
+  "c": "count",
+  "arm": "drug x"
+ },
+ "r1-sp-49#1": {
+  "notPaired": [
+   [
+    "3",
+    "3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "3"
+   ]
+  },
+  "reasons": [
+   "per_arm_vs_total",
+   "no_counterpart"
+  ]
+ },
+ "r1-sp-50#0": {
+  "m": "deaths",
+  "a": "3",
+  "b": "3",
+  "c": "count",
+  "arm": "drug x"
+ },
+ "r1-sp-50#1": {
+  "notPaired": [
+   [
+    "4",
+    "3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "4"
+   ]
+  },
+  "reasons": [
+   "per_arm_vs_total",
+   "no_counterpart"
+  ]
+ },
+ "r1-sp-51#0": {
+  "notPaired": [
+   [
+    "612",
+    "306"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "612"
+   ],
+   "b": [
+    "306"
+   ]
+  },
+  "reasons": [
+   "per_arm_vs_total",
+   "no_counterpart"
+  ]
+ },
+ "r1-sp-52#0": {
+  "notPaired": [
+   [
+    "608",
+    "304"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "608"
+   ],
+   "b": [
+    "304"
+   ]
+  },
+  "reasons": [
+   "per_arm_vs_total",
+   "no_counterpart"
+  ]
+ },
+ "r1-sp-56#0": {
+  "notPaired": [
+   [
+    "51.0",
+    "58.2"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "51.0"
+   ]
+  },
+  "reasons": [
+   "arm_differs",
+   "ambiguous_candidates",
+   "no_counterpart"
+  ]
+ },
+ "r1-sp-56#1": {
+  "m": "responder:acr20",
+  "a": "31.0",
+  "b": "31.0",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r1-sp-57#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "4.6"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "4.6"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-57#1": {
+  "notPaired": [
+   [
+    "3.3",
+    "3.3"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "3.3"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-58#0": {
+  "m": "effect:ls_mean_difference",
+  "a": "-0.71",
+  "b": "-0.75",
+  "c": "estimate"
+ },
+ "r1-sp-58#1": {
+  "notPaired": [
+   [
+    "-0.71",
+    "-0.92"
+   ],
+   [
+    "-0.86",
+    "-1.15"
+   ],
+   [
+    "-0.56",
+    "-0.69"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "-0.92"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "no_counterpart",
+   "unrecognised_qualifier"
+  ]
+ },
+ "r1-sp-59#0": {
+  "m": "deaths",
+  "a": "3",
+  "b": "3",
+  "c": "count",
+  "arm": "total"
+ },
+ "r1-sp-59#1": {
+  "m": "deaths",
+  "a": "2",
+  "b": "1",
+  "c": "count",
+  "arm": "drug x"
+ },
+ "r1-sp-59#2": {
+  "m": "deaths",
+  "a": "1",
+  "b": "2",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "r1-nsf-01#0": {
+  "m": "effect:hazard_ratio",
+  "a": "0.81",
+  "b": "0.81",
+  "c": "estimate"
+ },
+ "r1-nsf-01#1": {
+  "notPaired": [
+   [
+    "0.0047",
+    "0.0094"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "0.0047"
+   ],
+   "b": [
+    "0.0094"
+   ]
+  },
+  "reasons": [
+   "p_value_basis_differs"
+  ]
+ },
+ "r1-nsf-02#0": {
+  "m": "effect:hazard_ratio",
+  "a": "0.81",
+  "b": "0.81",
+  "c": "estimate"
+ },
+ "r1-nsf-02#1": {
+  "notPaired": [
+   [
+    "0.0047",
+    "0.0094"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "0.0047"
+   ],
+   "b": [
+    "0.0094"
+   ]
+  },
+  "reasons": [
+   "p_value_basis_differs"
+  ]
+ },
+ "r1-nsf-03#0": {
+  "m": "effect:hazard_ratio",
+  "a": "0.81",
+  "b": "0.81",
+  "c": "estimate"
+ },
+ "r1-nsf-03#1": {
+  "notPaired": [
+   [
+    "0.0094",
+    "0.0101"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "0.0094"
+   ],
+   "b": [
+    "0.0101"
+   ]
+  },
+  "reasons": [
+   "p_value_basis_differs"
+  ]
+ },
+ "r1-nsf-04#0": {
+  "m": "effect:hazard_ratio",
+  "a": "0.81",
+  "b": "0.81",
+  "c": "estimate"
+ },
+ "r1-nsf-04#1": {
+  "notPaired": [
+   [
+    "0.0094",
+    "0.0376"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "0.0094"
+   ],
+   "b": [
+    "0.0376"
+   ]
+  },
+  "reasons": [
+   "p_value_basis_differs"
+  ]
+ },
+ "r1-nsf-05#0": {
+  "m": "n:randomized",
+  "a": "1227",
+  "b": "1227",
+  "c": "count",
+  "arm": "total"
+ },
+ "r1-nsf-05#1": {
+  "m": "effect:hazard_ratio",
+  "a": "0.72",
+  "b": "0.72",
+  "c": "estimate"
+ },
+ "r1-nsf-06#0": {
+  "m": "n:randomized",
+  "a": "1227",
+  "b": "1227",
+  "c": "count",
+  "arm": "total"
+ },
+ "r1-nsf-06#1": {
+  "m": "n:randomized",
+  "a": "818",
+  "b": "818",
+  "c": "count",
+  "arm": "mivelistat"
+ },
+ "r1-nsf-06#2": {
+  "m": "n:randomized",
+  "a": "409",
+  "b": "409",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "r1-nsf-07#0": {
+  "m": "effect:hazard_ratio",
+  "a": "0.72",
+  "b": "0.72",
+  "c": "estimate"
+ },
+ "r1-nsf-08#0": {
+  "notPaired": [
+   [
+    "104.12",
+    "1.04"
+   ],
+   [
+    "97.35",
+    "0.97"
+   ],
+   [
+    "111.36",
+    "1.11"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "104.12"
+   ],
+   "b": [
+    "1.04"
+   ]
+  },
+  "reasons": [
+   "scale_differs"
+  ]
+ },
+ "r1-nsf-09#0": {
+  "notPaired": [
+   [
+    "104.12",
+    "1.04"
+   ],
+   [
+    "97.35",
+    "0.97"
+   ],
+   [
+    "111.36",
+    "1.11"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "104.12"
+   ],
+   "b": [
+    "1.04"
+   ]
+  },
+  "reasons": [
+   "scale_differs"
+  ]
+ },
+ "r1-nsf-10#0": {
+  "notPaired": [
+   [
+    "98.5",
+    "0.985"
+   ],
+   [
+    "91.2",
+    "0.912"
+   ],
+   [
+    "106.4",
+    "1.064"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "98.5"
+   ],
+   "b": [
+    "0.985"
+   ]
+  },
+  "reasons": [
+   "scale_differs"
+  ]
+ },
+ "r1-nsf-11#0": {
+  "notPaired": [
+   [
+    "0.985",
+    "1.021"
+   ],
+   [
+    "0.912",
+    "0.975"
+   ],
+   [
+    "1.064",
+    "1.069"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "0.985"
+   ],
+   "b": [
+    "1.021"
+   ]
+  },
+  "reasons": [
+   "endpoint_differs"
+  ]
+ },
+ "r1-nsf-12#0": {
+  "notPaired": [
+   [
+    "0.78",
+    "1.02"
+   ],
+   [
+    "0.70",
+    "0.96"
+   ],
+   [
+    "0.87",
+    "1.08"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "0.78"
+   ],
+   "b": [
+    "1.02"
+   ]
+  },
+  "reasons": [
+   "endpoint_differs"
+  ]
+ },
+ "r1-nsf-13#0": {
+  "notPaired": [
+   [
+    "0.71",
+    "0.88"
+   ],
+   [
+    "0.60",
+    "0.74"
+   ],
+   [
+    "0.84",
+    "1.05"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "0.71"
+   ],
+   "b": [
+    "0.88"
+   ]
+  },
+  "reasons": [
+   "endpoint_differs"
+  ]
+ },
+ "r1-nsf-14#0": {
+  "notPaired": [
+   [
+    "-6.2",
+    "-2.9"
+   ],
+   [
+    "-7.1",
+    "-3.4"
+   ],
+   [
+    "-5.3",
+    "-2.4"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "-6.2"
+   ],
+   "b": [
+    "-2.9"
+   ]
+  },
+  "reasons": [
+   "endpoint_differs"
+  ]
+ },
+ "r1-nsf-15#0": {
+  "notPaired": [
+   [
+    "8.4",
+    "6.1"
+   ],
+   [
+    "5.9",
+    "4.3"
+   ],
+   [
+    "12.0",
+    "8.7"
+   ],
+   [
+    "75",
+    "0"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "8.4"
+   ],
+   "b": [
+    "6.1"
+   ]
+  },
+  "reasons": [
+   "endpoint_differs"
+  ]
+ },
+ "r1-nsf-16#0": {
+  "m": "effect:odds_ratio",
+  "a": "8.4",
+  "b": "4.8",
+  "c": "estimate"
+ },
+ "r1-nsf-17#0": {
+  "m": "effect:ratio_geometric_means",
+  "a": "1.04",
+  "b": "1.04",
+  "c": "estimate"
+ },
+ "r1-nsf-18#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r1-nsf-18#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r1-nsf-19#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r1-nsf-19#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r1-nsf-19#2": {
+  "notPaired": [
+   [
+    "1.3",
+    "1.3"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "1.3"
+   ]
+  },
+  "reasons": [
+   "effect_type_unidentified",
+   "scale_differs",
+   "no_counterpart"
+  ]
+ },
+ "r1-nsf-20#0": {
+  "m": "responder:treatment_failure",
+  "a": "9.2",
+  "b": "9.2",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r1-nsf-20#1": {
+  "m": "responder:treatment_failure",
+  "a": "12.3",
+  "b": "12.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r1-nsf-20#2": {
+  "notPaired": [
+   [
+    "9.2",
+    "3.1"
+   ],
+   [
+    "12.3",
+    "3.1"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "3.1"
+   ]
+  },
+  "reasons": [
+   "effect_type_unidentified",
+   "no_counterpart"
+  ]
+ },
+ "r1-nsf-21#0": {
+  "m": "responder:acr20",
+  "a": "58.1",
+  "b": "58.1",
+  "c": "percent",
+  "arm": "zelnabart"
+ },
+ "r1-nsf-21#1": {
+  "m": "responder:acr20",
+  "a": "31.4",
+  "b": "31.4",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r1-nsf-22#0": {
+  "m": "eair:eair:serious",
+  "a": "4.6",
+  "b": "6.4",
+  "c": "estimate",
+  "arm": "drug x"
+ },
+ "r1-nsf-22#1": {
+  "m": "eair:eair:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "estimate",
+  "arm": "placebo"
+ },
+ "r1-nsf-23#0": {
+  "m": "eair:eair:serious",
+  "a": "4.6",
+  "b": "6.4",
+  "c": "estimate",
+  "arm": "drug x"
+ },
+ "r1-nsf-23#1": {
+  "m": "eair:eair:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "estimate",
+  "arm": "placebo"
+ },
+ "r1-nsf-24#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "3.2",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r1-nsf-24#1": {
+  "m": "incidence:serious",
+  "a": "3.2",
+  "b": "3.2",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r1-nsf-24#2": {
+  "notPaired": [
+   [
+    "2.9",
+    "3.2"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "2.9"
+   ]
+  },
+  "reasons": [
+   "measure_differs",
+   "no_counterpart"
+  ]
+ },
+ "r2-pv-ae-leading-to-withdrawal-read-as-any-ae#0": {
+  "notPaired": [
+   [
+    "86.4",
+    "6.4"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "86.4"
+   ],
+   "b": [
+    "6.4"
+   ]
+  },
+  "reasons": [
+   "measure_differs",
+   "no_counterpart"
+  ]
+ },
+ "r2-pv-ae-leading-to-death-read-as-any-ae#0": {
+  "notPaired": [
+   [
+    "86.4",
+    "1.2"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "86.4"
+   ],
+   "b": [
+    "1.2"
+   ]
+  },
+  "reasons": [
+   "measure_differs",
+   "no_counterpart"
+  ]
+ },
+ "r2-pv-ae-leading-to-dose-reduction-read-as-any-ae#0": {
+  "notPaired": [
+   [
+    "86.4",
+    "12.1"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "86.4"
+   ],
+   "b": [
+    "12.1"
+   ]
+  },
+  "reasons": [
+   "measure_differs",
+   "no_counterpart"
+  ]
+ },
+ "r2-pv-withdrew-owing-to-read-as-any-ae#0": {
+  "notPaired": [
+   [
+    "86.4",
+    "6.4"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "86.4"
+   ],
+   "b": [
+    "6.4"
+   ]
+  },
+  "reasons": [
+   "measure_differs",
+   "no_counterpart"
+  ]
+ },
+ "r2-pv-ae-leading-to-withdrawal-vs-discontinued#0": {
+  "m": "incidence:disc_treatment",
+  "a": "4.6",
+  "b": "6.4",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r2-pv-resulted-verb-read-as-arm#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "3.3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "4.6"
+   ],
+   "b": [
+    "3.3"
+   ]
+  },
+  "reasons": [
+   "no_counterpart"
+  ]
+ },
+ "r2-pv-lower-in-placebo-than-in-drug-x#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "6.4",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r2-pv-lower-in-placebo-than-in-drug-x#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r2-pv-fewer-patients-in-placebo-than-in-drug-x#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "6.4",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r2-pv-fewer-patients-in-placebo-than-in-drug-x#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r2-pv-n-of-N-patients-trailing-percent#0": {
+  "m": "incidence:serious",
+  "a": "14",
+  "b": "19",
+  "c": "count",
+  "arm": "drug x"
+ },
+ "r2-pv-n-of-N-patients-trailing-percent#1": {
+  "m": "incidence:serious",
+  "a": "10",
+  "b": "10",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "r2-pv-n-slash-N-patients-trailing-percent#0": {
+  "m": "incidence:serious",
+  "a": "14",
+  "b": "19",
+  "c": "count",
+  "arm": "drug x"
+ },
+ "r2-pv-n-slash-N-patients-trailing-percent#1": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "6.4",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r2-pv-ci-comma-nejm-style-hr#0": {
+  "m": "effect:hazard_ratio",
+  "a": "0.72",
+  "b": "0.76",
+  "c": "estimate"
+ },
+ "r2-pv-ci-comma-nejm-style-hr#1": {
+  "m": "effect:hazard_ratio",
+  "a": "0.60",
+  "b": "0.63",
+  "c": "lower"
+ },
+ "r2-pv-ci-comma-nejm-style-hr#2": {
+  "m": "effect:hazard_ratio",
+  "a": "0.86",
+  "b": "0.91",
+  "c": "upper"
+ },
+ "r2-pv-ci-comma-nejm-style-ls-mean-difference#0": {
+  "m": "effect:ls_mean_difference",
+  "a": "-0.80",
+  "b": "-0.92",
+  "c": "estimate"
+ },
+ "r2-pv-ci-comma-nejm-style-ls-mean-difference#1": {
+  "m": "effect:ls_mean_difference",
+  "a": "-1.00",
+  "b": "-1.12",
+  "c": "lower"
+ },
+ "r2-pv-ci-comma-nejm-style-ls-mean-difference#2": {
+  "m": "effect:ls_mean_difference",
+  "a": "-0.60",
+  "b": "-0.72",
+  "c": "upper"
+ },
+ "r2-pv-ci-confidence-limits#0": {
+  "m": "effect:hazard_ratio",
+  "a": "0.72",
+  "b": "0.76",
+  "c": "estimate"
+ },
+ "r2-pv-ci-confidence-limits#1": {
+  "m": "effect:hazard_ratio",
+  "a": "0.60",
+  "b": "0.63",
+  "c": "lower"
+ },
+ "r2-pv-ci-confidence-limits#2": {
+  "m": "effect:hazard_ratio",
+  "a": "0.86",
+  "b": "0.91",
+  "c": "upper"
+ },
+ "r2-pv-ci-interval-of-x-to-y-prose#0": {
+  "m": "effect:hazard_ratio",
+  "a": "0.72",
+  "b": "0.76",
+  "c": "estimate"
+ },
+ "r2-pv-ci-interval-of-x-to-y-prose#1": {
+  "m": "effect:hazard_ratio",
+  "a": "0.60",
+  "b": "0.63",
+  "c": "lower"
+ },
+ "r2-pv-ci-interval-of-x-to-y-prose#2": {
+  "m": "effect:hazard_ratio",
+  "a": "0.86",
+  "b": "0.91",
+  "c": "upper"
+ },
+ "r2-pv-randomised-population-comprised#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "621",
+  "c": "count",
+  "arm": "total"
+ },
+ "r2-pv-total-number-randomised-was#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "621",
+  "c": "count",
+  "arm": "total"
+ },
+ "r2-pv-randomised-ratio-then-n-equals#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "621",
+  "c": "count",
+  "arm": "total"
+ },
+ "r2-pv-n-in-total-were-randomised#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "621",
+  "c": "count",
+  "arm": "total"
+ },
+ "r2-pv-randomised-paren-screened-aside#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "621",
+  "c": "count",
+  "arm": "total"
+ },
+ "r2-pv-randomised-paren-screened-aside#1": {
+  "notPaired": [
+   [
+    "612",
+    "1204"
+   ],
+   [
+    "621",
+    "1204"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "1204"
+   ]
+  },
+  "reasons": [
+   "figure_not_read",
+   "no_counterpart",
+   "measure_differs"
+  ]
+ },
+ "r2-pv-randomised-paren-sites-aside#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "621",
+  "c": "count",
+  "arm": "total"
+ },
+ "r2-pv-randomised-paren-sites-aside#1": {
+  "notPaired": [
+   [
+    "612",
+    "84"
+   ],
+   [
+    "612",
+    "12"
+   ],
+   [
+    "621",
+    "84"
+   ],
+   [
+    "621",
+    "12"
+   ]
+  ]
+ },
+ "r2-pv-disposition-table-row-n-column#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "621",
+  "c": "count",
+  "arm": "total"
+ },
+ "r2-pv-table-row-label-n-pct-unaligned#0": {
+  "m": "incidence:serious",
+  "a": "14",
+  "b": "19",
+  "c": "count",
+  "arm": "drug x"
+ },
+ "r2-pv-table-row-label-n-pct-unaligned#1": {
+  "m": "incidence:serious",
+  "a": "10",
+  "b": "10",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "r2-pv-table-row-label-colon#0": {
+  "m": "incidence:serious",
+  "a": "14",
+  "b": "19",
+  "c": "count",
+  "arm": "drug x"
+ },
+ "r2-pv-table-row-label-colon#1": {
+  "m": "incidence:serious",
+  "a": "10",
+  "b": "10",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "r2-pv-percent-then-count-prose#0": {
+  "m": "incidence:serious",
+  "a": "14",
+  "b": "19",
+  "c": "count",
+  "arm": "drug x"
+ },
+ "r2-pv-percent-then-count-prose#1": {
+  "m": "incidence:serious",
+  "a": "10",
+  "b": "10",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "r2-pv-all-cause-mortality#0": {
+  "m": "deaths",
+  "a": "4.6",
+  "b": "6.4",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r2-pv-arm-active-treatment-group#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "6.4",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r2-pv-arm-those-assigned-to#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "6.4",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r2-pv-corresponding-figure-for#0": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r2-pv-corresponding-figure-for#1": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "6.4",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r2-pv-respectively-arms-named-first#0": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r2-pv-respectively-arms-named-first#1": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "6.4",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r2-pv-former-and-latter#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r2-pv-former-and-latter#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.6",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r2-pv-hyphenation-across-line-break-safety#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "6.4",
+  "c": "percent",
+  "arm": "drug x"
+ },
+ "r2-pv-hyphenation-across-line-break-hazard-ratio#0": {
+  "m": "effect:hazard_ratio",
+  "a": "0.72",
+  "b": "0.76",
+  "c": "estimate"
+ },
+ "r2-pv-footnote-markers-on-values#0": {
+  "m": "incidence:serious",
+  "a": "14",
+  "b": "19",
+  "c": "count",
+  "arm": "drug x"
+ },
+ "r2-pv-footnote-markers-on-values#1": {
+  "m": "incidence:serious",
+  "a": "10",
+  "b": "10",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "r2-pv-arm-list-one-per-line-en-dash#0": {
+  "m": "incidence:serious",
+  "a": "14",
+  "b": "19",
+  "c": "count",
+  "arm": "drug x"
+ },
+ "r2-pv-arm-list-one-per-line-en-dash#1": {
+  "m": "incidence:serious",
+  "a": "10",
+  "b": "10",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "r2-pv-arm-list-numbered-ordinals-as-figures#0": {
+  "m": "incidence:serious",
+  "a": "14",
+  "b": "19",
+  "c": "count",
+  "arm": "drug x"
+ },
+ "r2-pv-arm-list-numbered-ordinals-as-figures#1": {
+  "m": "incidence:serious",
+  "a": "10",
+  "b": "10",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "r2-pv-arm-list-numbered-ordinals-as-figures#2": {
+  "notPaired": [
+   [
+    "14",
+    "1"
+   ],
+   [
+    "4.6",
+    "1"
+   ],
+   [
+    "10",
+    "2"
+   ],
+   [
+    "3.3",
+    "2"
+   ]
+  ]
+ },
+ "r2-pv-nonnative-has-been-randomized#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "621",
+  "c": "count",
+  "arm": "total"
+ },
+ "r2-pv-nonnative-inverted-subject#0": {
+  "m": "n:randomized",
+  "a": "612",
+  "b": "621",
+  "c": "count",
+  "arm": "total"
+ },
+ "r2-scope-01-pool-scope-name-all-exposure#0": {
+  "notPaired": [
+   [
+    "5.0",
+    "9.7"
+   ],
+   [
+    "3.1",
+    "3.1"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "5.0",
+    "3.1"
+   ],
+   "b": [
+    "9.7",
+    "3.1"
+   ]
+  },
+  "reasons": [
+   "pool_scope_differs",
+   "pool_membership_differs",
+   "no_counterpart"
+  ]
+ },
+ "r2-scope-02-pool-scope-name-long-term#0": {
+  "notPaired": [
+   [
+    "5.0",
+    "12.8"
+   ],
+   [
+    "3.1",
+    "3.1"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "5.0",
+    "3.1"
+   ],
+   "b": [
+    "12.8",
+    "3.1"
+   ]
+  },
+  "reasons": [
+   "pool_scope_differs",
+   "pool_membership_differs",
+   "no_counterpart"
+  ]
+ },
+ "r2-scope-03-pool-control-type#0": {
+  "notPaired": [
+   [
+    "2.1",
+    "4.6"
+   ],
+   [
+    "1.8",
+    "3.3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "2.1",
+    "1.8"
+   ],
+   "b": [
+    "4.6",
+    "3.3"
+   ]
+  },
+  "reasons": [
+   "pool_scope_differs",
+   "pool_membership_differs",
+   "no_counterpart"
+  ]
+ },
+ "r2-scope-04-period-duration-prose#0": {
+  "notPaired": [
+   [
+    "2.1",
+    "4.6"
+   ],
+   [
+    "1.8",
+    "3.3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "2.1",
+    "1.8"
+   ],
+   "b": [
+    "4.6",
+    "3.3"
+   ]
+  },
+  "reasons": [
+   "period_differs",
+   "no_counterpart"
+  ]
+ },
+ "r2-scope-05-period-sub-window#0": {
+  "notPaired": [
+   [
+    "2.1",
+    "4.6"
+   ],
+   [
+    "1.8",
+    "3.3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "2.1",
+    "1.8"
+   ],
+   "b": [
+    "4.6",
+    "3.3"
+   ]
+  },
+  "reasons": [
+   "period_differs",
+   "no_counterpart"
+  ]
+ },
+ "r2-scope-06-db-period-duration#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "8.4"
+   ],
+   [
+    "3.3",
+    "5.1"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "4.6",
+    "3.3"
+   ],
+   "b": [
+    "8.4",
+    "5.1"
+   ]
+  },
+  "reasons": [
+   "period_differs",
+   "no_counterpart"
+  ]
+ },
+ "r2-scope-07-parenthetical-region-leak#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "7.1"
+   ],
+   [
+    "3.3",
+    "2.8"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "4.6",
+    "3.3"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "no_counterpart"
+  ]
+ },
+ "r2-scope-07-parenthetical-region-leak#1": {
+  "m": "incidence:serious",
+  "a": "5.9",
+  "b": "7.1",
+  "c": "percent",
+  "arm": "lorinastat"
+ },
+ "r2-scope-07-parenthetical-region-leak#2": {
+  "m": "incidence:serious",
+  "a": "2.0",
+  "b": "2.8",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r2-scope-08-parenthetical-region-leak-false-consistent#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "4.6"
+   ],
+   [
+    "3.3",
+    "3.3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "4.6",
+    "3.3"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "no_counterpart"
+  ]
+ },
+ "r2-scope-08-parenthetical-region-leak-false-consistent#1": {
+  "m": "incidence:serious",
+  "a": "5.9",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "lorinastat"
+ },
+ "r2-scope-08-parenthetical-region-leak-false-consistent#2": {
+  "m": "incidence:serious",
+  "a": "2.0",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r2-scope-09-parenthetical-age-leak#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "10.4"
+   ],
+   [
+    "3.3",
+    "6.2"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "4.6",
+    "3.3"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "no_counterpart"
+  ]
+ },
+ "r2-scope-09-parenthetical-age-leak#1": {
+  "m": "incidence:serious",
+  "a": "8.2",
+  "b": "10.4",
+  "c": "percent",
+  "arm": "lorinastat"
+ },
+ "r2-scope-09-parenthetical-age-leak#2": {
+  "m": "incidence:serious",
+  "a": "5.1",
+  "b": "6.2",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r2-scope-10-parenthetical-regional-n-leak#0": {
+  "notPaired": [
+   [
+    "612",
+    "218"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "612"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "no_counterpart"
+  ]
+ },
+ "r2-scope-10-parenthetical-regional-n-leak#1": {
+  "m": "n:randomized",
+  "a": "204",
+  "b": "218",
+  "c": "count"
+ },
+ "r2-scope-11-primary-vs-final-analysis#0": {
+  "notPaired": [
+   [
+    "0.84",
+    "0.78"
+   ],
+   [
+    "0.68",
+    "0.65"
+   ],
+   [
+    "1.04",
+    "0.94"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "0.84"
+   ],
+   "b": [
+    "0.78"
+   ]
+  },
+  "reasons": [
+   "analysis_differs"
+  ]
+ },
+ "r2-scope-12-interim-occasion#0": {
+  "notPaired": [
+   [
+    "0.84",
+    "0.78"
+   ],
+   [
+    "0.68",
+    "0.65"
+   ],
+   [
+    "1.04",
+    "0.94"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "0.84"
+   ],
+   "b": [
+    "0.78"
+   ]
+  },
+  "reasons": [
+   "analysis_differs"
+  ]
+ },
+ "r2-scope-13-table-footnote-subgroup#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "5.9"
+   ],
+   [
+    "3.3",
+    "2.0"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "4.6",
+    "3.3"
+   ]
+  },
+  "reasons": [
+   "subgroup_differs",
+   "no_counterpart"
+  ]
+ },
+ "r2-scope-14-as-treated-stated-as-prose#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "4.9"
+   ],
+   [
+    "3.3",
+    "3.0"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "4.6",
+    "3.3"
+   ],
+   "b": [
+    "4.9",
+    "3.0"
+   ]
+  },
+  "reasons": [
+   "analysis_differs"
+  ]
+ },
+ "r2-scope-15-mitt-not-read#0": {
+  "m": "effect:hazard_ratio:pfs",
+  "a": "0.72",
+  "b": "0.80",
+  "c": "estimate"
+ },
+ "r2-scope-16-population-definition-appositive#0": {
+  "m": "effect:hazard_ratio:pfs",
+  "a": "0.72",
+  "b": "0.80",
+  "c": "estimate"
+ },
+ "r2-scope-17-arm-letter-labels#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "6.4",
+  "c": "percent",
+  "arm": "ravoxetine"
+ },
+ "r2-scope-17-arm-letter-labels#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r2-scope-18-same-stratum-both-sides#0": {
+  "m": "effect:hazard_ratio:pfs",
+  "a": "0.61",
+  "b": "0.71",
+  "c": "estimate"
+ },
+ "r2-scope-19-combined-dose-arm-both-sides#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "6.4",
+  "c": "percent",
+  "arm": "lorinastat"
+ },
+ "r2-scope-19-combined-dose-arm-both-sides#1": {
+  "m": "incidence:serious",
+  "a": "3.3",
+  "b": "3.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r2-num-01#0": {
+  "notPaired": [
+   [
+    "3.2",
+    "32"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "3.2"
+   ],
+   "b": [
+    "32"
+   ]
+  },
+  "reasons": [
+   "unit_differs",
+   "measure_differs",
+   "no_counterpart"
+  ]
+ },
+ "r2-num-02#0": {
+  "notPaired": [
+   [
+    "4.6",
+    "5.8"
+   ],
+   [
+    "6.4",
+    "5.8"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "4.6",
+    "6.4"
+   ]
+  },
+  "reasons": [
+   "range_not_value",
+   "figure_not_read",
+   "no_counterpart"
+  ]
+ },
+ "r2-num-03#0": {
+  "m": "effect:hazard_ratio",
+  "a": "0.00014",
+  "b": "0.14",
+  "c": "p"
+ },
+ "r2-num-04#0": {
+  "m": "effect:hazard_ratio",
+  "a": "0.85",
+  "b": "0.95",
+  "c": "upper"
+ },
+ "r2-num-04#1": {
+  "m": "effect:hazard_ratio",
+  "a": "0.000023",
+  "b": "0.023",
+  "c": "p"
+ },
+ "r2-num-05#0": {
+  "m": "effect:hazard_ratio",
+  "a": "0.85",
+  "b": "0.95",
+  "c": "upper"
+ },
+ "r2-num-06#0": {
+  "m": "effect:hazard_ratio",
+  "a": "0.85",
+  "b": "0.95",
+  "c": "upper"
+ },
+ "r2-num-07#0": {
+  "m": "effect:hazard_ratio",
+  "a": "0.85",
+  "b": "0.95",
+  "c": "upper"
+ },
+ "r2-num-08#0": {
+  "m": "effect:hazard_ratio",
+  "a": "0.85",
+  "b": "0.95",
+  "c": "upper"
+ },
+ "r2-num-09#0": {
+  "m": "effect:hazard_ratio",
+  "a": "0.85",
+  "b": "0.95",
+  "c": "upper"
+ },
+ "r2-num-10#0": {
+  "m": "effect:hazard_ratio",
+  "a": "0.85",
+  "b": "0.95",
+  "c": "upper"
+ },
+ "r2-num-11#0": {
+  "m": "effect:hazard_ratio",
+  "a": "0.82",
+  "b": "0.91",
+  "c": "upper"
+ },
+ "r2-num-11#1": {
+  "notPaired": [
+   [
+    "0.61",
+    "0.63"
+   ],
+   [
+    "0.85",
+    "0.91"
+   ],
+   [
+    "0.85",
+    "0.82"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "0.61",
+    "0.85"
+   ]
+  },
+  "reasons": [
+   "ci_level_differs",
+   "no_counterpart"
+  ]
+ },
+ "r2-num-12#0": {
+  "m": "median:pfs",
+  "a": "9.2",
+  "b": "7.4",
+  "c": "estimate"
+ },
+ "r2-num-12#1": {
+  "notPaired": [
+   [
+    "8.1",
+    "6.1"
+   ],
+   [
+    "10.4",
+    "12.3"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "8.1",
+    "10.4"
+   ],
+   "b": [
+    "6.1",
+    "12.3"
+   ]
+  },
+  "reasons": [
+   "interval_kind_differs",
+   "no_counterpart",
+   "figure_not_read"
+  ]
+ },
+ "r2-num-13#0": {
+  "m": "incidence:serious",
+  "a": "4.6",
+  "b": "5.8",
+  "c": "percent"
+ },
+ "r2-num-13#1": {
+  "notPaired": [
+   [
+    "6.4",
+    "5.8"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "6.4"
+   ]
+  },
+  "reasons": [
+   "measure_differs",
+   "exposure_adjusted_rate",
+   "no_counterpart"
+  ]
+ },
+ "r2-num-14#0": {
+  "m": "effect:rrr",
+  "a": "54",
+  "b": "46",
+  "c": "estimate"
+ },
+ "r2-num-14#1": {
+  "m": "effect:rate_ratio",
+  "a": "0.46",
+  "b": "0.46",
+  "c": "estimate"
+ },
+ "r2-num-15#0": {
+  "m": "effect:hazard_ratio",
+  "a": "0.003",
+  "b": "0.0310",
+  "c": "p"
+ },
+ "r2-num-16#0": {
+  "m": "effect:ls_mean_difference",
+  "a": "0.003",
+  "b": "0.0310",
+  "c": "p"
+ },
+ "r2-num-17#0": {
+  "m": "eair:",
+  "a": "4.6",
+  "b": "6.4",
+  "c": "estimate"
+ },
+ "r2-lbl-01-table-unit-in-title-false-consistent#0": {
+  "m": "incidence:any:pt:nausea",
+  "a": "11",
+  "b": "18.0",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "r2-lbl-01-table-unit-in-title-false-consistent#1": {
+  "m": "incidence:any:pt:nausea",
+  "a": "14",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r2-lbl-01-table-unit-in-title-false-consistent#2": {
+  "m": "n:treated",
+  "a": "305",
+  "b": "305",
+  "c": "count",
+  "arm": "dapralutide"
+ },
+ "r2-lbl-01-table-unit-in-title-false-consistent#3": {
+  "m": "n:treated",
+  "a": "303",
+  "b": "303",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "r2-lbl-01-table-unit-in-title-false-consistent#4": {
+  "notPaired": [
+   [
+    "14",
+    "14"
+   ],
+   [
+    "11",
+    "55"
+   ]
+  ]
+ },
+ "r2-lbl-02-table-unit-in-title-false-conflicts#0": {
+  "m": "incidence:any:pt:nausea",
+  "a": "12",
+  "b": "18.0",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "r2-lbl-02-table-unit-in-title-false-conflicts#1": {
+  "m": "incidence:any:pt:nausea",
+  "a": "5",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r2-lbl-02-table-unit-in-title-false-conflicts#2": {
+  "m": "incidence:any:pt:diarrhea",
+  "a": "9",
+  "b": "8.9",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "r2-lbl-02-table-unit-in-title-false-conflicts#3": {
+  "m": "incidence:any:pt:diarrhea",
+  "a": "4",
+  "b": "4.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r2-lbl-02-table-unit-in-title-false-conflicts#4": {
+  "m": "n:treated",
+  "a": "305",
+  "b": "305",
+  "c": "count",
+  "arm": "dapralutide"
+ },
+ "r2-lbl-02-table-unit-in-title-false-conflicts#5": {
+  "m": "n:treated",
+  "a": "303",
+  "b": "303",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "r2-lbl-03-whitespace-label-table-units-row#0": {
+  "m": "incidence:any:pt:nausea",
+  "a": "12",
+  "b": "18.0",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "r2-lbl-03-whitespace-label-table-units-row#1": {
+  "m": "incidence:any:pt:nausea",
+  "a": "5",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r2-lbl-03-whitespace-label-table-units-row#2": {
+  "m": "incidence:any:pt:diarrhea",
+  "a": "9",
+  "b": "8.9",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "r2-lbl-03-whitespace-label-table-units-row#3": {
+  "m": "incidence:any:pt:diarrhea",
+  "a": "4",
+  "b": "4.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r2-lbl-03-whitespace-label-table-units-row#4": {
+  "m": "incidence:any:pt:vomiting",
+  "a": "8",
+  "b": "7.5",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "r2-lbl-03-whitespace-label-table-units-row#5": {
+  "m": "incidence:any:pt:vomiting",
+  "a": "1",
+  "b": "1.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r2-lbl-03-whitespace-label-table-units-row#6": {
+  "m": "n:treated",
+  "a": "305",
+  "b": "305",
+  "c": "count",
+  "arm": "dapralutide"
+ },
+ "r2-lbl-03-whitespace-label-table-units-row#7": {
+  "m": "n:treated",
+  "a": "303",
+  "b": "303",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "r2-lbl-04-smpc-4-8-never-compared-with-csr#0": {
+  "m": "incidence:any:pt:nausea",
+  "a": "12.0",
+  "b": "18.0",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "r2-lbl-04-smpc-4-8-never-compared-with-csr#1": {
+  "notPaired": [
+   [
+    "12.0",
+    "4.6"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "4.6"
+   ]
+  },
+  "reasons": [
+   "no_counterpart"
+  ]
+ },
+ "r2-lbl-05-smpc-4-8-adr-table-misleading-verdict#0": {
+  "m": "incidence:any:pt:nausea",
+  "a": "12.0",
+  "b": "18.0",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "r2-lbl-05-smpc-4-8-adr-table-misleading-verdict#1": {
+  "m": "incidence:any:pt:nausea",
+  "a": "4.6",
+  "b": "4.6",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r2-lbl-05-smpc-4-8-adr-table-misleading-verdict#2": {
+  "m": "incidence:any:pt:diarrhea",
+  "a": "8.9",
+  "b": "8.9",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "r2-lbl-05-smpc-4-8-adr-table-misleading-verdict#3": {
+  "m": "incidence:any:pt:diarrhea",
+  "a": "4.3",
+  "b": "4.3",
+  "c": "percent",
+  "arm": "placebo"
+ },
+ "r2-lbl-05-smpc-4-8-adr-table-misleading-verdict#4": {
+  "m": "n:treated",
+  "a": "305",
+  "b": "305",
+  "c": "count",
+  "arm": "dapralutide"
+ },
+ "r2-lbl-05-smpc-4-8-adr-table-misleading-verdict#5": {
+  "m": "n:treated",
+  "a": "303",
+  "b": "303",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "r2-lbl-06-uspi-6-1-most-common-ar-list#0": {
+  "m": "incidence:any:pt:nausea",
+  "a": "12",
+  "b": "18.0",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "r2-lbl-06-uspi-6-1-most-common-ar-list#1": {
+  "notPaired": [
+   [
+    "9",
+    "18.0"
+   ]
+  ],
+  "reported": {
+   "a": [
+    "9"
+   ]
+  },
+  "reasons": [
+   "no_counterpart"
+  ]
+ },
+ "r2-lbl-07-smpc-4-8-most-commonly-reported-list#0": {
+  "m": "incidence:any:pt:nausea",
+  "a": "12.0",
+  "b": "18.0",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "r2-lbl-07-smpc-4-8-most-commonly-reported-list#1": {
+  "m": "incidence:any:pt:diarrhea",
+  "a": "8.9",
+  "b": "8.9",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "r2-lbl-07-smpc-4-8-most-commonly-reported-list#2": {
+  "m": "incidence:any:pt:vomiting",
+  "a": "7.5",
+  "b": "7.5",
+  "c": "percent",
+  "arm": "dapralutide"
+ },
+ "r2-lbl-08-exposure-sentence-exposed-to-dose#0": {
+  "m": "n:treated",
+  "a": "1219",
+  "b": "1219",
+  "c": "count",
+  "arm": "total"
+ },
+ "r2-lbl-08-exposure-sentence-exposed-to-dose#1": {
+  "m": "n:treated",
+  "a": "621",
+  "b": "612",
+  "c": "count",
+  "arm": "dapralutide"
+ },
+ "r2-lbl-08-exposure-sentence-exposed-to-dose#2": {
+  "notPaired": [
+   [
+    "621",
+    "607"
+   ],
+   [
+    "1219",
+    "607"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "607"
+   ]
+  },
+  "reasons": [
+   "no_counterpart",
+   "per_arm_vs_total"
+  ]
+ },
+ "r2-lbl-09-exposure-sentence-per-arm-read-as-total#0": {
+  "m": "n:treated",
+  "a": "621",
+  "b": "612",
+  "c": "count",
+  "arm": "dapralutide"
+ },
+ "r2-lbl-09-exposure-sentence-per-arm-read-as-total#1": {
+  "m": "n:treated",
+  "a": "607",
+  "b": "607",
+  "c": "count",
+  "arm": "placebo"
+ },
+ "r2-lbl-09-exposure-sentence-per-arm-read-as-total#2": {
+  "notPaired": [
+   [
+    "621",
+    "1219"
+   ],
+   [
+    "607",
+    "1219"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "1219"
+   ]
+  },
+  "reasons": [
+   "no_counterpart",
+   "per_arm_vs_total"
+  ]
+ },
+ "r2-lbl-10-exposure-duration-subset-sentence#0": {
+  "m": "n:treated",
+  "a": "1219",
+  "b": "1219",
+  "c": "count",
+  "arm": "total"
+ },
+ "r2-lbl-10-exposure-duration-subset-sentence#1": {
+  "m": "exposure:duration",
+  "a": "541",
+  "b": "514",
+  "c": "count"
+ },
+ "r2-lbl-11-all-grades-vs-any-grade#0": {
+  "m": "incidence:any:pt:fatigue",
+  "a": "31",
+  "b": "44.2",
+  "c": "percent"
+ },
+ "r2-lbl-11-all-grades-vs-any-grade#1": {
+  "m": "incidence:any:pt:fatigue",
+  "a": "6",
+  "b": "5.8",
+  "c": "percent"
+ },
+ "r2-lbl-11-all-grades-vs-any-grade#2": {
+  "m": "incidence:any:pt:nausea",
+  "a": "31",
+  "b": "30.8",
+  "c": "percent"
+ },
+ "r2-lbl-11-all-grades-vs-any-grade#3": {
+  "m": "incidence:any:pt:nausea",
+  "a": "2",
+  "b": "1.9",
+  "c": "percent"
+ },
+ "r2-lbl-11-all-grades-vs-any-grade#4": {
+  "notPaired": [
+   [
+    "31",
+    "156"
+   ],
+   [
+    "6",
+    "156"
+   ]
+  ],
+  "reported": {
+   "b": [
+    "156"
+   ]
+  },
+  "reasons": [
+   "no_counterpart"
+  ]
+ },
+ "r2-lbl-12-section14-responder-row-unit-in-stub#0": {
+  "m": "responder:hba1c",
+  "a": "49",
+  "b": "51.6",
+  "c": "percent"
+ },
+ "r2-lbl-12-section14-responder-row-unit-in-stub#1": {
+  "m": "responder:hba1c",
+  "a": "21",
+  "b": "20.9",
+  "c": "percent"
+ }
+}

@@ -1,0 +1,248 @@
+{
+  "cases": 647,
+  "files": 39,
+  "rows": [
+    {
+      "file": "tests/authoring-market-document-binding.pglite.test.ts",
+      "cases": 7,
+      "evidence": "oct17-sources-accepted-tests.json",
+      "fileSha256AtEvidenceAssembly": "5a9c94bdaecc360a346b8f8acdef5fdbb54c7e3d22d4881207e3d4fb4aa07f51"
+    },
+    {
+      "file": "tests/schema-contract/document-alias-backfill.pglite.test.ts",
+      "cases": 7,
+      "evidence": "oct17-sources-accepted-tests.json",
+      "fileSha256AtEvidenceAssembly": "53a3b7fef31091d71a6a87570366fec4bc2499f9b16d6b3ce67bbec8480aacb7"
+    },
+    {
+      "file": "tests/schema-contract/document-alias-map.pglite.test.ts",
+      "cases": 11,
+      "evidence": "oct17-sources-accepted-tests.json",
+      "fileSha256AtEvidenceAssembly": "671be6f93201a81ee35abf17c58fc1aaefde8e7b70391bd56c380b166d1bbcfa"
+    },
+    {
+      "file": "tests/schema-contract/document-alias-store-vocabulary.pglite.test.ts",
+      "cases": 5,
+      "evidence": "oct17-sources-accepted-tests.json",
+      "fileSha256AtEvidenceAssembly": "15e52fb16fd2f0028089fa4dc7749b49526dbfc32ffba65a9664cb3a9b225b93"
+    },
+    {
+      "file": "tests/schema-contract/governed-document-binding.contract.test.ts",
+      "cases": 7,
+      "evidence": "oct17-sources-accepted-tests.json",
+      "fileSha256AtEvidenceAssembly": "a6ee969a827311a0342c17e7abc94760141a36f53011a08e8e27ad317e3a74a7"
+    },
+    {
+      "file": "server/services/ana/__tests__/batch-draft-settles-per-item.test.ts",
+      "cases": 2,
+      "evidence": "oct17-sources-accepted-tests.json",
+      "fileSha256AtEvidenceAssembly": "e69654ba31d12059e9b20454e3875c76d6ac0330319987a9c00ac9945fcc7cab"
+    },
+    {
+      "file": "server/services/ana/__tests__/governed-reason-not-invented.test.ts",
+      "cases": 75,
+      "evidence": "oct17-authoring-outcome-accepted-tests.json",
+      "fileSha256AtEvidenceAssembly": "32117166ce4c53fc02895396d3173b5bf78a8b927c70b7d6dfd2f8e2c3308ddf"
+    },
+    {
+      "file": "server/services/ana/__tests__/save-document-to-vault-tool.pglite.integration.test.ts",
+      "cases": 4,
+      "evidence": "oct17-authoring-outcome-accepted-tests.json",
+      "fileSha256AtEvidenceAssembly": "46b498c5323015927fbda32dc7b8dc4f0352a4996d304a0286af925a7dad1d9d"
+    },
+    {
+      "file": "server/services/ana/__tests__/source-read-transaction-lifecycle.test.ts",
+      "cases": 10,
+      "evidence": "oct17-sources-accepted-tests.json",
+      "fileSha256AtEvidenceAssembly": "e57f92015ede185967cf9d3ba3648f0ace23a87c4bbaaa99de94cd9ff16dcd8d"
+    },
+    {
+      "file": "server/services/vault/__tests__/catalog-actor-read-facades.test.ts",
+      "cases": 16,
+      "evidence": "oct17-sources-accepted-tests.json",
+      "fileSha256AtEvidenceAssembly": "dfa6d44a6f398edf25dcfba6e172c4e086a415044c45071b47dc1d5d8660eaa7"
+    },
+    {
+      "file": "server/services/vault/__tests__/catalog-document-access.test.ts",
+      "cases": 11,
+      "evidence": "oct17-draft-checkpoint-sync-tests.json",
+      "fileSha256AtEvidenceAssembly": "af049b6c9b5dc37556bf5088f9b920147ae1fd02805f4b9cd0a7e2b66ed9eebe"
+    },
+    {
+      "file": "server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts",
+      "cases": 12,
+      "evidence": "oct17-sources-accepted-tests.json",
+      "fileSha256AtEvidenceAssembly": "69ef76b16c46818dc7ebb4b36cc6d216ecd38771d5c449b12acdcc68155bf0ba"
+    },
+    {
+      "file": "server/services/vault/__tests__/catalog-search-version.test.ts",
+      "cases": 3,
+      "evidence": "oct17-sources-accepted-tests.json",
+      "fileSha256AtEvidenceAssembly": "dc92d80a2c384f0334dd512a7b29743cabe759a091558f90bd114c5ae8e72b36"
+    },
+    {
+      "file": "server/services/vault/__tests__/document-catalog-actor-access.test.ts",
+      "cases": 6,
+      "evidence": "oct17-sources-accepted-tests.json",
+      "fileSha256AtEvidenceAssembly": "5ca0c6b4d4f9ce09021e6387154b46bd52259898c0143a8cfd1556c36e02685a"
+    },
+    {
+      "file": "server/services/vault/__tests__/document-catalog-preview.service.test.ts",
+      "cases": 23,
+      "evidence": "oct17-sources-accepted-tests.json",
+      "fileSha256AtEvidenceAssembly": "f9645624fef3e1af73e60fa5cd3b1c2c64e42f02cb74ed0c0d01c374186e0cdd"
+    },
+    {
+      "file": "server/services/vault/__tests__/document-catalog-source-snapshot.test.ts",
+      "cases": 6,
+      "evidence": "oct17-sources-accepted-tests.json",
+      "fileSha256AtEvidenceAssembly": "c50fc6a73a63492cdae533a9e22ea22e4590c11e0141315fa094ecea8acc00ae"
+    },
+    {
+      "file": "server/services/authoring/__tests__/authoring-source-import.test.ts",
+      "cases": 26,
+      "evidence": "oct17-authoring-outcome-accepted-tests.json",
+      "fileSha256AtEvidenceAssembly": "bdfc013f1eb365156294d24dc6b46dfbdad0b4e4b6d5284173c7b731d649c9d0"
+    },
+    {
+      "file": "server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts",
+      "cases": 28,
+      "evidence": "oct17-authoring-outcome-accepted-tests.json",
+      "fileSha256AtEvidenceAssembly": "0d70805e7bd05ca9accd1919a6dbd0270651827e37b1d9e9048559dccda2153f"
+    },
+    {
+      "file": "server/services/authoring/__tests__/workflow-source-import.pglite.test.ts",
+      "cases": 27,
+      "evidence": "oct17-authoring-outcome-accepted-tests.json",
+      "fileSha256AtEvidenceAssembly": "6d99a88dc6e60018127405fce4820e56079a7a274864bedbb6f39b6fddf9117f"
+    },
+    {
+      "file": "server/services/ana/__tests__/tool-trace-document-ids.test.ts",
+      "cases": 9,
+      "evidence": "oct17-authoring-outcome-frozen-tests.json",
+      "fileSha256AtEvidenceAssembly": "3da56bbd68561f13fd321f2d0be3fe231477770434b184c6adb3db0174b2a1ec"
+    },
+    {
+      "file": "server/services/authoring/__tests__/authoring-create-outcome.test.ts",
+      "cases": 14,
+      "evidence": "oct17-draft-checkpoint-sync-tests.json",
+      "fileSha256AtEvidenceAssembly": "f574053354eab92f5379e4b899f49902c089b8bf6e49e40d1c30e2f08b7057e1"
+    },
+    {
+      "file": "server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts",
+      "cases": 19,
+      "evidence": "oct17-source-identity-sync-tests.json",
+      "fileSha256AtEvidenceAssembly": "a1a4e35bf9e686cded1bb5bbec05961b1643738673663e8c78d8b0d3e4456aae"
+    },
+    {
+      "file": "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts",
+      "cases": 31,
+      "evidence": "oct17-source-identity-sync-tests.json",
+      "fileSha256AtEvidenceAssembly": "edcd80e2ed9effdb50da99bd54cf83db0871c1bf33916775eab8376c488d284d"
+    },
+    {
+      "file": "server/services/ana/__tests__/draft-authoring-source-schema.test.ts",
+      "cases": 15,
+      "evidence": "oct17-source-identity-sync-tests.json",
+      "fileSha256AtEvidenceAssembly": "0e0d02ff580c0b4253ab21e060af5cc835e7fe59c41fcb01dc31bb9ca8363985"
+    },
+    {
+      "file": "server/services/ana/__tests__/draft-source-identity.test.ts",
+      "cases": 28,
+      "evidence": "oct17-source-identity-sync-tests.json",
+      "fileSha256AtEvidenceAssembly": "afd9143794cf8af09d059839fdd9ac7cb5f13e4d4509a10cade99a8f4ac65854"
+    },
+    {
+      "file": "server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts",
+      "cases": 10,
+      "evidence": "oct17-source-identity-sync-tests.json",
+      "fileSha256AtEvidenceAssembly": "de77a1df3d92b2a7133042033f1848f37c2bfbc47a3dc91333b80c4e55eae84c"
+    },
+    {
+      "file": "server/services/authoring/__tests__/draft-source-references.test.ts",
+      "cases": 31,
+      "evidence": "oct17-source-identity-sync-tests.json",
+      "fileSha256AtEvidenceAssembly": "017fd18724a9fbcc77a36d061eb44b31634a641fd33e9921f4fa489cef582120"
+    },
+    {
+      "file": "server/services/authoring/__tests__/saved-draft-source-export.test.ts",
+      "cases": 21,
+      "evidence": "oct17-source-identity-sync-tests.json",
+      "fileSha256AtEvidenceAssembly": "fe38e93a6ab3249a6738110fd966315a31b0aec5232156c002d4377d551f2a8b"
+    },
+    {
+      "file": "server/services/authoring/__tests__/saved-draft-source-reservation.test.ts",
+      "cases": 7,
+      "evidence": "oct17-source-identity-sync-tests.json",
+      "fileSha256AtEvidenceAssembly": "fd6777c13fa09de38b2a4afa33663c8e038adb04a37bf91c190d46dfb5f9028f"
+    },
+    {
+      "file": "server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts",
+      "cases": 3,
+      "evidence": "oct17-source-identity-sync-tests.json",
+      "fileSha256AtEvidenceAssembly": "bab92a19dcc83ed176c85eedb7e7886506f30eb0055ec18bcb3672062e0d0803"
+    },
+    {
+      "file": "server/services/ana/__tests__/batch-draft-sections.test.ts",
+      "cases": 13,
+      "evidence": "oct17-draft-checkpoint-sync-tests.json",
+      "fileSha256AtEvidenceAssembly": "401ebd2fa922d261408c584709f1c3e14dfa8a254d7816fcd9dcd77a7f545785"
+    },
+    {
+      "file": "server/routes/__tests__/ana-intelligence-source-context.test.ts",
+      "cases": 4,
+      "evidence": "oct17-draft-checkpoint-sync-tests.json",
+      "fileSha256AtEvidenceAssembly": "06d32131b4adf4e93c84c386e2bb94e9f052fa29e377b69dd64a1922b8a85182"
+    },
+    {
+      "file": "server/services/ai-gateway/__tests__/gateway-source-checkpoint-error.test.ts",
+      "cases": 3,
+      "evidence": "oct17-draft-checkpoint-sync-tests.json",
+      "fileSha256AtEvidenceAssembly": "698c48a7079a3df75bc0a9f6d4451f3ae98e3a50ecb7e5a19bfc71051ab9e3c7"
+    },
+    {
+      "file": "server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts",
+      "cases": 16,
+      "evidence": "oct17-draft-checkpoint-sync-tests.json",
+      "fileSha256AtEvidenceAssembly": "6559f7a1628faac5a3bbc58fa25a33d9c15c4b99fce251ccb1dec48203a9ea89"
+    },
+    {
+      "file": "server/services/ana/__tests__/blueprint-grounded-drafting.test.ts",
+      "cases": 19,
+      "evidence": "oct17-draft-checkpoint-sync-tests.json",
+      "fileSha256AtEvidenceAssembly": "3f2208a0971ba7fb697e9e012b855b611694124d1493f76227c6e883979d9fde"
+    },
+    {
+      "file": "server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts",
+      "cases": 20,
+      "evidence": "oct17-draft-checkpoint-sync-tests.json",
+      "fileSha256AtEvidenceAssembly": "364ad83313ba343653b7055b928a101690fd3c0323db1c1e239b0d91f610e505"
+    },
+    {
+      "file": "server/services/ana/__tests__/draft-project-sources.test.ts",
+      "cases": 42,
+      "evidence": "oct17-draft-checkpoint-sync-tests.json",
+      "fileSha256AtEvidenceAssembly": "038050c181347aa4cef241eb7f0f569e900d3ea3714391f03409730189c550c6"
+    },
+    {
+      "file": "server/services/ana/__tests__/draft-source-context-authority.test.ts",
+      "cases": 40,
+      "evidence": "oct17-draft-checkpoint-sync-tests.json",
+      "fileSha256AtEvidenceAssembly": "3cdfc7f99b93727674251da647c85dda38d0b2dabda18deafeae8e08b2b5d476"
+    },
+    {
+      "file": "server/services/ana/__tests__/draft-source-service-checkpoint.test.ts",
+      "cases": 16,
+      "evidence": "oct17-draft-checkpoint-sync-tests.json",
+      "fileSha256AtEvidenceAssembly": "6488c053c61200939bc23111c3b018b9148936c7e99e71b89981562dcfa5a46d"
+    }
+  ],
+  "currentIntegration": {
+    "cases": 198,
+    "files": 11,
+    "reports": [
+      "oct17-draft-checkpoint-sync-tests.json"
+    ]
+  },
+  "scope": "Current11-file actual checkpoint receipt replaces changed fixture proofs. Prior scoped per-file receipts are retained only on unchanged test hashes; this de-duplicated profile does not represent a fresh all-files run."
+}

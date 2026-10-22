@@ -168,7 +168,7 @@ describe('phase-2 MDX handlers: a lost §11.10(e) row is observable', () => {
       expect(outcome!.code).toBe('AUDIT_ROW_NOT_PERSISTED');
 
       // The conversational carrier says so too.
-      expect(String(r.message)).toMatch(/could not be written/i);
+      expect(String(r.message)).toMatch(/could not be confirmed/i);
     });
 
     it(`${c.name} says nothing about the audit row when it landed`, async () => {
@@ -179,7 +179,7 @@ describe('phase-2 MDX handlers: a lost §11.10(e) row is observable', () => {
 
       expect(outcome.persisted).toBe(true);
       // auditNote appends '' on success — the absence of noise is the contract.
-      expect(String(r.message)).not.toMatch(/could not be written/i);
+      expect(String(r.message)).not.toMatch(/could not be confirmed/i);
     });
 
     it(`${c.name} never puts the store's own error text on the wire`, async () => {

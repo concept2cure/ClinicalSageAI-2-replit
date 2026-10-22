@@ -1,0 +1,40 @@
+{
+  "cwd": "/workspace/ClinicalSageAI",
+  "executable": "/workspace/scratch/editor-toolchain/node_modules/node/bin/node",
+  "nodeVersion": "v22.23.3",
+  "argv": [
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+    "server/services/vault/__tests__/vault-ingest-storage.test.ts",
+    "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+    "server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts",
+    "server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts",
+    "server/services/authoring/__tests__/authoring-doc-hash-total-order.pglite.test.ts",
+    "tests/lineage/founder-path-lineage.pglite.test.ts",
+    "server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts",
+    "server/routes/__tests__/vault-ingest-type-binding.test.ts",
+    "server/routes/__tests__/vault-ingest-lineage.test.ts",
+    "server/services/regulatory/__tests__/authoring-approval-carryover.test.ts"
+  ],
+  "environment": {
+    "PATHPrefix": "/workspace/scratch/editor-toolchain/node_modules/.bin",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "dateUtc": "2026-10-21",
+  "startTimeReportedByVitest": "01:14:52",
+  "durationSecondsReportedByVitest": 59.06,
+  "finishedAtExitFileTimestamp": "2026-10-21T01:15:51.263Z",
+  "exitCode": 1,
+  "summary": [
+    "Test Files  1 failed | 10 passed (11)",
+    "Tests  10 failed | 126 passed | 1 todo (137)"
+  ],
+  "sourcePinFile": null,
+  "sourcePinNote": "Intermediate correction: ten approval-carry cases expose its missing organizations.settings prerequisite. Source hashes were not captured for this intermediate failing run.",
+  "rawLog": "fixture-failure.raw.log.gz",
+  "rawSha256": "20ab45a37f82f2b70db86a00625cb8077499c24a1966287314123a49f25c4063",
+  "gzipSha256": "221ae54220b218780913764ab5d4b4bf0e50a20fe23f581d4336a783f9d85faf"
+}

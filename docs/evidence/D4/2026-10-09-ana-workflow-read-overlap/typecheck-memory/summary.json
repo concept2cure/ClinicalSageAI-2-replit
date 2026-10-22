@@ -1,0 +1,9 @@
+{
+  "helper": "docs/evidence/D2-D5/2026-10-06-document-dispositions/typecheck-memory/c2c-ts-prewarm.cjs",
+  "helper_git_blob_sha1": "9866391314b83ebb762720141b584f350ecdace2",
+  "processes": 2,
+  "pending_after": 0,
+  "cached_diagnostic_file_count": 0,
+  "qualification": false,
+  "config": "Unchanged complete tsconfig.json; native TypeScript semantic diagnostics and emitBuildInfo. Preparation is not qualification."
+}

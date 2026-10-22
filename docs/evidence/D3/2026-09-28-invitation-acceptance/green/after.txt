@@ -140,4 +140,3 @@ stdout | tests/db/organizations-writes.dbtest.ts > an organization's row is writ
       Tests  33 passed (33)
    Start at  18:21:10
    Duration  8.96s (transform 1.62s, setup 163ms, import 4.56s, tests 3.50s, environment 0ms)
-

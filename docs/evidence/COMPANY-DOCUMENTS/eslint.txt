@@ -1,0 +1,172 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx
+   35:84  warning  'structuredClone' is not defined                                 no-undef
+   38:33  warning  'reason' is assigned a value but never used                      @typescript-eslint/no-unused-vars
+   40:27  warning  'structuredClone' is not defined                                 no-undef
+   45:27  warning  'structuredClone' is not defined                                 no-undef
+   57:42  warning  Arrow function has too many lines (125). Maximum allowed is 100  max-lines-per-function
+  101:80  warning  'HTMLFieldSetElement' is not defined                             no-undef
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx
+  107:42  warning  'HTMLFieldSetElement' is not defined  no-undef
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/AdminAccess.tsx
+  109:8   warning  Function 'AdminAccess' has too many lines (551). Maximum allowed is 100  max-lines-per-function
+  109:8   warning  Function 'AdminAccess' has a complexity of 71. Maximum allowed is 15     complexity
+  234:22  warning  'setRoleFilter' is assigned a value but never used                       @typescript-eslint/no-unused-vars
+  648:1   warning  File has too many lines (599). Maximum allowed is 500                    max-lines
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx
+   303:8   warning  Function 'Setup' has too many lines (548). Maximum allowed is 100                                                                                                                      max-lines-per-function
+   303:8   warning  Function 'Setup' has a complexity of 49. Maximum allowed is 15                                                                                                                         complexity
+   717:1   warning  File has too many lines (3003). Maximum allowed is 500                                                                                                                                 max-lines
+  1066:8   warning  Function 'AuditTrail' has too many lines (603). Maximum allowed is 100                                                                                                                 max-lines-per-function
+  1066:8   warning  Function 'AuditTrail' has a complexity of 26. Maximum allowed is 15                                                                                                                    complexity
+  1066:30  warning  'onAsk' is defined but never used. Allowed unused args must match /^_/u                                                                                                                @typescript-eslint/no-unused-vars
+  2000:8   warning  Function 'Apps' has too many lines (379). Maximum allowed is 100                                                                                                                       max-lines-per-function
+  2000:8   warning  Function 'Apps' has a complexity of 31. Maximum allowed is 15                                                                                                                          complexity
+  2000:24  warning  'onAsk' is defined but never used. Allowed unused args must match /^_/u                                                                                                                @typescript-eslint/no-unused-vars
+  2042:9   warning  The 'pj' logical expression could make the dependencies of useMemo Hook (at line 2190) change on every render. To fix this, wrap the initialization of 'pj' in its own useMemo() Hook  react-hooks/exhaustive-deps
+  2043:9   warning  The 'us' logical expression could make the dependencies of useMemo Hook (at line 2190) change on every render. To fix this, wrap the initialization of 'us' in its own useMemo() Hook  react-hooks/exhaustive-deps
+  2341:29  warning  Arrow function has a complexity of 21. Maximum allowed is 15                                                                                                                           complexity
+  2535:8   warning  Function 'ArtifactsCenter' has too many lines (272). Maximum allowed is 100                                                                                                            max-lines-per-function
+  2535:35  warning  'onAsk' is defined but never used. Allowed unused args must match /^_/u                                                                                                                @typescript-eslint/no-unused-vars
+  2988:8   warning  Function 'AdminConsole' has too many lines (733). Maximum allowed is 100                                                                                                               max-lines-per-function
+  2988:8   warning  Function 'AdminConsole' has a complexity of 45. Maximum allowed is 15                                                                                                                  complexity
+  2988:32  warning  'onAsk' is defined but never used. Allowed unused args must match /^_/u                                                                                                                @typescript-eslint/no-unused-vars
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/CompanyDocumentSettings.tsx
+   41:1    warning  Function 'LetterheadPreview' has a complexity of 17. Maximum allowed is 15                                                                                                                                                                                     complexity
+   96:8    warning  Function 'CompanyDocumentSettings' has too many lines (242). Maximum allowed is 100                                                                                                                                                                            max-lines-per-function
+   96:8    warning  Function 'CompanyDocumentSettings' has a complexity of 62. Maximum allowed is 15                                                                                                                                                                               complexity
+  144:28   warning  The ref value 'session.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'session.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+  144:47   warning  The ref value 'current.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'current.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+  145:6    warning  React Hook useEffect has a missing dependency: 'identity'. Either include it or remove the dependency array                                                                                                                                                    react-hooks/exhaustive-deps
+  149:119  warning  Async arrow function has a complexity of 23. Maximum allowed is 15                                                                                                                                                                                             complexity
+  183:42   warning  Async arrow function has a complexity of 17. Maximum allowed is 15                                                                                                                                                                                             complexity
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/CompanySubmissionDocuments.tsx
+  24:8   warning  Function 'CompanySubmissionDocuments' has too many lines (135). Maximum allowed is 100                                                                                                                                                                         max-lines-per-function
+  24:8   warning  Function 'CompanySubmissionDocuments' has a complexity of 48. Maximum allowed is 15                                                                                                                                                                            complexity
+  67:28  warning  The ref value 'session.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'session.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+  70:26  warning  Async arrow function has a complexity of 17. Maximum allowed is 15                                                                                                                                                                                             complexity
+  91:34  warning  Async arrow function has a complexity of 18. Maximum allowed is 15                                                                                                                                                                                             complexity
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx
+   489:8   warning  Function 'SubmissionCenter' has too many lines (1202). Maximum allowed is 100                                          max-lines-per-function
+   489:8   warning  Function 'SubmissionCenter' has a complexity of 143. Maximum allowed is 15                                             complexity
+   851:1   warning  File has too many lines (1517). Maximum allowed is 500                                                                 max-lines
+  1146:39  warning  Arrow function has a complexity of 33. Maximum allowed is 15                                                           complexity
+  1251:6   warning  React Hook React.useMemo has a missing dependency: 'profile.status'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx
+   587:1  warning  Function 'AddLeafForm' has too many lines (112). Maximum allowed is 100            max-lines-per-function
+   689:1  warning  File has too many lines (1697). Maximum allowed is 500                             max-lines
+  1019:8  warning  Function 'ValidationWorkspace' has too many lines (161). Maximum allowed is 100    max-lines-per-function
+  1019:8  warning  Function 'ValidationWorkspace' has a complexity of 28. Maximum allowed is 15       complexity
+  1226:8  warning  Function 'ShadowReviewWorkspace' has too many lines (198). Maximum allowed is 100  max-lines-per-function
+  1226:8  warning  Function 'ShadowReviewWorkspace' has a complexity of 23. Maximum allowed is 15     complexity
+  1779:8  warning  Function 'DispatchWorkspace' has too many lines (296). Maximum allowed is 100      max-lines-per-function
+  1779:8  warning  Function 'DispatchWorkspace' has a complexity of 75. Maximum allowed is 15         complexity
+
+/workspace/ClinicalSageAI-2-replit/server/db/pglite-harness.ts
+  634:1  warning  File has too many lines (603). Maximum allowed is 500  max-lines
+
+/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/organizations-profile-settings.test.ts
+  634:1  warning  File has too many lines (520). Maximum allowed is 500  max-lines
+
+/workspace/ClinicalSageAI-2-replit/server/routes/client-branding.ts
+  136:19  warning  '_id' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  136:35  warning  '_ca' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  136:51  warning  '_ua' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  170:23  warning  '_id' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  170:39  warning  '_ca' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  170:55  warning  '_ua' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  234:23  warning  '_id' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  234:39  warning  '_ca' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  234:55  warning  '_ua' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  323:23  warning  '_id' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  323:39  warning  '_ca' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  323:55  warning  '_ua' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  457:17  warning  '_id' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  457:33  warning  '_ca' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  457:49  warning  '_ua' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  508:17  warning  '_id' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  508:33  warning  '_ca' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  508:49  warning  '_ua' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  572:17  warning  '_id' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  572:33  warning  '_ca' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  572:49  warning  '_ua' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/workspace/ClinicalSageAI-2-replit/server/routes/company-document-actions.ts
+  46:91  warning  Async arrow function has a complexity of 16. Maximum allowed is 15  complexity
+
+/workspace/ClinicalSageAI-2-replit/server/routes/report-os.ts
+   634:1   warning  File has too many lines (2455). Maximum allowed is 500                         max-lines
+  1483:58  warning  Async arrow function has too many lines (208). Maximum allowed is 100          max-lines-per-function
+  1483:58  warning  Async arrow function has a complexity of 52. Maximum allowed is 15             complexity
+  1887:1   warning  Function 'buildRenderedFromRun' has a complexity of 16. Maximum allowed is 15  complexity
+  2988:59  warning  Async arrow function has a complexity of 18. Maximum allowed is 15             complexity
+
+/workspace/ClinicalSageAI-2-replit/server/services/company-documents/__tests__/ana-settings-privacy.test.ts
+  29:40   warning  'structuredClone' is not defined  no-undef
+  46:168  warning  'structuredClone' is not defined  no-undef
+  52:49   warning  'structuredClone' is not defined  no-undef
+
+/workspace/ClinicalSageAI-2-replit/server/services/company-documents/__tests__/managed-settings.test.ts
+   17:51  warning  'structuredClone' is not defined  no-undef
+   28:52  warning  'structuredClone' is not defined  no-undef
+   46:20  warning  'structuredClone' is not defined  no-undef
+   62:67  warning  'structuredClone' is not defined  no-undef
+   70:19  warning  'structuredClone' is not defined  no-undef
+   71:34  warning  'structuredClone' is not defined  no-undef
+   87:20  warning  'structuredClone' is not defined  no-undef
+  174:20  warning  'structuredClone' is not defined  no-undef
+
+/workspace/ClinicalSageAI-2-replit/server/services/docx/docxFactory.ts
+  477:8   warning  Async function 'generateRegulatory' has too many lines (184). Maximum allowed is 100  max-lines-per-function
+  477:8   warning  Async function 'generateRegulatory' has a complexity of 43. Maximum allowed is 15     complexity
+  658:1   warning  File has too many lines (557). Maximum allowed is 500                                 max-lines
+  732:10  warning  'styledRuns' is defined but never used                                                @typescript-eslint/no-unused-vars
+
+/workspace/ClinicalSageAI-2-replit/server/services/ectd/assemble-from-core.ts
+  237:8  warning  Async function 'assembleSequence' has too many lines (132). Maximum allowed is 100        max-lines-per-function
+  590:8  warning  Async function 'assembleSubmissionEctd' has too many lines (114). Maximum allowed is 100  max-lines-per-function
+
+/workspace/ClinicalSageAI-2-replit/server/services/ectd/assess-dispatch-readiness.ts
+  795:8  warning  Async function 'assessSequenceDispatchReadiness' has too many lines (149). Maximum allowed is 100  max-lines-per-function
+  896:1  warning  File has too many lines (585). Maximum allowed is 500                                              max-lines
+
+/workspace/ClinicalSageAI-2-replit/server/services/ectd/leaf-source-resolver.ts
+  386:8   warning  Async function 'materializeLeafSources' has too many lines (337). Maximum allowed is 100  max-lines-per-function
+  386:8   warning  Async function 'materializeLeafSources' has a complexity of 79. Maximum allowed is 15     complexity
+  597:11  warning  The value assigned to 'buf' is not used in subsequent statements                          no-useless-assignment
+  774:11  warning  The value assigned to 'bytes' is not used in subsequent statements                        no-useless-assignment
+
+/workspace/ClinicalSageAI-2-replit/server/services/report-os/pdf/writer.ts
+   74:3  warning  Constructor has a complexity of 16. Maximum allowed is 15                 complexity
+  109:3  warning  Method 'prepareLetterhead' has a complexity of 20. Maximum allowed is 15  complexity
+
+/workspace/ClinicalSageAI-2-replit/server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts
+  154:64  warning  Arrow function has too many lines (141). Maximum allowed is 100  max-lines-per-function
+
+/workspace/ClinicalSageAI-2-replit/server/services/submission-service/submission-service.ts
+   760:1  warning  File has too many lines (2370). Maximum allowed is 500                                                 max-lines
+   906:1  warning  Async function 'governedSignatureVerdict' has a complexity of 32. Maximum allowed is 15                complexity
+  2122:8  warning  Function 'transmitRouteFor' has a complexity of 22. Maximum allowed is 15                              complexity
+  2505:1  warning  Async function 'transmitDispatchedSequence' has too many lines (185). Maximum allowed is 100           max-lines-per-function
+  2505:1  warning  Async function 'transmitDispatchedSequence' has a complexity of 25. Maximum allowed is 15              complexity
+  2559:3  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  3315:8  warning  Async function 'upsertLeaf' has too many lines (224). Maximum allowed is 100                           max-lines-per-function
+  3315:8  warning  Async function 'upsertLeaf' has a complexity of 55. Maximum allowed is 15                              complexity
+
+/workspace/ClinicalSageAI-2-replit/server/services/vault/vault-ingest.service.ts
+  199:1  warning  Async function 'admitVaultDocument' has too many lines (393). Maximum allowed is 100  max-lines-per-function
+  199:1  warning  Async function 'admitVaultDocument' has a complexity of 85. Maximum allowed is 15     complexity
+
+/workspace/ClinicalSageAI-2-replit/shared/templates/template-spec.ts
+  214:8  warning  Function 'normalizeTemplateSpec' has too many lines (106). Maximum allowed is 100  max-lines-per-function
+  214:8  warning  Function 'normalizeTemplateSpec' has a complexity of 22. Maximum allowed is 15     complexity
+
+✖ 121 problems (0 errors, 121 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.

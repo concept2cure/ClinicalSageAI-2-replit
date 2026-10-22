@@ -22,6 +22,8 @@ const readiness = (blockers: Array<{ kind: 'required_section' | 'required_form';
 
 const heldClock: ClockState = {
   status: 'clinical_hold',
+  basis: 'fda_receipt',
+  holdHistoryAssessed: true,
   thirtyDayDate: '2026-01-31T00:00:00.000Z',
   safeToProceed: false,
   onHold: true,
@@ -62,7 +64,7 @@ describe('deriveIndActionItems', () => {
   });
 
   it('surfaces due-soon timeline milestones as time-bound medium actions', () => {
-    const timeline = buildIndTimeline({ receiptDate: '2026-01-01T00:00:00.000Z', asOf: '2026-01-25T00:00:00.000Z' });
+    const timeline = buildIndTimeline({ receiptDate: '2026-01-01T00:00:00.000Z', receiptRecorded: true, asOf: '2026-01-25T00:00:00.000Z' });
     const r = deriveIndActionItems({ timeline });
     const deadline = r.items.find((i) => i.category === 'deadline');
     expect(deadline?.priority).toBe('medium');
@@ -73,7 +75,7 @@ describe('deriveIndActionItems', () => {
     const r = deriveIndActionItems({
       clock: heldClock,
       readiness: readiness([{ kind: 'required_form', code: 'FDA_1571' }]),
-      timeline: buildIndTimeline({ receiptDate: '2026-01-01T00:00:00.000Z', asOf: '2026-01-25T00:00:00.000Z' }),
+      timeline: buildIndTimeline({ receiptDate: '2026-01-01T00:00:00.000Z', receiptRecorded: true, asOf: '2026-01-25T00:00:00.000Z' }),
     });
     const priorities = r.items.map((i) => i.priority);
     expect(priorities).toEqual([...priorities].sort((a, b) => ({ critical: 0, high: 1, medium: 2, low: 3 }[a] - { critical: 0, high: 1, medium: 2, low: 3 }[b])));

@@ -15,6 +15,7 @@ import { findActiveTransmittal } from './fda-esg';
 import { filedEntryHolding } from '../ectd/package-sequence-lifecycle';
 import { usableIdentifier } from '../ectd/regulatory-identifiers';
 import type { GovernedTransmitInput, ResolvedBundle } from './governed-transmit';
+import { RELEASE_ACT_MEANINGS } from '../part11/signature-meanings';
 
 /* ─── Refusal vocabulary ─────────────────────────────────────────── */
 
@@ -40,7 +41,9 @@ export type GovernedTransmitRefusalCode =
   | 'ACTIVE_TRANSMITTAL'
   | 'SIGNER_IS_AUTHOR'
   | 'AUTHORSHIP_NOT_A_RELEASE'
-  | 'SIGNER_INDEPENDENCE_UNRESOLVED';
+  | 'MEANING_NOT_A_RELEASE'
+  | 'SIGNER_INDEPENDENCE_UNRESOLVED'
+  | 'ESIGNATURE_NO_AUTHORITY';
 
 /** A refusal the caller should surface verbatim to the operator. */
 export class GovernedTransmitRefusal extends Error {
@@ -128,8 +131,8 @@ export function agencyMetadata(input: GovernedTransmitInput, bundle: ResolvedBun
  * (2026-10-01, W5/D7, sweep F19 — the second was sent, and reported recorded
  * while the history kept the first). Asked with the writer's own question
  * (filedEntryHolding), of the history on the row loadStoredBundle read. The
- * same bundle again is not refused: re-sending it after a rollback is the
- * documented recovery, and a rollback does not un-file. Only a production send
+ * same bundle again is not refused (a re-send of the bytes already on file
+ * files nothing new). Only a production send
  * files anything, so only one is held back.
  */
 export function assertSequenceNotFiledAsAnotherBundle(input: GovernedTransmitInput, bundle: ResolvedBundle): void {
@@ -205,23 +208,25 @@ const ACTIVE_STATUS_WORDS: Record<string, string> = {
   in_transit: 'its receipt is not yet confirmed',
 };
 
+/** Where a resend goes, now that a transmittal cannot be rolled back (6ef0ef121). */
+const RESEND_REMEDY = 'If a resend is needed, send it as a new sequence from Submission Center.';
+
 /**
  * Why a transmit is held by an active transmittal, and what to do — said so the
  * operator can read it as sent: no route path (a client hides text that looks
  * internal and substitutes its own), no status or environment token. Whatever
  * the variant, the agency may already hold the bundle, so receipt is confirmed
- * with the agency before anything is sent again. Once the agency's gateway
- * acknowledged receipt ('received'), a rollback is not offered as the way to
- * re-send: it retracts nothing at the agency, and the re-send it would free is a
- * duplicate filing. A pending send cannot be rolled back, so none is offered.
- * 2026-10-08 (W5/D7, sweep HS-6): the sentence named the rollback route, so the
- * surface replaced it with "Roll it back first" and the caveat was lost.
+ * with the agency before anything is sent again, and a resend is a new
+ * sequence from Submission Center. 2026-10-08 (W5/D7, sweep HS-6): the sentence
+ * named the rollback route, so the surface replaced it with "Roll it back
+ * first" and the caveat was lost. Since 2026-10-17 (6ef0ef121) there is no
+ * rollback route to offer: it marked a transmittal the agency still held as
+ * rolled back, and taking a filing back is a withdrawal sequence.
  *
  * The bytes lock has no environment in its key, so the holder may be a send to
  * the OTHER environment; that refusal says where it went instead (sweep HS-6
  * review: a received test send was reported to a first production send as "with
- * the agency", and rolling it back — the only way to free the lock — was not
- * offered).
+ * the agency").
  */
 function activeTransmittalMessage(active: ActiveHolder, environment: GovernedTransmitInput['environment']): string {
   const ref = `transmittal #${active.id}`;
@@ -233,14 +238,14 @@ function activeTransmittalMessage(active: ActiveHolder, environment: GovernedTra
     const held = active.sequence ? `sequence ${active.sequence} of this package` : 'this bundle';
     return (
       `The agency's gateway acknowledged receipt of ${ref}${sentAs}, so ${held} is with the agency. ` +
-      `A rollback does not retract it. Send ${it} again only if the agency confirms it did not receive or load it.`
+      `Confirm with the agency what it received. ${RESEND_REMEDY}`
     );
   }
   const where = active.sequence ? `Sequence ${active.sequence} of this package is already in ${ref}${sentAs}` : `This bundle is already in ${ref}`;
   const state = ACTIVE_STATUS_WORDS[active.status] ?? `its status is ${active.status.replace(/_/g, ' ')}`;
   const remedy = active.status === 'pending'
     ? 'That send has not finished; its row in the transmittal log shows the outcome once it does.'
-    : `If the agency confirms it did not receive it, roll ${ref} back from its row in the transmittal log, then send.`;
+    : RESEND_REMEDY;
   return `${where}, and ${state}. The agency may already hold it. Confirm receipt with the agency before sending ${it} again. ${remedy}`;
 }
 
@@ -250,16 +255,50 @@ const OTHER_ENVIRONMENT_STATE: Record<string, string> = {
   received: ', whose gateway acknowledged receipt',
 };
 
-/** The bundle is held by a send to the other environment: where it went, and how to free it. */
+/** The bundle is held by a send to the other environment: where it went, and what to do. */
 function otherEnvironmentMessage(ref: string, active: ActiveHolder, elsewhere: string): string {
   const state = OTHER_ENVIRONMENT_STATE[active.status] ?? '; its receipt is not yet confirmed';
-  const scope = active.holderEnvironment === 'production'
-    ? 'A production send does not deliver it to the test environment, and a rollback does not retract the production send from the agency.'
-    : 'A send to the test environment does not file it in production.';
-  const remedy = active.status === 'pending'
-    ? `Once that send finishes, roll ${ref} back from its row in the transmittal log, then send.`
-    : `Roll ${ref} back from its row in the transmittal log, then send.`;
-  return `This bundle is held by ${ref}, sent to ${elsewhere}${state}. ${scope} ${remedy}`;
+  const toProduction = active.holderEnvironment !== 'production';
+  const scope = toProduction
+    ? 'A send to the test environment does not file it in production.'
+    : 'A production send does not deliver it to the test environment.';
+  // A first send to this environment, not a resend: these bytes are held while
+  // that transmittal is active, and there is no rollback to free them (6ef0ef121).
+  const target = toProduction ? 'production' : 'the test environment';
+  return `This bundle is held by ${ref}, sent to ${elsewhere}${state}. ${scope} ` +
+    `These bytes cannot be sent to ${target} while that transmittal is active; to file there, send it as a new sequence from Submission Center.`;
+}
+
+/**
+ * Signing authority (21 CFR 11.10(g)): a transmission to an agency is signed,
+ * so only a role the signing policy authorizes may make it. Before 2026-10-08
+ * (weekly review, SEC-1008-1) the gateway route admitted any role that may
+ * write (member and manager included) and the AnA transmit path the same, so
+ * an irreversible send to FDA or EMA went out under a signature the policy says
+ * that person may not give, and an electronic_signatures row then recorded it.
+ *
+ * The question is the platform's one signing-authority check
+ * (checkSigningAuthority, part11/signing-authority-gate.ts; P-27): the role is
+ * the server's reading of this organization's membership, never the request's,
+ * judged by the one policy every signing route uses. Asked first, before
+ * credentials and before any byte is read, so an unauthorized caller spends no
+ * password attempt and learns nothing about the package. A role that could not
+ * be read is not authority: it surfaces as an internal error and nothing is
+ * transmitted.
+ */
+export async function assertTransmitterHasSigningAuthority(organizationId: number, userId: number): Promise<void> {
+  const { checkSigningAuthority } = await import('../part11/signing-authority-gate');
+  const refusal = await checkSigningAuthority(userId, organizationId);
+  if (!refusal) return;
+  if (refusal.status === 503) {
+    throw new GovernedTransmitInternalError('transmit-signing-authority', new Error(refusal.message));
+  }
+  throw new GovernedTransmitRefusal(
+    'ESIGNATURE_NO_AUTHORITY',
+    'Your role does not permit signing a transmission to the agency (21 CFR Part 11 §11.10(g)). ' +
+      'A colleague with signing rights must transmit it. Nothing was transmitted.',
+    403,
+  );
 }
 
 /**
@@ -293,6 +332,17 @@ export async function assertTransmitterIndependent(
       422,
     );
   }
+  // 2026-10-19 (D5): authorship was the only meaning refused, so a package
+  // went to the agency on a signature that said "I reviewed". Shared by the
+  // HTTP transmit and AnA's k510 transmit (executeGovernedTransmit).
+  if (!(RELEASE_ACT_MEANINGS as readonly string[]).includes(meaning)) {
+    throw new GovernedTransmitRefusal(
+      'MEANING_NOT_A_RELEASE',
+      `A transmission to the agency is a release; it cannot be signed with the meaning '${meaning || 'none'}'. ` +
+        'Sign it as release, approval or responsibility. Nothing was transmitted.',
+      422,
+    );
+  }
   try {
     await assertSignerIsNotAuthor(`submission-package:${packageId}`, organizationId, userId, { meaning });
   } catch (err) {
@@ -313,5 +363,38 @@ export async function assertTransmitterIndependent(
       );
     }
     throw new GovernedTransmitInternalError('transmit-separation-of-duties', err);
+  }
+}
+
+/** What a transmission by this user of this package would meet at the
+ *  separation-of-duties check, asked in advance. */
+export type TransmitIndependence = 'independent' | 'author' | 'no-creator' | 'unverified';
+
+/**
+ * Would assertTransmitterIndependent let this user transmit this package?
+ *
+ * Asked of the enforcing check itself, with a release meaning, so the advance
+ * answer cannot drift from what transmit will do — the client never re-derives
+ * who counts as the author. The check runs after re-authentication, so without
+ * this the package's creator learned the rule only by typing a password and
+ * being refused; the Transmit form now says so when the package is chosen.
+ *
+ * A lookup failure is 'unverified', never 'independent': unknown is not
+ * permission, and the transmit itself still decides.
+ */
+export async function transmitIndependenceOf(
+  packageId: number,
+  organizationId: number,
+  userId: number,
+): Promise<TransmitIndependence> {
+  try {
+    await assertTransmitterIndependent(packageId, organizationId, userId, 'release');
+    return 'independent';
+  } catch (err) {
+    if (err instanceof GovernedTransmitRefusal) {
+      if (err.code === 'SIGNER_IS_AUTHOR') return 'author';
+      if (err.code === 'SIGNER_INDEPENDENCE_UNRESOLVED') return 'no-creator';
+    }
+    return 'unverified';
   }
 }

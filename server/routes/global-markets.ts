@@ -14,8 +14,10 @@
  *   body: { profile: { name, isIvd, riskTier?, intendedUse?, availableArtifacts[] }, targetMarkets[] }
  *   → { data: GlobalSubmissionPlan }
  *
- * HONEST: the planner never claims transmission to any authority — the registry
- * invariant (canTransmit === false everywhere) carries straight through.
+ * HONEST: `canTransmit` is what regulatory/market-support.ts states for each
+ * market's device and IVD filings (market-registry.ts), false for every market
+ * today; the registry and the plan carry it, and the cannot-transmit blocker,
+ * straight through.
  *
  * @module server/routes/global-markets
  */

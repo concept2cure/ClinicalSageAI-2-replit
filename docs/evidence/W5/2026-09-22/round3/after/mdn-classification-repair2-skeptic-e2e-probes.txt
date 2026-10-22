@@ -26,4 +26,3 @@ T6 x-no-errors :: body writes=1 :: recorded status=in_transit (inside lock: true
       Tests  11 passed (11)
    Start at  08:06:49
    Duration  2.23s (transform 639ms, setup 180ms, import 1.26s, tests 331ms, environment 0ms)
-

@@ -1,0 +1,103 @@
+# Mutation 9 — AnA's fulfill_regulatory_commitment no longer refuses a PMR, PMC or REMS
+#
+# Replaced in server/services/ana/AnaToolExecutor.ts:
+#   -     if (commitment && fulfilmentRule(commitment.commitmentType).signatureRequired) {# with:
+#   +     if (false && commitment && fulfilmentRule(commitment.commitmentType).signatureRequired) { // MUTATION 9: AnA fulfils a PMR from chat#
+# Test run with the mutation in place: unit — server/services/ana/__tests__/ana-cannot-sign.test.ts 
+# Restored afterwards: sha256 before 74f4efdb2a3e1c18d6abfc2df4f93dd952269587e3f949f210da4dad2227de08, after 74f4efdb2a3e1c18d6abfc2df4f93dd952269587e3f949f210da4dad2227de08 (identical)
+
+## The mutation (git diff of the working tree while it was in place)
+diff --git a/server/services/ana/AnaToolExecutor.ts b/server/services/ana/AnaToolExecutor.ts
+index 300c4655..8235913e 100644
+--- a/server/services/ana/AnaToolExecutor.ts
++++ b/server/services/ana/AnaToolExecutor.ts
+@@ -13506,21 +13506,35 @@ registerToolHandler('fulfill_regulatory_commitment', async (input, ctx) => {
+   if (!Number.isInteger(commitmentId)) return JSON.stringify({ error: 'commitment_id is required.' });
+   const { getPool } = await import('../../db.js');
+   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+-  const { fulfillCommitmentTx } = await import('../ha-interactions/ha-service.js');
++  const { fulfillCommitmentTx, readCommitmentForFulfilment, ORG_LEVEL } = await import('../ha-interactions/ha-service.js');
++  const { fulfilmentRule } = await import('../ha-interactions/ha-logic.js');
+   const reason = gatedReason(input);
+   const client = await getPool().connect();
+   try {
+     await client.query('BEGIN');
+     await setTenantContextTx(client, ctx.organizationId);
++    /* P-40 (2026-10-19): a PMR, PMC or REMS is recorded fulfilled only by a
++       Part 11 signature naming what met it, and AnA cannot sign. The type is
++       read from the record, never taken from the model; for those three the
++       tool writes nothing and hands the act to the screen. */
++    const commitment = await readCommitmentForFulfilment(client, ctx.organizationId, commitmentId, ORG_LEVEL, { lock: true });
++    if (false && commitment && fulfilmentRule(commitment.commitmentType).signatureRequired) { // MUTATION 9: AnA fulfils a PMR from chat
++      await client.query('ROLLBACK');
++      return refuseSignatureInChat(
++        'fulfill_regulatory_commitment',
++        `Recording a ${commitment.commitmentType.toUpperCase()} as fulfilled`,
++        'Communication, Meetings & commitments, where you name the sequence or document that met it and sign',
++      );
++    }
+     const fulfilledDate = typeof input.fulfilled_date === 'string' ? input.fulfilled_date : null;
+-    await fulfillCommitmentTx(client, ctx.organizationId, commitmentId, fulfilledDate);
++    const done = await fulfillCommitmentTx(client, ctx.organizationId, commitmentId, { fulfilledDate, evidence: null, userId: ctx.userId });
+     await recordGovernedAction(client, {
+       orgId: ctx.organizationId, userId: ctx.userId, command: 'resolve',
+       target: `regulatory-commitment:${commitmentId}`, reason,
+-      payload: { fulfilledDate }, domain: 'ha', surface: 'ana',
++      payload: { status: 'fulfilled', fulfilledDate: done.fulfilledDate }, domain: 'ha', surface: 'ana',
+     });
+     await client.query('COMMIT');
+-    return JSON.stringify({ ok: true, id: commitmentId, message: `Marked commitment ${commitmentId} fulfilled.` });
++    return JSON.stringify({ ok: true, id: commitmentId, message: `Marked commitment ${commitmentId} fulfilled on ${done.fulfilledDate}.` });
+   } catch (err) {
+     await client.query('ROLLBACK').catch(() => undefined);
+     return JSON.stringify({ error: `fulfill_regulatory_commitment failed: ${err instanceof Error ? err.message : String(err)}` });
+
+## The run
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_dms_plan writes nothing and hands the act to the person 5ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > certify_other_support writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_biosketch writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_export_control_determination writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > execute_research_agreement writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_committee_determination writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_grant_closeout writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > execute_subaward writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > approve_no_cost_extension writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > approve_qms_document writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > retire_qms_document writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_dms_plan is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > certify_other_support is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_biosketch is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_export_control_determination is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > execute_research_agreement is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_committee_determination is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_grant_closeout is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > execute_subaward is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > approve_no_cost_extension is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > approve_qms_document is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > retire_qms_document is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > the register lets a handler refuse only where the handler is pinned > approve_rbm_assessment writes nothing, even on a confirmation 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > the register lets a handler refuse only where the handler is pinned > approve_rbm_plan writes nothing, even on a confirmation 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > the register lets a handler refuse only where the handler is pinned > transmit_submission writes nothing, even on a confirmation 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > the register lets a handler refuse only where the handler is pinned > transmit_submission points to the sequence, not the retired package transmit (audit 2026-10-17) 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > the register lets a handler refuse only where the handler is pinned > retire_qms_document refuses as a signature and points to the Retire action 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > the register lets a handler refuse only where the handler is pinned > every handler-refused tool in the register is pinned here or named 1ms
+ × server/services/ana/__tests__/ana-cannot-sign.test.ts > fulfill_regulatory_commitment refuses a signed fulfilment (P-40) > a pmr: writes nothing, says AnA cannot sign, and points to Meetings & commitments 49ms
+   → expected undefined to be false // Object.is equality
+ × server/services/ana/__tests__/ana-cannot-sign.test.ts > fulfill_regulatory_commitment refuses a signed fulfilment (P-40) > a pmc: writes nothing, says AnA cannot sign, and points to Meetings & commitments 1ms
+   → expected undefined to be false // Object.is equality
+ × server/services/ana/__tests__/ana-cannot-sign.test.ts > fulfill_regulatory_commitment refuses a signed fulfilment (P-40) > a rems: writes nothing, says AnA cannot sign, and points to Meetings & commitments 1ms
+   → expected undefined to be false // Object.is equality
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > fulfill_regulatory_commitment refuses a signed fulfilment (P-40) > a meeting commitment is still fulfilled from chat, as a governed resolve 3ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > fulfill_regulatory_commitment refuses a signed fulfilment (P-40) > is described as handing a PMR, PMC or REMS to the person 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/ana-cannot-sign.test.ts > fulfill_regulatory_commitment refuses a signed fulfilment (P-40) > a pmr: writes nothing, says AnA cannot sign, and points to Meetings & commitments
+ FAIL  server/services/ana/__tests__/ana-cannot-sign.test.ts > fulfill_regulatory_commitment refuses a signed fulfilment (P-40) > a pmc: writes nothing, says AnA cannot sign, and points to Meetings & commitments
+ FAIL  server/services/ana/__tests__/ana-cannot-sign.test.ts > fulfill_regulatory_commitment refuses a signed fulfilment (P-40) > a rems: writes nothing, says AnA cannot sign, and points to Meetings & commitments
+AssertionError: expected undefined to be false // Object.is equality
+- Expected:
++ Received:
+ Test Files  1 failed (1)
+      Tests  3 failed | 30 passed (33)
+
+## Reading
+With AnA's refusal disabled, the three cases (pmr, pmc, rems) fail on their first assertion, `out.ok` toBe false: the tool no longer answers with AnA's refusal ("AnA cannot sign ... Meetings & commitments"). What it answers instead is `{error: "fulfill_regulatory_commitment failed: ..."}`, because the service's own rule (fulfillCommitmentTx, EVIDENCE_REQUIRED for a PMR naming nothing) refused the write, so no row changed even here; and a fulfilled PMR without a signature would also fail at COMMIT (mutation 3). The protection this proves is that AnA refuses plainly and hands the act to the person, instead of attempting it and reporting a failure. The meeting-commitment case still passes. Control: "M9 unit", 33 passed.

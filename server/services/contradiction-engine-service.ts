@@ -86,6 +86,67 @@ export function isReviewState(value: unknown): value is ReviewState {
   return typeof value === 'string' && (REVIEW_STATES as readonly string[]).includes(value);
 }
 
+/**
+ * One project's submission gate, counted over EVERY finding it holds.
+ *
+ * The Inconsistency board used to derive this in the browser from the page of
+ * findings it had read (200 by default, most severe first), so a blocking
+ * finding of lower severity past that page was not counted and the screen could
+ * read "clear" over a project checkPromotionBlocked holds. Counted here, from
+ * the authority each finding was recorded with, by checkPromotionBlocked's own
+ * rule: a finding leaves the gate in a GATE_CLEARING_STATES review state, and
+ * an open one with blocks_promotion blocks.
+ */
+export interface ProjectGate {
+  /** Every finding recorded for the project, in any review state. */
+  total: number;
+  /** Still on the gate: neither resolved nor superseded. */
+  open: number;
+  resolved: number;
+  superseded: number;
+  /** Open findings, by the authority recorded on them. */
+  blocking: number;
+  needApproval: number;
+  needEscalation: number;
+  needReview: number;
+  advisory: number;
+  /** Open findings whose authority_state is none of the five above (the column has no CHECK). */
+  unrecognized: number;
+  blocked: boolean;
+}
+
+/** The gate from `(review_state, authority_state, n)` groups. Pure, so it is tested without a database. */
+export function projectGateFromCounts(
+  groups: ReadonlyArray<{ review_state: string; authority_state: string; n: number | string }>,
+): ProjectGate {
+  const gate: ProjectGate = {
+    total: 0, open: 0, resolved: 0, superseded: 0,
+    blocking: 0, needApproval: 0, needEscalation: 0, needReview: 0, advisory: 0, unrecognized: 0,
+    blocked: false,
+  };
+  for (const g of groups) {
+    const n = Number(g.n);
+    if (!Number.isFinite(n) || n <= 0) continue;
+    gate.total += n;
+    if (GATE_CLEARING_STATES.has(g.review_state as ReviewState)) {
+      if (g.review_state === 'superseded') gate.superseded += n;
+      else gate.resolved += n;
+      continue;
+    }
+    gate.open += n;
+    switch (g.authority_state) {
+      case 'blocks_promotion': gate.blocking += n; break;
+      case 'requires_approval': gate.needApproval += n; break;
+      case 'requires_escalation': gate.needEscalation += n; break;
+      case 'requires_review': gate.needReview += n; break;
+      case 'advisory_only': gate.advisory += n; break;
+      default: gate.unrecognized += n;
+    }
+  }
+  gate.blocked = gate.blocking > 0;
+  return gate;
+}
+
 /** Shortest reason accepted for a review transition — the same bar the revalue route sets. */
 export const REVIEW_REASON_MIN = 8;
 
@@ -185,6 +246,109 @@ export interface ContradictionFinding {
   detectedBy: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/**
+ * What one detector actually read, compared and recorded.
+ *
+ * `scanProjectFull`'s fail-closed gate exists because "a scan that could not run its full
+ * detector set is unknown, not clean". A detector that bounds or skips its own work WITHOUT
+ * failing does the same harm quietly: the promise resolves, `detectionMethods` asserts it
+ * ran, and `summary.total` — read by `buildPreflightContradictionContext` as
+ * `blockingCount`, and rendered by decision-lifecycle-service as "No pending decisions or
+ * contradictions" — comes back short.
+ *
+ * Every detector reports this, in this one shape. The cross-artifact detector had its own
+ * (`CrossArtifactCoverage`, earlier the same day); a second shape for the other five would be
+ * duplication this lane has spent three commits removing, so there is one.
+ */
+export interface DetectorCoverage {
+  /** The detector's name, as `detectionMethods` lists it. */
+  detector: string;
+  /** Records read and eligible to compare. */
+  read: number;
+  /** The read limit, where the read applies one. */
+  readLimit?: number;
+  /**
+   * True when the read came back AT its limit, so there may be records that were never
+   * compared. A limited read that returns fewer than the limit saw everything.
+   */
+  readTruncated: boolean;
+  /** Records set aside as unreadable — too short to compare, typically. */
+  skipped: number;
+  /** Findings recorded, which equals the findings returned. */
+  recorded: number;
+  /** True when a bound on recording cut in, so findings were found and not recorded. */
+  recordTruncated: boolean;
+  /** True when nothing was compared at all: no pair or record existed to compare. */
+  comparedNothing: boolean;
+  /**
+   * Units actually compared — pairs, where the detector pairs records, and records, where it
+   * checks each against a rule. This and `found` are separate on purpose: the first version
+   * used one field for both and a detector that compared two agreeing sections (0 issues
+   * found) was reported as having compared nothing.
+   */
+  compared: number;
+  /** Issues found before any recording bound. `recorded` is this, capped. */
+  found?: number;
+}
+
+/** A detector's result: its findings, and what it actually did to produce them. */
+export interface Detected {
+  findings: ContradictionFinding[];
+  coverage: DetectorCoverage;
+}
+
+/** A fresh coverage record for `detector`, with nothing read yet. */
+function coverageFor(detector: string, readLimit?: number): DetectorCoverage {
+  return {
+    detector,
+    read: 0,
+    ...(readLimit === undefined ? {} : { readLimit }),
+    readTruncated: false,
+    skipped: 0,
+    compared: 0,
+    recorded: 0,
+    recordTruncated: false,
+    comparedNothing: false,
+  };
+}
+
+/** The read limit every record-reading detector applies. Named so the report can state it. */
+export const DETECTOR_READ_LIMIT = 200;
+
+/**
+ * A detector's result, with `recorded` and `comparedNothing` derived rather than hand-set.
+ *
+ * The first version of this had each detector assign `comparedNothing` itself. Five
+ * assignments is five chances for one to sit behind a branch that does not run, and one did:
+ * `status_conflict` reported `comparedNothing: false` having read nothing. A derived value
+ * cannot drift from what the detector actually did.
+ *
+ * Nothing was compared when `compared` is 0. A detector that read records but could form no
+ * pair from them — one assumption in a category, one artifact in a section — compared nothing
+ * just as surely as one that read none, and that is why `compared` is counted rather than
+ * inferred from `read`.
+ */
+function concluded(findings: ContradictionFinding[], coverage: DetectorCoverage): Detected {
+  coverage.recorded = findings.length;
+  coverage.comparedNothing = coverage.compared === 0;
+  return { findings, coverage };
+}
+
+/** How many findings one cross-artifact scan records. A bound on writes, never silent. */
+export const CROSS_ARTIFACT_FINDING_CAP = 10;
+
+/** Worst-first, so a bounded scan keeps the findings that matter most. */
+const SEVERITY_ORDER: Record<Severity, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+
+/**
+ * A HarmonizeIssue's severity as a finding's. Named once so the order the bound keeps and
+ * the severity it records cannot drift apart — sorting by one and recording the other is how
+ * a "worst first" bound quietly stops being one.
+ */
+function findingSeverityOf(harmonizeSeverity: string): Severity {
+  return harmonizeSeverity === 'critical' ? 'critical' : 'high';
 }
 
 export interface OverlayRule {
@@ -287,17 +451,24 @@ class ContradictionEngineService {
   async detectAssumptionDrift(
     organizationId: number,
     projectId: number
-  ): Promise<ContradictionFinding[]> {
+  ): Promise<Detected> {
+    const coverage = coverageFor('assumption_drift', DETECTOR_READ_LIMIT);
+
     log.info('Detecting assumption drift', { projectId });
 
     const assumptions = await assumptionRegistryService.search({
       organizationId,
       projectId,
       status: 'active',
-      limit: 200,
+      limit: DETECTOR_READ_LIMIT,
     });
+    /* A read that came back AT its limit may have left records uncompared. One that came
+       back under it saw everything there was. */
+    coverage.read = assumptions.length;
+    coverage.readTruncated = assumptions.length >= DETECTOR_READ_LIMIT;
 
     const findings: ContradictionFinding[] = [];
+
     const byCategory = new Map<string, AssumptionRecord[]>();
 
     for (const a of assumptions) {
@@ -307,10 +478,13 @@ class ContradictionEngineService {
     }
 
     for (const [, group] of byCategory) {
+      // A group of one has no pair. Skipping it is right; reporting that as a comparison
+      // that found no drift is not, so the pairs actually compared are counted.
       if (group.length < 2) continue;
 
       for (let i = 0; i < group.length; i++) {
         for (let j = i + 1; j < group.length; j++) {
+          coverage.compared++;
           const a = group[i],
             b = group[j];
           if (a.assumedValue === b.assumedValue) continue;
@@ -343,8 +517,7 @@ class ContradictionEngineService {
         }
       }
     }
-
-    return findings;
+    return concluded(findings, coverage);
   }
 
   /**
@@ -353,17 +526,23 @@ class ContradictionEngineService {
   async detectDecisionActionInconsistency(
     organizationId: number,
     projectId: number
-  ): Promise<ContradictionFinding[]> {
+  ): Promise<Detected> {
+    const coverage = coverageFor('decision_action_inconsistency', DETECTOR_READ_LIMIT);
+
     log.info('Detecting decision/action inconsistency', { projectId });
 
     const decisions = await decisionRecordService.search({
       organizationId,
       projectId,
       actionState: 'approved',
-      limit: 200,
+      limit: DETECTOR_READ_LIMIT,
     });
+    coverage.read = decisions.length;
+    coverage.compared = decisions.length;
+    coverage.readTruncated = decisions.length >= DETECTOR_READ_LIMIT;
 
     const findings: ContradictionFinding[] = [];
+
 
     for (const d of decisions) {
       // Approved but never executed — might be stale
@@ -399,7 +578,7 @@ class ContradictionEngineService {
       }
     }
 
-    return findings;
+    return concluded(findings, coverage);
   }
 
   /**
@@ -408,17 +587,22 @@ class ContradictionEngineService {
   async detectCrossJurisdictionalDivergence(
     organizationId: number,
     projectId: number
-  ): Promise<ContradictionFinding[]> {
+  ): Promise<Detected> {
+    const coverage = coverageFor('cross_jurisdictional_divergence', DETECTOR_READ_LIMIT);
+
     log.info('Detecting cross-jurisdictional divergence', { projectId });
 
     const assumptions = await assumptionRegistryService.search({
       organizationId,
       projectId,
       status: 'active',
-      limit: 200,
+      limit: DETECTOR_READ_LIMIT,
     });
+    coverage.read = assumptions.length;
+    coverage.readTruncated = assumptions.length >= DETECTOR_READ_LIMIT;
 
     const findings: ContradictionFinding[] = [];
+
     const byCategory = new Map<string, AssumptionRecord[]>();
 
     for (const a of assumptions) {
@@ -433,6 +617,7 @@ class ContradictionEngineService {
 
       for (let i = 0; i < group.length; i++) {
         for (let j = i + 1; j < group.length; j++) {
+          coverage.compared++;
           const a = group[i],
             b = group[j];
           const overlap = a.applicableRegulators.filter(r => b.applicableRegulators.includes(r));
@@ -466,8 +651,7 @@ class ContradictionEngineService {
         }
       }
     }
-
-    return findings;
+    return concluded(findings, coverage);
   }
 
   /**
@@ -478,18 +662,27 @@ class ContradictionEngineService {
     projectId: number
   ): Promise<{
     findings: ContradictionFinding[];
-    summary: { total: number; bySeverity: Record<string, number>; byType: Record<string, number> };
+    summary: {
+      total: number;
+      bySeverity: Record<string, number>;
+      byType: Record<string, number>;
+      /** True when a detector bounded or skipped its own work, so `total` is a floor. */
+      incomplete: boolean;
+    };
+    /** One record per detector that ran. */
+    coverage: DetectorCoverage[];
   }> {
     await this.requireProjectInOrganisation(organizationId, projectId);
     log.info('Running full contradiction scan', { projectId });
 
-    const [driftFindings, decisionFindings, jurisdictionFindings] = await Promise.all([
+    const results = await Promise.all([
       this.detectAssumptionDrift(organizationId, projectId),
       this.detectDecisionActionInconsistency(organizationId, projectId),
       this.detectCrossJurisdictionalDivergence(organizationId, projectId),
     ]);
 
-    const allFindings = [...driftFindings, ...decisionFindings, ...jurisdictionFindings];
+    const allFindings = results.flatMap(r => r.findings);
+    const coverage = results.map(r => r.coverage);
 
     const bySeverity: Record<string, number> = {};
     const byType: Record<string, number> = {};
@@ -498,7 +691,16 @@ class ContradictionEngineService {
       byType[f.contradictionType] = (byType[f.contradictionType] ?? 0) + 1;
     }
 
-    return { findings: allFindings, summary: { total: allFindings.length, bySeverity, byType } };
+    /* Same contract as scanProjectFull: `total` is a floor whenever a detector bounded or
+       skipped its own work, and this scan reads three detectors that each apply a read
+       limit. */
+    const incomplete = coverage.some(c => c.readTruncated || c.recordTruncated || c.comparedNothing);
+
+    return {
+      findings: allFindings,
+      summary: { total: allFindings.length, bySeverity, byType, incomplete },
+      coverage,
+    };
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -642,8 +844,15 @@ class ContradictionEngineService {
   // ═══════════════════════════════════════════════════════════════════════════
 
   /**
-   * Execute the consequence path for a finding.
-   * Creates real governed objects (review threads, memos, etc.)
+   * Execute the consequence path for a finding — through
+   * contradictionConsequenceService, the one implementation.
+   *
+   * This was a second copy that created nothing: review_thread, memo,
+   * escalation, harmonization_rewrite and dossier_review_attachment each
+   * returned an invented id (`thread_contradiction_<id>_<ms>`, `memo_<id>`,
+   * `escalation_<id>`, `action_<id>`) and set consequence_executed = true.
+   * Replaced 2026-10-15 (zero duplication; the service creates the object or
+   * refuses).
    */
   async executeConsequence(
     findingId: string,
@@ -653,92 +862,23 @@ class ContradictionEngineService {
     consequenceType: ConsequenceType;
     consequenceObjectId: string | null;
     success: boolean;
+    error?: string;
   }> {
     const finding = await this.getFinding(findingId, organizationId);
     if (!finding) throw new Error('Finding not found');
     if (!finding.consequenceType) throw new Error('No consequence type assigned');
 
-    log.info('Executing consequence', { findingId, type: finding.consequenceType });
-
-    let consequenceObjectId: string | null = null;
-    let success = false;
-
-    switch (finding.consequenceType) {
-      case 'review_thread': {
-        // Create a review thread for the contradiction — works for all object types
-        consequenceObjectId = `thread_contradiction_${findingId}_${Date.now()}`;
-        success = true;
-        break;
-      }
-      case 'assumption_supersession': {
-        // Supersede the older assumption
-        if (finding.objectAType === 'assumption' && finding.objectBType === 'assumption') {
-          const older = finding.objectAId;
-          const newer = finding.objectBId;
-          await assumptionRegistryService.supersede(older, {
-            organizationId,
-            replacementId: newer,
-            reason: `Superseded by contradiction detection: ${finding.title}`,
-            performedBy: executedBy,
-          });
-          consequenceObjectId = newer;
-          success = true;
-        }
-        break;
-      }
-      case 'contradiction_memo': {
-        // Create a contradiction memo artifact
-        consequenceObjectId = `memo_${findingId}`;
-        success = true;
-        break;
-      }
-      case 'escalation': {
-        // Update finding to escalation state
-        consequenceObjectId = `escalation_${findingId}`;
-        success = true;
-        break;
-      }
-      case 'harmonization_rewrite':
-      case 'dossier_review_attachment': {
-        consequenceObjectId = `action_${findingId}`;
-        success = true;
-        break;
-      }
-    }
-
-    // Log the consequence execution
-    await pool!.query(
-      `
-      INSERT INTO contradiction_consequence_log (
-        organization_id, finding_id, consequence_type,
-        consequence_object_id, consequence_object_type,
-        executed_by, execution_status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-    `,
-      [
-        organizationId,
-        findingId,
-        finding.consequenceType,
-        consequenceObjectId,
-        finding.consequenceType,
-        executedBy,
-        success ? 'executed' : 'failed',
-      ]
-    );
-
-    // Update the finding
-    if (success) {
-      await pool!.query(
-        `
-        UPDATE contradiction_findings
-        SET consequence_object_id = $1, consequence_executed = true, updated_at = NOW()
-        WHERE id = $2 AND organization_id = $3
-      `,
-        [consequenceObjectId, findingId, organizationId]
-      );
-    }
-
-    return { consequenceType: finding.consequenceType, consequenceObjectId, success };
+    const { contradictionConsequenceService } = await import('./contradiction-consequence-service.js');
+    const result = await contradictionConsequenceService.executeConsequence(finding, finding.consequenceType, executedBy, {
+      organizationId,
+      projectId: finding.projectId ?? undefined,
+    });
+    return {
+      consequenceType: finding.consequenceType,
+      consequenceObjectId: result.consequenceObjectId,
+      success: result.success,
+      ...(result.error ? { error: result.error } : {}),
+    };
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -783,6 +923,20 @@ class ContradictionEngineService {
       blockingFindings,
       warningFindings,
     };
+  }
+
+  /** The project's whole submission gate (ProjectGate). A read failure throws — it is never an empty gate. */
+  async projectGate(organizationId: number, projectId: number): Promise<ProjectGate> {
+    const result = await pool!.query(
+      `
+      SELECT review_state, authority_state, COUNT(*)::int AS n
+      FROM contradiction_findings
+      WHERE organization_id = $1 AND project_id = $2
+      GROUP BY review_state, authority_state
+    `,
+      [organizationId, projectId]
+    );
+    return projectGateFromCounts(result.rows);
   }
 
   /**
@@ -1078,20 +1232,16 @@ class ContradictionEngineService {
       finding = await this.applyOverlays(finding, input.domain, input.programType);
     }
 
-    // Reactive: auto-trigger consequence if confidence and authority allow
+    // Reactive: propagate the finding's impact to linked objects. A
+    // consequence is NOT taken here: autoTriggerConsequence logged
+    // "auto_created_review_thread" / "auto_created_contradiction_memo" /
+    // "auto_superseded_assumption" to impact_propagation_log for every
+    // high-confidence finding and created none of them (removed 2026-10-15).
+    // A person takes a consequence through POST
+    // /api/authoring-actions/contradiction-consequence.
     if (finding.consequenceType) {
       try {
         const { reactiveDependencyService } = await import('./reactive-dependency-service');
-
-        // Auto-trigger consequence path
-        await reactiveDependencyService.autoTriggerConsequence({
-          organizationId: finding.organizationId,
-          projectId: input.projectId ?? 0,
-          findingId: finding.id,
-          confidenceLevel: finding.confidenceLevel,
-          authorityState: finding.authorityState,
-          consequenceType: finding.consequenceType,
-        });
 
         // Propagate impact to linked objects
         if (input.projectId) {
@@ -1188,7 +1338,9 @@ class ContradictionEngineService {
   async detectApprovedVsWorkingDrift(
     organizationId: number,
     projectId: number
-  ): Promise<ContradictionFinding[]> {
+  ): Promise<Detected> {
+    const coverage = coverageFor('approved_vs_working_drift');
+
     log.info('Detecting approved-vs-working drift', { projectId });
     const findings: ContradictionFinding[] = [];
 
@@ -1205,6 +1357,9 @@ class ContradictionEngineService {
 
       // Group by ctdSection
       const bySectionCode = new Map<string, any[]>();
+      coverage.read = artifacts.length;
+      coverage.compared = artifacts.length;
+
       for (const art of artifacts) {
         if (!art.ctdSection) continue;
         if (!bySectionCode.has(art.ctdSection)) bySectionCode.set(art.ctdSection, []);
@@ -1276,7 +1431,7 @@ class ContradictionEngineService {
       throw err;
     }
 
-    return findings;
+    return concluded(findings, coverage);
   }
 
   /**
@@ -1287,7 +1442,9 @@ class ContradictionEngineService {
   async detectStatusConflict(
     organizationId: number,
     projectId: number
-  ): Promise<ContradictionFinding[]> {
+  ): Promise<Detected> {
+    const coverage = coverageFor('status_conflict', DETECTOR_READ_LIMIT);
+
     log.info('Detecting status conflicts', { projectId });
     const findings: ContradictionFinding[] = [];
 
@@ -1305,11 +1462,15 @@ class ContradictionEngineService {
         organizationId,
         projectId,
         status: 'superseded',
-        limit: 200,
+        limit: DETECTOR_READ_LIMIT,
       });
 
       if (supersededAssumptions.length > 0) {
-        for (const art of artifacts) {
+        coverage.read = artifacts.length + supersededAssumptions.length;
+      coverage.compared = coverage.read;
+      coverage.readTruncated = supersededAssumptions.length >= DETECTOR_READ_LIMIT;
+
+      for (const art of artifacts) {
           if (art.status !== 'review' && art.status !== 'approved' && art.status !== 'locked')
             continue;
 
@@ -1350,7 +1511,7 @@ class ContradictionEngineService {
         organizationId,
         projectId,
         actionState: 'approved',
-        limit: 200,
+        limit: DETECTOR_READ_LIMIT,
       });
 
       for (const d of decisions) {
@@ -1396,7 +1557,7 @@ class ContradictionEngineService {
       throw err;
     }
 
-    return findings;
+    return concluded(findings, coverage);
   }
 
   /**
@@ -1407,7 +1568,9 @@ class ContradictionEngineService {
   async detectCrossArtifactContentConflict(
     organizationId: number,
     projectId: number
-  ): Promise<ContradictionFinding[]> {
+  ): Promise<Detected> {
+    const coverage = coverageFor('cross_artifact_content');
+
     log.info('Detecting cross-artifact content conflicts', { projectId });
     const findings: ContradictionFinding[] = [];
 
@@ -1436,19 +1599,37 @@ class ContradictionEngineService {
                 .replace(/\s+/g, ' ')
                 .trim()
             : '';
-        if (content.length < 50) continue; // Skip trivial content
+        // Counted, not merely skipped: a section nobody could read is not a section that agrees.
+        if (content.length < 50) {
+          coverage.skipped++;
+          continue;
+        }
         sections[art.ctdSection] = content;
         sectionArtifactMap[art.ctdSection] = art;
       }
 
-      if (Object.keys(sections).length < 2) return findings;
+      coverage.read = Object.keys(sections).length;
+      // Harmonize compares every pair of the sections it is given.
+      coverage.compared = (coverage.read * (coverage.read - 1)) / 2;
+      if (coverage.read < 2) {
+        /* Nothing was compared. The caller used to receive the same empty array it receives
+           for "two sections compared and they agree", with `cross_artifact_content` listed
+           among the detectors that ran. */
+        log.info('Cross-artifact content: nothing compared', { projectId, ...coverage });
+        // Through `concluded` like every other return, so the derivation cannot be bypassed.
+        return concluded(findings, coverage);
+      }
 
       const result = await engine.check({ sections, submissionType: 'IND' });
 
       // Convert critical and error harmonize issues to contradiction findings
-      const significantIssues = result.issues.filter(
-        i => i.severity === 'critical' || i.severity === 'error'
-      );
+      const significantIssues = result.issues
+        .filter(i => i.severity === 'critical' || i.severity === 'error')
+        /* Worst first. `.slice` took Harmonize's own order, so a critical sample-size
+           conflict could be dropped in favour of ten error-severity ones. */
+        .sort((a, b) => SEVERITY_ORDER[findingSeverityOf(a.severity)] - SEVERITY_ORDER[findingSeverityOf(b.severity)]);
+      coverage.found = significantIssues.length;
+      coverage.recordTruncated = significantIssues.length > CROSS_ARTIFACT_FINDING_CAP;
 
       const HARMONIZE_TO_CONTRADICTION: Record<string, ContradictionType> = {
         terminology: 'parameter_mismatch',
@@ -1458,7 +1639,7 @@ class ContradictionEngineService {
         cross_section: 'factual_contradiction',
       };
 
-      for (const issue of significantIssues.slice(0, 10)) {
+      for (const issue of significantIssues.slice(0, CROSS_ARTIFACT_FINDING_CAP)) {
         const artA = sectionArtifactMap[issue.sectionA];
         const artB = issue.sectionB ? sectionArtifactMap[issue.sectionB] : null;
         if (!artA) continue;
@@ -1478,7 +1659,7 @@ class ContradictionEngineService {
             ? `${artB.title || issue.sectionB} (${issue.sectionB})`
             : issue.sectionB || undefined,
           contradictionType,
-          severity: issue.severity === 'critical' ? 'critical' : 'high',
+          severity: findingSeverityOf(issue.severity),
           truthHierarchyLevel: 5,
           confidenceScore: issue.severity === 'critical' ? 0.9 : 0.75,
           confidenceLevel: issue.severity === 'critical' ? 'high' : 'moderate',
@@ -1504,7 +1685,7 @@ class ContradictionEngineService {
       throw err;
     }
 
-    return findings;
+    return concluded(findings, coverage);
   }
 
   /**
@@ -1530,10 +1711,12 @@ class ContradictionEngineService {
       const { db } = await import('../db.js');
       const { detectBodySpecificGaps } = await import('./body-aware-authoring.js');
 
+      // This tenant's artifacts: the read named no organization, so a scan
+      // could raise findings in one tenant from another tenant's text.
       const artifacts =
         (await db.query.concept2cureArtifacts
           ?.findMany?.({
-            where: (a: any, { eq }: any) => eq(a.projectId, projectId),
+            where: (a: any, { and, eq }: any) => and(eq(a.projectId, projectId), eq(a.organizationId, organizationId)),
           })
           ) || [];
 
@@ -1620,40 +1803,43 @@ class ContradictionEngineService {
     opts?: { regulatorBody?: string; submissionType?: string }
   ): Promise<{
     findings: ContradictionFinding[];
-    summary: { total: number; bySeverity: Record<string, number>; byType: Record<string, number> };
+    summary: {
+      total: number;
+      bySeverity: Record<string, number>;
+      byType: Record<string, number>;
+      /**
+       * True when a detector bounded or skipped its own work, so `total` is a floor and not
+       * a count. A caller must not read "ready to promote" from an incomplete scan.
+       */
+      incomplete: boolean;
+    };
     detectionMethods: string[];
+    /** One record per detector that ran: what it read, skipped, recorded, and what was bounded. */
+    coverage: DetectorCoverage[];
   }> {
     await this.requireProjectInOrganisation(organizationId, projectId);
     log.info('Running FULL contradiction scan (Pass 8)', { projectId, opts });
 
     const detectionMethods: string[] = [];
+    /* One record per detector that ran: what it read, what it skipped, what it recorded, and
+       whether any of that was bounded. A detector that REJECTED contributes nothing here
+       because the gate below throws and no verdict is produced at all. */
+    const coverage: DetectorCoverage[] = [];
+    /** Unwraps a detector's result, keeping its coverage and its name in step. */
+    const ran = (method: string) => (r: Detected): ContradictionFinding[] => {
+      detectionMethods.push(method);
+      coverage.push(r.coverage);
+      return r.findings;
+    };
     const allPromises: Promise<ContradictionFinding[]>[] = [
       // Pass 7 detectors
-      this.detectAssumptionDrift(organizationId, projectId).then(r => {
-        detectionMethods.push('assumption_drift');
-        return r;
-      }),
-      this.detectDecisionActionInconsistency(organizationId, projectId).then(r => {
-        detectionMethods.push('decision_action_inconsistency');
-        return r;
-      }),
-      this.detectCrossJurisdictionalDivergence(organizationId, projectId).then(r => {
-        detectionMethods.push('cross_jurisdictional_divergence');
-        return r;
-      }),
+      this.detectAssumptionDrift(organizationId, projectId).then(ran('assumption_drift')),
+      this.detectDecisionActionInconsistency(organizationId, projectId).then(ran('decision_action_inconsistency')),
+      this.detectCrossJurisdictionalDivergence(organizationId, projectId).then(ran('cross_jurisdictional_divergence')),
       // Pass 8 detectors
-      this.detectApprovedVsWorkingDrift(organizationId, projectId).then(r => {
-        detectionMethods.push('approved_vs_working_drift');
-        return r;
-      }),
-      this.detectStatusConflict(organizationId, projectId).then(r => {
-        detectionMethods.push('status_conflict');
-        return r;
-      }),
-      this.detectCrossArtifactContentConflict(organizationId, projectId).then(r => {
-        detectionMethods.push('cross_artifact_content');
-        return r;
-      }),
+      this.detectApprovedVsWorkingDrift(organizationId, projectId).then(ran('approved_vs_working_drift')),
+      this.detectStatusConflict(organizationId, projectId).then(ran('status_conflict')),
+      this.detectCrossArtifactContentConflict(organizationId, projectId).then(ran('cross_artifact_content')),
     ];
 
     // Body-specific detection if regulator/body context provided
@@ -1692,10 +1878,16 @@ class ContradictionEngineService {
       byType[f.contradictionType] = (byType[f.contradictionType] ?? 0) + 1;
     }
 
+    /* `total` is a floor, not a count, whenever ANY detector bounded or skipped its own
+       work. The fail-closed gate above covers a detector that CRASHED; this covers one that
+       quietly returned less than it found. */
+    const incomplete = coverage.some(c => c.readTruncated || c.recordTruncated || c.comparedNothing);
+
     return {
       findings: allFindings,
-      summary: { total: allFindings.length, bySeverity, byType },
+      summary: { total: allFindings.length, bySeverity, byType, incomplete },
       detectionMethods,
+      coverage,
     };
   }
 
@@ -1749,6 +1941,19 @@ class ContradictionEngineService {
     }>;
     overlayEscalatedToBlocking: boolean;
     linkedDecisionIds: string[];
+    /**
+     * True when the scan behind these counts bounded or skipped its own work, so
+     * `unresolvedCount` and `blockingCount` are floors rather than counts.
+     *
+     * A caller must not render a 0 from such a scan as an absence of contradictions.
+     * decision-lifecycle-service's status summary reads a 0 as "No pending decisions or
+     * contradictions", which is a positive assertion of cleanliness; from an incomplete
+     * scan that sentence is false.
+     */
+    scanIncomplete: boolean;
+    /** What the cross-artifact content detector read, compared and recorded. */
+    /** One record per detector that ran, so a caller can say WHICH comparison was short. */
+    coverage: DetectorCoverage[];
   }> {
     const scanResult = await this.scanProjectFull(organizationId, projectId, {
       regulatorBody: scope.regulatorBody,
@@ -1839,6 +2044,8 @@ class ContradictionEngineService {
       })),
       overlayEscalatedToBlocking: overlayEscalated,
       linkedDecisionIds,
+      scanIncomplete: scanResult.summary.incomplete,
+      coverage: scanResult.coverage,
     };
   }
 }

@@ -1,0 +1,65 @@
+# Each mutation applied alone to the fixed code, the suite run, the file restored (scratch runner, exact-string replace, asserts the pattern occurs once).
+
+M1 intent filter removed
+  Tests  5 failed | 20 passed (25)
+    × revoking one signature on a sequence that holds signatures for several acts: the one named > revoking the dispatch signature revokes that one and leaves the newer Shadow Review waiver in force
+    × revoking one signature on a sequence that holds signatures for several acts: the one named > the converse: revoking the waiver leaves the newer dispatch signature in force
+    × revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses, writing nothing, when no live signature answers to what was named
+    × kept: a target whose signatures declare no intent > naming an intent its signatures never declared resolves nothing
+    × POST /api/c2c/actions/revoke-signature > answers 409 REVOCATION_TARGET_UNRESOLVED when nothing answers to the selector
+
+M2 ambiguity refusal -> take the newest
+  Tests  3 failed | 22 passed (25)
+    × revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses, writing nothing, when live signatures for more than one act are on the target and none is named
+    × revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses when more than one live signature declares the named intent (one disposition per critical finding)
+    × POST /api/c2c/actions/revoke-signature > answers 409 REVOCATION_TARGET_AMBIGUOUS naming the live signatures, and writes nothing
+
+M3 kept legacy rule removed (intent-less target, several live)
+  Tests  1 failed | 24 passed (25)
+    × kept: a target whose signatures declare no intent > with several live signatures, the newest is revoked, as before
+
+M4 signatureId filter removed
+  Tests  7 failed | 18 passed (25)
+    × revoking one signature on a sequence that holds signatures for several acts: the one named > by its id: the named signature is revoked, though a newer one for another act is live
+    × revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses when more than one live signature declares the named intent (one disposition per critical finding)
+    × revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses, writing nothing, when no live signature answers to what was named
+    × revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > a signature already revoked cannot be revoked again by naming it, and no longer counts as live
+    × revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > a signature voided for a refused act (P-23) is out of force: not a candidate, and naming it resolves nothing
+    × revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > a signature on another target is not this target’s, even named by id
+    × POST /api/c2c/actions/revoke-signature > revokes the named signature and only that one
+
+M5 signatureActionId filter removed
+  Tests  2 failed | 23 passed (25)
+    × revoking one signature on a sequence that holds signatures for several acts: the one named > by the sign action it was given under
+    × revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses, writing nothing, when no live signature answers to what was named
+
+M6 withdrawn (voided) rows counted as live
+  Tests  1 failed | 24 passed (25)
+    × revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > a signature voided for a refused act (P-23) is out of force: not a candidate, and naming it resolves nothing
+
+M7 writer ignores a malformed selector
+  Tests  7 failed | 18 passed (25)
+    × revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses a selector that names nothing it could resolve: {"signatureId":"twelve"}
+    × revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses a selector that names nothing it could resolve: {"signatureId":-3}
+    × revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses a selector that names nothing it could resolve: {"signatureId":1.5}
+    × revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses a selector that names nothing it could resolve: {"signatureActionId":42}
+    × revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses a selector that names nothing it could resolve: {"signatureActionId":"  "}
+    × revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses a selector that names nothing it could resolve: {"intent":""}
+    × revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses a selector that names nothing it could resolve: {"intent":["dispatch"]}
+
+M8 selector parser accepts non-positive / fractional ids
+  Tests  2 failed | 23 passed (25)
+    × revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses a selector that names nothing it could resolve: {"signatureId":-3}
+    × revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses a selector that names nothing it could resolve: {"signatureId":1.5}
+
+M9 route: no early selector refusal (before re-auth)
+  Tests  1 failed | 24 passed (25)
+    × POST /api/c2c/actions/revoke-signature > refuses a malformed selector with 400 before the credential is asked for
+
+M10 route: ambiguous refusal not mapped to 409
+  Tests  1 failed | 24 passed (25)
+    × POST /api/c2c/actions/revoke-signature > answers 409 REVOCATION_TARGET_AMBIGUOUS naming the live signatures, and writes nothing
+
+M11 SQL: superseded rows counted (alone: equivalent, the canonical predicate also checks; paired run below)
+  Tests  25 passed (25)
+restored-ok

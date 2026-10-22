@@ -1,0 +1,62 @@
+[
+  {
+    "file": "embedded-red.txt",
+    "rawSha256": "23107a499f845e531c302a23326580632431a514aa41f4994e32d812a8d7ea63",
+    "storedSha256": "85efe469d33c5dd910e145d4cadfda1944df9f46e73306dc2aae605b0f9f4fdd",
+    "normalization": "trailing line endings only, one LF; empty stays empty"
+  },
+  {
+    "file": "chooser-query-intermediate.txt",
+    "rawSha256": "4b8e6f50aa763f1d4155f6726ad9eb0e6370797d25a56843a7acb41b42bb1906",
+    "storedSha256": "4c1e33bdd0c878af5659400e5c4379cf1617ba51669e0c811a48fa3ee0d55326",
+    "normalization": "trailing line endings only, one LF; empty stays empty"
+  },
+  {
+    "file": "red.txt",
+    "rawSha256": "0ad57ed6821d147ed1bae9f05078d8203dd3b13163937490214f2c3d021f5e66",
+    "storedSha256": "bf77e76f004157a50f2c6f906ac8978d276397de0afb5d830db862c213b17257",
+    "normalization": "trailing line endings only, one LF; empty stays empty"
+  },
+  {
+    "file": "green-4.txt",
+    "rawSha256": "ab1876eeb38df8cca06ac1331dc9bdfe00f33c69044b8cfd3eeb1364b536e298",
+    "storedSha256": "8f68e3dba0ba31f94adf109aea76fb06a139d0d659d0b51a3d035cdf4c3da3c2",
+    "normalization": "trailing line endings only, one LF; empty stays empty"
+  },
+  {
+    "file": "bypass-red.txt",
+    "rawSha256": "4a1c9c941ffc429c3b48cafba59e34409195de0914228c37e82cd841a9468567",
+    "storedSha256": "0a5f2dbfc011d28c05004cf643ec2bd7687fd3b78b9d49c0b1a2790a997f0d85",
+    "normalization": "trailing line endings only, one LF; empty stays empty"
+  },
+  {
+    "file": "green-7.txt",
+    "rawSha256": "0844a471e232c3d236b6639fdd9f72cc10c51d567f28b918b2484d99cf4884b9",
+    "storedSha256": "772a9cb9e17658282ab3e9b17b64a4b6083a893512d12552e4e9f1a8c2dc6e23",
+    "normalization": "trailing line endings only, one LF; empty stays empty"
+  },
+  {
+    "file": "green-27-before-final-pin.txt",
+    "rawSha256": "db1acddd61e5fe0cc568c81ed4bb3aceda8af86b49926069f100fd86100ff480",
+    "storedSha256": "160f6b3d978bb72ccc38a33255fbc595d4d56446f21f0a021ae5fe6593f8d062",
+    "normalization": "trailing line endings only, one LF; empty stays empty"
+  },
+  {
+    "file": "lint-before-final-pin.txt",
+    "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "storedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normalization": "trailing line endings only, one LF; empty stays empty"
+  },
+  {
+    "file": "green.txt",
+    "rawSha256": "c2553447a411c7f1104137bf1025d97c30b5b2276e49b2f364dd686b2ee7abe2",
+    "storedSha256": "546f4b76bc928d4503bd123db25402be5b290e8c78132842475be9442124ac29",
+    "normalization": "trailing line endings only, one LF; empty stays empty"
+  },
+  {
+    "file": "lint.txt",
+    "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "storedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normalization": "trailing line endings only, one LF; empty stays empty"
+  }
+]

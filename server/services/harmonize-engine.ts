@@ -11,7 +11,13 @@
  */
 
 import { createScopedLogger } from '../utils/logger';
+import { normalizeCtdCode } from '../../shared/regulatory/section-code';
 import { classifyInTextReferences, type ClassifiedReference } from './ana/in-text-references';
+import {
+  extractNumericalFacts,
+  numericValueOf,
+  roundToCompare,
+} from './intelligence/cross-artifact-consistency';
 
 const log = createScopedLogger('harmonize-engine');
 
@@ -56,6 +62,34 @@ export interface HarmonizeResult {
   issues: HarmonizeIssue[];
   consistencyScore: number;
   checkedDimensions: string[];
+  /** Dimensions that could not run on this input, and why. Never in checkedDimensions. */
+  skippedDimensions: Array<{ dimension: string; reason: string }>;
+}
+
+// ─── Summary/body pairs ──────────────────────────────────────────────────────
+
+/** A Module 2 summary and the module whose reports it summarises (ICH M4). */
+const CTD_SUMMARY_BODY_PAIRS: ReadonlyArray<{ summary: string; detail: string; label: string }> = [
+  { summary: '2.5', detail: '5', label: 'Clinical Overview vs Clinical Study Reports' },
+  { summary: '2.4', detail: '4', label: 'Nonclinical Overview vs Nonclinical Reports' },
+  { summary: '2.3', detail: '3', label: 'Quality Overall Summary vs Quality Data' },
+  { summary: '2.7', detail: '5', label: 'Clinical Summary vs Clinical Reports' },
+];
+
+/** Pairs a caller of POST /api/harmonize/check may key by document name. */
+const NAMED_SUMMARY_BODY_PAIRS: ReadonlyArray<{ summary: string; detail: string; label: string }> = [
+  { summary: 'clinical-overview', detail: 'clinical-study-report', label: 'Clinical Overview vs CSR' },
+  { summary: 'executive-summary', detail: 'body', label: 'Executive Summary vs Document Body' },
+];
+
+/** The CTD code a section key names ('2.5', 'm2.5', 'module-2.5' → '2.5'), or null. */
+function ctdCodeOfKey(key: string): string | null {
+  return normalizeCtdCode(key.trim().replace(/^module[\s_-]*/i, ''));
+}
+
+/** True when `code` is the CTD heading `heading` or a section below it. */
+function isAtOrBelow(code: string, heading: string): boolean {
+  return code === heading || code.startsWith(`${heading}.`);
 }
 
 // ─── Reference integrity ─────────────────────────────────────────────────────
@@ -82,6 +116,25 @@ function referenceIssue(ref: ClassifiedReference, sectionId: string, id: string)
 
 // ─── Engine ──────────────────────────────────────────────────────────────────
 
+/**
+ * One section's readings per label, as numbers, deduplicated at each label's own
+ * comparison precision. A fact whose value is not a number (a predicate K-number) is left
+ * out rather than coerced — a 0 standing in for a figure nobody read would agree with the
+ * next 0.
+ */
+function labelledReadings(content: string): Map<string, number[]> {
+  const byLabel = new Map<string, number[]>();
+  for (const fact of extractNumericalFacts(content)) {
+    const value = numericValueOf(fact);
+    if (value === null) continue;
+    const rounded = roundToCompare(value, fact.label);
+    const seen = byLabel.get(fact.label) ?? [];
+    if (!seen.includes(rounded)) seen.push(rounded);
+    byLabel.set(fact.label, seen);
+  }
+  return byLabel;
+}
+
 export class HarmonizeEngine {
 
   async check(input: HarmonizeInput): Promise<HarmonizeResult> {
@@ -89,6 +142,7 @@ export class HarmonizeEngine {
 
     const issues: HarmonizeIssue[] = [];
     const checkedDimensions: string[] = [];
+    const skippedDimensions: HarmonizeResult['skippedDimensions'] = [];
 
     // 1. Terminology consistency
     checkedDimensions.push('terminology');
@@ -98,9 +152,23 @@ export class HarmonizeEngine {
     checkedDimensions.push('numerics');
     issues.push(...this.checkNumerics(input));
 
-    // 3. Summary/body consistency
-    checkedDimensions.push('summary_body');
-    issues.push(...this.checkSummaryBody(input));
+    // 3. Summary/body consistency — only when a summary and its reports are both
+    // here. 2026-10-15: this was listed as checked on every input, though its
+    // pairs were keyed 'module-2.5' … and every caller keys by CTD code, so it
+    // never ran.
+    const summaryBody = this.checkSummaryBody(input);
+    if (summaryBody.pairsCompared > 0) {
+      checkedDimensions.push('summary_body');
+      issues.push(...summaryBody.issues);
+    } else {
+      const withContent = Object.keys(input.sections).filter((key) => input.sections[key]?.trim());
+      skippedDimensions.push({
+        dimension: 'summary_body',
+        reason:
+          'No summary with the reports it summarises is among the sections with content (CTD 2.3 with ' +
+          `Module 3, 2.4 with Module 4, 2.5 or 2.7 with Module 5): ${withContent.join(', ') || 'none'}.`,
+      });
+    }
 
     // 4. Reference integrity
     checkedDimensions.push('references');
@@ -126,6 +194,7 @@ export class HarmonizeEngine {
       issues,
       consistencyScore,
       checkedDimensions,
+      skippedDimensions,
     };
   }
 
@@ -225,61 +294,65 @@ export class HarmonizeEngine {
     return issues;
   }
 
+  /**
+   * The same labelled figure disagreeing between two sections.
+   *
+   * 2026-10-19: the figures come from extractNumericalFacts, the platform's one
+   * labelled-figure lexicon. This method held a third inline copy of that lexicon, and it
+   * was the loosest of the three:
+   *
+   *   - `confidence_interval` captured the CI's LEVEL, not its bounds
+   *     (`(\d+(?:\.\d+)?)\s*%\s*(?:CI|...)` reads the 95 in "95% CI 0.10 to 0.30"), so two
+   *     sections stating different intervals at the same level never conflicted, and two
+   *     stating the same interval at 95% and 99% always did.
+   *   - facts were keyed by `label + the first 30 characters of the match`, so the same
+   *     quantity written two ways never paired.
+   *   - values were compared as RAW STRINGS, so "0.70" against "0.7" was a conflict, and a
+   *     label stated twice in each section produced a cartesian product of issues.
+   *
+   * Values are now compared as numbers at the label's own precision, once per label pair,
+   * and a label stated more than once in a section is compared as a SET — the fix
+   * cross-artifact-consistency already carried ("Drug X n=305; placebo n=303" against a CSR
+   * that lists placebo first was a false critical blocker).
+   */
   private checkNumerics(input: HarmonizeInput): HarmonizeIssue[] {
     const issues: HarmonizeIssue[] = [];
-    const sections = Object.entries(input.sections);
     let issueIdx = 0;
 
-    // Extract numeric claims per section
-    const numericClaims = new Map<string, Map<string, string>>();
-
-    const numericPatterns: Array<{ label: string; pattern: RegExp }> = [
-      { label: 'sample_size', pattern: /(?:N\s*=\s*|n\s*=\s*|sample size[^.]*?)\s*(\d{1,5})/gi },
-      { label: 'p_value', pattern: /p\s*[<>=]\s*(0\.\d+|<\s*0\.\d+)/gi },
-      { label: 'confidence_interval', pattern: /(\d+(?:\.\d+)?)\s*%\s*(?:CI|confidence interval)/gi },
-      { label: 'hazard_ratio', pattern: /(?:HR|hazard ratio)\s*[=:]\s*(\d+\.\d+)/gi },
-      { label: 'odds_ratio', pattern: /(?:OR|odds ratio)\s*[=:]\s*(\d+\.\d+)/gi },
-      { label: 'response_rate', pattern: /(?:ORR|response rate|CR rate)\s*(?:of|was|=|:)\s*(\d+(?:\.\d+)?)\s*%/gi },
-    ];
-
-    for (const [sectionId, content] of sections) {
-      const sectionNums = new Map<string, string>();
-      for (const { label, pattern } of numericPatterns) {
-        const matches = content.matchAll(pattern);
-        for (const match of matches) {
-          const key = `${label}:${match[0].substring(0, 30)}`;
-          sectionNums.set(key, match[1] || match[0]);
-        }
-      }
-      numericClaims.set(sectionId, sectionNums);
+    const readings = new Map<string, Map<string, number[]>>();
+    for (const [sectionId, content] of Object.entries(input.sections)) {
+      readings.set(sectionId, labelledReadings(content ?? ''));
     }
 
-    // Cross-check numerics between sections
-    const sectionIds = Array.from(numericClaims.keys());
+    const sectionIds = [...readings.keys()];
     for (let i = 0; i < sectionIds.length; i++) {
       for (let j = i + 1; j < sectionIds.length; j++) {
-        const numsA = numericClaims.get(sectionIds[i])!;
-        const numsB = numericClaims.get(sectionIds[j])!;
-
-        for (const [key, valA] of numsA) {
-          const label = key.split(':')[0];
-          // Find matching keys in other section
-          for (const [keyB, valB] of numsB) {
-            if (keyB.split(':')[0] === label && valA !== valB) {
-              issues.push({
-                id: `NUM-${++issueIdx}`,
-                type: 'numeric',
-                severity: label === 'sample_size' || label === 'p_value' ? 'critical' : 'error',
-                sectionA: sectionIds[i],
-                sectionB: sectionIds[j],
-                description: `${label.replace(/_/g, ' ')} discrepancy: "${valA}" vs "${valB}"`,
-                valueA: valA,
-                valueB: valB,
-                recommendation: `Verify the correct ${label.replace(/_/g, ' ')} and reconcile across both sections`,
-                autoFixable: false,
-              });
-            }
-          }
+        const a = readings.get(sectionIds[i])!;
+        const b = readings.get(sectionIds[j])!;
+        for (const [label, aVals] of a) {
+          const bVals = b.get(label);
+          if (!bVals || bVals.length === 0) continue;
+          /* Compared as sets: the sections disagree when one states a value the other does
+             not, in either direction. Two sections that both list 305 and 303 agree,
+             whatever order they list them in. */
+          const aSet = new Set(aVals);
+          const bSet = new Set(bVals);
+          const onlyA = aVals.filter((v) => !bSet.has(v));
+          const onlyB = bVals.filter((v) => !aSet.has(v));
+          if (onlyA.length === 0 && onlyB.length === 0) continue;
+          const name = label.replace(/_/g, ' ');
+          issues.push({
+            id: `NUM-${++issueIdx}`,
+            type: 'numeric',
+            severity: label === 'sample_size' || label === 'p_value' ? 'critical' : 'error',
+            sectionA: sectionIds[i],
+            sectionB: sectionIds[j],
+            description: `${name} discrepancy: "${aVals.join(', ')}" vs "${bVals.join(', ')}"`,
+            valueA: aVals.join(', '),
+            valueB: bVals.join(', '),
+            recommendation: `Verify the correct ${name} and reconcile across both sections`,
+            autoFixable: false,
+          });
         }
       }
     }
@@ -287,34 +360,52 @@ export class HarmonizeEngine {
     return issues;
   }
 
-  private checkSummaryBody(input: HarmonizeInput): HarmonizeIssue[] {
+  /**
+   * Each summary section against the text of every report section it
+   * summarises, matched by CTD code (shared normalizeCtdCode: '2.5', 'm2.5' and
+   * '2.5.4' are Clinical Overview; '5.3.5.1' is Module 5). A claim is
+   * unsupported only when none of those reports carries its key terms.
+   * `pairsCompared` is 0 when the input holds no summary with its reports.
+   */
+  private checkSummaryBody(input: HarmonizeInput): { issues: HarmonizeIssue[]; pairsCompared: number } {
     const issues: HarmonizeIssue[] = [];
     let issueIdx = 0;
+    let pairsCompared = 0;
 
-    // Define known summary → detail section pairs
-    const summaryPairs: Array<{ summary: string; detail: string; label: string }> = [
-      { summary: 'module-2.5', detail: 'module-5', label: 'Clinical Overview vs Clinical Study Reports' },
-      { summary: 'module-2.4', detail: 'module-4', label: 'Nonclinical Overview vs Nonclinical Reports' },
-      { summary: 'module-2.3', detail: 'module-3', label: 'Quality Overall Summary vs Quality Data' },
-      { summary: 'module-2.7', detail: 'module-5', label: 'Clinical Summary vs Clinical Reports' },
-      { summary: 'clinical-overview', detail: 'clinical-study-report', label: 'Clinical Overview vs CSR' },
-      { summary: 'executive-summary', detail: 'body', label: 'Executive Summary vs Document Body' },
+    const withContent = Object.keys(input.sections).filter((key) => input.sections[key]?.trim());
+    const coded = withContent.map((key) => ({ key, code: ctdCodeOfKey(key) }));
+    const keysAtOrBelow = (heading: string) =>
+      coded.filter((s) => s.code !== null && isAtOrBelow(s.code, heading)).map((s) => s.key);
+
+    const pairs = [
+      ...CTD_SUMMARY_BODY_PAIRS.map((p) => ({
+        label: p.label,
+        summaries: keysAtOrBelow(p.summary),
+        details: keysAtOrBelow(p.detail),
+      })),
+      ...NAMED_SUMMARY_BODY_PAIRS.map((p) => ({
+        label: p.label,
+        summaries: withContent.includes(p.summary) ? [p.summary] : [],
+        details: withContent.includes(p.detail) ? [p.detail] : [],
+      })),
     ];
 
-    for (const pair of summaryPairs) {
-      const summaryContent = input.sections[pair.summary];
-      const detailContent = input.sections[pair.detail];
+    for (const pair of pairs) {
+      if (pair.summaries.length === 0 || pair.details.length === 0) continue;
+      const detailNames = pair.details.join(', ');
+      const detailContent = pair.details.map((key) => input.sections[key]).join('\n').toLowerCase();
 
-      if (summaryContent && detailContent) {
+      for (const summaryKey of pair.summaries) {
+        pairsCompared += 1;
         // Check for key conclusion statements in summary that may not be supported in detail
         const conclusionPatterns = /(?:demonstrates?|shows?|confirms?|establishes?|proves?)\s+([^.]+)/gi;
-        const summaryConclusions = Array.from(summaryContent.matchAll(conclusionPatterns));
+        const summaryConclusions = Array.from(input.sections[summaryKey].matchAll(conclusionPatterns));
 
         for (const conclusion of summaryConclusions) {
           const claim = conclusion[1].trim().toLowerCase();
           // Check if key terms from conclusion exist in detail section
           const keyTerms = claim.split(/\s+/).filter(t => t.length > 4);
-          const termsFound = keyTerms.filter(t => detailContent.toLowerCase().includes(t));
+          const termsFound = keyTerms.filter(t => detailContent.includes(t));
           const coverage = keyTerms.length > 0 ? termsFound.length / keyTerms.length : 1;
 
           if (coverage < 0.4) {
@@ -322,9 +413,9 @@ export class HarmonizeEngine {
               id: `SB-${++issueIdx}`,
               type: 'summary_body',
               severity: 'error',
-              sectionA: pair.summary,
-              sectionB: pair.detail,
-              description: `Summary claim "${conclusion[0].substring(0, 100)}..." lacks supporting detail in ${pair.detail}`,
+              sectionA: summaryKey,
+              sectionB: detailNames,
+              description: `Summary claim "${conclusion[0].substring(0, 100)}..." lacks supporting detail in ${detailNames}`,
               recommendation: `Ensure ${pair.label} alignment — verify claim is substantiated in detail section`,
               autoFixable: false,
             });
@@ -333,7 +424,7 @@ export class HarmonizeEngine {
       }
     }
 
-    return issues;
+    return { issues, pairsCompared };
   }
 
   /**

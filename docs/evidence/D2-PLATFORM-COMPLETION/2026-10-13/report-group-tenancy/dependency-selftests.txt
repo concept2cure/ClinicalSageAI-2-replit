@@ -1,0 +1,202 @@
+TAP version 13
+# Subtest: passes a reviewed unreachable advisory
+ok 1 - passes a reviewed unreachable advisory
+  ---
+  duration_ms: 65.479129
+  type: 'test'
+  ...
+# Subtest: passes the npm transitive wrapper for a reviewed advisory
+ok 2 - passes the npm transitive wrapper for a reviewed advisory
+  ---
+  duration_ms: 97.395628
+  type: 'test'
+  ...
+# Subtest: passes a diamond: two wrappers sharing one reviewed transitive
+ok 3 - passes a diamond: two wrappers sharing one reviewed transitive
+  ---
+  duration_ms: 64.726844
+  type: 'test'
+  ...
+# Subtest: passes a reviewed high cause alongside a separately reported moderate-only branch
+ok 4 - passes a reviewed high cause alongside a separately reported moderate-only branch
+  ---
+  duration_ms: 50.527409
+  type: 'test'
+  ...
+# Subtest: blocks an uncovered high cause even when its wrapper claims moderate severity
+ok 5 - blocks an uncovered high cause even when its wrapper claims moderate severity
+  ---
+  duration_ms: 49.221162
+  type: 'test'
+  ...
+# Subtest: blocks an uncovered critical advisory even when every wrapper claims moderate severity
+ok 6 - blocks an uncovered critical advisory even when every wrapper claims moderate severity
+  ---
+  duration_ms: 46.818349
+  type: 'test'
+  ...
+# Subtest: passes a well-formed moderate-only scanner graph without a high decision
+ok 7 - passes a well-formed moderate-only scanner graph without a high decision
+  ---
+  duration_ms: 46.638315
+  type: 'test'
+  ...
+# Subtest: blocks a truncated moderate branch beside a reviewed high cause
+ok 8 - blocks a truncated moderate branch beside a reviewed high cause
+  ---
+  duration_ms: 55.489032
+  type: 'test'
+  ...
+# Subtest: blocks a cycle in a moderate branch beside a reviewed high cause
+ok 9 - blocks a cycle in a moderate branch beside a reviewed high cause
+  ---
+  duration_ms: 42.398809
+  type: 'test'
+  ...
+# Subtest: blocks malformed advisory metadata in a moderate branch
+ok 10 - blocks malformed advisory metadata in a moderate branch
+  ---
+  duration_ms: 47.11352
+  type: 'test'
+  ...
+# Subtest: blocks a high wrapper with no reported high or critical cause
+ok 11 - blocks a high wrapper with no reported high or critical cause
+  ---
+  duration_ms: 64.486234
+  type: 'test'
+  ...
+# Subtest: fails closed on a true via cycle
+ok 12 - fails closed on a true via cycle
+  ---
+  duration_ms: 62.6778
+  type: 'test'
+  ...
+# Subtest: fails closed on a via-string naming a package absent from the report
+ok 13 - fails closed on a via-string naming a package absent from the report
+  ---
+  duration_ms: 38.629554
+  type: 'test'
+  ...
+# Subtest: fails closed on a new high advisory
+ok 14 - fails closed on a new high advisory
+  ---
+  duration_ms: 70.372719
+  type: 'test'
+  ...
+# Subtest: fails closed when the scanner is unavailable
+ok 15 - fails closed when the scanner is unavailable
+  ---
+  duration_ms: 33.073948
+  type: 'test'
+  ...
+# Subtest: fails closed on an expired exception
+ok 16 - fails closed on an expired exception
+  ---
+  duration_ms: 36.155606
+  type: 'test'
+  ...
+# Subtest: fails closed on a malformed validation clock instead of bypassing expiration
+ok 17 - fails closed on a malformed validation clock instead of bypassing expiration
+  ---
+  duration_ms: 230.149883
+  type: 'test'
+  ...
+# Subtest: fails closed on an invalid decision expiry instead of accepting NaN
+ok 18 - fails closed on an invalid decision expiry instead of accepting NaN
+  ---
+  duration_ms: 53.772924
+  type: 'test'
+  ...
+# Subtest: fails closed on an impossible calendar date in a decision expiry
+ok 19 - fails closed on an impossible calendar date in a decision expiry
+  ---
+  duration_ms: 32.727399
+  type: 'test'
+  ...
+# Subtest: fails closed on a malformed decision review date
+ok 20 - fails closed on a malformed decision review date
+  ---
+  duration_ms: 44.229321
+  type: 'test'
+  ...
+# Subtest: fails closed on a malformed exception approval timestamp
+ok 21 - fails closed on a malformed exception approval timestamp
+  ---
+  duration_ms: 73.059455
+  type: 'test'
+  ...
+# Subtest: fails closed when the ledger seal does not match the lockfile
+ok 22 - fails closed when the ledger seal does not match the lockfile
+  ---
+  duration_ms: 78.777586
+  type: 'test'
+  ...
+# Subtest: reseal refuses a new advisory and writes nothing
+ok 23 - reseal refuses a new advisory and writes nothing
+  ---
+  duration_ms: 354.180183
+  type: 'test'
+  ...
+# Subtest: reseal refuses when a covered finding vanishes from the audit
+ok 24 - reseal refuses when a covered finding vanishes from the audit
+  ---
+  duration_ms: 202.020107
+  type: 'test'
+  ...
+# Subtest: reseal refuses when a covered finding's installed version changed
+ok 25 - reseal refuses when a covered finding's installed version changed
+  ---
+  duration_ms: 184.884863
+  type: 'test'
+  ...
+# Subtest: reseal refuses when the scanner is unavailable
+ok 26 - reseal refuses when the scanner is unavailable
+  ---
+  duration_ms: 113.360057
+  type: 'test'
+  ...
+# Subtest: reseal rebinds an unchanged finding set and the gate passes again
+ok 27 - reseal rebinds an unchanged finding set and the gate passes again
+  ---
+  duration_ms: 341.131246
+  type: 'test'
+  ...
+# Subtest: security patch: a mapped IPv6 subnet cannot trust every IPv4 client
+ok 28 - security patch: a mapped IPv6 subnet cannot trust every IPv4 client
+  ---
+  duration_ms: 5.335783
+  type: 'test'
+  ...
+# Subtest: security patch: shell quoting rejects line terminators after a comment
+ok 29 - security patch: shell quoting rejects line terminators after a comment
+  ---
+  duration_ms: 4.192603
+  type: 'test'
+  ...
+# Subtest: security patch: an extreme indexed source-map offset is rejected in a bounded child
+ok 30 - security patch: an extreme indexed source-map offset is rejected in a bounded child
+  ---
+  duration_ms: 34.370563
+  type: 'test'
+  ...
+# Subtest: security patch: an aborted compressed response destroys its zlib stream
+ok 31 - security patch: an aborted compressed response destroys its zlib stream
+  ---
+  duration_ms: 61.436536
+  type: 'test'
+  ...
+# Subtest: integration: committed ledger seals the committed package-lock.json
+ok 32 - integration: committed ledger seals the committed package-lock.json
+  ---
+  duration_ms: 57.194728
+  type: 'test'
+  ...
+1..32
+# tests 32
+# suites 0
+# pass 32
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2842.689867

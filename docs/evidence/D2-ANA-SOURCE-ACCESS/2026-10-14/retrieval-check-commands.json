@@ -1,0 +1,72 @@
+{
+  "node": "v22.23.3",
+  "results": [
+    {
+      "command": [
+        "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "server/services/vault/__tests__/retrieval-actor-filter.test.ts",
+        "server/services/vault/__tests__/retrieval-actor-revalidation.test.ts",
+        "server/services/vault/__tests__/vault-search.test.ts",
+        "server/services/vault/__tests__/vault-search-paging.pglite.integration.test.ts",
+        "server/services/vault/__tests__/catalog-search-version.test.ts",
+        "server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts",
+        "server/services/__tests__/rag-actor-programme-scope.test.ts",
+        "server/services/__tests__/rag-vault-tenant-scope.test.ts",
+        "server/services/__tests__/rag-filters.test.ts",
+        "server/services/__tests__/ragRouter.test.ts",
+        "server/services/__tests__/advancedRAGPipeline-cache.test.ts",
+        "server/services/__tests__/advancedRAGPipeline-mmr.test.ts",
+        "--reporter=json",
+        "--outputFile=docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/retrieval-regression-final.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "node_modules/eslint/bin/eslint.js",
+        "server/services/vault/vault-search.ts",
+        "server/services/vault/document-catalog-search.ts",
+        "server/services/vault/document-catalog-search-query.ts",
+        "server/services/vault/vault-assistant-search.ts",
+        "server/services/vault/document-passage-search.ts",
+        "server/services/vault/retrieval-source-access.ts",
+        "server/services/vault/vector-index-availability.ts",
+        "server/services/advancedRAGPipeline.ts",
+        "server/services/ragRouter.ts",
+        "server/services/rag-filters.ts",
+        "server/services/vault/__tests__/retrieval-actor-filter.test.ts",
+        "server/services/vault/__tests__/retrieval-actor-revalidation.test.ts",
+        "server/services/vault/__tests__/vault-search-paging.pglite.integration.test.ts",
+        "server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts",
+        "server/services/__tests__/rag-actor-programme-scope.test.ts",
+        "--format=json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/owned-target-typecheck.cjs",
+        "server/services/vault/vault-search.ts",
+        "server/services/vault/document-catalog-search.ts",
+        "server/services/vault/document-catalog-search-query.ts",
+        "server/services/vault/vault-assistant-search.ts",
+        "server/services/vault/document-passage-search.ts",
+        "server/services/vault/retrieval-source-access.ts",
+        "server/services/vault/vector-index-availability.ts",
+        "server/services/advancedRAGPipeline.ts",
+        "server/services/ragRouter.ts",
+        "server/services/rag-filters.ts",
+        "server/services/vault/__tests__/retrieval-actor-filter.test.ts",
+        "server/services/vault/__tests__/retrieval-actor-revalidation.test.ts",
+        "server/services/vault/__tests__/vault-search-paging.pglite.integration.test.ts",
+        "server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts",
+        "server/services/__tests__/rag-actor-programme-scope.test.ts"
+      ],
+      "exitCode": 0
+    }
+  ]
+}

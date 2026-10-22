@@ -9,4 +9,3 @@ trg_audit_logs_no_truncate|O
 trg_audit_logs_no_update|O
 ALTER TABLE
 audit_logs_pkey
-

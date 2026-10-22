@@ -1,0 +1,10 @@
+# RED at 46f8cb822: the nine Vault panel files as on trunk, the new test kept (2026-10-15T06:13:40Z)
+ × client/src/concept2cure/v2/__tests__/vaultViewOnly.test.tsx > the Vault offers its write controls to the writing roles only > a viewer reads the document and its filing, and is offered no write 223ms
+   → vault-upload-button: expected <button class="sp-primary" …(2)>…(1)</button> to be null
+ ✓ client/src/concept2cure/v2/__tests__/vaultViewOnly.test.tsx > the Vault offers its write controls to the writing roles only > a member is offered each control, and no view-only note 721ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultViewOnly.test.tsx > the Vault offers its write controls to the writing roles only > a session that carries no permissions is offered the controls; the server decides 135ms
+ × client/src/concept2cure/v2/__tests__/vaultViewOnly.test.tsx > Data Room filing > a viewer selects nothing and files nothing, and is told why 26ms
+   → expected <input class="vd-dr-pick" …(2)></input> to be null
+ ✓ client/src/concept2cure/v2/__tests__/vaultViewOnly.test.tsx > Data Room filing > a member selects and files 35ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 3 passed (5)

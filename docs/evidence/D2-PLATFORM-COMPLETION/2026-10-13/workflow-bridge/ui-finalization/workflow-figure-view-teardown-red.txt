@@ -1,0 +1,54 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+··xx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/richSectionEditorFigureTransport.test.tsx > figure hydration and saves cannot start native API image requests > keeps the authenticated figure view when React teardown clears direct nodeViews
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "/api/authoring/images/file_933_abcdef",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/richSectionEditorFigureTransport.test.tsx:60:29
+     58|     createElement.mockClear();
+     59|     act(() => { canvas().view.setProps({ nodeViews: {} }); });
+     60|     expect(liveApiImages()).toEqual([]);
+       |                             ^
+     61|     await waitFor(() => expect(document.querySelector('.rse-img img')?…
+     62|     expect(apiRequest.mock.calls.every(([method, url]) => method === '…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/richSectionEditorFigureTransport.test.tsx > figure hydration and saves cannot start native API image requests > preserves current permission refusals when direct nodeViews are cleared
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "/api/authoring/images/file_933_abcdef",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/richSectionEditorFigureTransport.test.tsx:71:29
+     69|     createElement.mockClear();
+     70|     act(() => { canvas().view.setProps({ nodeViews: {} }); });
+     71|     expect(liveApiImages()).toEqual([]);
+       |                             ^
+     72|     await waitFor(() => expect(document.querySelector('.rse-img-status…
+     73|     expect(document.querySelector('.rse-img img')?.getAttribute('src')…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  22:52:53
+   Duration  4.36s (transform 1.18s, setup 302ms, import 1.51s, tests 806ms, environment 1.44s)

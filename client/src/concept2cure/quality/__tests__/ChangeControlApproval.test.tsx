@@ -25,7 +25,7 @@ const H = vi.hoisted(() => ({
 }));
 
 vi.mock('../changeHooks', async () => {
-  const { FIXTURE_SUMMARY } = await import('../changeData');
+  const { CHANGE_SUMMARY: FIXTURE_SUMMARY } = await import('./changeRows');
   return { useChangeSummary: () => ({ summary: FIXTURE_SUMMARY, loading: false, error: null }) };
 });
 vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ name: 'R. Approver' }) }));
@@ -49,9 +49,9 @@ vi.mock('../../_shared/components/EsignModal', () => ({
 }));
 
 import { ChangeControl } from '../ChangeControl';
-import { FIXTURE_CHANGES } from '../changeData';
+import { CHANGE_ROWS as FIXTURE_CHANGES } from './changeRows';
 
-function renderLog(showingSample = false) {
+function renderLog() {
   return render(
     <ChangeControl
       onAsk={(q) => H.asked.push(q)}
@@ -61,7 +61,6 @@ function renderLog(showingSample = false) {
       onOpenIdChange={() => {}}
       changes={FIXTURE_CHANGES}
       loading={false}
-      showingSample={showingSample}
       onRetry={H.refresh}
     />,
   );
@@ -102,12 +101,6 @@ describe('ChangeControl — approving a change is a signature taken here', () =>
     });
     expect(H.signed).toMatchObject({ signedAt: '2026-09-25T09:00:00.000Z' });
     expect(H.refresh).toHaveBeenCalled();
-  });
-
-  it('cannot approve a sample change', () => {
-    renderLog(true);
-    const btn = screen.getAllByRole('button', { name: /^Approve$/ })[0] as HTMLButtonElement;
-    expect(btn.disabled).toBe(true);
   });
 
   it('no longer tells AnA to capture an e-signature it cannot capture', () => {

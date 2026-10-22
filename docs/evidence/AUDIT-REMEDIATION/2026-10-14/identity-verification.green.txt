@@ -1,0 +1,71 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > refuses sign-up when the deployment cannot send mail, and creates nothing
+{
+  "timestamp": "2026-10-14T02:10:05.288Z",
+  "level": "error",
+  "message": "[auth] Sign-up refused: e-mail is not configured, so the verification link cannot be sent",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > creates the account pending verification, mails the link, and answers without a token 383ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > refuses sign-up when the deployment cannot send mail, and creates nothing 5ms
+stdout | server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > on a development server with dev auth allowed, the account is active and the token is returned (as before)
+{
+  "timestamp": "2026-10-14T02:10:05.690Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T02:10:05.691Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > on a development server with dev auth allowed, the account is active and the token is returned (as before)
+{
+  "timestamp": "2026-10-14T02:10:05.691Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > on a development server with dev auth allowed, the account is active and the token is returned (as before)
+{
+  "timestamp": "2026-10-14T02:10:05.710Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "[vitest] No \"runWithSystemTenantScope\" export is defined on the \"../../db/tenantStore\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > on a development server with dev auth allowed, the account is active and the token is returned (as before) 423ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/verify-email > moves the account from pending to active, once, and never from any other status 18ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/verify-email > refuses a token of another class, a forged one, and a missing one alike 8ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/resend-verification > answers 202 for every address; mails only an account that is pending 7ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/login for an unconfirmed account > refuses with AUTH_EMAIL_UNVERIFIED after the password is checked, and records the refusal 10ms
+ ✓ client/src/concept2cure/router/__tests__/signupVerificationRoute.test.tsx > signup verification routing > an anonymous #token= link reaches verification without signing in 60ms
+ ✓ client/src/concept2cure/router/__tests__/signupVerificationRoute.test.tsx > signup verification routing > an anonymous ?token= link reaches verification without signing in 12ms
+ ✓ client/src/concept2cure/router/__tests__/signupVerificationRoute.test.tsx > signup verification routing > waits for session bootstrap before consuming an anonymous verification token 11ms
+ ✓ client/src/concept2cure/router/__tests__/signupVerificationRoute.test.tsx > signup verification routing > an authenticated session redirects to the app without consuming another account verification token 308ms
+ ✓ client/src/concept2cure/router/__tests__/signupVerificationRoute.test.tsx > signup verification routing > ordinary anonymous app navigation still requires sign-in and keeps its return URL 7ms
+ ✓ client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx > tokenFromLocation > reads the fragment first, then the query, and refuses junk 7ms
+ ✓ client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx > VerifyEmail > posts the fragment token, drops it from the address bar, and offers sign-in when the server confirms 45ms
+ ✓ client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx > VerifyEmail > when the server refuses, says so and lets the person request a new link by address 20ms
+ ✓ client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx > VerifyEmail > with no token in the address, asks for a new link without calling the server 4ms
+ ✓ client/src/concept2cure/v2/__tests__/deepLinkKeepsProgram.test.tsx > signed-out deep link → sign-in → back > the sign-in redirect carries the program the link named 34ms
+ ✓ client/src/concept2cure/v2/__tests__/deepLinkKeepsProgram.test.tsx > signed-out deep link → sign-in → back > a link with no query still returns to its path 6ms
+ ✓ client/src/concept2cure/auth/__tests__/SignupVerifyStep.test.tsx > SignupVerifyStep > names the address, holds the resend for the cooldown, then sends again once and restarts the cooldown 36ms
+
+ Test Files  5 passed (5)
+      Tests  19 passed (19)
+   Start at  02:10:03
+   Duration  5.94s (transform 1.05s, setup 381ms, import 1.82s, tests 1.42s, environment 1.64s)
+

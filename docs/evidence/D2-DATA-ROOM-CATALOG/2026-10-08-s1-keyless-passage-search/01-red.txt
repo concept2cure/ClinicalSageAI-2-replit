@@ -1,0 +1,15 @@
+# vault-passage-search-keyless.dbtest.ts against HEAD 71126f27 (no embedding provider, both flags at their production default), PostgreSQL 16
+ × tests/db/vault-passage-search-keyless.dbtest.ts > the passage index is written with no key and no flag > both uploads are chunked, with no vector on any chunk, and the ledger says chunked
+   → expected null to be 'chunked' // Object.is equality
+ × tests/db/vault-passage-search-keyless.dbtest.ts > the passage index is written with no key and no flag > with passage embedding on but no provider, a new upload is still chunked, all or none embedded
+   → expected undefined to match object { chunk_status: 'chunked', …(1) }
+ × tests/db/vault-passage-search-keyless.dbtest.ts > search_document_passages answers by text, and says so > returns the passage that answers the question, from the right document
+   → {"error":"AnA cannot open this organization's Vault documents from the conversation — that access is not enabled for the organization (operator note: feature ana.document_catalog). Tell the user plainly that you cannot read their Vault files here, that the files are safe in the Vault, and that a file attached to this conversation can be read. Do not name internal settings, do not say a document does not exist, and do not simulate a listing."}: expected undefined to be true // Object.is equality
+ × tests/db/vault-passage-search-keyless.dbtest.ts > search_document_passages answers by text, and says so > answers a tox question from the tox document
+   → {"error":"AnA cannot open this organization's Vault documents from the conversation — that access is not enabled for the organization (operator note: feature ana.document_catalog). Tell the user plainly that you cannot read their Vault files here, that the files are safe in the Vault, and that a file attached to this conversation can be read. Do not name internal settings, do not say a document does not exist, and do not simulate a listing."}: expected undefined to be true // Object.is equality
+ × tests/db/vault-passage-search-keyless.dbtest.ts > search_document_passages answers by text, and says so > never returns another organization's document, even for identical text
+   → Cannot read properties of undefined (reading 'map')
+ × tests/db/vault-passage-search-keyless.dbtest.ts > search_document_passages answers by text, and says so > a word in no document matches nothing, honestly
+   → expected undefined to be true // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed (6)

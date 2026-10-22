@@ -1,0 +1,10 @@
+# red: launch-scope.ts lists the two surfaces; the fixture allowlist does not explain IndLifecycle.tsx's imports
+# npm run -s ci:launch-scope
+[ci:launch-scope] 8 apps · 33 surfaces · 13 modules · 28 surface files checked for fixture imports
+  ✗ fixture-free: client/src/concept2cure/v2/surfaces/IndLifecycle.tsx imports 'INDL_STATUS_LABEL' from fixtures/ind-lifecycle-data for launch surface 'ind-checklist' and scripts/ci/launch-scope-fixture-allowlist.json does not explain it
+  ✗ fixture-free: client/src/concept2cure/v2/surfaces/IndLifecycle.tsx imports 'INDL_CLOCK_STATUS' from fixtures/ind-lifecycle-data for launch surface 'ind-checklist' and scripts/ci/launch-scope-fixture-allowlist.json does not explain it
+  ✗ fixture-free: client/src/concept2cure/v2/surfaces/IndLifecycle.tsx imports 'INDL_DELIVERABLES' from fixtures/ind-lifecycle-data for launch surface 'ind-checklist' and scripts/ci/launch-scope-fixture-allowlist.json does not explain it
+  ✗ fixture-free: client/src/concept2cure/v2/surfaces/IndLifecycle.tsx imports 'indlReadiness' from fixtures/ind-lifecycle-data for launch surface 'ind-checklist' and scripts/ci/launch-scope-fixture-allowlist.json does not explain it
+  ✗ fixture-free: client/src/concept2cure/v2/surfaces/IndLifecycle.tsx imports 'indlClock' from fixtures/ind-lifecycle-data for launch surface 'ind-checklist' and scripts/ci/launch-scope-fixture-allowlist.json does not explain it
+❌ 5 finding(s)
+exit=1

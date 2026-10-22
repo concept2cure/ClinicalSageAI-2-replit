@@ -1,0 +1,21 @@
+{
+  "command": [
+    "./node_modules/.bin/vitest",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceImportScope.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts",
+    "client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx",
+    "client/src/concept2cure/v2/__tests__/biostatAttachHonesty.test.tsx"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 19.28,
+  "rawOutputSha256": "cb5d492abf1212339a4de324dbeee7d4dfc5db602ff413f71386b32099fea5ca",
+  "storedOutputSha256": "35ff39c022a7b23d95f50da3de5a815064e0966df9795c24cbfe981d66493ba5",
+  "qualification": "Stored output omits redundant terminal newlines only."
+}

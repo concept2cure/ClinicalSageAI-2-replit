@@ -11,7 +11,11 @@
  * @module server/services/ana/document-tools-shared
  */
 
+import { AnaProjectScopeError } from './project-scope-admission.js';
+import { ProgramReadAccessError } from '../c2c/current-program-access.js';
 import type { ToolContext } from './AnaToolExecutor.js';
+import type { CommandContext } from '../ana-ri/command-executor.js';
+import { agentAuditDetails, type PolicyCheck } from '../ana-ri/mdx-tool-policy.js';
 
 /**
  * Every tool whose handler refuses without the catalog — the ones that call
@@ -24,7 +28,6 @@ export const CATALOG_GATED_TOOLS: readonly string[] = [
   'catalog_project_document',
   'file_chat_upload_to_vault',
   'place_project_document',
-  'search_document_passages',
 ];
 
 /**
@@ -78,7 +81,7 @@ export function unknownDocumentRefusal(documentId: string, toolName: string): st
       error:
         `${documentId} is a chat-uploaded file, not a vault document, so ${toolName} cannot take it. ` +
         'Read it with read_uploaded_document (or inspect_uploaded_document first, for a large one) using that same file_id. ' +
-        'The file exists — do not report it as missing. Durable catalog records live on vault documents; ' +
+        'This identifier is in the chat-upload format; this Vault tool has not verified that file’s availability. Do not report it as missing from a Vault lookup. Durable catalog records live on vault documents; ' +
         'file_chat_upload_to_vault files this one into the project vault so it gains one.',
       idSpace: 'chat_upload',
     });
@@ -86,7 +89,7 @@ export function unknownDocumentRefusal(documentId: string, toolName: string): st
   return JSON.stringify({
     ok: false,
     error:
-      `No vault document with id ${documentId} is in your organization's programs. ` +
+      `No accessible vault document with id ${documentId} was returned for this actor’s source scope. ` +
       'Call list_project_documents to see what the project folder actually holds — vault documents carry UUID ids.',
     idSpace: 'unknown',
   });
@@ -102,9 +105,12 @@ export function unknownDocumentRefusal(documentId: string, toolName: string): st
 export async function requireDocumentAccess(
   ctx: ToolContext | undefined,
   toolName: string,
-): Promise<{ svc: CatalogService; orgId: number } | { refusal: string }> {
-  if (!ctx?.organizationId) {
-    return { refusal: `${toolName} requires an organization context.` };
+): Promise<{ svc: CatalogService; orgId: number } | { refusal: string; code?: string }> {
+  if (!ctx?.organizationId || !Number.isSafeInteger(ctx.organizationId) || ctx.organizationId <= 0) {
+    return { refusal: `${toolName} requires an organization context.`, code: 'SOURCE_ORGANIZATION_REQUIRED' };
+  }
+  if (!Number.isSafeInteger(ctx.userId) || !ctx.userId || ctx.userId <= 0) {
+    return { refusal: 'An identified current organization member is required to read project sources.', code: 'SOURCE_ACTOR_REQUIRED' };
   }
   const svc = await import('../vault/document-catalog.service.js');
   return { svc, orgId: ctx.organizationId };
@@ -129,11 +135,24 @@ export async function requireCatalog(
 export function withCaughtErrors(
   name: string,
   handler: (input: Record<string, unknown>, ctx?: ToolContext) => Promise<string>,
+  opts: { safeOutcome?: boolean } = {},
 ) {
   return async (input: Record<string, unknown>, ctx?: ToolContext): Promise<string> => {
     try {
       return await handler(input, ctx);
     } catch (err) {
+      if (err instanceof ProgramReadAccessError) {
+        return JSON.stringify({ ok: false, status: err.status, code: err.code, error: err.message });
+      }
+      if (opts.safeOutcome && err instanceof AnaProjectScopeError) {
+        return JSON.stringify({ ok: false, code: err.code, unavailable: err.status === 503, error: err.message });
+      }
+      if (opts.safeOutcome) {
+        // A failure after a committed write is possible. Neither raw internal
+        // errors nor an invented rollback belong in the client/model result.
+        return JSON.stringify({ ok: false, code: 'DOCUMENT_REQUEST_FAILED', outcome: 'unconfirmed',
+          error: 'The document request could not be completed. Reload the source or catalog record before retrying; its outcome could not be confirmed.' });
+      }
       return JSON.stringify({
         error: `${name} failed: ${err instanceof Error ? err.message : String(err)}`,
       });
@@ -146,3 +165,50 @@ export type RegisterFn = (
   handler: (input: Record<string, unknown>, ctx?: ToolContext) => Promise<string>,
 ) => void;
 
+/**
+ * Who made this write, for its audit row — the D5 fix: AnA's placement
+ * (place_project_document) and her catalog record (catalog_project_document).
+ *
+ * In the repo's one agent-audit shape: agentAuditDetails (ana-ri/
+ * mdx-tool-policy), the details every agent.ana.* row carries and
+ * explain_audit_row reads to say "AnA (agent)" rather than "human user". The
+ * helper takes a command context and a governed-tool gate; it reads only the
+ * thread, chat-message ids and serving model from the one and the reason and
+ * artifact flag from the other, so a tool call supplies what it has — its
+ * thread, its model call, and its rationale as the reason — and the rest of
+ * this tool's provenance is added beside it.
+ */
+/** As the gateway reported it, with the bare model name as the fallback. */
+function servingModelOf(ctx: ToolContext | undefined): CommandContext['servingModel'] {
+  const served = ctx?.servingModel;
+  return {
+    provider: served?.provider ?? null,
+    model: served?.model ?? ctx?.model ?? null,
+    requestId: served?.requestId ?? null,
+  };
+}
+
+export function anaToolProvenance(
+  ctx: ToolContext | undefined,
+  orgId: number,
+  rationale: string,
+  tool: string,
+): Record<string, unknown> {
+  const commandCtx = {
+    organizationId: orgId,
+    userId: ctx?.userId,
+    threadId: ctx?.threadId ?? undefined,
+    servingModel: servingModelOf(ctx),
+  } as CommandContext;
+  const gate = { ok: true, reason: rationale } as PolicyCheck;
+  return {
+    ...agentAuditDetails(commandCtx, gate),
+    // That soft signal is computed by the governed-tool gate, which this tool
+    // does not run. The helper would record `false`, which explain_audit_row
+    // renders as "the reason did NOT cite a concrete artifact" — a finding no
+    // one made. Null is "not assessed".
+    reasonReferencedArtifact: null,
+    tool,
+    turnId: ctx?.turnId ?? null,
+  };
+}

@@ -18,6 +18,9 @@ import {
   type GovernedBinding,
   type SignatureDbClient,
 } from './signature-persistence.js';
+import { AGENCY_RESPONSE_DIGEST_RECIPE, agencyResponseDigest } from '../agency-responses/response-logic.js';
+import { COMMITMENT_FULFILMENT_DIGEST_RECIPE, commitmentFulfilmentDigest } from '../ha-interactions/ha-logic.js';
+import { readCommitmentFulfilmentContent } from '../ha-interactions/fulfilment-record.js';
 
 /** One target type's binder: `rest` is the pointer after `<prefix>:`. */
 export type ContentBinder = (
@@ -113,6 +116,102 @@ const reportRunSealBinding: ContentBinder = async (client, rest, orgId, ledgerFa
   };
 };
 
+/**
+ * interim-snapshot:<id>: the interim data an adaptive decision is taken on.
+ *
+ * An IDMC does not approve "a decision" in the abstract — it approves a
+ * decision ABOUT a specific look at the data, so that look is what the
+ * signature binds. CONTENT ONLY, as the protocol binder is: the look number,
+ * the information fraction, the enrolment, the summary statistics, the test
+ * statistic, the conditional and predictive power and the boundary. No
+ * snapshot_date, no created_at, no blinding flag — a signature taken on this
+ * look must re-derive later when none of the DATA changed.
+ */
+const interimSnapshotBinding: ContentBinder = async (client, rest, orgId, ledgerFallback) => {
+  if (!/^\d+$/.test(rest)) return ledgerFallback('malformed interim snapshot pointer');
+  const snap = await client.query(
+    `SELECT plan_id, look_number, information_fraction, enrolled_count,
+            summary_statistics, test_statistic, conditional_power,
+            predictive_power, boundary
+       FROM interim_data_snapshots
+      WHERE id = $1::int AND organization_id = $2
+      LIMIT 1`,
+    [rest, orgId],
+  );
+  const row = snap.rows[0];
+  if (!row) return ledgerFallback('interim snapshot not readable at signing time');
+
+  const content = {
+    planId: Number(row.plan_id),
+    lookNumber: Number(row.look_number),
+    informationFraction: row.information_fraction === null ? null : Number(row.information_fraction),
+    enrolledCount: row.enrolled_count === null ? null : Number(row.enrolled_count),
+    summaryStatistics: row.summary_statistics ?? null,
+    testStatistic: row.test_statistic === null ? null : Number(row.test_statistic),
+    conditionalPower: row.conditional_power === null ? null : Number(row.conditional_power),
+    predictivePower: row.predictive_power === null ? null : Number(row.predictive_power),
+    boundary: row.boundary ?? null,
+  };
+  return {
+    digest: sha256CanonicalJson(content),
+    basis: BINDING_BASIS.INTERIM_SNAPSHOT_CONTENT,
+    note: `sha256 over the interim data at look ${content.lookNumber} (information fraction ${content.informationFraction}) of plan ${content.planId}: enrolment, summary statistics, test statistic, conditional and predictive power, and the boundary. No snapshot date, blinding flag or row timestamp is bound.`,
+  };
+};
+
+/**
+ * agency-question:<id>: one response to an agency question, as it stands in
+ * the signing transaction (the sign route has the row locked FOR UPDATE).
+ * The digest is agencyResponseDigest, the recipe the approval read recomputes,
+ * so "is this response approved" and "what did the signature bind" cannot
+ * disagree about the bytes.
+ */
+const agencyResponseBinding: ContentBinder = async (client, rest, orgId, ledgerFallback) => {
+  if (!/^\d+$/.test(rest)) return ledgerFallback('malformed agency question pointer');
+  const r = await client.query(
+    `SELECT communication_event_id, question_ref, question_text, response_text
+       FROM agency_communication_questions
+      WHERE id = $1::int AND organization_id = $2
+      LIMIT 1`,
+    [rest, orgId],
+  );
+  const row = r.rows[0];
+  if (!row) return ledgerFallback('agency question not readable at signing time');
+  return {
+    digest: agencyResponseDigest({
+      communicationEventId: String(row.communication_event_id),
+      questionRef: String(row.question_ref),
+      questionText: String(row.question_text),
+      responseText: String(row.response_text),
+    }),
+    basis: BINDING_BASIS.AGENCY_RESPONSE_CONTENT,
+    note: `sha256 (recipe ${AGENCY_RESPONSE_DIGEST_RECIPE}) over the letter id, the question reference and text, and the exact response text of question ${rest} at signing time. No revision, author or timestamp is bound.`,
+  };
+};
+
+/**
+ * regulatory-commitment:<id>: a commitment's recorded fulfilment (P-41,
+ * 2026-10-19), as the signing transaction has just written it. The digest is
+ * commitmentFulfilmentDigest over readCommitmentFulfilmentContent, the one
+ * reader the list read uses too, so the binder and "does the signature match
+ * the record" cannot disagree about the input. A commitment not fulfilled, or
+ * fulfilled without a recorder (a row from before fulfilments were recorded),
+ * has no fulfilment to bind and falls back; the database then refuses the
+ * commit, because it accepts only this basis.
+ */
+const commitmentFulfilmentBinding: ContentBinder = async (client, rest, orgId, ledgerFallback) => {
+  if (!/^\d{1,10}$/.test(rest)) return ledgerFallback('malformed regulatory commitment pointer');
+  const record = (await readCommitmentFulfilmentContent(client, orgId, [Number(rest)])).get(Number(rest));
+  if (!record) return ledgerFallback('regulatory commitment not readable at signing time');
+  if (record.status !== 'fulfilled' || !record.recorded) return ledgerFallback('the commitment carries no recorded fulfilment at signing time');
+  const c = record.content;
+  return {
+    digest: commitmentFulfilmentDigest(c),
+    basis: BINDING_BASIS.COMMITMENT_FULFILMENT_CONTENT,
+    note: `sha256 (recipe ${COMMITMENT_FULFILMENT_DIGEST_RECIPE}) over commitment ${rest}'s type, description, basis and due date, the date it was fulfilled (${c.fulfilledDate}), and what met it: ${c.sequenceId != null ? `sequence ${c.sequenceNumber ?? c.sequenceId} of submission ${c.submissionId ?? 'unknown'}` : 'no sequence'}; ${c.vaultDocumentId != null ? `Vault version ${c.vaultDocumentId} at sha256 ${c.vaultSha256}` : 'no Vault version'}. No status, recorder or timestamp is bound.`,
+  };
+};
+
 /** The binders deriveGovernedTargetBinding delegates to, by target prefix. */
 export const CONTENT_BINDERS: Readonly<Record<string, ContentBinder>> = {
   'protocol-document': (client, rest, orgId, fallback) =>
@@ -120,4 +219,7 @@ export const CONTENT_BINDERS: Readonly<Record<string, ContentBinder>> = {
   'protocol-review-assignment': (client, rest, orgId, fallback) =>
     protocolContentBinding(client, 'protocol-review-assignment', rest, orgId, fallback),
   'report-run': reportRunSealBinding,
+  'interim-snapshot': interimSnapshotBinding,
+  'agency-question': agencyResponseBinding,
+  'regulatory-commitment': commitmentFulfilmentBinding,
 };

@@ -1,0 +1,24 @@
+{
+  "observedAt": "2026-10-14T22:07:22.362Z",
+  "scope": "selected post-focused-verification source/test bindings; frame is preselection only, not authority; root owns whole integrated/native proof",
+  "sourceSha256": {
+    "server/services/clinical-regulatory-evidence/data-room-processing-sweep.ts": "b9cae6bb9b9102af929335f0647546d720c338edfb87add543c89d9124c1f931",
+    "server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts": "f51bbb5f70cebd1abc6073dc1d11c62759635899ef4f61811ccb3dc0c0cfc3b0",
+    "server/services/clinical-regulatory-evidence/data-room-processing-store.ts": "eb69cebddaf48093854b4f801432e9bb8e726dce8830263892bca65773677f3b",
+    "server/services/c2c/program-access.ts": "7b49fec6cebaec49b7ad66d4ea1f1561e28e752d2ee1ef017e694ee857d09e0d",
+    "server/services/c2c/program-project-anchor.ts": "d6ad2adb4ce8966a56614ca074942c93cd12205195060371aa6d96441808c496"
+  },
+  "sweepInterpolationCount": 9,
+  "lint": [
+    {
+      "file": "server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "file": "server/services/clinical-regulatory-evidence/data-room-processing-sweep.ts",
+      "errors": 0,
+      "warnings": 0
+    }
+  ]
+}

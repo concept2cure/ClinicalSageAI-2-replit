@@ -1,0 +1,16 @@
+# Phase A (the S3 defect): refusal ok:false + model fact, the suites the change touches
+# Trimmed from the full run: passing test lines are counted per file below, not listed.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ Test Files  6 passed (6)
+      Tests  77 passed (77)
+   Start at  11:55:29
+   Duration  14.83s (transform 6.39s, setup 185ms, import 13.16s, tests 259ms, environment 1ms)
+
+## Per file (passed / failed / skipped)
+   8 / 0 / 0  server/routes/ana-ri/__tests__/stream-step-presentation.test.ts
+   2 / 0 / 0  server/routes/ana-ri/__tests__/stream-ok-false-refusal.test.ts
+  24 / 0 / 0  server/services/ana/__tests__/step-presentation.test.ts
+   7 / 0 / 0  server/services/ana/__tests__/tool-refusal-ok-false.test.ts
+  25 / 0 / 0  server/services/ana/__tests__/turn-plan-and-context.test.ts
+  11 / 0 / 0  tests/services/tool-outcome.test.ts

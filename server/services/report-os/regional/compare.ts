@@ -5,6 +5,34 @@
  * markets and computes harmonization gaps (artifacts present in some markets but
  * missing in others). No DB/IO — inputs are normalized.
  *
+ * ── UNREACHABLE, AND NOT A GAP TO CLOSE (read before wiring it) ─────────────
+ * Nothing calls `compareRegions` or `renderRegionComparison` outside their own
+ * test, and `MarketReadiness` — a per-market `readinessScore`, `presentArtifacts`
+ * and `missingArtifacts` for ONE program across SEVERAL markets — is produced by
+ * nothing in this repository. That is not an oversight waiting for a provider.
+ *
+ * A market assessment is of the filing a program is RECORDED for, and a program
+ * records one (`projects.metadata.registryId`). The `regional` engine
+ * (`filing-readiness.ts`, 2026-10-12) therefore REFUSES to assess a program
+ * against a market it is not filing in — that refusal is the whole point of it,
+ * because a report titled for one market computed from another program's filing
+ * is the QA 2026-10-08 (j8) defect: "a report claiming an analysis nothing
+ * performed". Supplying this module's inputs means inventing a readiness score
+ * per market for filings that do not exist.
+ *
+ * So this is not a parallel implementation of the `regional` engine to migrate
+ * onto it (CLAUDE.md, zero duplication) — the two answer different questions,
+ * and only one of them has an answer. Nor is it dead code to sweep: under the
+ * working agreement, deleting a capability needs the reachable replacement named
+ * by path, and there is none, which makes removing it a product decision rather
+ * than a cleanup. It stays, unwired, with this note — the same lesson as the five
+ * deleted-and-rebuilt editor generations.
+ *
+ * What a harmonization view CAN honestly carry per market is the `MarketSupport`
+ * statement (`services/regulatory/market-support.ts`): per market and
+ * independent of any program's filing. That is market support, not program
+ * readiness, and it is not this module's shape.
+ *
  * @module server/services/report-os/regional/compare
  */
 

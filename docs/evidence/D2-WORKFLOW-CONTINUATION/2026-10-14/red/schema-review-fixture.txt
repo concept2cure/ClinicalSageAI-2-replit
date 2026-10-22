@@ -1,0 +1,253 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stderr | tests/schema-contract/authoring-review-audit-comment.contract.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/authoring-review-audit-comment.contract.test.ts
+{
+  "timestamp": "2026-10-14T20:55:33.418Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-review-audit-comment.contract.test.ts
+{
+  "timestamp": "2026-10-14T20:55:33.932Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T20:55:33.933Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/authoring-review-audit-comment.contract.test.ts
+{
+  "timestamp": "2026-10-14T20:55:33.933Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-review-audit-comment.contract.test.ts
+✅ Template tables initialized
+
+stderr | tests/schema-contract/authoring-review-audit-comment.contract.test.ts
+{
+  "timestamp": "2026-10-14T20:55:37.253Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "b20e0ba1-16e3-4894-977a-588f8afabc41",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-review-audit-comment.contract.test.ts
+{
+  "timestamp": "2026-10-14T20:55:37.288Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b20e0ba1-16e3-4894-977a-588f8afabc41 by a***@contract.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T20:55:37.288Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.CREATE authoring_section",
+  "context": {
+    "userId": "5a1c2a10-0000-4000-8000-000000000001",
+    "tenantId": 1,
+    "resourceId": "f4d356ef-106d-481f-bda2-66ef6f779040"
+  }
+}
+
+stderr | tests/schema-contract/authoring-review-audit-comment.contract.test.ts
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | tests/schema-contract/authoring-review-audit-comment.contract.test.ts
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | tests/schema-contract/authoring-review-audit-comment.contract.test.ts
+{
+  "timestamp": "2026-10-14T20:55:37.303Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stderr | tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > re-requesting the same reviewer updates the row instead of duplicating it
+{
+  "timestamp": "2026-10-14T20:55:37.320Z",
+  "level": "error",
+  "message": "[authoring-router] Authoring peer review could not be verified",
+  "context": {
+    "error": {
+      "code": "REQUEST_DB_CONTEXT_REQUIRED",
+      "statusCode": 500,
+      "name": "MissingRequestDbContextError"
+    }
+  }
+}
+
+stderr | tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > another tenant cannot read this document's reviews
+{
+  "timestamp": "2026-10-14T20:55:37.332Z",
+  "level": "error",
+  "message": "[authoring-router] Authoring peer review could not be verified",
+  "context": {
+    "error": {
+      "code": "REQUEST_DB_CONTEXT_REQUIRED",
+      "statusCode": 500,
+      "name": "MissingRequestDbContextError"
+    }
+  }
+}
+
+stdout | tests/schema-contract/authoring-review-audit-comment.contract.test.ts > comments: one write path, attributed, and in the one ledger > a comment carries its author, so the read path shows a person
+{
+  "timestamp": "2026-10-14T20:55:37.359Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc b20e0ba1-16e3-4894-977a-588f8afabc41 by r***@contract.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-review-audit-comment.contract.test.ts > comments: one write path, attributed, and in the one ledger > a reply threads to its parent
+{
+  "timestamp": "2026-10-14T20:55:37.386Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: reply_added on doc b20e0ba1-16e3-4894-977a-588f8afabc41 by a***@contract.example",
+  "context": {}
+}
+
+ × tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > request → list → submit → list, all 200 rather than 42P01 12ms
+   → expected 400 to be 200 // Object.is equality
+ × tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > re-requesting the same reviewer updates the row instead of duplicating it 5ms
+   → Cannot read properties of undefined (reading 'length')
+ × tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > who requested the review comes from the JWT, not from x-user-name 5ms
+   → expected 400 to be 200 // Object.is equality
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > an empty reviewer list is refused rather than silently doing nothing 3ms
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > another tenant cannot read this document's reviews 4ms
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > the Part 11 audit read-back returns what the writers write > GET /docs/:docId/audit surfaces the ledger the mutations populate 10ms
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > the Part 11 audit read-back returns what the writers write > another tenant's audit read returns nothing 5ms
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > comments: one write path, attributed, and in the one ledger > a comment carries its author, so the read path shows a person 22ms
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > comments: one write path, attributed, and in the one ledger > a reply threads to its parent 21ms
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > comments: one write path, attributed, and in the one ledger > the comment lands in the audit trail, not a second activity table 8ms
+stdout | tests/schema-contract/authoring-review-audit-comment.contract.test.ts > comments: one write path, attributed, and in the one ledger > resolving a comment returns 200 — it used to 500 after saving the change
+{
+  "timestamp": "2026-10-14T20:55:37.415Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_resolved on doc b20e0ba1-16e3-4894-977a-588f8afabc41 by a***@contract.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > comments: one write path, attributed, and in the one ledger > resolving a comment returns 200 — it used to 500 after saving the change 34ms
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > the deleted orphan surfaces stay deleted > no handler is registered for any of them 32ms
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > the deleted orphan surfaces stay deleted > and their tables are named nowhere in the router 22ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > request → list → submit → list, all 200 rather than 42P01
+AssertionError: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ tests/schema-contract/authoring-review-audit-comment.contract.test.ts:228:25
+    226|     const req1 = await as(AUTHOR)(request(app).post(`/api/authoring/do…
+    227|       .send({ reviewers: [{ id: REVIEWER.id, name: REVIEWER.name, emai…
+    228|     expect(req1.status).toBe(200);
+       |                         ^
+    229|     expect(req1.body.reviews).toHaveLength(1);
+    230|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > re-requesting the same reviewer updates the row instead of duplicating it
+TypeError: Cannot read properties of undefined (reading 'length')
+ ❯ tests/schema-contract/authoring-review-audit-comment.contract.test.ts:256:35
+    254|     // specification" — a different unconditional failure, not a passi…
+    255|     const before = await as(AUTHOR)(request(app).get(`/api/authoring/d…
+    256|     const n = before.body.reviews.length;
+       |                                   ^
+    257|
+    258|     const again = await as(AUTHOR)(request(app).post(`/api/authoring/d…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > who requested the review comes from the JWT, not from x-user-name
+AssertionError: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ tests/schema-contract/authoring-review-audit-comment.contract.test.ts:272:24
+    270|       .set('x-user-name', 'Someone Else Entirely')
+    271|       .send({ reviewers: [{ id: OUTSIDER.id, name: 'Named', email: 'na…
+    272|     expect(res.status).toBe(200);
+       |                        ^
+    273|
+    274|     const row = res.body.reviews[0];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 10 passed (13)
+   Start at  20:55:28
+   Duration  9.25s (transform 3.62s, setup 85ms, import 634ms, tests 8.25s, environment 0ms)

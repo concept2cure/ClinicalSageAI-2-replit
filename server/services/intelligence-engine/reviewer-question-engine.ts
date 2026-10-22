@@ -140,7 +140,8 @@ function questionsFromConsistency(report: ConsistencyReport): ReviewerQuestion[]
 function questionsFromDefensibility(score: DefensibilityScore): ReviewerQuestion[] {
   const questions: ReviewerQuestion[] = [];
 
-  if (score.score < 50) {
+  // An unassessed score (null) is not a low one.
+  if (score.score !== null && score.score < 50) {
     questions.push({
       question: DEFENSIBILITY_TEMPLATES.lowScore(score.score),
       trigger: `Defensibility score below 50: ${score.score}/100`,

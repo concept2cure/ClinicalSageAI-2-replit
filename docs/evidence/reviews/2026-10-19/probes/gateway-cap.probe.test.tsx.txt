@@ -1,0 +1,24 @@
+// @vitest-environment jsdom
+// THROWAWAY PROBE (honest-state review 2026-10-19). Lives in the scratchpad, not the repo.
+import React from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
+const apiRequest = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/queryClient', async (importOriginal) => ({ ...(await importOriginal<typeof import('@/lib/queryClient')>()), apiRequest }));
+import { GatewayTransmittals } from '@/concept2cure/v2/surfaces/GatewayTransmittals';
+import { usePublishSurfaceContext } from '@/concept2cure/v2/surfaceContext';
+afterEach(() => cleanup());
+describe('PROBE: transmittal log at the server cap (LIMIT 100, meta.count = page length)', () => {
+  it('what does the header claim when exactly 100 rows come back?', async () => {
+    const rows = Array.from({ length: 100 }, (_, i) => ({ id: 1000 - i, region: 'fda', gateway: 'esg', transmission_id: `ESG-${1000 - i}`, status: 'acknowledged', submitted_at: '2026-10-01T00:00:00Z', ack_received_at: '2026-10-01T01:00:00Z', package_id: null }));
+    apiRequest.mockReset();
+    apiRequest.mockImplementation(async (_m: string, url: string) => ({ ok: true, status: 200, json: async () => (url === '/api/mdx/gateways/transmittals' ? { data: rows, meta: { count: rows.length, signing: { canSign: true } } } : { data: [] }) }) as Response);
+    render(<GatewayTransmittals {...({ surface: { id: 'gateway-transmittals', label: 'Gateway transmittals' }, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biopharma' } as any)} />);
+    await screen.findByText('ESG-1000');
+    const head = document.querySelector('.pj-card-h')?.textContent ?? '';
+    const body = document.body.textContent ?? '';
+    const r = { header: head.slice(0, 80), saysTruncatedOrLimit: /most recent|first 100|limit|showing|older|more transmittals|truncat/i.test(body), rowsRendered: document.querySelectorAll('tbody tr').length };
+    console.log('PROBE-RESULT-GATEWAY-CAP ' + JSON.stringify(r));
+    expect(r.saysTruncatedOrLimit, 'a page at its cap must say it is a page').toBe(true);
+  });
+});

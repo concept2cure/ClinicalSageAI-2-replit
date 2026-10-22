@@ -22,6 +22,7 @@ import {
   getThreadMessages,
   programIdForThread,
   resolveAccessibleThread,
+  resolveThreadStore,
   ThreadAccessError,
 } from '../../services/chat-thread-helpers.js';
 
@@ -157,19 +158,8 @@ export async function listThreads(req: Request, res: Response) {
    the jsdom test mocked the fetch and could not have seen it.
 
    So the store is RESOLVED, once, org-scoped, and each handler then acts on the
-   store that actually owns the thread. */
-type ThreadStore = 'chat' | 'ai';
-
-async function resolveThreadStore(threadId: string, orgId: unknown): Promise<ThreadStore | null> {
-  const { rows } = await pool.query(
-    `SELECT 'chat'::text AS store FROM chat_threads WHERE id = $1 AND organization_id = $2
-     UNION ALL
-     SELECT 'ai'::text AS store FROM ai_threads WHERE id = $1 AND organization_id = $2
-     LIMIT 1`,
-    [threadId, orgId],
-  );
-  return (rows[0]?.store as ThreadStore | undefined) ?? null;
-}
+   store that actually owns the thread (chat-thread-helpers.ts resolveThreadStore,
+   which is also who-may-read-a-transcript for a turn's Summary). */
 
 /** The `ai_threads` transcript. `chat_messages` is read by getThreadMessages. */
 async function getAiThreadMessages(threadId: string): Promise<Array<{ role: string; content: string }>> {

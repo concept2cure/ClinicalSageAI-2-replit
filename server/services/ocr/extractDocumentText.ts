@@ -13,10 +13,13 @@
  * Pure composition over existing dependencies — no new extractor engine.
  */
 
-import { ocrService } from './ocrService';
+import { ocrService, type OcrPdfTextResult } from './ocrService';
 import { alignPageSpans, type PageSpan } from './page-offsets';
 import { createScopedLogger } from '../../utils/logger';
 import { RAW_TEXT_SOURCE_EXTENSIONS } from '../../../shared/constants/document-intake-formats';
+import type { ExtractionCoverage } from '../../../shared/data-room-processing-status';
+
+export type { ExtractionCoverage };
 
 const logger = createScopedLogger('document-text');
 
@@ -27,6 +30,7 @@ export type ExtractionMethod =
   | 'image-ocr'
   | 'docx'
   | 'xlsx'
+  | 'xpt-structure'
   | 'none';
 
 export interface ExtractedDocumentText {
@@ -42,6 +46,17 @@ export interface ExtractedDocumentText {
    * nobody can check against the file.
    */
   pageSpans?: PageSpan[];
+  /**
+   * How much of a scanned PDF OCR read, whenever OCR was attempted, whether
+   * or not its text was the one returned. Absent for a PDF with a usable text
+   * layer and for every other format.
+   */
+  coverage?: ExtractionCoverage;
+}
+
+/** What a caller lets automatic PDF OCR spend. Without it, OCR reads every page. */
+export interface ExtractDocumentTextOptions {
+  pdfOcrBudget?: { maxPages: number; maxDurationMs: number };
 }
 
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
@@ -49,6 +64,7 @@ const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.s
 const RAW_TEXT_MIMES = new Set(['application/json', 'application/xml']);
 /** Below this many characters a PDF text layer is treated as missing → OCR. */
 const PDF_TEXT_MIN = 200;
+export { AUTOMATIC_PDF_OCR_BUDGET } from './ocr-budget';
 
 /**
  * A PDF's text, with page spans when they can be verified.
@@ -59,7 +75,7 @@ const PDF_TEXT_MIN = 200;
  * formats hid that. It is also where the page mapping lives, which is the part
  * a passage citation depends on.
  */
-async function extractPdfText(buffer: Buffer): Promise<ExtractedDocumentText> {
+async function extractPdfText(buffer: Buffer, budget?: ExtractDocumentTextOptions['pdfOcrBudget']): Promise<ExtractedDocumentText> {
   let text = '';
   /* The per-page pieces the extractor produced, kept so a page span can be
      ALIGNED against the combined text rather than inferred from it. */
@@ -85,29 +101,50 @@ async function extractPdfText(buffer: Buffer): Promise<ExtractedDocumentText> {
   if (text.length >= PDF_TEXT_MIN) {
     return { text, method: 'pdf-text', pageSpans: alignPageSpans(text, pages) ?? undefined };
   }
-  // Thin or no text layer → scanned PDF; recover with OCR.
-  try {
-    const ocr = await ocrService.ocrPdfToText(buffer);
-    if (ocr.text.length > text.length) {
-      return {
-        text: ocr.text,
-        method: 'pdf-ocr',
-        confidence: ocr.confidence,
-        /* pageDetails carries the SOURCE page numbers, which differ from the
-           array index whenever the rasteriser was given a page range. */
-        pageSpans: alignPageSpans(ocr.text, ocr.pageDetails.map(d => ({ page: d.page, text: d.text }))) ?? undefined,
-      };
-    }
-  } catch (error) {
-    logger.warn('pdf OCR failed', { error: error instanceof Error ? error.message : String(error) });
+  // Thin or no text layer → scanned PDF; recover with OCR, within the caller's budget.
+  // Coverage is kept even when the text layer wins: a budget-limited OCR that
+  // found little says nothing about the pages it never read.
+  const { ocr, coverage } = await ocrScannedPdf(buffer, pages.length, budget);
+  if (ocr && ocr.text.length > text.length) {
+    return {
+      text: ocr.text,
+      method: 'pdf-ocr',
+      confidence: ocr.confidence,
+      /* pageDetails carries the SOURCE page numbers, which differ from the
+         array index whenever the rasteriser was given a page range. */
+      pageSpans: alignPageSpans(ocr.text, ocr.pageDetails.map(d => ({ page: d.page, text: d.text }))) ?? undefined,
+      coverage,
+    };
   }
   return text
-    ? { text, method: 'pdf-text', pageSpans: alignPageSpans(text, pages) ?? undefined }
-    : { text: '', method: 'none' };
+    ? { text, method: 'pdf-text', pageSpans: alignPageSpans(text, pages) ?? undefined, coverage }
+    : { text: '', method: 'none', coverage };
+}
+
+/**
+ * OCR a PDF whose text layer is thin: the result and how much it read, or,
+ * when OCR throws, no result and `ocr_failed`, because the scanned content was
+ * not read. Never throws.
+ */
+async function ocrScannedPdf(
+  buffer: Buffer,
+  textLayerPages: number,
+  budget: ExtractDocumentTextOptions['pdfOcrBudget'],
+): Promise<{ ocr: OcrPdfTextResult | null; coverage: ExtractionCoverage }> {
+  try {
+    const ocr = budget
+      ? await ocrService.ocrPdfToText(buffer, { maxPages: budget.maxPages, deadlineAt: Date.now() + budget.maxDurationMs })
+      : await ocrService.ocrPdfToText(buffer);
+    const { pageCount, pagesRead, limitedBy } = ocr.coverage;
+    return { ocr, coverage: { pageCount, pagesRead, limitedBy } };
+  } catch (error) {
+    logger.warn('pdf OCR failed', { error: error instanceof Error ? error.message : String(error) });
+    return { ocr: null, coverage: { pageCount: textLayerPages || null, pagesRead: null, limitedBy: 'ocr_failed' } };
+  }
 }
 
 /** Which extractor a file needs, from its media type and, failing that, its name. */
-type DocumentFormat = 'xlsx' | 'text' | 'image' | 'pdf' | 'docx' | 'unknown';
+type DocumentFormat = 'xlsx' | 'text' | 'image' | 'pdf' | 'docx' | 'xpt' | 'unknown';
 
 /** Raw source representation only: this does not validate JSON/XML or map a dataset. */
 function isRawTextFormat(mime: string, filename: string): boolean {
@@ -133,6 +170,7 @@ export function classifyDocumentFormat(mime: string | undefined, filename = ''):
   if (m.startsWith('image/') || /\.(png|jpe?g|gif|webp|tiff?|bmp)$/i.test(filename)) return 'image';
   if (m === 'application/pdf' || /\.pdf$/i.test(filename)) return 'pdf';
   if (m === DOCX_MIME || /\.docx$/i.test(filename)) return 'docx';
+  if (m === 'application/x-sas-xport' || /\.xpt$/i.test(filename)) return 'xpt';
   return 'unknown';
 }
 
@@ -171,10 +209,22 @@ async function extractDocxText(buffer: Buffer): Promise<ExtractedDocumentText> {
   }
 }
 
+/**
+ * A SAS transport file's text is its structure (2026-10-15): each dataset's
+ * name, label and record count, and each variable's name, label, type and
+ * length. Searchable and readable by AnA; no observation is read.
+ */
+async function extractXptText(buffer: Buffer): Promise<ExtractedDocumentText> {
+  const { readXptStructure, xptStructureText } = await import('../clinical-regulatory-evidence/xpt-structure');
+  const read = readXptStructure(buffer);
+  return read.ok ? { text: xptStructureText(read), method: 'xpt-structure' } : { text: '', method: 'none' };
+}
+
 export async function extractDocumentText(
   buffer: Buffer,
   mime: string | undefined,
   filename = '',
+  options: ExtractDocumentTextOptions = {},
 ): Promise<ExtractedDocumentText> {
   switch (classifyDocumentFormat(mime, filename)) {
     case 'xlsx':
@@ -184,9 +234,11 @@ export async function extractDocumentText(
     case 'image':
       return extractImageText(buffer);
     case 'pdf':
-      return extractPdfText(buffer);
+      return extractPdfText(buffer, options.pdfOcrBudget);
     case 'docx':
       return extractDocxText(buffer);
+    case 'xpt':
+      return extractXptText(buffer);
     default:
       // A format with no extractor is not an error: the document is admitted
       // and the catalog records that its content could not be read.

@@ -34,16 +34,17 @@
  */
 
 import type { ToolContext } from './AnaToolExecutor.js';
-import type { CommandContext } from '../ana-ri/command-executor.js';
-import { agentAuditDetails, type PolicyCheck } from '../ana-ri/mdx-tool-policy.js';
-import { documentScopeRefusal } from './catalog-scope.js';
+import { catalogScope, catalogDocumentBoundary } from './catalog-scope.js';
 import {
+  anaToolProvenance,
   CHAT_UPLOAD_ID,
   requireCatalog,
   unknownDocumentRefusal,
   withCaughtErrors,
   type RegisterFn,
 } from './document-tools-shared.js';
+import type { CatalogDocumentRow } from '../vault/document-catalog.service.js';
+import { catalogVersionRefusal } from '../vault/document-catalog-eligibility.js';
 
 /**
  * A placement request, already resolved to the arguments the service takes.
@@ -116,9 +117,14 @@ function parsePlacementInput(input: Record<string, unknown>): PlacementPlan | { 
  * judgement. Unfiling is exempt — it retracts a claim rather than making one.
  */
 function comprehensionRefusal(
-  doc: { id: string; fileName: string; catalog: { status: string } | null },
+  doc: Pick<CatalogDocumentRow, 'id' | 'fileName' | 'contentHash' | 'catalog'>,
 ): string | null {
-  if (doc.catalog?.status === 'cataloged') return null;
+  // What was recorded about other bytes says nothing about where this version belongs.
+  const versionRefusal = catalogVersionRefusal(doc);
+  if (versionRefusal) {
+    return JSON.stringify({ ok: false, refused: true, code: 'SOURCE_VERSION_CHANGED', documentId: doc.id, reason: `${doc.fileName} cannot be filed. ${versionRefusal}` });
+  }
+  if (doc.catalog?.status === 'cataloged' && doc.catalog.contentHash === doc.contentHash) return null;
   const state =
     doc.catalog?.status === 'extraction_failed'
       ? 'its text could not be extracted, so there is nothing to base a placement on'
@@ -154,52 +160,6 @@ function confirmationRefusal(documentId: unknown): string {
   });
 }
 
-/**
- * Who made this placement, for its audit row — the D5 fix.
- *
- * In the repo's one agent-audit shape: agentAuditDetails (ana-ri/
- * mdx-tool-policy), the details every agent.ana.* row carries and
- * explain_audit_row reads to say "AnA (agent)" rather than "human user". The
- * helper takes a command context and a governed-tool gate; it reads only the
- * thread, chat-message ids and serving model from the one and the reason and
- * artifact flag from the other, so a tool call supplies what it has — its
- * thread, its model call, and its rationale as the reason — and the rest of
- * this tool's provenance is added beside it.
- */
-/** As the gateway reported it, with the bare model name as the fallback. */
-function servingModelOf(ctx: ToolContext | undefined): CommandContext['servingModel'] {
-  const served = ctx?.servingModel;
-  return {
-    provider: served?.provider ?? null,
-    model: served?.model ?? ctx?.model ?? null,
-    requestId: served?.requestId ?? null,
-  };
-}
-
-function placementProvenance(
-  ctx: ToolContext | undefined,
-  orgId: number,
-  rationale: string,
-): Record<string, unknown> {
-  const commandCtx = {
-    organizationId: orgId,
-    userId: ctx?.userId,
-    threadId: ctx?.threadId ?? undefined,
-    servingModel: servingModelOf(ctx),
-  } as CommandContext;
-  const gate = { ok: true, reason: rationale } as PolicyCheck;
-  return {
-    ...agentAuditDetails(commandCtx, gate),
-    // That soft signal is computed by the governed-tool gate, which this tool
-    // does not run. The helper would record `false`, which explain_audit_row
-    // renders as "the reason did NOT cite a concrete artifact" — a finding no
-    // one made. Null is "not assessed".
-    reasonReferencedArtifact: null,
-    tool: 'place_project_document',
-    turnId: ctx?.turnId ?? null,
-  };
-}
-
 async function handlePlaceProjectDocument(
   input: Record<string, unknown>,
   ctx?: ToolContext,
@@ -216,11 +176,14 @@ async function handlePlaceProjectDocument(
     return unknownDocumentRefusal(parsed.documentId, 'place_project_document');
   }
 
-  const doc = await svc.loadDocumentForOrg(parsed.documentId, orgId);
+  const scope = await catalogScope(ctx, orgId, null, 'read');
+  if ('error' in scope) return JSON.stringify({ ok: false, ...scope });
+  const doc = await svc.loadDocumentForOrg(parsed.documentId, orgId, {
+    executor: scope.executor, userId: scope.accessibleScope.actor.userId, programId: scope.programId ?? undefined,
+  });
   if (!doc) return unknownDocumentRefusal(parsed.documentId, 'place_project_document');
-  // The open project's documents only (PF-10 S7), before anything is placed.
-  const outOfScope = await documentScopeRefusal(ctx, orgId, doc.programId);
-  if (outOfScope) return outOfScope;
+  const boundary = catalogDocumentBoundary(scope, doc.programId);
+  if (boundary) return boundary;
 
   if (!parsed.unfile) {
     const refusal = comprehensionRefusal(doc);
@@ -233,12 +196,12 @@ async function handlePlaceProjectDocument(
     documentId: doc.id,
     organizationId: orgId,
     // The person on whose behalf she acts; `agent` says who decided.
-    userId: ctx?.userId ?? null,
+    userId: scope.accessibleScope.actor.userId,
     folderId: parsed.folderId,
     ctdSection: parsed.ctdSection,
     evidenceKind: parsed.evidenceKind,
     note: parsed.rationale,
-    agent: placementProvenance(ctx, orgId, parsed.rationale),
+    agent: anaToolProvenance(ctx, orgId, parsed.rationale, 'place_project_document'),
   });
 
   if (!outcome.ok) {

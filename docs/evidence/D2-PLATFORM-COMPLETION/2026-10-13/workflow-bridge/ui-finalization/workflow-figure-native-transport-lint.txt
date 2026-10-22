@@ -1,0 +1,13 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/RichSectionEditor.tsx
+   534:3   warning  Function 'RichSectionEditor' has too many lines (1789). Maximum allowed is 100  max-lines-per-function
+   534:3   warning  Function 'RichSectionEditor' has a complexity of 176. Maximum allowed is 15     complexity
+   989:1   warning  File has too many lines (2036). Maximum allowed is 500                          max-lines
+  1008:19  warning  The value assigned to 'drift' is not used in subsequent statements              no-useless-assignment
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/roundTrip.ts
+   77:38  warning  'Document' is not defined                                               no-undef
+  166:49  warning  'Document' is not defined                                               no-undef
+  243:8   warning  Function 'parsedDocText' has a complexity of 16. Maximum allowed is 15  complexity
+
+✖ 7 problems (0 errors, 7 warnings)

@@ -19,18 +19,18 @@ import { useFetchJson } from './useFetchJson';
 import { type DataState } from '../lib/dataState';
 import { isRecord, shapeMismatch, toRowsState } from '../lib/payloadShape';
 import type {
-  UDI_DEVICES,
-  UDI_ISSUES,
-  UDI_LABELS,
-  UDI_MRI,
-  UDI_SYMBOLS,
+  UdiDeviceRow,
+  UdiIssueRow,
+  UdiLabelRow,
+  UdiMriRow,
+  UdiSymbolRow,
 } from '../data/udi';
 
-export type DeviceRow = (typeof UDI_DEVICES)[number];
-export type LabelRow = (typeof UDI_LABELS)[number];
-export type SymbolRow = (typeof UDI_SYMBOLS)[number];
-export type IssueRow = (typeof UDI_ISSUES)[number];
-export type MriRow = (typeof UDI_MRI)[number];
+export type DeviceRow = UdiDeviceRow;
+export type LabelRow = UdiLabelRow;
+export type SymbolRow = UdiSymbolRow;
+export type IssueRow = UdiIssueRow;
+export type MriRow = UdiMriRow;
 
 interface UdiPayload {
   data: {

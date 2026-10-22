@@ -4,11 +4,12 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createHash, randomUUID } from 'node:crypto';
 import { createJourneyDb, assertNoSchemaGaps, type JourneyDb } from '../../../../tests/golden-journeys/harness';
-import { PREREQ, VAULT_DDL, PROGRAM, ORG } from '../../../routes/__tests__/_authoring-canvas-fixture';
+import { PREREQ, VAULT_DDL, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, ORG } from '../../../routes/__tests__/_authoring-canvas-fixture';
 
 vi.mock('../../../db.js', () => ({ pool: { query: vi.fn() } }));
 import { loadDocumentForOrg, type Queryable } from '../document-catalog.service';
 import { verifyDraftSourceReferences } from '../../authoring/draft-source-references';
+import { draftSourceIdentityForText } from '../../ana/draft-source-identity';
 
 let db: JourneyDb;
 // The journey pool hides rowCount in its declared interface. These source
@@ -21,8 +22,8 @@ const sourceExecutor: Queryable = {
 };
 beforeAll(async () => {
   db = await createJourneyDb({
-    prereqSql: PREREQ + VAULT_DDL,
-    migrations: ['migrations/20260905_document_catalog.sql', 'migrations/20261006_document_data_dispositions.sql'],
+    prereqSql: PREREQ + AUTHORING_ACCESS_DDL + VAULT_DDL,
+    migrations: ['migrations/20260905_document_catalog.sql', 'migrations/20261008e_document_catalog_attribution.sql', 'migrations/20261006_document_data_dispositions.sql'],
   });
 });
 afterAll(async () => { try { assertNoSchemaGaps(db); } finally { await db?.close(); } });
@@ -38,7 +39,10 @@ async function source(organizationId: number | null): Promise<{ id: string; hash
     VALUES ($1,$2,'extracted',8)`, [id, hash]);
   return { id, hash };
 }
-const references = (documentId: string, hash: string) => [{ documentId, contentHash: hash, span: { start: 0, end: 8, totalChars: 8 } }];
+const references = (documentId: string, hash: string) => {
+  const span = { start: 0, end: 8, totalChars: 8 };
+  return [{ documentId, contentHash: hash, span, ...draftSourceIdentityForText('Evidence', span) }];
+};
 
 describe('new current-only saved-source admission requires a consistent recorded tenant', () => {
   it.each([
@@ -46,18 +50,24 @@ describe('new current-only saved-source admission requires a consistent recorded
     { label: 'unassigned', organizationId: null },
   ])('refuses a legacy $label recorded tenant despite a matching program and valid catalog', async ({ organizationId }) => {
     const { id, hash } = await source(organizationId);
-    const read = await loadDocumentForOrg(id, ORG, { executor: sourceExecutor, programId: PROGRAM, currentOnly: true, includeText: true });
-    expect.soft(read).toBeNull();
-    await expect.soft(verifyDraftSourceReferences(references(id, hash), sourceExecutor, ORG, PROGRAM)).rejects.toThrow(/could not be verified/);
+    const read = loadDocumentForOrg(id, ORG, { executor: sourceExecutor, userId: Number(AUTHOR.id), programId: PROGRAM, currentOnly: true, includeText: true });
+    const verified = () => verifyDraftSourceReferences(references(id, hash), sourceExecutor, ORG, PROGRAM, { actor: AUTHOR });
+    if (organizationId === null) {
+      await expect.soft(read).rejects.toMatchObject({ status: 409, code: 'VAULT_TENANT_RECONCILIATION_REQUIRED' });
+      await expect.soft(verified()).rejects.toMatchObject({ status: 409, code: 'VAULT_TENANT_RECONCILIATION_REQUIRED' });
+    } else {
+      expect.soft(await read).toBeNull();
+      await expect.soft(verified()).rejects.toThrow(/could not be verified/);
+    }
     expect((await db.pool.query('SELECT organization_id,program_id,content_hash FROM vault.documents WHERE id=$1', [id])).rows)
       .toEqual([{ organization_id: organizationId, program_id: PROGRAM, content_hash: hash }]);
   });
 
   it('retains exact source verification when the document and program agree on the tenant', async () => {
     const { id, hash } = await source(ORG);
-    expect(await loadDocumentForOrg(id, ORG, { executor: sourceExecutor, programId: PROGRAM, currentOnly: true, includeText: true }))
+    expect(await loadDocumentForOrg(id, ORG, { executor: sourceExecutor, userId: Number(AUTHOR.id), programId: PROGRAM, currentOnly: true, includeText: true }))
       .toMatchObject({ id, programId: PROGRAM, contentHash: hash, catalog: { status: 'extracted', contentHash: hash } });
-    expect(await verifyDraftSourceReferences(references(id, hash), sourceExecutor, ORG, PROGRAM))
+    expect(await verifyDraftSourceReferences(references(id, hash), sourceExecutor, ORG, PROGRAM, { actor: AUTHOR }))
       .toEqual([expect.objectContaining({ documentId: id, programId: PROGRAM, contentHash: hash })]);
   });
 });

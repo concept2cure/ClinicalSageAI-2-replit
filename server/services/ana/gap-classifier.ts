@@ -375,7 +375,7 @@ export const GAP_RULES: GapRule[] = [
     prefix: true,
     patterns: ['investigator', 'brochure', 'ib'],
     severity: 'critical',
-    guidance: 'ICH E6(R3) §7',
+    guidance: 'ICH E6(R3) Appendix A',
     message: 'Investigator Brochure (or current update) missing for IND.',
   },
 

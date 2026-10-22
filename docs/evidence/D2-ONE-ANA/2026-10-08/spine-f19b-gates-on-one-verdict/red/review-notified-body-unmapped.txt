@@ -1,0 +1,313 @@
+# Mutation (review fix removed, everything else as now): in server/services/regulatory/market-support.ts
+# -   if (NOTIFIED_BODY.keys.has(marketKey(market))) {
+# +   if (false && NOTIFIED_BODY.keys.has(marketKey(market))) {
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+{
+  "timestamp": "2026-10-08T17:15:00.773Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T17:15:00.775Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+{
+  "timestamp": "2026-10-08T17:15:00.775Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > for every catalog row, a tile is shown exactly when the server offers the filing, and author-only ones say so 1107ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > offers no Health Canada filing, and a search for one says why, in the server's words 61ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > a filing whose agency the server names no market for is not offered, and its reason is the server's 58ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > the chosen filing states its offer as text 44ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > lists nothing while the verdict is pending 8ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > a failed read is an error with Retry, never an empty or a full list 53ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a filing that creates an NDA without being one (a Type A meeting) states no tier; the NDA itself says Build and sequence 74ms
+ × client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the EU MDR/IVDR lane at a Notified Body is offered for authoring, asked of the server by its own market 57ms
+   → expected 0 to be greater than 0
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a search lists not-offered filings by the same fields as offered ones (an eCTD search finds Health Canada) 77ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the not-offered note counts the tab it is shown on 422ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > Retry stays mounted and busy while it reads again, and focus lands on the search box when the list arrives 78ms
+stderr | server/routes/c2c/__tests__/projects-create-market-offer.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-create-market-offer.test.ts
+{
+  "timestamp": "2026-10-08T17:15:06.254Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an MHRA "IND" with 422 FILING_NOT_OFFERED and its reason, before any SQL 38ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses a new Japanese NDA with 422 FILING_NOT_OFFERED and its reason, before any SQL 7ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an agency nothing maps (Swissmedic) with 422 FILING_NOT_OFFERED and its reason, before any SQL 5ms
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses a drug application at a Notified Body with 422 FILING_NOT_OFFERED and its reason, before any SQL 9ms
+   → expected 'Refused at creation: No document agen…' to match /^Refused at creation: A Notified Body…/
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses Health Canada (an NDS, sent as the wizard sends it) once the scaffold finds no outline, rolled back, nothing committed 6ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an agency with no outline (TGA) once the scaffold finds no outline, rolled back, nothing committed 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an EMA application with no EU outline (an NDA) once the scaffold finds no outline, rolled back, nothing committed 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > a program type with no document class (a bare device) has no outline to look for: refused before any SQL 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > an EU MAA: created, "Author documents for this market", with the reason 6ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > a continuing PMDA application (an approval number on file): created, author-only 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > a US commercial IND: created, build and sequence 3ms
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an EU mdr technical file at "EU / Notified Body": created, author-only, scaffolded from the EU device outline 5ms
+   → {"error":"FILING_NOT_OFFERED","message":"Refused at creation: No document agency is defined for 'EU / Notified Body'.","marketSupport":{"tier":"not_offered","label":"Not offered","reason":"Refused at creation: No document agency is defined for 'EU / Notified Body'.","appliesTo":null}}: expected 422 to be 201 // Object.is equality
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an EU ivdr technical file at "EU / Notified Body": created, author-only, scaffolded from the EU device outline 4ms
+   → {"error":"FILING_NOT_OFFERED","message":"Refused at creation: No document agency is defined for 'EU / Notified Body'.","marketSupport":{"tier":"not_offered","label":"Not offered","reason":"Refused at creation: No document agency is defined for 'EU / Notified Body'.","appliesTo":null}}: expected 422 to be 201 // Object.is equality
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an NDA sent with the region code us: scaffolded against FDA and created 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an NDA sent with the region code US: scaffolded against FDA and created 4ms
+stdout | server/services/regulatory/__tests__/market-support-offer.test.ts
+{
+  "timestamp": "2026-10-08T17:15:08.953Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T17:15:08.955Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/regulatory/__tests__/market-support-offer.test.ts
+{
+  "timestamp": "2026-10-08T17:15:08.955Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/regulatory/__tests__/market-support-offer.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/regulatory/__tests__/market-support-offer.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/regulatory/__tests__/market-support-offer.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (ind, FDA) is built and sequenced, and says transmit is not proven 3ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (nda, FDA) is built and sequenced, and says transmit is not proven 1ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (bla, FDA) is built and sequenced, and says transmit is not proven 1ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (anda, FDA) is built and sequenced, and says transmit is not proven 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > an EU MAA: Module 1 is flat, so no EMA sequence is built 1ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > an EU clinical trial (CTA through CTIS) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (510k): authored, no sequence 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (de_novo): authored, no sequence 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (pma): authored, no sequence 1ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (ide): authored, no sequence 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a master file: bound to the harmonised Module 3 outline, as creation binds it, and authored 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a continuing PMDA application (approval number on file): authored, Module 1 flat 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nds, Health_Canada) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, Health Canada) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (cta, Health_Canada) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, TGA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, NMPA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, MFDS) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, EMA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (ind, MHRA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, ANVISA) 0ms
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, EU / Notified Body) 6ms
+   → expected 'Refused at creation: No document agen…' to match /^Refused at creation: A Notified Body…/
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (device, EU / Notified Body) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (device, FDA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (jnda, PMDA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > sequenceTypeRefusal — FDA has no variation > refuses a variation for FDA, however the region is named 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > sequenceTypeRefusal — FDA has no variation > an EU variation, and every other FDA type, is not refused here 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence is stated for the application itself, not for every filing of its type > an FDA NDA names the NDA and the marketing applications of its family, and no meeting, designation, supplement, report or QMS record 2ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence is stated for the application itself, not for every filing of its type > an FDA BLA names the BLA and the 351(k), not the supplement 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence is stated for the application itself, not for every filing of its type > an author-only or refused offer is not scoped to named filings 0ms
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > (mdr, EU / Notified Body) reads the EU device outline and is authored, naming the Notified Body 1ms
+   → expected null to be 'EU' // Object.is equality
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > (ivdr, EU / Notified Body) reads the EU device outline and is authored, naming the Notified Body 1ms
+   → expected null to be 'EU' // Object.is equality
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > (cer, EU / Notified Body) reads the EU device outline and is authored, naming the Notified Body 1ms
+   → expected null to be 'EU' // Object.is equality
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > however the catalog or an API caller names it 2ms
+   → EU / Notified Body: expected 'not_offered' to be 'author_only' // Object.is equality
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, us) → FDA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, US) → FDA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (maa, EU) → EMA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (maa, eu) → EMA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, FDA) → FDA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, Health Canada) → Health_Canada 0ms
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (mdr, EU / Notified Body) → EMA 1ms
+   → expected null to be 'EMA' // Object.is equality
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (ivdr, EU / Notified Body) → EMA 0ms
+   → expected null to be 'EMA' // Object.is equality
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (cer, EU / Notified Body) → EMA 0ms
+   → expected null to be 'EMA' // Object.is equality
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, EU / Notified Body) → null: the caller keeps what it sent 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, Swissmedic) → null: the caller keeps what it sent 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (device, EU / Notified Body) → null: the caller keeps what it sent 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > Health Canada: the channel says nothing is sent, not that an adapter posts > the statement uses the Health Canada sentence, which the adapter refusal also uses 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses a drug application at a Notified Body with 422 FILING_NOT_OFFERED and its reason, before any SQL
+AssertionError: expected 'Refused at creation: No document agen…' to match /^Refused at creation: A Notified Body…/
+
+- Expected:
+/^Refused at creation: A Notified Body assesses EU MDR and IVDR technical documentation/
+
++ Received:
+"Refused at creation: No document agency is defined for 'EU / Notified Body'."
+
+ ❯ expectRefused server/routes/c2c/__tests__/projects-create-market-offer.test.ts:115:28
+    113|   expect(res.status, JSON.stringify(res.body)).toBe(422);
+    114|   expect(res.body.error).toBe('FILING_NOT_OFFERED');
+    115|   expect(res.body.message).toMatch(reason);
+       |                            ^
+    116|   expect(res.body.marketSupport).toMatchObject({ tier: 'not_offered', …
+    117|   expect(createSubmissionTx).not.toHaveBeenCalled();
+ ❯ server/routes/c2c/__tests__/projects-create-market-offer.test.ts:152:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an EU mdr technical file at "EU / Notified Body": created, author-only, scaffolded from the EU device outline
+ FAIL  server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an EU ivdr technical file at "EU / Notified Body": created, author-only, scaffolded from the EU device outline
+AssertionError: {"error":"FILING_NOT_OFFERED","message":"Refused at creation: No document agency is defined for 'EU / Notified Body'.","marketSupport":{"tier":"not_offered","label":"Not offered","reason":"Refused at creation: No document agency is defined for 'EU / Notified Body'.","appliesTo":null}}: expected 422 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 422
+
+ ❯ server/routes/c2c/__tests__/projects-create-market-offer.test.ts:218:50
+    216|     const res = await request(app()).post('/api/c2c/projects')
+    217|       .send(body({ programType, productType: 'device', primaryAgency: …
+    218|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                  ^
+    219|     expect(res.body.meta.marketSupport).toMatchObject({ tier: 'author_…
+    220|     expect(res.body.meta.marketSupport.reason).toMatch(/no Notified Bo…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, EU / Notified Body)
+AssertionError: expected 'Refused at creation: No document agen…' to match /^Refused at creation: A Notified Body…/
+
+- Expected:
+/^Refused at creation: A Notified Body assesses EU MDR and IVDR technical documentation and clinical evaluation reports; it takes no NDA\.$/
+
++ Received:
+"Refused at creation: No document agency is defined for 'EU / Notified Body'."
+
+ ❯ server/services/regulatory/__tests__/market-support-offer.test.ts:92:22
+     90|     expect(o.tier).toBe('not_offered');
+     91|     expect(o.label).toBe('Not offered');
+     92|     expect(o.reason).toMatch(reason);
+       |                      ^
+     93|     expect(o.reason).not.toMatch(/\.\.$/);
+     94|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > (mdr, EU / Notified Body) reads the EU device outline and is authored, naming the Notified Body
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > (ivdr, EU / Notified Body) reads the EU device outline and is authored, naming the Notified Body
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > (cer, EU / Notified Body) reads the EU device outline and is authored, naming the Notified Body
+AssertionError: expected null to be 'EU' // Object.is equality
+
+- Expected:
+"EU"
+
++ Received:
+null
+
+ ❯ server/services/regulatory/__tests__/market-support-offer.test.ts:133:22
+    131|   it.each(['mdr', 'ivdr', 'cer'])('(%s, EU / Notified Body) reads the …
+    132|     const s = marketSupport({ applicationType: t, market: 'EU / Notifi…
+    133|     expect(s.region).toBe('EU');
+       |                      ^
+    134|     expect(s.agency).toBe('Notified_Body');
+    135|     expect(s.outline.pack?.label).toBe(`${t}:ema`);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > however the catalog or an API caller names it
+AssertionError: EU / Notified Body: expected 'not_offered' to be 'author_only' // Object.is equality
+
+Expected: "author_only"
+Received: "not_offered"
+
+ ❯ server/services/regulatory/__tests__/market-support-offer.test.ts:141:95
+    139|   it('however the catalog or an API caller names it', () => {
+    140|     for (const m of ['EU / Notified Body', 'Notified_Body', 'notified …
+    141|       expect(marketSupport({ applicationType: 'mdr', market: m }, pack…
+       |                                                                                               ^
+    142|     }
+    143|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (mdr, EU / Notified Body) → EMA
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (ivdr, EU / Notified Body) → EMA
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (cer, EU / Notified Body) → EMA
+AssertionError: expected null to be 'EMA' // Object.is equality
+
+- Expected:
+"EMA"
+
++ Received:
+null
+
+ ❯ server/services/regulatory/__tests__/market-support-offer.test.ts:152:66
+    150|     ['mdr', 'EU / Notified Body', 'EMA'], ['ivdr', 'EU / Notified Body…
+    151|   ])('(%s, %s) → %s', (t, m, want) => {
+    152|     expect(documentAgencyFor({ applicationType: t, market: m })).toBe(…
+       |                                                                  ^
+    153|   });
+    154|   it.each([['nda', 'EU / Notified Body'], ['nda', 'Swissmedic'], ['dev…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the EU MDR/IVDR lane at a Notified Body is offered for authoring, asked of the server by its own market
+AssertionError: expected 0 to be greater than 0
+ ❯ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx:155:23
+    153|     fireEvent.change(screen.getByRole('textbox', { name: /search filin…
+    154|     const nb = tiles().filter((t) => t.agency === 'EU / Notified Body'…
+    155|     expect(nb.length).toBeGreaterThan(0);
+       |                       ^
+    156|     expect(nb.every((t) => t.authorOnly)).toBe(true);
+    157|     expect(apiRequest.mock.calls.some((c) => /market=EU\+%2F\+Notified…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  12 failed | 61 passed (73)
+   Start at  17:14:56
+   Duration  12.64s (transform 5.22s, setup 299ms, import 8.89s, tests 2.19s, environment 678ms)
+

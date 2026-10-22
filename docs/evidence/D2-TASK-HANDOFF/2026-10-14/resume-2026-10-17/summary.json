@@ -1,0 +1,149 @@
+{
+  "branch": "concept2cure-v2",
+  "sourceCommit": "3450b68b595255a6545bc7fc8863d30e5e5e9bfc",
+  "integratedCanonical": "14d8c9efe8df9b545e72ebfba446473040cb9b0e",
+  "publication": {
+    "status": "published-directly-to-canonical",
+    "receipt": "canonical-2026-10-20/publication.json"
+  },
+  "currentEvidence": "canonical-2026-10-20/README.md",
+  "sourceBinding": "canonical-2026-10-20/source-binding.json",
+  "results": {
+    "initialFixtureCohort": {
+      "passed": 348,
+      "failed": 21,
+      "files": 40,
+      "sourceCommit": "ec57b5519f8765096f79d437ffcdaeff40a016b4",
+      "status": "retained-red-run",
+      "evidence": "canonical-2026-10-20/fixtures/fixture-summary.json"
+    },
+    "correctedFixtureSubset": {
+      "passed": 45,
+      "failed": 0,
+      "files": 7,
+      "sourceCommit": "c24db62ac5dce1b5007d1cbc67981dd5a462b757",
+      "evidence": "canonical-2026-10-20/fixtures/fixture-summary.json"
+    },
+    "retainedWholeGreenFixtures": {
+      "passed": 324,
+      "failed": 0,
+      "files": 33,
+      "sourceCommit": "ec57b5519f8765096f79d437ffcdaeff40a016b4",
+      "filesByteIdenticalToFinal": true,
+      "boundary": "The 33 unmodified whole-green files retained from the initial40 run, excluding the termination fixture replayed after its type repair; not a separate replay.",
+      "evidence": "canonical-2026-10-20/fixtures/fixture-summary.json"
+    },
+    "taskSourceHost": {
+      "passed": 121,
+      "failed": 0,
+      "files": 5,
+      "sourceCommit": "ec57b5519f8765096f79d437ffcdaeff40a016b4",
+      "evidence": "canonical-2026-10-20/targets/targets-summary.json"
+    },
+    "serverCancellationOverlay": {
+      "passed": 53,
+      "failed": 0,
+      "files": 4,
+      "sourceCommit": "3450b68b595255a6545bc7fc8863d30e5e5e9bfc",
+      "evidence": "canonical-2026-10-20/server-cancellation/backend-summary.json"
+    }
+  },
+  "browser": {
+    "sourceCommit": "ec57b5519f8765096f79d437ffcdaeff40a016b4",
+    "evidence": "canonical-2026-10-20/browser/browser-summary.json",
+    "scenarios": 1,
+    "stages": 5
+  },
+  "sourceComparisons": {
+    "clientRuntime": {
+      "executionSource": "ec57b5519f8765096f79d437ffcdaeff40a016b4",
+      "fixtureCorrectionSource": "c24db62ac5dce1b5007d1cbc67981dd5a462b757",
+      "finalSource": "3450b68b595255a6545bc7fc8863d30e5e5e9bfc",
+      "clientProductionAndSharedBytesUnchanged": true,
+      "changedFixturePaths": [
+        "client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx",
+        "client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx",
+        "client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx",
+        "client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx",
+        "client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx",
+        "client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx"
+      ],
+      "retainedWholeGreenTestFilesUnchanged": 33,
+      "boundary": "Only six client fixture test files differ from ec57. The corrected seven-file replay executes atc24 and includes the unchanged conversation-refusal file. Browser/target broad pin manifests remain bound to actualec57; no final-commit restamping."
+    },
+    "serverOverlay": {
+      "incomingCanonical": "14d8c9efe8df9b545e72ebfba446473040cb9b0e",
+      "sourceCommit": "3450b68b595255a6545bc7fc8863d30e5e5e9bfc",
+      "paths": [
+        "server/services/ai-gateway/__tests__/gateway-source-operation-cancellation.test.ts",
+        "server/services/ana/AnaDocumentDraftingService.ts",
+        "server/services/ana/AnaToolExecutor.ts",
+        "server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts",
+        "server/services/ana/__tests__/draft-source-cancellation-checkpoint.test.ts",
+        "server/services/ana/__tests__/draft-source-operation-cancellation.test.ts",
+        "server/services/ana/draft-project-sources.ts"
+      ],
+      "evidence": "canonical-2026-10-20/server-cancellation/backend-summary.json",
+      "boundary": "Final server source includes a separately tested seven-path selected-source cancellation overlay. No broad claim that all server/production bytes match ec57 is made."
+    }
+  },
+  "gates": {
+    "build": {
+      "sourceCommit": "3450b68b595255a6545bc7fc8863d30e5e5e9bfc",
+      "clientEmbeddedCommitMatches": true,
+      "serverEmbeddedCommitMatches": true,
+      "productionBuildPassed": true
+    },
+    "classes": {
+      "uses": 16605,
+      "chunks": 30,
+      "missing": 0,
+      "baseline": 0
+    },
+    "compiler": {
+      "errors": 0,
+      "exit": 0,
+      "baseline": 0,
+      "mode": "Normal full-project tsc --noEmit --incremental",
+      "heapMb": 12288
+    },
+    "initialCompiler": {
+      "sourceCommit": "ec57b5519f8765096f79d437ffcdaeff40a016b4",
+      "errors": 1,
+      "exit": 2,
+      "code": "TS2741",
+      "fixture": "client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx",
+      "evidence": "canonical-2026-10-20/gates/task-handoff-canonical-20261020-push.log.gz",
+      "boundary": "The initial full compiler correctly refused the missing captured headers in a synthetic AssemblyOperation fixture. Its failed held push made no ref update. Only the final normal push is claimed as compiler-zero and accepted."
+    },
+    "warningRatchet": "Passed; net -1; baseline unchanged."
+  },
+  "historicalEvidence": [
+    "publication-integration/README.md",
+    "pm-integration/README.md",
+    "concurrency-integration/README.md",
+    "source-first-integration/README.md",
+    "assembly-integration/README.md",
+    "audit-integration/final-qualification.md"
+  ],
+  "historicalSummary": "pre-assembly-summary.json",
+  "humanChecklist": "../../../../testing/HUMAN_BETA_CHECKLIST_V1.md",
+  "nativeBoundary": "Earlier311/36,affected19/1 and61/6 retain actual execution anchors; no current native rerun or broad no-impact conclusion is claimed for the two-day incoming delta.",
+  "claimBoundary": "Initial40 red run retained:348 passed/21 failed. Its33 retained whole-green files/324 cases remain byte-identical; the six failed files plus the termination fixture pass45 cases in a separate seven-file c24 replay. Initialec57 compiler TS2741 refusal is retained; only the final normal compiler is claimed zero. No new all-green40-file execution is claimed. Target121/browser1980 retain actualec57 anchors; client/shared production bytes matchec57, while the final server cancellation overlay is separately source-bound and tested. Historical UI91/host61/backend42/native records retain their anchors. No current full native/hosted-CI/live-provider/human qualification claimed.",
+  "humanWitnessExecuted": false,
+  "hostedCiClaimed": false,
+  "expandedSecretScan": {
+    "sourceCommit": "3450b68b595255a6545bc7fc8863d30e5e5e9bfc",
+    "rawScannerExitCode": 1,
+    "rawScannerFindings": 250,
+    "verifiedSourceDigestFindings": 250,
+    "credentialFindingsAfterReview": 0,
+    "configChanged": false,
+    "allowlistAdded": false,
+    "files": 904,
+    "expandedBytes": 54713163,
+    "scope": "canonical-2026-10-20/gates/task-handoff-canonical-20261020-scan-scope.json.gz",
+    "classification": "canonical-2026-10-20/gates/task-handoff-canonical-20261020-scan-classification.json.gz",
+    "boundary": "Own source and complete evidence payload as listed, including every gzip expanded before scan. Scanner outputs and subsequent manifests are recorded separately."
+  }
+}

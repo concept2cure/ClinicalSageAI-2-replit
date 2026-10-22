@@ -1,0 +1,183 @@
+/**
+ * package_ectd_for_region names the application and the applicant from the
+ * record, never from the model (P-27, Rule 2).
+ *
+ * 2026-10-08 (P-27 follow-up). The tool took `application_id`, `sponsor_id`
+ * and `sponsor_name` from its input, so whatever the model wrote — a program
+ * code, a guessed IND number, a sponsor name read out of a document — was
+ * written into the regional backbone as the agency application number and the
+ * applicant. Export and compile already read both from package-identity.ts
+ * (organizations.name, regulatory_programs.application_number) and refuse by
+ * name when either is missing. This tool now does the same: it takes the
+ * project (`program_id`), reads the identity from the record, and refuses
+ * PACKAGE_IDENTITY_MISSING when the record lacks one. The model-input fields
+ * are gone from the schema.
+ */
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { promises as fs } from 'fs';
+import * as path from 'path';
+import JSZip from 'jszip';
+
+const { resolveSignerOrgRole, programInOrganization, readRecordedPackageIdentity } = vi.hoisted(() => ({
+  // Confirmed writes need an editor role (writeRoleRefusal); a member may edit.
+  resolveSignerOrgRole: vi.fn(async (): Promise<string | null> => 'member'),
+  // The registry wrapper confirms the named program is this organization's.
+  programInOrganization: vi.fn(async () => true),
+  readRecordedPackageIdentity: vi.fn(),
+}));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
+vi.mock('../../c2c/program-access', async (orig) => ({ ...(await orig<object>()), programInOrganization }));
+vi.mock('../../c2c/program-access.js', async (orig) => ({ ...(await orig<object>()), programInOrganization }));
+// Only the record read is replaced; the refusal (packageIdentityRefusal) is the real one.
+vi.mock('../../ectd/package-identity', async (orig) => ({ ...(await orig<object>()), readRecordedPackageIdentity }));
+vi.mock('../../ectd/package-identity.js', async (orig) => ({ ...(await orig<object>()), readRecordedPackageIdentity }));
+
+import { PACKAGE_ECTD_FOR_REGION } from '../AnaToolDefinitions';
+import { getToolHandler } from '../AnaToolExecutor';
+import { anaScratchDir } from '../document-workspace';
+
+const CTX = { organizationId: 1, userId: 1, humanConfirmed: true };
+const PROGRAM = '7d1c2f0e-5b7a-4c1e-9a43-0f2b6d1e8c55';
+const recordedIdentity = (patch: Record<string, unknown> = {}) => ({
+  programId: PROGRAM, applicationNumber: '123456', applicantName: 'Concept2Cure Therapeutics',
+  applicantSponsorId: '11111111-1111-4111-8111-111111111111', applicantId: '123456789',
+  contact: { name: 'Regulatory Contact', phone: '+1 617 555 0100', email: 'regulatory@example.test' },
+  ...patch,
+});
+const pdf = (l: string) => Buffer.from(`%PDF-1.4\n% ${l}\ntrailer<< /Root 1 0 R >>\n%%EOF\n`, 'utf8');
+
+type Schema = { properties: Record<string, unknown>; required: string[] };
+const schema = () => PACKAGE_ECTD_FOR_REGION.input_schema as unknown as Schema;
+
+async function run(input: Record<string, unknown>) {
+  const handler = getToolHandler('package_ectd_for_region');
+  expect(handler).toBeTypeOf('function');
+  return JSON.parse(await handler!(input, CTX)) as {
+    ok?: boolean; error?: string; code?: string; missing?: string[]; bundlePath?: string;
+    applicationNumber?: string; applicantName?: string;
+  };
+}
+
+async function coverLeaf() {
+  const work = anaScratchDir(CTX.organizationId, 'submissions');
+  const cover = path.join(work, 'p27-cover.pdf');
+  const output = path.join(work, 'p27-out');
+  await fs.mkdir(work, { recursive: true });
+  await fs.writeFile(cover, pdf('cover'));
+  // Each fixture owns its paths; model input cannot choose a scratch directory.
+  const modelInput = (extra: Record<string, unknown> = {}) => ({
+    region: 'fda', program_id: PROGRAM, sequence: '0000', submission_type: 'original', application_type: 'ind',
+    product_name: 'P', output_dir: output,
+    leaves: [{ ctd_section: '1.2', operation: 'new', source_path: cover, file_name: 'cover.pdf', title: 'Cover' }],
+    // What a model used to send: none of these identity fields may reach the package.
+    application_id: 'MODEL-999999', sponsor_id: 'MODEL-DUNS', sponsor_name: 'Model Invented Sponsor',
+    ...extra,
+  });
+  return { cover, output, modelInput };
+}
+
+beforeEach(() => {
+  readRecordedPackageIdentity.mockReset();
+  programInOrganization.mockClear();
+});
+
+describe('package_ectd_for_region — identity from the record (P-27)', () => {
+  it('takes no application number or applicant from its input, and asks for the project instead', () => {
+    const s = schema();
+    expect(s.properties).not.toHaveProperty('application_id');
+    expect(s.properties).not.toHaveProperty('sponsor_id');
+    expect(s.properties).not.toHaveProperty('sponsor_name');
+    expect(s.properties).toHaveProperty('program_id');
+    expect(s.required).toContain('program_id');
+    expect(s.required).not.toContain('application_id');
+  });
+
+  it('writes the recorded application number and applicant, never the model-supplied ones', async () => {
+    readRecordedPackageIdentity.mockResolvedValue(recordedIdentity());
+    const { cover, output, modelInput } = await coverLeaf();
+    try {
+      const out = await run(modelInput());
+      expect(out.error).toBeUndefined();
+      expect(readRecordedPackageIdentity).toHaveBeenCalledWith(expect.anything(), 1, PROGRAM);
+      expect(out.applicationNumber).toBe('123456');
+      expect(out.applicantName).toBe('Concept2Cure Therapeutics');
+      const zip = await JSZip.loadAsync(await fs.readFile(out.bundlePath!));
+      const regional = Object.keys(zip.files).find((f) => f.endsWith('us-regional.xml'))!;
+      const xml = (await zip.file(regional)?.async('string')) ?? '';
+      expect(xml).toMatch(/<application-number[^>]*>123456<\/application-number>/);
+      expect(xml).toContain('<company-name>Concept2Cure Therapeutics</company-name>');
+      expect(xml).toContain('<id>123456789</id>');
+      expect(xml).toContain('<applicant-contacts>');
+      expect(xml).toMatch(/<applicant-contact-name[^>]*>Regulatory Contact<\/applicant-contact-name>/);
+      expect(xml).toContain('<telephone>+1 617 555 0100</telephone>');
+      expect(xml).toContain('<email>regulatory@example.test</email>');
+      expect(xml).not.toContain('UNASSIGNED-ORG-');
+      expect(xml).not.toContain('MODEL-999999');
+      expect(xml).not.toContain('Model Invented Sponsor');
+      expect(xml).not.toContain('MODEL-DUNS');
+    } finally {
+      await fs.rm(output, { recursive: true, force: true });
+      await fs.rm(cover, { force: true });
+    }
+  });
+
+  it('refuses by name when the project records no application number, and builds nothing', async () => {
+    readRecordedPackageIdentity.mockResolvedValue(recordedIdentity({ applicationNumber: null }));
+    const { cover, output, modelInput } = await coverLeaf();
+    try {
+      const out = await run(modelInput());
+      expect(out.ok).toBeUndefined();
+      expect(out.code).toBe('PACKAGE_IDENTITY_MISSING');
+      expect(out.missing).toEqual(['applicationNumber']);
+      expect(out.error).toMatch(/application number/);
+      expect(out.error).toMatch(/Nothing was built/);
+      await expect(fs.readdir(output)).rejects.toThrow();
+    } finally {
+      await fs.rm(cover, { force: true });
+    }
+  });
+
+  it('refuses by name when the organisation records no usable applicant name', async () => {
+    readRecordedPackageIdentity.mockResolvedValue(recordedIdentity({ applicantName: null }));
+    const { cover, modelInput } = await coverLeaf();
+    try {
+      const out = await run(modelInput());
+      expect(out.code).toBe('PACKAGE_IDENTITY_MISSING');
+      expect(out.missing).toEqual(['applicantName']);
+    } finally {
+      await fs.rm(cover, { force: true });
+    }
+  });
+
+  it.each([
+    { patch: { applicantId: null }, field: 'applicantId' },
+    { patch: { applicantId: '12-345-6789' }, field: 'applicantId' },
+    { patch: { applicationNumber: 'IND123456' }, field: 'applicationNumber' },
+    { patch: { contact: { name: 'Regulatory Contact', phone: null, email: 'regulatory@example.test' } }, field: 'contact.phone' },
+  ])('refuses missing or invalid recorded FDA identity ($field) before publishing bytes', async ({ patch, field }) => {
+    readRecordedPackageIdentity.mockResolvedValue(recordedIdentity(patch));
+    const { cover, output, modelInput } = await coverLeaf();
+    try {
+      const out = await run(modelInput());
+      expect(out.code).toBe('PACKAGE_IDENTITY_MISSING');
+      expect(out.missing).toContain(field);
+      await expect(fs.readdir(output)).rejects.toThrow();
+    } finally {
+      await fs.rm(output, { recursive: true, force: true });
+      await fs.rm(cover, { force: true });
+    }
+  });
+
+  it('refuses a call that names no project, even with model-supplied identity, and reads nothing', async () => {
+    const { cover, modelInput } = await coverLeaf();
+    try {
+      const out = await run(modelInput({ program_id: undefined }));
+      expect(out.code).toBe('PACKAGE_IDENTITY_MISSING');
+      expect(out.error).toMatch(/program_id/);
+      expect(readRecordedPackageIdentity).not.toHaveBeenCalled();
+    } finally {
+      await fs.rm(cover, { force: true });
+    }
+  });
+});

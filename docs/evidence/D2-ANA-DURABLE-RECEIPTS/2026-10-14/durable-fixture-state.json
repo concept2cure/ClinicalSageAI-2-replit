@@ -1,0 +1,46 @@
+{
+  "name": "c2c-durable-receipts-de548226-a7c",
+  "database": "ana_durable_receipt_fixture",
+  "ownerRole": "durable_fixture_applier",
+  "host": "127.0.0.1",
+  "phase": "cleaned",
+  "startedAt": "2026-10-14T20:59:51.045Z",
+  "limitations": "Synthetic local fixture; deployed database roles, workload and regulatory qualification are not established.",
+  "dockerServerVersion": "28.4.0",
+  "image": [
+    "postgres@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d"
+  ],
+  "containerId": "b1e809d69ed975b1550b5cf13b251c53a7ce6c9e5296a3f51e56726d05af07ac",
+  "port": 32771,
+  "observerGrant": "fixture-only pg_monitor for independently observed backend blocking; no superuser/BYPASSRLS",
+  "runtimeRole": {
+    "name": "app_service",
+    "attributes": "LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEROLE"
+  },
+  "applierRole": {
+    "name": "durable_fixture_applier",
+    "attributes": "LOGIN NOSUPERUSER NOBYPASSRLS CREATEROLE",
+    "use": "fixture-only schema installation; runtime uses app_service"
+  },
+  "bootstrapRole": {
+    "name": "durable_fixture_admin",
+    "use": "isolated fixture setup only; not test runtime"
+  },
+  "server": {
+    "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+    "database": "ana_durable_receipt_fixture",
+    "role": "durable_fixture_applier",
+    "pid": 71,
+    "rolsuper": false,
+    "rolbypassrls": false
+  },
+  "independentBackendPids": [
+    71,
+    72
+  ],
+  "testExitCode": 0,
+  "stopReason": "test completion",
+  "cleanup": "exact owned container removed",
+  "cleanupVerified": true,
+  "finishedAt": "2026-10-14T21:00:00.889Z"
+}

@@ -67,4 +67,3 @@ AssertionError: expected [] to deeply equal [ [ 'email', 'name' ] ]
       Tests  2 failed | 2 passed (4)
    Start at  01:11:41
    Duration  2.35s (transform 908ms, setup 71ms, import 1.70s, tests 304ms, environment 0ms)
-

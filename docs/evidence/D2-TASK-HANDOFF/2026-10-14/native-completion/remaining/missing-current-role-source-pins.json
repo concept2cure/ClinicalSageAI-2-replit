@@ -1,0 +1,9 @@
+{
+  "head": "23502318f439237cd2cc9a2246cba263f3b18f33",
+  "files": [
+    {
+      "path": "tests/db/vault-placement.dbtest.ts",
+      "sha256": "1be380dcbd544343b68d54df38d25409ce45b37721aaa87f3cd562640284e3b4"
+    }
+  ]
+}

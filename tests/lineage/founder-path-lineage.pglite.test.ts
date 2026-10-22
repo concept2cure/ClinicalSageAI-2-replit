@@ -18,7 +18,8 @@
  *                    POST /api/coauthor/documents), then             server/routes/submissions.ts:876, :928; server/services/submission-service/submission-service.ts:1842 (:2062)
  *                    PUT /api/submissions/sequences/:id/leaves ×2
  *                    (the filing copy, and the Vault copy)
- *   8 transmit       transition → freeze → dispatch → transmit,      server/routes/submissions.ts:890, :1674, :1690, :1718;
+ *   8 transmit       the original IND's Module 3 by reference, then  server/services/ind-lifecycle/ind-cross-reference-persistence.ts:97;
+ *                    transition → freeze → dispatch → transmit,      server/routes/submissions.ts:890, :1674, :1690, :1718;
  *                    each on a governed Part 11 sign                  server/routes/c2c/actions.ts:777; submission-service.ts:1217 (:1418, :1443);
  *                                                                    server/services/submission-gateways/fda-esg.ts:264-281
  *
@@ -59,6 +60,8 @@
  * founder-path-lineage.hops-filing.ts (7–8 and the walks).
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { createHash } from 'node:crypto';
+import { receiptReport } from '../../server/services/submission-gateways/__tests__/support/as2-cms-fixture';
 import { assertNoSchemaGaps, assertNoDegradedTenantEnrichment } from '../golden-journeys/harness';
 import { T, buildWorld, baselineProblems, type World } from './founder-path-lineage.world';
 import { hopProject, hopCapture, hopAnaDraft, hopEditSave, hopSeal, hopFileToVault, hopAdopt } from './founder-path-lineage.hops-authoring';
@@ -71,6 +74,7 @@ const h = vi.hoisted(() => ({
   objects: new Map<string, { bytes: Buffer; mime: string; filename: string; orgId: number }>(),
   /** Every byte string that left for the agency. */
   wire: [] as Buffer[],
+  mic: '',
 }));
 
 vi.mock('../../server/db', () => ({
@@ -160,18 +164,28 @@ vi.mock('../../server/services/enhancedEmbeddingService', async (importOriginal)
   };
 });
 /* The agency wire, and only the wire: the real FDA ESG gateway, its guard and
-   its transmittal ledger run; the AS2 POST, the MDN verdict and the body
-   signature (which needs the sponsor's real key) are stubbed. */
+   its transmittal ledger run; the AS2 POST and CMS envelope/receipt signature
+   primitives (which need the parties' real keys) are stubbed. The envelope
+   preserves package bytes so the walk checks their hash through the ledger. */
+vi.mock('../../server/services/submission-gateways/as2-cms', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../server/services/submission-gateways/as2-cms')>();
+  return {
+    ...actual,
+    buildAs2CmsEnvelope: async ({ body, contentType, filename }: { body: Buffer; contentType: string; filename: string }) => {
+      h.mic = createHash('sha256').update(actual.as2PayloadEntity(body, contentType, filename)).digest('base64');
+      return { body, contentType, mic: h.mic, micAlgorithm: 'sha-256' as const };
+    },
+    verifyAs2CmsReceipt: async (body: Buffer) => body,
+  };
+});
 vi.mock('../../server/services/submission-gateways/as2-transport', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../server/services/submission-gateways/as2-transport')>();
   return {
     ...actual,
-    signAs2Body: () => 'stub-signature',
-    postAs2: async (opts: { body: Buffer }) => {
+    postAs2: async (opts: { body: Buffer; headers: Record<string, string> }) => {
       h.wire.push(Buffer.from(opts.body));
-      return { httpStatus: 200, headers: { 'message-id': '<stub-mdn@fda.example>' }, body: Buffer.from('stub MDN: processed') };
+      return { httpStatus: 200, headers: { 'message-id': '<stub-mdn@fda.example>', 'content-type': 'application/pkcs7-mime' }, body: receiptReport(opts.headers['Message-ID'], h.mic) };
     },
-    classifyAs2Delivery: () => ({ kind: 'RECEIVED', httpStatus: 200, responseRaw: 'stub MDN: processed', receiptId: '<stub-mdn@fda.example>' }),
   };
 });
 
@@ -190,6 +204,11 @@ const MIGRATIONS = [
   // refused REAUTH_ACCOUNT_STATE_UNKNOWN, fail-closed.
   'migrations/20261001_users_sessions_ended_at.sql',
   'migrations/20260527_mutation_primitives.sql',
+  // The governed-action ledger's open command vocabulary, as the deploy set
+  // applies it after 20260527: the approval signature records command
+  // 'approve' (spine F1, approveBoundFilingSections), which 20260527's
+  // closed list refuses.
+  'db/migrations/20260730_c2c_ana_actions_command_vocab.sql',
   'migrations/20260609_audit_hmac_seal.sql',
   'migrations/20260921_audit_logs_chain_seq.sql',
   // public.actor_name (D3, 2026-09-29): project reads name people through it.
@@ -197,10 +216,14 @@ const MIGRATIONS = [
   // The project: the program, its filing scaffold, its PM-spine anchor.
   'migrations/20260524_program_workbench_schema.sql',
   'migrations/20260907_regulatory_programs_application_number.sql',
+  // The real project create INSERT now records both EU device classifications.
+  'migrations/20261012b_regulatory_programs_eu_device_classes.sql',
   'migrations/20260528_phase9_document_schema.sql',
   'migrations/20260529_phase9_backfill.sql',
   'migrations/20260804_phase9_rule_pack_outlines.sql',
   'migrations/20260814_projects_regulatory_program_anchor.sql',
+  'db/migrations/20260401_project_sharing_visibility.sql',
+  'db/migrations/20260314_phase12_multi_user_review.sql',
   // projects.therapeutic_area and .retrieval_mode: the legacy project routes select the whole row (PF-08).
   'db/migrations/20260508_project_therapeutic_area.sql',
   'migrations/20260603_project_retrieval_mode.sql',
@@ -212,6 +235,10 @@ const MIGRATIONS = [
   'migrations/20260829_cre_source_versioning.sql',
   // Who captured it, and the capture record's write-once guard (VR-16, VR-16b).
   'migrations/20261001_cre_evidence_sources_capture_immutability.sql',
+  // The text a capture was read to, and its measure (Data Room catalog S2).
+  'migrations/20261008c_data_room_source_text.sql',
+  // The study a capture names, keyed to its organization (Data Room catalog S3).
+  'migrations/20261008d_cre_source_study_ref.sql',
   'migrations/20260726_file_uploads_tenancy.sql',
   'db/migrations/20260828_file_uploads_checksum.sql',
   'migrations/20261006_document_data_dispositions.sql',
@@ -233,8 +260,20 @@ const MIGRATIONS = [
   'migrations/20260728_authoring_document_governed_binding.sql',
   'migrations/20260814d_document_alias_map.sql',
   'migrations/20260921_authoring_document_provenance.sql',
+  /* The AnA turn-record store. The model recorded on a drafted document is
+     resolved FROM the turn record the draft names and from nowhere else
+     (27211528b, SEC-A-7 door 2: provenance.model used to be caller input, so
+     any member could name any model for prose written into three append-only
+     records). Without this store the walk's draft can record no model at all,
+     which is the honest outcome for an unfiled turn -- so the walk files one. */
+  'migrations/20260926_ana_turn_records.sql',
   // Submission Center: the governed sign, the dispatch gate's review store, the transmittal ledger.
   'migrations/20260604_shadow_review.sql',
+  'migrations/20261015_shadow_review_waiver.sql', // P-34: a failed run records its failure_code
+  'migrations/20261015b_shadow_finding_disposition.sql', // P-35: the dispatch count reads who closed each critical
+  // P-33: the one dispatch verdict reads the IND LOA and safety-report registers.
+  'migrations/20260614_ind_safety_reports.sql',
+  'migrations/20260614_ind_cross_references.sql',
   'db/migrations/20260725_submission_orchestrator_store_port.sql',
   'db/migrations/20260725_esig_gate_columns_port.sql',
   'migrations/20260813d_esignature_governed_unification.sql',
@@ -244,6 +283,12 @@ const MIGRATIONS = [
   // Which account a transmit is sent under (b7bf25037, 2026-10-01). The guard
   // resolves it before the wire, and an unreadable choice refuses the send.
   'migrations/20261001g_organization_gateway_accounts.sql',
+  // The Module 1.4 cross-reference register. Since 2026-10-11 (D2, 4ad6118fc)
+  // Submission Readiness asks an ORIGINAL IND for its Module 3 and reads this
+  // register for the files that may stand in for it; a register it cannot read
+  // is reported as unreadable and blocks, so a journey without the table
+  // proves the refusal of a database gap, not of a missing dependency.
+  'migrations/20260614_ind_cross_references.sql',
   // Last: the same-organization project keys (PF-04) over every store above
   // that names a project. After 20260727_prm_program_link, whose unchecked
   // backfill must never run with the key present.

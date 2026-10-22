@@ -7,15 +7,9 @@
  * four Overview KPIs).
  *
  * SOURCED FROM REAL TABLES (never fabricated):
- *   • portfolio  ← reg_submissions (sub_id, product_id, region, sub_type)
- *                  + per-submission overdue Information Requests from
- *                    reg_questions (status IN OPEN/DRAFTED/IN_REVIEW, due_date < now)
- *                  + the Regulatory Preparedness Index from the real RPI engine
- *                    (server/src/services/reg/rpi.ts::computeRPI). These are the
- *                    queries + engine GET /api/cmc/blueprint/portfolio/overview
- *                    (server/api/cmc/portfolio.ts) ran; that router was retired
- *                    on 2026-10-05 with no caller, and this board is the one
- *                    portfolio read.
+ *   • portfolio  ← canonical submissions anchored by program_id, with actual
+ *                  tenant-scoped eCTD sequence and Module 3 leaf counts.
+ *                  No parallel legacy registry or invented preparedness score.
  *   • sections   ← cmc_module3_sections (section_key, section_path,
  *                  approval_state) for one project — the governed Module 3
  *                  store the operating-system routes read/write. Only populated
@@ -28,10 +22,17 @@
  * unavailable for a submission — never a fabricated score or a fake zero.
  * Display fields the surface renders that have NO faithful org-scoped source in
  * this schema (specifications, stability series, batch dispositions, blueprint
- * readiness, per-region global readiness, agency correspondence) are returned
- * as explicit null — never invented. Fails CLOSED to honest empties
- * (provisioned:false) rather than 500 when a backing table is absent, so the
- * surface keeps its fixture fallback.
+ * readiness, per-region global readiness) are returned as explicit null —
+ * never invented. Failed/unprovisioned reads publish unavailable metadata and
+ * no established counts.
+ *
+ * NO AGENCY CORRESPONDENCE (2026-10-19, rows D2 and D5; decisions P-38 and
+ * P-39 item 1). The board read the earlier CMC question file (reg_questions)
+ * and served it as `correspondence`, with an `irOverdue` KPI counted by that
+ * file's own rule. Agency questions have one home, the letter: CMC reads a
+ * program's questions from GET /api/concept2cure/projects/:projectId/
+ * agency-questions, with the letter's own overdue verdict, and the earlier file
+ * is read-only history behind GET /api/cmc/agency-questions.
  *
  * @module server/routes/cmc-module3-board.routes
  */
@@ -46,22 +47,16 @@ const logger = createScopedLogger('cmc-module3-board');
 
 /** One portfolio row — matches CmcPortfolio (rpi/ir nullable when unmeasurable). */
 interface PortfolioRow {
+  submissionId: number;
+  programId: string | null;
   sub: string;
   product: string;
   region: string;
   type: string;
   rpi: number | null;
   ir: number | null;
-  /**
-   * Where this row lives: 'spine' = the canonical submission core
-   * (submissions/ectd_sequences/submission_leaves — what the C2C intake
-   * creates and Module 3 placement writes into); 'rpi' = the legacy
-   * reg_submissions store the preparedness engine reads. The board used to
-   * read ONLY the legacy store, which does not even exist on a freshly
-   * provisioned database — so a program with a fully placed Module 3 opened
-   * onto "0 submissions".
-   */
-  source: 'spine' | 'rpi';
+  /** The same canonical filing core that project intake and placement write. */
+  source: 'spine';
   /** Spine rows: placed Module 3 leaves (lower(section_code) like 'm3%'). */
   m3Leaves: number | null;
   /** Spine rows: eCTD sequences on the submission. */
@@ -72,29 +67,12 @@ interface PortfolioRow {
  * Is this error "no backend here", or a read that failed?
  *
  * Every block below answered both with `provisioned: false`, so a transient
- * database error rendered as "the correspondence store is not provisioned" —
- * and the overdue-IR KPI silently swapped to a different metric under the same
- * label. 42P01 (undefined_table) is genuinely unprovisioned; anything else is a
- * read that did not complete, and the surface must be told which it got.
+ * database error rendered as "the store is not provisioned". 42P01
+ * (undefined_table) is genuinely unprovisioned; anything else is a read that
+ * did not complete, and the surface must be told which it got.
  */
 function isUnprovisioned(err: unknown): boolean {
   return (err as { code?: string } | null)?.code === '42P01';
-}
-
-/** One open agency question touching Module 3 — straight from reg_questions. */
-interface CorrespondenceRow {
-  id: number | string;
-  question: string;
-  sectionRef: string | null;
-  priority: string | null;
-  severity: string | null;
-  status: string;
-  region: string | null;
-  dueDate: string | null;
-  overdue: boolean;
-  assignedTo: string | null;
-  /** The authoring document holding the drafted response, when one is linked. */
-  responseDocId: string | null;
 }
 
 /** One governed Module 3 section — matches CmcSection { key, path, st }. */
@@ -133,27 +111,32 @@ function mapApprovalState(state: unknown): SectionRow['st'] {
  */
 async function buildSpinePortfolio(
   tenantId: number,
+  programId?: string,
 ): Promise<{ rows: PortfolioRow[]; provisioned: boolean; unreadable: boolean }> {
   try {
     const rows = (
       await q(
-        `select s.title,
+        `select s.id, s.program_id, s.title,
                 coalesce(s.product_name, '')     as product,
                 coalesce(s.primary_region, '')   as region,
                 coalesce(s.application_type, '') as type,
                 (select count(*)::int from ectd_sequences e
-                  where e.submission_id = s.id and e.deleted_at is null) as sequences,
+                  where e.submission_id = s.id and e.organization_id = s.organization_id and e.deleted_at is null) as sequences,
                 (select count(*)::int from submission_leaves l
                    join ectd_sequences e2 on e2.id = l.sequence_id
                   where e2.submission_id = s.id
+                    and e2.organization_id = s.organization_id and l.organization_id = s.organization_id
                     and l.deleted_at is null and e2.deleted_at is null
-                    and lower(l.section_code) like 'm3%') as m3_leaves
+                    and (lower(l.section_code) like 'm3%' or l.section_code = '3' or l.section_code like '3.%')) as m3_leaves
            from submissions s
           where s.organization_id = $1 and s.deleted_at is null
+            and ($2::text is null or s.program_id::text = $2)
           order by s.updated_at desc nulls last, s.id desc`,
-        [tenantId],
+        [tenantId,programId ?? null],
       )
     ).rows as Array<{
+      id: number;
+      program_id: string | null;
       title: string;
       product: string;
       region: string;
@@ -163,12 +146,14 @@ async function buildSpinePortfolio(
     }>;
     return {
       rows: rows.map((r) => ({
+        submissionId: r.id,
+        programId: r.program_id,
         sub: r.title,
         product: r.product,
         region: r.region.toUpperCase(),
         type: r.type.toUpperCase(),
-        // The preparedness engine is keyed to the legacy store; no score is
-        // computable for a spine row — null, never a fake number.
+        // No preparedness assessment or per-filing question relationship is
+        // supplied by these persisted fields. Keep those unknown.
         rpi: null,
         ir: null,
         source: 'spine' as const,
@@ -184,191 +169,6 @@ async function buildSpinePortfolio(
     });
     return { rows: [], provisioned: false, unreadable: !isUnprovisioned(err) };
   }
-}
-
-/**
- * Open agency questions touching Module 3 — reg_questions is org-scoped and
- * carries the question text, CTD section reference, priority/severity, status
- * and due date. The board previously returned correspondence:null and the
- * Program-records tab rendered a permanent empty state while these rows fed
- * only an Overview KPI. Filtered to Module 3 references PLUS unsectioned
- * rows — the Log-question dialog makes the section optional, and a question
- * this file confirmed must never vanish from the only UI over the store
- * (non-M3 sections stay excluded: they belong to another module's file).
- * Ordered so the nearest deadline is first. Fails closed to unprovisioned.
- */
-async function buildCorrespondence(
-  tenantId: number,
-): Promise<{
-  rows: CorrespondenceRow[];
-  provisioned: boolean;
-  /** True when the read FAILED (as opposed to the store being absent). */
-  unreadable: boolean;
-  /** Open questions matching the filter, BEFORE the page limit. */
-  totalOpen: number;
-  /** Overdue among ALL of them — not among the page. */
-  overdueTotal: number;
-  /** True when the page shows fewer than the store holds. */
-  truncated: boolean;
-}> {
-  try {
-    const rows = (
-      await q(
-        `select id, question_text, section_reference, priority, severity, status,
-                region, due_date, assigned_to, response_doc_id,
-                (due_date is not null and due_date < current_date
-                 and status in ('OPEN','DRAFTED','IN_REVIEW')) as overdue
-           from reg_questions
-          where organization_id = $1
-            and status in ('OPEN','DRAFTED','IN_REVIEW')
-            and (section_reference ilike '3.%' or section_reference ilike 'm3%'
-                 or section_reference is null)
-          order by (due_date is null), due_date asc, id desc
-          limit 50`,
-        [tenantId],
-      )
-    ).rows as Array<{
-      id: number | string;
-      question_text: string;
-      section_reference: string | null;
-      priority: string | null;
-      severity: string | null;
-      status: string;
-      region: string | null;
-      due_date: string | Date | null;
-      assigned_to: string | null;
-      response_doc_id: string | null;
-      overdue: boolean;
-    }>;
-    /* The counts come from the STORE, not from the page above. `irOverdue` —
-       rendered as "You have N information requests overdue" — was the overdue
-       count of this LIMIT 50 page, so an org with more than fifty open Module 3
-       questions was told it had fewer overdue than it did. A page is for
-       reading; a count is for acting on. */
-    const totals = (
-      await q(
-        `select count(*)::int as total,
-                count(*) filter (
-                  where due_date is not null and due_date < current_date
-                )::int as overdue
-           from reg_questions
-          where organization_id = $1
-            and status in ('OPEN','DRAFTED','IN_REVIEW')
-            and (section_reference ilike '3.%' or section_reference ilike 'm3%'
-                 or section_reference is null)`,
-        [tenantId],
-      )
-    ).rows[0] as { total: number; overdue: number } | undefined;
-    const totalOpen = Number(totals?.total ?? rows.length);
-
-    return {
-      totalOpen,
-      overdueTotal: Number(totals?.overdue ?? rows.filter((r) => r.overdue).length),
-      truncated: totalOpen > rows.length,
-      rows: rows.map((r) => ({
-        id: r.id,
-        question: r.question_text,
-        sectionRef: r.section_reference,
-        priority: r.priority,
-        severity: r.severity,
-        status: r.status,
-        region: r.region,
-        dueDate: r.due_date ? new Date(r.due_date).toISOString() : null,
-        overdue: Boolean(r.overdue),
-        assignedTo: r.assigned_to,
-        responseDocId: r.response_doc_id ?? null,
-      })),
-      provisioned: true,
-      unreadable: false,
-    };
-  } catch (err) {
-    logger.warn('reg_questions read failed', {
-      err: err instanceof Error ? err.message : String(err),
-    });
-    return {
-      rows: [], provisioned: false, unreadable: !isUnprovisioned(err),
-      totalOpen: 0, overdueTotal: 0, truncated: false,
-    };
-  }
-}
-
-/**
- * Build the org-wide portfolio from reg_submissions, enriched per submission
- * with the overdue-IR count and the real RPI. Fails closed to an empty,
- * unprovisioned list; degrades rpi/ir to null (never a fake number) per row.
- */
-async function buildPortfolio(
-  tenantId: number,
-): Promise<{ rows: PortfolioRow[]; provisioned: boolean; unreadable: boolean }> {
-  let subs: Array<{ sub_id: string; product_id: string; region: string; sub_type: string }>;
-  try {
-    subs = (
-      await q(
-        `select sub_id, product_id, region, sub_type
-           from reg_submissions
-          where tenant_id = $1
-          order by created_at desc`,
-        [tenantId],
-      )
-    ).rows;
-  } catch (err) {
-    logger.warn('reg_submissions read failed', {
-      err: err instanceof Error ? err.message : String(err),
-    });
-    return { rows: [], provisioned: false, unreadable: !isUnprovisioned(err) };
-  }
-
-  const rows: PortfolioRow[] = [];
-  for (const s of subs) {
-    // Overdue Information Requests (real; null only if the query itself fails).
-    let ir: number | null = null;
-    try {
-      const r = (
-        await q(
-          `select sum(case when due_date < now() then 1 else 0 end)::int as overdue
-             from reg_questions
-            where sub_id = $1 and status in ('OPEN','DRAFTED','IN_REVIEW')`,
-          [s.sub_id],
-        )
-      ).rows[0];
-      ir = r?.overdue ?? 0;
-    } catch (err) {
-      logger.warn('reg_questions read failed for submission', {
-        subId: s.sub_id,
-        err: err instanceof Error ? err.message : String(err),
-      });
-      ir = null;
-    }
-
-    // Regulatory Preparedness Index from the real engine; null on failure
-    // (honest degradation — never the legacy fabricated fallback score).
-    let rpi: number | null = null;
-    try {
-      const rpiMod = await import('../src/services/reg/rpi.js');
-      const result = await rpiMod.computeRPI(s.sub_id);
-      rpi = typeof result?.rpi === 'number' ? result.rpi : null;
-    } catch (err) {
-      logger.warn('RPI computation failed for submission', {
-        subId: s.sub_id,
-        err: err instanceof Error ? err.message : String(err),
-      });
-      rpi = null;
-    }
-
-    rows.push({
-      sub: s.sub_id,
-      product: s.product_id,
-      region: s.region,
-      type: s.sub_type,
-      rpi,
-      ir,
-      source: 'rpi',
-      m3Leaves: null,
-      sequences: null,
-    });
-  }
-
-  return { rows, provisioned: true, unreadable: false };
 }
 
 /**
@@ -444,26 +244,10 @@ export default function createCmcModule3BoardRoutes(): Router {
       typeof projectIdRaw === 'string' && projectIdRaw.trim() ? projectIdRaw.trim() : undefined;
 
     try {
-      const [spine, legacy, sections, correspondence] = await Promise.all([
-        buildSpinePortfolio(tenantId),
-        buildPortfolio(tenantId),
+      const [portfolio, sections] = await Promise.all([
+        buildSpinePortfolio(tenantId,projectId),
         buildSections(tenantId, projectId),
-        buildCorrespondence(tenantId),
       ]);
-      // Canonical spine rows first (they are the product's own submissions),
-      // then the legacy preparedness rows, deduplicated on identity so a
-      // submission mirrored in both stores is not counted twice.
-      const spineKeys = new Set(
-        spine.rows.map((r) => `${r.sub}`.trim().toLowerCase()),
-      );
-      const portfolio = {
-        rows: [
-          ...spine.rows,
-          ...legacy.rows.filter((r) => !spineKeys.has(`${r.sub}`.trim().toLowerCase())),
-        ],
-        provisioned: spine.provisioned || legacy.provisioned,
-        unreadable: spine.unreadable || legacy.unreadable,
-      };
 
       const rpiValues = portfolio.rows
         .map((r) => r.rpi)
@@ -472,26 +256,10 @@ export default function createCmcModule3BoardRoutes(): Router {
         ? Math.round(rpiValues.reduce((a, b) => a + b, 0) / rpiValues.length)
         : null;
 
-      /* One source for 'overdue IRs': the same org-wide reg_questions read
-         the correspondence card renders — the KPI and the tab can no longer
-         disagree. The legacy per-submission sum remains the fallback ONLY where
-         reg_questions is genuinely absent. When either read FAILED there is no
-         honest count to publish, so this is null and the surface says the figure
-         is not established rather than showing a different metric under the same
-         label. */
-      const irOverdue: number | null = correspondence.provisioned
-        ? correspondence.overdueTotal
-        : correspondence.unreadable || portfolio.unreadable
-          ? null
-          : portfolio.rows
-              .map((r) => r.ir)
-              .filter((v): v is number => typeof v === 'number')
-              .reduce((a, b) => a + b, 0);
-
       /* A failed section read publishes NO counts: 0 sections / 0 approved /
          0% ready beside sectionsUnreadable:true was a believable figure over
          a register nothing had read. */
-      const sectionsReadable = Boolean(sections && !sections.unreadable);
+      const sectionsReadable = Boolean(sections?.provisioned && !sections.unreadable);
       const sectionsTotal = sections && sectionsReadable ? sections.rows.length : null;
       const sectionsApproved = sections && sectionsReadable
         ? sections.rows.filter((s) => s.st === 'approved').length
@@ -509,9 +277,8 @@ export default function createCmcModule3BoardRoutes(): Router {
           portfolio: portfolio.rows,
           sections: sections ? sections.rows : null,
           kpis: {
-            submissions: portfolio.rows.length,
+            submissions: portfolio.provisioned && !portfolio.unreadable ? portfolio.rows.length : null,
             rpiAverage,
-            irOverdue,
             sectionsApproved,
             sectionsTotal,
             readyPercent,
@@ -523,26 +290,15 @@ export default function createCmcModule3BoardRoutes(): Router {
           batches: null,
           blueprint: null,
           global: null,
-          // Open Module 3 agency questions (reg_questions, org-scoped) — null
-          // ONLY when the store is unprovisioned, so the surface can tell
-          // "no backend here" from "no open questions".
-          correspondence: correspondence.provisioned ? correspondence.rows : null,
           meta: {
             projectId: projectId ?? null,
             portfolioProvisioned: portfolio.provisioned,
-            spinePortfolioProvisioned: spine.provisioned,
+            spinePortfolioProvisioned: portfolio.provisioned,
             sectionsProvisioned: sections ? sections.provisioned : null,
-            correspondenceProvisioned: correspondence.provisioned,
             /* provisioned:false answers two different questions; these say which
-               one you got, so a failed read is never rendered as "none open". */
-            correspondenceUnreadable: correspondence.unreadable,
+               one you got, so a failed read is never rendered as "none". */
             portfolioUnreadable: portfolio.unreadable,
             sectionsUnreadable: sections ? sections.unreadable : null,
-            /* The card shows a page; these describe the store behind it, so a
-               surface can say "50 of 128" rather than imply it holds them all. */
-            correspondenceTotalOpen: correspondence.provisioned ? correspondence.totalOpen : null,
-            correspondenceOverdueTotal: correspondence.provisioned ? correspondence.overdueTotal : null,
-            correspondenceTruncated: correspondence.provisioned ? correspondence.truncated : null,
             generatedAt: new Date().toISOString(),
           },
         },

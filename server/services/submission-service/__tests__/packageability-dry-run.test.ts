@@ -1,0 +1,142 @@
+/**
+ * The existing packageability gate discards every temporary bundle. Non-FDA
+ * checks retain the explicit dry-run contract; FDA checks assess the recorded
+ * identity captured by the governed signature so contact gates see the facts
+ * the person is approving (MR-10 identity completion, 2026-10-21).
+ */
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+const state = vi.hoisted(() => ({ writes: 0, blockers: [] as string[], cleaned: 0, status: 'validated', intent: 'freeze',
+  region: 'jp', captureAvailable: true, calls: [] as Array<Record<string, unknown>>,
+  identity: { programId: '11111111-1111-4111-8111-111111111111', applicationNumber: '123456',
+    applicantSponsorId: '22222222-2222-4222-8222-222222222222', applicantId: '123456789', applicantName: 'Recorded Sponsor',
+    contact: { name: 'Regulatory Contact', phone: '+1 617 555 0100' as string | null, email: 'regulatory@example.test' } },
+}));
+
+vi.mock('../../../db', () => {
+  const rowsFor = (name: string) =>
+    name === 'ectd_sequences'
+      ? [{ id: 1, submissionId: 1, region: state.region, sequenceNumber: '0000', status: state.status, type: 'original', organizationId: 7 }]
+      : [];
+  const tableNameOf = (t: any) => t?.[Symbol.for('drizzle:Name')] ?? t?._?.name ?? '';
+  const select = () => {
+    let name = '';
+    const chain: any = {
+      from: (t: any) => { name = tableNameOf(t); return chain; },
+      where: () => chain,
+      limit: async () => rowsFor(name),
+      then: (res: any, rej: any) => Promise.resolve(rowsFor(name)).then(res, rej),
+    };
+    return chain;
+  };
+  const textOf = (q: any): string => (q?.queryChunks ?? []).map((c: any) => (Array.isArray(c?.value) ? c.value.join('') : '?')).join('');
+  const execute = async (q: any) => {
+    const t = textOf(q);
+    if (t.includes('c2c_ana_actions')) return { rows: [{ id: 'sig-1', payload: { intent: state.intent, meaning: 'approval' } }] };
+    if (t.includes('electronic_signatures')) {
+      return { rows: [{ bound_payload_digest: 'd', binding_basis: 'ectd-sequence-leaf-manifest-sha256', superseded_by: null, is_valid: true, verification_status: 'valid' }] };
+    }
+    return { rows: [] };
+  };
+  const pool = {
+    query: async () => ({ rowCount: 0, rows: [] }),
+    connect: async () => { state.writes += 1; throw new Error('no state change expected'); },
+  };
+  return { db: { select, execute }, pool };
+});
+vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async () => ({ persisted: true })) }, writeChainedAuditRow: vi.fn() }));
+vi.mock('../../part11/signature-persistence', async (orig) => ({
+  ...(await orig<any>()),
+  deriveGovernedTargetBinding: async () => ({ digest: 'd', basis: 'ectd-sequence-leaf-manifest-sha256', note: '',
+    ...(state.region === 'fda' && state.captureAvailable ? { recordedPackageIdentity: { version: 1, identity: state.identity } } : {}),
+  }),
+  isSignatureWithdrawn: () => false,
+}));
+vi.mock('../../ectd/assess-dispatch-readiness', () => ({
+  assessSequenceDispatchReadiness: async () => ({
+    gate: { cleared: true, blockers: [] }, freezeGate: { cleared: true, blockers: [] },
+    validationErrors: 0, unacknowledgedShadowCriticals: 0,
+  }),
+}));
+vi.mock('../../ectd/assemble-from-core', async (orig) => {
+  const real = await orig<any>();
+  return {
+    ...real,
+    assembleSequence: async (params: Record<string, unknown>) => {
+      state.calls.push(params);
+      return {
+        dryRun: params.dryRun === true,
+        bundle: { path: '', sha256: '', sizeBytes: 0, format: 'ectd' },
+        skipped: [], unresolvedLeaves: [], materialized: 1,
+        unfinalized: state.blockers.length, unfinalizedSections: state.blockers.map((b) => ({ sectionCode: b, status: 'draft' })),
+        cleanup: async () => { state.cleaned += 1; },
+      };
+    },
+  };
+});
+
+import { freezeSequence } from '../submission-service';
+
+const ctx = { organizationId: 7, userId: 11 };
+
+beforeEach(() => {
+  state.writes = 0;
+  state.cleaned = 0;
+  state.blockers = [];
+  state.status = 'validated';
+  state.intent = 'freeze';
+  state.region = 'jp'; state.captureAvailable = true; state.identity.contact.phone = '+1 617 555 0100';
+  state.calls.length = 0;
+});
+
+describe('the non-FDA governed packageability check retains its explicit dry run (P-27)', () => {
+  it('asks the assembler for a dry run and supplies no identity of its own', async () => {
+    await expect(freezeSequence(1, ctx, 'sig-1')).rejects.toThrow(/no state change expected/);
+    expect(state.calls).toHaveLength(1);
+    expect(state.calls[0]).toMatchObject({ sequenceId: 1, organizationId: 7, dryRun: true });
+    expect(state.calls[0]).not.toHaveProperty('applicationId');
+    expect(state.calls[0]).not.toHaveProperty('sponsorId');
+    expect(state.calls[0]).not.toHaveProperty('sponsorName');
+  });
+
+  it('discards the dry-run bundle whether or not the check passes', async () => {
+    await expect(freezeSequence(1, ctx, 'sig-1')).rejects.toThrow(/no state change expected/);
+    expect(state.cleaned).toBe(1);
+    state.blockers = ['m2.5'];
+    await expect(freezeSequence(1, ctx, 'sig-1')).rejects.toMatchObject({ code: 'DISPATCH_BLOCKED' });
+    expect(state.cleaned).toBe(2);
+  });
+});
+
+
+describe('the FDA governed packageability check uses the signature-captured recorded facts', () => {
+  it('supplies the captured DUNS and regulatory contact, then discards the temporary package', async () => {
+    state.region = 'fda';
+    await expect(freezeSequence(1, ctx, 'sig-1')).rejects.toThrow(/no state change expected/);
+    expect(state.calls).toHaveLength(1);
+    expect(state.calls[0]).toMatchObject({ sequenceId: 1, organizationId: 7, applicationId: '123456',
+      sponsorId: '123456789', sponsorName: 'Recorded Sponsor',
+      contacts: [{ type: 'regulatory', name: 'Regulatory Contact', phone: '+1 617 555 0100', email: 'regulatory@example.test' }],
+      recordedPackageIdentity: { version: 1, identity: state.identity } });
+    expect(state.calls[0]).not.toHaveProperty('dryRun');
+    expect(state.cleaned).toBe(1);
+  });
+
+  it('refuses an FDA binding with no captured identity before assembly or a state write', async () => {
+    state.region = 'fda'; state.captureAvailable = false;
+    await expect(freezeSequence(1, ctx, 'sig-1')).rejects.toMatchObject({ code: 'DISPATCH_BLOCKED', message: expect.stringMatching(/no recorded application\/applicant identity/) });
+    expect(state.calls).toHaveLength(0); expect(state.writes).toBe(0); expect(state.cleaned).toBe(0);
+  });
+
+  it('refuses incomplete recorded FDA contact facts before assembly or a state write', async () => {
+    state.region = 'fda'; state.identity.contact.phone = null;
+    await expect(freezeSequence(1, ctx, 'sig-1')).rejects.toMatchObject({ code: 'DISPATCH_BLOCKED', message: expect.stringMatching(/telephone/) });
+    expect(state.calls).toHaveLength(0); expect(state.writes).toBe(0);
+  });
+
+  it('retains the real assembly blockers and cleanup for a captured FDA package', async () => {
+    state.region = 'fda'; state.blockers = ['m2.5'];
+    await expect(freezeSequence(1, ctx, 'sig-1')).rejects.toMatchObject({ code: 'DISPATCH_BLOCKED', message: expect.stringMatching(/not approved/) });
+    expect(state.calls).toHaveLength(1); expect(state.cleaned).toBe(1); expect(state.writes).toBe(0);
+  });
+});

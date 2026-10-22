@@ -1,0 +1,4 @@
+  ✗ RED — runtime code turns enforcement off with a transaction-local set_config (invisible to the session-scoped check)
+  ✗ RED — a new route uses SET LOCAL of the bypass flag (allowed only in innovation-routes guardQuery)
+  ✗ RED — the one allowed writer grows past its allowance
+[ci:session-scoped-rls-bypass:selftest] FAIL — 3/28 case(s) did not hold against /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/18f73405-4fbd-5074

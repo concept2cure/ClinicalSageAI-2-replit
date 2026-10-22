@@ -51,13 +51,13 @@ import type { PoolClient } from 'pg';
 import { createScopedLogger } from '../../utils/logger.js';
 import { productTypesToSegments } from '../../services/report-os/segment.js';
 import {
-  filingTypesForView,
   foldersForView,
   VAULT_FOLDER_PRESETS,
   VAULT_VIEWS,
   VAULT_DOC_KINDS,
   type VaultViewId,
   vaultIngestTypeLabel,
+  vaultSpineLabel,
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 import { sectionHasContentSql, sectionCompletionPct } from '../../services/c2c/section-content.js';
 import {
@@ -65,23 +65,29 @@ import {
   folderLabel,
 } from '../../services/vault/vault-filing.service.js';
 import { listClientDocuments } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
+import { sourceReadView } from '../../../shared/data-room-processing-status.js';
+import { sourceProcessingSummary } from '../../services/clinical-regulatory-evidence/data-room-processing-read.js';
 import { readVaultCoverage, type VaultCoverage } from '../../services/vault/vault-coverage.js';
 import { normalizeCtdCode, compareSectionCode } from '../../../shared/regulatory/section-code.js';
 import { writeChainedAuditRow } from '../../services/auditService.js';
 import { readRecordAuditHistory } from '../audit-trail-ledger.routes.js';
 import { readVersionFamily, supersededSql, versionCountLateral } from '../../services/vault/vault-version-family.js';
 import { readVaultLifecycles, vaultVersionNotTransmittable } from '../../services/vault/vault-lifecycle.js';
-import { fileDataRoomSources, readFiledAs } from '../../services/vault/vault-data-room-filing.js';
+import { countDataRoomStages, fileDataRoomSources, readFiledAs } from '../../services/vault/vault-data-room-filing.js';
 import { vaultDataEligibleSql, vaultBinaryAvailableSql, vaultDispositionChoiceSql } from '../../services/document-data-disposition/eligibility.js';
 import { searchVaultDocuments } from '../../services/vault/vault-search.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
 import { governedActorId, requireEditorAccess } from '../../middleware/orgMembership.js';
 import { getStorageProvider, getStorageProviderFor } from '../../services/storage/index.js';
+import { StorageIntegrityError } from '../../services/storage/storage-provider.js';
 /* The one translation from a CMC TEXT project id to the integer the
    governed artifact registry FKs to. Its contract requires every caller to
    branch on the resolution and keep an honest degraded path. */
 import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project.js';
 import { programInOrganization } from '../../services/c2c/program-access';
+import { installProjectRouteAccess, sendProjectAccessFailure } from './project-route-access';
+import { ProgramReadAccessError, getCurrentAccessibleProgramScope } from '../../services/c2c/current-program-access';
+import { projectVaultRelationshipHistory, VaultHistoryAccessError } from '../../services/vault/vault-history-access';
 
 const logger = createScopedLogger('c2c-project-vault-routes');
 
@@ -178,8 +184,9 @@ interface DataRoomBlock {
   /** Sources the classifier refused to place: a person has to decide. */
   needsReview: number;
   sources: DataRoomRow[];
-  /** The lane reads the newest DATA_ROOM_WINDOW current sources. When there
-   *  are more, every count above covers the window only and is a floor. */
+  /** The lane LISTS the newest DATA_ROOM_WINDOW current sources. The counts
+   *  above cover every current source of the project (countDataRoomStages,
+   *  2026-10-08), whatever the window shows. */
   window: { shown: number; truncated: boolean };
 }
 
@@ -331,7 +338,7 @@ export async function recordVaultDownload(
     await client.query('BEGIN');
     await writeChainedAuditRow(client, {
       tenantId: d.orgId,
-      userId: (req as any).user?.id ?? undefined,
+      userId: governedActorId(req) ?? undefined,
       action: 'vault.document.download',
       resourceType: 'vault_document',
       resourceId: d.documentId,
@@ -419,17 +426,6 @@ function normalizeStatus(raw: string | null | undefined, hasContent: boolean): s
     case 'todo':     return 'not_started';
     default:         return hasContent ? 'draft' : 'not_started';
   }
-}
-
-/** Spine label = the view's primary filing framework + its governing refs
- *  (same basis the shipped client `vaultStructureToSpine` converter uses). */
-function vaultViewLabel(view: VaultViewId): string {
-  const filings = filingTypesForView(view);
-  const primary = filings[0];
-  if (!primary) return view;
-  const refs = (primary as { regulatoryRefs?: string[] }).regulatoryRefs;
-  const suffix = refs && refs.length ? ` · ${refs.join(' · ')}` : '';
-  return `${primary.label}${suffix}`;
 }
 
 /** Bytes → '3.4 MB' (real size only; null → em dash, never invented). */
@@ -839,6 +835,31 @@ export interface VaultByteSource {
   storageProvider: string | null;
 }
 
+/** Preserve a provider integrity refusal without retrying or returning bytes. */
+function providerReadRefusal(error: unknown): VerifiedVaultBytes {
+  // Providers prove their own recorded identity before returning bytes.
+  // Preserve that verdict when they reject corruption; a present altered
+  // file must not become a missing-file finding in the fixity audit.
+  if (error instanceof StorageIntegrityError) {
+    const altered = error.reason === 'size_mismatch' || error.reason === 'digest_mismatch';
+    return {
+      ok: false,
+      status: 409,
+      error: altered ? 'CONTENT_HASH_MISMATCH' : 'STORED_FILE_UNREADABLE',
+      message: altered
+        ? 'The stored file or its metadata does not match the recorded storage identity. Nothing was downloaded.'
+        : 'The stored file has no valid recorded identity. Nothing was downloaded.',
+    };
+  }
+  return {
+    ok: false,
+    status: 409,
+    error: 'STORED_FILE_MISSING',
+    message:
+      'The vault record exists but its stored file could not be read. Nothing was downloaded.',
+  };
+}
+
 export async function readVerifiedVaultBytes(
   source: VaultByteSource,
   recordedHash: string | null,
@@ -879,13 +900,7 @@ export async function readVerifiedVaultBytes(
         documentId,
         reason: err instanceof Error ? err.message : 'unknown',
       });
-      return {
-        ok: false,
-        status: 409,
-        error: 'STORED_FILE_MISSING',
-        message:
-          'The vault record exists but its stored file could not be read. Nothing was downloaded.',
-      };
+      return providerReadRefusal(err);
     }
     if (!got) {
       logger.error('vault download: stored version not readable for this organization', {
@@ -1052,15 +1067,17 @@ async function readFamilyHistory(
   orgId: number,
   family: Awaited<ReturnType<typeof readVersionFamily>>,
   documentId: string,
+  userId: number | undefined,
 ) {
   const versionIds = family ? family.map((v) => v.id) : [];
   // One more row than the window is asked for, so a cut is known and said
   // (the response's `truncated`), never a silent cap.
-  const history = await readRecordAuditHistory(client, orgId, {
+  const verifiedHistory = await readRecordAuditHistory(client, orgId, {
     tableName: 'vault_document',
     recordId: family ? versionIds : documentId,
     limit: HISTORY_WINDOW + 1,
   });
+  const history = await projectVaultRelationshipHistory(client, { organizationId: orgId, userId }, verifiedHistory);
   const lifecycles = family ? await readVaultLifecycles(client, orgId, versionIds) : new Map();
   const records = [...lifecycles.entries()].map(([vaultId, l]) => ({ vaultId, canonicalId: l.canonicalId as string }));
   const lifecycle = records.length > 0
@@ -1098,6 +1115,7 @@ async function readFamilyHistory(
 
 export default function createProjectVaultRoutes(): Router {
   const router = Router();
+  installProjectRouteAccess(router, 'vault');
 
   /**
    * GET /api/c2c/project-vault/search?q=&limit=&offset=&includeSuperseded=
@@ -1114,19 +1132,21 @@ export default function createProjectVaultRoutes(): Router {
     const limit = Math.min(Math.max(parseInt(String(req.query.limit ?? '25'), 10) || 25, 1), 100);
     const offset = Math.max(parseInt(String(req.query.offset ?? '0'), 10) || 0, 0);
     const includeSuperseded = req.query.includeSuperseded === 'true';
-    if (!q) {
-      return res.json({ success: true, data: { query: '', results: [], total: 0, limit, offset, reason: 'EMPTY_QUERY' } });
-    }
     try {
-      const found = await searchVaultDocuments(pool, { organizationId: orgId, programId: null, q, limit, offset, includeSuperseded });
+      const currentScope = await getCurrentAccessibleProgramScope(pool, { organizationId: orgId, userId: governedActorId(req) ?? undefined });
+      if (!q) {
+        return res.json({ success: true, data: { query: '', results: [], total: 0, limit, offset, reason: 'EMPTY_QUERY', scope: 'verified-accessible-programs' } });
+      }
+      const found = await searchVaultDocuments(pool, { organizationId: orgId, userId: currentScope.actor.userId, programId: null, q, limit, offset, includeSuperseded }, currentScope);
       return res.json({
         success: true,
         data: {
-          query: q, total: found.total, limit, offset, includeSuperseded,
+          query: q, total: found.total, limit, offset, includeSuperseded, scope: 'verified-accessible-programs',
           results: found.results.map((r) => ({ ...r, size: prettySize(r.sizeBytes) })),
         },
       });
     } catch (err) {
+      if (err instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, err);
       logger.error('vault library search failed', { err: err instanceof Error ? err.message : String(err) });
       return res.status(500).json({
         success: false,
@@ -1284,7 +1304,7 @@ export default function createProjectVaultRoutes(): Router {
       );
       /** The program+tenant predicate, shared by the page and its aggregates so
        *  a count can never be taken over a different set than the rows. */
-      const uploadsWhere = `d.program_id = $1 AND d.deleted_at IS NULL
+      const uploadsWhere = `d.program_id = $1 AND d.organization_id=$2 AND d.deleted_at IS NULL
               AND ${vaultDataEligibleSql('d')}
               AND EXISTS (
                 SELECT 1 FROM regulatory_programs rp
@@ -1382,7 +1402,8 @@ export default function createProjectVaultRoutes(): Router {
              (is_current = false), and counting both made one file two. One
              past the window, so a program with more says so; the reader's
              default cap was 200 and nothing said when it was reached. */
-          const read = await listClientDocuments(orgId, {
+          const read = await listClientDocuments(pool, orgId, {
+            userId: governedActorId(req) ?? undefined,
             programId: id,
             currentOnly: true,
             limit: DATA_ROOM_WINDOW + 1,
@@ -1424,10 +1445,7 @@ export default function createProjectVaultRoutes(): Router {
               : /image/i.test(mime) ? 'Image'
               : /text|markdown/i.test(mime) ? 'Text'
               : 'File';
-            const readState =
-              s.extractionStatus === 'extracted' ? 'Read'
-              : s.extractionStatus === 'failed' ? 'Text not readable'
-              : 'Not processed yet';
+            const readState = sourceReadView({ ...s, processing: s.processing ?? sourceProcessingSummary(meta) }).label;
             const suggestedFolder = dossier?.suggestedFolder ?? null;
             return {
               id: s.id,
@@ -1445,11 +1463,10 @@ export default function createProjectVaultRoutes(): Router {
               filedAs,
             };
           });
+          // Exact, over the whole project: the rows are a window, the counts are not.
+          const counts = await countDataRoomStages(pool, id, orgId);
           dataRoom = {
-            captured: rows.length,
-            classified: rows.filter(r => r.stage === 'classified' || r.stage === 'filed').length,
-            filed: rows.filter(r => r.stage === 'filed').length,
-            needsReview: rows.filter(r => r.stage === 'needs_review').length,
+            ...counts,
             sources: rows,
             window: { shown: rows.length, truncated },
           };
@@ -1482,7 +1499,7 @@ export default function createProjectVaultRoutes(): Router {
       });
       const data: VaultDisplayShape = {
         program: project.name || 'Vault',
-        spine: vaultViewLabel(view),
+        spine: vaultSpineLabel(view, project.program_type),
         standard: view,
         documentCount:
           documentCounts.authored + (documentCounts.cmcArtifacts ?? 0) + (documentCounts.uploads ?? 0),
@@ -1605,7 +1622,7 @@ export default function createProjectVaultRoutes(): Router {
 
       // The one search query (vault-search.ts), here scoped to this program; the
       // library search below asks the same query across the organisation.
-      const found = await searchVaultDocuments(pool, { organizationId: orgId, programId: id, q, limit, offset, includeSuperseded });
+      const found = await searchVaultDocuments(pool, { organizationId: orgId, userId: res.locals.currentProgramAccess.actor.userId, programId: id, q, limit, offset, includeSuperseded });
       return res.json({
         success: true,
         data: {
@@ -1625,6 +1642,10 @@ export default function createProjectVaultRoutes(): Router {
             placementStatus: r.placementStatus,
             version: r.version,
             current: r.current,
+            // The bytes a version is: a screen that names a version as
+            // evidence shows the sha256 it will pin (the library search
+            // below already carries it).
+            contentHash: r.contentHash ?? null,
             originalFileAvailable: r.originalFileAvailable,
             disposition: r.disposition,
             snippet: r.snippet,
@@ -1674,10 +1695,11 @@ export default function createProjectVaultRoutes(): Router {
       // "placed nowhere" would be a claim about leaves not read.
       const { readVaultPlacements, readVaultEstarUses, readVaultCmcEvidenceUses } = await import('../../services/vault/vault-where-used.js');
       const ids = family.map((v) => v.id);
-      const placements = await readVaultPlacements(pool, orgId, ids);
-      const estarUses = await readVaultEstarUses(pool, orgId, ids);
+      const actor = { userId: governedActorId(req) ?? undefined };
+      const placements = await readVaultPlacements(pool, orgId, ids, actor);
+      const estarUses = await readVaultEstarUses(pool, orgId, ids, actor);
       // The CMC records that cite each version as their source (row D2).
-      const cmcEvidence = await readVaultCmcEvidenceUses(pool, orgId, ids);
+      const cmcEvidence = await readVaultCmcEvidenceUses(pool, orgId, ids, actor);
       // Why each version would not be transmitted, in the words the transmit
       // refusal prints (VR-14's one rule, read for display), or null. Placement
       // is not refused on it; freeze, dispatch and transmit are. An unreadable
@@ -1691,7 +1713,13 @@ export default function createProjectVaultRoutes(): Router {
         cmcEvidence: cmcEvidence.get(v.id) ?? [],
         transmitRefusal: refusals[i],
       }));
-      return res.json({ success: true, data: { versions } });
+      // Who may sign a review or an approval here (QA 2026-10-08, walk 2, j3):
+      // the reader's own authority from the check the sign route applies, and
+      // the members who hold it, so the page names them instead of offering a
+      // signature the server refuses after the password.
+      const { readSigningPosture } = await import('../../services/vault/vault-signing-posture.js');
+      const signing = await readSigningPosture(pool, orgId, governedActorId(req));
+      return res.json({ success: true, data: { versions, signing } });
     } catch (err) {
       if (isMissingStore(err)) {
         return res.status(503).json({ success: false, error: 'STORE_UNAVAILABLE',
@@ -1775,11 +1803,12 @@ export default function createProjectVaultRoutes(): Router {
       client = await pool.connect();
       await client.query('BEGIN');
       await setTenantContextTx(client, orgId);
-      const { entries, chain, truncated } = await readFamilyHistory(client, orgId, family, documentId);
+      const { entries, chain, truncated } = await readFamilyHistory(client, orgId, family, documentId, governedActorId(req) ?? undefined);
       await client.query('COMMIT');
       return res.json({ success: true, data: { entries, chain, truncated } });
     } catch (err) {
       await client?.query('ROLLBACK').catch(() => undefined);
+      if (err instanceof ProgramReadAccessError || err instanceof VaultHistoryAccessError) return res.status(err.status).json({ success: false, error: err.code, message: err.message });
       logger.error('vault document history read failed', {
         documentId,
         err: err instanceof Error ? err.message : String(err),
@@ -1811,7 +1840,7 @@ export default function createProjectVaultRoutes(): Router {
         `SELECT d.id, d.file_name, d.document_title, d.mime_type, d.file_size, d.s3_key,
                 d.storage_version_id, d.storage_provider, d.content_hash
            FROM vault.documents d
-          WHERE d.id = $1 AND d.program_id = $2 AND d.deleted_at IS NULL
+          WHERE d.id = $1 AND d.program_id = $2 AND d.organization_id=$3 AND d.deleted_at IS NULL
             AND ${vaultBinaryAvailableSql('d')}
             AND EXISTS (
               SELECT 1 FROM regulatory_programs rp
@@ -1921,7 +1950,7 @@ export default function createProjectVaultRoutes(): Router {
   router.post('/:id/file', requireEditorAccess, async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
-    const userId: number | null = (req as any).user?.id ?? null;
+    const userId: number | null = governedActorId(req);
 
     const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
     const body = (req.body ?? {}) as {
@@ -1986,7 +2015,7 @@ export default function createProjectVaultRoutes(): Router {
     try {
       const outcome = await fileDataRoomSources({
         organizationId: orgId,
-        userId: (req as any).user?.id ?? null,
+        userId: governedActorId(req),
         programId: String(req.params.id),
         sourceIds: (req.body ?? {}).sourceIds,
         // Sources the person adds as the next version of a named document (QA-2026-10-08).
@@ -2023,7 +2052,7 @@ export default function createProjectVaultRoutes(): Router {
       const outcome = await confirmSuggestedFilings({
         programId: String(req.params.id),
         organizationId: orgId,
-        userId: (req as any).user?.id ?? null,
+        userId: governedActorId(req),
         folderId: body.folderId,
         documentIds: body.documentIds,
         note: body.note,
@@ -2057,7 +2086,7 @@ export default function createProjectVaultRoutes(): Router {
       const out = await checkProgramFixity({
         programId: String(req.params.id),
         organizationId: orgId,
-        userId: (req as any).user?.id ?? null,
+        userId: governedActorId(req),
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
       });
@@ -2094,7 +2123,7 @@ export default function createProjectVaultRoutes(): Router {
         programId: String(req.params.id),
         documentId: String(req.params.documentId),
         organizationId: orgId,
-        userId: (req as any).user?.id ?? null,
+        userId: governedActorId(req),
         documentTitle: text(body.documentTitle),
         documentType: text(body.documentType),
         classification: text(body.classification),
@@ -2111,6 +2140,71 @@ export default function createProjectVaultRoutes(): Router {
       return res.status(500).json({ success: false, error: 'The details could not be saved. Nothing was changed.' });
     }
   });
+
+  /* ── The catalog record: AnA's suggestion, a person's decision (S4, D5) ──
+     What AnA recorded about the current version (kind, purpose, summary, key
+     data), who proposed it (model, turn) and whether a person confirmed or
+     corrected it. The writer (document-catalog-governance.service.ts) checks
+     the role, the reason, the vocabulary and program ownership, and commits
+     each decision with one chained audit row; these routes only carry it. */
+  router.get('/:id/documents/:documentId/catalog', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    try {
+      const { readCatalogRecord } = await import('../../services/vault/document-catalog-governance.service.js');
+      const record = await readCatalogRecord({
+        programId: String(req.params.id ?? ''), documentId: String(req.params.documentId ?? ''), organizationId: orgId,
+        userId: governedActorId(req), executor: pool,
+      });
+      if (!record) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+      return res.json({ success: true, data: record });
+    } catch (err) {
+      if (err instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, err, true);
+      logger.error('vault catalog record read failed', { err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'CATALOG_UNAVAILABLE',
+        message: "This document's catalog record could not be read. Nothing is shown rather than a record that may be wrong." });
+    }
+  });
+
+  const reviewCatalog = (action: 'confirm' | 'correct') => async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const text = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
+    if ('expectedExtractedTextSha256' in body && typeof body.expectedExtractedTextSha256 !== 'string') {
+      return res.status(400).json({ success: false, error: 'INVALID_EXTRACTED_TEXT_HASH',
+        message: 'The shown source text must be identified by its SHA-256 digest.' });
+    }
+    try {
+      const { reviewCatalogRecord } = await import('../../services/vault/document-catalog-governance.service.js');
+      const outcome = await reviewCatalogRecord({
+        programId: String(req.params.id ?? ''),
+        documentId: String(req.params.documentId ?? ''),
+        organizationId: orgId,
+        // From the session only; the service refuses a request with none.
+        userId: governedActorId(req),
+        action,
+        expectedContentHash: text(body.contentHash),
+        expectedExtractedTextSha256: text(body.expectedExtractedTextSha256),
+        expectedRevision: text(body.revision),
+        documentKind: text(body.documentKind),
+        purpose: text(body.purpose),
+        summary: text(body.summary),
+        reason: body.reason,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      if (!outcome.ok) {
+        return res.status(outcome.status).json({ success: false, error: outcome.code, message: outcome.message });
+      }
+      return res.json({ success: true, state: outcome.state, changes: outcome.changes });
+    } catch (err) {
+      logger.error(`vault catalog ${action} failed`, { err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'CATALOG_NOT_SAVED', message: 'The catalog record could not be saved. Nothing was changed.' });
+    }
+  };
+  router.post('/:id/documents/:documentId/catalog/confirm', requireEditorAccess, reviewCatalog('confirm'));
+  router.post('/:id/documents/:documentId/catalog/correct', requireEditorAccess, reviewCatalog('correct'));
 
   /* ── Document relationships (plan critique 15, D2) ─────────────────────
      One version names the documents that support it, that it references or
@@ -2133,7 +2227,7 @@ export default function createProjectVaultRoutes(): Router {
     if (!UUID_RE.test(id)) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
     try {
       const { listRelationships } = await import('../../services/vault/vault-relationships.js');
-      const out = await listRelationships(pool, { programId: id, organizationId: orgId, documentId: String(req.params.documentId ?? '') });
+      const out = await listRelationships(pool, { programId: id, organizationId: orgId, userId: governedActorId(req) ?? undefined, documentId: String(req.params.documentId ?? '') });
       if (!out.ok) return res.status(out.status).json({ success: false, error: out.code, message: out.message });
       return res.json({ success: true, data: { relationships: out.relationships } });
     } catch (err) {
@@ -2150,7 +2244,7 @@ export default function createProjectVaultRoutes(): Router {
       const out = await addRelationship({
         programId: String(req.params.id),
         organizationId: orgId,
-        userId: (req as any).user?.id ?? null,
+        userId: governedActorId(req),
         documentId: String(req.params.documentId ?? ''),
         toDocumentId: body.toDocumentId,
         type: body.type,
@@ -2174,7 +2268,7 @@ export default function createProjectVaultRoutes(): Router {
       const out = await removeRelationship({
         programId: String(req.params.id),
         organizationId: orgId,
-        userId: (req as any).user?.id ?? null,
+        userId: governedActorId(req),
         relationshipId: String(req.params.relationshipId ?? ''),
         reason: body.reason,
         ipAddress: req.ip,

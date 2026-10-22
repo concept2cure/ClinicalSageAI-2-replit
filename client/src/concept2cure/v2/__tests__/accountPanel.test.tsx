@@ -73,6 +73,7 @@ const MFA_DISABLE = '/api/v1/auth/mfa/disable';
 const LOGOUT = '/api/v1/auth/logout';
 
 /** What /mfa/setup issues (mfaService.generateSecret): a base32 key, its URI, a server-drawn data: URL. */
+// nosemgrep: detected-generic-secret -- the RFC 6238 / Google Authenticator documentation example key, a public test fixture, not a credential
 const SECRET = 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP';
 const SETUP_BODY = {
   success: true,

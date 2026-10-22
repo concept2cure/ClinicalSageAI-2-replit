@@ -202,6 +202,8 @@ export interface RenderProfileOptions {
    * Default 8.
    */
   maxBulletsPerSection?: number;
+  /** Keep nested section drafts to matching/always rules; no section means always only. */
+  onlyApplicableRules?: boolean;
 }
 
 /**
@@ -241,7 +243,10 @@ export function renderProfileForPrompt(
   }
 
   // Context rules — relevant ones first, then the rest.
-  const rules = sortContextRules(profile.contextRules, activeSection);
+  const scopedRules = options.onlyApplicableRules
+    ? profile.contextRules.filter(rule => contextRuleMatchesSection(rule, activeSection))
+    : profile.contextRules;
+  const rules = sortContextRules(scopedRules, activeSection);
   if (rules.length > 0) {
     lines.push('### Context Rules');
     for (const rule of rules.slice(0, max)) {
@@ -272,8 +277,8 @@ export function renderProfileForPrompt(
 
   // Statistical considerations — only inject when authoring stat-relevant sections.
   const wantStat =
-    !activeSection ||
-    /^11\.|^11$|^9\.|^9$|^2\.7\.[34]/.test(activeSection);
+    (!activeSection && !options.onlyApplicableRules) ||
+    /^11\.|^11$|^9\.|^9$|^2\.7\.[34]/.test(activeSection ?? '');
   if (wantStat && profile.statisticalConsiderations.length > 0) {
     lines.push('### Statistical Considerations');
     for (const r of profile.statisticalConsiderations.slice(0, max)) {
@@ -302,9 +307,13 @@ export function renderProfileForPrompt(
   }
 
   // Common gaps — terse; full registry is loaded via gap-classifier.
-  if (profile.commonGaps.length > 0) {
+  const commonGaps = options.onlyApplicableRules
+    ? profile.commonGaps.filter(gap => activeSection && (activeSection === gap.ctdSection ||
+      (gap.prefix && activeSection.startsWith(`${gap.ctdSection}.`))))
+    : profile.commonGaps;
+  if (commonGaps.length > 0) {
     lines.push('### Common Gaps in This Therapeutic Area');
-    for (const g of profile.commonGaps.slice(0, max)) {
+    for (const g of commonGaps.slice(0, max)) {
       lines.push(
         `- [${g.severity}] §${g.ctdSection}: ${g.description}`
       );
@@ -313,6 +322,14 @@ export function renderProfileForPrompt(
   }
 
   return lines.join('\n').trimEnd() + '\n';
+}
+
+/** Applicability is structural scope only; a matching rule is still advisory. */
+function contextRuleMatchesSection(rule: ContextRule, section: string | null): boolean {
+  if (rule.scope === 'always') return true;
+  if (!section || !rule.appliesTo) return false;
+  if (rule.scope === 'section') return section === rule.appliesTo || section.startsWith(`${rule.appliesTo}.`);
+  return section.split('.')[0] === rule.appliesTo.replace(/[^\d]/g, '');
 }
 
 /**

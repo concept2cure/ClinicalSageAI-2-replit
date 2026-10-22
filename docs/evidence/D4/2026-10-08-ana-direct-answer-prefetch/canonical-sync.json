@@ -1,0 +1,23 @@
+{
+  "reproduction_base": "206ddad79be576c6c69a253ffc9376a89943c841",
+  "preserved_paths": [
+    "docs/design/PROJECT_FIRST_PLAN_2026-09-26.md",
+    "docs/evidence/D2-DATA-ROOM-CATALOG/2026-10-08-s5b-computation-runs/01-red.txt",
+    "docs/evidence/D2-DATA-ROOM-CATALOG/2026-10-08-s5b-computation-runs/02-green-real-pg.txt",
+    "docs/evidence/D2-DATA-ROOM-CATALOG/2026-10-08-s5b-computation-runs/03-migrate-twice.txt",
+    "docs/evidence/D2-DATA-ROOM-CATALOG/2026-10-08-s5b-computation-runs/04-integrity-check-removed-red.txt",
+    "docs/evidence/D2-DATA-ROOM-CATALOG/2026-10-08-s5b-computation-runs/README.md",
+    "migrations/20261008f_stats_computation_runs.sql",
+    "scripts/db/migration-set.mjs",
+    "server/services/biostatistics-bridge/bridge-service.ts",
+    "server/services/biostatistics-bridge/design-adapter.ts",
+    "server/services/stats/computation-runs.ts",
+    "server/services/study-design/sap-projection.ts",
+    "tests/db/stats-computation-run.dbtest.ts"
+  ],
+  "owned_source_unchanged": false,
+  "reason": "Preserve statistics provenance and later canonical AnA timeline/detach work. Resolver move remains identical relative to current base; repeat backend qualification/build and full hook on merged contents.",
+  "first_sync_qualification_base": "1e217bfbec5eeb96c0af06b858883d83fc3eec07",
+  "final_qualification_base": "c55fa8d4bca3491c2d821ae84a55a1320ee2e745",
+  "additional_sync_record": "publication-resync.json"
+}

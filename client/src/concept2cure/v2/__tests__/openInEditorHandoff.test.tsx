@@ -23,6 +23,8 @@
  *   • a failed document create does not navigate and does not POST a section;
  *   • a failed section create does not navigate either — leaving for an editor
  *     that would show an empty document is the same silent loss in a new hat;
+ *   • uncertain or refused handoffs retain a persistent recovery notice,
+ *     distinct from the transient toast;
  *   • a thrown request does not navigate;
  *   • a double click creates ONE document, not two;
  *   • the retired localStorage note is never written again;
@@ -42,6 +44,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 
 import { Biostatistics } from '../surfaces/Biostatistics';
 import { ReportEngine } from '../surfaces/ReportEngine';
+vi.mock('../navEntitlements', () => ({ useNavEntitlements: () => ({ launchScopeEnforced: false }) }));
+
 import { CmcModule } from '../surfaces/CmcModule';
 
 function res(payload: unknown, status = 200) {
@@ -50,6 +54,106 @@ function res(payload: unknown, status = 200) {
 
 const DOC_URL = '/api/authoring/docs';
 const SEC_URL = '/api/authoring/sections';
+const HANDOFF_NOTICE = { selector: '.scaf-note[role="alert"]' };
+
+/* ── The statistical engine (Biostatistics only) ──────────────────────────────
+   Biostatistics computes nothing in the browser: it posts the design to
+   POST /api/ana-biostats/compute and renders the governed document that
+   POST /api/ana-biostats/document generates from that same result. Those two
+   routes have to be served here, because without them the surface has no
+   result and no document and every Biostatistics case below would fail for
+   that reason rather than the one it names.
+
+   The bodies are stand-ins for the engine's real generators, whose content is
+   pinned on the server side in tests/services/ana-biostats.test.ts. What
+   matters to THIS file is that the markdown the surface hands to the authoring
+   store is byte-for-byte what the engine returned. */
+const COMPUTE_URL = '/api/ana-biostats/compute';
+const DOCGEN_URL = '/api/ana-biostats/document';
+
+const ENGINE_INPUT = {
+  clientTrack: 'biotech_pharma', regulatoryBody: 'FDA', studyType: 'superiority',
+  objectiveType: 'efficacy', endpointType: 'time_to_event', alpha: 0.05, powerTarget: 0.9,
+  effectSize: 0.38, eventRate: 0.55, attritionRate: 0.15, allocationRatio: 1, numberOfGroups: 2,
+};
+
+const ENGINE_COMPUTE = {
+  validation: { valid: true, normalizedInput: ENGINE_INPUT, warnings: [], errors: [], prefilled: [] },
+  computation: {
+    method: 'Log-rank test (Schoenfeld formula)',
+    sampleSize: { perGroup: 311, total: 622, groups: 2 },
+    power: 0.8423, effectSize: 0.38, alpha: 0.05,
+    adjustedSampleSize: 366, adjustedTotal: 733, attritionAdjusted: true,
+    criticalValue: 1.959963984540054, testStatistic: 'Log-rank',
+    formula: 'Events = (z_a + z_b)^2 * (1+r)^2 / (r * ln(HR)^2), HR=0.620, events=247',
+    assumptions: [{ parameter: 'event_rate', value: 0.55, source: 'user_provided', sensitivity: 'high' }],
+  },
+  judgment: {
+    overallVerdict: 'adequate', overallRisk: 'low', actionRecommendation: 'proceed',
+    confidence: { level: 'high', score: 88, factors: [], limitations: [] },
+    dimensions: [{ name: 'Power Adequacy', verdict: 'adequate', score: 80, rationale: 'Achieved power: 84.2%.', flags: [] }],
+    fragility: { fragilityIndex: 22, category: 'robust', sensitiveParameters: [], narrative: 'Robust.' },
+    endpointMethodFit: { fit: 'strong', suggestedMethod: 'Cox model', currentMethod: 'Log-rank', rationale: 'Standard.', alternatives: ['RMST'] },
+    escalationReasons: [],
+    roleExplanations: { technical: '', clinical: '', regulatory: '', executive: '' },
+  },
+  domain: { track: 'biotech_pharma', methodSuggestions: [], designConsiderations: [], endpointGuidance: [], regulatoryNotes: [], riskFactors: [] },
+  regulatory: { body: 'FDA', statisticalExpectations: [], documentRequirements: [], riskFramingNotes: [], guidanceReferences: [], specificConstraints: [] },
+};
+
+const DOC_HEADINGS: Record<string, string> = {
+  sample_size_rationale: 'Sample Size Rationale',
+  dsmb_charter: 'Data Safety Monitoring Board (DSMB) Charter',
+};
+
+const engineDocumentContent = (type: string) => [
+  `# ${DOC_HEADINGS[type] ?? type}`,
+  '',
+  '## Study Context',
+  '- **Track**: Pharma/Biotech',
+  '- **Study Type**: superiority',
+  '- **Endpoint Type**: time_to_event',
+  '- **Target Regulatory Body**: FDA',
+  '',
+  '## Sample Size Determination',
+  '',
+  '### Statistical Method',
+  'Log-rank test (Schoenfeld formula)',
+  '',
+  '### Formula',
+  'Events = (z_a + z_b)^2 * (1+r)^2 / (r * ln(HR)^2), HR=0.620, events=247',
+  '',
+  '### Result',
+  '',
+  '- **Sample size per group**: 311',
+  '- **Total (unadjusted)**: 622',
+  '- **Total (adjusted)**: 733',
+  '- **Achieved power**: 84.2%',
+  '- **Significance level**: 0.05 (two-sided)',
+  '',
+  '## Statistical Judgment',
+  '',
+  '- **Overall verdict**: adequate',
+  '- **Fragility**: robust',
+  '',
+  '*Generated by the AnA Biostats engine. All numeric results are deterministic.*',
+].join('\n');
+
+const engineDocument = (type: string) => ({
+  type,
+  title: DOC_HEADINGS[type] ?? type,
+  content: engineDocumentContent(type),
+  version: 1,
+  status: 'draft',
+  provenance: { generatedAt: '2026-10-11T00:00:00.000Z', engineVersion: '1.0.0' },
+});
+
+/** The engine has answered and its document is on screen, so the hand-off has
+ *  something to hand off. */
+const biostatDocReady = (heading = 'Sample Size Rationale') =>
+  waitFor(() =>
+    expect(document.querySelector('.bs-doc-render')?.textContent ?? '').toContain(heading),
+  );
 
 /** Every POST the handoff makes, in call order. */
 const posts = () =>
@@ -63,11 +167,17 @@ const writtenKeys = (): string[] => (setItem.mock.calls as unknown as unknown[][
 
 /** Default: both creates succeed with a real server-shaped row. */
 function wireStore(over: (m: string, u: string, b?: any) => Response | null = () => null) {
-  apiRequest.mockImplementation(async (m: string, u: string, b?: any) => {
+  apiRequest.mockImplementation(async (m: string, u: string, b: any = {}) => {
     const o = over(m, u, b);
     if (o) return o;
-    if (m === 'POST' && u === DOC_URL) return res({ success: true, document: { id: 'D-77', title: b?.title } }, 201);
-    if (m === 'POST' && u === SEC_URL) return res({ success: true, section: { id: 'S-12', code: b?.code } }, 201);
+    if (m === 'POST' && u === '/api/cmc/variations/classify') return res({ success: true, data: {
+      fdaReportingCategory: 'annual_report', emaVariationCategory: 'type_ia', supacTier: 'level_1', bioequivalence: 'none',
+      rationale: ['Comparable process requires documented assessment.'], validationRequirements: ['Document comparability evidence.'], impactedCtdSections: ['3.2.S.2'], citations: ['SUPAC-IR'],
+    } });
+    if (m === 'POST' && u === DOC_URL) return res({ success: true, document: { id: 'D-77', title: b.title, client_program_id: b.client_program_id } }, 201);
+    if (m === 'POST' && u === SEC_URL) return res({ success: true, section: { id: 'S-12', code: b.code, doc_id: b.doc_id, title: b.title } }, 201);
+    if (m === 'POST' && u === COMPUTE_URL) return res(ENGINE_COMPUTE);
+    if (m === 'POST' && u === DOCGEN_URL) return res(engineDocument(String(b.documentType ?? '')));
     return res({});
   });
 }
@@ -106,6 +216,7 @@ describe('Biostatistics — Open in editor', () => {
   it('creates the document, saves the markdown as a section, then navigates', async () => {
     const onNav = vi.fn();
     render(<Biostatistics {...props('biostatistics', onNav)} />);
+    await biostatDocReady();
 
     fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
 
@@ -128,8 +239,9 @@ describe('Biostatistics — Open in editor', () => {
       code: 'sample_size_rationale',
     });
 
-    // The deliverable actually travels — the same markdown the surface rendered,
-    // not just its title.
+    // The deliverable actually travels — and it is the ENGINE's document, byte
+    // for byte, not a browser draft reconstructed from the same inputs.
+    expect(sec.content).toBe(engineDocumentContent('sample_size_rationale'));
     expect(sec.content).toMatch(/^# Sample Size Rationale/);
     expect(sec.content).toMatch(/## Sample Size Determination/);
     expect(sec.content.length).toBeGreaterThan(400);
@@ -142,6 +254,7 @@ describe('Biostatistics — Open in editor', () => {
   it('never writes the retired localStorage note', async () => {
     const onNav = vi.fn();
     render(<Biostatistics {...props('biostatistics', onNav)} />);
+    await biostatDocReady();
     fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
     await waitFor(() => expect(onNav).toHaveBeenCalled());
     expect(writtenKeys()).not.toContain('c2c_biostat_doc');
@@ -153,59 +266,19 @@ describe('Biostatistics — Open in editor', () => {
     setProject({ id: '11111111-2222-3333-4444-555555555555' });
     const onNav = vi.fn();
     render(<Biostatistics {...props('biostatistics', onNav)} />);
+    await biostatDocReady();
     fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
     await waitFor(() => expect(docCalls()).toHaveLength(1));
     expect(docCalls()[0][2]).toMatchObject({ client_program_id: '11111111-2222-3333-4444-555555555555' });
   });
 
-  it('does NOT navigate when the document create fails — and saves no section', async () => {
-    wireStore((m, u) => (m === 'POST' && u === DOC_URL ? res({ error: 'Failed to create document' }, 500) : null));
-    const onNav = vi.fn();
-    render(<Biostatistics {...props('biostatistics', onNav)} />);
-
-    fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
-
-    expect(await screen.findByText(/Couldn’t create the document/)).toBeTruthy();
-    expect(screen.getByText(/Nothing was saved/)).toBeTruthy();
-    expect(onNav).not.toHaveBeenCalled();
-    expect(secCalls()).toHaveLength(0);
-    // The work is still on screen — the rendered document did not go anywhere.
-    expect(document.querySelector('.bs-doc-render')?.textContent).toMatch(/Sample Size Determination/);
-  });
-
-  it('says so, and stays put, when the session is not authenticated', async () => {
-    wireStore((m, u) => (m === 'POST' && u === DOC_URL ? res({ error: 'Authentication required' }, 401) : null));
-    const onNav = vi.fn();
-    render(<Biostatistics {...props('biostatistics', onNav)} />);
-    fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
-    expect(await screen.findByText(/isn’t authenticated/)).toBeTruthy();
-    expect(onNav).not.toHaveBeenCalled();
-    expect(secCalls()).toHaveLength(0);
-  });
-
-  it('does NOT navigate when the section create fails — the text would be lost', async () => {
-    wireStore((m, u) => (m === 'POST' && u === SEC_URL ? res({ error: 'Document is FROZEN/APPROVED' }, 403) : null));
-    const onNav = vi.fn();
-    render(<Biostatistics {...props('biostatistics', onNav)} />);
-
-    fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
-
-    expect(await screen.findByText(/its text didn’t save/)).toBeTruthy();
-    expect(onNav).not.toHaveBeenCalled();
-  });
-
-  it('does NOT navigate when the request throws', async () => {
-    wireStore(() => { throw new Error('network down'); });
-    const onNav = vi.fn();
-    render(<Biostatistics {...props('biostatistics', onNav)} />);
-    fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
-    expect(await screen.findByText(/network down/)).toBeTruthy();
-    expect(onNav).not.toHaveBeenCalled();
-  });
-
+  /* The two happy-path cases above and the chooser case below are the contract;
+     every way the hand-off can fail has its own describe, which also keeps
+     either block inside the project's function-length limit. */
   it('a double click creates ONE document, not two', async () => {
     const onNav = vi.fn();
     render(<Biostatistics {...props('biostatistics', onNav)} />);
+    await biostatDocReady();
     const btn = screen.getByRole('button', { name: /Open in editor/ });
     fireEvent.click(btn);
     fireEvent.click(btn);
@@ -217,13 +290,75 @@ describe('Biostatistics — Open in editor', () => {
   it('hands off the document the user actually chose', async () => {
     const onNav = vi.fn();
     render(<Biostatistics {...props('biostatistics', onNav)} />);
+    await biostatDocReady();
     fireEvent.click(screen.getByRole('button', { name: 'DSMB / DMC Charter' }));
+    // The engine writes the newly chosen document before it can be handed off.
+    await biostatDocReady('Data Safety Monitoring Board');
     fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
     await waitFor(() => expect(secCalls()).toHaveLength(1));
     expect(docCalls()[0][2]).toMatchObject({ title: 'DSMB / DMC Charter', client_program_id: PROGRAM });
     expect(secCalls()[0][2]).toMatchObject({ code: 'dsmb_charter' });
     expect(secCalls()[0][2].content).toMatch(/DSMB|Data Monitoring/i);
   });
+});
+
+describe('Biostatistics — Open in editor: every way it can fail', () => {
+  it('does NOT navigate when the document create fails — and saves no section', async () => {
+    wireStore((m, u) => (m === 'POST' && u === DOC_URL ? res({ error: 'Failed to create document' }, 500) : null));
+    const onNav = vi.fn();
+    render(<Biostatistics {...props('biostatistics', onNav)} />);
+    await biostatDocReady();
+
+    fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
+
+    expect(await screen.findByText(/Could not confirm whether the document was saved/, HANDOFF_NOTICE)).toBeTruthy();
+    expect(screen.queryByText(/Nothing was saved/)).toBeNull();
+    expect(onNav).not.toHaveBeenCalled();
+    expect(secCalls()).toHaveLength(0);
+    // The work is still on screen — the rendered document did not go anywhere.
+    expect(document.querySelector('.bs-doc-render')?.textContent).toMatch(/Sample Size Determination/);
+  });
+
+  it('says so, and stays put, when the session is not authenticated', async () => {
+    wireStore((m, u) => (m === 'POST' && u === DOC_URL ? res({ error: 'Authentication required' }, 401) : null));
+    const onNav = vi.fn();
+    render(<Biostatistics {...props('biostatistics', onNav)} />);
+    await biostatDocReady();
+    fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
+    expect(await screen.findByText(/isn’t authenticated/, HANDOFF_NOTICE)).toBeTruthy();
+    expect(onNav).not.toHaveBeenCalled();
+    expect(secCalls()).toHaveLength(0);
+  });
+
+  it('does NOT navigate when the section create fails — the text would be lost', async () => {
+    wireStore((m, u) => (m === 'POST' && u === SEC_URL ? res({ error: 'Document is FROZEN/APPROVED' }, 403) : null));
+    const onNav = vi.fn();
+    render(<Biostatistics {...props('biostatistics', onNav)} />);
+    await biostatDocReady();
+
+    fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
+
+    expect(await screen.findByText(/its text did not save/, HANDOFF_NOTICE)).toBeTruthy();
+    expect(onNav).not.toHaveBeenCalled();
+  });
+
+  it('does NOT navigate when the request throws', async () => {
+    /* Scoped to the authoring writes. Throwing for EVERY apiRequest also kills
+       the statistical engine's two calls, so the surface would have no document
+       to hand off — a different failure, which would pass this assertion for
+       the wrong reason. */
+    wireStore((m, u) => {
+      if (m === 'POST' && (u === DOC_URL || u === SEC_URL)) throw new Error('network down');
+      return null;
+    });
+    const onNav = vi.fn();
+    render(<Biostatistics {...props('biostatistics', onNav)} />);
+    await biostatDocReady();
+    fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
+    expect(await screen.findByText(/Could not confirm whether the document was saved/, HANDOFF_NOTICE)).toBeTruthy();
+    expect(onNav).not.toHaveBeenCalled();
+  });
+
 });
 
 /* ══════════════════════════ ReportEngine ══════════════════════════ */
@@ -276,7 +411,7 @@ describe('ReportEngine — Open in editor', () => {
     const onNav = vi.fn();
     analyzed(onNav);
     fireEvent.click(await screen.findByRole('button', { name: /Open in editor/ }));
-    expect(await screen.findByText(/Couldn’t create the document/)).toBeTruthy();
+    expect(await screen.findByText(/Could not confirm whether the document was saved/, HANDOFF_NOTICE)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
     expect(secCalls()).toHaveLength(0);
     // The analysis is still rendered where the user left it.
@@ -288,7 +423,7 @@ describe('ReportEngine — Open in editor', () => {
     const onNav = vi.fn();
     analyzed(onNav);
     fireEvent.click(await screen.findByRole('button', { name: /Open in editor/ }));
-    expect(await screen.findByText(/its text didn’t save/)).toBeTruthy();
+    expect(await screen.findByText(/its text did not save/, HANDOFF_NOTICE)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
   });
 });
@@ -300,10 +435,13 @@ async function simulated(onNav: () => void) {
   /* The tab is "Change control": the simulator now sits above the register it
      models against, rather than being the whole tab. */
   fireEvent.click(screen.getByRole('button', { name: /Change control/ }));
-  const ta = await screen.findByPlaceholderText(/switch the drug-substance supplier/);
-  fireEvent.change(ta, { target: { value: 'Move DS manufacture from Site A to Site B; equivalent process.' } });
-  fireEvent.click(screen.getByRole('button', { name: /Simulate change/ }));
-  return await screen.findByRole('button', { name: /Open in editor/ });
+  const choose = (label: string, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } });
+  choose('Dosage form', 'immediate_release_oral_solid'); choose('Change category', 'manufacturing_site');
+  choose('Material affected', 'drug_substance'); choose('Touches a critical step', 'no');
+  choose('Site change', 'different_site_same_country');
+  choose('Change description', 'Move DS manufacture from Site A to Site B; equivalent process.');
+  fireEvent.click(screen.getByRole('button', { name: 'Assess proposed variation' }));
+  return await screen.findByRole('button', { name: 'Open draft assessment in editor' });
 }
 
 describe('CmcModule change simulator — Open in editor', () => {
@@ -336,10 +474,10 @@ describe('CmcModule change simulator — Open in editor', () => {
 
     fireEvent.click(btn);
 
-    expect(await screen.findByText(/Couldn’t create the document/)).toBeTruthy();
+    expect(await screen.findByText(/Could not confirm whether the document was saved/, HANDOFF_NOTICE)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
     expect(secCalls()).toHaveLength(0);
-    expect(document.querySelector('.cm-doc-render')?.textContent).toMatch(/Comparability Requirement/);
+    expect(screen.getByText('Comparable process requires documented assessment.')).toBeTruthy();
   });
 
   it('does NOT navigate when the section create fails', async () => {
@@ -349,7 +487,7 @@ describe('CmcModule change simulator — Open in editor', () => {
 
     fireEvent.click(btn);
 
-    expect(await screen.findByText(/its text didn’t save/)).toBeTruthy();
+    expect(await screen.findByText(/its text did not save/, HANDOFF_NOTICE)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
   });
 });
@@ -364,7 +502,7 @@ describe('CmcModule change simulator — Open in editor', () => {
  * work where the user can still see it.
  */
 async function expectRefusedWithoutProject(onNav: () => void, workSelector: string, work: RegExp) {
-  expect(await screen.findByText(/open a project first/i)).toBeTruthy();
+  expect(await screen.findByText(/open a project first/i, HANDOFF_NOTICE)).toBeTruthy();
   expect(posts()).toHaveLength(0);
   expect(docCalls()).toHaveLength(0);
   expect(secCalls()).toHaveLength(0);
@@ -378,6 +516,7 @@ describe('Open in editor with no project open — nothing is created (PF-07)', (
     setProject(undefined);
     const onNav = vi.fn();
     render(<Biostatistics {...props('biostatistics', onNav)} />);
+    await biostatDocReady();
     fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
     await expectRefusedWithoutProject(onNav, '.bs-doc-render', /Sample Size Determination/);
   });
@@ -386,6 +525,7 @@ describe('Open in editor with no project open — nothing is created (PF-07)', (
     setProject({ id: 42 });
     const onNav = vi.fn();
     render(<Biostatistics {...props('biostatistics', onNav)} />);
+    await biostatDocReady();
     fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
     await expectRefusedWithoutProject(onNav, '.bs-doc-render', /Sample Size Determination/);
   });
@@ -403,6 +543,6 @@ describe('Open in editor with no project open — nothing is created (PF-07)', (
     const onNav = vi.fn();
     const btn = await simulated(onNav);
     fireEvent.click(btn);
-    await expectRefusedWithoutProject(onNav, '.cm-doc-render', /Comparability Requirement/);
+    await expectRefusedWithoutProject(onNav, '.pj-card-b', /Comparable process requires documented assessment/);
   });
 });

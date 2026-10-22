@@ -49,7 +49,7 @@
  */
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
+import { captureDocumentRecordReadOwner, readDocumentRecord, type DocRow, type SectionRow } from './documentRecordRead';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import type { FireToast } from '../toast';
@@ -72,26 +72,9 @@ import { SendForReviewDialog } from './SendForReviewDialog';
 import { useProgramRead, programHeadline, programLineFor } from './programSummary';
 import { describeProvenance, moduleWasAssumed, type DocumentProvenance } from './provenance';
 import { OpenedDocumentPending, StatusPill, ToDocumentsButton } from './CanvasDocumentList';
-
-/** GET /docs/:id → `document` (the columns this card reads; `created_by` is the author, never offered as its reviewer). */
-interface DocRow extends Pick<AuthDoc, 'created_by'> {
-  id: string;
-  title: string;
-  module: string | null;
-  product_code: string | null;
-  status: string;
-  updated_at: string | null;
-  section_count: number | string | null;
-  provenance?: unknown;
-}
-
-interface SectionRow {
-  id: string;
-  code: string;
-  title: string;
-  content: string | null;
-  order_index: number | null;
-}
+import { useCanvasRegionFocus, useOriginSectionFocus } from './canvasFocus';
+import type { AskOrigin } from './askAnaToDraft';
+import { originForSavedSection } from './authoringConversationOrigin';
 
 export interface DocumentCanvasProps {
   docId: string;
@@ -107,7 +90,7 @@ export interface DocumentCanvasProps {
   onExpandedChange: (expanded: boolean) => void;
   onNav: (id: string) => void;
   /** Put a prompt in the thread's composer (the workbench's asks). */
-  onAsk: (text: string) => void;
+  onAsk: (text: string, savedOrigin?: AskOrigin) => void;
   fireToast: FireToast;
   liveDrive?: OwnedSurfaceViewProps['liveDrive'];
   /**
@@ -149,6 +132,10 @@ export interface DocumentCanvasProps {
    * The host says no when focus belongs elsewhere (the list row that opened it).
    */
   returnFocus?: boolean;
+  /** Exact saved section carried by an Authoring conversation handoff. */
+  focusSectionId?: string;
+  /** The first asynchronous origin expansion keeps focus in the composer. */
+  focusOnOpen?: boolean;
 }
 
 /** The stored document type (`product_code`), in words: `clinical_overview` → "Clinical overview". */
@@ -157,41 +144,6 @@ export function documentTypeLabel(code: string | null | undefined): string | nul
   if (!c) return null;
   const words = c.replace(/[_-]+/g, ' ').trim();
   return words.charAt(0).toUpperCase() + words.slice(1).toLowerCase();
-}
-
-/** One read of the record: the document row, the caller's access, the sections. */
-type RecordRead =
-  | { ok: true; doc: DocRow; access: unknown; sections: SectionRow[] }
-  | { ok: false; message: string; doc?: DocRow };
-
-/**
- * GET /docs/:id and /sections, together. A failure is the sentence to show,
- * never an empty document: a missing row, a row whose sections did not read,
- * or a store that could not be reached each say which.
- */
-async function readDocumentRecord(docId: string): Promise<RecordRead> {
-  try {
-    const [d, s] = await Promise.all([
-      apiRequest('GET', `/api/authoring/docs/${encodeURIComponent(docId)}`),
-      apiRequest('GET', `/api/authoring/docs/${encodeURIComponent(docId)}/sections`),
-    ]);
-    const dj = (await d.json().catch(() => null)) as { document?: DocRow; access?: unknown } | null;
-    const sj = (await s.json().catch(() => null)) as { sections?: SectionRow[] } | null;
-    if (!d.ok || !dj?.document) {
-      return {
-        ok: false,
-        message: serverMessage(dj) ?? (d.status === 404 ? 'This document is not in your organization’s authoring records.' : `The document did not load (HTTP ${d.status}).`),
-      };
-    }
-    if (!s.ok || !sj) {
-      /* The document row is real; its sections did not read. Say that,
-         rather than rendering a document with no sections. */
-      return { ok: false, doc: dj.document, message: `“${dj.document.title}” exists, but its sections did not load (HTTP ${s.status}).` };
-    }
-    return { ok: true, doc: dj.document, access: dj.access, sections: Array.isArray(sj.sections) ? sj.sections : [] };
-  } catch (e) {
-    return { ok: false, message: redactInternals(e instanceof Error ? e.message : '', 'The authoring store could not be reached.') };
-  }
 }
 
 /** The codes of sections that are new, or whose stored text changed, between two reads. */
@@ -226,7 +178,7 @@ export function DocumentCanvas({
   paneEl = null,
   refreshKey = 0,
   onEditorBridge,
-  onShowList, listCount = null, cardless = false, returnFocus = true,
+  onShowList, listCount = null, cardless = false, returnFocus = true, focusSectionId, focusOnOpen = true,
 }: DocumentCanvasProps) {
   /* Beside the conversation the card stays in the thread, marked as the
      document that is open; in place it gives way to the editor. */
@@ -267,23 +219,37 @@ export function DocumentCanvas({
      controls (`aria-controls`) rather than only that it is expanded. */
   const expandedId = useId();
 
-  const load = useCallback(async (quiet = false) => {
+  const loadScopeKey = `${docId}:${programId}`;
+  const loadScope = useRef({ key: loadScopeKey });
+  if (loadScope.current.key !== loadScopeKey) loadScope.current = { key: loadScopeKey };
+  const loadSequence = useRef(0);
+  const alive = useRef(true);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
+  const load = useCallback(async (quiet = false, recovery = false) => {
+    const scope = loadScope.current;
+    if (scope.key !== `${docId}:${programId}`) return false;
+    const owner = recovery ? captureDocumentRecordReadOwner() : null;
+    if (recovery && !owner) return false;
+    const sequence = ++loadSequence.current;
+    const currentRead = () => alive.current && loadScope.current === scope && loadSequence.current === sequence
+      && owner?.current() !== false;
     if (!quiet) {
       setState('loading');
       setError(null);
     }
-    const read = await readDocumentRecord(docId);
+    const read = await readDocumentRecord(docId, recovery, programId, owner?.headers);
+    if (!currentRead()) return false;
     if (!read.ok) {
       /* A refresh that failed is not an empty document: keep the record on
          screen and say the refresh did not land. */
       if (quiet) {
         setRefreshFailed(true);
-        return;
+        return false;
       }
       setState('error');
       setError(read.message);
       if (read.doc) setDoc(read.doc);
-      return;
+      return false;
     }
     if (quiet) setUpdatedCodes(changedSectionCodes(sectionsRef.current, read.sections));
     setRefreshFailed(false);
@@ -292,7 +258,8 @@ export function DocumentCanvas({
     sectionsRef.current = read.sections;
     setSections(read.sections);
     setState('ready');
-  }, [docId]);
+    return true;
+  }, [docId, programId]);
 
   useEffect(() => {
     void load();
@@ -346,32 +313,10 @@ export function DocumentCanvas({
     if (expanded && !workbenchMounted) setWorkbenchMounted(true);
   }, [expanded, workbenchMounted]);
 
-  /* Focus follows the region. Opening moves it to the first control of what
-     opened — the way back — and closing returns it to the control that
-     opened it, so the keyboard never lands on a region that is now hidden.
-
-     On the FIRST expand the bar does not exist yet: the workbench mounts in
-     the render after `expanded` flips, so a focus call made on that first
-     pass reached a null ref and did nothing at all. The effect therefore
-     waits for the control, rather than firing once into an empty ref. */
-  /* A canvas opened from the list mounts already expanded, and must still
-     move focus into what opened: so it starts as "was closed". */
-  const wasExpanded = useRef(cardless ? false : expanded);
-  /* "← Documents" closes the editor and the list takes the focus, not this
-     card; so does a host that says focus belongs elsewhere (`returnFocus`). */
-  const toList = useRef(false);
-  useEffect(() => {
-    if (expanded) {
-      const back = backBtnRef.current;
-      if (!back) return;
-      if (!wasExpanded.current) back.focus({ preventScroll: true });
-      wasExpanded.current = true;
-      return;
-    }
-    if (wasExpanded.current && returnFocus && !toList.current) expandBtnRef.current?.focus({ preventScroll: true });
-    toList.current = false;
-    wasExpanded.current = false;
-  }, [expanded, workbenchMounted, doc, returnFocus]);
+  const toList = useCanvasRegionFocus({
+    expanded, cardless, returnFocus, focusOnOpen, mounted: workbenchMounted,
+    recordReady: doc !== null, back: backBtnRef, card: expandBtnRef,
+  });
   const showList = () => {
     toList.current = true;
     onShowList?.();
@@ -407,12 +352,13 @@ export function DocumentCanvas({
   };
 
   const docsForWorkbench: AuthDoc[] = doc
-    ? [{ id: doc.id, title: doc.title, module: doc.module, product_code: doc.product_code, status: doc.status, updated_at: doc.updated_at, section_count: doc.section_count }]
+    ? [{ id: doc.id, title: doc.title, module: doc.module, product_code: doc.product_code, status: doc.status, updated_at: doc.updated_at, section_count: doc.section_count, c2c_document_id: doc.c2c_document_id }]
     : [];
 
   const reloadDoc = useCallback(async () => {
     await load();
   }, [load]);
+  const refreshCreationContext = useCallback(() => load(true, true), [load]);
 
   const [bridge, setBridge] = useState<EditorBridge | null>(null);
 
@@ -421,11 +367,12 @@ export function DocumentCanvas({
      to go into it, and lands in the composer for the person to send. The
      wording asks for the text in the conversation: the document exists, and
      a second one drafted from this ask would be a duplicate. */
-  const [focusSection, setFocusSection] = useState<{ id: string; nonce: number } | null>(null);
-  const askToDraft = (sec: SectionRow, title: string) => {
+  const [focusSection, setFocusSection] = useOriginSectionFocus(focusSectionId);
+  const askToDraft = (sec: SectionRow) => {
+    if (!doc) return;
     setFocusSection(prev => ({ id: sec.id, nonce: (prev?.nonce ?? 0) + 1 }));
     onExpandedChange(true);
-    onAsk(`Draft the text for section ${sec.code} ${sec.title} of “${title}” here in the conversation, so I can insert it into the document.`);
+    onAsk('Draft the text for the saved section attached to this question here in the conversation, so I can insert it into the existing document.', originForSavedSection(doc, sec, programId));
   };
   /* The workbench reports its open section whether or not this canvas is
      expanded (it stays mounted, hidden), and so does this, saying which. An
@@ -543,7 +490,7 @@ export function DocumentCanvas({
                 ) : (
                   <p className="dcv-sec-empty">
                     Not drafted yet.
-                    <button type="button" className="nda-open" onClick={() => askToDraft(sec, title)}>
+                    <button type="button" className="nda-open" onClick={() => askToDraft(sec)}>
                       {`Ask AnA to draft ${sec.code}`}
                     </button>
                   </p>
@@ -615,7 +562,7 @@ export function DocumentCanvas({
               docId={doc.id}
               docTitle={doc.title}
               activeSectionCode={first?.code ?? null}
-              dirty={false}
+              sectionCodes={sections.map((x) => x.code)} docStatus={doc.status ?? null} refusal={actRefusal(access.placeIntoFiling)} dirty={false}
               onNav={onNav}
               fireToast={fireToast}
             />
@@ -660,6 +607,7 @@ export function DocumentCanvas({
               docsState="ready"
               status="all"
               reloadDocs={reloadDoc}
+              refreshCreationContext={refreshCreationContext}
               programId={programId}
               pinnedDocId={doc.id}
               embedded={{ onBack: () => onExpandedChange(false), hostShowsBack: true, onEditorBridge: setBridge, focusSection }}
@@ -674,8 +622,9 @@ export function DocumentCanvas({
         return beside && paneEl ? createPortal(region, paneEl) : region;
       })()}
 
-      {fileToVaultOpen && doc && (
+      {doc && (
         <FileToVaultDialog
+          open={fileToVaultOpen}
           docId={doc.id}
           docTitle={doc.title}
           docStatus={doc.status}

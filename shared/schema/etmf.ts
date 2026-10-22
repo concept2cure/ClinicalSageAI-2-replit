@@ -6,8 +6,8 @@
  * deterministic completeness gap-check that feeds inspection readiness (C2C-13)
  * — closing the "TMF gaps surface at inspection; manual classification" pain.
  *
- * Grounded in the DIA TMF Reference Model (11 zones), ICH E6(R2) §8 essential
- * documents, and the contemporaneous-filing expectation. Conventions match the
+ * Grounded in the DIA TMF Reference Model (11 zones), ICH E6(R3) Appendix C essential
+ * records, and the contemporaneous-filing expectation. Conventions match the
  * platform; status/type columns are CHECK-constrained.
  *
  * @module shared/schema/etmf

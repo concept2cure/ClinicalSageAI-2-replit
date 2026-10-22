@@ -44,6 +44,7 @@ import {
   type MutationErrorDetail,
 } from '@/lib/queryClient';
 import { ErrorState } from './dataConnect';
+import { consumeOrganizationSwitchAuditNotice } from './organizationSwitchAuditNotice';
 
 interface Entry extends MutationErrorDetail {
   id: number;
@@ -73,6 +74,10 @@ export function GlobalMutationErrors() {
       });
     };
     window.addEventListener(AUDIT_ROW_NOT_PERSISTED_EVENT, onUnpersisted);
+    // A verified organization switch reloads the page; take its bounded
+    // one-shot receipt after the new shell mounts, using this same warning.
+    const pending = consumeOrganizationSwitchAuditNotice();
+    if (pending) onUnpersisted(new CustomEvent(AUDIT_ROW_NOT_PERSISTED_EVENT, { detail: pending }));
     return () => window.removeEventListener(AUDIT_ROW_NOT_PERSISTED_EVENT, onUnpersisted);
   }, []);
 
@@ -99,8 +104,8 @@ export function GlobalMutationErrors() {
         <ErrorState
           key={`audit-${notice.id}`}
           variant="inline"
-          title="The request completed, but the audit trail did not record it"
-          message="The server completed this request, but could not write the audit-trail entry that records who did it and when. Tell your administrator and give them the reference below."
+          title="The request completed, but its audit entry is unconfirmed"
+          message="The server completed this request, but could not confirm a readable audit-trail entry that records who did it and when. Review the audit history before retrying. Tell your administrator and give them the reference below."
           correlationId={notice.correlationId}
           onDismiss={() => setAuditNotices((prev) => prev.filter((p) => p.id !== notice.id))}
           testId="global-audit-row-notice"

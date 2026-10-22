@@ -18,6 +18,8 @@
  */
 
 import { createScopedLogger } from '../../utils/logger';
+import { authoringDraftCreationFailure, type authoringCreationRecoveryPayload } from './authoring-create-outcome';
+import { looksLikeHtml, plainTextToHtml } from '../../../shared/authoring/plain-text-html';
 import { resolveOpenProgram } from '../c2c/program-access';
 import type { AuthoringPool } from './authoring-documents';
 import {
@@ -100,27 +102,60 @@ function summaryContent(input: CreateDocumentFromDraftInput): string {
 }
 
 /**
- * The tool body. Returns the JSON string the model receives; `{ error }` for
- * every refusal, so telemetry classifies it as degraded rather than a crash.
+ * The drafted figures no cited source states (S5a), said to AnA in the result
+ * she relays: each is named with its section, so she does not present it to
+ * the user as the source's. Empty when every figure was found, or when the
+ * draft cited no source (then nothing was checked, and the result's
+ * projectSourceReferences is empty).
  */
-export async function draftAuthoringDocumentTool(
+export function unverifiedFigureNote(refs: import('./authoring-from-draft').DocumentProvenance['projectSourceReferences']): string {
+  const missing = (refs ?? []).flatMap(r =>
+    (r.figures?.figures ?? []).filter(f => f.status === 'unverified').map(f => `${f.text} (${r.sectionCode})`));
+  const total = (refs ?? []).reduce((n, r) => n + (r.figures?.unverified ?? 0), 0);
+  if (total === 0) return '';
+  const shown = missing.slice(0, 10).join('; ');
+  return ` ${total} figure(s) in the draft are not stated in the sources it cites: ${shown}` +
+    `${total > 10 ? `; and ${total - 10} more` : ''}. Tell the user they are unverified, and do not present them as ` +
+    'the sources\u2019 figures. The editor lists them.';
+}
+
+/** Which AnA tool is creating the draft, and what it adds to the one path. */
+interface AnaDraftOptions {
+  tool: 'draft_authoring_document' | 'save_document_to_vault';
+  noProjectRefusal: string;
+  /** The reason the person stated, for a tool that requires one. */
+  changeReason?: string;
+}
+
+/**
+ * The one way AnA creates a draft: both tools below come through here, so
+ * there is one writer (authoring_documents through createDocumentFromDraft)
+ * and one set of refusals. `{ error }` for every refusal.
+ */
+async function createAnaDraft(
   pool: AuthoringPool,
   input: Record<string, unknown>,
   ctx: DraftToolContext | undefined,
-): Promise<string> {
+  opts: AnaDraftOptions,
+): Promise<{ error: string } | DraftToolResult | ReturnType<typeof authoringCreationRecoveryPayload>> {
   if (!ctx?.organizationId || !ctx.userId) {
-    return JSON.stringify({ error: 'draft_authoring_document requires tenant + user context.' });
+    return { error: `${opts.tool} requires tenant + user context.` };
   }
   const programId = await resolveOpenProgram(pool, ctx);
-  if (!programId) return JSON.stringify({ error: DRAFT_AUTHORING_DOCUMENT_NO_PROJECT });
+  if (!programId) return { error: opts.noProjectRefusal };
 
   const provenance: ProvenanceInput = { source: 'ana' };
   if (ctx.threadId) provenance.conversationId = String(ctx.threadId);
   if (ctx.turnId) provenance.turnId = String(ctx.turnId);
-  if (ctx.model) provenance.model = String(ctx.model);
+  /* `ctx.model` is NOT set here any more (round 15, SEC-A-7 door 2). The model
+     recorded on a drafted document comes from the turn record this draft names,
+     or from nothing — one rule, no privileged channel beside it. Setting it
+     here would be inert in any case: `createDocumentFromDraft` parses the
+     provenance of both its callers, and `parseProvenance` no longer accepts
+     `model`. Leaving the line would read as attribution that still happens. */
 
   const parsed = parseDraftInput({ ...input, programId, provenance });
-  if (!parsed.ok) return JSON.stringify({ error: parsed.error });
+  if (!parsed.ok) return { error: parsed.error };
 
   const email = await actorEmail(pool, Number(ctx.userId));
   const audit: AuthoringAuditContext = {
@@ -136,9 +171,10 @@ export async function draftAuthoringDocumentTool(
     const outcome = await createDocumentFromDraft(
       { pool, tenantId: Number(ctx.organizationId), actor: { id: String(ctx.userId), email }, audit },
       parsed.value,
+      opts.changeReason ? { changeReason: opts.changeReason } : undefined,
     );
-    if (outcome.kind === 'refused') return JSON.stringify({ error: outcome.error });
-    const result: DraftToolResult = {
+    if (outcome.kind === 'refused') return { error: outcome.error };
+    return {
       projectSourceReferences: outcome.provenance.projectSourceReferences ?? [],
       status: 'generated',
       saved: true,
@@ -151,13 +187,74 @@ export async function draftAuthoringDocumentTool(
       content: summaryContent(parsed.value),
       message:
         `Saved '${parsed.value.title}' as an authoring draft (${outcome.sections.length} section(s)) in the open project. ` +
-        'It is a draft in the editor; nothing is filed in the vault until someone files it.',
+        'It is a draft in the editor; nothing is filed in the vault until someone files it.' +
+        unverifiedFigureNote(outcome.provenance.projectSourceReferences),
     };
-    return JSON.stringify(result);
   } catch (err) {
-    // The driver's message names tables and constraints; it goes to the log,
-    // never to the model, which relays tool text to the user.
-    logger.error('draft_authoring_document failed', { err: err instanceof Error ? err.message : String(err) });
-    return JSON.stringify({ error: 'draft_authoring_document failed: the document could not be written. Nothing was saved.' });
+    // Driver details stay in the log; uncertain creation retains its recovery identity.
+    return authoringDraftCreationFailure(err, opts.tool, logger);
   }
+}
+
+/**
+ * The tool body. Returns the JSON string the model receives; `{ error }` for
+ * every refusal, so telemetry classifies it as degraded rather than a crash.
+ */
+export async function draftAuthoringDocumentTool(
+  pool: AuthoringPool,
+  input: Record<string, unknown>,
+  ctx: DraftToolContext | undefined,
+): Promise<string> {
+  return JSON.stringify(await createAnaDraft(pool, input, ctx, {
+    tool: 'draft_authoring_document', noProjectRefusal: DRAFT_AUTHORING_DOCUMENT_NO_PROJECT,
+  }));
+}
+
+/** The refusal, verbatim, when no project is open. */
+export const SAVE_DOCUMENT_NO_PROJECT =
+  'save_document_to_vault needs an open project — every AnA draft is filed under one. Open or select a project, then ask again.';
+
+/**
+ * `save_document_to_vault` — the single-body form of `draft_authoring_document`
+ * (document store consolidation step 2, docs/design/DOCUMENT_STORE_CONSOLIDATION.md,
+ * 2026-10-17).
+ *
+ * It used to insert a `concept2cure_artifacts` row, so a draft AnA said it had
+ * saved was in no store the editor or the Vault reads. It now creates an
+ * authoring draft through the same path as `draft_authoring_document`: one
+ * section holding the body, the person's stated reason as the CREATE reason
+ * for change, AnA's machine-draft lineage and provenance as that path records
+ * them. It never writes `vault.documents`: AnA prose is not governed content
+ * without a passed PQ (P-30, docs/MODEL_GOVERNANCE_DECISION_2026-10-13.md), so
+ * filing stays a person's step and the reply says the draft is not in the Vault.
+ * The tool keeps its name because confirmations, plans and transcripts carry it.
+ */
+export async function saveDocumentToVaultTool(
+  pool: AuthoringPool,
+  input: Record<string, unknown>,
+  ctx: DraftToolContext | undefined,
+  reason: string,
+): Promise<string> {
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  const content = typeof input.content === 'string' ? input.content : '';
+  if (!title) return JSON.stringify({ error: 'title (string) is required.' });
+  if (!content) return JSON.stringify({ error: 'content (string) is required.' });
+  const ctd = typeof input.ctd_section === 'string' && input.ctd_section.trim() ? input.ctd_section.trim() : null;
+  const category = typeof input.category === 'string' && input.category.trim() ? input.category.trim() : null;
+  const out = await createAnaDraft(pool, {
+    title,
+    ...(category ? { documentType: category } : {}),
+    // Plain text is stored as the editor's HTML, escaped (shared/authoring/plain-text-html.ts).
+    sections: [{ code: ctd ?? '1', title, content: looksLikeHtml(content) ? content : plainTextToHtml(content) }],
+  }, ctx, { tool: 'save_document_to_vault', noProjectRefusal: SAVE_DOCUMENT_NO_PROJECT, changeReason: reason });
+  if ('error' in out) return JSON.stringify(out);
+  return JSON.stringify({
+    ...out,
+    ok: true,
+    filed_in_vault: false,
+    message:
+      `Saved '${title}' as an AnA draft in the editor (authoring document ${out.authoringDocId}, one section). ` +
+      'It is not filed in the Vault; a person files it from the editor.' +
+      unverifiedFigureNote(out.projectSourceReferences),
+  });
 }

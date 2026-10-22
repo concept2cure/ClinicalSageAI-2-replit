@@ -1,0 +1,29 @@
+{
+  "executionBase": "e1c63ae9b024ed0ecde835f61c07ecb589eab67d",
+  "testExitCode": 0,
+  "testsPassed": 17,
+  "node": "v22.23.3",
+  "sourcePinsStable": true,
+  "sourcePinsStillCurrent": true,
+  "testOrProductionEditsDuringQualification": false,
+  "strictLintExitCode": 0,
+  "strictFiles": 5,
+  "strictErrors": 0,
+  "strictWarnings": 0,
+  "vaultErrors": 0,
+  "vaultWarnings": 4,
+  "vaultHeadWarnings": 4,
+  "temporaryTypeScriptFilesUsed": false,
+  "historicalWrapperExitCodesInferred": false,
+  "historicalArtifactsPreserved": 8,
+  "readmeLinksResolved": [
+    "../../../../../design/PROJECT_FILES_SOURCE_ASSEMBLY_2026-10-18.md",
+    "current-tests.json",
+    "lint-summary.json",
+    "current-lint-strict.json",
+    "current-vault-lint.json",
+    "head-vault-lint.json",
+    "qualification-preflight.json",
+    "historical/index.json"
+  ]
+}

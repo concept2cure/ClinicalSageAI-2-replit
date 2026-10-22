@@ -1,0 +1,28 @@
+{
+  "base": "21ed7516fb312bcb7c7b9a3a4ba1c5ec80609f0f",
+  "command": [
+    "/root/.npm/_npx/d18f28baf1132559/node_modules/node/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "--no-ignore",
+    "--stdin",
+    "--stdin-filename",
+    "server/services/ana-ri/workflow-orchestration.ts",
+    "--format",
+    "json"
+  ],
+  "exit": 0,
+  "elapsed_seconds": 0.959,
+  "results": [
+    {
+      "filePath": "/workspace/scratch/bd36ee581acd/concept2cure/server/services/ana-ri/workflow-orchestration.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    }
+  ]
+}

@@ -106,7 +106,7 @@ describe('vault chunk writer tenancy', () => {
   it('embeds an owned document under that organization\'s tenant scope', async () => {
     const { chunkAndEmbedDocument } = await import('../document-chunking.service');
     const result = await chunkAndEmbedDocument({ documentId: DOC, organizationId: ORG, text: 'Some extracted text.' });
-    expect(result).toEqual({ ok: true, chunkCount: 1 });
+    expect(result).toEqual({ ok: true, chunkCount: 1, embedded: true });
     expect(embedCalls).toHaveLength(1);
     expect(embedCalls[0].texts).toEqual(['Some extracted text.']);
     expect(embedCalls[0].tenantId).toBe(String(ORG));
@@ -115,7 +115,7 @@ describe('vault chunk writer tenancy', () => {
   it('every statement that touches vault.document_chunks is bound to the organization', async () => {
     const { chunkAndEmbedDocument } = await import('../document-chunking.service');
     const result = await chunkAndEmbedDocument({ documentId: DOC, organizationId: ORG, text: 'Some extracted text.' });
-    expect(result).toEqual({ ok: true, chunkCount: 1 });
+    expect(result).toEqual({ ok: true, chunkCount: 1, embedded: true });
     const touching = calls.filter(c => /vault\.document_chunks/.test(c.sql));
     expect(touching.length).toBeGreaterThanOrEqual(2); // the DELETE and at least one INSERT
     for (const c of touching) {

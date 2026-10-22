@@ -1,0 +1,47 @@
+[
+  {
+    "version": "5.6.3",
+    "mode": "seed",
+    "rootCount": 7093,
+    "sourceCount": 12152,
+    "skippedDuringNativeInvalidation": 8,
+    "pendingBefore": 435,
+    "pendingAfter": 435,
+    "checkedCount": 0,
+    "cachedDiagnosticFileCount": 0,
+    "rssMb": 5266,
+    "heapMb": 4956,
+    "gcEvents": [],
+    "diagnostics": []
+  },
+  {
+    "version": "5.6.3",
+    "mode": "batch",
+    "rootCount": 7093,
+    "sourceCount": 12152,
+    "skippedDuringNativeInvalidation": 0,
+    "pendingBefore": 435,
+    "pendingAfter": 0,
+    "checkedCount": 435,
+    "cachedDiagnosticFileCount": 0,
+    "rssMb": 6208,
+    "heapMb": 5699,
+    "gcEvents": [
+      {
+        "checkedCount": 389,
+        "rssBeforeMb": 6269,
+        "rssAfterMb": 6191,
+        "heapBeforeMb": 5975,
+        "heapAfterMb": 5612
+      },
+      {
+        "checkedCount": 400,
+        "rssBeforeMb": 6218,
+        "rssAfterMb": 6191,
+        "heapBeforeMb": 5721,
+        "heapAfterMb": 5615
+      }
+    ],
+    "diagnostics": []
+  }
+]

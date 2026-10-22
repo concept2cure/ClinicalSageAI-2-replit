@@ -27,7 +27,7 @@ import {
   deviceAuditTrail 
 } from '../../shared/schema.js';
 import { eq, and, or, inArray, like, sql, desc, arrayOverlaps } from 'drizzle-orm';
-import auditService from './auditService.js';
+import { recordAuditRow } from './audit/audit-write-outcome';
 import { ai } from '../lib/unified-ai-client';
 import multer from 'multer';
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
@@ -200,6 +200,11 @@ interface DocumentTags {
  */
 const UPLOAD_MAX_BYTES = 100 * 1024 * 1024; // 100MB limit
 
+export class DocumentDataCenterRefusal extends Error {
+  readonly status=404;
+  constructor() { super('Document not found');this.name='DocumentDataCenterRefusal'; }
+}
+
 class DocumentDataCenterService {
   private storage: multer.Multer;
   private uploadDir: string = path.join(process.cwd(), 'uploads', 'device-data-center');
@@ -245,7 +250,6 @@ class DocumentDataCenterService {
       fileFilter: makeUploadFileFilter({
         extensions: [],
         mimeTypes: [...this.allowedMimeTypes],
-        allowMimePrefixes: [],
       }),
     });
     
@@ -514,7 +518,7 @@ class DocumentDataCenterService {
       }).returning();
 
       // Log audit trail for 21 CFR Part 11 compliance
-      await auditService.logAction({
+      const auditTrail = await recordAuditRow({
         organizationId,
         userId: metadata.userId,
         action: 'DOCUMENT_UPLOADED',
@@ -537,6 +541,7 @@ class DocumentDataCenterService {
       return {
         success: true,
         document: newDocument,
+        meta: { auditTrail },
         aiTags,
         message: UPLOAD_MESSAGE[aiTags.method],
       };
@@ -741,7 +746,7 @@ class DocumentDataCenterService {
         );
 
       if (!existing) {
-        throw new Error('Document not found');
+        throw new DocumentDataCenterRefusal();
       }
 
       // Update document
@@ -770,8 +775,10 @@ class DocumentDataCenterService {
         )
         .returning();
 
+      if (!updated) throw new DocumentDataCenterRefusal();
+
       // Log audit trail
-      await auditService.logAction({
+      const auditTrail = await recordAuditRow({
         organizationId,
         userId: updates.userId,
         action: 'DOCUMENT_TAGS_UPDATED',
@@ -783,13 +790,13 @@ class DocumentDataCenterService {
           categories: updates.categories,
           standards: updates.testStandards,
         },
-        ipAddress: '127.0.0.1',
         userAgent: 'DocumentDataCenterService',
       });
 
       return {
         success: true,
         document: updated,
+        meta: { auditTrail },
         message: 'Document tags updated successfully',
       };
     } catch (error) {

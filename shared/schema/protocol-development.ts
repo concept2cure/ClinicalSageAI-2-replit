@@ -8,14 +8,14 @@
  * Soft-links to the governed protocol records (iacuc_protocols / irb_submissions /
  * clinical_studies) via (protocol_kind, linked_protocol_id).
  *
- * Section templates follow ICH M11 / ICH E6(R2) (clinical), PHS Policy / AWA 9 CFR
+ * Section templates follow ICH M11 / ICH E6(R3) Appendix B (clinical), PHS Policy / AWA 9 CFR
  * 2.31 3Rs (IACUC), and 45 CFR 46.111 (IRB). Conventions match the platform;
  * status/type columns are CHECK-constrained. Mutations are governed + audited.
  *
  * @module shared/schema/protocol-development
  */
 
-import { boolean, index, integer, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, index, integer, pgTable, serial, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { organizations, users } from '../schema';
 import { researchPersonnel } from './research-compliance';
 
@@ -37,6 +37,8 @@ export const protocolDocuments = pgTable(
   {
     id: serial('id').primaryKey(),
     organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    /** Owned regulatory program; legacy records stay explicitly unfiled. */
+    programId: uuid('program_id'),
     protocolKind: text('protocol_kind').$type<ProtocolKind>().notNull(),
     /** Soft reference to iacuc_protocols / irb_submissions / clinical_studies by kind. */
     linkedProtocolId: integer('linked_protocol_id'),

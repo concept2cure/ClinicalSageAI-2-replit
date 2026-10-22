@@ -34,17 +34,22 @@
  * intentions.
  */
 
-import type { PoolClient, Pool } from 'pg';
-import { resolveDocumentClass, describeUnmappedClass } from './document-class.js';
-
-/** Minimal shape shared by Pool and PoolClient — this module needs only query. */
-type Queryable = Pick<Pool | PoolClient, 'query'>;
+import type { RequestSqlClient } from '../../db/requestDb';
+import { queryRowsClient } from '../../db/queryRowsClient';
+import { documentAgencyCandidates, resolveDocumentClass, describeUnmappedClass } from './document-class.js';
 
 export interface BindingInput {
-  db: Queryable;
+  db: RequestSqlClient;
   orgId: number;
   /** regulatory_programs.id (uuid), or null/undefined for an org-wide document. */
   projectId: string | null | undefined;
+  /**
+   * A market's document of this project to bind instead of the home filing
+   * (FILING_SPINE F22b): c2c_documents.id with filing_scope 'market'. Bound
+   * only when it is that, in this project and organization; otherwise the
+   * reason says why and nothing is bound.
+   */
+  marketDocumentId?: string | null;
 }
 
 export interface BindingResult {
@@ -57,7 +62,8 @@ export interface BindingResult {
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function resolveGovernedDocument(input: BindingInput): Promise<BindingResult> {
-  const { db, orgId, projectId } = input;
+  const { orgId, projectId } = input;
+  const db = queryRowsClient(input.db);
 
   if (!projectId) {
     return {
@@ -85,6 +91,8 @@ export async function resolveGovernedDocument(input: BindingInput): Promise<Bind
     return { documentId: null, reason: 'The project was not found in this organization.' };
   }
 
+  if (input.marketDocumentId) return bindMarketDocument(db, orgId, projectId, String(input.marketDocumentId));
+
   const { program_type: programType, primary_agency: primaryAgency } = project.rows[0];
   const klass = resolveDocumentClass(programType, primaryAgency);
   if (!klass) {
@@ -97,14 +105,19 @@ export async function resolveGovernedDocument(input: BindingInput): Promise<Bind
 
   // The project's governed document of this class. Newest first so a project
   // that has been re-scaffolded binds to the current filing rather than a
-  // superseded one.
+  // superseded one. Only its home agency or a harmonised fallback (2026-10-15,
+  // FILING_SPINE F22): an added market's document of the same class carries
+  // the market's agency and holds only its regional modules, so it is never
+  // the home filing. Its scope is read too (2026-10-15, F22b), so the rule
+  // does not rest on the agency alone.
   const doc = await db.query<{ id: string }>(
     `SELECT id
        FROM c2c_documents
-      WHERE project_id = $1 AND org_id = $2 AND doc_type = $3
+      WHERE project_id = $1 AND org_id = $2 AND doc_type = $3 AND agency = ANY($4::text[])
+        AND COALESCE(to_jsonb(c2c_documents)->>'filing_scope', 'home') = 'home'
       ORDER BY created_at DESC
       LIMIT 1`,
-    [projectId, orgId, klass.docType],
+    [projectId, orgId, klass.docType, documentAgencyCandidates(klass.docType, klass.agency)],
   );
   if (doc.rows.length === 0) {
     return {
@@ -114,5 +127,25 @@ export async function resolveGovernedDocument(input: BindingInput): Promise<Bind
     };
   }
 
+  return { documentId: doc.rows[0].id };
+}
+
+/**
+ * A market's document of the project (FILING_SPINE F22b). Read through to_jsonb
+ * so a database without the filing_scope column, which holds no market
+ * document, reads as "not a market's document" rather than failing.
+ */
+async function bindMarketDocument(db: ReturnType<typeof queryRowsClient>, orgId: number, projectId: string, documentId: string): Promise<BindingResult> {
+  const doc = await db.query<{ id: string }>(
+    `SELECT d.id
+       FROM c2c_documents d
+      WHERE d.id = $1 AND d.project_id = $2 AND d.org_id = $3
+        AND to_jsonb(d)->>'filing_scope' = 'market'
+      LIMIT 1`,
+    [documentId, projectId, orgId],
+  );
+  if (doc.rows.length === 0) {
+    return { documentId: null, reason: "The market's document was not found in this project, so nothing is bound to it." };
+  }
   return { documentId: doc.rows[0].id };
 }

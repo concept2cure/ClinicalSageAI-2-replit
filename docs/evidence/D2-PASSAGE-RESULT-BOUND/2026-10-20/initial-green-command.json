@@ -1,0 +1,42 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "server/services/ana/__tests__/document-passage-result-bound.test.ts",
+    "server/services/ana/__tests__/document-passage-result-cap.test.ts",
+    "server/services/ana/__tests__/document-passage-result-references.test.ts",
+    "tests/services/tool-outcome-passage-omission.test.ts",
+    "server/services/ana/__tests__/document-passage-tools.test.ts",
+    "server/services/ana/__tests__/document-passage-tools-budget.test.ts",
+    "tests/services/tool-outcome.test.ts",
+    "server/services/ana/__tests__/catalog-gated-tools.test.ts",
+    "server/services/vault/__tests__/document-passage-search-context.test.ts",
+    "server/services/vault/__tests__/passage-context-span.test.ts",
+    "server/services/vault/__tests__/passage-context-span-nested.test.ts"
+  ],
+  "PATH_prefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+  "NODE_OPTIONS": "--max-old-space-size=4096",
+  "nodeVersion": "v22.23.3",
+  "tests": {
+    "server/services/ana/__tests__/document-passage-result-bound.test.ts": "f44a4a9276210278cdfeae37dc621d5ea5fd9f3b2bc58e73133cca740f5cf880",
+    "server/services/ana/__tests__/document-passage-result-cap.test.ts": "80d5129c5ce062ea870129992d9df762e3b84f665462dd4738c4328c7ae85a2e",
+    "server/services/ana/__tests__/document-passage-result-references.test.ts": "ce0e392385c17eb328bccbf1c433afeb2fbdaaf41c11c26f9107f00e4604a836",
+    "tests/services/tool-outcome-passage-omission.test.ts": "44480dd94dc578e0b5fafd46b6827accc11c145d90de10f84c1fc25003a609cf",
+    "server/services/ana/__tests__/document-passage-tools.test.ts": "6decf98134e4c7aee161ab3c87a4826620dc14cd75ff4ce7152108a176cce597",
+    "server/services/ana/__tests__/document-passage-tools-budget.test.ts": "586ef7b1fcd0f0c0349f0504973a6ce8d5760cf03c9b2988dc665b59f2f2eca5",
+    "tests/services/tool-outcome.test.ts": "80e0b0fa05d32e4e9ad561fd271c9992048e0baf9bd60d6c15b0d34c137aba54",
+    "server/services/ana/__tests__/catalog-gated-tools.test.ts": "3ed60a99db341e700908f4a122d5960e03099ce20cd539e18915c0615516712e",
+    "server/services/vault/__tests__/document-passage-search-context.test.ts": "483784665c5b8e0791d3d6d2a4f22a6682174e6b824a11f4db54f2d045fd7fd7",
+    "server/services/vault/__tests__/passage-context-span.test.ts": "2af83c90cc7b3c3f0591ba48d3751f3f55e7268d5791ddd2290b0c76ba591643",
+    "server/services/vault/__tests__/passage-context-span-nested.test.ts": "32d2c58064ce97bd412a65eab4d34a8f95e7b026b2dea4cd260825d546782ace"
+  },
+  "production": {
+    "server/services/ana/document-passage-tools.ts": "bd101d65d27b5077bbb3f1ef3e50a86fec9427270dade60c48c3810ccdb0aa7e",
+    "server/services/ana/tool-outcome.ts": "e32bef67da8f61db7b8a15fd636505ae2c572d3830e293e9600cf8de087761ed"
+  }
+}

@@ -1,0 +1,6 @@
+ × client/src/concept2cure/components/session/__tests__/IdleSessionGuardReload.test.tsx > the idle clock survives a reload > a reload in the middle of the window does not restart it: sign-out comes 15 minutes after the person stopped 163ms
+ × client/src/concept2cure/components/session/__tests__/IdleSessionGuardReload.test.tsx > the idle clock survives a reload > a page opened after the window has passed signs out at once 22ms
+ ✓ client/src/concept2cure/components/session/__tests__/IdleSessionGuardReload.test.tsx > the idle clock survives a reload > another session's clock is never applied to this one 5ms
+ × client/src/concept2cure/components/session/__tests__/IdleSessionGuardReload.test.tsx > the idle clock survives a reload > activity in another tab of the same session keeps this tab signed in 37ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 1 passed (4)

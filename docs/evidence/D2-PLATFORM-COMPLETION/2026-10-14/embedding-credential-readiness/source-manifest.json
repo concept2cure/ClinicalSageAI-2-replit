@@ -1,0 +1,223 @@
+{
+  "schemaVersion": 1,
+  "capturedUtc": "2026-10-14T20:04:39.212208+00:00",
+  "branch": "concept2cure-v2",
+  "phase": "Embedding credential readiness",
+  "qualification": [
+    "Source records are bounded selected inputs, not an exhaustive import closure.",
+    "The red baseline source is genuine; the first-phase prospective fixture was actually captured by lint JSON before relocation.",
+    "Final unit proof uses SDK/embedding stubs with real gateway placement/ledger logic; no live provider/native/compiler qualification.",
+    "One existing warning occurrence retained with its original/final locations/counts; no scanner or warning baseline expansion.",
+    "Only new copied logs are sanitized/normalized; private raw bytes and earlier sealed artifacts remain unchanged."
+  ],
+  "sources": [
+    {
+      "path": "server/services/ai-gateway/embeddings/embedding-provider.ts",
+      "bytes": 21755,
+      "digestAlgorithm": "sha256",
+      "digest": "7d825cfb0b39abc800c9f5b00e7a30ff7371e4bc1e93d7cae232ea7c04cc793f"
+    },
+    {
+      "path": "server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts",
+      "bytes": 27882,
+      "digestAlgorithm": "sha256",
+      "digest": "46ca0a0ce5caa77ce2383fad6fab1dc6f9a754071446a49e0a05f744f5f81fa7"
+    },
+    {
+      "path": "server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts",
+      "bytes": 8182,
+      "digestAlgorithm": "sha256",
+      "digest": "864cca7ba71d59655ded6ba32586a3c15b5e98b55556797c57c521d97e706490"
+    },
+    {
+      "path": "server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts",
+      "bytes": 14385,
+      "digestAlgorithm": "sha256",
+      "digest": "8138098b891d14884ee27f37f85067b11f00e5bab36e3839e1a4be4c32dc8aa7"
+    },
+    {
+      "path": "server/services/innovation/__tests__/embedding-failure-honesty.contract.test.ts",
+      "bytes": 7429,
+      "digestAlgorithm": "sha256",
+      "digest": "3c61f9a3f38ac814faa512f5d1057da6fd189e0f3399f31df0052e3ef10de102"
+    },
+    {
+      "path": "server/services/ai-gateway/gateway.ts",
+      "bytes": 220250,
+      "digestAlgorithm": "sha256",
+      "digest": "355b46be8a9d1d7d6d259b8d11664f68970e89af5f74dc322219f00046a103ab"
+    },
+    {
+      "path": "server/services/ai-gateway/providers/org-placement.ts",
+      "bytes": 10497,
+      "digestAlgorithm": "sha256",
+      "digest": "a7410d0be7dd849c22938fc084fee3dd0d31eaf3db887775be75a706bcd657b7"
+    },
+    {
+      "path": "server/services/ai-gateway/providers/placement.ts",
+      "bytes": 15399,
+      "digestAlgorithm": "sha256",
+      "digest": "45c2e6bbd03e7bd7347b024df09e7c370f76d0b895433eb2db56f706611cc7fd"
+    },
+    {
+      "path": "server/services/embedding-corpus-policy.ts",
+      "bytes": 18122,
+      "digestAlgorithm": "sha256",
+      "digest": "fb6f59d618a2d18835899a3c0710282112b78853fa9d33ba5ec01c1401395279"
+    },
+    {
+      "path": "docs/design/EMBEDDING_CREDENTIAL_READINESS.md",
+      "bytes": 2968,
+      "digestAlgorithm": "sha256",
+      "digest": "f8a8a39ee7df3e9423b05231c02115dab8f325928c7af7f6d05515c6397a4f2a"
+    },
+    {
+      "path": "vitest.config.ts",
+      "bytes": 3983,
+      "digestAlgorithm": "sha256",
+      "digest": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+    },
+    {
+      "path": "tests/setup.ts",
+      "bytes": 17904,
+      "digestAlgorithm": "sha256",
+      "digest": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/embedding-credential-readiness/README.md",
+      "bytes": 4066,
+      "digestAlgorithm": "sha256",
+      "digest": "c6e9dd0b33580e195f281ff29df41ad10705afcd5f358fd2f84bd9c25c632703"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/embedding-credential-readiness/green/final-focused-59.txt",
+      "bytes": 78420,
+      "digestAlgorithm": "sha256",
+      "digest": "d235867a38439d0c186929b1707991c52d3516a4a5d445efa5d8d9c87186dd40"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/embedding-credential-readiness/green/final-lint-summary.json",
+      "bytes": 726,
+      "digestAlgorithm": "sha256",
+      "digest": "0d9ec53c58c4bb3903d091522e52a7424ee61545ff6fa9128241d921dfbda734"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/embedding-credential-readiness/green/first-focused-59.txt",
+      "bytes": 76721,
+      "digestAlgorithm": "sha256",
+      "digest": "6262aeab1986c5533a979228eeddc9c6eac280f350a9bc3b834c3d65b287ac07"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/embedding-credential-readiness/green/first-phase-lint-summary.json",
+      "bytes": 704,
+      "digestAlgorithm": "sha256",
+      "digest": "240f377f8621df562d49c2dcbb5a7777769a2dbf8c38a65492a021e2837d5052"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/embedding-credential-readiness/green/lint-baseline-comparison.json",
+      "bytes": 1571,
+      "digestAlgorithm": "sha256",
+      "digest": "b3060b9efc5c9ca00f5775ce5cf2f2b1402a1ea68065d589f948b37586123ced"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/embedding-credential-readiness/red/sdk-stub-credential-3-red.txt",
+      "bytes": 20514,
+      "digestAlgorithm": "sha256",
+      "digest": "c01d1b3eac842c61fec41723e2580bc420986de04b2e099d22f0654a319b2bdd"
+    }
+  ],
+  "rawEvidence": [
+    {
+      "path": "/tmp/project-vault-embedding-credential-red.txt",
+      "bytes": 20515,
+      "digestAlgorithm": "sha256",
+      "digest": "d4e5475197a9e01df74ba7a2956be945a4364f2370cbe0accb1f82c41f7f1160"
+    },
+    {
+      "path": "/tmp/project-vault-embedding-credential-focused-green.txt",
+      "bytes": 76722,
+      "digestAlgorithm": "sha256",
+      "digest": "870653e78ab25fdb8e6de6f67805226ad7dd3a714f91d4197eeddbce182a6cfb"
+    },
+    {
+      "path": "/tmp/project-vault-embedding-credential-final-focused-green.txt",
+      "bytes": 78421,
+      "digestAlgorithm": "sha256",
+      "digest": "75163c2857c4278f65bc1ed2fbf7586a5d57a27277f3fc56f53ce82c09745196"
+    },
+    {
+      "path": "/tmp/project-vault-embedding-credential-scoped-lint.json",
+      "bytes": 31627,
+      "digestAlgorithm": "sha256",
+      "digest": "71c067e7efa766c8696109166a6a57eb7fdd6405dedceb07ba2afde16af02106"
+    },
+    {
+      "path": "/tmp/project-vault-embedding-credential-scoped-lint.stderr.txt",
+      "bytes": 0,
+      "digestAlgorithm": "sha256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/project-vault-embedding-credential-final-lint.json",
+      "bytes": 29554,
+      "digestAlgorithm": "sha256",
+      "digest": "492ccc004b691353083c7dc2c206e2c5e07c8e5bfd96327b9aea1d2cdb107234"
+    },
+    {
+      "path": "/tmp/project-vault-embedding-credential-final-lint.stderr.txt",
+      "bytes": 0,
+      "digestAlgorithm": "sha256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/project-vault-embedding-credential-lint-baseline-comparison.json",
+      "bytes": 1571,
+      "digestAlgorithm": "sha256",
+      "digest": "b3060b9efc5c9ca00f5775ce5cf2f2b1402a1ea68065d589f948b37586123ced"
+    },
+    {
+      "path": "/tmp/project-vault-embedding-provider-source.before.ts",
+      "bytes": 21522,
+      "digestAlgorithm": "sha256",
+      "digest": "e1954d4e95e7efcf00d9f869b3be647a482faef9177a2cba9c277e4ed94e8c80"
+    },
+    {
+      "path": "/tmp/project-vault-embedding-provider-test.before.ts",
+      "bytes": 26195,
+      "digestAlgorithm": "sha256",
+      "digest": "196d33b63e2dacda80edd3ea90c369e14e326393d2abe4cbb4612c318e95b61a"
+    },
+    {
+      "path": "/tmp/project-vault-embedding-provider-election-test.before.ts",
+      "bytes": 5829,
+      "digestAlgorithm": "sha256",
+      "digest": "5c066cdd0f0f95f5f07c160702c6e018adb203c4dcd9e76347b8c663be510538"
+    },
+    {
+      "path": "/tmp/project-vault-embedding-credential-first-phase-fixture.ts",
+      "bytes": 30039,
+      "digestAlgorithm": "sha256",
+      "digest": "c52fd210cfa28b5c3e8a13a50ccea955859107a264e64449ddd222478470088c"
+    },
+    {
+      "path": "/tmp/project-vault-embedding-embedding-provider-baseline-lint.json",
+      "bytes": 273,
+      "digestAlgorithm": "sha256",
+      "digest": "a3c85786e3b27a01af413c3f30d360e0fd35b2e6aeafd2643aa5d2173424b30b"
+    },
+    {
+      "path": "/tmp/project-vault-embedding-embedding-provider.test-baseline-lint.json",
+      "bytes": 27272,
+      "digestAlgorithm": "sha256",
+      "digest": "e22f5e06de487d597b85a967664e750cf7b7af0ddd6da1cea382f8882462a465"
+    },
+    {
+      "path": "/tmp/project-vault-embedding-embedding-provider-election.test-baseline-lint.json",
+      "bytes": 297,
+      "digestAlgorithm": "sha256",
+      "digest": "b608857c29bd64c5f98b9138339e832416a5309489bcefcfaf3f2c34d5a6a4d7"
+    }
+  ]
+}

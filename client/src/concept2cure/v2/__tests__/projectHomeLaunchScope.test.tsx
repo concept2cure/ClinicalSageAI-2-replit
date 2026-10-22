@@ -81,6 +81,9 @@ describe('Project home and the launch scope', () => {
     // What is not in this release is a line of words, never a panel or a button.
     expect(screen.queryByText('Not in this release')).toBeNull();
     expect(screen.getByTestId('pj-coming-later').textContent).toMatch(/^Coming later:/);
+    // The same bare line on both stages: Respond's sat inside its tool card
+    // (filing-spine design review, open item 10, 2026-10-08).
+    expect(screen.getByTestId('pj-coming-later').closest('.pj-sec')).toBeNull();
     // The removed Plan stage pointed at meetings, eTMF and grants "above".
     expect(screen.queryByText('Meetings, eTMF and grants open in their own surfaces')).toBeNull();
   });

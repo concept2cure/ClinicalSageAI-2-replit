@@ -1,0 +1,6 @@
+mutant D5-07: the click guard is dropped, so only the disabled attribute stands between the rule and the post
+verdict: SURVIVED
+Tests  8 passed (8)
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)

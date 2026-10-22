@@ -60,7 +60,10 @@ describe('market formatting validator — violations', () => {
     expect(validateLeavesAgainstMarketSpec(usEctd, [fiveGb]).findings.some((x) => x.rule === 'SUBMISSION_SIZE')).toBe(false);
     const elevenGb: LeafFileDescriptor = { fileName: 'big.pdf', fileSizeBytes: 11 * 1000 ** 3 };
     expect(validateLeavesAgainstMarketSpec(usEctd, [elevenGb]).findings.some((x) => x.rule === 'SUBMISSION_SIZE')).toBe(true);
-    expect((usEctd.formatting.maxSubmissionSizeMb ?? 0) * 1024 ** 2).toBeLessThanOrEqual(10 * 1000 ** 3);
+    // One FDA figure: exactly the gateway's 10^10 bytes, so nothing between them is refused here and accepted there.
+    expect((usEctd.formatting.maxSubmissionSizeMb ?? 0) * 1024 ** 2).toBe(10 * 1000 ** 3);
+    const justUnder: LeafFileDescriptor = { fileName: 'big.pdf', fileSizeBytes: 9_999_500_000 };
+    expect(validateLeavesAgainstMarketSpec(usEctd, [justUnder]).findings.some((x) => x.rule === 'SUBMISSION_SIZE')).toBe(false);
   });
 
   it('errors when the total exceeds the EU 600 MB submission limit', () => {

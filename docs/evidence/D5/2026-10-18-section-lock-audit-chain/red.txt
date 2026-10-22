@@ -1,0 +1,16 @@
+# At HEAD 155783880, before the change. Real migrations/20260921_audit_logs_chain_seq.sql
+# and the real recordGovernedAction, on PGlite. The same row written both ways:
+
+ROWS [{"target":"document:d1","chain_seq":null},   <- statement by statement, as auditLockEvent's pool did it
+      {"target":"document:d2","chain_seq":1}]      <- inside BEGIN ... COMMIT
+
+# The mechanism, from the trigger:
+#   IF NEW.sha256_chain IS NULL OR chain_tenant IS NULL THEN
+#     RETURN NEW;   -- the row is a legacy row and chain_seq stays NULL
+# chain_tenant is the transaction-local GUC app.audit_chain_tenant, cleared when
+# the statement that set it commits -- before the INSERT, on a pool.
+
+# The call site (server/routes/realtime-collab.ts, auditLockEvent):
+#     const pool = await getDbPool();
+#     ...
+#     await recordGovernedAction(pool, { ... });

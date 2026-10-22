@@ -35,7 +35,8 @@ describe('what each call was sent', () => {
     }));
     const { body } = r.seal('answered');
     expect(body.schema).toBe(TURN_RECORD_SCHEMA);
-    expect(TURN_RECORD_SCHEMA).toBe('ana-turn-record/3');
+    // /3's routing and per-call facts are carried on in /4 (S4 adds the timeline).
+    expect(TURN_RECORD_SCHEMA).toBe('ana-turn-record/4');
     expect(body.routing).toEqual({ riskTier: 'high', taskType: 'regulatory_review', rationale: 'Open section 2.7.4 is a CTD summary -> approved model required' });
     expect(body.model.calls).toEqual([
       {

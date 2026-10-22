@@ -1,5 +1,5 @@
 {
- "$note": "Every AnA tool and platform command, classified against the launch catalog on 2026-09-26 by reading its handler (docs/evidence/D2-API-SCOPE/2026-09-26-ana-tools/). hiddenApp: operates records of surfaces outside the launch catalog only; withheld/refused in production. inScope: operates a launch surface, or no tenant records (knowledge). A new tool or command must be added to one of the two, or ana-launch-scope.test.ts fails.",
+ "$note": "Every AnA tool and platform command, classified against the launch catalog on 2026-09-26 by reading its handler (docs/evidence/D2-API-SCOPE/2026-09-26-ana-tools/). hiddenApp: operates records of surfaces outside the launch catalog only; withheld/refused in production. inScope: operates a launch surface, or no tenant records (knowledge). A new tool or command must be added to one of the two, or ana-launch-scope.test.ts fails. Amended 2026-10-12 (decision P-28): CMC / Module 3 joined the launch catalog, so its 10 tools and 6 commands moved from hiddenApp to inScope. The move is bookkeeping, not the mechanism — anaCapabilityInLaunchScope re-checks the surface against LAUNCH_SURFACE_IDS rather than trusting this file, so the tools came back the moment the surface did. What this file would otherwise say is that a launch surface is outside the catalog.",
  "classifiedOn": "2026-09-26",
  "tools": {
   "hiddenApp": [
@@ -52,23 +52,6 @@
      "create_clinical_investigator",
      "create_financial_disclosure",
      "review_financial_disclosure"
-    ]
-   },
-   {
-    "surfaces": [
-     "cmc"
-    ],
-    "names": [
-     "answer_intelligence_question",
-     "assess_recorded_batch_poolability",
-     "assess_recorded_process_capability",
-     "assess_recorded_stability_trend",
-     "commit_intelligence_flow",
-     "compare_recorded_dissolution",
-     "estimate_recorded_shelf_life",
-     "list_cmc_registers",
-     "resume_intelligence_flow",
-     "start_intelligence_flow"
     ]
    },
    {
@@ -458,6 +441,7 @@
    "analyze_rmst",
    "analyze_safety_signal",
    "analyze_win_ratio",
+   "answer_intelligence_question",
    "apply_fact_change",
    "apply_protocol_design_derivation",
    "approve_import",
@@ -544,6 +528,9 @@
    "assess_qtc_risk",
    "assess_rare_disease_endpoint",
    "assess_readability",
+   "assess_recorded_batch_poolability",
+   "assess_recorded_process_capability",
+   "assess_recorded_stability_trend",
    "assess_regulatory_landscape",
    "assess_respiratory_safety_pharmacology",
    "assess_rolling_submission",
@@ -610,9 +597,11 @@
    "code_meddra",
    "code_whodrug",
    "commit_document_revision",
+   "commit_intelligence_flow",
    "compare_document_versions",
    "compare_global_pathways",
    "compare_proposed_design_to_precedent",
+   "compare_recorded_dissolution",
    "compare_statistical_scenarios",
    "compare_submission_against_precedent",
    "compare_vault_versions",
@@ -636,7 +625,6 @@
    "create_qms_document",
    "critique_document",
    "critique_draft",
-   "cross_region_gap_analysis",
    "define_estimand",
    "derive_ctq_factors",
    "describe_capabilities",
@@ -703,6 +691,7 @@
    "draft_quality_overall_summary_m2_3",
    "draft_safety_narrative",
    "edit_spreadsheet",
+   "estimate_recorded_shelf_life",
    "estimate_sample_size",
    "estimate_shelf_life",
    "evaluate_pbpk_model",
@@ -802,6 +791,7 @@
    "lint_references",
    "list_app_screens",
    "list_authoring_outline",
+   "list_cmc_registers",
    "list_demo_scripts",
    "list_fda_forms",
    "list_fda_technical_rules",
@@ -892,6 +882,7 @@
    "resolve_regulatory_structure",
    "resolve_submission_plan",
    "resolve_validation_finding",
+   "resume_intelligence_flow",
    "retire_qms_document",
    "review_amendment",
    "review_biospecimen_profile",
@@ -990,6 +981,7 @@
    "set_soa_cell",
    "set_specifications",
    "size_diagnostic_study",
+   "start_intelligence_flow",
    "start_legacy_import",
    "start_product_demo",
    "start_war_game",
@@ -1034,19 +1026,6 @@
     ],
     "names": [
      "assess_defensibility"
-    ]
-   },
-   {
-    "surfaces": [
-     "cmc"
-    ],
-    "names": [
-     "cmc_status",
-     "control_strategy",
-     "ich_compliance",
-     "module3_contradictions",
-     "module3_lineage",
-     "module3_readiness"
     ]
    },
    {
@@ -1220,10 +1199,12 @@
    "audit.explain",
    "check_dossier_readiness",
    "check_promotion_blockers",
+   "cmc_status",
    "compare_versions",
    "compute_dose_escalation",
    "compute_readiness",
    "compute_sample_size",
+   "control_strategy",
    "correspondence.ingest",
    "create_artifact",
    "create_milestone",
@@ -1241,6 +1222,7 @@
    "freeze_document",
    "generate_checklist",
    "generate_sap",
+   "ich_compliance",
    "k510_workflow.preflight",
    "k510_workflow.transmit",
    "list_artifact_versions",
@@ -1254,7 +1236,10 @@
    "module3_build_all",
    "module3_build_section",
    "module3_classify_source",
+   "module3_contradictions",
+   "module3_lineage",
    "module3_missing_inputs",
+   "module3_readiness",
    "module3_refresh_stale",
    "module3_stale_sections",
    "pdev.activity.ai_draft",
@@ -1280,5 +1265,6 @@
    "update_task",
    "variations_classify"
   ]
- }
+ },
+ "amendedOn": "2026-10-12"
 }

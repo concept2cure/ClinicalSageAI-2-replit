@@ -259,3 +259,38 @@ describe('upsertLeaf keeps a filing inside its project', () => {
     expect(logAction).not.toHaveBeenCalled();
   });
 });
+
+describe('the leaf ledger records the filing copy\u2019s status', () => {
+  /* Filing-spine design review, 2026-10-08 (.design/filing-spine/DESIGN_REVIEW.md,
+     Part 11 lens): "Re-place approved version" rewrites the leaf that already
+     holds a copy, after the copy was approved. When approval leaves the text as
+     it was, the pin does not move and documentChanged is false, so the ledger
+     row said nothing had changed. The row now records the copy's own status at
+     each write: draft when it was placed, approved when it was re-placed. */
+  it('placing and re-placing an authoring copy records the copy\u2019s status at each write (draft, then approved)', async () => {
+    const DOC_A = 'd0c00000-0000-4000-8000-0000000000a0';
+    await q(
+      `INSERT INTO authoring_documents (id, title, created_by, tenant_id, client_program_id) VALUES ($1, 'CO', 'u9', $2, $3)`,
+      [DOC_A, CTX.organizationId, P_A],
+    );
+    const [copy] = await q<{ id: number }>(
+      `INSERT INTO coauthor_documents (organization_id, title, content, status) VALUES ($1, 'CO (filing copy)', 'Clinical overview.', 'draft') RETURNING id`,
+      [CTX.organizationId],
+    );
+    await q(
+      `INSERT INTO c2c_document_aliases (canonical_id, store, native_id, organization_id) VALUES ($1, 'coauthor_documents', $2, $3)`,
+      [DOC_A, String(copy.id), CTX.organizationId],
+    );
+    const place = { sequenceId: SEQ_A, sectionCode: 'm2.5', title: 'Clinical overview', documentTable: 'coauthor_documents', documentId: Number(copy.id) };
+    const leaf = await upsertLeaf({ ...place, reason: 'Clinical overview for this sequence' }, CTX);
+    expect(lastLedgerDetails()).toMatchObject({ documentTable: 'coauthor_documents', documentId: Number(copy.id), documentStatus: 'draft' });
+
+    await q(`UPDATE coauthor_documents SET status = 'approved' WHERE id = $1`, [copy.id]);
+    await upsertLeaf({ ...place, leafId: leaf.id, reason: 'Re-placing the approved version' }, CTX);
+    expect(lastLedgerDetails()).toMatchObject({
+      documentChanged: false,
+      documentStatus: 'approved',
+      reason: 'Re-placing the approved version',
+    });
+  });
+});

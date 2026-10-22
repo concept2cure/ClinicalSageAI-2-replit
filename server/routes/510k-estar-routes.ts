@@ -23,12 +23,13 @@ import {
 } from '../services/pathway-engines/estar/estar-artifact-retention';
 import { governedSignatureSchema } from '../api/cmc/governance';
 import { verifyReauth } from './c2c/actions';
+import { checkSigningAuthority } from '../services/part11/signing-authority-gate';
 import {
   fillEstarSubmission,
   type EstarAttachmentReport,
 } from '../services/pathway-engines/estar/estar-fill';
 import { createDeviceAttachmentResolver } from '../services/pathway-engines/estar/estar-attachment-plan';
-import { getEstarFieldMap, isFieldMapPopulated } from '../services/pathway-engines/estar/estar-field-map';
+import { getEstarFieldMap, isFieldMapPopulated, getEstarFieldMapCapability, PRESTAR_COMPLETION_NOTE, type EstarFieldMapCapability } from '../services/pathway-engines/estar/estar-field-map';
 import {
   loadEstarAdministrativeInputs,
   projectEstarAdministrativeData,
@@ -77,6 +78,7 @@ import { regulatoryPrograms } from '../../shared/schema/programs';
 import { loadProgramDeviceFlags } from '../services/pathway-engines/estar/program-device-flags';
 import { requireEditorAccess } from '../middleware/orgMembership';
 import { isMissingAnchorColumn, resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
+import { ProjectAdmissionRefusal, requireCurrentProjectActor, requireProjectAdmission } from './c2c/project-access';
 import {
   getEstarRegistration,
   upsertEstarRegistration,
@@ -653,6 +655,7 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
 
     if (anchor.anchorProjectId !== null) {
       const consequence = await createGovernedExportConsequence({
+        ipAddress: req.ip ?? null,
         organizationId: getOrganizationId(req),
         projectId: anchor.anchorProjectId,
         userId: getUserId(req),
@@ -1047,14 +1050,16 @@ function withOfficialExtras<T extends object>(
   fieldReport: OfficialEstarFieldReport | null,
   retention: EstarRetentionReport,
   erasedFields: ReadonlyArray<string>,
-  attachmentReport?: EstarAttachmentReport,
+  extras: { attachmentReport?: EstarAttachmentReport; fieldMapCapability?: EstarFieldMapCapability } = {},
 ): T {
+  const { attachmentReport, fieldMapCapability } = extras;
   return {
     ...body,
     ...(fieldReport ? { fieldReport } : {}),
     erasedFields: [...erasedFields],
     ...(attachmentReport ? { attachmentReport } : {}),
     retention,
+    ...(fieldMapCapability ? { fieldMapCapability, applicantCompletionRequired: fieldMapCapability.applicantCompletionRequired } : {}),
   };
 }
 
@@ -1153,6 +1158,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
         descriptorId: result.descriptorId,
         templateAvailable: result.templateAvailable,
         fieldMapPopulated: result.fieldMapPopulated,
+        fieldMapCapability: result.fieldMapCapability,
         blockers: result.blockers,
         ...(result.attachmentReport ? { attachmentReport: result.attachmentReport } : {}),
       });
@@ -1162,11 +1168,13 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
     const pdfBuffer = Buffer.from(result.pdfBytes);
     // What was actually written, per field, read off the fill result itself.
     const { fieldReport, metadata: fieldMetadata } = describeOfficialFill(resolved, result.filledFields);
-    // The real submittable artifact was produced — assert it truthfully.
+    // Filled official bytes and completed-request qualification are separate.
     const officialMetadata = {
       format: 'pdf',
       package: 'eSTAR',
       officialEstarPdf: true,
+      fieldMapCapability: result.fieldMapCapability,
+      applicantCompletionRequired: result.fieldMapCapability?.applicantCompletionRequired === true,
       descriptorId: result.descriptorId,
       filledFields: result.filledFields,
       skippedFields: result.skippedFields,
@@ -1210,6 +1218,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
 
     if (anchor.anchorProjectId !== null) {
       const consequence = await createGovernedExportConsequence({
+        ipAddress: req.ip ?? null,
         organizationId: getOrganizationId(req),
         projectId: anchor.anchorProjectId,
         userId: getUserId(req),
@@ -1217,7 +1226,9 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
         contentForArtifact: JSON.stringify({ type, variant, descriptorId: result.descriptorId, data: fillData }),
         sourceType: 'export_estar_pdf',
         ctdSection: meta.ctdSection || 'm1.5',
-        suggestedPlacement: 'Module 1 / official FDA eSTAR (submittable)',
+        suggestedPlacement: result.fieldMapCapability?.applicantCompletionRequired
+          ? 'Official FDA PreSTAR administrative prefill — applicant completion required'
+          : 'Module 1 / official FDA eSTAR (submittable)',
         backendRoute: 'POST /api/510k/estar/official',
         binaryOutput: pdfBuffer,
         mimeType: 'application/pdf',
@@ -1226,7 +1237,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
       });
 
       return res.status(200).json(
-        withOfficialExtras(consequence, fieldReport, retention, result.erasedFields, result.attachmentReport),
+        withOfficialExtras(consequence, fieldReport, retention, result.erasedFields, { attachmentReport: result.attachmentReport, fieldMapCapability: result.fieldMapCapability }),
       );
     }
 
@@ -1248,7 +1259,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
     });
 
     return res.status(200).json(
-      withOfficialExtras(unplaced, fieldReport, retention, result.erasedFields, result.attachmentReport),
+      withOfficialExtras(unplaced, fieldReport, retention, result.erasedFields, { attachmentReport: result.attachmentReport, fieldMapCapability: result.fieldMapCapability }),
     );
   } catch (error: any) {
     logger.error('official eSTAR export failure', {
@@ -1408,6 +1419,9 @@ router.get('/readiness', authMiddleware, async (req, res) => {
       officialEstarPdf: ready,
       templateAvailable: result.templateAvailable,
       fieldMapPopulated: result.fieldMapPopulated,
+      fieldMapCapability: result.fieldMapCapability,
+      applicantCompletionRequired: result.fieldMapCapability?.applicantCompletionRequired === true,
+      ...(result.fieldMapCapability?.applicantCompletionRequired ? { completionNote: PRESTAR_COMPLETION_NOTE } : {}),
       blockers: ready ? [] : result.blockers,
     });
   } catch (error: any) {
@@ -1552,6 +1566,7 @@ router.get('/official-fields', authMiddleware, async (req, res) => {
       type,
       variant,
       mappedCount: resolved.fields.length,
+      fieldMapCapability: getEstarFieldMapCapability(descriptor.id),
       sourcedCount: resolved.fields.filter((f) => f.source !== null).length,
       fields: resolved.fields,
     });
@@ -1680,7 +1695,8 @@ router.put('/registration', authMiddleware, requireEditorAccess, async (req, res
   try {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
-    const row = await upsertEstarRegistration(requestDb(req), validation.data as EstarRegistrationWrite, {
+    await requireCurrentProjectActor(req, true);
+    const { auditTrail, ...row } = await upsertEstarRegistration(requestDb(req), validation.data as EstarRegistrationWrite, {
       organizationId,
       userId,
     });
@@ -1688,8 +1704,10 @@ router.put('/registration', authMiddleware, requireEditorAccess, async (req, res
       registered: true,
       registration: row,
       clientRegistration: toClientRegistration(row),
+      meta: { auditTrail },
     });
   } catch (error: any) {
+    if (error instanceof ProjectAdmissionRefusal) return res.status(error.status).json({ error: error.code, message: error.message });
     logger.error('estar registration write failure', {
       err: error instanceof Error ? error.message : String(error),
     });
@@ -1878,8 +1896,11 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
 // ── Submission lifecycle tracking (the filing → tracking bridge) ─────────────
 
 function submissionFail(res: any, error: any) {
+  if (error instanceof ProjectAdmissionRefusal) {
+    return res.status(error.status).json({ error: error.code, message: error.message });
+  }
   if (error instanceof EstarSubmissionError) {
-    return res.status(error.code === 'NOT_FOUND' ? 404 : 400).json({ error: error.code, message: error.message });
+    return res.status(error.code === 'NOT_FOUND' ? 404 : error.code === 'STATE_CHANGED' ? 409 : 400).json({ error: error.code, message: error.message });
   }
   logger.error('estar submission route error', { err: error instanceof Error ? error.message : String(error) });
   return res.status(500).json({ error: 'ESTAR_SUBMISSION_FAILED', message: 'eSTAR submission tracking failed. The problem has been logged.' });
@@ -1956,34 +1977,59 @@ router.post('/submissions', authMiddleware, requireEditorAccess, async (req, res
     return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });
   }
   try {
-    const row = await createEstarSubmission(validation.data, {
+    await requireCurrentProjectActor(req, true);
+    if (validation.data.projectId != null) await requireProjectAdmission(req, String(validation.data.projectId), true);
+    const { auditTrail, ...row } = await createEstarSubmission(validation.data, {
       organizationId: getOrganizationId(req),
       userId: getUserId(req),
     });
-    return res.status(201).json(row);
+    return res.status(201).json({ ...row, meta: { auditTrail } });
   } catch (error: any) {
     return submissionFail(res, error);
   }
 });
 
 /** GET /api/510k/estar/submissions — this org's tracked filings (optional ?status). */
-router.get('/submissions', authMiddleware, async (req, res) => {
-  const organizationId = resolveOrgId(req);
-  if (!organizationId) return res.status(400).json({ error: 'Organization context required' });
+function trackedSubmissionFilters(req: Request) {
   const raw = typeof req.query.status === 'string' ? req.query.status : undefined;
   const status = raw && (ESTAR_SUBMISSION_STATUSES as readonly string[]).includes(raw)
     ? (raw as EstarSubmissionStatus)
     : undefined;
-  // ?projectId= scopes to one project's filings (the PM-spine view). Ignored
-  // when not a positive integer, so a malformed filter never widens the result.
+  if (req.query.status !== undefined && (typeof req.query.status !== 'string' || status === undefined)) {
+    return { error: 'status must name a supported tracked-filing lifecycle state.' } as const;
+  }
+  // An explicit malformed scope must never become an organization-wide read.
   const projectIdRaw = Number(req.query.projectId);
   const projectId = Number.isInteger(projectIdRaw) && projectIdRaw > 0 ? projectIdRaw : undefined;
+  if (req.query.projectId !== undefined && (typeof req.query.projectId !== 'string' || projectId === undefined)) {
+    return { error: 'projectId must be a positive integer.' } as const;
+  }
+  return { status, projectId };
+}
+
+router.get('/submissions', authMiddleware, async (req, res) => {
+  const organizationId = resolveOrgId(req);
+  if (!organizationId) return res.status(400).json({ error: 'Organization context required' });
+  const filters = trackedSubmissionFilters(req);
+  if ('error' in filters) return res.status(400).json({ error: 'VALIDATION', message: filters.error });
+  const { status, projectId } = filters;
   try {
+    await requireCurrentProjectActor(req);
+    if (projectId !== undefined) await requireProjectAdmission(req, String(projectId));
     const rows = await listEstarSubmissions(
       { organizationId },
       { ...(status ? { status } : {}), ...(projectId !== undefined ? { projectId } : {}) },
     );
-    return res.status(200).json({ submissions: rows });
+    const submissions: typeof rows = [];
+    for (const row of rows) {
+      try {
+        if (row.projectId != null) await requireProjectAdmission(req, String(row.projectId));
+        submissions.push(row);
+      } catch (error) {
+        if (!(error instanceof ProjectAdmissionRefusal) || error.code !== 'PROJECT_NOT_FOUND') throw error;
+      }
+    }
+    return res.status(200).json({ submissions });
   } catch (error: any) {
     return submissionFail(res, error);
   }
@@ -2016,7 +2062,9 @@ router.get('/submissions/:id', authMiddleware, async (req, res) => {
   const organizationId = resolveOrgId(req);
   if (!organizationId) return res.status(400).json({ error: 'Organization context required' });
   try {
+    await requireCurrentProjectActor(req);
     const row = await getEstarSubmission(String(req.params.id), { organizationId });
+    if (row.projectId != null) await requireProjectAdmission(req, String(row.projectId));
     return res.status(200).json(row);
   } catch (error: any) {
     return submissionFail(res, error);
@@ -2037,11 +2085,19 @@ router.patch('/submissions/:id', authMiddleware, requireEditorAccess, async (req
     validation.data;
   try {
     const userId = getUserId(req);
+    await requireCurrentProjectActor(req, true);
+    const current = await getEstarSubmission(String(req.params.id), { organizationId: getOrganizationId(req) });
+    if (current.projectId != null) await requireProjectAdmission(req, String(current.projectId), true);
 
     /* Re-auth gate FIRST for the one transition that is a signature. Captured
        at signing time, never reused from the session (§11.200). */
     let signature: EstarFilingSignature | undefined;
     if (status === 'filed') {
+      /* §11.10(g), before the password: filing is an electronic signature, so
+         the filer's role must carry signing authority under the platform's one
+         policy. QA 2026-10-08 (j6 sweep): only the password was asked. */
+      const authority = await checkSigningAuthority(userId, getOrganizationId(req));
+      if (authority) return res.status(authority.status).json({ error: authority.message, code: authority.code });
       const reauthResult = await verifyReauth(userId, reauth);
       if (!reauthResult.ok) {
         res.setHeader('WWW-Authenticate', 'ReAuth required');
@@ -2067,6 +2123,10 @@ router.patch('/submissions/:id', authMiddleware, requireEditorAccess, async (req
       { toStatus: status, fdaTrackingNumber, decision, signature },
       { organizationId: getOrganizationId(req), userId },
     );
+    if ('auditTrail' in row) {
+      const { auditTrail, ...submission } = row;
+      return res.status(200).json({ ...submission, meta: { auditTrail } });
+    }
     return res.status(200).json(row);
   } catch (error: any) {
     return submissionFail(res, error);

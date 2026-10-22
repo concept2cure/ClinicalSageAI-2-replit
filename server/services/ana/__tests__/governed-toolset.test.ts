@@ -140,4 +140,3 @@ describe('governedToolsetFor — the catalog gate', () => {
     expect(isDocumentCatalogEnabled).not.toHaveBeenCalled();
   });
 });
-

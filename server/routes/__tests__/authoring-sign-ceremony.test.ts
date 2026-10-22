@@ -56,6 +56,8 @@ vi.mock('../../services/part11/resolve-signer-role.js', () => ({
 }));
 vi.mock('../../middleware/orgMembership', () => ({
   enforceOrgMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
+  requireEditorAccess: (_req: unknown, _res: unknown, next: () => void) => next(),
+  GOVERNED_WRITE_ROLES: new Set(['owner','admin','approver','reviewer']),
   invalidateOrgMembershipCache: () => undefined,
 }));
 // The production wiring of the ceremony, with the account's state set per case.
@@ -128,6 +130,7 @@ beforeEach(async () => {
   h.clientQuery.mockImplementation(async (sql: string) => {
     const s = String(sql);
     if (/^BEGIN|^COMMIT|^ROLLBACK/i.test(s)) return {};
+    if (/FROM authoring_audit_trail/i.test(s) && /operation_type='CREATE'/.test(s)) return { rows:[],rowCount:0 };
     if (/COUNT\(\*\)[\s\S]*FROM authoring_workflow_steps/i.test(s)) {
       return { rowCount: 1, rows: [{ pending: '1', total: '2' }] };
     }

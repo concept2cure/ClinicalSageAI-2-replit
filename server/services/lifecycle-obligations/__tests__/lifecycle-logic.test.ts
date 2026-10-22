@@ -81,7 +81,8 @@ describe('renewal-cycle projection', () => {
   });
 
   it('derives an honest report label, preferring an authored classification', () => {
-    expect(renewalReportLabel('annual_report', 'fda', null)).toBe('PADER');
+    // Was pinned 'PADER' — a postmarketing safety report, not the annual report (2026-10-15).
+    expect(renewalReportLabel('annual_report', 'fda', null)).toBe('Annual report');
     expect(renewalReportLabel('annual_report', 'eu', null)).toBe('Annual report');
     expect(renewalReportLabel('renewal', 'jp', null)).toBe('Re-examination');
     expect(renewalReportLabel('periodic_report', 'eu', null)).toBe('PSUR/PBRER');

@@ -42,6 +42,13 @@
  * @module server/services/governance/separation-of-duties
  */
 import { pool } from '../../db.js';
+/* Who entered the register records a Module 3 section was composed from. The
+   reader lives with the CMC registers because the lineage it walks is theirs;
+   the rule applied to its answer is this module's. */
+import {
+  readSectionRecordOperators,
+  unattributedRecordsRefusal,
+} from '../cmc/register-operators.js';
 
 /** The check ran, and the signer is one of the record's authors. → 403 */
 export class SeparationOfDutiesError extends Error {
@@ -106,6 +113,18 @@ export interface TargetAuthorship {
   authors: number[];
   /** Which sources contributed, for the refusal message and the audit. */
   sources: string[];
+  /**
+   * Set when authorship is only PARTLY recorded: some of what the record is
+   * built from names its author and some does not. The string is the refusal,
+   * written by whoever knows which part is missing.
+   *
+   * A partial answer is not a negative one. Rule 3 of this module's header —
+   * unknown author means refuse — applies to each contributing part, not only
+   * to the whole: a signature must never imply a four-eyes check that did not
+   * happen for the records it could not see. `assertSignerIsNotAuthor` refuses
+   * on this, after the plainer "you wrote it" case.
+   */
+  incomplete?: string;
 }
 
 function intOrNull(v: unknown): number | null {
@@ -203,6 +222,81 @@ async function canonicalDocumentAuthors(db: AuthorshipReader, canonicalId: strin
     set.add(version.rows, 'created_by', 'Vault uploader');
   }
   return set.result();
+}
+
+function unresolvedAuthoringHeading():SeparationOfDutiesAuthorUnresolvedError {
+  return new SeparationOfDutiesAuthorUnresolvedError(
+    'The recorded Authoring heading change cannot be identified reliably. Review independence is unresolved.',
+  );
+}
+
+function authoringHeadingChanged(raw:unknown):boolean {
+  if (!raw || typeof raw!=='object' || Array.isArray(raw)) throw unresolvedAuthoringHeading();
+  const change=raw as Record<string,unknown>;
+  if (typeof change.field!=='string') throw unresolvedAuthoringHeading();
+  if (!['title','code'].includes(change.field)) return false;
+  if (![change.from,change.to].every(value=>value===null || typeof value==='string')) throw unresolvedAuthoringHeading();
+  return change.from!==change.to;
+}
+
+/** RENAME's native from/to facts distinguish visible changes from noops and
+ * track-mode-only activity. Incomplete relevant evidence cannot establish independence. */
+function authoringHeadingAuditHasChange(metadata:unknown):boolean {
+  const changes=metadata && typeof metadata==='object' && !Array.isArray(metadata)
+    ? (metadata as Record<string,unknown>).changes : undefined;
+  if (!Array.isArray(changes)) throw unresolvedAuthoringHeading();
+  // Check the entire recorded set: a valid first change must not hide malformed later facts.
+  return changes.map(authoringHeadingChanged).some(Boolean);
+}
+
+/** Authoring uses the recorded creator, immutable prose revision actors and
+ * existing visible-mutation audit actors. Permissions never rewrite authorship. */
+async function authoringDocumentAuthors(db: AuthorshipReader, documentId: string, orgId: number): Promise<TargetAuthorship> {
+  const empty: TargetAuthorship = { modelled: true, authors: [], sources: [] };
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(documentId)) return empty;
+  const document = await db.query(
+    `SELECT d.created_by FROM authoring_documents d WHERE d.id = $1 AND d.tenant_id = $2 LIMIT 1`,
+    [documentId, orgId],
+  );
+  if (document.rows.length !== 1) return empty;
+  const actorId = (value: unknown): number => {
+    const canonical = typeof value === 'number' || (typeof value === 'string' && /^[1-9]\d*$/.test(value));
+    const id = canonical ? Number(value) : NaN;
+    if (!Number.isSafeInteger(id) || id < 1 || id > 2_147_483_647) {
+      throw new SeparationOfDutiesAuthorUnresolvedError(
+        'The recorded Authoring creator or content contributor cannot be identified reliably. Review independence is unresolved.',
+      );
+    }
+    return id;
+  };
+  const authors = new Set<number>([actorId(document.rows[0].created_by)]);
+  const sources = ['Authoring document creator'];
+  const revisions = await db.query(
+    `SELECT DISTINCT r.created_by FROM doc_revisions r
+       JOIN authoring_sections s ON s.id = r.section_id AND s.tenant_id = r.tenant_id
+       JOIN authoring_documents d ON d.id = s.doc_id AND d.tenant_id = s.tenant_id
+      WHERE d.id = $1 AND d.tenant_id = $2`,
+    [documentId, orgId],
+  );
+  for (const row of revisions.rows) authors.add(actorId(row.created_by));
+  if (revisions.rows.length) sources.push('Authoring revision ledger');
+  const mutations = await db.query(
+    `SELECT actor_id, operation_type, metadata FROM authoring_audit_trail
+      WHERE doc_id = $1 AND tenant_id = $2 AND (
+        (operation_type = 'CREATE' AND section_id IS NOT NULL)
+        OR operation_type = 'REORDER_SECTIONS'
+        OR (operation_type = 'RENAME' AND metadata->>'source' = 'section-metadata')
+      )`,
+    [documentId, orgId],
+  );
+  let visibleMutation = false;
+  for (const row of mutations.rows) {
+    if (row.operation_type==='RENAME' && !authoringHeadingAuditHasChange(row.metadata)) continue;
+    authors.add(actorId(row.actor_id));
+    visibleMutation = true;
+  }
+  if (visibleMutation) sources.push('Authoring visible mutation audit');
+  return { modelled: true, authors: [...authors].sort((a, b) => a - b), sources };
 }
 
 /**
@@ -321,6 +415,73 @@ const SINGLE_AUTHOR: Record<string, { sql: string; column: string; source: strin
 };
 
 /**
+ * `'<head>:<tail>'`, or null when the rest names only one part. Each two-part
+ * target parses its OWN rest (here and in the two helpers below) rather than in
+ * `resolveTargetAuthors`, which keeps that function at one branch per prefix —
+ * its complexity ceiling is 15 and it is at it.
+ */
+function twoPartRest(rest: string): { head: string; tail: string } | null {
+  const parts = rest.split(':');
+  if (parts.length < 2) return null;
+  const [head, ...tail] = parts;
+  return { head, tail: tail.join(':') };
+}
+
+/** One section of a c2c document: `'section:<documentId>:<sectionKey>'`. */
+async function documentSectionAuthors(db: AuthorshipReader, rest: string, orgId: number): Promise<TargetAuthorship> {
+  const t = twoPartRest(rest);
+  if (!t) return NOT_MODELLED;
+  return documentAuthors(db, t.head, orgId, t.tail);
+}
+
+/** The governed target naming one project's Module 3 section. */
+export function cmcModule3SectionTarget(projectId: string, sectionKey: string): string {
+  return `cmc-module3-section:${projectId}:${sectionKey}`;
+}
+
+/**
+ * A Module 3 section's authors are the people who ENTERED the register records
+ * it was composed from — read from the `cmc.register.create` rows on the
+ * tenant's audit chain (services/cmc/register-audit.ts), through the section's
+ * own lineage.
+ *
+ * Not the person who ran the compile: the compile is deterministic and writes
+ * nobody's judgement into the section. What a section says is what its records
+ * say, so the data entry is the authorship, and that is the pairing a quality
+ * unit's second-person review exists to separate.
+ *
+ * A section citing nothing has no author and is refused by the caller, as
+ * every other unresolved record type is.
+ */
+async function cmcModule3SectionAuthors(
+  db: AuthorshipReader,
+  rest: string,
+  orgId: number,
+): Promise<TargetAuthorship> {
+  const target = twoPartRest(rest);
+  if (!target) return NOT_MODELLED;
+  const { head: projectId, tail: sectionKey } = target;
+  const read = await readSectionRecordOperators(db, orgId, projectId, sectionKey);
+  const set = new AuthorSet();
+  /* The reader says WHERE it found each operator — the audit chain for every
+     register created since 2026-10-18, and the change-proposal register's own
+     `created_by` column for the one that predates it. The refusal names them,
+     so a signer is told what the platform knows about who entered the data. */
+  for (const source of read.sources) {
+    set.add(read.operators.map((id) => ({ operator_id: id })), 'operator_id', source);
+  }
+  const result = set.result();
+  if (read.cited.length === 0) {
+    result.incomplete =
+      `§${sectionKey} cites no recorded source, so this approval cannot be shown to be independent of whoever ` +
+      'entered its data. Nothing was signed. Compile the section from the programme\u2019s records, then approve.';
+  } else if (read.unattributed.length > 0) {
+    result.incomplete = unattributedRecordsRefusal(sectionKey, read.unattributed);
+  }
+  return result;
+}
+
+/**
  * Resolve the authors of a governed target, org-scoped. THROWS when a lookup
  * fails — that is not an answer about authorship and must not be read as one.
  */
@@ -337,18 +498,18 @@ export async function resolveTargetAuthors(target: string, orgId: number, db: Au
   }
 
   switch (prefix) {
+    case 'authoring-document':
+      return authoringDocumentAuthors(db, rest, orgId);
     case 'document':
       return documentAuthors(db, rest, orgId, null);
-    case 'section': {
-      const parts = rest.split(':');
-      if (parts.length < 2) return NOT_MODELLED;
-      const [docId, ...keyParts] = parts;
-      return documentAuthors(db, docId, orgId, keyParts.join(':'));
-    }
+    case 'section':
+      return documentSectionAuthors(db, rest, orgId);
     case 'protocol-document':
       return protocolDocumentAuthors(db, rest, orgId);
     case 'canonical_document':
       return canonicalDocumentAuthors(db, rest, orgId);
+    case 'cmc-module3-section':
+      return cmcModule3SectionAuthors(db, rest, orgId);
     case 'protocol-review-assignment': {
       // A reviewer signs over the protocol, so independence is from its authors.
       if (!/^\d+$/.test(rest)) return new AuthorSet().result();
@@ -367,6 +528,47 @@ export async function resolveTargetAuthors(target: string, orgId: number, db: Au
 }
 
 // ─── The check ───────────────────────────────────────────────────────────────
+
+/**
+ * The HTTP answer to a separation-of-duties refusal, or null for any other
+ * error. ONE mapping, beside the three errors it maps, so no route can answer
+ * the same refusal differently — the governed-action handler, the document
+ * lock and the CMC section approval all read it from here. (It lived in
+ * routes/c2c/actions.ts until 2026-10-18 and is re-exported from there, so its
+ * existing importers are unchanged; a route is not where a rule about three
+ * error classes belongs, and the CMC approval would have had to import a
+ * 1,000-line route module to get at it.)
+ */
+export function separationOfDutiesRefusal(
+  err: unknown,
+  label: string,
+): { status: number; body: { error: string; detail: string } } | null {
+  if (err instanceof SeparationOfDutiesError) {
+    return { status: 403, body: { error: err.code, detail: err.message } };
+  }
+  if (err instanceof SeparationOfDutiesAuthorUnresolvedError) {
+    // The check ran, but the record has no recorded author (or its type has
+    // none modelled), so independence cannot be shown. A retry will not fix it.
+    return { status: 409, body: { error: err.code, detail: err.message } };
+  }
+  if (err instanceof SeparationOfDutiesUnverifiedError) {
+    // The check did not run, which is not the same as the check refusing.
+    // 503, not 403: the user is not the problem, and a retry may succeed.
+    // The error's own message carries the failed lookup's cause, which is
+    // internal; it goes to the log, and the caller gets an authored
+    // sentence (ci:server-error-leaks, 2026-09-23).
+    console.error('[%s] %s', label, err.message);
+    return {
+      status: 503,
+      body: {
+        error: err.code,
+        detail:
+          'Separation of duties could not be verified, so nothing was signed. Try again; if this continues, contact your administrator.',
+      },
+    };
+  }
+  return null;
+}
 
 export interface SeparationOfDutiesResult {
   /** True when independence was verified; false only for an authorship signature. */
@@ -396,6 +598,7 @@ export async function assertSignerIsNotAuthor(
   try {
     authorship = await resolveTargetAuthors(target, orgId, opts.client);
   } catch (err: unknown) {
+    if (err instanceof SeparationOfDutiesAuthorUnresolvedError) throw err;
     const e = err as { code?: unknown; message?: unknown } | null;
     const cause = typeof e?.code === 'string' ? `database error ${e.code}` : 'owner lookup failed';
     console.error('[governance/SoD] authorship lookup failed for "%s"; refusing to sign:', target, e?.message);
@@ -409,18 +612,58 @@ export async function assertSignerIsNotAuthor(
         'otherwise this record type needs its authorship modelled before it can be approved.',
     );
   }
-  if (authorship.authors.length === 0) {
-    throw new SeparationOfDutiesAuthorUnresolvedError(
-      `No author is recorded for "${target}", so a review, approval or lock signature cannot be shown to be independent ` +
-        'of the author. Nothing was signed. Establish who authored it through an audited action, then have a different, ' +
-        'authorized user sign.',
-    );
-  }
+  /* The signer being an author is the plainest refusal there is, so it is said
+     first — before "authorship is only partly recorded", which is true of the
+     same record and tells the signer much less. (An empty author set can never
+     reach this branch, so the order below is unchanged for every other
+     target.) */
   if (authorship.authors.includes(signerId)) {
     throw new SeparationOfDutiesError(
       `Separation of duties: you are an author of this record (${authorship.sources.join(', ')}) and cannot review, approve ` +
         'or lock it. A different, authorized user must sign.',
     );
   }
+  if (authorship.authors.length === 0 || authorship.incomplete) {
+    throw new SeparationOfDutiesAuthorUnresolvedError(
+      authorship.incomplete ??
+        `No author is recorded for "${target}", so a review, approval or lock signature cannot be shown to be independent ` +
+          'of the author. Nothing was signed. Establish who authored it through an audited action, then have a different, ' +
+          'authorized user sign.',
+    );
+  }
   return { checked: true, reason: `Signer is not among the record's authors (${authorship.sources.join(', ')}).` };
 }
+
+/** What signing this record with an approval meaning would meet at the
+ *  separation-of-duties check, asked in advance. */
+export type SignerIndependence = 'independent' | 'author' | 'unresolved' | 'unverified';
+
+/**
+ * Would assertSignerIsNotAuthor let this user sign this record as review,
+ * approval or release?
+ *
+ * Asked of the enforcing check itself, so a screen that warns in advance (the
+ * Submission Center's Dispatch tab: a sequence's creator cannot sign its
+ * freeze or dispatch) cannot disagree with what the sign step will do. Before
+ * this the route re-derived the rule from resolveTargetAuthors — a second
+ * copy, which would have drifted the day the rule changed. The gateway's
+ * transmitIndependenceOf asks its own check the same way.
+ *
+ * A lookup failure is 'unverified', never 'independent': unknown is not
+ * permission, and the sign step still decides.
+ */
+export async function signerIndependenceOf(
+  target: string,
+  orgId: number,
+  signerId: number,
+): Promise<SignerIndependence> {
+  try {
+    await assertSignerIsNotAuthor(target, orgId, signerId, { command: 'sign', meaning: 'approval' });
+    return 'independent';
+  } catch (err) {
+    if (err instanceof SeparationOfDutiesError) return 'author';
+    if (err instanceof SeparationOfDutiesAuthorUnresolvedError) return 'unresolved';
+    return 'unverified';
+  }
+}
+

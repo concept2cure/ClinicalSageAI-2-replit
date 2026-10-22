@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-14",
+  "scanner_module": "github.com/zricethezav/gitleaks/v8@v8.28.0",
+  "original_finding_commit": "49dba3d214da2f50872d2c7b889a7abb8fc82678",
+  "range_base": "e33e0ef9f7500524686c66735a14fb1c2ecaa889",
+  "range_head": "fe25455371c13759531f81cbdd8be21b6d1c6869",
+  "range_commits": 5,
+  "nonmerge_commits": 4,
+  "before": {
+    "exit_code": 1,
+    "findings": 12,
+    "unique_fingerprints": 9,
+    "elapsed_seconds": 10.64,
+    "commits_scanned": 4
+  },
+  "after": {
+    "exit_code": 0,
+    "findings": 0,
+    "elapsed_seconds": 11.34,
+    "commits_scanned": 4
+  },
+  "command": [
+    "/workspace/scratch/gitleaks-audit/bin/gitleaks",
+    "git",
+    "--no-banner",
+    "--redact=100",
+    "--config",
+    ".gitleaks.toml",
+    "--log-opts=--full-history --diff-filter=tuxdb e33e0ef9f7500524686c66735a14fb1c2ecaa889..fe25455371c13759531f81cbdd8be21b6d1c6869",
+    "--report-format=json",
+    "--report-path=/workspace/scratch/gitleaks-audit/upstream-fe2545537-post-dispositions-findings.json",
+    "."
+  ],
+  "working_directory": "/workspace/concept2cure",
+  "exact_added_fingerprints": 9,
+  "classified_checksum_occurrences": 4,
+  "classified_static_prose_occurrences": 8,
+  "independent_reviews": {
+    "checksum_reviews": 3,
+    "static_prose_reviews": 2,
+    "historical_blob_identity_verified": true
+  },
+  "existing_ignore_prefix_preserved_byte_for_byte": true,
+  "scanner_configuration_unchanged": true,
+  "scope_note": "Additional frozen upstream range with working-tree exact dispositions; control-tower owns final committed merge-range and hosted verification."
+}

@@ -59,17 +59,10 @@ export async function getKernelBetaReadiness(): Promise<KernelBetaReadiness> {
     });
   }
 
-  // Static integration checks (endpoint availability by design)
-  checks.push({
-    name: 'plan_endpoints',
-    passed: true,
-    detail: 'Plan preview/run/protocol/events endpoints implemented',
-  });
-  checks.push({
-    name: 'telemetry_hooks',
-    passed: true,
-    detail: 'KDR + policy outcomes + protocol event logging wired',
-  });
+  // 2026-10-15: two more checks were pushed here as constants, plan_endpoints
+  // ("endpoints implemented") and telemetry_hooks ("logging wired"), both
+  // passed: true without being checked. With every kernel table missing the
+  // score was still 2/3 and the status 'yellow'. Only computed checks count.
 
   const passedCount = checks.filter(c => c.passed).length;
   const score = checks.length > 0 ? passedCount / checks.length : 0;

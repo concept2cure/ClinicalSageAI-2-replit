@@ -44,12 +44,13 @@ import { writeChainedAuditRow } from '../services/auditService';
 import type { AuditRowOutcome } from '../services/audit/audit-write-outcome';
 import { parseEvalidatorJsonReport } from '../services/ectd/external-validator/lorenz-adapter';
 import { tallyFindings, type ExternalValidationFinding } from '../services/ectd/external-validator/types';
-import { resolveSubmissionSpine, type SubmissionSpine } from '../services/cmc/submission-spine';
+import { resolveSequenceSpine, resolveSubmissionSpine, type SubmissionSpine } from '../services/cmc/submission-spine';
 import { sectionMatches } from '../services/ectd/section-code-match';
 import { formRequirementForDocumentType } from '../services/ectd/section-to-ctd';
 import { toPackagerRegion } from '../services/ectd/core-to-packager';
 import { buildLeafManifest } from '../services/ectd/sequence-manifest';
-import { recordedApplicationId } from '../services/ectd/regulatory-identifiers';
+import { usableIdentifier } from '../services/ectd/regulatory-identifiers';
+import { readRecordedPackageIdentity, packageIdentityRefusal, recordedPackageIdentitySnapshot, fdaContactsForPackageIdentity } from '../services/ectd/package-identity';
 import {
   resolveRequiredSections,
   type RequiredSectionSet,
@@ -57,6 +58,10 @@ import {
 } from '../services/ectd/required-sections';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+import { regionalDeviceApplicationClassOf } from '../../shared/regulatory/filing-catalog';
+import type { SubmissionBundle } from '../services/submission-gateways/types';
+import type { DtdValidationEvidence, DtdFileValidation } from '../../shared/regulatory/ectd-dtd-validation';
+import { hasPassedPackageDtdValidation, dtdFileValidationPassed } from '../services/ectd/dtd-bundler';
 
 const router = Router();
 const log = createScopedLogger('ectd-compile');
@@ -196,6 +201,27 @@ interface CompileAnchor {
   label: string;
 }
 
+/** A numeric PM anchor may belong to a program; only a recorded null is legacy. */
+async function numericCompileAnchor(numeric: number, orgId: number): Promise<CompileAnchor | null> {
+  const { rows } = await pool.query(
+    `SELECT p.regulatory_program_id, r.id AS linked_program_id, r.program_type, r.primary_agency
+       FROM projects p
+       LEFT JOIN regulatory_programs r ON r.id = p.regulatory_program_id
+         AND r.organization_id = p.organization_id AND r.deleted_at IS NULL
+      WHERE p.id = $1 AND p.organization_id = $2 AND p.status IS DISTINCT FROM 'deleted'
+      LIMIT 1`,
+    [numeric, orgId],
+  );
+  const row = rows[0];
+  if (!row || (row.regulatory_program_id !== null && (!row.linked_program_id || !row.program_type))) return null;
+  return {
+    numericProjectId: numeric, programId: null, programCode: null, applicationNumber: null,
+    title: null, productName: null,
+    programType: row.program_type ?? null, primaryAgency: row.primary_agency ?? null,
+    label: `Project ${numeric}`,
+  };
+}
+
 /**
  * Resolve the route's `:projectIdent`, org-scoped, mirroring the eSTAR ident
  * contract: numeric → the legacy project id (pass-through — every section query
@@ -206,18 +232,8 @@ interface CompileAnchor {
 async function resolveCompileAnchor(ident: string, orgId: number): Promise<CompileAnchor | null> {
   if (/^\d+$/.test(ident)) {
     const numeric = parseInt(ident, 10);
-    if (!Number.isInteger(numeric) || numeric <= 0) return null;
-    return {
-      numericProjectId: numeric,
-      programId: null,
-      programCode: null,
-      applicationNumber: null,
-      title: null,
-      productName: null,
-      programType: null,
-      primaryAgency: null,
-      label: `Project ${numeric}`,
-    };
+    if (!Number.isSafeInteger(numeric) || numeric <= 0) return null;
+    return numericCompileAnchor(numeric, orgId);
   }
   const byUuid = UUID_RE.test(ident);
   try {
@@ -250,8 +266,13 @@ async function resolveCompileAnchor(ident: string, orgId: number): Promise<Compi
 
 /** The agency application-number field from the program record — the one rule
  *  (services/ectd/regulatory-identifiers.ts), shared with the export. */
-function applicationIdFor(anchor: CompileAnchor, fallbackKey: string): string {
-  return recordedApplicationId({ applicationNumber: anchor.applicationNumber, programCode: anchor.programCode }, fallbackKey);
+/**
+ * The agency application number the project records, or null. ONLY the
+ * recorded number: the program code is the sponsor's own handle and never an
+ * agency number (QA 2026-10-08, j6 — PLR-606 reached <application-number>).
+ */
+function recordedApplicationNumber(anchor: CompileAnchor): string | null {
+  return usableIdentifier('applicationNumber', anchor.applicationNumber);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -283,7 +304,14 @@ async function anchorFromRequest(
     res.status(401).json({ error: 'Organization context required' });
     return null;
   }
-  const anchor = await resolveCompileAnchor(ident, orgId);
+  let anchor: CompileAnchor | null;
+  try {
+    anchor = await resolveCompileAnchor(ident, orgId);
+  } catch (err) {
+    log.error('Project compilation applicability could not be read', { orgId, ident, err });
+    res.status(503).json({ error: { code: 'PROJECT_APPLICABILITY_UNAVAILABLE', message: 'This project’s filing context could not be checked. Try again shortly.' } });
+    return null;
+  }
   if (!anchor) {
     res.status(404).json({ error: 'Project not found in your organization' });
     return null;
@@ -291,31 +319,82 @@ async function anchorFromRequest(
   return { orgId, anchor, ident };
 }
 
+/** Regional working documents cannot enter medicinal compilation or validation. */
+function refuseRegionalDeviceEctd(res: Response, anchor: CompileAnchor): boolean {
+  if (!regionalDeviceApplicationClassOf(anchor.programType)) return false;
+  res.status(422).json({ error: {
+    code: 'ECTD_NOT_APPLICABLE',
+    message: 'Device preparation projects are not eCTD applications. No submission package is built or transmitted for this preparation pathway.',
+  } });
+  return true;
+}
+
+/**
+ * The spine this request works on (FILING_SPINE.md F14): the sequence the
+ * caller names (`sequenceId`, in the body or the query string) when this
+ * project owns it, else the program's spine by the existing rule
+ * (resolveSubmissionSpine: one submission per program, by its type). A
+ * malformed id is 400 and another project's sequence 404, answered here; null
+ * means a response was sent. `named` lets a write refuse a named sequence with
+ * nothing placed in it rather than fall back to a different store.
+ */
+async function spineForRequest(
+  req: Request,
+  res: Response,
+  anchor: Parameters<typeof resolveSubmissionSpine>[0],
+  orgId: number,
+): Promise<{ spine: SubmissionSpine | null; named: boolean } | null> {
+  const raw = (req.body as { sequenceId?: unknown } | undefined)?.sequenceId ?? (req.query as { sequenceId?: unknown } | undefined)?.sequenceId;
+  if (raw === undefined || raw === null || raw === '') {
+    return { spine: await resolveSubmissionSpine(anchor, orgId), named: false };
+  }
+  const id = Number(raw);
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json({ error: { code: 'BAD_SEQUENCE_ID', message: 'sequenceId names a sequence by its id, a whole number.' } });
+    return null;
+  }
+  const spine = await resolveSequenceSpine(anchor, orgId, id);
+  if (!spine) {
+    res.status(404).json({ error: { code: 'SEQUENCE_NOT_FOUND', message: `Sequence ${id} is not a sequence of this project.` } });
+    return null;
+  }
+  return { spine, named: true };
+}
+
+/** A named sequence with nothing placed in it is refused: the program's section
+ *  store is not that sequence, and compiling or validating it would answer for
+ *  something else. True when a response was sent. */
+function refuseEmptyNamedSequence(res: Response, chosen: { spine: SubmissionSpine | null; named: boolean }, act: string): boolean {
+  if (!chosen.named || (chosen.spine?.sequence?.leafCount ?? 0) > 0) return false;
+  res.status(409).json({
+    error: {
+      code: 'SEQUENCE_EMPTY',
+      message: `Sequence ${chosen.spine?.sequence?.sequenceNumber ?? ''} has no documents placed in it, so there is nothing to ${act}. Place documents into it first.`,
+    },
+  });
+  return true;
+}
+
 /**
  * Load the anchor's tracked sections. A program-spine anchor has NO
  * project_sections store (integer FK — see PROGRAM_SECTION_STORE_BLOCKER), so it
  * loads an honestly-empty set rather than someone else's rows or a fabricated
- * one. `swallow` preserves each route's existing table-missing behavior.
+ * one. An unavailable tracked-section read throws; it is not an empty project.
  */
 async function loadAnchorSections(
   anchor: CompileAnchor,
   orgId: number,
   columns: string,
-  opts: { orderBy?: string; swallow?: boolean } = {},
+  opts: { orderBy?: string } = {},
 ): Promise<any[]> {
   if (anchor.numericProjectId === null) return [];
-  try {
-    const result = await pool.query(
-      `SELECT ${columns}
+  const result = await pool.query(
+    `SELECT ${columns}
        FROM project_sections
        WHERE project_id = $1 AND organization_id = $2${opts.orderBy ? ` ORDER BY ${opts.orderBy}` : ''}`,
-      [anchor.numericProjectId, orgId],
-    );
-    return result.rows;
-  } catch (err) {
-    if (opts.swallow) return []; // table may not exist — honest empty
-    throw err;
-  }
+    [anchor.numericProjectId, orgId],
+  );
+  return result.rows;
 }
 
 /**
@@ -427,6 +506,9 @@ interface CompiledPackage {
   regionalBackbone: { path: string; xml: string } | null;
   /** index-md5.txt: the MD5 of index.xml, verbatim. */
   indexMd5: string | null;
+  /** Presence and actual validation are separate facts, from this exact bundle. */
+  dtdStatus: SubmissionBundle['dtdStatus'] | null;
+  regionalStatus: SubmissionBundle['regionalBackbone'] | null;
   /** PDF/A conversion outcome over the package's PDF leaves; null when the
    *  packager reported no grade. agencyFormsAsIssued are FDA forms shipped with
    *  FDA's own security (leaf-pdf-security.ts): never converted, by rule, and
@@ -466,6 +548,78 @@ interface ValidationResult {
   message: string;
   sectionCode?: string;
   fix?: string;
+  evidence?: PackageDtdRecord;
+}
+
+interface PackageDtdRecord {
+  packageSha256: string | null;
+  dtdStatus: SubmissionBundle['dtdStatus'] | null;
+}
+
+// Decode the existing JSON finding as metadata. The packager's canonical
+// helper alone judges coverage and validity; JSON shape is never proof of pass.
+const xmlProofSchema = z.object({ ran: z.boolean(), valid: z.boolean(), errors: z.array(z.string()), mode: z.enum(['well-formed', 'dtd', 'xsd']) });
+const dtdProofSchema: z.ZodType<DtdValidationEvidence> = z.object({
+  version: z.literal(1), expectedFiles: z.array(z.string()), passed: z.boolean(),
+  files: z.array(z.object({ relPath: z.string(), wellFormed: xmlProofSchema,
+    doctype: z.object({ valid: z.boolean(), errors: z.array(z.string()) }), dtd: xmlProofSchema })),
+  integrity: z.object({ verified: z.array(z.string()), mismatched: z.array(z.object({ fileName: z.string(), expected: z.string(), actual: z.string() })),
+    missingFiles: z.array(z.string()), unlistedFiles: z.array(z.string()), ok: z.boolean() }),
+});
+const dtdStatusSchema = z.object({ required: z.array(z.string()), present: z.array(z.string()), missing: z.array(z.string()),
+  missingStylesheets: z.array(z.string()).optional(), requiredStylesheets: z.array(z.string()).optional(), presentStylesheets: z.array(z.string()).optional(),
+  selfContained: z.boolean(), validation: dtdProofSchema.optional() }).passthrough();
+const packageDtdRecordSchema = z.object({ packageSha256: z.string().regex(/^[a-f0-9]{64}$/), dtdStatus: dtdStatusSchema.nullable() });
+
+function recordedPackageDtdValidation(value: unknown): PackageDtdRecord | null {
+  if (!Array.isArray(value)) return null;
+  const records = value.filter(row => row && typeof row === 'object' && row.rule === 'package_dtd_validation');
+  if (records.length !== 1) return null;
+  const decoded = packageDtdRecordSchema.safeParse(records[0].evidence);
+  if (!decoded.success) return null;
+  const status = decoded.data.dtdStatus;
+  if (status?.validation?.passed === true && !hasPassedPackageDtdValidation(status)) return null;
+  return decoded.data;
+}
+
+function dtdFileOutcome(file: DtdFileValidation, hasDiagnostics: boolean) {
+  const invalid = !file.doctype.valid || (file.wellFormed.ran && !file.wellFormed.valid) || (file.dtd.ran && !file.dtd.valid);
+  if (invalid) return { severity: 'error' as const, text: 'XML/DOCTYPE/DTD validation failed' };
+  if (!dtdFileValidationPassed(file) || hasDiagnostics) return { severity: 'warning' as const, text: 'DTD validation did not run cleanly and completely; unverified' };
+  return { severity: 'info' as const, text: 'DTD validation ran and passed' };
+}
+
+/** Actionable facts for one existing XML result, including a diagnostic-free failure. */
+function dtdFileFinding(file: DtdFileValidation): ValidationResult {
+  const diagnostics = [...file.wellFormed.errors, ...file.doctype.errors, ...file.dtd.errors];
+  const outcome = dtdFileOutcome(file, diagnostics.length > 0);
+  return { rule: 'package_dtd_file', severity: outcome.severity,
+    message: `${file.relPath}: ${outcome.text}.${diagnostics.length ? ` ${diagnostics.join('; ')}` : ''}`,
+    fix: outcome.severity !== 'info' ? 'Resolve the XML, referenced supportive files or validator capability and compile again.' : undefined };
+}
+
+function dtdIntegrityFindings(proof: DtdValidationEvidence): ValidationResult[] {
+  const integrity = proof.integrity;
+  const problems = [
+    ...integrity.mismatched.map(row => `${row.fileName}: expected SHA-256 ${row.expected}, received ${row.actual}`),
+    ...integrity.missingFiles.map(file => `${file}: checksum-listed bytes are missing`),
+    ...integrity.unlistedFiles.map(file => `${file}: bytes have no checksum entry`),
+  ];
+  if (!integrity.ok && problems.length === 0) problems.push('Package checksum verification did not pass.');
+  return problems.map(message => ({ rule: 'package_dtd_integrity', severity: 'error', message,
+    fix: 'Restore the reviewed supportive files and checksum manifest, then compile again.' }));
+}
+
+function packageDtdFindings(pkg: CompiledPackage): ValidationResult[] {
+  const passed = hasPassedPackageDtdValidation(pkg.dtdStatus);
+  const summary: ValidationResult = { rule: 'package_dtd_validation', severity: passed ? 'info' : 'warning',
+    message: passed ? 'Package DTD validation passed for the captured package bytes.' : 'Package DTD validation has not passed; absent, incomplete or failed evidence is unverified.',
+    evidence: { packageSha256: pkg.sha256, dtdStatus: pkg.dtdStatus },
+    fix: passed ? undefined : 'Inspect per-file validation and integrity evidence, resolve the reported gaps, and compile again.' };
+  const decoded = dtdStatusSchema.safeParse(pkg.dtdStatus);
+  const proof = decoded.success ? decoded.data.validation : undefined;
+  if (!proof) return [summary];
+  return [summary, ...proof.files.map(dtdFileFinding), ...dtdIntegrityFindings(proof)];
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -483,6 +637,7 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
   const resolved = await anchorFromRequest(req, res);
   if (!resolved) return;
   const { orgId, anchor, ident } = resolved;
+  if (refuseRegionalDeviceEctd(res, anchor)) return;
 
   try {
     const { modules: targetModules, submissionType = 'initial', region = 'FDA' } = req.body;
@@ -497,7 +652,9 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
     // 0. CANONICAL PATH: a program whose submission spine carries placed leaves
     //    compiles through the real generator (assemble-from-core → regional
     //    packager) — genuine rendered PDF leaves, real index.xml, real MD5s.
-    const spine = await resolveSubmissionSpine(anchor, orgId);
+    const chosen = await spineForRequest(req, res, anchor, orgId);
+    if (!chosen || refuseEmptyNamedSequence(res, chosen, 'compile')) return;
+    const spine = chosen.spine;
     if (spine?.sequence && spine.sequence.leafCount > 0) {
       // The sequence's recorded region decides the package; the selector only
       // cross-checks it. A region that contradicts the record is refused, the
@@ -583,13 +740,13 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
       .map((def) => {
         const code = def.code;
         const moduleSections = sections.filter(
-          s => s.section_code?.startsWith(code.replace('m', '')) || s.module?.toLowerCase() === code
+          s => sectionMatches(s.section_code, code) || s.module?.toLowerCase() === code
         );
         const requiredSections = def.requiredSections;
         const completedRequired = requiredSections.filter(rs =>
           moduleSections.some(
             ms =>
-              ms.section_code?.startsWith(rs) && ['approved', 'locked', 'final'].includes(ms.status)
+              sectionMatches(ms.section_code, rs) && ['approved', 'locked', 'final'].includes(ms.status)
           )
         );
 
@@ -620,9 +777,10 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
       });
 
     // 4. Generate eCTD 4.0 XML backbone. `applicationRef` is written into
-    //    <ectd:application-number>, so it takes the same chain the assembled
-    //    package uses (applicationIdFor): the RECORDED agency number, else the
-    //    program's own code, else a handle that says it is unassigned.
+    //    <ectd:application-number>: the RECORDED agency number, else a handle
+    //    that says it is unassigned. This draft is a status document ("NOT A
+    //    TRANSMISSIBLE SEQUENCE"), so it says so rather than refusing; the
+    //    program code is never written there (QA 2026-10-08, j6).
     //
     //    A legacy numeric project used to get `IND-${numericProjectId}` here —
     //    a string shaped exactly like an agency IND number, synthesised from a
@@ -631,12 +789,9 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
     //    the opposite ("recorded identity we actually hold"). Such a project has
     //    no program record and therefore nothing recorded, so it says so.
     const xmlBackbone = generateECTD4Backbone({
-      applicationRef: applicationIdFor(
-        anchor,
-        anchor.numericProjectId !== null
-          ? `UNASSIGNED-PROJECT-${anchor.numericProjectId}`
-          : anchor.programId ?? ident,
-      ),
+      applicationRef:
+        recordedApplicationNumber(anchor) ??
+        (anchor.numericProjectId !== null ? `UNASSIGNED-PROJECT-${anchor.numericProjectId}` : 'UNASSIGNED-PROGRAM'),
       submissionType,
       region,
       modules: moduleStatuses,
@@ -979,19 +1134,21 @@ async function compileFromSpine(
   let auditTrail: AuditRowOutcome | undefined;
 
   try {
+    // The application and the applicant from the record, or nothing is
+    // assembled: the refusal becomes this compile's ASSEMBLY_REFUSED finding
+    // and its `failed` status below (package-identity.ts, QA 2026-10-08 j6).
+    const identity = await readRecordedPackageIdentity(pool, orgId, anchor.programId);
+    const fda = toPackagerRegion(seq.region) === 'fda';
+    const missingIdentity = packageIdentityRefusal(identity, 'Nothing was assembled.', { fda });
+    if (missingIdentity) throw missingIdentity;
     const assembled = await assembleSequence({
       sequenceId: seq.id,
       organizationId: orgId,
       userId: resolveUserId(req),
-      // Recorded identity only: the agency's assigned number when the program
-      // records one, else the program's real code, else a handle that says it is
-      // unassigned — never an invented agency number, and never an applicant
-      // name the agency would read as real. The comment here already claimed
-      // "neutral", but `Organization 7` in <name> does not read as a gap; these
-      // follow regulatory-identifiers.ts' stated wording instead.
-      applicationId: applicationIdFor(anchor, `UNASSIGNED-SEQ-${seq.id}`),
-      sponsorId: `UNASSIGNED-ORG-${orgId}`,
-      sponsorName: `UNASSIGNED (organization ${orgId})`,
+      applicationId: identity.applicationNumber as string,
+      sponsorId: fda ? identity.applicantId as string : '',
+      sponsorName: identity.applicantName as string,
+      ...(fda ? { contacts: fdaContactsForPackageIdentity(identity), recordedPackageIdentity: recordedPackageIdentitySnapshot(identity) } : {}),
       priorState,
     });
     auditTrail = assembled.auditTrail;
@@ -1018,6 +1175,8 @@ async function compileFromSpine(
       compiledPackage = {
         sha256: packageSha256,
         files,
+        dtdStatus: assembled.bundle.dtdStatus ?? null,
+        regionalStatus: assembled.bundle.regionalBackbone ?? null,
         regionalBackbone: regionalPath && regionalXml != null ? { path: regionalPath, xml: regionalXml } : null,
         indexMd5: (await zip.file('index-md5.txt')?.async('string'))?.trim() ?? null,
         pdfa: grade
@@ -1074,6 +1233,7 @@ async function compileFromSpine(
 
   const initialSequence = seq.sequenceNumber === '0000';
   const validationResults = leafPlacementFindings(leaves, { initialSequence, required, isMaterialized });
+  if (compiledPackage) validationResults.push(...packageDtdFindings(compiledPackage));
   if (assembleFailure != null) {
     validationResults.unshift({
       rule: 'ASSEMBLY_REFUSED',
@@ -1124,6 +1284,9 @@ async function compileFromSpine(
         'The package references eCTD DTDs that are not bundled under util/dtd/ — it is not self-contained. Vendor the ICH/regional DTDs before transmission.',
       );
     }
+    if (!hasPassedPackageDtdValidation(compiledPackage?.dtdStatus)) {
+      blockers.push('Package DTD validation has not passed. Inspect the per-file XML/DTD execution and checksum evidence before treating this package as submission-ready.');
+    }
     // The packager converts every PDF leaf to PDF/A when it can and ships the
     // original bytes when it cannot (no Ghostscript on the host). It reported
     // that grade; nothing read it, so a vanilla-PDF package compiled with no
@@ -1162,8 +1325,9 @@ async function compileFromSpine(
         xmlBackbone,
         JSON.stringify(validationResults),
         // The SAME identifier the backbone carries, so the compilation history
-        // and the next sequence's manifest lookup agree with what was filed.
-        applicationIdFor(anchor, `SEQ-${seq.id}`),
+        // and the next sequence's manifest lookup agree with what was filed;
+        // NULL when none is recorded (the assembly was then refused).
+        recordedApplicationNumber(anchor),
         seq.sequenceNumber,
         leafManifestJson,
         // Stable per-submission key: lets the NEXT sequence locate this manifest
@@ -1229,17 +1393,18 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
   const resolved = await anchorFromRequest(req, res);
   if (!resolved) return;
   const { orgId, anchor, ident } = resolved;
+  if (refuseRegionalDeviceEctd(res, anchor)) return;
 
   try {
-    // Get project sections (tenant-scoped — readiness is tenant data). A missing
-    // table returns empty readiness; a program-spine ident loads an honestly-
+    // Get project sections (tenant-scoped — readiness is tenant data). A failed
+    // read returns an error; a program-spine ident loads an honestly-
     // empty set (no linked section store — see PROGRAM_SECTION_STORE_BLOCKER).
     const sections = await loadAnchorSections(
       anchor,
       orgId,
       `section_code, title, status, module, required,
                 word_count, updated_at`,
-      { orderBy: 'section_code', swallow: true },
+      { orderBy: 'section_code' },
     );
 
     // Module-level readiness, against the program's own required set.
@@ -1250,7 +1415,10 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
 
     // The leaf-rendering half of readiness comes from the submission spine's
     // REAL state (documents placed into the sequence), not a capability flag.
-    const spine = await resolveSubmissionSpine(anchor, orgId);
+    // A named sequence (F14) is read when this project owns it.
+    const chosen = await spineForRequest(req, res, anchor, orgId);
+    if (!chosen) return;
+    const spine = chosen.spine;
     // A program has no linked section store, so for it the section-store count
     // was always 0 of N — shown beside documents already placed in its
     // sequence. Where the sequence carries leaves, readiness counts what is
@@ -1265,7 +1433,7 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
       const code = def.code;
       const digit = code.replace('m', '');
       const moduleSections = sections.filter(
-        s => s.section_code?.startsWith(digit) || s.module?.toLowerCase() === code
+        s => sectionMatches(s.section_code, digit) || s.module?.toLowerCase() === code
       );
       const totalRequired = def.requiredSections.length;
       const completedRequired = placedLeaves
@@ -1273,7 +1441,7 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
         : def.requiredSections.filter(rs =>
             moduleSections.some(
               ms =>
-                ms.section_code?.startsWith(rs) && ['approved', 'locked', 'final'].includes(ms.status)
+                sectionMatches(ms.section_code, rs) && ['approved', 'locked', 'final'].includes(ms.status)
             )
           ).length;
 
@@ -1318,7 +1486,7 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
       readinessBasis: placedLeaves ? 'placed' : 'approved',
       /** The sequence a compile would build, with its recorded region. */
       sequence: spine?.sequence
-        ? { sequenceNumber: spine.sequence.sequenceNumber, region: spine.sequence.region, leafCount: spine.sequence.leafCount }
+        ? { id: spine.sequence.id, sequenceNumber: spine.sequence.sequenceNumber, region: spine.sequence.region, leafCount: spine.sequence.leafCount }
         : null,
       requiredSectionSource: required.provenance,
       totalSections: sections.length,
@@ -1368,14 +1536,15 @@ router.get('/:projectIdent/history', async (req: Request, res: Response) => {
         `SELECT id, compilation_name, compilation_type, status, version,
                 compiled_at, created_at, sequence_number,
                 leaf_manifest IS NOT NULL AS has_manifest,
-                external_validation
+                external_validation, validation_results
          FROM ectd_compilations
          WHERE organization_id = $1 AND compilation_name ~ $2
          ORDER BY created_at DESC
          LIMIT 20`,
         [orgId, labelTokenPattern]
       );
-      compilations = result.rows;
+      compilations = result.rows.map(({ validation_results, ...row }) => ({ ...row,
+        packageDtdValidation: recordedPackageDtdValidation(validation_results) }));
     } catch (err: any) {
       // An unreadable history is not an empty one: "never compiled" is a claim
       // about this submission that a failed read cannot make.
@@ -1399,6 +1568,7 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
   const resolved = await anchorFromRequest(req, res);
   if (!resolved) return;
   const { orgId, anchor, ident } = resolved;
+  if (refuseRegionalDeviceEctd(res, anchor)) return;
 
   // An agency-validator report run outside the product, imported against the
   // compilation whose package it covered (WO-9 Click 6). Same route: it is a
@@ -1419,7 +1589,9 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
     // the canonical compile actually assembles — not the (empty) legacy section
     // store. Placement-only findings here: rendering is only claimed by the
     // compile, which performs it.
-    const spine = await resolveSubmissionSpine(anchor, orgId);
+    const chosen = await spineForRequest(req, res, anchor, orgId);
+    if (!chosen || refuseEmptyNamedSequence(res, chosen, 'validate')) return;
+    const spine = chosen.spine;
     let results: ValidationResult[];
     if (spine?.sequence && spine.sequence.leafCount > 0) {
       const leaves = await loadSpineLeaves(spine.sequence.id, orgId);
@@ -1441,7 +1613,7 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
         anchor,
         orgId,
         `section_code, title, status, content, word_count, module, required`,
-        { swallow: true },
+        {},
       );
       results = withAnchorFindings(runPreCompileValidation(sections, region, required), anchor);
     }
@@ -1641,7 +1813,9 @@ async function importEvalidatorReport(
     res.status(422).json({ error: { code: 'REPORT_UNREADABLE', message: (err as Error).message } });
     return;
   }
-  const spine = await resolveSubmissionSpine(resolved.anchor, resolved.orgId);
+  const chosen = await spineForRequest(req, res, resolved.anchor, resolved.orgId);
+  if (!chosen) return;
+  const spine = chosen.spine;
   if (!spine) {
     res.status(409).json({
       error: { code: 'NO_SUBMISSION', message: 'This program has no submission, so it has no compiled package a report could cover.' },
@@ -1695,7 +1869,7 @@ function runPreCompileValidation(
   // 1. Check for required sections
   const allRequired = required.modules.flatMap((m) => m.requiredSections);
   for (const reqCode of allRequired) {
-    const found = sections.find(s => s.section_code?.startsWith(reqCode));
+    const found = sections.find(s => sectionMatches(s.section_code, reqCode));
     if (!found) {
       results.push({
         rule: 'REQUIRED_SECTION_MISSING',
@@ -1740,7 +1914,7 @@ function runPreCompileValidation(
 
   // 3. FDA-specific checks
   if (region === 'FDA') {
-    const hasForms = sections.some(s => s.section_code?.startsWith('1.1'));
+    const hasForms = sections.some(s => sectionMatches(s.section_code, '1.1'));
     if (!hasForms) {
       results.push({
         rule: 'FDA_FORMS_MISSING',
@@ -1750,7 +1924,7 @@ function runPreCompileValidation(
         fix: 'Upload completed FDA forms to Module 1.1',
       });
     }
-    const hasCoverLetter = sections.some(s => s.section_code?.startsWith('1.2'));
+    const hasCoverLetter = sections.some(s => sectionMatches(s.section_code, '1.2'));
     if (!hasCoverLetter) {
       results.push({
         rule: 'FDA_COVER_LETTER_MISSING',
@@ -1769,7 +1943,7 @@ function runPreCompileValidation(
     '2.7.1': 1000, // Summary of current studies
   };
   for (const [code, minWords] of Object.entries(minWordCounts)) {
-    const section = sections.find(s => s.section_code?.startsWith(code));
+    const section = sections.find(s => sectionMatches(s.section_code, code));
     if (section && section.word_count && section.word_count < minWords) {
       results.push({
         rule: 'INSUFFICIENT_CONTENT',

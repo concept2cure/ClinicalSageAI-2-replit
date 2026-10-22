@@ -80,6 +80,23 @@ router.get('/health/ready', async (req: Request, res: Response) => {
  * failed probe's own text. The detail is logged; the body states only which
  * probe failed, which is what a load balancer or an operator dashboard needs.
  */
+/**
+ * SagePlus probe states that do NOT make the system degraded.
+ *
+ * 'not_configured' is healthy for the same reason it is on the database row
+ * below: nothing was configured to be up, so a dev or test environment with no
+ * DATABASE_URL is not an outage.
+ *
+ * Until 2026-10-12 the verdict read `sagePlusResult.status === 'operational'`
+ * against a healthCheck() that returned 'operational' UNCONDITIONALLY — it put
+ * the probe result in `databaseConnected` and the failure in the log, and said
+ * operational either way. So this conjunct could never be false and contributed
+ * nothing, while `services.sagePlus.status` reported operational to any monitor
+ * reading it. A Set rather than a disjunction keeps the handler's cyclomatic
+ * complexity where the ratchet had it.
+ */
+const SAGE_PLUS_HEALTHY = new Set(['operational', 'not_configured']);
+
 function probeFailed(probe: string, error: unknown): string {
   logger.warn(`${probe} probe failed`, {
     err: error instanceof Error ? error.message : String(error),
@@ -176,7 +193,7 @@ router.get('/health/deep', async (req: Request, res: Response) => {
     // Overall health determination
     const isHealthy =
       (databaseResult.status === 'ok' || databaseResult.status === 'not_configured') &&
-      sagePlusResult.status === 'operational' &&
+      SAGE_PLUS_HEALTHY.has(sagePlusResult.status) &&
       circuitBreakers.validator !== CircuitState.OPEN &&
       circuitBreakers.openai !== CircuitState.OPEN &&
       circuitBreakers.database !== CircuitState.OPEN;

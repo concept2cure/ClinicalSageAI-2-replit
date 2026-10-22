@@ -1,3 +1,4 @@
+import { requestsReadOnly, readOnlyToolRefusal, READ_ONLY_INSTRUCTION } from '../../services/ana/read-only-turn.js';
 /**
  * POST /api/ana-ri/stream — SSE streaming AnA RI chat.
  *
@@ -23,6 +24,7 @@ import { frameToolOutput } from '../../services/ana/tool-output-frame.js';
 import type { QueryResult, QueryResultRow } from 'pg';
 
 import { getPool } from '../../db.js';
+import { requestPgClient } from '../../db/requestDb.js';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
 import {
   resolveEffortLevel,
@@ -50,7 +52,9 @@ import {
   getOrCreateThread,
   getThreadMessages,
   ThreadAccessError,
-  saveChatMessage as saveMessage, programIdForThread } from '../../services/chat-thread-helpers.js';
+  saveChatMessage as saveMessage,
+  programIdForThread,
+} from '../../services/chat-thread-helpers.js';
 import { planKernelExecution } from '../../services/kernel-router.js';
 import { getKernelPolicyHint } from '../../services/kernel-adaptive-policy.js';
 import { buildMemoryContextForChat } from '../../services/memory-context-assembler.js';
@@ -87,7 +91,8 @@ import {
   runAgenticToolLoop,
   resolveMaxRounds,
   resolveRoundBudget,
-  capToolResultForModel,
+  assertToolResultBodyBudget,
+  ToolResultBudgetExceededError,
   assistantTurnContent,
   budgetToolResultsForModel,
   buildAdaptationNote,
@@ -102,7 +107,7 @@ import {
   type ModelTurn,
   type FailedToolCall,
 } from '../../services/ana/agentic-loop.js';
-import { readReceiptContext, settleReadReceipts, type DeferredReadReceipts } from '../../services/ana/read-receipts.js';
+import { guardReadResultsForHandoff, readReceiptContext, settleReadReceipts, withdrawSourceReadResult, type DeferredReadReceipts } from '../../services/ana/read-receipts.js';
 import { buildSteerMessage } from '../../services/ana/operator-channel.js';
 import type { ProvenanceRecord } from '../../services/evidence/provenance.js';
 import {
@@ -124,9 +129,16 @@ import {
   type GenerationCapture,
 } from '../../services/ai-gateway/generation-capture.js';
 import { toolEvidence, type EvidenceEntry } from '../../services/ana/answer-grounding.js';
+import { RUN_AGENT_TOOL } from '@shared/ana/run-control-limits';
+import { agentTraceStatus } from '../../services/ana/sub-agent-result.js';
+import { newAgentTurnCounters } from '../../services/ana/sub-agent-limits.js';
+import { runAgentViewForModel } from '../../services/ana/sub-agent-shape.js';
+import { agentEvidenceEntries, agentProvenance, subAgentsHostable } from '../../services/ana/sub-agent-stream.js';
+import type { SubAgentHost } from '../../services/ana/sub-agent.js';
 import { checkProposal } from '../../services/ana/proposal-check.js';
 import { buildShortfallNote } from '../../services/ana/tool-outcome.js';
 import { persistStoppedAnswer, runStreamPostProcessing } from './post-processing.js';
+import { sealAfterMirror } from '../../services/ana/run-events.js';
 import {
   callSent,
   canonicalJson,
@@ -137,6 +149,7 @@ import {
   type TurnRecorder,
   type TurnRecordStatus,
 } from '../../services/ana/turn-record.js';
+import { TurnTimeline } from '../../services/ana/turn-timeline-emitter.js';
 import { DOCUMENT_ACTIONS } from '../../services/ana-ri/document-actions.js';
 import { reflectAfterTurn } from '../../services/ana-ri/relational-profile-service.js';
 import { selectToolsForTurn, SELF_DRIVE_TOOLS } from '../../services/ana/tool-selection.js';
@@ -165,6 +178,7 @@ import {
   prefetchRouteIntelligenceContext,
   resolveProjectIdFromBody,
 } from '../../services/ana-ri/chat-context-builder.js';
+import { withStatedDocumentType } from '../../services/ana-ri/open-document.js';
 import { invokedAppHints, invokedAppPins } from '../../services/ana-ri/invoked-apps-block.js';
 import {
   sendError,
@@ -197,6 +211,7 @@ import {
 } from '../../services/ana/run-control.js';
 import {
   MAX_PAUSE_MS,
+  endStoppedReason,
   isHoldable,
   parseRunPolicy,
   type AnaRunPolicy,
@@ -223,6 +238,8 @@ import {
 } from '../../services/ana/step-presentation.js';
 import type { GatewayServerToolUse } from '../../services/ai-gateway/types.js';
 import { resolveOrgId, resolveUserId } from '../../types/auth-request.js';
+import { admitAnaProjectScope, AnaProjectScopeError, type AdmittedAnaProjectScope } from '../../services/ana/project-scope-admission';
+import { admitAnaSelectedSources, assertAnaUploadAccess } from '../../services/ana/source-context-admission';
 import { clientIpOf } from '../../utils/client-ip';
 
 // Thin facade over getPool() so the extracted body keeps its `dbPool.query(...)`
@@ -238,6 +255,29 @@ const dbPool = {
 const COMMAND_FENCE = /```command\s*\n/;
 
 /** The round's model call, if the round's own text holds a command block (commandBlockProposer). */
+/** What the person reads when beginRun refuses (AnA detach §2.8). Fixed copy; no model writes it. */
+const RUN_REFUSAL_COPY: Readonly<Record<'RUN_IN_PROGRESS' | 'RUN_LIMIT', string>> = {
+  RUN_IN_PROGRESS: 'AnA is still working on the last message in this conversation.',
+  RUN_LIMIT: 'You have three turns running. Stop one, or wait for one to finish.',
+};
+
+/**
+ * The frame for a beginRun refusal (run-control RunRefusedError), or null for
+ * any other failure. Read by name and code rather than `instanceof`, so the
+ * route does not hold a second import of the class for a test double to omit.
+ */
+function runRefusalFrame(err: unknown): { type: 'error'; code: string; error: string; runId?: string } | null {
+  const e = err as { name?: unknown; code?: unknown; runId?: unknown } | null;
+  if (!e || e.name !== 'RunRefusedError') return null;
+  if (e.code !== 'RUN_IN_PROGRESS' && e.code !== 'RUN_LIMIT') return null;
+  return {
+    type: 'error',
+    code: e.code,
+    error: RUN_REFUSAL_COPY[e.code],
+    ...(typeof e.runId === 'string' && e.runId ? { runId: e.runId } : {}),
+  };
+}
+
 function commandRoundOf<T>(roundText: string, served: T): T[] {
   return COMMAND_FENCE.test(roundText) ? [served] : [];
 }
@@ -259,7 +299,10 @@ function commandRoundOf<T>(roundText: string, served: T): T[] {
  * not marked twice. Exported for its test.
  */
 export function buildScreenReportTurn(report: string): GatewayMessage | null {
-  const observed = (report ?? '').trim().replace(/^\[Screen report\]\s*/i, '').trim();
+  const observed = (report ?? '')
+    .trim()
+    .replace(/^\[Screen report\]\s*/i, '')
+    .trim();
   if (!observed) return null;
   return {
     role: 'system',
@@ -329,49 +372,31 @@ export const APPROVAL_TIMEOUT_WHY = 'nobody decided in time';
 type SettledApproval = { ok: boolean; result: unknown; why?: string; heldBack?: boolean };
 
 /**
- * How long a turn waits to learn which project row it is in: the deadline every
- * other optional pre-gateway read has (the route prefetch's 3 s, the enrichment
- * budget's 3 s). The lookup is awaited before the prefetch, so without one a
- * slow database held the whole turn (up to the pool's 5 s connect plus 30 s
- * statement timeout) before any context read started.
+ * Mandatory project admission is bounded before any source context starts.
+ * A permission read that exceeds this deadline refuses the turn.
  */
 export const TURN_PROJECT_DEADLINE_MS = 3000;
 const TURN_PROJECT_TIMED_OUT = new Error('project lookup deadline exceeded');
 
 /**
- * The project row this turn is in (ana-14): an integer projects.id as itself, a
- * program UUID through its linked projects row (lowest id, org-scoped), and
- * anything else no project. Resolved once and handed to every reader keyed on
- * projects.id.
- *
- * Strict and bounded (strictProjectRowForRef, TURN_PROJECT_DEADLINE_MS): a
- * lookup that fails or runs out of time is 'unresolved', with why, and context
- * enrichment reports it to the person. It is never "no linked project": that
- * reads as "nothing recorded", and the readers then told the model a project
- * had no safety, CMC or CSR data when nobody had looked.
+ * Resolve and authorize the explicit project once for this turn. No scope
+ * remains valid for an organization conversation; an explicit malformed,
+ * unanchored or unreadable scope is refused before context and tool work.
  */
-async function resolveTurnProject(ref: unknown, orgId: unknown): Promise<TurnProject> {
-  if (ref === null || ref === undefined || ref === '') return { status: 'none' };
+async function admitTurnProject(ref: unknown, organizationId: unknown, userId: unknown): Promise<AdmittedAnaProjectScope> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    const id = await Promise.race([
-      (async () => {
-        const { strictProjectRowForRef } = await import('../../services/c2c/program-project-anchor.js');
-        return strictProjectRowForRef(async () => (await import('../../db.js')).db, {
-          ref,
-          orgId: Number(orgId),
-          context: 'ana-ri.stream',
-        });
-      })(),
+    return await Promise.race([
+      admitAnaProjectScope(getPool(), { projectRef: ref, organizationId, userId }),
       new Promise<never>((_resolve, reject) => {
         timer = setTimeout(() => reject(TURN_PROJECT_TIMED_OUT), TURN_PROJECT_DEADLINE_MS);
       }),
     ]);
-    return id === null ? { status: 'none' } : { status: 'linked', id };
-  } catch (err) {
-    const reason: EnrichmentUnavailableReason = err === TURN_PROJECT_TIMED_OUT ? 'timeout' : 'error';
-    console.warn('[AnA RI Stream] Project not resolved:', reason, err instanceof Error ? err.message : String(err));
-    return { status: 'unresolved', reason };
+  } catch (error) {
+    if (error === TURN_PROJECT_TIMED_OUT) {
+      throw new AnaProjectScopeError(503, 'ANA_PROJECT_ACCESS_UNAVAILABLE', 'Current project access took too long to verify. AnA has not read its sources.');
+    }
+    throw error;
   } finally {
     clearTimeout(timer);
   }
@@ -554,16 +579,26 @@ export function mountStreamRoute(router: Router): void {
     // The run is closed exactly once, by whichever of the disconnect handler and
     // the finally block gets there first.
     let runSettled = false;
+    // The turn's policy once the request is read: the error path asks it why a stop ended the turn.
+    let turnPolicyOf: TurnPolicy | null = null;
     // The tenant the run row was stamped with, for the turn-end read-back.
     let runOrgIdForEvents: number | null = null;
-    // The round the keepalive stamps on each heartbeat. Updated at every
-    // checkpoint so a reaped-and-resumed row still reports where it got to.
-    let heartbeatRound = 0;
     // The retained record of this turn (services/ana/turn-record.ts): filled
     // as each fact becomes known, sealed and written once when the turn ends —
     // answered, stopped or failed — and chained. Undefined until the tenant is
     // known; null for a turn that has none, which cannot be filed.
     let turnRecorder: TurnRecorder | null | undefined;
+    // The Summary's events: each one appended to the recorder and written as a
+    // `timeline` frame, the one producer (turn-timeline-emitter.ts, S4).
+    const timeline = new TurnTimeline({
+      write: frame => {
+        if (!res.writableEnded) res.write(frame);
+      },
+      recorder: () => turnRecorder,
+      // The run's live mirror (AnA detach DT1): a durable run's handle carries
+      // one; a turn with no run row has nothing to mirror into.
+      mirror: () => runHandle?.events,
+    });
     /**
      * The human controls taken during this turn, read back from the run row
      * at turn end and projected onto the assistant message's metadata, which
@@ -601,13 +636,19 @@ export function mountStreamRoute(router: Router): void {
     const recordStreamed = (chunk: string): void => turnRecorder?.appendStreamed(chunk);
     const recordServed = (round: number, served: { provider: string | null; model: string | null }, sent?: CallSent): void =>
       turnRecorder?.addServed(round, served, sent);
+    // Flush, then seal, then release (AnA detach §3.4): the mirror's guard
+    // refuses an insert once the record exists, so the record is written only
+    // after the mirror is flushed; its rows then leave through the release
+    // door, and released_at is written whatever came of the record.
     const fileTurnRecord = (outcome: TurnOutcome): Promise<TurnRecordStatus> =>
       turnRecorder === undefined
         ? Promise.resolve({ status: 'not_recorded', reason: 'This turn ended before its record was opened.' })
-        : writeTurnRecordSafely(getPool(), turnRecorder, outcome, {
-            ipAddress: req.ip,
-            userAgent: req.get('user-agent') ?? undefined,
-          });
+        : sealAfterMirror(runHandle?.events, () =>
+            writeTurnRecordSafely(getPool(), turnRecorder ?? null, outcome, {
+              ipAddress: req.ip,
+              userAgent: req.get('user-agent') ?? undefined,
+            }),
+          );
     /**
      * Prompt-cache totals for the WHOLE turn, every model call included.
      *
@@ -673,6 +714,7 @@ export function mountStreamRoute(router: Router): void {
           runBy: 'server',
         });
       }
+      steps.forEach((step, i) => timeline.serverStep(round, step, i));
       if (res.writableEnded) return;
       for (const step of steps) {
         // Source `web`, the query as preview, both tenses (server-tool-steps.ts).
@@ -728,6 +770,7 @@ export function mountStreamRoute(router: Router): void {
         return sendError(res, 400, 'Message is required', null, 'INVALID_MESSAGE');
       }
 
+      const readOnly = requestsReadOnly(message);
       // ── Prompt-injection inspection (coverage: EVERY user turn) ──────────
       // Wires the existing prompt-injection defense (server/lib/prompt-injection-
       // protection) into the streaming hot path. Detection + high-risk audit
@@ -755,12 +798,26 @@ export function mountStreamRoute(router: Router): void {
             res,
             400,
             'Message was blocked by the input safety policy',
-            null,
+            'auditTrail' in guardErr ? { auditTrail: guardErr.auditTrail } : null,
             'PROMPT_INJECTION_BLOCKED'
           );
         }
         throw guardErr;
       }
+
+      // Mandatory admission precedes the direct intelligence handler, every
+      // source-context reader, run creation and the first model request.
+      const requestedProjectRef = project_id ?? req.body.context?.projectId ?? project_context?.projectId;
+      let admittedProject: AdmittedAnaProjectScope;
+      try {
+        admittedProject = await admitTurnProject(requestedProjectRef, guardOrgId, guardUserId);
+        await admitAnaSelectedSources(getPool(), { organizationId: guardOrgId, userId: guardUserId, sourceIds: req.body.source_ids ?? [] });
+        await assertAnaUploadAccess(getPool(), { organizationId: guardOrgId, userId: guardUserId, fileIds: req.body.file_ids ?? [] });
+      } catch (error) {
+        if (error instanceof AnaProjectScopeError) return sendError(res, error.status, error.message, null, error.code);
+        throw error;
+      }
+      const streamProjectId = admittedProject.programId ?? admittedProject.projectId ?? undefined;
 
       const gw = ensureGateway();
       const deterministicMode = gw?.isDeterministic?.() || false;
@@ -780,10 +837,22 @@ export function mountStreamRoute(router: Router): void {
       // during context assembly (orchestration + intelligence/memory/enrichment).
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
+        'X-Content-Type-Options': 'nosniff',
         'Cache-Control': 'no-cache',
         Connection: 'keep-alive',
         'X-Accel-Buffering': 'no',
       });
+
+      if (injectionGuard.auditTrail && (!injectionGuard.auditTrail.persisted || !injectionGuard.auditTrail.chained)) {
+        // nosemgrep: javascript.express.security.audit.xss.direct-response-write.direct-response-write -- SSE with nosniff; the entire payload is JSON encoded, escaping frame delimiters and never interpreted as HTML.
+        res.write(`data: ${JSON.stringify({ type: 'warning',
+          code: injectionGuard.auditTrail.persisted ? 'AUDIT_ROW_NOT_RETRIEVABLE' : 'AUDIT_ROW_NOT_PERSISTED',
+          message: injectionGuard.auditTrail.persisted
+            ? 'The input safety audit entry was stored, but is unavailable in the readable audit trail.'
+            : 'The input safety check completed, but its audit entry could not be confirmed. Review the audit history before retrying.',
+          meta: { auditTrail: injectionGuard.auditTrail },
+        })}\n\n`);
+      }
 
       // Keepalive ping. Long-running orchestration / context assembly (and the
       // AI's first-token latency on large prompts) can leave the socket silent
@@ -800,15 +869,12 @@ export function mountStreamRoute(router: Router): void {
         } catch {
           clearInterval(streamKeepalive);
         }
-        // The run's heartbeat rides the keepalive that already exists rather
-        // than a second timer. It has to: the reaper's staleness ceiling
-        // (STALE_AFTER_MS, 5 min) is SHORTER than the pause ceiling
-        // (MAX_PAUSE_MS, 10 min), so a beat taken only at round boundaries left
-        // a paused run — or any single round over five minutes — to be marked
-        // failed/orphaned by another request's sweep while it was still
-        // running. Beating here covers every phase of the turn, including the
-        // final generation after the loop.
-        if (runId && runHandle) void runHandle.heartbeat(heartbeatRound);
+        // The run's heartbeat no longer rides this keepalive (AnA detach DT1,
+        // §2.3): the keepalive is cleared when the socket closes, so a run's
+        // beat depended on a page staying open. One process-wide interval in
+        // run-control.ts (beatOwnedRuns) beats every run this process owns,
+        // at the same 15 s, through every phase of the turn and with or
+        // without a socket. This ping stays for the proxies and touches no row.
       }, STREAM_KEEPALIVE_MS);
       const stopKeepalive = () => clearInterval(streamKeepalive);
       res.on('close', stopKeepalive);
@@ -840,9 +906,11 @@ export function mountStreamRoute(router: Router): void {
             pool: getPool(),
             organizationId: runOrgId,
             userId: runUserId,
+            // Verified inside beginRun before it is stamped (AnA detach §2.8).
             threadId: typeof thread_id === 'string' ? thread_id : null,
             projectId: typeof project_id === 'string' ? project_id : null,
             surface: 'ana-ri-stream',
+            runPolicy: parseRunPolicy(run_policy),
           });
           runId = opened.runId;
           runHandle = opened.handle;
@@ -851,10 +919,23 @@ export function mountStreamRoute(router: Router): void {
           void reapOrphanedRuns(getPool()).catch(() => {});
           res.write(`data: ${JSON.stringify({ type: 'run_started', runId })}\n\n`);
         } catch (err: any) {
+          // A refusal is an answer, not an outage (AnA detach §2.8, D-3): this
+          // conversation already has a live run, or the person has three. Both
+          // come before the question is saved, so nothing of this turn exists
+          // yet to record or roll back.
+          const refusal = runRefusalFrame(err);
+          if (refusal) {
+            res.write(`data: ${JSON.stringify(refusal)}\n\n`);
+            stopKeepalive();
+            res.end();
+            return;
+          }
           // Control is an enhancement; the answer is the product. A run row we
           // could not open costs the person their controls, not their turn —
           // and because no `run_started` is emitted, the strip renders nothing
-          // rather than buttons that would 404.
+          // rather than buttons that would 404. A colleague's conversation
+          // (THREAD_FORBIDDEN) lands here too: no run is opened for it, and
+          // getOrCreateThread below refuses the turn as it always has.
           console.error('[AnA RI Stream] run control unavailable:', err?.message);
         }
       }
@@ -869,11 +950,11 @@ export function mountStreamRoute(router: Router): void {
          only on a run a person can resume; otherwise it fails closed at the
          first hold it would have made (TurnPolicy). */
       const runPolicy = parseRunPolicy(run_policy);
-      const turnPolicy = new TurnPolicy({
+      const turnPolicy = (turnPolicyOf = new TurnPolicy({
         runPolicy,
         holdable: isHoldable({ runId, runUserId }),
         startedAt: streamPhaseStart,
-      });
+      }));
       // Handed to the gateway and the tool dispatcher so a stop lands on work
       // already in flight, rather than waiting for the next round boundary.
       const runSignal = runHandle?.cancelSignal;
@@ -888,6 +969,8 @@ export function mountStreamRoute(router: Router): void {
       const disconnectRun = () => {
         if (runSettled || res.writableEnded) return;
         runSettled = true;
+        // Unless a person's Stop already landed, the turn stopped because the page left (S4).
+        if (!runHandle?.cancelSignal.aborted) turnPolicy.noteDisconnected();
         if (!runId) {
           // The existing local-only handle needs no row to abort the gateway
           // and tools. Record the socket cause, without inventing a person's
@@ -936,25 +1019,6 @@ export function mountStreamRoute(router: Router): void {
       // before the disconnect listeners existed. Settle that missed close
       // after opening the recorder so its cause is retained too.
       if (res.destroyed || req.aborted) disconnectRun();
-      /* The tenant's permitted tool surface, resolved in parallel with context
-         assembly. Composed by governedToolsetFor so this path and
-         POST /api/chat/send-message cannot drift on whether the deny-list is
-         applied — which they had. */
-      const toolPolicyPromise = governedToolsetFor(getPool(), orgId == null ? null : Number(orgId));
-
-      // ── Live Drive (opt-in screen driving) ─────────────────────────────
-      // The client sends `live_drive: true` only while the person has the
-      // toggle on, plus `drive_mode: 'demo'` for an explicitly started
-      // demonstration (bigger budgets, demo prompt block — same entitlement).
-      // Entitlement (`ana_live_drive`, ENTITLEMENTS_ENFORCE modes) is resolved
-      // in parallel with context assembly; a deny is an honest `drive_state`
-      // event, never a dead turn. No request → zero queries.
-      const driveStatePromise = resolveDriveState(
-        live_drive === true,
-        orgId != null ? Number(orgId) : null,
-        { driveMode: drive_mode },
-      );
-
       // ── Intelligence answer fast-path ──────────────────────────────────
       // When the client submits a structured intelligence flow answer, skip
       // the full AI pipeline and call the tool handler directly.
@@ -984,13 +1048,13 @@ export function mountStreamRoute(router: Router): void {
           const payload = JSON.parse(message.slice(INTELLIGENCE_ANSWER_PREFIX.length));
           const handler = getToolHandler('answer_intelligence_question');
           if (!handler) throw new Error('answer_intelligence_question handler not registered');
-          const streamProjectId = project_id || resolveProjectIdFromBody(req.body);
           const fastStart = Date.now();
           const resultStr = await handler(payload, {
+            sqlClient: requestPgClient(req),
             organizationId: orgId,
             userId: userId || null,
-            projectId: streamProjectId ? Number(streamProjectId) || null : null,
-            projectRef: streamProjectId ? String(streamProjectId) : null,
+            projectId: admittedProject.projectId,
+            projectRef: admittedProject.projectRef,
           });
           let parsed: any = null;
           try {
@@ -998,18 +1062,29 @@ export function mountStreamRoute(router: Router): void {
           } catch {
             parsed = null;
           }
-          const fastError = parsed ? (typeof parsed.error === 'string' ? parsed.error : null) : 'The result was not JSON.';
+          const fastError = parsed
+            ? typeof parsed.error === 'string'
+              ? parsed.error
+              : null
+            : 'The result was not JSON.';
           turnRecorder?.addStep({
             round: 1,
             tool: 'answer_intelligence_question',
-            label: describeToolPlan([{ id: 'intelligence_answer', name: 'answer_intelligence_question', input: payload ?? {} }])[0].label,
+            label: describeToolPlan([
+              {
+                id: 'intelligence_answer',
+                name: 'answer_intelligence_question',
+                input: payload ?? {},
+              },
+            ])[0].label,
             status: fastError ? 'error' : 'success',
             latencyMs: Date.now() - fastStart,
             input: payload,
             result: resultStr,
             error: fastError,
           });
-          if (!parsed) throw new Error('answer_intelligence_question returned a result that is not JSON');
+          if (!parsed)
+            throw new Error('answer_intelligence_question returned a result that is not JSON');
           // The person was given the error, not an answer.
           if (fastError) fastOutcome = 'failed';
           if (parsed?.status === 'intelligence_question' && parsed.question) {
@@ -1040,13 +1115,42 @@ export function mountStreamRoute(router: Router): void {
           }
         } catch (err: any) {
           fastOutcome = 'failed';
-          turnRecorder?.warn(`The answer could not be processed: ${String(err?.message ?? err).slice(0, 500)}`);
+          turnRecorder?.warn(
+            `The answer could not be processed: ${String(err?.message ?? err).slice(0, 500)}`
+          );
           say(`Error processing intelligence answer: ${err?.message}`);
         }
         streamFailed = fastOutcome === 'failed';
         await closeFastPath(fastOutcome);
         return;
       }
+
+      // Only model turns use these reads. Direct interview answers above
+      // retain their registered handler gates without admitting unused work.
+      /* The tenant's permitted tool surface, resolved in parallel with context
+         assembly. Composed by governedToolsetFor so this path and
+         POST /api/chat/send-message cannot drift on whether the deny-list is
+         applied — which they had. */
+      /* Sub-agents (row 74, S5): hosted only on a turn that has a run row whose
+         organization is the request's — the person's pause and Stop, and the
+         ledger's parent link, all hang off that row. Hosting also makes the
+         tenant policy read STRICT, so an unreadable policy withholds run_agent
+         rather than offering every tool to an unattended child (governed-toolset.ts). */
+      const hostsSubAgents = subAgentsHostable({ runId, runOrgId, orgId });
+      const toolPolicyPromise = governedToolsetFor(getPool(), orgId == null ? null : Number(orgId), { hostsSubAgents });
+
+      // ── Live Drive (opt-in screen driving) ─────────────────────────────
+      // The client sends `live_drive: true` only while the person has the
+      // toggle on, plus `drive_mode: 'demo'` for an explicitly started
+      // demonstration (bigger budgets, demo prompt block — same entitlement).
+      // Entitlement (`ana_live_drive`, ENTITLEMENTS_ENFORCE modes) is resolved
+      // in parallel with context assembly; a deny is an honest `drive_state`
+      // event, never a dead turn. No request → zero queries.
+      const driveStatePromise = resolveDriveState(
+        live_drive === true,
+        orgId != null ? Number(orgId) : null,
+        { driveMode: drive_mode },
+      );
 
       const validatedLens: IntentLens | undefined =
         intent_lens && VALID_LENSES.has(intent_lens as IntentLens)
@@ -1069,15 +1173,10 @@ export function mountStreamRoute(router: Router): void {
       // Shared builder parity: keep authoring-context serialization identical across chat/stream.
       const authoringContextBlock = buildAuthoringContextBlock(authoring_context);
 
-      const streamProjectId = project_id || resolveProjectIdFromBody(req.body);
-      /* The integer projects.id this turn's project is, resolved once and handed
-         to every reader keyed on it: the project prefetch and relational
-         overlay, memory, enrichment, the session bootstrap, the tool-run log and
-         the relational reflection. The v2 app sends the program UUID, and each
-         of them used to take Number(uuid), which is NaN (ana-14). Started here,
-         awaited before the first reader needs it, and bounded
-         (TURN_PROJECT_DEADLINE_MS). */
-      const streamProjectPromise = resolveTurnProject(streamProjectId, orgId);
+      /* The verified integer projects.id is shared with every context reader;
+         the program UUID remains available to program-keyed readers. */
+      const streamProjectPromise: Promise<TurnProject> = Promise.resolve(admittedProject.projectId == null
+        ? { status: 'none' } : { status: 'linked', id: admittedProject.projectId });
       const streamAuthoringContext =
         authoring_context && typeof authoring_context === 'object'
           ? ({ ...authoring_context } as Record<string, unknown>)
@@ -1116,6 +1215,16 @@ export function mountStreamRoute(router: Router): void {
           const userMessageId = await saveMessage(threadId, 'user', message);
           turnRecorder?.setMessageIds({ user: userMessageId });
           stoppedTurnThreadId = threadId;
+          // The verified (or just minted) conversation and the question, on
+          // the run, so another device can find it by thread (§2.8).
+          if (runHandle?.stampThread) {
+            await runHandle
+              .stampThread(threadId, typeof userMessageId === 'number' ? userMessageId : null)
+              .then(ok => {
+                if (!ok) console.warn('[AnA RI Stream] run not stamped with its conversation:', runId);
+              })
+              .catch((err: any) => console.error('[AnA RI Stream] run thread stamp failed:', err?.message));
+          }
         } catch (e: any) {
           /* Matched by code: a conversation bound to another project than the
              one this turn names (chat-thread-helpers getOrCreateThread). */
@@ -1209,7 +1318,7 @@ export function mountStreamRoute(router: Router): void {
         projectId: streamProjectId,
         projectIdNumber: streamProjectIdNumber,
         organizationId: orgId,
-        authoringContext: streamAuthoringContext,
+        authoringContext: withStatedDocumentType(streamAuthoringContext, document_context),
         userId: typeof userId === 'number' ? userId : Number(userId) || null,
         targetAgency:
           typeof project_context?.targetAgency === 'string' ? project_context.targetAgency : null,
@@ -1245,6 +1354,7 @@ export function mountStreamRoute(router: Router): void {
         _deadlineRadarBlock: prefetchedStreamContext.deadlineRadarBlock,
         _sessionBriefingBlock: prefetchedStreamContext.sessionBriefingBlock,
         _contradictionWatchBlock: prefetchedStreamContext.contradictionWatchBlock,
+        _openDocumentBlock: prefetchedStreamContext.openDocumentBlock,
       });
       orchestration.systemPrompt += prefetchedStreamContext.contextAvailabilityBlock ?? '';
       if (prefetchedStreamContext.unavailableSources?.length) {
@@ -1344,7 +1454,9 @@ export function mountStreamRoute(router: Router): void {
       const streamVolatileSuffix =
         memoryBlock +
         enrichment.block +
-        (driveState.enabled ? buildLiveDrivePromptBlock(driveState.mode) : buildOfferedMovesPromptBlock());
+        (driveState.enabled
+          ? buildLiveDrivePromptBlock(driveState.mode)
+          : buildOfferedMovesPromptBlock());
 
       // What AnA was given this turn that her answer can be checked against
       // (answer-grounding.ts): the person's own words, read as theirs and never
@@ -1419,12 +1531,16 @@ export function mountStreamRoute(router: Router): void {
          loader's own fault tolerance would swallow into "this project has no
          memory". This used to normalize 'proj_7' and '7' here and drop a program
          UUID, so a v2 project's atoms never loaded; a program now loads through
-         its linked project. With no linked project, the org-level half of the
-         rehydration (client atoms, lessons, the vault files) still lands. */
+         its linked project. Catalog recall keeps the original project reference
+         too, so a missing numeric anchor cannot widen an open project into the
+         library. */
       const streamBootstrapBlock = await sessionBootstrapBlockFor({
+        db: requestPgClient(req),
         priorMessageCount: streamPriorTurns,
         organizationId: orgId ? Number(orgId) : null,
         projectId: streamProjectIdNumber ?? undefined,
+        userId: guardUserId,
+        projectRef: admittedProject.projectRef,
         threadId: threadId ?? undefined,
         atomLimit: 6,
       });
@@ -1522,7 +1638,8 @@ export function mountStreamRoute(router: Router): void {
           );
           const attachedFiles = await loadUploadedFileMetadata(
             streamFileIds,
-            orgId != null ? Number(orgId) : null
+            orgId != null ? Number(orgId) : null,
+            { userId: guardUserId },
           );
           if (attachedFiles.length < streamFileIds.length) {
             console.warn(
@@ -1532,7 +1649,12 @@ export function mountStreamRoute(router: Router): void {
             );
           }
           for (const f of attachedFiles) {
-            contextUploads.push({ fileId: f.fileId, fileName: f.fileName, mimeType: f.mimeType, read: 'name_only' });
+            contextUploads.push({
+              fileId: f.fileId,
+              fileName: f.fileName,
+              mimeType: f.mimeType,
+              read: 'name_only',
+            });
             uploadChecksums.set(f.fileId, f.checksumSha256);
           }
           if (attachedFiles.length > 0) {
@@ -1563,7 +1685,7 @@ export function mountStreamRoute(router: Router): void {
                 // Recheck the disposition at the byte read too: the preview may
                 // have been confirmed after the earlier metadata lookup.
                 const { loadUploadedFile } = await import('../../services/ana/uploaded-file-access.js');
-                const buf = (await loadUploadedFile(f.fileId, Number(orgId))).buffer;
+                const buf = (await loadUploadedFile(f.fileId, Number(orgId), { userId: guardUserId })).buffer;
                 if (!buf || buf.length === 0 || buf.length > MAX_DOC_BYTES) continue;
                 messages.push({
                   role: 'user' as const,
@@ -1673,7 +1795,9 @@ export function mountStreamRoute(router: Router): void {
             // Their labels, not their ids. Every renderer shows these as
             // buttons that ask AnA for the thing named, so "rewritten_section"
             // was both what the person read and what the button sent.
-            suggestedActions: orchestration.suggestedActions.map(t => DOCUMENT_ACTIONS[t]?.label ?? t),
+            suggestedActions: readOnly ? [] : orchestration.suggestedActions.map(
+              t => DOCUMENT_ACTIONS[t]?.label ?? t
+            ),
           },
         })}\n\n`
       );
@@ -1698,6 +1822,15 @@ export function mountStreamRoute(router: Router): void {
       });
       // How the turn was routed, and why, on its record (MC-RL-8).
       turnRecorder?.setRouting(routingPlan);
+
+      // Keep each standard-chat model response bounded. The agentic loop still
+      // follows its effort and run-policy ceilings below.
+      const governedDraftRequested = requestsGovernedDraft(message);
+      const interactiveTokenBound =
+        !governedDraftRequested && effortUsed !== 'thorough' && routingPlan.riskTier !== 'high';
+      const streamMaxTokens = interactiveTokenBound
+        ? Math.min(routingPlan.maxTokens, effortUsed === 'fast' ? 1_024 : 2_048)
+        : routingPlan.maxTokens;
 
       const policyHint = await getKernelPolicyHint({
         organizationId: orgId ? Number(orgId) : null,
@@ -1781,7 +1914,8 @@ export function mountStreamRoute(router: Router): void {
           `data: ${JSON.stringify({
             type: 'warning',
             code: 'MODEL_OVERRIDE_REFUSED',
-            message: 'The model you chose is not available or approved for this work, so AnA is answering with the default model.',
+            message:
+              'The model you chose is not available or approved for this work, so AnA is answering with the default model.',
           })}\n\n`
         );
       }
@@ -1938,8 +2072,7 @@ export function mountStreamRoute(router: Router): void {
         // substantive nudge. High-stakes ('high' riskTier) and an explicit
         // Thorough effort still reason: resolveThinkingConfig enables those
         // regardless of this flag, so governance keeps its floor.
-        substantive:
-          substantiveTurn && !(driveState.enabled && driveState.mode === 'demo'),
+        substantive: substantiveTurn && !(driveState.enabled && driveState.mode === 'demo'),
       });
       const streamThinkingConfig = streamThinkingResolved.enabled
         ? streamThinkingResolved
@@ -1962,7 +2095,14 @@ export function mountStreamRoute(router: Router): void {
       // organizations.settings.anaToolPolicy.deny. Honour the deny-list on
       // the assembled toolset so disabled tools are never offered to the
       // model. Loader is fail-open (default-allow) on any DB issue.
-      const governedTools = await toolPolicyPromise;
+      const governedTools = (await toolPolicyPromise).filter(t => !readOnlyToolRefusal(t.name, {}, readOnly));
+      /* run_agent is in THIS turn's governed set only when the turn hosts agents
+         and the tenant allows it. The stream dispatches any registered handler by
+         name, so the host below is lent only when this holds (brief D14): a tenant
+         deny of run_agent is a real kill switch, and it fails closed. */
+      const agentsOffered = governedTools.some(t => t.name === RUN_AGENT_TOOL);
+      /** This turn's agent counts: 6 per turn, 4 per round (sub-agent-limits.ts). */
+      const agentCounters = newAgentTurnCounters();
       // Governance first (tenant deny-list), then offer the subset relevant to this
       // turn's intent + context. The platform command bridge is always retained,
       // but it reaches the command registry only — a typed tool dropped here is
@@ -1989,10 +2129,13 @@ export function mountStreamRoute(router: Router): void {
             // rather than always-on because voice and deep investigations
             // share the selector and can do neither (tool-selection.ts).
             ...SELF_DRIVE_TOOLS,
+            // Delegation survives relevance trimming on a turn that may use it.
+            ...(agentsOffered ? [RUN_AGENT_TOOL] : []),
           ],
           context: {
             projectType: asStr(submission_type),
-            documentType: asStr(document_context),
+            // The open document's type as the route resolved it; document_context is an object.
+            documentType: prefetchedStreamContext.openDocumentLabel ?? undefined,
             surface: asStr(intent_lens) ?? asStr(authoring_context),
             // The invoked app's id, label and words, so its tools survive the
             // relevance cap (shared/navigation/callable-apps).
@@ -2008,7 +2151,11 @@ export function mountStreamRoute(router: Router): void {
 
       // The question as the model was given it (encapsulated when the injection
       // guard wraps it), and the first call's whole input.
-      turnRecorder?.setRequest(message, injectionGuard.encapsulated ? injectionGuard.text : effectiveMessage);
+      turnRecorder?.setRequest(
+        message,
+        injectionGuard.encapsulated ? injectionGuard.text : effectiveMessage
+      );
+      if (readOnly) messages.push({ role: 'system', content: READ_ONLY_INSTRUCTION });
       turnRecorder?.setModelInput(messages);
       const gwResponse = await gw.route({
         taskType: routingPlan.taskType,
@@ -2024,7 +2171,7 @@ export function mountStreamRoute(router: Router): void {
         // The run this call belongs to, on its ledger row (D6).
         runId: runId || undefined,
         messages,
-        maxTokens: routingPlan.maxTokens,
+        maxTokens: streamMaxTokens,
         temperature: routingPlan.temperature,
         strategy: selectedStrategy,
         // Explicit-model path: a user pin wins; otherwise the cost tier picks the
@@ -2042,6 +2189,8 @@ export function mountStreamRoute(router: Router): void {
         apiEffort,
         ...(streamThinkingConfig ? { thinking: streamThinkingConfig } : {}),
         ...(streamTools.length > 0 ? { tools: streamTools } : {}),
+        // Decision 3 (A): a call that offers tools has her notes as her words (gateway: progress-updates.ts).
+        notesBetweenTools: streamTools.length > 0,
         stream: true,
         onStream: (chunk: string, metadata?: any) => {
           // Cancelled mid-generation → stop emitting (and accumulating) at
@@ -2091,6 +2240,8 @@ export function mountStreamRoute(router: Router): void {
       const commandRounds = commandRoundOf(fullContent, lastServedModel);
       turnRecorder?.addServed(1, lastServedModel, callSent({ apiEffort, thinking: streamThinkingConfig, tools: streamTools }));
       recordCacheUsage(gwResponse);
+      // Her words before round 1's steps, when the call also called tools (a note, S4).
+      timeline.noteFromCall(fullContent, gwResponse);
       // The first model call is round 1's call; its server tools ran inside it.
       emitServerToolSteps(gwResponse, 1);
       recordServerToolEvidence(gwResponse);
@@ -2138,8 +2289,35 @@ export function mountStreamRoute(router: Router): void {
         /** One hold per turn: the checkpoint's pause wait (run-hold.ts). None without a run row. */
         const runHold =
           runId && runHandle
-            ? streamRunHold({ runId, handle: runHandle, runOrgId, res, emit: emitControl, policy: runPolicy })
-            : null;
+              ? streamRunHold({ runId, handle: runHandle, runOrgId, res, emit: emitControl, policy: runPolicy })
+              : null;
+
+        /**
+         * What a `run_agent` call is lent (row 74, S5): nothing unless this turn
+         * hosts agents, the tenant allowed the tool, and there is a run hold to
+         * wait on — the runner then answers AGENTS_NEED_A_LIVE_RUN, so nothing
+         * starts. The hold is bound to the PARENT's round, because `paused` and
+         * `resumed` name the round the person is watching; a child passing its
+         * own 0-6 would write its number into the person's frames. Frames leave
+         * as `agent_event` under the CALL's id, whatever the frame itself says,
+         * so a client pairs them with the step that started them.
+         */
+        const subAgentHostFor = (toolUseId: string, round: number): { subAgentHost?: SubAgentHost } => {
+          if (!agentsOffered || !runHold || !runId || orgId == null) return {};
+          return {
+            subAgentHost: {
+              organizationId: Number(orgId),
+              parentRunId: runId,
+              round,
+              governedTools,
+              agents: agentCounters,
+              hold: (announce, signal) => runHold.hold(round, announce, signal),
+              expiredSignal: runHold.expiredSignal,
+              heldMs: () => runHold.heldMs(),
+              emit: frame => emitControl({ ...frame, type: 'agent_event', toolUseId }),
+            },
+          };
+        };
 
         /**
          * Settle every tool call in this round that a person has to authorise.
@@ -2156,6 +2334,11 @@ export function mountStreamRoute(router: Router): void {
         ): Promise<Map<string, SettledApproval>> => {
           const out = new Map<string, SettledApproval>();
           for (const toolUse of calls) {
+            const readOnlyRefusal = readOnlyToolRefusal(toolUse.name, toolUse.input, readOnly);
+            if (readOnlyRefusal) {
+              out.set(toolUse.id, { ok: false, why: readOnlyRefusal.message, result: readOnlyRefusal, heldBack: true });
+              continue;
+            }
             const verdict = classifyToolCall(toolUse);
             if (verdict.kind === 'UNGOVERNED') continue;
 
@@ -2292,6 +2475,7 @@ export function mountStreamRoute(router: Router): void {
             message: `${proposal.message} AnA is waiting on this before she goes on.`,
             ...checked,
           });
+          timeline.awaiting(round, toolUse);
 
           // The wait. Same machinery as pause: woken by the decision, with the
           // ceiling only bounding a wake that never arrives.
@@ -2299,15 +2483,28 @@ export function mountStreamRoute(router: Router): void {
           const started = Date.now();
           for (;;) {
             if (runHandle!.cancelSignal.aborted) {
-              return refused('the run was stopped', 'The run was stopped before anyone decided, so this action did not run.');
+              return refused(
+                'the run was stopped',
+                'The run was stopped before anyone decided, so this action did not run.'
+              );
             }
             if (res.writableEnded) {
               await stopRunInternally(getPool(), runId, 'client_disconnected', orgId);
-              return refused('the client disconnected', 'The connection dropped before anyone decided, so this action did not run.');
+              return refused(
+                'the client disconnected',
+                'The connection dropped before anyone decided, so this action did not run.'
+              );
             }
-            const decision = await readApprovalDecision(getPool(), runId, toolUse.id).catch(() => null);
+            const decision = await readApprovalDecision(getPool(), runId, toolUse.id).catch(
+              () => null
+            );
             if (decision) {
-              emitControl({ type: 'approval_decided', round, toolUseId: toolUse.id, decided: decision.decided });
+              emitControl({
+                type: 'approval_decided',
+                round,
+                toolUseId: toolUse.id,
+                decided: decision.decided,
+              });
               if (decision.decided === 'approved' && decision.error === undefined) {
                 return { ok: true, result: decision.result ?? { success: true } };
               }
@@ -2377,8 +2574,10 @@ export function mountStreamRoute(router: Router): void {
           // read names its document from the start; scoped like the handler
           // (step-presentation.ts resolveStepDocumentTitles).
           const roundTitles = await resolveStepDocumentTitles(calls, {
+            sqlClient: requestPgClient(req),
             organizationId: orgId,
             ...turnToolContext(streamProjectId, { threadId, turnId: runId, servingModel: lastServedModel }),
+            userId: guardUserId,
           });
           res.write(
             `data: ${JSON.stringify({
@@ -2393,6 +2592,7 @@ export function mountStreamRoute(router: Router): void {
           // run in parallel), and finally emit results in the original order so
           // the client UI stays deterministic.
           for (const toolUse of calls) {
+            const announced = announcedStepFields(toolUse, roundTitles);
             res.write(
               `data: ${JSON.stringify({
                 type: 'tool_use',
@@ -2403,10 +2603,11 @@ export function mountStreamRoute(router: Router): void {
                 // same step, so a name cannot tell them apart (see tool_result).
                 toolUseId: toolUse.id,
                 // Label, source, preview and facts: presentStep, never the tool's name.
-                ...announcedStepFields(toolUse, roundTitles),
+                ...announced,
                 input: toolUse.input,
               })}\n\n`
             );
+            timeline.announced(round, toolUse, announced);
           }
           // ── Anything that needs a person is settled FIRST, one at a time ──
           //
@@ -2432,13 +2633,16 @@ export function mountStreamRoute(router: Router): void {
 
           // Reads' receipts wait here until the round is budgeted (read-receipts.ts).
           const readReceipts: DeferredReadReceipts = new Map();
+          const toolActorId = userId || null;
+          const hostForTool = (name: string, id: string) => name === RUN_AGENT_TOOL ? subAgentHostFor(id, round) : {};
           const ran = await mapWithConcurrency(
             calls,
             async toolUse => {
               const handler = getToolHandler(toolUse.name);
               const toolStart = Date.now();
               let resultStr: string;
-              let toolStatus: 'success' | 'error' | 'not_found' | 'cancelled' = 'success';
+              // 'incomplete': an agent that stopped at a budget (sub-agent-result.ts).
+              let toolStatus: 'success' | 'error' | 'not_found' | 'cancelled' | 'incomplete' = 'success';
               let toolErrorMessage: string | undefined;
               // A person's no (or no answer): not a failure to work around.
               let heldBack = false;
@@ -2485,21 +2689,27 @@ export function mountStreamRoute(router: Router): void {
                   // capture, so what a model writes for it is known.
                   const toolWork = runCapturingGenerations(generated, () =>
                     runWithRunScope({ runId }, () =>
-                    handler(toolUse.input, {
-                      organizationId: orgId,
-                      userId: userId || null,
-                      // The project, and the conversation, turn and model this
-                      // call serves (PF-10 S5): a document a tool creates
-                      // records them as its provenance.
-                      ...turnToolContext(streamProjectId, { threadId, turnId: runId, servingModel: lastServedModel }),
-                      // Lets navigate_to tell the model the truth about what its
-                      // directive does this turn (applied live vs offered chip).
-                      liveDrive: driveState.enabled,
-                      lockedScreens,
-                      turnState: driveTurnState,
-                      signal: runSignal,
-                      ...readReceiptContext(readReceipts, toolUse.id),
-                    })));
+                      handler(toolUse.input, {
+                        readOnly,
+                        sqlClient: requestPgClient(req),
+                        organizationId: orgId,
+                        userId: toolActorId,
+                        // The project, and the conversation, turn and model this
+                        // call serves (PF-10 S5): a document a tool creates
+                        // records them as its provenance.
+                        ...turnToolContext(streamProjectId, { threadId, turnId: runId, servingModel: lastServedModel }),
+                        // Lets navigate_to tell the model the truth about what its
+                        // directive does this turn (applied live vs offered chip).
+                        liveDrive: driveState.enabled,
+                        lockedScreens,
+                        turnState: driveTurnState,
+                        signal: runSignal,
+                        ...readReceiptContext(readReceipts, toolUse.id),
+                        // Only a run_agent call, and only on a hosting turn.
+                        ...hostForTool(toolUse.name, toolUse.id),
+                      }),
+                    ),
+                  );
                   const cancellationWait = abortRace(runSignal);
                   try {
                     resultStr = await Promise.race([toolWork, cancellationWait]);
@@ -2515,12 +2725,13 @@ export function mountStreamRoute(router: Router): void {
                     toolStatus = 'cancelled';
                     toolErrorMessage = undefined;
                   } else {
-                  resultStr = JSON.stringify({
-                    error: `Tool execution failed: ${toolErr?.message || 'unknown error'}`,
-                    tool: toolUse.name,
-                  });
-                  toolStatus = 'error';
-                  toolErrorMessage = toolErr?.message || 'unknown error';
+                    const executionFailure = toolErr?.message || 'unknown error';
+                    resultStr = JSON.stringify({
+                      error: `Tool execution failed: ${executionFailure}`,
+                      tool: toolUse.name,
+                    });
+                    toolStatus = 'error';
+                    toolErrorMessage = executionFailure;
                   }
                 }
               } else {
@@ -2537,14 +2748,26 @@ export function mountStreamRoute(router: Router): void {
                 toolStatus = 'error';
                 toolErrorMessage = refusal;
               }
+              // An agent's own outcome refines a mechanical success: a budget
+              // stop reads 'incomplete', a child the person stopped 'cancelled'
+              // (brief D16). Every other status is kept as it is.
+              if (toolUse.name === RUN_AGENT_TOOL) {
+                toolStatus = agentTraceStatus(toolStatus, resultStr);
+              }
               void logToolRun({
                 threadId: thread_id,
                 projectId: streamProjectIdNumber,
-                userId: userId || null,
+                userId: toolActorId,
                 organizationId: orgId,
                 toolName: toolUse.name,
                 arguments: (toolUse.input ?? {}) as Record<string, unknown>,
                 result: { resultBytes: resultStr.length },
+                /* The outcome the person's record carries, not a rounded one:
+                   an agent cut short at a budget recorded as a plain success
+                   left the ledger disagreeing with the record they can open,
+                   and nobody querying it could find which runs were cut short
+                   (review 2026-10-11; the column is free text, as
+                   toolRegistry.ts says of 'cancelled'). */
                 status: toolStatus,
                 errorMessage: toolErrorMessage,
                 latencyMs: Date.now() - toolStart,
@@ -2554,6 +2777,8 @@ export function mountStreamRoute(router: Router): void {
               // rather than timing the round-trip from its own side.
               return {
                 toolUse, resultStr, toolStatus, toolErrorMessage, heldBack, latencyMs: Date.now() - toolStart, generated,
+                // Handler dispatch: the wait for a person settled before it (S4).
+                startedAt: toolStart,
                 // From the capture, never from a list of tools (generation-capture.ts).
                 usedModel: stepUsedModel(generated, approval !== undefined),
               };
@@ -2593,14 +2818,21 @@ export function mountStreamRoute(router: Router): void {
             });
           };
           const roundFailures: FailedToolCall[] = [];
-          for (const { toolUse, resultStr, toolStatus, toolErrorMessage, heldBack, latencyMs, usedModel } of ran) {
-            entries.push({ tool_use_id: toolUse.id, content: resultStr, name: toolUse.name });
+          for (const { toolUse, resultStr, toolStatus, toolErrorMessage, heldBack, latencyMs, usedModel, startedAt } of ran) {
+            /* An agent's full result keeps its whole trace — every child step, in
+               full — for the turn record. The model and the client read it
+               without that trace: it is the record's, not the conversation's. */
+            const isAgent = toolUse.name === RUN_AGENT_TOOL;
+            const shown = isAgent ? runAgentViewForModel(resultStr) : resultStr;
+            entries.push({ tool_use_id: toolUse.id, content: shown, name: toolUse.name });
             // The finished step: its label in the right tense, its facts and the
             // sentence for a step that did not succeed (step-presentation.ts).
             const step = finishedStep(toolUse, roundTitles, {
               status: toolStatus, heldBack, why: toolErrorMessage, result: resultStr, latencyMs, usedModel,
             });
             const stepLabel = step.label;
+            // On the timeline, and what the record adds to the step from it (/4).
+            const ended = timeline.finished(round, toolUse, { ...step.frame, status: toolStatus, heldBack, ms: latencyMs, startedAt });
             turnRecorder?.addStep({
               toolUseId: toolUse.id,
               round,
@@ -2611,6 +2843,7 @@ export function mountStreamRoute(router: Router): void {
               input: toolUse.input,
               result: resultStr,
               error: toolErrorMessage ?? null,
+              ...ended,
             });
             // Record this call in the turn's tool-trace memory + evidence corpus.
             toolTrace.push({ ...buildTraceEntry(toolUse.name, stepLabel, toolStatus, resultStr), ...step.trace });
@@ -2623,7 +2856,9 @@ export function mountStreamRoute(router: Router): void {
             // A step a person declined, left unanswered, or that only a person
             // may take is not one either (row 74, F1): the note would tell the
             // model to find another way to do what a person just said no to.
-            if (toolStatus !== 'success' && toolStatus !== 'cancelled' && !heldBack) {
+            // Nor is an agent that stopped at a budget: what it found is usable,
+            // and "try an alternative" would start the same brief over (D16).
+            if (toolStatus !== 'success' && toolStatus !== 'cancelled' && toolStatus !== 'incomplete' && !heldBack) {
               roundFailures.push({
                 name: toolUse.name,
                 label: step.doing,
@@ -2647,7 +2882,7 @@ export function mountStreamRoute(router: Router): void {
                 ...step.frame,
                 status: toolStatus,
                 latencyMs,
-                result: resultStr,
+                result: shown,
               })}\n\n`
             );
             // The plan AnA declared, from the handler's NORMALISED result — the
@@ -2657,8 +2892,19 @@ export function mountStreamRoute(router: Router): void {
               lastPlan = planEvent.steps;
               turnRecorder?.addPlan(round, planEvent.steps);
               res.write(`data: ${JSON.stringify(planEvent)}\n\n`);
+              timeline.planned(round, planEvent.steps);
             }
-            if (toolStatus === 'success') {
+            /* An agent's provenance is its tools' own, for a completed agent and
+               one that stopped at a budget alike. A failed agent's is dropped:
+               nothing it did is evidence. The parsed-result block below reads
+               directives and drafts, which no agent produces. */
+            if (isAgent && (toolStatus === 'success' || toolStatus === 'incomplete')) {
+              for (const p of agentProvenance(resultStr)) {
+                if (collectedProvenance.length >= PROVENANCE_CAP) break;
+                collectedProvenance.push(p as ProvenanceRecord);
+              }
+            }
+            if (toolStatus === 'success' && !isAgent) {
               try {
                 const parsed = JSON.parse(resultStr);
                 // Accumulate any provenance envelope this evidence tool emitted, for
@@ -2695,9 +2941,12 @@ export function mountStreamRoute(router: Router): void {
                   if (driveState.enabled && driveNavigationsApplied < driveBudget.navigations) {
                     driveNavigationsApplied += 1;
                     res.write(
-                      `data: ${JSON.stringify(buildDriveNavigationEvent(directive, round, toolUse.id))}\n\n`
+                      `data: ${JSON.stringify(
+                        buildDriveNavigationEvent(directive, round, toolUse.id)
+                      )}\n\n`
                     );
-                    if (driveAcks) awaitingMoves.set(toolUse.id, `opening the ${directive.label} screen`);
+                    if (driveAcks)
+                      awaitingMoves.set(toolUse.id, `opening the ${directive.label} screen`);
                     auditDriveNavigation(
                       {
                         organizationId: orgId,
@@ -2733,7 +2982,9 @@ export function mountStreamRoute(router: Router): void {
                   if (driveState.enabled && driveActionsApplied < driveBudget.actions) {
                     driveActionsApplied += 1;
                     res.write(
-                      `data: ${JSON.stringify(buildDriveActionEvent(actionDirective, round, toolUse.id))}\n\n`
+                      `data: ${JSON.stringify(
+                        buildDriveActionEvent(actionDirective, round, toolUse.id)
+                      )}\n\n`
                     );
                     if (driveAcks) {
                       awaitingMoves.set(
@@ -2778,7 +3029,10 @@ export function mountStreamRoute(router: Router): void {
                   // mode change for a drive already running, and says so. The
                   // turn-start event above never carries the flag.
                   res.write(
-                    `data: ${JSON.stringify({ ...buildDriveStateEvent(driveState), promoted: true })}\n\n`
+                    `data: ${JSON.stringify({
+                      ...buildDriveStateEvent(driveState),
+                      promoted: true,
+                    })}\n\n`
                   );
                   pendingOperatorTurns.push({
                     role: 'system',
@@ -2882,8 +3136,15 @@ export function mountStreamRoute(router: Router): void {
           // carry all prior results forward). Small rounds pass through under the
           // classic per-result caps, byte-identical to before. A read goes whole
           // or not at all, and its receipt is written only if it went whole.
-          const budgeted = budgetToolResultsForModel(entries, { wholeOrNothing: readReceipts });
-          await settleReadReceipts(entries, budgeted, readReceipts);
+          const staged = budgetToolResultsForModel(entries, { wholeOrNothing: readReceipts, strictTotal: true });
+          const budgeted = await guardReadResultsForHandoff(entries, staged, readReceipts, { signal: runSignal });
+          const sourceReadIds = [...new Set([...readReceipts.keys(), ...entries.filter(e => e.name === 'read_project_document').map(e => e.tool_use_id)])];
+          await settleReadReceipts(entries, budgeted, readReceipts, undefined, {
+            signal: runSignal, onSourceRefused: () => sourceReadIds.forEach(id => withdrawSourceReadResult(budgeted, id, { signal: runSignal })),
+          });
+          // Late source refusal can grow bodies after allocation. Do not trim
+          // after receipt settlement or claim earlier outcomes were rolled back.
+          assertToolResultBodyBudget(budgeted);
           // What the model will read of each result, where the budget or the
           // drive-budget amendment changed it from what the tool returned.
           turnRecorder?.setSentToModel(budgeted);
@@ -2897,6 +3158,15 @@ export function mountStreamRoute(router: Router): void {
           const outcomes = new Map(ran.map(r => [r.toolUse.id, r]));
           for (const b of budgeted) {
             const r = outcomes.get(b.tool_use_id);
+            if (r?.toolUse.name === RUN_AGENT_TOOL) {
+              /* An agent is evidence only through its tools' results, as the
+                 child read them — never its report, never the checks' echo of
+                 the text the parent gave it, never its notes (brief D19). */
+              if (r.toolStatus === 'success' || r.toolStatus === 'incomplete') {
+                toolEvidenceCorpus.push(...agentEvidenceEntries(r.resultStr));
+              }
+              continue;
+            }
             const entry = r
               ? toolEvidence(r.toolUse.name, {
                   status: r.toolStatus,
@@ -2911,10 +3181,12 @@ export function mountStreamRoute(router: Router): void {
           // steps that failed, then the steps that returned nothing usable — a
           // search with no hits, a service that could not be reached, a tool
           // that needs input it was not given (tool-outcome.ts, TP-RL-4).
+          const stagedById = new Map(budgeted.map(entry => [entry.tool_use_id, entry.content]));
           pendingAdaptationNote = [
             buildAdaptationNote(roundFailures, calls.length),
             buildShortfallNote(
-              ran.map(r => ({ label: describeToolPlan([r.toolUse])[0].label, status: r.toolStatus, heldBack: r.heldBack, result: r.resultStr })),
+              ran.map(r => ({ label: describeToolPlan([r.toolUse])[0].label, status: r.toolStatus, heldBack: r.heldBack,
+                result: stagedById.get(r.toolUse.id) ?? '' })),
               calls.length,
             ),
           ]
@@ -2951,10 +3223,15 @@ export function mountStreamRoute(router: Router): void {
            live; reading them interleaved made both harder to follow, and the
            mix pushed callModel past the complexity limit. */
         const stageRound = (results: ToolResultEntry[], priorText: string, round: number): void => {
+          // Replan control results bypass executeTools; all staged rounds fit.
+          assertToolResultBodyBudget(results);
           const stagedFrom = loopMessages.length;
-          loopMessages.push({ role: 'assistant', content: assistantTurnContent(priorText, results) });
-          // Entries arrive pre-budgeted from executeTools, so the per-result cap
-          // here is a no-op safety net. The adaptation note (when a tool failed
+          loopMessages.push({
+            role: 'assistant',
+            content: assistantTurnContent(priorText, results),
+          });
+          // Preserve accepted body bytes after corpus/recorder admission.
+          // The adaptation note (when a tool failed
           // last round) rides the same user turn so the model course-corrects
           // instead of retrying the identical call.
           const adaptationSuffix = pendingAdaptationNote ? `\n\n${pendingAdaptationNote}` : '';
@@ -2966,11 +3243,10 @@ export function mountStreamRoute(router: Router): void {
                 .map(
                   tr =>
                     `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${frameToolOutput(
-                      capToolResultForModel(tr.content)
+                      tr.content
                     )}`
                 )
-                .join('\n\n') +
-              adaptationSuffix,
+                .join('\n\n') + adaptationSuffix,
           });
           // Steers ride AFTER the tool results, as operator turns. Order
           // matters twice over: the gateway requires an inline system turn to
@@ -2985,6 +3261,9 @@ export function mountStreamRoute(router: Router): void {
           turnRecorder?.addRoundInput(round, loopMessages.slice(stagedFrom));
         };
 
+        /** Decision 3 (A): a round that offers tools asks for her notes as her words (gateway: progress-updates.ts). */
+        const notesBetweenTools = (includeTools: boolean): boolean => includeTools && streamTools.length > 0;
+
         /** What a follow-up round sends, for its record (MC-RL-8): the closing round is told to call no tool. */
         const roundSent = (thinking: ReturnType<typeof followUpThinking>, includeTools: boolean): CallSent =>
           callSent({ apiEffort, thinking, tools: streamTools, toolChoice: includeTools ? null : 'none' });
@@ -2995,7 +3274,9 @@ export function mountStreamRoute(router: Router): void {
           round: number,
           includeTools: boolean
         ): Promise<ModelTurn> => {
+          if (runSignal?.aborted) return { text: '', toolCalls: [] };
           await settleMoves(round);
+          if (runSignal?.aborted) return { text: '', toolCalls: [] };
           stageRound(results, priorText, round);
 
           // Model tiering (S3) — opt-in via ANA_LOOP_TIERING=on, default OFF so
@@ -3015,6 +3296,7 @@ export function mountStreamRoute(router: Router): void {
           let roundText = '';
           // What this round sends, kept for its record (MC-RL-8).
           const roundThinking = followUpThinking();
+          if (runSignal?.aborted) return { text: '', toolCalls: [] };
           const roundResponse = await gw.route({
             taskType: routingPlan.taskType,
             // Every agentic round is bound to the same tenant as the first.
@@ -3022,7 +3304,7 @@ export function mountStreamRoute(router: Router): void {
             riskTier: routingPlan.riskTier,
             runId: runId || undefined,
             messages: loopMessages,
-            maxTokens: routingPlan.maxTokens,
+            maxTokens: streamMaxTokens,
             temperature: routingPlan.temperature,
             strategy: roundStrategy,
             // Keep the same explicit model (user pin or cost tier) across the
@@ -3059,6 +3341,8 @@ export function mountStreamRoute(router: Router): void {
             // outcome, one cache tier instead of none.
             ...(streamTools.length > 0 ? { tools: streamTools } : {}),
             ...(includeTools ? {} : { toolChoice: 'none' as const }),
+            // Decision 3 (A): a tool round has her notes as her words; the closing round keeps the summary.
+            notesBetweenTools: notesBetweenTools(includeTools),
             stream: true,
             onStream: (chunk: string, metadata?: any) => {
               if (runHandle?.cancelSignal.aborted) return;
@@ -3092,6 +3376,8 @@ export function mountStreamRoute(router: Router): void {
           }
           recordCacheUsage(roundResponse);
           lastFinishReason = roundResponse.finishReason;
+          // Her words before the next round's steps, when this call also called tools (a note, S4).
+          timeline.noteFromCall(roundText, roundResponse);
           emitServerToolSteps(roundResponse, round);
           recordServerToolEvidence(roundResponse);
           lastServedModel = servedModelOf(roundResponse);
@@ -3176,7 +3462,8 @@ export function mountStreamRoute(router: Router): void {
               if (queued.moveId) awaitingMoves.delete(queued.moveId);
               drained.push(queued);
             }
-            if (awaitingMoves.size === 0 || runHandle.cancelSignal.aborted || res.writableEnded) break;
+            if (awaitingMoves.size === 0 || runHandle.cancelSignal.aborted || res.writableEnded)
+              break;
             const left = MOVE_SETTLE_MAX_MS - (Date.now() - settleStart);
             if (left <= 0) break;
             await runHandle.wake(Math.min(left, WAKE_CEILING_MS));
@@ -3208,7 +3495,6 @@ export function mountStreamRoute(router: Router): void {
                   cancelSignal: runHandle.cancelSignal,
                   cancelled: () => runHandle!.cancelSignal.aborted,
                   heartbeat: (round: number) => {
-                    heartbeatRound = round;
                     void runHandle!.heartbeat(round);
                   },
                   // Steers and screen reports: the drain is atomic and covers
@@ -3228,7 +3514,9 @@ export function mountStreamRoute(router: Router): void {
           // A step she chose that never ran is still a step of this turn: the
           // record says so, with no result ("A step with no recorded result
           // says so").
-          notRun: (call, round, why) =>
+          notRun: (call, round, why) => {
+            // On the timeline whether or not the turn has a record (S4).
+            const ended = timeline.notRun(round, call, why);
             turnRecorder?.addStep({
               toolUseId: call.id,
               round,
@@ -3238,7 +3526,9 @@ export function mountStreamRoute(router: Router): void {
               input: call.input,
               result: null,
               error: why,
-            }),
+              ...ended,
+            });
+          },
         });
 
         // Kept for endRun: until 2026-09-26 the result was discarded and every
@@ -3340,6 +3630,9 @@ export function mountStreamRoute(router: Router): void {
         thinkingEnabled: !!streamThinkingConfig,
       });
 
+      // The Summary's closing row: how the turn ended, and why it stopped (S4).
+      timeline.end(runSignal?.aborted ? 'stopped' : 'answered', endStoppedReason(Boolean(runSignal?.aborted), loopStoppedReason));
+
       // Emit `done` as soon as the last token is out. Carries the minimal
       // metadata the client needs to close the assistant turn. Heavier
       // post-processing (guidance + command executors, persistence, evidence,
@@ -3389,7 +3682,11 @@ export function mountStreamRoute(router: Router): void {
       // top level — the client already has `done`. When the executors finish
       // (or fail) we emit `post_done` with cleanedResponse + executed actions/
       // commands + evidence, then close the stream.
-      turnRecorder?.setModel({ provider: gwResponse.provider, model: gwResponse.model, effort: effortUsed });
+      turnRecorder?.setModel({
+        provider: gwResponse.provider,
+        model: gwResponse.model,
+        effort: effortUsed,
+      });
       turnRecorder?.setReasoning(fullThinking);
       turnRecorder?.setAnswer({ streamed: fullContent });
       // A turn whose loop did not end by her choice says so in its record. The
@@ -3409,6 +3706,7 @@ export function mountStreamRoute(router: Router): void {
       // record's controls do not show them; each is written down here.
       for (const hold of turnPolicy.policyHolds) turnRecorder?.warn(policyHoldWarning(hold));
       void runStreamPostProcessing({
+        readOnly,
         res,
         fullContent,
         persistenceFailed,
@@ -3469,24 +3767,28 @@ export function mountStreamRoute(router: Router): void {
       // had streamed: otherwise the question stood alone (QA 2026-10-08, j5).
       if (stopped && stoppedTurnThreadId) {
         try {
-          const answerId = await persistStoppedAnswer(stoppedTurnThreadId, turnRecorder?.streamedText ?? '');
+          const answerId = await persistStoppedAnswer(stoppedTurnThreadId, turnRecorder?.streamedText ?? '', turnPolicyOf?.stoppedReason('cancelled'));
           turnRecorder?.setMessageIds({ assistant: answerId });
         } catch (saveErr: any) {
           console.error('[AnA RI Stream] Stopped answer persist failed:', saveErr?.message);
         }
       }
+      timeline.end(stopped ? 'stopped' : 'failed', stopped ? endStoppedReason(true, turnPolicyOf?.stoppedReason('cancelled')) : null);
       const turnRecord = await fileTurnRecord(stopped ? 'stopped' : 'failed');
+      const budgetRefusal = error instanceof ToolResultBudgetExceededError ? error : null;
       if (res.headersSent) {
         res.write(
           `data: ${JSON.stringify({
             type: 'error',
-            error: 'An error occurred while generating the response',
+            error: budgetRefusal?.message ?? 'An error occurred while generating the response',
+            ...(budgetRefusal ? { code: budgetRefusal.code } : {}),
             turnRecord,
           })}\n\n`
         );
         res.end();
       } else {
-        sendError(res, 500, 'Internal server error');
+        if (budgetRefusal) sendError(res, 422, budgetRefusal.message, { turnRecord }, budgetRefusal.code);
+        else sendError(res, 500, 'Internal server error');
       }
     } finally {
       // Close the run. Guarded on a live status inside endRun, so a turn that
@@ -3502,7 +3804,7 @@ export function mountStreamRoute(router: Router): void {
           getPool(),
           runId,
           streamFailed ? 'failed' : 'finished',
-          streamFailed ? 'error' : loopStoppedReason,
+          streamFailed ? 'error' : loopStoppedReason
         );
       }
     }
@@ -3519,7 +3821,7 @@ export function mountStreamRoute(router: Router): void {
    */
   const refusalResponse = (
     result: { code?: string; status: string | null },
-    action: string,
+    action: string
   ): { httpStatus: number; error: string } => {
     switch (result.code) {
       case 'NOT_FOUND':
@@ -3573,7 +3875,9 @@ export function mountStreamRoute(router: Router): void {
     const message = typeof req.body?.message === 'string' ? req.body.message : undefined;
     const moveId = readMoveId(req.body?.moveId);
 
-    if (!['pause', 'resume', 'interject', 'cancel', 'screen_report', 'move_landed'].includes(action)) {
+    if (
+      !['pause', 'resume', 'interject', 'cancel', 'screen_report', 'move_landed'].includes(action)
+    ) {
       return res.status(400).json({ ok: false, error: `Unknown control action: ${action}` });
     }
     if ((action === 'interject' || action === 'screen_report') && !message?.trim()) {
@@ -3599,14 +3903,22 @@ export function mountStreamRoute(router: Router): void {
       runId,
       organizationId,
       userId: resolveUserId(req),
-      action: action as 'pause' | 'resume' | 'interject' | 'cancel' | 'screen_report' | 'move_landed',
+      action: action as
+        | 'pause'
+        | 'resume'
+        | 'interject'
+        | 'cancel'
+        | 'screen_report'
+        | 'move_landed',
       message,
       ...(moveId ? { moveId } : {}),
     });
 
     if (!result.ok) {
       const { httpStatus, error } = refusalResponse(result, action);
-      return res.status(httpStatus).json({ ok: false, runId, action, status: result.status, error });
+      return res
+        .status(httpStatus)
+        .json({ ok: false, runId, action, status: result.status, error });
     }
 
     return res.status(200).json({

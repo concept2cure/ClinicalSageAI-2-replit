@@ -80,6 +80,7 @@ async function sign() {
 afterEach(cleanup);
 beforeEach(() => {
   apiRequest.mockReset();
+  verifyPassword.mockClear();
   downloadBlob.mockClear();
   seqs = [seqRow()];
 });
@@ -123,11 +124,13 @@ describe('a governed step is asked before anyone signs (finding: signature befor
   });
 });
 
+const TRANSMIT = (configured: { staging: boolean | null; production: boolean | null }) => ({
+sequenceStatus: 'dispatched', dispatchStatus: 'pending', route: { ok: true, region: 'fda', gateway: 'esg' },
+configured, recordedApplicationNumber: '000512', gate: CLEAR, refusal: configured.staging || configured.production ? null : 'This sequence\'s agency gateway has no staging or production credentials configured for this organization, so nothing can be sent. Nothing was signed or transmitted.',
+});
+
 describe('the dispatched sequence has a package and a transmit (the blocker)', () => {
-  const TRANSMIT = (configured: { staging: boolean | null; production: boolean | null }) => ({
-    sequenceStatus: 'dispatched', dispatchStatus: 'pending', route: { ok: true, region: 'fda', gateway: 'esg' },
-    configured, recordedApplicationNumber: '000512', gate: CLEAR, refusal: configured.staging || configured.production ? null : 'This sequence\'s agency gateway has no staging or production credentials configured for this organization, so nothing can be sent. Nothing was signed or transmitted.',
-  });
+
 
   it('downloads the package through the canonical eCTD export for this sequence', async () => {
     seqs = [seqRow({ status: 'dispatched' })];
@@ -161,6 +164,53 @@ describe('the dispatched sequence has a package and a transmit (the blocker)', (
     const transmit = screen.getByRole('button', { name: /Transmit sequence 0000/ }) as HTMLButtonElement;
     expect(transmit.disabled).toBe(true);
     expect((screen.getByLabelText('Agency application number') as HTMLInputElement).value).toBe('000512');
+  });
+
+  it('a configured account with an unavailable transport never asks for a transmit signature', async () => {
+    seqs = [seqRow({ status: 'dispatched' })];
+    const unavailable = { transport: 'as2', implementation: 'unavailable', qualification: 'not_verified', qualified: false, reason: 'Agency transport prerequisites are unavailable.', missingDependencies: ['transport runtime'] };
+    mockApi((method, url) => method === 'POST' && url === '/api/submissions/sequences/21/governed-precheck'
+      ? ok({ step: 'transmit', cleared: true, refusal: null, transmit: { ...TRANSMIT({ staging: true, production: true }), transportReadiness: { staging: unavailable, production: unavailable } } })
+      : undefined);
+    await ready(); openWorkspace('Dispatch');
+    await waitFor(() => expect(document.body.textContent).toContain('Agency transport prerequisites are unavailable.'));
+    expect((screen.getByRole('button', { name: /Transmit sequence 0000/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect(calledWith('POST', '/api/c2c/actions/sign')).toHaveLength(0);
+    expect(verifyPassword).not.toHaveBeenCalled();
+  });
+
+  /* QA 2026-10-08 (j6): the package named "UNASSIGNED (organization 1)" as the
+     applicant and the program code as the application number. The Dispatch tab
+     says, before anyone signs, what the package names — from the record. */
+  it('says what the package names as its applicant and its application, from the record', async () => {
+    seqs = [seqRow({ status: 'dispatched' })];
+    mockApi((method, url) =>
+      method === 'POST' && url === '/api/submissions/sequences/21/governed-precheck'
+        ? ok({ step: 'transmit', cleared: true, refusal: null, transmit: { ...TRANSMIT({ staging: true, production: false }), recordedApplicant: 'Concept2Cure Therapeutics' } })
+        : undefined,
+    );
+    await ready();
+    openWorkspace('Dispatch');
+    await waitFor(() => expect(document.body.textContent).toContain('FDA ESG (FDA)'));
+    expect(document.body.textContent).toContain('ApplicantConcept2Cure Therapeutics');
+    expect(document.body.textContent).toContain('Application number000512');
+  });
+
+  it('with no application number or applicant on record, says "not recorded" and the server refusal, never a placeholder', async () => {
+    seqs = [seqRow({ status: 'dispatched' })];
+    const refusal = 'A package names its application and its applicant from the record, never a placeholder, and its project records no agency application number (record the number the agency assigned on the project; the program code is not one). Nothing can be sent until it is recorded.';
+    mockApi((method, url) =>
+      method === 'POST' && url === '/api/submissions/sequences/21/governed-precheck'
+        ? ok({ step: 'transmit', cleared: false, refusal, transmit: { ...TRANSMIT({ staging: true, production: false }), recordedApplicationNumber: null, recordedApplicant: null, refusal } })
+        : undefined,
+    );
+    await ready();
+    openWorkspace('Dispatch');
+    await waitFor(() => expect(document.body.textContent).toContain('FDA ESG (FDA)'));
+    expect(document.body.textContent).toContain('Applicantnot recorded');
+    expect(document.body.textContent).toContain('Application numbernot recorded');
+    expect(document.body.textContent).toContain('its project records no agency application number');
+    expect(document.body.textContent).not.toMatch(/UNASSIGNED/);
   });
 
   it('a configured gateway transmits through the signed chain: gates, sign (intent transmit), transmit', async () => {
@@ -244,29 +294,6 @@ describe('a transmit signature serves only the transmit it was given for (P-23)'
     await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Not transmitted — FDA ESG has no staging credentials'));
     expect(screen.getByRole('alert').textContent).toContain('The signature given for it is now void; a new attempt is signed again.');
   });
-
-  it('a transport that is not verified is not reported as missing credentials', async () => {
-    seqs = [seqRow({ status: 'dispatched' })];
-    mockApi((method, url) => {
-      if (method !== 'POST') return undefined;
-      if (url === '/api/submissions/sequences/21/governed-precheck') return ok({ step: 'transmit', cleared: true, refusal: null, transmit: TRANSMIT });
-      if (url === '/api/c2c/actions/sign') return ok({ actionId: 'act_tx3', sha256Chain: 'beef' });
-      if (url === '/api/submissions/sequences/21/transmit') {
-        return ok({ transmitted: false, reason: 'transport_not_verified', gateway: 'esg', dispatchStatus: 'pending' });
-      }
-      return undefined;
-    });
-    await ready();
-    openWorkspace('Dispatch');
-    const transmit = await screen.findByRole('button', { name: /Transmit sequence 0000/ });
-    await waitFor(() => expect((transmit as HTMLButtonElement).disabled).toBe(false));
-    fireEvent.click(transmit);
-    expect(await screen.findByRole('dialog')).toBeTruthy();
-    await sign();
-    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('over a transport that has not been verified with the agency'));
-    expect(screen.getByRole('alert').textContent).not.toContain('credentials');
-    expect(screen.getByRole('alert').textContent).toContain('Nothing was sent; the attempt is recorded.');
-  });
 });
 
 describe('the Builder says what the server knows about each leaf', () => {
@@ -278,7 +305,7 @@ describe('the Builder says what the server knows about each leaf', () => {
   });
 
   it('an unapproved Vault version reads "not approved", never "source verified"', async () => {
-    mockApi((method, url) => (method === 'GET' && url === '/api/submissions/sequences/21/leaves' ? ok([LEAF()]) : undefined));
+    mockApi((method, url) => (method === 'GET' && url === '/api/submissions/sequences/21/leaves?submissionId=7' ? ok([LEAF()]) : undefined));
     await ready();
     openWorkspace('Builder');
     await waitFor(() => expect(document.body.textContent).toContain('not approved: not reviewed'));
@@ -287,7 +314,7 @@ describe('the Builder says what the server knows about each leaf', () => {
 
   it('removes a leaf with its reason, and nothing without one', async () => {
     mockApi((method, url) => {
-      if (method === 'GET' && url === '/api/submissions/sequences/21/leaves') return ok([LEAF()]);
+      if (method === 'GET' && url === '/api/submissions/sequences/21/leaves?submissionId=7') return ok([LEAF()]);
       if (method === 'DELETE' && url === '/api/submissions/sequences/21/leaves/60') {
         return { ok: true, status: 204, json: async () => { throw new Error('no body'); }, headers: new Headers({ 'X-Sequence-Status-Changed': 'validated->assembling' }) } as unknown as Response;
       }
@@ -307,9 +334,9 @@ describe('the Builder says what the server knows about each leaf', () => {
 
   it('an identical re-placement says nothing was placed, and an original offers only New', async () => {
     mockApi((method, url) => {
-      if (method === 'GET' && url === '/api/submissions/sequences/21/leaves') return ok([]);
+      if (method === 'GET' && url === '/api/submissions/sequences/21/leaves?submissionId=7') return ok([]);
       if (method === 'GET' && url === '/api/coauthor/documents') return ok({ documents: [{ id: 5, title: 'Cover Letter', moduleNumber: '1.2', status: 'approved' }] });
-      if (method === 'PUT' && url === '/api/submissions/sequences/21/leaves') return ok({ id: 62, sectionCode: '1.2', unchanged: true, auditTrail: null });
+      if (method === 'PUT' && url === '/api/submissions/sequences/21/leaves') return ok({ id: 62, sequenceId: 21, sectionCode: '1.2', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 5, unchanged: true, auditTrail: null });
       return undefined;
     });
     await ready();
@@ -323,5 +350,50 @@ describe('the Builder says what the server knows about each leaf', () => {
     await waitFor(() => expect(document.body.textContent).toContain('is already leaf #62 at 1.2 in this sequence'));
     expect(document.body.textContent).toContain('Nothing was placed');
     expect(document.body.textContent).not.toContain('placed from “Cover Letter” — server-confirmed');
+  });
+});
+
+describe('confirmed release renewal refreshes the existing dispatch assessment', () => {
+  function renewalApi(confirmed: boolean) {
+    let renewed = false;
+    seqs = [seqRow({ status: 'dispatched' })];
+    mockApi((method, url, body) => {
+      if (method === 'GET' && url.endsWith('/dispatch-readiness')) return ok(readiness({
+        sequenceStatus: 'dispatched',
+        gate: renewed ? CLEAR : { cleared: false, blockers: ['The current recorded facts need a release signature.'] },
+        releaseSignature: { required: true, verdict: renewed ? 'valid' : 'unsigned', cleared: renewed },
+        dispatchAuthorization: { reauthorizing: true, eligible: true, refusal: null },
+      }));
+      if (method === 'POST' && url.endsWith('/governed-precheck')) {
+        const step = (body as { step?: string } | undefined)?.step;
+        return step === 'dispatch' ? ok({ step, cleared: true, refusal: null }) : ok({ step: 'transmit', cleared: false, refusal: 'Gateway unavailable.', transmit: TRANSMIT({ staging: false, production: false }) });
+      }
+      if (method === 'POST' && url === '/api/c2c/actions/sign') return ok({ actionId: 'act_renewal', sha256Chain: 'a'.repeat(64) });
+      if (method === 'POST' && url.endsWith('/dispatch')) {
+        renewed = confirmed;
+        return confirmed ? ok(seqRow({ status: 'dispatched' })) : { ...ok({ error: { code: 'OUTCOME_UNKNOWN', message: 'The release renewal could not be confirmed.' } }, 503), ok: false } as Response;
+      }
+      return undefined;
+    });
+  }
+  it('reads the new release verdict after a confirmed dispatched to dispatched act', async () => {
+    renewalApi(true); await ready(); openWorkspace('Dispatch');
+    const renew = await screen.findByRole('button', { name: /Re-sign release for current recorded facts/ });
+    const readsBefore = calledWith('GET', '/api/submissions/sequences/21/dispatch-readiness').length;
+    fireEvent.click(renew);
+    await screen.findByRole('dialog'); await sign();
+    await screen.findByText('Signature applied');
+    await waitFor(() => expect(calledWith('GET', '/api/submissions/sequences/21/dispatch-readiness').length).toBeGreaterThan(readsBefore));
+    expect(calledWith('POST', '/api/submissions/sequences/21/dispatch')).toHaveLength(1);
+  });
+  it('preserves the unresolved verdict when the governed act has no confirmed receipt', async () => {
+    renewalApi(false); await ready(); openWorkspace('Dispatch');
+    const renew = await screen.findByRole('button', { name: /Re-sign release for current recorded facts/ });
+    const readsBefore = calledWith('GET', '/api/submissions/sequences/21/dispatch-readiness').length;
+    fireEvent.click(renew);
+    await screen.findByRole('dialog'); await sign();
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('The release renewal could not be confirmed.'));
+    expect(calledWith('GET', '/api/submissions/sequences/21/dispatch-readiness')).toHaveLength(readsBefore);
+    expect(screen.queryByText('Signature applied')).toBeNull();
   });
 });

@@ -1,0 +1,176 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+xxxxxxx·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > refuses malformed document organization 7 without producing headers or fabricated totals
+ FAIL  server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > refuses malformed document organization null without producing headers or fabricated totals
+ FAIL  server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > refuses malformed document organization undefined without producing headers or fabricated totals
+AssertionError: promise resolved "{ documents: [ { …(18) } ], …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "documents": [
++     {
++       "catalogState": "confirmed",
++       "catalogStatus": "cataloged",
++       "charCount": undefined,
++       "checkScope": {
++         "context": "not_recorded",
++         "kind": "legacy_value_presence",
++         "scientificQualification": "unassessed",
++       },
++       "createdAt": "2026-10-14T00:00:00Z",
++       "disposition": null,
++       "documentCode": undefined,
++       "documentKind": "cert",
++       "documentTitle": "Assay source",
++       "documentType": undefined,
++       "extractionError": undefined,
++       "fileName": "assay.txt",
++       "id": "20000000-0000-4000-8000-000000000002",
++       "location": {
++         "ctdSection": undefined,
++         "evidenceKind": undefined,
++         "folderId": undefined,
++         "placementStatus": "suggested",
++       },
++       "originalFileAvailable": true,
++       "programId": "10000000-0000-4000-8000-000000000001",
++       "programName": "Client program",
++       "purpose": "Measured source",
++     },
++   ],
++   "extractionFailed": 2,
++   "notYetStudied": 300,
++   "total": 340,
++   "unfiled": 3,
++   "withheld": 339,
+  }
+
+ ❯ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts:13:42
+     11|   it.each([7, null, undefined])('refuses malformed document organizati…
+     12|     h.rows[0].organization_id = organizationId;
+     13|     await expect(listProjectDocuments(42)).rejects.toMatchObject({ cod…
+       |                                          ^
+     14|     await expect(getCatalogBootstrapDigest(42)).rejects.toMatchObject(…
+     15|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > refuses a source with an invalid live program relationship: foreign_parent
+ FAIL  server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > refuses a source with an invalid live program relationship: deleted_parent
+ FAIL  server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > refuses a source with an invalid live program relationship: unidentified_parent
+AssertionError: promise resolved "{ documents: [ { …(18) } ], …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "documents": [
++     {
++       "catalogState": "confirmed",
++       "catalogStatus": "cataloged",
++       "charCount": undefined,
++       "checkScope": {
++         "context": "not_recorded",
++         "kind": "legacy_value_presence",
++         "scientificQualification": "unassessed",
++       },
++       "createdAt": "2026-10-14T00:00:00Z",
++       "disposition": null,
++       "documentCode": undefined,
++       "documentKind": "cert",
++       "documentTitle": "Assay source",
++       "documentType": undefined,
++       "extractionError": undefined,
++       "fileName": "assay.txt",
++       "id": "20000000-0000-4000-8000-000000000002",
++       "location": {
++         "ctdSection": undefined,
++         "evidenceKind": undefined,
++         "folderId": undefined,
++         "placementStatus": "suggested",
++       },
++       "originalFileAvailable": true,
++       "programId": "10000000-0000-4000-8000-000000000001",
++       "programName": "Client program",
++       "purpose": "Measured source",
++     },
++   ],
++   "extractionFailed": 2,
++   "notYetStudied": 300,
++   "total": 340,
++   "unfiled": 3,
++   "withheld": 339,
+  }
+
+ ❯ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts:20:42
+     18|     if (kind === 'deleted_parent') h.rows[0].program_deleted_at = '202…
+     19|     if (kind === 'unidentified_parent') delete h.rows[0].program_delet…
+     20|     await expect(listProjectDocuments(42)).rejects.toMatchObject({ cod…
+       |                                          ^
+     21|     await expect(getCatalogBootstrapDigest(42)).rejects.toMatchObject(…
+     22|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > scopes recorded source and live parent before computing window totals
+AssertionError: expected 'SELECT d.id, d.program_id, rp.name AS…' to contain 'd.organization_id = $1'
+
+- Expected
++ Received
+
+- d.organization_id = $1
++ SELECT d.id, d.program_id, rp.name AS program_name, d.document_code, d.document_title,
++             d.document_type, d.file_name, d.folder_id, d.ctd_section, d.evidence_kind,
++             d.placement_status, d.created_at,
++             (SELECT dd.choice FROM public.document_data_dispositions dd WHERE EXISTS (SELECT 1 FROM public.regulatory_programs dd_program WHERE dd_program.id=d.program_id AND dd_program.organization_id=dd.organization_id) AND dd.program_id = d.program_id
++     AND (dd.vault_document_id = d.id OR dd.linked_ids->'vaultDocumentIds' @> jsonb_build_array(d.id::text)
++       OR dd.source_sha256 = d.content_hash) ORDER BY dd.disposition_sequence DESC, dd.created_at DESC, dd.id DESC LIMIT 1) AS disposition,
++             NOT EXISTS (SELECT 1 FROM public.document_data_dispositions dd WHERE EXISTS (SELECT 1 FROM public.regulatory_programs dd_program WHERE dd_program.id=d.program_id AND dd_program.organization_id=dd.organization_id) AND dd.program_id = d.program_id
++     AND (dd.vault_document_id = d.id OR dd.linked_ids->'vaultDocumentIds' @> jsonb_build_array(d.id::text)
++       OR dd.source_sha256 = d.content_hash)) AS original_file_available,
++             c.catalog_status, c.document_kind, c.purpose, c.extraction_error, c.char_count,
++             c.catalog_state,
++             COUNT(*) OVER () AS scope_total,
++             COUNT(*) FILTER (
++               WHERE c.catalog_status IS NULL OR c.catalog_status = 'extracted'
++             ) OVER () AS scope_not_studied,
++             COUNT(*) FILTER (WHERE c.catalog_status = 'extraction_failed')
++               OVER () AS scope_extraction_failed,
++             COUNT(*) FILTER (WHERE d.placement_status = 'unfiled')
++               OVER () AS scope_unfiled
++        FROM vault.documents d
++        JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1
++        LEFT JOIN vault.document_catalog c ON c.document_id = d.id AND c.content_hash = d.content_hash
++       WHERE d.deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM public.document_data_dispositions dd WHERE EXISTS (SELECT 1 FROM public.regulatory_programs dd_program WHERE dd_program.id=d.program_id AND dd_program.organization_id=dd.organization_id) AND dd.program_id = d.program_id
++     AND (dd.vault_document_id = d.id OR dd.linked_ids->'vaultDocumentIds' @> jsonb_build_array(d.id::text)
++       OR dd.source_sha256 = d.content_hash) AND dd.choice IN ('remove_data', 'supersede')) AND d.program_id = $3
++       ORDER BY d.created_at DESC
++       LIMIT $2
+
+ ❯ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts:27:38
+     25|     expect(page).toMatchObject({ total: 340, withheld: 339, notYetStud…
+     26|     expect(page.documents[0]).toMatchObject({ fileName: 'assay.txt', c…
+     27|     expect(h.query.mock.calls[0][0]).toContain('d.organization_id = $1…
+       |                                      ^
+     28|     expect(h.query.mock.calls[0][0]).toContain('rp.deleted_at IS NULL'…
+     29|     expect(h.query.mock.calls[0][1]).toEqual([42, 1, program]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 1 passed (8)
+   Start at  06:47:40
+   Duration  1.82s (transform 962ms, setup 74ms, import 1.50s, tests 23ms, environment 0ms)
+

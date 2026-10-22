@@ -1,0 +1,15 @@
+{
+  "gate": "ci:token-contrast",
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:token-contrast"
+  ],
+  "at": "2026-10-20T22:28:17.034548+00:00",
+  "elapsedSeconds": 0.28,
+  "exitCode": 0,
+  "stdout": "\u2705 token-contrast: 131 pairs checked \u2014 text \u2265 4.5:1, non-text \u2265 3:1.\n   15 documented exceptions (brand, muted-text ramp, structural borders) held at or above their recorded ratios.\n",
+  "stderr": "",
+  "sourceFreeze": "source-freeze.json"
+}

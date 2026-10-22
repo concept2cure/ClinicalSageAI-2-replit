@@ -1,0 +1,4580 @@
+{
+  "generatedAt": "2026-10-14T21:24:24.539317+00:00",
+  "branch": "concept2cure-v2",
+  "auditedCommit": "920b230bd1509a41347fe653605babdabea2ae78",
+  "description": "Current working-tree source, tests, assets, configuration and other documentation differences from the audited commit. Remediation evidence excluded to avoid recursive hashes. No commit/deploy is implied.",
+  "fileCount": 653,
+  "files": [
+    {
+      "path": ".github/workflows/cerv2-staging-deploy.yml",
+      "status": "deleted",
+      "bytes": null,
+      "sha256": null,
+      "auditCommitSha256": "fee0e034e1e1c04e56b3405a4a819b3bd46949211b5a28218a08b71b6b8e606f"
+    },
+    {
+      "path": ".github/workflows/ci-staging-integration.yml",
+      "status": "deleted",
+      "bytes": null,
+      "sha256": null,
+      "auditCommitSha256": "4dbdc4c563f13741a9ae07a6987d02483649135b2cf859f83517dbbfdbff6502"
+    },
+    {
+      "path": ".github/workflows/tier5-browser-smoke.yml",
+      "status": "modified",
+      "bytes": 6612,
+      "sha256": "d6e84a52905e5c40e3d22ebb9239f8c3d3ed92cc6fb128307cfcb4e493990857",
+      "auditCommitSha256": "952d50274e2b7ae9e8575fa5a470befbc9d5c7d15d2ad8a4827040a1ef3dcfd3"
+    },
+    {
+      "path": "Dockerfile.optimized",
+      "status": "modified",
+      "bytes": 14863,
+      "sha256": "223630d60d95606f15745f5dddf4b27b1124fd1a5dbf59967cc10dd28678e50c",
+      "auditCommitSha256": "e0342b7dcc4edff7e9c6d42a8a5020657071e59d7ed69ee4afda8e945e1667cf"
+    },
+    {
+      "path": "assets/ectd-dtd/README.md",
+      "status": "modified",
+      "bytes": 10784,
+      "sha256": "72b70351305a4513042f71066f626e9f3b7dd245949cc7c1916a1a9b989ac447",
+      "auditCommitSha256": "34d5e5bce3a30ac3e9c385dff96e43dcf1b23474ceb185c25a1714dcd89742b8"
+    },
+    {
+      "path": "assets/estar-templates/PreSTAR-q-sub.pdf",
+      "status": "added",
+      "bytes": 3803448,
+      "sha256": "3f134a223897312d965c5d4b05f3d68f4cad2ed6593b419fd6565124a61b58c3",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "assets/estar-templates/README.md",
+      "status": "modified",
+      "bytes": 4006,
+      "sha256": "45c252694ac7b777cc0b12989ca9326a9d4f117e7cb685120950d7a34f2727d5",
+      "auditCommitSha256": "4fc3834e3798577b5e67337a3852450be272b5c550943abad6c1ce29c85eb79a"
+    },
+    {
+      "path": "assets/estar-templates/checksums.txt",
+      "status": "modified",
+      "bytes": 1051,
+      "sha256": "5f00228ff0147ed7a0a47f4121433bae77a124d5f0de88d0d00c50c4fa372b68",
+      "auditCommitSha256": "61c354d4cea1c1773a0242ad9db894eb322816b95d2a46c0cded49d66990225d"
+    },
+    {
+      "path": "assets/estar-templates/eSTAR-510k-ivd.pdf",
+      "status": "modified",
+      "bytes": 5579188,
+      "sha256": "df5e31dcbbe60e55b93c6006c4771c01df75a9d1c21e4b473605e20dfacce1e1",
+      "auditCommitSha256": "90d936495e415f6f63f9202c0db15ecffb041df60c5faecc57bc468559c1594f"
+    },
+    {
+      "path": "assets/estar-templates/eSTAR-510k-non-ivd.pdf",
+      "status": "modified",
+      "bytes": 5418738,
+      "sha256": "d7926c7699dab2e86b45062e228511650419d182f7255b3dee00519a3dfcfc93",
+      "auditCommitSha256": "73de2f1e89546654cdb5cb4203c86e6368fccfcb975dd6e637f399072f0edb92"
+    },
+    {
+      "path": "assets/fda-recognized-standards/.gitignore",
+      "status": "modified",
+      "bytes": 887,
+      "sha256": "18258457e4fad44648cdf10b53ef57f9188759545a4cbef7f239d02de916084f",
+      "auditCommitSha256": "5c935e5b5abb0d0b7d7a92e72b9695757e31833d97fafc32bc40b3cff43dbe7a"
+    },
+    {
+      "path": "assets/fda-recognized-standards/README.md",
+      "status": "modified",
+      "bytes": 9920,
+      "sha256": "1ac4a0d7e48f1fd9a156001e0e14e10b57f4ebbda6b32b0c197594e003ff029c",
+      "auditCommitSha256": "3bf8edb2feca4653ce3907b473a6b10ff75fb66554a06bbdb10c6f2aa32aa9b9"
+    },
+    {
+      "path": "assets/fda-recognized-standards/checksums.txt",
+      "status": "added",
+      "bytes": 106,
+      "sha256": "f84a9e92c5c8e2985213efe71e6746f4e5e5f9e9af305a381313405d395e2347",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "assets/fda-recognized-standards/fda-recognized-consensus-standards.json",
+      "status": "added",
+      "bytes": 1966879,
+      "sha256": "8795ab4429987c05e2912434e87b25c2754dc36ee736521c72dcc76f6411ee7a",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/public/locales/en/auth.json",
+      "status": "modified",
+      "bytes": 7384,
+      "sha256": "bbbdf95ff90acb7921114e1cb28347eee5b38de8298d56edc037d9919132abab",
+      "auditCommitSha256": "4d7df611b78c65207c1b98f07c8a8e7b85929d332c7840b41e405f824b1ba12b"
+    },
+    {
+      "path": "client/src/concept2cure/_shared/components/EsignModal.tsx",
+      "status": "modified",
+      "bytes": 24027,
+      "sha256": "be3364f2d7a63d0827023aef0cbbc7cf16f2c4c0be77d646327533d9662b84de",
+      "auditCommitSha256": "c1a9c69ec7f02135c03789d635d8332ea9e141b53a8e8106f854ec1ef7f13a58"
+    },
+    {
+      "path": "client/src/concept2cure/auth/__tests__/ssoHandoff.test.ts",
+      "status": "modified",
+      "bytes": 2276,
+      "sha256": "4e681c069e1f29ebd8c12dae1f820214d0123262fd6da1780affdccf1f7be30b",
+      "auditCommitSha256": "5cd14154296b7fe9af9aaca96713d688f1961ba59f5dc2105e6acd43047dd920"
+    },
+    {
+      "path": "client/src/concept2cure/auth/redirectUtils.ts",
+      "status": "modified",
+      "bytes": 6992,
+      "sha256": "7cb6f26157dbb53e4b41f4e571c241609ae83ca5033d8de55d76deaf20807b84",
+      "auditCommitSha256": "f8027e656f4abe6d6b7900ab0c7e8b5565be6afc5e8be97edee834ad950171cb"
+    },
+    {
+      "path": "client/src/concept2cure/components/ana/__tests__/useAnaChat-completion.test.ts",
+      "status": "modified",
+      "bytes": 12467,
+      "sha256": "2a17268249ac5208f7bfdf678054583b932b226139ca3f329b0564f728b2f5c5",
+      "auditCommitSha256": "9420f937a7eb87e743cc4e1d093447a495b7014c008426dd45d3b1e00959d635"
+    },
+    {
+      "path": "client/src/concept2cure/components/ana/useAnaChat.ts",
+      "status": "modified",
+      "bytes": 126221,
+      "sha256": "e7b0e3a2fdae01f087e5c43be45dbb78e266a5436b704550a06e2e778f39c794",
+      "auditCommitSha256": "5acafb32a2fad42acf2e331ef77bc549cacfda1914a12efb5513f84defd7684f"
+    },
+    {
+      "path": "client/src/concept2cure/components/concept2cure-auth/Concept2CureLogin.tsx",
+      "status": "modified",
+      "bytes": 29404,
+      "sha256": "c707230ff88e01071b08ce2b426e21e3a7fde00c0cb3b56663b43bb4baddb048",
+      "auditCommitSha256": "05bc08ca0cbaef6758fc49cccf1a2b7743a9925d12db446f35027276e85e4933"
+    },
+    {
+      "path": "client/src/concept2cure/components/concept2cure-auth/OrganizationSso.tsx",
+      "status": "added",
+      "bytes": 3933,
+      "sha256": "ca603f7997c83f9e3499fb70e394f0a696473258b4f9b33248e44e66ec8c1de9",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/components/concept2cure-auth/__tests__/organizationSsoLogin.test.tsx",
+      "status": "added",
+      "bytes": 6921,
+      "sha256": "394f2cd06e552f89b9110994825fffebb5191d503edc8888f00015771b77f34a",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/components/concept2cure-auth/styles.module.css",
+      "status": "modified",
+      "bytes": 11281,
+      "sha256": "b0f616ff682c439eb7248cc254a79a40c8e1f3f380b963393c26402865f1311a",
+      "auditCommitSha256": "80175549acce043e680c2ff664a1ab2d8ff267499f6efdbdb48a8ec3876e06b8"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/components/AnalyticsReportLibrary.tsx",
+      "status": "added",
+      "bytes": 2733,
+      "sha256": "1dc48e9dc7663934803c92af745077cecf1acc05a18df79fabf4534f9849356d",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/__tests__/screeningRecovery.test.tsx",
+      "status": "added",
+      "bytes": 6625,
+      "sha256": "e98ccc892b95c0e54afb7ac7c9ac019721778107f877915606d08d65acef7087",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts",
+      "status": "modified",
+      "bytes": 13861,
+      "sha256": "b8226e96f9c3604cb5d991ba585c1ce1e0b494cc0ed3d6e3c712a484e656c2d9",
+      "auditCommitSha256": "6aec0ae99fb1a824444c54754525278fc3077623ae621854bd964c47af33418e"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/__tests__/useEstarFilingAudit.test.tsx",
+      "status": "added",
+      "bytes": 3596,
+      "sha256": "cc6aa4776e03bbb62d1356454c18e535bb49404936cdbd3f4f6d914e91b91464",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/useAnalytics.ts",
+      "status": "modified",
+      "bytes": 4621,
+      "sha256": "1dac243413d02c7705917b98f49db838f13470e0e662af52bcd77c8e678fe7e0",
+      "auditCommitSha256": "49e01803a919325eb5e5a76bd0227c9f4495cd6daf5b09d4c9b8201969b157db"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/useCerLiterature.ts",
+      "status": "modified",
+      "bytes": 22363,
+      "sha256": "30b49fe3a556b76688e28a77c3c0d1ca413782ca3e68ae6ec145497891a53e4e",
+      "auditCommitSha256": "e28c9bcb8a06e31b76c781bf44137fd6c1c600a4ad923d655741dec15fb2d9fd"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/useEstarExport.ts",
+      "status": "modified",
+      "bytes": 22596,
+      "sha256": "8eddc689a638b3972f9a95db52e65f3fd7099535cffa4cee4e3cf33084543b95",
+      "auditCommitSha256": "151df2a09dd6198304a7998d1ba1f299206d63ff25d7676c3a2065a4e1e77d14"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/useEstarFiling.ts",
+      "status": "modified",
+      "bytes": 22323,
+      "sha256": "ed50701c1fa17ea5bf32878f9a16c7dc799c7d08b5a45646588fb159b2ac7ac0",
+      "auditCommitSha256": "c5c9d6b7e3dfeeb4a9408066e2c961a7ffa8a377ea430ed27a0a45f62af77253"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/useEstarOfficialFields.ts",
+      "status": "modified",
+      "bytes": 11456,
+      "sha256": "6b2953177d02fb8e151e344b1cab1d30d6214c20eb1a3c6265cb567cf1bd56af",
+      "auditCommitSha256": "93f017316280ada31057e5d1aaabbc3c7f3f3fd48b8258d1f6e308a79b29a7ef"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/surfaces/AnalyticsSurface.tsx",
+      "status": "modified",
+      "bytes": 15832,
+      "sha256": "eb0b0cc6407dfc3c2a0128ff8224d3469281016c539b01f3f074b113ff5e1dfa",
+      "auditCommitSha256": "7303404128164a51634a85e86f99395d4389482ab7d345af979b94fe5ab0ebf0"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/surfaces/DeviceProfilePanel.tsx",
+      "status": "modified",
+      "bytes": 21675,
+      "sha256": "0c4ee41b4886d9cf8223f5bb8cc5ec27cc98b90d24cda4ccee83a6eb07ce1770",
+      "auditCommitSha256": "e10dd7c6caff222f716e57559b7351056b5438c801c566d5157231753a690b7c"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/surfaces/EstarFilingPanel.tsx",
+      "status": "modified",
+      "bytes": 31117,
+      "sha256": "eba42d310429cdcd141d68496d78d9e8bad8d5b8b52c0b606d624f37b99d51b2",
+      "auditCommitSha256": "27dc9e1bd056422f9b718694bd8f8d7d6cdbc99403e6b9a2cb88edaeadd32324"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/surfaces/OfficialEstarPanel.tsx",
+      "status": "modified",
+      "bytes": 20271,
+      "sha256": "ac43ed077d4f0d44d03795a978a2cebf1cfc1260ae1bfbb6d0716adeb1ffbc3c",
+      "auditCommitSha256": "1dde459eae2ddff9d8785e73aef309be2a83ad3c69fdc4631d744487b5f959b7"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/surfaces/__tests__/AnalyticsSurface.availability.test.tsx",
+      "status": "added",
+      "bytes": 5522,
+      "sha256": "c1b45a97ecfa646ceb76050fff3873e5e161b978c6b6d86e8d9999f86f1f1cad",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx",
+      "status": "modified",
+      "bytes": 23699,
+      "sha256": "75dc2260772291db56c258dee0869d9b61171c0336ff4a62ac53f2d5ab683154",
+      "auditCommitSha256": "bd12d64c85cf2a76b2cd5850562d04b4cc198f201fec88fadb9be1981148c326"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx",
+      "status": "modified",
+      "bytes": 51163,
+      "sha256": "756a402ce3d00160c50fd3cb3a04640a670ebba9eea7d0c346348164365f26ea",
+      "auditCommitSha256": "d5c8a9a17c1fff1f0a6914a137b0ee3b524307777e90164ab06cac07f45627be"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/surfaces/cer/LiteratureTab.tsx",
+      "status": "modified",
+      "bytes": 28148,
+      "sha256": "0294def3eaa77b40fac6e20ad68c44a6820e4f3e00b1dfc37f0be23d85ea24e8",
+      "auditCommitSha256": "fd4c0a16c0e50f78041e3499cd6463e2f2f5026ac17063c3859e1fa16a47cf67"
+    },
+    {
+      "path": "client/src/concept2cure/quality/App.tsx",
+      "status": "modified",
+      "bytes": 16059,
+      "sha256": "02cd3072fdebb720654926f04fa77d89a7e91e0fd30f1b1048d6460020aeae2c",
+      "auditCommitSha256": "226a6201b7be85f8fa78a3267d50158b8940e3824240d7271f078738bbde4799"
+    },
+    {
+      "path": "client/src/concept2cure/quality/ControlledDocumentDialogs.tsx",
+      "status": "added",
+      "bytes": 9587,
+      "sha256": "5ff1d8fdd1b22a695f30dd48ef371636cb6318b2c7352eaf77343d0e6cb7f9b3",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/quality/ControlledDocumentHistory.tsx",
+      "status": "added",
+      "bytes": 2741,
+      "sha256": "90704e997d4247f59417f52bf3c01eb695369a8c9a007463ae90a03759855782",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/quality/ControlledDocumentTarget.tsx",
+      "status": "added",
+      "bytes": 3045,
+      "sha256": "753a51c96d40d716dcbd72383516d8d28060880a48812fa3c3e5f673fa94bd82",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/quality/ControlledDocumentWorkbench.tsx",
+      "status": "added",
+      "bytes": 2398,
+      "sha256": "b4ff05b5f902fd1f63b7d01119ed54e643726f349a687b6c2a6d1142296c91c6",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/quality/SopRegister.tsx",
+      "status": "modified",
+      "bytes": 30548,
+      "sha256": "38fd166fe8b2d725c421d3d4cce684248fbb3c6ffd098af69d378df359a0b8fe",
+      "auditCommitSha256": "23053e4d43eb59f379797a79a2668fc29c243a50107caec6dee52010bb80db2f"
+    },
+    {
+      "path": "client/src/concept2cure/quality/__tests__/ControlledDocumentWorkbench.integration.test.tsx",
+      "status": "added",
+      "bytes": 6840,
+      "sha256": "531965b3692ea7b8563fc0006dd0cfa5112fde12ad4f1c44758a2bf30d00b586",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/quality/__tests__/QualityNotificationTarget.test.tsx",
+      "status": "added",
+      "bytes": 1601,
+      "sha256": "ddf37d3c44b1099dc81c81a51fb07a18475d88d60a0ee7e454cd7665b86cc4b4",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx",
+      "status": "modified",
+      "bytes": 14760,
+      "sha256": "014710c5175dadf5fb5fc6e1a6b563afb1112c9ac54514428d538f0cfa6e28de",
+      "auditCommitSha256": "e19929f2cc5795a6a4a3e8b6b82ef05e846192f2be3128dda6212419d54d82e2"
+    },
+    {
+      "path": "client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx",
+      "status": "added",
+      "bytes": 17049,
+      "sha256": "4e826a9075a420936f064f2eee72c120f60320895efefe63a336856c023f090c",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/quality/__tests__/hooksDocumentBinding.test.tsx",
+      "status": "added",
+      "bytes": 1641,
+      "sha256": "8fd3895fadd525db58ee64ab9633ab240092bd56907e0f13769115e2012c73b9",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/quality/app.css",
+      "status": "modified",
+      "bytes": 21492,
+      "sha256": "32c96bae09cc74935c01c1112ab098367e949e743e43b9384b67c15e7bb7b473",
+      "auditCommitSha256": "9c80d18f15dfdf4c95a0e7d6b8d1a94f0f8757cdb8966adb7cba495203e61230"
+    },
+    {
+      "path": "client/src/concept2cure/quality/data.ts",
+      "status": "modified",
+      "bytes": 9502,
+      "sha256": "f3b9f407eabbac3920f1614ce0d3fbda7e817683718e8bb16f3b146e0b8cf7eb",
+      "auditCommitSha256": "ba9e800991356f6dcca4a8d3dd9ba40fd73e3080a231a50e968658a65095eb35"
+    },
+    {
+      "path": "client/src/concept2cure/quality/hooks.ts",
+      "status": "modified",
+      "bytes": 4968,
+      "sha256": "3fd34ed6821a1047b11d62710b101c3a2f2610d20dd1682a64f8a6c9c7122002",
+      "auditCommitSha256": "24deb578ba8b809d4052a85ba1937fa3cb67ceae6c0d965eb518c2c6f67090b9"
+    },
+    {
+      "path": "client/src/concept2cure/quality/qmsApproval.ts",
+      "status": "modified",
+      "bytes": 3498,
+      "sha256": "c575d7ac039dcb456029d2065cc7ccce1f35353943ffc41e2bf459a1e6bc48de",
+      "auditCommitSha256": "4e7608e4bd8d92d9987be46b1b1450202eae195fbae0a1c4186d45d2b5c748fc"
+    },
+    {
+      "path": "client/src/concept2cure/quality/qmsDocumentRecord.ts",
+      "status": "added",
+      "bytes": 836,
+      "sha256": "5bfddca58e44ae50062fddbcadff1d1517ebb961d23f709212bccc20c57344a4",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/quality/qmsDocuments.ts",
+      "status": "added",
+      "bytes": 4113,
+      "sha256": "82efffa9e3feab84fef27b66ae434fdaeb0106c8714032e39b78e6c8a4a8fb00",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/router/ZenRouter.tsx",
+      "status": "modified",
+      "bytes": 12366,
+      "sha256": "2b18b7a035f7e0fe83f819b246337c97e76bae9174542b139d3c0882d67b83e8",
+      "auditCommitSha256": "56f140d977d944ba88a61689a4ef88f2f61a841af78b8221760b17bc90f57333"
+    },
+    {
+      "path": "client/src/concept2cure/router/__tests__/signupVerificationRoute.test.tsx",
+      "status": "added",
+      "bytes": 5129,
+      "sha256": "60e8e454428b3c48b8fc54e06e5774bd453a77d7b2a7d1d83273e41bf44ee1de",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/GlobalMutationErrors.tsx",
+      "status": "modified",
+      "bytes": 6213,
+      "sha256": "7e71ff54ea529e66153cddf9aa002063cd010ed416583758ccdb1329fc03fee6",
+      "auditCommitSha256": "78a031ff6cf03374f84c11c2a87a9ae35d1914bc0c15d39287de48b8fb8ca137"
+    },
+    {
+      "path": "client/src/concept2cure/v2/NotificationOpenButton.tsx",
+      "status": "added",
+      "bytes": 2129,
+      "sha256": "d783b80cb4630a44465648149e25e1a3842b17187cdc34b610b1c924525c26bf",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/NotificationPreferences.tsx",
+      "status": "added",
+      "bytes": 2552,
+      "sha256": "ea98c090cc88532dc9e22a21b2664b1b2ec4c14cdf9baa6651aff5d8d04ea071",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/OrganizationAccess.tsx",
+      "status": "added",
+      "bytes": 8013,
+      "sha256": "d86872408b446e2c8883f2a92b3d3c687aa954afc36640e51a44d16cb4b1c611",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/Shell.tsx",
+      "status": "modified",
+      "bytes": 38727,
+      "sha256": "b5a2c6ce8747be1eceffeaf6d0b4fa5027dbf9fcfab0fb9a6aaa08944094756b",
+      "auditCommitSha256": "876c4726ebbcac85003aa1910d4d70da36cd42a88bd39985eb3a4edf87680b11"
+    },
+    {
+      "path": "client/src/concept2cure/v2/TaskTray.tsx",
+      "status": "modified",
+      "bytes": 17137,
+      "sha256": "1dac687ccea9dc6dc71e9f239fd3daf03408c4510f17c8b4703f2ce5350adbd8",
+      "auditCommitSha256": "a3a75f55b3de5c05dbfa69c42c52b067088eb11dd0778369a895eadf1fa85bc9"
+    },
+    {
+      "path": "client/src/concept2cure/v2/V2App.tsx",
+      "status": "modified",
+      "bytes": 65817,
+      "sha256": "e6162204ae5c8c12bad73bbfe4f6e1d03c4b8cf672c7335e839652490adfedca",
+      "auditCommitSha256": "e56c91b80174d95accb30a522b02898c295cdf05c5dd049dc1677ccf261b6440"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx",
+      "status": "added",
+      "bytes": 13177,
+      "sha256": "0ab30b708252f502c2f03fd32ec8e4a22b068f76a311d462b3c4ba139f92a1ea",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/adminPendingInvitation.test.tsx",
+      "status": "added",
+      "bytes": 2094,
+      "sha256": "bf8546213f1addd403e872e42302db4e1d54d56e13544aea4a64f92a1f9cb875",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/as2ReceiptUpload.test.tsx",
+      "status": "added",
+      "bytes": 5541,
+      "sha256": "ff023f1d7d4f695b012da3f54ffbab394a296cf5a5660c4e2b71343ff0e2961b",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringCollab.test.tsx",
+      "status": "modified",
+      "bytes": 11883,
+      "sha256": "7189a4a7ea6aabf535da03f6f7b91e213e8fd768c30fa45b79afc24afd279072",
+      "auditCommitSha256": "2c3d3a67d987147d28f9da6316397fce65cab356d72058b48ce4e3a5293c91b9"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
+      "status": "modified",
+      "bytes": 27093,
+      "sha256": "f3e1ffba3e41879cee90238ae8f40c1e493441cab5c038882ca05e1989e53afb",
+      "auditCommitSha256": "688369dc6d34bb75d929ef2fbc2e5b2a034482b7c9330941af7f626582cf30b3"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/cmcAuditRemediation.test.tsx",
+      "status": "added",
+      "bytes": 7395,
+      "sha256": "db9ec3742069be345f28efb542b8bfbe5646f78ef1868bcb7bc7d8ec1d13d3f3",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx",
+      "status": "modified",
+      "bytes": 36103,
+      "sha256": "862043396e53c8c9fd591844760038a968fab88bb52677f50ee80388af0cd4b6",
+      "auditCommitSha256": "012c9047ff82ae15083ad801eeea2453adab26b610158923cf5b94179984aae7"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx",
+      "status": "modified",
+      "bytes": 19195,
+      "sha256": "c0f3314b021063e391066c7cb6c9187c1f575faefcaff10579d48c4161ab1813",
+      "auditCommitSha256": "4c42242687dbd5a66d5cb174577427bc226c769f847b8324ec83687cf7595b97"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/coreAuditWarningTransport.test.tsx",
+      "status": "added",
+      "bytes": 2964,
+      "sha256": "561dc7cbe7f70fa6f695f7c3d2f8780205a14dfd5c8d606fda43812b4fd9c803",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/csrNarrativeReadiness.test.tsx",
+      "status": "added",
+      "bytes": 3919,
+      "sha256": "96fd054efea3b88955a052aa9a6ba66085e8aedd563870b1b7521c9f61803da6",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx",
+      "status": "added",
+      "bytes": 14381,
+      "sha256": "b06b63e678e9e7b09c43bbdb72e95ae3298f7ec92e572a0ba80ce1e9536222b6",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/deferredAssessmentWorkbenches.test.tsx",
+      "status": "added",
+      "bytes": 10907,
+      "sha256": "0d8193204cdd4a774d3b43100a3e2af07d58cadc9fdb09cbefc404c831c16482",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx",
+      "status": "modified",
+      "bytes": 14276,
+      "sha256": "63293ca06866cf74adf0feb0efc610d8c14b076597c759f8738131274749dba5",
+      "auditCommitSha256": "d3937aef5620c8bf272558a3179066c7f101d7d0d7f10f00c916c7f2cc89dfb3"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx",
+      "status": "added",
+      "bytes": 12013,
+      "sha256": "5e1ec6dd5edd6d7d0439f78ed64c5baa030e7b21c514087f19f951c4687a7ad3",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx",
+      "status": "modified",
+      "bytes": 8390,
+      "sha256": "737118842fd0574b9e50531ead0357d0993d695172c86c3476baf57676043047",
+      "auditCommitSha256": "0af81c100b9a71ebfa0f6cc0a26b3d8cfdaab2e54442fbd215c2a4613ab9a094"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/gatewayNotificationTarget.test.tsx",
+      "status": "added",
+      "bytes": 3599,
+      "sha256": "104580893051b6ebd8b99a9e515d7bdb0849f3504b1a27e9a73e050f6b7c73c0",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx",
+      "status": "modified",
+      "bytes": 70432,
+      "sha256": "7d7c5e0ab61a6603bab4cfd4ee62b6852f393fd3ecb3dcaca85f311834f87143",
+      "auditCommitSha256": "7c17e3da902c6b721402fed1ad476435c16e26a338adeb85666376b6437e6338"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx",
+      "status": "modified",
+      "bytes": 5355,
+      "sha256": "35c4394a1f20f205c22c2b87c3f581875d10bcbb2481cad437249239de24a3f4",
+      "auditCommitSha256": "32e5d821b01bcf741a38e3f7ef2a874bf88f653692d3372c7e71167d927b8753"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/identityRuleActions.test.tsx",
+      "status": "added",
+      "bytes": 3919,
+      "sha256": "8d9a24a76066df9b425981660647d8f312cada80a830eff9d6c4180a85fe78a2",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsCapabilityCounts.test.tsx",
+      "status": "added",
+      "bytes": 4059,
+      "sha256": "1c2eba79417e0bdaf0395afa1e1dfb1265bd879eb81542a6de9b97c5eea185aa",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLabelCurrencyMatrix.test.tsx",
+      "status": "added",
+      "bytes": 5372,
+      "sha256": "9185b320ce378972dde71ecce56a41ddbb3af1deecc5c64ae97273252ffee3d3",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx",
+      "status": "modified",
+      "bytes": 32081,
+      "sha256": "4f285fd294533212ac9974b99094f4eec186a1b8ed2294f8e77a15039882beb7",
+      "auditCommitSha256": "cfbbed8d8f3ced62615d48f1819e1b6fcac1ab61080729c0f3e4ac7047e44bf5"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/navParams.test.ts",
+      "status": "modified",
+      "bytes": 5025,
+      "sha256": "e1708361c32cd274bd6ed8cd9b4eff5ff1c17dcdd8559c42c9bce60b22fe6edb",
+      "auditCommitSha256": "9f8ace9555b0139b546acddfbb4a33aa1416c82ea4ab74539f16933e5d486d6d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/notificationAuthoringUnsaved.test.tsx",
+      "status": "added",
+      "bytes": 4636,
+      "sha256": "7bc1ba7e027e81f30d3059fca0830ac4b99a0739a3d26b7f538d75e6edc370f3",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx",
+      "status": "added",
+      "bytes": 3915,
+      "sha256": "4216d1608cbb8cb834400c5e5eb5f34083c098097a075d2c97254383216ea245",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/notificationRecordJourney.test.tsx",
+      "status": "added",
+      "bytes": 6747,
+      "sha256": "952c49088cf520961199f32af4a6d0f178ae1dad4fc8af02613fb6dc019211fb",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/notificationSharedSignature.test.tsx",
+      "status": "added",
+      "bytes": 6838,
+      "sha256": "0ac0a354b062e2f1d098d7a72b43b8a96d9c5a33aa79d623f6febac10049e849",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/notificationTarget.test.ts",
+      "status": "added",
+      "bytes": 1430,
+      "sha256": "a5b1689ec9f58c062efe07473b5bfbb0c1ff2c42cd96e0bf43daccc2e02f2707",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/organizationAccess.test.tsx",
+      "status": "added",
+      "bytes": 5704,
+      "sha256": "fe7a278891e50b1acded4b7b79949f4177d150fd4710766d3e4db981bbc828e0",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/organizationSwitchAuditNotice.test.tsx",
+      "status": "added",
+      "bytes": 6088,
+      "sha256": "d274f2c034d2bad65b31d07a9a6cfe29bbb14a49b85b01bec3d43044d3a73c3d",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx",
+      "status": "modified",
+      "bytes": 6908,
+      "sha256": "b6ec36e2a46a336a9c50c98533e1cf20f55b19d57d095f1927b9f6aa0367ce8a",
+      "auditCommitSha256": "0563ff3180844956fcb6042b2dcfdf1d4a354f9fe05e2d0716611780953ebabc"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx",
+      "status": "added",
+      "bytes": 18453,
+      "sha256": "8b91685ffec9771f06f2086fadc8225ce20dc51cb53db45226dc1170038c79ce",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx",
+      "status": "modified",
+      "bytes": 32933,
+      "sha256": "8f985337ca4797103f306284cc699ae3e555d2c48d45b62a76d8016b1d526f73",
+      "auditCommitSha256": "d37d3313fa5a8af9b69c56fc6be88870c6790a46c957c01646efbb1d52e2443c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx",
+      "status": "modified",
+      "bytes": 12861,
+      "sha256": "015cdd709933004bc325e94238a9b6ddca973c413889c0e4f13331cb0efb9783",
+      "auditCommitSha256": "81f3ebcb7a9ba6b87dd3163c52402c757901444deaaa437ca0bd9d831e49178c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/safetyNarrativeSaveRecovery.test.tsx",
+      "status": "added",
+      "bytes": 8089,
+      "sha256": "aab5864bde79e23fce3b8665cb7e97535d8688437857701635f99f4093505eed",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx",
+      "status": "modified",
+      "bytes": 8015,
+      "sha256": "d8a9044718b94d255434ca5767c7ef79e937bcce6ff3236dddad0c68abf6150d",
+      "auditCommitSha256": "8d2ee60eee431de1a376c8f1c84e28d6722ddd9c59ad934aa2103b2222665551"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+      "status": "modified",
+      "bytes": 22312,
+      "sha256": "f6e6ab8561e4b3bfaae89f98a6230e8627374971d50454398c012a70ecc575a3",
+      "auditCommitSha256": "b51b69540954a6eabbdf29c8a2ebf6e6474b9fca2ef9d5e83f4face1be48ba51"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx",
+      "status": "modified",
+      "bytes": 13321,
+      "sha256": "b74da87a799849481165873f70b02b20a056dd2b77394aaf8c0e3406e94c5a56",
+      "auditCommitSha256": "4203268406654d2f9e98b1105c76eaafbe58a391571050f65a110f64605c6ecd"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterTrackedFiling.test.tsx",
+      "status": "added",
+      "bytes": 7121,
+      "sha256": "38333d4b140aacde5e90f193b21eca80da276f81901832bbbd2fa440430071de",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/switchOrganization.test.ts",
+      "status": "added",
+      "bytes": 3706,
+      "sha256": "46fce468cc86eff49749fff8ad1acce7772c0b2c2c6427bb2a9435d552b9561a",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx",
+      "status": "modified",
+      "bytes": 7099,
+      "sha256": "a20f3ea78e9397f90bd9192d1335a1215d07f79565195bd3d4c90a081da7bb03",
+      "auditCommitSha256": "f094ec39a0ae952cd16df44d531ff23dd3ca34498ad79540d2f5b6a633658f00"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx",
+      "status": "added",
+      "bytes": 10506,
+      "sha256": "71c34de282a1494b488f95bcec36df316313d8fc39c149226722315cbdcaf5e4",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskBoardTrackedFiling.test.tsx",
+      "status": "added",
+      "bytes": 7717,
+      "sha256": "a6c72342cb6f810b5061debc49c02531ca3ccfdb583939f7435aed9f5d2cea5b",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx",
+      "status": "modified",
+      "bytes": 7243,
+      "sha256": "81775a6443f96f8d11cd4c599d9fd64b66abcabb83a1831c974f169732989bc6",
+      "auditCommitSha256": "f44198c775c5583797284e1b414f11c3a54ac23882795e1082b8cee0204b2e60"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx",
+      "status": "added",
+      "bytes": 11526,
+      "sha256": "7ac2af9e789353e4008bdabb61e08146ab8c55813cf9fc155efd48c23166ece9",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/usageBillingControls.test.tsx",
+      "status": "modified",
+      "bytes": 5295,
+      "sha256": "490f22715f5d5b69ad80352442aa83a642431369c7d90bd4729e2be33a1485af",
+      "auditCommitSha256": "19f6dfeed89b824d95298672bd0ea3da82fabab9c134366fda7ff795ba9dff8c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx",
+      "status": "modified",
+      "bytes": 9998,
+      "sha256": "905a09261b5aaaead8645b5bbb709b308669a85ea4bc683566bfd731dc88dff0",
+      "auditCommitSha256": "fa0c2ad1d40d0b9fd1ef948fe3d1337f0c1717e512dfaf0bad0f89dc8256fa5c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/apiCall.ts",
+      "status": "modified",
+      "bytes": 4490,
+      "sha256": "6933f994c06ead80fcab0f1aa701bf96ebba7d50565a070d352c764b637d416f",
+      "auditCommitSha256": "d579897bcee4eab3d1757466cab9f9b8d3288dfa63359aa24c33b7f94c83b0de"
+    },
+    {
+      "path": "client/src/concept2cure/v2/authoringHandoff.ts",
+      "status": "modified",
+      "bytes": 13297,
+      "sha256": "0b74c1f95f29186397cb4e99b52f43f0e31dded57492c61845ee1f6ad6342721",
+      "auditCommitSha256": "77c69ec0c060a9600880e0d9da22738045fd5038a63adb7adad72fc4723efc2f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/ceremony.ts",
+      "status": "modified",
+      "bytes": 1826,
+      "sha256": "ef0368d2a486a90ca388c14e761af762f492d7a1a1e1bf0cd6e89ac4fe8d0047",
+      "auditCommitSha256": "585c049a38377c2d850434403b225dbb66d4478ce3d266ddc5069bfa68491b7f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "status": "modified",
+      "bytes": 300951,
+      "sha256": "4d1e191628eaf9bd50e83eade4893035569fa1451cf6a86c6fa801d3decf79a4",
+      "auditCommitSha256": "de9b8396be5a2d56f0d4abaeccbb5a7562f70d428ded8171763860fda779dd02"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/ImportSourceNotice.tsx",
+      "status": "modified",
+      "bytes": 2348,
+      "sha256": "4441b7b1b7c293c4337bce86dbc1a30adfdf12e28706f2b9179ddc4683a24683",
+      "auditCommitSha256": "5b8dd1230c745e9247e5c1d721394c90fc1f5bded369654d6591d664170678a3"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/SourceImportDialog.tsx",
+      "status": "modified",
+      "bytes": 15113,
+      "sha256": "fd7109971d44da0b8d970fdf4d012a2c797a77de8f561d3ce1c64efe58582757",
+      "auditCommitSha256": "bf83218732a90174d5cda7e2c5328122a18071d3a3654d8bafc39554fed7d2b1"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx",
+      "status": "modified",
+      "bytes": 12326,
+      "sha256": "01d06802f85e5526623261664375af08b1ed8b488d394db719051e70a616aca3",
+      "auditCommitSha256": "55402b2ec6e33c9f69887ac21619115831252df1663f5b4acf80c74e5a8f5a90"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/provenance.ts",
+      "status": "modified",
+      "bytes": 11177,
+      "sha256": "c950b9c416be2ece8cc37415e48422731ce5bf7313173036ae3346b5bb4462f4",
+      "auditCommitSha256": "d8d11ff27af64a7847becbe98f11bd656a0e8f5086b52e2c01254abd850c5216"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editorTarget.ts",
+      "status": "modified",
+      "bytes": 14470,
+      "sha256": "8e28581aba49c12ce96eda5c3d8a6ede2c55f277229e63d136900f4d451abb8d",
+      "auditCommitSha256": "4ab6cc8a9154b5261270f016072fca992b8e5b0c04ca00a77df03320a949a59d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/fixtures/protocol-data.ts",
+      "status": "modified",
+      "bytes": 9604,
+      "sha256": "2f04cd8316c3bee15c858182a06f8a640975efc771901c7e0c98809a5346a2b5",
+      "auditCommitSha256": "6c7aed8efd9849412269eb71000b671ba4353d0dfa3b2f17fed836b94350177b"
+    },
+    {
+      "path": "client/src/concept2cure/v2/navEntitlements.tsx",
+      "status": "modified",
+      "bytes": 16177,
+      "sha256": "e7a42882fcd23b58af4e46d104b541263cf264a1e7171d1923da7a5385b12e14",
+      "auditCommitSha256": "ed8f06b81f008e6327aab499af00d5988c97136717a212ae466a32d1ae056033"
+    },
+    {
+      "path": "client/src/concept2cure/v2/navParams.ts",
+      "status": "modified",
+      "bytes": 5095,
+      "sha256": "b51f8a7c8ca59862a9c8822c61d0ef7ad1b6ee10075b5ee1967c572c1a6c1d50",
+      "auditCommitSha256": "b8249ada81ed5474b087d87d10f53fc91df07f314ff63e96675c99078c18036d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/notificationNavigation.ts",
+      "status": "added",
+      "bytes": 1540,
+      "sha256": "748afd0bc10ceef521eedf89b7348fdbe67c644bc5ddcb6c488a24e3609857ea",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/notificationTarget.ts",
+      "status": "added",
+      "bytes": 2158,
+      "sha256": "08a6caacaf248906084c83c1113875e4ff828ea3e2fd0307f9de11265ff920eb",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/organizationSwitchAuditNotice.ts",
+      "status": "added",
+      "bytes": 1967,
+      "sha256": "20350f2787e5fb38727ec4479aa7efbb62b4ac408b2d1e3aab0c86e6d68aa88f",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/shellProject.ts",
+      "status": "modified",
+      "bytes": 13452,
+      "sha256": "ba1473ff6d9691230ccf9ee996269ade2b8623a2857558f460a1ef3ae79102de",
+      "auditCommitSha256": "9611bd38bfe113d6d95d26f2982a19a55630ecf72cc8c1eafd694745202b5f30"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/admin-access.css",
+      "status": "modified",
+      "bytes": 15941,
+      "sha256": "fcc8be5dc439310f56f9c44c29a01e824d79cd0e1d8dd84019ef08263c9f5670",
+      "auditCommitSha256": "8f99467f7bf971c3e24cb6e79307aa1ebe2c4c8b2823c57413793560144cf493"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AdminAccess.tsx",
+      "status": "modified",
+      "bytes": 42680,
+      "sha256": "b480915f01dc53567131387fdf29652ddb614178e0e5572fc41df02f72d09f97",
+      "auditCommitSha256": "f5e5a33126b8e05371b524052587891b87ee5b118b0fbb469ac5891e62b11903"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AdminApiKeyCreate.tsx",
+      "status": "added",
+      "bytes": 5650,
+      "sha256": "a7bb3118621e933b83e199c30fdab440582495d630b2299f51e1c96f57a3e0f8",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/As2ReceiptUpload.tsx",
+      "status": "added",
+      "bytes": 4332,
+      "sha256": "c09d2634082a7d7ffd5b1738fb7dc06230b7c8735e9ece6310fd1814100f3085",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AssessmentWorkbenchKit.tsx",
+      "status": "added",
+      "bytes": 2297,
+      "sha256": "b62f24ab476f90ffc78122e6b515c04b5dfce9aea3760cd3672d7fbd9841d3c7",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AuthoringCollab.tsx",
+      "status": "modified",
+      "bytes": 14530,
+      "sha256": "78874c8fd569323a2b4ca3229b13c5e8e62f0abaa0ee2377b5b8e23a5c0818a9",
+      "auditCommitSha256": "43fea4ffb1ba0859824a0280d8de9dfd440d80e4d3f1e4232d40cee0d0bf1a18"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/BlaAssessmentInputs.ts",
+      "status": "added",
+      "bytes": 6341,
+      "sha256": "d2083b23b43f4814670585547752def07ab7a1770d3e93bdc4c147c70879855a",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/BlaAssessmentWorkbench.tsx",
+      "status": "added",
+      "bytes": 10374,
+      "sha256": "74ac4989b050440a723a396ac471041edbab4af98cbf7beae7b5e343238101ae",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+      "status": "modified",
+      "bytes": 170509,
+      "sha256": "af5d70878535d64bf3577f736f9af3ada0967045ab9bd2ad66cb03df4a4df157",
+      "auditCommitSha256": "619dca1f491f57fc87cee72ad67477474b78e5cd941cec6282999f647cce549f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/CmcRegisterLinks.tsx",
+      "status": "added",
+      "bytes": 5671,
+      "sha256": "ad02177b07f030e4bb8f9f9ca02d0bdcf76d2ccc8c6077dc497344e7cf25182e",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/CmcVariationAssessment.tsx",
+      "status": "added",
+      "bytes": 8601,
+      "sha256": "d00d2298b13fd924dba9f84cede17c10b9d0d7ac817d8b427227ef960e999700",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/CsrNarrativeReadiness.tsx",
+      "status": "added",
+      "bytes": 4304,
+      "sha256": "831f6737fc2a30d95a919c9cf72a33fa8a0fd5daefedd192f70ad1cb9cfeafae",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/CsrSourceInputControls.tsx",
+      "status": "added",
+      "bytes": 15297,
+      "sha256": "7c3c78564f65cc7e4ef3a7ec9e973ffe628030392f73ed0980a2f25e8d3c020a",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+      "status": "modified",
+      "bytes": 85486,
+      "sha256": "010f64c0bce14ed8df66bd30db857f4ccff10b44bfd06449e1d67ad9020920a1",
+      "auditCommitSha256": "b21bdd544b4a30541fc57d860a0d163924aab6ba54cc6ad4a27371bc6fc8f7dc"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/GatewayAccountsSetting.tsx",
+      "status": "modified",
+      "bytes": 11546,
+      "sha256": "7b261d260a1f603ea7f32ba31784a4924b6f15133e4c9b121585b902292163eb",
+      "auditCommitSha256": "d4cac6d89eb6b1f0aba417eb74eb07e18ca66e6bfd0677fdb25a381d9c9dfe64"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/GatewayTransmittals.tsx",
+      "status": "modified",
+      "bytes": 67769,
+      "sha256": "f64315e999b6fa6bf7b995a9d2217a084776076cc46639054509527ba73743a9",
+      "auditCommitSha256": "ca257093648ba8257dfd551ddd4cd8db645138bbe9336880ac6fed516a42c170"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/IdentityConsole.tsx",
+      "status": "modified",
+      "bytes": 21873,
+      "sha256": "3e367812296241c57cb091b4c7add4ceec7ac84523bb9e092de1019cde620b22",
+      "auditCommitSha256": "ab37457c12994f9700f9f7525106f02b5876c077ac475c03b233fb9f0c556530"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+      "status": "modified",
+      "bytes": 118976,
+      "sha256": "6e69f4a1da5d387b0419b8f73583af004df01aa3c0e764c75789145448b9cdfb",
+      "auditCommitSha256": "21d4eb58897197a2cd81c2715cc750f146148453108a054b4276e135515ed655"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/InsightsCatalogPanel.tsx",
+      "status": "modified",
+      "bytes": 16003,
+      "sha256": "9d1d03dd77cd24d4909ceac400c56afd93543973933eeefde93f92231007d23c",
+      "auditCommitSha256": "1d7bd792e3cff0a72e7fe24dbb971be1c3ea18ccb619262c7c3c41781308d70c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/IvdAssessmentWorkbench.tsx",
+      "status": "added",
+      "bytes": 11825,
+      "sha256": "04f082a1f0e43020c611f9561d04038fc004502b659e1fd8290d72dba918ffbd",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/IvdCompleteness.tsx",
+      "status": "modified",
+      "bytes": 15642,
+      "sha256": "02cef82599d53f418e31f515cc9a896943770af6bfcd87639512b61d455d5b96",
+      "auditCommitSha256": "a4e12235146061cebc806e0225e15d941bbd1504968b2148f10666c1e6adfe1a"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/NdaCockpit.tsx",
+      "status": "modified",
+      "bytes": 39033,
+      "sha256": "29e4c528c8143e2f67e3310ba273827e22e0a1a06e17656089ea7ba7bebdc2e1",
+      "auditCommitSha256": "be6ee8034ea3d22504a65a0bec7b8aa87fd7e200024b5d7619d38ee754b56263"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/OrchestratorRunControls.tsx",
+      "status": "added",
+      "bytes": 10858,
+      "sha256": "4f9f5c3751b5b077b818bbbde906d0001b6b9adb16314584f6aca84e1b5eccbc",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+      "status": "modified",
+      "bytes": 102638,
+      "sha256": "b00f525e16adb649a656342bd1be4e7d02943b52d4f59498c82ef302cd9c1ec8",
+      "auditCommitSha256": "cc3e72471ade682108c56996f1d9c0476379f12d48903aa321813d91094a3989"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProtocolDev.tsx",
+      "status": "modified",
+      "bytes": 15574,
+      "sha256": "f08a5831d1a692e666e5130a9f75a47de195b461af41d3ecb3ab5a560adf29b5",
+      "auditCommitSha256": "ceee2c55ce06f37f5df95747a65298e52b495ea34138d499bc3df80ffc627af6"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProtocolDevCreateDesign.tsx",
+      "status": "added",
+      "bytes": 7459,
+      "sha256": "9817bcdd0c85007661c2b0ecb7e8bdf3689812024e3e785e7e602313240d2017",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProtocolDevDesign.tsx",
+      "status": "modified",
+      "bytes": 15913,
+      "sha256": "85bb7ade63fff73108175629010649c95dac713798aa7de626ff727788311a16",
+      "auditCommitSha256": "ff2ffb74fc71046dbfc2616190c178177b25a3478020450940682b753a2d9ed8"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProtocolDevFileProgram.tsx",
+      "status": "added",
+      "bytes": 2116,
+      "sha256": "0cee320c2570988fcab801feefb8098a3d6cc31648d097235a0c20fd4dfd7cce",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProtocolDevForms.tsx",
+      "status": "modified",
+      "bytes": 21473,
+      "sha256": "2fd82bb18a924bb245ac40e851bc7f5ad7f1c48ff1a252a3e83a055532a99a4f",
+      "auditCommitSha256": "97ac4b0456f7c76fff9013f54216a57e843dc48f827ec788279952b83f99fb3a"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProtocolDevSelection.tsx",
+      "status": "added",
+      "bytes": 6022,
+      "sha256": "01f37ef17628f57727f88ced3d479d5bd5e3623f4ef46c161490378a81cc8d5b",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProtocolDevWrites.ts",
+      "status": "modified",
+      "bytes": 19826,
+      "sha256": "a6dc9f077940ad4144280ba7de83d0955aab23c6feb7a71de4f091081a8cad87",
+      "auditCommitSha256": "2c6187eb63bd8ea13fbb0314abe5faf4bae42d960bda7fa57db2d99f35a1d8ef"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/QualityModule.tsx",
+      "status": "modified",
+      "bytes": 1406,
+      "sha256": "cc169677f2084d1fb125656b17dc80b2845aec9081999021c47b714790478d86",
+      "auditCommitSha256": "916a1c34e9c6ebf475bc78c73eb1410d762ca181d0ce701fb9204f2c26d21315"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SafetyNarrative.tsx",
+      "status": "modified",
+      "bytes": 38763,
+      "sha256": "1b87332df141909eb13b12ec517ebb18b359fb8d531f3efd210d19ec1ac2cfad",
+      "auditCommitSha256": "7aff777be3b80c7d2aa8a2e0770afcb2533c48cf3e5dde108a8a775657d15b09"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+      "status": "modified",
+      "bytes": 96448,
+      "sha256": "732666ebb844e7806476ddf42f3f542b0e8fa11ba588a0801cd952a29534d103",
+      "auditCommitSha256": "f7a872733fc29d36ce14d0461fc5a5accdcadf770d7a8e1bcb50af7a650de556"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+      "status": "modified",
+      "bytes": 98552,
+      "sha256": "a4dfc39b7f59afa451703c4b2829934181fd9d2e60cc91703a567b4070efa8f1",
+      "auditCommitSha256": "feca57d4b6615f86e3afa617fc579d5a88189c720fecca74bf2f613a9c5506c8"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+      "status": "modified",
+      "bytes": 109987,
+      "sha256": "32c759f9298fa2b150255dbeb2b4b5b3c3679bee3d304037a00509994d564a39",
+      "auditCommitSha256": "0714b6ea2bfdf10df0758a673b83b942018f0b6b7ea9d3c0f7eca5868f2a6345"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/TrackedFilingDetail.tsx",
+      "status": "added",
+      "bytes": 6070,
+      "sha256": "4e9c40d0bda79498a2c83f2133373127e70c5cec106c7efa9fd27fa0f354675c",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/UsageBilling.tsx",
+      "status": "modified",
+      "bytes": 35499,
+      "sha256": "0a4a7df409cc7d6eb65e2890f03142ccba2a81a99e8657a716f4adaf6e596d07",
+      "auditCommitSha256": "6f5f30168c8aae64850b6fc3f2c8cd72756a385bca0bffa0d912c4e4f15c0bac"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
+      "status": "modified",
+      "bytes": 91946,
+      "sha256": "c630b2685cd0806fa23241336f8faf9f65fdc14bd5534bab80233ae570647802",
+      "auditCommitSha256": "a62972346169983ca3c548fb132c5a2571cab947d2f6dfdc94113b296272f639"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/insightsLibraryShared.tsx",
+      "status": "modified",
+      "bytes": 8866,
+      "sha256": "cb09cf9a6fb4dd1660084deeea36dce1799c5d158d92d4f43bcc1f6a6a8f530a",
+      "auditCommitSha256": "37420709a2b93f076e07356d788cdfe1e86585096364b4674bd86e02da97bbd1"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/submissionNavTarget.ts",
+      "status": "modified",
+      "bytes": 9017,
+      "sha256": "445721a21e050933a553deecafce9f59bb560498da4070fd98e5ab1c079701fd",
+      "auditCommitSha256": "eb5605eb53f625943e13815bcf86314cfe846e25485bae8fd5f3bc54eb7dc457"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/useTransmittalTarget.ts",
+      "status": "added",
+      "bytes": 2187,
+      "sha256": "71d38f69fd933eb3053204aec61cdc374dfd40f56bf3b369a9f578d7bd7acd66",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/concept2cure/v2/switchOrganization.ts",
+      "status": "added",
+      "bytes": 2600,
+      "sha256": "b2d4e999e4ede4d82726a2d74b1162be65dcaf43e60abda0fc2f38920c01d881",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/lib/__tests__/audit-row-not-persisted.test.ts",
+      "status": "modified",
+      "bytes": 9945,
+      "sha256": "34a0183ee9b052157001e4a0b0fd2a5b1052f4bc12d5f0bfc7f37654efd712a5",
+      "auditCommitSha256": "407023e34f9c4bed40c064bf8e3c2cac22ac433dcf514c86636a7a73f2bc997b"
+    },
+    {
+      "path": "client/src/lib/queryClient.ts",
+      "status": "modified",
+      "bytes": 26230,
+      "sha256": "6318c21606fa70314ab80680175b1aca7ea978e264dc10a7436b6cc7f069403f",
+      "auditCommitSha256": "9ac80be7062f273e6c06992a11c45a15c0cbf22a8bdc9501202bf6eb892f5a5f"
+    },
+    {
+      "path": "client/src/services/portal/__tests__/authService-sso-mfa.test.ts",
+      "status": "added",
+      "bytes": 3185,
+      "sha256": "b52a774761516aef29936ca0deb1d4b33231e3f5915fbb8e848b05157b9ba8a7",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "client/src/services/portal/authService.tsx",
+      "status": "modified",
+      "bytes": 51188,
+      "sha256": "b6a454ae855812ca2fa1d42507b75d28770ed382435425db7125859f16d00217",
+      "auditCommitSha256": "73b9da26017706e486ff9fa97e80ebd826cfff42a41afa304727dd26419b840d"
+    },
+    {
+      "path": "db/migrations/20260813_child_table_parent_scoped_rls.sql",
+      "status": "modified",
+      "bytes": 43860,
+      "sha256": "17bdd67345b4e4f372b0d313f4a7cec3f5b713090c11da55cdd792c9dcbbc030",
+      "auditCommitSha256": "8b3bff9d1f3876840ef78198034a427dab6f2f4254ed2b213d9b1f07d123a235"
+    },
+    {
+      "path": "db/migrations/20261014_ai_feedback_persistence.sql",
+      "status": "added",
+      "bytes": 1075,
+      "sha256": "a267eca5f0a19e7afe47578501c410858c5aca12d21bbbea483f15ab4337599b",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "db/migrations/20261014_orchestrator_continuation_inputs.sql",
+      "status": "added",
+      "bytes": 1921,
+      "sha256": "a8a17b351be1bcb12bc197ed12218d4766bb1abe3b03c27056d6632e9b6bee50",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "db/migrations/20261014_qms_controlled_authoring_content.sql",
+      "status": "added",
+      "bytes": 5260,
+      "sha256": "681dbfef5ca9234199d3cab54a07125d09a2bcbe8e171645c468d046e6120253",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "docs/design/PROTOCOL_DESIGN_CONVERGENCE.md",
+      "status": "modified",
+      "bytes": 7317,
+      "sha256": "988787d8b8ae86f5a9c35d78d1c2e0316bfa5eb6b3baab2f9614d6613513bf76",
+      "auditCommitSha256": "b8710728bfb79bab106033788f666e5960e1e54f3467d5e44fc78c7cde47856b"
+    },
+    {
+      "path": "docs/reports/tenant-entry-points-baseline.json",
+      "status": "modified",
+      "bytes": 8444,
+      "sha256": "ff53d9611c10d8f7140a6cebfa8a62ec36d4ca4a844e006b4a01a7ef6cdc1f01",
+      "auditCommitSha256": "6b9e08b7ae9a033e1e814025587e0cd513eeb68d84180b4d7db4fe83f5cd25e3"
+    },
+    {
+      "path": "docs/reports/tenant-isolation-baseline.json",
+      "status": "modified",
+      "bytes": 70,
+      "sha256": "5ceac1752dd040b038f12baf3fac65d70ad3119c3bf4410fe95b52c7f66a2980",
+      "auditCommitSha256": "12002eaa8e8cc36cbdec2c5fef084fe9a63e08508a5d7943bbdfc7734509de42"
+    },
+    {
+      "path": "docs/reports/workflow-target-baseline.json",
+      "status": "modified",
+      "bytes": 686,
+      "sha256": "dfdde1ceb80facb6c668742c3fd0e461b7f09d0c0461019db36c7b1e1702c6bc",
+      "auditCommitSha256": "d65e191b0c244c6ac17ea37cb8a4a5d535474a1a60fe8f956e02a0221896db86"
+    },
+    {
+      "path": "docs/runbooks/protected-release-setup.md",
+      "status": "modified",
+      "bytes": 5350,
+      "sha256": "d9746b6e319519a7686e6469458cf54fe901d2898eb44393297eda27028c467e",
+      "auditCommitSha256": "e0126c5d5bc1de93a213eb50876939f819248d13bcb54a922c02301f2729d2b7"
+    },
+    {
+      "path": "migrations/20260510_notifications_and_clinical.sql",
+      "status": "modified",
+      "bytes": 11441,
+      "sha256": "1e8b241d43c8bc35c0ebd26823745ba34ae31c92ca3ccb65d5720426573bfbc7",
+      "auditCommitSha256": "6fa3b52786d331458275f5f275017702fc7ff5d7dcf54f066e3f53e677cfb4b3"
+    },
+    {
+      "path": "migrations/20261014_ectd_transmit_attempt_binding.sql",
+      "status": "added",
+      "bytes": 821,
+      "sha256": "228b407d6fa43fab542691cafa00898024ce414d0bdd59dda8cf464e8b7672a6",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "migrations/20261014_immutable_report_record_indexes.sql",
+      "status": "added",
+      "bytes": 1048,
+      "sha256": "747dc212ca8ae25c78d87d3b0aaf0c5eb7a27f2666699cb98499cddb2516d86e",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "migrations/20261014_notification_recipient_receipts.sql",
+      "status": "added",
+      "bytes": 1181,
+      "sha256": "6cf015344684938b349bc0d6e3a86fce16ebf62af43e5a1d6a963d27026b687e",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "migrations/20261014_protocol_program_scope.sql",
+      "status": "added",
+      "bytes": 1703,
+      "sha256": "433430973a7528525bb2d5a3dee1172fc3059c50d67bb9cbed84e7d0a0a22f28",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "scripts/ai/__tests__/changed-source-files.test.mjs",
+      "status": "added",
+      "bytes": 2748,
+      "sha256": "ac40169a85981313b7eabf5a33cbd81f96777ed3cf5df6442f6a80cc42a83552",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "scripts/ai/changed-source-files.mjs",
+      "status": "added",
+      "bytes": 2191,
+      "sha256": "45f672ca19b731174b711ba5c073226cd1f0741b997bc68c24f916de81277ea4",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "scripts/ai/verify-tests.sh",
+      "status": "modified",
+      "bytes": 4063,
+      "sha256": "b47df62fec4749e61f79e40d089a7c0223f5faaab48944c1dcd95a08464cea67",
+      "auditCommitSha256": "d8d64b4b541f3dde045c70c6b3f686e362498592ee7cf591d401a0b170aa0f14"
+    },
+    {
+      "path": "scripts/ci/__tests__/lineage-request-transaction.test.mjs",
+      "status": "added",
+      "bytes": 6237,
+      "sha256": "c556523b19f2e941a183474a1ff4cc9ef76d3d861975ac6fdb26a0405e5d48e6",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "scripts/ci/__tests__/unbacked-tables-strings.test.mjs",
+      "status": "modified",
+      "bytes": 9975,
+      "sha256": "a3d36bdf675181d5da9eb3e645251edcaa4b2c0ef29e120609f304c2ac8b8480",
+      "auditCommitSha256": "0ae6f3821b79a756e0088bfe20637626b1b9af2505687262ece5a33dc4fdc1fc"
+    },
+    {
+      "path": "scripts/ci/check-discarded-audit-write.mjs",
+      "status": "modified",
+      "bytes": 23075,
+      "sha256": "c9109f6f42309ea9342ceadb418758f614ae40637c29aadca92c4af514c916b7",
+      "auditCommitSha256": "8db3f155a67a1fc89449a184e1030f4b11b8650dfa7824baabb407d3e247c7dc"
+    },
+    {
+      "path": "scripts/ci/check-lineage-save-gate.mjs",
+      "status": "modified",
+      "bytes": 29009,
+      "sha256": "6270eaf0fc081c3c150ffb50937a28ba3870bb723b2bf8a02c4080152dadde32",
+      "auditCommitSha256": "7cf0b19d1df9ca58cab46e842703bf209e7d00159d99dc57b30e2f922a2067a2"
+    },
+    {
+      "path": "scripts/ci/check-node-runtime.mjs",
+      "status": "modified",
+      "bytes": 9377,
+      "sha256": "989e8c644073b6bf1d20d5f3e05f9a31a0034bd664b70b3b438bd49b484fb970",
+      "auditCommitSha256": "89f867ab8d5449290f75447a2124c107ed59c7967c6d011a9bb580b800c3d78f"
+    },
+    {
+      "path": "scripts/ci/check-purge-coverage.mjs",
+      "status": "modified",
+      "bytes": 14385,
+      "sha256": "7440bac816e78d646f789a50011ce637ad590e713699cf082c05c0aea0d5bc9d",
+      "auditCommitSha256": "77d7c45b50abc1c5a66af9b21825aa4bca267659c968bfea04e26c4582d46fd4"
+    },
+    {
+      "path": "scripts/ci/check-purge-coverage.selftest.mjs",
+      "status": "modified",
+      "bytes": 32392,
+      "sha256": "688c7ef24c5b3db7e87592d3d57afd1f296a7bca95998ec0fa847b8655976dd3",
+      "auditCommitSha256": "d5c94bf89104eea8bc6d51a3a37964387008bd99ae191d5923ea9f5984129159"
+    },
+    {
+      "path": "scripts/ci/check-sql-interpolation.mjs",
+      "status": "modified",
+      "bytes": 7375,
+      "sha256": "b16f1be64afea83c7acaf3da84953c50cf4aa3802a03de4069e2426dd86a7f03",
+      "auditCommitSha256": "9e6271d2f24dbdc1f75d1e518f52375a5f679b8f3e91aab9236bbfa09ab30e85"
+    },
+    {
+      "path": "scripts/ci/check-sql-interpolation.selftest.mjs",
+      "status": "modified",
+      "bytes": 12495,
+      "sha256": "5c735f12fe0168a0b36f632f25cf2706021db0a8e29953914d5b68700a35e49b",
+      "auditCommitSha256": "8fa622174fa1c8ff110f086fe8b2a33ddb5119092fb15c980ad6a26027c7567b"
+    },
+    {
+      "path": "scripts/ci/check-tenant-isolation.mjs",
+      "status": "modified",
+      "bytes": 31417,
+      "sha256": "351478cc96a2be9e65a2efd69f0869d4518e33e723e32f1dfdae1a7b39bcf276",
+      "auditCommitSha256": "df48d30979294391975f1ec46409fa60347240ea1d01b9758932146ea1c0c723"
+    },
+    {
+      "path": "scripts/ci/check-tenant-isolation.selftest.mjs",
+      "status": "modified",
+      "bytes": 32172,
+      "sha256": "d8f21a4e879ebf4bd39d435872f791e1dfd15922e05cb995afc2dde7b264cdd6",
+      "auditCommitSha256": "3484a66b75b21086157d2980d1c511eea20ad4f136d558b9cd9e682e01b6653f"
+    },
+    {
+      "path": "scripts/ci/check-unbacked-tables.mjs",
+      "status": "modified",
+      "bytes": 20616,
+      "sha256": "2193b72a2e2be7075928408023ff8b15307e417deed56274075f3516152c4869",
+      "auditCommitSha256": "3eefdb7918b79cd603136f762445e8631f72e810d50055b72a7c5987131a67bb"
+    },
+    {
+      "path": "scripts/ci/dead-audit-tables-baseline.json",
+      "status": "modified",
+      "bytes": 6100,
+      "sha256": "0f78c885f204e38b77d30ca22ec9a5df88429e236e771d963ee9a529ac5fabf4",
+      "auditCommitSha256": "ba3268c67f4ec92d087d958b6e74e156bb1b081c0598eb34693383f27a851603"
+    },
+    {
+      "path": "scripts/ci/discarded-audit-write-baseline.json",
+      "status": "modified",
+      "bytes": 548,
+      "sha256": "67ecc7fac8431729f2dd07d9fa839fda664b61f88d6906d08adcf17d7363b2c7",
+      "auditCommitSha256": "6da0a3eecaa6affb8e11543fa5ec37b78dc126716f76e81970735db9412e447e"
+    },
+    {
+      "path": "scripts/ci/lib/approved-sql-predicates.mjs",
+      "status": "added",
+      "bytes": 5580,
+      "sha256": "e00eef494ebd838c1d94b18ba2c84e32d0d42e7eb127c7b91985ebd87f238b1e",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "scripts/ci/lib/approved-sql-predicates.test.mjs",
+      "status": "added",
+      "bytes": 7116,
+      "sha256": "e20c74b80a25de84d30c7071b7945fbe9c24aa77ed63c6f9b562df245ad938df",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "scripts/ci/lib/lineage-request-transaction.mjs",
+      "status": "added",
+      "bytes": 10900,
+      "sha256": "b59fa590f2b56641062b4b14dfc172612cf1adc504e484871e29db12b32f8e90",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "scripts/ci/migration-deploy-path-baseline.json",
+      "status": "modified",
+      "bytes": 6009,
+      "sha256": "ff2caa83efbd759c1a185db46450bd4a0770ee4c6347e5737cd1ec8df068e1ef",
+      "auditCommitSha256": "71c2010116a53b5a7191b99f4d43df31b46f336daf62f024e2fc7fad610ac684"
+    },
+    {
+      "path": "scripts/ci/sql-interpolation-baseline.json",
+      "status": "modified",
+      "bytes": 11610,
+      "sha256": "7e97fdc74cb164b4eadcd1be15978d78b6cde08cabf38e8b572eadec1e0b4457",
+      "auditCommitSha256": "712b61316663c6e5e9319455936d3bc24d90b9a64ab2ec0c23b197f7c12362a4"
+    },
+    {
+      "path": "scripts/ci/unbacked-tables-baseline.json",
+      "status": "modified",
+      "bytes": 3524,
+      "sha256": "51622a907557c68412c8903842d1fd01fdb124633eebf954338910fc6fb24dc6",
+      "auditCommitSha256": "59c9f10c2ddc9a413503d7ff08541658d4c21fd2325cbe5368186ec4fec854ff"
+    },
+    {
+      "path": "scripts/ci/writerless-stores-baseline.json",
+      "status": "modified",
+      "bytes": 13635,
+      "sha256": "df4efc0d36a6df64719d13cdae0e385ecfa902d5203cfe398ab4d3756c09e580",
+      "auditCommitSha256": "941e7ef3dafac4bd78a4c0d8fff334834e8c857fafb4f3e4683846b0f32259f0"
+    },
+    {
+      "path": "scripts/db/migration-set.mjs",
+      "status": "modified",
+      "bytes": 230261,
+      "sha256": "ebc729040a95ce1320195630cfa503070e647526df9b96392c50d7704498882d",
+      "auditCommitSha256": "055a81c02a5a8630000e4f5f0c5b8e2c920856ea421679955773c45f47385088"
+    },
+    {
+      "path": "scripts/ops/__tests__/activate-history-ruleset.test.mjs",
+      "status": "added",
+      "bytes": 7220,
+      "sha256": "e4ebcd6a9ce62a113f19b57addb9de2ad4d4a04ddf61c5cbb1d99dcf8171bf7b",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "scripts/ops/activate-history-ruleset.mjs",
+      "status": "added",
+      "bytes": 7677,
+      "sha256": "7756d0efac5a224f168d87181783851ba308c3f369e157ebec90b90db07ceb5f",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "scripts/ops/ga-readiness-report.mjs",
+      "status": "modified",
+      "bytes": 60729,
+      "sha256": "498264fc124e98a0b57c8b2f3e596ae8d3ed89417e7a5a2e166244d2d180a611",
+      "auditCommitSha256": "6098f6d5c712e3435654d914a625d540009c1cf1a577245924905d4a1e52d78f"
+    },
+    {
+      "path": "scripts/ops/submission-preflight.mjs",
+      "status": "modified",
+      "bytes": 6036,
+      "sha256": "bf822cfa76cbffc83c76ce13793772b5827dde522c7c2196615ca1f00d8e3ff7",
+      "auditCommitSha256": "d6153c8ab1bc0a4702e27cc39587fd68596ef366bb873c463d71759b47855f71"
+    },
+    {
+      "path": "server/__tests__/security/scim-ip-allowlist-admin.test.ts",
+      "status": "modified",
+      "bytes": 7602,
+      "sha256": "a07a2bc4576ea5c4d03ce185fcb60f0da0026d67cb75e1472a866ad9873a22b9",
+      "auditCommitSha256": "09d3131ee6921971a2074287d8d3d46ba21ad3432fb6aae0371119622f4b1041"
+    },
+    {
+      "path": "server/__tests__/security/scim-ip-rule-atomic.pglite.test.ts",
+      "status": "added",
+      "bytes": 3949,
+      "sha256": "ef780d1ad9deb92b875f575583918a71c703cc9a66ea861a3c1e96543db22437",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts",
+      "status": "modified",
+      "bytes": 31192,
+      "sha256": "5e7247d46520d7e8aadf84e49fb4279d13b9995a0c753bbae42f69c545b0599a",
+      "auditCommitSha256": "2b738a17fcb8c5d9245d84bb6bc5c40f9820d47c41d3a861fb9a53c202380da9"
+    },
+    {
+      "path": "server/api/cmc/__tests__/cmc-write-role-gate.test.ts",
+      "status": "modified",
+      "bytes": 4508,
+      "sha256": "22f893c4e7bba713c80d716331cd7792738951b636448122dac8921927c51839",
+      "auditCommitSha256": "f503afb5a06cea2a5f732804a7e4bbb32837a550a7ecbee8515a9ad1fa64f76a"
+    },
+    {
+      "path": "server/api/cmc/__tests__/register-link-recovery.routes.test.ts",
+      "status": "added",
+      "bytes": 3125,
+      "sha256": "7de2b94b0bd62c3c1d3c54125ff1cfa4552a7c3977f3cebd8973c8ed79b7529d",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/api/cmc/routes.ts",
+      "status": "modified",
+      "bytes": 103651,
+      "sha256": "6245cf99130ae3ecc7940a211c5fba9b3e25092ee98bfed73f3a5fa7f1a1aa17",
+      "auditCommitSha256": "f2c6f09778edde8ef9f027b4ef6b075605aad9f3b4e7491a3c97157aa63168a9"
+    },
+    {
+      "path": "server/api/cmc/sourceEvidenceRoutes.ts",
+      "status": "modified",
+      "bytes": 7300,
+      "sha256": "298496f00d34a9dbedba206ce32fcef88d8e20c6d581847be9803d253956c4a6",
+      "auditCommitSha256": "fa70f19dc7a5dfc83b6b7f3a69cd132c098e2446a765141a0e7fa5f8e679b5e9"
+    },
+    {
+      "path": "server/auth.ts",
+      "status": "modified",
+      "bytes": 17904,
+      "sha256": "be5a88e23140fe1b62f231bca85936ec1c35433ef1b048baca9a92eb96bb6b39",
+      "auditCommitSha256": "d8222cdfcb6c601d5d757fbf144fbeaa18535a3d611e60a7b0b35421d1238945"
+    },
+    {
+      "path": "server/bootstrap/register-core-routes.ts",
+      "status": "modified",
+      "bytes": 15212,
+      "sha256": "5bc40ce16baaabd86323383e36156107472bc7bfb7b05c1533693054880ee18b",
+      "auditCommitSha256": "4169ccbb94dc42c962597e9621a77bdf8d26de6f1eb70f985017b14bc166b7cd"
+    },
+    {
+      "path": "server/db/__tests__/requestDb.test.ts",
+      "status": "modified",
+      "bytes": 2623,
+      "sha256": "30c7c80e0865dd15b4aa174299c5b59b383f4942fca52e57eff433705851dae4",
+      "auditCommitSha256": "8875987ab4ae0bd3d80f71c90a1b94cce5e2353d85118596300ede652120528a"
+    },
+    {
+      "path": "server/db/pglite-harness.ts",
+      "status": "modified",
+      "bytes": 31006,
+      "sha256": "16f6dc0d5eae0c508377a724ba801eb24b5815c15c0cb1f523d664a759462b41",
+      "auditCommitSha256": "6e094359cc26c4c9e9050facf2212b5f4605ccf2e7172e813f4e66d5107330be"
+    },
+    {
+      "path": "server/db/queryRowsClient.ts",
+      "status": "added",
+      "bytes": 425,
+      "sha256": "90721034d67ca36f28b4f3e809f801e317b3da16ebd43c949acf4423c30938ea",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/db/requestDb.ts",
+      "status": "modified",
+      "bytes": 6329,
+      "sha256": "d92072739d96ec6b875fbe0cb5ed16c1ad5e2dc06656772f4809b96d350e3fdd",
+      "auditCommitSha256": "aae8a3e525a0343435dfd690450cb70c34b29566ade09fc34112734334ddd25d"
+    },
+    {
+      "path": "server/integrations/veeva-vault/__tests__/vault-sync.test.ts",
+      "status": "modified",
+      "bytes": 13123,
+      "sha256": "97a397cc4b5d475e425f70920c30365673ff87f9b0389fc62c5bfc729d964237",
+      "auditCommitSha256": "319d3536cdee5525dac19b3988033a4c48c6c9d6cd913a4909bf0675ca48d559"
+    },
+    {
+      "path": "server/integrations/veeva-vault/vault-sync-service.ts",
+      "status": "modified",
+      "bytes": 10041,
+      "sha256": "342ef251015f36c3070dd44c8890ae2d40713ab013d5cd0a7353a14892ad5c7b",
+      "auditCommitSha256": "4a7cc64af19e655e5d0fc160d9feb7eabfd3124e60193929d3cfc3b98060f804"
+    },
+    {
+      "path": "server/jobs/__tests__/driftSentinelSweep.audit-outcome.test.ts",
+      "status": "added",
+      "bytes": 5101,
+      "sha256": "5b6635ab9a36f71e1f9275c6b9a6727c8559e23169a28df445ede6dd459c1b65",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/jobs/driftSentinelSweep.ts",
+      "status": "modified",
+      "bytes": 7046,
+      "sha256": "b88b32a84e222eb24ded256b0c120a9b9934eb81a4ffd304799d0ee4ca1e60b7",
+      "auditCommitSha256": "b23cb89eb5f4d188d742c36a21b7931d5da0fd86dc25253f380497f55150eeb7"
+    },
+    {
+      "path": "server/middleware/__tests__/audit-outcome-headers-exposed.test.ts",
+      "status": "modified",
+      "bytes": 5343,
+      "sha256": "d8e97bcfbb722be792e36d38ab3e7b91c513e6a9f692a0159dd22237a330799e",
+      "auditCommitSha256": "dac4a51f69d10cdf35e8e450a2b34da142bf095c6f9f43562b69d436aaa53e72"
+    },
+    {
+      "path": "server/middleware/__tests__/authoringObjectAuthorization.test.ts",
+      "status": "modified",
+      "bytes": 19797,
+      "sha256": "0dd0b8dba1e5c387b4ae5ad1cfcb9942f45243d4f12f81b64cb92f8620c66172",
+      "auditCommitSha256": "d9d7238b22cb8e367c5043697c00360bd2a2c1e8a81c8c80a4bb2d2dc1da5ac4"
+    },
+    {
+      "path": "server/middleware/__tests__/launch-scope-api-gate.test.ts",
+      "status": "modified",
+      "bytes": 23576,
+      "sha256": "cc5b3959f6bf91f9e1b022cc467e949bcd37bb08da1f48a972f6d5aee60cb248",
+      "auditCommitSha256": "c552150489b53918e6245ef7ada62d59193569138108bf4e5298a1b56a70977f"
+    },
+    {
+      "path": "server/middleware/__tests__/lazy-request-db-client.test.ts",
+      "status": "modified",
+      "bytes": 10193,
+      "sha256": "831b4101753f642b7b6cba7face29cd0128cd36aafe9d69f990f99131d04cf28",
+      "auditCommitSha256": "68855f953aa11b3f729b0cd82983dde068c7467aa0bfe0a56814c31e7a397636"
+    },
+    {
+      "path": "server/middleware/__tests__/moduleEntitlementMasterAdmin.test.ts",
+      "status": "added",
+      "bytes": 2628,
+      "sha256": "b92a0cbda374a6e8fc0228e44d7c3325b2d35bf47c2427d5bec15a587c61c2db",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/middleware/__tests__/tenantLifecycleGuard.test.ts",
+      "status": "modified",
+      "bytes": 24862,
+      "sha256": "9a39228f9cfc3aaec958bfa22b0d92566ec006f0f4f22087a1b761a64ee5cfa9",
+      "auditCommitSha256": "05efaebc49576223240adce5c5b210a3e611899f1f8ffd6bf90f50dee7a5fc69"
+    },
+    {
+      "path": "server/middleware/authoringObjectAuthorization.ts",
+      "status": "modified",
+      "bytes": 15875,
+      "sha256": "fe0f2d7c51ecad5ccd623ef294a94f9c8b5158cabb3f039be19c1331b9e99071",
+      "auditCommitSha256": "f1922655caa32b9d709caa8623512bda89781c166f7d46bbc2766d9704aba640"
+    },
+    {
+      "path": "server/middleware/enterprise-security.ts",
+      "status": "modified",
+      "bytes": 47995,
+      "sha256": "079f176dd1242c1852a2b7d2dd3bf202e370fe582e1262534a9b13c3424677e6",
+      "auditCommitSha256": "41c7f2bd37c2896ec9bf3dc9a46163885e0a05f4cb41a86a1ff5c32e1b2c906d"
+    },
+    {
+      "path": "server/middleware/lazyRequestDbClient.ts",
+      "status": "modified",
+      "bytes": 6567,
+      "sha256": "c1a41c7206685b196ce5ea896292c863c9dcfc0546fc19d0126783f1ef723448",
+      "auditCommitSha256": "257ce09f03442c9288bd43362a89f36b1b0d4ec5c3fc6b281f6dec92a1153cef"
+    },
+    {
+      "path": "server/middleware/moduleEntitlementGate.ts",
+      "status": "modified",
+      "bytes": 12571,
+      "sha256": "9331d5a555efa5e64b2c9baa20aa209b1a90c7331786f8f477ed593b1f899be4",
+      "auditCommitSha256": "701a523d3713b30dbaa2b1949d661a0c1a935bb7ac94dbc9cb5e226759b75280"
+    },
+    {
+      "path": "server/middleware/tenantLifecycleGuard.ts",
+      "status": "modified",
+      "bytes": 15540,
+      "sha256": "0ad3996fcb2892dc59476836b0fa441f6ca7ec2bb8c4d3df0dd41599837e9cd8",
+      "auditCommitSha256": "740f4db12bc4ea0790f78ef177573d49b03ffa92c08a7a4b696f336dbddb1379"
+    },
+    {
+      "path": "server/routes/510k-estar-routes.ts",
+      "status": "modified",
+      "bytes": 93813,
+      "sha256": "26db9ddca73db592a82d452d324fe66f0bbca1c541e6d0dacfe9a6fa53b42ee9",
+      "auditCommitSha256": "0ebf7c3a04e6a12e574580f250f609c1a3e9735216080ea7d2883f827cb89f1c"
+    },
+    {
+      "path": "server/routes/__tests__/ana-intelligence-audit-loader-failure.test.ts",
+      "status": "added",
+      "bytes": 2485,
+      "sha256": "29ec76efbb0191587eeeb9b417c474ca4522422435925797d2489012cf133dcd",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts",
+      "status": "added",
+      "bytes": 12214,
+      "sha256": "c35a23f938078a6730c4a9edec6269c1b2eff851191d95135c5b4dca44c463ce",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/api-keys-create-reason.test.ts",
+      "status": "added",
+      "bytes": 4651,
+      "sha256": "4ec34d2c3de8352c1bebcc217bbc92750f0c0cb3e0a81cc27236859976c6eff3",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/auth-mfa-challenge-factors.test.ts",
+      "status": "modified",
+      "bytes": 13295,
+      "sha256": "a3d5d0eb2f5546d60b147aca1808815e2d62cd763822ad4c2b7f7b153c4f53b6",
+      "auditCommitSha256": "1c8bfb228076bbf23bb500411bb181a8e25a8110a7fdeaaf905b51cb18ffce8a"
+    },
+    {
+      "path": "server/routes/__tests__/authEnterprise-memberships.test.ts",
+      "status": "added",
+      "bytes": 2263,
+      "sha256": "e6f82e5096e7d05edc8ff8572587bfd11d77e5525550628765ee450927f823ce",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts",
+      "status": "modified",
+      "bytes": 7786,
+      "sha256": "07d00359bbc595a2a96c6a390135776948e457d7603b9982a4c47c1d1557b8b9",
+      "auditCommitSha256": "7eb972cdf4fc0d1fec1deb49acd034e1aa81a6faf62cdb2ce7352792453a4c7f"
+    },
+    {
+      "path": "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts",
+      "status": "modified",
+      "bytes": 16024,
+      "sha256": "70d92aa56a18fff994df03f903f697c9ed8660d47aceb93ba4904b5a0cf63fa0",
+      "auditCommitSha256": "0a0c971056ca8c89a400077591a65d92ddef7ce14e3ace12ad0c4cda81796a70"
+    },
+    {
+      "path": "server/routes/__tests__/authoring-draft-program-sources.test.ts",
+      "status": "added",
+      "bytes": 5704,
+      "sha256": "5cf22f4491db357d5699e86040085fe65a963859052e50dca92fd8ddf1327d07",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/authoringAiDraftAccept.test.ts",
+      "status": "modified",
+      "bytes": 14007,
+      "sha256": "74d321bd6ff0d1253a73059233e1e9714cf6d540e5d1e641d1d1ac7336b1d613",
+      "auditCommitSha256": "a6b9c5ec8e1492ef87ce573b9fd9aff87504e755b2a400f0583e7dfc0d2674f1"
+    },
+    {
+      "path": "server/routes/__tests__/authoringAiDraftStructured.test.ts",
+      "status": "modified",
+      "bytes": 7848,
+      "sha256": "5e7595bd14d762778181281b09a4682d5f2a07f310c7e1b61054e5d24d20d0b7",
+      "auditCommitSha256": "98e8228bb77d47d2441c47b63ec3130b584239c04ecdfeb7bb7a4b999e4cbad8"
+    },
+    {
+      "path": "server/routes/__tests__/billing-configuration-audit-outcome.test.ts",
+      "status": "added",
+      "bytes": 3841,
+      "sha256": "46f8d4366b7f22cc63772e436a85d99e7fe4fcba9825fb512bc806be4d636f28",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/billing-credit-capabilities.test.ts",
+      "status": "added",
+      "bytes": 4030,
+      "sha256": "953df6662a8026f482422c8695bf13d211340b949146f98f87df64250990a3bd",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/bla-ivd-request-readers.test.ts",
+      "status": "added",
+      "bytes": 3060,
+      "sha256": "efae9335263f8b755656c9bfd70c192e7398dc2afe0e6a3f564065503ae7388a",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts",
+      "status": "added",
+      "bytes": 27699,
+      "sha256": "0f6423e3dd056948dbb823ed8d47bbb9e41cfe7378c89549b39005d1fe9b86ae",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/cmc-module3-board-canonical.pglite.test.ts",
+      "status": "added",
+      "bytes": 5202,
+      "sha256": "911cc39edce839c062e965dc3c603c68e80dc940916fd58fb5dc37b3784cc5bd",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/cmcModule3BoardCorrespondence.test.ts",
+      "status": "modified",
+      "bytes": 6214,
+      "sha256": "97f9b95e73f5fb1d732a46c87bad6215906c815d70735eec56572173c93244da",
+      "auditCommitSha256": "0409edbc4f95aaa6e041f113f7baf9c5e05ebc30ae38d8c996aae0c6599819d2"
+    },
+    {
+      "path": "server/routes/__tests__/csr-draft-source-honesty.test.ts",
+      "status": "added",
+      "bytes": 2749,
+      "sha256": "bdae5834d477a621b92167a68915db3bede7e09c4d535d650a56d57a776a080b",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/defense-shadow-binding.dbtest.ts",
+      "status": "added",
+      "bytes": 26340,
+      "sha256": "4bb169432296d948c68ed990714bfa0d80b2990816ac1d5c092b7cfa492cdc79",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/defense-shadow-contracts.test.ts",
+      "status": "added",
+      "bytes": 12534,
+      "sha256": "2ba6362e16a118c7b6fc4b5d0a8ac3e8a4e349a6a70cd36c0cdad4642023ddbf",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/deferred-data-runtime-role.pglite.test.ts",
+      "status": "added",
+      "bytes": 6281,
+      "sha256": "92a3f3a753eece9798fe7b026108a82ad9aada1615831d7b651138f637463126",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/domain-sign-ceremony.routes.test.ts",
+      "status": "modified",
+      "bytes": 20756,
+      "sha256": "3f36e37bb71702e465fa0b0dcdcfc5aac56ad7c791b0bdc1a1ca26e93385378d",
+      "auditCommitSha256": "bc6e4d5e7d6961fd49f438f0d5948c992ea139f4b03df7f879a35781bc1d3352"
+    },
+    {
+      "path": "server/routes/__tests__/gateway-account-qualification.test.ts",
+      "status": "added",
+      "bytes": 2665,
+      "sha256": "0c5f5f7c3a9f29e85160875ce8350095abfb519b6dc226e0c66617a068261353",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/governed-signed-act.request-context.test.ts",
+      "status": "added",
+      "bytes": 4555,
+      "sha256": "27ddf634f770f6db285654a1ba885972cb5a2218a943182d57122242cc293505",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/graphrag-citation-trace-scope.test.ts",
+      "status": "modified",
+      "bytes": 5688,
+      "sha256": "d2b370900ddcefdb920790ecbcd60bb74e3bb7faad8663e82e16a7c8546007ea",
+      "auditCommitSha256": "44d960d07de232854ae1d3fe115ab3ce77e0785fea33a4bd43aea5d743abc7de"
+    },
+    {
+      "path": "server/routes/__tests__/graphrag.pool.test.ts",
+      "status": "modified",
+      "bytes": 2333,
+      "sha256": "76d942b7a49020219d4c9912b65da2dec5806e4ccfe028faf0c5595a180341a1",
+      "auditCommitSha256": "097eb6c3d850b38ca2b5d1cb45cee81e86ea40314fe7cec630937a33557b0271"
+    },
+    {
+      "path": "server/routes/__tests__/inline-annotations-identity.test.ts",
+      "status": "modified",
+      "bytes": 6104,
+      "sha256": "b8b59895507be5faa4202a0509db7659b8d22a96a8093b81fa979fd529a838d8",
+      "auditCommitSha256": "626afa15e686dd2cb7c5e757b262b9cbcbe74aa1b9b747a0ac58dd053f50b590"
+    },
+    {
+      "path": "server/routes/__tests__/ivd-assessments.error-envelope.test.ts",
+      "status": "modified",
+      "bytes": 4809,
+      "sha256": "907b0cffea6af035d4f21cf60e74580467f556c163984ec405a1e1536b210715",
+      "auditCommitSha256": "b6cae578dfb76a94f4ff97d0ffbf09cf4b9d758a2f77ad15d606834517b90659"
+    },
+    {
+      "path": "server/routes/__tests__/mdx-analytics-availability.test.ts",
+      "status": "added",
+      "bytes": 2729,
+      "sha256": "f3f0e91034553e38298b93bab8619d75272569caeda0117944cdb6a439fe89fc",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/mdx-as2-receipt.test.ts",
+      "status": "added",
+      "bytes": 6494,
+      "sha256": "63481c36537ddb9876c0642c949a80a7392e9b58d3f7b0ec28e352c8dc682cbb",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/mdx-qms-readiness.test.ts",
+      "status": "modified",
+      "bytes": 6109,
+      "sha256": "6a64c2f1f06b72724b09bf4bf45533f0749ab9c3f23b9eeb8b2e0e350c32c1e0",
+      "auditCommitSha256": "fd23d996261cf7ccbe756c23f0d5b08a904e87d36dbd360b07e92c968c34d3d9"
+    },
+    {
+      "path": "server/routes/__tests__/mdx-qms-retire.test.ts",
+      "status": "modified",
+      "bytes": 17614,
+      "sha256": "0a757b79815fa58822791d1a0b06d060883bbdc44979a565c0286edd2221ad59",
+      "auditCommitSha256": "b634c26c446998db58db7fab5a1f763452006fa1336aaee62d1069e4ccf41dfc"
+    },
+    {
+      "path": "server/routes/__tests__/notification-record-target.pglite.test.ts",
+      "status": "added",
+      "bytes": 13791,
+      "sha256": "fd202c9bb56be844c90a98cfb177ffa383057bbb15ccce98e0f35d85489828b3",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/notification-request-binding.dbtest.ts",
+      "status": "added",
+      "bytes": 14784,
+      "sha256": "620ce8177cae32b6aaaf77515a796731dc2b8c5ee5e909d47ea36a81227106a9",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts",
+      "status": "added",
+      "bytes": 16712,
+      "sha256": "001a042ccc115ec8f5fc4329409ae67d22b86ef20651e4faf523481c7182ac56",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/o01-collaboration-audits.pglite.test.ts",
+      "status": "added",
+      "bytes": 12460,
+      "sha256": "584b260c83b15a7f3597e9c995c537e280c71bae994705df28cc9db773a1c10c",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/o01-core-project-audits.pglite.test.ts",
+      "status": "added",
+      "bytes": 18990,
+      "sha256": "8b16ea921b0486bf67b1fc011e6e841074e91b13fff9eaf1391eb628c916b556",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/orchestrator-continuation.routes.test.ts",
+      "status": "added",
+      "bytes": 2521,
+      "sha256": "e25e1c0a142c157132b68d8d4d1fa3cd12e312c6c6c8f2e0727784c2ea75067e",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts",
+      "status": "added",
+      "bytes": 10533,
+      "sha256": "ca6a1ff85429c3712af52e9d21f6ee56764e1fe38b0d66ba4852a7059fbe282b",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/orchestrator-module3-governed.test.ts",
+      "status": "modified",
+      "bytes": 14916,
+      "sha256": "950ffb4adf6eae024b581888332fc3affa7efdb61096ec2911310085ec014520",
+      "auditCommitSha256": "da8efd967ea60eae45d11398afe4198927257537d4e5d6eb654cf861ee40d1be"
+    },
+    {
+      "path": "server/routes/__tests__/orchestrator-program-start.routes.test.ts",
+      "status": "added",
+      "bytes": 5814,
+      "sha256": "4013329551d7c485824f8420aa3ea78c78072f10246223674a686a8481b98963",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/orchestrator-run-submission-fk.test.ts",
+      "status": "modified",
+      "bytes": 6665,
+      "sha256": "49ed800fb1e814ed58f40a052b8588852bedd46205e86e9e7d18bed3350d4580",
+      "auditCommitSha256": "a92ad0542f11a43779f0817f1cc4888eea63e06be256bdeaf0dcd41ed14b73dd"
+    },
+    {
+      "path": "server/routes/__tests__/protocol-dev.routes.test.ts",
+      "status": "modified",
+      "bytes": 5382,
+      "sha256": "dd409b6f780e817ecd20e10e88cd8f032fffed63cdc71d98cfd1767afa17ee2b",
+      "auditCommitSha256": "7f3bad5a9c178c04970ce246b76b2d9f07d30c2eee4e9ef7152b2bb8443a5969"
+    },
+    {
+      "path": "server/routes/__tests__/protocol-development-error-containment.test.ts",
+      "status": "modified",
+      "bytes": 3255,
+      "sha256": "2731fa8348fe66f618799f3ff6ac93ebea7f0c62d2f62ad3cf6d42bb84a71b81",
+      "auditCommitSha256": "c00ddbbc5c5b9ec66d5432fa353d2da411b7b389a7cf48f8cb6aa5fcd56950cd"
+    },
+    {
+      "path": "server/routes/__tests__/protocol-program-scope.routes.test.ts",
+      "status": "added",
+      "bytes": 5113,
+      "sha256": "67de0a306912b97e8013e4fdb64e4ca63c6d48c1bc4362d74b3eafb5be429bfb",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/protocol-signatures.routes.test.ts",
+      "status": "modified",
+      "bytes": 20545,
+      "sha256": "4ff55978038bd0cff394a83c6d8b9cfd6d4e2401d860a07d73a95b035e80069e",
+      "auditCommitSha256": "8eb83887940cde6539f2391de822b3ed4297d83f058b5c16ee47763a357d2c02"
+    },
+    {
+      "path": "server/routes/__tests__/qms-change-approval-signature.test.ts",
+      "status": "modified",
+      "bytes": 10530,
+      "sha256": "bc227ded1d6b5171a245fd83f37efa7f8c7df0e733ca6793f1e85230c2c61af9",
+      "auditCommitSha256": "4e6aa9680c29e95d432aa52d6191f627ac64ad32133e084c966565f66182139f"
+    },
+    {
+      "path": "server/routes/__tests__/qms-changes.test.ts",
+      "status": "modified",
+      "bytes": 11687,
+      "sha256": "e3ffb08a0a4eafe4f3b611e1a028a07de1608ce4e2072114361ad74dbce7d1c2",
+      "auditCommitSha256": "2179ad6c8a768eb3631fa58647d9eda21583baf01d896f8d0efa1ad7ecaeb8ed"
+    },
+    {
+      "path": "server/routes/__tests__/qms-document-approval-signature.test.ts",
+      "status": "modified",
+      "bytes": 17218,
+      "sha256": "27b1daf353a225b97aa88f14a0b6ce1453dc9f05190f6abd9768042c5500c74b",
+      "auditCommitSha256": "971829dc5216b5a397a31e69027d95421e55f8b5567e41cf04fc849906a677f9"
+    },
+    {
+      "path": "server/routes/__tests__/qms-document-content-access.test.ts",
+      "status": "added",
+      "bytes": 5026,
+      "sha256": "c5e78c022ee1f908b79e792d973bfd6b3097c538eb6feb11e14b5a67f032f33f",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/qms-effective-only-by-signature.test.ts",
+      "status": "modified",
+      "bytes": 10983,
+      "sha256": "00de2e5a23c3df71da46755b8c2528b4f6306acabd06c76e4bc13b31b33a93c6",
+      "auditCommitSha256": "4191166ceb65a478252d7bb3d3336c48b0693fe366b86398276eec2f4f8d23e5"
+    },
+    {
+      "path": "server/routes/__tests__/qms-governed-writes-audited.test.ts",
+      "status": "modified",
+      "bytes": 9345,
+      "sha256": "e456a943fd490c3a36432112fef815b4c1a66bc17ec355e3db4019a2f27831f0",
+      "auditCommitSha256": "2f97274f79d814116448ee32298ce1b91765141773718fca90cb4e745d4c2007"
+    },
+    {
+      "path": "server/routes/__tests__/qms-legacy-api-retired.test.ts",
+      "status": "modified",
+      "bytes": 14426,
+      "sha256": "40231f83f2ba9671b6cddf3b63c3c904ba9ae09bae84ea2b363bfe38b11caeea",
+      "auditCommitSha256": "2acbe057f163489797fbc37951faffc371f32593085c0e683be07af2ba02eb70"
+    },
+    {
+      "path": "server/routes/__tests__/safety-narrative-cases.test.ts",
+      "status": "modified",
+      "bytes": 4921,
+      "sha256": "ef43f72dadb073c6c8ed5acd50ce173df8903f616dd2f6bcbe1eba9aab4dbcce",
+      "auditCommitSha256": "a2d4e80babd6c0bdc7f17a8ea6f7ca13e07f0393b809334653964cea91f5cbd5"
+    },
+    {
+      "path": "server/routes/__tests__/safety-narrative-save.test.ts",
+      "status": "modified",
+      "bytes": 8946,
+      "sha256": "7ae6ae731f316f14c105d103709dedcdeb948797401a4da49f2466a2ad5ccafb",
+      "auditCommitSha256": "b24733c0c0c6fc352f06260cb49c104202da4cc0337cb5f0759b5063daa36c84"
+    },
+    {
+      "path": "server/routes/__tests__/se-matrix-5xx-containment.test.ts",
+      "status": "modified",
+      "bytes": 2083,
+      "sha256": "7ccfd763f49b8b7ab72f8315513f862e85620a2f43221356667b236a2ffea074",
+      "auditCommitSha256": "bfe8039c1a92fba5566c17bcd484d7477171429544c82f95d6de1dc6a403ac96"
+    },
+    {
+      "path": "server/routes/__tests__/ssoRoutes.test.ts",
+      "status": "modified",
+      "bytes": 30162,
+      "sha256": "ca25b5252a4b8c023f9f6d93216e0d6e25fd179d4b7b2b33687ae03e108381fe",
+      "auditCommitSha256": "cfa5b0a63b01eeeec673552109f95a45cffdffac6a5804dec876e39daa0b048f"
+    },
+    {
+      "path": "server/routes/__tests__/study-design-persist.route.test.ts",
+      "status": "modified",
+      "bytes": 7518,
+      "sha256": "c4e22d1472ec239fe06fae64eaa5c99fc57b48924935a9cfeaee374e92b858ac",
+      "auditCommitSha256": "e393b00d78d74427503ca125282de73ecc60ee4325ee7dfcce0a95caf54a1864"
+    },
+    {
+      "path": "server/routes/__tests__/taskBoard-home-contract.test.ts",
+      "status": "added",
+      "bytes": 2582,
+      "sha256": "5109db1d87af86474293de85d7d39d7f36549ed7115e4db5b3b13b9962bb385e",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/tmf-assessment-audit-outcomes.test.ts",
+      "status": "added",
+      "bytes": 7732,
+      "sha256": "e36e2e51d7406ffad4079e51035d91603ce9946c1b7aa25d2651f42f0250bf9f",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts",
+      "status": "added",
+      "bytes": 13319,
+      "sha256": "fe7892309489fd08fe329432052a37ea893b5014b0b0d4717cc7bf5637d3a4d1",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/admin/__tests__/business-center.test.ts",
+      "status": "modified",
+      "bytes": 19330,
+      "sha256": "756e1242c46b51ce5882dbf557ff7f109bc879403116a83a5906c90b70b80eb6",
+      "auditCommitSha256": "114c53af180ddc9fd345594ce061484931f4b336d58614912a5c10ade1ee2fe4"
+    },
+    {
+      "path": "server/routes/admin/business-center.ts",
+      "status": "modified",
+      "bytes": 14312,
+      "sha256": "fbcb8d04382c2c79c82785292feba81dfa0e3acf781f0cce6dfe0684fb07dce4",
+      "auditCommitSha256": "544b4934adbfbe45618a83c05c3ba1bf4c209068c78e797fa1e391e410892771"
+    },
+    {
+      "path": "server/routes/admin/business/rate-cards.ts",
+      "status": "modified",
+      "bytes": 8232,
+      "sha256": "a8418ecaf0adf2597aeafbc08316617be224bf9b8e5a7a9de69c55912cd22c86",
+      "auditCommitSha256": "48e8c62723b4e1b0f815bbd0f9de7d849e55baf91cae979267975da5b1fb6b0e"
+    },
+    {
+      "path": "server/routes/admin/scim-ip-allowlist.ts",
+      "status": "modified",
+      "bytes": 8696,
+      "sha256": "528b643550fda7eb34370dc8e814d13e74b301e22dcd7820e12957e03b8a5141",
+      "auditCommitSha256": "d68b51df72a7719834a1c30a090ccc4c6aa4f6664964eb0fe0249c0ceaf6ca2d"
+    },
+    {
+      "path": "server/routes/ana-intelligence.ts",
+      "status": "modified",
+      "bytes": 30253,
+      "sha256": "62ddd0c6a67bc37087da4f61fee477388d9ca754df99a1a88699e84fbdfe75a6",
+      "auditCommitSha256": "453d509a7a4bc847719be8ea2c279af6be52d3ba5e66b9c31c9f8410d7f4de0f"
+    },
+    {
+      "path": "server/routes/ana-ri/__tests__/stream-answer-sources.test.ts",
+      "status": "modified",
+      "bytes": 16744,
+      "sha256": "73a18c515461730be01f9051b5317e44cb8a355f625a49924a3d8b03ccc527e0",
+      "auditCommitSha256": "2fdc29ef0c25abbbd105fbbfe8bb4a36b934171a3870bf56d30bffdfc8c38c18"
+    },
+    {
+      "path": "server/routes/ana-ri/stream.ts",
+      "status": "modified",
+      "bytes": 195522,
+      "sha256": "c69c4ade88457911fae2cec881dc630456725114f5883faa4c9f03a860ae5300",
+      "auditCommitSha256": "27940c50d8b58d082862dff9211e45c2255e204a167624edca08f9685acb4e9e"
+    },
+    {
+      "path": "server/routes/api-keys.ts",
+      "status": "modified",
+      "bytes": 9352,
+      "sha256": "93997cbdf9f094e4b345071c91ad09304c97a99a374e41526908fee472be9f40",
+      "auditCommitSha256": "f0d2d3958e177b94412aaaf6eae6390034f89dab67214a6745838c62d2144f39"
+    },
+    {
+      "path": "server/routes/audit-services.ts",
+      "status": "modified",
+      "bytes": 24370,
+      "sha256": "454b9f1db4ccac026f4ff3145457b177003eb7896eb4b00c63674b1097e55f43",
+      "auditCommitSha256": "087ab816553ccf0ed5df533b6dbf924c022241a77bd6601e4dddd3c7079da183"
+    },
+    {
+      "path": "server/routes/auth.ts",
+      "status": "modified",
+      "bytes": 110917,
+      "sha256": "ddbb25b1c5de7cf5a26ad973911426aef4e1b4d4beb51a7ed7465b5e87b382f1",
+      "auditCommitSha256": "72c9df0379b8dfa8bdc724bb8b80e446fdd516fd3c7cfcce4826a0dc41638d32"
+    },
+    {
+      "path": "server/routes/authEnterprise.ts",
+      "status": "modified",
+      "bytes": 43281,
+      "sha256": "82e69995450ead8c44bbb56a0f5bee69a491e2e08a2d2fac1f6a2302bd73b036",
+      "auditCommitSha256": "87021c8704d6576caaf50a7c3ff1a7dba2e04b33e6d73de89ebeaa2db5d73264"
+    },
+    {
+      "path": "server/routes/authoring.router.ts",
+      "status": "modified",
+      "bytes": 399825,
+      "sha256": "5d125b6ae2876dceeddc5f6b9116c55ab858294744a129757cc5d90ea2a62290",
+      "auditCommitSha256": "7e350e5bf189a5ce24984302496259b02a4f8b8446efde160d86368a25e57f50"
+    },
+    {
+      "path": "server/routes/billing-dashboard.ts",
+      "status": "modified",
+      "bytes": 43478,
+      "sha256": "a72d7cd4444890f2fb640328b80c9e03ba4ff2ea3140c63daad53db71a376a7a",
+      "auditCommitSha256": "65bfe62987e414ced1b4ce2377012eb69f023f16ed6ad183beecb1771d943d9c"
+    },
+    {
+      "path": "server/routes/biopharma/bla-workbench.ts",
+      "status": "modified",
+      "bytes": 15930,
+      "sha256": "c853c8f5719401d3829415da2c20a3a1aad654e8095198c96bd4015524511b01",
+      "auditCommitSha256": "d147f0cb2b4b195d9f560e8765f1939f07497144ca1fa4c7649a99f0988a4855"
+    },
+    {
+      "path": "server/routes/c2c/__tests__/communication-center.test.ts",
+      "status": "modified",
+      "bytes": 8161,
+      "sha256": "28b21ebf4dcdf767468522a3d36b0b7f083409597a1592402ed4c5e6f40cdbd5",
+      "auditCommitSha256": "e39e4ecf75344449019796ad1237a9b767d9089c2cc2fb6eb9664092a3cc3e65"
+    },
+    {
+      "path": "server/routes/c2c/__tests__/exports-recorded.test.ts",
+      "status": "modified",
+      "bytes": 6344,
+      "sha256": "43c3c9046a0e1d8ebc93bb700cf47220a62b817a00508fb2bafeff15395e1d96",
+      "auditCommitSha256": "3a15913a9b5baff54753734925d3f6a22bce83795aa85524c1cc69a4e304e8ec"
+    },
+    {
+      "path": "server/routes/c2c/ai-editing.ts",
+      "status": "modified",
+      "bytes": 70400,
+      "sha256": "1d6cbf5b87ac5bf26901540a75b92605c266f12fb7ad95186de97e2c2eb317dc",
+      "auditCommitSha256": "ee0a6113f3bfc3ee5f43bfab350b538f18d45502b655a1c28f4e6ff8d9022020"
+    },
+    {
+      "path": "server/routes/c2c/artifacts.ts",
+      "status": "modified",
+      "bytes": 171448,
+      "sha256": "5cc016336848159586b92965387f27e6b05d07bb3b31445502acb594f575cc1c",
+      "auditCommitSha256": "b5e73bfbeb05bb0b88837abc2b945e67e5c634ee0b30a70964c41ba9e5bd6440"
+    },
+    {
+      "path": "server/routes/c2c/communication-center.ts",
+      "status": "modified",
+      "bytes": 40923,
+      "sha256": "5689373205095ae9841e32b0576e54260eecc7158187c689c1f8ee65bb525f01",
+      "auditCommitSha256": "1d639b666f2b5aa1c91f17d1ad39a796544e9820f3b9f3b171754cf93903fa38"
+    },
+    {
+      "path": "server/routes/c2c/context-intelligence.ts",
+      "status": "modified",
+      "bytes": 39533,
+      "sha256": "e65cf5b0d6a01c8f05b1fc9cb6ae5d2f78b3df2546885824cb87690bcd504cf1",
+      "auditCommitSha256": "43d3314938ecb0a0e66b3f0b4c73f2ff288f39176f9ae323bc66fd5116d282a8"
+    },
+    {
+      "path": "server/routes/c2c/conversations.ts",
+      "status": "modified",
+      "bytes": 14789,
+      "sha256": "7fe33eabaa628457eafa69fb1004742c6539ec9587148b0bec9b73a9c2f91609",
+      "auditCommitSha256": "d4d6a4d14503fe54868a18ab4a002077ef1945adcf82dd4168b6c1045361426b"
+    },
+    {
+      "path": "server/routes/c2c/exports.ts",
+      "status": "modified",
+      "bytes": 28958,
+      "sha256": "98641143c375db492d66d47c7957d532f51fc015ce13d78bc4e7cea9ee26feaa",
+      "auditCommitSha256": "a0c585e8f3c1850bcd7a270880c51541482643051ba0263629d6f87bf733579b"
+    },
+    {
+      "path": "server/routes/c2c/knowledge-sources.ts",
+      "status": "modified",
+      "bytes": 31034,
+      "sha256": "5a7a49f49c2fa6e7f549a45d1f4ea903d4aa8600c941546da7bb7a937c0f6b4b",
+      "auditCommitSha256": "2dad24912fcb345ab8fe507ae26f3b84b251eabf61d5402463b3760e7c4f52ed"
+    },
+    {
+      "path": "server/routes/c2c/project-access.ts",
+      "status": "modified",
+      "bytes": 16603,
+      "sha256": "9f3a16157f6cfe294878d3696da05587e6b980d91429ba0a9da621fd12d7d7ea",
+      "auditCommitSha256": "9e1a982ede0ac0352210248e1464651d3b2aa90125348cac98ce58a38f688acc"
+    },
+    {
+      "path": "server/routes/c2c/project-knowledge.ts",
+      "status": "modified",
+      "bytes": 15694,
+      "sha256": "97f6a1f8f67c3d4245a1a03118dbeb41e2ad4ac6a8a002e04bbf318752ce9f7f",
+      "auditCommitSha256": "149f3e75dc29f699b04cfcc199a3236446efa31b9a3eab6161acc1a2adbf3fb9"
+    },
+    {
+      "path": "server/routes/capa-mdr.ts",
+      "status": "modified",
+      "bytes": 22384,
+      "sha256": "fcb8fd4ee91e4095e1bf49c3c0691bb8ab45d9b9e15d737cb7ee53921b58f0fc",
+      "auditCommitSha256": "919c16afe10d5441761e91f0b7ee643237af362265875b2ec0330abec553a310"
+    },
+    {
+      "path": "server/routes/cer-routes.ts",
+      "status": "modified",
+      "bytes": 26496,
+      "sha256": "a546dd10d0558c6320a9fbb5d15654ed9938795c43bc38594b2ac356e6111212",
+      "auditCommitSha256": "236f1d17575cfd8ce5fc77ee3b29477cef50a30d324880b9cec11d4aa58800b8"
+    },
+    {
+      "path": "server/routes/cerv2-document-routes.ts",
+      "status": "modified",
+      "bytes": 27385,
+      "sha256": "aa3813233bdf468ccf39ce9760780096b288334ef98e0366339182b31a75fdbe",
+      "auditCommitSha256": "fb17e2a7b8231842855ac533b7b36c8bf27149003c08cdaed8ab89347cd2c849"
+    },
+    {
+      "path": "server/routes/cmc-changes.routes.ts",
+      "status": "modified",
+      "bytes": 8571,
+      "sha256": "1e6c58b44355167ec3fe0759844028cbd95ea3c4a7373e9688890c20be530414",
+      "auditCommitSha256": "4583df8d3d947a7718df947d504401ca02e4a613cefa28e278f001218eec9484"
+    },
+    {
+      "path": "server/routes/cmc-module3-board.routes.ts",
+      "status": "modified",
+      "bytes": 18300,
+      "sha256": "4075af1580cfa33e841c195d29d934052cdef65d5209b57b2e1342a7f91cf8de",
+      "auditCommitSha256": "a268591b38dbbecbc24791f92f064c770d08d7d6717f1244b2fa4b182b1d5559"
+    },
+    {
+      "path": "server/routes/concept2cure.ts",
+      "status": "modified",
+      "bytes": 114696,
+      "sha256": "b98e182b48f2a12d0e9560cf6b2ec132729dce526ebffd8fa17e36a70d8cfced",
+      "auditCommitSha256": "28290c03d5f35dab6495f84d6203dabb84f29e315de332d81282c04e55145d16"
+    },
+    {
+      "path": "server/routes/csr-builder-routes.ts",
+      "status": "modified",
+      "bytes": 16878,
+      "sha256": "25ca203632c6cbcf747adef2da01b09b39e6463942e38ebc2f883d105bb64db3",
+      "auditCommitSha256": "324141aa08b2107e5998b263a17b4b8766aeba827b4a454b172e60c512bba018"
+    },
+    {
+      "path": "server/routes/csr-source-inputs.ts",
+      "status": "added",
+      "bytes": 4335,
+      "sha256": "04805061621094e9e85cc24623fc58b6ac443b5b0cef88d4c3723d69bea807c3",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/decision-lineage.ts",
+      "status": "modified",
+      "bytes": 22477,
+      "sha256": "d46ad19e5be54687f8afa141d6311e5b16a13954832f83c5fdd659704b2c9857",
+      "auditCommitSha256": "9290f7fd222cfcedcc66630bc0af8ab6c07c3fc0b69a0c8bcdf42b92fc1e5ca4"
+    },
+    {
+      "path": "server/routes/defense-packet.ts",
+      "status": "modified",
+      "bytes": 55351,
+      "sha256": "9b9836c300a071f272db1180a5ebb3bc956a04ee41792ff0b14f63af188b0d99",
+      "auditCommitSha256": "674dfeaa60acca3555d5d94597921eb0ed47354a592f48ec695ee1e50e8124a3"
+    },
+    {
+      "path": "server/routes/document-data-center.ts",
+      "status": "modified",
+      "bytes": 11620,
+      "sha256": "20d562d7fa3611ffe5f2cdbfc6bd2884da22af9ccc682a09cd4da468ed58f13b",
+      "auditCommitSha256": "eaf6f8fe1b2a8bd78e9037836cc2bcc48fdad50d8ebe93d01086ddd695b8e9ee"
+    },
+    {
+      "path": "server/routes/etmf.routes.ts",
+      "status": "modified",
+      "bytes": 10595,
+      "sha256": "9a697efde84f40f8c4cb9e8de6ab3628e6297b22b4b36fe845f0d8ed102c4c5f",
+      "auditCommitSha256": "6c8f2e1fda1641265ea811c8cbb3a1a3fd6e47a3e16f785302b27e3db89a88ab"
+    },
+    {
+      "path": "server/routes/gateway-accounts.ts",
+      "status": "modified",
+      "bytes": 6850,
+      "sha256": "f5c64330d58304ed7e1e2ff55258b1cf3022e3c1a784c860834d7ad64ecfb9d0",
+      "auditCommitSha256": "bb21b0a26c5d60a053600d44c8b0641af752af8bdc09c976ce32242fbd313e38"
+    },
+    {
+      "path": "server/routes/governed-signed-act.ts",
+      "status": "modified",
+      "bytes": 13520,
+      "sha256": "223c0e9de8d34d37c807bdafc203bf9d015ed1d23fe49f9ff2b351077df42408",
+      "auditCommitSha256": "d5f39d98151e33444f3a8c6fcc2f9fbc4a94198f41ce6137315ff35c1cdb723e"
+    },
+    {
+      "path": "server/routes/graphrag.ts",
+      "status": "modified",
+      "bytes": 38039,
+      "sha256": "96f43cf2bb8708b7999d015530c9a2b398a910c8a9854417f0c8448234a91b99",
+      "auditCommitSha256": "e24ba7d84ba57b62496e23e1a421ca241e5fe1c0947da651da0b8a6fa83caa12"
+    },
+    {
+      "path": "server/routes/ind-lifecycle/filing.routes.ts",
+      "status": "modified",
+      "bytes": 17445,
+      "sha256": "15e801d2b13924b7b457750a575e9c1c1e8c8760acaf27aaa017d6ba2081022c",
+      "auditCommitSha256": "59278eb8c1f2d89df8af86cdf658dbf45e614adb8bd0b5e88bec72602bfa659b"
+    },
+    {
+      "path": "server/routes/ind-lifecycle/registers.routes.ts",
+      "status": "modified",
+      "bytes": 23402,
+      "sha256": "8075c0bcd263a1852f12d397a8b9ffcaff9b105a2313855514c80ddb8bef14b2",
+      "auditCommitSha256": "f0dd2216809c42f7298c0e881963c613a8e1bdc233cba249f7faa9ec4f9425e2"
+    },
+    {
+      "path": "server/routes/ind-lifecycle/sequence.routes.ts",
+      "status": "modified",
+      "bytes": 10862,
+      "sha256": "411ab13632876d20ce39c0a839529612439b2a6c11a91e0c3a3a36f7983cadb9",
+      "auditCommitSha256": "998fbf5bf4abba1785fd0d4ee3aafeee2d44693682eddf63c6229e025a325138"
+    },
+    {
+      "path": "server/routes/inline-annotations.ts",
+      "status": "modified",
+      "bytes": 12124,
+      "sha256": "e58fbc516ecae2ccd75ef97e163c79c5df8f82efd26407aae7eb6d23afd62517",
+      "auditCommitSha256": "b215e0d7dc724d7561c3391b02adec423c35f7c893eaa17f2e03b0ff39ee363d"
+    },
+    {
+      "path": "server/routes/ivd-assessments.ts",
+      "status": "modified",
+      "bytes": 11290,
+      "sha256": "57a6a52fd6ea0c0518edae0834c77f74a93d9bd7617f8c115f0cb168b1754a54",
+      "auditCommitSha256": "793374c03c283fb22323737ba22e20badca0424b763a879473315dde7ae000c6"
+    },
+    {
+      "path": "server/routes/ivd-lifecycle.ts",
+      "status": "modified",
+      "bytes": 25810,
+      "sha256": "57c9230249e1e4f80915c6cf4aebc0b9e61b09df8d9adbc69ba7ee7831e11ee5",
+      "auditCommitSha256": "a78c2e9b4cbf1d69da3937f76ab069f02e904b83467cd092c6e59cde7f2f8d76"
+    },
+    {
+      "path": "server/routes/licensing.ts",
+      "status": "modified",
+      "bytes": 7758,
+      "sha256": "a7c0e88af084738574035f3e3205761aa8a5123f8e9b81356978c5a982e2dde8",
+      "auditCommitSha256": "ca1f92d97268bb1b1ac381e65d470a29d6d49f8091e7f10060daa84e372da78d"
+    },
+    {
+      "path": "server/routes/market-access.routes.ts",
+      "status": "modified",
+      "bytes": 4936,
+      "sha256": "29aff2a85201797bcdc40ab3cc90d8816043198ef58e4297d164e8b68c653d0a",
+      "auditCommitSha256": "6db43f32718ae290a545fb913361e10a96eba059bb83d24e292da9352c948cac"
+    },
+    {
+      "path": "server/routes/mdx-analytics.ts",
+      "status": "modified",
+      "bytes": 18186,
+      "sha256": "d084b812cd4bbb4ec4a3c080d379afbd0397f4f66089876a5d3044ecd3c2f910",
+      "auditCommitSha256": "9d6d5b51bc7d2bac7ce4618a06c7c8dff2c2fc48d582e3489aee0f00a3615ff1"
+    },
+    {
+      "path": "server/routes/mdx-as2-receipt.ts",
+      "status": "added",
+      "bytes": 3726,
+      "sha256": "633175114608b3e1d61e19d25d859fb79644b17f87b3f3b953f527a7c1873500",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/routes/mdx-notifications.ts",
+      "status": "modified",
+      "bytes": 11029,
+      "sha256": "282bde63b44a61b0b8a827da8ff72658342943f721cd9149c520b47890d972c6",
+      "auditCommitSha256": "6656fe2e2251577ecc21c1e9f94934208aa2e9a51906782e317d0d58ddf59f49"
+    },
+    {
+      "path": "server/routes/mdx-qms.ts",
+      "status": "modified",
+      "bytes": 77746,
+      "sha256": "507173cb2cd8d739e62210ae28e97ee22cd951615eccbf91321253c8813e1e0c",
+      "auditCommitSha256": "bfb4eccd5493867f261e7651a3ce5eba68492dc8874b211d9ca3c26539480dce"
+    },
+    {
+      "path": "server/routes/mdx-submission-gateway.ts",
+      "status": "modified",
+      "bytes": 31367,
+      "sha256": "37073bc4657ed8549818aebbb54ad12246c7d61a7a210e420c34e028603bc32c",
+      "auditCommitSha256": "dd6b494e4402b496b3548759bd2839afcd4a4e333de3210d451763c5d39822e4"
+    },
+    {
+      "path": "server/routes/program-journey.routes.ts",
+      "status": "modified",
+      "bytes": 6365,
+      "sha256": "75cb7409d0fcc3265b31b6fe94dba647c772352bbc9cd16f6ca70157fe02ddb6",
+      "auditCommitSha256": "058bb4edbe25d248e6ed13785f9084e19dab6bb0a60ce0cfc27c08ab0c2d7dd7"
+    },
+    {
+      "path": "server/routes/protocol-dev.routes.ts",
+      "status": "modified",
+      "bytes": 3218,
+      "sha256": "5746d1522783f96f66c8e9e8e7c8f18b979deedcd33ca968e80d84b3a82eaa89",
+      "auditCommitSha256": "4c3d05b77a3f2ff3c2fe355508bd6d370f125c71e6aeb4478e93a424c77bc83c"
+    },
+    {
+      "path": "server/routes/protocol-development.ts",
+      "status": "modified",
+      "bytes": 31489,
+      "sha256": "fce8010182e42de55c4e71e79114f248dae4baf024db897b029722adbf5c0a3f",
+      "auditCommitSha256": "477643afe1ab868e867b20d3cb353ffac02d20889593b0977b9cb251a475eed7"
+    },
+    {
+      "path": "server/routes/reg-change.routes.ts",
+      "status": "modified",
+      "bytes": 5026,
+      "sha256": "129db52b018e4edbc6de5793cd531f38026fc3f7f32b1a12684cc51ba756b6e3",
+      "auditCommitSha256": "ddbd0b25040058e52f162393069d00f4d36291af104dc1d1e69a0a2bc115001e"
+    },
+    {
+      "path": "server/routes/regulatory-assessments.routes.ts",
+      "status": "modified",
+      "bytes": 4726,
+      "sha256": "12283845be1bcf734732ccdd7bd5b56da5b02c551c1f68e1a46f94f271a27b64",
+      "auditCommitSha256": "58dab727c2476867382d018faa6c3738bfb7f1eb903916110e3fc9147c0bef84"
+    },
+    {
+      "path": "server/routes/regulatory-graph.ts",
+      "status": "modified",
+      "bytes": 29781,
+      "sha256": "ac6192d977125bac8d083123d4fc05ef48e2403a53f6618d03bfddee9edfae29",
+      "auditCommitSha256": "a4ad997929aaeb918f0bd07032eec32107db0bc16f585249b5530e49d6189f9f"
+    },
+    {
+      "path": "server/routes/report-os.ts",
+      "status": "modified",
+      "bytes": 121456,
+      "sha256": "bdb0725bc40b85c7fb4b37921fc8c9c572c0689e6876a69fa04464a99c740d33",
+      "auditCommitSha256": "bab42b779fdbb07c09d9495f2f4043eac690f76a2a65f9dbdb48ada83ba5c62c"
+    },
+    {
+      "path": "server/routes/safety-narrative.ts",
+      "status": "modified",
+      "bytes": 23933,
+      "sha256": "f488b47902d3c0f27958a3fd652231710af1d4ac261fa24d94ab5d1efd998111",
+      "auditCommitSha256": "bcec53535f8b1dfc97c18b1e6f95a6faca1a84914805c7b54d73f5fe8c13dec7"
+    },
+    {
+      "path": "server/routes/se-matrix.ts",
+      "status": "modified",
+      "bytes": 778,
+      "sha256": "e5fbd406ec2c075915e74bb95ca59a875da3553c6d7ff432a72a6f8a1babbd58",
+      "auditCommitSha256": "176266eb3959e4eeb26eb92efad0e7be1877ed43de7367fd227c3d445ae5cf20"
+    },
+    {
+      "path": "server/routes/sso.ts",
+      "status": "modified",
+      "bytes": 39749,
+      "sha256": "7f68f83f96b181ff2d392a1492dc04865b72c3163dd5a413b58a823a8805d853",
+      "auditCommitSha256": "1f35023b54c2433c06134e5163a2ce0b0d45e67bea3ee28d2f75d5361ab89bc0"
+    },
+    {
+      "path": "server/routes/study-design.ts",
+      "status": "modified",
+      "bytes": 29275,
+      "sha256": "2ea1bbac2da0422f2220a34295a4f067b4b4d02933d2ad58be203e465bace9d8",
+      "auditCommitSha256": "8d433003f6f6b924a9f3b01ca621a1ede4f09d74e524d6ed4ce8112fbab838a4"
+    },
+    {
+      "path": "server/routes/submission-orchestrator.ts",
+      "status": "modified",
+      "bytes": 50935,
+      "sha256": "cc3f63812ddafa24dfd823ffc89188e82d4fd6cb3dd4ee2dba187cccc85b46e5",
+      "auditCommitSha256": "1f15ae8cedac4ceeec1b6bbac2ba74a41a61cc690c77bb9e0282312171c75e8d"
+    },
+    {
+      "path": "server/routes/submission-sign-release.ts",
+      "status": "modified",
+      "bytes": 20105,
+      "sha256": "457dca20e7d8eace6abe16fed70aa8561438ff4a6b28ed919863f181dd4d3a66",
+      "auditCommitSha256": "9468a5b1171ccaa1096502f24b9bb081e142915d5214ba276890b7e3c8bea0d6"
+    },
+    {
+      "path": "server/routes/submissions.ts",
+      "status": "modified",
+      "bytes": 100545,
+      "sha256": "f0ca72315e4449b31463153fc4b987c7c27c9a5149b0caf847ac03dcc60f0c47",
+      "auditCommitSha256": "0f4521a58a10c22e21d4982e23d4776c14c5c894227ae58b9bfb0f2fd75702cb"
+    },
+    {
+      "path": "server/routes/taskBoard.routes.ts",
+      "status": "modified",
+      "bytes": 26328,
+      "sha256": "710303cb2c574aa1226c31dcd30c6f4d7dac927c035c161bc6745babde1f8a33",
+      "auditCommitSha256": "8aaccbe38523332fcc26d428387a872fc3b14ff47d34ad32801c24e71150021b"
+    },
+    {
+      "path": "server/routes/tenant-users.ts",
+      "status": "modified",
+      "bytes": 27153,
+      "sha256": "9f7395d55898bf7202797f9baad5fb2a1d62aa6181c3f46ce129261071b1b496",
+      "auditCommitSha256": "75fa9bcfd7b37331f95029a83fb5101533457f1254e8027d2e1474aaec0b2f9a"
+    },
+    {
+      "path": "server/services/DocumentDataCenterService.ts",
+      "status": "modified",
+      "bytes": 34777,
+      "sha256": "fc9eba70e42ff308729aac22468a7684b9877894b79be260d65163eb64dfbd3d",
+      "auditCommitSha256": "7c3e565171d40dbb909fe41a9531f7e31a138fa928e24349d572a396f7c46149"
+    },
+    {
+      "path": "server/services/__tests__/adaptive-decision-is-governed.test.ts",
+      "status": "modified",
+      "bytes": 11361,
+      "sha256": "bf6c3e270a1c87cf0a440f74ff116ea7233b7cb183d6a041606bbc51325b24f7",
+      "auditCommitSha256": "6b3eb58153dea78d1112bb157b584f5873e0f258efd1198d01e99ffed75145cd"
+    },
+    {
+      "path": "server/services/__tests__/api-key-lifecycle-audit.pglite.test.ts",
+      "status": "added",
+      "bytes": 11510,
+      "sha256": "a9b92a3022f7f53a5603a049f8dfb5fc5d7d825b83a35152612d148621de9eaf",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/__tests__/auto-extraction-governance.test.ts",
+      "status": "modified",
+      "bytes": 4428,
+      "sha256": "13507edf619c67969c05e778d605101c017e1dfa9e3742b22e300e5e7c6d89e6",
+      "auditCommitSha256": "3a9b8a37a5418e31ea791467b2fb1759f3faeefa3dd33dd099296373d20d0417"
+    },
+    {
+      "path": "server/services/__tests__/content-save-audit-outcomes.pglite.test.ts",
+      "status": "added",
+      "bytes": 10525,
+      "sha256": "d478ef348e2a131b4eeabb720f97c06dc5832355a5c79ee1cf73c8ecd5e80899",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/__tests__/credit-allocation-boundary.test.ts",
+      "status": "added",
+      "bytes": 4692,
+      "sha256": "df7539eb09b25d9fa8ef4e0ca0302b6d0ab1b482a97e318b3fba9a449c47f232",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/__tests__/credit-autoreload-audit-outcome.test.ts",
+      "status": "modified",
+      "bytes": 4210,
+      "sha256": "767a1c7cff8320f9c03319231334d91e8c6c2cd90175ec5df5010f9728d0b92a",
+      "auditCommitSha256": "3a25cb22b39197fe66915df4ee15af0a62251edeabf0aa76a9be3922b9c339f0"
+    },
+    {
+      "path": "server/services/__tests__/csr-builder-completeness.test.ts",
+      "status": "modified",
+      "bytes": 12553,
+      "sha256": "f5dc25b364247692b8a18f33137b9500c7b1c023f02f386cb3980909ddefac0b",
+      "auditCommitSha256": "62244f5c2c93b14e827374b50d726c1a990538315298d93eef24e167d306b0c1"
+    },
+    {
+      "path": "server/services/__tests__/csr-builder-lazy-client.test.ts",
+      "status": "added",
+      "bytes": 2091,
+      "sha256": "568d5f906474e8435512591aa8f002f0387a8c8577c802513b1938716c3e0856",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/__tests__/csr-tabulation-source-correctness.test.ts",
+      "status": "added",
+      "bytes": 3201,
+      "sha256": "f6ee362e06f7e51812825e7078e63c7ad4ec351847d17ddab9e8e6a86077d637",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/__tests__/figure-generation-governance.test.ts",
+      "status": "modified",
+      "bytes": 4494,
+      "sha256": "faf92a24b8a30f28cbc975feea644e08ee961520388702cb31098e54bdb26fed",
+      "auditCommitSha256": "4b50b6f6fc6d876b615f02c1594721af495402541431224e135e3e449bc4d3f4"
+    },
+    {
+      "path": "server/services/__tests__/licensing-admin-audit-outcome.test.ts",
+      "status": "added",
+      "bytes": 5122,
+      "sha256": "d9621aa794f07dd0c6dad2bb70bd381fc867ffcc31712a5d989ef342ee3b249e",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/__tests__/part11-audit-receipts.test.ts",
+      "status": "added",
+      "bytes": 5043,
+      "sha256": "2832a6dc5d6d8b2d3aabbe74776bc428606e7037f5dfcb6a2cf18895e2856e1b",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/__tests__/part11-release-signature-single-write-path.pglite.integration.test.ts",
+      "status": "modified",
+      "bytes": 22345,
+      "sha256": "412816d2fce380b89d6a7e0e7fc54fba05adccf438789dd9fb1ad3f336feddc6",
+      "auditCommitSha256": "98735bca181aa1b4ba6c2973349b27df4a0e49a683f6ed0e3ca5489a5c0b8863"
+    },
+    {
+      "path": "server/services/__tests__/submission-orchestrator-continuation.test.ts",
+      "status": "added",
+      "bytes": 12061,
+      "sha256": "0bec8c2a9f8ddefa331fa131b5c1ebae3effdc8df50c9e6442fef161486a5823",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/__tests__/submission-orchestrator-inputs.pglite.test.ts",
+      "status": "added",
+      "bytes": 3515,
+      "sha256": "bf5312a2bf6b69eaf96410704e0121ec9bf05b98c9bc01d6b8660d5be190209d",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/account-standing.ts",
+      "status": "modified",
+      "bytes": 18107,
+      "sha256": "d9da05dbccf9dacb8eed3a9f0afb8e9ba27ecf2d28a1c9a30e693f0e405f0ec7",
+      "auditCommitSha256": "365c8d735631f338481e0c1f6feb9cd1faa8b32da27d20d8d32f0e006c7b7f1a"
+    },
+    {
+      "path": "server/services/adaptive-trial-operations-service.ts",
+      "status": "modified",
+      "bytes": 57415,
+      "sha256": "bbb91610e2b6ef66b98e5ae41558e5d821186ff80439c7f8253b483cdbcf4b5d",
+      "auditCommitSha256": "fb2f9e1a4b5f0be832ffb8c4ba96442e2eb72da41c1d100d5ac36d8f03e225a5"
+    },
+    {
+      "path": "server/services/ana/AnaToolExecutor.ts",
+      "status": "modified",
+      "bytes": 1134809,
+      "sha256": "e0f85016ae2503fb8e81612d14e1f00207f327622cbeced1dcafa07ce64119dd",
+      "auditCommitSha256": "a0fe57817cf6239c21678b6594352e8490bbecde090376b4a7a8d0deaab73ca7"
+    },
+    {
+      "path": "server/services/ana/__tests__/bla-tool-save-boundary.test.ts",
+      "status": "added",
+      "bytes": 2105,
+      "sha256": "7db3f215ed1f79689e63bbaa1c2d96762c37284f4a0b3c725e552aaa11296fa8",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/ana/__tests__/capa-governed-service-handoff.test.ts",
+      "status": "added",
+      "bytes": 4374,
+      "sha256": "10e71598add715c7218af5a9261f6b14d0d1345d26b57a5a534213ca39fd0c2a",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/ana/__tests__/notification-category-schema.test.ts",
+      "status": "added",
+      "bytes": 848,
+      "sha256": "e93a6f0d9ea94f632377233a44d5498cfb30dd36748092a3870349d1df0d0675",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/ana/__tests__/qms-change-tools.test.ts",
+      "status": "modified",
+      "bytes": 17678,
+      "sha256": "e6d523af5141f98e2c6c78e477e5b7d897b8f10c2e7dbfdc9aa0ad3e0d04943b",
+      "auditCommitSha256": "b7e281d0bbcf25a2577dd14313b1e103da96568be1548d4d9166a0a75b8641c9"
+    },
+    {
+      "path": "server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts",
+      "status": "modified",
+      "bytes": 25499,
+      "sha256": "beecf08e66f9085cc63414b4a2e56a73ee5402aea0d55fa30958c1e7178f9925",
+      "auditCommitSha256": "ac375566db56fb05d90fc08ef596a62150f77aa4c73708e082df0a6249c57de5"
+    },
+    {
+      "path": "server/services/ana/__tests__/revise-qms-document-role.test.ts",
+      "status": "modified",
+      "bytes": 5026,
+      "sha256": "77f84ebc1e84ea0849b6e4d6b22626d4bb702f399739b24b11251727fba5b8b2",
+      "auditCommitSha256": "ab267daba87cd7158724dca55312977f0287686d5ac02dfe63b9b89eb1b54c7d"
+    },
+    {
+      "path": "server/services/ana/ana-input-guard.ts",
+      "status": "modified",
+      "bytes": 7829,
+      "sha256": "9c05969122866be8e720a6550bdcd79268a60e21bb767dbad5b2f07aed1dfb83",
+      "auditCommitSha256": "9b965e04dad8fe56dc482ad65c6f6f472f24b9dc4dcf9c54d4f350fe8d31ff4e"
+    },
+    {
+      "path": "server/services/ana/bla-biologics-tool-defs.ts",
+      "status": "modified",
+      "bytes": 49602,
+      "sha256": "f96164d5e75ed3564b48e2f1f2dbcea39c7c7757f9eb9fcb211e89185ee93a40",
+      "auditCommitSha256": "e42346dcd932d2665cca9fbf729561abe7d59e0999f926affeef8ac1221cae68"
+    },
+    {
+      "path": "server/services/ana/notifications-study-memory-tool-defs.ts",
+      "status": "modified",
+      "bytes": 96799,
+      "sha256": "386dff400f5388a38147f18b31c78ccd4f3b32eeb32262089feca0f3b5fe3adb",
+      "auditCommitSha256": "da82d4e1534081882d72b87e975b33f1746347d127e9c5eb1e2bfb12235aed93"
+    },
+    {
+      "path": "server/services/ana/qms-labeling-analytics-tool-defs.ts",
+      "status": "modified",
+      "bytes": 18264,
+      "sha256": "0a14d0b52030c2ecf27b5cde2a6b999a520caf450430414a305575bd835faceb",
+      "auditCommitSha256": "271acf44e4618782712bd896fe1fe401c1d12e81a168edd5dc917d9723844bb2"
+    },
+    {
+      "path": "server/services/api-key-service.ts",
+      "status": "modified",
+      "bytes": 12799,
+      "sha256": "1443549a01d0a415c12627dbc33f30204119a59edc2fd3ad229ca728d7af3921",
+      "auditCommitSha256": "0ff772bd96188ccf8453a03c7920d3cfeae3a43401cc793e037e78183f02b9a9"
+    },
+    {
+      "path": "server/services/audit/__tests__/audit-request-commit-outcome.test.ts",
+      "status": "added",
+      "bytes": 3004,
+      "sha256": "61fcb4bc3b445b3e89f4c5125500a44197e322b74b6e279dd4c84f081ee6fffa",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/audit/__tests__/audit-row-headers.test.ts",
+      "status": "modified",
+      "bytes": 2403,
+      "sha256": "13263a1d81b493a0e312fa15dbc12af7892b121e88b1e9c1b33ab480fc5f6ffa",
+      "auditCommitSha256": "11a9926f01bd25fcda52b64b61d97c833aaa28f7b61c70feeca9c74c6321a458"
+    },
+    {
+      "path": "server/services/audit/audit-write-outcome.ts",
+      "status": "modified",
+      "bytes": 12305,
+      "sha256": "e1491a81cee9b8cea871b1d0b309fc076b2a0cb6dabe1bb8e788790a42b3b99e",
+      "auditCommitSha256": "cc7758e3da76c044f2c96399e1ebfd0f1faca3654281477126bab766eeca5d98"
+    },
+    {
+      "path": "server/services/auth-security-service.ts",
+      "status": "modified",
+      "bytes": 24696,
+      "sha256": "2005b02a4adebcab9f0273e81fda32d48493a11c15c3c18a6dace96ddd1f4c7f",
+      "auditCommitSha256": "4a7fb18f060a440e332a648ce299046d63d54334cce565d95d86bd9450271443"
+    },
+    {
+      "path": "server/services/auth/saml-login-challenge.ts",
+      "status": "added",
+      "bytes": 2585,
+      "sha256": "015a9f4b1b5464074fa96f462ca621e7612dc3d303932b480a611088a8749321",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-draft-sources.test.ts",
+      "status": "added",
+      "bytes": 2818,
+      "sha256": "d467edd2301e2679b27ce95ae8dfc1ea175707f50aea0e7192da3732f1507657",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts",
+      "status": "modified",
+      "bytes": 16910,
+      "sha256": "407fb87cf4d3eb3093c7dd946da9f198122ae832d6290ac91f1546c990012ef1",
+      "auditCommitSha256": "ac6e0b12ab8bd88eb395716564fb80ac6d79bbe5ced118f055a3a795553415d4"
+    },
+    {
+      "path": "server/services/authoring/__tests__/workflow-production-import.test.ts",
+      "status": "added",
+      "bytes": 2755,
+      "sha256": "a3c31835f3277181094c941641ce722d4499165c0aee990f908ed2d5c398008d",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/authoring/__tests__/workflow-source-import.pglite.test.ts",
+      "status": "modified",
+      "bytes": 25851,
+      "sha256": "6bb1e207e90d1db64c7803dee9e4ce74723b29d845629ca4eec4a6a7372e0ccd",
+      "auditCommitSha256": "8aab213b90c62254650e397c493db91c061e8bbb03fb92d85d57e96834808956"
+    },
+    {
+      "path": "server/services/authoring/authoring-documents.ts",
+      "status": "modified",
+      "bytes": 32475,
+      "sha256": "49c02b44e209bb13fcacbd069093f034921a2deca54832d8718b2cfc6123e3a4",
+      "auditCommitSha256": "64998fbad8712cd3c5e90f91ec7c671794dd407e8a0af72930c39c41ba7439d8"
+    },
+    {
+      "path": "server/services/authoring/authoring-draft-sources.ts",
+      "status": "added",
+      "bytes": 4906,
+      "sha256": "07a4ded21f1fcbc07cc975debe970ad6fed12049263ed615413bf4331b450cc6",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/authoring/authoring-source-import.ts",
+      "status": "modified",
+      "bytes": 31490,
+      "sha256": "0887be348a5c76ef9d0ffe0cdd6c02918334fc83bc7946a395514558a6168192",
+      "auditCommitSha256": "2a82c41527ae35cc10b2141900a67192f5ca94a0fe92224d4d5d65e2ca1fb3f4"
+    },
+    {
+      "path": "server/services/authoring/import-source-references.ts",
+      "status": "modified",
+      "bytes": 6239,
+      "sha256": "478e90cd18802cb3deb10018d1c54e60ea3020fe7ce7089aa327e057f25c1da5",
+      "auditCommitSha256": "e4253c782708317088db8ca820de2685c7c097c9bd3923f44cb5a43b6de3cff9"
+    },
+    {
+      "path": "server/services/authoring/ivd-workflow-source.ts",
+      "status": "added",
+      "bytes": 7762,
+      "sha256": "136402feb966edb4bfa08e80aadbf97cf67795a9524e9fb34a647d107d9cc115",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/authoring/section-generation-service.ts",
+      "status": "modified",
+      "bytes": 8466,
+      "sha256": "c30ba65b55a20c08346f9253e7a1b80e508bcc4d411862d31408ae03b561cee7",
+      "auditCommitSha256": "f62aaf1c73cbe29d7606ae0abdc2de766b46e327808d13f5c45c07824363140a"
+    },
+    {
+      "path": "server/services/authoring/workflow-import-governance.ts",
+      "status": "modified",
+      "bytes": 16474,
+      "sha256": "3f1e754d2010c6a9afed087eb3f54a34b86fbbd2752d59d057e2fe0a030664ea",
+      "auditCommitSha256": "824b5d533b86d5802a78100d35e889fa7901cfd49ef67b74df419289647f6786"
+    },
+    {
+      "path": "server/services/authoring/workflow-source-import.ts",
+      "status": "modified",
+      "bytes": 22911,
+      "sha256": "09f2e35614f7557b13479c70146c4392f138d5e6382893bd9a150518506aa24f",
+      "auditCommitSha256": "1c95e844e5debc6208028efce691d470fa09fae7c1950154ec7d683486257053"
+    },
+    {
+      "path": "server/services/autoExtractionPipeline.ts",
+      "status": "modified",
+      "bytes": 40778,
+      "sha256": "af60fbb2010061c235036ad472244ba03e7bac1f3ad4fcabb219416d940ba3ea",
+      "auditCommitSha256": "8a007a5c250f4c6611f9285bc9e844321a18ca06669cc190e304280675eabd59"
+    },
+    {
+      "path": "server/services/biologics/bla-assessment-store.ts",
+      "status": "added",
+      "bytes": 3581,
+      "sha256": "68557258534b2c27f6dac1818135d7646ca821e9399a8e1a4517ae63adeda8dc",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/c2c/__tests__/governed-program-write.test.ts",
+      "status": "added",
+      "bytes": 1892,
+      "sha256": "ee6efd29ec11a1319035d83e5bf282ab2f501d64fb7e8496174d88a724ebffbd",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/c2c/governed-document-binding.ts",
+      "status": "modified",
+      "bytes": 5251,
+      "sha256": "38bcf15097e94068b43993f4e7a628a1841c0611ad6ed323b9792ab7aac872f4",
+      "auditCommitSha256": "ed4d449fdeaca439833e536da324a9c88e5718013478ff46b9b3ba5d751a077a"
+    },
+    {
+      "path": "server/services/c2c/governed-program-write.ts",
+      "status": "added",
+      "bytes": 2604,
+      "sha256": "c04703de427c378258f4ca0e6b1d93c0c5755f7ac6481701f50266e244b5f0b8",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/capa-mdr/__tests__/governed-context.test.ts",
+      "status": "added",
+      "bytes": 7792,
+      "sha256": "3b4ebbf4724ea353bc1276722f3f19fde08f4415a4eebc251fb033100f36805b",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/capa-mdr/capaMdr.service.ts",
+      "status": "modified",
+      "bytes": 43655,
+      "sha256": "f41bb674461436328212e2977adff490a8c2bf0e98ad6ca68b33c5f028a67f9a",
+      "auditCommitSha256": "f77039d6bd09b47b3fa5abf55a33c10f61b84cfc437682eded3ac9875e0ca342"
+    },
+    {
+      "path": "server/services/capa-mdr/governed-context.ts",
+      "status": "added",
+      "bytes": 9349,
+      "sha256": "ce3038865574ff3f5ffb728b34029be5070ff2e870aa44cdfa3267a19b9d5cbe",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/cer/index.ts",
+      "status": "modified",
+      "bytes": 7606,
+      "sha256": "3040006ca7dee7f01b3b1c2ab6f214853b9e10d9105a580430e01605fb0e7ddd",
+      "auditCommitSha256": "520c718cabd40b31f739c3378b4d7e693536b45ad8aeecfab9864e2e8e98ca3a"
+    },
+    {
+      "path": "server/services/cerGenerationService.ts",
+      "status": "modified",
+      "bytes": 31509,
+      "sha256": "02ee1318dab6ae2d024d9ee1b6b8b7cedd2068f8fbcbab5bd79beac81a7e575e",
+      "auditCommitSha256": "d445c3f558f491597eab461e3f8e73cb983bce44888f55578d01f3fd8011c76b"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts",
+      "status": "modified",
+      "bytes": 10176,
+      "sha256": "49899ed941a008cddc0dbaa1d1fbeb3278076849d195c814854c9f9e36e28679",
+      "auditCommitSha256": "8bf67fc87e8c13b7d5cad20f4d386d386c6c258074993be0cf0cddf896c20dec"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/vault-source-link.pglite.test.ts",
+      "status": "added",
+      "bytes": 3758,
+      "sha256": "b0e5f81b74b5140a83d1e70029360e777264cdcf260825ded171d96c4fa8d512",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/draft-candidate-store.ts",
+      "status": "modified",
+      "bytes": 10101,
+      "sha256": "23d3b588ee126555a896c2aea6fb82ee7e17b789c99250bfaa635e660647c77f",
+      "auditCommitSha256": "faa71c6814186fb77e468afd3894e79a33710a1798f67a8d782ba34a01e69422"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/retrieval-source-link.ts",
+      "status": "modified",
+      "bytes": 8977,
+      "sha256": "3895138894a1bc12976164cd0ffef1c64ed9630600ccf26db15d82d4fa64e6a8",
+      "auditCommitSha256": "0e0859897cf2c342e4bf73bdccf852ae2cfbe23ea8ad20dfd561120a93e1ba4c"
+    },
+    {
+      "path": "server/services/cmc/__tests__/register-link-recovery.test.ts",
+      "status": "added",
+      "bytes": 4339,
+      "sha256": "c0eabe2ff8729bc5da4925d9e7bdd9262effc43eea806edae5234590a55d1bbc",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/cmc/link-to-module3.ts",
+      "status": "modified",
+      "bytes": 9497,
+      "sha256": "c1273f88e5144e682367efb78c429d7b324494e153526c6fb361cf76d579e218",
+      "auditCommitSha256": "f7f078b3745c4ce3ad1f77c2904eef6de403d6e91eecde43439c0f235f4e1412"
+    },
+    {
+      "path": "server/services/cmc/register-link-recovery.ts",
+      "status": "added",
+      "bytes": 8325,
+      "sha256": "edd066e686a3590aa1fd76c20f53ed655b72b32d51988c629ba623d73570cb32",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/credit-ledger.ts",
+      "status": "modified",
+      "bytes": 17025,
+      "sha256": "7d8ad2c56cb752edf2c588ea223078bcbfd5aaa824526b1a68a45c45aae73391",
+      "auditCommitSha256": "8735a79e60aa34afda756675dfe04b2374964893123b547aba8d1be320ac57d9"
+    },
+    {
+      "path": "server/services/csr-builder.ts",
+      "status": "modified",
+      "bytes": 46601,
+      "sha256": "86b10136867351de436eee4a7acadf3ef5b6c4b43d5c10f003d26bd13ef8483e",
+      "auditCommitSha256": "dd6d62b87b124c00ccd397a74647270392c618606f252df7a7a6487bf3bd6649"
+    },
+    {
+      "path": "server/services/csr-tabulation-builders.ts",
+      "status": "modified",
+      "bytes": 22456,
+      "sha256": "d819ac2aa34fce8f0af9b7dbc3415848bafec3a9e7c630a2773c846b667fde8a",
+      "auditCommitSha256": "120869f2893513406deec00ae2ee76868280e241e3ff5b2d0443132d29cfedc2"
+    },
+    {
+      "path": "server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts",
+      "status": "modified",
+      "bytes": 7219,
+      "sha256": "7eb1ae4175f51561f74c6c3fe2b7ad7a8fb6f809973177f5e1b43f75a4099629",
+      "auditCommitSha256": "b345a8566cbf76475c16135c25c09b15c26430e829ef48d82b4fb3c9e039a545"
+    },
+    {
+      "path": "server/services/csr/__tests__/saved-clinical-tables.test.ts",
+      "status": "added",
+      "bytes": 5893,
+      "sha256": "df86f6fbd35d2baadcb6efc625fa926286501666aaa4e2c254c8602873e5462a",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/csr/__tests__/source-input-fixture.ts",
+      "status": "added",
+      "bytes": 2361,
+      "sha256": "b91a6a3cf6234f2c9107e71cd216ed95e614c9670acb1a823a6a4b0c843076b1",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/csr/__tests__/vault-source-input.test.ts",
+      "status": "added",
+      "bytes": 10054,
+      "sha256": "3b09d2726669b31c3619c9ea72076780dcc651b161649362e47082aef7e271d0",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/csr/csr-job-runner.ts",
+      "status": "modified",
+      "bytes": 19219,
+      "sha256": "dde738c27fd0f6faa5b1e7e1a6cfc882342bc839c5d0eea4a08a44b611f82e52",
+      "auditCommitSha256": "2e06c90986a2700709b698386be5a949b9aee51674657bb68a379ac2822c2e1d"
+    },
+    {
+      "path": "server/services/csr/program-source-readiness.ts",
+      "status": "added",
+      "bytes": 6047,
+      "sha256": "fbc88fbe908e92a36b587474b260b53a0269bcdacef4a6d0311c1353c0970b13",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/csr/project-scope.ts",
+      "status": "modified",
+      "bytes": 9699,
+      "sha256": "5806e2aa0b923fc53f64f4e2badcd475dd538cfed5677af9bd50e3aa316e818c",
+      "auditCommitSha256": "29ea18ef4ec835846e9def5bd325d395ed2582642094121fb7bfc73647253980"
+    },
+    {
+      "path": "server/services/csr/run-source-guard.ts",
+      "status": "added",
+      "bytes": 1923,
+      "sha256": "f5fd10fc1a31825bbed32badcd4ca87cd933344dfd0d3ddd92c7a03e9d6f2452",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/csr/saved-clinical-tables.ts",
+      "status": "added",
+      "bytes": 3077,
+      "sha256": "e9a97edf3a7bc0e9f79876a6113f030a0bcda503caf2f393f15c5f2120435f0c",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/csr/source-receipt-eligibility.ts",
+      "status": "added",
+      "bytes": 4328,
+      "sha256": "9aadc2ea5c02fc3d87e3f33b952d583168960c45f0d28ef3aa11a6840b62c303",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/csr/vault-source-input.ts",
+      "status": "added",
+      "bytes": 10737,
+      "sha256": "54a81d323cc145f348aaf5391a25bb6bed7544b8315cf611b31fd442db619568",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/defense-packet/request-contract.ts",
+      "status": "added",
+      "bytes": 7448,
+      "sha256": "7d40c23f69cec10a2ba0e561086e8a9d1fa58dfefd5d97bd720add1e206331d6",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/entitlements/__tests__/csr-readiness-launch-claim.test.ts",
+      "status": "added",
+      "bytes": 1186,
+      "sha256": "26278dfe2b52db1da3012001ef67377f1a947c78c7be998418a5a8799c8109fe",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/entitlements/api-prefix-map.ts",
+      "status": "modified",
+      "bytes": 3459,
+      "sha256": "818c7a40550af005b6d6fd99e9742b0b4acc38ce9ebebe5c39bfdb9ae45f8fc7",
+      "auditCommitSha256": "deb273ec70daa45ea03e992cbb3bbe213a2582895d5b2223a3cc24c184416047"
+    },
+    {
+      "path": "server/services/entitlements/launch-scope-api.ts",
+      "status": "modified",
+      "bytes": 6521,
+      "sha256": "11918465d215b9a84f315c6e155e9295dde435633cd9bb1133950dfda039ea54",
+      "auditCommitSha256": "c3628c3149815ebffe4b88bab31c2075c7e438e7f002ceb32445ce5670afbd5d"
+    },
+    {
+      "path": "server/services/etmf/__tests__/tmf-document-ref-guard.test.ts",
+      "status": "modified",
+      "bytes": 6988,
+      "sha256": "e5c4e7fd1bc3bba021c806cd973e6fb493b234ad96fb12d8aece4a7e95a385f2",
+      "auditCommitSha256": "1d69d8115babf83fa18a25af97ab9668418b4ae98605c2cd7d928d44d4d27d58"
+    },
+    {
+      "path": "server/services/etmf/tmf-artifact-persistence.ts",
+      "status": "modified",
+      "bytes": 9662,
+      "sha256": "d8fc31fdbc7a6d4a4155ab782f615772d0ea23ebf0fc7419317ea064093ebdac",
+      "auditCommitSha256": "c06e31a82fa69a6bb050e677d71d4b690862753eb384bc9211f66123ff9c7bb0"
+    },
+    {
+      "path": "server/services/figureGenerationService.ts",
+      "status": "modified",
+      "bytes": 29230,
+      "sha256": "7526438484e4a62414421be839563bec293bf725f368ad5290da35446e80218b",
+      "auditCommitSha256": "ebc0df63f1bb2ba67abfa55f0b8d10abee6f1d1a28c8567352d87cc3fb778b2d"
+    },
+    {
+      "path": "server/services/ind-lifecycle/__tests__/icsr-gateway-transport-after-send.test.ts",
+      "status": "modified",
+      "bytes": 11367,
+      "sha256": "101bb7e003d74dbe09ca911d12e077c47bf0c77c56895466a7211eb434d73b13",
+      "auditCommitSha256": "a86d449b039ffa332f87157e6056449442868417d69ef22b2c1fe5477ac37add"
+    },
+    {
+      "path": "server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts",
+      "status": "modified",
+      "bytes": 28461,
+      "sha256": "f55740877365429c783400d7fed365b27eebe20642cfacba616ff92c25398970",
+      "auditCommitSha256": "823c4cc845d56355bd4fe84b96ebb6910b27a39d18bfd673396b8981414d6c2f"
+    },
+    {
+      "path": "server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts",
+      "status": "modified",
+      "bytes": 12694,
+      "sha256": "c88c6327b49ce434df63884944dcfb96ea1ebe425c2b1b06ccd99cd30efc978d",
+      "auditCommitSha256": "0ac4d98c849ce082c1fa2f0d5b11dab52ec03fd5637f7f812ed0c71cf939374b"
+    },
+    {
+      "path": "server/services/ind-lifecycle/__tests__/ind-persistence-pglite.integration.test.ts",
+      "status": "modified",
+      "bytes": 4880,
+      "sha256": "34cba8f2759596a545ea2410b03efe60d8418494f5e900001a22f78df6a1fdb1",
+      "auditCommitSha256": "214de8e35d76fdd1a7223362b74fdb1e740c2ff46315892aadb409af890e28da"
+    },
+    {
+      "path": "server/services/ind-lifecycle/__tests__/ind-registers-persistence-pglite.integration.test.ts",
+      "status": "modified",
+      "bytes": 17031,
+      "sha256": "9362be0d8ccb07657042c2fcc0243e5405b83d71e5c020a25cc028493db642a0",
+      "auditCommitSha256": "17c5c2640f854f919f17b7e471145a0717309ac049a50ccb4ca118e81fc51044"
+    },
+    {
+      "path": "server/services/ind-lifecycle/icsr-gateway-transport.ts",
+      "status": "modified",
+      "bytes": 25875,
+      "sha256": "5dbdb76e24546571c3f1f66921521f698312448d9a4301dbf5da138fea97b5e4",
+      "auditCommitSha256": "e01ead9ab8755fb98f1b596bdcec6c7124d60f1097415cab019674a95287bd5a"
+    },
+    {
+      "path": "server/services/ind-lifecycle/ind-amendment-persistence.ts",
+      "status": "modified",
+      "bytes": 4753,
+      "sha256": "da3199654284c469bc68ea2789a0aaa436207d38fb04565cfaee612146cfa6f4",
+      "auditCommitSha256": "a3f475e8f8fe7f0943dc91fcfe629d50c1b8847a8401b7d1089caeee6fc2369e"
+    },
+    {
+      "path": "server/services/ind-lifecycle/ind-annual-report-persistence.ts",
+      "status": "modified",
+      "bytes": 7691,
+      "sha256": "0039184ce87cd81357da8765ba2a8f53c5919eb0ec859298410fccdbe89041ed",
+      "auditCommitSha256": "d58eb474d4c8f630d4c1a1f9ba3d6802bed7feb6f13cf3ef0011f07fd737adf0"
+    },
+    {
+      "path": "server/services/ind-lifecycle/ind-dispatch-snapshot-service.ts",
+      "status": "modified",
+      "bytes": 3691,
+      "sha256": "1bad7414aab1d85532a487e6a8191c2c6a6cf2c9f6ef4f786d7c1d26b7158cef",
+      "auditCommitSha256": "3238e7bb871b3d538c570bbd6c946d6d5a2ae6620e1ac3cd7549eabe0a45a836"
+    },
+    {
+      "path": "server/services/ind-lifecycle/ind-safety-report-persistence.ts",
+      "status": "modified",
+      "bytes": 6559,
+      "sha256": "041b83a14a08ecd136611e5b1e8a63f0e33427aae487d4d854e699f3213a0aab",
+      "auditCommitSha256": "5473d889269ce19f61653a6bfd0b3a2118c19267b8173cd20d10d84515e5a556"
+    },
+    {
+      "path": "server/services/keywordExtractionService.ts",
+      "status": "modified",
+      "bytes": 21676,
+      "sha256": "bf7f5293cd559b9463b90e41344fb69ae8b87e2ed7adc8c634fd2f5505e397b3",
+      "auditCommitSha256": "33964bc01db132d7cdff6c2e31511a4e440729775a41ea3ee287296e00999bde"
+    },
+    {
+      "path": "server/services/licensing/__tests__/eula-acceptance-audit.pglite.test.ts",
+      "status": "added",
+      "bytes": 11762,
+      "sha256": "870e662eddbfe0b2dd21c2d4e5fbf5cce02e2cbf92ceead9f13ab5fb2838912f",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/licensing/eula-service.ts",
+      "status": "modified",
+      "bytes": 16324,
+      "sha256": "9f6b38da20c403fd3ddd2b48cbf64d6ba07e403b09232a4a182c4a5a93ddad89",
+      "auditCommitSha256": "661cd94ba656f65f409248d3489b3e1747c6b0c3b11a3a45e42d73f59cf4e1e3"
+    },
+    {
+      "path": "server/services/literature-screening.service.ts",
+      "status": "modified",
+      "bytes": 21727,
+      "sha256": "2bc148fdc478d5ce8190e0432a222e6eab353daef302de54d47ae51ec6d36f9c",
+      "auditCommitSha256": "42eb36c4018ffa907fef77f0abc329db3576e4c25ca4cd41ec95599c2f7ca40c"
+    },
+    {
+      "path": "server/services/living-file/__tests__/freshness-report.test.ts",
+      "status": "modified",
+      "bytes": 10660,
+      "sha256": "c3446782fa32671aa5a5957e6383dfd767678db3f60cf280d893a550e6f27015",
+      "auditCommitSha256": "9c61b55e05ab6c0d67e363d73da3acb567e32b1a37a7a2a782195ec873a3b619"
+    },
+    {
+      "path": "server/services/living-file/__tests__/publish-outcome.test.ts",
+      "status": "modified",
+      "bytes": 6838,
+      "sha256": "ec37d1d40ba2a6396e0c71bc2361c509bee13981a7c720354773f9a8dd953d0f",
+      "auditCommitSha256": "c2f9c37c1a1a233a652a6f19e357110e9a6eb65a7c42b8c2a6f562088577482f"
+    },
+    {
+      "path": "server/services/living-file/change-router.service.ts",
+      "status": "modified",
+      "bytes": 14242,
+      "sha256": "c465603a84e783ff69ba0a2dd6ed7c5b95dd3e46a22f4cf5bf17a9785b2e7233",
+      "auditCommitSha256": "f55c0896df692124a8cbf60eab86e4660a8fae297f8a49675018fcc68853808c"
+    },
+    {
+      "path": "server/services/living-file/freshness-report.service.ts",
+      "status": "modified",
+      "bytes": 14806,
+      "sha256": "e0a594ef7d8b72b464e10fe72b8255221a418019d6514e37c2a1c1f780bedd52",
+      "auditCommitSha256": "7e21e0f192875e64ccaea38ac80fcef44f3574ab5f7858f7abe750a7d0fb7050"
+    },
+    {
+      "path": "server/services/living-file/publish.ts",
+      "status": "modified",
+      "bytes": 6500,
+      "sha256": "29baa222dade2bdfdcc121e61f39d7d35a1b5ae028625588b638f788668cee81",
+      "auditCommitSha256": "c18b8593de4b660b2e1b03216258aef38821571321e691f3a5413e6c6738f165"
+    },
+    {
+      "path": "server/services/living-record/__tests__/fact-change-audit-outcome.test.ts",
+      "status": "modified",
+      "bytes": 8699,
+      "sha256": "30b7e3bdbf06837cb9146cf6074b9ae845c582fb8f19eef63d3b05b36af57147",
+      "auditCommitSha256": "7bfc4263e0545c79358d632dd174e2b21e9faae4d258581697df9e546979db12"
+    },
+    {
+      "path": "server/services/living-record/document-binder.ts",
+      "status": "modified",
+      "bytes": 16534,
+      "sha256": "151fc670ee37160eec9b699f18b8e2510f99768844f2ee1dc654436ce53487e0",
+      "auditCommitSha256": "b203d7d6fc7c1480863aa8946a32ed78b5f7d9ba72b30c65fb8adaf1e60f6aa8"
+    },
+    {
+      "path": "server/services/living-record/fact-change-orchestrator.ts",
+      "status": "modified",
+      "bytes": 19352,
+      "sha256": "c01cb46b08d5a3d0e0567dc71779b770b5d6b507d6ae27e8190fd77a5b71b55c",
+      "auditCommitSha256": "0bf93a3d1e2e4b492473d92d3a8c8c51a17b4944bedec61fff7920a1708fa61d"
+    },
+    {
+      "path": "server/services/living-record/fact-propagation.ts",
+      "status": "modified",
+      "bytes": 6713,
+      "sha256": "8245fe544274cc5942bc080eb04e8a853e48f9ecc40d44e45a5d2536255d0b1b",
+      "auditCommitSha256": "3cd86a956aa3768c6d179b970d9e30eacaebc3066e53e274b9e94ee53b47fa3d"
+    },
+    {
+      "path": "server/services/living-record/reconciliation-engine.ts",
+      "status": "modified",
+      "bytes": 17778,
+      "sha256": "87893f90ca8fe7c68966cef066e002471a4c5d8b17ed454905ae760e216c5cd5",
+      "auditCommitSha256": "defa86ed13f0501d3ef6eea2cbc4dd9084084afd70da32855a7e64e1ae47933e"
+    },
+    {
+      "path": "server/services/mfaService.ts",
+      "status": "modified",
+      "bytes": 26320,
+      "sha256": "e4c382168a32298349a4e910239e16e562674a297747c0d55a3a62cfdd69d2e9",
+      "auditCommitSha256": "8ffbe039a0f22a2e6c0e7e7796664c2fd7855fb20e5b5d90892958720c271e2b"
+    },
+    {
+      "path": "server/services/notifications/__tests__/recipient-state.pglite.integration.test.ts",
+      "status": "added",
+      "bytes": 5049,
+      "sha256": "265cc8e9650c7ef759e9ec1ffd591b131b5a49541f65d2aaad9f12b2e713b985",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/notifications/notification-record-target.ts",
+      "status": "added",
+      "bytes": 9972,
+      "sha256": "19a6304c5553bd25c04b1bedc3e0321dcaba6853547318fbff8a91cea3dce037",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/notifications/notification-reference.ts",
+      "status": "added",
+      "bytes": 4211,
+      "sha256": "a0e7238c05497e5269ceb020dd16aa2d36385c35a26b46d9f9f2fd3f59af8db4",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/notifications/notification-service.ts",
+      "status": "modified",
+      "bytes": 11689,
+      "sha256": "c2f9dd27a0bf7d891cb76de559ab2eefb7133650e584e2149cb6aba455b6c33c",
+      "auditCommitSha256": "f877ae18803e5ebfddada89b6e7b5fefc8031c390b7647405a61720f5371d449"
+    },
+    {
+      "path": "server/services/part11/governed-signature-ceremony.ts",
+      "status": "modified",
+      "bytes": 12908,
+      "sha256": "7c466b86f438d35ae707af4d72c7341acae315fac2841372f0342a3d67ed4fa2",
+      "auditCommitSha256": "006e3ff2c2c214eb0a2473483ef94105107b5e5d9fa91cf67702241ba7d1d674"
+    },
+    {
+      "path": "server/services/part11/resolve-signer-role.ts",
+      "status": "modified",
+      "bytes": 1972,
+      "sha256": "eca0988ac3d8d4a6daaa9b66cdb5c535909188954f46afea784fd307f972903e",
+      "auditCommitSha256": "27add6805c8ba054280269c50957ea608ebdb3b5b65fbb65313def8cba25794b"
+    },
+    {
+      "path": "server/services/part11/reverify-signer-deps.ts",
+      "status": "modified",
+      "bytes": 3257,
+      "sha256": "27225c73bac44369544cf867b8fd11f7eb7b0c30859a3eab2ffe291eef89ecb5",
+      "auditCommitSha256": "7b8c74b537fe40efc451659e960dbe8ee48d8e0e67e2d4e0d265d0cf3c393acf"
+    },
+    {
+      "path": "server/services/part11/signing-authority-gate.ts",
+      "status": "modified",
+      "bytes": 3074,
+      "sha256": "5978afe9b62d9c4708bb951fdcabffe3e2ca51015e528f403dc4c1d390f1ec2e",
+      "auditCommitSha256": "7d3beea44d52e336ccc9e5b9ae9154c25fc46fa370655105b3ce64abd9fc818c"
+    },
+    {
+      "path": "server/services/part11ComplianceService.ts",
+      "status": "modified",
+      "bytes": 30632,
+      "sha256": "fd2c2e913676d336f2bbaf608c2d8b2a618ead214705ecf4bede0eaacb6ad75c",
+      "auditCommitSha256": "a35221e6f7504ef727184b6e0256da031348165c6405df5a45eeaf5b180588bf"
+    },
+    {
+      "path": "server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts",
+      "status": "modified",
+      "bytes": 7195,
+      "sha256": "c60bd8d2f04e656e9a69b7b0ac94e9267ff8975f41a18c61ef0f71c886a163aa",
+      "auditCommitSha256": "1247b2466acfc89c5a9c396ae932f7b6987b56a56abdeda7089f1806fb797a27"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts",
+      "status": "modified",
+      "bytes": 8679,
+      "sha256": "af5fc9d78f5bddb2b7456fefb4d283a0cb912c80421696200af1566d820674f5",
+      "auditCommitSha256": "f4fc4a982cd3e13b60f4f17a376379f4b6d149bc0344c64e923d5ef60d131ce4"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts",
+      "status": "modified",
+      "bytes": 22768,
+      "sha256": "e4b8162ef27105c40050e5187fdd9324926b3554f12c346713fb08e655d41201",
+      "auditCommitSha256": "75b340e8900ec71bf11ad23eca3ffdde45b57b13e7e31009e206d109bdb0d240"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts",
+      "status": "modified",
+      "bytes": 26084,
+      "sha256": "208a44428e08db8c54e2928d174c5f24cddaf13ce5fd47e6c7e743a3e104dd7e",
+      "auditCommitSha256": "db1e26f81563ad4cb7cf295c6f965159330b72d84ad63a14fdbc74b478ce8560"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/__tests__/estar-fill.test.ts",
+      "status": "modified",
+      "bytes": 38367,
+      "sha256": "3f62c2fc43d5d566f343bd967af57802b8c0d9d88498781385ce0791228cb116",
+      "auditCommitSha256": "8b96752625de496a938d2617c632802299f214b8003a93d561e30a99220a8ad6"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts",
+      "status": "modified",
+      "bytes": 8273,
+      "sha256": "e92b0671245673ff2ce80569857a51a79570bdbfc6bf896d3f350180633e4f09",
+      "auditCommitSha256": "f16694cd44d0154dd0f024f366e11149ba99e59de14dd0375657d6dc34a006dd"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts",
+      "status": "modified",
+      "bytes": 6576,
+      "sha256": "6f45bcd9b0c0fb12e17afdd57fba9e4d6c507e47b5c1df26974218fc4927e8f4",
+      "auditCommitSha256": "96ce92bafdcca2db1e80e96df8e2d36b63a0155ea4996c704d4e28dc61b20c4d"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts",
+      "status": "modified",
+      "bytes": 8681,
+      "sha256": "cd6c9bde857b1cd7775f273a9d48f518a99ad9a808cc0e3b819b50edbb8affdb",
+      "auditCommitSha256": "87feb376b5c5f378bcfc053abe7ab41f3ed9500103a5065f99b4b4e7de895418"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/__tests__/prestar-administrative-prefill.test.ts",
+      "status": "added",
+      "bytes": 7670,
+      "sha256": "5fc05be89b91febccdab33f38f6dae54050c5cb01a59c78c456aa3ae8f0a98dd",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/pathway-engines/estar/estar-artifact-retention.ts",
+      "status": "modified",
+      "bytes": 8190,
+      "sha256": "7c241651ccd575af7f1db2ae0f1ad501bf1d57ca0be7de544584380a21b7250d",
+      "auditCommitSha256": "c24de1f0a2e08187cde4ef8502d0921fbb450565d684c7eeaaf8204bc2dfe8b0"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/estar-attachment-plan.ts",
+      "status": "modified",
+      "bytes": 26263,
+      "sha256": "779a0af16f2021f7f6ead8c7e3ebc513ea1c0f4536d0377afaa7acef2ba362e8",
+      "auditCommitSha256": "a0f12f80cb85f70754353815cef7b0e9754e76ebbb5a9f52050da9963886f69d"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/estar-field-map.ts",
+      "status": "modified",
+      "bytes": 53192,
+      "sha256": "182740a45e4e546a55cebd5e4784796f53e991427f5ed22ff7663f7e524b7b00",
+      "auditCommitSha256": "cbac7289bfe4bcb524d42d042e0f765e53d203e57a6c68324fa03491da780a79"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/estar-filing-readiness.ts",
+      "status": "modified",
+      "bytes": 14942,
+      "sha256": "ee1491d6afffea5d4dad5eff78c639afd10659f4ced1ed0028b9ca8dc8f45b1b",
+      "auditCommitSha256": "e4630311e09b603f0a626577e03fca16c411b2c062b2ada688c1b98ec3357af8"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/estar-fill.ts",
+      "status": "modified",
+      "bytes": 36571,
+      "sha256": "2e6844262a169b148d1d9f58674afe0d256db3f392199536b73050da6835bf3e",
+      "auditCommitSha256": "95a672bf40ea78528afe7f0ff91da9c30af2c1b5d29d13b0f068d2bf7622d501"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/estar-registration-service.ts",
+      "status": "modified",
+      "bytes": 6613,
+      "sha256": "275418550b32be6cb0d95a50d1818ff8f47645604e785ce6c8e01edc63f95798",
+      "auditCommitSha256": "399caf89bf6ed94071fa7d0f0590a26cb301a4e55167daf9a2ddeba97bf972c5"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/estar-submission-service.ts",
+      "status": "modified",
+      "bytes": 17002,
+      "sha256": "71ade252611e70b5e267dd70974ae6141cce63da4f67f39e7a39d0d52fcd4408",
+      "auditCommitSha256": "f0cb2ac35399612aba33b6adf81c357ebd9b9b97fa832fc6f66aa99ecb0d5101"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/estar-template-registry.ts",
+      "status": "modified",
+      "bytes": 14670,
+      "sha256": "8253d276fe235c146c9d1d7f31202859da31e5da8cfd433b7231578f96de7942",
+      "auditCommitSha256": "108574d8a09d5c71d3762b47f69b9d86bff50f8d360fd1eccb411245c130c415"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/estar-versions.ts",
+      "status": "modified",
+      "bytes": 19131,
+      "sha256": "99ce4e2eb135aacb26502badc0d4a9f800a9989ee780fafc6f56a5c85d22a622",
+      "auditCommitSha256": "4a66f597712b94d3b7e0203dc1f90a8cc35699be3ec52a28542d75e926bbb4ee"
+    },
+    {
+      "path": "server/services/pathway-engines/mdr-ivdr/assemble-technical-file-from-core.ts",
+      "status": "modified",
+      "bytes": 22350,
+      "sha256": "4e690588fcfff7e5cb4a053ec49d18df38c0b1e0bf2b22d77a148c1b6daee52a",
+      "auditCommitSha256": "baba7a151d7956016b2084b26cf1e8c825f53b0908a40e5212efd54809f87fa9"
+    },
+    {
+      "path": "server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts",
+      "status": "modified",
+      "bytes": 19564,
+      "sha256": "48d3d506ee1ea530ec31d76d6285528f0ce0abf02fe4cff28dcbb81e411912e9",
+      "auditCommitSha256": "3a6cffce3c8bdc779ee01f64ea2211e38fd133af5f470ebd8b8bcd7432e85167"
+    },
+    {
+      "path": "server/services/protocol-development/__tests__/protocol-program-scope.pglite.test.ts",
+      "status": "added",
+      "bytes": 9731,
+      "sha256": "b731660c821b7ba41d4ba8c42ed328dbf85c07ffc8abe6056e4efbc1b3b309d9",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/protocol-development/pdev-protocol-index.ts",
+      "status": "added",
+      "bytes": 2432,
+      "sha256": "def354d878535c63e301d712d7549cf28ee5b0e897d77b3e1abb4cd188b1a193",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/protocol-development/pdev-view-assembler.ts",
+      "status": "modified",
+      "bytes": 36128,
+      "sha256": "d592886e98d0a3b3db44d6c3c53a5c20ecbee015da2805877f5454faceffdf6c",
+      "auditCommitSha256": "a663e00b8fb5903d9f8cd0dd17669ed9ff9efcd9200c6f222ef64af277cbe7e4"
+    },
+    {
+      "path": "server/services/protocol-development/protocol-development-service.ts",
+      "status": "modified",
+      "bytes": 31092,
+      "sha256": "ac920400ef5a59f9220273a66325614604ff3a370642655192a8c5bc3475dbd9",
+      "auditCommitSha256": "8e6e4a72ba404285b3f7dcc358784b334de1e8d0340838ea9874998d0fc7401e"
+    },
+    {
+      "path": "server/services/protocol-development/protocol-program-access.ts",
+      "status": "added",
+      "bytes": 254,
+      "sha256": "f815fa5194549379ff14a8f0bf49dae13bf5869e704d6ec38fb89860a8b6944c",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/pv/__tests__/sae-cases-view-assembler.pglite.integration.test.ts",
+      "status": "modified",
+      "bytes": 8000,
+      "sha256": "23a24c89ce6ba5914aadbf46922fc201220b2254ab3efae5b787abbc1eb7603e",
+      "auditCommitSha256": "fb2bced14ab678fee837fab2dca480ec28ffac29529eff2c6a6fe305fbc822bb"
+    },
+    {
+      "path": "server/services/pv/sae-cases-view-assembler.ts",
+      "status": "modified",
+      "bytes": 7715,
+      "sha256": "8ef6d4ffb5986b5647e794c12cc25134f74c86d99c2de07e360c30d200ebb258",
+      "auditCommitSha256": "82d2ed62f83660712de20c21bfb168d7e8472b674fb724c2157a69bf2bff845a"
+    },
+    {
+      "path": "server/services/qms/__tests__/changeControl.pglite.integration.test.ts",
+      "status": "modified",
+      "bytes": 14577,
+      "sha256": "26904563858c402f2108bfc95ae2837887a4aa1e54e045f75cb3c9bfc9a5baba",
+      "auditCommitSha256": "5aa6c843b4f076259c9b734410f3f5b85af468800b89f3061ab1acf188bc352d"
+    },
+    {
+      "path": "server/services/qms/__tests__/controlled-document-content.test.ts",
+      "status": "added",
+      "bytes": 2698,
+      "sha256": "cf8f350bcc745c42cec9c11baf15a698c51430a7b6f16b0912fe38d49767fa58",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts",
+      "status": "added",
+      "bytes": 12450,
+      "sha256": "6f50555904d5f53f20c52a05e619a9969b5dc67162c15d1758eea8836320d228",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/qms/__tests__/qms-authoring-harness.ts",
+      "status": "added",
+      "bytes": 5506,
+      "sha256": "1740aa2bba71084d1d3edbe1b0a2cc6a1c0d05ae1d42afb27cb02b81af82ca9c",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/qms/__tests__/training-compliance.pglite.test.ts",
+      "status": "added",
+      "bytes": 9015,
+      "sha256": "c7c7dfbd4c3c5275de8a7313c2c67e783cd8bb4b91070e031bb7e85f812c353a",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/qms/changeControl.service.ts",
+      "status": "modified",
+      "bytes": 17930,
+      "sha256": "00c52cbc0689268e04c28a4143a4e3bdca5a1cca4b89d2458ff26b7bd9229aa1",
+      "auditCommitSha256": "1f0addabe0930b7600b92e7cd7eeb71c208c92daf305cda23cf1e0c341a562a8"
+    },
+    {
+      "path": "server/services/qms/controlled-document-content.ts",
+      "status": "added",
+      "bytes": 6179,
+      "sha256": "94bd8c7f80f5d5a80753c1ba480491ba497b65705e3a3691f618f09ff32a6140",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/qms/controlled-document-service.ts",
+      "status": "added",
+      "bytes": 20030,
+      "sha256": "fd3ee7a18192d1fcb3b250f7d512b292c06c4dba6f19d5b726ae3188febba5cd",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/qms/document-approval-signature.ts",
+      "status": "modified",
+      "bytes": 24033,
+      "sha256": "18e15b10743dd39d2a8172c4c5b7bd80b91a6ebdf68b74956b71fd450d56969e",
+      "auditCommitSha256": "fffc6009bb4b0bbe8ccd4a3d1d0fbd54bcd187fd8589fef7010deb3f9ba0953a"
+    },
+    {
+      "path": "server/services/qms/training-compliance.ts",
+      "status": "added",
+      "bytes": 1954,
+      "sha256": "2b5e2a3470552810a3a4429b2ec6e6e30c08f3c25e2a5070b0cbb7750ba43a75",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/regulatory-assessments/regulatory-assessment-persistence.ts",
+      "status": "modified",
+      "bytes": 4952,
+      "sha256": "cc5e8e3ca5a4b8e976fc412575e8608e95ded043e0e3325aaec1b3b8d7091918",
+      "auditCommitSha256": "940b19777d98deb4a90a46d731f98fa967f5d3e1b1964ebb065c2b8d408618b0"
+    },
+    {
+      "path": "server/services/regulatory-graph/__tests__/defense-packet-staleness.test.ts",
+      "status": "modified",
+      "bytes": 11879,
+      "sha256": "cbba71aae3b3ae187a1e9a1f8e9d5f0acf320c223699e96bd87cbd97faa869c5",
+      "auditCommitSha256": "bf0d4be82a75c0c14eac2c583cbfc484bfde0a5382c26af59da091ef893bfc0d"
+    },
+    {
+      "path": "server/services/regulatory-graph/defense-packet-staleness.service.ts",
+      "status": "modified",
+      "bytes": 17259,
+      "sha256": "283f16aba666bc27fd65f468037f124a704c7e702399665235d02ef278139eb3",
+      "auditCommitSha256": "6b4a0d0114b66adc27617484478eaf13bb34d6d2a595660bb60693a8a327860c"
+    },
+    {
+      "path": "server/services/regulatory/__tests__/deferred-assessment-governance.pglite.test.ts",
+      "status": "added",
+      "bytes": 10561,
+      "sha256": "231d527dfe95d1d2a9f79bba00576d99cab348299f385f2ddf87346cea695370",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/regulatory/ivd-assessments.service.ts",
+      "status": "modified",
+      "bytes": 6053,
+      "sha256": "5429657694c1ee719ec85186bda159811327fce5df298f76576e306976712db4",
+      "auditCommitSha256": "0726d9412ea2a33ec812d111c049a51221cee083dbd354d8647ee9b981a38804"
+    },
+    {
+      "path": "server/services/regulatory/ivd-governed-write.ts",
+      "status": "added",
+      "bytes": 2444,
+      "sha256": "a8323da4cbfe2e9fda18394feac2a4b24723ed4c2e593bb76c656a1df547fbe3",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/report-os/__tests__/capability-inventory.test.ts",
+      "status": "added",
+      "bytes": 1926,
+      "sha256": "5a6a565ee008a0e8281c5d1670860f2bc138c9bfd4ec02d7208d8a6ee7695c40",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/report-os/__tests__/label-currency-matrix.pglite.test.ts",
+      "status": "added",
+      "bytes": 14727,
+      "sha256": "566f58e824d7d17b5ecaae69e2a6b30e08ba3c436ff6ed015e29df41bb81775d",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/report-os/capability-inventory.ts",
+      "status": "added",
+      "bytes": 2640,
+      "sha256": "9d38c43b5c64a3fe49bdf260b0da3405bb18b7cb07a638532e712473beb957b3",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/report-os/label-currency-matrix.ts",
+      "status": "added",
+      "bytes": 12962,
+      "sha256": "d70b5a2d5785584813f5bcddfe3b4e4a5604239d5aec0f0f4ed0a35c244d9120",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/report-os/render/label-currency-matrix.ts",
+      "status": "added",
+      "bytes": 3377,
+      "sha256": "866fa11261191a10db4bb6c261dc6dd6130918c59f89de680d71874ad8665b81",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/report-os/render/render.ts",
+      "status": "modified",
+      "bytes": 24231,
+      "sha256": "f4b3aca439efe7f256f6f9e2419eec3d59f59993f7aaeb9c1c4322f6676218c3",
+      "auditCommitSha256": "a3801530615ea8ff471404977e3f05a2f9859cb8440a5b4ba84e55b62c8baf81"
+    },
+    {
+      "path": "server/services/report-os/report-engine.ts",
+      "status": "modified",
+      "bytes": 9452,
+      "sha256": "23b54b6e27ea9d1a8611baa54387282875b610a8f0bdf5cbe402cf974caafd4d",
+      "auditCommitSha256": "be3544c9605b860c3839c3c48f57c2bcb47feeba8a36fa5746d13e767acfd88d"
+    },
+    {
+      "path": "server/services/report-os/research-compliance-report-providers.ts",
+      "status": "modified",
+      "bytes": 15850,
+      "sha256": "659748403f9c5e577e118b4bfb13b0e43e36594dbf3d78c149d1dbff4a491d3d",
+      "auditCommitSha256": "3e7703bd4533e448edb7c2001283df997fb7b6e7b30c056fc0dd4bb9ad0f030d"
+    },
+    {
+      "path": "server/services/seat-licensing.ts",
+      "status": "modified",
+      "bytes": 10932,
+      "sha256": "ce4c2a20672f167db62c9d3c1361b55047913d402b032c45fa997e5c65e27c05",
+      "auditCommitSha256": "5173c9e6fd63d203f57a3104b372e23d9091d65c9cb37e10f3209399206a1d71"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/acknowledgement-timestamps.test.ts",
+      "status": "added",
+      "bytes": 1183,
+      "sha256": "16184907b7e3c172e062781634548e690073002021dec5c04efcac7796c1e141",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/as2-cms.test.ts",
+      "status": "added",
+      "bytes": 5346,
+      "sha256": "440ed67eadc35de58d9610f73076284e524dc322b768079df392d46215754b8d",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts",
+      "status": "modified",
+      "bytes": 32142,
+      "sha256": "f516ba2f2ef4e2df7ac7a1dcc55c4b26d2281ae1a2bbd6380c435feb7f4839b2",
+      "auditCommitSha256": "af7d8b1c369e23daa60c97c64d007fb32ddc26f49498d5a6d57536e1e602ecad"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/fda-esg-ambiguous-delivery.test.ts",
+      "status": "modified",
+      "bytes": 12596,
+      "sha256": "6b34cba26f09509077640ce78c0a94ae5236104b13fa7cfa4448eb088e7fcd27",
+      "auditCommitSha256": "520b1d76803b3e58367722c78e166d5d215b3e232b24d6959dcabc451b7b1f46"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/fda-esg-client-account.test.ts",
+      "status": "modified",
+      "bytes": 6449,
+      "sha256": "bc1d8c8747ed4ce5019c11bbd65abe902dac44a45d2c18235edf4d091a30e5ad",
+      "auditCommitSha256": "b50dce0b597615fc5729311171324aedf69d5f1365da7fc7b1c63d55956b3154"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/fda-esg-cms-postsend.test.ts",
+      "status": "added",
+      "bytes": 5571,
+      "sha256": "35c0336d579e92a843e366690e2f6d8b2c36ae4fa4d4804b650e909f7a441646",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts",
+      "status": "modified",
+      "bytes": 34755,
+      "sha256": "611457bae0489279efbda8e2b802c07f76810dbd657146d3aa32bea1ab587742",
+      "auditCommitSha256": "b9c31de6c00bee435df9aff039daed1deac3c1d6701ffe6979872015b6f1b7c5"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts",
+      "status": "added",
+      "bytes": 10699,
+      "sha256": "eeb11d1ca50efa746b0210f08ab9fb675a8a3fa300f218d73f0c3c18b6a89698",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/gateway-qualification.test.ts",
+      "status": "added",
+      "bytes": 4044,
+      "sha256": "f479614b628e4408bda4ddd73a8d075ae8c7fe300e35f5d47529962b62648714",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/support/as2-cms-fixture.ts",
+      "status": "added",
+      "bytes": 4246,
+      "sha256": "eb9652ae767a6729df47ca000b3fd025180403745fd8219f98aa6c17fde11abd",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/support/cms-semantic-double.ts",
+      "status": "added",
+      "bytes": 1603,
+      "sha256": "809f6ef54dc7f620e0b7e971cd2a73e063f98430e0e1f36d338ffc829892e309",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/submission-gateways/acknowledgement.ts",
+      "status": "modified",
+      "bytes": 4176,
+      "sha256": "dc4ce78d8bc16da95447507a212bcb027f62d5accd7c9b3ace9ae6508e38ea93",
+      "auditCommitSha256": "c914c2482c8de5baf589adf10a1441018447b8f4f8916c1316d4601d33ad8537"
+    },
+    {
+      "path": "server/services/submission-gateways/as2-cms.ts",
+      "status": "added",
+      "bytes": 10057,
+      "sha256": "82e2c90ae59f3f0e33047a3170d797d36e3ee07f64a3b6bf83440e02f59bcde6",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/submission-gateways/as2-transport.ts",
+      "status": "modified",
+      "bytes": 49394,
+      "sha256": "987b0a37e45fe6e3ddf17c729eeaf033ba5f83fc7210d924127f4d492ad96105",
+      "auditCommitSha256": "09ea2c31b5ccb2608ada7d5ea484cf164ef3ce8004a4285292642330ca8dc554"
+    },
+    {
+      "path": "server/services/submission-gateways/fda-esg-receipts.ts",
+      "status": "added",
+      "bytes": 11864,
+      "sha256": "c013658681651f7e185697769abccad6b69619f0c9eb49922dab67ef5b484f34",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/submission-gateways/fda-esg.ts",
+      "status": "modified",
+      "bytes": 59962,
+      "sha256": "081f0c6088b5a262b7e4525697ff3264ce1c6d2d930c0b7cbc7f8c030f098374",
+      "auditCommitSha256": "764fc3bb74d521c4f50c9e7f3edb786791664b394b4725bb154699a790ab5057"
+    },
+    {
+      "path": "server/services/submission-gateways/index.ts",
+      "status": "modified",
+      "bytes": 18063,
+      "sha256": "b394d53379514af5ddb66ee11197d42745236df8a1434f2be83928d6c4daa44d",
+      "auditCommitSha256": "2b99a63b385f4165a2ed663692c36376644e5c097edf9768b7b96a3a66a5c68a"
+    },
+    {
+      "path": "server/services/submission-gateways/transport-refusals.ts",
+      "status": "modified",
+      "bytes": 1779,
+      "sha256": "9862fa37ac108f6ba36e33244c4a6031adb60b4e43ace2cd07733663f8d44cd7",
+      "auditCommitSha256": "99d7b810654ed5f683f8f399648f703825a1ff3bf0b28fc4c06a098f7d8768cb"
+    },
+    {
+      "path": "server/services/submission-gateways/types.ts",
+      "status": "modified",
+      "bytes": 25841,
+      "sha256": "f04723661b5f0347a3444e5bf6032ec2884d954d085503204eb7504104993369",
+      "auditCommitSha256": "b82275335186b43f0ecf45c97f85a6195c0f5c2caca0c7591e494cc4dba2f66d"
+    },
+    {
+      "path": "server/services/submission-orchestrator-continuation.ts",
+      "status": "added",
+      "bytes": 17153,
+      "sha256": "6f72530d2935e3b68199b583457a3d85400484b120e58754c6d4ff8bd3553301",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/submission-orchestrator-inputs.ts",
+      "status": "added",
+      "bytes": 2260,
+      "sha256": "b1475b3631b14ae3acc0f6792d3da6470b49b67858ed1a34886da0d52c934dd9",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/submission-package-orchestrator.ts",
+      "status": "modified",
+      "bytes": 153059,
+      "sha256": "c3a102a1154d8265a787fd372bfe1dbd789734a79e4733a6b5f408468c50537a",
+      "auditCommitSha256": "57b20ac1152bb8b25dbdd95bf7a0bb4db25f3011752ccaf9e32792e5886a3595"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts",
+      "status": "modified",
+      "bytes": 25033,
+      "sha256": "4436aacd254074a8fa671077907219bb7c4e5bd6a5e67df6475c8cbb406ec485",
+      "auditCommitSha256": "39ab94ba64272e532c0c3fcdc2fbf1cefb317c1717b494a626757a42bbb3fa7f"
+    },
+    {
+      "path": "server/services/submission-service/submission-service.ts",
+      "status": "modified",
+      "bytes": 165964,
+      "sha256": "3af4a6be3b26f2fe52085c99d250c07ed93fba6b52fdaafe0df6e9ccb8a51f87",
+      "auditCommitSha256": "0341db42673f852adb5424601c3ebe45073b84f73e5628ea199f5d58a46376cd"
+    },
+    {
+      "path": "server/services/tasking/__tests__/task-home-programs.pglite.test.ts",
+      "status": "added",
+      "bytes": 2334,
+      "sha256": "13145bc97439fa1a98510a1a6235494cd84456fc1108fc4f63514434555d1cd7",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/tasking/task-filing-home.ts",
+      "status": "added",
+      "bytes": 3865,
+      "sha256": "7001eab5571b9ed52c600357d9f98934a222506b7115b9abc6ce16c7cac4e3b1",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/tasking/task-home-programs.ts",
+      "status": "added",
+      "bytes": 2040,
+      "sha256": "0ac6c680c8c507e5c0828b64c11806631e0b3ca5490b1722fe8ccb612e5ee570",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/tenant/__tests__/pending-invitation-delivery.test.ts",
+      "status": "added",
+      "bytes": 1559,
+      "sha256": "b9a9b200141c20c1eebd4dfc88ab7a4348ea22d23eee8bfd41d44b61830c54e0",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/tenant/__tests__/tenant-offboarding.test.ts",
+      "status": "modified",
+      "bytes": 17675,
+      "sha256": "5042e474cf86bac6ec237d40de8f72d9ee20745c53810a1922c0098866e2676c",
+      "auditCommitSha256": "04a609042ab9df2d1b4000d8d6cdc625e8801de8aaa119041d893014ba673b36"
+    },
+    {
+      "path": "server/services/tenant/__tests__/tenant-purge-audit.test.ts",
+      "status": "modified",
+      "bytes": 9650,
+      "sha256": "123874b29d7f26d7d21622d9e79d2fd6d7a0e80372963debc18c605773aea9a6",
+      "auditCommitSha256": "2691150c581ca80afd0403b886fd0400941a58e4ce45f371da7b412172176def"
+    },
+    {
+      "path": "server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts",
+      "status": "added",
+      "bytes": 8852,
+      "sha256": "1988ef5abe8ae33ba2e7cba25090f4ce86680e16d42522f38c56380ace515d0c",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/tenant/pending-invitation-delivery.ts",
+      "status": "added",
+      "bytes": 999,
+      "sha256": "86820223817022e7970de9a445e8836f77cb0d05a8297924139c60235df321f5",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/services/tenant/tenant-offboarding.ts",
+      "status": "modified",
+      "bytes": 54805,
+      "sha256": "6c6c01c42844618102542618f2e588199dbbcc285fc5dc6a67a1cfe032eceaa5",
+      "auditCommitSha256": "2637782a98bd83c65da6e3759893e84b2db21fb9af2eb80dda4e21502ea29645"
+    },
+    {
+      "path": "server/services/usage-metering.ts",
+      "status": "modified",
+      "bytes": 7307,
+      "sha256": "8809ad51f22f949969f0125059236376504afac3272ddcef269818fb1ce94e34",
+      "auditCommitSha256": "699b39a1e926e943b670872ac31ca241740fe15840816a2b9439a5da12c245d2"
+    },
+    {
+      "path": "server/services/vault/document-catalog.service.ts",
+      "status": "modified",
+      "bytes": 29616,
+      "sha256": "21332ca10080006e5753a663a75c39bc1cc250c8f0e8726bb31afcbd1fa76a0e",
+      "auditCommitSha256": "b4f6b3e11ac715a30cdcdbb33594a5b7cedc05a565e71bca2fcf57dcb5fcd732"
+    },
+    {
+      "path": "server/services/weekly-usage-limits.ts",
+      "status": "modified",
+      "bytes": 23117,
+      "sha256": "a2b7b132ba5a7a5e9c02b60434cf76067c520c63d2c03313bff2fa861e04aacb",
+      "auditCommitSha256": "7f631e495e4621a902741ac9c87c6a4a0dab187e3c4fa0fa33e5133fcb5dd4f2"
+    },
+    {
+      "path": "server/services/workflow/DecisionLineageService.ts",
+      "status": "modified",
+      "bytes": 38910,
+      "sha256": "5bbd3906ef52fd60c97649aafd7632c4a87803e1c36cb4d138daac725f6fc022",
+      "auditCommitSha256": "586ac7f30dc65a7f50085787a784907b334da31d0f25ff51498d12faf77974b0"
+    },
+    {
+      "path": "server/services/workflow/WorkflowExecutionEngine.ts",
+      "status": "modified",
+      "bytes": 8575,
+      "sha256": "84b9ba3200cafecffa94725365363307e1ce3b8899e142259f1a31060b693712",
+      "auditCommitSha256": "ea094c0845421d8c6e26ad4bbea79c4e808d382d2a806ee73f28d36f95f52b0c"
+    },
+    {
+      "path": "server/services/workflow/__tests__/decision-record-outcome.test.ts",
+      "status": "added",
+      "bytes": 3841,
+      "sha256": "4be32af4c91aed7ae837229ba1f24f8da293dc41d031fa57c5645065c10a7f32",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts",
+      "status": "modified",
+      "bytes": 7867,
+      "sha256": "4e0fb3fd6635907c74ff96da161113c70cfac9c9fd8a8a49881bffbae3d2901c",
+      "auditCommitSha256": "9308d199a86d53e5362971a8680873a864e4aedb6b68454c8bcc22874c1bf09e"
+    },
+    {
+      "path": "server/startup/__tests__/tenant-impersonation-detector.test.ts",
+      "status": "modified",
+      "bytes": 5422,
+      "sha256": "4a493e254256d721de7b0186868379bcb6e91fc1ebfcf7b025b606d0bea1b006",
+      "auditCommitSha256": "068ffe5dde88a014cc07ae24e77a060f24d519a26a3df5186c6c56c045730037"
+    },
+    {
+      "path": "server/test/__tests__/workflowEngine.test.ts",
+      "status": "modified",
+      "bytes": 2123,
+      "sha256": "c06865c3c2b4c974259798b6302d222e267362420d61b6399485dcd249d70fd1",
+      "auditCommitSha256": "f3eb72883c87257a471fe2266d158110ff90e5457d0312a7d46a31f07b17529b"
+    },
+    {
+      "path": "server/utils/__tests__/fileSignature.test.ts",
+      "status": "modified",
+      "bytes": 12012,
+      "sha256": "782c73db43feb979dd60be0ca13acb9c766113f10d140968a658234ab2711845",
+      "auditCommitSha256": "bdc510f547b074012749e9539ca83a80bd62a9f8ffa80e65bc2332f1b59edc46"
+    },
+    {
+      "path": "server/utils/fileSignature.ts",
+      "status": "modified",
+      "bytes": 11128,
+      "sha256": "a48bd6e9a64b0f87a60bef4c440f5d95ac1c43899e507fb89fa874b63915743c",
+      "auditCommitSha256": "078073d3c9097ffb87468a40094d6bacc18fb5e2d4db0cd83c72aec653d93713"
+    },
+    {
+      "path": "services/ai/PredictiveIntelligenceEngine.ts",
+      "status": "modified",
+      "bytes": 18112,
+      "sha256": "2a21532e338bb38aca61aa245c3340e068a5d3f1ce3d4d08d7cd1e439ba6c9b8",
+      "auditCommitSha256": "d139eb7c817b621e004b98321bf2d697ad3c05feccc84e9d0b2da200f1c6605f"
+    },
+    {
+      "path": "services/capability-unavailable.ts",
+      "status": "added",
+      "bytes": 343,
+      "sha256": "6ee3e01f8aea6d610da55551b5c42de18f3e0656a23cbff312d1d48b9fac2344",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "services/workflow/WorkflowExecutionEngine.ts",
+      "status": "modified",
+      "bytes": 38753,
+      "sha256": "eaa9a92c220bb73733ab572ae3a233b4f6b75daad666af0de7b1bc14cff497c5",
+      "auditCommitSha256": "4e7bcb17ff6f7ce563264ab68f75e2b88dcf6206c36f40a22a5670438fb0e2dc"
+    },
+    {
+      "path": "shared/__tests__/csr-source-input.test.ts",
+      "status": "added",
+      "bytes": 4472,
+      "sha256": "7e222db69af8c27952ca0b507f513fae0d8083039b3e36f6f8fec2f488a38521",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "shared/authoring/source-import.ts",
+      "status": "modified",
+      "bytes": 3119,
+      "sha256": "2049a716104a9f59cb5dc49934bfc8a842b36c313587ac36c69c350e2eafb854",
+      "auditCommitSha256": "dbcba928bef1b26ddd911a0c76037017a219699b0eaf9b07ea3bb8dec64e61d1"
+    },
+    {
+      "path": "shared/constants/__tests__/deferred-capability-inventory.test.ts",
+      "status": "added",
+      "bytes": 1065,
+      "sha256": "c11528311eb11d04b5180637703be7defeafd90da4f97efe4118c0866210313a",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "shared/constants/deferred-capability-inventory.ts",
+      "status": "added",
+      "bytes": 7720,
+      "sha256": "a690f0a1806917da721f3e1e037eba48357d5b5133ae1781fc8d396a82d3020e",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "shared/constants/notifications.ts",
+      "status": "added",
+      "bytes": 1675,
+      "sha256": "ce6c96119cc5095be124b218e59992864a0ab763d9c3e4cfdcfc0cb572f6939a",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "shared/constants/ui-surface-registry.ts",
+      "status": "modified",
+      "bytes": 50936,
+      "sha256": "3f7842de28f65f993dbfa3ec85cbd09a71cacd08ef225fbafde03a5aeaaf3fe6",
+      "auditCommitSha256": "e614068f57d4e0ae026cab6a65c7abf42cebf93c0c9be86985fa8b3a90731b4f"
+    },
+    {
+      "path": "shared/constants/ui-surface-registry.ui-v2.ts",
+      "status": "modified",
+      "bytes": 69293,
+      "sha256": "42687378ae2f0070cd013aea8dc8b8891a855ededfa05c48a135e99efd6ac115",
+      "auditCommitSha256": "ab6b921d75335abbdf2b0600d2ca1ea6ec5018983feb295075c83601e4cb0c14"
+    },
+    {
+      "path": "shared/csr-source-contract.ts",
+      "status": "added",
+      "bytes": 4327,
+      "sha256": "25d5b6760ff188c8cb0148f8b5d457db61dca67f7db2fd149007f8e8d7aadb26",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "shared/csr-source-input.ts",
+      "status": "added",
+      "bytes": 9949,
+      "sha256": "e9e24114ae939cc185ece171e67f69d50db3a9d500e40d0f6107a6bea5d41e0b",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "shared/schema/gateway-transport.ts",
+      "status": "added",
+      "bytes": 329,
+      "sha256": "5511919ea5c5066f8eee776d908d4bef52704a503936d73d2c946b221bfea6a1",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "shared/schema/protocol-development.ts",
+      "status": "modified",
+      "bytes": 11847,
+      "sha256": "ff5df1037bba11436f5a2a1f21653de4cf9ce5c5f2bbb119539aa86333798713",
+      "auditCommitSha256": "d0d59090512cd9b5fd9381bb0a939e86ed8e57f4e861b5b137ebf49670afdbad"
+    },
+    {
+      "path": "shared/schema/submissions.ts",
+      "status": "modified",
+      "bytes": 17527,
+      "sha256": "12ada04e0959def2ddaa3b45c1130664d5989c49426478c4606a4564659520ee",
+      "auditCommitSha256": "1b20537144ed924b486e2d25f66f2ab666606a6d7924044b4f9f1894c732ae40"
+    },
+    {
+      "path": "shared/types/notification-navigation.ts",
+      "status": "added",
+      "bytes": 3475,
+      "sha256": "241d10ae85bb62cbb3efd63f40ccc84ffb3a8ca5790bce81d8a1374c0304991c",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "shared/types/task-filing-home.ts",
+      "status": "added",
+      "bytes": 2518,
+      "sha256": "03ad37759bd3e59b4640eb0cfcb9c2bd012ccd66e153e8ab6e8c7067bc4c7795",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "tests/ai-safety/ana-input-guard.test.ts",
+      "status": "modified",
+      "bytes": 6657,
+      "sha256": "ea8ddb7c9db29cf23d58c4eb158707efd30ae668d3d573dab35c8aaa4649452c",
+      "auditCommitSha256": "9cc2bdb3a6e7cb0881b3d935bdb59f79c7eae55473266f3923ad6221da9d5d0d"
+    },
+    {
+      "path": "tests/artifact-routes-invalidate-bundles.test.ts",
+      "status": "modified",
+      "bytes": 13801,
+      "sha256": "214c83dab648b2658d2a5eeeef76d2f42f5078b65173f89896fee7c7351a62e2",
+      "auditCommitSha256": "f629df5d0678c9aee409775268914b0d2078b561ae3b325ac665977b022804fd"
+    },
+    {
+      "path": "tests/capability-convergence-refusals.test.ts",
+      "status": "added",
+      "bytes": 1917,
+      "sha256": "7e854173ae7082addf1cee358ccae8ab5c171bd3f39483fbf125cf4da207bf1e",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "tests/ci/launch-qualification-catalog.test.ts",
+      "status": "added",
+      "bytes": 2037,
+      "sha256": "1162ce11f7d8501f172796ba1369b7a8d8a1e70a2022e099fc7616469b7abf23",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "tests/db/ai-feedback-persistence.dbtest.ts",
+      "status": "added",
+      "bytes": 17779,
+      "sha256": "ab69735092bbe0b8f2599b66254f3a03f988ae9d6e508e7ea5f52cb51be4905a",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "tests/db/bla-ivd-request-connection.dbtest.ts",
+      "status": "added",
+      "bytes": 12495,
+      "sha256": "13467fbe56b2f2788188b68b924cd612efa8a8af9b84324c05f6be1b2c1efe55",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "tests/db/capa-governed-transactions.dbtest.ts",
+      "status": "added",
+      "bytes": 25683,
+      "sha256": "7683af9d57453271f10641aa1c83460306aa47425164bb479f8333bd0ded77af",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "tests/db/content-audit-consumers.dbtest.ts",
+      "status": "added",
+      "bytes": 30278,
+      "sha256": "74ed02a150103e816cbf9e17586f70085f8364a26e5ca9287c9c41b84bee0696",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "tests/db/csr-vault-source-input.dbtest.ts",
+      "status": "added",
+      "bytes": 21889,
+      "sha256": "d75aef8e60ed2180abd9b924f39e722e7cab0a67de4008d064163c2fc1113331",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "tests/db/domain-sign-ceremony.dbtest.ts",
+      "status": "modified",
+      "bytes": 29422,
+      "sha256": "810eeb110e53e4c350b32da00773833a51d50c2351305186549e5ec9b8b0021a",
+      "auditCommitSha256": "819a2d85132c55cd445f853f6a2f917461691c34600b1fc391235691e269c53e"
+    },
+    {
+      "path": "tests/db/estar-audit-admission.dbtest.ts",
+      "status": "added",
+      "bytes": 19545,
+      "sha256": "d454d19c4564491f4a9a3d87162fbb4730a745381f9707e1df7224f4288739d7",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "tests/db/ind-audit-outcomes.dbtest.ts",
+      "status": "added",
+      "bytes": 19480,
+      "sha256": "e7896f250d8b9f394edc341f51a341b7459792904d5b3cb0e4c9222e5a812e53",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "tests/db/mdx-qms-request-rls.dbtest.ts",
+      "status": "added",
+      "bytes": 18369,
+      "sha256": "09fc6b7dcb7c030699c765374d9ad3f504fb86ec1ecba116c70233fcd2987837",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "tests/db/part11-audit-receipts.dbtest.ts",
+      "status": "added",
+      "bytes": 21315,
+      "sha256": "bcd068198b3884cd2a0f1e502c608d4fbba4e8e20ece607e87446eea1654fdf9",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "tests/db/protocol-request-connection.dbtest.ts",
+      "status": "added",
+      "bytes": 16656,
+      "sha256": "3194bab29f5cdbd4ebc1d81daee78437339e3d6e89545413bbc92d2ad8de1452",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "tests/db/provenance-audit-outcomes.dbtest.ts",
+      "status": "added",
+      "bytes": 25423,
+      "sha256": "7ec887d899ba7cd6f00632d7fe1e0da649ab1379c3ad55dd0b1e1bd10b8ab00f",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "tests/db/report-label-matrix.dbtest.ts",
+      "status": "added",
+      "bytes": 8367,
+      "sha256": "8e714837effb13349cb7fb12b2c4ec71987a94aa74a683ebb373adaeb8429fae",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "tests/db/task-filing-home.dbtest.ts",
+      "status": "added",
+      "bytes": 24210,
+      "sha256": "03f6fbc32fae5ae1558cc8e9ef9f7b644a5d464af3674d823bbc6c74bef440a8",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "tests/db/tmf-assessment-audit-outcomes.dbtest.ts",
+      "status": "added",
+      "bytes": 21894,
+      "sha256": "b9f822ffaf75d5e3847128ff7cde1e2add46336e9afe994924c754341f901089",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "tests/db/wave3-critical-history.dbtest.ts",
+      "status": "added",
+      "bytes": 23694,
+      "sha256": "2a6c785739ed6ceb73967007689049ed812f1205e738aedbb8c1cf06f0bca118",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "tests/e2e/authenticated-app-smoke.e2e.spec.ts",
+      "status": "modified",
+      "bytes": 4814,
+      "sha256": "ee0d50de456ac593948320d796054f9bda2b334dcd75d58dae97aa3ca3c1715c",
+      "auditCommitSha256": "7fd7bde4296eb36482d76ab9a7b110d9de6f94a4d3f57ac5595cdf8e7f0e19b0"
+    },
+    {
+      "path": "tests/e2e/golden-customer-journey.e2e.ts",
+      "status": "modified",
+      "bytes": 15624,
+      "sha256": "60d9e59d59f974cc345ef02978ff578f34d56314f8b7f6e7b9b6f3371f3786f2",
+      "auditCommitSha256": "2b83210e960e812fc67132d43ac88377544e477bcc2828c1b1a778c2b498eed1"
+    },
+    {
+      "path": "tests/e2e/launch-catalog.ts",
+      "status": "added",
+      "bytes": 795,
+      "sha256": "9460b85407141c349ca871e7f64cd63bd0784ee85d96072e2818585c5c83ba50",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "tests/e2e/launch-surface-access-control.e2e.spec.ts",
+      "status": "modified",
+      "bytes": 4577,
+      "sha256": "a5a02761311fcf4a586687d6da8905e3fece27dbc71abd66b4bfa7774d7b74dd",
+      "auditCommitSha256": "88d234859c235d83d1d5ea9fed74dfccbda9027f44e585b460d124b394ee8641"
+    },
+    {
+      "path": "tests/e2e/launch-surface-keyboard.e2e.spec.ts",
+      "status": "modified",
+      "bytes": 11995,
+      "sha256": "f308a696f146effaa5cc40947cf14a40972f5cf16c302c7115ee9801946f85fb",
+      "auditCommitSha256": "43aaf5f90c46e5f820007353c48d3e7f1c34f7112e14171347717698992158e7"
+    },
+    {
+      "path": "tests/e2e/seed-data.json",
+      "status": "modified",
+      "bytes": 605,
+      "sha256": "6455730775060ed7bc340cf28ea2f35f64034dec08b3e0a003679c0a499ddc01",
+      "auditCommitSha256": "c8d7744e91bd46412cdb0d5a35c6b2f8397183f219ef7a5dc965ed587bbee02a"
+    },
+    {
+      "path": "tests/integration/orchestrator-e2e-ind.test.ts",
+      "status": "modified",
+      "bytes": 33669,
+      "sha256": "9fa5315249a13ae1bba127c31d8046965e4fa6abc7b797488c81f4c12f62ddd0",
+      "auditCommitSha256": "4211708cfb3ea55df94398ece27a9a00ff4d18d44ca71fac69a758acb7481905"
+    },
+    {
+      "path": "tests/mdx-notifications-clinical-routes.test.ts",
+      "status": "modified",
+      "bytes": 11120,
+      "sha256": "5f8bd4578260567d501a7bd5ed099ac222a2c2c0f957596f3bb3281a2aa8a92b",
+      "auditCommitSha256": "17d71ee27968d6c96b97700d4c32b35c89fadb03cecc978d942b276e11ac250f"
+    },
+    {
+      "path": "tests/mdx-qms-labeling-search-analytics-routes.test.ts",
+      "status": "modified",
+      "bytes": 18495,
+      "sha256": "04bda3a4d92c4a86adc9667dac0c6ee8afc265ef1f94af290fa5322cd5c2a31e",
+      "auditCommitSha256": "2430bb91dfd285adc481ca6339f4b245aabd00ec0e3deb6686a59059385fd03f"
+    },
+    {
+      "path": "tests/ops/ga-readiness-prestar-prefill.test.mjs",
+      "status": "added",
+      "bytes": 1177,
+      "sha256": "f24b9630de72d1039ce10840511fa1da9474044ce86dd0667c6d7510a1a64b87",
+      "auditCommitSha256": null
+    },
+    {
+      "path": "tests/routes/cerv2-literature-screening.test.ts",
+      "status": "modified",
+      "bytes": 17603,
+      "sha256": "a33fbb6deabd6cd72a68e5723affd8fe2304387cbabe2149160c738558765b98",
+      "auditCommitSha256": "f90b9f3e8def84b9ad2d7cdb2aa6662bfe38208178a6d276bbe7be3c5ec941c2"
+    },
+    {
+      "path": "tests/routes/concept2cure-export-governance.test.ts",
+      "status": "modified",
+      "bytes": 13876,
+      "sha256": "6a6afe8023139079d6e0d1916d6ddd341a5c32544ac77dbd686701ba8dd93b76",
+      "auditCommitSha256": "a5fb576d447512ef612a3337b0afd670bb7632edde788351a479d5c14d426f92"
+    },
+    {
+      "path": "tests/routes/concept2cure-governed-upload.test.ts",
+      "status": "modified",
+      "bytes": 4169,
+      "sha256": "1e658573be520a92584287c344c6dfd84198ca719c2c1054a4f1a8f3fc00be51",
+      "auditCommitSha256": "bf53067f0d72bb19653aa14c1deae561971693cc9868c2eea7f83dcf17e8df94"
+    },
+    {
+      "path": "tests/routes/concept2cure.test.ts",
+      "status": "modified",
+      "bytes": 23919,
+      "sha256": "4d28b5bc3e36f916c01bcaf1a3711015fe88e1815a1033d14f3e544c792a1fb5",
+      "auditCommitSha256": "f2fc463437d09e78c472f112a296a08f2f56f49545362152623080258166b6c2"
+    },
+    {
+      "path": "tests/routes/estar-official-pdf.test.ts",
+      "status": "modified",
+      "bytes": 58654,
+      "sha256": "7c90412e98b632a690a92eb2a62de2bbc3c5e5fa7e4e24c6e369f12cbbfcbe30",
+      "auditCommitSha256": "8793c972f367ecc9845357943cda1106420155b2abc0afab3bd52ca6ab9d3fd1"
+    },
+    {
+      "path": "tests/routes/estar-registration-correspondent.test.ts",
+      "status": "modified",
+      "bytes": 8975,
+      "sha256": "2b53494f98415bb23c907959151f5c1614b41498d8e7df90a67dd452b1a218d7",
+      "auditCommitSha256": "208134eac53de300fc841761ba7154a48deeba4d6a7c636a4fb9480a428f03ad"
+    },
+    {
+      "path": "tests/routes/estar-submission-filing.test.ts",
+      "status": "modified",
+      "bytes": 9554,
+      "sha256": "8b83aefbfe1453b60b267bc2813827b0ed8df0028f2406473ee667212f0c8063",
+      "auditCommitSha256": "4f1ee0e1e217a27a21cc6a236b6306c5fcfd638b5dc7a58ed1892662caf3fffc"
+    },
+    {
+      "path": "tests/routes/technical-file-export-governance.test.ts",
+      "status": "modified",
+      "bytes": 14828,
+      "sha256": "1975b60b8656307b0d79898c5b5ef889226d7f88cac801ffb73198c8e682d54c",
+      "auditCommitSha256": "f638d5105d826b16f62f1af2bd9d58c627f2adec3eb2eac495ad32850e5cde98"
+    },
+    {
+      "path": "tests/services/mfaService.test.ts",
+      "status": "modified",
+      "bytes": 22165,
+      "sha256": "1cc1f61496aba321c1015df17559999a147bddd0e429b93cfff270d7fc3312aa",
+      "auditCommitSha256": "cd6e3ff9a85cecbbdf4bd5b6646119b3c44d1565b80b594fa893b6981b86c280"
+    },
+    {
+      "path": "tests/unit/submission-orchestrator-tenant-isolation.test.ts",
+      "status": "modified",
+      "bytes": 36298,
+      "sha256": "567bc3bb4db1b12674885236ab3cb6ff6008faa1b9d48aa3e968e914d2f14361",
+      "auditCommitSha256": "e5e9b730b7f6918e7f8efa6ca65117dd9e0a84884c71e822ab2f17a4f07baae9"
+    },
+    {
+      "path": "tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts",
+      "status": "modified",
+      "bytes": 39356,
+      "sha256": "7c0fbe1898687f2e37e32e903442a2a814054793463f79ab20145d61fc0304ac",
+      "auditCommitSha256": "d3c798d6b6719d1baf932caf1e1192d84a96a7f8f6089b7f1b0cc130c41ca0a6"
+    },
+    {
+      "path": "tests/unit/submission-package-orchestrator-uncovered.test.ts",
+      "status": "modified",
+      "bytes": 25326,
+      "sha256": "59946a9fb6fb88e0cfbecfc726dd0be6b5af2b38ff66a9343ed16149165dcb14",
+      "auditCommitSha256": "fbc61b5f8f8db462fcde890e2f71cf652714fc86aded4548a6ff32e9ab13812a"
+    },
+    {
+      "path": "tests/unit/submission-sign-release-route.test.ts",
+      "status": "modified",
+      "bytes": 32228,
+      "sha256": "ff85600b2bc1ad0589b6d48bd4ffc9b17dd86a84ec3192969ce351aa4da0c1f5",
+      "auditCommitSha256": "f75516609657b481af153abe1c7f151598760c2079db4c49912dd4769f2f7144"
+    }
+  ]
+}

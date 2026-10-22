@@ -1,5 +1,5 @@
 {
-  "$comment": "The performance-qualification protocol a model must pass to be approved for high-risk regulatory drafting. DRAFT until the system owner approves it: a PQ run against unapproved acceptance criteria cannot produce a PASS, by construction in server/eval/pq/pq-verdict.ts. Every criterion names where its value came from; none was chosen for this file.",
+  "$comment": "The performance-qualification protocol a model must pass to be approved for high-risk regulatory drafting. DRAFT until the system owner approves it: a PQ run against unapproved acceptance criteria cannot produce a PASS, by construction in server/eval/pq/pq-verdict.ts. Every criterion names where its value came from; none was chosen for this file. Founder decision P-31 (2026-10-13, docs/MODEL_GOVERNANCE_DECISION_2026-10-13.md) reviewed this protocol and did NOT approve it. Two fail-open gates were fixed in that change (the per-item faithfulness floor below, and extraction criteria that were skipped in silence); four conditions remained before approval, listed in that record. Two landed on 2026-10-15: the extraction sample floor (minTasksPerDocType 10; the bank now holds 12 extraction tasks per document type) and headroom above both floors (gold-bank-floor.test.ts). Two remain: gold-bank coverage for CMC / Module 3 and Module 2.5-2.7, and a product provider key. Amending this file after a model has passed invalidates that pass (run-pq.ts writes protocolSha256 and verify-pq-record.ts checks it), so the window to correct the criteria is open only while no model has passed.",
   "protocolId": "PQ-DRAFT-001",
   "title": "Performance qualification of a model for high-risk regulatory drafting",
   "version": "0.1.0",
@@ -23,9 +23,10 @@
       "required": true,
       "executable": true,
       "criteria": {
-        "minF1": 0.8
+        "minF1": 0.8,
+        "minTasksPerDocType": 10
       },
-      "criteriaSource": "server/eval/doc-quality/README.md: '--min-f1 0.8'.",
+      "criteriaSource": "server/eval/doc-quality/README.md: '--min-f1 0.8'. minTasksPerDocType 10 is P-31 condition 3 (docs/MODEL_GOVERNANCE_DECISION_2026-10-13.md, 'The floor that matches generation is 10 per document type'), set 2026-10-15 when 24 authored extraction tasks brought the bank to 12 per document type; counted over tasks the pinned model verifiably answered.",
       "harness": "server/eval/doc-quality/gold-tasks.json, extraction tasks that carry an input and expectedFields; the pinned model is asked directly by server/eval/pq/run-pq.ts (buildExtractionPrompt) and scored by doc-quality-metrics scoreExtractionTask. It is deliberately NOT routed through a per-document-type extraction service: that would measure the service and whichever model it selects, which is the attribution failure the rag component is still blocked on."
     },
     "rag": {
@@ -40,9 +41,10 @@
       "criteria": {
         "minHitRate": 0.6,
         "minFaithfulness": 0.7,
+        "minItemFaithfulness": 0.5,
         "minScoredItems": 30
       },
-      "criteriaSource": "Reviewer-draft acceptance criteria: retain minHitRate 0.6 and minFaithfulness 0.7; add minScoredItems 30 positive items per metric from the existing RAG README 30\u201350 gold-item target. Negative controls never fill either metric floor. Controlled PQ now executes canonical scoped retrieval/generation and a distinct pinned judge with actual provider-resolved identities. Operational approval, official-source review, corpus verification and live execution remain required.",
+      "criteriaSource": "Reviewer-draft acceptance criteria: retain minHitRate 0.6 and minFaithfulness 0.7; add minScoredItems 30 positive items per metric from the existing RAG README 30\u201350 gold-item target. Negative controls never fill either metric floor. Controlled PQ now executes canonical scoped retrieval/generation and a distinct pinned judge with actual provider-resolved identities. Operational approval, official-source review, corpus verification and live execution remain required. Founder decision P-31 (2026-10-13) adds minItemFaithfulness 0.5: minFaithfulness is applied as an arithmetic mean (pq-verdict.ts ragCriterion), and the judge is told 0 means the answer is 'unsupported or contradicted' (eval/rag/rag-metrics.ts), so at the 30-item sample floor NINE zero-scored items pass a mean of 0.70 \u2014 30% of the bank could be fabrication and the model would still qualify. The generation component already uses an absolute per-item criterion for a per-item harm (maxForbiddenHits 0); rag now matches it. The value sits where the judge's own wording changes meaning: below 0.5 the judge holds the answer more unsupported than supported, and none of those is tolerated; partial support above it is a quality question the mean measures, and the individual fabrication at run time is caught by the deterministic answer-grounding engine, not by this protocol.",
       "harness": "server/eval/pq/run-pq.ts -> rag-phase.ts; canonical server/eval/rag scope/source resolver and retrieval builder; server/services/rag-generation-request.ts source/prompt shared with production; strict server/eval/rag/rag-metrics.ts judgeFaithfulness. A controlled PQ bypasses model selection/fallback via existing evaluateModel for exact registry candidate and independent judge."
     }
   }

@@ -39,12 +39,21 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import dotenv from 'dotenv';
 import { canonicalPqClaims, supportsPassedPq } from './lib/pq-claim-verification.mjs';
-
-dotenv.config({ quiet: true });
+import { loadReadinessEnv, readinessEnvNotice } from './lib/readiness-env.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+
+/* This used to be `dotenv.config({ quiet: true })`, which merged the
+   repository's gitignored development .env into process.env before any row was
+   judged. Row `flag-rls` — "RLS enforcement (RLS_ENFORCE=on)", severity
+   blocker, owner "Ops (deploy env)" — therefore read `ready` off a developer's
+   laptop, and the headline moved with the shell's cwd (6/18 from the repo root,
+   5/19 from anywhere else) because dotenv resolves .env from process.cwd().
+   Both contradict this file's own design contract: "Nothing is ever reported
+   ready on the strength of a comment, a doc, or an intention."
+   Local loading is still available, opt-in and labelled. */
+const readinessEnv = loadReadinessEnv({ repoRoot });
 const env = process.env;
 
 const JSON_MODE = process.argv.includes('--json');
@@ -144,8 +153,8 @@ const ESTAR_DESCRIPTORS = [
   { id: 'pma-device', file: 'eSTAR-510k-non-ivd.pdf' },
   { id: 'pma-ivd', file: 'eSTAR-510k-ivd.pdf' },
   { id: 'q_sub-prestar', file: 'PreSTAR-q-sub.pdf' },
-  { id: 'ide-prestar', file: 'PreSTAR-ide.pdf' },
-  { id: '513g-prestar', file: 'PreSTAR-513g.pdf' },
+  { id: 'ide-prestar', file: 'PreSTAR-q-sub.pdf' },
+  { id: '513g-prestar', file: 'PreSTAR-q-sub.pdf' },
 ];
 
 // server/services/fda-recognized-standards/recognized-standards-dataset.ts —
@@ -164,7 +173,11 @@ const GATEWAY_CREDENTIALS = [
   // removed; transmit raises UnverifiedTransportError before the wire. The row
   // is therefore always blocked, whatever is set — never 'ready'.
   { key: 'pmda:pmda_gateway', label: 'PMDA gateway', vars: [], unverified: 'protocol unverified (no regulator source for a PMDA transport; the real system is the 申請電子データシステム, esg.pmda.go.jp); transmit raises UnverifiedTransportError (transmitted:false)' },
-  { key: 'ca:hc_cesg', label: 'Health Canada CESG', vars: ['HC_CESG_URL', 'HC_CESG_COMPANY_ID', 'HC_CESG_CERT_PATH', 'HC_CESG_KEY_PATH', 'HC_CESG_HMAC_SECRET'] },
+  // 2026-10-08 (F19b): the CESG REST transport was written from no Health
+  // Canada source and is removed; transmit raises UnverifiedTransportError
+  // before the wire, and the HC_CESG_* variables are no longer read. Always
+  // blocked, like PMDA's row.
+  { key: 'ca:hc_cesg', label: 'Health Canada CESG', vars: [], unverified: 'channel unverified (its adapter was written from no Health Canada source); transmit raises UnverifiedTransportError (transmitted:false)', unblock: 'Source the Health Canada electronic-submission channel from Health Canada material and implement it in server/services/submission-gateways/health-canada-gateway.ts; no credential setting unblocks this row.' },
   { key: 'uk:mhra_gateway', label: 'MHRA gateway', vars: ['MHRA_URL', 'MHRA_API_KEY', 'MHRA_ORG_ID'] },
   { key: 'cn:nmpa_gateway', label: 'NMPA gateway', vars: ['NMPA_URL', 'NMPA_TOKEN', 'NMPA_COMPANY_ID'] },
   { key: 'au:tga_ebs', label: 'TGA eBS', vars: ['TGA_EBS_URL', 'TGA_EBS_API_KEY', 'TGA_EBS_SPONSOR_ID'] },
@@ -221,7 +234,7 @@ function record(r) {
     record({
       id: 'estar-field-maps',
       group: 'Licensed agency artifacts',
-      label: 'eSTAR canonical → AcroForm field maps',
+      label: 'eSTAR canonical → official form field maps',
       status: 'unknown',
       severity: 'blocker',
       observed: 'estar-field-map.ts could not be read',
@@ -239,16 +252,34 @@ function record(r) {
     record({
       id: 'estar-field-maps',
       group: 'Licensed agency artifacts',
-      label: 'eSTAR canonical → AcroForm field maps',
+      label: 'eSTAR canonical → official form field maps',
       status: empty.length === 0 ? 'ready' : 'blocked',
       severity: 'blocker',
       observed: `${ESTAR_DESCRIPTORS.length - empty.length}/${ESTAR_DESCRIPTORS.length} descriptor maps populated` +
         (empty.length ? ` — empty: ${empty.map((d) => d.id).join(', ')}` : ''),
       gate: 'server/services/pathway-engines/estar/estar-field-map.ts ESTAR_FIELD_MAPS; enforced by estar-fill.ts (blockers) and GET /api/510k/estar/readiness',
       owner: 'Engineering (Regulatory pathway), after Procurement vendors the PDF',
-      unblock: 'POST /api/510k/estar/scaffold-field-map, verify each key against the real AcroForm, then populate estar-field-map.ts.',
+      unblock: 'POST /api/510k/estar/scaffold-field-map, verify each key against the actual XFA or AcroForm fields, then populate estar-field-map.ts.',
     });
   }
+}
+
+{
+  const source = readFile('server/services/pathway-engines/estar/estar-filing-readiness.ts');
+  const explicitRefusal = source !== null && /requestSpecificAutomationQualified\s*=\s*family\s*!==\s*'prestar'/.test(source);
+  record({
+    id: 'prestar-request-automation',
+    group: 'Licensed agency artifacts',
+    label: 'PreSTAR request-specific automated filing qualification',
+    status: explicitRefusal ? 'blocked' : 'unknown',
+    severity: 'blocker',
+    observed: explicitRefusal
+      ? 'Q-Sub, IDE and 513(g) support four administrative prefill fields only; request-specific questions, declarations and remaining attachment routing are not qualified.'
+      : 'The source qualification boundary could not be established; map presence alone cannot clear request qualification.',
+    gate: 'server/services/pathway-engines/estar/estar-filing-readiness.ts requestSpecificAutomationQualified; estar-field-map.ts getEstarFieldMapCapability; estar-submission-service.ts prefill refusal',
+    owner: 'Engineering / Regulatory QA',
+    unblock: 'Qualify request-specific fields, repeated-question capture, interactive form behavior and authentic attachment routing with the pinned official form and independent completed-request evidence. No credential or environment setting clears this row.',
+  });
 }
 
 {
@@ -489,7 +520,7 @@ for (const gw of GATEWAY_CREDENTIALS) {
     gate: 'server/services/submission-gateways/*.ts credential preflight → CredentialError; surfaced by gatewayConfigurationStatus()',
     owner: 'Regulatory Ops (agency account) + Ops (secrets manager)',
     unblock: gw.unverified
-      ? 'Source the PMDA electronic-submission protocol from PMDA material (or UAT) and implement it in server/services/submission-gateways/pmda-gateway.ts; no credential setting unblocks this row.'
+      ? gw.unblock ?? 'Source the PMDA electronic-submission protocol from PMDA material (or UAT) and implement it in server/services/submission-gateways/pmda-gateway.ts; no credential setting unblocks this row.'
       : restSelected
       ? 'Set FDA_ESG_TRANSPORT=as2 with the AS2 credentials for the verified path, or complete the ESG NextGen REST UAT and replace transmitViaNextGenRest in fda-esg.ts.'
       : 'Register with the agency, obtain the credentials, load them into the production secrets manager.',
@@ -1003,6 +1034,11 @@ const advisories = rows.filter((r) => r.severity === 'advisory' && r.status !== 
 const summary = {
   generatedAt: new Date().toISOString(),
   nodeEnv: env.NODE_ENV || '(unset)',
+  /* Whose environment produced this verdict. A reader comparing two runs must
+     be able to see that one of them included a local file. */
+  localEnvLoaded: readinessEnv.localEnvLoaded,
+  localEnvPath: readinessEnv.localEnvLoaded ? readinessEnv.envPath : null,
+  localEnvKeys: readinessEnv.keys,
   total: rows.length,
   ready: rows.filter((r) => r.status === 'ready').length,
   blocked: rows.filter((r) => r.status === 'blocked').length,
@@ -1017,6 +1053,7 @@ if (JSON_MODE) {
   const mark = (s) => (s === 'ready' ? '[x]' : s === 'unknown' ? '[?]' : '[ ]');
   console.log('GA readiness report — blocker status from env + asset presence');
   console.log(`Generated ${summary.generatedAt}   NODE_ENV=${summary.nodeEnv}`);
+  console.log(readinessEnvNotice(readinessEnv));
   console.log('Runbook: docs/GA_OPS_PROCUREMENT_RUNBOOK_2026-08.md');
   console.log('='.repeat(76));
 

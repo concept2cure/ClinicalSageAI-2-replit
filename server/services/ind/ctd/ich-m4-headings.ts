@@ -20,23 +20,24 @@
  * Scope.
  *   - Module 1 is regional and is not an ICH M4 heading; `isIchHeading` is
  *     false for every 1.x code.
- *   - Module 3: this file holds only the skeleton the eCTD backbone names
- *     (3, 3.1, 3.2, 3.2.S, 3.2.P, 3.3). Module 3 content and its deeper headings
- *     (3.2.S.1.1…, 3.2.P.2.x…, 3.2.A.1–3, 2.3.S.x…) belong to the CMC lane, which
+ *   - Module 3: this file holds the eCTD backbone skeleton and two structural
+ *     pharmaceutical-development parents (3.2.P.2.1 and 3.2.P.2.2). Module 3
+ *     content and its deeper headings (3.2.A.1–3, 2.3.S.x…) belong to the CMC lane, which
  *     appends them here through the same `IchM4Heading` type. There is never a
  *     second Module 3 tree. Append-only shared file (ANA_REGULATORY_RECORD.md R0).
  *   - The tabulated nonclinical summaries (2.6.3, 2.6.5, 2.6.7) are numbered in
  *     ICH M4S by table (e.g. "2.6.7.1 Toxicology: Overview"), not by heading.
  *     Those table numbers are not modelled; `isIchHeading` is false for them.
  *
- * Basis. Each row carries its own. `M4E_R2` (regulator-text) is used only for
- * the rows whose number and wording were matched against search extracts of the
- * FDA-hosted ICH M4E(R2) on 2026-10-05. Every other row is `recall`, including
- * every ICH M4 organisation and M4S row: their wording was matched against
- * search extracts of FDA-hosted copies (fda.gov/media/71628, the FDA M4
- * organisation guidance), but `regulatory-basis.ts` declares no M4S or M4
- * constant yet, and a file in `ind/ctd` does not declare its own. The facts are
- * in docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/
+ * Basis. Each row carries its own, and every one is `recall`: a search extract
+ * is recall (`M4E_R2` was labelled regulator-text until 2026-10-15). `M4E_R2`
+ * is used only for the rows whose number and wording were matched against
+ * search extracts of the FDA-hosted ICH M4E(R2) on 2026-10-05. The ICH M4
+ * organisation and M4S rows were matched against search extracts of FDA-hosted
+ * copies (fda.gov/media/71628, the FDA M4 organisation guidance) and say so in
+ * their note; `regulatory-basis.ts` declares no M4S or M4 constant yet, and a
+ * file in `ind/ctd` does not declare its own. The facts are in
+ * docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/
  * g-ich-m4-headings-facts.md.
  *
  * `ectdElement` (the ICH eCTD v3.2.2 DTD element name) is added once the DTD is
@@ -63,8 +64,11 @@ export interface IchM4Heading {
   basis: RegulatoryBasis;
 }
 
+// 2026-10-15: the note ended "regulator-text once its constant is declared in
+// regulatory-basis.ts"; declaring a constant reads nothing, so it promised a label
+// the evidence does not support.
 const SEARCH_EXTRACT_NOTE =
-  'wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts';
+  'wording matched against a search extract of the FDA-hosted copy on 2026-10-05; the document itself was not read. Verbatim re-read owed.';
 
 const M4_ORG = (): RegulatoryBasis => ({
   ...recall('ICH M4(R4), Organisation of the CTD'),
@@ -75,9 +79,15 @@ const M4S = (section: string): RegulatoryBasis => ({
   note: SEARCH_EXTRACT_NOTE,
 });
 const M4E = (section: string): RegulatoryBasis => recall(`ICH M4E(R2) ${section}`);
+// The 2.5.6 benefit-risk subdivisions, added 2026-10-20: the regulator hosts were unreachable
+// from the build environment, so the numbers and wording rest on a search extract.
+const M4E_BR = (section: string): RegulatoryBasis => ({
+  ...recall(`ICH M4E(R2) ${section}`),
+  note: 'number and wording matched against a search extract of the table of contents of the FDA-hosted copy on 2026-10-20; the document itself was not read. Verbatim re-read owed.',
+});
 const M4Q = (section: string): RegulatoryBasis => ({
   ...recall(`ICH M4Q(R1) ${section}`),
-  note: 'Module 3 skeleton only; Module 3 content is the CMC lane',
+  note: 'Module 3 structure only; detailed Module 3 content is in the canonical authoring overlay',
 });
 
 type Row = readonly [code: string, title: string, basis: RegulatoryBasis];
@@ -86,15 +96,28 @@ const ROWS: readonly Row[] = [
   // ── Module 2 ────────────────────────────────────────────────────────────────
   ['2', 'Common Technical Document Summaries', M4_ORG()],
   ['2.1', 'Common Technical Document Table of Contents (Modules 2–5)', M4_ORG()],
+  /* The Nonclinical Overview's own subsections. Found missing on 2026-10-13 by the repo-wide
+     Module 1 scan, which reported all six as "not an ICH M4 heading" against
+     server/services/market-specs/document-template-library.ts — where they are stated correctly.
+     The record was the half that was wrong. */
+  ['2.4.1', 'Overview of the Nonclinical Testing Strategy', M4S('2.4.1')],
+  ['2.4.2', 'Pharmacology', M4S('2.4.2')],
+  ['2.4.3', 'Pharmacokinetics', M4S('2.4.3')],
+  ['2.4.4', 'Toxicology', M4S('2.4.4')],
+  ['2.4.5', 'Integrated Overview and Conclusions', M4S('2.4.5')],
+  ['2.4.6', 'List of Literature References', M4S('2.4.6')],
+  /* The benefit-risk subdivisions M4E(R2) added to 2.5.6 (2016). The record's own 2.5.6 brief
+     named all seven in its key content, and no heading held them, so a Clinical Overview's
+     outline stopped at 2.5.6 (2026-10-20, D2 increment 3). */
+  ['2.5.6.1', 'Therapeutic Context', M4E_BR('2.5.6.1')],
+  ['2.5.6.1.1', 'Disease or Condition', M4E_BR('2.5.6.1.1')],
+  ['2.5.6.1.2', 'Current Therapies', M4E_BR('2.5.6.1.2')],
+  ['2.5.6.2', 'Benefits', M4E_BR('2.5.6.2')],
+  ['2.5.6.3', 'Risks', M4E_BR('2.5.6.3')],
+  ['2.5.6.4', 'Benefit-Risk Assessment', M4E_BR('2.5.6.4')],
+  ['2.5.6.5', 'Appendix', M4E_BR('2.5.6.5')],
   ['2.5.7', 'Literature References', M4E_R2],
   ['2.6', 'Nonclinical Written and Tabulated Summaries', M4_ORG()],
-  ['2.6.2.1', 'Brief Summary', M4S('2.6.2.1')],
-  ['2.6.2.2', 'Primary Pharmacodynamics', M4S('2.6.2.2')],
-  ['2.6.2.3', 'Secondary Pharmacodynamics', M4S('2.6.2.3')],
-  ['2.6.2.4', 'Safety Pharmacology', M4S('2.6.2.4')],
-  ['2.6.2.5', 'Pharmacodynamic Drug Interactions', M4S('2.6.2.5')],
-  ['2.6.2.6', 'Discussion and Conclusions', M4S('2.6.2.6')],
-  ['2.6.2.7', 'Tables and Figures', M4S('2.6.2.7')],
   ['2.6.4.1', 'Brief Summary', M4S('2.6.4.1')],
   ['2.6.4.2', 'Methods of Analysis', M4S('2.6.4.2')],
   ['2.6.4.3', 'Absorption', M4S('2.6.4.3')],
@@ -166,6 +189,9 @@ const ROWS: readonly Row[] = [
   ['3.2', 'Body of Data', M4_ORG()],
   ['3.2.S', 'Drug Substance', M4Q('3.2.S')],
   ['3.2.P', 'Drug Product', M4Q('3.2.P')],
+  // Parents of the exact P.2 leaves added 2026-10-09; content remains in the overlay.
+  ['3.2.P.2.1', 'Components of the Drug Product', M4Q('3.2.P.2.1')],
+  ['3.2.P.2.2', 'Drug Product', M4Q('3.2.P.2.2')],
   ['3.3', 'Literature References', M4_ORG()],
 
   // ── Module 4 ────────────────────────────────────────────────────────────────

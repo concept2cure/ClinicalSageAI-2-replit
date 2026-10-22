@@ -1,0 +1,20 @@
+Same seven assertions applied to the audited HEAD and repaired tabulators. Both source snapshots compiled without substituting test implementations.
+Original audited HEAD: exit 1
+FAIL sample SD and single-observation unknown
+FAIL sex Other category retained
+FAIL screen failure included
+FAIL fatal AE label does not claim all study deaths
+FAIL lab normal-shift denominator retained
+FAIL unknown optional population total retained
+FAIL zero safety denominator stays unknown
+0/7 checks passed
+
+Repaired: exit 0
+PASS sample SD and single-observation unknown
+PASS sex Other category retained
+PASS screen failure included
+PASS fatal AE label does not claim all study deaths
+PASS lab normal-shift denominator retained
+PASS unknown optional population total retained
+PASS zero safety denominator stays unknown
+7/7 checks passed

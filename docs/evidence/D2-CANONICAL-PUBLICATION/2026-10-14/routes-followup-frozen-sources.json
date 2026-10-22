@@ -1,0 +1,11 @@
+{
+  "observedAt": "2026-10-14T21:32:46.673Z",
+  "scope": "post-focused-verification selected source bindings; whole imported graph remains lead-owned",
+  "sources": {
+    "server/routes/c2c/projects.ts": "ccdc28f4ed86e4f3f2a2871960a6270f49afc1e4be2f6e616aa50bb2f125c660",
+    "server/routes/c2c/__tests__/projects-adoption.test.ts": "522f422e0933a20596ec89a855ddacb209fc1e716dd55e4e28c42aa402f5ad95",
+    "server/routes/c2c/__tests__/projects-adoption-sql.test.ts": "13092a483a25f1fe9e4bd2cfa4e8d2021feb1f4b980cd72b6555b15cc4466296",
+    "server/routes/c2c/__tests__/projects-sources-window.test.ts": "24220e3801313129d6a3204f513a87d10734738f224633ffe7f3e4f8df19339c",
+    "server/routes/__tests__/vault-data-room-counts.test.ts": "a2785d961da619bbed9e6b3ba52dcda642e3aec5cb160913420d46afcbc2a38b"
+  }
+}

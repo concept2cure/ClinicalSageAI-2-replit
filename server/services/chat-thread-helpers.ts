@@ -282,15 +282,45 @@ function estimateTokens(text: string): number {
 
 /**
  * Retrieve all messages in a thread, ordered chronologically.
+ *
+ * With each message's `id` (ANA-SUMMARY S4): a reloaded conversation keeps it
+ * as the message's identity and attaches each turn's record to it by
+ * `assistant_message_id`, where it used to synthesise `t-<thread>-<index>`
+ * and had nothing to join on.
  */
 export async function getThreadMessages(
   threadId: string
-): Promise<Array<{ role: string; content: string; metadata?: unknown }>> {
+): Promise<Array<{ id: number; role: string; content: string; metadata?: unknown }>> {
   const result = await pool.query(
-    'SELECT role, content, metadata FROM chat_messages WHERE thread_id = $1 ORDER BY created_at ASC',
+    'SELECT id, role, content, metadata FROM chat_messages WHERE thread_id = $1 ORDER BY created_at ASC',
     [threadId]
   );
   return result.rows;
+}
+
+/** The two thread stores: `chat_threads` (AnA RI) and `ai_threads` (submission chat, evidence-ask). */
+export type ThreadStore = 'chat' | 'ai';
+
+/**
+ * Which store holds a thread in this organisation, or null when neither does.
+ * The rule for reading a transcript: the organisation's own thread, in either
+ * store (GET /api/chat/threads/:id/messages), and so the rule for reading a
+ * turn's Summary (decision 6 of ANA-SUMMARY, turn-records.ts). `q` is the
+ * request's own client where the caller has one.
+ */
+export async function resolveThreadStore(
+  threadId: string,
+  orgId: unknown,
+  q: { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> } = pool,
+): Promise<ThreadStore | null> {
+  const { rows } = await q.query(
+    `SELECT 'chat'::text AS store FROM chat_threads WHERE id = $1 AND organization_id = $2
+     UNION ALL
+     SELECT 'ai'::text AS store FROM ai_threads WHERE id = $1 AND organization_id = $2
+     LIMIT 1`,
+    [threadId, orgId],
+  );
+  return (rows[0]?.store as ThreadStore | undefined) ?? null;
 }
 
 /**

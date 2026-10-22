@@ -11,6 +11,8 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ApiRequestError } from '@/lib/queryClient';
+import { authService } from '@/services/portal/authService';
+import { clearAuthToken } from '@/utils/authToken';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -31,6 +33,8 @@ function ok(payload: unknown, status = 200) {
 }
 
 const PROJECT = '11111111-1111-4111-8111-111111111111';
+const ACTOR = { id: '7', organizationId: '12', email: 'author@example.test', roles: ['admin'], permissions: ['governed:write'] };
+const BEARER = `fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 12 }))}.synthetic`;
 
 /* The export formats are items of the one Download menu (editor/DownloadMenu.tsx). */
 function controlledItem(format: 'Word' | 'PDF' | 'XML'): HTMLElement {
@@ -42,6 +46,10 @@ function exportAs(format: 'Word' | 'PDF' | 'XML') {
 }
 afterEach(() => {
   cleanup();
+  authService.endSession(null);
+  clearAuthToken();
+  localStorage.clear();
+  sessionStorage.clear();
   delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
 });
 
@@ -164,13 +172,17 @@ describe('Authoring export context isolation', () => {
   });
 });
 beforeEach(() => {
+  clearAuthToken();
+  localStorage.clear();
+  sessionStorage.clear();
+  authService.setToken(BEARER, ACTOR, 'fixture-refresh', 3600);
   // A document is created in the open project (PF-07).
   (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PROJECT, title: 'BX-204 IND' };
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string, body?: any) => {
     if (method === 'GET' && url === '/api/authoring/templates') return ok({ success: true, templates: [{ id: 't1', name: 'CTD Module 2 shell' }] });
-    if (method === 'POST' && url === '/api/authoring/docs') return ok({ success: true, document: { id: 'D-9', title: body.title } }, 201);
-    if (method === 'POST' && url === '/api/authoring/sections') return ok({ success: true, section: { id: 'S-4', code: body.code } }, 201);
+    if (method === 'POST' && url === '/api/authoring/docs') return ok({ success: true, document: { id: 'D-9', title: body.title, client_program_id: body.client_program_id, template_id: body.template_id ?? null } }, 201);
+    if (method === 'POST' && url === '/api/authoring/sections') return ok({ success: true, section: { id: 'S-4', code: body.code, doc_id: body.doc_id } }, 201);
     if (method === 'POST' && url === '/api/authoring/docs/D1/export') {
       return { ok: true, status: 200, blob: async () => new Blob(['PK-docx']), json: async () => null } as unknown as Response;
     }
@@ -247,7 +259,7 @@ describe('AuthoringCreateExport — create → publish', () => {
       if (method === 'POST' && url === '/api/authoring/docs') {
         return ok({
           success: true,
-          document: { id: 'D-9', title: body.title },
+          document: { id: 'D-9', title: body.title, client_program_id: body.client_program_id, template_id: body.template_id ?? null },
           governance: { bound: false, reason: 'ivd has no document class, so no filing was resolved.' },
         }, 201);
       }
@@ -273,7 +285,7 @@ describe('AuthoringCreateExport — create → publish', () => {
       if (method === 'POST' && url === '/api/authoring/docs') {
         return ok({
           success: true,
-          document: { id: 'D-9', title: body.title },
+          document: { id: 'D-9', title: body.title, client_program_id: body.client_program_id, template_id: body.template_id ?? null },
           governance: { bound: true, c2cDocumentId: 'doc_ind_7' },
         }, 201);
       }

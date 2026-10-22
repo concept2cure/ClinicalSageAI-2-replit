@@ -124,3 +124,73 @@ Also still open: no per-org setting exists to tighten separation of duties
 ("admin may tighten" has no mechanism), and Gateway Transmittals has no
 advance warning like the Dispatch tab's — the creator learns at the refusal,
 which now says why and that a colleague must transmit.
+
+## 2026-10-12 — the same warning on Gateway Transmittals
+
+The Dispatch tab told a sequence's creator in advance; the agency gateway did
+not. `assertTransmitterIndependent` runs after re-authentication, so a package's
+creator learned the rule by typing a password and being refused. (The role half
+was already handled by SEC-1008-1 on 2026-10-08: the screen hides Transmit from
+a role that may not sign, from the server's signing check.)
+
+- `governed-transmit-checks.ts` — `transmitIndependenceOf`: a dry-run of
+  `assertTransmitterIndependent` itself, with a release meaning, mapped to
+  `independent | author | no-creator | unverified`. No second copy of the rule;
+  a failed lookup is `unverified`, never `independent`.
+- `GET /api/mdx/gateways/transmit-independence?packageIds=…` — per package,
+  1–100 ids, validated (422 otherwise). Scoped to the caller's organization, so
+  another tenant's package reads exactly like a nonexistent one (`no-creator`).
+- `GatewayTransmittals.tsx` — the Transmit form's package picker marks a
+  package the signer created ("— you created this; a colleague must transmit
+  it") or one with no recorded creator, and its hint names the rule. Only the
+  Transmit form: assembling and recording identifiers are not refused to the
+  creator. An unread answer marks nothing.
+- Not changed: `C2CForm.tsx` (another lane's SEC-C-7 follow-on holds it), so
+  options are labelled rather than disabled; the server still refuses.
+
+**Falsification** — each reverted: picker not given the verdicts → 1 fail;
+verdicts leaking into the assemble form → 1 fail; failed lookup reported as
+independent → 1 fail; id validation removed → 1 fail.
+23 transmit/gateway suites, 425 tests; `tsc` exit 0; `ci:launch-scope-api`,
+`ci:org-path-param-guards`, `ci:unauthenticated-fetch`,
+`ci:tenant-isolation:no-regression`, `ci:server-error-leaks`,
+`check:security-patterns` pass.
+
+**Still waiting:** AnA's create-package insert (`command-executor.ts:1969`) omits
+`created_by_id`, so AnA-created packages read `no-creator` and are refused at
+transmit — now also marked as such in the picker. That file was changed at
+2026-10-11 22:07 UTC by another session, inside its 24-hour window until
+2026-10-12 22:07 UTC; the fix is one column (`created_by_id` = `ctx.userId`).
+
+## 2026-10-13 — the two items left open, closed once their windows passed
+
+**AnA-created packages record their creator** (`5252eac91`).
+`createSubmissionPackage` (`command-executor.ts`) inserted without
+`created_by_id`, so every package AnA created read "no creator recorded" and
+nobody could transmit it to the agency. It now records `ctx.userId`, as the HTTP
+route does. Tested on the real table (PGlite, the real `0002` migration) through
+the transmit's own check: the creator reads `author`, a colleague `independent`.
+Red first against the unfixed insert (`expected null to be 42`). ana-ri suites:
+81 files, 1,439 tests.
+
+**The Dispatch tab's signer check asks the enforcing function.** On 2026-10-05
+`GET /sequences/:seqId/dispatch-readiness` re-derived the author rule inline
+from `resolveTargetAuthors` — a second copy of the sign step's rule, untested at
+route level. It now calls `signerIndependenceOf`
+(`separation-of-duties.ts`), a dry-run of `assertSignerIsNotAuthor` with an
+approval meaning, beside the gateway's `transmitIndependenceOf`. The unused
+`sources` field is gone from both sides.
+
+New: `server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts`
+(the route asks the check for this sequence, organization and user, and passes
+each state through), and five `signerIndependenceOf` cases in the SoD suite.
+
+Falsification, each reverted:
+- the route's previous inline code restored verbatim → 5 fail (it never asks
+  the enforcing check);
+- a failed lookup reported as independent → 1 fails;
+- the dry-run asking with an authorship meaning, so the check never runs →
+  4 fail.
+
+Route directory 435 files / 4,224 tests; governance and client dispatch
+suites 61 tests; `tsc` exit 0.

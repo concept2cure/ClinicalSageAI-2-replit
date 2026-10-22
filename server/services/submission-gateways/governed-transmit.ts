@@ -56,6 +56,7 @@ import {
   assertNoActiveTransmittal,
   assertSequenceNotFiledAsAnotherBundle,
   assertTransmitterIndependent,
+  assertTransmitterHasSigningAuthority,
 } from './governed-transmit-checks';
 import { getBundle } from '../submission-bundle-storage';
 import { recordFiledSequence } from '../ectd/package-content-change';
@@ -79,7 +80,7 @@ import {
 
 // Defined beside the pre-transmit checks that raise them (./governed-transmit-checks);
 // re-exported so every caller keeps importing them from here.
-export { GovernedTransmitInternalError, GovernedTransmitRefusal } from './governed-transmit-checks';
+export { GovernedTransmitInternalError, GovernedTransmitRefusal, assertTransmitterHasSigningAuthority } from './governed-transmit-checks';
 export type { GovernedTransmitRefusalCode } from './governed-transmit-checks';
 
 /* ─── Bundle descriptors ─────────────────────────────────────────── */
@@ -479,6 +480,10 @@ export async function executeGovernedTransmit(
     region, gateway, organizationId, userId, environment,
     reason, reauthVerifiedAt, recordGovernedAction,
   } = input;
+
+  // Signing authority first (SEC-1008-1): every caller, the HTTP route and
+  // AnA's transmit alike, goes through here.
+  await assertTransmitterHasSigningAuthority(organizationId, userId);
 
   // ─── C2C-SUB-003: the bundle descriptor is a trust boundary ──────────
   //

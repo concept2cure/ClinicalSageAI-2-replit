@@ -22,8 +22,10 @@
  *   - FIRE-AND-FORGET WRITES: `persistPattern` never throws — errors are
  *     logged and dropped so persistence never blocks the hot path. Writes
  *     are chained per org so they land in observation order.
- *   - GRACEFUL READS: `loadPersistedPatterns` returns `[]` when nothing is
- *     stored or rows are unreadable — callers never handle errors.
+ *   - HONEST READS: `loadPersistedPatterns` returns `[]` only when nothing is
+ *     stored. A read that fails rejects with RimPatternStoreUnavailableError
+ *     (2026-10-15: it returned `[]`, which callers reported as "no patterns
+ *     learned").
  *   - TENANT-SCOPED: every row carries organization_id; reads filter on it,
  *     and hydration drops any pattern claiming another org.
  *
@@ -45,6 +47,14 @@ const getDb = () => (dbModule ??= import('../../db.js'));
 
 /** Orgs already warned about a missing table (once per process). */
 let warnedMissingTable = false;
+
+/** The learned-pattern store could not be read; what it holds is unknown. */
+export class RimPatternStoreUnavailableError extends Error {
+  constructor(cause: unknown) {
+    super('RIM pattern store unavailable: learned patterns could not be read', { cause });
+    this.name = 'RimPatternStoreUnavailableError';
+  }
+}
 
 function parseOrgId(orgId: string): number | null {
   const n = Number.parseInt(orgId, 10);
@@ -145,8 +155,9 @@ function rowToPattern(row: Record<string, unknown>): RimPattern {
 }
 
 /**
- * Load an org's persisted patterns. Returns `[]` when nothing is stored or
- * rows are unreadable — callers never need to handle errors.
+ * Load an org's persisted patterns. Returns `[]` only when nothing is stored;
+ * a failed read — a missing table included — rejects with
+ * RimPatternStoreUnavailableError.
  *
  * When the real table holds nothing for the org, the loader checks the
  * stopgap blob (project_memory_entries, category 'rim_learned_pattern') and,
@@ -157,6 +168,7 @@ function rowToPattern(row: Record<string, unknown>): RimPattern {
 export async function loadPersistedPatterns(orgId: string): Promise<RimPattern[]> {
   const org = parseOrgId(orgId);
   if (org === null) return [];
+  let rows: Array<Record<string, unknown>>;
   try {
     const { pool } = await getDb();
     const result = await pool.query<Record<string, unknown>>(
@@ -166,26 +178,27 @@ export async function loadPersistedPatterns(orgId: string): Promise<RimPattern[]
         WHERE organization_id = $1`,
       [org]
     );
-    if (result.rows.length > 0) {
-      // Tenant hygiene: never hydrate a pattern claiming another org.
-      return result.rows.map(rowToPattern).filter(p => p.orgId === org);
-    }
-    return await importLegacyBlob(org);
+    rows = result.rows;
   } catch (err) {
+    // 2026-10-15: this returned [] — "no patterns learned" — for a read that
+    // never happened.
     if (isMissingTable(err)) {
       warnMissingTableOnce();
     } else {
-      console.warn(
-        '[RIM] Pattern persistence read failed (returning []):',
-        err instanceof Error ? err.message : err
-      );
+      console.warn('[RIM] Pattern persistence read failed:', err instanceof Error ? err.message : err);
     }
-    return [];
+    throw new RimPatternStoreUnavailableError(err);
   }
+  if (rows.length > 0) {
+    // Tenant hygiene: never hydrate a pattern claiming another org.
+    return rows.map(rowToPattern).filter(p => p.orgId === org);
+  }
+  return importLegacyBlob(org);
 }
 
 /** One-time import of the stopgap JSON blob into the real tables. */
 async function importLegacyBlob(org: number): Promise<RimPattern[]> {
+  let patterns: unknown;
   try {
     const { pool } = await getDb();
     const legacy = await pool.query<{ content: string }>(
@@ -197,25 +210,23 @@ async function importLegacyBlob(org: number): Promise<RimPattern[]> {
     if (legacy.rows.length === 0 || !legacy.rows[0].content) return [];
 
     const parsed = JSON.parse(legacy.rows[0].content);
-    const patterns = Array.isArray(parsed) ? parsed : parsed?.patterns;
-    if (!Array.isArray(patterns)) return [];
-
-    const owned = (patterns as RimPattern[]).filter(p => p && p.orgId === org);
-    for (const p of owned) {
-      await persistPatternNow(p);
-    }
-    if (owned.length > 0) {
-      console.warn(
-        `[RIM] Imported ${owned.length} learned pattern(s) for org ${org} from the ` +
-          'project_memory_entries stopgap into rim_learned_patterns.'
-      );
-    }
-    return owned;
+    patterns = Array.isArray(parsed) ? parsed : parsed?.patterns;
   } catch (err) {
-    console.warn(
-      '[RIM] Legacy pattern import failed (returning []):',
-      err instanceof Error ? err.message : err
-    );
-    return [];
+    // Unread or unparseable: what it holds is unknown, not empty (was []).
+    console.warn('[RIM] Legacy pattern read failed:', err instanceof Error ? err.message : err);
+    throw new RimPatternStoreUnavailableError(err);
   }
+  if (!Array.isArray(patterns)) return [];
+
+  const owned = (patterns as RimPattern[]).filter(p => p && p.orgId === org);
+  for (const p of owned) {
+    await persistPatternNow(p);
+  }
+  if (owned.length > 0) {
+    console.warn(
+      `[RIM] Imported ${owned.length} learned pattern(s) for org ${org} from the ` +
+        'project_memory_entries stopgap into rim_learned_patterns.'
+    );
+  }
+  return owned;
 }

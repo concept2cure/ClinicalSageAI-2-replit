@@ -121,7 +121,7 @@ export const FDA_TECHNICAL_RULES: readonly TechnicalRule[] = Object.freeze<Techn
     rule: 'Every study in Module 4 or 5 with study data carries a Trial Summary (TS) dataset, with the study start date.',
     consequence: 'Technical rejection (validation criterion 1734).',
     basis: FDA_STUDY_DATA_TRC,
-    platform: { check: 'not-checked', note: 'Datasets cannot be packaged: every eCTD leaf must be a PDF (ectd leaf-source resolver), and the Vault refuses .xpt and .xml.' },
+    platform: { check: 'not-checked', note: 'Datasets cannot be packaged: every eCTD leaf must be a PDF (ectd leaf-source resolver). The Data Room and Vault hold .xpt, Dataset-JSON and define.xml and read their structure (2026-10-15), but no dataset reaches a package.' },
   },
   {
     id: 'data-dm-adsl-define', area: 'study-data',
@@ -135,7 +135,7 @@ export const FDA_TECHNICAL_RULES: readonly TechnicalRule[] = Object.freeze<Techn
     rule: 'Datasets in SAS XPORT version 5, one dataset per file named as the dataset; a dataset over 5 GB is split, and both are submitted.',
     consequence: 'The data cannot be loaded into FDA’s review tools.',
     basis: FDA_SDTCG,
-    platform: { check: 'not-checked', note: 'No XPT reader or writer exists on the platform.' },
+    platform: { check: 'not-checked', note: 'An XPT v5 reader reads each file\'s datasets, variables and record counts (xpt-structure.ts, 2026-10-15). There is no writer, and nothing checks one dataset per file, the naming or the 5 GB split against a package.' },
   },
   {
     id: 'data-reviewer-guides', area: 'study-data',

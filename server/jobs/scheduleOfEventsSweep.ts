@@ -5,15 +5,14 @@
  * top of it" without anyone asking: it re-assesses milestone health, marks
  * slips / at-risk items, opens recovery & mitigation tasks, fires alerts, flags
  * goals whose target dates have passed, and refreshes AnA's narrative — all via
- * reviewScheduleHealth() (which reuses the platform's task + notification
+ * reviewScheduleHealthForSweep() (which reuses the platform's task + notification
  * tables). Each project is best-effort so one failure doesn't stop the rest.
  *
  * Lifecycle mirrors submission-chat-sweep-scheduler:
  *   - start() schedules a single timer (idempotent)
  *   - first sweep runs after a short startup delay
- *   - disabled in tests, when SCHEDULE_OF_EVENTS_SWEEP_DISABLED is truthy, or
- *     when the schedule tables don't exist yet (listActiveSchedulePlans throws
- *     → caught, treated as zero work)
+ *   - disabled in tests or when SCHEDULE_OF_EVENTS_SWEEP_DISABLED is truthy
+ *   - listing failures are counted and logged before the next scheduled retry
  *
  * Multi-process (production runs three copies of the server, each starting
  * this sweep; there is no Redis). Two guards, because they stop different
@@ -36,18 +35,19 @@
 
 import {
   listActiveSchedulePlans,
-  reviewScheduleHealth,
+  reviewScheduleHealthForSweep,
 } from '../services/projects/schedule-of-events';
 import { createScopedLogger } from '../utils/logger.js';
-import { pool } from '../db';
 import { runScheduledOnce } from '../db/scheduledOnce';
+import { withTenantConnection } from '../db/withTenantConnection';
+import type { RequestSqlClient } from '../db/requestDb';
 
 const logger = createScopedLogger('schedule-of-events-sweep');
 
 export interface ScheduleSweepSummary {
   schedules: number;
   reviewed: number;
-  /** Schedules skipped because they were reviewed within the claim window. */
+  /** Unclaimed schedules: within the window or no longer active/eligible. */
   recentlyReviewed: number;
   tasksCreated: number;
   alertsCreated: number;
@@ -73,18 +73,28 @@ function emptySummary(): ScheduleSweepSummary {
  * number of concurrent or later sweeps inside the window, exactly one gets a
  * row back. The loser MUST NOT review, so the result is checked, not ignored.
  */
-async function claimScheduleForReview(scheduleId: number, minAgeMs: number): Promise<boolean> {
-  // tenant-isolation-safe: runs under the sweep's audited system scope
-  // (runScheduledOnce → runWithSystemTenantScope) and is keyed by the plan's
-  // primary key, taken from the estate-wide active-plan listing.
-  const { rows } = await pool.query(
+async function claimScheduleForReview(
+  client: RequestSqlClient,
+  plan: { scheduleId: number; orgId: number; projectId: number },
+  minAgeMs: number,
+): Promise<boolean> {
+  const { rows } = await client.query(
     `UPDATE project_schedule_of_events
         SET last_reviewed_by_ana_at = now()
       WHERE id = $1
+        AND organization_id = $2
+        AND project_id = $3
+        AND status = 'active'
+        AND EXISTS (
+          SELECT 1 FROM projects p JOIN organizations o ON o.id = p.organization_id
+          WHERE p.id = project_schedule_of_events.project_id
+            AND p.organization_id = project_schedule_of_events.organization_id
+            AND p.status = 'active' AND o.status = 'active'
+        )
         AND (last_reviewed_by_ana_at IS NULL
-             OR last_reviewed_by_ana_at < now() - make_interval(secs => $2::double precision))
+             OR last_reviewed_by_ana_at < now() - make_interval(secs => $4::double precision))
       RETURNING id`,
-    [scheduleId, minAgeMs / 1000],
+    [plan.scheduleId, plan.orgId, plan.projectId, minAgeMs / 1000],
   );
   return rows.length > 0;
 }
@@ -108,29 +118,35 @@ async function sweepAll(minAgeMs: number): Promise<ScheduleSweepSummary> {
   try {
     plans = await listActiveSchedulePlans();
   } catch {
-    // Tables not migrated yet, or transient DB error — treat as no work.
+    summary.errors += 1;
+    logger.warn('active schedule listing failed');
     return summary;
   }
   summary.schedules = plans.length;
   for (const p of plans) {
     try {
-      if (!(await claimScheduleForReview(p.scheduleId, minAgeMs))) {
+      const result = await withTenantConnection({
+        tenantId: p.orgId, role: null, source: 'job', caller: 'schedule-of-events-sweep:review',
+      }, async client => {
+        if (!(await claimScheduleForReview(client, p, minAgeMs))) return null;
+        // Let transaction failures reach the connection owner, which evicts
+        // the client when a COMMIT acknowledgement is uncertain.
+        return reviewScheduleHealthForSweep({ orgId: p.orgId, projectId: p.projectId, apply: true }, client);
+      });
+      if (result === null) {
         summary.recentlyReviewed += 1;
         continue;
       }
-      const result = await reviewScheduleHealth({
-        orgId: p.orgId,
-        projectId: p.projectId,
-        apply: true,
-        triggeredBy: 'scheduler',
-      });
       if (result.ok) {
         summary.reviewed += 1;
         summary.tasksCreated += result.tasksCreated;
         summary.alertsCreated += result.alertsCreated;
+      } else {
+        summary.errors += 1;
       }
     } catch {
       summary.errors += 1; // per-project best-effort
+      logger.warn('schedule review failed', { organizationId: p.orgId, projectId: p.projectId, scheduleId: p.scheduleId });
     }
   }
   return summary;

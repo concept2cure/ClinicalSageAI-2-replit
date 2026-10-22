@@ -1,0 +1,11 @@
+{
+  "draftSha256": "9605cdecb0345ecd18ae17a3cd7bd00d49760620e2f7eb79ce2c77500821ca24",
+  "actualSha256": "9620e12bef7b3d0a5115b5f71d63334b9c677000bdfa7e7dab8201d7d572256f",
+  "changes": [
+    "root-approved exclusive slot1 allowed",
+    "remote keys/endpoints blank",
+    "local embedding lane with both endpoints blank",
+    "other gateways disabled"
+  ],
+  "syntaxOnlyBeforeExecution": true
+}

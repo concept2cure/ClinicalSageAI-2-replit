@@ -58,6 +58,13 @@
 -- All three remain deny-all, which is safe, and none is referenced by server
 -- code — so nothing is broken by leaving them until they are needed.
 --
+-- AMENDED 2026-10-13 (D3): "deny-all" was true of every role but the table
+-- OWNER. Measured on a database provisioned from blank, all three carry
+-- relrowsecurity = t, relforcerowsecurity = f and zero policies, and
+-- PostgreSQL exempts an owner from policies unless FORCE is set — so the owner
+-- read every tenant's rows. The last block in this file now adds the FORCE,
+-- and the ENABLE too, for the reason given in the 2026-10-13 note below.
+--
 -- ── Why the policy shape is copied, not invented ────────────────────────────
 -- The predicate is 20260801_tenant_isolation_sweep.sql's policy with the tenant
 -- comparison redirected at the PARENT row: same session variables, same
@@ -107,6 +114,98 @@
 -- scope: B's draft was read, rewritten and deleted, and a task was filed under
 -- B's program and under no program at all. Nothing is removed from this file.
 -- Evidence docs/evidence/D3/2026-09-28-drafting-tasks/.
+--
+-- ── AMENDED IN PLACE 2026-10-12 (D3) ────────────────────────────────────────
+-- capa_records and q_submissions join the text-program-id class. Both were
+-- sitting in scripts/ci/unkeyed-request-tables-baseline.json as "unreviewed"
+-- and in no spec, so each was isolated only by its reading route's join. The
+-- note beside their entries records why adding them is inert for today's
+-- shared-pool readers and binding for request-scoped ones, measured rather
+-- than assumed. Nothing is removed from this file.
+-- Evidence docs/evidence/D3/2026-10-12-unkeyed-table-classification/.
+--
+-- ── AMENDED IN PLACE 2026-10-13 (D3) ────────────────────────────────────────
+-- capa_actions, q_sub_meetings, q_sub_questions and q_sub_timeline_entries
+-- join the CHAINED list — and they are here because yesterday's amendment put
+-- them there. Adding capa_records and q_submissions to `specs` above made
+-- those two tenant-keyed PARENTS, which is what the change was for; it also
+-- gave each of them children that are now "tenant-keyed table(s) [carrying] no
+-- RLS policy". install-fresh's own verifier caught it and failed the whole
+-- provision:
+--
+--   ❌ Install failed: 4 tenant-keyed table(s) carry no RLS policy — rows are
+--      readable across tenants once anything reads them:
+--      public.capa_actions (child of public.capa_records, row security off),
+--      public.q_sub_meetings, public.q_sub_questions,
+--      public.q_sub_timeline_entries (children of public.q_submissions)
+--
+-- That is the check doing its job, and the lesson is that policying a table
+-- MOVES the frontier rather than closing it. Fixing only those four proved it
+-- twice over: the next provision failed again, on
+--
+--   public.q_sub_commitments (child of public.q_sub_questions, row security off)
+--
+-- a table that was not a child of a tenant-keyed parent until the line above
+-- made q_sub_questions one. So the whole descendant tree was then walked at
+-- once, transitively through pg_constraint rather than one failure at a time:
+--
+--   depth 1  capa_actions            → capa_records     (capa_id)
+--   depth 1  q_sub_meetings          → q_submissions    (q_submission_id)
+--   depth 1  q_sub_questions         → q_submissions    (q_submission_id)
+--   depth 1  q_sub_timeline_entries  → q_submissions    (q_submission_id)
+--   depth 2  q_sub_commitments       → q_sub_questions  (q_sub_question_id)
+--
+-- and nothing lies below depth 2. All five are grandchildren or deeper: their
+-- parents carry no organization_id of their own and are themselves scoped
+-- through regulatory_programs, so they go in `chained`, which delegates to the
+-- parent's own policy instead of naming a tenant column. Keys are uuid → uuid
+-- throughout, so no text comparison is involved. Order is load-bearing within
+-- the list as well as between the two loops: `specs` runs before `chained`, and
+-- q_sub_commitments follows q_sub_questions. Nothing is removed from this file.
+-- Evidence docs/evidence/D3/2026-10-13-capa-qsub-grandchildren/.
+
+-- ── AMENDED IN PLACE 2026-10-13, again (D3): the FORCE the deny-all chains
+-- never had ──────────────────────────────────────────────────────────────────
+-- A separate session reached the five above independently and landed them
+-- first; this half is what checking the file's OTHER 2026-10-13 claim turned
+-- up, and it stands on its own.
+--
+-- The header exempts three chains it cannot express — csr_endpoint_results,
+-- ctd_module_sections, ctd_documents — as "deny-all, which is safe". That
+-- rests on migrations/0005_csr_knowledge_database.sql's ENABLE ROW LEVEL
+-- SECURITY loop, which does name all three. The loop runs ENABLE and never
+-- FORCE, so on a database provisioned from blank they measure
+--
+--   relrowsecurity = t, relforcerowsecurity = f, 0 policies
+--
+-- For the runtime role (NOSUPERUSER, NOBYPASSRLS) that is genuine deny-all, so
+-- the exemption holds where production reads. For the table OWNER it is not:
+-- PostgreSQL exempts an owner from its own policies unless FORCE is set, and
+-- with no policy and no FORCE the owner read every tenant's rows. That is the
+-- same owner exemption install-fresh's step 7/8 warns about in general terms,
+-- and the reason every other table in this file gets ENABLE **and** FORCE and
+-- the test asserts both. The last block in this file applies the same pair to
+-- these three, so the deny-all is true under every role rather than all but
+-- one.
+--
+-- It applies the ENABLE too, not only the FORCE, for a reason about appliers:
+-- 0005 is on install-fresh's own RLS_MIGRATIONS list but is NOT in
+-- C2C_MIGRATION_FILES. So the ENABLE reaches a database provisioned from blank
+-- and nothing replays it for one that only ever runs deploy-migrate. Putting
+-- both in THIS file — which the deploy set carries — makes the state the
+-- header claims true on either path, from one place.
+--
+-- tests/db/child-table-parent-scoped-rls asserted the exemption as
+-- `policied === false`, which is equally true of real deny-all, of deny-all the
+-- owner walks through, and of a table with row security off altogether — so it
+-- passed in the state it existed to prevent. It now asserts row security ON
+-- and FORCEd and unpolicied, the only combination that denies to everyone. Run
+-- against a database provisioned before this amendment it fails, naming the
+-- table.
+--
+-- The three chains stay deny-all; reversing that is the repo's call, not a
+-- session's. Nothing is removed from this file. Evidence
+-- docs/evidence/D3/2026-10-13-child-rls-force-and-q-sub-children/.
 --
 -- Idempotent: guarded on pg_policies and pg_class, safe to re-run every deploy.
 
@@ -195,6 +294,31 @@ DECLARE
     -- 2026-09-28 (D3): generated drafts, same shape — see the header note.
     -- A task naming no program is visible to no tenant scope (fail closed).
     ['drafting_tasks',             'project_id',       'regulatory_programs',  'id',       'organization_id'],
+
+    -- 2026-10-12 (D3): the last two members of the text-program-id class,
+    -- found while clearing ci:unkeyed-request-tables:unreviewed to zero. Both
+    -- sat in that baseline unclassified; neither was in this spec, so their
+    -- isolation was the reading route's join and nothing else.
+    --
+    -- capa_records' one reader is already correct and was already repaired
+    -- once: routes/mdx-postmarket.ts joins regulatory_programs INNER and
+    -- filters on p.organization_id, after a LEFT JOIN with
+    -- `OR p.organization_id IS NULL` had returned every orphaned CAPA to every
+    -- tenant. q_submissions is read from more places (q-sub.service, the AnA
+    -- tools, tenant-export, pdev, the mdx handlers), each joining the
+    -- programme itself.
+    --
+    -- Adding them here is defence in depth, and measured to be safe rather
+    -- than assumed: those readers import the SHARED pool (server/db/runtime.ts
+    -- sets no session scope — applySessionScope is called only from
+    -- middleware/establishRequestTenantScope.ts and db/withTenantConnection.ts),
+    -- so `app.rls_enforce` is unset on their connections and this policy's
+    -- first arm admits every row — inert, not breaking. On a request-scoped
+    -- connection it binds, and a scoped connection with no organisation admits
+    -- NOTHING (verified on a deploy-shaped database: unset -> first arm true;
+    -- rls_enforce=on with no org -> org predicate NULL).
+    ['capa_records',               'program_id',       'regulatory_programs',  'id',       'organization_id'],
+    ['q_submissions',              'program_id',       'regulatory_programs',  'id',       'organization_id'],
 
     -- Children with a foreign key into a tenant-keyed parent that had row
     -- security OFF: the output of scripts/db/rls-coverage-check.sql's child rule
@@ -419,6 +543,14 @@ $$;
 -- expressed the same way. They are left deny-all deliberately: no server code
 -- reads them, and the test pins that choice.
 --
+-- AMENDED IN PLACE 2026-10-13 (D3). That choice stands — reversing it is the
+-- repo's call, not a session's — but it was only half enforced. The ENABLE it
+-- relies on comes from migrations/0005_csr_knowledge_database.sql, which sets
+-- ENABLE without FORCE and is not in C2C_MIGRATION_FILES. So the deny-all
+-- excluded the table owner, and reached only a database provisioned from
+-- blank. The last block in this file applies ENABLE and FORCE to the three
+-- from inside the deploy set. See the header note.
+--
 -- NON-PUBLIC CHILDREN (AMENDED IN PLACE 2026-09-24, ledger L203). The same
 -- delegation works for a child outside public whose parent carries its own
 -- tenant_isolation_policy. So this list takes schema-qualified names; a bare
@@ -436,11 +568,52 @@ DECLARE
   -- child, fk column, parent, parent key column. Key types agree for every
   -- pair (checked against the catalog), so no cast is needed.
   chained TEXT[][] := ARRAY[
+    -- 2026-10-14 audit remediation: the canonical Shadow packet/export/job
+    -- store lives in predicate, not public. Both packet and export carry the
+    -- actual programme UUID; render jobs inherit the export's tenant. Keep
+    -- the complete descendant chain here so a missing route predicate cannot
+    -- expose another tenant's packet, export or rendering job.
+    ['predicate.defense_packets',                    'program_id',   'public.regulatory_programs',             'id'],
+    ['predicate.proof_pack_exports',                 'program_id',   'public.regulatory_programs',             'id'],
+    ['predicate.render_jobs',                        'proof_pack_id','predicate.proof_pack_exports',           'id'],
     ['ai_claims',                     'generation_run_id',  'ai_generation_runs',     'id'],
     ['ai_claim_citations',            'retrieval_chunk_id', 'ai_retrieval_chunks',    'id'],
     ['c2c_document_section_evidence', 'section_id',         'c2c_document_sections',  'id'],
     ['c2c_document_section_versions', 'section_id',         'c2c_document_sections',  'id'],
     ['section_propagations',          'patch_id',           'section_patches',        'id'],
+
+    -- 2026-10-13 (D3): the generation below capa_records and q_submissions,
+    -- which `specs` made tenant-keyed parents the day before. Their own
+    -- parents carry no organization_id, so these delegate to the parent's
+    -- policy rather than naming a tenant column.
+    --
+    -- Readers were surveyed rather than assumed. capa_actions is read and
+    -- written only by services/capa-mdr/capaMdr.service.ts, which imports the
+    -- SHARED pool (server/db/runtime.ts sets no session scope), so
+    -- `app.rls_enforce` is unset on its connections and this policy's first arm
+    -- admits every row — inert for it, binding on a request-scoped connection:
+    -- the same measurement the 2026-10-12 note records for its parent. The
+    -- q_sub children are read by services/pdev/pdev-fda-interactions.ts (after
+    -- it has verified the programme belongs to the caller's organisation),
+    -- services/ana-ri/mdx-proactive-signals.ts (whose query already joins
+    -- regulatory_programs and filters p.organization_id) and
+    -- services/tenant-export/tenant-export.service.ts (parent-scoped by
+    -- q_submission_id; test callers only, no production route). So nothing here
+    -- loses a row it can see today.
+    --
+    -- Measured on a provisioned database as the runtime role, with
+    -- app.rls_enforce='on', two tenants each holding one Pre-Sub question:
+    -- before, tenant A's scope counted 2 — its own question and the other
+    -- tenant's, with the position taken on each; after, 1; and a scoped
+    -- connection carrying no organisation counts 0.
+    ['capa_actions',                  'capa_id',            'capa_records',           'id'],
+    ['q_sub_meetings',                'q_submission_id',    'q_submissions',          'id'],
+    ['q_sub_questions',               'q_submission_id',    'q_submissions',          'id'],
+    ['q_sub_timeline_entries',        'q_submission_id',    'q_submissions',          'id'],
+    -- Depth 2: a commitment hangs off a question, not off the submission. It
+    -- follows q_sub_questions so that policy exists when this one is reached.
+    ['q_sub_commitments',             'q_sub_question_id',  'q_sub_questions',        'id'],
+
     -- 2026-09-24 (ledger L203): children outside public.
     ['ai.risk_assessments',                          'dossier_id',   'global_dossier.dossier_instances',        'id'],
     ['audit.config_bundles',                         'program_id',   'core.programs',                           'id'],
@@ -527,6 +700,64 @@ BEGIN
   END LOOP;
 
   RAISE NOTICE '[child-rls] chained: % policied, % skipped', applied, skipped;
+END
+$$;
+
+-- ── Deny-all, enforced against every role (AMENDED IN PLACE 2026-10-13, D3) ──
+-- The three chains the header leaves deliberately deny-all. Their row security
+-- is set by migrations/0005_csr_knowledge_database.sql, which runs ENABLE and
+-- not FORCE and is not in C2C_MIGRATION_FILES — so the deny-all exempted the
+-- table owner (PostgreSQL skips an owner's own policies without FORCE, and
+-- with no policy at all that owner read every tenant's rows), and it reached
+-- only a database provisioned from blank. Both halves are applied here, from a
+-- file the deploy set does carry.
+--
+-- Row security ON, FORCEd, with NO policy denies every row to every role. It
+-- is only acceptable where nothing reads the table, which is asserted by name
+-- rather than assumed:
+--
+--   csr_endpoint_results -> csr_endpoints    -> csr_studies
+--   ctd_module_sections  -> ctd_submissions  -> ctd_programs
+--   ctd_documents        -> ctd_module_sections -> ctd_submissions -> ctd_programs
+--
+-- None has a reader in server code (checked: the only references are
+-- shared/schema and migrations; the check_ectd_cross_references AnA tool is a
+-- pure function over its input, not a query against any of these). A table
+-- LEAVES this list by gaining a real parent-scoped policy in one of the lists
+-- above — never by having row security turned back off. If a reader appears it
+-- will read empty under RLS_ENFORCE=on, and that is the signal to scope it
+-- properly: failing closed and visibly, rather than returning another tenant's
+-- rows.
+DO $$
+DECLARE
+  deny_all TEXT[] := ARRAY['csr_endpoint_results', 'ctd_module_sections', 'ctd_documents'];
+  t TEXT;
+  applied INT := 0;
+  skipped INT := 0;
+BEGIN
+  FOREACH t IN ARRAY deny_all LOOP
+    IF to_regclass('public.' || t) IS NULL THEN
+      RAISE NOTICE '[child-rls] % absent — skipping deny-all', t;
+      skipped := skipped + 1;
+      CONTINUE;
+    END IF;
+
+    -- Never override a real policy. If a later change scopes one of these
+    -- through its parent, that policy decides the table's visibility and this
+    -- block becomes a no-op rather than a second opinion about it.
+    IF EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename=t) THEN
+      RAISE NOTICE '[child-rls] % is policied — leaving deny-all alone', t;
+      skipped := skipped + 1;
+      CONTINUE;
+    END IF;
+
+    EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
+    EXECUTE format('ALTER TABLE public.%I FORCE ROW LEVEL SECURITY', t);
+    applied := applied + 1;
+    RAISE NOTICE '[child-rls] % deny-all (row security on, FORCEd, no policy)', t;
+  END LOOP;
+
+  RAISE NOTICE '[child-rls] deny-all: % enforced, % skipped', applied, skipped;
 END
 $$;
 

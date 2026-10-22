@@ -25,6 +25,7 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { clearAuthToken, setAuthToken } from '@/utils/authToken';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -32,7 +33,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: { id: 'u-1', name: 'Tester', email: 't@example.com' } }),
+  useAuth: () => ({ user: { id: 7, organizationId: 7, name: 'Tester', email: 't@example.com', permissions: ['governed:write'] } }),
 }));
 
 import { ApiRequestError } from '@/lib/queryClient';
@@ -57,6 +58,7 @@ const expired = () => ({ ok: false, status: 401, json: async () => ({ error: 'Un
 /** Reads served for the board; `writes` decides each mutation's answer. */
 let writes: (method: string, path: string) => Promise<Response>;
 beforeEach(() => {
+  setAuthToken(`fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 7 }))}.fixture`);
   apiRequest.mockReset();
   writes = async () => ok({ success: true });
   apiRequest.mockImplementation(async (method: string, rawPath: unknown) => {
@@ -70,6 +72,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  clearAuthToken();
   vi.unstubAllGlobals();
 });
 

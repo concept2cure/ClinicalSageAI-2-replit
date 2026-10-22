@@ -10,19 +10,77 @@
  * null), and POSTs /api/submissions/:id/program-anchor { programId, reason }.
  *
  * The server decides (anchorSubmissionToProgram): the project's lead or an
- * organization manager, a live project of this organization, a submission with
- * no project, none of another project's documents already in it. The project
- * starts unstated (P-21), a reason is required, and the answer is shown in the
- * server's words; success is said only once the server returns the anchor.
+ * organization manager, a live project of this organization of the
+ * submission's own filing type, a submission with no project, none of another
+ * project's documents already in it. The project starts unstated (P-21), a
+ * reason is required, and the answer is shown in the server's words; success
+ * is said only once the server returns the anchor.
+ *
+ * QA 2026-10-08 (j6): the select listed every programme of the organization —
+ * device programmes, a BLA, an MAA and a J-NDA for an NDA — and an anchor is
+ * not undone here. It now offers exactly what GET
+ * /api/submissions/:id/program-anchor answers (listAnchorCandidates: the
+ * projects whose filing type is the submission's, by the rule the anchor
+ * applies), and counts the others without naming them.
  */
 import React from 'react';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { mutateVerbatim, clause, type Notice } from './SubmissionSeqWorkspaces';
+import { useLiveData, hasKeys } from '../dataConnect';
 
 export interface AnchorProgramme {
   id: string;
   title: string;
   code: string;
+}
+
+/** GET /api/submissions/:id/program-anchor (listAnchorCandidates). */
+interface AnchorCandidates {
+  applicationType: string;
+  applicationTypeLabel: string;
+  candidates: AnchorProgramme[];
+  otherTypes: number;
+}
+
+/** "2 projects of other filing types are", "1 project of another filing type is". */
+const projectsOf = (n: number): string =>
+  n === 1 ? '1 project of another filing type is' : `${n} projects of other filing types are`;
+
+/** What the server offered, in the control's words. */
+function offeredProjects(data: AnchorCandidates | null) {
+  const programmes = Array.isArray(data?.candidates) ? data.candidates : [];
+  const typeLabel = data?.applicationTypeLabel ?? '';
+  const others = Number(data?.otherTypes ?? 0);
+  return {
+    programmes,
+    emptyNote:
+      `No ${typeLabel} project exists in this organization to anchor this submission to` +
+      (others > 0 ? `; ${projectsOf(others)} not offered, because a submission is anchored only to a project of its own filing type.` : '.'),
+    typeNote: `Only ${typeLabel} projects are offered${others > 0 ? `; ${projectsOf(others)} not.` : '.'}`,
+  };
+}
+
+/** The read when it is not a list to choose from — reading, unreadable or empty — or null when it is. */
+function offeredStatus(offered: { loading: boolean; error?: string; data: AnchorCandidates | null }, emptyNote: string, count: number) {
+  if (offered.loading) {
+    return (
+      <div className="scaf-note" role="status">
+        Reading the projects this submission can be anchored to…
+      </div>
+    );
+  }
+  if (offered.error || !offered.data) {
+    return (
+      <div className="sc-verdict tone-err" role="status">
+        The projects this submission can be anchored to could not be read, so nothing is offered right now.
+      </div>
+    );
+  }
+  return count === 0 ? (
+    <div className="scaf-note" role="status">
+      {emptyNote}
+    </div>
+  ) : null;
 }
 
 const programmeLabel = (p: AnchorProgramme): string => [p.code, p.title].filter(Boolean).join(' · ') || p.id;
@@ -31,6 +89,7 @@ const programmeLabel = (p: AnchorProgramme): string => [p.code, p.title].filter(
 function AnchorForm({
   submissionId,
   programmes,
+  typeNote,
   programId,
   onProgram,
   reason,
@@ -41,6 +100,8 @@ function AnchorForm({
 }: {
   submissionId: number;
   programmes: AnchorProgramme[];
+  /** Which filing type is offered, and how many projects are not. */
+  typeNote: string;
   programId: string;
   onProgram: (id: string) => void;
   reason: string;
@@ -70,6 +131,7 @@ function AnchorForm({
             </option>
           ))}
         </select>
+        <div className="scaf-note">{typeNote}</div>
       </div>
       <div className="sc-field">
         <label htmlFor={reasonId}>
@@ -104,19 +166,22 @@ function AnchorForm({
 
 export function SubmissionProgramAnchor({
   submission,
-  programmes,
-  programmesUnreadable,
   onAnchored,
 }: {
   submission: { id: number; title: string };
-  /** The organization's projects (GET /api/c2c/projects), as the parent read them. */
-  programmes: AnchorProgramme[];
-  /** The projects could not be read: nothing is offered to choose from. */
-  programmesUnreadable: boolean;
   /** Called once the server has anchored the submission, with the line to show. */
   onAnchored: (notice: Notice) => void;
 }) {
   const [open, setOpen] = React.useState(false);
+  // Read when the control is opened: the projects this submission may be anchored to.
+  const candidatesPath = open ? `/api/submissions/${submission.id}/program-anchor` : null;
+  const offered = useLiveData<AnchorCandidates>(
+    candidatesPath,
+    [candidatesPath],
+    hasKeys<AnchorCandidates>('candidates', 'applicationTypeLabel'),
+  );
+  const { programmes, emptyNote, typeNote } = offeredProjects(offered.data);
+  const notChoosable = open ? offeredStatus(offered, emptyNote, programmes.length) : null;
   const [programId, setProgramId] = React.useState('');
   const [reason, setReason] = React.useState('');
   const [busy, setBusy] = React.useState(false);
@@ -164,14 +229,13 @@ export function SubmissionProgramAnchor({
         <button type="button" className="sc-trans-b" onClick={() => setOpen(true)}>
           Anchor to a project
         </button>
-      ) : programmesUnreadable ? (
-        <div className="sc-verdict tone-err" role="status">
-          The projects could not be read, so there is nothing to anchor this submission to right now.
-        </div>
+      ) : notChoosable ? (
+        notChoosable
       ) : (
         <AnchorForm
           submissionId={submission.id}
           programmes={programmes}
+          typeNote={typeNote}
           programId={programId}
           onProgram={setProgramId}
           reason={reason}

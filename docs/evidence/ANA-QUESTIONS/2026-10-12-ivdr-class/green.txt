@@ -1,0 +1,14 @@
+# the question engine, both catalogues, the wider tier and the card
+ Test Files  38 passed
+      Tests  684 passed (684)
+
+# the three services migrated onto the one class vocabulary
+$ npx vitest run server/services/gspr-postmarket server/services/market-specs server/services/regulatory
+ Test Files  110 passed (110)
+      Tests  1378 passed (1378)
+
+$ TYPECHECK_HEAP_MB=20480 npm run ci:typecheck:no-regression
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+
+$ node scripts/ci/check-eslint-warning-ratchet.mjs --since HEAD
+[ci:eslint-warning-ratchet] no file changed its warning count since HEAD.

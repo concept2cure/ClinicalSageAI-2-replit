@@ -1,0 +1,9 @@
+# mutation: stream-no-mirror-sink
+# test: server/routes/ana-ri/__tests__/stream-run-events.test.ts -t "third sink"
+ × server/routes/ana-ri/__tests__/stream-run-events.test.ts > the mirror is the third sink of the one producer > receives exactly the timeline the browser receives, in order 86ms
+   → expected [] to deeply equal [ { seq: 1, …(4) }, …(7) ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-run-events.test.ts > the mirror is the third sink of the one producer > receives exactly the timeline the browser receives, in order
+AssertionError: expected [] to deeply equal [ { seq: 1, …(4) }, …(7) ]
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 skipped (7)

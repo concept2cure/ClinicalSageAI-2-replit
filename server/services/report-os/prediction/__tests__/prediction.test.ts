@@ -31,7 +31,7 @@ function deficiencyInput(overrides: Partial<DeficiencyRiskInput> = {}): Deficien
     firstCycleApprovalProbability: 0.63,
     sampleSize: 250,
     usingNetworkPrior: false,
-    modelConfidence: 0.7,
+    // No modelConfidence: it was blendedReadiness / 100 relabelled (2026-10-15).
     ...overrides,
   };
 }

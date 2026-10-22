@@ -1,0 +1,233 @@
+{
+  "runtime": "v22.23.3",
+  "fixture": {
+    "database": "scientific_catalog_fixture",
+    "ownerRole": "catalog_fixture_owner",
+    "name": "c2c-catalog-race-34a72289-571",
+    "image": [
+      "postgres@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d"
+    ]
+  },
+  "proofScope": "Actual canonical catalog/admission/source eligibility/version guard/chained audit SQL on distinct local PostgreSQL sessions. Synthetic minimal DDL, explicit policy case, synthetic HMAC seal, no deployed role/provider/client data qualification.",
+  "observations": [
+    {
+      "server": {
+        "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+        "current_database": "scientific_catalog_fixture",
+        "current_user": "catalog_fixture_owner",
+        "pg_backend_pid": 73,
+        "superuser": false,
+        "bypassrls": false
+      },
+      "image": [
+        "postgres@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d"
+      ],
+      "rolePosture": "synthetic table owner NOSUPERUSER NOBYPASSRLS; ordinary table ownership bypasses RLS except the explicitly forced policy case"
+    },
+    {
+      "barrier": "withdrawal",
+      "blocker": 75,
+      "waiters": [
+        {
+          "pid": 76,
+          "application_name": "catalog-withdrawal",
+          "wait_event_type": "Lock",
+          "blockers": [
+            75
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "successor",
+      "blocker": 77,
+      "waiters": [
+        {
+          "pid": 78,
+          "application_name": "catalog-successor",
+          "wait_event_type": "Lock",
+          "blockers": [
+            77
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "extraction",
+      "blocker": 79,
+      "waiters": [
+        {
+          "pid": 80,
+          "application_name": "catalog-extraction",
+          "wait_event_type": "Lock",
+          "blockers": [
+            79
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "move",
+      "blocker": 81,
+      "waiters": [
+        {
+          "pid": 82,
+          "application_name": "catalog-move",
+          "wait_event_type": "Lock",
+          "blockers": [
+            81
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "viewer",
+      "blocker": 83,
+      "waiters": [
+        {
+          "pid": 84,
+          "application_name": "catalog-viewer",
+          "wait_event_type": "Lock",
+          "blockers": [
+            83
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "membership",
+      "blocker": 85,
+      "waiters": [
+        {
+          "pid": 86,
+          "application_name": "catalog-membership",
+          "wait_event_type": "Lock",
+          "blockers": [
+            85
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "private",
+      "blocker": 87,
+      "waiters": [
+        {
+          "pid": 88,
+          "application_name": "catalog-private",
+          "wait_event_type": "Lock",
+          "blockers": [
+            87
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "inactive",
+      "blocker": 89,
+      "waiters": [
+        {
+          "pid": 90,
+          "application_name": "catalog-inactive",
+          "wait_event_type": "Lock",
+          "blockers": [
+            89
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "source-dml",
+      "blocker": 91,
+      "waiters": [
+        {
+          "pid": 92,
+          "application_name": "catalog-source-dml",
+          "wait_event_type": "Lock",
+          "blockers": [
+            91
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "actor-dml",
+      "blocker": 93,
+      "waiters": [
+        {
+          "pid": 94,
+          "application_name": "catalog-actor-dml",
+          "wait_event_type": "Lock",
+          "blockers": [
+            93
+          ]
+        }
+      ]
+    },
+    {
+      "case": "forced synthetic catalog policy",
+      "superuser": false,
+      "bypassrls": false,
+      "result": "42501 propagated, no success audit",
+      "limits": "explicit local policy only; no deployed RLS qualification"
+    }
+  ],
+  "before": {
+    "server/services/vault/document-catalog-governance.service.ts": "d5d6a3b0ff4c6381d9fb7c9b42e9e0833f08d4fc7955197dbe8dae9d6ac4240c",
+    "server/services/vault/document-catalog-admission.ts": "0022f748129fa42a43c3a193cf5fae16d23bd9ad2f6e72eaae489119cde8b360",
+    "server/services/vault/document-catalog-write-integrity.ts": "d42cec7319a919965099af8c3920d564bcdc8b05790448aa39dc375001a29a20",
+    "server/services/vault/document-catalog-core.ts": "866bb582da097b67a94e852d2d31834e292c183396302a83a4c21589c02f6f6e",
+    "server/services/vault/catalog-fact-verification.ts": "7de836b464954d69848d5d3610e2a64a7dcb6c113fa4ab34275b4c6744195af9",
+    "server/services/vault/vault-version-family.ts": "196ba74c0214250ac6f10c4b5ec5c92194c89901d23be015dedeaeef7493b526",
+    "server/services/vault/vault-write-authority.ts": "349a2456bbffc3c244e05599e5c9726d4251944b797546989179e4ef3acce7d0",
+    "server/services/ana/project-scope-admission.ts": "f4d10f50eff9992f2be773d3c184534a6cb81a599cab9ae8d73a408edd0379a6",
+    "server/services/report-os/project-access.ts": "43ed392aacb3493732a02bf6881e1728504bfc7a26e7bd647333644bf929ea58",
+    "server/services/project-sharing-access.ts": "f39a527db22a214c681cb6685af41f4793fd6e2973517f65b854cb87d5cf9815",
+    "server/services/c2c/program-access.ts": "b7879560db14239ab7ff1c3aa0258a5df1e1451dea5c362abf981281149d6d14",
+    "server/services/c2c/program-project-anchor.ts": "e05b25b9066602d60f130fdac1f4f58a5a42dec3a1e213c3752febc4a16b4bb1",
+    "server/services/document-data-disposition/eligibility.ts": "b4d93194a0cdac02966b2b9bf0ca73e4dcf96fa6218ed259ecf4e469ce37db6f",
+    "server/services/document-data-disposition/program-lock.ts": "04862a0cc8becdb04267ec08975fdfc5063ca39001fa07ef2d440fdec6071a42",
+    "server/services/auditService.ts": "b2e9e668edd4ccc7dfdba0ba4037512fb3725c99b2f50a15fd5fccce487b549c",
+    "server/services/audit/chain.ts": "7247d385cd16282fae584d10c8d82944dd5590034b69e72745dd9ab2415eaeb9",
+    "server/services/tenant/governed-tenant-context.ts": "dff426545317dbc4ce6e93b090179b65b0446e0e826fa5c519e631c2549b819d",
+    "server/db/sessionScope.ts": "53a488a133fbf2b6489c09634a39520dd2d91174267798ea5d4818871e4231e9",
+    "server/services/document-data-disposition/__tests__/disposition-fixture.ts": "6b18f8e565f44010a04f22539752a9c56f4229b169b7a09eb151e33080510c59",
+    "migrations/20260905_document_catalog.sql": "820a30b5a07d420970b8e48104149d7650b5be01f174b7b59d9c5fb7b02ad584",
+    "migrations/20261008e_document_catalog_attribution.sql": "7e215fd6e5250e6d592406b570fc2c68a99f6793d5621f099b3be78f3332d59e",
+    "migrations/20260930_vault_documents_version_lineage.sql": "44e06daed45ac1e584c98ea88879b9216dba3fbcfee3473c59c3e0caee699ab2",
+    "migrations/20261006_document_data_dispositions.sql": "84a14559d159d2df78ffa71c6ebe03783bf804b56c8b8a4ae9587733a9f43568",
+    "migrations/20260921_audit_logs_chain_seq.sql": "4f2838bcd6f9a8c52899c4b99f37ed41d151f7d02f63551eb0033736b22b4833",
+    "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/catalog-postgres.test.mts": "f97cf1d76b884bc9904a7f87e34385eac275cd80c1109225b907466a5f571381",
+    "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/catalog-postgres.config.mts": "6a0dbe38db226ea72cef456b93bfabb3e22ba88b0d97650fea04487175e26e69"
+  },
+  "after": {
+    "server/services/vault/document-catalog-governance.service.ts": "d5d6a3b0ff4c6381d9fb7c9b42e9e0833f08d4fc7955197dbe8dae9d6ac4240c",
+    "server/services/vault/document-catalog-admission.ts": "0022f748129fa42a43c3a193cf5fae16d23bd9ad2f6e72eaae489119cde8b360",
+    "server/services/vault/document-catalog-write-integrity.ts": "d42cec7319a919965099af8c3920d564bcdc8b05790448aa39dc375001a29a20",
+    "server/services/vault/document-catalog-core.ts": "866bb582da097b67a94e852d2d31834e292c183396302a83a4c21589c02f6f6e",
+    "server/services/vault/catalog-fact-verification.ts": "7de836b464954d69848d5d3610e2a64a7dcb6c113fa4ab34275b4c6744195af9",
+    "server/services/vault/vault-version-family.ts": "196ba74c0214250ac6f10c4b5ec5c92194c89901d23be015dedeaeef7493b526",
+    "server/services/vault/vault-write-authority.ts": "349a2456bbffc3c244e05599e5c9726d4251944b797546989179e4ef3acce7d0",
+    "server/services/ana/project-scope-admission.ts": "f4d10f50eff9992f2be773d3c184534a6cb81a599cab9ae8d73a408edd0379a6",
+    "server/services/report-os/project-access.ts": "43ed392aacb3493732a02bf6881e1728504bfc7a26e7bd647333644bf929ea58",
+    "server/services/project-sharing-access.ts": "f39a527db22a214c681cb6685af41f4793fd6e2973517f65b854cb87d5cf9815",
+    "server/services/c2c/program-access.ts": "b7879560db14239ab7ff1c3aa0258a5df1e1451dea5c362abf981281149d6d14",
+    "server/services/c2c/program-project-anchor.ts": "e05b25b9066602d60f130fdac1f4f58a5a42dec3a1e213c3752febc4a16b4bb1",
+    "server/services/document-data-disposition/eligibility.ts": "b4d93194a0cdac02966b2b9bf0ca73e4dcf96fa6218ed259ecf4e469ce37db6f",
+    "server/services/document-data-disposition/program-lock.ts": "04862a0cc8becdb04267ec08975fdfc5063ca39001fa07ef2d440fdec6071a42",
+    "server/services/auditService.ts": "b2e9e668edd4ccc7dfdba0ba4037512fb3725c99b2f50a15fd5fccce487b549c",
+    "server/services/audit/chain.ts": "7247d385cd16282fae584d10c8d82944dd5590034b69e72745dd9ab2415eaeb9",
+    "server/services/tenant/governed-tenant-context.ts": "dff426545317dbc4ce6e93b090179b65b0446e0e826fa5c519e631c2549b819d",
+    "server/db/sessionScope.ts": "53a488a133fbf2b6489c09634a39520dd2d91174267798ea5d4818871e4231e9",
+    "server/services/document-data-disposition/__tests__/disposition-fixture.ts": "6b18f8e565f44010a04f22539752a9c56f4229b169b7a09eb151e33080510c59",
+    "migrations/20260905_document_catalog.sql": "820a30b5a07d420970b8e48104149d7650b5be01f174b7b59d9c5fb7b02ad584",
+    "migrations/20261008e_document_catalog_attribution.sql": "7e215fd6e5250e6d592406b570fc2c68a99f6793d5621f099b3be78f3332d59e",
+    "migrations/20260930_vault_documents_version_lineage.sql": "44e06daed45ac1e584c98ea88879b9216dba3fbcfee3473c59c3e0caee699ab2",
+    "migrations/20261006_document_data_dispositions.sql": "84a14559d159d2df78ffa71c6ebe03783bf804b56c8b8a4ae9587733a9f43568",
+    "migrations/20260921_audit_logs_chain_seq.sql": "4f2838bcd6f9a8c52899c4b99f37ed41d151f7d02f63551eb0033736b22b4833",
+    "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/catalog-postgres.test.mts": "f97cf1d76b884bc9904a7f87e34385eac275cd80c1109225b907466a5f571381",
+    "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/catalog-postgres.config.mts": "6a0dbe38db226ea72cef456b93bfabb3e22ba88b0d97650fea04487175e26e69"
+  },
+  "changedSources": [],
+  "sourcesUnchangedDuringRun": true
+}

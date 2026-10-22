@@ -14,7 +14,7 @@
  * @module server/services/research-compliance/compliance-briefing
  */
 
-import { computeDomainReport } from '../report-os/research-compliance-report-providers';
+import { computeDomainReport, type DomainReportResult } from '../report-os/research-compliance-report-providers';
 
 export type BriefingSeverity = 'critical' | 'warning' | 'info';
 
@@ -99,18 +99,27 @@ const EXTRACTORS: { reportTypeId: string; extract: (s: Record<string, unknown> |
   },
 ];
 
+/** The cross-domain briefing retains its aggregate-only lifecycle dependency;
+ * detailed report requests continue through the actor-bound calendar provider. */
+function computeBriefingDomainReport(reportTypeId: string, orgId: number) {
+  return computeDomainReport(reportTypeId, orgId, reportTypeId === 'lifecycle.obligation_calendar' ? { aggregateOnly: true } : undefined);
+}
+
 /**
  * Build the prioritized briefing for an organization. Items are ordered
  * critical → warning → info, then by count descending.
  */
-export async function buildComplianceBriefing(orgId: number): Promise<ComplianceBriefing> {
+export async function buildComplianceBriefing(orgId: number, options?: { strict?: boolean; onReport?: (report: DomainReportResult) => void }): Promise<ComplianceBriefing> {
   const items: BriefingItem[] = [];
   for (const { reportTypeId, extract } of EXTRACTORS) {
     let summary: Record<string, unknown> | undefined;
     try {
-      const report = await computeDomainReport(reportTypeId, orgId);
+      const report = await computeBriefingDomainReport(reportTypeId, orgId);
+      if (!report && options?.strict) throw new Error(`No provider computes ${reportTypeId}.`);
+      if (report) options?.onReport?.(report);
       summary = report?.summary;
-    } catch {
+    } catch (error) {
+      if (options?.strict) throw error;
       summary = undefined; // a missing domain table shouldn't sink the whole briefing
     }
     for (const item of extract(summary)) {

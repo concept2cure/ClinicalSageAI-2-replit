@@ -1,0 +1,16 @@
+{
+  "base_commit": "7111deff00bc17e0b3aefeccfa40a16975ccc74a",
+  "branch": "concept2cure-v2",
+  "client_tree_before": "f4a50c306387585250e354c68e08a099362e3823",
+  "source_blobs": {
+    "server/services/ana/docx-fidelity.ts": "ccb2a7321eeb360a5385150f13cef12129d5142b",
+    "server/services/ana/AnaToolExecutor.ts": "2503ed7a2ee5b19a2c8cc4e1c4cb03a7c802e364",
+    "server/services/ana/legacy-import-tool-defs.ts": "410c9b4ed4c51d6db2542c988ad076238b75c17d",
+    "server/services/ana/__tests__/verify-docx-against-source.test.ts": "942b27b78d5e94386dbfc487e8a4933e7d4210e5",
+    "server/services/ana/__tests__/verify-docx-claim-scope.test.ts": "c5f01c7174444faad6664ea39e36b27eed42c29f",
+    "server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts": "63c72104e3cdd789a5d77a5fd2a3ed47566a07b4"
+  },
+  "new_dependencies": false,
+  "launch_workstream": "W3 / D4",
+  "scope": "Existing DOCX verifier: persisted artifact fidelity, source qualification unassessed"
+}

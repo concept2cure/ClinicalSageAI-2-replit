@@ -1,0 +1,200 @@
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > lists the project’s submission from the project-scoped read 125ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > an empty project says so, which is not the same as a failure 55ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > a failed read is a failure with a retry, and the retry reads again 321ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > keeps "Open Submission Center", which opens on this project 134ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > shows the server’s verdict, its blockers and its counts, from the readiness endpoint 145ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > a cleared verdict is the server’s, and says so in words 62ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > a response with no gate is unanswered, never cleared 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > no submission and no sequence are said in plain words 72ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit tab never denies a submission the project has > an IND project whose only submission is an MAA shows the MAA as its market, with its own state 45ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit tab never denies a submission the project has > a CER project (no application type is CER) lists its submissions as its markets 50ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit tab never denies a submission the project has > a submission with no project recorded is not gated by name: no verdict, and the panels agree 41ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > states each gate the server cleared without assessing, in the server’s words 55ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > with no gate breakdown, says the external validator did not run 57ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > a cleared verdict whose validator ran says nothing it did not assess 43ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > an IND to FDA blocked by 2 blockers, and an MAA to EMA with no sequence, each say so on their own row 193ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > a 500 on one verdict shows "No verdict" with a retry on that row only, never "Cleared", and keeps the other row 351ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > a sequence list with no body is "No verdict" with a retry, never "No sequence yet" 82ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > opening a row stashes the submission, its sequence and Validation when blocked, then opens the Submission Center 97ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > offers no "Add a market" button while the Submission Center cannot open New submission from a link 80ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a project with no submission says so in words and says where New submission is 42ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a 403 on the list is the person’s role, stated once, with no retry and no alert in the header 45ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a failed list read is a failure with a retry, never "no market" 77ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > states both verdicts and the count in review, from the reads the tabs make (one board read) 86ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > a board of approved documents is not "in review" 41ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > a failed verdict is "No verdict" in the header too, never "Cleared" 45ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > lists the project's documents from the program-scoped read, with status in words 178ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a row opens THAT document, by id, in this program 366ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a failed read is an error with a retry, never an empty list, and the retry reads again 170ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > an empty project says so in words 48ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > "Recent drafts" and the Workspace grid are gone, and nothing reads the drafts 70ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a module row opens the project's newest document in that module, not the editor's list 140ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > offers the editor and the organisation's protocols as doors 170ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > Evidence has the data room and Author does not 249ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > "Write from these sources" hands the readable sources to AnA and never opens the editor 190ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > the Evidence blurb says what the tab holds 56ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Submit — the grid's filing doors > "Compile and download" opens eCTD compile, and "Open readiness" opens the readiness screen 107ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a module row names the sections as the figure and the document it opens in words, and how many the module holds 36ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > "Write from these sources" hands over the 10 newest readable sources, and says "newest" 160ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a data room cut by the server window says "newest", even under the limit 114ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a device project is not offered the eCTD compiler, and its coming-later line names no IND work 128ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a drug project still names IND annual-report tracking as coming later 99ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > DataRoom refresh applies keep_data eligibility to both local and handed-off pins 806ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > DataRoom refresh applies remove_data eligibility to both local and handed-off pins 454ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > superseded data remains visible as history and cannot be pinned 94ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > selected Vault upload exposes the preview decision control 203ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > retained Vault data has no download promise for unavailable original bytes 188ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > retained search-only Vault selection preserves its unavailable original and lifecycle state 450ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > offers only the shared chat candidates from its project-source picker 165ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > lists the project's real sources 128ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > says a document is readable only when its extraction succeeded 83ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > reports how many sources are actually usable 68ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > renders an honest empty state for a project with no sources 50ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > distinguishes a failed read from an empty data room 62ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > searches the whole room on the server, by title and text, and lists its answer 393ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > offers a way to add sources 66ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > cannot pin a source whose text was never read 92ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > hands the pinned set to AnA 86ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > offers no pin action until something is pinned 56ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > reports the sections and documents a source is cited in 55ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > says plainly when nothing was written from a source 50ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > flags the sections written against content the source no longer has 61ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > shows nothing rather than a zero when the server sends no usage field 56ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > names the affected sections when a source has changed under them 59ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > shows no change banner when nothing is stale 45ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > counts a re-uploaded file once 48ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > shows what the catalog found: protocol, registry id, data cut-off, and a table's CDISC domain 50ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > a full page shows the exact total and pages to the older sources 96ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > lists the program's threads from the program-scoped read and resumes one on click 168ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > shows an honest empty when the program has no threads, and a failure as a failure 129ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > the composer leads the main column and the readiness ring sits in the aside 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — older conversations are reachable > shows a screenful, then the older ones a screenful at a time, until there are none 671ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — older conversations are reachable > a screenful exactly offers nothing more 159ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — older conversations are reachable > an older read that fails says so, keeps what is shown, and can be tried again 236ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > baseline file > names only hops from the original six, each once, each with its slice and a reason 3ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > baseline file > every hop in the test has a fixture pair 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > review-tab-to-document: red on the 2026-10-08 dead end 2ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > review-tab-to-document: green on the shape its slice builds 2ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > outline-node-to-started-section: red on the 2026-10-08 dead end 0ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > outline-node-to-started-section: green on the shape its slice builds 2ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > placed-document-to-sequence: red on the 2026-10-08 dead end 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > placed-document-to-sequence: green on the shape its slice builds 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > dispatched-sequence-to-transmit: red on the 2026-10-08 dead end 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > dispatched-sequence-to-transmit: green on the shape its slice builds 0ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > respond-to-response-sequence: red on the 2026-10-08 dead end 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > respond-to-response-sequence: green on the shape its slice builds 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > author-document-row-to-document: red on the 2026-10-08 dead end 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > author-document-row-to-document: green on the shape its slice builds 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > author-document-row-to-document: green when the page hands its open handler down as a prop 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > review-tab-to-document: Project page, Review tab → the document under review, open in the editor 326ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > outline-node-to-started-section: Editor outline, a required section not started in this document → that section, created and open 89ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > placed-document-to-sequence: Place into filing, "Open in Submission Center" (and the market row, once F9 builds it) → the Submission Center, on that sequence 22ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > dispatched-sequence-to-transmit: Submission Center, a dispatched sequence → POST /api/submissions/sequences/:seqId/transmit 271ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > respond-to-response-sequence: Project page, Respond tab → the Submission Center, starting a response sequence 83ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > author-document-row-to-document: Project page, Author tab, a document row → that document, open in the editor 394ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > reads the review board scoped to this program, and groups the documents by what they need 396ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > a document every reviewer approved but nobody has signed is not shown as Approved 120ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > "Open document" opens THAT document, by id, in this program 192ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > a failed read is an error with a retry, never an empty list, and the retry reads again 116ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > an empty board says so in words 56ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > never says "aren't wired" and never sends the person to the task-board alias 54ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > "Open the review board" opens the Review surface when it is available, and is not shown when it is not 205ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — five tabs follow the work > the tabs are exactly Evidence, Author, Review, Submit and Respond, in that order 132ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — five tabs follow the work > no tab says "Not in this release" 181ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — five tabs follow the work > what Plan and Lifecycle promised is named on Submit as coming later, with no button 62ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — AnA can still name the removed tabs > set-stage "plan" opens Submit, and says so 57ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — AnA can still name the removed tabs > set-stage "lifecycle" opens Submit too 67ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — the start box sits above the tabs > a message typed in the start box survives switching tabs 365ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — the start box sits above the tabs > the start box and the conversations come before the tabs and stay on every tab 130ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > EctdCoauthor — open-tab views, never runs > opens the validation tab WITHOUT starting the run the human button would, and says so 345ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > EctdCoauthor — open-tab views, never runs > REFUSES to leave the document tab over unsaved edits (the editor unmounts) 179ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > CmcModule — open-tab drives the real pane swap > registers under "cmc"; open-tab mounts the named pane 98ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > SubmissionCenter — select/workspace/sequence via the "submissions" alias > drives the real portfolio: select a submission, open its sequences, select one — with honest misses 49ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > ProjectHome — set-stage drives the lifecycle rail > with a project open, the stage rail really moves 110ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > ProjectHome — set-stage drives the lifecycle rail > with no project open, the refusal is honest 8ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > renders sponsor, product, indication and the IND number from GET /api/c2c/projects/:id 385ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > takes product from the row, not from the navigation handoff 108ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > labels the number by program type 110ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > says "not assigned" when the agency has not numbered the program — never a placeholder 95ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > says "not recorded" for sponsor, product or indication the row lacks 89ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx > project home — device program > shows class, regulatory path, product code, regulation, panel, predicate and flags from the row 347ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx > project home — device program > states absence for a device field the row lacks — never a placeholder 114ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx > project home — device program > publishes the product type onto the open shell project so the shell can follow it 100ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx > project home — drug program is unchanged > renders the drug facts and no device block 100ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx > Project home — the Evidence stage holds the project's files > lists the project's vault from the project-scoped read, on the page 157ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx > Project home — the Evidence stage holds the project's files > a file can be opened here; nothing asks for a section or offers to close a rail 393ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx > Project home — the Evidence stage holds the project's files > a failed read is a failure with a retry, not an empty vault 57ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx > ProjectFilesPanel beside the editor is unchanged > keeps its rail header and asks for a section before citing 34ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx > Project home — the start box > names what it does and speaks in no voice but the page's 331ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx > Project home — the start box > a question typed here starts a new conversation in the project, carrying the words 155ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx > Project home — the start box > Enter with an empty box goes nowhere 71ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Respond stage offers no locked tool, and names what comes later in words 138ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Submit stage offers no locked tool, and names what comes later in words 65ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > never offers the source tracer, which this release does not carry 235ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > a CTD module chip opens the program's document in that module, not the locked dossier map 57ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationFilesAdopt.test.tsx > ConversationFilesAdopt > lists the caller’s conversation files and adds one to the project through the adopt route 269ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationFilesAdopt.test.tsx > ConversationFilesAdopt > a refused adopt says what the server said, and changes nothing 46ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationFilesAdopt.test.tsx > ConversationFilesAdopt > a failed read says so — it is not an empty list 7ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationFilesAdopt.test.tsx > ConversationFilesAdopt > with nothing to offer, renders nothing 3ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationFilesAdopt.test.tsx > ConversationFilesAdopt > is mounted in ProjectHome’s Data Room for the open project 259ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeMyWorkLine.test.tsx > Project home — My work > says in one line that the work is not filtered to this project, and no longer claims readiness is unwired 379ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeMyWorkLine.test.tsx > Project home — My work > "Open My work" opens the task board on the person's own tasks, as the nav does 138ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Review stage: the program’s tasks and approvals > reads the work view by the program UUID and lists its items with their store 156ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Review stage: the program’s tasks and approvals > says the counts are a floor when a store could not be read 56ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Review stage: the program’s tasks and approvals > an empty work view is an honest empty, not a failure 50ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Review stage: the program’s tasks and approvals > a program with no project record says so, not "no tasks" and not an error 54ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Review stage: the program’s tasks and approvals > a failed read is an error, never an empty list 61ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > market rows state what the platform can carry (F19) > each submission row shows its market's support, in the server's words 169ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > market rows state what the platform can carry (F19) > a failed read says it failed and offers a retry; it never reads as a market with nothing to say 248ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > a read in flight claims nothing about the market 3ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > says nothing, and reads nothing, without both an application type and a market 1ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > does not repeat the summary when the line says the same thing 0ms
+stderr | client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > a BLOCKED program does not wear a green pill
+stderr | client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an AT_RISK program does not wear a green pill
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > a BLOCKED program does not wear a green pill 90ms
+stderr | client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an UNKNOWN status is neutral — never assumed healthy
+stderr | client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an ACTIVE program still reads green — the good state stays reachable
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an AT_RISK program does not wear a green pill 29ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an UNKNOWN status is neutral — never assumed healthy 32ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an ACTIVE program still reads green — the good state stays reachable 31ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the priority chip reflects its value, not a fixed warn > a LOW priority is not rendered as a warning 91ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the priority chip reflects its value, not a fixed warn > a CRITICAL priority still warns — the alert stays reachable 58ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > draws the governed readiness, and ignores a stale progress_percent 186ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > a program with no approved sections reads 0%, the same as its card 85ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > readiness that could not be measured is stated as "not measured", never left out or drawn as 0 101ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRecords.test.tsx > ProjectHome — records in this project > lists the open project’s records, read from that project 310ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRecords.test.tsx > ProjectHome — records in this project > with no project open, there is no records panel and no records read 6ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > marks no stage done on a real project; only the open stage is marked 107ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > opening a later stage does not complete the ones before it 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > with no project selected, shows no lifecycle and no placeholder project name 20ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > with a project selected, names it in the crumb and the heading 48ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each finding is a named corpus rule > shows the rule’s title and id, its regions, its corpus severity and where it is enforced 90ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each finding is a named corpus rule > a finding whose code no rule names says so, instead of passing for a rule 23ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each gate is the rule it enforces, in words > renders every gate the server composed, the release signature included, with its own blockers 23ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each gate is the rule it enforces, in words > no gate is a bare pass or fail: each states its outcome in words, beside its rule 23ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each gate is the rule it enforces, in words > never says dispatch is permitted while the server blocks it, and shows no percentage 22ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > says "Not assessed" and why when no validator ran, never "Satisfied" 93ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > does not call the validator clean in the cleared verdict when it never ran 25ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > still says "Satisfied" when the validator ran and its report was clean 22ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — the program’s submission is the one anchored to it (LX-22) > gates the anchored submission, not a newer same-named one of another project 66ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — the program’s submission is the one anchored to it (LX-22) > a same-named submission of another project is not this program’s: no submission 10ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — the program’s submission is the one anchored to it (LX-22) > a same-named submission with no recorded project is NOT matched by name: nothing is gated, and the screen says how to anchor it 8ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > gates the open program's sequence, not the organisation's first submission 12ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a program whose submission has no sequence yet is an honest empty state — never another program's gate 7ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a program with no submission at all says so, naming the program 6ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > with no program open the gate is not run against anything 5ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a failed discovery is an error, not an empty state 7ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > does not offer project settings anywhere on the screen 113ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > leaves only the honest way out of the project workspace 54ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx > DispatchReadiness — renders the server gate, not a local recomputation > does NOT clear an unreviewed sequence the server blocks 66ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx > DispatchReadiness — renders the server gate, not a local recomputation > clears only when the SERVER says every composed gate is clear 15ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx > DispatchReadiness — renders the server gate, not a local recomputation > treats a response carrying no gate as UNANSWERED, never as cleared 12ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessOtherTypes.test.tsx > DispatchReadiness — the program’s submissions of other types > says the IND is missing and names the MAA, never "no submission" 57ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessOtherTypes.test.tsx > DispatchReadiness — the program’s submissions of other types > a program with nothing recorded is still "no submission", with its type named 10ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx > the filing spine’s project-page classes > the block is found 2ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx > the filing spine’s project-page classes > defines no class another v2 stylesheet already defines 22ms
+ Test Files  30 passed (30)
+      Tests  191 passed (191)
+   Start at  19:35:20
+   Duration  56.61s (transform 3.82s, setup 2.45s, import 11.63s, tests 21.44s, environment 15.83s)

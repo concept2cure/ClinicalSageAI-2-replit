@@ -140,4 +140,3 @@ stdout | tests/db/traceability-update-boundary.dbtest.ts > A traceability update
       Tests  58 passed (58)
    Start at  18:16:10
    Duration  19.10s (transform 3.73s, setup 237ms, import 9.74s, tests 8.14s, environment 1ms)
-

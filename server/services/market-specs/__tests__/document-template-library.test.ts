@@ -15,7 +15,7 @@ import {
 import { getRequirements } from '../submission-requirements';
 import { LABELING_RULES_KNOWLEDGE } from '../../ivd-knowledge/regulatory/labeling-rules';
 import { assembleTechDoc } from '../../pathway-engines/mdr-ivdr/tech-doc-assembler';
-import { getApplicationType, GLOBAL_REGISTRY } from '../../../../shared/regulatory/global-document-registry';
+import { getApplicationType, GLOBAL_REGISTRY, isDeviceRegistryEntry } from '../../../../shared/regulatory/global-document-registry';
 import { getSectionBlueprintForEntry } from '../../../../shared/regulatory/project-bootstrap';
 import { ICH_E2F_DSUR_SECTIONS } from '../../ind/ctd/lifecycle-document-types';
 import { getLifecycleDocumentType } from '../../ind/ctd/index';
@@ -51,10 +51,12 @@ describe('document template library — consistency', () => {
 });
 
 describe('document template library — canonical structures', () => {
-  it('Clinical Overview matches the ICH M4E 2.5.1–2.5.6 spine', () => {
+  it('Clinical Overview matches the ICH M4E 2.5.1–2.5.7 spine', () => {
+    // 2.5.7 Literature References added 2026-10-15: M4E lists it, and the
+    // chat drafting and medical-writing copies already carried it.
     const co = getDocumentTemplate('clinical_overview')!;
     expect(co.ctdSection).toBe('2.5');
-    expect(co.sections.map((s) => s.number)).toEqual(['2.5.1', '2.5.2', '2.5.3', '2.5.4', '2.5.5', '2.5.6']);
+    expect(co.sections.map((s) => s.number)).toEqual(['2.5.1', '2.5.2', '2.5.3', '2.5.4', '2.5.5', '2.5.6', '2.5.7']);
   });
 
   it('510(k) Summary carries the 21 CFR 807.92 elements incl. substantial equivalence', () => {
@@ -289,9 +291,9 @@ describe('document template library — existing biotech structures are reachabl
     });
   });
 
-  it('coverage lists every active biotech entry once and says explicitly which outlines remain unavailable', async () => {
+  it('coverage lists every active medicinal, device and diagnostics entry once and says explicitly which outlines remain unavailable', async () => {
     const coverage = await registryDocumentTemplateCoverage();
-    expect(coverage.map((r) => r.registryId)).toEqual(GLOBAL_REGISTRY.filter((e) => e.active && e.segment === 'pharma_biotech').map((e) => e.id));
+    expect(coverage.map((r) => r.registryId)).toEqual(GLOBAL_REGISTRY.filter((e) => e.active && (e.segment === 'pharma_biotech' || isDeviceRegistryEntry(e))).map((e) => e.id));
     expect(new Set(coverage.map((r) => r.registryId)).size).toBe(coverage.length);
     for (const row of coverage) {
       expect(row.outlineAvailable, row.registryId).toBe(Boolean(await getRegistryDocumentTemplate(row.registryId)));
@@ -352,12 +354,16 @@ describe('document template library — subtype-scoped IND safety scaffold', () 
     const entry = getApplicationType('US_IND_SR')!;
     const blueprint = getSectionBlueprintForEntry(entry);
     const components = getLifecycleDocumentType('ind_safety_report')!.components;
-    expect(blueprint.sections.map(s => s.code)).toEqual(['1', '2', '3', '4', '5', '6']);
+    // 2026-10-18 (review finding): 312.32(c)(1)'s previous-similar-reports
+    // analysis is its own required group, code 7, last, where its code sorts
+    // (critic, 2026-10-19), and last in the lifecycle record too, so each
+    // row's index still names its record part.
+    expect(blueprint.sections.map(s => s.code)).toEqual(['1', '2', '3', '4', '5', '6', '7']);
     expect(blueprint.sections.every(s => s.module === 0)).toBe(true);
     expect(blueprint.sections.map(s => s.title)).toEqual(components.map(c => c.title));
-    expect(blueprint.sections.map(s => s.required)).toEqual([true, false, false, false, false, false]);
+    expect(blueprint.sections.map(s => s.required)).toEqual([true, false, false, false, false, false, true]);
     const outline = await getRegistryDocumentTemplate(entry.id);
-    expect(outline?.sections.map(s => s.required)).toEqual([true, false, false, false, false, false]);
+    expect(outline?.sections.map(s => s.required)).toEqual([true, false, false, false, false, false, true]);
     expect(outline?.sections[0].purpose).toContain('not a universal cover-letter');
     expect(outline?.sections[1].purpose).toContain('not evidence that an ICSR is always required');
     expect(outline?.outlineLimitations?.join(' ')).toMatch(/subtype/i);

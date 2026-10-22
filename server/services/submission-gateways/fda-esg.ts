@@ -15,24 +15,14 @@
  *      - SSH key auth against esg-sftp.fda.gov, PUT to /incoming/…
  *      - FDA picks up and emits ack1/ack2/ack3 over /outgoing/ later
  *
- * ── KNOWN CONFORMANCE GAP (not yet production-conformant) ────────────────────
- * The AS2 *message envelope* is NOT yet a PKCS#7/CMS S/MIME structure. The body
- * is posted as `application/octet-stream`; `signAs2Body` computes a detached
- * RSA-SHA256 signature but it is NOT attached as an S/MIME `multipart/signed` or
- * `application/pkcs7-mime` part, and there is no PKCS#7 *encryption*. FDA ESG
- * (Axway/Cyclone AS2) requires an S/MIME PKCS#7-signed message, so a real FDA
- * endpoint would REJECT this envelope (a 4xx or a refusing MDN, surfaced
- * honestly as a GatewayError — the success path below only runs on a 2xx whose
- * MDN accepts this very message, which a conformant gateway will not return to
- * a non-conformant message; a 5xx is recorded in transit, since an
- * intermediary may hold the bytes — classifyAs2Delivery, 2026-09-23 MDN final
- * pass). Likewise the synchronous
- * MDN is persisted but NOT cryptographically verified, and checkStatus() does
- * not poll FDA for async ack1/ack2/ack3. Closing this needs a real CMS
- * implementation (a vendored ASN.1/CMS library) + MDN signature verification +
- * an ack poller. Do not represent AS2 transmission as production-ready until
- * that lands; SFTP is the nearer-term real path (and requires ssh2-sftp-client,
- * currently absent from package.json).
+ * AS2 messages are CMS-signed and AES-256-CBC encrypted with OpenSSL. The
+ * synchronous receipt must verify against the pinned agency MDN certificate,
+ * original Message-ID and SHA-256 content MIC. Exact receipt bytes are retained.
+ * FDA AS2 User Guide v2.2 (July 2026) supports AES-128/192/256 and excludes
+ * AES-256-GCM; the chosen CBC cipher is within that documented set. Engineering
+ * checks do not qualify an account: FDA UAT and agency acceptance remain required.
+ * OpenSSL is an explicit runtime dependency. Large-bundle SFTP still requires
+ * the optional ssh2-sftp-client dependency and its own account credentials.
  *
  *   3. ESG NextGen REST API (`FDA_ESG_TRANSPORT=rest`; W5 2026-09-20, runbook
  *      B16 / competitive delta §3): FDA retired WebTrader in April 2025 and
@@ -62,7 +52,9 @@
  *                            (2026-10-01, W5/D7, sweep F16).
  *   FDA_ESG_CERT_PATH        mTLS client certificate (PEM path)
  *   FDA_ESG_KEY_PATH         mTLS private key (PEM path)
- *   FDA_ESG_FDA_CERT_PATH    FDA's certificate (PEM path) — TLS trust anchor
+ *   FDA_ESG_FDA_CERT_PATH    FDA AS2 recipient encryption certificate (PEM path)
+ *   FDA_ESG_MDN_CERT_PATH    pinned MDN signing certificate, if different
+ *   FDA_ESG_TLS_CA_PATH      optional TLS CA override (otherwise system trust)
  *   FDA_ESG_SFTP_HOST / FDA_ESG_SFTP_USER / FDA_ESG_SFTP_KEY_PATH  SFTP fallback
  *   REST (NextGen) path:
  *   FDA_ESG_REST_URL         ESG NextGen API base URL (https://…)
@@ -83,14 +75,16 @@
 
 import { promises as fs } from 'fs';
 import { randomUUID } from 'crypto';
+import { createRequire } from 'node:module';
 import { pool } from '../../db';
 import { resolveGatewayAccount, type ResolvedGatewayAccount } from './gateway-accounts';
 import { readVerifiedBundle } from './bundle-integrity';
 import { platformTransmittalRecord } from './acknowledgement';
 import { usableIdentifier } from '../ectd/regulatory-identifiers';
 import {
-  attemptDelivery, buildAs2Headers, classifyAs2Delivery, postAs2, signAs2Body, type DeliveryOutcome,
+  attemptDelivery, buildAs2Headers, classifyVerifiedAs2Delivery, postAs2, type DeliveryOutcome, type DeliveryAttempt, type As2Response,
 } from './as2-transport';
+import { as2CmsAvailable, buildAs2CmsEnvelope } from './as2-cms';
 import {
   CredentialError, GatewayError, NOTHING_TRANSMITTED, TransportError, UnverifiedTransportError,
   resolveToRegistryEntry,
@@ -112,6 +106,8 @@ interface FdaEsgCredentials {
   clientCertPem: string;       // mTLS client cert (also signs AS2)
   clientKeyPem:  string;       // mTLS private key
   fdaCertPem:    string;       // FDA's AS2 public cert (encrypts AS2 to FDA)
+  mdnCertPem?: string;         // FDA's pinned MDN signing cert, when distinct
+  tlsCaPem?: string;           // Optional TLS CA override; AS2 cert is not a TLS CA
   sftpHost?:     string;
   sftpUser?:     string;
   sftpKeyPem?:   string;
@@ -138,9 +134,14 @@ async function credentialsFor(
   environment: 'staging' | 'production',
   account: ResolvedGatewayAccount | null,
 ): Promise<FdaEsgCredentials> {
-  return account?.mode === 'client'
+  const credentials = await (account?.mode === 'client'
     ? loadFdaClientCredentials(environment, account)
-    : loadFdaCredentials(organizationId, environment);
+    : loadFdaCredentials(organizationId, environment));
+  const mdnPath = envFor(environment, 'MDN_CERT_PATH'), tlsPath = envFor(environment, 'TLS_CA_PATH');
+  return { ...credentials,
+    mdnCertPem: mdnPath ? await fs.readFile(mdnPath, 'utf8') : credentials.fdaCertPem,
+    tlsCaPem: tlsPath ? await fs.readFile(tlsPath, 'utf8') : undefined,
+  };
 }
 
 /** The organisation's own FDA account: its AS2 identity, certificate and key, with FDA's side from the platform. */
@@ -235,6 +236,18 @@ async function loadFdaCredentials(
 
 export type FdaEsgConfiguredTransport = 'as2' | 'rest';
 
+/** Engineering capability only. Account registration and agency UAT are separate facts. */
+export function fdaEsgTransportImplementation(environment: 'staging' | 'production'): { transport: FdaEsgConfiguredTransport; implemented: boolean; reason: string; sftpAvailable: boolean; missingDependencies: string[] } {
+  const transport = resolveFdaEsgTransport(environment);
+  let sftpAvailable = false;
+  try { createRequire(import.meta.url).resolve('ssh2-sftp-client'); sftpAvailable = true; } catch { /* Optional large-bundle fallback is absent. */ }
+  const cmsAvailable = as2CmsAvailable();
+  return { transport, implemented: transport === 'as2' && cmsAvailable, sftpAvailable,
+    missingDependencies: [...(!cmsAvailable ? ['openssl'] : []), ...(!sftpAvailable ? ['ssh2-sftp-client (large-bundle SFTP fallback)'] : [])],
+    reason: transport === 'rest' ? 'The FDA NextGen REST wire contract has not been verified; transmit is refused.' : cmsAvailable ? 'CMS signing/encryption and pinned MDN verification are implemented. FDA account UAT and agency acceptance remain unverified.' : 'AS2 CMS requires OpenSSL, which is unavailable in this runtime.',
+  };
+}
+
 function envVarName(environment: 'staging' | 'production', suffix: string): string {
   return `FDA_ESG${environment === 'staging' ? '_STAGING' : ''}_${suffix}`;
 }
@@ -306,17 +319,19 @@ function transmitViaNextGenRest(
   });
   throw new UnverifiedTransportError(
     'fda', 'esg', 'rest',
-    "This deployment selects the ESG NextGen transport, which has not been tested in FDA's " +
-    'pre-production environment. An administrator can switch FDA ESG to the verified AS2 transport.',
+    // "implemented", not "verified": AS2's agency UAT is not verified either
+    // (fdaEsgTransportImplementation, 2026-10-17).
+    'This deployment selects the ESG NextGen transport, whose contract has not been verified against ' +
+    "FDA's documentation or tested in FDA's pre-production environment. An administrator can switch " +
+    'FDA ESG to the implemented AS2 transport.',
   );
 }
 
 /* ─── AS2 envelope (RFC 4130) ────────────────────────────────────── */
 
-/* Envelope framing, body signing, the mTLS POST and MDN interpretation live
-   in ./as2-transport.ts, shared with the E2B(R3) ICSR transport so there is
-   exactly one AS2 implementation. The PKCS#7 conformance gap is documented
-   there and at the top of this file. */
+/* CMS signing/encryption live in ./as2-cms.ts; mTLS delivery and verified
+   receipt interpretation live in ./as2-transport.ts. The E2B(R3) ICSR caller
+   uses these same primitives. Agency UAT remains separately unverified. */
 
 /**
  * The agency application number the SFTP path is filed under: it names the
@@ -346,6 +361,8 @@ async function createTransmittalRow(
   req: GatewayTransmitRequest,
   transport: 'as2' | 'sftp',
 ): Promise<number> {
+  const binding = req.dispatchBinding;
+  if (binding && (binding.organizationId !== req.organizationId || binding.bundleSha256 !== req.bundle.sha256 || !Number.isSafeInteger(binding.sequenceId) || binding.sequenceId <= 0 || typeof binding.attemptId !== 'string' || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(binding.attemptId) || req.authorization?.kind !== 'governed-signature' || req.authorization.signatureActionId !== binding.signatureActionId)) throw new ValidationError('The internal sequence dispatch binding does not identify this authorized bundle.', [], NOTHING_TRANSMITTED);
   const { rows } = await pool.query<{ id: number }>(
     `INSERT INTO submission_transmittals (
        organization_id, program_id, package_id, region, gateway, format,
@@ -357,7 +374,8 @@ async function createTransmittalRow(
       req.organizationId, req.programId, req.packageId, req.bundle.format,
       req.submissionType ?? null, transport, req.bundle.path,
       req.bundle.sha256, req.bundle.sizeBytes, req.userId,
-      JSON.stringify(req.metadata ?? {}),
+      // These are server-owned receipt proofs, never caller-supplied metadata.
+      JSON.stringify({ ...(req.metadata ?? {}), dispatchBinding: binding ?? undefined, as2: undefined, as2Receipt: undefined, as2ReceiptHistory: [] }),
     ],
   );
   return rows[0].id;
@@ -489,6 +507,23 @@ interface SentBundle {
   httpStatus?: number;
   mdnRaw?: string;
   errorClass: 'gateway' | 'transport';
+}
+
+function possibleAs2Delivery(attempt: DeliveryAttempt, messageId: string): SentBundle | null {
+  if (!attempt.ok || (attempt.response.httpStatus >= 400 && attempt.response.httpStatus < 500)) return null;
+  return { delivery: `The AS2 endpoint answered HTTP ${attempt.response.httpStatus} after the request was handed to it`,
+    transmissionId: messageId, httpStatus: attempt.response.httpStatus, mdnRaw: attempt.response.body.toString('utf8'), errorClass: 'gateway' };
+}
+
+function unconfirmedAs2Delivery(outcome: Extract<DeliveryOutcome, { kind: 'DELIVERED_UNCONFIRMED' }>): SentBundle {
+  return { delivery: 'The AS2 request may have reached FDA', transmissionId: outcome.trackingId,
+    httpStatus: outcome.httpStatus ?? undefined, mdnRaw: outcome.responseRaw ?? undefined, errorClass: 'gateway' };
+}
+
+function as2ReceiptMetadata(response: As2Response, outcome: DeliveryOutcome) {
+  return { bodyBase64: response.body.toString('base64'), contentType: response.headers['content-type'],
+    verified: outcome.kind === 'RECEIVED' || (outcome.kind === 'REFUSED_BY_AGENCY' && response.httpStatus >= 200 && response.httpStatus < 300),
+    receivedAt: new Date().toISOString() };
 }
 
 /**
@@ -630,6 +665,17 @@ async function transmitViaSftp(
 
 /* ─── Gateway implementation ─────────────────────────────────────── */
 
+async function writeAs2Metadata(transmittalId: number, organizationId: number, key: 'as2' | 'as2Receipt', value: Record<string, unknown>): Promise<void> {
+  try {
+    const result = await pool.query(`UPDATE submission_transmittals SET metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), ARRAY[$3]::text[], $4::jsonb)
+      WHERE id = $1 AND organization_id = $2 AND region = 'fda' AND gateway = 'esg' RETURNING id`, [transmittalId, organizationId, key, JSON.stringify(value)]);
+    if (result.rowCount === 0) throw new TransportError('The tenant-bound AS2 receipt binding could not be persisted.', null);
+  } catch (err) {
+    if (key === 'as2') throw new TransportError('The original AS2 binding could not be persisted. Nothing was transmitted.', err, NOTHING_TRANSMITTED);
+    throw err;
+  }
+}
+
 export class FdaEsgGateway implements SubmissionGateway {
   readonly region    = 'fda' as const;
   readonly gateway   = 'esg' as const;
@@ -638,34 +684,15 @@ export class FdaEsgGateway implements SubmissionGateway {
      prefer SFTP; AS2 when configured). */
   readonly transport = 'as2' as const;
 
-  /**
-   * The transport this deployment selects for `environment` (FDA_ESG_TRANSPORT),
-   * as gatewayConfigurationStatus reports it. A setting that cannot be read
-   * reports the default; isConfigured answers false for it.
-   */
-  transportFor(environment: 'staging' | 'production'): FdaEsgConfiguredTransport {
-    try {
-      return resolveFdaEsgTransport(environment);
-    } catch {
-      return this.transport;
-    }
-  }
-
-  transportUnverified(environment: 'staging' | 'production'): boolean {
-    return this.transportFor(environment) === 'rest';
-  }
-
   async isConfigured(organizationId: number, environment: 'staging' | 'production'): Promise<boolean> {
     try {
       if (resolveFdaEsgTransport(environment) === 'rest') {
-        // Configured means able to transmit, and the REST transport refuses
-        // every transmit until its contract is verified (transmitViaNextGenRest),
-        // whatever credentials resolve. gatewayConfigurationStatus() reports the
-        // transport beside this, so a surface can say which one is selected.
-        // 2026-10-08 (W5/D7, sweep HS-4): this answered true once the REST
-        // credentials resolved, so the gateway was listed as configured while
-        // every transmit through it was refused.
-        return false;
+        // Configured means credentials resolve. It does NOT mean the REST
+        // transport can transmit — see transmitViaNextGenRest — and
+        // gatewayConfigurationStatus() reports the transport so a surface can
+        // say which one.
+        loadFdaRestCredentials(environment);
+        return true;
       }
       await credentialsFor(
         organizationId,
@@ -762,22 +789,34 @@ export class FdaEsgGateway implements SubmissionGateway {
       /* AS2 transmit. */
       const body = await readVerifiedBundle(req.bundle);
       const messageId = `<${randomUUID()}@${creds.as2From}>`;
+      let envelope: Awaited<ReturnType<typeof buildAs2CmsEnvelope>>;
+      try { envelope = await buildAs2CmsEnvelope({ body, contentType: 'application/octet-stream', filename: 'ectd.zip', clientCertPem: creds.clientCertPem, clientKeyPem: creds.clientKeyPem, agencyCertPem: creds.fdaCertPem }); }
+      catch (err) { throw new TransportError('AS2 signing/encryption preparation failed. Nothing was transmitted.', err, NOTHING_TRANSMITTED); }
       const headers = buildAs2Headers({
         messageId, from: creds.as2From, to: creds.as2To,
-        contentType: 'application/octet-stream',
-        body,
-        signaturePem: signAs2Body(body, creds.clientKeyPem),
+        contentType: envelope.contentType, body: envelope.body, filename: 'smime.p7m',
       });
+      // Persist the exact public receipt binding before any byte leaves this process.
+      await writeAs2Metadata(transmittalId, req.organizationId, 'as2', { messageId, mic: envelope.mic, micAlgorithm: envelope.micAlgorithm, environment: req.environment });
 
       /* 2026-09-23 (W5/D7, MDN final pass): one attempt, one outcome from the
          shared classifier — see recordAs2Outcome. The HTTP Content-Type goes
          to parseMdn inside it (an unsigned multipart/report's boundary is not
          in the body; round-3 review, second pass). */
-      const outcome = classifyAs2Delivery(await attemptDelivery(() => postAs2({
-        endpoint: creds.endpointUrl, headers, body,
+      const attempt = await attemptDelivery(() => postAs2({
+        endpoint: creds.endpointUrl, headers, body: envelope.body,
         clientCertPem: creds.clientCertPem, clientKeyPem: creds.clientKeyPem,
-        agencyCertPem: creds.fdaCertPem, errorPrefix: 'ESG AS2 POST',
-      })), messageId);
+        agencyCertPem: creds.tlsCaPem, errorPrefix: 'ESG AS2 POST',
+      }));
+      // Capture possible delivery before receipt verification or ANY database
+      // write. A persistence failure must retain the duplicate-send lock.
+      sent = possibleAs2Delivery(attempt, messageId);
+      const outcome = await classifyVerifiedAs2Delivery(attempt, messageId, { agencyCertPem: creds.mdnCertPem!, expectedMic: envelope.mic });
+      if (outcome.kind === 'DELIVERED_UNCONFIRMED') sent = unconfirmedAs2Delivery(outcome);
+      if (attempt.ok) await writeAs2Metadata(transmittalId, req.organizationId, 'as2Receipt', as2ReceiptMetadata(attempt.response, outcome));
+      // A tied agency refusal authorizes retry only after its evidence is
+      // durable. Before this point every receipt-store failure remains ambiguous.
+      if (outcome.kind === 'REFUSED_BY_AGENCY') sent = null;
       if (outcome.kind !== 'RECEIVED') throw await recordAs2Outcome(transmittalId, outcome, messageId);
 
       /* Persist the raw MDN body verbatim alongside the message-id. The
@@ -856,23 +895,30 @@ export class FdaEsgGateway implements SubmissionGateway {
       throw new GatewayError(`Transmittal ${transmittalId} not found`, 404, null, null);
     }
     const r = rows[0];
+    const captured = r.metadata?.as2Receipt as { bodyBase64?: unknown; contentType?: unknown; receivedAt?: unknown } | undefined;
+    if (typeof captured?.bodyBase64 === 'string' && captured.bodyBase64) {
+      const observed = typeof captured.receivedAt === 'string' ? new Date(captured.receivedAt) : null;
+      return { transmittalId, transmissionId: r.transmission_id,
+        contentType: typeof captured.contentType === 'string' ? captured.contentType : 'application/octet-stream',
+        buffer: Buffer.from(captured.bodyBase64, 'base64'),
+        receivedAt: observed && Number.isFinite(observed.getTime()) ? observed : r.ack_received_at ?? null,
+        provenance: 'agency',
+      };
+    }
     if (r.mdn_raw && r.mdn_raw.length > 0) {
-      // Return the verbatim MDN response. message/disposition-notification is
-      // the canonical MIME type for MDN; the body itself is multipart and
-      // self-describes. We keep the legacy filename extension stable in the
-      // route layer so existing UI download links continue to work.
+      // Legacy rows retain verbatim bytes without their original MIME header.
+      // Keep the type unspecified rather than inventing a multipart boundary.
       return {
         transmittalId,
         transmissionId: r.transmission_id,
-        contentType: 'message/disposition-notification',
+        contentType: 'application/octet-stream',
         buffer: Buffer.from(r.mdn_raw, 'utf8'),
-        /* 2026-09-23 (W5/D7, round-3 review) — RESIDUAL, not fixed here: a row
-           that is not 'received' (an explicit rejection, or an in_transit row
-           whose MDN could not be tied to the message) has no ack_received_at,
-           so this falls back to the download time. It should be null, but
-           GatewayAcknowledgment.receivedAt is `Date` (types.ts) and the same
-           fallback is in platformTransmittalRecord (acknowledgement.ts). */
-        receivedAt: r.ack_received_at ?? new Date(),
+        /* A row that is not 'received' (an explicit rejection, or an
+           in_transit row whose MDN could not be tied to the message) has no
+           ack_received_at. This fell back to the download time — the residual
+           the 2026-09-23 round-3 review left open because the type was `Date`.
+           It is null now (2026-10-15). */
+        receivedAt: r.ack_received_at ?? null,
         // The only genuine agency artefact the platform holds: FDA's own MDN,
         // stored verbatim at transmit time. Everything else served from this
         // method is a platform record and is labelled as one.

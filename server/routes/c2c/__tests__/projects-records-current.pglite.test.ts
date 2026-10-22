@@ -41,12 +41,14 @@ const ORG = 7;
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const V1 = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1';
 const V2 = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2';
+const USER = 5;
 
 function app() {
   const a = express();
   a.use(express.json());
   a.use((req: any, _res, next) => {
-    req.organizationId = ORG;
+    // The current-access gate reads the acting member on the request client.
+    Object.assign(req, { organizationId: ORG, userId: USER, dbClient: client });
     next();
   });
   a.use('/api/c2c/projects', router);
@@ -59,8 +61,8 @@ beforeAll(async () => {
   // The actor-name reader the Vault tree and the Data room both use (D3). The
   // migration installs it only where the audit and user tables exist.
   await h.pg.exec(AUDIT_LOGS_PGLITE_DDL);
-  await h.pg.exec(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT, email TEXT);
-                   CREATE TABLE IF NOT EXISTS organization_users (user_id integer, organization_id integer);`);
+  await h.pg.exec(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT, email TEXT, status TEXT);
+                   CREATE TABLE IF NOT EXISTS organization_users (user_id integer, organization_id integer, role text);`);
   await h.pg.exec(fs.readFileSync(path.join(process.cwd(), 'migrations/20260929_actor_names.sql'), 'utf8'));
   await h.pg.exec(`
     CREATE SCHEMA IF NOT EXISTS vault;
@@ -94,6 +96,20 @@ beforeAll(async () => {
       rule_pack_version TEXT, title TEXT, status TEXT, readiness INTEGER,
       updated_at TIMESTAMPTZ, owner_id INTEGER
     );
+    -- What the current-access gate reads: an active member, the program's one
+    -- project anchor, and that project's sharing policy.
+    CREATE TABLE organizations (id INTEGER PRIMARY KEY, name TEXT, status TEXT);
+    CREATE TABLE projects (id INTEGER PRIMARY KEY, organization_id INTEGER, regulatory_program_id UUID,
+      owner_id INTEGER, created_by_id INTEGER, settings JSONB, status TEXT, client_workspace_id INTEGER);
+    CREATE TABLE project_visibility_settings (project_id INTEGER, organization_id INTEGER, visibility TEXT);
+    CREATE TABLE project_members (project_id INTEGER, organization_id INTEGER, user_id INTEGER, role TEXT, status TEXT);
+    CREATE TABLE concept2cure_artifacts (id INTEGER, organization_id INTEGER, project_id INTEGER);
+    CREATE TABLE concept2cure_review_assignments (artifact_id INTEGER, reviewer_id INTEGER, organization_id INTEGER, status TEXT);
+    INSERT INTO organizations VALUES (${ORG}, 'Fixture sponsor', 'active');
+    INSERT INTO users VALUES (${USER}, 'Member', 'member@example.test', 'active');
+    INSERT INTO organization_users (user_id, organization_id, role) VALUES (${USER}, ${ORG}, 'member');
+    INSERT INTO projects VALUES (1, ${ORG}, '${PROGRAM}', ${USER}, ${USER}, '{}', 'active', 71);
+    INSERT INTO project_visibility_settings VALUES (1, ${ORG}, 'org_public');
     CREATE TABLE c2c_rule_packs (doc_type TEXT, agency TEXT, version TEXT, required_sections JSONB);
     CREATE TABLE public.document_data_dispositions (
       id SERIAL PRIMARY KEY, organization_id INTEGER, program_id UUID, choice TEXT,

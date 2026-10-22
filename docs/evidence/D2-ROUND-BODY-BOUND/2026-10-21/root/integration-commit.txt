@@ -1,0 +1,11 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+✅ Pre-commit checks complete
+[concept2cure-v2 83adf4c1f] Retain strict body-bound qualification and canonical integration
+ 7 files changed, 3800 insertions(+), 2 deletions(-)
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/implementation-commit.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/implementation-push-command.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/incoming-final.diff.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/incoming-report-refresh.diff.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/integration.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/merge.txt

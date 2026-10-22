@@ -1,0 +1,53 @@
+{
+  "scope": "W1/D2 regional device project initialization: exact governed packs and honest zero-required readiness",
+  "red": {
+    "failed": 24,
+    "passed": 1,
+    "pending": 5,
+    "cause": "Eight absent exact pack specifications and sixteen zero-required requirement-assessment cases; IND positive control passed."
+  },
+  "green": {
+    "files": 8,
+    "passed": 73,
+    "failed": 0,
+    "pending": 0,
+    "receipt": "final-green.json"
+  },
+  "pins": {
+    "count": 19,
+    "stableDuringFinalRun": true,
+    "drift": [],
+    "before": "final-sources-before.json",
+    "after": "final-sources-after.json"
+  },
+  "lint": {
+    "strict": {
+      "files": 5,
+      "errors": 0,
+      "warnings": 0
+    },
+    "scriptManualAudit": {
+      "files": 2,
+      "errors": 0,
+      "warnings": 9,
+      "baselineErrors": 0,
+      "baselineWarnings": 9,
+      "sameRuleCounts": true,
+      "note": "scripts/** is excluded by canonical ESLint config; manual --no-ignore warnings compared against HEAD, not waived in strict production/test lint."
+    }
+  },
+  "priorPackMigrationFiles": {
+    "count": 17,
+    "unchangedAgainstHead": true
+  },
+  "emitterVerification": "emit-verification.json",
+  "intermediateReceipts": {
+    "green-initial.json": "30 new cases passed before adding prior-NDA review and future CHECK fixtures.",
+    "green.json": "70 passed, one fixture failed because superseded_by is absent from the review-state view; fixture corrected to read the bound version. Superseded by final-green.json."
+  },
+  "limitations": [
+    "No compiler, build, full warning scan or Git mutations by pack worker.",
+    "No human testing, provider calls, official form adequacy or transport acceptance tested.",
+    "Final root integration qualifies merged shared/init dependencies and supersedes this focused packet if they change."
+  ]
+}

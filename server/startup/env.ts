@@ -15,8 +15,6 @@ export interface StartupFlags {
   debug: boolean;
   /** Experimental route families allowed to mount (non-prod only). */
   experimentalRoutesEnabled: boolean;
-  /** Demo route families allowed to mount (non-prod only). */
-  demoRoutesEnabled: boolean;
   /**
    * Test/QA-only route families (test-assembly, integration-test) allowed to
    * mount. Fenced OFF in production by default; set ENABLE_TEST_ROUTES=true to
@@ -26,9 +24,11 @@ export interface StartupFlags {
 }
 
 /**
- * Production refuses the dev/mock route flags and AUTH_BOUNDARY_MODE=warn at
- * boot: a flag flipped on in a production deploy is a misconfiguration to catch
- * before a dev surface is served to customers (security audit 2026-09-24, IAM-16).
+ * Production refuses the dev/mock route flags, AUTH_BOUNDARY_MODE=warn and
+ * SECURITY_SELF_TEST_NONBLOCKING=true at boot: a flag flipped on in a production
+ * deploy is a misconfiguration to catch before a dev surface is served to
+ * customers (security audit 2026-09-24, IAM-16), or before a process with a
+ * failing security self-test serves anyone (MR-08).
  */
 function refuseForbiddenProductionPosture(): void {
   const PROD_FORBIDDEN_FLAGS = [
@@ -56,6 +56,23 @@ function refuseForbiddenProductionPosture(): void {
     console.error(
       '[FATAL] AUTH_BOUNDARY_MODE=warn is not permitted in production: the /api boundary is ' +
         'default-deny there. Unset the variable or set AUTH_BOUNDARY_MODE=enforce.',
+    );
+    process.exit(1);
+  }
+
+  // The boot security self-test (startup/security-self-test.ts) exits a
+  // production process on a critical failure: no virus scanner, a weak JWT
+  // secret, a broken audit chain. SECURITY_SELF_TEST_NONBLOCKING=true skipped
+  // that exit, so one environment line let production boot with every critical
+  // failure at once, the scanner MR-08 requires included. Nothing in the
+  // repository sets it for production (docs/evidence/MR-08/2026-10-18/stage-1/
+  // fix-round/nonblocking-grep.txt). Refused here like the flags above; outside
+  // production it is accepted, and there the self-test never blocks boot.
+  const nonblocking = (process.env.SECURITY_SELF_TEST_NONBLOCKING || '').trim().toLowerCase();
+  if (nonblocking === 'true') {
+    console.error(
+      '[FATAL] SECURITY_SELF_TEST_NONBLOCKING=true is not permitted in production: a critical ' +
+        'security self-test failure must stop the boot. Unset the variable and fix the failing check.',
     );
     process.exit(1);
   }
@@ -128,8 +145,6 @@ export function resolveStartupFlags(): StartupFlags {
     debug,
     experimentalRoutesEnabled:
       process.env.ENABLE_EXPERIMENTAL_ROUTES === 'true' && process.env.NODE_ENV !== 'production',
-    demoRoutesEnabled:
-      process.env.ENABLE_DEMO_ROUTES === 'true' && process.env.NODE_ENV !== 'production',
     testRoutesEnabled:
       process.env.NODE_ENV !== 'production' || process.env.ENABLE_TEST_ROUTES === 'true',
   };

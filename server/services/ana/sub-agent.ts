@@ -43,12 +43,13 @@ import {
 } from '@shared/ana/run-control-limits';
 import { getTenantScope } from '../../db/tenantStore.js';
 import { runRefusingModelCalls } from '../ai-gateway/model-call-scope.js';
-import type { AnaTool, GatewayRequest } from '../ai-gateway/types.js';
+import type { AnyAnaTool, GatewayRequest } from '../ai-gateway/types.js';
 import type { AgenticToolEvent } from './agentic-tool-dispatch.js';
 import { notifyObserver } from './agentic-tool-dispatch.js';
-import type { LoopStopDirective } from './agentic-loop.js';
+import type { LoopStopDirective, ToolResultEntry } from './agentic-loop.js';
 import type { ToolContext } from './AnaToolExecutor.js';
 import type { RunHoldAnnounce, RunHoldOutcome } from './run-hold.js';
+import { refusalOf } from './tool-trace.js';
 import {
   HARNESS_CHECKS,
   aggregateVerdict,
@@ -97,7 +98,7 @@ export interface SubAgentHost {
   /** The parent round this call belongs to. */
   round: number;
   /** The tools the parent was offered this turn, after tenant policy and launch scope. */
-  governedTools: readonly AnaTool[];
+  governedTools: readonly AnyAnaTool[];
   /** This turn's agent counts. */
   agents: AgentTurnCounters;
   /** The parent's run hold, bound to the PARENT's round (a child round never reaches it). */
@@ -164,6 +165,7 @@ function childContext(ctx: ToolContext, signal: AbortSignal): ToolContext {
     organizationId: ctx.organizationId,
     organizationUuid: ctx.organizationUuid ?? null,
     userId: ctx.userId ?? null,
+    sqlClient: ctx.sqlClient,
     projectId: ctx.projectId ?? null,
     projectRef: ctx.projectRef ?? null,
     agentDepth: 1,
@@ -384,6 +386,16 @@ function childStopWhen(run: AgentRun): () => LoopStopDirective {
   };
 }
 
+/** Attach only an unambiguous server correlation; payload fields confer none. */
+function recordStagedResults(steps: AgentStep[], entries: readonly Readonly<ToolResultEntry>[], round: number): void {
+  for (const entry of entries) {
+    const id = entry.tool_use_id;
+    if (!id.trim() || entries.filter(other => other.tool_use_id === id).length !== 1) continue;
+    const matching = steps.filter(step => step.round === round && step.toolUseId === id);
+    if (matching.length === 1 && matching[0].tool === entry.name) matching[0].modelContent = entry.content;
+  }
+}
+
 /** Run the child loop. The caller turns its outcome into the result. */
 async function runChildLoop(run: AgentRun, childCtx: ToolContext, readings: CheckReading[]) {
   const { host: h, runId } = run;
@@ -403,7 +415,13 @@ async function runChildLoop(run: AgentRun, childCtx: ToolContext, readings: Chec
     callerModule: 'ana-sub-agent',
   };
   const { executeAgenticLoop } = await import('./AnaToolExecutor.js');
-  return executeAgenticLoop(request, {
+  const { runWithRunScope } = await import('../ai-gateway/run-scope.js');
+  /* The child's own run, named as the parent's child. A tool's gateway calls
+     carry no run id of their own (an embedding is one), so the gateway reads
+     the ambient scope: without this the child's embeddings were ledgered as
+     the PARENT's, with no parent link, and the cost read by parent_run_id
+     that ADR-0015 §2 requires before production would have missed them. */
+  return runWithRunScope({ runId, parentRunId: h.parentRunId }, () => executeAgenticLoop(request, {
     maxRounds: CHILD_MAX_ROUNDS,
     progressExtension: 0,
     toolContext: childCtx,
@@ -414,17 +432,24 @@ async function runChildLoop(run: AgentRun, childCtx: ToolContext, readings: Chec
     stopWhen: childStopWhen(run),
     checkpoint: async () => ((await holdFor(run)) ? 'continue' : 'abort'),
     onToolEvent: (e: AgenticToolEvent) => {
-      const ok = !e.errorMessage;
-      if (e.phase === 'end') run.steps.push({ round: e.round, tool: e.call.name, input: e.call.input, result: e.result ?? '', ok });
+      /* A handler that cannot do the thing RETURNS `{error}`; it does not
+         throw, and the dispatch sets `errorMessage` only for a throw, a tool
+         that was not offered, or lost input. Judging a step by that alone
+         recorded a failed read as a good one, and the stream then offered it
+         as evidence the answer had been checked against. `refusalOf` is the
+         one judgment of a refusal, and the parent's own path uses it. */
+      const ok = !e.errorMessage && refusalOf(e.result ?? '') === null;
+      if (e.phase === 'end') run.steps.push({ round: e.round, tool: e.call.name, toolUseId: e.call.id, input: e.call.input, result: e.result ?? '', ok });
       run.emit({ phase: 'step', runId, step: e.phase, tool: e.call.name, round: e.round, ...(e.phase === 'end' ? { ok } : {}) });
     },
+    onToolResultsForModel: (entries, round) => recordStagedResults(run.steps, entries, round),
     onModelResponse: response => {
       run.usage.modelCalls += 1;
       run.usage.inputTokens += response.usage?.inputTokens ?? 0;
       run.usage.outputTokens += response.usage?.outputTokens ?? 0;
       run.models.push(recordModel(response));
     },
-  });
+  }));
 }
 
 /** Wait out a pause, run the checks (verify), run the child loop, and shape what it did. */

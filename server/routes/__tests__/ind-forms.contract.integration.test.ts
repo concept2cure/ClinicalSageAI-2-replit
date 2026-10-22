@@ -12,6 +12,7 @@ import request from 'supertest';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import { createIndPgliteDb, type IndPgliteDb } from '../../db/pglite-harness';
+import { pglitePool } from '../../services/ana-ri/__tests__/pglite-pool.fixture';
 
 const holder = vi.hoisted(() => ({ db: null as any, pglite: null as any }));
 /* `db` is drizzle over PGlite; `pool` is the duck-typed shim the raw-SQL
@@ -25,6 +26,7 @@ vi.mock('../../db', () => ({
       const r = await holder.pglite.query(text, params as unknown[]);
       return { rows: r.rows as unknown[], rowCount: (r.rows as unknown[]).length };
     },
+    connect: async () => pglitePool(() => holder.pglite).client,
   },
 }));
 /* Object bytes never touch the disk in a test: the storage provider is the only
@@ -55,6 +57,7 @@ vi.mock('../../services/auditService', () => ({
   default: {
     logAction: vi.fn(async () => ({ persisted: true, chained: true, tamperProof: true })),
   },
+  writeChainedAuditRow: vi.fn(async () => {}),
 }));
 
 import formsRouter from '../ind-forms.routes';
@@ -91,6 +94,14 @@ beforeAll(async () => {
   // Seed a project (org 1) for the governed-artifact route's org-scoping check.
   await harness.pglite.exec("INSERT INTO projects (id, organization_id, name) VALUES (1, 1, 'Test IND Project')");
   await harness.pglite.exec("INSERT INTO organizations (id, name) VALUES (1, 'Concept2Cure Therapeutics'), (2, 'Other Sponsor Inc')");
+  // Program-facts writes re-read current persisted authority in their own transaction.
+  await harness.pglite.exec(`
+    ALTER TABLE organizations ADD COLUMN status TEXT DEFAULT 'active';
+    CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT);
+    CREATE TABLE organization_users (organization_id INTEGER, user_id INTEGER, role TEXT);
+    INSERT INTO users VALUES (9,'active');
+    INSERT INTO organization_users VALUES (1,9,'manager');
+  `);
   // PGlite bootstrap can exceed the global 10s hookTimeout when the full
   // suite runs under load; give it explicit headroom.
 }, 60_000);
@@ -509,6 +520,15 @@ async function seedProgram(opts: {
   return String((r.rows[0] as { id: string }).id);
 }
 
+/** The existing fact editor now sends the exact read version and a stated reason. */
+async function saveProgramFacts(body: Record<string, unknown>) {
+  const listed = await request(app).get('/api/ind-forms/').query({ projectIdent: body.projectIdent });
+  return request(app).put('/api/ind-forms/program-facts').send({
+    expectedFactsVersion: listed.body.program?.factsVersion ?? '2026-10-21T00:00:00.000000Z',
+    reason: 'Record the sponsor-completed program facts.', ...body,
+  });
+}
+
 /** The canonical submission (and, unless withSequence is false, its 0000). */
 async function seedSpine(opts: {
   org?: number;
@@ -617,12 +637,9 @@ describe('the open program supplies the form facts', () => {
     expect(res.body.missingRequired).toContain('indication');
   });
 
-  /* QA 2026-10-08 (j7, findings 3b and 3c). The program record has no column
-     for the sponsor's address or the IND type; the build reads both — and the
-     phase — from the request, merged over the record. That is where the forms
-     panel's inputs now go. Nothing is defaulted: an unstated phase stays a
-     missing required field. */
-  it('the sponsor address, IND type and phase the panel states land where the 1571 build reads them; unstated, they stay missing', async () => {
+  /* Program-backed identity/address are recorded facts. Existing per-build
+     IND type and phase remain explicit choices; missing facts stay missing. */
+  it('a build pins program address while retaining stated IND type and phase; unstated facts stay missing', async () => {
     await seedProgram({ code: 'BX-903', name: 'BX-903 (IND)', productName: 'Product 903', applicationNumber: '000903', indication: 'Z' });
     const stated = await request(app).post('/api/ind-forms/FDA_1571/build').send({
       projectIdent: 'BX-903', sponsor: { address: '1 Main St, Boston MA 02110, US' }, indType: 'Commercial IND', studyPhase: 'Phase 2',
@@ -630,11 +647,12 @@ describe('the open program supplies the form facts', () => {
     expect(stated.status).toBe(200);
     expect(stated.body.fields).toMatchObject({
       sponsor_name: 'Concept2Cure Therapeutics',
-      sponsor_address: '1 Main St, Boston MA 02110, US',
+      sponsor_address: '',
       ind_type: 'Commercial IND',
       phase_of_study: 'Phase 2',
     });
-    for (const id of ['sponsor_address', 'ind_type', 'phase_of_study']) expect(stated.body.missingRequired).not.toContain(id);
+    for (const id of ['ind_type', 'phase_of_study']) expect(stated.body.missingRequired).not.toContain(id);
+    expect(stated.body.missingRequired).toContain('sponsor_address');
 
     const unstated = await request(app).post('/api/ind-forms/FDA_1571/build').send({ projectIdent: 'BX-903' });
     expect(unstated.body.missingRequired).toEqual(expect.arrayContaining(['sponsor_address', 'ind_type', 'phase_of_study']));
@@ -661,7 +679,7 @@ describe('the sponsor address and IND type are recorded on the program', () => {
      every build request, so a build from anywhere else had none. */
   it('PUT /program-facts records the sponsor address and IND type on the program, and the 1571 build reads them from the record', async () => {
     const programId = await seedProgram({ code: 'BX-906', name: 'BX-906 (IND)', productName: 'Product 906', indication: 'V' });
-    const put = await request(app).put('/api/ind-forms/program-facts').send({
+    const put = await saveProgramFacts({
       projectIdent: 'BX-906', sponsorAddress: ' 2 Kendall Sq, Cambridge MA 02139, US ', indType: 'Research IND',
     });
     expect(put.status, JSON.stringify(put.body)).toBe(200);
@@ -682,14 +700,14 @@ describe('the sponsor address and IND type are recorded on the program', () => {
     expect(listed.body.program.formMetadata).toMatchObject({ sponsor: { address: '2 Kendall Sq, Cambridge MA 02139, US' }, indType: 'Research IND' });
 
     // The write is audited with the fields it changed.
-    const auditService = (await import('../../services/auditService')).default as unknown as { logAction: ReturnType<typeof vi.fn> };
-    expect(auditService.logAction).toHaveBeenCalledWith(expect.objectContaining({
+    const { writeChainedAuditRow } = await import('../../services/auditService');
+    expect(writeChainedAuditRow).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
       action: 'ind_form.program_facts.update', resourceType: 'regulatory_program', resourceId: programId,
-      metadata: expect.objectContaining({ fields: ['sponsorAddress', 'indType'] }),
+      details: expect.objectContaining({ fields: ['sponsorAddress', 'indType'] }),
     }));
 
     // A blank clears the address; an absent field is left as recorded.
-    const cleared = await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: 'BX-906', sponsorAddress: '' });
+    const cleared = await saveProgramFacts({ projectIdent: 'BX-906', sponsorAddress: '' });
     expect(cleared.status).toBe(200);
     const after = await harness.pglite.query(`SELECT sponsor_address, ind_type FROM regulatory_programs WHERE id = $1`, [programId]);
     expect(after.rows[0]).toEqual({ sponsor_address: null, ind_type: 'Research IND' });
@@ -700,17 +718,17 @@ describe('the sponsor address and IND type are recorded on the program', () => {
     await seedProgram({ code: 'BX-908', name: 'BX-908 (NDA)', productName: 'Product 908', programType: 'NDA' });
     await seedProgram({ org: 2, code: 'BX-909', name: 'BX-909 (IND)', productName: 'Product 909' });
 
-    const unknown = await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: 'BX-907', indType: 'Phase 1' });
+    const unknown = await saveProgramFacts({ projectIdent: 'BX-907', indType: 'Phase 1' });
     expect(unknown.status).toBe(400);
     expect(unknown.body.error.message).toMatch(/Commercial IND/);
-    const notInd = await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: 'BX-908', indType: 'Research IND' });
+    const notInd = await saveProgramFacts({ projectIdent: 'BX-908', indType: 'Research IND' });
     expect(notInd.status).toBe(400);
     expect(notInd.body.error.message).toMatch(/IND type/);
-    const empty = await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: 'BX-907' });
+    const empty = await saveProgramFacts({ projectIdent: 'BX-907' });
     expect(empty.status).toBe(400);
-    const numeric = await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: '12', sponsorAddress: 'x' });
+    const numeric = await saveProgramFacts({ projectIdent: '12', sponsorAddress: 'x' });
     expect(numeric.status).toBe(400);
-    const foreign = await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: 'BX-909', sponsorAddress: 'Somewhere' });
+    const foreign = await saveProgramFacts({ projectIdent: 'BX-909', sponsorAddress: 'Somewhere' });
     expect(foreign.status).toBe(404);
 
     const rows = await harness.pglite.query(
@@ -726,7 +744,7 @@ describe('the sponsor address and IND type are recorded on the program', () => {
 
   it('a stated value in the build request still wins over the recorded one', async () => {
     await seedProgram({ code: 'BX-910A', name: 'BX-910A (IND)', productName: 'Product 910A' });
-    await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: 'BX-910A', sponsorAddress: 'Recorded St', indType: 'Commercial IND' });
+    await saveProgramFacts({ projectIdent: 'BX-910A', sponsorAddress: 'Recorded St', indType: 'Commercial IND' });
     const built = await request(app).post('/api/ind-forms/FDA_1571/build').send({ projectIdent: 'BX-910A', indType: 'Treatment IND' });
     expect(built.body.fields).toMatchObject({ sponsor_address: 'Recorded St', ind_type: 'Treatment IND' });
   });
@@ -817,8 +835,10 @@ describe('a sponsor\'s completed official form is filed into the sequence', () =
 
     // And the listing now reports it as placed.
     const listed = await request(app).get('/api/ind-forms/').query({ projectIdent: 'BX-910' });
+    // Nobody attested this file is the completed, signed form, and the
+    // listing says so (attestedAt null, not absent).
     expect(listed.body.placements).toEqual([
-      expect.objectContaining({ formId: 'FDA_1571', sectionCode: 'm1.1', sequenceNumber: '0000' }),
+      expect.objectContaining({ formId: 'FDA_1571', sectionCode: 'm1.1', sequenceNumber: '0000', attestedAt: null }),
     ]);
   });
 
@@ -1051,5 +1071,98 @@ describe('the listing is scoped to the program', () => {
     expect(res.status).toBe(409);
     expect(res.body.error.code).toBe('FORM_NOT_APPLICABLE');
     expect(await leafRows(sequenceId!)).toHaveLength(0);
+  });
+});
+
+/* QA 2026-10-08 (second walk, j7). Attaching the product's OWN unedited 1571
+   and 1572 PDFs marked both forms COMPLETE on the IND checklist — although
+   Build & check reported required fields missing on each — and moved PLR-606's
+   readiness from 0% to 8%. An attached PDF is an attachment; a form is complete
+   only when the forms engine finds no required field missing (Rule 2). The
+   check is recorded with the attachment (rendered_leaf_files.
+   required_fields_missing), from two deterministic sources: the build over the
+   program's record and what the person stated (Build & check), and — when the
+   bytes ARE the platform's own render of that build — the required boxes that
+   render leaves blank. */
+describe('an attached form counts as complete only when the forms engine finds nothing required missing', () => {
+  const SPONSOR_ADDRESS = '1 Harbor Way, Boston MA';
+  async function seedIndWithFacts(code: string) {
+    await seedProgram({ code, name: `${code} (IND)`, productName: `Product ${code}`, indication: 'Ovarian cancer' });
+    const facts = await saveProgramFacts({ projectIdent: code, sponsorAddress: SPONSOR_ADDRESS, indType: 'Commercial IND' });
+    expect(facts.status, JSON.stringify(facts.body)).toBe(200);
+    return seedSpine({ title: `${code} (IND)`, productName: `Product ${code}` });
+  }
+  const storedCheck = async (leafId: number) =>
+    (await harness.pglite.query(
+      `SELECT f.required_fields_missing FROM rendered_leaf_files f
+         JOIN submission_leaves l ON l.document_id = f.id AND l.document_table = 'rendered_leaf_files'
+        WHERE l.id = $1`, [leafId],
+    )).rows[0] as { required_fields_missing: string[] | null } | undefined;
+  const checklistForm = async (submissionId: number, formId: string) => {
+    const { assembleOrgIndChecklists } = await import('../../services/ind-lifecycle/ind-checklist-view-assembler');
+    const rows = await assembleOrgIndChecklists(1);
+    const row = rows.find((r) => r.submissionId === submissionId) as { forms: Array<{ id: string; done: boolean }> } | undefined;
+    return row?.forms.find((f) => f.id === formId);
+  };
+
+  it('the product’s own unedited 1572: attached, not complete — the investigator, facility and IRB are missing', async () => {
+    const { submissionId, sequenceId } = await seedIndWithFacts('BX-960');
+    const pdf = await request(app).post('/api/ind-forms/FDA_1572/pdf').send({ projectIdent: 'BX-960' })
+      .buffer(true).parse((res, cb) => { const c: Buffer[] = []; res.on('data', (d: Buffer) => c.push(d)); res.on('end', () => cb(null, Buffer.concat(c))); });
+    expect(pdf.status).toBe(200);
+    const res = await request(app).post('/api/ind-forms/FDA_1572/official-upload')
+      .field('projectIdent', 'BX-960').field('sequenceId', String(sequenceId))
+      .attach('file', pdf.body as Buffer, { filename: 'FDA-1572.pdf', contentType: 'application/pdf' });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect((await checklistForm(submissionId, 'FDA_1572'))?.done, 'the checklist counts the unedited 1572 as complete').toBe(false);
+    expect(res.body.complete).toBe(false);
+    expect(res.body.requiredFieldsMissing).toEqual(expect.arrayContaining(['investigator_name', 'facility_name', 'irb_name']));
+    expect((await storedCheck(res.body.leafId))?.required_fields_missing).toEqual(res.body.requiredFieldsMissing);
+  }, 30_000);
+
+  it('the product’s own unedited 1571, phase stated: not complete — the IND type and phase boxes are blank on that file', async () => {
+    const { submissionId, sequenceId } = await seedIndWithFacts('BX-961');
+    const pdf = await request(app).post('/api/ind-forms/FDA_1571/pdf').send({ projectIdent: 'BX-961', studyPhase: 'Phase 1' })
+      .buffer(true).parse((res, cb) => { const c: Buffer[] = []; res.on('data', (d: Buffer) => c.push(d)); res.on('end', () => cb(null, Buffer.concat(c))); });
+    expect(pdf.status).toBe(200);
+    const res = await request(app).post('/api/ind-forms/FDA_1571/official-upload')
+      .field('projectIdent', 'BX-961').field('sequenceId', String(sequenceId)).field('studyPhase', 'Phase 1')
+      .attach('file', pdf.body as Buffer, { filename: 'FDA-1571.pdf', contentType: 'application/pdf' });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect((await checklistForm(submissionId, 'FDA_1571'))?.done, 'the checklist counts the unedited 1571 as complete').toBe(false);
+    expect(res.body.complete).toBe(false);
+    expect(res.body.requiredFieldsMissing).toEqual(expect.arrayContaining(['ind_type', 'phase_of_study']));
+  }, 30_000);
+
+  it('a signed 1571 whose phase nobody stated: not complete — Build & check’s missing field', async () => {
+    const { submissionId, sequenceId } = await seedIndWithFacts('BX-962');
+    const res = await request(app).post('/api/ind-forms/FDA_1571/official-upload')
+      .field('projectIdent', 'BX-962').field('sequenceId', String(sequenceId))
+      .attach('file', SIGNED_PDF, 'signed-1571.pdf');
+    expect(res.status).toBe(201);
+    expect((await checklistForm(submissionId, 'FDA_1571'))?.done, 'the checklist counts a 1571 with no phase as complete').toBe(false);
+    expect(res.body.requiredFieldsMissing).toEqual(['phase_of_study']);
+    expect(res.body.complete).toBe(false);
+  });
+
+  // 2026-10-15 (report_ind_ivd_irb #15): the clean check alone used to make this
+  // complete; it reads the record, not the file. The uploader's attestation is
+  // now required too — unattested, see ind-forms-official-upload-records-attestation.
+  it('a signed 1571 with every required field recorded or stated, attested by its uploader: complete, and the checklist says so', async () => {
+    const { submissionId, sequenceId } = await seedIndWithFacts('BX-963');
+    const res = await request(app).post('/api/ind-forms/FDA_1571/official-upload')
+      .field('projectIdent', 'BX-963').field('sequenceId', String(sequenceId)).field('studyPhase', 'Phase 1')
+      .field('attestCompletedSigned', 'true')
+      .attach('file', SIGNED_PDF, 'signed-1571.pdf');
+    expect(res.status).toBe(201);
+    expect(res.body.requiredFieldsMissing).toEqual([]);
+    expect(res.body.complete).toBe(true);
+    expect((await storedCheck(res.body.leafId))?.required_fields_missing).toEqual([]);
+    expect((await checklistForm(submissionId, 'FDA_1571'))?.done).toBe(true);
+    // The listing carries the check with the placement.
+    const listed = await request(app).get('/api/ind-forms/').query({ projectIdent: 'BX-963' });
+    expect(listed.body.placements).toEqual([
+      expect.objectContaining({ formId: 'FDA_1571', requiredFieldsMissing: [], attestedAt: expect.any(String) }),
+    ]);
   });
 });

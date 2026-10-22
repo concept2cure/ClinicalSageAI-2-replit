@@ -1,0 +1,50 @@
+{
+  "qualification": "Actual ESLint of saved original source/fixtures and final files. Existing warning occurrence compared by rule/severity/node/message category; reported line and function length are retained rather than concealed.",
+  "files": [
+    {
+      "path": "server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts",
+      "beforeErrors": 0,
+      "afterErrors": 0,
+      "beforeWarnings": 0,
+      "afterWarnings": 0,
+      "sameWarningOccurrences": true,
+      "beforeMessages": [],
+      "afterMessages": []
+    },
+    {
+      "path": "server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts",
+      "beforeErrors": 0,
+      "afterErrors": 0,
+      "beforeWarnings": 1,
+      "afterWarnings": 1,
+      "sameWarningOccurrences": true,
+      "beforeMessages": [
+        {
+          "line": 148,
+          "rule": "max-lines-per-function",
+          "message": "Arrow function has too many lines (127). Maximum allowed is 100."
+        }
+      ],
+      "afterMessages": [
+        {
+          "line": 149,
+          "rule": "max-lines-per-function",
+          "message": "Arrow function has too many lines (130). Maximum allowed is 100."
+        }
+      ]
+    },
+    {
+      "path": "server/services/ai-gateway/embeddings/embedding-provider.ts",
+      "beforeErrors": 0,
+      "afterErrors": 0,
+      "beforeWarnings": 0,
+      "afterWarnings": 0,
+      "sameWarningOccurrences": true,
+      "beforeMessages": [],
+      "afterMessages": []
+    }
+  ],
+  "errors": 0,
+  "warnings": 1,
+  "newWarningOccurrences": 0
+}

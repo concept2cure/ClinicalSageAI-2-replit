@@ -1,0 +1,4 @@
+2026-10-14T06:43:40.2272091Z  Test Files  2 failed | 123 passed (125)
+2026-10-14T06:43:40.2281217Z       Tests  2 failed | 1419 passed (1421)
+2026-10-14T06:43:40.2282175Z    Start at  06:32:18
+2026-10-14T06:43:40.2285386Z    Duration  682.09s (transform 7.41s, setup 1.75s, import 35.83s, tests 628.34s, environment 15ms)

@@ -57,7 +57,7 @@ submissions: t
 authoring_documents: t
 unified_tasks: t
 -- server log evidence
-182:[ai-provenance-ledger] [AI Gateway Audit] AI provenance ledger unusable: probe failed: permission denied for schema ai. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) 
+182:[ai-provenance-ledger] [AI Gateway Audit] AI provenance ledger unusable: probe failed: permission denied for schema ai. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy)
 337:{"level":50,"time":"2026-09-20T19:06:17.126Z","pid":2043,"hostname":"vm","context":{"summary":"jwt_secret_strength=pass jwt_rotation_status=pass csp_middleware_active=pass clamav_connectivity=skipped(CLAMAV_HOST not set — virus scan bypassed (intentional
 484:⚠️ Regulatory template seeding failed (non-blocking): permission denied for schema intelligence
 524:{"level":50,"time":"2026-09-20T19:06:56.069Z","pid":2043,"hostname":"vm","context":{"servingMode":"off","deploymentMode":"off","usedPreviousResolution":false,"err":"permission denied for table platform_settings"},"msg":"[enforcement-mode] could not read th

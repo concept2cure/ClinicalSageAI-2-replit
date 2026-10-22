@@ -1,0 +1,12 @@
+Selected results from /workspace/scratch/global-biotech-source-selection-before.log; routine request/setup logs omitted.
+
+ × server/services/market-specs/__tests__/regional-template-source-selection.test.ts > regional template source selection > EU PSUR uses every numbered section of the canonical PBRER 17ms
+ × server/services/market-specs/__tests__/regional-template-source-selection.test.ts > regional template source selection > NDA/BLA annual reports use the post-approval lifecycle record, not IND annual headings 4ms
+ FAIL  server/services/market-specs/__tests__/regional-template-source-selection.test.ts > regional template source selection > EU PSUR uses every numbered section of the canonical PBRER
+AssertionError: expected [ { number: '1', …(3) }, …(9) ] to deeply equal [ { number: '1', …(3) }, …(18) ]
+ FAIL  server/services/market-specs/__tests__/regional-template-source-selection.test.ts > regional template source selection > NDA/BLA annual reports use the post-approval lifecycle record, not IND annual headings
+AssertionError: expected [ { code: '1', …(1) }, …(6) ] to deeply equal [ { code: 'annual.2252', …(1) }, …(6) ]
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  20:31:17
+   Duration  1.56s (transform 1.09s, setup 92ms, import 1.20s, tests 24ms, environment 0ms)

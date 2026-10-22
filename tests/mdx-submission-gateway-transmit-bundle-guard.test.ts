@@ -38,6 +38,15 @@ const connectFn = vi.fn();
 // The signing ceremony reads the signer's account standing (VSR-001 F-28);
 // every signer here is active. Suspended and deprovisioned signers are pinned
 // by reverify-signer.test.ts and tests/db/account-standing.dbtest.ts.
+// The transmitter holds a signing role (approver); only such a role may
+// transmit to an agency (SEC-1008-1). The route asks the signer's role on the
+// membership row (checkSigningAuthority) before the password, and
+// executeGovernedTransmit asks again through the same check.
+// An approver unless a case sets `signerRole.next`, which is used once (SEC-1008-1).
+const signerRole = vi.hoisted(() => ({ next: null as string | null }));
+vi.mock('../server/services/part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: async () => { const r = signerRole.next ?? 'approver'; signerRole.next = null; return r; },
+}));
 vi.mock('../server/services/account-standing', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../server/services/account-standing')>()),
   isAccountActive: async () => true,
@@ -353,6 +362,22 @@ function goodDescriptor(overrides: Record<string, unknown> = {}) {
 }
 
 /* ── Client descriptors cannot name a filesystem path ────────────── */
+
+describe('POST transmit — only a role that may sign transmits (SEC-1008-1)', () => {
+  it.each(['member', 'manager'])('refuses a %s: 403 before the password is read, and nothing is sent', async (role) => {
+    queryFn.mockClear();
+    signerRole.next = role;
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ environment: 'staging', packageId: 1, ...REAUTH });
+    expect(res.status).toBe(403);
+    expect(JSON.stringify(res.body)).toContain('ESIGNATURE_NO_AUTHORITY');
+    // No password_hash read: the refusal cost the account no lockout attempt.
+    const credentialReads = queryFn.mock.calls.filter((c: unknown[]) => /password_hash/i.test(String(c[0])));
+    expect(credentialReads, 'a password attempt was spent on a role that may not sign').toHaveLength(0);
+    expect(transmitFn).not.toHaveBeenCalled();
+  });
+});
 
 describe('POST transmit — client-supplied bundle descriptors (C2C-SUB-003)', () => {
   it('refuses an explicit descriptor pointing at an arbitrary server-readable file', async () => {
@@ -787,7 +812,9 @@ describe('POST transmit — one active send per sequence, per environment (sweep
      (POST /api/…/rollback), which a client hides as internal text and replaces
      with its own "Roll it back first" — dropping the caveat that the agency may
      already hold the bundle. These pinned that route path; the sentence now
-     names no route, and the caveat is the advice. */
+     names no route, and the caveat is the advice. The rollback route itself
+     was removed on 2026-10-17 (6ef0ef121), so the remedy is a resend as a new
+     sequence from Submission Center, and no rollback is offered at all. */
   it.each(['pending', 'in_transit', 'received'])('refuses a re-assembled bundle of a sequence whose send is still %s in the same environment, before the gateway', async (status) => {
     packages = [{ id: 5, orgId: CALLER_ORG, bundle: sequenceZero() }];
     transmittals = [firstSend(status, 'production')];
@@ -803,18 +830,15 @@ describe('POST transmit — one active send per sequence, per environment (sweep
     expect(transmitFn).not.toHaveBeenCalled();
     if (status === 'received') {
       expect(res.body.error).toMatch(/acknowledged receipt of transmittal #4300/);
-      expect(res.body.error).toMatch(/only if the agency confirms it did not receive or load it/);
-      expect(res.body.error).not.toMatch(/roll .*back/i);
+      expect(res.body.error).toMatch(/is with the agency\. Confirm with the agency what it received\. If a resend is needed, send it as a new sequence from Submission Center\./);
+      expect(res.body.error).not.toMatch(/Send sequence 0000 again/);
     } else {
       expect(res.body.error).toMatch(/The agency may already hold it\. Confirm receipt with the agency before sending sequence 0000 again/);
     }
-    // A pending send cannot be rolled back (rollbackTransmittal refuses it), so
-    // the sentence does not offer that; it says the send has not finished.
-    if (status === 'in_transit') expect(res.body.error).toMatch(/roll transmittal #4300 back from its row in the transmittal log/);
-    if (status === 'pending') {
-      expect(res.body.error).not.toMatch(/roll .*back/i);
-      expect(res.body.error).toMatch(/That send has not finished/);
-    }
+    expect(res.body.error).not.toMatch(/roll .*back|rollback/i);
+    if (status === 'in_transit') expect(res.body.error).toMatch(/If a resend is needed, send it as a new sequence from Submission Center/);
+    // A pending send has not finished; the sentence says so rather than how to resend.
+    if (status === 'pending') expect(res.body.error).toMatch(/That send has not finished/);
   });
 
   it.each(['in_transit', 'received'])('the same bundle while its send is %s: the same caveat, and no route path', async (status) => {
@@ -828,7 +852,6 @@ describe('POST transmit — one active send per sequence, per environment (sweep
     expect(res.body.error).not.toMatch(/\/api\//);
     if (status === 'received') {
       expect(res.body.error).toMatch(/acknowledged receipt of transmittal #4310, so this bundle is with the agency/);
-      expect(res.body.error).not.toMatch(/roll .*back/i);
     } else {
       expect(res.body.error).toMatch(/This bundle is already in transmittal #4310/);
       expect(res.body.error).toMatch(/The agency may already hold it\. Confirm receipt with the agency before sending it again/);
@@ -863,8 +886,9 @@ describe('POST transmit — one active send per sequence, per environment (sweep
  * has no environment in its key, so a bundle sent to the agency's TEST
  * environment holds the first PRODUCTION send of the same bytes. The refusal
  * said the bundle "is with the agency" and that a rollback "does not retract
- * it" — untrue for production, which never received it, and rolling the test
- * send back is the only way to free the lock. It names the environment now.
+ * it" — untrue for production, which never received it. It names the
+ * environment now. Since 2026-10-17 (6ef0ef121) there is no rollback to offer:
+ * a resend is a new sequence from Submission Center.
  */
 describe('POST transmit — the same bytes held by a send to the other environment (sweep HS-6 review)', () => {
   const sameBytes = (id: number, status: string, environment: string): TransmittalRow =>
@@ -875,24 +899,26 @@ describe('POST transmit — the same bytes held by a send to the other environme
     return request(makeApp()).post('/api/mdx/gateways/fda/esg/transmit').send({ packageId: 5, environment, ...REAUTH });
   };
 
-  it.each(['in_transit', 'received'])('held by a %s send to the TEST environment: a production send is told that, and how to free it', async (status) => {
+  it.each(['in_transit', 'received'])('held by a %s send to the TEST environment: a production send is told that, and where a resend goes', async (status) => {
     const res = await sendSequenceZero('production', sameBytes(900, status, 'staging'));
     expect(res.status).toBe(409);
     expect(res.body.error).not.toMatch(/is with the agency|does not retract|agency may already hold/i);
     expect(res.body.error).toMatch(/This bundle is held by transmittal #900, sent to the agency's test environment/);
     expect(res.body.error).toMatch(/A send to the test environment does not file it in production\./);
-    expect(res.body.error).toMatch(/Roll transmittal #900 back from its row in the transmittal log, then send\./);
+    expect(res.body.error).toMatch(/These bytes cannot be sent to production while that transmittal is active; to file there, send it as a new sequence from Submission Center\./);
+    expect(res.body.error).not.toMatch(/resend|roll .*back|rollback/i);
     expect(res.body.error).not.toMatch(/\/api\/|staging|in_transit/);
     expect(res.body.details).toEqual({ code: 'ACTIVE_TRANSMITTAL', transmittalId: 900, status, holderEnvironment: 'staging' });
     expect(transmitFn).not.toHaveBeenCalled();
   });
 
-  it('held by a received PRODUCTION send, sent to the test environment: a rollback is not said to retract it', async () => {
+  it('held by a received PRODUCTION send, sent to the test environment: it is not said to be in the test environment', async () => {
     const res = await sendSequenceZero('staging', sameBytes(901, 'received', 'production'));
     expect(res.status).toBe(409);
     expect(res.body.error).toMatch(/sent to the agency's production environment, whose gateway acknowledged receipt\./);
     expect(res.body.error).not.toMatch(/is with the agency/);
-    expect(res.body.error).toMatch(/A production send does not deliver it to the test environment, and a rollback does not retract the production send from the agency\./);
+    expect(res.body.error).toMatch(/A production send does not deliver it to the test environment\./);
+    expect(res.body.error).not.toMatch(/roll .*back|rollback/i);
     expect(res.body.details).toEqual({ code: 'ACTIVE_TRANSMITTAL', transmittalId: 901, status: 'received', holderEnvironment: 'production' });
     expect(transmitFn).not.toHaveBeenCalled();
   });
@@ -1181,7 +1207,7 @@ describe('POST transmit — one bundle per filed sequence (sweep F19)', () => {
     expect(packageSelects, 'no second read of the package').toEqual([[5, CALLER_ORG]]);
   });
 
-  it('the same bundle already on file is not refused (a re-send after a rollback), and the history is left as it is', async () => {
+  it('the same bundle already on file is not refused (a re-send of the bytes on file files nothing new), and the history is left as it is', async () => {
     packages = [{ id: 5, orgId: CALLER_ORG, bundle: sequenceOne(), filedSequences: [FILED_0000, { ...FILED_0001, sha256: legitSha }] }];
     lockReads(() => [FILED_0000, { ...FILED_0001, sha256: legitSha }]);
     transmitFn.mockResolvedValueOnce({ transmittalId: 4309, transmissionId: 'mdn-resend', status: 'received', transport: 'as2', httpStatus: 200 });
@@ -1229,5 +1255,43 @@ describe('POST transmit — one bundle per filed sequence (sweep F19)', () => {
     expect(historyWrite(), 'nothing was written over the other bundle').toBeUndefined();
     expect(signPayload()).toMatchObject({ filedSequenceReason: 'sequence-conflict', filedSequenceConflict: CONFLICT });
     expect(transmitManifest()).toMatchObject({ filedSequenceRecorded: false, filedSequenceConflict: CONFLICT });
+  });
+});
+
+/**
+ * GET /gateways/transmit-independence — the Transmit form's advance answer to
+ * "may I transmit this package?", from the transmit's own separation-of-duties
+ * check. The acting user is 777; a package's default creator is 4242.
+ */
+describe('GET /api/mdx/gateways/transmit-independence', () => {
+  it('marks the package the caller created, and leaves a colleague\'s package independent', async () => {
+    packages = [
+      { id: 5, orgId: CALLER_ORG, bundle: goodDescriptor(), createdBy: 777 },
+      { id: 6, orgId: CALLER_ORG, bundle: goodDescriptor() },
+      { id: 8, orgId: CALLER_ORG, bundle: goodDescriptor(), createdBy: null },
+    ];
+    const res = await request(makeApp()).get('/api/mdx/gateways/transmit-independence?packageIds=5,6,8');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ 5: 'author', 6: 'independent', 8: 'no-creator' });
+  });
+
+  it("another tenant's package reads exactly like one that does not exist — nothing disclosed", async () => {
+    packages = [{ id: 5501, orgId: OTHER_ORG, bundle: goodDescriptor(), createdBy: 777 }];
+    const res = await request(makeApp()).get('/api/mdx/gateways/transmit-independence?packageIds=5501,9999');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ 5501: 'no-creator', 9999: 'no-creator' });
+  });
+
+  it('refuses a malformed or unbounded id list (422), never a partial answer', async () => {
+    for (const q of ['', 'abc', '5,-1', '5;6', Array.from({ length: 101 }, (_, i) => i + 1).join(',')]) {
+      const res = await request(makeApp()).get(`/api/mdx/gateways/transmit-independence?packageIds=${q}`);
+      expect(res.status, `packageIds=${q.slice(0, 20)}`).toBe(422);
+    }
+  });
+
+  it('asks nothing of the gateway', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor(), createdBy: 777 }];
+    await request(makeApp()).get('/api/mdx/gateways/transmit-independence?packageIds=5');
+    expect(transmitFn).not.toHaveBeenCalled();
   });
 });

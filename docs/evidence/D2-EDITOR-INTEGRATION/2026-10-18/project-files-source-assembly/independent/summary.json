@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "workstream": "W1",
+  "row": "D2",
+  "recordedAt": "2026-10-20T19:35:05.704055+00:00",
+  "executionBase": "e1c63ae9b024ed0ecde835f61c07ecb589eab67d",
+  "node": "v22.23.3",
+  "current": {
+    "testsPassed": 9,
+    "testFiles": 1,
+    "exitCode": 0,
+    "lintExitCode": 0,
+    "lintErrors": 0,
+    "lintWarnings": 0,
+    "sourcePinCount": 29,
+    "sourcePinsStableBeforeAndAfter": true,
+    "sourcePinsStillMatch": true
+  },
+  "historical": {
+    "base": "3cae08d236ba5be6dd96284bca2c47b4605c007d",
+    "missingActionReportedFailures": 1,
+    "candidateReportedPasses": 9,
+    "numericProcessExitStatusesRetained": false,
+    "qualifiesCurrentSource": false
+  },
+  "storageIntegrityIssues": [],
+  "readmeLinks": [
+    {
+      "target": "../../../../../design/PROJECT_FILES_SOURCE_ASSEMBLY_2026-10-18.md",
+      "exists": true
+    },
+    {
+      "target": "../../../../../../client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx",
+      "exists": true
+    },
+    {
+      "target": "current-tests-receipt.json",
+      "exists": true
+    },
+    {
+      "target": "current-tests.txt",
+      "exists": true
+    },
+    {
+      "target": "current-lint-receipt.json",
+      "exists": true
+    },
+    {
+      "target": "baseline-source-pins.json",
+      "exists": true
+    },
+    {
+      "target": "baseline-test.tsx.txt",
+      "exists": true
+    },
+    {
+      "target": "historical-baseline-red.txt",
+      "exists": true
+    },
+    {
+      "target": "historical-candidate-green.txt",
+      "exists": true
+    },
+    {
+      "target": "historical-lint.json",
+      "exists": true
+    },
+    {
+      "target": "historical-receipt-storage.json",
+      "exists": true
+    }
+  ],
+  "qualification": "Actual Workbench/ProjectFilesPanel/chooser/target/controller/transport with synthetic HTTP/auth/provider responses. No real backend/provider/full-shell/native PostgreSQL/human acceptance claim."
+}

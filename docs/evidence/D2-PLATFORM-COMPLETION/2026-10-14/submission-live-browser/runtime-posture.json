@@ -1,0 +1,14 @@
+{
+  "database": "platform_ci_sharing_blank_20261014_d25f4a7b",
+  "role": "app_service",
+  "pid": 22848,
+  "rolsuper": false,
+  "rolbypassrls": false,
+  "enforcement": "on",
+  "tenant": "",
+  "user_role": "",
+  "bypass": "",
+  "admin": "",
+  "configuredRls": "on",
+  "qualification": "Actual app-role database introspection; no regulatory-table read or bypass grant."
+}

@@ -15,6 +15,7 @@ import { requirePlatformAdmin } from '../../middleware/requirePlatformAdmin';
 import { query } from '../../db';
 import { isValidCidr } from '../../utils/cidr';
 import { createScopedLogger } from '../../utils/logger';
+import { writeScimIpPolicy, ScimIpPolicyError, type ScimIpRuleRow } from '../../services/scim-ip-policy';
 
 const logger = createScopedLogger('admin-scim-ip-allowlist');
 const router = Router();
@@ -28,14 +29,18 @@ router.use(authMiddleware);
 // customer org admin reach this cross-tenant router.
 const requireAdmin = requirePlatformAdmin;
 
-interface AllowlistRow {
-  id: number;
-  organization_id: number;
-  cidr: string;
-  label: string | null;
-  enabled: boolean;
-  created_at?: Date | string;
-  updated_at?: Date | string;
+type AllowlistRow = ScimIpRuleRow;
+
+/** Every security-policy mutation names the reason recorded in its transaction. */
+function reasonOf(body: { reason?: unknown }): string | undefined {
+  if (typeof body.reason !== 'string' || body.reason.trim().length < 3 || body.reason.trim().length > 500) {
+    throw new Error('SCIM_REASON_INVALID');
+  }
+  return body.reason.trim();
+}
+function governedReason(req: Request, res: Response): { reason?: string } | null {
+  try { return { reason: reasonOf(req.body ?? {}) }; }
+  catch { res.status(400).json({ error: 'A reason for change of 3–500 characters is required. Nothing was changed.' }); return null; }
 }
 
 function toRule(row: AllowlistRow): Record<string, unknown> {
@@ -54,28 +59,26 @@ function toRule(row: AllowlistRow): Record<string, unknown> {
 
 router.post('/', requireAdmin, async (req: Request, res: Response) => {
   try {
+    const governed = governedReason(req, res); if (!governed) return;
     const organizationId = Number((req.body as { organizationId?: unknown })?.organizationId);
     const cidrRaw = (req.body as { cidr?: unknown })?.cidr;
     const labelRaw = (req.body as { label?: unknown })?.label;
     const label = typeof labelRaw === 'string' && labelRaw.length > 0 ? labelRaw.slice(0, 200) : null;
 
-    if (!Number.isFinite(organizationId)) {
+    if (!Number.isInteger(organizationId) || organizationId <= 0) {
       return res.status(400).json({ error: 'organizationId (integer) is required.' });
     }
     if (typeof cidrRaw !== 'string' || !isValidCidr(cidrRaw)) {
       return res.status(400).json({ error: 'cidr must be a valid IPv4/IPv6 CIDR or address.' });
     }
 
-    const result = await query(
-      `INSERT INTO scim_ip_allowlist (organization_id, cidr, label)
-       VALUES ($1, $2, $3)
-       RETURNING id, organization_id, cidr, label, enabled, created_at, updated_at`,
-      [organizationId, cidrRaw, label]
-    );
-    return res.status(201).json(toRule(result.rows[0] as AllowlistRow));
+    const created = await writeScimIpPolicy(req, { kind: 'create', organizationId, cidr: cidrRaw, label, ...governed });
+    if (!created) return res.status(404).json({ error: 'Organization not found. Nothing was changed.' });
+    return res.status(201).json({ ...toRule(created), auditTrail: { persisted: true, chained: true } });
   } catch (err) {
+    if (err instanceof ScimIpPolicyError) return res.status(err.status).json({ error: err.message, code: err.code, ruleId: err.ruleId, recoveryUrl: err.recoveryUrl });
     logger.error('Create SCIM IP rule failed', err as Record<string, unknown>);
-    return res.status(500).json({ error: 'Failed to create SCIM IP rule.' });
+    return res.status(500).json({ error: 'The SCIM IP rule could not be created and recorded. Nothing was changed.' });
   }
 });
 
@@ -91,6 +94,7 @@ router.get('/', requireAdmin, async (_req: Request, res: Response) => {
     );
     return res.json({ rules: (result.rows as AllowlistRow[]).map(toRule) });
   } catch (err) {
+    if (err instanceof ScimIpPolicyError) return res.status(err.status).json({ error: err.message, code: err.code, ruleId: err.ruleId, recoveryUrl: err.recoveryUrl });
     logger.error('List SCIM IP rules failed', err as Record<string, unknown>);
     return res.status(500).json({ error: 'Failed to list SCIM IP rules.' });
   }
@@ -100,22 +104,20 @@ router.get('/', requireAdmin, async (_req: Request, res: Response) => {
 
 router.patch('/:id', requireAdmin, async (req: Request, res: Response) => {
   try {
+    const governed = governedReason(req, res); if (!governed) return;
     const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(404).json({ error: 'Not found.' });
+    if (!Number.isInteger(id) || id <= 0) return res.status(404).json({ error: 'Not found.' });
     const enabledRaw = (req.body as { enabled?: unknown })?.enabled;
     if (typeof enabledRaw !== 'boolean') {
       return res.status(400).json({ error: 'enabled (boolean) is required.' });
     }
-    const result = await query(
-      `UPDATE scim_ip_allowlist SET enabled = $1, updated_at = now() WHERE id = $2
-       RETURNING id, organization_id, cidr, label, enabled, created_at, updated_at`,
-      [enabledRaw, id]
-    );
-    if (!result.rows.length) return res.status(404).json({ error: 'Not found.' });
-    return res.json(toRule(result.rows[0] as AllowlistRow));
+    const changed = await writeScimIpPolicy(req, { kind: 'update', id, enabled: enabledRaw, ...governed });
+    if (!changed) return res.status(404).json({ error: 'Not found.' });
+    return res.json({ ...toRule(changed), auditTrail: { persisted: true, chained: true } });
   } catch (err) {
+    if (err instanceof ScimIpPolicyError) return res.status(err.status).json({ error: err.message, code: err.code, ruleId: err.ruleId, recoveryUrl: err.recoveryUrl });
     logger.error('Update SCIM IP rule failed', err as Record<string, unknown>);
-    return res.status(500).json({ error: 'Failed to update SCIM IP rule.' });
+    return res.status(500).json({ error: 'The SCIM IP rule could not be updated and recorded. Nothing was changed.' });
   }
 });
 
@@ -123,14 +125,18 @@ router.patch('/:id', requireAdmin, async (req: Request, res: Response) => {
 
 router.delete('/:id', requireAdmin, async (req: Request, res: Response) => {
   try {
+    const governed = governedReason(req, res); if (!governed) return;
     const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(404).json({ error: 'Not found.' });
-    const result = await query('DELETE FROM scim_ip_allowlist WHERE id = $1 RETURNING id', [id]);
-    if (!result.rows.length) return res.status(404).json({ error: 'Not found.' });
+    if (!Number.isInteger(id) || id <= 0) return res.status(404).json({ error: 'Not found.' });
+    const deleted = await writeScimIpPolicy(req, { kind: 'delete', id, ...governed });
+    if (!deleted) return res.status(404).json({ error: 'Not found.' });
+    res.setHeader('X-Audit-Row-Persisted', 'true');
+    res.setHeader('X-Audit-Row-Chained', 'true');
     return res.status(204).send();
   } catch (err) {
+    if (err instanceof ScimIpPolicyError) return res.status(err.status).json({ error: err.message, code: err.code, ruleId: err.ruleId, recoveryUrl: err.recoveryUrl });
     logger.error('Delete SCIM IP rule failed', err as Record<string, unknown>);
-    return res.status(500).json({ error: 'Failed to delete SCIM IP rule.' });
+    return res.status(500).json({ error: 'The SCIM IP rule could not be deleted and recorded. Nothing was changed.' });
   }
 });
 

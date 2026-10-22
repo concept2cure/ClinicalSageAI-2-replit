@@ -1,3 +1,4 @@
+import { matchedSourceEvidence, type PathwayEvidenceLeaf, type PathwayEvidenceSlot } from '../source-aware-evidence';
 /**
  * CTIS pathway engine (EU clinical-trial applications — CTR 536/2014)
  *
@@ -41,7 +42,7 @@ import {
 } from './ctr-annex-i';
 
 /** A canonical leaf as CTIS-mapping input (subset of the submission leaf). */
-export interface CtisInputLeaf {
+export interface CtisInputLeaf extends PathwayEvidenceLeaf {
   sectionCode: string;
   title: string;
   /** Optional document-type id (e.g. 'clinical_protocol', 'investigator_brochure'). */
@@ -73,7 +74,7 @@ export interface CtisSlot {
   required: boolean;
 }
 
-export interface CtisSlotStatus extends CtisSlot {
+export interface CtisSlotStatus extends CtisSlot, PathwayEvidenceSlot  {
   present: boolean;
   status: CtisSlotState;
   /** The placement that satisfies this slot (Part II: with this state's code). */
@@ -105,6 +106,8 @@ export interface CtisDossier {
 }
 
 export interface MapToCtisInput {
+  /** Request-owned coverage only; omitted preserves legacy structural behavior. */
+  sourceAware?: boolean;
   leaves: CtisInputLeaf[];
   /** ISO/EU member-state codes the application targets (e.g. ['DE','FR']). */
   memberStates: string[];
@@ -157,14 +160,16 @@ function decide(
 function statusOf(
   row: CtrAnnexIRow,
   expectedSlug: string,
-  satisfying: CtisInputLeaf[],
-  statelessEvidence: boolean,
-  markedNotApplicable: boolean,
+  placement:{satisfying:CtisInputLeaf[];statelessEvidence:boolean;markedNotApplicable:boolean;sourceAware?:boolean},
 ): CtisSlotStatus {
-  const present = satisfying.length > 0;
-  const status = decide(row, present, statelessEvidence, markedNotApplicable);
+  const {satisfying,statelessEvidence,markedNotApplicable,sourceAware}=placement;
+  const proof = matchedSourceEvidence(satisfying, sourceAware, satisfying.length > 0);
+  const { present } = proof;
+  let status = decide(row, present, statelessEvidence, markedNotApplicable);
+  if (proof.contentUndetermined && status !== 'not-applicable') status = 'undetermined';
   return {
     ...baseOf(row),
+    ...proof,
     required: row.requirement.kind !== 'conditional' && status !== 'not-applicable',
     present,
     status,
@@ -173,14 +178,14 @@ function statusOf(
   };
 }
 
-function evalPartI(row: CtrAnnexIRow, leaves: CtisInputLeaf[], na: Set<string>): CtisSlotStatus {
+function evalPartI(row: CtrAnnexIRow, leaves: CtisInputLeaf[], na: Set<string>, sourceAware?: boolean): CtisSlotStatus {
   const satisfying = leaves.filter(
     (l) => canon(l.sectionCode) === row.ctisSlug || (!!l.documentType && row.documentTypes.includes(l.documentType)),
   );
-  return statusOf(row, row.ctisSlug, satisfying, false, na.has(naKey('I', row.id)));
+  return statusOf(row, row.ctisSlug, {satisfying,statelessEvidence:false,markedNotApplicable:na.has(naKey('I',row.id)),sourceAware});
 }
 
-function evalPartII(row: CtrAnnexIRow, ms: string, leaves: CtisInputLeaf[], na: Set<string>): CtisSlotStatus {
+function evalPartII(row: CtrAnnexIRow, ms: string, leaves: CtisInputLeaf[], na: Set<string>, sourceAware?: boolean): CtisSlotStatus {
   const expected = `part-ii.${ms.toLowerCase()}.${partIISegment(row)}`;
   const satisfying = leaves.filter((l) => canon(l.sectionCode) === expected);
   const statelessEvidence = leaves.some((l) => {
@@ -188,7 +193,7 @@ function evalPartII(row: CtrAnnexIRow, ms: string, leaves: CtisInputLeaf[], na: 
     if (code === row.ctisSlug) return true;
     return !!l.documentType && row.documentTypes.includes(l.documentType) && !STATE_PLACED.test(code);
   });
-  return statusOf(row, expected, satisfying, statelessEvidence, na.has(naKey('II', row.id, ms)));
+  return statusOf(row, expected, {satisfying,statelessEvidence,markedNotApplicable:na.has(naKey('II',row.id,ms)),sourceAware});
 }
 
 const idsWith = (slots: CtisSlotStatus[], status: CtisSlotState): string[] =>
@@ -203,7 +208,7 @@ export function mapToCtis(input: MapToCtisInput): CtisDossier {
     .filter(Boolean);
   const na = normaliseNotApplicable(input.notApplicable);
 
-  const partI = CTR_ANNEX_I_PART_I.map((row) => evalPartI(row, leaves, na));
+  const partI = CTR_ANNEX_I_PART_I.map((row) => evalPartI(row, leaves, na, input.sourceAware));
   const partIMissingRequired = idsWith(partI, 'missing');
   const partIUndetermined = idsWith(partI, 'undetermined');
   const checkApplicability = idsWith(partI, 'check-applicability').map((id) => `I:${id}`);
@@ -211,7 +216,7 @@ export function mapToCtis(input: MapToCtisInput): CtisDossier {
   const partIIMissingByState: Record<string, string[]> = {};
   const partIIUndeterminedByState: Record<string, string[]> = {};
   const partII: CtisPartIIByState[] = memberStates.map((ms) => {
-    const slots = CTR_ANNEX_I_PART_II.map((row) => evalPartII(row, ms, leaves, na));
+    const slots = CTR_ANNEX_I_PART_II.map((row) => evalPartII(row, ms, leaves, na, input.sourceAware));
     const missingRequired = idsWith(slots, 'missing');
     const undetermined = idsWith(slots, 'undetermined');
     partIIMissingByState[ms] = missingRequired;
@@ -223,8 +228,8 @@ export function mapToCtis(input: MapToCtisInput): CtisDossier {
   const ready =
     memberStates.length > 0 &&
     partIMissingRequired.length === 0 &&
-    partIUndetermined.length === 0 &&
-    partII.every((st) => st.missingRequired.length === 0 && st.undetermined.length === 0);
+    (input.sourceAware ? partI.every(s=>!s.required||s.status!=='undetermined') : partIUndetermined.length === 0) &&
+    partII.every((st) => st.missingRequired.length === 0 && (input.sourceAware ? st.slots.every(s=>!s.required||s.status!=='undetermined') : st.undetermined.length === 0));
 
   return {
     partI,

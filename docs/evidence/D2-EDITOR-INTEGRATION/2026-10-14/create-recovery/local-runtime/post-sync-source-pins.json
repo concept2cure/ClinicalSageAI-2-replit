@@ -1,0 +1,117 @@
+{
+  "head": "4997d35ebd6a17bfb33df7860195d832bc094921",
+  "branch": "concept2cure-v2",
+  "integrationCommit": "1bd3af0bc5abaff99f9eea0a0c139617842a32a2",
+  "priorRun": "final-node22/",
+  "files": [
+    {
+      "path": "server/index.ts",
+      "sha256": "fd159bc0eeebe051a0345b46f321885deccb1a45787e06ac645ebb037b658fe3"
+    },
+    {
+      "path": "server/routes/auth.ts",
+      "sha256": "72c9df0379b8dfa8bdc724bb8b80e446fdd516fd3c7cfcce4826a0dc41638d32"
+    },
+    {
+      "path": "server/routes/c2c/projects.ts",
+      "sha256": "c66f88c427d8f22efaf1deadd10a516ff9a3b4c691b6c16a614976711e02bb48"
+    },
+    {
+      "path": "server/routes/authoring.router.ts",
+      "sha256": "4f999eda26c295f4fcf41657d7a95918b7ba5a7c7c5bb0d8c3435cb659446d2e"
+    },
+    {
+      "path": "server/services/authoring/authoring-documents.ts",
+      "sha256": "1072c4dea821755ddd621eb6ee96188bec73c658f7944baf95f87a0f1af89866"
+    },
+    {
+      "path": "server/services/authoring/authoring-template-sections.ts",
+      "sha256": "e747ace9e7af78ab833d1cb25e351305a88f8a644ad5e6adb61cbb1ae339ee49"
+    },
+    {
+      "path": "server/services/authoring/builtin-authoring-templates.ts",
+      "sha256": "171891ae3fda0cb195b3445ef6177499c506fe162f8cadeac53d1783db02dfb9"
+    },
+    {
+      "path": "server/services/authoring/authoring-file-to-vault.ts",
+      "sha256": "2d0a9a3421d341901e0209364814b264cbe9230016925e09007f749bdcf4a2d7"
+    },
+    {
+      "path": "server/services/c2c/current-program-access.ts",
+      "sha256": "5e6fb22586636a2c02d68581cfc4365aff3ffbbfce931258e90f85cd4b916bee"
+    },
+    {
+      "path": "server/db/runtime.ts",
+      "sha256": "cf1dbf69e60e0c4b356842d107f1465e0a2e77047d0fced2a74ab7b1a73a47e8"
+    },
+    {
+      "path": "server/db/bootstrap/index.ts",
+      "sha256": "5b990eac10064285618b733255a581b72830d6a9eabc6778fc57ac9490db8b86"
+    },
+    {
+      "path": "server/db/bootstrap/seed-default-org.ts",
+      "sha256": "524974d9814e2100f3122571abec0a9549307929877a596f74965d7bc22f7420"
+    },
+    {
+      "path": "server/services/storage/local-provider.ts",
+      "sha256": "9eaae10cd86979f73b9eb8506285560f99aee49efbb14d72637f57edf69f27cf"
+    },
+    {
+      "path": "server/routes/c2c/project-vault.ts",
+      "sha256": "dc3a62523c03d842bc58758266dee13985ebbf39cc0a1e56c241d703d7f4418f"
+    },
+    {
+      "path": "scripts/db/install-fresh.mjs",
+      "sha256": "23469635136c354930de376a07ab840eb4be7e34952b6c71d4cb94383a46389d"
+    },
+    {
+      "path": "scripts/db/deploy-migrate.mjs",
+      "sha256": "b2c407a24e6c92d03002bb3d59ed1c189bed02cb2523fc191886c8b7b949ded5"
+    },
+    {
+      "path": "scripts/db/migration-set.mjs",
+      "sha256": "df9cb9c6f3a54ca6630eadedd89bc125ecd2e360fe5d8ab4b46f73d63be41cf0"
+    },
+    {
+      "path": "server/services/authoring/authoring-permissions.ts",
+      "sha256": "6bc758b79e118231cee03b239dd312ad213f58b993b103781dad4376f8bf3e59"
+    },
+    {
+      "path": "server/middleware/authoringObjectAuthorization.ts",
+      "sha256": "5c636aadb702fada68f38ca7494dadebdf74f0a9876ae6c107323d7f5bf9d7ac"
+    },
+    {
+      "path": "server/services/c2c/program-access.ts",
+      "sha256": "d2d0dd697ea15fbfac097a5eb45b385562df6d9f35a30987ce8977c9231bfa81"
+    },
+    {
+      "path": "server/services/coauthor/coauthor-snapshot.ts",
+      "sha256": "03459fc150f3e9515fd4861384f714f56fb76ce73d91ae36722c5cf4154ab414"
+    },
+    {
+      "path": "server/routes/submissions.ts",
+      "sha256": "3c283ce16e1d1b056278f47845864ba8df22fa4fe99ed27f2cbee1b5a39b8129"
+    },
+    {
+      "path": "server/services/submission-service/submission-request-read.ts",
+      "sha256": "df97afbb98204b44a31b248c6e96d70807670126e1a16fd1cd42764a641a1cef"
+    },
+    {
+      "path": "server/services/ai-gateway/embeddings/embedding-provider.ts",
+      "sha256": "7d825cfb0b39abc800c9f5b00e7a30ff7371e4bc1e93d7cae232ea7c04cc793f"
+    },
+    {
+      "path": "server/services/ectd/submission-leaf-source-evidence.ts",
+      "sha256": "0a438b2b0454c3af3fd0122714c97f16728a98bb7dd56e4a66b4333910cf1aac"
+    },
+    {
+      "path": "shared/types/submission-api.ts",
+      "sha256": "ccfa5baaae000208342870c7bea805df37f406333d3eda2ebb1fe2dc8c7330b5"
+    }
+  ],
+  "runner": {
+    "path": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/local-runtime/reproduce-local.mjs",
+    "sha256": "dc62bb9f810e5559a68b97463d1ea50be2383e67454c607f67760120602eff66"
+  },
+  "priorOwnTwentyPinsUnchanged": true
+}

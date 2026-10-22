@@ -136,6 +136,13 @@ describe('access boundary', () => {
       .set('x-test-user', SUPPORT);
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.grants)).toBe(true);
+    expect(res.body.grantableRoles).toEqual(['platform_admin', 'support']);
+  });
+
+  it('reports business-tier choices only for verified platform business standing', async () => {
+    const res = await request(makeApp()).get('/api/admin/access/grants').set('x-test-user', SUPER);
+    expect(res.status).toBe(200);
+    expect(res.body.grantableRoles).toEqual(['super_admin', 'platform_admin', 'support', 'business_admin', 'owner']);
   });
 });
 

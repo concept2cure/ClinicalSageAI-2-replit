@@ -1,0 +1,167 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+{
+  "timestamp": "2026-10-13T23:46:43.502Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T23:46:43.504Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+{
+  "timestamp": "2026-10-13T23:46:43.504Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+[database] Database connection successful
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+{
+  "timestamp": "2026-10-13T23:46:43.741Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > two accepted insertions from the same machine author, in one save > attributes BOTH to the machine, not just the one in the first accepted text 11ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > two accepted insertions from the same machine author, in one save > still leaves a genuinely human clause alone 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > two accepted insertions from the same machine author, in one save > bounds by occurrence WITHIN each accepted text, so one repeated clause is not over-claimed 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > two accepted insertions from the same machine author, in one save > claims two when the author genuinely accepted it twice 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > a clause with words inside < … > added is not the machine's 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > a clause with words inside an <xmp>, which shows its inside as text added is not the machine's 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > a clause with words inside a <textarea>, which shows its inside as text added is not the machine's 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > a clause with words after a <plaintext>, which shows the rest as text added is not the machine's 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > the machine's words inside the markup the editor writes are still the machine's 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > removes a tag every reader hides, and keeps every other `<` as written 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > reads markdown only when asked, as the turn record's side is: `\|` is `|` and `*` is dropped 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > scans a run of `<a` with no `>` once, not once for every `<` 17ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds <xmp> 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds upper case 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds an attribute 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds an attribute after a space 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds a self-closing slash 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds a line break after the name 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds a CDATA section 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds nothing in another tag 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds nothing in a longer name 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds nothing in a space before the name 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds nothing in a closing tag alone 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds nothing in escaped text 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > xmp, paragraph breaks: the clause holding the shown words is not the machine's 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > plaintext, a paragraph break: the clause holding the shown words is not the machine's 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > textarea, a comma clause break: the clause holding the shown words is not the machine's 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > CDATA in SVG, paragraph breaks: the clause holding the shown words is not the machine's 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > plaintext with an attribute (N1): the clause holding the shown words is not the machine's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > xmp with a class, and a space in its end tag (N1): the clause holding the shown words is not the machine's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > textarea with rows, and a space in its end tag (N1): the clause holding the shown words is not the machine's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > plaintext with an attribute, inside the one clause: not the machine's 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > xmp with a class, inside the one clause: not the machine's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > textarea with rows, inside the one clause: not the machine's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > a clause before the first opener is still compared (guard) 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > content read as plain text shows every `<…>` > with no known tag in the content, a clause holding a tag-shaped token is not the machine's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > content read as plain text shows every `<…>` > with a known tag elsewhere, its attribute words are not the machine's either: source mode shows them (round 4, D4) 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > content read as plain text shows every `<…>` > an asterisk added to the machine's clause makes it not the machine's: content is never read as markdown (N5) 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > carry-forward meets a raw-text region in HTML content > an accepted clause a later save put inside one is not carried: its words were matched with tags removed 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > carry-forward meets a raw-text region in HTML content > an unaccepted machine draft is carried: it was never compared, every character is the machine's (guard) 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > carry-forward meets a raw-text region in HTML content > outside any region, an accepted clause is carried as before (guard) 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > inAcceptedText: what this save accepted, not what the content carries > a clause carried forward and accepted again is in it, under its original acceptor 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > inAcceptedText: what this save accepted, not what the content carries > a clause carried forward and not accepted again is not; a one-word claim accepts no clause 1ms
+stdout | server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts
+{
+  "timestamp": "2026-10-13T23:46:47.331Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T23:46:47.333Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts
+{
+  "timestamp": "2026-10-13T23:46:47.334Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts
+[database] Database connection successful
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts
+{
+  "timestamp": "2026-10-13T23:46:47.585Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > preserves the recorded unaccepted prose across the real figure/table normalization 22ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > keeps normalized paragraph and table wrappers with the retained prose 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > preserves the original acceptor, time and signature without recording a fresh acceptance 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > does not carry an edited independent paragraph while preserving the untouched one 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > bounds repeated formatted clauses to the number previously attributed 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > preserves current behavior when no trusted previous content is supplied 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > carries the original usage and measured confidence without inventing new values 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > attributes a whole-machine draft remainder after partially retaining an accepted span 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > keeps a verified fresh acceptance ahead of unaccepted formatting carry 20ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > format-only provenance carry-forward > retains exact-raw usage and unknown confidence when formatting is not needed 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > new acceptance after an independently retained formatted paragraph > credits genuinely accepted new prose in the remainder of a combined HTML clause 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > new acceptance after an independently retained formatted paragraph > keeps record and reaccepted occurrence bounds after deriving that remainder 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting carry-forward proves the trusted prior content > throws on a previous span hash that does not describe the trusted prior text 13ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting carry-forward proves the trusted prior content > throws on impossible previous offsets instead of crediting the current saver 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting carry-forward proves the trusted prior content > does not treat changed case characters as formatting 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting carry-forward proves the trusted prior content > does not treat changed decimal characters as formatting 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting carry-forward proves the trusted prior content > does not treat changed scientific operator characters as formatting 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting carry-forward proves the trusted prior content > refuses unsafe reader/printing markup in <p><xmp><b>The primary endpoint was met at week twelve.</b></xmp></p> 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting carry-forward proves the trusted prior content > refuses unsafe reader/printing markup in <p><b title="Reviewer added statement">The primary endpoint was met at week twelve.</b></p> 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting carry-forward proves the trusted prior content > refuses unsafe reader/printing markup in <p><b"malformed">The primary endpoint was met at week twelve.</b></p> 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting carry-forward proves the trusted prior content > refuses unsafe reader/printing markup in <figure><p><b>The primary endpoint was met at week twelve.</b></p></figure> 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting carry-forward proves the trusted prior content > does not collapse significant whitespace in preformatted content 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting preserves prose across canonical presentation and entities > retains prose under the canonical combined paragraph presentation declarations 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting preserves prose across canonical presentation and entities > keeps both sides of an inserted image without attributing its caption to the original author 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting preserves prose across canonical presentation and entities > decodes equivalent scientific entities exactly once with raw offsets retained 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting preserves prose across canonical presentation and entities > does not equate an unknown uppercase entity with the scientific character 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting preserves prose across canonical presentation and entities > discloses unsafe hidden presentation instead of declaring formatting verified 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting preserves prose across canonical presentation and entities > discloses unsafe printing annotation instead of declaring formatting verified 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting preserves prose across canonical presentation and entities > discloses unsafe source mode instead of declaring formatting verified 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > formatting preserves prose across canonical presentation and entities > discloses unsafe malformed markup instead of declaring formatting verified 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > table formatting preserves cell identity > retains unchanged exact cells when one other cell changes 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > table formatting preserves cell identity > does not flatten changed cell/header/span associations 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > table formatting preserves cell identity > does not flatten changed cell/header/span associations 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > table formatting preserves cell identity > does not flatten changed cell/header/span associations 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > table formatting preserves cell identity > does not carry a short old cell label inside a changed longer value 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > table formatting preserves cell identity > refuses changed header text rather than retaining data under a different association 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > table formatting preserves cell identity > refuses reordered cells even when the same words remain in the table 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > table formatting preserves cell identity > refuses reordered data rows even when their full text remains unchanged 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > table formatting preserves cell identity > does not retain the old 100 mg substring inside a changed full cell value 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts > table formatting preserves cell identity > does not retain the old Safety substring inside a changed full cell value 21ms
+
+ Test Files  2 passed (2)
+      Tests  83 passed (83)
+   Start at  23:46:38
+   Duration  10.11s (transform 3.14s, setup 388ms, import 7.73s, tests 235ms, environment 0ms)

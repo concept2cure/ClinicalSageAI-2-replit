@@ -43,10 +43,21 @@ vi.mock('../../services/clinical-regulatory-evidence/evidence-spine.service.js',
   listClientDocuments,
 }));
 
+/* The current-access gate (installProjectRouteAccess, 14362ef00) admits every
+   /:id on a current member of the caller's organization. Its reads are answered
+   from seats (support/current-member.ts); an unseated caller or program is
+   refused exactly as the real gate refuses. */
+vi.mock('../../services/c2c/current-program-access', async (original) => {
+  const real = await original<typeof import('../../services/c2c/current-program-access')>();
+  return { ...real, ...(await import('../c2c/__tests__/support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
+
 import createProjectVaultRoutes from '../c2c/project-vault';
+import { clearSeats, seatMember, seatProgram } from '../c2c/__tests__/support/current-member';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const CAP = 2;
+const USER = 3;
 
 /** A checksum that is in the vault but NOT in the page the tree fetched. */
 const HASH_BEYOND_PAGE = 'sha256-outside-the-page';
@@ -55,7 +66,9 @@ function app(org: number | null = 7) {
   const a = express();
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
-    if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org, id: 3 };
+    if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org, id: USER };
+    // The request's own connection, which the production request scope supplies.
+    (req as unknown as { dbClient: unknown }).dbClient = { query };
     next();
   });
   a.use('/api/c2c/project-vault', createProjectVaultRoutes());
@@ -129,6 +142,9 @@ function wireStore(opts: { total: number; unfiled: number; suggested?: number; f
 
 beforeEach(() => {
   vi.clearAllMocks();
+  clearSeats();
+  seatMember(7, USER, 'member');
+  seatProgram(7, PROGRAM);
   process.env.VAULT_TREE_MAX_DOCS = String(CAP);
   listClientDocuments.mockResolvedValue([]);
 });
@@ -214,7 +230,10 @@ describe("a source's filed stage is answered by the database, not by the page", 
     wireStore({ total: 500, unfiled: 137, filedHashes: [HASH_BEYOND_PAGE] });
     const res = await request(app()).get(`/api/c2c/project-vault/${PROGRAM}`);
     expect(res.body.data.dataRoom.sources[0].stage).toBe('filed');
-    expect(res.body.data.dataRoom.filed).toBe(1);
+    // The Filed COUNT is one aggregate over the whole project since 2026-10-08
+    // (countDataRoomStages), proven on PostgreSQL in data-room-processing.dbtest.ts.
+    const counted = query.mock.calls.find(([sql]) => /AS needs_review/.test(String(sql)));
+    expect(counted?.[1]).toEqual([PROGRAM, 7]);
   });
 
   it('still reports not-filed when the database says the checksum is absent', async () => {
@@ -222,7 +241,6 @@ describe("a source's filed stage is answered by the database, not by the page", 
     wireStore({ total: 500, unfiled: 137, filedHashes: [] });
     const res = await request(app()).get(`/api/c2c/project-vault/${PROGRAM}`);
     expect(res.body.data.dataRoom.sources[0].stage).not.toBe('filed');
-    expect(res.body.data.dataRoom.filed).toBe(0);
   });
 
   it('probes only the checksums it actually holds, scoped to program and tenant', async () => {

@@ -1,0 +1,12 @@
+{
+  "original_base": "1473342ab8371155fddc479590ba5de51846bc40",
+  "unchanged_query_count": 4,
+  "sql_literal_sha256": [
+    "d36d72beb11cc4cb4691b0d66e8919c07072b2d20cc0ae11875c1fe56c6953e3",
+    "b13a529f7233fac06fcdde0c660833ca8b19c20f91afd38645bce1cc58474e3b",
+    "ed903b4f015b09abc7d0b120274f01aebb147e71af6c27dec9ee2158720e0663",
+    "1732ee84fdcc169a731ec79afb1e48a77de17bf8856c22a3a70bc5b3241006b0"
+  ],
+  "identical_sql_literals_in_original_order": true,
+  "query_parameters": "Each existing [organizationId] array unchanged; pool instrumentation retains independent scoped statement transactions."
+}

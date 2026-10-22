@@ -38,7 +38,7 @@ describe('governed freeze/dispatch — compare-and-set on the authorized state',
   });
 
   it('passes the read status as that predicate, not a constant', () => {
-    expect(CODE).toMatch(/params: \[toStatus, id, ctx\.organizationId, seq\.status\]/);
+    expect(CODE).toMatch(/params: \[toStatus, id, ctx\.organizationId, seq\.status(?:,|\])/);
   });
 
   it('reports a lost race as INVALID_STATE, not "not found"', () => {

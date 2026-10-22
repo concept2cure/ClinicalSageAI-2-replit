@@ -1,0 +1,10 @@
+{
+  "base": "2ad484223e8fc84ae0a627e4038653caf93ba787",
+  "branch": "concept2cure-v2",
+  "client_tree": "f4a50c306387585250e354c68e08a099362e3823",
+  "production_source": "server/services/ana-ri/context-enrichment.ts",
+  "production_blob": "44f9e4bdd9707ca6811a6a42dce90c74d8d8f47f",
+  "workstream": "W3",
+  "row": "D4",
+  "original_qualification_base": "512369c95a4a89a32e20bc2cb32601521a2a2df4"
+}

@@ -22,9 +22,19 @@
 import express from 'express';
 import request from 'supertest';
 import { timingSafeEqual } from 'node:crypto';
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { createIndPgliteDb, type IndPgliteDb } from '../../server/db/pglite-harness';
 import { createDocumentLifecycleRouter } from '../../server/routes/document-lifecycle';
+
+// P-27 (2026-10-08): signing authority is the platform's one policy
+// (checkSigningAuthority), which reads the signer's MEMBERSHIP role through
+// resolveSignerOrgRole on the process database, not the session's. This router
+// runs on the harness; the stand-in gives each test user the membership role
+// its session claims here: 43 a member, 44 a viewer, every other user an admin.
+vi.mock('../../server/services/part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: async (userId: number, organizationId: number) =>
+    organizationId !== 1 ? null : userId === 43 ? 'member' : userId === 44 ? 'viewer' : 'admin',
+}));
 import { buildLifecycleBindings } from '../../server/services/regulatory/lifecycleBindings';
 import type { DocumentAuditEvent } from '../../shared/regulatory/document-lifecycle';
 import type { SignerCredentials, SignerReverification } from '../../server/services/part11/reverify-signer';

@@ -1,0 +1,17 @@
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > approved v2 (approved at v2) → locked records published_version_id = 2, and the result is filable 40ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > approved at v2, edited to v3, then locked: REFUSED with 409, nothing written, and the message asks for re-approval 15ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > approved with no approved version recorded, then locked: REFUSED (fail closed) 4ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > review v3 → approved records approved_version_id = 3; an edit to v4 afterwards is not filable 6ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > a reviewer still pending refuses the approval (400) and records no approved version 5ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > a reviewer who did not approve refuses the approval (400) 4ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > a quorum that cannot be read is not met: the approval is refused and records no approved version 5ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > a decisions read that fails after the assignments read is not met either 7ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: the role table decides who performs the approval act > a manager is refused review → approved (403) and nothing is written 10ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: the role table decides who performs the approval act > a super_admin is refused review → approved (403) and nothing is written 7ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: the role table decides who performs the approval act > a author is refused review → approved (403) and nothing is written 8ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > POST …/audit-report/export: the locked report records its lock, and no approval nobody gave > inserts status locked with published_version_id = version = 1, approved_version_id unset, so it is not filable 10ms
+ × tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: signing authority before the password > locked by a manager on the membership row is refused 403 ESIGNATURE_NO_AUTHORITY, no password compared, nothing written 14ms
+ × tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: signing authority before the password > approved by a member on the membership row is refused 403 ESIGNATURE_NO_AUTHORITY, no password compared, nothing written 7ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: signing authority before the password > a move to review is not a signature and does not ask for the role 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 13 passed (15)

@@ -7,10 +7,13 @@ import {
   wouldLeaveNoAdministrator, type MembershipActor,
 } from '../services/tenant/membership-change';
 import { clientIpOf } from '../utils/client-ip';
+import { deliverPendingInvitation } from '../services/tenant/pending-invitation-delivery';
+import { declineOwnInvitation, listOwnPendingInvitations } from '../services/tenant/invitation-consent';
 import { ASSIGNABLE_ORG_ROLES } from '../../shared/constants/org-roles';
 import { createScopedLogger } from '../utils/logger.js';
 import { invalidateOrgMembershipCache } from '../middleware/auth';
 import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
+import { isSigningAuthorized } from '../services/part11/signing-authority';
 import {
   issueInvitation,
   reissueForUnredeemedInvitee,
@@ -170,22 +173,8 @@ router.get('/invitations/mine', async (req, res) => {
     // rows, which this scope's tenant policy hides; invitations_for_member
     // reads them for a member of this scope's organization and nobody else
     // (migrations/20260928_invitations_for_member.sql).
-    const result = await pool.query(
-      `SELECT
-         id,
-         organization_id as "organizationId",
-         email,
-         role,
-         status,
-         invited_by_id as "invitedById",
-         created_at as "createdAt"
-       FROM public.invitations_for_member($1)
-       WHERE status = 'pending'
-       ORDER BY created_at DESC`,
-      [callerId]
-    );
+    res.json(await listOwnPendingInvitations(req, callerId));
 
-    res.json(result.rows);
   } catch (error) {
     log.error('Error retrieving pending invitations', error);
     res.status(500).json({ error: 'Failed to retrieve pending invitations' });
@@ -221,12 +210,14 @@ router.post('/invitations/:invitationId/accept', async (req, res) => {
       atomicAcceptInvitation: (
         invitationId: number,
         callerUserId: number,
+        auditContext?: { ipAddress?: string; userAgent?: string },
       ) => Promise<{
         success: boolean;
         error?: string;
         message?: string;
         details?: unknown;
         data?: unknown;
+        auditTrail?: { persisted: true; chained: true };
       }>;
     };
 
@@ -238,7 +229,10 @@ router.post('/invitations/:invitationId/accept', async (req, res) => {
       return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'Invitation not found' });
     }
     const result = await inVerifiedOrgScope(req, own.organizationId, 'member', () =>
-      atomicQuotaService.atomicAcceptInvitation(invitationId, callerId)
+      atomicQuotaService.atomicAcceptInvitation(invitationId, callerId, {
+        ipAddress: clientIpOf(req) ?? undefined,
+        userAgent: req.get('user-agent'),
+      })
     );
 
     if (!result.success) {
@@ -248,6 +242,7 @@ router.post('/invitations/:invitationId/accept', async (req, res) => {
         NOT_PENDING: 409,
         QUOTA_EXCEEDED: 403,
         ORGANIZATION_NOT_FOUND: 404,
+        DATABASE_ERROR: 500,
       };
       return res.status(statusByError[result.error ?? ''] ?? 400).json({
         success: false,
@@ -258,7 +253,7 @@ router.post('/invitations/:invitationId/accept', async (req, res) => {
     }
 
     log.debug('Invitation accepted:', result.data);
-    res.json({ success: true, message: 'Invitation accepted', data: result.data });
+    res.json({ success: true, message: 'Invitation accepted', data: result.data, auditTrail: result.auditTrail });
   } catch (error) {
     log.error('Error accepting invitation', error);
     res.status(500).json({ error: 'Failed to accept invitation' });
@@ -298,20 +293,13 @@ router.post('/invitations/:invitationId/decline', async (req, res) => {
       return res.status(409).json({ error: `Invitation has already been ${invitation.status}` });
     }
 
-    const declined = await inVerifiedOrgScope(req, invitation.organizationId, 'member', () =>
-      pool.query(
-        `UPDATE organization_invitations
-         SET status = 'declined', responded_at = NOW()
-         WHERE id = $1 AND organization_id = $2 AND user_id = $3 AND status = 'pending'`,
-        [invitationId, invitation.organizationId, callerId]
-      )
-    );
-    if (declined.rowCount !== 1) {
+    const declined = await declineOwnInvitation(req, callerId, invitationId, invitation.organizationId);
+    if (!declined) {
       return res.status(409).json({ error: 'Invitation is no longer pending' });
     }
 
     log.debug(`Invitation ${invitationId} declined by user ${callerId}`);
-    res.json({ success: true, message: 'Invitation declined' });
+    res.json({ success: true, message: 'Invitation declined', auditTrail: { persisted: true, chained: true } });
   } catch (error) {
     log.error('Error declining invitation', error);
     res.status(500).json({ error: 'Failed to decline invitation' });
@@ -320,7 +308,11 @@ router.post('/invitations/:invitationId/decline', async (req, res) => {
 
 /**
  * GET /api/tenant-users/:tenantId
- * Get users for a specific tenant
+ * Get users for a specific tenant. Each row says whether the member may apply
+ * an electronic signature (`canSign`), read from the signing policy itself
+ * (isSigningAuthorized on the membership role), so a picker that must offer
+ * only signers (the protocol reviewer picker; a review is assigned only to
+ * someone who can sign its disposition) does not keep its own role list.
  */
 router.get('/:tenantId', async (req, res) => {
   try {
@@ -365,7 +357,7 @@ router.get('/:tenantId', async (req, res) => {
       pool.query(query, [tenantId])
     );
     log.debug(`Retrieved ${result.rows.length} users for organization ${tenantId}`);
-    res.json(result.rows);
+    res.json(result.rows.map((row: { role?: string | null }) => ({ ...row, canSign: isSigningAuthorized(row.role) })));
   } catch (error) {
     log.error('Error retrieving tenant users', error);
     res.status(500).json({ error: 'Failed to retrieve tenant users' });
@@ -502,11 +494,13 @@ router.post('/', async (req, res) => {
       // Existing user in another org: consent required — a pending invitation
       // was created instead of a membership (decision-register item 12, #727).
       log.debug('Cross-org invite resulted in pending invitation:', result.data);
+      const delivery = await deliverPendingInvitation(validatedData.email, appBaseUrl);
       return res.status(202).json({
         success: true,
         pendingInvitation: true,
         message: result.message,
         data: result.data,
+        delivery,
       });
     }
 

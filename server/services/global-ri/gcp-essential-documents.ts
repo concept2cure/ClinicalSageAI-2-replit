@@ -9,29 +9,36 @@
  * are credible. This service encodes three reference tables an RA/clinical
  * operations lead consults daily:
  *
- *   A) the core GCP principles (ICH E6(R2) §2 — the "13 principles");
+ *   A) the core GCP principles as worded in ICH E6(R2) §2 — the "13 principles"
+ *      (historical: superseded by E6(R3), 2025-01-06, whose 11 principles were
+ *      rewritten, not renumbered);
  *   B) the essential documents that individually and collectively permit
  *      evaluation of the conduct of a trial and the quality of the data, grouped
- *      by trial stage (ICH E6(R2) §8.2 "before", §8.3 "during", §8.4 "after");
- *   C) the responsibility split between sponsor (ICH E6(R2) §5) and investigator
- *      (ICH E6(R2) §4).
+ *      by trial stage ("before", "during", "after" the clinical phase) — ICH
+ *      E6(R3) Appendix C (essential records). The stage grouping is this
+ *      service's, carried over from the E6(R2) §8.2–§8.4 phase tables
+ *      (historical, superseded by E6(R3)); it is not an Appendix C heading;
+ *   C) the responsibility split between sponsor (ICH E6(R3) Annex 1 §3) and
+ *      investigator (ICH E6(R3) Annex 1 §2).
  *
- * Pure / deterministic — no DB, no IO. The lists are the minimum set per
- * ICH E6(R2); the ICH E6(R3) (Step 4, 2023; effective 2025) modernization
- * recasts §8 as an "essential records" expectation tied to the Trial Master
- * File (TMF) and emphasizes quality-by-design and risk-based approaches.
- * Confirm scope per trial against E6(R2)/E6(R3) and the applicable regional
+ * Pure / deterministic — no DB, no IO. The lists are the minimum set as
+ * tabulated in E6(R2) (superseded by E6(R3), 2025-01-06); ICH E6(R3) (Step 4,
+ * 2025-01-06) recasts the R2 §8 essential documents as "essential records"
+ * (Appendix C) tied to the Trial Master File (TMF) and emphasizes
+ * quality-by-design and risk-based approaches.
+ * Confirm scope per trial against ICH E6(R3) and the applicable regional
  * GCP (e.g. FDA 21 CFR 50/56/312, EU CTR 536/2014). Honest-by-construction:
  * this is a readiness/reference aid, not the authoritative checklist.
  *
- * Reference: ICH E6(R2) Good Clinical Practice (Step 4, 9 Nov 2016) §§2, 4, 5,
- * 8; ICH E6(R3) Good Clinical Practice (Step 4, 2023); WMA Declaration of
- * Helsinki.
+ * Reference: ICH E6(R3) Good Clinical Practice (Step 4, 2025-01-06) principles,
+ * Annex 1 §2, Annex 1 §3, Appendix C; ICH E6(R2) Good Clinical Practice (Step 4,
+ * 9 Nov 2016) §2 (historical, superseded by E6(R3), 2025-01-06) for the
+ * principle wording; WMA Declaration of Helsinki.
  *
  * @module server/services/global-ri/gcp-essential-documents
  */
 
-/** The trial stages used to group essential documents (ICH E6(R2) §8). */
+/** The trial stages used to group essential records (ICH E6(R3) Appendix C). */
 export type GcpStage = 'before' | 'during' | 'after';
 
 /** The two parties whose GCP responsibilities are modeled. */
@@ -40,7 +47,7 @@ export type GcpParty = 'sponsor' | 'investigator';
 /** Who is expected to hold a given essential document. */
 export type GcpDocumentHolder = 'sponsor' | 'investigator' | 'both';
 
-/** A single GCP principle (ICH E6(R2) §2). */
+/** A single GCP principle (ICH E6(R2) §2 wording; historical, superseded by E6(R3)). */
 export interface GcpPrinciple {
   /** Stable principle id (e.g. 'p1'). */
   id: string;
@@ -48,7 +55,7 @@ export interface GcpPrinciple {
   statement: string;
 }
 
-/** A single essential document (ICH E6(R2) §8). */
+/** A single essential record (ICH E6(R3) Appendix C). */
 export interface GcpEssentialDocument {
   /** Stable document id (e.g. 'before_icf'). */
   id: string;
@@ -58,7 +65,7 @@ export interface GcpEssentialDocument {
   heldBy: GcpDocumentHolder;
 }
 
-/** A single party responsibility (ICH E6(R2) §4 investigator / §5 sponsor). */
+/** A single party responsibility (ICH E6(R3) Annex 1 §2 investigator / Annex 1 §3 sponsor). */
 export interface GcpResponsibility {
   /** Stable responsibility id (e.g. 'sponsor_monitoring'). */
   id: string;
@@ -66,11 +73,12 @@ export interface GcpResponsibility {
   title: string;
 }
 
-const E6_PRINCIPLES_CITATION = 'ICH E6(R2) §2 (Principles of ICH GCP)';
+const E6_PRINCIPLES_CITATION =
+  'ICH E6(R2) §2 (Principles of ICH GCP; historical wording, superseded by ICH E6(R3) principles 1–11, 2025-01-06)';
 const E6_RESPONSIBILITY_NOTE =
-  'ICH E6 lists the minimum set; confirm scope per trial against E6(R2)/E6(R3) and the applicable regional GCP.';
+  'ICH E6 lists the minimum set; confirm scope per trial against ICH E6(R3) and the applicable regional GCP.';
 
-/** A) The core ICH GCP principles (ICH E6(R2) §2.1–§2.13). */
+/** A) The core ICH GCP principles as worded in ICH E6(R2) §2.1–§2.13 (historical; superseded by E6(R3), 2025-01-06). */
 const GCP_PRINCIPLES: GcpPrinciple[] = [
   { id: 'p1', statement: 'Clinical trials are conducted in accordance with the ethical principles that have their origin in the Declaration of Helsinki, and that are consistent with GCP and the applicable regulatory requirement(s).' },
   { id: 'p2', statement: 'Before a trial is initiated, foreseeable risks and inconveniences are weighed against the anticipated benefit for the individual subject and society; a trial proceeds only if the anticipated benefits justify the risks.' },
@@ -87,9 +95,9 @@ const GCP_PRINCIPLES: GcpPrinciple[] = [
   { id: 'p13', statement: 'Systems with procedures that assure the quality of every aspect of the trial are implemented, with the quality management system using a risk-based (quality-by-design) approach.' },
 ];
 
-/** B) Essential documents by trial stage (ICH E6(R2) §8.2 / §8.3 / §8.4). */
+/** B) Essential records by trial stage (ICH E6(R3) Appendix C). */
 const ESSENTIAL_DOCUMENTS: Record<GcpStage, GcpEssentialDocument[]> = {
-  // §8.2 — Before the clinical phase of the trial commences.
+  // Before the clinical phase of the trial commences.
   before: [
     { id: 'before_ib', title: "Investigator's Brochure", heldBy: 'both' },
     { id: 'before_protocol', title: 'Signed protocol and amendments, and sample case report form (CRF)', heldBy: 'both' },
@@ -109,7 +117,7 @@ const ESSENTIAL_DOCUMENTS: Record<GcpStage, GcpEssentialDocument[]> = {
     { id: 'before_shipping_records', title: 'Shipping records for investigational product(s) and trial-related materials', heldBy: 'both' },
     { id: 'before_decoding', title: 'Decoding procedures for blinded trials', heldBy: 'both' },
   ],
-  // §8.3 — During the clinical conduct of the trial.
+  // During the clinical conduct of the trial.
   during: [
     { id: 'during_ib_updates', title: "Investigator's Brochure updates", heldBy: 'both' },
     { id: 'during_revisions', title: 'Revisions to protocol/amendments, CRF, informed consent form, and other written information to subjects', heldBy: 'both' },
@@ -131,7 +139,7 @@ const ESSENTIAL_DOCUMENTS: Record<GcpStage, GcpEssentialDocument[]> = {
     { id: 'during_signature_sheet', title: 'Signature sheet (signatures/initials of persons authorized to make CRF entries/corrections)', heldBy: 'investigator' },
     { id: 'during_drug_accountability', title: 'Record of retained body fluids/tissue samples and investigational product accountability at the site', heldBy: 'both' },
   ],
-  // §8.4 — After completion or termination of the trial.
+  // After completion or termination of the trial.
   after: [
     { id: 'after_site_accountability', title: 'Investigational product accountability at the site', heldBy: 'both' },
     { id: 'after_destruction', title: 'Documentation of investigational product destruction', heldBy: 'both' },
@@ -144,31 +152,31 @@ const ESSENTIAL_DOCUMENTS: Record<GcpStage, GcpEssentialDocument[]> = {
   ],
 };
 
-/** C) Responsibility split — sponsor (§5) vs investigator (§4). */
+/** C) Responsibility split — sponsor (ICH E6(R3) Annex 1 §3) vs investigator (Annex 1 §2). */
 const RESPONSIBILITIES: Record<GcpParty, GcpResponsibility[]> = {
   sponsor: [
-    { id: 'sponsor_qms', title: 'Implement a quality management system using a risk-based (quality-by-design) approach (§5.0)' },
-    { id: 'sponsor_qa_qc', title: 'Implement and maintain quality assurance and quality control systems with written SOPs (§5.1)' },
-    { id: 'sponsor_trial_management', title: 'Trial management, data handling, recordkeeping, and validated computerized systems (§5.5)' },
-    { id: 'sponsor_investigator_selection', title: 'Select qualified investigator(s)/institution(s) and define their responsibilities (§5.6)' },
-    { id: 'sponsor_monitoring', title: 'Monitor the trial (risk-based, on-site and/or centralized) to verify rights/well-being of subjects, accuracy/completeness of data, and protocol/GCP compliance (§5.18)' },
-    { id: 'sponsor_audit', title: 'Conduct audits independent of routine monitoring to evaluate trial conduct and compliance (§5.19)' },
-    { id: 'sponsor_safety_reporting', title: 'Safety evaluation and expedited reporting of adverse drug reactions to investigators, IRB/IEC, and regulators (§5.16/§5.17)' },
-    { id: 'sponsor_imp_supply', title: 'Supply, label, package, and account for the investigational product(s) (§5.13/§5.14)' },
-    { id: 'sponsor_audit_trail', title: 'Ensure data integrity and an attributable audit trail across systems and records (§5.5)' },
-    { id: 'sponsor_noncompliance', title: 'Secure agreements, address noncompliance, and notify authorities of premature termination/suspension (§5.20/§5.21)' },
+    { id: 'sponsor_qms', title: 'Implement a quality management system using a risk-based (quality-by-design) approach (Annex 1 §3.10)' },
+    { id: 'sponsor_qa_qc', title: 'Implement and maintain quality assurance and quality control systems with written SOPs (Annex 1 §3.11)' },
+    { id: 'sponsor_trial_management', title: 'Trial management, data handling, recordkeeping, and validated computerized systems (Annex 1 §3.16, §4.3)' },
+    { id: 'sponsor_investigator_selection', title: 'Select qualified investigator(s)/institution(s) and define their responsibilities (Annex 1 §3.7)' },
+    { id: 'sponsor_monitoring', title: 'Monitor the trial (risk-based, on-site and/or centralized) to verify rights/well-being of participants, accuracy/completeness of data, and protocol/GCP compliance (Annex 1 §3.11.4)' },
+    { id: 'sponsor_audit', title: 'Conduct audits independent of routine monitoring to evaluate trial conduct and compliance (Annex 1 §3.11.2)' },
+    { id: 'sponsor_safety_reporting', title: 'Safety evaluation and expedited reporting of adverse drug reactions to investigators, IRB/IEC, and regulators (Annex 1 §3.13)' },
+    { id: 'sponsor_imp_supply', title: 'Supply, label, package, and account for the investigational product(s) (Annex 1 §3.15)' },
+    { id: 'sponsor_audit_trail', title: 'Ensure data integrity and an attributable audit trail across systems and records (Annex 1 §4)' },
+    { id: 'sponsor_noncompliance', title: 'Secure agreements, address noncompliance, and notify authorities of premature termination/suspension (Annex 1 §3.6/§3.12)' },
   ],
   investigator: [
-    { id: 'investigator_qualifications', title: 'Be qualified by education, training, and experience and provide evidence thereof (§4.1)' },
-    { id: 'investigator_resources', title: 'Demonstrate adequate resources — sufficient time, qualified staff, and adequate facilities (§4.2)' },
-    { id: 'investigator_medical_care', title: 'Provide medical care for trial-related decisions; a qualified physician is responsible for medical decisions (§4.3)' },
-    { id: 'investigator_irb_communication', title: 'Obtain and maintain communication with the IRB/IEC, including approval before initiation (§4.4)' },
-    { id: 'investigator_protocol_compliance', title: 'Comply with the approved protocol and document/justify any deviations (§4.5)' },
-    { id: 'investigator_imp_accountability', title: 'Maintain investigational product accountability and storage at the trial site (§4.6)' },
-    { id: 'investigator_informed_consent', title: 'Obtain freely given informed consent from each subject before participation (§4.8)' },
-    { id: 'investigator_records', title: 'Maintain accurate source records and reports (attributable, legible, contemporaneous, original, accurate — ALCOA) (§4.9)' },
-    { id: 'investigator_safety_reporting', title: 'Report serious adverse events to the sponsor and safety information to the IRB/IEC as required (§4.11)' },
-    { id: 'investigator_progress_reports', title: 'Provide progress reports to the IRB/IEC and a final report on completion/termination (§4.10/§4.13)' },
+    { id: 'investigator_qualifications', title: 'Be qualified by education, training, and experience and provide evidence thereof (Annex 1 §2.1)' },
+    { id: 'investigator_resources', title: 'Demonstrate adequate resources — sufficient time, qualified staff, and adequate facilities (Annex 1 §2.2)' },
+    { id: 'investigator_medical_care', title: 'Provide medical care for trial-related decisions; a qualified physician is responsible for medical decisions (Annex 1 §2.7)' },
+    { id: 'investigator_irb_communication', title: 'Obtain and maintain communication with the IRB/IEC, including approval before initiation (Annex 1 §2.4)' },
+    { id: 'investigator_protocol_compliance', title: 'Comply with the approved protocol and document/justify any deviations (Annex 1 §2.5)' },
+    { id: 'investigator_imp_accountability', title: 'Maintain investigational product accountability and storage at the trial site (Annex 1 §2.10)' },
+    { id: 'investigator_informed_consent', title: 'Obtain freely given informed consent from each participant before participation (Annex 1 §2.8)' },
+    { id: 'investigator_records', title: 'Maintain accurate source records and reports (attributable, legible, contemporaneous, original, accurate — ALCOA) (Annex 1 §2.12)' },
+    { id: 'investigator_safety_reporting', title: 'Report serious adverse events to the sponsor and safety information to the IRB/IEC as required (Annex 1 §2.7)' },
+    { id: 'investigator_progress_reports', title: 'Provide progress reports to the IRB/IEC and a final report on completion/termination (Annex 1 §2.13)' },
   ],
 };
 
@@ -199,28 +207,29 @@ export interface GcpResponsibilitiesResult {
 }
 
 /**
- * Return the core ICH GCP principles (ICH E6(R2) §2). Pure / deterministic.
+ * Return the core ICH GCP principles (ICH E6(R2) §2 wording; historical,
+ * superseded by E6(R3), 2025-01-06). Pure / deterministic.
  */
 export function getGcpPrinciples(): GcpPrinciplesResult {
   return {
     principles: GCP_PRINCIPLES,
     citation: E6_PRINCIPLES_CITATION,
     notes: [
-      'These are the foundational principles; ICH E6(R3) reaffirms them while emphasizing quality-by-design, risk-proportionate approaches, and a media-neutral view of records.',
+      'These are the E6(R2) foundational principles (historical, superseded by E6(R3), 2025-01-06); ICH E6(R3) rewrote them as 11 principles while emphasizing quality-by-design, risk-proportionate approaches, and a media-neutral view of records.',
       E6_RESPONSIBILITY_NOTE,
     ],
   };
 }
 
 const E6_STAGE_CITATION: Record<GcpStage, string> = {
-  before: 'ICH E6(R2) §8.2 (Before the clinical phase of the trial commences)',
-  during: 'ICH E6(R2) §8.3 (During the clinical conduct of the trial)',
-  after: 'ICH E6(R2) §8.4 (After completion or termination of the trial)',
+  before: 'ICH E6(R3) Appendix C (Essential Records for the Conduct of a Clinical Trial) — records expected before the clinical phase of the trial commences',
+  during: 'ICH E6(R3) Appendix C (Essential Records for the Conduct of a Clinical Trial) — records expected during the clinical conduct of the trial',
+  after: 'ICH E6(R3) Appendix C (Essential Records for the Conduct of a Clinical Trial) — records expected after completion or termination of the trial',
 };
 
 /**
- * Return the essential documents expected at a given trial stage (ICH E6(R2)
- * §8). Pure / deterministic. Throws for an unmodeled stage.
+ * Return the essential records expected at a given trial stage (ICH E6(R3)
+ * Appendix C). Pure / deterministic. Throws for an unmodeled stage.
  */
 export function getEssentialDocuments(stage: GcpStage): GcpEssentialDocumentsResult {
   const documents = ESSENTIAL_DOCUMENTS[stage];
@@ -233,14 +242,14 @@ export function getEssentialDocuments(stage: GcpStage): GcpEssentialDocumentsRes
     citation: E6_STAGE_CITATION[stage],
     notes: [
       'This is the minimum essential-documents set; the sponsor/investigator file (TMF) may require additional records per the trial and applicable regional GCP.',
-      'ICH E6(R3) recasts §8 as an "essential records" expectation tied to the Trial Master File; confirm the records inventory per trial.',
+      'ICH E6(R3) Appendix C recasts the essential documents of E6(R2) (superseded, 2025-01-06) as an "essential records" expectation tied to the Trial Master File; confirm the records inventory per trial.',
     ],
   };
 }
 
 /**
- * Return the GCP responsibilities for a party — sponsor (§5) or investigator
- * (§4). Pure / deterministic. Throws for an unmodeled party.
+ * Return the GCP responsibilities for a party — sponsor (ICH E6(R3) Annex 1 §3)
+ * or investigator (Annex 1 §2). Pure / deterministic. Throws for an unmodeled party.
  */
 export function getResponsibilities(party: GcpParty): GcpResponsibilitiesResult {
   const responsibilities = RESPONSIBILITIES[party];
@@ -250,9 +259,9 @@ export function getResponsibilities(party: GcpParty): GcpResponsibilitiesResult 
   return {
     party,
     responsibilities,
-    citation: party === 'sponsor' ? 'ICH E6(R2) §5 (Sponsor)' : 'ICH E6(R2) §4 (Investigator)',
+    citation: party === 'sponsor' ? 'ICH E6(R3) Annex 1 §3 (Sponsor)' : 'ICH E6(R3) Annex 1 §2 (Investigator)',
     notes: [
-      'Responsibilities may be delegated (e.g. sponsor functions to a CRO under §5.2), but accountability for GCP compliance remains with the named party.',
+      'Responsibilities may be delegated (e.g. sponsor functions to a CRO under ICH E6(R3) Annex 1 §3.3), but accountability for GCP compliance remains with the named party.',
       E6_RESPONSIBILITY_NOTE,
     ],
   };

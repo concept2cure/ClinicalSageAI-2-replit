@@ -1,0 +1,12 @@
+{
+  "helper_path": "docs/evidence/D2-D5/2026-10-06-document-dispositions/typecheck-memory/c2c-ts-prewarm.cjs",
+  "helper_git_blob": "9866391314b83ebb762720141b584f350ecdace2",
+  "command": [
+    "python",
+    "/workspace/scratch/03341391a627/prepare-direct-answer-compiler-cache.py"
+  ],
+  "scope": "Unchanged whole-project config. Actual TypeScript-owned invalidation, semantic diagnostic checking and native cache output. Preparation is not the qualification verdict; full unchanged pre-push must pass afterward.",
+  "heap_mb": 6656,
+  "soft_rss_mb": 6200,
+  "max_files_per_process": 3000
+}

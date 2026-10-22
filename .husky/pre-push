@@ -135,7 +135,49 @@ if ! npm run --silent ci:migration-set-order 2>&1; then
   echo ""
   exit 1
 fi
+
+# A table's CREATE must precede the file that attaches a guard to it. A guard on
+# an absent table self-guards and NO-OPS, so ordered first it arrives only on the
+# deploy AFTER the one that creates the table — and in between the table exists
+# and the guard does not. For qms_documents that window is a controlled document
+# reaching 'effective' with no electronic signature (21 CFR Part 11 §11.50).
+# The set has made this mistake twice and the order gate above is blind to it:
+# verified 2026-10-12 by misplacing the two QMS files, which ci:migration-set-order,
+# ci:migration-drop-safety and ci:migration-deploy-path all passed.
+echo "   Validating that guarded tables are created before they are guarded..."
+if ! npm run --silent ci:migration-guard-order:selftest >/dev/null 2>&1 || ! npm run --silent ci:migration-guard-order 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Migration guard-order check FAILED."
+  echo "   A trigger, constraint, RLS enable or policy is attached to a table that"
+  echo "   C2C_MIGRATION_FILES creates LATER, so the guard no-ops on the deploy that"
+  echo "   creates the table and only arms on the next one."
+  echo "   Move the creator above the guard in scripts/db/migration-set.mjs."
+  echo ""
+  exit 1
+fi
 echo "   ✅ Migration apply-order passed."
+
+# The two appliers read DIFFERENT file lists, and only one of them is exercised
+# by a fresh install. install-fresh's step-3 overlay reads <repo>/migrations and
+# never walks db/migrations/, so a root-tree file that FKs or ALTERs a table only
+# db/migrations/ creates defers on every pass and the installer reports
+# INCOMPLETE — while deploy-migrate, which applies the whole set, stays green and
+# hides it. That has cost five outages: three found by the 2026-07-30 blank-DB
+# audit, ana_runs on 2026-10-09, and 20261018b_agency_response_questions.sql on
+# 2026-10-19, which failed step 8 of Tier 5 Browser Smoke — a required
+# release-evidence job whose logs could not even be fetched to diagnose it.
+echo "   Validating the fresh-install overlay can reach what it depends on..."
+if ! npm run --silent ci:install-fresh-overlay-deps:selftest >/dev/null 2>&1 || ! npm run --silent ci:install-fresh-overlay-deps 2>&1; then
+  echo ""
+  echo "🚫 ERROR: a root-tree migration depends on a table only db/migrations/ creates."
+  echo "   install-fresh's overlay never walks that tree, so this cannot apply on a"
+  echo "   fresh install and blank-db provisioning + Tier 5 will fail while the deploy"
+  echo "   path stays green. Add the creator to PRE_OVERLAY_CREATORS in"
+  echo "   scripts/db/install-fresh.mjs with a dated note saying which file needed it."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Fresh-install overlay dependencies reachable."
 
 # The sibling hazard to apply-order, and the same shape of invisible: the
 # applier re-executes EVERY file on every deploy (scripts/db/migration-set.mjs
@@ -154,6 +196,25 @@ if ! npm run --silent ci:migration-drop-safety 2>&1; then
   exit 1
 fi
 echo "   ✅ Replay-safe DROPs passed."
+
+# One vocabulary per class. The US class was enumerated at least fifteen times
+# across the repository (three with a different value set), the MDR class in two
+# irreconcilable shapes, the IVDR class in eight places — and two interviews had
+# drifted out of the fact reader's vocabulary with no test noticing. Promoting
+# one module did not stop the next session writing a ninth list, so this refuses
+# one. It is name-aware, because 'A' | 'B' | 'C' | 'D' is also a cleanroom grade
+# and an FDA meeting type. Cheap: it reads the files.
+echo "   Validating no class vocabulary is restated..."
+if ! npm run --silent ci:class-vocabulary 2>&1; then
+  echo ""
+  echo "🚫 ERROR: A governed class vocabulary is restated."
+  echo "   Import it from shared/regulatory/device-class.ts — DEVICE_CLASSES,"
+  echo "   MDR_DECLARED_CLASSES, MDR_RULE_CLASSES, IVDR_CLASSES — rather than"
+  echo "   writing the values again."
+  echo ""
+  exit 1
+fi
+echo "   ✅ One class vocabulary passed."
 
 # A new migrations/*.sql must be on a deploy path. install-fresh applies the
 # whole tree to a NEW database; deploy-migrate applies only C2C_MIGRATION_FILES,
@@ -308,6 +369,21 @@ if ! npm run --silent ci:session-scoped-rls-bypass 2>&1; then
   exit 1
 fi
 echo "   ✅ No new session-scoped RLS bypass."
+
+# Cheap, no database. RLS here cannot contain injected SQL (the tenant id is a
+# settable session variable, docs/security/C2C_TENANT_ISOLATION_PROOF.md §0), so
+# a value interpolated into SQL text is cross-tenant critical. Ratchet: no file
+# gains an interpolation; scripts/ci/sql-interpolation-baseline.json only shrinks.
+echo "   Validating no new value interpolated into SQL text..."
+if ! npm run --silent ci:sql-interpolation 2>&1; then
+  echo ""
+  echo "🚫 ERROR: SQL interpolation check FAILED."
+  echo "   Pass the value as a bind parameter (\$1, or drizzle sql\`...\`, which"
+  echo "   parameterizes). An identifier comes from a fixed allowlist in code."
+  echo ""
+  exit 1
+fi
+echo "   ✅ No new value interpolated into SQL text."
 echo "   Validating ledger integrity (row ids, evidence paths)..."
 if ! node scripts/ops/ledger-check.mjs >/dev/null 2>&1; then
   echo ""
@@ -360,8 +436,9 @@ echo "   Checking for fixture fallback in client surfaces..."
 if ! npm run --silent ci:fixture-fallback 2>&1; then
   echo ""
   echo "🚫 ERROR: Ungated fixture fallback FAILED."
-  echo "   A surface falls back to example rows when its read fails. Use"
-  echo "   useSampleRows(live, fixture) behind the explicit sample-mode boundary."
+  echo "   A surface shows example rows where the tenant's own belong — on a"
+  echo "   failed read, or through the sample mode removed on 2026-10-14."
+  echo "   Render the read's own loading / error / empty state instead."
   echo ""
   exit 1
 fi
@@ -467,6 +544,29 @@ echo "   ✅ One source for the client address."
 # protocol finalize and review-disposition routes, and an AnA tool, wrote such
 # rows with no password re-entry and no electronic_signatures row. The baseline
 # caps the remaining sites per file, each with a written reason; never grow it.
+# P-29.2: a seal, and anything built from the filing, must ask whether the
+# filing still holds this document's text. The selftest runs FIRST — the gate's
+# value is in a branch that does not fire on a healthy tree, and round 16
+# shipped the check at the freeze while /e-sign as APPROVER passed no check at
+# all, with every test green. The baseline caps the remaining doors per file,
+# each with a written reason; never grow it.
+echo "   Checking the filing-exit agreement gate catches what it must..."
+if ! npm run --silent ci:filing-exit-agreement:selftest 2>&1; then
+  echo ""
+  echo "🚫 ERROR: the filing-exit agreement gate does not fail on the shapes it exists to catch."
+  echo "   Fix scripts/ci/check-filing-exit-agreement.mjs, not the selftest."
+  exit 1
+fi
+echo "   ✅ The filing-exit gate fails on what it must."
+echo "   Checking that every seal asks whether the filing holds this document's text..."
+if ! npm run --silent ci:filing-exit-agreement 2>&1; then
+  echo ""
+  echo "🚫 ERROR: a seal, or a package built from the filing, that never asks the agreement question."
+  echo "   Call filingAgreesWithEditing on the sealing transaction and refuse on the"
+  echo "   diverged-and-different subset -- see P-29.2 in docs/EXIT_ATTESTATION_DECISION_2026-10-18.md."
+  exit 1
+fi
+echo "   ✅ Every seal asks the filing-agreement question."
 echo "   Checking that every sign ledger row comes from a signature ceremony..."
 if ! npm run --silent ci:sign-ceremony 2>&1; then
   echo ""
@@ -510,6 +610,36 @@ if ! npm run --silent ci:trivyignore-hygiene 2>&1; then
   exit 1
 fi
 echo "   ✅ .trivyignore entries are bounded and owned."
+
+# ── The oversized-file ratchet actually holds now ────────────────────────────
+# WO-12 defers the oversized-file decomposition on three reasons, the third
+# being "The line is held. The ratchet cannot grow now." It was not held: WO-12
+# recorded 95 files over 1,500 lines and the tree reached 114.
+#
+# audit:repo-health:no-regression compares against
+# docs/reports/repo-health-scan-latest.json, and
+# .github/workflows/repo-health-baseline-refresh.yml regenerates and COMMITS
+# that file on every push to concept2cure-v2. Its rationale is that "PRs
+# branched after a merge therefore always see delta 0" — but RULE 0 means this
+# repository has no PRs, every change is a direct push to trunk, so each push's
+# growth is absorbed into the baseline before any later run can see it. The
+# delta is 0 today with the tree 32 files above the strict ceiling.
+#
+# This ceiling is a number in package.json, where the auto-refresh cannot reach
+# it and the "moves DOWN only" convention already applies. It is set at the
+# measured count, so nothing existing is blocked and only new growth fails.
+# Takes ~1.2s (Node builtins, tracked files only).
+echo "   Checking no file crosses the size ceiling (the ratchet the auto-refresh was absorbing)..."
+if ! npm run --silent audit:repo-health:ceiling 2>&1; then
+  echo ""
+  echo "🚫 ERROR: this push puts another file over the size ceiling."
+  echo "   Split it, or reduce another file to make room. The ceiling in"
+  echo "   package.json (audit:repo-health:ceiling) moves DOWN only — see"
+  echo "   docs/work-orders/WO-12-complexity-refactor.md."
+  echo ""
+  exit 1
+fi
+echo "   ✅ No new oversized file."
 
 # ── No 5xx body carries the caught error's text ──────────────────────────────
 #

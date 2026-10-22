@@ -1,0 +1,17 @@
+# Defect 5, end to end: this working tree's production bundle booted with SECURITY_SELF_TEST_NONBLOCKING=true and no CLAMAV_HOST. 2026-10-18T20:01:31Z
+# Same env as the step-6 boots (ci.yml production-boot-smoke's), CLAMAV_HOST unset.
+$ boot dist/index.js with SECURITY_SELF_TEST_NONBLOCKING=true (CLAMAV_HOST unset)
+pid=20964
+the server EXITED during boot, exit code 1 (last /readyz: 000)
+server output (FATAL lines):
+[FATAL] SECURITY_SELF_TEST_NONBLOCKING=true is not permitted in production: a critical security self-test failure must stop the boot. Unset the variable and fix the failing check.
+
+# And without the flag, CLAMAV_HOST unset: the boot still exits naming clamav_connectivity, and no longer prints the
+# 'Set SECURITY_SELF_TEST_NONBLOCKING=true to override' hint that ../boot-production-no-scanner-after.txt shows at its line 392.
+$ boot dist/index.js (CLAMAV_HOST unset)
+pid=21066
+the server EXITED during boot, exit code 1 (last /readyz: 000)
+server output:
+[security-self-test] FAILED. Critical checks:
+  - clamav_connectivity: CLAMAV_HOST not set: production refuses every upload (server/middleware/uploadSafety.ts)
+lines mentioning SECURITY_SELF_TEST_NONBLOCKING: 0

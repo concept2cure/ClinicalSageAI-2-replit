@@ -17,7 +17,10 @@ const query = vi.fn();
 vi.mock('../../db.js', () => ({ pool: { query: (...a: unknown[]) => query(...a) } }));
 
 const getThreadMessages = vi.fn();
-vi.mock('../../services/chat-thread-helpers.js', () => ({
+// The store is resolved by the helper itself (resolveThreadStore, through the
+// mocked pool above); only the transcript read is replaced.
+vi.mock('../../services/chat-thread-helpers.js', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   getThreadMessages: (...a: unknown[]) => getThreadMessages(...a),
 }));
 

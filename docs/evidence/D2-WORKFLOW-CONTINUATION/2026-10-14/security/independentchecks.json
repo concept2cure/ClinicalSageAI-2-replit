@@ -1,0 +1,88 @@
+{
+  "verification": "Independent recomputation from original Git object bytes; no checkout mutation or producer execution",
+  "reviewer": "authoring_access_ui",
+  "commit": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4",
+  "summaryPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json",
+  "summaryGitBlobId": "d33e3cdd72d0737bf33207600aa6cc2729c5ee5b",
+  "algorithm": "SHA-256",
+  "allThreeMatches": true,
+  "scope": "Only the three specified incoming generic-api-key alerts; no general secret clearance",
+  "producerEvidence": [
+    {
+      "path": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/browser.mjs",
+      "lines": [
+        31,
+        34,
+        35,
+        190,
+        198
+      ],
+      "meaning": "createHash(sha256) hashes readFileSync Buffer bytes; fixturePins enumerates fixture files and summary records their hashes plus the api-contract file hash."
+    },
+    {
+      "path": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/generate.ts",
+      "lines": [
+        2,
+        33,
+        34,
+        37
+      ],
+      "meaning": "Writes a synthetic template browser API contract JSON fixture with a trailing newline, using existing template data and a synthetic actor."
+    },
+    {
+      "path": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/mock-api.mjs",
+      "lines": [
+        1,
+        2,
+        5,
+        9,
+        10
+      ],
+      "meaning": "Local fixture API state and response interceptor code; recorded value is the checksum of this code file, not an authentication credential."
+    }
+  ],
+  "checks": [
+    {
+      "summaryLine": 22,
+      "summaryField": "fixtureSha256[api-contract.json]",
+      "fingerprint": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json:generic-api-key:22",
+      "sourcePath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/api-contract.json",
+      "sourceGitBlobId": "7a41d1160e44510942094ea74627cf818f1c3c07",
+      "sourceByteLength": 39567,
+      "computedSha256": "2c098b40a998b553406845095a37af30adb1188fb7ae48677cb991f90715db22",
+      "recordedValueMatchesExactBlobBytes": true,
+      "checksumPresentAtReportedSourceLocation": true,
+      "scannerReportRedacted": true,
+      "producerMeaningVerified": true,
+      "credential": false
+    },
+    {
+      "summaryLine": 27,
+      "summaryField": "fixtureSha256[mock-api.mjs]",
+      "fingerprint": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json:generic-api-key:27",
+      "sourcePath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/mock-api.mjs",
+      "sourceGitBlobId": "059f906f5d2be7de52b3876b68f70a4dc9aac9eb",
+      "sourceByteLength": 3448,
+      "computedSha256": "abaf3a2338fecb2d2c532e6028da75972924e16c9ed70044e8b68a7c82439347",
+      "recordedValueMatchesExactBlobBytes": true,
+      "checksumPresentAtReportedSourceLocation": true,
+      "scannerReportRedacted": true,
+      "producerMeaningVerified": true,
+      "credential": false
+    },
+    {
+      "summaryLine": 32,
+      "summaryField": "apiContractSha256",
+      "fingerprint": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json:generic-api-key:32",
+      "sourcePath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/api-contract.json",
+      "sourceGitBlobId": "7a41d1160e44510942094ea74627cf818f1c3c07",
+      "sourceByteLength": 39567,
+      "computedSha256": "2c098b40a998b553406845095a37af30adb1188fb7ae48677cb991f90715db22",
+      "recordedValueMatchesExactBlobBytes": true,
+      "checksumPresentAtReportedSourceLocation": true,
+      "scannerReportRedacted": true,
+      "producerMeaningVerified": true,
+      "credential": false
+    }
+  ]
+}

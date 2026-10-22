@@ -45,28 +45,28 @@ describe('computeDocumentChecklist', () => {
     expect(templateUploaded).toBe(false);
   });
 
-  it('marks an item uploaded when file type matches and the name shares the first label word', () => {
-    // 'Company Overview / About Us' -> first word 'company', fileTypes include 'pdf'
+  it('marks an item uploaded when file type matches and the name carries two of its label words', () => {
+    // 'Company Overview / About Us' -> 'company' + 'overview', fileTypes include 'pdf'.
+    // (2026-10-15: one shared first word used to be enough — 'Company Deck.pdf' matched.)
     const docs: ChecklistDocument[] = [
-      { fileName: 'Company Deck.pdf', fileType: 'pdf' },
+      { fileName: 'Company Overview 2026.pdf', fileType: 'pdf' },
     ];
     const result = computeDocumentChecklist(docs);
     const companyProfile = result.find(c => c.category === 'Company Profile')!;
     const overview = companyProfile.items.find(i => i.label === 'Company Overview / About Us')!;
-    expect(overview.uploaded).toBe(true);
+    expect(overview).toMatchObject({ uploaded: true, matchedFiles: ['Company Overview 2026.pdf'] });
   });
 
-  it('marks an item uploaded when the exact filename is in the uploaded set even if the first label word is absent', () => {
-    // uploadedNames branch: name matches an uploaded filename exactly, fileType allowed.
+  it('does not mark an item uploaded for a file merely because it was uploaded', () => {
+    // 2026-10-15: this pinned the tautology — `uploadedNames` was built from the
+    // same documents, so 'roadmap.pdf' marked 'Warning Letters or CRLs' uploaded.
     const docs: ChecklistDocument[] = [
       { fileName: 'roadmap.pdf', fileType: 'pdf' },
     ];
     const result = computeDocumentChecklist(docs);
-    // 'Warning Letters or CRLs' -> fileTypes ['pdf']; first word 'warning' not in 'roadmap.pdf'
-    // but uploadedNames contains 'roadmap.pdf' which equals the doc name -> uploaded true.
     const regHistory = result.find(c => c.category === 'Regulatory History')!;
     const warning = regHistory.items.find(i => i.label === 'Warning Letters or CRLs')!;
-    expect(warning.uploaded).toBe(true);
+    expect(warning.uploaded).toBe(false);
   });
 
   it('does not mark an item uploaded when the file type is not accepted', () => {

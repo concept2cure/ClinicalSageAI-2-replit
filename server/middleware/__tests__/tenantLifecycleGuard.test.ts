@@ -15,7 +15,7 @@ import type { TenantAccessPosture } from '../../services/tenant/tenant-lifecycle
 const { getTenantAccessPosture, query, logAuditEvent, grants } = vi.hoisted(() => ({
   getTenantAccessPosture: vi.fn(),
   query: vi.fn(),
-  logAuditEvent: vi.fn(async (..._a: unknown[]) => ({ persisted: true })),
+  logAuditEvent: vi.fn(async (..._a: unknown[]) => ({ persisted: true, chained: true, tamperProof: true })),
   /** user id -> platform roles that user holds an ACTIVE platform_role_grants row for. */
   grants: new Map<number, string[]>(),
 }));
@@ -46,7 +46,7 @@ function answerGrantsFromTable() {
 const grantLookups = () =>
   query.mock.calls.filter(([sql]) => /FROM platform_role_grants/.test(String(sql))).length;
 
-// The override's audit row is written fire-and-forget through a lazy import of
+// The override's audit row is awaited through a lazy import of
 // the audit logger. Faked so the override can be OBSERVED (and so the real
 // logger does not reach for a database this suite does not have).
 vi.mock('../../services/audit/auditLogger', () => ({ logAuditEvent }));
@@ -80,6 +80,9 @@ function makeReq(overrides: Record<string, any> = {}): any {
 
 function makeRes() {
   const res: any = { statusCode: 0, body: undefined };
+  const headers = new Map<string, string>();
+  res.setHeader = (name: string, value: string) => headers.set(name.toLowerCase(), value);
+  res.getHeader = (name: string) => headers.get(name.toLowerCase());
   res.status = (code: number) => {
     res.statusCode = code;
     return res;
@@ -92,10 +95,14 @@ function makeRes() {
 }
 
 /** The guard resolves the posture asynchronously; give the microtask queue a turn. */
-const settle = () => new Promise(resolve => setImmediate(resolve));
+const settle = async () => {
+  await new Promise(resolve => setImmediate(resolve));
+  await vi.dynamicImportSettled();
+};
 
 beforeEach(() => {
   vi.clearAllMocks();
+  logAuditEvent.mockReset().mockResolvedValue({ persisted: true, chained: true, tamperProof: true });
   getTenantAccessPosture.mockResolvedValue(posture());
   grants.clear();
   answerGrantsFromTable();
@@ -226,6 +233,63 @@ describe('platform actors', () => {
     expect(next).not.toHaveBeenCalled();
     expect(res.statusCode).toBe(403);
     expect(res.body.error.code).toBe('TENANT_SUSPENDED');
+  });
+});
+
+describe('actual platform override receipt before the handler', () => {
+  beforeEach(() => {
+    grants.set(7, ['platform_admin']);
+    getTenantAccessPosture.mockResolvedValue(posture({ decision: 'deny', state: 'suspended', code: 'TENANT_SUSPENDED' }));
+  });
+
+  it.each(['lost', 'thrown', 'tamper-only'] as const)('allows authorized access with bounded %s headers and recovers', async mode => {
+    if (mode === 'thrown') logAuditEvent.mockRejectedValueOnce(new Error('private driver connection details'));
+    else logAuditEvent.mockResolvedValueOnce({ persisted: mode === 'tamper-only', chained: false, tamperProof: mode === 'tamper-only' });
+    const res = makeRes();
+    const next = vi.fn(() => {
+      expect(res.getHeader('X-Audit-Row-Persisted')).toBe(String(mode === 'tamper-only'));
+      if (mode === 'tamper-only') expect(res.getHeader('X-Audit-Row-Chained')).toBe('false');
+      else expect(res.getHeader('X-Audit-Row-Code')).toBe('AUDIT_ROW_NOT_PERSISTED');
+    });
+    enforceTenantLifecycle(makeReq(), res, next);
+    await settle();
+    expect(next).toHaveBeenCalledOnce();
+    expect(res.statusCode).toBe(0);
+    expect(logAuditEvent).toHaveBeenCalledOnce();
+    const recovery = makeRes(); const nextRecovery = vi.fn();
+    enforceTenantLifecycle(makeReq(), recovery, nextRecovery);
+    await settle();
+    expect(nextRecovery).toHaveBeenCalledOnce();
+    expect(recovery.getHeader('X-Audit-Row-Persisted')).toBe('true');
+    expect(recovery.getHeader('X-Audit-Row-Chained')).toBe('true');
+  });
+
+  it('waits for the real audit result before allowing the handler to respond', async () => {
+    let finish!: (result: { persisted: boolean; chained: boolean; tamperProof: boolean }) => void;
+    logAuditEvent.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    const res = makeRes(); const next = vi.fn();
+    enforceTenantLifecycle(makeReq(), res, next);
+    await vi.waitFor(() => expect(logAuditEvent).toHaveBeenCalledOnce());
+    expect(next).not.toHaveBeenCalled();
+    finish({ persisted: false, chained: false, tamperProof: false });
+    await settle();
+    expect(next).toHaveBeenCalledOnce();
+    expect(res.getHeader('X-Audit-Row-Persisted')).toBe('false');
+  });
+
+  it.each(['null', 'crashed'])('records an honest unknown observation for a %s posture override', async mode => {
+    if (mode === 'null') getTenantAccessPosture.mockResolvedValueOnce(null);
+    else getTenantAccessPosture.mockRejectedValueOnce(new Error('unreadable posture'));
+    const res = makeRes(); const next = vi.fn();
+    enforceTenantLifecycle(makeReq(), res, next);
+    await settle();
+    expect(next).toHaveBeenCalledOnce();
+    expect(logAuditEvent).toHaveBeenCalledOnce();
+    expect(logAuditEvent.mock.calls[0][0]).toMatchObject({
+      organizationId: '42', userId: '7',
+      metadata: { tenantState: 'unknown', postureDecision: 'unknown', postureCode: 'TENANT_STATE_UNVERIFIED' },
+    });
+    expect(res.getHeader('X-Audit-Row-Persisted')).toBe('true');
   });
 });
 

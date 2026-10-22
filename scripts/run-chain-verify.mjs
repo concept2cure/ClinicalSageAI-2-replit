@@ -4,9 +4,9 @@
  *
  * Walks the `audit_events` hash chain end-to-end (or a 24-hour window)
  * and reports broken links. On failure: emits a non-zero exit code,
- * writes a detailed JSON report to AUDIT_VERIFY_OUT, and inserts a
- * `audit.chain_integrity_failure` event into audit_events itself so
- * the failure is part of the trail.
+ * writes a detailed JSON report to AUDIT_VERIFY_OUT, and inserts an
+ * `audit.chain_integrity_failure` event into the audit trail of each
+ * organisation whose chain broke, so the failure is part of that trail.
  *
  * Cron entries (production):
  *   # Daily 24-hour scan
@@ -27,12 +27,58 @@
  *   3  chain UNVERIFIED — rows were read but none carried a record_hash, so
  *      nothing was checkable. Not intact and not broken: no integrity
  *      statement can be made. See WO-16C #72.
+ *   4  chain BROKEN, and the failure event could not be recorded in every
+ *      affected organisation's trail (the report's failureEvents says which).
  */
 import pg from 'pg';
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 
 const { Pool } = pg;
+
+/**
+ * Record a broken chain in the audit trail of each organisation whose chain
+ * broke, naming only that organisation's links. Returns, per organisation,
+ * whether the event was recorded.
+ *
+ * Until 2026-10-15 one event went to organisation 1 with every tenant's
+ * links, as user_id 0 — which audit_events_user_id_users_id_fk refuses, so
+ * on a migrated database it was never recorded — named 'system' from
+ * 127.0.0.1, and the refusal was only logged. The actor is this scheduled
+ * job: it has no user id and no client address, so both are NULL (as SCIM
+ * provisioning records itself). entity_id 0: the entity is the chain itself.
+ */
+export async function recordChainFailures(pool, broken, { window, totalEntries }) {
+  const byOrg = new Map();
+  for (const link of broken) {
+    const list = byOrg.get(link.organizationId) ?? [];
+    list.push(link);
+    byOrg.set(link.organizationId, list);
+  }
+  const outcomes = [];
+  for (const [organizationId, links] of byOrg) {
+    try {
+      await pool.query(
+        `INSERT INTO audit_events
+          (organization_id, event_type, entity_type, entity_id, user_id, user_name,
+           user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant)
+         VALUES ($1, 'audit.chain_integrity_failure', 'audit_chain.cron_verify', 0,
+                 NULL, 'chain-verify scheduled job', 'system', NULL, NOW(), $2, $3, true, true)`,
+        [
+          organizationId,
+          `Chain integrity verification failed: ${links.length} broken link(s) in this organisation's audit trail`,
+          JSON.stringify({ window, brokenLinks: links.slice(0, 20), brokenLinkCount: links.length, totalEntries }),
+        ],
+      );
+      outcomes.push({ organizationId, recorded: true });
+    } catch (err) {
+      console.error('[chain-verify] The failure event for organisation %s was not recorded: %s', organizationId, err.message);
+      outcomes.push({ organizationId, recorded: false, error: err.message });
+    }
+  }
+  return outcomes;
+}
 
 function arg(name) {
   const m = process.argv.find(a => a.startsWith(`--${name}=`));
@@ -135,7 +181,7 @@ async function main() {
           ? 'UNVERIFIED'
           : 'INTACT';
   const report = {
-    schemaVersion: '1.1',
+    schemaVersion: '1.2',
     window,
     startedAt,
     finishedAt,
@@ -154,6 +200,10 @@ async function main() {
     organizationsCovered: prevByOrg.size,
     brokenLinks: broken.length,
     brokenLinkSamples: broken.slice(0, 50),
+    // Per affected organisation: was the failure recorded in its trail.
+    failureEvents: verdict === 'BROKEN'
+      ? await recordChainFailures(pool, broken, { window, totalEntries: rows.length })
+      : undefined,
   };
 
   const outPath =
@@ -169,32 +219,8 @@ async function main() {
   console.log(`[chain-verify] report=${outPath}`);
 
   if (verdict === 'BROKEN') {
-    // Record the failure in the chain itself so it persists across restarts.
-    // entity_id is INTEGER per the schema. Use 0 as a sentinel for system-
-    // originated events (the entity is the chain itself, not a domain row).
-    // entity_type carries the human-readable scope.
-    try {
-      await pool.query(
-        `INSERT INTO audit_events
-          (organization_id, event_type, entity_type, entity_id, user_id, user_name,
-           user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant)
-         VALUES (1, 'audit.chain_integrity_failure', 'audit_chain.cron_verify', 0,
-                 0, 'system', 'system', '127.0.0.1', NOW(), $1, $2, true, true)`,
-        [
-          `Chain integrity verification failed: ${broken.length} broken link(s)`,
-          JSON.stringify({
-            window,
-            brokenLinks: broken.slice(0, 20),
-            totalEntries: rows.length,
-          }),
-        ],
-      );
-    } catch (err) {
-      console.error('[chain-verify] Failed to log failure event:', err.message);
-    }
-
     await pool.end();
-    process.exit(1);
+    process.exit(report.failureEvents.every((e) => e.recorded) ? 1 : 4);
   }
 
   // WO-16C #72 (follow-up). Exit 0 is documented as "chain INTACT", so a scan
@@ -213,7 +239,10 @@ async function main() {
   process.exit(0);
 }
 
-main().catch(err => {
-  console.error('[chain-verify] fatal:', err);
-  process.exit(2);
-});
+// Run as the cron entry; importing the module (tests) runs nothing.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch(err => {
+    console.error('[chain-verify] fatal:', err);
+    process.exit(2);
+  });
+}

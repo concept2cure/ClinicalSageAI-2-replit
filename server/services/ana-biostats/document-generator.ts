@@ -155,11 +155,19 @@ export class DocumentGenerator {
     content += `- **Significance level**: ${input.alpha} (two-sided)\n\n`;
 
     if (comp.diagnosticMetrics) {
+      const d = comp.diagnosticMetrics;
       content += `### Diagnostic Performance\n\n`;
-      content += `- **Sensitivity**: ${(comp.diagnosticMetrics.sensitivity * 100).toFixed(1)}%\n`;
-      content += `- **Specificity**: ${(comp.diagnosticMetrics.specificity * 100).toFixed(1)}%\n`;
-      if (comp.diagnosticMetrics.ppv) content += `- **PPV**: ${(comp.diagnosticMetrics.ppv * 100).toFixed(1)}%\n`;
-      if (comp.diagnosticMetrics.npv) content += `- **NPV**: ${(comp.diagnosticMetrics.npv * 100).toFixed(1)}%\n`;
+      // Each line is printed only when the engine computed that figure. An ROC
+      // design supplies no sensitivity or specificity; before 2026-10-11 they
+      // were zeros on that path and this printed "Sensitivity: 0.0%".
+      if (typeof d.sensitivity === 'number') content += `- **Sensitivity**: ${(d.sensitivity * 100).toFixed(1)}%\n`;
+      if (typeof d.specificity === 'number') content += `- **Specificity**: ${(d.specificity * 100).toFixed(1)}%\n`;
+      if (d.ppv) content += `- **PPV**: ${(d.ppv * 100).toFixed(1)}%\n`;
+      if (d.npv) content += `- **NPV**: ${(d.npv * 100).toFixed(1)}%\n`;
+      if (typeof d.auc === 'number') {
+        content += `- **AUC**: ${d.auc.toFixed(3)}`;
+        content += d.aucCI ? ` (95% CI ${d.aucCI.lower.toFixed(3)}–${d.aucCI.upper.toFixed(3)})\n` : `\n`;
+      }
       content += `\n`;
     }
 

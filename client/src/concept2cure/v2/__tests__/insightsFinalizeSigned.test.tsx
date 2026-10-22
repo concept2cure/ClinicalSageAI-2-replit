@@ -13,7 +13,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const apiRequest = vi.hoisted(() => vi.fn());
@@ -28,6 +28,7 @@ vi.mock('@/services/portal/authService', async (importOriginal) => ({
 }));
 
 import { InsightsCanvas } from '../surfaces/Insights';
+import { publishShellProject } from '../shellProject';
 // The catalog the overview answers with (the canvas holds no copy of its own).
 import { CANVAS_REPORT_TYPES } from './_insights-catalog-fixture';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
@@ -93,6 +94,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
   vi.unstubAllGlobals();
 });
 
@@ -122,6 +124,34 @@ async function signInDialog(meaning = 'Authorship') {
   fireEvent.click(within(dialog).getByRole('button', { name: /Sign and commit/ }));
   return dialog;
 }
+
+describe('Insights — finalization belongs to the displayed run', () => {
+  it('does not attribute a signature that completes after a program change to the replacement report', async () => {
+    const nextProgram = '22222222-2222-4222-8222-222222222222';
+    let finish: ((value: Response) => void) | undefined;
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (url.includes('/api/insights-canvas/overview')) return ok(url.includes(nextProgram) ? { data: { ...OVERVIEW.data, leadProgram: { ...OVERVIEW.data.leadProgram, scopeId: '2', projectId: 2, code: 'NEW-202', label: 'NEW-202' }, openProgram: { programId: nextProgram, state: 'lead' } } } : OVERVIEW);
+      if (method === 'POST' && url === '/api/report-os/runs') return ok({ data: { run: { id: window.C2C_PROJECT ? 88 : RUN_ID } } });
+      if (url === `/api/report-os/runs/${RUN_ID}/rendered`) return ok(RENDERED);
+      if (url === '/api/report-os/runs/88/rendered') return ok({ data: { ...RENDERED.data, scopeId: '2', scopeLabel: 'NEW-202', sections: [{ id: 'new', title: 'Replacement report', blocks: [] }] } });
+      if (url.endsWith('/finalize')) { finalizeBodies.push(body); return new Promise<Response>(resolve => { finish = resolve; }); }
+      return ok({});
+    });
+    await runReport();
+    await signInDialog();
+    await waitFor(() => expect(finish).toBeDefined());
+    act(() => publishShellProject({ id: nextProgram, code: 'NEW-202' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    await waitFor(() => expect(document.body.textContent).toContain('NEW-202'));
+    const composer = document.querySelector('.rc-input textarea') as HTMLTextAreaElement;
+    fireEvent.change(composer, { target: { value: 'Run the executive readiness digest report' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Find' }));
+    await screen.findByText('Replacement report');
+    await act(async () => { finish?.(ok(SEALED)); });
+    expect(screen.queryByTestId('ro-seal')).toBeNull();
+    expect(document.querySelector('.ro-status')?.textContent).toBe('partial');
+  });
+});
 
 describe('Insights — Finalize is a signature, separate from Export', () => {
   it('offers the meanings a finalize can carry, sends reason, meaning and the password, and shows the manifestation', async () => {
@@ -206,7 +236,9 @@ describe('Insights — Finalize is a signature, separate from Export', () => {
           success: false,
           error: {
             code: 'ESIGNATURE_NO_AUTHORITY',
-            message: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)), and finalizing a report signs it. Nothing was finalized.',
+            // The signing ceremony's own sentence: finalize keeps one authority
+            // check, the ceremony's floor ("Report finalize" follow-up decision).
+            message: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed.',
           },
         },
       });

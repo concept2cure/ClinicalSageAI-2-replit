@@ -262,9 +262,9 @@ describe('reviews — request a review and record a disposition', () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'GET' && url === '/api/tenant-users/42') {
         return ok([
-          { id: 21, name: 'Dr Amara Okafor', email: 'okafor@c2c.test', role: 'member' },
-          { id: 22, name: 'Read Only', email: 'viewer@c2c.test', role: 'viewer' },
-          { id: 23, name: '', email: 'lead@c2c.test', role: 'manager' },
+          { id: 21, name: 'Dr Amara Okafor', email: 'okafor@c2c.test', role: 'reviewer', canSign: true },
+          { id: 22, name: 'Read Only', email: 'viewer@c2c.test', role: 'viewer', canSign: false },
+          { id: 23, name: '', email: 'lead@c2c.test', role: 'approver', canSign: true },
         ]);
       }
       if (method === 'GET' && url.startsWith('/api/protocol-dev')) return ok({ success: true, data: [DOC] });
@@ -415,6 +415,7 @@ describe('a governed write does not take the protocol off screen', () => {
     let releaseSecondRead: (() => void) | null = null;
     let readCount = 0;
     apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url.includes('view=index')) return ok({ data: [DOC] });
       if (method === 'GET' && url.startsWith('/api/protocol-dev')) {
         readCount += 1;
         if (readCount > 1) await new Promise<void>((r) => { releaseSecondRead = r; });
@@ -490,7 +491,7 @@ describe('empty state', () => {
     });
     const p = props();
     render(<Providers><ProtocolWorkspace {...p} /></Providers>);
-    expect(await screen.findByText(/C2C-101/)).toBeTruthy();
+    expect((await screen.findAllByText(/C2C-101/)).length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole('button', { name: /Ask AnA to draft the synopsis/ }));
     expect(p.onAsk).toHaveBeenCalled();
     // The screen names the programme; the request does not carry its stored

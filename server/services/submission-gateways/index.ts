@@ -8,7 +8,8 @@
  *   const result = await gw.transmit({ organizationId, bundle, environment, ... });
  */
 
-import { FdaEsgGateway } from './fda-esg';
+import { FdaEsgGateway, fdaEsgTransportImplementation } from './fda-esg';
+import type { GatewayTransportReadiness } from '../../../shared/schema/gateway-transport';
 import { EmaCespGateway, EudamedGateway } from './ema-cesp';
 import { PmdaGateway } from './pmda-gateway';
 import { HealthCanadaGateway } from './health-canada-gateway';
@@ -35,6 +36,7 @@ import { resolvePdfARequirement } from '../ectd/pdfa-requirement';
 import { assertBundleLeafSecurity } from './bundle-leaf-security';
 import { pool } from '../../db';
 import { clientAccountRefusal, resolveGatewayAccount, specFor, type ResolvedGatewayAccount } from './gateway-accounts';
+import { ADAPTER_UNSOURCED } from './transport-refusals';
 
 export * from './types';
 export { evaluatePreTransmit } from './pre-transmit-check';
@@ -59,6 +61,12 @@ const REGISTRY: Record<string, SubmissionGateway> = {
   'kr:mfds_dbio':                  new MfdsGateway(),
   'sg:hsa_prism':                  new HsaPrismGateway(),
 };
+
+/** These adapters have no sourced agency wire contract (market-support's channel:none). */
+const UNSOURCED_GATEWAYS = new Set([
+  'uk:mhra_gateway', 'cn:nmpa_gateway', 'au:tga_ebs', 'ch:swissmedic_egateway',
+  'br:anvisa_gateway', 'in:cdsco_sugam', 'kr:mfds_dbio', 'sg:hsa_prism',
+]);
 
 /**
  * Runtime half of the transmit authorization gate.
@@ -111,6 +119,22 @@ function assertTransmitAuthorized(
   throw new TransmitAuthorizationError(
     `Refusing to transmit: unrecognised authorization kind ${JSON.stringify((auth as { kind?: unknown }).kind)}.`,
   );
+}
+
+/** Internal sequence binding must agree with the already verified human gate and bundle. */
+function assertDispatchBinding(req: GatewayTransmitRequest): void {
+  const binding = req.dispatchBinding;
+  if (!binding) return;
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(binding.attemptId ?? '') ||
+    !Number.isSafeInteger(binding.sequenceId) || binding.sequenceId <= 0 ||
+    binding.organizationId !== req.organizationId ||
+    req.authorization.kind !== 'governed-signature' ||
+    binding.signatureActionId !== req.authorization.signatureActionId ||
+    binding.bundleSha256 !== req.bundle?.sha256
+  ) {
+    throw new TransmitAuthorizationError('The internal sequence attempt binding does not match its organization, verified signature and package. Nothing was transmitted.');
+  }
 }
 
 /** Errors the transmit guard raised before handing anything to a gateway. */
@@ -211,9 +235,6 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
     transport: impl.transport,
     isConfigured: (organizationId: number, environment: 'staging' | 'production') =>
       impl.isConfigured(organizationId, environment),
-    ...(impl.transportUnverified
-      ? { transportUnverified: (environment: 'staging' | 'production') => impl.transportUnverified!(environment) }
-      : {}),
     // `async` deliberately: the guard must REJECT rather than throw
     // synchronously, so every caller sees one failure mode from a method whose
     // signature promises a Promise. A sync throw out of an async-shaped API
@@ -233,6 +254,10 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
       let account: ResolvedGatewayAccount;
       try {
         assertTransmitAuthorized(impl.region, impl.gateway, req?.authorization);
+        assertDispatchBinding(req);
+        if (UNSOURCED_GATEWAYS.has(key)) {
+          throw new UnverifiedTransportError(impl.region, impl.gateway, impl.transport, ADAPTER_UNSOURCED);
+        }
         // Package-fitness preconditions (belt-and-suspenders alongside the human
         // gate): size limit (always), + PDF/A grade and DTD self-containment when
         // the operator opts in for production. External agency-grade validation is
@@ -313,23 +338,48 @@ export function listGateways(): Array<{ region: Region; gateway: GatewayName; tr
   }));
 }
 
-/**
- * Report which gateways are configured for an organization — configured meaning
- * able to transmit — and the transport each resolves in this environment.
- * FDA ESG's transport is chosen per deployment (FDA_ESG_TRANSPORT), so the
- * registry's default is not what it would use. 2026-10-08 (W5/D7, sweep HS-4).
- */
+/** Installed protocol capability is not proof of successful agency qualification. */
+export async function gatewayTransportReadiness(
+  region: Region,
+  gateway: GatewayName,
+  environment: 'staging' | 'production',
+): Promise<GatewayTransportReadiness> {
+  const impl = getGatewayUnguarded(region, gateway);
+  if (region === 'fda' && gateway === 'esg') {
+    const capability = await fdaEsgTransportImplementation(environment);
+    return {
+      transport: capability.transport,
+      implementation: capability.implemented ? 'implemented' : 'unavailable',
+      qualification: 'not_verified',
+      qualified: false,
+      reason: capability.reason,
+      missingDependencies: [...capability.missingDependencies, 'Environment-specific FDA UAT and verified receipt evidence'],
+    };
+  }
+  return {
+    transport: impl.transport,
+    implementation: UNSOURCED_GATEWAYS.has(`${region}:${gateway}`) ? 'unavailable' : 'unverified',
+    qualification: 'not_verified',
+    qualified: false,
+    reason: UNSOURCED_GATEWAYS.has(`${region}:${gateway}`)
+      ? 'No sourced agency wire contract exists; transmission is refused before the wire. Credentials do not establish qualification.'
+      : 'The agency protocol and environment-specific acceptance have not been verified. Credentials do not establish qualification.',
+    missingDependencies: ['Verified current agency protocol contract', 'Environment-specific agency UAT and verified receipt evidence'],
+  };
+}
+
+/** Credential presence and transport qualification, reported independently. */
 export async function gatewayConfigurationStatus(
   organizationId: number,
   environment: 'staging' | 'production',
-): Promise<Array<{ region: Region; gateway: GatewayName; transport: string; configured: boolean }>> {
-  const out: Array<{ region: Region; gateway: GatewayName; transport: string; configured: boolean }> = [];
+): Promise<Array<{ region: Region; gateway: GatewayName; configured: boolean; transportReadiness: GatewayTransportReadiness }>> {
+  const out: Array<{ region: Region; gateway: GatewayName; configured: boolean; transportReadiness: GatewayTransportReadiness }> = [];
   for (const gw of Object.values(REGISTRY)) {
     out.push({
       region: gw.region,
       gateway: gw.gateway,
-      transport: gw instanceof FdaEsgGateway ? gw.transportFor(environment) : gw.transport,
       configured: await gw.isConfigured(organizationId, environment),
+      transportReadiness: await gatewayTransportReadiness(gw.region, gw.gateway, environment),
     });
   }
   return out;

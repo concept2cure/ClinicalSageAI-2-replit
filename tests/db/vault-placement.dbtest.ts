@@ -44,14 +44,18 @@
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { Pool } from 'pg';
+import { createHash } from 'node:crypto';
 import { databaseUrl } from '../setup.db';
+import { nativeCatalogRunId, withNativeCatalogClient } from './catalog-native-fixture';
+import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime, seedVaultFixtureParent, seedVaultFixtureViewer } from './vault-current-access-fixture';
 
 // place_project_document refuses unless the catalog is on for the tenant; the
 // env override the flag helper honours stands in for a toggle row.
 process.env.ANA_DOCUMENT_CATALOG_FORCE_ON = 'true';
 
-const PROBE_PREFIX = 'dbtest-place ';
-const PROBE_CODE = 'DBTEST-PLACE-DOC';
+const RUN = nativeCatalogRunId();
+const PROBE_PREFIX = `dbtest-place ${RUN} `;
+const PROBE_CODE = `DBTEST-PLACE-DOC-${RUN}`;
 
 let owner: Pool;
 let orgId: number;
@@ -59,6 +63,10 @@ let orgUuid: string;
 let otherOrgId: number;
 let otherOrgUuid: string;
 let userId: number;
+let viewerId: number;
+let memberId: number;
+let unaffiliatedId: number;
+let documentSequence = 0;
 let programId: string;
 let documentId: string;
 
@@ -95,7 +103,7 @@ async function place(
         programId,
         documentId,
         organizationId: as.id,
-        userId,
+        userId: role === null ? unaffiliatedId : role === 'viewer' ? viewerId : role === 'member' ? memberId : userId,
         ...args,
       } as Parameters<typeof placeVaultDocument>[0]),
     role,
@@ -112,42 +120,14 @@ const row = async () =>
     )
   ).rows[0];
 
-/* The probe documents and the filing audit rows written about them. Run before
-   every case, not only at the end: the per-case reset used to delete the
-   documents alone, which orphaned every earlier case's audit rows beyond the
-   reach of the final cleanup (it found them through the documents). Keyed on
-   this suite's own two tenants instead, which also sweeps a crashed run's. */
-async function deleteProbeDocuments(): Promise<void> {
-  const client = await owner.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query(
-      `DELETE FROM audit_logs WHERE action = 'vault.document.file' AND tenant_id = ANY($1::int[])`,
-      [[orgId, otherOrgId]],
-    );
-    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query('COMMIT');
-  } catch {
-    await client.query('ROLLBACK').catch(() => {});
-  } finally {
-    client.release();
-  }
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${PROBE_CODE}%`]);
-}
-
-async function cleanupProbeRows(): Promise<void> {
-  await deleteProbeDocuments();
-  await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE_PREFIX}%`]);
-}
-
 beforeAll(async () => {
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
+  await assertVaultFixtureDatabase(owner);
 
   const org = await owner.query(
     `INSERT INTO organizations (name, slug) VALUES ($1, $2)
        ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
-    [`${PROBE_PREFIX}tenant`, 'dbtest-place-tenant'],
+    [`${PROBE_PREFIX}tenant`, `dbtest-place-${RUN}-tenant`],
   );
   orgId = Number(org.rows[0].id);
   orgUuid = String(org.rows[0].uuid);
@@ -155,7 +135,7 @@ beforeAll(async () => {
   const other = await owner.query(
     `INSERT INTO organizations (name, slug) VALUES ($1, $2)
        ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
-    [`${PROBE_PREFIX}other tenant`, 'dbtest-place-other'],
+    [`${PROBE_PREFIX}other tenant`, `dbtest-place-${RUN}-other`],
   );
   otherOrgId = Number(other.rows[0].id);
   otherOrgUuid = String(other.rows[0].uuid);
@@ -163,25 +143,41 @@ beforeAll(async () => {
   const user = await owner.query(
     `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, $3)
        ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    ['dbtest-place@example.test', `${PROBE_PREFIX}actor`, 'not-a-real-hash'],
+    [`dbtest-place-${RUN}@example.test`, `${PROBE_PREFIX}actor`, 'not-a-real-hash'],
   );
   userId = Number(user.rows[0].id);
 
-  await cleanupProbeRows();
+  viewerId = Number((await owner.query(`INSERT INTO users(email,name,password_hash)
+    VALUES($1,'Placement Viewer','not-a-real-hash') RETURNING id`, [`dbtest-place-viewer-${RUN}@example.test`])).rows[0].id);
+  memberId = Number((await owner.query(`INSERT INTO users(email,name,password_hash)
+    VALUES($1,'Placement Member','not-a-real-hash') RETURNING id`, [`dbtest-place-member-${RUN}@example.test`])).rows[0].id);
+  unaffiliatedId = Number((await owner.query(`INSERT INTO users(email,name,password_hash,status)
+    VALUES($1,'Placement Unaffiliated','not-a-real-hash','active') RETURNING id`, [`dbtest-place-unaffiliated-${RUN}@example.test`])).rows[0].id);
 
   const prog = await owner.query(
     `INSERT INTO regulatory_programs
        (name, code, organization_id, program_type, product_type, primary_agency, product_name)
      VALUES ($1, $2, $3, '510k', 'device', 'FDA', $4) RETURNING id`,
-    [`${PROBE_PREFIX}device program`, 'DBTEST-PLACE-A', orgId, 'AeroFlow AF-1000'],
+    [`${PROBE_PREFIX}device program`, `DBTEST-PLACE-A-${RUN}`, orgId, 'AeroFlow AF-1000'],
   );
   programId = String(prog.rows[0].id);
+  const tenant = { orgId, orgUuid, programId };
+  await seedVaultFixtureParent(owner, tenant, { userId, namespace: PROBE_CODE });
+  await seedVaultFixtureViewer(owner, tenant, { userId: viewerId, invitedBy: userId });
+  await owner.query(`INSERT INTO organization_users(organization_id,user_id,role)
+    VALUES($1,$2,'member'),($3,$4,'admin')`, [orgId, memberId, otherOrgId, userId]);
+  await owner.query(`INSERT INTO project_members(project_id,organization_id,user_id,role,status,invited_by_id)
+    SELECT id,organization_id,$3,'edit','active',$4 FROM projects
+    WHERE organization_id=$1 AND regulatory_program_id=$2`, [orgId,programId,memberId,userId]);
+  await assertVaultFixtureRuntime(tenant);
+  expect((await owner.query('SELECT role FROM organization_users WHERE user_id=$1', [unaffiliatedId])).rows).toEqual([]);
+  expect((await owner.query('SELECT role FROM project_members WHERE user_id=$1', [unaffiliatedId])).rows).toEqual([]);
 });
 
 /* A fresh document per case: these are writes, and a case that inherited the
    previous one's placement would pass for the wrong reason. */
 beforeEach(async () => {
-  await deleteProbeDocuments();
+  const code = `${PROBE_CODE}-${++documentSequence}`;
   const doc = await owner.query(
     `INSERT INTO vault.documents
        (program_id, organization_id, document_code, document_title, document_type,
@@ -191,14 +187,14 @@ beforeEach(async () => {
              '1.0', 'local', 'probe/key', 'dhf.pdf', 10, 'application/pdf', $4,
              'INTERNAL', 'unfiled', NULL, 'INDEXED', $5)
      RETURNING id`,
-    [programId, orgId, PROBE_CODE, `hash-${Date.now()}`, userId],
+    [programId, orgId, code, createHash('sha256').update(code).digest('hex'), userId],
   );
   documentId = String(doc.rows[0].id);
 });
 
 afterAll(async () => {
-  await cleanupProbeRows().catch(() => {});
   await owner.end().catch(() => {});
+  await closeVaultFixtureRuntime();
 });
 
 /** The latest filing audit row for the probe document, details parsed. */
@@ -240,32 +236,15 @@ const ANA_CTX = {
   turnId: 'dbtest-place-turn',
 };
 
-/** The caller's membership. AnA's tool dispatch reads the role live from
- *  organization_users before any confirmed write (AnaToolExecutor.ts
- *  writeRoleRefusal, 2026-09-28); null means no membership at all. */
-async function setMembership(role: string | null): Promise<void> {
-  if (role === null) {
-    await owner.query('DELETE FROM organization_users WHERE organization_id = $1 AND user_id = $2', [orgId, userId]);
-    return;
-  }
-  await owner.query(
-    `INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, $3)
-       ON CONFLICT (user_id, organization_id) DO UPDATE SET role = EXCLUDED.role`,
-    [orgId, userId, role],
-  );
-}
-
 /** place_project_document, resolved through the real executor registry. */
 async function anaPlaces(input: Record<string, unknown>, role: string | null = 'admin') {
-  await setMembership(role);
   const { getToolHandler } = await import('../../server/services/ana/AnaToolExecutor');
   const handler = getToolHandler('place_project_document');
   if (!handler) throw new Error('place_project_document is not registered');
-  const raw = await inTenantScope(
-    { id: orgId, uuid: orgUuid },
-    () => handler({ document_id: documentId, ...input }, { organizationId: orgId, userId, ...ANA_CTX }),
-    role,
-  );
+  const actorId = role === 'viewer' ? viewerId : role === 'member' ? memberId : userId;
+  const raw = await withNativeCatalogClient({ organizationId: orgId, organizationUuid: orgUuid,
+    userId: actorId, role: role ?? 'admin', caller: 'tests/db/vault-placement.dbtest.ts' },
+  sqlClient => handler({ document_id: documentId, ...input }, { organizationId: orgId, userId: actorId, ...ANA_CTX, sqlClient }));
   return JSON.parse(raw);
 }
 
@@ -276,7 +255,7 @@ async function markCataloged(): Promise<void> {
     `INSERT INTO vault.document_catalog
        (document_id, content_hash, catalog_status, char_count, document_kind,
         purpose, summary, cataloged_by, cataloged_at)
-     VALUES ($1, repeat('d', 64), 'cataloged', 120, 'design_history_file',
+     VALUES ($1, (SELECT content_hash FROM vault.documents WHERE id=$1), 'cataloged', 120, 'design_history_file',
              'Design history extract for AF-1000.', 'dbtest-place summary', $2, NOW())
      ON CONFLICT (document_id) DO UPDATE SET catalog_status = 'cataloged'`,
     [documentId, userId],
@@ -528,9 +507,9 @@ describe('only a role that may write files into the Vault (D3)', () => {
   /* The web routes carry requireEditorAccess. The service they share with
      AnA's tools, authoring's file-to-vault and eSTAR retention carried none, and
      ToolContext carries no role at all — so a viewer who asked AnA to file a
-     document had it filed. The check now sits in the service, on the role the
-     tenant scope carries: on every request path that is the organization_users
-     role the middleware reads, AnA's included. */
+     document had it filed. The service now rereads the actor's actual
+     organization_users role and current project access. A missing cached role
+     does not erase verified membership; an unaffiliated actor cannot write. */
   it('refuses a viewer, and writes nothing', async () => {
     const before = await row();
     const out = await place({ folderId: 'eng', note: 'filed by a viewer' }, undefined, 'viewer');
@@ -539,10 +518,20 @@ describe('only a role that may write files into the Vault (D3)', () => {
     expect(await lastFilingAudit()).toBeNull();
   });
 
-  it('refuses a scope that carries no role at all', async () => {
+  it('refuses an actor with no current membership or cached request role', async () => {
+    const before = await row();
     const out = await place({ folderId: 'eng', note: 'no role' }, undefined, null);
-    expect(out).toMatchObject({ ok: false, status: 403, code: 'VAULT_WRITE_ROLE_REQUIRED' });
+    expect(await row()).toEqual(before);
+    expect(await lastFilingAudit()).toBeNull();
+    expect(out).toMatchObject({ ok: false, status: 403, code: 'PROJECT_ACTOR_ACCESS_DENIED' });
     expect((await row()).placement_status).toBe('unfiled');
+  });
+
+  it('uses the active administrator membership when the cached request role is absent', async () => {
+    const out = await place({ folderId: 'eng', note: 'Filed with current administrator authority.', userId }, undefined, null);
+    expect(out.ok, JSON.stringify(out)).toBe(true);
+    expect(await row()).toMatchObject({ folder_id: 'eng', placement_status: 'confirmed', placed_by: userId });
+    expect((await lastFilingAudit())?.userId).toBe(userId);
   });
 
   it('refuses AnA acting for a viewer — the path that had no check', async () => {
@@ -562,4 +551,3 @@ describe('only a role that may write files into the Vault (D3)', () => {
     expect((await row()).folder_id).toBe('eng');
   });
 });
-

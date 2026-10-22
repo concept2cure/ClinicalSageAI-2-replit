@@ -41,9 +41,9 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
-}));
+vi.mock('@/services/portal/authService', async original => {
+  const actual = await original<typeof import('@/services/portal/authService')>(); return { ...actual, authService: { getUser: () => ({ id: 1, organizationId: 1 }), captureSessionReadGuard: actual.authService.captureSessionReadGuard.bind(actual.authService), on: actual.authService.on.bind(actual.authService) }, useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }) };
+});
 vi.mock('../surfaces/AuthoringPlaceIntoFiling', () => ({
   AuthoringPlaceIntoFiling: () => <button type="button">Place into filing</button>,
 }));
@@ -73,6 +73,8 @@ const OWNED_PROPS: OwnedSurfaceViewProps = {
 
 const DOC = 'aaaaaaaa-0000-4000-8000-000000000002';
 const PID = '5ac45b38-a1d8-4a41-9488-fac39a57b852';
+const SECTION = 'cccccccc-0000-4000-8000-000000000001';
+let projectBeforeTest: typeof window.C2C_PROJECT;
 const ok = (payload: unknown, status = 200) => ({ ok: status < 400, status, json: async () => payload }) as Response;
 
 const USER: AnaChatMessage = { id: 'm1', role: 'user', text: 'Draft the **Module 2.5** excerpt.' } as AnaChatMessage;
@@ -101,6 +103,8 @@ const REHYDRATED: AnaChatMessage = {
 } as AnaChatMessage;
 
 beforeEach(() => {
+  projectBeforeTest = window.C2C_PROJECT;
+  window.C2C_PROJECT = { id: PID } as typeof window.C2C_PROJECT;
   (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO = { id: 'thread-1' };
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
@@ -108,7 +112,7 @@ beforeEach(() => {
       return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview — C2C-101', module: 'M2', product_code: null, status: 'DRAFT', updated_at: null, section_count: 1, provenance: { source: 'ana', model: 'claude-fable-5-1', conversationId: 'thread-1' } } });
     }
     if (method === 'GET' && url === `/api/authoring/docs/${DOC}/sections`) {
-      return ok({ success: true, sections: [{ id: 'S1', doc_id: DOC, code: '2.5.1', title: 'Product Development Rationale', content: '<p>From the record.</p>', order_index: 0 }] });
+      return ok({ success: true, sections: [{ id: SECTION, doc_id: DOC, code: '2.5.1', title: 'Product Development Rationale', content: '<p>From the record.</p>', order_index: 0 }] });
     }
     if (method === 'GET' && url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'C2C-101', phase: 'planning' });
     return ok({ success: true });
@@ -116,6 +120,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  window.C2C_PROJECT = projectBeforeTest;
   delete (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO;
 });
 
@@ -171,10 +176,11 @@ describe('ConversationThread — the document canvas', () => {
     expect(screen.queryByTestId('document-canvas')).toBeNull();
   });
 
-  it('finds the document in a rehydrated turn’s tool trace, and never in prose', () => {
+  it('finds the document in a rehydrated turn’s tool trace (draft_authoring_document or, since 2026-10-17, save_document_to_vault), never in prose', () => {
     expect(authoringDocOf(REHYDRATED)).toEqual({ docId: DOC, programId: PID, title: 'From the trace' });
     expect(authoringDocOf({ id: 'x', role: 'assistant', text: `authoringDocId ${DOC}` } as AnaChatMessage)).toBeNull();
     expect(authoringDocOf({ id: 'y', role: 'assistant', text: '', toolCalls: [{ name: 'draft_authoring_document', label: 'l', status: 'success', result: 'not json' }] } as AnaChatMessage)).toBeNull();
+    expect(authoringDocOf({ id: 's', role: 'assistant', text: '', toolCalls: [{ name: 'save_document_to_vault', label: 'l', status: 'success', result: JSON.stringify({ authoringDocId: DOC, programId: PID, status: 'generated', title: 'Saved draft' }) }] } as AnaChatMessage)).toEqual({ docId: DOC, programId: PID, title: 'Saved draft' });
   });
 
   it('hides the side column while a canvas is expanded, and Open full editor mounts the one workbench in place', async () => {
@@ -348,7 +354,7 @@ describe('ConversationThread — AnA\u2019s answers go into the open document (2
     expect(insert.disabled).toBe(true);
     const reason = document.getElementById(insert.getAttribute('aria-describedby') ?? '');
     expect(reason?.textContent).toBe(
-      'Written by claude-sonnet-5, which is not approved for regulatory drafting. Ask again with Thorough effort to have an approved model write it.',
+      'This answer was written by claude-sonnet-5, which is not approved for regulatory drafting, so the answer can’t be inserted.',
     );
     insert.click();
     await new Promise((r) => setTimeout(r, 50));
@@ -365,7 +371,7 @@ describe('ConversationThread — AnA\u2019s answers go into the open document (2
     const insert = (await screen.findByRole('button', { name: 'Insert into 2.5.1 as tracked suggestion' }, { timeout: 4000 })) as HTMLButtonElement;
     expect(insert.disabled).toBe(true);
     expect(document.getElementById(insert.getAttribute('aria-describedby') ?? '')?.textContent).toMatch(
-      /^This answer’s record does not say which model wrote it\./,
+      /^This page has no record of which model wrote this answer, so the answer can’t be inserted\./,
     );
   });
 });
@@ -415,17 +421,12 @@ describe('ConversationThread — AnA knows the document open beside the conversa
 });
 
 describe('ConversationThread — a sealed document is known to AnA, and takes no insert (2026-10-01)', () => {
-  it('names the frozen document on the turn but offers no insert into it', async () => {
+  it('names the frozen document on the turn and explains its disabled insertion without changing content', async () => {
     chatSend.mockReset();
-    const FOLLOWUP: AnaChatMessage = {
-      id: 'm5', role: 'assistant', text: 'Exposure was dose-proportional from 10 to 300 mg.',
-      turnRecord: { status: 'recorded', id: 'rec-7', sha256: 'a'.repeat(64) },
-    } as unknown as AnaChatMessage;
+    const FOLLOWUP = { id: 'm5', role: 'assistant', text: 'Exposure was dose-proportional from 10 to 300 mg.', turnRecord: { status: 'recorded', id: 'rec-7', sha256: 'a'.repeat(64) } } as unknown as AnaChatMessage;
     const base = apiRequest.getMockImplementation()!;
     apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
-      if (method === 'GET' && url === `/api/authoring/docs/${DOC}`) {
-        return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview — C2C-101', module: 'M2', product_code: null, status: 'FROZEN', updated_at: null, section_count: 1, provenance: { source: 'ana', conversationId: 'thread-1' } } });
-      }
+      if (method === 'GET' && url === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview — C2C-101', module: 'M2', product_code: null, status: 'FROZEN', updated_at: null, section_count: 1, provenance: { source: 'ana', conversationId: 'thread-1' } } });
       return base(method, url, body);
     });
     chatMessages.current = [USER, DRAFTED, FOLLOWUP];
@@ -435,14 +436,18 @@ describe('ConversationThread — a sealed document is known to AnA, and takes no
     open.click();
     await screen.findByTestId('dc-expanded');
 
-    await vi.waitFor(async () => {
-      chatSend.mockClear();
-      const box = screen.getByRole('textbox', { name: 'Reply to AnA' });
-      fireEvent.change(box, { target: { value: 'What does this section say?' } });
-      fireEvent.keyDown(box, { key: 'Enter' });
-      expect(chatSend.mock.calls[0]?.[2]?.authoringContext).toMatchObject({ artifactId: DOC, sectionCode: '2.5.1' });
-    });
-    expect(screen.queryByRole('button', { name: /as tracked suggestion/ })).toBeNull();
+    const insert = (await screen.findByRole('button', { name: 'Insert into 2.5.1 as tracked suggestion' })) as HTMLButtonElement;
+    const box = screen.getByRole('textbox', { name: 'Reply to AnA' });
+    fireEvent.change(box, { target: { value: 'What does this section say?' } });
+    fireEvent.keyDown(box, { key: 'Enter' });
+    expect(chatSend.mock.calls[0]?.[2]?.authoringContext).toMatchObject({ artifactId: DOC, sectionCode: '2.5.1', artifactStatus: 'FROZEN' });
+    expect(insert.disabled).toBe(true);
+    expect(document.getElementById(insert.getAttribute('aria-describedby') ?? '')?.textContent).toBe('This document is frozen — its content cannot be edited, so nothing can be inserted into it.');
+    const before = document.querySelector('.ct-canvas-pane .tiptap')?.textContent;
+    fireEvent.click(insert);
+    expect(document.querySelector('.ct-canvas-pane .tiptap')?.textContent).toBe(before);
+    expect(document.querySelector('.ct-canvas-pane ins')).toBeNull();
+    expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
   });
 });
 
@@ -453,20 +458,16 @@ describe('ConversationThread — a section not yet drafted is one ask away (2026
      and the insert both name that section. */
   it('opens the editor at the section, puts the ask in the composer, and the turn and the insert name that section', async () => {
     chatSend.mockReset();
+    const [firstSection, requestedSection] = [SECTION, 'cccccccc-0000-4000-8000-000000000002'];
     const base = apiRequest.getMockImplementation()!;
     apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
-      if (method === 'GET' && url === `/api/authoring/docs/${DOC}/sections`) {
-        return ok({ success: true, sections: [
-          { id: 'S1', doc_id: DOC, code: '2.5.1', title: 'Product Development Rationale', content: '<p>From the record.</p>', order_index: 0 },
-          { id: 'S2', doc_id: DOC, code: '2.5.2', title: 'Overview of Biopharmaceutics', content: '', order_index: 1 },
+      if (method === 'GET' && url === `/api/authoring/docs/${DOC}/sections`) return ok({ success: true, sections: [
+          { id: firstSection, doc_id: DOC, code: '2.5.1', title: 'Product Development Rationale', content: '<p>From the record.</p>', order_index: 0 },
+          { id: requestedSection, doc_id: DOC, code: '2.5.2', title: 'Overview of Biopharmaceutics', content: '', order_index: 1 },
         ] });
-      }
       return base(method, url, body);
     });
-    const FOLLOWUP: AnaChatMessage = {
-      id: 'm5', role: 'assistant', text: 'Exposure was dose-proportional from 10 to 300 mg.',
-      turnRecord: { status: 'recorded', id: 'rec-7', sha256: 'a'.repeat(64) },
-    } as unknown as AnaChatMessage;
+    const FOLLOWUP = { id: 'm5', role: 'assistant', text: 'Exposure was dose-proportional from 10 to 300 mg.', turnRecord: { status: 'recorded', id: 'rec-7', sha256: 'a'.repeat(64) } } as unknown as AnaChatMessage;
     chatMessages.current = [USER, DRAFTED, FOLLOWUP];
     render(<ConversationThread {...OWNED_PROPS} />);
 
@@ -475,13 +476,16 @@ describe('ConversationThread — a section not yet drafted is one ask away (2026
 
     const box = screen.getByRole('textbox', { name: 'Reply to AnA' }) as HTMLTextAreaElement;
     await vi.waitFor(() =>
-      expect(box.value).toMatch(/^Draft the text for section 2\.5\.2 Overview of Biopharmaceutics of “Module 2\.5 Clinical Overview — C2C-101”/),
+      expect(box.value).toBe('Draft the text for the saved section attached to this question here in the conversation, so I can insert it into the existing document.'),
     );
     await vi.waitFor(() => expect(document.querySelector('.ct-canvas-pane [data-testid="dc-expanded"]')).toBeTruthy());
     await screen.findByRole('button', { name: 'Insert into 2.5.2 as tracked suggestion' }, { timeout: 4000 });
 
+    await vi.waitFor(() => expect((screen.getByRole('button', { name: 'Send message to AnA' }) as HTMLButtonElement).disabled).toBe(false));
+    expect(chatSend).not.toHaveBeenCalled();
     fireEvent.keyDown(box, { key: 'Enter' });
-    expect(chatSend.mock.calls[0]?.[2]?.authoringContext).toMatchObject({ artifactId: DOC, sectionCode: '2.5.2' });
+    expect(chatSend.mock.calls[0]?.[2]?.authoringContext).toMatchObject({ projectId: PID, artifactId: DOC, sectionId: requestedSection, sectionCode: '2.5.2' });
+    expect(chatSend.mock.calls[0]?.[2]?.moduleContext).toMatchObject({ documentTitle: 'Module 2.5 Clinical Overview — C2C-101', sectionTitle: 'Overview of Biopharmaceutics' });
   });
 });
 
@@ -498,7 +502,15 @@ describe('ConversationThread — every AnA draft opens as a document (2026-10-01
     id: 'm6',
     role: 'assistant',
     text: 'Here is the statistical analysis plan.',
-    turnRecord: { status: 'recorded', id: 'rec-9', sha256: 'b'.repeat(64) },
+    /* The models that served the turn, with RULE 2's verdict. Required here
+       since round 14 (SEC-A-7 door 5): "Open as document" reaches
+       POST /api/authoring/docs/from-draft, which creates a whole governed
+       document of model prose, so the governed-write rule applies to it as it
+       applies to an insert. A record with no `servedBy` is one this view was
+       not told about, and the card refuses it — which is what this fixture
+       was before, four days before that rule reached this door. The refusal
+       itself is covered in conversationThreadInsertRefusals.test.tsx. */
+    turnRecord: { status: 'recorded', id: 'rec-9', sha256: 'b'.repeat(64), servedBy: [{ provider: 'anthropic', model: 'claude-opus-5-5', qualified: true, approvedForHighRisk: true, pq: 'pending' }] },
     generatedDraft: {
       title: SAP_TITLE,
       content: `# ${SAP_TITLE}\n\nScope of this plan.\n\n## 1. Objectives\n\nPrimary objective.\n\n## 2. Endpoints\n\nPrimary endpoint.`,

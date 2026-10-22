@@ -46,6 +46,14 @@ const query = (t) => `export const read_${t} = '${SELECT(t)}';`;
 const statement = (name, body) => `export const ${name} = \`${body}\`;`;
 
 const FILES = {
+  'server/services/deterministic-tool-description.ts': statement('dose_description',
+    'Select an appropriate pediatric dose scaling method. Recommendations derive from CYP ontogeny and measured clearance.'),
+  'server/services/select-projections.ts': [
+    statement('alias_projection','SELECT id identifier FROM aliased_projection_missing'),
+    statement('function_projection','select count(*) FROM counted_projection_missing'),
+    statement('qualified_projection','SELECT p.id FROM qualified_projection_missing p'),
+    statement('literal_projection',"SELECT 'known' AS basis FROM literal_projection_missing"),
+  ].join('\n'),
   // A reference to a table nothing creates, AFTER a string holding /* and
   // before a real block comment: reported.
   'server/services/advisory-reader.ts': [
@@ -154,6 +162,16 @@ test('a reference to an uncreated table after a string holding /* is reported', 
   const r = runGate();
   assert.equal(r.code, 1, r.out);
   assert.ok(r.unbacked.has('advisory_missing'), r.out);
+});
+
+test('a SELECT-like prose description is not runtime SQL or an unbacked CYP store',()=>{
+  assert.ok(!runGate().unbacked.has('cyp'),runGate().out);
+});
+
+test('structural SELECT admission keeps aliases, functions, qualified columns and literal projections',()=>{
+  const r=runGate();
+  for(const table of ['aliased_projection_missing','counted_projection_missing','qualified_projection_missing','literal_projection_missing'])
+    assert.ok(r.unbacked.has(table),`${table} was hidden:\n${r.out}`);
 });
 
 test('runtime DDL after a string holding /* backs its table', () => {

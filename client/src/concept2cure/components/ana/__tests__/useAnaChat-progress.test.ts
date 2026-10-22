@@ -198,13 +198,15 @@ describe('the progress record over a real stream', () => {
     expect(result.current.pendingSteers).toEqual(['Focus on the safety endpoints']);
 
     await act(async () => {
-      // The server trims and caps the echo; it is matched by position, so an
-      // echo that differs from what was typed still clears the oldest steer.
-      ctl.enqueue(ev({ type: 'interjected', round: 2, message: 'Focus on the safety' }));
+      // The echo is the server's canonical text (trimmed, capped), and it is
+      // matched by that text, not by position (519c6acd5): an unrelated echo
+      // must not consume a pending steer. Order, duplicates and the cap are
+      // pinned in useAnaChat-steering-receipts.test.ts.
+      ctl.enqueue(ev({ type: 'interjected', round: 2, message: 'Focus on the safety endpoints' }));
       await drain();
     });
     expect(result.current.pendingSteers).toEqual([]);
-    expect(lastAssistant(result).interjections).toEqual(['Focus on the safety']);
+    expect(lastAssistant(result).interjections).toEqual(['Focus on the safety endpoints']);
 
     await act(async () => {
       ctl.enqueue(ev({ type: 'done' }));

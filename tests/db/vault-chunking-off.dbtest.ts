@@ -1,5 +1,10 @@
 /**
- * The half-on state: catalog enabled, passage index NOT.
+ * The half-on state: catalog enabled, passage EMBEDDING not.
+ *
+ * AMENDED 2026-10-08 (keyless passage search, D2): points 2 and 3 below
+ * describe the state before. Every ingest now writes the passages; with
+ * 'ana.vault_chunking' off they carry no vector and search_document_passages
+ * finds them by text. The suite now proves that.
  *
  * ── Why this suite exists ────────────────────────────────────────────────────
  * The two flags behind AnA's client-files surface are independent, and the
@@ -33,16 +38,18 @@ import express from 'express';
 import request from 'supertest';
 import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
+import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime, seedVaultFixtureParent } from './vault-current-access-fixture';
+import { nativeCatalogRunId, withNativeCatalogClient } from './catalog-native-fixture';
 
-/* Catalog ON, chunking deliberately OFF. The delete matters: these files run
-   sequentially in one worker and a sibling suite sets the chunking override at
-   module scope, so inheriting it would silently test the both-on state and
-   report it as this one. */
+/* Catalog ON, passage embedding deliberately OFF. Blank the inherited override
+   so another suite or dotenv cannot silently force the both-on state. */
+const savedEnvironment = Object.fromEntries(['ANA_DOCUMENT_CATALOG_FORCE_ON', 'ANA_VAULT_CHUNKING_FORCE_ON'].map(key => [key, process.env[key]]));
 process.env.ANA_DOCUMENT_CATALOG_FORCE_ON = 'true';
-delete process.env.ANA_VAULT_CHUNKING_FORCE_ON;
+process.env.ANA_VAULT_CHUNKING_FORCE_ON = '';
 
-const PROBE_PREFIX = 'dbtest-chunkoff ';
-const PROBE_CODE = 'DBTEST-CHUNKOFF-DOC';
+const RUN = nativeCatalogRunId();
+const PROBE_PREFIX = `dbtest-chunkoff-${RUN} `;
+const PROBE_CODE = `DBTEST-CHUNKOFF-DOC-${RUN}`;
 
 const BODY =
   'Stability Summary for drug product batch 23-104 stored at 25 degrees Celsius. ' +
@@ -57,27 +64,13 @@ let programId: string;
 let documentId: string;
 let app: express.Express;
 
-async function inTenantScope<T>(fn: () => Promise<T>): Promise<T> {
-  const { runWithTenantScope } = await import('../../server/db/tenantStore');
-  return runWithTenantScope(
-    {
-      tenantId: String(orgId),
-      orgUuid,
-      role: 'admin',
-      source: 'request',
-      caller: 'tests/db/vault-chunking-off.dbtest.ts',
-    },
-    fn,
-  );
-}
-
 async function callTool(name: string, input: Record<string, unknown>) {
   const { getToolHandler } = await import('../../server/services/ana/AnaToolExecutor');
   const handler = getToolHandler(name);
   if (!handler) throw new Error(`${name} is not registered`);
-  const raw = await inTenantScope(() =>
-    handler(input, { organizationId: orgId, organizationUuid: orgUuid, userId, humanConfirmed: true }),
-  );
+  const raw = await withNativeCatalogClient({ organizationId: orgId, organizationUuid: orgUuid,
+    userId, role: 'admin', caller: 'tests/db/vault-chunking-off.dbtest.ts' },
+  sqlClient => handler(input, { organizationId: orgId, organizationUuid: orgUuid, userId, humanConfirmed: true, sqlClient }));
   return JSON.parse(raw);
 }
 
@@ -100,57 +93,22 @@ async function buildApp(): Promise<express.Express> {
   return a;
 }
 
-async function cleanupProbeRows(): Promise<void> {
-  const client = await owner.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query(
-      `DELETE FROM audit_logs WHERE action = 'vault.document.ingest'
-         AND record_id IN (SELECT id::text FROM vault.documents WHERE document_code LIKE $1)`,
-      [`${PROBE_CODE}%`],
-    );
-    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query('COMMIT');
-  } catch {
-    await client.query('ROLLBACK').catch(() => {});
-  } finally {
-    client.release();
-  }
-  await owner.query(
-    `DELETE FROM vault.document_chunks WHERE document_id IN
-       (SELECT id FROM vault.documents WHERE document_code LIKE $1)`,
-    [`${PROBE_CODE}%`],
-  );
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${PROBE_CODE}%`]);
-  await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE_PREFIX}%`]);
-}
-
 beforeAll(async () => {
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
-
-  // The toggle row must not be enabled either, or the env delete above buys
-  // nothing — this suite asserts the OFF state, so it has to establish it.
-  await owner
-    .query(`UPDATE feature_toggles SET enabled = FALSE WHERE feature_key = 'ana.vault_chunking'`)
-    .catch(() => undefined);
+  await assertVaultFixtureDatabase(owner);
 
   const org = await owner.query(
-    `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
-    [`${PROBE_PREFIX}tenant`, 'dbtest-chunkoff-tenant'],
+    `INSERT INTO organizations (name, slug, status) VALUES ($1, $2, 'active') RETURNING id, uuid`,
+    [`${PROBE_PREFIX}tenant`, `dbtest-chunkoff-${RUN}-tenant`],
   );
   orgId = Number(org.rows[0].id);
   orgUuid = String(org.rows[0].uuid);
 
   const user = await owner.query(
-    `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, $3)
-       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    ['dbtest-chunkoff@example.test', `${PROBE_PREFIX}actor`, 'not-a-real-hash'],
+    `INSERT INTO users (email, name, password_hash, status) VALUES ($1, $2, $3, 'active') RETURNING id`,
+    [`dbtest-chunkoff-${RUN}@example.test`, `${PROBE_PREFIX}actor`, 'not-a-real-hash'],
   );
   userId = Number(user.rows[0].id);
-
-  await cleanupProbeRows();
 
   const prog = await owner.query(
     `INSERT INTO regulatory_programs
@@ -159,6 +117,10 @@ beforeAll(async () => {
     [`${PROBE_PREFIX}program`, 'DBTEST-CHUNKOFF-A', orgId, 'Chunkoffin 5mg'],
   );
   programId = String(prog.rows[0].id);
+  await seedVaultFixtureParent(owner, { orgId, orgUuid, programId }, { userId, namespace: `${PROBE_PREFIX}parent` });
+  await assertVaultFixtureRuntime({ orgId, orgUuid, programId });
+  const { isVaultChunkingEnabled } = await import('../../server/services/vault/document-chunking.service');
+  expect(await isVaultChunkingEnabled(orgId), 'This suite requires passage embedding off without changing global configuration.').toBe(false);
 
   app = await buildApp();
 
@@ -174,8 +136,16 @@ beforeAll(async () => {
 }, 120_000);
 
 afterAll(async () => {
-  await cleanupProbeRows().catch(() => {});
-  await owner.end().catch(() => {});
+  // Keep this invocation's source bytes, records and append-only history.
+  try { await closeVaultFixtureRuntime(); }
+  finally {
+    try { await owner?.end(); }
+    finally {
+      for (const [key, value] of Object.entries(savedEnvironment)) {
+        if (value === undefined) delete process.env[key]; else process.env[key] = value;
+      }
+    }
+  }
 });
 
 describe('the catalog half works on its own', () => {
@@ -201,39 +171,35 @@ describe('the catalog half works on its own', () => {
   });
 });
 
-describe('the passage index is absent, and says so', () => {
-  it('wrote no chunks and left the ledger unclaimed rather than claiming success', async () => {
+/* Since 2026-10-08 (keyless passage search) passage embedding off no longer
+   means "no passage index": every ingest writes the passages, and with
+   embedding off they carry no vectors and are found by text. Embedding off
+   now means only that no passage text is sent to an embedding provider. */
+describe('with passage embedding off, the passages are indexed for text and nothing is embedded', () => {
+  it('wrote the chunks with no vector, and the ledger says chunked', async () => {
     const { rows } = await owner.query(
       `SELECT (SELECT COUNT(*)::int FROM vault.document_chunks c WHERE c.document_id = d.id) AS chunks,
+              (SELECT COUNT(c.embedding)::int FROM vault.document_chunks c WHERE c.document_id = d.id) AS embedded,
               cat.chunk_status, cat.chunk_count
          FROM vault.documents d
          LEFT JOIN vault.document_catalog cat ON cat.document_id = d.id
         WHERE d.id = $1`,
       [documentId],
     );
-    expect(Number(rows[0].chunks)).toBe(0);
-    // Not 'chunked' with a zero count — that would read as "indexed, nothing in it".
-    expect(rows[0].chunk_status).not.toBe('chunked');
+    expect(Number(rows[0].chunks)).toBeGreaterThan(0);
+    expect(Number(rows[0].embedded)).toBe(0);
+    expect(rows[0].chunk_status).toBe('chunked');
+    expect(Number(rows[0].chunk_count)).toBe(Number(rows[0].chunks));
   });
 
-  it('search_document_passages reports an empty index, not an absent answer', async () => {
+  it('search_document_passages finds the passage by text, and says it ranked by text', async () => {
     const out = await callTool('search_document_passages', {
       query: 'assay result at the six month timepoint',
     });
-    expect(out.ok, `expected an honest empty-index answer, got: ${JSON.stringify(out)}`).toBe(true);
-    expect(out.passages).toEqual([]);
-    // The load-bearing assertion: the response must distinguish "nothing is
-    // indexed" from "the documents do not say that". The text IS in the
-    // document — a bare empty result here would be a false statement about it.
-    expect(out.coverage.total).toBeGreaterThan(0);
-    expect(out.coverage.indexed).toBe(0);
-    expect(out.message).toContain('are in the passage index');
-    expect(out.message).toContain('nothing was searched');
-    expect(out.message).toContain('ana.vault_chunking');
-    expect(out.message).toContain('read_project_document');
-    // And specifically NOT the provider-blame message it used to give: with the
-    // index empty there is nothing to embed, so no provider is consulted.
+    expect(out.ok, JSON.stringify(out)).toBe(true);
+    expect(out.passages.length).toBeGreaterThan(0);
+    expect(out.passages[0].text).toContain('98.4');
+    expect(out.coverage.indexed).toBeGreaterThan(0);
     expect(out.unavailable).toBeUndefined();
-    expect(JSON.stringify(out)).not.toContain('embedding provider');
   });
 });

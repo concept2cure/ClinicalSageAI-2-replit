@@ -36,6 +36,7 @@ import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
 import { sql } from 'drizzle-orm';
 export * from './schema/vault';
+export * from './schema/ana-source-read-receipts';
 export * from './schema/csr-knowledge-db';
 export * from './schema/submissions';
 export * from './schema/evidence';
@@ -3744,6 +3745,14 @@ export const stabilityStudies = pgTable(
     stabilityData: json('stability_data'),
     notes: text('notes'),
     shelfLife: text('shelf_life'),
+    /* Who signed the shelf-life close-out, and when
+       (migrations/20261019_stability_shelf_life_signature.sql). Written only by
+       POST /api/cmc/stability-studies/:id/close-out; an ordinary edit cannot
+       set either, and `withoutSignatureFields` strips both from any patch.
+       NULL while the study runs, and for a study closed out before 2026-10-19,
+       when the close-out was an ordinary edit. */
+    shelfLifeSignedBy: integer('shelf_life_signed_by'),
+    shelfLifeSignedAt: timestamp('shelf_life_signed_at'),
     status: text('status').default('DRAFT').notNull(), // DRAFT, ACTIVE, PAUSED, COMPLETED
     startDate: timestamp('start_date').notNull(),
     plannedEndDate: timestamp('planned_end_date'),
@@ -5325,7 +5334,10 @@ export const croStudies = pgTable(
     csoAssignments: json('cso_assignments'), // Clinical Study Operations assignments
     timeline: json('timeline'), // Study milestones and timelines
     riskAssessment: json('risk_assessment'), // Risk factors and mitigation
-    complianceStatus: text('compliance_status').default('compliant').notNull(), // compliant, minor_deviation, major_deviation, critical
+    // compliant, minor_deviation, major_deviation, critical — or null: not
+    // assessed. It was NOT NULL DEFAULT 'compliant', so every new study read
+    // 'compliant' with nothing assessed (2026-10-15).
+    complianceStatus: text('compliance_status'),
     notes: text('notes'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -12512,7 +12524,10 @@ export const coauthorValidationHistory = pgTable(
     // Document Context
     documentVersion: integer('document_version'),
     module: text('module').notNull(),
-    agency: text('agency').notNull(),
+    // The agency the caller named, or null: the checks are not agency-specific,
+    // and 'FDA' was assumed when none was named (2026-10-15,
+    // migrations/20261015f_coauthor_validation_history_agency_nullable.sql).
+    agency: text('agency'),
 
     // Validation Summary
     totalIssues: integer('total_issues').default(0),
@@ -15417,7 +15432,9 @@ export const clientMemoryEntries = pgTable(
     sourcePageOrSection: text('source_page_or_section'), // Page/section reference
 
     // ── Intelligence Metadata ────────────────────────────────────
-    confidenceScore: real('confidence_score').default(0.8), // 0.0 - 1.0
+    // 0.0 - 1.0; null when no writer stated one. 2026-10-15: defaulted to 0.8,
+    // so a row whose writer stated nothing claimed an 80% confidence.
+    confidenceScore: real('confidence_score'),
     importanceLevel: text('importance_level').default('medium'), // low, medium, high, critical
     isVerifiedByUser: boolean('is_verified_by_user').default(false),
     verifiedAt: timestamp('verified_at'),
@@ -15589,7 +15606,8 @@ export const projectMemoryEntries = pgTable(
     sourceDocumentType: text('source_document_type'),
 
     // ── Intelligence Metadata ───────────────────────────────────
-    confidenceScore: real('confidence_score').default(0.8),
+    // null when no writer stated one (2026-10-15: defaulted to 0.8, as above).
+    confidenceScore: real('confidence_score'),
     importanceLevel: text('importance_level').default('medium'),
     isVerifiedByUser: boolean('is_verified_by_user').default(false),
 
@@ -17545,7 +17563,7 @@ export const indemnificationAttestations = pgTable(
     guidelineReference: text('guideline_reference'), // e.g. "ICH E3 Section 11.4"
 
     // Attestation result
-    complianceStatus: text('compliance_status').notNull(), // 'compliant', 'partially_compliant', 'non_compliant', 'not_applicable'
+    complianceStatus: text('compliance_status').notNull(), // 'compliant', 'partially_compliant', 'non_compliant', 'not_applicable', 'not_assessed'
     complianceScore: real('compliance_score'), // 0-100
     findings: json('findings'), // [{finding, severity, recommendation}]
     evidenceReferences: json('evidence_references'), // [{type, id, description}] pointers to supporting evidence
@@ -18162,7 +18180,7 @@ export type PlatformRoleGrant = InferSelectModel<typeof platformRoleGrants>;
  *   "Where was this data used?" (downstream)
  *   "What justified this content?" (evidence basis)
  *
- * Complies with 21 CFR Part 11 §11.10(e) and ICH E6(R3) §5.5.3
+ * Complies with 21 CFR Part 11 §11.10(e) and ICH E6(R3) Annex 1 §4.3 (computerised systems)
  */
 export const dataLineageRecords = pgTable('data_lineage_records', {
   id: serial('id').primaryKey(),

@@ -1,0 +1,40 @@
+Red — the gate itself, widened, run BEFORE any citation was changed (2026-10-12).
+tests/regulatory/ich-e6r3-citations.test.ts.
+
+── Widening 1: SCAN gains the root-level `services/` tree ───────────────────────────────────────
+
+ × what the platform serves > never cites E6(R2) as the guideline in force
+   → services/ai/detectors/ProtocolDesignAnalyzer.ts (1): ping rules for safety', fdaGuidance: 'ICH E6(R2) - GCP', recommendation: 'Define clear stoppin
+services/ai/risk-factors/ind-risks.ts (1): ED', mitigationGuidance: 'Complete IB per ICH E6(R2) and FDA guidance requirements', dataRequirements:
+services/regulatory/pyramids/ind-amendment-pyramid.ts (3):  guidance: { ichGuideline: 'ICH E6(R2) Section 7', cfrReference: '21 CFR 312.55(a)
+services/regulatory/pyramids/ind-pyramid.ts (2): dpoints'] }, guidance: { ichGuideline: 'ICH E6(R2), ICH E8(R1)', keyConsiderations: ['First-in-human stu
+services/regulatory/pyramids/ind-safety-supplement-pyramid.ts (1): : '21 CFR 312.32(d)', ichGuideline: 'ICH E2F, ICH E6(R2)', keyConsiderations: ['IB must be updated at least an
+
+      Tests  1 failed | 5 passed (6)
+
+── Widening 2: the file matcher gains .js / .mjs / .cjs, and SCAN gains `scripts/` ──────────────
+
+ × what the platform serves > never cites E6(R2) as the guideline in force
+   → server/api/validation/index.js (4): in the correct order.', references: ['ICH E6(R2) Section 6', 'FDA Guidance for Industry E6(R2)'],
+scripts/audits/generate-evidence-pack.mjs (1): nk is preserved by hash chain.'); out.push('- ICH E6(R2) §5.5.3 — data integrity (tamper detection via cryptog
+scripts/seed/ga-demo.d/124-investigator-brochure.mjs (1): Wave-3 domain seed — Investigator's Brochure (ICH E6(R2) §7) readiness evidence.
+
+ × what the platform serves > every E6(R3) citation that names a section names one that exists
+   → scripts/demo/launch-demo/packs/biotech-content.mjs: "E6(R3) §5"
+
+      Tests  2 failed | 4 passed (6)
+
+server/api/validation/index.js is a .js file INSIDE a directory the gate was already scanning: the
+extension filter, not the directory list, is what hid it. "E6(R3) §5" is not a superseded
+citation — it is a section that does not exist (R3 Annex 1 ends at §4), and only the extension
+widening made it visible.
+
+── What stayed green through both runs ──────────────────────────────────────────────────────────
+
+The qualified comments the Module 1 placement step had just written in ind-pyramid.ts —
+
+  * The GCP guideline for an IB, in force. E6(R2) §7 is the superseded numbering for this content;
+  * E6(R3) reached Step 4 on 2025-01-06 and moved it to Appendix A …
+
+— passed both runs and are still in the file. A citation that says it is superseded is not a
+citation of a superseded guideline, which is the rule the gate holds.

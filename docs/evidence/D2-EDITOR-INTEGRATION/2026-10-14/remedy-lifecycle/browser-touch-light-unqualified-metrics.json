@@ -1,0 +1,117 @@
+{
+  "metrics": {
+    "visibleEditableViewport": {
+      "x": 46,
+      "y": 576.78125,
+      "width": 298,
+      "height": 267
+    },
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "page": {
+      "clientWidth": 390,
+      "scrollWidth": 390
+    },
+    "canvas": {
+      "x": 0,
+      "y": 0.78125,
+      "width": 390,
+      "height": 844,
+      "clientWidth": 388,
+      "scrollWidth": 388,
+      "clientHeight": 842,
+      "scrollHeight": 842
+    },
+    "editor": {
+      "x": 46,
+      "y": 550.578125,
+      "width": 298,
+      "height": 320,
+      "clientWidth": 298,
+      "scrollWidth": 298,
+      "clientHeight": 320,
+      "scrollHeight": 320
+    },
+    "documentScroll": {
+      "x": 1,
+      "y": 576.78125,
+      "width": 388,
+      "height": 267,
+      "clientWidth": 388,
+      "scrollWidth": 388,
+      "clientHeight": 267,
+      "scrollHeight": 1153
+    },
+    "editorScroll": null,
+    "sectionHeading": {
+      "x": 45,
+      "y": 45.78125,
+      "width": 300,
+      "height": 198.796875,
+      "clientWidth": 300,
+      "scrollWidth": 300,
+      "clientHeight": 198,
+      "scrollHeight": 198
+    },
+    "editorCount": 1
+  },
+  "axe": {
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "impact": "serious",
+        "targets": [
+          [
+            "div[data-state=\"closed\"] > div"
+          ]
+        ]
+      },
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "targets": [
+          [
+            ".ed-tree-row:nth-child(3) > .ed-num"
+          ],
+          [
+            ".ed-tree-row:nth-child(3) > .ed-lbl"
+          ],
+          [
+            ".ed-mast-num"
+          ],
+          [
+            "h1"
+          ],
+          [
+            ".nda-open:nth-child(3)"
+          ],
+          [
+            ".nda-open:nth-child(5)"
+          ],
+          [
+            ".ed-mast-meta"
+          ]
+        ]
+      },
+      {
+        "id": "label-content-name-mismatch",
+        "impact": "serious",
+        "targets": [
+          [
+            "button[title=\"Bold (⌘B)\"]"
+          ],
+          [
+            "button[title=\"Italic (⌘I)\"]"
+          ],
+          [
+            "button[title=\"Underline (⌘U)\"]"
+          ]
+        ]
+      }
+    ],
+    "passes": 24
+  }
+}

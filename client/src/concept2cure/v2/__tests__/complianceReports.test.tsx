@@ -70,7 +70,7 @@ beforeEach(() => {
   browser.allowsDownload = true;
   route = (url) => (url === '/api/audit/reports' ? ok(CATALOG) : ok(exportBody(SECTIONED)));
   apiCall.mockReset();
-  apiCall.mockImplementation(async (_method: string, url: string) => route(url));
+  apiCall.mockImplementation(async (_method: string, url: string) => url === '/api/audit/reviews' ? ok({ canSign: false, status: { access: { state: 'none', latest: null }, audit_trail: { state: 'none', latest: null } } }) : route(url));
   apiRequest.mockReset();
 });
 afterEach(() => {
@@ -160,7 +160,7 @@ describe('running a report', () => {
     expect(screen.getByText('CR-EXPORT-1')).toBeTruthy();
     expect(screen.getByText('k1')).toBeTruthy();
     expect(
-      screen.getByText('Each run is recorded on the audit trail. Download CSV runs the report again and is recorded as its own run.'),
+      screen.getByText('JSON and CSV use the report snapshot on screen. CSV conversion is sealed and recorded on the audit trail without running the report again.'),
     ).toBeTruthy();
   });
 
@@ -179,7 +179,7 @@ describe('running a report', () => {
     fireEvent.change(screen.getByLabelText('From'), { target: { value: '2026-10-02' } });
     await runSelected();
     expect((await screen.findByRole('alert')).textContent).toMatch(/start date is after the end date/i);
-    expect(urls().filter((u) => u !== '/api/audit/reports')).toEqual([]);
+    expect(urls().filter((u) => u !== '/api/audit/reports' && u !== '/api/audit/reviews')).toEqual([]);
   });
 
   it('shows the not-recorded refusal for a 503 and no table', async () => {
@@ -246,7 +246,7 @@ describe('downloads', () => {
     const csvManifest = { ...MANIFEST, exportId: 'CR-EXPORT-CSV', format: 'csv' };
     route = (url) => {
       if (url === '/api/audit/reports') return ok(CATALOG);
-      return url.includes('format=csv') ? ok(exportBody(csv, csvManifest)) : ok(exportBody(SECTIONED));
+      return url === '/api/audit/reports/convert' ? ok(exportBody(csv, csvManifest)) : ok(exportBody(SECTIONED));
     };
     mount();
     await selectReport(/Sign-in and session events/);
@@ -257,7 +257,9 @@ describe('downloads', () => {
     });
 
     await waitFor(() => expect(saved).toHaveLength(2));
-    expect(urls()).toContain('/api/audit/reports/authentication-events?from=2026-07-03&to=2026-10-01&format=csv');
+    expect(urls()).toContain('/api/audit/reports/convert');
+    expect(apiCall).toHaveBeenCalledWith('POST', '/api/audit/reports/convert', { export: { data: JSON.stringify(SECTIONED, null, 2), manifest: MANIFEST, signature: 'f'.repeat(64) }, format: 'csv' });
+    expect(urls().filter(u => u.startsWith('/api/audit/reports/authentication-events?'))).toHaveLength(1);
     const [file, manifest] = saved;
     expect(file.name).toBe('authentication-events-2026-07-03-2026-10-01.csv');
     expect(file.text).toBe(csv);
@@ -322,7 +324,7 @@ describe('the full audit trail entry', () => {
     // A store name is not copy.
     expect(within(table).queryByText('audit_logs')).toBeNull();
 
-    const run = urls().find((u) => u !== '/api/audit/reports')!;
+    const run = urls().find((u) => u.startsWith('/api/audit/export/signed?'))!;
     expect(run.startsWith('/api/audit/export/signed?')).toBe(true);
     const q = new URLSearchParams(run.split('?')[1]);
     expect(q.get('format')).toBe('json');

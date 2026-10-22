@@ -1,0 +1,35 @@
+
+[repo]/client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+   336:8   warning  Function 'describeAuditMetadata' has a complexity of 39. Maximum allowed is 15                                                      complexity
+   788:1   warning  File has too many lines (4864). Maximum allowed is 500                                                                              max-lines
+  1250:8   warning  Function 'DocumentWorkbench' has too many lines (4029). Maximum allowed is 100                                                      max-lines-per-function
+  1250:8   warning  Function 'DocumentWorkbench' has a complexity of 312. Maximum allowed is 15                                                         complexity
+  2135:26  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+  2157:16  warning  Arrow function has a complexity of 18. Maximum allowed is 15                                                                        complexity
+  2894:50  warning  Async arrow function has a complexity of 16. Maximum allowed is 15                                                                  complexity
+  2950:55  warning  Async arrow function has a complexity of 34. Maximum allowed is 15                                                                  complexity
+  3112:5   warning  React Hook useCallback has missing dependencies: 'activeDocId' and 'loadAudit'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  3470:43  warning  Async arrow function has a complexity of 16. Maximum allowed is 15                                                                  complexity
+  3754:7   warning  'queueMicrotask' is not defined                                                                                                     no-undef
+  5274:39  warning  Arrow function has a complexity of 20. Maximum allowed is 15                                                                        complexity
+  6150:28  warning  Arrow function has too many lines (210). Maximum allowed is 100                                                                     max-lines-per-function
+  6150:28  warning  Arrow function has a complexity of 24. Maximum allowed is 15                                                                        complexity
+
+[repo]/client/src/concept2cure/v2/editor/provenance.ts
+  53:8  warning  Function 'describeProvenance' has a complexity of 26. Maximum allowed is 15  complexity
+
+[repo]/client/src/concept2cure/v2/surfaces/Pyramid.tsx
+  225:1   warning  Function 'PyTaskSheet' has a complexity of 22. Maximum allowed is 15      complexity
+  353:8   warning  Function 'PyramidShell' has too many lines (334). Maximum allowed is 100  max-lines-per-function
+  353:8   warning  Function 'PyramidShell' has a complexity of 20. Maximum allowed is 15     complexity
+  435:33  warning  Arrow function has a complexity of 19. Maximum allowed is 15              complexity
+  612:1   warning  File has too many lines (612). Maximum allowed is 500                     max-lines
+
+[repo]/client/src/concept2cure/v2/surfaces/Vault.tsx
+   683:1   warning  File has too many lines (1683). Maximum allowed is 500                        max-lines
+   776:1   warning  Function 'VaultForProject' has too many lines (1125). Maximum allowed is 100  max-lines-per-function
+   776:1   warning  Function 'VaultForProject' has a complexity of 169. Maximum allowed is 15     complexity
+  1192:33  warning  Arrow function has a complexity of 37. Maximum allowed is 15                  complexity
+
+✖ 24 problems (0 errors, 24 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.

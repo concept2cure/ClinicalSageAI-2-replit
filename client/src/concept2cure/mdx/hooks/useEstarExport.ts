@@ -97,6 +97,8 @@ export interface EstarExportOutcome {
    * know about) from "this was never an official fill" (nothing to report).
    */
   official: boolean;
+  /** A produced PreSTAR prefill is not a completed request. */
+  applicantCompletionRequired?: boolean;
   error: string | null;
 }
 
@@ -262,7 +264,8 @@ export function exportStatusLine(busy: boolean, outcome: EstarExportOutcome | nu
     const erasure = outcome.official && !outcome.fieldReport
       ? erasedFieldsClause(outcome.erasedFields)
       : '';
-    return `${verb}${fieldReportClause(outcome.fieldReport)}${erasure}${formatting}${registry}`;
+    const completion = outcome.applicantCompletionRequired ? ' · PreSTAR administrative prefill; applicant completion and review required before filing' : '';
+    return `${verb}${fieldReportClause(outcome.fieldReport)}${erasure}${formatting}${registry}${completion}`;
   }
   if (outcome.blockedByEntitlement) return entitlementRequiredLine(outcome.requiredTier);
   return `Export failed — ${
@@ -436,6 +439,7 @@ async function postExport(url: string, body: unknown, official: boolean): Promis
       erasedFields: parseErasedFields(json?.erasedFields),
       official,
       error: null,
+      applicantCompletionRequired: json?.applicantCompletionRequired === true,
     };
   } catch {
     // A throw here is the fetch itself failing (offline, DNS, abort). Its

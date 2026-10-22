@@ -1,0 +1,60 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts
+{
+  "timestamp": "2026-10-14T21:18:26.528Z",
+  "level": "warn",
+  "message": "[database] DATABASE_NEON_NEW_SECRET or DATABASE_URL not found, database features will be unavailable",
+  "context": {}
+}
+
+stdout | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts
+[database] No DATABASE_URL provided, skipping database connection
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > uses one request executor, filtered before ranking, with both scopes current
+[RAG] vault query not embedded; answering from the text index alone: Offline keyless fixture
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > retains an explicit narrower programme filter instead of widening it
+[RAG] vault query not embedded; answering from the text index alone: Offline keyless fixture
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > refuses an original-byte identity change after candidate discovery
+[RAG] vault query not embedded; answering from the text index alone: Offline keyless fixture
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > refuses an unbound original hash in exact source admission
+[RAG] vault query not embedded; answering from the text index alone: Offline keyless fixture
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > preserves upstream authorized legacy passage reads without inventing a byte binding
+[RAG] vault query not embedded; answering from the text index alone: Offline keyless fixture
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > keeps keyless ranking disclosed and current-source predicates on initial and final reads
+[RAG] vault query not embedded; answering from the text index alone: Offline keyless fixture
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > refuses malformed ranked rows instead of exposing unverified counts
+[RAG] vault query not embedded; answering from the text index alone: Offline keyless fixture
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > withdraws a read whose current actor changes after lexical results arrive
+[RAG] vault query not embedded; answering from the text index alone: Offline keyless fixture
+
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > uses one request executor, filtered before ranking, with both scopes current 15ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > refuses mismatched source actor before embedding or reading text 1ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > refuses a changed source role before any embedding or source read 0ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > keeps an evaluated empty accessible scope empty without embedding 1ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > retains an explicit narrower programme filter instead of widening it 1ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > refuses an original-byte identity change after candidate discovery 1ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > refuses an unbound original hash in exact source admission 1ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > preserves upstream authorized legacy passage reads without inventing a byte binding 1ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > keeps keyless ranking disclosed and current-source predicates on initial and final reads 1ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > recovers a missing vector type inside a caller transaction before lexical fallback 1ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > supports exact PostgreSQL no-transaction savepoint rejection without opening a caller transaction 1ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > does not treat a savepoint permission denial as absent optional vector support 1ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > does not hide an unrelated missing SQL type behind lexical results 0ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > refuses malformed ranked rows instead of exposing unverified counts 1ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > withdraws a read whose current actor changes after lexical results arrive 1ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > does not let retrieval scope authorize generation 1ms
+
+ Test Files  1 passed (1)
+      Tests  16 passed (16)
+   Start at  21:18:22
+   Duration  4.85s (transform 2.81s, setup 0ms, import 4.28s, tests 28ms, environment 0ms)
+

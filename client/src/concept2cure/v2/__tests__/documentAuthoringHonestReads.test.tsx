@@ -24,9 +24,18 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: { id: '7', email: 'ra@example.test', displayName: 'R. Author' } }),
-}));
+vi.mock('@/services/portal/authService', async original => {
+  const actual = await original<typeof import('@/services/portal/authService')>();
+  return {
+    ...actual,
+    authService: {
+      getUser: () => ({ id: 1, organizationId: 1 }),
+      captureSessionReadGuard: actual.authService.captureSessionReadGuard.bind(actual.authService),
+      on: actual.authService.on.bind(actual.authService),
+    },
+    useAuth: () => ({ user: { id: '7', email: 'ra@example.test', displayName: 'R. Author' } }),
+  };
+});
 
 /* jsdom has no layout; ProseMirror asks for client rects on mount. */
 const emptyRects = function () {
@@ -131,7 +140,7 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
     expect(text()).not.toMatch(/3\.2\.S\.9/);
   });
   it('the filing outline does not call every part "not started" while the sections read has failed', async () => {
-    (window as any).C2C_PROJECT = { id: 'P-1' };
+    (window as any).C2C_PROJECT = { id: '11111111-1111-4111-8111-111111111111' };
     try {
       wire((m, u) => {
         if (m === 'GET' && u.startsWith('/api/c2c/documents?projectId=')) {
@@ -153,6 +162,66 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
       fireEvent.click(node);
       await waitFor(() => expect(text()).toMatch(/could not be read, so nothing is known about whether this part is drafted/));
       expect(text()).not.toMatch(/no draft yet in this document/);
+    } finally {
+      delete (window as any).C2C_PROJECT;
+    }
+  });
+
+  /* QA 2026-10-08, walk 2 (j4): a new project has a filing outline and no
+     document. Every outline node was titled "this document’s sections have not
+     been read yet" and a click said "This document’s sections are still being
+     read." — a read that never starts, so it never finished. With no document
+     open nothing is being read; the node and the click say what is true and
+     where to go. (Starting the section from the outline is FILING_SPINE F4.) */
+  it('with no document open, the outline says so — never that sections are being read', async () => {
+    (window as any).C2C_PROJECT = { id: '11111111-1111-4111-8111-111111111111' };
+    try {
+      wire((m, u) => {
+        if (m === 'GET' && u.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: [] });
+        if (m === 'GET' && u.startsWith('/api/c2c/documents?projectId=')) {
+          return ok({ documents: [{ id: 'F1', doc_type: 'ind', agency: 'fda', title: 'IND 2026', rule_pack_version: '1', status: 'draft', readiness: 0 }] });
+        }
+        if (m === 'GET' && u === '/api/c2c/documents/F1/outline') {
+          return ok({
+            document: { id: 'F1', title: 'IND 2026', doc_type: 'ind', agency: 'fda', status: 'draft', readiness: 0 },
+            outline: [{ key: '1.1.1', parent_key: null, label: 'Form FDA 1571', mandatory: true, path_order: 1, status: 'todo', draft_source: null, has_content: false, version: 1 }],
+          });
+        }
+        return undefined;
+      });
+      render(<DocumentAuthoring {...props()} />);
+      const node = await screen.findByTitle(/Form FDA 1571 — no document is open/);
+      expect(screen.queryByTitle(/have not been read yet/)).toBeNull();
+      fireEvent.click(node);
+      await waitFor(() => expect(text()).toMatch(/No document is open, so 1\.1\.1 Form FDA 1571 has nothing to edit yet/));
+      expect(text()).toMatch(/New document/);
+      expect(text()).not.toMatch(/still being read/);
+    } finally {
+      delete (window as any).C2C_PROJECT;
+    }
+  });
+
+  it('while the project’s documents are still being read, the outline says that — not that a document’s sections are', async () => {
+    (window as any).C2C_PROJECT = { id: '11111111-1111-4111-8111-111111111111' };
+    try {
+      wire((m, u) => {
+        if (m === 'GET' && u.startsWith('/api/authoring/docs?')) return never();
+        if (m === 'GET' && u.startsWith('/api/c2c/documents?projectId=')) {
+          return ok({ documents: [{ id: 'F1', doc_type: 'ind', agency: 'fda', title: 'IND 2026', rule_pack_version: '1', status: 'draft', readiness: 0 }] });
+        }
+        if (m === 'GET' && u === '/api/c2c/documents/F1/outline') {
+          return ok({
+            document: { id: 'F1', title: 'IND 2026', doc_type: 'ind', agency: 'fda', status: 'draft', readiness: 0 },
+            outline: [{ key: '1.1.1', parent_key: null, label: 'Form FDA 1571', mandatory: true, path_order: 1, status: 'todo', draft_source: null, has_content: false, version: 1 }],
+          });
+        }
+        return undefined;
+      });
+      render(<DocumentAuthoring {...props()} />);
+      const node = await screen.findByTitle(/Form FDA 1571 — this project’s documents are still being read/);
+      fireEvent.click(node);
+      await waitFor(() => expect(text()).toMatch(/This project’s documents are still being read\./));
+      expect(text()).not.toMatch(/This document’s sections are still being read/);
     } finally {
       delete (window as any).C2C_PROJECT;
     }
@@ -184,7 +253,7 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
   });
 
   it('a citation removal the server refuses is reported with the server’s reason, not silently dropped', async () => {
-    (window as any).C2C_PROJECT = { id: 'P-1' };
+    (window as any).C2C_PROJECT = { id: '11111111-1111-4111-8111-111111111111' };
     try {
       const citation = {
         citationId: 'cite-1', citedAt: '2026-07-01T00:00:00Z', citationText: null, citedChecksum: 'sha-1', state: 'current',
@@ -209,7 +278,7 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
     }
   });
   it('a failed filing-outline read is said in the tree header, not degraded silently to the document list', async () => {
-    (window as any).C2C_PROJECT = { id: 'P-1' };
+    (window as any).C2C_PROJECT = { id: '11111111-1111-4111-8111-111111111111' };
     try {
       wire((m, u) => (m === 'GET' && u.startsWith('/api/c2c/documents?projectId=') ? fail(500) : undefined));
       render(<DocumentAuthoring {...props()} />);
@@ -220,7 +289,7 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
   });
 
   it('switching sections never shows the previous section’s sources under the next section’s header', async () => {
-    (window as any).C2C_PROJECT = { id: 'P-1' };
+    (window as any).C2C_PROJECT = { id: '11111111-1111-4111-8111-111111111111' };
     try {
       const TWO = { success: true, sections: [
         { ...SECTIONS.sections[0], citation_count: 1 },
