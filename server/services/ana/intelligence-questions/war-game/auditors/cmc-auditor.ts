@@ -11,6 +11,13 @@
 
 import type { WarGameAuditor, AuditRule, WarGameFinding, AuditDimension } from '../types.js';
 
+/* 2026-10-22 (D2): rules converged onto the field ids flows/cmc-specification.ts
+   (and the container-closure/stability nodes it imports) asks, with their real
+   value types: yes_no is a boolean, so "No" is false, not blank. Rules whose
+   question the interview does not ask still read their original keys and are
+   reported NOT ASSESSED by the engine; they are not mapped to merely related
+   questions. tests/ana-intelligence/war-game-reads-what-the-interview-asks.test.ts. */
+
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
 /* ------------------------------------------------------------------ */
@@ -57,7 +64,8 @@ const rules: AuditRule[] = [
     title: 'Impurity Profile Not Provided',
     question: 'The submission lacks an impurity profile for the drug substance. Without a comprehensive enumeration of process-related and degradation impurities, how does the sponsor expect the Agency to assess patient safety?',
     check(answers) {
-      if (isBlank(answers.impurity_profile)) {
+      // The interview asks the impurity profile as organic_impurities (required).
+      if (isBlank(answers.organic_impurities)) {
         return finding(
           this.id,
           this.dimension,
@@ -68,7 +76,7 @@ const rules: AuditRule[] = [
           'A complete impurity profile is required per ICH Q3A(R2) Section 3, including identification and qualification of all impurities above reporting thresholds.',
           'ICH Q3A(R2) Section 3; ICH Q3B(R2) Section 3; 21 CFR 314.50(d)(1)',
           'Provide a comprehensive impurity profile listing all identified and unidentified impurities, their structures where known, proposed limits, and qualification status relative to ICH Q3A/Q3B thresholds.',
-          ['impurity_profile', 'impurity_limits', 'drug_substance_specification'],
+          ['organic_impurities', 'inorganic_impurities', 'ds_specification_tests'],
         );
       }
       return null;
@@ -80,7 +88,10 @@ const rules: AuditRule[] = [
     title: 'Forced Degradation Studies Absent',
     question: 'The submission does not include forced degradation (stress testing) data. How has the sponsor demonstrated the stability-indicating capability of the proposed analytical methods without evaluating degradation pathways?',
     check(answers) {
-      if (isBlank(answers.forced_degradation_studies)) {
+      // The interview asks stress testing as the 'stress' option ("Stress / Forced
+      // Degradation") of the DS and DP stability-condition multi-selects.
+      const hasStress = (v: unknown) => Array.isArray(v) && v.includes('stress');
+      if (!hasStress(answers.ds_stability_conditions) && !hasStress(answers.dp_stability_conditions)) {
         return finding(
           this.id,
           this.dimension,
@@ -91,7 +102,7 @@ const rules: AuditRule[] = [
           'ICH Q1A(R2) Section 2.1.2 requires stress testing to elucidate degradation pathways and demonstrate the stability-indicating power of analytical procedures.',
           'ICH Q1A(R2) Section 2.1.2; ICH Q1B; ICH Q2(R2)',
           'Conduct forced degradation studies under acidic, basic, oxidative, thermal, humidity, and photolytic conditions per ICH Q1B. Demonstrate mass balance and confirm the specificity of stability-indicating methods.',
-          ['forced_degradation_studies', 'stability_indicating_method', 'degradation_products'],
+          ['ds_stability_conditions', 'dp_stability_conditions', 'stability_indicating'],
         );
       }
       return null;
@@ -103,7 +114,7 @@ const rules: AuditRule[] = [
     title: 'Container Closure System Not Described',
     question: 'The submission does not describe the container closure system for the drug product. Without this information, the Agency cannot assess extractables/leachables risk or product-container compatibility.',
     check(answers) {
-      if (isBlank(answers.container_closure_system)) {
+      if (isBlank(answers.container_system_name) && isBlank(answers.primary_packaging)) {
         return finding(
           this.id,
           this.dimension,
@@ -114,7 +125,7 @@ const rules: AuditRule[] = [
           'A full description of the container closure system is required per 21 CFR 314.50(d)(1)(ii)(b) and ICH Q1A(R2) Section 2.2.4 (Container Closure System), including materials of construction, specifications, and compatibility data.',
           '21 CFR 314.50(d)(1)(ii)(b); ICH Q1A(R2) Section 2.2.4; FDA Guidance: Container Closure Systems for Packaging Human Drugs and Biologics (1999)',
           'Describe the container closure system including materials of construction, dimensions, extractables/leachables studies, and compatibility with the drug product formulation.',
-          ['container_closure_system', 'extractables_leachables', 'packaging_compatibility'],
+          ['container_system_name', 'primary_packaging', 'closure_description', 'el_assessment'],
         );
       }
       return null;
@@ -126,7 +137,7 @@ const rules: AuditRule[] = [
     title: 'Reference Standard Not Characterized',
     question: 'The submission does not provide information on the primary reference standard. How does the sponsor intend to ensure the accuracy of all quantitative analytical results without a fully characterized reference standard?',
     check(answers) {
-      if (isBlank(answers.reference_standard)) {
+      if (isBlank(answers.primary_reference_standard)) {
         return finding(
           this.id,
           this.dimension,
@@ -137,7 +148,7 @@ const rules: AuditRule[] = [
           'ICH Q6A Section 2.11 and ICH Q7 Section 11.1 (paragraphs 11.17-11.19) require a well-characterized primary reference standard for use in identity, purity, and assay testing.',
           'ICH Q6A Section 2.11; ICH Q7 Section 11.1 (paragraphs 11.17-11.19); USP General Chapter <11>',
           'Provide characterization data for the primary reference standard, including purity determination by orthogonal methods, certificate of analysis, and storage/requalification procedures.',
-          ['reference_standard', 'reference_standard_purity', 'analytical_methods'],
+          ['primary_reference_standard', 'reference_standard_requalification', 'key_analytical_methods'],
         );
       }
       return null;
@@ -149,7 +160,7 @@ const rules: AuditRule[] = [
     title: 'Drug Substance Characterization Incomplete',
     question: 'The submission does not include adequate structural elucidation of the drug substance. How can the Agency confirm the identity and structural integrity of the molecule without spectroscopic and physicochemical data?',
     check(answers) {
-      if (isBlank(answers.drug_substance_characterization)) {
+      if (isBlank(answers.characterization_methods)) {
         return finding(
           this.id,
           this.dimension,
@@ -160,7 +171,7 @@ const rules: AuditRule[] = [
           'ICH Q6A Section 3.1 and S.3.1 of the CTD require comprehensive structural elucidation including spectroscopic confirmation of molecular structure.',
           'ICH Q6A Section 3.1; ICH M4Q(R1) Module 3.2.S.3.1',
           'Provide full structural elucidation data including 1H/13C NMR, high-resolution mass spectrometry, IR/UV spectroscopy, and elemental analysis. Include stereochemistry assignment if applicable.',
-          ['drug_substance_characterization', 'molecular_structure', 'polymorphic_form'],
+          ['characterization_methods', 'characterization_summary', 'polymorphic_forms'],
         );
       }
       return null;
@@ -274,18 +285,22 @@ const rules: AuditRule[] = [
     title: 'ICH Q3 Impurity Thresholds Not Addressed',
     question: 'The proposed impurity limits do not appear to align with ICH Q3A/Q3B reporting, identification, and qualification thresholds for the given maximum daily dose. How does the sponsor justify deviation from the internationally harmonized framework?',
     check(answers) {
-      if (answers.q3_thresholds_met === false || answers.q3_thresholds_met === 'no' || isBlank(answers.q3_thresholds_met)) {
+      // The interview asks this inverted: unqualified_impurities (yes_no, required) is
+      // true when an impurity sits above the ICH Q3A qualification threshold.
+      if (answers.unqualified_impurities === true || isBlank(answers.unqualified_impurities)) {
         return finding(
           this.id,
           this.dimension,
           'critical',
           this.title,
           this.question,
-          'ICH Q3A/Q3B impurity thresholds (reporting, identification, qualification) are not demonstrated to be met for the proposed maximum daily dose.',
+          answers.unqualified_impurities === true
+            ? 'The sponsor reports impurities above the ICH Q3A/Q3B qualification threshold that are not qualified for the proposed maximum daily dose.'
+            : 'Whether any impurity exceeds the ICH Q3A/Q3B qualification threshold for the proposed maximum daily dose is not stated.',
           'ICH Q3A(R2) and Q3B(R2) establish dose-dependent thresholds for reporting, identification, and qualification of impurities. Compliance must be demonstrated.',
           'ICH Q3A(R2) Table 1; ICH Q3B(R2) Table 1; ICH Q3C(R9); ICH Q3D(R2)',
           'Tabulate all impurities against ICH Q3A/Q3B thresholds based on maximum daily dose. For any impurity above the identification threshold, provide structural identification. For impurities above the qualification threshold, provide toxicological qualification data.',
-          ['q3_thresholds_met', 'impurity_limits', 'maximum_daily_dose', 'impurity_profile'],
+          ['unqualified_impurities', 'max_daily_dose', 'organic_impurities'],
         );
       }
       return null;
@@ -343,7 +358,7 @@ const rules: AuditRule[] = [
     title: 'Residual Solvents Not Controlled per ICH Q3C',
     question: 'The submission does not address residual solvent testing. Given that solvents are used in the synthesis, how does the sponsor ensure patient safety without demonstrating compliance with ICH Q3C limits?',
     check(answers) {
-      if (isBlank(answers.residual_solvents_testing)) {
+      if (isBlank(answers.residual_solvents)) {
         return finding(
           this.id,
           this.dimension,
@@ -354,7 +369,7 @@ const rules: AuditRule[] = [
           'ICH Q3C(R9) establishes concentration limits for residual solvents in pharmaceuticals based on permitted daily exposure (PDE). All solvents used in the final synthesis steps must be tested unless justified.',
           'ICH Q3C(R9); ICH Q3D(R2); USP <467>',
           'Identify all solvents used in the drug substance synthesis. Include residual solvent testing (e.g., GC headspace) in the specification with limits per ICH Q3C Class 1/2/3 classifications.',
-          ['residual_solvents_testing', 'synthesis_solvents', 'drug_substance_specification'],
+          ['residual_solvents', 'synthesis_overview', 'ds_specification_tests'],
         );
       }
       return null;
@@ -391,7 +406,7 @@ const rules: AuditRule[] = [
     title: 'Critical Quality Attributes Not Identified via QbD',
     question: 'The submission does not identify Critical Quality Attributes (CQAs) through a systematic Quality by Design approach. Without CQAs, how does the sponsor ensure that the control strategy adequately protects product quality and patient safety?',
     check(answers) {
-      if (isBlank(answers.critical_quality_attributes)) {
+      if (isBlank(answers.cqas_identified)) {
         return finding(
           this.id,
           this.dimension,
@@ -402,7 +417,7 @@ const rules: AuditRule[] = [
           'ICH Q8(R2) Part II Section 2.2 defines CQAs as physical, chemical, biological, or microbiological properties that should be within an appropriate limit to ensure product quality. CQA identification is foundational to the control strategy.',
           'ICH Q8(R2) Part II Section 2.2; ICH Q9; ICH Q10; ICH Q11 Section 3',
           'Conduct a systematic risk assessment (e.g., FMEA, Ishikawa) to identify CQAs from the Quality Target Product Profile. Link each CQA to its impact on safety and efficacy.',
-          ['critical_quality_attributes', 'qtpp', 'risk_assessment', 'control_strategy'],
+          ['cqas_identified', 'risk_assessment_method', 'cpps_identified'],
         );
       }
       return null;
@@ -437,7 +452,7 @@ const rules: AuditRule[] = [
     title: 'Design Space Not Established',
     question: 'No design space has been defined for the manufacturing process. Without a design space, how does the sponsor intend to manage process variability while maintaining product quality within acceptable limits?',
     check(answers) {
-      if (isBlank(answers.design_space)) {
+      if (answers.design_space_established !== true) {
         return finding(
           this.id,
           this.dimension,
@@ -448,7 +463,7 @@ const rules: AuditRule[] = [
           'ICH Q8(R2) Section 3 defines design space as the multidimensional combination of input variables and process parameters demonstrated to provide assurance of quality. Operating within a design space is not considered a change.',
           'ICH Q8(R2) Section 3; ICH Q11 Section 8; ICH Q12 Section 5',
           'Consider establishing a design space based on multivariate process characterization studies (e.g., DoE). Define proven acceptable ranges for critical process parameters and link them to CQAs.',
-          ['design_space', 'critical_process_parameters', 'doe_studies', 'critical_quality_attributes'],
+          ['design_space_established', 'cpps_identified', 'cqas_identified'],
         );
       }
       return null;
@@ -460,7 +475,9 @@ const rules: AuditRule[] = [
     title: 'Process Validation Not Demonstrated',
     question: 'The submission provides no evidence of process validation. How does the sponsor ensure that the manufacturing process consistently produces product meeting its predetermined specifications and quality attributes?',
     check(answers) {
-      if (isBlank(answers.process_validation_data) && isBlank(answers.process_validation_status)) {
+      // The interview asks the validation lifecycle stage; 'not_started' is
+      // "Not Yet Started", i.e. no validation plan or data.
+      if (isBlank(answers.validation_stage) || answers.validation_stage === 'not_started') {
         return finding(
           this.id,
           this.dimension,
@@ -471,7 +488,7 @@ const rules: AuditRule[] = [
           'FDA Guidance on Process Validation (2011) describes a lifecycle approach with three stages: process design, process qualification, and continued process verification. Evidence of Stage 2 (process qualification) is expected prior to commercial distribution.',
           'FDA Guidance: Process Validation (2011); 21 CFR 211.100; ICH Q8(R2); ICH Q11',
           'Provide a process validation protocol and, where available, execution data covering at least three consecutive PPQ batches at commercial scale. Include acceptance criteria for all CQAs and CPPs.',
-          ['process_validation_data', 'process_validation_status', 'ppq_batches', 'critical_process_parameters'],
+          ['validation_stage', 'ppq_batches', 'process_validation_complete', 'cpps_identified'],
         );
       }
       return null;
@@ -483,7 +500,10 @@ const rules: AuditRule[] = [
     title: 'Analytical Method Validation Insufficient',
     question: 'The submission does not provide adequate analytical method validation data per ICH Q2(R2). How can the Agency have confidence in the reliability and accuracy of the reported analytical results?',
     check(answers) {
-      if (isBlank(answers.analytical_method_validation)) {
+      // method_validation_status: 'qualification_only' is "Methods Qualified but Not
+      // Yet Validated", 'not_started' is "Validation Not Yet Started".
+      const mvs = answers.method_validation_status;
+      if (isBlank(mvs) || mvs === 'not_started' || mvs === 'qualification_only') {
         return finding(
           this.id,
           this.dimension,
@@ -494,7 +514,7 @@ const rules: AuditRule[] = [
           'ICH Q2(R2) requires validation of analytical procedures for specificity, linearity, range, accuracy, precision (repeatability and intermediate precision), detection limit, quantitation limit, and robustness as applicable.',
           'ICH Q2(R2); ICH Q14; FDA Guidance: Analytical Procedures and Methods Validation (2015)',
           'Provide complete validation reports for all analytical methods used in specifications, including demonstrated specificity, linearity (R2 >= 0.999), accuracy (recovery 98-102%), precision (RSD <= 2%), and robustness.',
-          ['analytical_method_validation', 'analytical_methods', 'stability_indicating_method'],
+          ['method_validation_status', 'key_analytical_methods', 'stability_indicating'],
         );
       }
       return null;
@@ -636,7 +656,7 @@ const rules: AuditRule[] = [
     title: 'Analytical Method Validation Reports Missing',
     question: 'Analytical method validation reports are referenced but not provided. How does the sponsor expect the Agency to assess data reliability when the underlying method validation is absent from the submission?',
     check(answers) {
-      if (isBlank(answers.amv_reports) && !isBlank(answers.analytical_methods)) {
+      if (isBlank(answers.amv_reports) && !isBlank(answers.key_analytical_methods)) {
         return finding(
           this.id,
           this.dimension,
@@ -647,7 +667,7 @@ const rules: AuditRule[] = [
           'ICH Q2(R2) requires documented validation of analytical procedures. Full validation reports should be included in Module 3.2.S.4.3 and 3.2.P.5.3 of the CTD.',
           'ICH Q2(R2); ICH M4Q(R1) Modules 3.2.S.4.3, 3.2.P.5.3',
           'Include complete analytical method validation reports for all specification tests. Reports should document all ICH Q2(R2) validation characteristics with tabulated results and acceptance criteria.',
-          ['amv_reports', 'analytical_methods', 'analytical_method_validation'],
+          ['amv_reports', 'key_analytical_methods', 'method_validation_status'],
         );
       }
       return null;
@@ -707,7 +727,8 @@ const rules: AuditRule[] = [
     title: 'Genotoxic Impurities Not Assessed per ICH M7',
     question: 'The submission does not include an assessment of potentially mutagenic impurities per ICH M7(R2). Given the serious patient safety implications of genotoxic impurities, how does the sponsor justify this omission?',
     check(answers) {
-      if (isBlank(answers.mutagenic_impurity_assessment) && isBlank(answers.ich_m7_assessment)) {
+      // mutagenic_impurity_assessment (yes_no, required) is the ICH M7 assessment.
+      if (answers.mutagenic_impurity_assessment !== true) {
         return finding(
           this.id,
           this.dimension,
@@ -718,7 +739,7 @@ const rules: AuditRule[] = [
           'ICH M7(R2) requires assessment of mutagenic potential for all actual and potential impurities, with control strategies based on acceptable intake (AI) limits derived from the Threshold of Toxicological Concern (TTC).',
           'ICH M7(R2); FDA Guidance: Genotoxic and Carcinogenic Impurities in Drug Substances and Products (2008); EMA/CHMP/ICH/83812/2013',
           'Conduct a comprehensive ICH M7(R2) assessment: (1) identify all potential mutagenic impurities via (Q)SAR analysis; (2) classify per M7 Classes 1-5; (3) establish acceptable intake limits; (4) demonstrate control via specification limits or purge factor arguments.',
-          ['mutagenic_impurity_assessment', 'ich_m7_assessment', 'impurity_profile', 'synthesis_route'],
+          ['mutagenic_impurity_assessment', 'organic_impurities', 'synthesis_overview'],
         );
       }
       return null;
@@ -730,7 +751,9 @@ const rules: AuditRule[] = [
     title: 'Elemental Impurities Not Controlled per ICH Q3D',
     question: 'The submission does not address elemental impurities per ICH Q3D(R2). Certain elements (e.g., Pd, Pt, Ni from catalysts) may be introduced during synthesis. How does the sponsor ensure these are controlled within permitted daily exposure limits?',
     check(answers) {
-      if (isBlank(answers.elemental_impurities_assessment) && isBlank(answers.ich_q3d_assessment)) {
+      // inorganic_impurities ("Inorganic / Elemental Impurities", required) asks for
+      // the ICH Q3D risk assessment.
+      if (isBlank(answers.inorganic_impurities)) {
         return finding(
           this.id,
           this.dimension,
@@ -741,7 +764,7 @@ const rules: AuditRule[] = [
           'ICH Q3D(R2) requires a risk-based assessment of elemental impurities from all potential sources (drug substance synthesis, excipients, manufacturing equipment, container closure) with control below established PDEs.',
           'ICH Q3D(R2); USP <232>/<233>; FDA Guidance: Elemental Impurities in Drug Products (2022)',
           'Conduct an ICH Q3D risk assessment covering all Class 1, 2A, and 2B elements. Evaluate all potential sources including catalysts, reagents, utilities, equipment, and container closure. Provide ICP-MS or ICP-OES data for relevant elements.',
-          ['elemental_impurities_assessment', 'ich_q3d_assessment', 'catalysts_used', 'manufacturing_equipment'],
+          ['inorganic_impurities', 'synthesis_overview', 'equipment_type'],
         );
       }
       return null;
@@ -776,7 +799,8 @@ const rules: AuditRule[] = [
     title: 'Excipient Compatibility Studies Not Conducted',
     question: 'The submission does not include drug-excipient compatibility studies. Without these studies, how does the sponsor assure the Agency that the formulation is stable and that no deleterious interactions occur between the drug substance and excipients?',
     check(answers) {
-      if (isBlank(answers.excipient_compatibility_studies)) {
+      // yes_no: false ("No") is an answer, not a blank, so test for true.
+      if (answers.excipient_compatibility_studies !== true) {
         return finding(
           this.id,
           this.dimension,
@@ -787,7 +811,7 @@ const rules: AuditRule[] = [
           'ICH Q8(R2) recommends drug-excipient compatibility studies as part of pharmaceutical development to identify potential incompatibilities that could affect product quality during storage.',
           'ICH Q8(R2) Section 2.3; FDA Guidance: Quality Considerations for Continuous Manufacturing (2019)',
           'Conduct binary and multicomponent drug-excipient compatibility studies using accelerated conditions and stability-indicating analytical methods. Document results and impact on formulation selection.',
-          ['excipient_compatibility_studies', 'formulation_composition', 'excipient_list'],
+          ['excipient_compatibility_studies', 'compatibility_study_details', 'formulation_composition_detail'],
         );
       }
       return null;
