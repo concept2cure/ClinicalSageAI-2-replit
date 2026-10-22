@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-22T05:17:24.889Z",
+  "generatedAt": "2026-10-22T05:43:48.827Z",
   "git": {
-    "sha": "86a92f6061c99830bc9be999df255365dc91eb2d",
+    "sha": "f3d998d0430ee9845768f8b73f92222c4e242742",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2361,7 +2361,7 @@
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
-        "bytes": 128470
+        "bytes": 131606
       },
       {
         "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
@@ -2396,6 +2396,10 @@
         "bytes": 119982
       },
       {
+        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+        "bytes": 119781
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
         "bytes": 119169
       },
@@ -2412,8 +2416,8 @@
         "bytes": 117106
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
-        "bytes": 116979
+        "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
+        "bytes": 116716
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2424,12 +2428,12 @@
         "bytes": 115150
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
-        "bytes": 114827
-      },
-      {
         "file": "server/routes/submissions.ts",
         "bytes": 111986
+      },
+      {
+        "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+        "bytes": 111611
       },
       {
         "file": "server/routes/auth.ts",
@@ -2442,10 +2446,6 @@
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
         "bytes": 108892
-      },
-      {
-        "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
-        "bytes": 108493
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
