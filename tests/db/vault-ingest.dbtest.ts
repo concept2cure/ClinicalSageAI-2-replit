@@ -455,6 +455,38 @@ describe('POST /api/vault/ingest — a refused upload leaves no bytes behind', (
   });
 });
 
+describe("POST /api/vault/ingest — a file carries its uploader's fields", () => {
+  /* Gap 7.1 (docs/design/VEEVA_GAP_2026-10-22.md): the uploader now sends a row's
+     own fields. The route already took them; this pins what lands. */
+  it("a file sent with its row's fields is recorded with exactly those, and its folder as the person's filing", async () => {
+    const res = await actingRequest()
+      .post('/api/vault/ingest')
+      .field('programId', programId)
+      .field('documentCode', `${PROBE_CODE}-ROW`)
+      .field('documentTitle', 'Risk management file, revision C')
+      .field('documentType', 'REPORT')
+      .field('version', '2.1')
+      .field('classification', 'CONFIDENTIAL')
+      .field('folderId', 'eng')
+      .field('evidenceKind', 'report')
+      .attach('file', Buffer.concat([PDF_BYTES, Buffer.from('% row-fields\n', 'utf8')]), 'risk-file.pdf');
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    const { rows } = await owner.query(
+      `SELECT document_title, document_type, version, classification, folder_id, evidence_kind, ctd_section,
+              placement_status, placed_by
+         FROM vault.documents WHERE document_code = $1`,
+      [`${PROBE_CODE}-ROW`],
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      document_title: 'Risk management file, revision C', document_type: 'REPORT', version: '2.1',
+      classification: 'CONFIDENTIAL', folder_id: 'eng', evidence_kind: 'report', ctd_section: null,
+      placement_status: 'confirmed',
+    });
+    expect(Number(rows[0].placed_by)).toBe(userId);
+  });
+});
+
 describe('POST /api/vault/ingest — only a role that may write adds to the Vault (D3)', () => {
   /* The route carries requireEditorAccess, so it cannot show the service's own
      check. AnA's file_chat_upload_to_vault, authoring's file-to-vault and eSTAR
