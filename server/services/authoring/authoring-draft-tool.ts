@@ -234,8 +234,12 @@ export async function saveDocumentToVaultTool(
   pool: AuthoringPool,
   input: Record<string, unknown>,
   ctx: DraftToolContext | undefined,
-  reason: string,
+  /* An object, not a bare string: the governed-reason guard
+     (governed-reason-not-invented.test.ts) follows a `reason` property from
+     the handler's gatedReason into the write, and cannot follow a positional. */
+  stated: { reason: string },
 ): Promise<string> {
+  const { reason } = stated;
   const title = typeof input.title === 'string' ? input.title.trim() : '';
   const content = typeof input.content === 'string' ? input.content : '';
   if (!title) return JSON.stringify({ error: 'title (string) is required.' });

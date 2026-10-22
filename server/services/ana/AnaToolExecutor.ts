@@ -21027,7 +21027,8 @@ registerToolHandler('save_document_to_vault', async (input, ctx) => {
     import('../../db.js'),
     import('../authoring/authoring-draft-tool.js'),
   ]);
-  return saveDocumentToVaultTool(getPool(), input, ctx, gatedReason(input));
+  const reason = gatedReason(input);
+  return saveDocumentToVaultTool(getPool(), input, ctx, { reason });
 });
 
 /* draft_authoring_document — an AnA-built document IS an authoring document
