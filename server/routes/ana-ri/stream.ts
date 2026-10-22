@@ -52,6 +52,7 @@ import { recordAnaTurn } from '../../services/ana-ri-metrics.js';
 import {
   getOrCreateThread,
   getThreadMessages,
+  recordThreadSkills,
   ThreadAccessError,
   saveChatMessage as saveMessage,
   programIdForThread,
@@ -1515,6 +1516,14 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
           const userMessageId = await saveMessage(threadId, 'user', message);
           turnRecorder?.setMessageIds({ user: userMessageId });
           stoppedTurnThreadId = threadId;
+          // The composer's picks, kept on the conversation so they follow it to
+          // another browser (ANA_SKILLS §10). Only when this turn says what they
+          // are; a failed write costs nothing this turn, which loads them anyway.
+          if (Array.isArray(req.body.skills)) {
+            void recordThreadSkills(threadId, Number(orgId), pickedSkillKeysOf(req.body.skills)).catch((err: any) =>
+              console.warn('[AnA RI Stream] conversation skills not kept:', err?.message),
+            );
+          }
           // The verified (or just minted) conversation and the question, on
           // the run, so another device can find it by thread (§2.8).
           if (runHandle?.stampThread) {

@@ -1003,4 +1003,11 @@ export interface UseAnaChatReturn {
   isLoadingThread: boolean;
   /** A failed history load blocks sending until retry or reset. */
   threadLoadError?: { threadId: string; message: string } | null;
+  /**
+   * The skills kept on the loaded conversation (its picks from the composer's
+   * Skills menu, recorded on the thread by the stream), or null when the read
+   * said nothing about them. Optional so a stand-in chat that predates it
+   * still types.
+   */
+  threadSkills?: { threadId: string; keys: string[] } | null;
 }

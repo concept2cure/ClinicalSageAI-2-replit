@@ -56,6 +56,8 @@ export interface GatewayRequestSeen {
 
 function freshState() {
   return {
+    /** Each write of a conversation's picked skills to its thread, in order. */
+    threadSkills: [] as Array<{ threadId: string; organizationId: number; keys: string[] }>,
     /** One entry per model call: tool calls to make, the answer text, or words with tool calls. */
     script: [] as Array<ToolUse[] | string | ModelSays>,
     /** The gateway request id each call reports, by call number from 1; none when absent. */
@@ -451,6 +453,9 @@ export const mocks = {
   chatThreads: () => ({
     getOrCreateThread: async () => 'thread-1',
     getThreadMessages: async () => [],
+    recordThreadSkills: async (threadId: string, organizationId: number, keys: string[]) => {
+      state.threadSkills.push({ threadId, organizationId, keys });
+    },
     saveChatMessage: async () => {},
     programIdForThread: () => null,
     ThreadAccessError: class ThreadAccessError extends Error {},

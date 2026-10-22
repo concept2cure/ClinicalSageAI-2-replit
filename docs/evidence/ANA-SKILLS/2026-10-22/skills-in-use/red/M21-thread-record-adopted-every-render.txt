@@ -1,0 +1,75 @@
+Mutation: client/src/concept2cure/v2/anaSkillChoice.ts
+-  || adopted.current === kept.threadId
++ 
+Test: client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx
+Exit: 1
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx > the Skills menu in the composer > lists what is on, picks up to three, and says AnA chooses when none is picked 49ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx > the Skills menu in the composer > says a failed read failed, and that AnA still chooses 10ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx > a conversation with skills picked > sends what was picked with the turn 26ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx > a conversation with skills picked > shows on an answer which skills it followed, and why each loaded 29ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx > a project’s Skills card > deploys a skill only with a stated reason, and sends the reason 130ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx > a project’s Skills card > shows a reader the project’s skills without the actions 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx > a project’s Skills card > says a failed or malformed read failed, never that the project has no skills 23ms
+
+ Test Files   (1)
+      Tests  7 passed (15)
+     Errors  1 error
+   Start at  23:14:30
+   Duration  53.20s (transform 1.82s, setup 96ms, import 2.27s, tests 0ms, environment 318ms)
+
+stderr | client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx > a conversation with skills picked > shows on an answer which skills it followed, and why each loaded
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+
+<--- Last few GCs --->
+
+[3654:0x13f48000]    53054 ms: Mark-Compact 2045.5 (2085.5) -> 2044.0 (2084.0) MB, pooled: 3 MB, 856.46 / 0.00 ms  (average mu = 0.091, current mu = 0.010) allocation failure; scavenge might not succeed
+
+
+<--- JS stacktrace --->
+
+FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+ 1: 0xe40d24 node::OOMErrorHandler(char const*, v8::OOMDetails const&) [/opt/node22/bin/node]
+ 2: 0x1216be0 v8::Utils::ReportOOMFailure(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [/opt/node22/bin/node]
+ 3: 0x1216eb7 v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [/opt/node22/bin/node]
+ 4: 0x1444875  [/opt/node22/bin/node]
+ 5: 0x14448a3  [/opt/node22/bin/node]
+ 6: 0x145d97a  [/opt/node22/bin/node]
+ 7: 0x1460b48  [/opt/node22/bin/node]
+ 8: 0x1cc69b1  [/opt/node22/bin/node]
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Worker forks emitted error.
+ ❯ EventEmitter.<anonymous> node_modules/vitest/dist/chunks/cli-api.C6CiCDM3.js:3446:22
+ ❯ EventEmitter.emit node:events:519:28
+ ❯ ChildProcess.emitUnexpectedExit node_modules/vitest/dist/chunks/cli-api.C6CiCDM3.js:3013:22
+ ❯ ChildProcess.emit node:events:519:28
+ ❯ Process.ChildProcess._handle.onexit node:internal/child_process:293:12
+
+Caused by: Error: Worker exited unexpectedly
+ ❯ ChildProcess.emitUnexpectedExit node_modules/vitest/dist/chunks/cli-api.C6CiCDM3.js:3012:33
+ ❯ ChildProcess.emit node:events:519:28
+ ❯ Process.ChildProcess._handle.onexit node:internal/child_process:293:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+[vitest-pool]: Timeout terminating forks worker for test files /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx.

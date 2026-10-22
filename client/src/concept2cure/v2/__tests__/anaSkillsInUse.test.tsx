@@ -13,7 +13,11 @@ const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async importOriginal => ({ ...(await importOriginal<typeof import('@/lib/queryClient')>()), apiRequest }));
 
 const send = vi.hoisted(() => vi.fn());
-const chatMessages = vi.hoisted(() => ({ value: [] as unknown[] }));
+const chatMessages = vi.hoisted(() => ({
+  value: [] as unknown[],
+  threadId: null as string | null,
+  threadSkills: null as { threadId: string; keys: string[] } | null,
+}));
 vi.mock('../../components/ana/useAnaChat', () => ({
   useAnaChat: () => ({
     messages: chatMessages.value,
@@ -21,12 +25,15 @@ vi.mock('../../components/ana/useAnaChat', () => ({
     isLoadingThread: false,
     loadThread: vi.fn().mockResolvedValue(undefined),
     send,
-    threadId: null,
+    threadId: chatMessages.threadId,
+    threadSkills: chatMessages.threadSkills,
   }),
 }));
 
 import { ApiRequestError } from '@/lib/queryClient';
-import { ComposerSkills } from '../ComposerSkills';
+import { ComposerSkills, useSkillMentionSource } from '../ComposerSkills';
+import { useConversationSkills } from '../anaSkillChoice';
+import { act, renderHook } from '@testing-library/react';
 import { ConversationThread } from '../surfaces/ConversationThread';
 import { ProjectSkills } from '../ProjectSkills';
 import { SkillStudio } from '../SkillStudio';
@@ -50,6 +57,8 @@ beforeEach(() => {
   apiRequest.mockReset();
   send.mockReset();
   chatMessages.value = [];
+  chatMessages.threadId = null;
+  chatMessages.threadSkills = null;
   window.sessionStorage.clear();
 });
 afterEach(() => {
@@ -223,5 +232,100 @@ describe('the skill studio', () => {
     await waitFor(() => expect(onSaved).toHaveBeenCalledWith('Zebra review created.'));
     const saved = apiRequest.mock.calls.find(c => c[0] === 'POST' && c[1] === '/api/ana-skills/projects/0f3c/skills')![2] as Record<string, unknown>;
     expect(saved).toMatchObject({ name: 'Zebra review', triggers: ['zebra protocol'], reason: 'Our reviewers asked for this.' });
+  });
+});
+
+describe('a conversation’s picks, kept on its thread', () => {
+  it('starts a reopened conversation from the picks its thread kept', () => {
+    const kept = { threadId: 'ana-ri_1', keys: ['labeling'] };
+    const { result } = renderHook(() => useConversationSkills('ana-ri_1', kept));
+    expect(result.current[0]).toEqual(['labeling']);
+    expect(result.current[2]).toBe(true);
+  });
+
+  it('prefers what this browser picked over the thread’s older record', () => {
+    window.sessionStorage.setItem('c2c.ana-skills.v1', JSON.stringify({ 'ana-ri_1': ['clinical'] }));
+    // One record, as the chat hook's state holds it: the same object on every render.
+    const kept = { threadId: 'ana-ri_1', keys: ['labeling'] };
+    const { result } = renderHook(() => useConversationSkills('ana-ri_1', kept));
+    expect(result.current[0]).toEqual(['clinical']);
+  });
+
+  it('adopts the record once, even when storage refuses the write and the host hands a new record each render', () => {
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError');
+    });
+    try {
+      let renders = 0;
+      const { result } = renderHook(() => {
+        renders += 1;
+        return useConversationSkills('ana-ri_1', { threadId: 'ana-ri_1', keys: ['labeling'] });
+      });
+      expect(result.current[0]).toEqual(['labeling']);
+      expect(renders).toBeLessThan(5);
+    } finally {
+      setItem.mockRestore();
+    }
+  });
+
+  it('ignores a record that belongs to another conversation', () => {
+    const kept = { threadId: 'ana-ri_1', keys: ['labeling'] };
+    const { result } = renderHook(() => useConversationSkills('ana-ri_2', kept));
+    expect(result.current[0]).toEqual([]);
+    expect(result.current[2]).toBe(false);
+  });
+
+  it('once a conversation has had picks, letting AnA choose again is sent as an empty list', async () => {
+    chatMessages.threadId = 'ana-ri_1';
+    chatMessages.threadSkills = { threadId: 'ana-ri_1', keys: ['labeling'] };
+    apiRequest.mockImplementation(async () => ok({ skills: AVAILABLE }));
+    (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO = { id: 'current' };
+    render(
+      <ConversationThread
+        surface={{ id: 'conversation-thread', label: 'Conversation' } as OwnedSurfaceViewProps['surface']}
+        segment="biopharma"
+        onNav={() => {}}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('ct-skills-pill'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Let AnA choose' }));
+    const box = screen.getByLabelText('Reply to AnA');
+    fireEvent.change(box, { target: { value: 'What next?' } });
+    fireEvent.keyDown(box, { key: 'Enter' });
+    await waitFor(() => expect(send).toHaveBeenCalled());
+    expect(send.mock.calls[0][2]).toMatchObject({ skills: [] });
+  });
+
+  it('sends nothing about skills from a conversation that never had any', async () => {
+    (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO = { id: 'new' };
+    render(
+      <ConversationThread
+        surface={{ id: 'conversation-thread', label: 'Conversation' } as OwnedSurfaceViewProps['surface']}
+        segment="biopharma"
+        onNav={() => {}}
+      />,
+    );
+    fireEvent.click(document.querySelector<HTMLButtonElement>('.ct-empty-chip')!);
+    await waitFor(() => expect(send).toHaveBeenCalled());
+    expect(send.mock.calls[0][2]?.skills).toBeUndefined();
+  });
+});
+
+describe('skills in the `/` menu', () => {
+  it('reads only once the draft starts with `/`, offers what is not picked, and nothing when the allowance is full', async () => {
+    apiRequest.mockImplementation(async () => ok({ skills: AVAILABLE }));
+    const onChange = vi.fn();
+    const { result, rerender } = renderHook(({ draft, chosen }) => useSkillMentionSource(null, draft, chosen, onChange), {
+      initialProps: { draft: 'hello', chosen: ['labeling'] as string[] },
+    });
+    expect(apiRequest).not.toHaveBeenCalled();
+    rerender({ draft: '/st', chosen: ['labeling'] });
+    await waitFor(() => expect(result.current.search('').length).toBe(3));
+    expect(result.current.search('').map((s) => s.key)).not.toContain('labeling');
+    expect(result.current.search('stability').map((s) => s.key)).toEqual(['cmc.stability']);
+    act(() => result.current.pick('cmc.stability'));
+    expect(onChange).toHaveBeenCalledWith(['labeling', 'cmc.stability']);
+    rerender({ draft: '/st', chosen: ['labeling', 'cmc.stability', 'clinical'] });
+    expect(result.current.search('')).toEqual([]);
   });
 });

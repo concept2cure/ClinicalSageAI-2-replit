@@ -93,6 +93,18 @@ describe('skills on a conversation turn', () => {
     expect(used.skills[0]).toMatchObject({ chosen: 'picked', reasons: ['chosen in this conversation'] });
   });
 
+  it('keeps the turn\u2019s picks on the conversation, and an empty list when the person lets AnA choose again', async () => {
+    await turn(app, { message: 'Thanks.', skills: ['labeling', 'not a key'] });
+    await turn(app, { message: 'Thanks.', skills: [] });
+    expect(h.state.threadSkills.map(w => w.keys)).toEqual([['labeling'], []]);
+    expect(h.state.threadSkills[0].threadId).toBe('thread-1');
+  });
+
+  it('leaves the conversation\u2019s picks alone when a turn says nothing about them', async () => {
+    await turn(app, { message: 'Thanks.' });
+    expect(h.state.threadSkills).toEqual([]);
+  });
+
   it('ignores a picked value that is not a skill key', async () => {
     const events = await turn(app, { message: 'Thanks, that is all for today.', skills: ["labeling'; DROP TABLE x;--", 42] });
     expect(systemText()).not.toContain('## Skills for this turn');

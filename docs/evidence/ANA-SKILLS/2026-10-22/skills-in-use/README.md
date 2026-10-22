@@ -97,9 +97,43 @@ The table is in `public` with `organization_id INTEGER NOT NULL`, so the tenant 
 - **Project custom instructions** (`projects.settings.customInstructions`) reach only the legacy chat path (`send-message.ts`), not AnA's stream. The project page's Instructions card is a fixed empty state.
 - **`ana_project_capabilities`** has a reader and no writer.
 
+## Third change: skills in `/`, and picks kept on the conversation
+
+This is design §10.5.
+
+**What a person can now do:**
+- Type `/` and a few letters in AnA's composer. Matching skills are listed after the commands, and choosing one adds it to the conversation's picks.
+- Reopen a conversation in another browser or tab, and its picks come back.
+- Choose "Let AnA choose", and that is recorded on the conversation.
+
+**Tests (2026-10-22):**
+
+| Suite | Tests |
+|---|---|
+| `appMentions.test.tsx`: 3 new for skills in `/`; the source pin now allows the composer's fourth argument | 12 |
+| `anaSkillsInUse.test.tsx`: 7 new | 15 |
+| `useAnaChat-thread-skills.test.ts` (new): picks returned with the thread, null when unstated, sent on each turn including an empty list | 3 |
+| `thread-messages-store.test.ts`: 2 new | 14 |
+| `stream-skills.test.ts`: 2 new (picks kept on the conversation; left alone when a turn says nothing) | 8 |
+| Everything touched: skills, skill routes, all of `server/routes/ana-ri/__tests__`, chat routes, AnA client components, conversation, project page, composer, `/` menu, Home | 1,838 across 157 files, all pass |
+
+**Found and fixed while verifying:**
+- A source-pinning test (`stream-stopped-reason.test.ts`) requires the stopped-turn thread assignment to follow the message ids directly. The picks write now sits after it.
+- The adoption effect could loop when storage refuses writes and a host passes a fresh record on every render. It now adopts once per conversation, and a test proves it.
+
+**Shown failing (`red/`):**
+
+| Mutation | Test that caught it |
+|---|---|
+| M15: a turn that says nothing overwrites the picks | stream-skills: "leaves the conversation's picks alone…" |
+| M16: unreadable picks reported as an empty list | thread-messages-store: "serves the transcript without the picks…" |
+| M17: the thread's record overrides this browser's newer choice | anaSkillsInUse: "prefers what this browser picked…" |
+| M18: clearing the picks is never sent | anaSkillsInUse: "letting AnA choose again is sent as an empty list" |
+| M19: choosing a skill in `/` does not pick it | appMentions: two tests |
+| M20: `/` offers skills already picked | anaSkillsInUse: "offers what is not picked…" |
+| M21: the record is re-adopted on every render | Red by a runaway render that exhausts the worker's memory. The unbounded render is the defect itself; the test's render-count assertion never gets to run. |
+
 ## Owed
 
 - The founder decisions from the first change still stand: who reviews the library, and whether unreviewed skills stay on by default.
-- `/skill` in the composer's `/` menu.
-- Keeping a conversation's picks on the thread record, so they follow a person across browsers.
 - HawkScan DAST was not run: no `HAWK_API_KEY` in this environment.

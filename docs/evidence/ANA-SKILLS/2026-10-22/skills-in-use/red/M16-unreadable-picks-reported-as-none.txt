@@ -1,0 +1,63 @@
+Mutation: server/routes/chat/threads.ts
+- .catch(() => undefined) : undefined;
++ .catch(() => []) : undefined;
+Test: server/routes/chat/__tests__/thread-messages-store.test.ts
+Exit: 1
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > GET /threads/:id/messages > serves an AnA thread its own transcript from chat_messages 2ms
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > GET /threads/:id/messages > serves a submission-chat thread from ai_messages, not from the other store 1ms
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > GET /threads/:id/messages > resolves the store org-scoped, so another tenant's thread is not found 1ms
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > GET /threads/:id/messages > returns the skills the conversation’s person picked, read in the organization 1ms
+ × server/routes/chat/__tests__/thread-messages-store.test.ts > GET /threads/:id/messages > serves the transcript without the picks when they cannot be read, never as none picked 5ms
+   → expected { messages: [ { …(2) } ], skills: [] } to not have property "skills"
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > GET /threads/:id/messages > needs an organization 0ms
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id > updates the store the thread lives in 1ms
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id > writes a title change scoped to the organization, not by id alone 0ms
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id — a conversation stays in the project it was held in (PF-10 S8) > a project change on the chat store (42) is refused 409, and nothing is written 1ms
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id — a conversation stays in the project it was held in (PF-10 S8) > a project change on the chat store (0f3c1a2b-1111-4222-8333-444455556666) is refused 409, and nothing is written 0ms
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id — a conversation stays in the project it was held in (PF-10 S8) > a project change on the chat store (null) is refused 409, and nothing is written 0ms
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id — a conversation stays in the project it was held in (PF-10 S8) > a project change on the ai store (0f3c1a2b-1111-4222-8333-444455556666) is refused 409, and nothing is written 0ms
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id — a conversation stays in the project it was held in (PF-10 S8) > a colleague's conversation is refused 403, and nothing is written 0ms
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id — a conversation stays in the project it was held in (PF-10 S8) > the owner renames their own conversation 0ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 passed (14)
+   Start at  23:11:56
+   Duration  1.15s (transform 561ms, setup 73ms, import 904ms, tests 16ms, environment 0ms)
+
+stderr | server/routes/chat/__tests__/thread-messages-store.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/chat/__tests__/thread-messages-store.test.ts
+{
+  "timestamp": "2026-10-22T23:11:57.711Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/chat/__tests__/thread-messages-store.test.ts > GET /threads/:id/messages > serves the transcript without the picks when they cannot be read, never as none picked
+AssertionError: expected { messages: [ { …(2) } ], skills: [] } to not have property "skills"
+
+- Expected:
+undefined
+
++ Received:
+[]
+
+ ❯ server/routes/chat/__tests__/thread-messages-store.test.ts:90:24
+     88|     expect(r.statusCode).toBe(200);
+     89|     expect(r.body.messages).toHaveLength(1);
+     90|     expect(r.body).not.toHaveProperty('skills');
+       |                        ^
+     91|   });
+     92|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

@@ -192,7 +192,6 @@ client segment has at least 40 skills that apply to it (`library.test.ts`). Coun
 
 ## 8. Not in this change (follow-ups)
 
-- A `/skill` invocation typed in the composer (the Skills menu, §10, picks skills; the `/` menu does not list them yet).
 - Converging the enrichment judgment packs into the registry so an organization can configure them.
 - Generating the connector `skills/concept2cure` pack from the library.
 - Skill evaluations against `server/eval/` (does a skill improve an answer), before a skill is marked reviewed.
@@ -275,10 +274,27 @@ which is shallow; older deletions are not visible from here.
 
 ### 10.4 Follow-ups
 
-- `/skill` in the composer's `/` menu.
 - Reaching the project's custom instructions (`project-instructions.ts`) on AnA's stream, or folding them into a
   project skill (founder's call: they are always-on text, not a selected method).
-- Recording a conversation's picks on the thread (`chat_threads.metadata`) so they follow the person across
-  browsers.
+
+### 10.5 Skills in the `/` menu, and picks kept on the conversation (third change, same day)
+
+- **`/` lists skills.** The one composer menu (`appMentions.tsx`, `useAppMentions`) takes an optional skill
+  source. With one, `/` lists the matching skills after the commands. Choosing a skill inserts no text: the
+  typed `/query` leaves the draft and the skill joins the conversation's picks, as the Skills menu would add it.
+  The menu still never puts a command in a message that the server does not parse
+  (`shared/ana/slash-commands.ts` is unchanged). The skills are read only once a draft starts with `/`, and none
+  is offered when the allowance is full (`useSkillMentionSource`).
+- **Picks kept on the thread.** When a turn says what its picks are (`skills` present, an empty list included),
+  the stream writes them to `chat_threads.metadata.skills` for the thread it has already resolved to the caller's
+  own (`recordThreadSkills`). A failed write costs nothing this turn: the turn loads the picks anyway.
+  `GET /api/chat/threads/:id/messages` returns them as `skills`; a failed read leaves the field out and never
+  reads as "none picked". The chat hook exposes them as `threadSkills`, and the conversation adopts them, once,
+  when this browser holds no choice of its own for that thread (what this browser picked is the newer choice).
+  Once a conversation has had picks, an empty list is sent too, so letting AnA choose again is recorded. A host
+  with no Skills menu sends nothing, and the thread's picks are left alone.
+- What already exists, for this step: `chat_threads.metadata JSONB` (`migrations/20260728_chat_thread_store.sql`)
+  was already provisioned and written by `cortex-unified.ts`. No migration is needed. The `/` menu and its
+  source-pinning test (`appMentions.test.tsx`) are extended, not forked.
 
 Verification for this change: `docs/evidence/ANA-SKILLS/2026-10-22/skills-in-use/README.md`.
