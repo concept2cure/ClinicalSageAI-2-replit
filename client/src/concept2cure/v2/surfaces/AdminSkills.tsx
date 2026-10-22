@@ -16,13 +16,11 @@ import {
   DISCIPLINE_OPTIONS,
   REASON_REQUIRED,
   SEGMENT_OPTIONS,
-  orgForm,
-  orgSkillBody,
   reasonOf,
   toggleForm,
   type Editing,
-  type OrgEditing,
 } from './AdminSkillForms';
+import { SkillStudio } from '../SkillStudio';
 
 /**
  * Skills — the Admin and access tab where an administrator decides which
@@ -32,7 +30,8 @@ import {
  *                      discipline; each one readable whole, turned off or on
  *                      with a reason, added to or replaced by the
  *                      organization's own text.
- *   Your skills        the organization's own skills, created and changed
+ *   Your skills        the organization's own skills, designed, tried and
+ *                      tuned in the skill studio (SkillStudio.tsx), saved
  *                      with a reason.
  *   Test a question    which skills AnA would load for a question, and why.
  *
@@ -69,7 +68,7 @@ function orgStatusPill(status: OrgSkillDto['status']): string {
   return status === 'draft' ? 'draft' : 'idle';
 }
 
-export function AdminSkills() {
+export function AdminSkills({ onAsk }: { onAsk?: (text: string) => void } = {}) {
   const [epoch, setEpoch] = useState(0);
   const reload = () => setEpoch((n) => n + 1);
   const library = useLiveData<LibraryPayload>('/api/ana-skills/library', ['/api/ana-skills/library', epoch]);
@@ -103,19 +102,10 @@ export function AdminSkills() {
     );
   };
 
-  const submitOrgSkill = async (target: OrgEditing, v: Record<string, string>) => {
-    const reason = reasonOf(v);
-    if (!reason) {
-      fireToast(REASON_REQUIRED, 'error');
-      return;
-    }
-    const body = orgSkillBody(target, v, reason);
+  const savedOrgSkill = (message: string) => {
     setEditing(null);
-    if (target.skill) {
-      await send('PUT', `/api/ana-skills/organization/${target.skill.id}`, body, `${body.name} saved, version ${target.skill.version + 1}.`, 'The skill was not changed.');
-    } else {
-      await send('POST', '/api/ana-skills/organization', body, `${body.name} created.`, 'The skill was not created.');
-    }
+    fireToast(message);
+    reload();
   };
 
   return (
@@ -135,7 +125,7 @@ export function AdminSkills() {
         <C2CForm config={toggleForm(editing.skill)} onCancel={() => setEditing(null)} onSubmit={(v) => void submitToggle(editing.skill, v)} />
       )}
       {editing?.kind === 'org' && (
-        <C2CForm config={orgForm(editing)} onCancel={() => setEditing(null)} onSubmit={(v) => void submitOrgSkill(editing, v)} />
+        <SkillStudio target={editing} onClose={() => setEditing(null)} onSaved={savedOrgSkill} onAsk={onAsk} />
       )}
       <C2CToast msg={toast} />
     </>

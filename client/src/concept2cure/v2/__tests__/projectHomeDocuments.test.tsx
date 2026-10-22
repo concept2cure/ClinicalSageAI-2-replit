@@ -81,6 +81,8 @@ function serve(opts: Opts = {}) {
       return ok({ projectId: PID, sources: [source(11, 'csr-study-101.pdf', 'extracted'), source(12, 'scan.pdf', 'failed')] });
     }
     if (url.startsWith('/api/chat/threads?program_id=')) return ok({ threads: [] });
+    // The project's Skills card (ProjectSkills.tsx): nothing deployed, read-only.
+    if (url === `/api/ana-skills/projects/${PID}`) return ok({ projectId: 1, settings: [], skills: [], alwaysMax: 3, canChange: false });
     return ok({});
   });
 }

@@ -3504,6 +3504,12 @@ export const C2C_MIGRATION_FILES = [
   // public with organization_id INTEGER NOT NULL, so the sweeps below police
   // them. Additive and IF NOT EXISTS throughout; drops nothing.
   'migrations/20261022_ana_skills.sql',
+  // AnA skills in a project (2026-10-22, lane ANA-SKILLS): project_skill_settings
+  // (a project's 'always' or 'off' for one skill, with the reason) and
+  // account_skill_bundles.project_id (a skill written for one project). After
+  // 20261022_ana_skills.sql, which creates account_skill_bundles. Public with
+  // organization_id INTEGER NOT NULL; additive and IF NOT EXISTS; drops nothing.
+  'migrations/20261022c_ana_project_skills.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

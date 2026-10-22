@@ -66,6 +66,8 @@ export interface OrgSkillFields {
   extendsSkillKey: string | null;
   extensionMode: 'addendum' | 'replace' | null;
   status: 'draft' | 'active' | 'archived';
+  /** A skill written for one project: selected only on that project's turns. Null for the whole organization. */
+  projectId: number | null;
 }
 
 /** An organization skill as stored, in the shape the selector and Settings read. */
@@ -157,6 +159,7 @@ function toRecord(row: Record<string, unknown>): OrgSkillRecord {
     extendsSkillKey: typeof row.extends_skill_key === 'string' ? row.extends_skill_key : null,
     extensionMode: mode,
     status: (['draft', 'active', 'locked', 'archived'].includes(status) ? status : 'draft') as OrgSkillRecord['status'],
+    projectId: row.project_id == null ? null : Number(row.project_id),
     version: Number(row.version ?? 1),
     updatedAt: row.updated_at ? new Date(row.updated_at as string).toISOString() : null,
   };
@@ -172,7 +175,7 @@ export async function listOrgSkills(
     `SELECT id, bundle_id, name, description, bundle_type, prompt_fragments, evidence_preferences,
               authority_response_style, module_types, work_types, submission_types, regulatory_regions,
               segments, therapeutic_areas, surfaces, document_types, triggers, tool_names,
-              extends_skill_key, extension_mode, status, version, updated_at FROM account_skill_bundles
+              extends_skill_key, extension_mode, project_id, status, version, updated_at FROM account_skill_bundles
       WHERE organization_id = $1 AND ($2::boolean OR status <> 'archived')
       ORDER BY name, id`,
     [organizationId, options.includeArchived === true],
@@ -221,7 +224,8 @@ export class OrgSkillRefusal extends Error {
   }
 }
 
-async function inTransaction<T>(pool: SkillConnectable, work: (client: SkillTxClient) => Promise<T>): Promise<T> {
+/** One governed write: the change and its audit row commit together or not at all. */
+export async function inTransaction<T>(pool: SkillConnectable, work: (client: SkillTxClient) => Promise<T>): Promise<T> {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -275,13 +279,13 @@ export async function createOrgSkill(
            (bundle_id, organization_id, name, description, bundle_type, module_types, work_types,
             submission_types, regulatory_regions, segments, therapeutic_areas, surfaces, document_types,
             triggers, tool_names, extends_skill_key, extension_mode, prompt_fragments, policy_bindings,
-            version, status, created_by_id, created_at, updated_at)
+            version, status, created_by_id, project_id, created_at, updated_at)
          VALUES ($1, $2, $3, $4, $5, $6::json, $7::json, $8::json, $9::json, $10::jsonb, $11::jsonb, $12::jsonb,
-                 $13::jsonb, $14::jsonb, $15::jsonb, $16, $17, $18::json, '[]'::json, 1, $19, $20, NOW(), NOW())
+                 $13::jsonb, $14::jsonb, $15::jsonb, $16, $17, $18::json, '[]'::json, 1, $19, $20, $21, NOW(), NOW())
          RETURNING id, bundle_id, name, description, bundle_type, prompt_fragments, evidence_preferences,
               authority_response_style, module_types, work_types, submission_types, regulatory_regions,
               segments, therapeutic_areas, surfaces, document_types, triggers, tool_names,
-              extends_skill_key, extension_mode, status, version, updated_at`,
+              extends_skill_key, extension_mode, project_id, status, version, updated_at`,
         [
           bundleId,
           organizationId,
@@ -303,6 +307,7 @@ export async function createOrgSkill(
           fragmentsOf(fields.instructions),
           fields.status,
           actor.userId,
+          fields.projectId,
         ],
       );
       const created = toRecord(rows[0]);
@@ -346,6 +351,8 @@ export async function createOrgSkill(
  * Change an organization skill. A locked skill refuses every change; an
  * archived one refuses everything but being restored to a draft. The version
  * rises with each change, and the audit row holds the skill before and after.
+ * The project a skill was written for is fixed at creation and not changed
+ * here: who may change a skill depends on it, so moving it would move that.
  */
 export async function updateOrgSkill(
   pool: SkillConnectable,
@@ -361,7 +368,7 @@ export async function updateOrgSkill(
         `SELECT id, bundle_id, name, description, bundle_type, prompt_fragments, evidence_preferences,
               authority_response_style, module_types, work_types, submission_types, regulatory_regions,
               segments, therapeutic_areas, surfaces, document_types, triggers, tool_names,
-              extends_skill_key, extension_mode, status, version, updated_at FROM account_skill_bundles
+              extends_skill_key, extension_mode, project_id, status, version, updated_at FROM account_skill_bundles
           WHERE id = $1 AND organization_id = $2 FOR UPDATE`,
         [id, organizationId],
       );
@@ -384,7 +391,7 @@ export async function updateOrgSkill(
           RETURNING id, bundle_id, name, description, bundle_type, prompt_fragments, evidence_preferences,
               authority_response_style, module_types, work_types, submission_types, regulatory_regions,
               segments, therapeutic_areas, surfaces, document_types, triggers, tool_names,
-              extends_skill_key, extension_mode, status, version, updated_at`,
+              extends_skill_key, extension_mode, project_id, status, version, updated_at`,
         [
           id,
           organizationId,

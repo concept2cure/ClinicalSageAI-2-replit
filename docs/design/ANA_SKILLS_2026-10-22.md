@@ -138,7 +138,11 @@ deletion that matched was the vendored gstack developer-tool suite under `.claud
 
 ### 6.1 Coverage
 
-*(Counts are filled from the built library in the evidence README.)*
+139 skills: 114 written across the 13 disciplines (regulatory strategy 8, submissions 9, CMC 13, nonclinical 6,
+clinical 14, clinical pharmacology 7, biostatistics 12, safety 7, labeling 7, medical writing 7, quality systems 7,
+device 10, diagnostics 7) and 25 therapeutic-area skills derived from the TA profiles (a root and 24 areas). Every
+client segment has at least 40 skills that apply to it (`library.test.ts`). Counts by segment and area are in
+`docs/evidence/ANA-SKILLS/2026-10-22/README.md`.
 
 ### 6.2 How it was written
 
@@ -188,8 +192,7 @@ deletion that matched was the vendored gstack developer-tool suite under `.claud
 
 ## 8. Not in this change (follow-ups)
 
-- Composer skill chips and a `/skill` invocation (the design reference's SkillsRow); selection already accepts
-  invoked keys.
+- A `/skill` invocation typed in the composer (the Skills menu, §10, picks skills; the `/` menu does not list them yet).
 - Converging the enrichment judgment packs into the registry so an organization can configure them.
 - Generating the connector `skills/concept2cure` pack from the library.
 - Skill evaluations against `server/eval/` (does a skill improve an answer), before a skill is marked reviewed.
@@ -198,3 +201,84 @@ deletion that matched was the vendored gstack developer-tool suite under `.claud
 ## 9. Verification
 
 See `docs/evidence/ANA-SKILLS/2026-10-22/README.md`.
+
+## 10. Skills in use: chosen in the conversation, deployed to a project, designed and tuned (second change, 2026-10-22)
+
+The founder's direction: skills, not tools; an organization adds, creates, designs and tunes its own as one does
+with Claude's; skills apply at organization setup, in Settings, and per project; a person picks skills in AnA's
+chat; and AnA still selects skills on her own from what is asked. This change completes §3–§5 rather than adding
+a second skills system.
+
+### 10.1 What already exists (searched before this change)
+
+| Piece | Path | What it does today | What it did not do |
+|---|---|---|---|
+| Selector, invoked keys | `server/services/ana/skills/selector.ts` | Scored `invokedKeys` +100 | Nothing sent them; no project choice |
+| AnA's composer | `client/src/concept2cure/v2/surfaces/ConversationThread.tsx` (`.ct-comp-foot`) | Live drive, run policy, the Engine pill and menu | No skill choice |
+| `/` and `@` menus | `client/src/concept2cure/v2/appMentions.tsx`, `shared/ana/slash-commands.ts` | Slash commands (`/playbook`, `/guide`…) and app mentions | Do not list skills (follow-up, §8) |
+| `selected_tools` | `useAnaChat.ts` body | Pins tools for a turn | Tools are not skills; left as it is |
+| Project page side column | `client/src/concept2cure/v2/surfaces/ProjectHome.tsx` (`pj-side`) | Readiness card; Memory and Instructions as fixed empty states | No skills |
+| Project admission | `server/services/ana/project-scope-admission.ts`, `server/routes/c2c/project-access.ts` | How AnA's turn admits a project; project write admission | Reused, not rebuilt |
+| `ana_project_capabilities` | `shared/schema/ana-intelligence.ts:169` | Per-project usage counters for the capability catalog; nothing writes it; one reader prints the top five | Not a skill store: keyed to `ana_capability_registry`, no reason, usage-shaped. Not reused, so its one reader does not print skill keys as capabilities |
+| Project custom instructions | `projects.settings.customInstructions`, `server/services/projects/project-instructions.ts` | Read on the legacy chat path (`send-message.ts`) | Not on AnA's stream; always-on text, not a selected method (finding, not changed here) |
+| `project_intelligence_profiles.project_persona` | `shared/schema.ts:15555` | One "SKILL.md for this project" text read by client-intelligence memory | One text per project, not skills |
+| Organization setup | `client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx` (Setup), `organizations.client_type` | The client type picker | Did not reach skill selection |
+| Governed dialogs | `useDialog.ts`, the `de-*` drawer vocabulary | Every governed drawer | Reused for the studio |
+| Audit history | `audit_logs` rows written by `account-skill-bundles.ts` | Every skill change with before, after and reason | Nothing read them back for a skill |
+
+Deleted-file search: `git log --all --diff-filter=D` on skill, playbook, recipe, prompt-library and instructions
+names finds only `.claude/skills/**` (developer tooling), no application code — in the history this clone holds,
+which is shallow; older deletions are not visible from here.
+
+### 10.2 What changed
+
+- **Chosen skills.** The selector takes two choices besides the question: skills **picked** in the conversation
+  (`invokedKeys`, +100) and skills **deployed** to the project (`deployedKeys`, +50). A choice loads with no
+  trigger phrase and whatever the program's facets, and has its own allowance (`maxChosen` 3), so a choice never
+  crowds out what the question calls for (`maxSkills` 3 for AnA's own selection); `maxChars` rises to 32,000 for
+  both. The turn record and `context_used` say, per skill, `chosen: 'picked' | 'deployed' | null`.
+- **The composer's Skills menu** (`ComposerSkills.tsx`), beside the Engine pill: "Skills: AnA chooses" until a
+  person picks up to three from what is on for the organization and the project. The picks ride on every turn of
+  that conversation as `skills` (`anaSkillChoice.ts`, kept per conversation for the browser session). The server
+  keeps only skill-shaped keys, at most three (`pickedSkillKeysOf`).
+- **Each answer names its skills** (`TurnSkillsUsed`): each skill, whether the person picked it, the project
+  deployed it, or AnA chose it, and the selector's reasons on hover.
+- **Project skills** (`project_skill_settings`, `20261022c`): a project deploys a skill (`always`, at most three)
+  or turns one off there (`off`), with a reason and a chained audit row
+  (`ana_skill.project_deployed | project_turned_off | project_cleared`). A skill can also be **written for one
+  project** (`account_skill_bundles.project_id`): it loads only on that project's turns, and a project adds to a
+  library skill but never replaces one (that stays the organization's decision). Who may change a project's
+  skills is the project's write admission; who may read them is the same admission AnA's turn uses.
+- **The project page's Skills card** (`ProjectSkills.tsx`), in the side column: always on here, off here, written
+  for this project, and the actions for a person the project admits to change it.
+- **The skill studio** (`SkillStudio.tsx`) replaces the organization skill drawer (zero duplication): design the
+  skill, **try a question against the unsaved draft** (`POST /test` with `draft`, nothing stored), read its
+  **versions** from the audit rows (`GET /organization/:id/history`), ask AnA to draft one (a fixed prompt handed
+  to the conversation), and save with a reason. The same studio writes a project's skill from its Skills card.
+- **Setup.** The organization's client type (`organizations.client_type`, through the existing
+  `orgToClientSegment`) is the segment when a turn names no submission type, and Setup says so.
+- **The question test and the live turn share one path** (`selectTurnSkills`), so what Settings shows is what AnA
+  loads.
+- An active organization skill no longer needs a trigger phrase: one without is loaded when picked or deployed.
+
+### 10.3 Decisions
+
+1. **Skills, not tools.** A skill is a method AnA follows; the composer picks skills (`skills`), not tools
+   (`selected_tools` is untouched).
+2. **A project may deploy at most three skills.** Each loads on every turn there; more would leave no room for the
+   question. Enforced under an advisory lock in the writer.
+3. **A project adds, never replaces.** Replacing a library method changes it for everyone who meets it in that
+   project; it stays an administrator's act in Admin and access → Skills.
+4. **Picks are a working preference, not a record.** They live in the browser session per conversation; what a
+   turn actually loaded is recorded on the turn.
+5. **The project card is read-only for those the project admits only to read.**
+
+### 10.4 Follow-ups
+
+- `/skill` in the composer's `/` menu.
+- Reaching the project's custom instructions (`project-instructions.ts`) on AnA's stream, or folding them into a
+  project skill (founder's call: they are always-on text, not a selected method).
+- Recording a conversation's picks on the thread (`chat_threads.metadata`) so they follow the person across
+  browsers.
+
+Verification for this change: `docs/evidence/ANA-SKILLS/2026-10-22/skills-in-use/README.md`.

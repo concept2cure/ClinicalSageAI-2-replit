@@ -14,6 +14,8 @@
 
 import { createHash } from 'node:crypto';
 import {
+  SKILL_TURN_BUDGET,
+  isLibrarySkillKey,
   orgSkillKey,
   type ClientSegmentId,
   type CanonicalRegion,
@@ -22,6 +24,7 @@ import {
 import { stableStringify } from '../../../../shared/canonical-json.js';
 import { THERAPEUTIC_AREAS } from '../../../../shared/constants/domain/therapeutic-areas.js';
 import { normalizeTherapeuticArea } from '../../../../shared/constants/domain/aliases.js';
+import { isOrganizationType, orgToClientSegment } from '../../../../shared/constants/domain/organization-types.js';
 import { isCanonicalRegion } from '../../../../shared/regulatory/region-identity.js';
 import { resolveToRegistryEntry } from '../../../../shared/regulatory/submission-type-bridge.js';
 import {
@@ -34,6 +37,7 @@ import {
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
 import { getProfile } from '../therapeutic-area-profiles/index.js';
 import { getSkillLibrary } from './library/index.js';
+import { projectChoices, readProjectSkillSettings, type ProjectSkillSetting } from './project-skills.js';
 import { selectSkills, type SelectableSkill, type SkillSelection, type SkillSelectionContext } from './selector.js';
 import type { LibrarySkill } from './types.js';
 
@@ -241,6 +245,36 @@ export function segmentsAndRegionOf(submissionType: string | null | undefined): 
   return { segments, region };
 }
 
+/**
+ * The organization's own client segment, from the client type set at setup
+ * (organizations.client_type, through orgToClientSegment). A service
+ * organization (a CRO, a CDMO) has none: its segment is the product's.
+ */
+export function segmentsOfClientType(clientType: string | null | undefined): ClientSegmentId[] {
+  if (!clientType || !isOrganizationType(clientType)) return [];
+  const segment = orgToClientSegment(clientType);
+  return segment ? [segment] : [];
+}
+
+/**
+ * What a project changes about the organization's skills: its own skills are
+ * added, other projects' are left out, a skill turned off there is left out,
+ * and a skill deployed there is chosen on every turn.
+ */
+export function applyProjectScope(
+  skills: readonly SelectableSkill[],
+  settings: ReadonlyMap<string, Pick<ProjectSkillSetting, 'state'>>,
+): { skills: SelectableSkill[]; deployedKeys: string[] } {
+  const { deployed, off } = projectChoices(settings as ReadonlyMap<string, ProjectSkillSetting>);
+  const visible = skills.filter(s => !off.has(s.key) && !(s.replacedBy && off.has(s.replacedBy.key)));
+  return { skills: visible, deployedKeys: deployed };
+}
+
+/** The organization's skills that apply in a project: its own, and the organization-wide ones. */
+export function orgSkillsForProject(orgSkills: readonly OrgSkillRecord[], projectId: number | null | undefined): OrgSkillRecord[] {
+  return orgSkills.filter(r => r.projectId === null || (projectId != null && r.projectId === projectId));
+}
+
 // ─── The prompt block ───────────────────────────────────────────────────────
 
 function reviewLine(skill: SelectableSkill): string {
@@ -313,6 +347,8 @@ export interface TurnSkillEntry {
   replacedBy: { key: string; name: string; version: number } | null;
   addenda: Array<{ key: string; name: string; version: number; contentHash: string }>;
   reasons: string[];
+  /** Picked in the conversation or deployed to the project; null when AnA selected it. */
+  chosen: 'picked' | 'deployed' | null;
 }
 
 export type TurnSkillsStatus = 'loaded' | 'none' | 'unavailable';
@@ -348,6 +384,7 @@ function entriesOf(selection: SkillSelection): TurnSkillEntry[] {
     replacedBy: s.skill.replacedBy ?? null,
     addenda: (s.skill.addenda ?? []).map(a => ({ key: a.key, name: a.name, version: a.version, contentHash: a.contentHash })),
     reasons: s.reasons,
+    chosen: s.chosen,
   }));
 }
 
@@ -367,6 +404,20 @@ export function documentTypeIdOf(...candidates: unknown[]): string | null {
     if (typeof v === 'string' && REGISTRY_ID.test(v)) return v;
   }
   return null;
+}
+
+/**
+ * The skills a person picked in the conversation, from the request body.
+ * Client-sent, so only key-shaped strings are kept, at most the turn's chosen
+ * allowance; a key that names no skill the organization has on simply selects
+ * nothing.
+ */
+export function pickedSkillKeysOf(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  const keys = raw.filter(
+    (k): k is string => typeof k === 'string' && (isLibrarySkillKey(k) || /^org:[A-Za-z0-9_-]{1,80}$/.test(k)),
+  );
+  return Array.from(new Set(keys)).slice(0, SKILL_TURN_BUDGET.maxChosen);
 }
 
 function toolPinsOf(selection: SkillSelection): string[] {
@@ -389,28 +440,69 @@ async function projectTherapeuticArea(client: SkillReadClient, organizationId: n
   return therapeuticAreaOf(typeof rows[0]?.therapeutic_area === 'string' ? rows[0].therapeutic_area : null);
 }
 
+/** The organization's client type, read in its own scope. Null when unset or unreadable. */
+async function organizationClientType(client: SkillReadClient, organizationId: number): Promise<string | null> {
+  const { rows } = await client.query(`SELECT client_type FROM organizations WHERE id = $1`, [organizationId]);
+  return typeof rows[0]?.client_type === 'string' ? rows[0].client_type : null;
+}
+
+const NO_PROJECT_SETTINGS: ReadonlyMap<string, ProjectSkillSetting> = new Map();
+
+/** What a dry run changes about a turn (Settings' question test). */
+export interface TurnSkillOverrides {
+  /** An unsaved skill, tested as if it were active; it stands in for `draftOf` when that is set. */
+  draft?: OrgSkillRecord | null;
+  draftOf?: number | null;
+  /** A therapeutic area to test with instead of the project's. */
+  therapeuticArea?: TherapeuticArea | null;
+}
+
+/**
+ * The selection AnA makes for a turn, from the organization's stored skills
+ * and settings, the project's, and the turn's context. The live turn and the
+ * question test both come through here, so the test shows what AnA would load.
+ */
+export async function selectTurnSkills(
+  client: SkillReadClient,
+  input: TurnSkillInput,
+  overrides: TurnSkillOverrides = {},
+): Promise<SkillSelection> {
+  const library = getSkillLibrary();
+  const projectId = input.projectId ?? null;
+  const [stored, settings, projectArea, projectSettings, clientType] = await Promise.all([
+    listOrgSkills(client, input.organizationId),
+    readSkillSettings(client, input.organizationId),
+    projectId ? projectTherapeuticArea(client, input.organizationId, projectId) : Promise.resolve(null),
+    projectId ? readProjectSkillSettings(client, input.organizationId, projectId) : Promise.resolve(NO_PROJECT_SETTINGS),
+    organizationClientType(client, input.organizationId),
+  ]);
+  const orgSkills = overrides.draft
+    ? [...stored.filter(r => r.id !== overrides.draftOf), overrides.draft]
+    : stored;
+  const built = buildSelectableSkills(library.skills, orgSkillsForProject(orgSkills, projectId), settings);
+  const { skills, deployedKeys } = applyProjectScope(built.skills, projectSettings);
+  const stated = segmentsAndRegionOf(input.submissionType);
+  // The submission type states the product's segment; without one, the
+  // organization's own client type (set at setup) is the best that is known.
+  const segments = stated.segments.length > 0 ? stated.segments : segmentsOfClientType(clientType);
+  const context: SkillSelectionContext = {
+    message: input.message,
+    surfaceId: input.surfaceId ?? null,
+    documentType: input.documentType ?? null,
+    segments,
+    therapeuticArea: overrides.therapeuticArea ?? projectArea,
+    submissionType: input.submissionType ?? null,
+    region: stated.region,
+    invokedKeys: input.invokedKeys ?? [],
+    deployedKeys,
+  };
+  return selectSkills(skills, context);
+}
+
 /** Select and describe the turn's skills. Never throws. */
 export async function resolveTurnSkills(client: SkillReadClient, input: TurnSkillInput): Promise<TurnSkills> {
   try {
-    const library = getSkillLibrary();
-    const [orgSkills, settings, therapeuticArea] = await Promise.all([
-      listOrgSkills(client, input.organizationId),
-      readSkillSettings(client, input.organizationId),
-      input.projectId ? projectTherapeuticArea(client, input.organizationId, input.projectId) : Promise.resolve(null),
-    ]);
-    const { skills } = buildSelectableSkills(library.skills, orgSkills, settings);
-    const { segments, region } = segmentsAndRegionOf(input.submissionType);
-    const context: SkillSelectionContext = {
-      message: input.message,
-      surfaceId: input.surfaceId ?? null,
-      documentType: input.documentType ?? null,
-      segments,
-      therapeuticArea,
-      submissionType: input.submissionType ?? null,
-      region,
-      invokedKeys: input.invokedKeys ?? [],
-    };
-    const selection = selectSkills(skills, context);
+    const selection = await selectTurnSkills(client, input);
     return {
       status: selection.selected.length > 0 ? 'loaded' : 'none',
       selection,

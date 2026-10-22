@@ -275,6 +275,8 @@ function readSkillsUsed(event: Record<string, unknown>): Pick<AnaContextUsed, 's
         name: s.name as string,
         source: s.source === 'organization' ? ('organization' as const) : ('library' as const),
         version: typeof s.version === 'number' ? s.version : 0,
+        reasons: Array.isArray(s.reasons) ? s.reasons.filter((r: unknown): r is string => typeof r === 'string') : [],
+        chosen: s.chosen === 'picked' || s.chosen === 'deployed' ? s.chosen : null,
       })),
     skillsStatus: status,
   };

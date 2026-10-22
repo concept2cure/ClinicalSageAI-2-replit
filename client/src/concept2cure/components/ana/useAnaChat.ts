@@ -1724,6 +1724,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           const tools = sendOpts?.toolsOverride ?? options.selectedTools;
           return tools && tools.length > 0 ? tools : undefined;
         })(),
+        // Skills picked in the composer for this conversation. Omitted when
+        // none are, so AnA chooses on her own.
+        skills: sendOpts?.skills && sendOpts.skills.length > 0 ? sendOpts.skills : undefined,
         // Model/effort picker. Both omitted when unset so the server keeps its
         // default routing (effort='balanced', no model pin).
         effort_level: options.effortLevel ?? undefined,

@@ -300,7 +300,16 @@ export interface AnaContextUsed {
    * Undefined when the server did not say — an older server — which is shown
    * as nothing, never as "no skills".
    */
-  skills?: Array<{ key: string; name: string; source: 'library' | 'organization'; version: number }>;
+  skills?: Array<{
+    key: string;
+    name: string;
+    source: 'library' | 'organization';
+    version: number;
+    /** Why it loaded, in the selector's words ("asked about \"shelf life\""). */
+    reasons: string[];
+    /** Picked in the conversation or deployed to the project; null when AnA chose it. */
+    chosen: 'picked' | 'deployed' | null;
+  }>;
   skillsStatus?: 'loaded' | 'none' | 'unavailable';
 }
 /**
@@ -855,6 +864,12 @@ export interface DriveTurnControls {
  */
 export interface AnaSendOptions {
   toolsOverride?: string[];
+  /**
+   * Skills the person picked for this conversation (the composer's Skills
+   * menu). Sent as `skills`; the server loads them ahead of what AnA selects
+   * herself. Omitted when empty: AnA chooses.
+   */
+  skills?: string[];
   liveDrive?: boolean;
   driveMode?: 'assist' | 'demo';
   runPolicy?: AnaRunPolicy | null;

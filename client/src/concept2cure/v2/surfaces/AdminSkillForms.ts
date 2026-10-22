@@ -14,9 +14,11 @@ import {
 } from '@shared/ana/skills';
 
 /**
- * The forms of Admin and access → Skills (AdminSkills.tsx): turning a library
- * skill off or on, and writing an organization skill. Each form carries the
- * reason the server requires; the body it builds is what /api/ana-skills reads.
+ * The forms of AnA skills: turning a library skill off or on (a drawer in
+ * Admin and access → Skills, AdminSkills.tsx), and what the skill studio
+ * (SkillStudio.tsx) starts from and sends when a skill is written or tuned.
+ * Every change carries the reason the server requires; the body built here is
+ * what /api/ana-skills reads.
  */
 
 export const SEGMENT_OPTIONS: C2CFormFieldOption[] = [
@@ -24,18 +26,18 @@ export const SEGMENT_OPTIONS: C2CFormFieldOption[] = [
   ...SKILL_SEGMENT_IDS.map((s) => ({ value: s, label: SKILL_SEGMENT_LABELS[s] })),
 ];
 export const DISCIPLINE_OPTIONS: C2CFormFieldOption[] = SKILL_DISCIPLINES.map((d) => ({ value: d, label: SKILL_DISCIPLINE_LABELS[d] }));
-const USE_CASE_OPTIONS: C2CFormFieldOption[] = SKILL_USE_CASES.map((u) => ({ value: u, label: SKILL_USE_CASE_LABELS[u] }));
-const TA_OPTIONS: C2CFormFieldOption[] = [
+export const USE_CASE_OPTIONS: C2CFormFieldOption[] = SKILL_USE_CASES.map((u) => ({ value: u, label: SKILL_USE_CASE_LABELS[u] }));
+export const TA_OPTIONS: C2CFormFieldOption[] = [
   { value: '', label: 'Any therapeutic area' },
   ...THERAPEUTIC_AREAS.filter((t) => t.value !== 'other').map((t) => ({ value: t.value, label: t.label })),
 ];
-const STATUS_OPTIONS: C2CFormFieldOption[] = [
+export const STATUS_OPTIONS: C2CFormFieldOption[] = [
   { value: 'draft', label: 'Draft — AnA does not load it' },
   { value: 'active', label: 'Active' },
   { value: 'archived', label: 'Archived' },
 ];
 
-const REASON_FIELD: C2CFormField = {
+export const REASON_FIELD: C2CFormField = {
   key: 'reason',
   label: 'Reason for change',
   type: 'textarea',
@@ -46,7 +48,14 @@ const REASON_FIELD: C2CFormField = {
 
 export type Editing =
   | { kind: 'toggle'; skill: LibrarySkillSummaryDto }
-  | { kind: 'org'; skill: OrgSkillDto | null; base: LibrarySkillDetailDto | null; mode: 'addendum' | 'replace' | null };
+  | {
+      kind: 'org';
+      skill: OrgSkillDto | null;
+      base: LibrarySkillDetailDto | null;
+      mode: 'addendum' | 'replace' | null;
+      /** The project a new skill is written for (its program id or number); absent for the organization's own. */
+      projectId?: string | number | null;
+    };
 
 export type OrgEditing = Extract<Editing, { kind: 'org' }>;
 
@@ -125,94 +134,28 @@ function defaultsOfBase(base: LibrarySkillDetailDto | null, mode: OrgEditing['mo
   };
 }
 
-function orgFormTitle(target: OrgEditing, mode: OrgEditing['mode']): string {
-  if (target.skill) return 'Change this skill';
-  if (!target.base) return 'New skill';
+/** What the studio's fields start from: the skill being changed, or the library skill it builds on. */
+export function studioDefaults(target: OrgEditing): Record<string, string> {
+  const mode = target.skill?.extensionMode ?? target.mode;
+  const d = target.skill ? defaultsOfSkill(target.skill) : defaultsOfBase(target.base, mode);
+  return { ...d, mode: mode ?? 'addendum' };
+}
+
+/** Whether the skill builds on a library skill (adds to it or replaces it). */
+export function extendsLibrary(target: OrgEditing): boolean {
+  return Boolean(target.base || target.skill?.extendsSkillKey);
+}
+
+/** The studio's title for what is being written. */
+export function studioTitle(target: OrgEditing): string {
+  const mode = target.skill?.extensionMode ?? target.mode;
+  if (target.skill) return `Change "${target.skill.name}"`;
+  if (!target.base) return target.projectId ? 'New skill for this project' : 'New skill';
   return mode === 'replace' ? `Replace "${target.base.name}"` : `Add to "${target.base.name}"`;
 }
 
-function orgFormSub(extending: boolean, mode: OrgEditing['mode']): string {
-  if (!extending) return 'AnA selects this skill when a question contains one of its trigger phrases.';
-  return mode === 'replace'
-    ? 'AnA loads this text instead of the library method whenever the library skill is selected.'
-    : 'AnA loads this text after the library method whenever the library skill is selected.';
-}
-
-function modeField(mode: OrgEditing['mode']): C2CFormField {
-  return {
-    key: 'mode',
-    label: 'What it does to the library skill',
-    type: 'seg',
-    options: [
-      { value: 'addendum', label: 'Adds to it' },
-      { value: 'replace', label: 'Replaces it' },
-    ],
-    default: mode ?? 'addendum',
-  };
-}
-
-export function orgForm(target: OrgEditing): C2CFormConfig {
-  const s = target.skill;
-  const mode = s?.extensionMode ?? target.mode;
-  const extending = Boolean(target.base || s?.extendsSkillKey);
-  const d = s ? defaultsOfSkill(s) : defaultsOfBase(target.base, mode);
-  return {
-    eyebrow: s ? `Skills · ${s.name}` : 'Skills · new',
-    title: orgFormTitle(target, mode),
-    sub: orgFormSub(extending, mode),
-    governed: 'Saving changes the instructions AnA follows for everyone in this organization. The skill before and after, and your reason, are recorded in the audit trail.',
-    submitLabel: s ? 'Save skill' : 'Create skill',
-    fields: [
-      { key: 'name', label: 'Name', type: 'text', required: true, default: d.name },
-      {
-        key: 'description',
-        label: 'When to use it',
-        type: 'textarea',
-        rows: 2,
-        required: true,
-        default: d.description,
-        desc: 'One or two sentences. At least 20 characters.',
-      },
-      ...(extending ? [modeField(mode)] : []),
-      {
-        key: 'instructions',
-        label: 'Instructions',
-        type: 'textarea',
-        rows: 12,
-        required: true,
-        default: d.instructions,
-        desc: 'The method AnA follows, in Markdown. Name tools in backticks. Never put figures here for AnA to repeat: figures come from the platform’s engines.',
-      },
-      {
-        key: 'triggers',
-        label: 'Trigger phrases',
-        type: 'textarea',
-        rows: 4,
-        default: d.triggers,
-        desc: extending
-          ? 'Optional: phrases that should also select it, one per line.'
-          : 'One per line, as people type them. A skill with none is never selected.',
-      },
-      { key: 'discipline', label: 'Discipline', type: 'select', options: DISCIPLINE_OPTIONS, default: d.discipline, half: true },
-      { key: 'useCase', label: 'Kind of work', type: 'select', options: USE_CASE_OPTIONS, default: d.useCase, half: true },
-      { key: 'segment', label: 'Client segment', type: 'select', options: SEGMENT_OPTIONS, default: d.segment, half: true },
-      { key: 'therapeuticArea', label: 'Therapeutic area', type: 'select', options: TA_OPTIONS, default: d.therapeuticArea, half: true },
-      {
-        key: 'tools',
-        label: 'Tools',
-        type: 'textarea',
-        rows: 2,
-        default: d.tools,
-        desc: 'Optional: AnA tool names the method relies on, one per line.',
-      },
-      { key: 'status', label: 'Status', type: 'select', options: STATUS_OPTIONS, default: d.status },
-      REASON_FIELD,
-    ],
-  };
-}
-
 /** The body /api/ana-skills/organization reads, from the form's values. */
-export function orgSkillBody(target: OrgEditing, v: Record<string, string>, reason: string) {
+export function orgSkillBody(target: OrgEditing, v: Record<string, string>, reason: string | null) {
   const extendsSkillKey = target.base?.key ?? target.skill?.extendsSkillKey ?? null;
   return {
     name: (v.name ?? '').trim(),

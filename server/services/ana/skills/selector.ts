@@ -2,9 +2,11 @@
  * Which skills AnA loads for a turn — decided by code, explained, and the same
  * every time for the same inputs.
  *
- * Two things decide it:
- *   - what the person asked: a skill's trigger phrases found in the message, or
- *     the skill named outright (an invocation);
+ * Three things decide it:
+ *   - what the person chose: a skill picked in the conversation, or deployed
+ *     to the project so it loads on every turn there. A choice always loads
+ *     (within its own allowance) and never needs a trigger phrase;
+ *   - what the person asked: a skill's trigger phrases found in the message;
  *   - what is in front of them: the surface and document open, and the
  *     program's segment, therapeutic area, submission type and region. The
  *     surface, the document and the program's therapeutic area can each load a
@@ -26,6 +28,7 @@
 
 import {
   SKILL_TURN_BUDGET,
+  type SkillChoice,
   type ClientSegmentId,
   type CanonicalRegion,
   type SkillFacets,
@@ -72,8 +75,10 @@ export interface SkillSelectionContext {
   /** Any submission-type spelling; resolved through the bridge. */
   submissionType?: string | null;
   region?: CanonicalRegion | null;
-  /** Skills the person named outright. */
+  /** Skills the person picked in the conversation. */
   invokedKeys?: string[];
+  /** Skills deployed to the open project: loaded on every turn there. */
+  deployedKeys?: string[];
 }
 
 export interface SelectedSkill {
@@ -82,6 +87,8 @@ export interface SelectedSkill {
   reasons: string[];
   triggerHits: string[];
   invoked: boolean;
+  /** Picked in the conversation or deployed to the project; null when AnA selected it herself. */
+  chosen: SkillChoice | null;
   contextOnly: boolean;
 }
 
@@ -101,6 +108,7 @@ export interface SkillSelection {
 export interface SkillBudget {
   maxSkills: number;
   maxContextOnly: number;
+  maxChosen: number;
   maxChars: number;
 }
 
@@ -239,17 +247,29 @@ interface Scored {
   reasons: string[];
   triggerHits: string[];
   invoked: boolean;
+  chosen: SkillChoice | null;
   contextOnly: boolean;
 }
+
+/** A choice made under the library key or under the organization's replacement of it. */
+function chosenAs(skill: SelectableSkill, keys: ReadonlySet<string>): boolean {
+  return keys.has(skill.key) || (skill.replacedBy ? keys.has(skill.replacedBy.key) : false);
+}
+
+const CHOICE_SCORE: Record<SkillChoice, number> = { picked: 100, deployed: 50 };
+const CHOICE_REASON: Record<SkillChoice, string> = {
+  picked: 'chosen in this conversation',
+  deployed: 'deployed to this project',
+};
 
 function scoreSkill(
   skill: SelectableSkill,
   message: string,
-  invoked: ReadonlySet<string>,
+  choices: { picked: ReadonlySet<string>; deployed: ReadonlySet<string> },
   ctx: SkillSelectionContext,
   ctxRegistryId: string | null,
 ): Scored | null {
-  const isInvoked = invoked.has(skill.key) || (skill.replacedBy ? invoked.has(skill.replacedBy.key) : false);
+  const chosen: SkillChoice | null = chosenAs(skill, choices.picked) ? 'picked' : chosenAs(skill, choices.deployed) ? 'deployed' : null;
   const triggerHits = matchTriggers(message, skill.triggers);
   const triggerScore = Math.min(
     TRIGGER_SCORE_CAP,
@@ -257,21 +277,22 @@ function scoreSkill(
   );
   const facets = scoreFacets(skill, ctx, ctxRegistryId);
 
-  const asked = isInvoked || triggerScore > 0;
+  const asked = chosen !== null || triggerScore > 0;
   // On context alone: only what is in front of the person, and only when
   // nothing about the program says the method is for something else.
   if (!asked && (!facets.inFront || facets.mismatches.length > 0)) return null;
 
   const reasons: string[] = [];
-  if (isInvoked) reasons.push('named by the person');
+  if (chosen) reasons.push(CHOICE_REASON[chosen]);
   if (triggerHits.length > 0) reasons.push(`asked about ${triggerHits.map(t => `"${t}"`).join(', ')}`);
   reasons.push(...facets.reasons);
   if (asked) reasons.push(...facets.mismatches.map(m => `loaded on the question though ${m}`));
 
-  const penalty = asked && !isInvoked ? 2 * facets.mismatches.length : 0;
-  const score = (isInvoked ? 100 : 0) + triggerScore + facets.score - penalty;
+  // A choice is the person's: no facet mismatch penalizes it.
+  const penalty = asked && !chosen ? 2 * facets.mismatches.length : 0;
+  const score = (chosen ? CHOICE_SCORE[chosen] : 0) + triggerScore + facets.score - penalty;
   if (score <= 0) return null;
-  return { skill, score, triggerScore, reasons, triggerHits, invoked: isInvoked, contextOnly: !asked };
+  return { skill, score, triggerScore, reasons, triggerHits, invoked: chosen === 'picked', chosen, contextOnly: !asked };
 }
 
 function compareScored(a: Scored, b: Scored): number {
@@ -283,13 +304,17 @@ function compareScored(a: Scored, b: Scored): number {
   );
 }
 
+interface Held {
+  skills: number;
+  chosen: number;
+  contextOnly: number;
+  chars: number;
+}
+
 /** Why a scored skill does not fit what the turn already holds, or null when it fits. */
-function whyItDoesNotFit(
-  e: Scored,
-  held: { skills: number; contextOnly: number; chars: number },
-  limits: SkillBudget,
-): string | null {
-  if (held.skills >= limits.maxSkills) return `the turn already holds ${limits.maxSkills} closer matches`;
+function whyItDoesNotFit(e: Scored, held: Held, limits: SkillBudget): string | null {
+  if (e.chosen && held.chosen >= limits.maxChosen) return `${limits.maxChosen} chosen skills are already loaded`;
+  if (!e.chosen && held.skills >= limits.maxSkills) return `the turn already holds ${limits.maxSkills} closer matches`;
   if (e.contextOnly && held.contextOnly >= limits.maxContextOnly) return 'only one skill is loaded on the screen alone';
   if (held.chars + sizeOf(e.skill) > limits.maxChars) return 'it does not fit the turn’s skill budget';
   return null;
@@ -307,17 +332,18 @@ export function selectSkills(
 ): SkillSelection {
   const limits: SkillBudget = { ...SKILL_TURN_BUDGET, ...budget };
   const message = normalizeForMatch(ctx.message ?? '');
-  const invoked = new Set((ctx.invokedKeys ?? []).map(k => k.trim()).filter(Boolean));
+  const keySet = (keys: string[] | undefined) => new Set((keys ?? []).map(k => k.trim()).filter(Boolean));
+  const choices = { picked: keySet(ctx.invokedKeys), deployed: keySet(ctx.deployedKeys) };
   const ctxRegistryId = registryIdOf(ctx.submissionType);
 
   const eligible = skills
-    .map(skill => scoreSkill(skill, message, invoked, ctx, ctxRegistryId))
+    .map(skill => scoreSkill(skill, message, choices, ctx, ctxRegistryId))
     .filter((e): e is Scored => e !== null)
     .sort(compareScored);
 
   const selected: SelectedSkill[] = [];
   const passedOver: PassedOverSkill[] = [];
-  const held = { skills: 0, contextOnly: 0, chars: 0 };
+  const held: Held = { skills: 0, chosen: 0, contextOnly: 0, chars: 0 };
 
   for (const e of eligible) {
     const why = whyItDoesNotFit(e, held, limits);
@@ -325,7 +351,8 @@ export function selectSkills(
       passedOver.push({ skill: e.skill, score: e.score, why });
       continue;
     }
-    held.skills += 1;
+    if (e.chosen) held.chosen += 1;
+    else held.skills += 1;
     held.chars += sizeOf(e.skill);
     if (e.contextOnly) held.contextOnly += 1;
     selected.push({
@@ -334,6 +361,7 @@ export function selectSkills(
       reasons: e.reasons,
       triggerHits: e.triggerHits,
       invoked: e.invoked,
+      chosen: e.chosen,
       contextOnly: e.contextOnly,
     });
   }

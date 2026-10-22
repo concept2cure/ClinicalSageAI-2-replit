@@ -10,6 +10,9 @@
 
 import {
   orgSkillKey,
+  type AvailableSkillDto,
+  type ProjectSkillSettingDto,
+  type ProjectSkillState,
   type LibrarySkillDetailDto,
   type LibrarySkillSummaryDto,
   type OrgSkillDto,
@@ -118,6 +121,7 @@ export function orgSkillDto(r: OrgSkillRecord): OrgSkillDto {
     submissionTypes: r.submissionTypes,
     surfaces: r.surfaces,
     documentTypes: r.documentTypes,
+    projectId: r.projectId,
   };
 }
 
@@ -131,6 +135,7 @@ export function selectionDto(selection: SkillSelection): SkillSelectionDto {
       contentHash: s.skill.contentHash.slice(0, HASH_SHOWN),
       score: s.score,
       reasons: s.reasons,
+      chosen: s.chosen,
       attached: [
         ...(s.skill.replacedBy
           ? [{ key: s.skill.replacedBy.key, name: s.skill.replacedBy.name, mode: 'replace' as const, version: s.skill.replacedBy.version }]
@@ -141,4 +146,72 @@ export function selectionDto(selection: SkillSelection): SkillSelectionDto {
     passedOver: selection.passedOver.map(p => ({ key: p.skill.key, name: p.skill.name, score: p.score, why: p.why })),
     considered: selection.considered,
   };
+}
+
+function inForce(r: OrgSkillRecord): boolean {
+  return r.status === 'active' || r.status === 'locked';
+}
+
+/**
+ * What a person can choose for a conversation or deploy to a project: each
+ * library skill the organization has on (under the organization's name for it
+ * when it replaced the method), and each of the organization's own skills in
+ * force that stands alone. An addendum is not listed: it loads with its library
+ * skill. In a project, a skill turned off there is not listed, and the
+ * project's state for each listed skill is given.
+ *
+ * `orgSkills` must already be the ones that apply in the project
+ * (turn-skills.ts orgSkillsForProject).
+ */
+export function availableSkills(
+  library: readonly LibrarySkill[],
+  orgSkills: readonly OrgSkillRecord[],
+  settings: ReadonlyMap<string, Pick<SkillSettingRecord, 'enabled'>>,
+  project: { id: number; settings: ReadonlyMap<string, { state: ProjectSkillState }> } | null,
+): AvailableSkillDto[] {
+  const projectState = (key: string): ProjectSkillState | null => project?.settings.get(key)?.state ?? null;
+  const replacements = new Map(
+    orgSkills.filter(r => inForce(r) && r.extensionMode === 'replace' && r.extendsSkillKey).map(r => [r.extendsSkillKey!, r]),
+  );
+  const out: AvailableSkillDto[] = [];
+  for (const l of library) {
+    const replacement = replacements.get(l.key);
+    if (!replacement && settings.get(l.key)?.enabled === false) continue;
+    out.push({
+      key: l.key,
+      name: replacement?.name ?? l.name,
+      description: replacement?.description ?? l.description,
+      source: 'library',
+      disciplines: l.disciplines,
+      useCases: l.useCases,
+      segments: l.segments,
+      projectOnly: false,
+      projectState: projectState(l.key),
+    });
+  }
+  for (const r of orgSkills) {
+    if (!inForce(r) || r.extendsSkillKey) continue;
+    const key = orgSkillKey(r.bundleId);
+    out.push({
+      key,
+      name: r.name,
+      description: r.description,
+      source: 'organization',
+      disciplines: r.disciplines as AvailableSkillDto['disciplines'],
+      useCases: r.useCases as AvailableSkillDto['useCases'],
+      segments: r.segments as AvailableSkillDto['segments'],
+      projectOnly: project !== null && r.projectId === project.id,
+      projectState: projectState(key),
+    });
+  }
+  return out.filter(s => s.projectState !== 'off');
+}
+
+/** A project's settings, each named by the skill it holds (null when that skill is gone). */
+export function projectSettingsDto(
+  settings: ReadonlyMap<string, { state: ProjectSkillState; reason: string; updatedAt: string | null }>,
+  names: ReadonlyMap<string, string>,
+): ProjectSkillSettingDto[] {
+  return Array.from(settings, ([key, s]) => ({ key, name: names.get(key) ?? null, state: s.state, reason: s.reason, updatedAt: s.updatedAt }))
+    .sort((a, b) => (a.state === b.state ? (a.name ?? a.key).localeCompare(b.name ?? b.key) : a.state === 'always' ? -1 : 1));
 }

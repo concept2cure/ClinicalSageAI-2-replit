@@ -185,12 +185,22 @@ describe('an organization’s own skills', () => {
     expect(res.body.error.message).toContain('tools');
   });
 
-  it('refuses an active skill nothing can select', async () => {
-    const res = await request(appAs(ADMIN, fakeClient()))
+  it('accepts an active skill with no trigger phrase: it loads when someone picks it or deploys it', async () => {
+    const client = fakeClient(sql => (sql.includes('INSERT INTO account_skill_bundles') ? [{ ...STORED_ROW, triggers: [] }] : []));
+    const res = await request(appAs(ADMIN, client))
       .post('/api/ana-skills/organization')
       .send({ ...SKILL, triggers: [], reason: REASON });
-    expect(res.status).toBe(422);
-    expect(res.body.error.message).toContain('AnA can never select it');
+    expect(res.status).toBe(201);
+  });
+
+  it('writes an organization skill for the whole organization, whatever project the body names', async () => {
+    const client = fakeClient(sql => (sql.includes('INSERT INTO account_skill_bundles') ? [STORED_ROW] : []));
+    const res = await request(appAs(ADMIN, client))
+      .post('/api/ana-skills/organization')
+      .send({ ...SKILL, projectId: 9, reason: REASON });
+    expect(res.status).toBe(201);
+    const insert = writes(client).find(q => q.sql.includes('INSERT INTO account_skill_bundles'))!;
+    expect(insert.params[20]).toBeNull();
   });
 
   it('refuses an extension that does not say whether it adds or replaces', async () => {

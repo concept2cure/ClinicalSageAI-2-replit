@@ -1,0 +1,86 @@
+Mutation: server/routes/ana-skills.ts
+- if (forWrite) await requireProjectAdmission(req, String(admitted.projectId), true);
++ 
+Test: server/routes/__tests__/ana-skills-project-routes.test.ts
+Exit: 1
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/ana-skills-project-routes.test.ts
+{
+  "timestamp": "2026-10-22T19:47:07.098Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-22T19:47:07.098Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+ × server/routes/__tests__/ana-skills-project-routes.test.ts > deploying a skill to a project, or turning one off there > refuses a person the project does not admit to change it, and writes nothing 45ms
+   → expected 200 to be 403 // Object.is equality
+ ✓ server/routes/__tests__/ana-skills-project-routes.test.ts > deploying a skill to a project, or turning one off there > refuses a change with no reason 5ms
+ ✓ server/routes/__tests__/ana-skills-project-routes.test.ts > deploying a skill to a project, or turning one off there > deploys to the project the program resolves to, with the reason and its audit row 5ms
+ ✓ server/routes/__tests__/ana-skills-project-routes.test.ts > deploying a skill to a project, or turning one off there > refuses a fourth deployed skill, and writes nothing 4ms
+ ✓ server/routes/__tests__/ana-skills-project-routes.test.ts > deploying a skill to a project, or turning one off there > refuses to deploy a skill the organization turned off 4ms
+ ✓ server/routes/__tests__/ana-skills-project-routes.test.ts > deploying a skill to a project, or turning one off there > clears the project’s setting, and records that 4ms
+ ✓ server/routes/__tests__/ana-skills-project-routes.test.ts > deploying a skill to a project, or turning one off there > refuses a project the person cannot read 3ms
+ ✓ server/routes/__tests__/ana-skills-project-routes.test.ts > a skill written for a project > is stored against the admitted project, whatever project the body names 5ms
+ ✓ server/routes/__tests__/ana-skills-project-routes.test.ts > a skill written for a project > cannot replace a library skill: that is the organization’s decision 4ms
+ ✓ server/routes/__tests__/ana-skills-project-routes.test.ts > a skill written for a project > is changed from its own project only 3ms
+ ✓ server/routes/__tests__/ana-skills-project-routes.test.ts > what the composer can pick, and a draft tried before it is saved > lists what is on, leaves out what the project turned off, and marks what it deploys 4ms
+ ✓ server/routes/__tests__/ana-skills-project-routes.test.ts > what the composer can pick, and a draft tried before it is saved > loads an unsaved draft for a question its trigger phrase is in, and stores nothing 36ms
+ ✓ server/routes/__tests__/ana-skills-project-routes.test.ts > what the composer can pick, and a draft tried before it is saved > reads a skill’s versions from its audit rows 2ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 passed (13)
+   Start at  19:47:04
+   Duration  6.43s (transform 4.37s, setup 58ms, import 6.07s, tests 128ms, environment 0ms)
+
+stderr | server/routes/__tests__/ana-skills-project-routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/ana-skills-project-routes.test.ts
+{
+  "timestamp": "2026-10-22T19:47:06.134Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/ana-skills-project-routes.test.ts
+{
+  "timestamp": "2026-10-22T19:47:07.098Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/ana-skills-project-routes.test.ts > deploying a skill to a project, or turning one off there > refuses a person the project does not admit to change it, and writes nothing
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/ana-skills-project-routes.test.ts:99:24
+     97|     const client = fakeClient();
+     98|     const res = await request(appAs(EDITOR, client)).put(`/api/ana-ski…
+     99|     expect(res.status).toBe(403);
+       |                        ^
+    100|     expect(writes(client)).toEqual([]);
+    101|     expect(auditRows).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

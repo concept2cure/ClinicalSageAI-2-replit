@@ -53,6 +53,8 @@ import {
   CT_LINKMAP, CT_LINKIC, CT_ARTIC, CT_STATUS_LABEL,
 } from '../fixtures/conversation-thread-data';
 import type { CtTurn, CtArtifact } from '../fixtures/conversation-thread-data';
+import { ComposerSkills, TurnSkillsUsed } from '../ComposerSkills';
+import { useConversationSkills } from '../anaSkillChoice';
 
 
 /* The starters a new conversation opens on. They are the product speaking
@@ -96,6 +98,7 @@ function toTurn(m: AnaChatMessage): CtTurn {
     turnRecord: m.turnRecord,
     unfinished: answerUnfinished(m) || undefined,
     contextUsed: contextUsed.length ? contextUsed : undefined,
+    skillsUsed: nonEmpty(m.contextUsed?.skills?.map(({ key, name, reasons, chosen }) => ({ key, name, reasons, chosen }))),
     evidence: m.evidence,
     /* Present while the turn is in flight — the phase line IS the waiting
        state — and, once settled, only when there is real work to show for it.
@@ -501,6 +504,7 @@ function AnaTurn({ turn, onAsk, onNav, onStartDemo, onContinue, onSummary, onAns
             {turn.contextUsed.map((src, i) => (<span key={i} className="ct-ground-chip">{src}</span>))}
           </div>
         )}
+        {turn.skillsUsed && <TurnSkillsUsed skills={turn.skillsUsed} />}
         {turn.executedActions && (
           <div className="ana-msg-executed">
             <AnaActionChips
@@ -1158,6 +1162,9 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
     onArtifactSaved: liveDrive?.onWorkSaved,
   });
   const anaChat = shellChat ?? ownChat;
+  /* Skills the person picked in the composer for this conversation; every
+     turn sent from here carries them (anaSkillChoice.ts). */
+  const [chosenSkills, setChosenSkills] = useConversationSkills(anaChat.threadId ?? null);
   const [toast, fireToast] = useToast();
   const [loadErr, setLoadErr] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -1198,7 +1205,8 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
        sends it, once. */
     const fromOrigin = originTurnContext(askOrigin, originDocumentRead, shellProjectId, omittedOriginEditor ? null : editor?.bridge, editor?.open === true);
     if (fromOrigin) setAskOrigin(null);
-    const opts = turnOpts || fromOrigin ? { ...(turnOpts ?? {}), ...(fromOrigin ?? {}) } : undefined;
+    const skillOpts = chosenSkills.length > 0 ? { skills: chosenSkills } : undefined;
+    const opts = turnOpts || fromOrigin || skillOpts ? { ...(turnOpts ?? {}), ...(fromOrigin ?? {}), ...(skillOpts ?? {}) } : undefined;
     originOmissionSpentRef.current = true;
     if (opts) return anaChat.send(text, files, opts);
     return files === undefined ? anaChat.send(text) : anaChat.send(text, files);
@@ -1932,7 +1940,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
                   <p>Ask a question, or ask AnA to do the work. AnA thinks, pulls from the evidence, and streams a grounded answer — every turn is saved to your governed conversation store.</p>
                   <div className="ct-empty-chips">
                     {STARTER_ASKS.map((q, i) => (
-                      <button key={i} className="ct-empty-chip" onClick={() => { void anaChat.send(q); }}>{q}</button>
+                      <button key={i} className="ct-empty-chip" onClick={() => { void sendTurn(q); }}>{q}</button>
                     ))}
                   </div>
                 </div>
@@ -2140,6 +2148,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
             <div className="ct-comp-foot">
               <LiveDriveSwitch />
               <RunPolicySwitch variant="foot" />
+              <ComposerSkills projectId={shellProjectId} chosen={chosenSkills} onChange={setChosenSkills} />
               {/* The engine this conversation's turns run on. It was chosen in
                   the right rail's menu; the rail is gone. */}
               {engine && (
