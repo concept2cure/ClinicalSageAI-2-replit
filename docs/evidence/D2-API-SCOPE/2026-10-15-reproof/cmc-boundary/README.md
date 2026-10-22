@@ -209,6 +209,18 @@ them: theirs are at `project_knowledge_search`, `load_nonclinical_program`,
 `expiryText`, `log_inspection_finding`, `create_qms_document` and the governed
 document reads.
 
+**Found after the push, by checking the interview's other caller.** The chat
+stream's `[INTELLIGENCE_ANSWER]` fast path (`server/routes/ana-ri/stream.ts`)
+calls the same handler, so it was already behind the boundary. But it rendered
+only a question, a completion or an `error`, so a refusal reached the person as
+a turn with no text. It now says the refusal's message. Red:
+`stream-fast-path-red.txt` (no text event); green: `stream-fast-path-green.txt`
+44 / 44. `stream.ts` was edited by `…01PosF1Z` (`359221e5e`, `2b1e7769c`) and
+`…01DiJJAk` (`8fb897868`) inside their 24-hour windows. The silence was this
+change's regression, so the fix was not deferred. It is one branch in lines
+no hunk of theirs touches (last changed 2026-09-07), and it is disclosed on
+the board.
+
 ## Still open
 
 - `POST /api/orchestration/pre-submission-gate` runs the ICH check. It is

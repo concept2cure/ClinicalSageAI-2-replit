@@ -299,6 +299,42 @@ export async function getThreadMessages(
   return result.rows;
 }
 
+/**
+ * The skills a person picked for an AnA conversation (the composer's Skills
+ * menu, docs/design/ANA_SKILLS_2026-10-22.md §10), kept on the thread as
+ * `metadata.skills` so they follow the conversation to another browser. The
+ * stream writes them for the thread it has already resolved to the caller's
+ * own; an empty list records that the person let AnA choose again. They are a
+ * working preference: what each turn actually loaded is on its turn record.
+ */
+export async function recordThreadSkills(threadId: string, organizationId: number, keys: string[]): Promise<void> {
+  await pool.query(
+    `UPDATE chat_threads
+        SET metadata = COALESCE(metadata::jsonb, '{}'::jsonb) || jsonb_build_object('skills', $1::jsonb)
+      WHERE id = $2 AND organization_id = $3`,
+    [JSON.stringify(keys), threadId, organizationId]
+  );
+}
+
+/** The skills kept on a conversation, or null when it holds none (never picked, or not an AnA thread). */
+export async function readThreadSkills(threadId: string, organizationId: number): Promise<string[] | null> {
+  const { rows } = await pool.query(
+    `SELECT metadata -> 'skills' AS skills FROM chat_threads WHERE id = $1 AND organization_id = $2`,
+    [threadId, organizationId]
+  );
+  const value: unknown = rows[0]?.skills;
+  const list = typeof value === 'string' ? safeJson(value) : value;
+  return Array.isArray(list) ? list.filter((k): k is string => typeof k === 'string') : null;
+}
+
+function safeJson(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
 /** The two thread stores: `chat_threads` (AnA RI) and `ai_threads` (submission chat, evidence-ask). */
 export type ThreadStore = 'chat' | 'ai';
 

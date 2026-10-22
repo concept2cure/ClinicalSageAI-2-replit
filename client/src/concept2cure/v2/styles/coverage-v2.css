@@ -1537,8 +1537,6 @@
 .c2c-v2 ul.dr2-finds{ margin-bottom:0; }
 .c2c-v2 .dr2-market{ margin-top:10px; }
 .c2c-v2 .dr2-door{ display:flex; flex-direction:column; gap:6px; margin-top:12px; }
-/* F18 review: a finding's act label is longer than "Fix"; the row wraps at narrow widths. */
-.c2c-v2 .dr2-find{ flex-wrap:wrap; }
 /* The placed leaf a readiness finding points at: tinted, beside its text tag. */
 .c2c-v2 tr[data-section-target] > td{ background:var(--accent-000); }
 .c2c-v2 .dr2-gate{ border:1px solid var(--border); border-top:3px solid var(--border); border-radius:10px; background:var(--bg-000); padding:13px 15px; }
@@ -1560,7 +1558,9 @@
 .c2c-v2 .dr2-count.err{ background:color-mix(in srgb,var(--error) 13%,transparent); color:var(--error); }
 .c2c-v2 .dr2-count.warn{ background:color-mix(in srgb,var(--warning) 14%,transparent); color:var(--warning); }
 .c2c-v2 .dr2-count.idle{ background:var(--bg-200); color:var(--text-300); }
-.c2c-v2 .dr2-find{ display:flex; align-items:center; gap:10px; padding:8px 0; border-top:1px solid var(--border); }
+/* F18 review: a finding's act label is longer than "Fix"; the row wraps at narrow widths.
+   One rule, not two: a second .dr2-find rule above this one was a shadowed selector (ci:check-css-selector-shadowing). */
+.c2c-v2 .dr2-find{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:8px 0; border-top:1px solid var(--border); }
 .c2c-v2 .dr2-find-sev{ flex:none; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.03em; padding:2px 7px; border-radius:100px; }
 .c2c-v2 .dr2-find-sev.tone-error{ background:color-mix(in srgb,var(--error) 14%,transparent); color:var(--error); }
 .c2c-v2 .dr2-find-sev.tone-warning{ background:color-mix(in srgb,var(--warning) 15%,transparent); color:var(--warning); }

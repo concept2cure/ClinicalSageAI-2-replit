@@ -1,0 +1,10 @@
+ × client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx > after an upload, the Vault opens the document it recorded > opens a new document where it landed, in place of the one that was open 5320ms
+   → expected '3.2.P.8 - stability-summary-24m' to contain 'analytical-procedures'
+ × client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx > after an upload, the Vault opens the document it recorded > a check-in opens the document at the version just recorded, not the folder’s first document 5363ms
+   → expected null to be 'true' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx > after an upload, the Vault opens the document it recorded > a response that names no document opens nothing: the document is not guessed 180ms
+ × client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx > after an upload, the Vault opens the document it recorded > a recorded document the re-read does not hold is said, not silently ignored 5142ms
+   → Unable to find an element by: [data-testid="vault-target-missing"]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)

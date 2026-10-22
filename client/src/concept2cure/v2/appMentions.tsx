@@ -27,6 +27,15 @@
  * same two vocabularies, so a mention or command typed without the menu means
  * the same thing, and nothing about "which app" is asserted by the client.
  *
+ * Skills (2026-10-22, docs/design/ANA_SKILLS_2026-10-22.md §10). A composer
+ * that holds a conversation's picked skills passes a skill source; the `/`
+ * menu then lists, after the commands, the skills that match what is typed.
+ * Choosing a skill inserts NO text: the typed `/query` is removed and the skill
+ * joins the conversation's picks, which ride on every turn as `skills`. So the
+ * menu still never puts a command in the message that the server does not
+ * parse, and a skill is used the same way whether it is picked here or in the
+ * composer's Skills menu.
+ *
  * Keyboard: ↑/↓ move, Enter/Tab choose, Escape closes. While the menu is open,
  * Enter chooses rather than sends — the composer's own Enter-to-send handler
  * runs only when `onKeyDown` returns false.
@@ -38,6 +47,23 @@ import { I } from './icons';
 
 export type MentionKind = 'app' | 'slash';
 
+/** A skill as the `/` menu offers it. */
+export interface MentionSkill {
+  key: string;
+  name: string;
+  description: string;
+}
+
+/**
+ * Where a composer's `/` menu finds skills, and what choosing one does. `search`
+ * answers from what is already read (an empty list while it loads); `pick` adds
+ * the skill to the conversation.
+ */
+export interface SkillMentionSource {
+  search: (query: string) => MentionSkill[];
+  pick: (key: string) => void;
+}
+
 export interface MentionToken {
   kind: MentionKind;
   /** Offset of the `@` or `/` in the value. */
@@ -47,7 +73,8 @@ export interface MentionToken {
 
 export type MentionItem =
   | { kind: 'app'; key: string; app: CallableApp }
-  | { kind: 'slash'; key: string; cmd: SlashCommand };
+  | { kind: 'slash'; key: string; cmd: SlashCommand }
+  | { kind: 'skill'; key: string; skill: MentionSkill };
 
 /** The `@query` or leading `/query` token that ends at the caret, or null when the caret is not in one. */
 export function mentionTokenAt(value: string, caret: number): MentionToken | null {
@@ -66,8 +93,9 @@ export function mentionTokenAt(value: string, caret: number): MentionToken | nul
   return null;
 }
 
-/** The text a chosen item inserts, with its trailing space. */
+/** The text a chosen item inserts, with its trailing space. A skill inserts none. */
 export function insertionFor(item: MentionItem): string {
+  if (item.kind === 'skill') return '';
   return item.kind === 'app' ? `@${item.app.label} ` : `/${item.cmd.name} `;
 }
 
@@ -78,8 +106,17 @@ export function insertMention(value: string, start: number, caretEnd: number, it
   return { value: next, caret: start + inserted.length };
 }
 
-function itemsFor(token: MentionToken): MentionItem[] {
-  if (token.kind === 'slash') return searchSlashCommands(token.query).map((cmd) => ({ kind: 'slash', key: cmd.name, cmd }));
+/** How many skills the `/` menu lists after the commands. */
+const SKILLS_LISTED = 6;
+
+function itemsFor(token: MentionToken, skills?: SkillMentionSource): MentionItem[] {
+  if (token.kind === 'slash') {
+    const commands: MentionItem[] = searchSlashCommands(token.query).map((cmd) => ({ kind: 'slash', key: cmd.name, cmd }));
+    const found: MentionItem[] = (skills?.search(token.query) ?? [])
+      .slice(0, SKILLS_LISTED)
+      .map((skill) => ({ kind: 'skill', key: `skill:${skill.key}`, skill }));
+    return [...commands, ...found];
+  }
   return searchCallableApps(token.query).map((app) => ({ kind: 'app', key: app.id, app }));
 }
 
@@ -103,11 +140,12 @@ export function useAppMentions(
   value: string,
   setValue: (next: string) => void,
   textareaRef: React.RefObject<HTMLTextAreaElement | null>,
+  skills?: SkillMentionSource,
 ): AppMentionsApi {
   const [token, setToken] = useState<(MentionToken & { caret: number }) | null>(null);
   const [active, setActive] = useState(0);
 
-  const items = useMemo(() => (token ? itemsFor(token) : []), [token]);
+  const items = useMemo(() => (token ? itemsFor(token, skills) : []), [token, skills]);
   const open = token !== null && items.length > 0;
 
   const sync = useCallback((el: HTMLTextAreaElement | null) => {
@@ -129,6 +167,8 @@ export function useAppMentions(
     const t = token ?? (el ? mentionTokenAt(el.value, el.selectionStart ?? el.value.length) : null);
     if (!t) return;
     const caretEnd = token?.caret ?? (el?.selectionStart ?? value.length);
+    // A skill joins the conversation; the `/query` that found it leaves the draft.
+    if (item.kind === 'skill') skills?.pick(item.skill.key);
     const next = insertMention(value, t.start, caretEnd, item);
     setValue(next.value);
     setToken(null);
@@ -139,7 +179,7 @@ export function useAppMentions(
         try { el.focus(); el.setSelectionRange(next.caret, next.caret); } catch { /* detached */ }
       });
     }
-  }, [token, textareaRef, value, setValue]);
+  }, [token, textareaRef, value, setValue, skills]);
 
   const onKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>): boolean => {
     if (!open) return false;
@@ -153,15 +193,35 @@ export function useAppMentions(
   return { open, kind: token?.kind ?? null, items, active, onKeyDown, sync, choose, close, setActive };
 }
 
+function itemIcon(item: MentionItem): React.ReactNode {
+  if (item.kind === 'app') return I.grid;
+  return item.kind === 'skill' ? I.bookOpen : I.terminal;
+}
+
+function itemLabel(item: MentionItem): string {
+  if (item.kind === 'app') return `@${item.app.label}`;
+  return item.kind === 'skill' ? item.skill.name : `/${item.cmd.name}`;
+}
+
+function itemSummary(item: MentionItem): string {
+  if (item.kind === 'app') return item.app.description;
+  return item.kind === 'skill' ? item.skill.description : item.cmd.summary;
+}
+
+function menuHeading(kind: MentionKind | null, items: MentionItem[]): string {
+  if (kind !== 'slash') return 'Apps — choose one to name it in your message';
+  return items.some((i) => i.kind === 'skill')
+    ? 'Commands start your message; a skill is used on every turn of this conversation'
+    : 'Commands — choose one to start your message with';
+}
+
 /** The menu. Positioned by the host's composer (`position: relative`) through the `.ana-menu` rules. */
 export function AppMentionMenu({ api, id }: { api: AppMentionsApi; id: string }) {
   if (!api.open) return null;
   const slash = api.kind === 'slash';
   return (
     <div className="ana-menu ana-mention" role="listbox" id={id} aria-label={slash ? 'Commands' : 'Apps'}>
-      <div className="ana-menu-sec">
-        {slash ? 'Commands — choose one to start your message with' : 'Apps — choose one to name it in your message'}
-      </div>
+      <div className="ana-menu-sec">{menuHeading(api.kind, api.items)}</div>
       {api.items.map((item, i) => (
         <button
           key={item.key}
@@ -174,11 +234,11 @@ export function AppMentionMenu({ api, id }: { api: AppMentionsApi; id: string })
           // mousedown, not click: a click would blur the textarea first and the
           // caret position the insertion needs would be gone.
           onMouseDown={(e) => { e.preventDefault(); api.choose(item); }}
-          title={item.kind === 'app' ? item.app.description : item.cmd.summary}
+          title={itemSummary(item)}
         >
-          <span className="ico">{item.kind === 'app' ? I.grid : I.terminal}</span>
-          <span>{item.kind === 'app' ? `@${item.app.label}` : `/${item.cmd.name}`}</span>
-          {item.kind === 'slash' && <span className="ana-mention-sub">{item.cmd.summary}</span>}
+          <span className="ico">{itemIcon(item)}</span>
+          <span>{itemLabel(item)}</span>
+          {item.kind !== 'app' && <span className="ana-mention-sub">{item.kind === 'skill' ? 'Skill' : item.cmd.summary}</span>}
         </button>
       ))}
     </div>

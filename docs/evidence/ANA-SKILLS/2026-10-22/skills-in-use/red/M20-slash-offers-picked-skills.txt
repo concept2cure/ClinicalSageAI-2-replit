@@ -1,0 +1,83 @@
+Mutation: client/src/concept2cure/v2/ComposerSkills.tsx
+- !chosen.includes(s.key) &&
++ 
+Test: client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx
+Exit: 1
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx > the Skills menu in the composer > lists what is on, picks up to three, and says AnA chooses when none is picked 51ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx > the Skills menu in the composer > says a failed read failed, and that AnA still chooses 11ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx > a conversation with skills picked > sends what was picked with the turn 32ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx > a conversation with skills picked > shows on an answer which skills it followed, and why each loaded 29ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx > a project’s Skills card > deploys a skill only with a stated reason, and sends the reason 127ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx > a project’s Skills card > shows a reader the project’s skills without the actions 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx > a project’s Skills card > says a failed or malformed read failed, never that the project has no skills 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx > the skill studio > tries a question against the draft before anything is saved, and saves only with a reason 83ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx > a conversation’s picks, kept on its thread > starts a reopened conversation from the picks its thread kept 2ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx > a conversation’s picks, kept on its thread > prefers what this browser picked over the thread’s older record 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx > a conversation’s picks, kept on its thread > ignores a record that belongs to another conversation 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx > a conversation’s picks, kept on its thread > once a conversation has had picks, letting AnA choose again is sent as an empty list 58ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx > a conversation’s picks, kept on its thread > sends nothing about skills from a conversation that never had any 14ms
+ × client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx > skills in the `/` menu > reads only once the draft starts with `/`, offers what is not picked, and nothing when the allowance is full 5009ms
+   → expected 4 to be 3 // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 passed (14)
+   Start at  23:13:28
+   Duration  8.37s (transform 1.96s, setup 96ms, import 2.43s, tests 5.43s, environment 307ms)
+
+stderr | client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx > a conversation with skills picked > shows on an answer which skills it followed, and why each loaded
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx > skills in the `/` menu > reads only once the draft starts with `/`, offers what is not picked, and nothing when the allowance is full
+AssertionError: expected 4 to be 3 // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- 3
++ 4
+
+ ❯ client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx:303:66
+    301|     expect(apiRequest).not.toHaveBeenCalled();
+    302|     rerender({ draft: '/st', chosen: ['labeling'] });
+    303|     await waitFor(() => expect(result.current.search('').length).toBe(…
+       |                                                                  ^
+    304|     expect(result.current.search('').map((s) => s.key)).not.toContain(…
+    305|     expect(result.current.search('stability').map((s) => s.key)).toEqu…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

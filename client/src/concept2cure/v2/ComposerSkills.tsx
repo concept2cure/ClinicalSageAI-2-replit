@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useMemo, useState } from 'react';
 import { apiRequest } from '@/lib/queryClient';
+import type { SkillMentionSource } from './appMentions';
 import {
   SKILL_DISCIPLINE_LABELS,
   SKILL_TURN_BUDGET,
@@ -103,6 +104,37 @@ function useAvailableSkills(path: string | null): AvailableRead {
     };
   }, [path]);
   return read;
+}
+
+/**
+ * The skills a composer's `/` menu offers (appMentions.tsx): what the Skills
+ * menu would list, matching what is typed after the `/`, leaving out what is
+ * already picked. Read only once the draft starts with `/`; nothing is offered
+ * while the read is in flight or when the allowance is full. Picking adds the
+ * skill to the conversation's picks, exactly as the Skills menu does.
+ */
+export function useSkillMentionSource(
+  projectId: Props['projectId'],
+  draft: string,
+  chosen: string[],
+  onChange: (keys: string[]) => void
+): SkillMentionSource {
+  const wanted = draft.startsWith('/');
+  const path = availablePath(wanted, [], projectId);
+  const available = useAvailableSkills(path);
+  return useMemo(() => {
+    const skills = available.data?.skills ?? [];
+    const full = chosen.length >= SKILL_TURN_BUDGET.maxChosen;
+    return {
+      search: (query: string) =>
+        full
+          ? []
+          : skills.filter(s => !chosen.includes(s.key) && matches(s, query.trim().toLowerCase())),
+      pick: (key: string) => {
+        if (!chosen.includes(key) && !full) onChange([...chosen, key]);
+      },
+    };
+  }, [available.data, chosen, onChange]);
 }
 
 export function ComposerSkills({ projectId, chosen, onChange }: Props) {

@@ -203,15 +203,36 @@ async function closeUploadList() {
   await settle(page, 1000);
 }
 
-/** Open the uploaded document in the Vault, as a person would, by clicking its row. Nothing
- *  selects it after an upload, so acting on "the selected document" without this acted on
- *  whichever row the Vault opened by default. Refuses to go on unless the details name it. */
-async function openVaultDocument() {
-  await page.getByText(VAULT_TITLE, { exact: true }).first().click();
-  await settle(page, 1500);
-  const details = await page.getByTestId('vault-filing-block').count();
-  const opened = (await mainText(page, 60000)).includes(VAULT_TITLE);
-  if (!details || !opened) throw new Error(`the Vault did not open ${VAULT_TITLE}`);
+/** The Vault opens the document an upload recorded. Until the follow-up of 2026-10-22 it
+ *  stayed on whatever was open, and this driver clicked the uploaded row itself. It clicks
+ *  nothing now: the walk refuses to go on unless the details pane already names the document. */
+async function expectUploadedDocumentOpen() {
+  const title = page.locator('.vd-detail .vd-d-title');
+  await title.filter({ hasText: VAULT_TITLE }).waitFor({ timeout: 15000 }).catch(() => {});
+  const named = (await title.innerText().catch(() => '')).trim();
+  say(`   opened after the upload: ${named || '(nothing)'}`);
+  if (!named.includes(VAULT_TITLE) || !(await page.getByTestId('vault-filing-block').count())) {
+    throw new Error(`the Vault did not open ${VAULT_TITLE} after the upload (details pane: ${named || 'empty'})`);
+  }
+}
+
+/** The submit button holds still under a resting pointer. Until the follow-up of 2026-10-22
+ *  its hover lift moved it off its own bottom row, so it jittered by 1 px and never settled,
+ *  and this driver clicked it with force. The pointer rests on that row for 40 frames, and the
+ *  button's top edge must take one value; the click below is a plain one. */
+async function expectSettlesUnderPointer(button) {
+  const box = await button.boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height - 0.5);
+  const tops = await button.evaluate(async (el) => {
+    const seen = new Set();
+    for (let i = 0; i < 40; i += 1) {
+      await new Promise((r) => requestAnimationFrame(r));
+      seen.add(el.getBoundingClientRect().top);
+    }
+    return [...seen];
+  });
+  say(`   submit under a resting pointer: ${tops.length === 1 ? 'settled' : 'moving'} (top edge over 40 frames: ${tops.join(', ')})`);
+  if (tops.length !== 1) throw new Error('the placement submit button does not settle under a resting pointer');
 }
 
 async function placeVaultDocument({ seqLabel, section, op, reason, shotName }) {
@@ -247,18 +268,8 @@ async function placeVaultDocument({ seqLabel, section, op, reason, shotName }) {
   }
   for (let i = 0; i < 40 && await submit.isDisabled(); i += 1) await page.waitForTimeout(250);
   if (await submit.isDisabled()) say(`   !! placement button disabled: ${await submit.getAttribute('title')}`);
-  try {
-    await submit.click({ timeout: 8000 });
-  } catch (err) {
-    if (!/not stable/.test(String(err.message))) throw err;
-    const metrics = [];
-    for (let i = 0; i < 6; i += 1) {
-      metrics.push(await dlg.locator('.de-body').evaluate((el) => `${el.scrollHeight}/${el.clientHeight}/${el.clientWidth}`).catch(() => '?'));
-      await page.waitForTimeout(120);
-    }
-    say(`   observed: the enabled submit button never settles (1-px layout oscillation; .de-body scrollHeight/clientHeight/clientWidth over 720 ms: ${metrics.join(' ')}); clicked with force, as a person can`);
-    await submit.click({ force: true });
-  }
+  await expectSettlesUnderPointer(submit);
+  await submit.click({ timeout: 8000 });
   await settle(page, 2500);
   const verdicts = await dlg.getByRole('status').allInnerTexts();
   say(`   verdict: ${verdicts.map((v) => v.trim()).filter(Boolean).join(' | ').slice(0, 900)}`);
@@ -273,7 +284,7 @@ async function click3b() {
   await vaultUpload(V1);
   say(`   upload: ${(await page.locator('[role="status"]').allInnerTexts()).map((s) => s.trim()).filter((s) => /Auto-filed|uploaded|version|recorded/i.test(s)).join(' | ').slice(0, 400)}`);
   await closeUploadList();
-  await openVaultDocument();
+  await expectUploadedDocumentOpen();
   await page.getByLabel('Reason for this filing decision').fill('Analytical procedures belong in Module 3, at 3.2.S.4.2.');
   await page.getByRole('button', { name: /Confirm filing/ }).click();
   await settle(page, 2500);
@@ -295,7 +306,7 @@ async function vaultReviseV2() {
   const lines = (await mainText(page, 60000)).split('\n').filter((l) => /v2\.0|v1\.0|version/i.test(l)).slice(0, 8);
   say(`   versions: ${lines.join(' | ')}`);
   await shot(page, 'c6c-vault-v2-checked-in');
-  await openVaultDocument();
+  await expectUploadedDocumentOpen();
   await placeVaultDocument({ seqLabel: '0001', section: '3.2.S.4.2', op: 'Replace',
     reason: 'Analytical procedures revised to 2.0; replace the version filed in 0000.', shotName: 'c6c-vault-v2-placed-0001' });
 }

@@ -55,7 +55,7 @@ import {
   CT_LINKMAP, CT_LINKIC, CT_ARTIC, CT_STATUS_LABEL,
 } from '../fixtures/conversation-thread-data';
 import type { CtTurn, CtArtifact } from '../fixtures/conversation-thread-data';
-import { ComposerSkills, TurnSkillsUsed } from '../ComposerSkills';
+import { ComposerSkills, TurnSkillsUsed, useSkillMentionSource } from '../ComposerSkills';
 import { useConversationSkills } from '../anaSkillChoice';
 
 
@@ -1198,8 +1198,9 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
   });
   const anaChat = shellChat ?? ownChat;
   /* Skills the person picked in the composer for this conversation; every
-     turn sent from here carries them (anaSkillChoice.ts). */
-  const [chosenSkills, setChosenSkills] = useConversationSkills(anaChat.threadId ?? null);
+     turn sent from here carries them, and the thread keeps them
+     (anaSkillChoice.ts). */
+  const [chosenSkills, setChosenSkills, skillsTouched] = useConversationSkills(anaChat.threadId ?? null, anaChat.threadSkills);
   const [toast, fireToast] = useToast();
   const [loadErr, setLoadErr] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -1240,7 +1241,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
        sends it, once. */
     const fromOrigin = originTurnContext(askOrigin, originDocumentRead, shellProjectId, omittedOriginEditor ? null : editor?.bridge, editor?.open === true);
     if (fromOrigin) setAskOrigin(null);
-    const skillOpts = chosenSkills.length > 0 ? { skills: chosenSkills } : undefined;
+    const skillOpts = skillsTouched ? { skills: chosenSkills } : undefined;
     const opts = turnOpts || fromOrigin || skillOpts ? { ...(turnOpts ?? {}), ...(fromOrigin ?? {}), ...(skillOpts ?? {}) } : undefined;
     originOmissionSpentRef.current = true;
     if (opts) return anaChat.send(text, files, opts);
@@ -1279,7 +1280,9 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
   const fileRef = useRef<HTMLInputElement>(null);
   /* `@app` in the thread composer — the same hook the rail uses (appMentions.tsx). */
   const draftRef = useRef<HTMLTextAreaElement>(null);
-  const mentions = useAppMentions(draft, setDraft, draftRef);
+  /* `/` offers the conversation's skills after the commands; choosing one picks it. */
+  const skillMentions = useSkillMentionSource(shellProjectId, draft, chosenSkills, setChosenSkills);
+  const mentions = useAppMentions(draft, setDraft, draftRef, skillMentions);
   /* An ask from inside a document canvas lands HERE — in this composer, with
      focus — so the person keeps talking to AnA about the document she is
      looking at. Not auto-sent: it is her message to send. */

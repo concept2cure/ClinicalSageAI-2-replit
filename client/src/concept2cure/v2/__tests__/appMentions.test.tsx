@@ -9,20 +9,20 @@
  * reading their source, the same way the shell contract tests do.
  */
 import React, { useRef, useState } from 'react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { AppMentionMenu, insertMention, mentionTokenAt, useAppMentions } from '../appMentions';
+import { AppMentionMenu, insertMention, mentionTokenAt, useAppMentions, type SkillMentionSource } from '../appMentions';
 import { searchSlashCommands } from '@shared/ana/slash-commands';
 import { findCallableApp, searchCallableApps } from '@shared/navigation/callable-apps';
 
-function Host({ onSend }: { onSend: (t: string) => void }) {
+function Host({ onSend, skills }: { onSend: (t: string) => void; skills?: SkillMentionSource }) {
   const [draft, setDraft] = useState('');
   const ref = useRef<HTMLTextAreaElement>(null);
-  const m = useAppMentions(draft, setDraft, ref);
+  const m = useAppMentions(draft, setDraft, ref, skills);
   return (
     <div style={{ position: 'relative' }}>
       <textarea
@@ -149,9 +149,50 @@ describe('every composer host is wired to the one hook', () => {
   for (const f of ['surfaces/ConversationThread.tsx', 'surfaces/Surfaces.tsx']) {
     it(`${f} uses useAppMentions and renders AppMentionMenu on its textarea`, () => {
       const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
-      expect(src).toMatch(/useAppMentions\(draft, setDraft, draftRef\)/);
+      // The fourth argument, when a host passes one, is its skill source (§10, skills in `/`).
+      expect(src).toMatch(/useAppMentions\(draft, setDraft, draftRef(, \w+)?\)/);
       expect(src).toMatch(/<AppMentionMenu api=\{mentions\}/);
       expect(src).toMatch(/if \(mentions\.onKeyDown\(e\)\) return;/);
     });
   }
+});
+
+describe('skills in the `/` menu', () => {
+  const STABILITY = { key: 'cmc.stability', name: 'Stability programs and shelf life', description: 'Designing stability studies.' };
+  const source = (pick: (key: string) => void): SkillMentionSource => ({
+    search: (q) => ([STABILITY].filter((s) => s.name.toLowerCase().includes(q.toLowerCase()))),
+    pick,
+  });
+
+  it('lists matching skills after the commands, and choosing one picks it and inserts no text', () => {
+    const pick = vi.fn();
+    render(<Host onSend={() => {}} skills={source(pick)} />);
+    const box = screen.getByLabelText('Message') as HTMLTextAreaElement;
+    type(box, '/stab');
+    const option = screen.getByRole('option', { name: /Stability programs and shelf life/ });
+    expect(screen.getByText('Commands start your message; a skill is used on every turn of this conversation')).toBeTruthy();
+    fireEvent.mouseDown(option);
+    expect(pick).toHaveBeenCalledWith('cmc.stability');
+    expect(box.value).toBe('');
+  });
+
+  it('chooses a skill from the keyboard like a command, and Enter does not send', () => {
+    const pick = vi.fn();
+    const onSend = vi.fn();
+    render(<Host onSend={onSend} skills={source(pick)} />);
+    const box = screen.getByLabelText('Message') as HTMLTextAreaElement;
+    type(box, '/stability');
+    const options = screen.getAllByRole('option');
+    const index = options.findIndex((o) => /Stability programs/.test(o.textContent ?? ''));
+    for (let i = 0; i < index; i++) fireEvent.keyDown(box, { key: 'ArrowDown' });
+    fireEvent.keyDown(box, { key: 'Enter' });
+    expect(pick).toHaveBeenCalledWith('cmc.stability');
+    expect(onSend).not.toHaveBeenCalled();
+  });
+
+  it('offers no skill in a composer that passes no source, and commands are unchanged', () => {
+    render(<Host onSend={() => {}} />);
+    type(screen.getByLabelText('Message') as HTMLTextAreaElement, '/stab');
+    expect(screen.queryByRole('option', { name: /Stability programs/ })).toBeNull();
+  });
 });
