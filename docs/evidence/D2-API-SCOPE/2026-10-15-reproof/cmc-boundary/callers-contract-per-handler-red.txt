@@ -1,0 +1,45 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > finds the callers it exists to watch 2ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts': `'router.get(\'/quality/qbd/:projectId\…'` asks before it calls [ 'analyzeQbdFromSources' ] 0ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts': `'router.post(\'/ich-compliance\', asyn…'` asks before it calls [ 'runIchComplianceCheck' ] 0ms
+ × server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts': `'router.post(\'/control-strategy\', as…'` asks before it calls [ 'generateControlStrategy' ] 6ms
+   → expected false to be true // Object.is equality
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts': `'router.post(\'/stability-studies/:id/…'` asks before it calls [ 'estimateRecordedShelfLife' ] 0ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts': `'router.post(\'/stability-studies/pool…'` asks before it calls [ 'assessRecordedPoolability' ] 0ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/ana-ri/quality-engine…': `'export async function ichCompliance('` asks before it calls [ 'runIchComplianceCheck' ] 0ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/ana-ri/quality-engine…': `'export async function controlStrategy('` asks before it calls [ 'generateControlStrategy' ] 0ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/module3-convergence-s…': `'export async function getModule3Build…'` asks before it calls [ …(3) ] 0ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > server/services/submission-package-orchestrator.ts asks through the file named 2ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/ana/AnaToolExecutor.ts': `'registerToolHandler(\'estimate_record…'` is listed with a reason, and still needs to be 0ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/ana/AnaToolExecutor.ts': `'registerToolHandler(\'assess_recorded…'` is listed with a reason, and still needs to be 0ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/routes/orchestration.ts': `'router.post(\'/pre-submission-gate\''` is listed with a reason, and still needs to be 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts': `'router.post(\'/control-strategy\', as…'` asks before it calls [ 'generateControlStrategy' ]
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts:191:20
+    189|     '$file: `$opens` asks before it calls $engines',
+    190|     ({ asks }) => {
+    191|       expect(asks).toBe(true);
+       |                    ^
+    192|     },
+    193|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 passed (13)
+   Start at  06:05:45
+   Duration  4.44s (transform 231ms, setup 101ms, import 3.99s, tests 18ms, environment 0ms)
+

@@ -35,11 +35,25 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
 
-/** Queries go to PGlite. A bare `query` is autocommit, as a pg Pool's is. */
+/**
+ * Queries go to PGlite. PGlite is ONE session, and a pg Pool is not: a bare
+ * `pool.query` runs on whichever idle connection is free, in autocommit, never
+ * inside the transaction another caller holds on the connection it was lent.
+ * So the stand-in pool refuses a savepoint on a bare `query`, exactly as
+ * Postgres refuses it there. Without that, a reader that opened a transaction
+ * on a lent connection and then handed the POOL to the savepoint reader would
+ * pass here (one shared session) and fail in production (found by the review
+ * of 2026-10-22).
+ */
 const h = vi.hoisted(() => {
   const state: { harness: IndPgliteDb | null } = { harness: null };
   const run = (text: string, params?: unknown[]) => state.harness!.pglite.query(text, params as unknown[]) as never;
-  return { state, pool: { query: run, connect: async () => ({ query: run, release: () => undefined }) } };
+  const SAVEPOINT = /^\s*(SAVEPOINT|RELEASE\s+SAVEPOINT|ROLLBACK\s+TO\s+SAVEPOINT)\b/i;
+  const autocommit = (text: string, params?: unknown[]) =>
+    SAVEPOINT.test(text)
+      ? (Promise.reject(new Error('SAVEPOINT can only be used in transaction blocks')) as never)
+      : run(text, params);
+  return { state, pool: { query: autocommit, connect: async () => ({ query: run, release: () => undefined }) } };
 });
 const pglitePool = h.pool;
 let harness: IndPgliteDb;
@@ -163,13 +177,15 @@ describe('the build board (getModule3BuildStatus)', () => {
   });
 
   it('lists exactly the 3.2.R section the compile composes for a US IND', async () => {
-    await q('BEGIN');
+    const client = await pglitePool.connect();
+    await client.query('BEGIN');
     let composedRegional: string[];
     try {
-      const { sections } = await composeProjectModule3(pglitePool as never, ORG, PROGRAM);
+      const { sections } = await composeProjectModule3(client as never, ORG, PROGRAM);
       composedRegional = sections.map((s) => s.sectionKey).filter((k) => k.startsWith('3.2.R'));
     } finally {
-      await q('ROLLBACK');
+      await client.query('ROLLBACK');
+      client.release();
     }
     expect(composedRegional.length).toBeGreaterThan(0);
 
@@ -204,6 +220,30 @@ describe('the build board (getModule3BuildStatus)', () => {
       [ORG, PROGRAM, JSON.stringify({ name: 'BX-702' }), JSON.stringify(SMALL_MOLECULE)],
     );
     expect(await refusalOf(getModule3BuildStatus(ORG, PROGRAM))).toBeNull();
+  });
+
+  it.each([
+    ['the older substance is a biologic, the newer a small molecule', SIMULATION_MAB, SMALL_MOLECULE],
+    ['the older substance is a small molecule, the newer a biologic', SMALL_MOLECULE, SIMULATION_MAB],
+  ])('reaches compose’s verdict when %s', async (_case, older, newer) => {
+    await q(`DELETE FROM cmc_source_objects WHERE project_id = $1`, [PROGRAM]);
+    await q(
+      `INSERT INTO cmc_source_objects (organization_id, project_id, source_type, source_key, source_payload, updated_at)
+       VALUES ($1, $2, 'drug_substance', 'drug_substance:1', $3::jsonb, '2026-01-01T00:00:00Z'),
+              ($1, $2, 'drug_substance', 'drug_substance:2', $4::jsonb, '2026-06-01T00:00:00Z')`,
+      [ORG, PROGRAM, JSON.stringify(older), JSON.stringify(newer)],
+    );
+    const client = await pglitePool.connect();
+    await client.query('BEGIN');
+    let composeVerdict: string | null;
+    try {
+      composeVerdict = (await refusalOf(composeProjectModule3(client as never, ORG, PROGRAM)))?.code ?? null;
+    } finally {
+      await client.query('ROLLBACK');
+      client.release();
+    }
+    const boardVerdict = (await refusalOf(getModule3BuildStatus(ORG, PROGRAM)))?.code ?? null;
+    expect(boardVerdict).toBe(composeVerdict);
   });
 
   it('gives a program with no CMC records yet its empty board, not a refusal', async () => {

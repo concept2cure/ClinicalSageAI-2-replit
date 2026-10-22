@@ -167,6 +167,18 @@ describe('POST /stability-studies/poolability judges every study’s program', (
     expect(assessRecordedPoolability).not.toHaveBeenCalled();
   });
 
+  it('judges EVERY program: one admitted and one refused is refused, naming the refused one', async () => {
+    const Q = '7c1e2d3f-4a5b-4c6d-8e7f-90a1b2c3d4e5';
+    studyRows = [study(5, P), study(6, Q)];
+    assessProgramCompositionScope.mockImplementation(async (_org: number, projectId: string) => (projectId === Q ? MAB_REFUSAL : null));
+    const res = await request(app).post('/api/cmc/stability-studies/poolability').send({ studyIds: [5, 6] });
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('CMC_MODALITY_OUT_OF_SCOPE');
+    expect(assessProgramCompositionScope).toHaveBeenCalledWith(ORG, P);
+    expect(assessProgramCompositionScope).toHaveBeenCalledWith(ORG, Q);
+    expect(assessRecordedPoolability).not.toHaveBeenCalled();
+  });
+
   it('pools studies of a program inside the boundary', async () => {
     studyRows = [study(5, P), study(6, P)];
     const res = await request(app).post('/api/cmc/stability-studies/poolability').send({ studyIds: [5, 6] });

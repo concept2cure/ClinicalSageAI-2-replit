@@ -109,6 +109,33 @@ first.
 | The shelf-life and poolability refusals toasted "Couldn't save…", for an assessment that saves nothing. | `cmcAssessmentThrew`. | covered by copy only |
 | Placement's wrong-submission-type refusal still advised an NDA or BLA. | Now advises the program's US IND. | copy only |
 
+The test-validity lens found four ways the tests could stay green over a
+regression. Each is closed, and each closure was seen failing:
+
+- **The PGlite stand-in pool shared one session with its lent connection**, so
+  a reader that held a transaction and handed the pool to the savepoint
+  reader would pass here and fail in production. The bare `query` now refuses
+  a savepoint, as pg's autocommit connection does. With the QOS tool
+  regressed to exactly that, both QOS cases fail
+  (`readers-harness-catches-bare-pool.txt`).
+- **The callers contract judged files, counting a mention in a comment.** It
+  now cuts each file into handlers (a route, a tool registration, a function),
+  counts only calls, and requires the boundary inside the same handler. With
+  the boundary removed from the control-strategy route alone, that route fails
+  while the other four pass (`callers-contract-per-handler-red.txt`); against
+  trunk, all nine caller handlers fail (`callers-contract-red.txt`). The
+  allowlist names handlers: the two AnaToolExecutor tools expire 2026-10-24,
+  and the pre-submission gate's entry checks its own reason against
+  `launchScopeApiVerdict`.
+- **No test failed if the build-state 409, the placement mapping or the three
+  board commands' relays were deleted.** `composition-boundary-module3-os.test.ts`
+  makes each fail: 6 red against trunk, then 6/6.
+- **Poolability was only tested with one program.** A batch of an admitted
+  program pooled with a batch of a refused one is now refused, and judging only
+  the first program fails it (`routes-every-program-red.txt`). Routes 16/16.
+- The board's verdict is compared with compose's for two substances in both
+  orders, on a real engine. Readers: 12/12.
+
 The review also raised legacy numeric project ids. They reach the boundary as
 a program-row read that cannot succeed, and are now answered 503 rather than
 quoting a uuid cast error. Compose has refused them since `ebde394d7`.
