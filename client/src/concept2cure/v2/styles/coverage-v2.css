@@ -942,6 +942,13 @@
 .c2c-v2 .vd-search input:focus-visible{ outline:2px solid var(--accent-200); outline-offset:1px; border-color:transparent; }
 @media (prefers-reduced-motion: reduce){ .c2c-v2 .vd-search input{ transition:none; } }
 .c2c-v2 .vd-crumb.cur{ color:var(--text-100); font-weight:600; cursor:default; }
+/* The find view's metadata filters (VR-18): one row under the search bar. */
+.c2c-v2 .vd-filters{ display:flex; align-items:flex-end; gap:8px; padding:6px 10px 8px; border-bottom:1px solid var(--border); flex-wrap:wrap; font-size:12px; }
+.c2c-v2 .vd-filter{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.c2c-v2 .vd-filter-l{ color:var(--text-300); font-size:11px; }
+.c2c-v2 .vd-filter .c2c-input{ width:auto; max-width:200px; font-size:12px; padding:4px 6px; }
+.c2c-v2 .vd-filter input.c2c-input{ width:96px; }
+.c2c-v2 .vd-filter-note{ flex-basis:100%; color:var(--text-300); }
 .c2c-v2 .vd-crumb svg{ width:13px; height:13px; }
 .c2c-v2 .vd-crumb-sep{ color:var(--text-400); }
 .c2c-v2 .vd-cols, .c2c-v2 .vd-row{ display:grid !important; grid-template-columns:minmax(0,1fr) 126px 128px 92px 110px; align-items:center; gap:10px; }

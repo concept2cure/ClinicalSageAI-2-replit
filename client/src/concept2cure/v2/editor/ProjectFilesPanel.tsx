@@ -52,6 +52,7 @@ import { SectionActions, SelectedFileActions, VaultSourceImport } from './Projec
 import { DataRoomSourcesPanel } from './DataRoomSourcesPanel';
 import { IndDocumentLibrary } from './IndDocumentLibrary';
 import { useProjectVaultSearch, SEARCH_RESULTS_CHANGED, type SearchHit } from './projectVaultSearch';
+import { searchHitToDoc } from '../surfaces/VaultLibraryResults';
 
 /** The read model's envelope, unwrapped — the fields this rail reads. */
 interface VaultRead {
@@ -95,17 +96,6 @@ type ViewerState = SharedViewerState<VaultDoc>;
 
 /* ── Pure helpers ─────────────────────────────────────────────────────────── */
 
-/** A search hit in the tree's row shape, so one row renderer serves both. */
-function hitToDoc(h: SearchHit): VaultDoc {
-  return {
-    id: h.id, num: h.ctdSection || '', title: h.title, type: h.documentType || '',
-    status: h.placementStatus || 'unfiled', pct: null, owner: '', updated: '',
-    preview: (h.snippet || '').replace(/<\/?b>/g, ''), src: 'upload', docId: h.id, sizeLabel: h.size || undefined,
-    originalFileAvailable: h.originalFileAvailable, disposition: h.disposition,
-    earlierVersion: h.current === false, ver: h.version ? `v${h.version}` : '',
-  };
-}
-
 /** The reference line inserted for a file that is not a citable source. */
 export function referenceTextFor(doc: VaultDoc): string {
   const parts = [`“${doc.title}”`];
@@ -132,11 +122,12 @@ function flattenVaultDocs(nodes: Array<VaultDoc | VaultFolder>): VaultDoc[] {
 function findSelectedDoc(selectedId: string | null, treeDocs: VaultDoc[], hits: SearchHit[]): VaultDoc | null {
   if (!selectedId) return null;
   const treeDoc = treeDocs.find(doc => doc.id === selectedId);
-  const hit = hits.find(row => row.id === selectedId);
+  // A hit is keyed as its tree row is (`up-<uuid>`, searchHitToDoc).
+  const hit = hits.find(row => searchHitToDoc(row).id === selectedId);
   if (!hit) return treeDoc ?? null;
   // Search is a newer read than the browse tree. Keep its recorded availability
   // authoritative while retaining the same file's checksum and filing metadata.
-  return { ...treeDoc, ...hitToDoc(hit), hash: treeDoc?.hash, filing: treeDoc?.filing };
+  return { ...treeDoc, ...searchHitToDoc(hit), hash: treeDoc?.hash, filing: treeDoc?.filing };
 }
 
 /** The data-room source a vault upload IS — same bytes, checksum to content
@@ -353,8 +344,8 @@ function VaultSearchResults(props: RowsProps & {
       ) : (
         <>
           <div className="pf-count">{hits.length} of {hitsTotal} match{hitsTotal === 1 ? '' : 'es'}</div>
-          {hits.map(h => (
-            <VaultDocRow key={h.id} doc={hitToDoc(h)} depth={0} active={selectedId === h.id} onToggle={() => onSelectDoc(h.id)} />
+          {hits.map(h => searchHitToDoc(h)).map(doc => (
+            <VaultDocRow key={doc.id} doc={doc} depth={0} active={selectedId === doc.id} onToggle={() => onSelectDoc(doc.id)} />
           ))}
           {pageError && <ErrorState icon={I.alertTriangle} title="More results could not be loaded"
             message={pageError} retry={pageError === SEARCH_RESULTS_CHANGED ? onRetry : () => void loadMore()}

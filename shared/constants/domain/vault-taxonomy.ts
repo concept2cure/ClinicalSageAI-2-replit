@@ -82,6 +82,13 @@ export type VaultIngestDocumentType = (typeof VAULT_INGEST_DOCUMENT_TYPES)[numbe
  */
 export const VAULT_CLASSIFICATIONS = ['CONFIDENTIAL', 'INTERNAL', 'CONTROLLED', 'PUBLIC'] as const;
 export type VaultClassification = (typeof VAULT_CLASSIFICATIONS)[number];
+/** The reader's word for each classification: one list, for the edit form and the find view's filter. */
+export const VAULT_CLASSIFICATION_LABELS: Record<VaultClassification, string> = {
+  CONFIDENTIAL: 'Confidential',
+  INTERNAL: 'Internal',
+  CONTROLLED: 'Controlled',
+  PUBLIC: 'Public',
+};
 
 /**
  * How each ingest type is NAMED to a reader.

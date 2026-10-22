@@ -77,6 +77,20 @@ const STAGE_LABEL: Record<string, string> = {
   withdrawn: 'Withdrawn',
 };
 
+/**
+ * The review stages a reader filters the Vault by, each with the canonical
+ * stages it covers (the search's lifecycleStage values; 'none' is a version with
+ * no lifecycle record). The words are the ones a row already shows, so a filter
+ * and the row it finds agree.
+ */
+export const VAULT_STAGE_CHOICES: ReadonlyArray<{ value: string; label: string; stages: readonly string[] }> = [
+  { value: 'not_sent', label: STAGE_LABEL.authoring, stages: ['none', 'authoring'] },
+  { value: 'in_review', label: STAGE_LABEL.in_review, stages: ['in_review'] },
+  { value: 'approved', label: STAGE_LABEL.approved, stages: APPROVED_STAGES },
+  { value: 'superseded', label: STAGE_LABEL.superseded, stages: ['superseded'] },
+  { value: 'withdrawn', label: STAGE_LABEL.withdrawn, stages: ['withdrawn'] },
+];
+
 /** A version's stage in words. No record means nobody has sent it for review. */
 export function stageLabel(stage: string | null | undefined): string {
   if (!stage) return 'Not sent for review';
