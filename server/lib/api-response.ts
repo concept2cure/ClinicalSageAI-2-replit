@@ -27,6 +27,9 @@ import type { Response } from 'express';
 import type { ApiEnvelope, ApiErrorEnvelope } from '../../shared/constants/mdx';
 import { isConversionCapacityError } from '../services/conversion-slots';
 
+/** Re-exported so a route that already imports this module needs no second import (ectd-compile.ts). */
+export { isConversionCapacityError };
+
 interface ScopedLogger {
   error: (message: string, context?: unknown) => void;
 }
