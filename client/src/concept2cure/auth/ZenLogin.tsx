@@ -185,15 +185,20 @@ export const ZenLogin: React.FC = () => {
   );
 
   const isDev = import.meta.env.DEV || import.meta.env.MODE === 'development';
+  /* The account dev login signs in as is configuration (VITE_DEV_LOGIN_EMAIL,
+     seeded by DEMO_USER_EMAIL). 2026-10-15: both buttons posted one person's
+     personal address; with no identity configured there is now no button. */
+  const devLoginEmail = String(import.meta.env.VITE_DEV_LOGIN_EMAIL ?? '').trim();
 
   const handleDemoAccess = useCallback(async () => {
+    if (!devLoginEmail) return;
     setIsLoading(true);
     setError(null);
     try {
       const res = await fetch('/api/auth/dev-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: 'jonmichaelpsmith@gmail.com' }),
+        body: JSON.stringify({ email: devLoginEmail }),
       });
       const data = await res.json();
       if (data.success && data.accessToken) {
@@ -219,7 +224,7 @@ export const ZenLogin: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [rememberMe, setLocation]);
+  }, [rememberMe, setLocation, devLoginEmail]);
 
   const handleLogin = useCallback(async () => {
     if (!validateEmail(email)) {
@@ -498,7 +503,7 @@ export const ZenLogin: React.FC = () => {
                     Sign in
                   </Button>
 
-                  {isDev && (
+                  {isDev && devLoginEmail && (
                     <div className="pt-2 border-t border-stone-100">
                       <Button
                         type="button"

@@ -76,8 +76,12 @@ export interface M4PlacementRow {
 export interface SendRollup {
   /** Number of in-scope (SEND-mandated) studies. */
   inScope: number;
-  /** In-scope studies whose SEND package is validation-ready (risk 'low'). */
-  validated: number;
+  /**
+   * In-scope studies whose readiness verdict is low risk on a validation status
+   * the user DECLARED (no validator runs on the platform). 2026-10-15: this was
+   * `validated`, and was shown as datasets validated.
+   */
+  declaredPassed: number;
   /** Union of required SEND domains missing across in-scope studies. */
   missingDomains: string[];
   /** Worst per-study risk across in-scope studies; 'none' when none in scope. */
@@ -255,7 +259,7 @@ export function assembleNonclinicalSummary(
   // SEND readiness rollup across in-scope studies.
   const inScopeStudies = studies.filter((s) => sendInScope(s.studyType));
   const missingDomainSet = new Set<string>();
-  let validated = 0;
+  let declaredPassed = 0;
   let worst = 0;
   for (const s of inScopeStudies) {
     const facts: StudySendFacts = s.send ?? {
@@ -267,7 +271,7 @@ export function assembleNonclinicalSummary(
     };
     const verdict = evaluateSendReadiness({ studyType: s.studyType, ...facts });
     verdict.missingDomains.forEach((d) => missingDomainSet.add(d));
-    if (verdict.riskLevel === 'low') validated += 1;
+    if (verdict.riskLevel === 'low') declaredPassed += 1;
     worst = Math.max(worst, RISK_RANK[verdict.riskLevel]);
   }
   const risk: SendRiskLevel | 'none' =
@@ -275,7 +279,7 @@ export function assembleNonclinicalSummary(
 
   const send: SendRollup = {
     inScope: inScopeStudies.length,
-    validated,
+    declaredPassed,
     missingDomains: [...missingDomainSet].sort(),
     risk,
   };

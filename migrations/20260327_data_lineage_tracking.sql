@@ -1,3 +1,17 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- Purpose: data lineage and evidence chain persistence (21 CFR Part 11 §11.10(e)).
+-- Integrity Risk Addressed: a heuristic stored as, or lost beside, a confidence.
+-- =============================================================================
+--
+-- AMENDED IN PLACE 2026-10-15: evidence_chain_records gains
+-- evidence_coverage_heuristic (REAL) and primary_relevance_basis (TEXT), added
+-- with ADD COLUMN IF NOT EXISTS so a replay is a no-op. The evidence model
+-- computes a coverage heuristic from source count, relevance, kind and recency;
+-- it is not a confidence, so confidence_score (NULL unless one was measured)
+-- cannot hold it and it was dropped on persist. primary_relevance_basis records
+-- 'fixed_weight' when the primary source's relevance is a hand-set weight.
+--
 -- Data Lineage Tracking — Regulatory-Grade
 -- Migration: 20260327_data_lineage_tracking.sql
 --
@@ -109,6 +123,10 @@ CREATE TABLE IF NOT EXISTS evidence_chain_records (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- 2026-10-15 (see header): the coverage heuristic and the relevance basis.
+ALTER TABLE evidence_chain_records ADD COLUMN IF NOT EXISTS evidence_coverage_heuristic REAL;
+ALTER TABLE evidence_chain_records ADD COLUMN IF NOT EXISTS primary_relevance_basis TEXT;
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS ecr_org_idx ON evidence_chain_records(organization_id);
 CREATE INDEX IF NOT EXISTS ecr_project_idx ON evidence_chain_records(project_id);
@@ -132,3 +150,6 @@ COMMENT ON COLUMN data_lineage_records.linkage_type IS 'Relationship type: deriv
 COMMENT ON COLUMN data_lineage_records.transformation_type IS 'How data was transformed: direct_copy, ai_summarization, ai_generation, manual_edit, extraction, aggregation';
 COMMENT ON COLUMN evidence_chain_records.confidence_basis IS 'How confidence was determined: rules_based, validation_based, ai_inferred';
 COMMENT ON COLUMN evidence_chain_records.chain_strength IS 'Aggregate evidence strength: strong, moderate, weak';
+COMMENT ON COLUMN evidence_chain_records.confidence_score IS 'A confidence the caller measured and stated; NULL for rules_based and whenever none was measured';
+COMMENT ON COLUMN evidence_chain_records.evidence_coverage_heuristic IS 'Heuristic evidence coverage 0-100 from source count, relevance, kind and recency. A heuristic, not a confidence. NULL for rules_based chains and chains with no evidence';
+COMMENT ON COLUMN evidence_chain_records.primary_relevance_basis IS 'fixed_weight when primary_relevance is a hand-set weight per kind of evidence, not a measurement; NULL when it is the caller''s own figure';

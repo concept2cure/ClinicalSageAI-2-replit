@@ -44,6 +44,7 @@ import { C2CToast, useToast } from '../toast';
 import { downloadBlob, downloadText, safeFileName } from '../download';
 import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import { signatureMeaningLabel } from '../../_shared/signatureMeaning';
+import { ExportReviewConfirmation, useExportReview } from '../ExportReviewConfirmation';
 import { OrchestratorRunControls } from './OrchestratorRunControls';
 import { captureShellProjectGuard, useShellProject, type ShellProject } from '../shellProject';
 import { useSubmissionReadSession } from './submissionScopedRead';
@@ -83,8 +84,8 @@ interface StatusView {
   /** 'placed' — counted from documents placed in the program's sequence;
    *  'approved' — from the section store's approved/locked/final statuses. */
   readinessBasis?: 'placed' | 'approved';
-  /** The sequence a compile builds, with the region recorded on it. */
-  sequence?: { sequenceNumber: string; region: string; leafCount: number } | null;
+  /** The sequence a compile builds, with its recorded region and type. */
+  sequence?: { sequenceNumber: string; region: string; leafCount: number; type?: string | null } | null;
   totalSections: number;
   totalRequired: number;
   totalCompleted: number;
@@ -924,6 +925,10 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
   const actionRevision = useRef(0);
   const actionCurrent = useCallback((request: number) => current() && actionRevision.current === request, [current]);
   const [toast, fireToast] = useToast();
+  // The package download's review: the signed-in user's confirmation of this
+  // compile (a new compile starts unconfirmed). 2026-10-15: none was sent, so
+  // production refused every download (403 HUMAN_REVIEW_REQUIRED).
+  const exportReview = useExportReview(compileResult?.id ?? '');
 
   // ── Orchestrator pipeline state (folded in from the deleted duplicate) ──
   // Each panel carries its OWN read-outcome flag for the same reason
@@ -1057,6 +1062,9 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
      changed nothing told the user a choice existed that did not. */
   const recordedRegion = status?.sequence?.region ?? null;
   const regionBody = useMemo(() => (recordedRegion ? {} : { region }), [recordedRegion, region]);
+  /* So is its type: the selector is offered only where none is recorded (it
+     read "initial" on amendment 0001, WO-9 §20, 2026-10-22). */
+  const recordedType = typeof status?.sequence?.type === 'string' && status.sequence.type ? status.sequence.type : null;
 
   /* A rehearsal (WO-9 Click 6) binds a follow-up sequence against the latest
      recorded compile of each earlier sequence, filed or not — for an agency
@@ -1097,7 +1105,10 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
     const request = ++actionRevision.current;
     setBusy('export');
     try {
-      const res = await apiRequest('POST', `/api/ectd/export/${subId}`, exportRequestBody(compileResult, regionBody));
+      const res = await apiRequest('POST', `/api/ectd/export/${subId}`, {
+        ...exportRequestBody(compileResult, regionBody),
+        governance: exportReview.governance,
+      });
       if (!actionCurrent(request)) return;
       if (!res.ok) {
         const pj = (await res.json().catch(() => null)) as { error?: string } | null;
@@ -1118,7 +1129,7 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
     } finally {
       if (actionCurrent(request)) setBusy(null);
     }
-  }, [compileResult, regionBody, ident, fireToast, current, actionCurrent]);
+  }, [compileResult, regionBody, ident, fireToast, current, actionCurrent, exportReview.governance]);
 
   const doCompile = useCallback(async () => {
     if (identPath == null || !current()) return;
@@ -1126,7 +1137,7 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
     setBusy('compile');
     try {
       const { ok, status: st, body } = await readJson<CompileResult>('POST', `/api/ectd-compile/${identPath}/compile`, {
-        submissionType,
+        ...(recordedType ? {} : { submissionType }),
         ...regionBody,
         ...seqBody,
         ...(followUp && rehearsal ? { rehearsal: true } : {}),
@@ -1147,7 +1158,7 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
       fireToast(notice.text, notice.tone);
       void loadStatus(); void loadHistory();
     } finally { if (actionCurrent(request)) setBusy(null); }
-  }, [identPath, submissionType, regionBody, seqBody, followUp, rehearsal, fireToast, loadStatus, loadHistory, current, actionCurrent]);
+  }, [identPath, submissionType, recordedType, regionBody, seqBody, followUp, rehearsal, fireToast, loadStatus, loadHistory, current, actionCurrent]);
 
   /* WHAT ANA SEES HERE. Published ABOVE the no-program early return, because
      `usePublishSurfaceContext` is a hook and a hook below a conditional return
@@ -1458,10 +1469,19 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
               </select>
             </>
           )}
-          <label style={{ fontSize: 12, color: 'var(--text-400)' }} htmlFor="ectd-subtype">Submission</label>
-          <select id="ectd-subtype" className="c2c-input" style={{ height: 30 }} value={submissionType} onChange={(e) => setSubmissionType(e.target.value as any)}>
-            {SUB_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
+          {recordedType ? (
+            <span style={{ fontSize: 12.5 }}>
+              Type <b>{recordedType}</b>
+              <span style={{ color: 'var(--text-400)' }}> · recorded on sequence {status?.sequence?.sequenceNumber}</span>
+            </span>
+          ) : (
+            <>
+              <label style={{ fontSize: 12, color: 'var(--text-400)' }} htmlFor="ectd-subtype">Submission</label>
+              <select id="ectd-subtype" className="c2c-input" style={{ height: 30 }} value={submissionType} onChange={(e) => setSubmissionType(e.target.value as any)}>
+                {SUB_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </>
+          )}
           {followUp && (
             <label style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}
               title="For an agency validator only. Binds this sequence's replace, append and delete against the latest recorded compile of each earlier sequence, filed or not. The package, its record and its download say so; transmit binds only against filed sequences.">
@@ -1574,14 +1594,17 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
                 content file and is still a package (2026-09-29, W5/D7: this
                 was gated on rendered leaf files, so it could not be exported). */}
             {compileResult.submissionId != null && compileResult.package != null && (
-              <button
-                className="btn primary"
-                style={{ height: 32, marginRight: 8 }}
-                disabled={busy != null}
-                onClick={() => void doExport()}
-              >
-                {I.download} {busy === 'export' ? 'Assembling package…' : 'Download package (.zip)'}
-              </button>
+              <>
+                <ExportReviewConfirmation review={exportReview} subject="this compiled package's content" disabled={busy != null} />
+                <button
+                  className="btn primary"
+                  style={{ height: 32, marginRight: 8 }}
+                  disabled={busy != null}
+                  onClick={() => void doExport()}
+                >
+                  {I.download} {busy === 'export' ? 'Assembling package…' : 'Download package (.zip)'}
+                </button>
+              </>
             )}
             {compileResult.xmlBackbone && (
               <>

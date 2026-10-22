@@ -530,8 +530,9 @@ work waited, and its model was kept where the two overlapped:
   `shared/regulatory/ectd-leaf-rules.ts` (`07fbf47d4`), with
   `FILENAME_RULE_TEXT` and `FOLDER_NAME_PATTERN`. The server re-exports them, so
   placement in the client applies the same rule. FDA's 10 GB limit sits beside
-  trunk's sourced-limit accessor (`getGatewaySizeLimitOnFile`), and Canada keeps
-  its own 4 GiB figure, pending a source.
+  trunk's sourced-limit accessor (`getGatewaySizeLimitOnFile`). Canada has no
+  limit on file: trunk deleted the deprecated accessor and its unsourced figures
+  (`7a7428755`), so the lane's interim 4 GiB Canada constant went with it.
 - **Where the VP fixes now run.** The package assemble route has no screen
   caller since `8b75e6b5b`, and production refuses its transmit. So VP-1, VP-2,
   VP-3's LEAF-PDF-VERSION and leaf PDF, VP-7's route path, F20 and HS-2's
@@ -556,8 +557,12 @@ work waited, and its model was kept where the two overlapped:
     no screen reads;
   - the pre-transmit size check reads `getGatewaySizeLimitOnFile`. A region
     with no published limit on file (CA, UK, CN, KR, AU, CH, BR, IN) is said to
-    be unchecked, where it was refused on a figure no agency publishes. The
-    us-ectd market spec holds exactly 10^10 bytes, so FDA has one figure.
+    be unchecked, where it was refused on a figure no agency publishes. Trunk
+    landed the same fix independently (`7a7428755`), merged 2026-10-22: its
+    `checkGatewaySize` is kept, the lane's duplicate deleted, and the lane's
+    two differences folded in (decimal GB, so FDA's limit reads "10.00 GB"; FDA's
+    own physical-media remedy). The us-ectd market spec holds exactly 10^10
+    bytes, so FDA has one figure.
 
   Suites: the merged tree typechecks clean. In a broad run (1,938 files), the
   32 files and 99 tests that fail also fail, identically, on a pristine export

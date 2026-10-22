@@ -198,7 +198,9 @@ export function renewalReportLabel(obligationType: string, region: string | null
       // 314.80(c)(2)) — not the annual report this obligation is (21 CFR 314.81(b)(2)).
       return 'Annual report';
     case 'periodic_report':
-      return r === 'fda' ? 'PADER' : 'PSUR/PBRER';
+      // 2026-10-15: an unclassified FDA row read 'PADER'; it may as well be a
+      // PSUR/PBRER filed in its place, and the row does not say which.
+      return r === 'fda' ? 'Periodic safety report (type not recorded)' : 'PSUR/PBRER';
     case 'renewal':
       return r === 'jp' ? 'Re-examination' : 'Renewal';
     default:

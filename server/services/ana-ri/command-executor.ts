@@ -307,17 +307,51 @@ export async function createProject(
   }
 ): Promise<CommandResult> {
   try {
+    /* 2026-10-15: this wrote projects.submission_type, which projects does not
+       have, and left out client_workspace_id and type (both NOT NULL), so every
+       call failed. The submission type is metadata, as POST
+       /api/concept2cure/projects records it. The workspace decides who can see
+       the project (program-project-anchor.ts), so it is the organization's own
+       workspace, or its only one — never picked from several. */
+    const { DEFAULT_WORKSPACE_MARKER } = await import('../c2c/organization-default-workspace.js');
+    const ws = await pool.query(
+      `SELECT count(*)::int AS workspace_count,
+              min(id) FILTER (WHERE (metadata ->> $2) = 'true') AS default_workspace_id,
+              min(id) AS first_workspace_id
+         FROM client_workspaces WHERE organization_id = $1`,
+      [ctx.organizationId, DEFAULT_WORKSPACE_MARKER]
+    );
+    const wsRow = ws.rows[0] ?? {};
+    const workspaceCount = Number(wsRow.workspace_count ?? 0);
+    const workspaceId =
+      wsRow.default_workspace_id != null ? Number(wsRow.default_workspace_id)
+        : workspaceCount === 1 ? Number(wsRow.first_workspace_id) : null;
+    if (workspaceId === null) {
+      return {
+        success: false,
+        action: 'create_project',
+        message:
+          workspaceCount === 0
+            ? `Project "${params.name}" was not created: this organization has no client workspace to hold it.`
+            : `Project "${params.name}" was not created: this organization has ${workspaceCount} client workspaces and none is marked as its own, and the workspace decides who can see the project, so it is not chosen here. Create it from the Projects page, which names the workspace.`,
+        error: 'CLIENT_WORKSPACE_AMBIGUOUS',
+      };
+    }
+    const metadata: Record<string, string> = {};
+    if (params.submissionType) metadata.submissionType = params.submissionType;
+    if (params.targetAgency) metadata.targetAgency = params.targetAgency;
     const result = await pool.query(
-      `INSERT INTO projects (organization_id, name, description, status, submission_type,
-        therapeutic_area, created_by_id, created_at, updated_at)
-       VALUES ($1, $2, $3, 'active', $4, $5, $6, NOW(), NOW())
+      `INSERT INTO projects (organization_id, client_workspace_id, name, description, type, status,
+        therapeutic_area, metadata, created_by_id, owner_id, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, 'concept2cure', 'active', $5, $6::json, $7, $7, NOW(), NOW())
        RETURNING id, name, status`,
       [
         ctx.organizationId,
+        workspaceId,
         params.name,
         params.description || '',
-        params.submissionType || null,
         params.therapeuticArea || null,
+        JSON.stringify(metadata),
         ctx.userId,
       ]
     );
@@ -349,9 +383,12 @@ export async function createProject(
 /** List user's projects */
 export async function listProjects(ctx: CommandContext): Promise<CommandResult> {
   try {
+    // 2026-10-15: this selected projects.submission_type, which projects does
+    // not have, so every call failed; the type is in metadata (as loadUserContext reads it).
     const result = await pool.query(
-      `SELECT id, name, status, submission_type, therapeutic_area, progress,
-              created_at, updated_at
+      `SELECT id, name, status,
+              COALESCE(metadata->>'submissionType', metadata->>'submission_type') AS submission_type,
+              therapeutic_area, progress, created_at, updated_at
        FROM projects
        WHERE organization_id = $1
        ORDER BY updated_at DESC
@@ -411,19 +448,16 @@ export async function updateProject(
             )
           );
 
-    const allowedFields = [
-      'name',
-      'description',
-      'status',
-      'submission_type',
-      'therapeutic_area',
-      'phase',
-      'priority',
-      'risk_level',
-    ];
+    /* 2026-10-15: this allowed submission_type and phase, columns projects does
+       not have, so an update naming either failed outright; and a field it did
+       not know was skipped while the success message listed it as updated. The
+       submission type is metadata; a project records no phase; an unknown field
+       is refused by name and nothing is written. */
+    const allowedFields = ['name', 'description', 'status', 'therapeutic_area', 'priority', 'risk_level'];
     const setClauses: string[] = [];
     const values: unknown[] = [projectId, ctx.organizationId];
     let paramIdx = 3;
+    const notUpdatable: string[] = [];
 
     for (const [key, value] of Object.entries(updates)) {
       const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
@@ -431,11 +465,28 @@ export async function updateProject(
         setClauses.push(`${snakeKey} = $${paramIdx}`);
         values.push(value);
         paramIdx++;
+      } else if (snakeKey === 'submission_type') {
+        setClauses.push(
+          `metadata = (COALESCE(metadata::jsonb, '{}'::jsonb) || jsonb_build_object('submissionType', $${paramIdx}::text))::json`
+        );
+        values.push(value == null ? null : String(value));
+        paramIdx++;
+      } else {
+        notUpdatable.push(key);
       }
     }
 
-    if (setClauses.length === 0) {
-      return { success: false, action: 'update_project', message: 'No valid fields to update.' };
+    if (notUpdatable.length > 0 || setClauses.length === 0) {
+      const named = notUpdatable.length
+        ? ` ${notUpdatable.join(', ')}: not an updatable project field (name, description, status, therapeuticArea, priority, riskLevel, submissionType).`
+        : '';
+      return {
+        success: false,
+        action: 'update_project',
+        message: setClauses.length === 0
+          ? `No valid fields to update.${named}`
+          : `Nothing was updated.${named}`,
+      };
     }
 
     setClauses.push('updated_at = NOW()');
@@ -1547,9 +1598,13 @@ export async function loadUserContext(ctx: CommandContext): Promise<CommandResul
     );
     const user = userResult.rows[0];
 
-    // User's projects
+    // User's projects. 2026-10-15: this selected projects.submission_type, which
+    // projects does not have, so the read always failed. A project records its
+    // submission type in metadata (as user-intelligence's loadUserProjects reads it).
     const projects = await pool.query(
-      `SELECT id, name, status, submission_type, therapeutic_area, progress, updated_at
+      `SELECT id, name, status,
+              COALESCE(metadata->>'submissionType', metadata->>'submission_type') AS submission_type,
+              therapeutic_area, progress, updated_at
        FROM projects WHERE organization_id = $1 ORDER BY updated_at DESC LIMIT 20`,
       [ctx.organizationId]
     );
@@ -1584,17 +1639,15 @@ export async function loadUserContext(ctx: CommandContext): Promise<CommandResul
       message: `Loaded context: ${projects.rows.length} projects, ${conversations.rows.length} recent conversations, ${recentArtifacts.rows.length} recent artifacts.`,
     };
   } catch (err: unknown) {
-    // Graceful degradation — return partial context
+    // A failed read is a failure. 2026-10-15: it answered success: true with
+    // empty lists ("Loaded partial context"), so AnA was told nothing was in flight.
+    console.error('[ana-ri] load_user_context could not read the context:', err instanceof Error ? err.message : err);
     return {
-      success: true,
+      success: false,
       action: 'load_user_context',
-      data: {
-        user: { id: ctx.userId },
-        projects: [],
-        recentConversations: [],
-        recentArtifacts: [],
-      },
-      message: 'Loaded partial context (some tables may not exist yet).',
+      message:
+        'Your context (projects, conversations, artifacts) could not be read. This is not an empty context; retry, and report it if it persists.',
+      error: 'CONTEXT_UNAVAILABLE',
     };
   }
 }
@@ -4237,6 +4290,7 @@ export async function recommendEndpoints(
       return { success: false, action: 'recommend_endpoints', message: 'indication is required.' };
     const service = getEndpointRecommenderService();
     const result = await service.getComprehensiveEndpointRecommendations(
+      ctx.organizationId,
       String(params.indication),
       params.phase as string | undefined,
       (params.count as number) || 10,
@@ -4286,6 +4340,7 @@ export async function evaluateEndpoint(
     }
     const service = getEndpointRecommenderService();
     const evaluation = await service.evaluateEndpoint(
+      ctx.organizationId,
       String(params.endpoint),
       String(params.indication),
       params.phase as string | undefined

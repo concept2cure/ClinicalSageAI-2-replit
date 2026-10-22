@@ -87,7 +87,7 @@ const rules: AuditRule[] = [
     dimension: 'consistency',
     title: 'Formulation-route mismatch or missing data',
     question:
-      'Per 21 CFR 312.23(a)(7)(iv)(a), the composition, manufacture, and control of the drug product must be described. ' +
+      'Per 21 CFR 312.23(a)(7)(iv)(b), the composition, manufacture, and control of the drug product must be described. ' +
       'Is the formulation type consistent with the proposed route of administration?',
     check(answers) {
       const formulation = asString(answers.formulation_type).toLowerCase();
@@ -97,7 +97,7 @@ const rules: AuditRule[] = [
           this.id, this.dimension, 'warning', this.title, this.question,
           'Formulation type or route of administration has not been specified.',
           'The IND must describe the drug product composition and intended route of administration.',
-          '21 CFR 312.23(a)(7)(iv)(a)',
+          '21 CFR 312.23(a)(7)(iv)(b)',
           'Specify both the dosage form/formulation type and the route of administration, and ensure they are pharmacologically compatible.',
           ['formulation_type', 'route_of_administration'],
         );
@@ -112,7 +112,7 @@ const rules: AuditRule[] = [
           this.id, this.dimension, 'critical', 'Formulation-route mismatch detected', this.question,
           `Oral dosage form "${formulation}" is inconsistent with intravenous route of administration.`,
           'The drug product formulation must be appropriate for the intended route per 21 CFR 312.23(a)(7).',
-          '21 CFR 312.23(a)(7)(iv)(a); FDA Guidance for Industry: Sterile Drug Products Produced by Aseptic Processing',
+          '21 CFR 312.23(a)(7)(iv)(b); FDA Guidance for Industry: Sterile Drug Products Produced by Aseptic Processing',
           'Reconcile the formulation type with the proposed route. An IV route requires a sterile injectable formulation.',
           ['formulation_type', 'route_of_administration'],
         );
@@ -122,7 +122,7 @@ const rules: AuditRule[] = [
           this.id, this.dimension, 'critical', 'Formulation-route mismatch detected', this.question,
           `Injectable formulation "${formulation}" is inconsistent with oral route of administration.`,
           'The drug product formulation must be appropriate for the intended route.',
-          '21 CFR 312.23(a)(7)(iv)(a)',
+          '21 CFR 312.23(a)(7)(iv)(b)',
           'Reconcile the formulation type with the proposed route. An oral route requires an orally bioavailable dosage form.',
           ['formulation_type', 'route_of_administration'],
         );
@@ -194,15 +194,15 @@ const rules: AuditRule[] = [
     dimension: 'regulatory_alignment',
     title: 'Genotoxicity studies not addressed',
     question:
-      'ICH S2(R1) requires a standard battery of genotoxicity tests before Phase 1. ' +
+      'Under ICH M3(R2), a gene mutation (Ames) assay supports single-dose first-in-human trials, an assessment of chromosomal damage in a mammalian system is added before multiple-dose trials, and the complete ICH S2(R1) standard battery is completed before Phase 2. ' +
       'Has the sponsor conducted the Ames test, an in vitro chromosomal aberration assay, and an in vivo micronucleus study?',
     check(answers) {
       if (isBlank(answers.genotoxicity_studies)) {
         return finding(
           this.id, this.dimension, 'warning', this.title, this.question,
           'The submission does not address genotoxicity study status. FDA reviewers will expect the ICH S2(R1) standard battery to be completed or a justified deviation.',
-          'ICH S2(R1) requires a bacterial reverse mutation assay plus two mammalian cell assays (or one in vitro and one in vivo) before initial clinical trials.',
-          'ICH S2(R1); ICH M3(R2) Section 7; 21 CFR 312.23(a)(8)',
+          'Under ICH M3(R2), a bacterial reverse mutation (Ames) assay is completed before single-dose first-in-human trials and a mammalian chromosomal damage assessment before multiple-dose trials. The complete ICH S2(R1) standard battery (Option 1: Ames, an in vitro mammalian cell assay and an in vivo assay; or Option 2: Ames and an in vivo assessment in two tissues) is completed before Phase 2.',
+          'ICH S2(R1); ICH M3(R2) Section 9; 21 CFR 312.23(a)(8)',
           'Describe the genotoxicity battery conducted (or planned), including assay type, test article concentration ranges, and study outcomes. If any study is deferred, provide the scientific rationale.',
           ['genotoxicity_studies', 'nonclinical_studies_complete'],
         );
@@ -288,7 +288,7 @@ const rules: AuditRule[] = [
     dimension: 'regulatory_alignment',
     title: 'GMP compliance status unclear',
     question:
-      '21 CFR 312.23(a)(7)(iv)(b) requires that the drug product be manufactured in compliance with CGMP. ' +
+      'Clinical trial material must be manufactured under CGMP (FD&C Act 501(a)(2)(B)); 21 CFR 211 applies from Phase 2 onward, and most Phase 1 investigational drugs are exempt from it under 21 CFR 210.2(c). ' +
       'Is the manufacturing site operating under current Good Manufacturing Practice regulations?',
     check(answers) {
       const gmp = asBool(answers.gmp_compliance);
@@ -296,8 +296,8 @@ const rules: AuditRule[] = [
         return finding(
           this.id, this.dimension, 'critical', this.title, this.question,
           'The sponsor indicates the manufacturing site is NOT GMP-compliant. This is a fundamental deficiency that will prevent IND acceptance.',
-          'Drug products for use in clinical investigations must be manufactured in compliance with CGMP per 21 CFR 211 and 21 CFR 312.23(a)(7)(iv)(b).',
-          '21 CFR 312.23(a)(7)(iv)(b); 21 CFR 211; FDA Guidance: CGMP for Phase 1 Investigational Drugs (2008)',
+          'Drug products for use in clinical investigations must be manufactured under CGMP (FD&C Act section 501(a)(2)(B)). Most Phase 1 investigational drugs are exempt from 21 CFR 211 under 21 CFR 210.2(c) and follow FDA\'s 2008 guidance on CGMP for Phase 1 Investigational Drugs; 21 CFR 211 applies from Phase 2 onward. Drug product manufacturing information is described in the IND under 21 CFR 312.23(a)(7)(iv)(b).',
+          'FD&C Act 501(a)(2)(B); 21 CFR 210.2(c); 21 CFR 211 (Phase 2 onward); FDA Guidance: CGMP for Phase 1 Investigational Drugs (2008)',
           'The manufacturing site must achieve GMP compliance before the drug product can be used in clinical trials. For Phase 1, FDA Guidance on CGMP for Phase 1 Investigational Drugs provides a risk-based framework with some flexibility, but fundamental GMP elements must be in place.',
           ['gmp_compliance', 'manufacturing_site'],
         );
@@ -306,8 +306,8 @@ const rules: AuditRule[] = [
         return finding(
           this.id, this.dimension, 'warning', 'GMP compliance not confirmed', this.question,
           'GMP compliance status has not been confirmed in the submission.',
-          'GMP compliance is required for clinical trial material per 21 CFR 211.',
-          '21 CFR 312.23(a)(7)(iv)(b); 21 CFR 211',
+          'CGMP is required for clinical trial material (FD&C Act 501(a)(2)(B)); 21 CFR 211 applies from Phase 2 onward, while most Phase 1 investigational drugs are exempt from it under 21 CFR 210.2(c).',
+          'FD&C Act 501(a)(2)(B); 21 CFR 210.2(c); 21 CFR 211',
           'Confirm GMP compliance status and provide the manufacturing site address, most recent inspection date, and any outstanding FDA observations (Form 483 items).',
           ['gmp_compliance', 'manufacturing_site'],
         );
@@ -330,7 +330,7 @@ const rules: AuditRule[] = [
           this.id, this.dimension, 'warning', this.title, this.question,
           'No manufacturing site has been identified. The IND must include the name and address of the manufacturer.',
           '21 CFR 312.23(a)(7) requires identification of the manufacturing establishment and the name of the manufacturer.',
-          '21 CFR 312.23(a)(7); FDA Form 1571 Item 10',
+          '21 CFR 312.23(a)(7)',
           'Provide the full name and address of each manufacturing facility involved in drug substance and drug product manufacturing, testing, and packaging.',
           ['manufacturing_site', 'gmp_compliance'],
         );
@@ -408,7 +408,7 @@ const rules: AuditRule[] = [
         return finding(
           this.id, this.dimension, 'critical', this.title, this.question,
           'No sponsor name has been provided. The IND cannot be filed without a sponsor per 21 CFR 312.23(a)(1).',
-          'The sponsor must be identified on Form FDA 1571, including name, address, and telephone number. Foreign sponsors must designate a US agent per 21 CFR 312.23(a)(1)(v).',
+          'The sponsor must be identified on Form FDA 1571, including name, address, and telephone number. Foreign sponsors must designate a US agent per 21 CFR 312.23(a)(1)(ix).',
           '21 CFR 312.23(a)(1); FDA Form 1571',
           'Provide the sponsor name, address, and contact information. If the sponsor is a foreign entity, identify the US agent.',
           ['sponsor_name', 'ind_number'],
@@ -447,7 +447,7 @@ const rules: AuditRule[] = [
     dimension: 'regulatory_alignment',
     title: 'IRB approval status not confirmed',
     question:
-      '21 CFR 312.23(a)(1)(ix) requires that the IND contain a statement that an IRB has been identified. ' +
+      '21 CFR 312.23(a)(1)(iv) requires a commitment that an IRB complying with 21 CFR Part 56 will be responsible for the initial and continuing review and approval of each study. ' +
       'What is the current status of IRB review and approval at each proposed clinical site?',
     check(answers) {
       const status = asString(answers.irb_approval_status).toLowerCase();
@@ -455,8 +455,8 @@ const rules: AuditRule[] = [
         return finding(
           this.id, this.dimension, 'warning', this.title, this.question,
           'IRB approval status has not been specified. While IRB approval is not required at IND submission, the FDA must be informed of the IRB status before subjects are enrolled.',
-          '21 CFR 56 requires IRB review and approval before initiation of research involving human subjects. 21 CFR 312.23(a)(1)(ix) requires a commitment to obtain IRB approval.',
-          '21 CFR 312.23(a)(1)(ix); 21 CFR 56; 21 CFR 312.66',
+          '21 CFR 56 requires IRB review and approval before initiation of research involving human subjects. 21 CFR 312.23(a)(1)(iv) requires a commitment that an IRB complying with 21 CFR Part 56 will be responsible for the initial and continuing review and approval of each study in the proposed clinical investigation.',
+          '21 CFR 312.23(a)(1)(iv); 21 CFR 56; 21 CFR 312.66',
           'Specify IRB approval status (pending, submitted, approved) and identify the reviewing IRB. If using a central IRB, confirm the arrangement. Include the IRB name, address, and FWA number.',
           ['irb_approval_status', 'investigator_qualifications'],
         );
@@ -514,7 +514,7 @@ const rules: AuditRule[] = [
           this.id, this.dimension, 'info', this.title, this.question,
           'Clinical hold history has not been addressed. Full transparency regarding any prior clinical holds on this IND or related INDs is expected.',
           'Sponsors should disclose any prior clinical holds and their resolution in the IND submission.',
-          '21 CFR 312.42; 21 CFR 312.23(a)(5)',
+          '21 CFR 312.42; 21 CFR 312.23(a)(9)',
           'State whether the drug, related compounds, or the sponsor has been subject to any prior clinical holds. If yes, provide the hold date, basis, and documentation of resolution.',
           ['clinical_hold_history', 'previous_human_experience'],
         );
@@ -585,15 +585,15 @@ const rules: AuditRule[] = [
     dimension: 'completeness',
     title: 'Drug product description inadequate',
     question:
-      '21 CFR 312.23(a)(7)(iv)(a) requires a description of the drug product including its components, composition, and specifications. ' +
+      '21 CFR 312.23(a)(7)(iv)(b) requires a description of the drug product including its components, composition, and specifications. ' +
       'Has a complete drug product description been provided?',
     check(answers) {
       if (isBlank(answers.drug_product_description)) {
         return finding(
           this.id, this.dimension, 'warning', this.title, this.question,
           'No drug product description has been provided. FDA CMC reviewers require a clear description of the finished dosage form.',
-          '21 CFR 312.23(a)(7)(iv)(a) requires the composition of the drug product, including identity and quantity of each ingredient.',
-          '21 CFR 312.23(a)(7)(iv)(a)',
+          '21 CFR 312.23(a)(7)(iv)(b) requires the composition of the drug product, including identity and quantity of each ingredient.',
+          '21 CFR 312.23(a)(7)(iv)(b)',
           'Provide a drug product description including: (1) dosage form, (2) unit dose composition (active and inactive ingredients with quantities), (3) container closure system, (4) release specifications, (5) description of manufacturing process.',
           ['drug_product_description', 'formulation_type', 'drug_substance'],
         );
@@ -608,15 +608,15 @@ const rules: AuditRule[] = [
     dimension: 'risk_identification',
     title: 'Previous human experience not summarized',
     question:
-      '21 CFR 312.23(a)(5) requires information from prior human experience with the investigational drug. ' +
+      '21 CFR 312.23(a)(9) requires information from previous human experience with the investigational drug. ' +
       'Has the drug or related compounds been administered to humans previously, and if so, what safety and efficacy signals were observed?',
     check(answers) {
       if (isBlank(answers.previous_human_experience)) {
         return finding(
           this.id, this.dimension, 'info', this.title, this.question,
           'No information on previous human experience has been provided. If this is a first-in-human study, an explicit statement to that effect is expected.',
-          '21 CFR 312.23(a)(5) requires a summary of previous human experience, including prior clinical trials, foreign marketing experience, and any adverse events.',
-          '21 CFR 312.23(a)(5)',
+          '21 CFR 312.23(a)(9) requires a summary of previous human experience with the investigational drug, including prior clinical investigations, foreign marketing experience, and any adverse events.',
+          '21 CFR 312.23(a)(9)',
           'If prior human experience exists (e.g., foreign clinical studies, compassionate use), summarize the safety and efficacy data. If this is first-in-human, state so explicitly and cross-reference the nonclinical data supporting safety.',
           ['previous_human_experience', 'safety_database_size', 'clinical_hold_history'],
         );
@@ -639,7 +639,7 @@ const rules: AuditRule[] = [
           this.id, this.dimension, 'warning', this.title, this.question,
           'Prior human experience is referenced but the safety database size is not quantified. Reviewers need to assess whether the existing safety data are sufficient.',
           'ICH E1 provides guidance on the size of the safety database needed to support different phases of clinical development.',
-          'ICH E1; 21 CFR 312.23(a)(5)',
+          'ICH E1; 21 CFR 312.23(a)(9)',
           'Quantify the safety database: number of subjects exposed, dose ranges, duration of exposure, and a summary of adverse events by system organ class and severity.',
           ['safety_database_size', 'previous_human_experience'],
         );
@@ -654,15 +654,15 @@ const rules: AuditRule[] = [
     dimension: 'consistency',
     title: 'Phase of clinical investigation not specified',
     question:
-      '21 CFR 312.23(a)(3)(iv) requires identification of the phase of the proposed clinical investigation. ' +
+      '21 CFR 312.23(a)(1)(ii) requires identification of the phase of the proposed clinical investigation. ' +
       'What phase is this IND application supporting, and is the nonclinical and CMC data package appropriate for that phase?',
     check(answers) {
       if (isBlank(answers.phase)) {
         return finding(
           this.id, this.dimension, 'critical', this.title, this.question,
           'The phase of clinical investigation has not been specified. This is required information for Form FDA 1571 and determines the regulatory expectations for the supporting data package.',
-          '21 CFR 312.23(a)(3)(iv) and Form 1571 require identification of the phase of clinical study.',
-          '21 CFR 312.23(a)(3)(iv); FDA Form 1571 Item 11',
+          '21 CFR 312.23(a)(1)(ii) and Form 1571 require identification of the phase of clinical study.',
+          '21 CFR 312.23(a)(1)(ii); FDA Form 1571 Item 8',
           'Specify the phase (Phase 1, Phase 1/2, Phase 2, Phase 3) and ensure that the CMC, nonclinical, and clinical sections are consistent with phase-appropriate regulatory expectations per ICH M3(R2) Table 1.',
           ['phase', 'nonclinical_studies_complete', 'gmp_compliance'],
         );
@@ -683,8 +683,8 @@ const rules: AuditRule[] = [
         return finding(
           this.id, this.dimension, 'warning', this.title, this.question,
           'No indication has been specified. While FDA does not formally "approve" indications at the IND stage, a clearly defined target indication is essential for assessing the adequacy of the nonclinical and clinical plans.',
-          '21 CFR 312.23(a)(3)(ii) requires a description of the objectives and planned duration of the proposed clinical investigation.',
-          '21 CFR 312.23(a)(3)(ii)',
+          '21 CFR 312.23(a)(3)(i) requires an introductory statement describing the broad objectives and planned duration of the proposed clinical investigation.',
+          '21 CFR 312.23(a)(3)(i)',
           'Define the specific indication, including the target patient population and disease stage. Provide context on the unmet medical need and the current standard of care.',
           ['indication', 'therapeutic_area', 'mechanism_of_action'],
         );
@@ -699,7 +699,7 @@ const rules: AuditRule[] = [
     dimension: 'documentation',
     title: 'Drug name not provided',
     question:
-      'Form FDA 1571 Item 4 requires the name of the investigational drug. ' +
+      'Form FDA 1571 Item 5 requires the name of the investigational drug. ' +
       'Has the sponsor provided the drug name (proprietary and/or code name) and the established/USAN name if available?',
     check(answers) {
       if (isBlank(answers.drug_name)) {
@@ -707,7 +707,7 @@ const rules: AuditRule[] = [
           this.id, this.dimension, 'warning', this.title, this.question,
           'No drug name has been provided. The IND filing requires identification of the drug by name.',
           'Form 1571 requires the drug name, including any proprietary name, code designation, and chemical name.',
-          'FDA Form 1571 Item 4; 21 CFR 312.23(a)(7)',
+          'FDA Form 1571 Item 5; 21 CFR 312.23(a)(7)',
           'Provide the drug name including: (1) sponsor code designation, (2) USAN/INN name if assigned, (3) chemical name, and (4) any proprietary name if applicable.',
           ['drug_name', 'drug_substance'],
         );
@@ -730,7 +730,7 @@ const rules: AuditRule[] = [
           this.id, this.dimension, 'info', this.title, this.question,
           'No IND number has been provided. For an original IND submission this is expected (FDA assigns the number upon receipt). For amendments, the existing IND number must be referenced.',
           'For original INDs, an IND number will be assigned by FDA. For subsequent submissions, the assigned IND number must be referenced.',
-          '21 CFR 312.23(a)(1); FDA Form 1571 Item 3',
+          '21 CFR 312.23(a)(1); FDA Form 1571 Item 6',
           'If this is an original IND, indicate "To Be Assigned." If an IND number has been previously assigned, include it on all correspondence and submissions.',
           ['ind_number', 'sponsor_name'],
         );

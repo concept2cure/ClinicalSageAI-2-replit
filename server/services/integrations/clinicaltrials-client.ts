@@ -106,8 +106,11 @@ export interface CtgovTrial {
 
 export interface CtgovSearchResult extends Partial<StalenessFields> {
   source: 'ClinicalTrials.gov';
-  /** Total studies matching the query across all pages (not just this page). */
-  totalCount: number;
+  /**
+   * Total studies matching the query across all pages (not just this page), as
+   * the API reported it; null when the response did not carry one.
+   */
+  totalCount: number | null;
   trials: CtgovTrial[];
 }
 
@@ -220,7 +223,8 @@ export async function searchTrials(params: CtgovSearchParams): Promise<CtgovSear
 
   const payload = {
     source: 'ClinicalTrials.gov' as const,
-    totalCount: typeof safe.totalCount === 'number' ? safe.totalCount : studies.length,
+    // 2026-10-15: fell back to the page length, understating the total.
+    totalCount: typeof safe.totalCount === 'number' ? safe.totalCount : null,
     trials: studies.slice(0, pageSize).map(normalizeStudy),
   };
 

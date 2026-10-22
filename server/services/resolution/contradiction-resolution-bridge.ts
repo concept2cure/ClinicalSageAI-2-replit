@@ -405,7 +405,8 @@ export async function resolveContradiction(
     preflightRefreshTriggered = await triggerPreflightRefresh(
       organizationId,
       projectId,
-      orchestration.receipt
+      orchestration.receipt,
+      String(userId)
     );
   }
 
@@ -433,12 +434,15 @@ export async function resolveContradiction(
 
 /**
  * Trigger a preflight refresh after resolution execution.
- * Non-blocking — logs but does not fail the resolution.
+ * Non-blocking — logs but does not fail the resolution. Each step's cascade is
+ * logged as `triggeredBy`, the user who resolved the contradiction (2026-10-15:
+ * unstated, so it was logged as the reactive-dependency machine actor).
  */
 async function triggerPreflightRefresh(
   organizationId: number,
   projectId: number,
-  receipt: BundleExecutionReceipt
+  receipt: BundleExecutionReceipt,
+  triggeredBy: string
 ): Promise<boolean> {
   try {
     // Only refresh if there were actual executed steps
@@ -458,6 +462,7 @@ async function triggerPreflightRefresh(
           sourceId: step.targetId,
           sourceLabel: step.targetTitle ?? `${step.targetType}:${step.targetId}`,
           reason: `Post-resolution update (bundle: ${receipt.bundleId})`,
+          triggeredBy,
         });
       } catch (innerErr: unknown) {
         log.warn('Failed to propagate change for executed step', {

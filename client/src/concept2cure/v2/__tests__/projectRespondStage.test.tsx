@@ -167,3 +167,42 @@ describe('Submission Center opened for a response (F15)', () => {
     expect(type.value).toBe('response');
   });
 });
+
+describe('A letter uploaded in Respond names the submission it concerns (gap 6.5, 2026-10-22)', () => {
+  afterEach(() => { vi.unstubAllGlobals(); });
+  const upload = (container: HTMLElement) => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ fileId: 'file_9', sourceId: 77, status: 'ready' }) })));
+    fireEvent.change(container.querySelector('input[type="file"]')!, { target: { files: [new File(['%PDF'], 'IR.pdf', { type: 'application/pdf' })] } });
+  };
+  const loggedBody = async () => {
+    await waitFor(() => expect(apiRequest.mock.calls.some((c) => c[0] === 'POST' && c[1] === COMMS_URL)).toBe(true));
+    return apiRequest.mock.calls.find((c) => c[0] === 'POST' && c[1] === COMMS_URL)![2];
+  };
+
+  it("with the project's only submission, links it, and the person can see and change that", async () => {
+    const { container } = render(<ProjectRespond pid={PID} markets={markets([submission(55, 'ONC-221 IND', 'ind', 'fda')])} onNav={vi.fn()} onAsk={vi.fn()} />);
+    expect((screen.getByLabelText(/The submission this letter concerns/) as HTMLSelectElement).value).toBe('55');
+    upload(container);
+    expect((await loggedBody()).linkedSubmissionId).toBe('55');
+  });
+
+  it('with several, links none until one is chosen, and the chosen one is also the response sequence\'s market', async () => {
+    const onNav = vi.fn();
+    const { container } = render(<ProjectRespond pid={PID} markets={markets([submission(55, 'ONC-221 IND', 'ind', 'fda'), submission(56, 'ONC-221 MAA', 'maa', 'eu')])} onNav={onNav} onAsk={vi.fn()} />);
+    const picker = screen.getByLabelText(/The submission this letter concerns/) as HTMLSelectElement;
+    expect(picker.value).toBe('');
+    fireEvent.change(picker, { target: { value: '56' } });
+    upload(container);
+    expect((await loggedBody()).linkedSubmissionId).toBe('56');
+    expect((screen.getByLabelText(/The market the letter came from/) as HTMLSelectElement).value).toBe('56');
+    fireEvent.click(screen.getByRole('button', { name: /Start a response sequence/ }));
+    expect(consumeNavParams('submission-center')).toEqual({ submissionId: '56', ws: 'sequences', followUp: 'response' });
+  });
+
+  it('a letter the person marks as about no submission is logged with none', async () => {
+    const { container } = render(<ProjectRespond pid={PID} markets={markets([submission(55, 'ONC-221 IND', 'ind', 'fda')])} onNav={vi.fn()} onAsk={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText(/The submission this letter concerns/), { target: { value: '' } });
+    upload(container);
+    expect(await loggedBody()).not.toHaveProperty('linkedSubmissionId');
+  });
+});

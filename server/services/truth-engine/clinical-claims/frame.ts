@@ -10,7 +10,7 @@ import { canonical } from './number';
 import { armLabel } from './items';
 import type { Draft } from './context';
 import type { DocInfo } from './doc';
-import type { Claim, ClaimFrame, Loc, Measure, Population, ReasonCode, SlotName, Unframed } from './types';
+import type { Claim, ClaimFrame, Loc, Measure, ClaimPopulation, ReasonCode, SlotName, Unframed } from './types';
 
 const SAFETY = new Set<Measure['family']>(['incidence', 'deaths', 'eair', 'lab', 'exposure', 'demographic']);
 const EFFICACY = new Set<Measure['family']>(['effect', 'responder', 'median', 'arm_change', 'baseline_mean']);
@@ -89,7 +89,7 @@ export function finalize(d: Draft, doc: DocInfo, index: number): Claim | Unframe
     reasons.push({ reason: 'pool_membership_unidentified', slot: 'study', detail: 'A pooled figure whose member studies are not listed (C16).' });
   }
 
-  let population: Population | undefined = d.own.population ?? ctx.population;
+  let population: ClaimPopulation | undefined = d.own.population ?? ctx.population;
   if (d.own.population) slotFrom.population = 'form';
   else if (ctx.population) slotFrom.population = ctx.populationFrom ?? 'sentence';
   if (!population && SAFETY.has(d.family)) {

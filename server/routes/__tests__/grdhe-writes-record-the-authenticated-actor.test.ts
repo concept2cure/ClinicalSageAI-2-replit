@@ -51,7 +51,7 @@ vi.mock('../../db', async () => {
     if (/FROM regulatory_harmonization\.export_jobs/.test(text)) {
       return [{
         id: JOB, tenant_id: TENANT, source_entity_type: 'adverse_event', source_entity_ids: state.sourceEntityIds,
-        target_format: 'FDA_AE_3500A', target_jurisdiction: 'FDA', status: 'pending', ...stamp,
+        target_format: 'STAND_IN_RECORDED_FORMAT', target_jurisdiction: 'FDA', status: 'pending', ...stamp,
         terminology_versions: { MEDDRA: { version_id: 'tv-1', version_code: '26.1', display_name: 'MedDRA 26.1', locked_at: stamp.created_at } },
       }];
     }
@@ -85,6 +85,16 @@ vi.mock('../../db', async () => {
         fn({ execute: run(true) })),
     },
   };
+});
+
+// 2026-10-15: a format no regulatory_format value records is refused before the
+// service (grdhe-export-jobs-refuse-a-format-no-regulatory-format-records.pglite.test.ts).
+// This suite tests the writes after that check, so FDA_AE_3500A stands in for a
+// format one records, and the job above records that stand-in, which execute
+// reads back to the FDA generator. The database is a double; nothing is cast.
+vi.mock('../../services/grdhe/exportGenerators', async importOriginal => {
+  const actual = await importOriginal<typeof import('../../services/grdhe/exportGenerators')>();
+  return { ...actual, RECORDED_AS: { ...actual.RECORDED_AS, FDA_AE_3500A: 'STAND_IN_RECORDED_FORMAT' } };
 });
 
 import router from '../grdheRoutes';

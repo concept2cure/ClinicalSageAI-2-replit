@@ -18,7 +18,7 @@
 import { normalizeCtdCode } from '../../../shared/regulatory/section-code.js';
 import { sectionMatches } from '../ectd/section-code-match.js';
 
-export interface OutlineSection {
+export interface CrossReferenceSection {
   document_id: string;
   title: string | null;
   section_key: string;
@@ -69,19 +69,19 @@ export function sectionCodeOf(reference: string): string | null {
   return codes.sort((a, b) => b.split('.').length - a.split('.').length)[0] ?? null;
 }
 
-function preferExact(rows: OutlineSection[], code: string): OutlineSection {
+function preferExact(rows: CrossReferenceSection[], code: string): CrossReferenceSection {
   return rows.find((s) => normalizeCtdCode(s.section_key) === code) ?? rows[0];
 }
 
 /** A heading nothing has been written under yet: status 'todo' throughout. */
-function unwritten(rows: OutlineSection[]): boolean {
+function unwritten(rows: CrossReferenceSection[]): boolean {
   return rows.every((s) => s.status === 'todo');
 }
 
 export function checkCrossReference(
   reference: string,
   documentId: string,
-  sections: readonly OutlineSection[],
+  sections: readonly CrossReferenceSection[],
 ): CrossReferenceCheck {
   const code = sectionCodeOf(reference);
   if (!code) {

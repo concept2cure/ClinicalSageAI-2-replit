@@ -62,6 +62,8 @@ interface IndlChecklist {
    which is not "none". */
 interface IndlFormRow extends IndlForm {
   attachment?: { attested: boolean; requiredFieldsMissing: string[] | null } | null;
+  /** The co-authored form at this code, if any; it counts only when signed. */
+  authored?: { status: string; signed: boolean } | null;
 }
 
 /** The attached file at a form's place, in words — what the chip and AnA both say. */
@@ -81,6 +83,12 @@ function formFileState(f: IndlFormRow): string {
 function formChip(f: IndlFormRow): { label: string; note: string | null } {
   if (f.done) return { label: 'Complete', note: null };
   const a = f.attachment;
+  if (!a && f.authored && !f.authored.signed) {
+    return {
+      label: 'Authored — not signed',
+      note: 'The form is authored, but no signed copy is recorded, so it does not count. Attach the signed form in 2a with the attestation.',
+    };
+  }
   if (!a) return { label: 'Open', note: null };
   if (!a.attested) {
     return {
@@ -1137,7 +1145,10 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
           {kicker}
           <h1>{drug} — Initial IND</h1>
           <p className="surface-sub">
-            {[prog.productName, prog.indication, prog.sponsorName, 'eCTD v4.0 (FDA)']
+            {/* The format every FDA package here is built in (market-support.ts:
+                "this platform builds eCTD v3.2.2 only"); it said v4.0 until the
+                WO-9 lane re-walk of 2026-10-22. */}
+            {[prog.productName, prog.indication, prog.sponsorName, 'eCTD v3.2.2 (FDA)']
               .filter(Boolean)
               .join(' — ')}
           </p>
@@ -1316,7 +1327,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                 <div className="indl-cover-meta">
                   {prog.productName && <span>{prog.productName}</span>}
                   {prog.sponsorName && <span>{prog.sponsorName}</span>}
-                  <span>Initial IND — eCTD v4.0 (FDA)</span>
+                  <span>Initial IND — eCTD v3.2.2 (FDA)</span>
                   <span>
                     {R.assessed
                       ? 'Assessed ' +

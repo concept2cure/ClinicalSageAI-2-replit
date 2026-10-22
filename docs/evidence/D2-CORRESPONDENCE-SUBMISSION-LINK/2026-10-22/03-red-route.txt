@@ -1,0 +1,11 @@
+# RED at d4be3c13f: the route as on trunk, the new route cases (2026-10-22T05:06:15Z)
+ × server/routes/c2c/__tests__/communication-center.test.ts > POST /projects/:projectId/agency-communications — the submission a letter concerns (gap 6.5) > refuses a reference that is not a submission id without looking anything up
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/communication-center.test.ts > POST /projects/:projectId/agency-communications — the submission a letter concerns (gap 6.5) > refuses a submission the organisation-and-program lookup does not find, and writes nothing
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/communication-center.test.ts > POST /projects/:projectId/agency-communications — the submission a letter concerns (gap 6.5) > stores the id the lookup found and returns the submission it names
+   → expected { …(16) } to match object { linkedSubmissionId: '41', …(1) }
+ × server/routes/c2c/__tests__/communication-center.test.ts > POST /projects/:projectId/agency-communications — the submission a letter concerns (gap 6.5) > treats an empty choice as no submission and looks nothing up
+   → expected undefined to be null
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 16 passed (20)

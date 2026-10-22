@@ -13,6 +13,15 @@
 -- measured any of them. Removed; the rows an earlier install wrote are
 -- withdrawn by migrations/20261015j_gcc_seed_invented_figures_withdrawn.sql
 -- (deploy set).
+-- Also 2026-10-15 (D2, no fabricated output): cortex.compute_domain_similarity
+-- stored 0.5 for a missing embedding similarity or concept overlap, weighted
+-- the two 0.6 / 0.4 with no source, and cached the result;
+-- cortex.suggest_transfer_mapping graded risk into fixed bands (0.7 / 0.5 /
+-- 0.3 / 0.1) and derived a transfer strength and a recommendation from them.
+-- Both were SECURITY DEFINER and nothing calls them. Both now raise
+-- feature_not_supported and run as their caller. Databases installed before
+-- this amendment get the same definitions from
+-- migrations/20261015i_cortex_engine_functions_refuse.sql (deploy set).
 
 BEGIN;
 
@@ -628,88 +637,19 @@ CREATE OR REPLACE FUNCTION cortex.compute_domain_similarity(
 )
 RETURNS NUMERIC
 LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = cortex, pg_catalog
+SECURITY INVOKER
 AS $$
-DECLARE
-    v_domain_a RECORD;
-    v_domain_b RECORD;
-    v_embedding_sim NUMERIC;
-    v_concept_overlap NUMERIC;
-    v_overall_sim NUMERIC;
 BEGIN
-    -- Ensure consistent ordering
-    IF p_domain_a_id > p_domain_b_id THEN
-        SELECT p_domain_a_id, p_domain_b_id INTO p_domain_b_id, p_domain_a_id;
-    END IF;
-    
-    -- Check cache
-    SELECT overall_similarity INTO v_overall_sim
-    FROM cortex.domain_similarity_cache
-    WHERE domain_a_id = p_domain_a_id AND domain_b_id = p_domain_b_id;
-    
-    IF v_overall_sim IS NOT NULL THEN
-        RETURN v_overall_sim;
-    END IF;
-    
-    -- Get domain data
-    SELECT * INTO v_domain_a FROM cortex.domain_knowledge WHERE id = p_domain_a_id;
-    SELECT * INTO v_domain_b FROM cortex.domain_knowledge WHERE id = p_domain_b_id;
-    
-    IF v_domain_a IS NULL OR v_domain_b IS NULL THEN
-        RETURN NULL;
-    END IF;
-    
-    -- Compute embedding similarity
-    v_embedding_sim := CASE 
-        WHEN v_domain_a.domain_embedding IS NOT NULL AND v_domain_b.domain_embedding IS NOT NULL
-        THEN 1 - (v_domain_a.domain_embedding <=> v_domain_b.domain_embedding)
-        ELSE 0.5
-    END;
-    
-    -- Compute concept overlap (Jaccard)
-    v_concept_overlap := CASE 
-        WHEN v_domain_a.key_concepts IS NOT NULL AND v_domain_b.key_concepts IS NOT NULL
-        THEN (
-            SELECT COUNT(*)::NUMERIC / NULLIF(
-                (SELECT COUNT(DISTINCT c) FROM (
-                    SELECT unnest(v_domain_a.key_concepts) AS c
-                    UNION
-                    SELECT unnest(v_domain_b.key_concepts)
-                ) t), 0)
-            FROM (
-                SELECT unnest(v_domain_a.key_concepts)
-                INTERSECT
-                SELECT unnest(v_domain_b.key_concepts)
-            ) t
-        )
-        ELSE 0.5
-    END;
-    
-    -- Weighted combination
-    v_overall_sim := 0.6 * v_embedding_sim + 0.4 * COALESCE(v_concept_overlap, 0.5);
-    
-    -- Cache result
-    INSERT INTO cortex.domain_similarity_cache (
-        domain_a_id, domain_b_id,
-        embedding_similarity, concept_overlap, overall_similarity
-    ) VALUES (
-        p_domain_a_id, p_domain_b_id,
-        v_embedding_sim, v_concept_overlap, v_overall_sim
-    )
-    ON CONFLICT (domain_a_id, domain_b_id) DO UPDATE
-    SET embedding_similarity = EXCLUDED.embedding_similarity,
-        concept_overlap = EXCLUDED.concept_overlap,
-        overall_similarity = EXCLUDED.overall_similarity,
-        computed_at = NOW();
-    
-    RETURN v_overall_sim;
+    -- Amended in place 2026-10-15: see the note at the top of this file.
+    RAISE EXCEPTION 'cortex.compute_domain_similarity computes no similarity: no similarity model exists'
+        USING ERRCODE = 'feature_not_supported';
 END;
 $$;
 
 COMMENT ON FUNCTION cortex.compute_domain_similarity IS
-'Compute and cache similarity between two domains.
-Uses embedding similarity and concept overlap.';
+'Refuses (feature_not_supported): no similarity model exists. It used to store 0.5 for a
+missing embedding similarity or concept overlap, weighted the two 0.6 / 0.4 with no
+source, and cached the result.';
 
 -- Function: Suggest transfer mapping
 CREATE OR REPLACE FUNCTION cortex.suggest_transfer_mapping(
@@ -718,71 +658,19 @@ CREATE OR REPLACE FUNCTION cortex.suggest_transfer_mapping(
 )
 RETURNS JSONB
 LANGUAGE plpgsql
-STABLE
-SECURITY DEFINER
-SET search_path = cortex, pg_catalog
+SECURITY INVOKER
 AS $$
-DECLARE
-    v_source RECORD;
-    v_target RECORD;
-    v_similarity NUMERIC;
-    v_transfer_type TEXT;
-    v_risk NUMERIC;
-    v_suggestion JSONB;
 BEGIN
-    -- Get domain info
-    SELECT * INTO v_source FROM cortex.domain_knowledge WHERE id = p_source_domain_id;
-    SELECT * INTO v_target FROM cortex.domain_knowledge WHERE id = p_target_domain_id;
-    
-    IF v_source IS NULL OR v_target IS NULL THEN
-        RETURN NULL;
-    END IF;
-    
-    -- Compute similarity
-    v_similarity := cortex.compute_domain_similarity(p_source_domain_id, p_target_domain_id);
-    
-    -- Determine transfer type
-    v_transfer_type := CASE 
-        WHEN v_similarity > 0.8 THEN 'direct'
-        WHEN v_similarity > 0.6 THEN 'structural'
-        WHEN v_similarity > 0.4 THEN 'analogical'
-        ELSE 'conditional'
-    END;
-    
-    -- Estimate risk (higher if domains are very different or target has unique requirements)
-    v_risk := CASE
-        WHEN v_similarity < 0.3 THEN 0.7
-        WHEN v_target.regulatory_specificity > 0.8 THEN 0.5
-        WHEN v_similarity > 0.7 THEN 0.1
-        ELSE 0.3
-    END;
-    
-    v_suggestion := jsonb_build_object(
-        'source_domain', v_source.domain_value,
-        'target_domain', v_target.domain_value,
-        'similarity', v_similarity,
-        'suggested_transfer_type', v_transfer_type,
-        'estimated_transfer_strength', v_similarity * (1 - v_risk * 0.5),
-        'estimated_risk', v_risk,
-        'recommendation', CASE 
-            WHEN v_similarity > 0.6 AND v_risk < 0.4 THEN 'recommended'
-            WHEN v_similarity > 0.4 AND v_risk < 0.5 THEN 'consider'
-            ELSE 'caution'
-        END,
-        'notes', CASE
-            WHEN v_similarity > 0.8 THEN 'High similarity suggests direct transfer is viable'
-            WHEN v_risk > 0.5 THEN 'High risk - validate carefully before applying'
-            ELSE 'Moderate similarity - structural or analogical transfer may work'
-        END
-    );
-    
-    RETURN v_suggestion;
+    -- Amended in place 2026-10-15: see the note at the top of this file.
+    RAISE EXCEPTION 'cortex.suggest_transfer_mapping suggests no mapping: no transfer model exists'
+        USING ERRCODE = 'feature_not_supported';
 END;
 $$;
 
 COMMENT ON FUNCTION cortex.suggest_transfer_mapping IS
-'Suggest a transfer mapping between two domains based on similarity analysis.
-Returns recommendation with estimated strength and risk.';
+'Refuses (feature_not_supported): no transfer model exists. It used to grade risk into
+fixed bands (0.7 / 0.5 / 0.3 / 0.1) and derive a transfer strength and a
+recommendation from them and from compute_domain_similarity''s placeholder 0.5.';
 
 -- ============================================================================
 -- SECTIONS 10-11: SEED DOMAIN KNOWLEDGE AND TRANSFER TEMPLATES — REMOVED 2026-10-15

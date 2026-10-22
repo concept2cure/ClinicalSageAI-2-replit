@@ -26,3 +26,13 @@ output "origin_secret_header_name" {
   description = "Header CloudFront must send with origin_secret for the listener to forward the request."
   value       = local.origin_secret_header_name
 }
+
+# The request-count scaling policy names the load balancer and target group by
+# their ARN suffixes (modules/ecs-fargate, aws_appautoscaling_policy.api_requests).
+output "alb_arn_suffix" {
+  value = aws_lb.this.arn_suffix
+}
+
+output "api_target_group_arn_suffix" {
+  value = aws_lb_target_group.api.arn_suffix
+}

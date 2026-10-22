@@ -98,7 +98,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
         question:
           'Let\'s begin with the NDA application type. Is this a 505(b)(1) new molecular entity, a 505(b)(2) application relying on a listed drug, or a supplement to an existing NDA? The application pathway determines the evidentiary requirements.',
         guidance:
-          'Per 21 CFR 314.50, an NDA must contain full reports of investigations showing the drug is safe and effective. A 505(b)(1) NDA (full NDA) requires the applicant to provide all safety and efficacy data. A 505(b)(2) NDA (21 CFR 314.54) permits reliance on FDA\'s previous findings of safety and/or effectiveness for a listed drug, reducing the need for de novo studies — but requires a right-of-reference or published literature. NDA supplements (21 CFR 314.70) cover changes to an approved NDA such as new indications, formulation changes, or labeling updates. Expedited programs (Priority Review, Accelerated Approval under 21 CFR 314.500, Fast Track, Breakthrough Therapy) affect review timelines and may impose additional post-marketing requirements.',
+          'Per 21 CFR 314.50, an NDA must contain full reports of investigations showing the drug is safe and effective. A 505(b)(1) NDA (full NDA) requires the applicant to provide all safety and efficacy data. A 505(b)(2) NDA (21 CFR 314.54) permits reliance on FDA\'s previous findings of safety and/or effectiveness for a listed drug, reducing the need for de novo studies — where the investigations relied upon were not conducted by or for the applicant and the applicant has no right of reference or use to them (e.g., published literature or FDA\'s finding of safety and/or effectiveness for a listed drug). NDA supplements (21 CFR 314.70) cover changes to an approved NDA such as new indications, formulation changes, or labeling updates. Expedited programs (Priority Review, Accelerated Approval under 21 CFR 314.500, Fast Track, Breakthrough Therapy) affect review timelines and may impose additional post-marketing requirements.',
         fields: [
           {
             id: 'nda_type',
@@ -217,9 +217,9 @@ export function createNdaSubmissionFlow(): FlowDefinition {
         id: 'sponsor_info',
         section: 'app_overview',
         question:
-          'Provide sponsor details. Per 21 CFR 314.50(a), the NDA must identify the applicant, responsible contact, and confirm PDUFA user fee payment.',
+          'Provide sponsor details. Per 21 CFR 314.50(a), the application form (Form FDA 356h) identifies the applicant and a responsible contact; PDUFA user fee payment must also be confirmed.',
         guidance:
-          'Per 21 CFR 314.50(a), the NDA cover letter must include the applicant name, address, NDA number (if supplement), and a responsible contact person. PDUFA user fees (21 CFR 314.50(l)) must be paid before FDA will file the application. The Prescription Drug User Fee Act (PDUFA) goal date establishes the FDA review timeline (10 months standard, 6 months priority review from the filing date, which is typically 60 days after receipt).',
+          'Per 21 CFR 314.50(a), the application form (Form FDA 356h) carries the applicant name and address, the application number (for a supplement) and a responsible contact; the cover letter is placed in Module 1.2. PDUFA user fees (FD&C Act section 736, 21 USC 379h) must be paid before FDA will file the application; under section 736(e), an application is considered incomplete and will not be accepted for filing until all fees owed are paid. The Prescription Drug User Fee Act (PDUFA) goal date establishes the FDA review timeline: 10 months (standard) or 6 months (priority), counted from the 60-day filing date for new molecular entity NDAs reviewed under the PDUFA Program, and from receipt for non-NME NDAs.',
         fields: [
           {
             id: 'sponsor_name',
@@ -266,7 +266,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             type: 'yes_no',
             required: true,
             helpText:
-              'Per PDUFA (21 USC 379h) and 21 CFR 314.50(l), the application fee must be paid at the time of NDA submission. FDA will not file an application without fee payment or a valid waiver/reduction.',
+              'Per PDUFA (FD&C Act section 736, 21 USC 379h), the application fee must be paid at the time of NDA submission. FDA will not file an application without fee payment or a valid waiver/reduction.',
           },
           {
             id: 'pdufa_goal_date',
@@ -274,7 +274,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             type: 'date',
             visibleWhen: { field: 'user_fee_paid', operator: 'eq', value: true },
             helpText:
-              'The PDUFA goal date is set by FDA after filing (Day 60). Standard review: 10 months from receipt. Priority review: 6 months from receipt.',
+              'The PDUFA goal date is set by FDA after filing (Day 60). NME NDAs (PDUFA "Program"): standard review 10 months, priority review 6 months, from the 60-day filing date (about 12 or 8 months from receipt). Non-NME NDAs: standard review 10 months, priority review 6 months, from receipt.',
           },
         ],
         defaultNext: 'drug_description',
@@ -285,8 +285,8 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             severity: 'critical',
             title: 'PDUFA User Fee Required',
             message:
-              'The Prescription Drug User Fee must be paid at the time of NDA submission. FDA will refuse to file the application without fee payment per 21 CFR 314.50(l) and 21 USC 379h. Fee waivers may be available for small businesses or orphan products under certain conditions.',
-            reference: '21 CFR 314.50(l); PDUFA (21 USC 379h)',
+              'The Prescription Drug User Fee must be paid at the time of NDA submission. FDA will refuse to file the application without fee payment per FD&C Act section 736(e) (21 USC 379h). Fee waivers may be available for small businesses or orphan products under certain conditions.',
+            reference: 'FD&C Act section 736 (21 USC 379h), including 736(e); PDUFA',
           },
         ],
       },
@@ -477,7 +477,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
               { value: '36mo', label: '36 months or more' },
             ],
             helpText:
-              'Per ICH Q1A(R2), NDA stability data should include at least 12 months long-term (25°C/60% RH) and 6 months accelerated (40°C/75% RH) data at the time of submission. Proposed shelf life should not exceed twice the long-term data period or the accelerated data period, whichever is shorter.',
+              'Per ICH Q1A(R2), NDA stability data should include at least 12 months long-term (25°C/60% RH) and 6 months accelerated (40°C/75% RH) data at the time of submission. Proposed shelf life may be up to twice the period covered by long-term data, but no more than 12 months beyond it, when the data support extrapolation (ICH Q1E).',
           },
           {
             id: 'container_closure',
@@ -612,7 +612,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
         question:
           'Describe the carcinogenicity and reproductive toxicology studies. These are critical for NDA labeling and risk assessment.',
         guidance:
-          'Per ICH S1A/S1B, carcinogenicity studies are required for drugs intended for chronic use (≥6 months continuous or intermittent for chronic/recurrent conditions). ICH S1B(R1) allows alternatives to the traditional 2-year rat bioassay (e.g., p53+/- transgenic mouse model or rasH2 model). Per ICH S5(R3), the complete reproductive toxicology battery (fertility and early embryonic development, embryo-fetal development, pre- and postnatal development) must be completed before NDA submission. Teratogenicity signals have direct implications for REMS evaluation, Pregnancy Category assignment (now under PLLR framework per 21 CFR 201.57(c)(9)), and boxed warning consideration.',
+          'Per ICH S1A/S1B, carcinogenicity studies are required for drugs intended for chronic use (≥6 months continuous or intermittent for chronic/recurrent conditions). ICH S1B allows a short- or medium-term transgenic mouse model (e.g., rasH2 or p53+/-) as an alternative to the traditional 2-year mouse bioassay, and ICH S1B(R1) adds a weight-of-evidence approach that can support waiving the 2-year rat bioassay. Per ICH S5(R3), the complete reproductive toxicology battery (fertility and early embryonic development, embryo-fetal development, pre- and postnatal development) must be completed before NDA submission. Teratogenicity signals have direct implications for REMS evaluation, Pregnancy Category assignment (now under PLLR framework per 21 CFR 201.57(c)(9)), and boxed warning consideration.',
         fields: [
           {
             id: 'carcinogenicity_status',
@@ -709,7 +709,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             severity: 'critical',
             title: 'Teratogenicity Signal Requires REMS Evaluation',
             message:
-              'A teratogenicity signal in reproductive toxicology studies requires evaluation for a REMS with Elements to Assure Safe Use (ETASU) such as pregnancy testing, contraception requirements, and restricted distribution programs (see thalidomide/lenalidomide REMS precedents). Pregnancy must be listed as a contraindication in labeling, and a Medication Guide is likely required.',
+              'A teratogenicity signal in reproductive toxicology studies requires evaluation for a REMS with Elements to Assure Safe Use (ETASU) such as pregnancy testing, contraception requirements, and restricted distribution programs (see thalidomide/lenalidomide REMS precedents). Embryo-fetal risk is usually addressed in Warnings and Precautions and in labeling sections 8.1 (Pregnancy) and 8.3 (Females and Males of Reproductive Potential). Pregnancy is listed as a contraindication only when the risk clearly outweighs any possible benefit (21 CFR 201.57(c)(5)). A Medication Guide may be required if the criteria of 21 CFR 208.1 are met.',
             reference: '21 CFR 314.50; 21 USC 355-1; 21 CFR 201.57(c)(9)',
           },
         ],
@@ -772,7 +772,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
               { value: 'not_studied', label: 'Not Studied (parenteral product)' },
             ],
             helpText:
-              'Per FDA Guidance "Food-Effect Bioavailability and Fed Bioequivalence Studies" (2022), food effect determines the dosing instructions in labeling (take with/without food, etc.).',
+              'Per FDA Guidance "Assessing the Effects of Food on Drugs in INDs and NDAs — Clinical Pharmacology Considerations" (June 2022), food effect determines the dosing instructions in labeling (take with/without food, etc.).',
           },
           {
             id: 'accumulation_ratio',
@@ -815,7 +815,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
         question:
           'Describe the drug-drug interaction (DDI) assessment. Both in vitro and clinical DDI studies should be complete for the NDA.',
         guidance:
-          'Per FDA Guidance "In Vitro Drug Interaction Studies — Cytochrome P450 Enzyme- and Transporter-Mediated Drug Interactions" (January 2020) and "Clinical Drug Interaction Studies" (January 2020), the NDA must include a comprehensive DDI assessment. In vitro: CYP reaction phenotyping (substrate identification), CYP inhibition (reversible and TDI), CYP induction (PXR/CAR activation and mRNA), and transporter interactions (P-gp, BCRP, OATP1B1/1B3, OCT2, OAT1/3, MATE1/2-K). Clinical DDI studies should follow the FDA DDI Decision Trees (Figures 1-7 of the 2020 guidance). Results directly impact labeling (contraindications, dose adjustments, interaction tables).',
+          'Per ICH M12 "Drug Interaction Studies" (FDA final guidance, August 2024), which superseded FDA\'s two January 2020 in vitro and clinical drug interaction guidances, the NDA must include a comprehensive DDI assessment. In vitro: CYP reaction phenotyping (substrate identification), CYP inhibition (reversible and TDI), CYP induction (PXR/CAR activation and mRNA), and transporter interactions (P-gp, BCRP, OATP1B1/1B3, OCT2, OAT1/3, MATE1/2-K). Clinical DDI studies should follow the decision criteria in ICH M12. Results directly impact labeling (contraindications, dose adjustments, interaction tables).',
         fields: [
           {
             id: 'cyp_substrate',
@@ -906,8 +906,8 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             severity: 'warning',
             title: 'Clinical DDI Studies Expected',
             message:
-              'Clinical drug-drug interaction studies should be completed before NDA submission. Missing DDI data may result in labeling limitations, post-marketing requirements, or a Complete Response Letter. Per the FDA DDI Guidance (2020), clinical studies are required when in vitro results indicate potential for clinically relevant interactions.',
-            reference: 'FDA Guidance: Clinical Drug Interaction Studies (January 2020); FDA Guidance: In Vitro Drug Interaction Studies (January 2020)',
+              'Clinical drug-drug interaction studies should be completed before NDA submission. Missing DDI data may result in labeling limitations, post-marketing requirements, or a Complete Response Letter. Per ICH M12, clinical studies are required when in vitro results indicate potential for clinically relevant interactions.',
+            reference: 'ICH M12: Drug Interaction Studies (FDA final guidance, August 2024)',
           },
         ],
       },
@@ -1057,7 +1057,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             label: 'Is approval sought based on a surrogate endpoint?',
             type: 'yes_no',
             helpText:
-              'Per 21 CFR 314.510, FDA may grant accelerated approval based on a surrogate endpoint reasonably likely to predict clinical benefit. A confirmatory study demonstrating clinical benefit is required post-approval (21 CFR 314.530).',
+              'Per 21 CFR 314.510, FDA may grant accelerated approval based on a surrogate endpoint reasonably likely to predict clinical benefit. A confirmatory study demonstrating clinical benefit is required post-approval (21 CFR 314.510; FD&C Act 506(c)); failure to verify clinical benefit is a ground for withdrawal of approval under 21 CFR 314.530.',
           },
           {
             id: 'surrogate_endpoint_description',
@@ -1298,7 +1298,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
         question:
           'Describe the overall safety database. Per ICH E1, the NDA safety database must be adequate to characterize the safety profile for the proposed indication and patient population.',
         guidance:
-          'Per ICH E1 "The Extent of Population Exposure to Assess Clinical Safety for Drugs Intended for Long-Term Treatment of Non-Life-Threatening Conditions" and 21 CFR 314.50(d)(5)(vi), the NDA safety database should include: (a) ≥1,500 patients exposed to the drug at any dose, (b) ≥300-600 patients exposed for 6 months, and (c) ≥100 patients exposed for 12 months (for chronic-use drugs). ICH E1(A) "The Extent of Population Exposure to Assess Clinical Safety" provides additional guidance. An integrated safety summary (ISS) pooling all studies is expected. The safety update cutoff date should be as recent as possible, typically within 4 months of NDA submission.',
+          'Per ICH E1 "The Extent of Population Exposure to Assess Clinical Safety for Drugs Intended for Long-Term Treatment of Non-Life-Threatening Conditions" and 21 CFR 314.50(d)(5)(vi), the NDA safety database should include: (a) ≥1,500 patients exposed to the drug at any dose, (b) ≥300-600 patients exposed for 6 months, and (c) ≥100 patients exposed for 12 months (for chronic-use drugs). ICH E1 was formerly coded E1A; it is the same single guideline, not a separate source. An integrated safety summary (ISS) pooling all studies is expected. The safety update cutoff date should be as recent as possible, typically within 4 months of NDA submission.',
         fields: [
           {
             id: 'total_exposed',
@@ -1352,7 +1352,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             type: 'yes_no',
             required: true,
             helpText:
-              'The ISS pools safety data across all studies and is a critical component of the NDA. It should be structured per ICH E2C(R2) "Periodic Benefit-Risk Evaluation Report" format.',
+              'The ISS pools safety data across all studies and is a critical component of the NDA. It should be prepared per 21 CFR 314.50(d)(5)(vi)(a) and ICH M4E (Summary of Clinical Safety in Module 2.7.4, with the full ISS in Module 5.3.5.3), following FDA guidance on integrated summaries. ICH E2C(R2) applies to postmarketing Periodic Benefit-Risk Evaluation Reports, not the ISS.',
           },
         ],
         defaultNext: 'adverse_events',
@@ -1364,16 +1364,16 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             title: 'Safety Database Below ICH E1 Recommendation',
             message:
               'The total number of patients exposed is below the ICH E1 recommendation of ≥1,500 patients. For non-life-threatening chronic conditions, this may result in a request for additional safety data or a post-marketing requirement. For life-threatening conditions, orphan drugs, or accelerated approval, lower thresholds may be acceptable with adequate justification.',
-            reference: 'ICH E1; ICH E1(A); 21 CFR 314.50(d)(5)(vi)',
+            reference: 'ICH E1; 21 CFR 314.50(d)(5)(vi)',
           },
           {
             id: 'insufficient_long_term_exposure',
-            condition: { field: 'exposure_duration_12mo', operator: 'lt', value: 300 },
+            condition: { field: 'exposure_duration_12mo', operator: 'lt', value: 100 },
             severity: 'critical',
             title: 'Insufficient Long-Term Exposure Data',
             message:
-              'Fewer than 300 patients have ≥12-month exposure data. Per ICH E1(A), adequate long-term exposure is essential to identify adverse reactions that may emerge with chronic use (e.g., carcinogenicity signals, organ toxicity, immune-mediated reactions). FDA may require post-marketing studies to supplement the database.',
-            reference: 'ICH E1(A); 21 CFR 314.50(d)(5)(vi)',
+              'Fewer than 100 patients have ≥12-month exposure data (ICH E1 recommends about 100). Per ICH E1, adequate long-term exposure is essential to identify adverse reactions that may emerge with chronic use (e.g., carcinogenicity signals, organ toxicity, immune-mediated reactions). FDA may require post-marketing studies to supplement the database.',
+            reference: 'ICH E1; 21 CFR 314.50(d)(5)(vi)',
           },
         ],
       },
@@ -1384,7 +1384,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
         question:
           'Describe the adverse event profile, including the most common AEs, dose-response relationships, and any anticipated labeling implications.',
         guidance:
-          'Per 21 CFR 314.50(d)(5)(vi) and ICH E2C(R2), the NDA must include a comprehensive analysis of adverse events. Common AEs (occurring in ≥5-10% of patients and more frequent than control) should be tabulated by system organ class (SOC) and preferred term (MedDRA). Grade ≥3 events (CTCAE v5.0) should be separately analyzed. Dose-response relationships for toxicity should be described. Special safety topics (hepatotoxicity per FDA Guidance "Drug-Induced Liver Injury" (2009), cardiovascular risk per ICH E14, nephrotoxicity, infections, etc.) require dedicated analyses. If a boxed warning is anticipated, the proposed text should be included per 21 CFR 201.57(c)(1).',
+          'Per 21 CFR 314.50(d)(5)(vi) and ICH M4E (Module 2.7.4), the NDA must include a comprehensive analysis of adverse events. Common AEs (occurring in ≥5-10% of patients and more frequent than control) should be tabulated by system organ class (SOC) and preferred term (MedDRA). Grade ≥3 events (CTCAE v5.0) should be separately analyzed. Dose-response relationships for toxicity should be described. Special safety topics (hepatotoxicity per FDA Guidance "Drug-Induced Liver Injury" (2009), cardiovascular risk per ICH E14, nephrotoxicity, infections, etc.) require dedicated analyses. If a boxed warning is anticipated, the proposed text should be included per 21 CFR 201.57(c)(1).',
         fields: [
           {
             id: 'most_common_aes',
@@ -1500,7 +1500,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             type: 'yes_no',
             visibleWhen: { field: 'deaths_in_program', operator: 'gt', value: 0 },
             helpText:
-              'Per 21 CFR 314.50(d)(5)(vi)(b), individual patient narratives for all deaths (and other serious or significant AEs) must be included in the NDA. Each narrative should describe demographics, medical history, dosing, event description, management, outcome, and causality assessment.',
+              'Per 21 CFR 314.50(f)(2), case report forms must be submitted for every patient who died or who withdrew from a study because of an adverse event. Individual patient narratives for all deaths (and other serious or significant AEs) are part of the clinical study reports under ICH E3, section 12.3.2. Each narrative should describe demographics, medical history, dosing, event description, management, outcome, and causality assessment.',
           },
           {
             id: 'sae_summary',
@@ -1556,7 +1556,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
         question:
           'Describe the CTD/eCTD organization for this NDA. All NDA submissions must be in eCTD format per FDA requirements.',
         guidance:
-          'Per ICH M4 "Organization of the Common Technical Document for the Registration of Pharmaceuticals for Human Use" and 21 CFR 314.50(a), NDA submissions must follow the CTD structure: Module 1 (Regional Administrative Information), Module 2 (CTD Summaries), Module 3 (Quality/CMC), Module 4 (Nonclinical Study Reports), Module 5 (Clinical Study Reports). The FDA eCTD mandate (effective since May 2017) requires all NDA submissions to be in eCTD electronic format. Module 2 summaries (Quality Overall Summary, Nonclinical Overview, Nonclinical Written/Tabulated Summaries, Clinical Overview, Clinical Summary) are critical review documents that must be complete and well-organized.',
+          'Per ICH M4 "Organization of the Common Technical Document for the Registration of Pharmaceuticals for Human Use" and FD&C Act section 745A(a), NDA submissions must follow the CTD structure: Module 1 (Regional Administrative Information), Module 2 (CTD Summaries), Module 3 (Quality/CMC), Module 4 (Nonclinical Study Reports), Module 5 (Clinical Study Reports). The FDA eCTD mandate (effective since May 2017) requires all NDA submissions to be in eCTD electronic format. Module 2 summaries (Quality Overall Summary, Nonclinical Overview, Nonclinical Written/Tabulated Summaries, Clinical Overview, Clinical Summary) are critical review documents that must be complete and well-organized.',
         fields: [
           {
             id: 'ctd_format',
@@ -1564,8 +1564,8 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             type: 'select',
             required: true,
             options: [
-              { value: 'ectd_v4', label: 'eCTD v4.0 (ICH M8 — current standard)' },
-              { value: 'ectd_v3', label: 'eCTD v3.2.2 (transitional)' },
+              { value: 'ectd_v4', label: 'eCTD v4.0 (ICH M8 — optional for new applications since Sept 2024)' },
+              { value: 'ectd_v3', label: 'eCTD v3.2.2 (FDA-supported standard)' },
               { value: 'paper', label: 'Paper Submission', flagsIssue: true },
             ],
           },
@@ -1623,7 +1623,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             title: 'eCTD Submission Required',
             message:
               'Paper NDA submissions are no longer accepted by FDA. Per the eCTD mandate (effective May 5, 2017), all NDAs, ANDAs, BLAs, and amendments/supplements must be submitted in eCTD format. Failure to submit in eCTD format will result in a Refuse to Receive.',
-            reference: 'FDA eCTD Mandate (21 CFR 314.50(a)); ICH M8',
+            reference: 'FD&C Act section 745A(a); FDA Guidance "Providing Regulatory Submissions in Electronic Format — Certain Human Pharmaceutical Product Applications and Related Submissions Using the eCTD Specifications"; ICH M8',
           },
         ],
       },
@@ -1634,7 +1634,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
         question:
           'Provide eCTD technical details including sequence numbering, datasets, and validation status.',
         guidance:
-          'Per FDA Technical Specifications Documents and the FDA Data Standards Catalog, NDA submissions must include study datasets in CDISC format (SDTM for tabulation datasets, ADaM for analysis datasets). The define.xml file per CDISC Define-XML v2.0 must accompany all datasets. Reviewer\'s Guides for each study dataset are expected per FDA Guidance "Study Data Technical Conformance Guide" (2023). The eCTD submission must pass the FDA\'s eSubmitter validation (ESG gateway) before FDA will accept the submission. All sequence numbers must follow the FDA Comprehensive Table of Contents (CTOCh) and CDER/CBER numbering conventions.',
+          'Per FDA Technical Specifications Documents and the FDA Data Standards Catalog, NDA submissions must include study datasets in CDISC format (SDTM for tabulation datasets, ADaM for analysis datasets). The define.xml file per CDISC Define-XML v2.0 must accompany all datasets. Reviewer\'s Guides for each study dataset are expected per FDA Guidance "Study Data Technical Conformance Guide" (2023). The ESG only transmits the submission; after receipt, CDER or CBER validates the eCTD against the FDA eCTD Validation Criteria, and high-severity errors can lead to technical rejection. All sequence numbers must follow the FDA Comprehensive Table of Contents (CTOCh) and CDER/CBER numbering conventions.',
         fields: [
           {
             id: 'ectd_sequence_number',
@@ -1697,11 +1697,11 @@ export function createNdaSubmissionFlow(): FlowDefinition {
           },
           {
             id: 'esub_validation_passed',
-            label: 'eSub/eCTD Validation Passed (FDA ESG gateway)',
+            label: 'eCTD Validation Passed (FDA eCTD Validation Criteria)',
             type: 'yes_no',
             required: true,
             helpText:
-              'The FDA Electronic Submissions Gateway (ESG) performs automated validation of eCTD submissions. Validation errors must be resolved before FDA will accept the submission. Run a pre-submission validation using the FDA eCTD Validation Criteria document.',
+              'The FDA Electronic Submissions Gateway (ESG) transmits eCTD submissions to the receiving center; it does not validate eCTD content. After receipt, CDER or CBER validates the sequence against the FDA eCTD Validation Criteria and reports the results in the center acknowledgment. High-severity validation errors can result in technical rejection, so resolve them before submission. Run a pre-submission validation with eCTD validation software configured to the FDA eCTD Validation Criteria.',
           },
         ],
         defaultNext: 'labeling_content',
@@ -1721,8 +1721,8 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             severity: 'critical',
             title: 'eSub Validation Must Pass',
             message:
-              'The eCTD submission must pass FDA Electronic Submissions Gateway (ESG) validation before acceptance. Common validation failures include: incorrect file naming, PDF bookmark errors, missing M1 documents, file size limits exceeded, and lifecycle sequencing errors. Resolve all validation errors before submission.',
-            reference: 'FDA eCTD Guidance; FDA eCTD Validation Criteria; 21 CFR 314.50(a)',
+              'The eCTD submission must pass FDA eCTD technical validation (applied by CDER/CBER after receipt through the ESG, against the FDA eCTD Validation Criteria) before acceptance. Common validation failures include: incorrect file naming, PDF bookmark errors, missing M1 documents, file size limits exceeded, and lifecycle sequencing errors. Resolve all validation errors before submission.',
+            reference: 'FDA eCTD Guidance; FDA eCTD Validation Criteria; FD&C Act section 745A(a)',
           },
         ],
       },
@@ -1837,7 +1837,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
         question:
           'Has the need for a Risk Evaluation and Mitigation Strategy (REMS) been assessed? If REMS is required, describe the proposed elements.',
         guidance:
-          'Per 21 USC 355-1 (FDAAA Section 901) and FDA Guidance "Format and Content of Proposed Risk Evaluation and Mitigation Strategies (REMS), REMS Assessments, and Proposed REMS Modifications" (2009), FDA may require a REMS if it determines that a REMS is necessary to ensure the benefits outweigh the risks. REMS elements may include: (1) Medication Guide and/or Patient Package Insert, (2) Communication Plan (Dear Healthcare Provider letters, educational materials), (3) Elements to Assure Safe Use (ETASU) — prescriber certification, patient enrollment, pharmacy certification, restricted distribution. REMS with ETASU are the most restrictive and are required for drugs with the most serious safety concerns (e.g., thalidomide/lenalidomide, isotretinoin, opioids).',
+          'Per 21 USC 355-1 (FDAAA Section 901) and FDA Guidances "REMS: FDA\'s Application of Statutory Factors in Determining When a REMS Is Necessary" and "Format and Content of a REMS Document", FDA may require a REMS if it determines that a REMS is necessary to ensure the benefits outweigh the risks. REMS elements may include: (1) Medication Guide and/or Patient Package Insert, (2) Communication Plan (Dear Healthcare Provider letters, educational materials), (3) Elements to Assure Safe Use (ETASU) — prescriber certification, patient enrollment, pharmacy certification, restricted distribution. REMS with ETASU are the most restrictive and are required for drugs with the most serious safety concerns (e.g., thalidomide/lenalidomide, isotretinoin, opioids).',
         fields: [
           {
             id: 'rems_required',
@@ -1915,7 +1915,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
         question:
           'Describe post-marketing commitments (PMCs) and post-marketing requirements (PMEs). For accelerated approval, a confirmatory study is required.',
         guidance:
-          'Per 21 CFR 314.81 "Other Post-Marketing Reports" and FDAAA Section 505(o)(3), FDA may require post-marketing studies or clinical trials to assess a known or potential serious risk, to assess signals of serious risk, or to identify unexpected serious risks. For drugs approved under Accelerated Approval (21 CFR 314.510), a confirmatory study demonstrating clinical benefit is required per 21 CFR 314.530. FDA may withdraw accelerated approval if the confirmatory study fails to verify clinical benefit. Post-marketing commitments are agreed-upon studies; post-marketing requirements are mandatory per FDAAA. Periodic Safety Update Reports (PSURs) per ICH E2C(R2) or Periodic Adverse Drug Experience Reports (PADERs) per 21 CFR 314.80 are required.',
+          'Per 21 CFR 314.81 "Other Post-Marketing Reports" and FDAAA Section 505(o)(3), FDA may require post-marketing studies or clinical trials to assess a known or potential serious risk, to assess signals of serious risk, or to identify unexpected serious risks. For drugs approved under Accelerated Approval (21 CFR 314.510), a confirmatory study demonstrating clinical benefit is required per 21 CFR 314.510 and FD&C Act 506(c). FDA may withdraw accelerated approval if the confirmatory study fails to verify clinical benefit. Post-marketing commitments are agreed-upon studies; post-marketing requirements are mandatory per FDAAA. Periodic Safety Update Reports (PSURs) per ICH E2C(R2) or Periodic Adverse Drug Experience Reports (PADERs) per 21 CFR 314.80 are required.',
         fields: [
           {
             id: 'confirmatory_study_planned',
@@ -1950,7 +1950,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             label: 'Post-Marketing Requirements (PMEs) — Mandatory Studies',
             type: 'textarea',
             placeholder:
-              'e.g., PMR 1: Confirmatory OS study (21 CFR 314.530). PMR 2: Pediatric studies per iPSP (PREA). PMR 3: REMS assessment at 18 months.',
+              'e.g., PMR 1: Confirmatory OS study (21 CFR 314.510). PMR 2: Pediatric studies per iPSP (PREA). PMR 3: REMS assessment at 18 months.',
           },
           {
             id: 'phase_4_studies',
@@ -1990,8 +1990,8 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             severity: 'critical',
             title: 'Confirmatory Study Required for Accelerated Approval',
             message:
-              'If this NDA seeks accelerated approval (21 CFR 314.510), a confirmatory post-marketing study demonstrating clinical benefit is mandatory per 21 CFR 314.530. Per FDORA 2022 amendments, FDA has enhanced authority to require that confirmatory studies are underway prior to accelerated approval and to withdraw approval on an expedited timeline if studies fail to verify clinical benefit. The confirmatory study protocol should be agreed upon with FDA before NDA submission.',
-            reference: '21 CFR 314.510; 21 CFR 314.530; FDORA 2022',
+              'If this NDA seeks accelerated approval (21 CFR 314.510), a confirmatory post-marketing study demonstrating clinical benefit is mandatory per 21 CFR 314.510 and FD&C Act 506(c); approval may be withdrawn under 21 CFR 314.530 if it fails to verify benefit. Per FDORA 2022 amendments, FDA has enhanced authority to require that confirmatory studies are underway prior to accelerated approval and to withdraw approval on an expedited timeline if studies fail to verify clinical benefit. The confirmatory study protocol should be agreed upon with FDA before NDA submission.',
+            reference: '21 CFR 314.510; FD&C Act 506(c); 21 CFR 314.530 (withdrawal); FDORA 2022',
           },
         ],
       },
@@ -2045,7 +2045,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             label: 'Pediatric Exclusivity (505A) Eligibility',
             type: 'yes_no',
             helpText:
-              'Per BPCA (21 USC 355a), pediatric exclusivity provides 6 months of additional market exclusivity if FDA-issued Written Requests are fulfilled. This applies to NMEs with remaining patent life or marketing exclusivity.',
+              'Per BPCA (21 USC 355a), pediatric exclusivity provides 6 months of additional market exclusivity if FDA-issued Written Requests are fulfilled. This applies to any drug (active moiety) with remaining listed patent protection or marketing exclusivity, not only NMEs; the 6 months attach to those existing protections.',
           },
           {
             id: 'bpca_written_request',
@@ -2079,14 +2079,14 @@ export function createNdaSubmissionFlow(): FlowDefinition {
         question:
           'Assess submission readiness. Has a Pre-NDA meeting been held, is patent information prepared, and are all regulatory prerequisites in place?',
         guidance:
-          'Per 21 CFR 314.50(h) and 21 CFR 314.53, NDA applicants must submit patent information (Form FDA 3542a) for each drug substance and drug product patent. Patent certifications per 21 CFR 314.50(i) are required for 505(b)(2) applications (Paragraph I-IV certifications). Exclusivity claims (5-year NCE, 3-year clinical data, orphan 7-year, pediatric 6-month extension) should be identified. A Pre-NDA meeting (Type B, per FDA Guidance "Formal Meetings" (2017)) is strongly recommended to discuss filing strategy, labeling issues, REMS, and data requirements. Advisory Committee (AdCom) preparation may be needed if FDA refers the NDA to an advisory committee per 21 CFR 14.',
+          'Per 21 CFR 314.50(h) and 21 CFR 314.53, NDA applicants must submit patent information (Form FDA 3542a) for each drug substance and drug product patent. Patent certifications per 21 CFR 314.50(i) are required for 505(b)(2) applications (Paragraph I-IV certifications). Exclusivity claims (5-year NCE, 3-year clinical data, orphan 7-year, pediatric 6-month extension) should be identified. A Pre-NDA meeting (Type B, per FDA Guidance "Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products") is strongly recommended to discuss filing strategy, labeling issues, REMS, and data requirements. Advisory Committee (AdCom) preparation may be needed if FDA refers the NDA to an advisory committee per 21 CFR 14.',
         fields: [
           {
             id: 'pre_nda_meeting_held',
             label: 'Pre-NDA Meeting (Type B) Held with FDA',
             type: 'yes_no',
             helpText:
-              'A Pre-NDA meeting is strongly recommended per FDA Guidance "Formal Meetings Between the FDA and Sponsors" (2017). Topics include: agreement on NDA content and format, labeling discussions, REMS requirements, and any outstanding data requests.',
+              'A Pre-NDA meeting is strongly recommended per FDA Guidance "Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products" (current PDUFA VII version). Topics include: agreement on NDA content and format, labeling discussions, REMS requirements, and any outstanding data requests.',
           },
           {
             id: 'fda_feedback_addressed',
@@ -2126,7 +2126,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             options: [
               { value: 'nce_5yr', label: '5-Year NCE Exclusivity (21 USC 355(c)(3)(E)(ii))' },
               { value: '3yr_clinical', label: '3-Year Clinical Data Exclusivity (21 USC 355(c)(3)(E)(iii))' },
-              { value: 'orphan_7yr', label: '7-Year Orphan Drug Exclusivity (21 USC 360bb)' },
+              { value: 'orphan_7yr', label: '7-Year Orphan Drug Exclusivity (21 USC 360cc)' },
               { value: 'pediatric_6mo', label: '6-Month Pediatric Exclusivity (21 USC 355a)' },
               { value: 'none', label: 'No Exclusivity Claims' },
             ],
@@ -2145,7 +2145,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
               { value: 'not_applicable', label: 'Not Applicable (505(b)(1) NDA)' },
             ],
             helpText:
-              'Per 21 CFR 314.50(i), 505(b)(2) applicants must certify to each patent listed in the Orange Book for the reference listed drug. Paragraph IV certifications trigger a 45-day notice to the patent holder and may result in patent litigation with a 30-month stay.',
+              'Per 21 CFR 314.50(i), 505(b)(2) applicants must certify to each patent listed in the Orange Book for the reference listed drug. Paragraph IV certifications require notice to the NDA holder and patent owner within 20 days of FDA\'s filing acknowledgment; if a patent infringement suit is filed within 45 days of receipt of that notice, approval is subject to a 30-month stay.',
           },
           {
             id: 'orange_book_listing',
@@ -2164,7 +2164,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
         question:
           'Complete the final submission checklist. All administrative documents must be included per 21 CFR 314.50.',
         guidance:
-          'Per 21 CFR 314.50, the NDA must include: Form FDA 356h (Application Form), financial disclosure information (21 CFR Part 54), debarment certification (21 CFR 314.50(a)(5)(iv)), field copy certification, environmental assessment or categorical exclusion (21 CFR Part 25), and a cover letter. The field copy certification confirms that a complete copy of Section 11 (case report tabulations/forms for serious AEs and study dropouts) has been provided. Financial disclosure (21 CFR 54) requires disclosure of financial interests of clinical investigators. The environmental assessment usually qualifies for categorical exclusion per 21 CFR 25.31(a). The target submission date should account for the 60-day filing period and PDUFA review clock.',
+          'Per 21 CFR 314.50, the NDA must include: Form FDA 356h (Application Form), financial disclosure information (21 CFR Part 54), debarment certification (21 CFR 314.50(a)(5)(iv)), field copy certification, environmental assessment or categorical exclusion (21 CFR Part 25), and a cover letter. The field copy certification confirms that the field copy (the chemistry, manufacturing and controls technical section, with a copy of Form FDA 356h) is a true copy of the CMC technical section in the archival and review copies, for use by the FDA district office (21 CFR 314.50(l)(3)). A field copy is not required when the technical section is submitted electronically, for example in eCTD. Financial disclosure (21 CFR 54) requires disclosure of financial interests of clinical investigators. The environmental assessment usually qualifies for categorical exclusion under 21 CFR 25.31: 25.31(b) for a new molecular entity (use of the active moiety increases, but the expected introduction concentration is below 1 part per billion), or 25.31(a) when the action does not increase use of the active moiety. The target submission date should account for the 60-day filing period and PDUFA review clock.',
         fields: [
           {
             id: 'form_fda_356h_complete',
@@ -2196,7 +2196,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             type: 'yes_no',
             required: true,
             helpText:
-              'The field copy certification confirms that a complete copy of the NDA Section 11 (case report tabulations/forms) is available for FDA district office review if needed for pre-approval inspections.',
+              'The field copy certification confirms that the field copy of the CMC technical section is a true copy for FDA district office use (21 CFR 314.50(l)(3)). A field copy is not required when the technical section is submitted electronically in eCTD.',
           },
           {
             id: 'environmental_assessment',
@@ -2206,7 +2206,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             options: [
               {
                 value: 'categorical_exclusion',
-                label: 'Categorical Exclusion (21 CFR 25.31(a))',
+                label: 'Categorical Exclusion (21 CFR 25.31(a) or (b))',
                 description: 'Most NDAs qualify for categorical exclusion',
               },
               {
@@ -2240,14 +2240,14 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             label: 'Anticipated PDUFA Goal Date',
             type: 'date',
             helpText:
-              'PDUFA goal date = filing date + 10 months (standard review) or 6 months (priority review). Filing date is typically 60 days after receipt.',
+              'For NME NDAs under the PDUFA Program, the goal date is the 60-day filing date + 10 months (standard review) or 6 months (priority review). For non-NME NDAs, the goal date is 10 or 6 months from receipt.',
           },
           {
             id: 'submission_notes',
             label: 'Additional Submission Notes or Considerations',
             type: 'textarea',
             placeholder:
-              'e.g., Rolling submission planned under Fast Track designation. First module to be submitted Q1 2027 with complete eCTD expected Q3 2027. Companion diagnostic (CDx) NDA submitted in parallel to CDRH.',
+              'e.g., Rolling submission planned under Fast Track designation. First module to be submitted Q1 2027 with complete eCTD expected Q3 2027. Companion diagnostic (CDx) PMA (or 510(k)/De Novo) submitted in parallel to CDRH.',
           },
         ],
         defaultNext: null,

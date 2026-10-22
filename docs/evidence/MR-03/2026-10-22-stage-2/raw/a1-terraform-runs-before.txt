@@ -1,0 +1,44 @@
+# Slice A (OPS-13, Terraform), before: each new run alone against the pre-change stack (178f0b477 + the new runs).
+# Terraform skips every later run once one fails, so each run was split into its own file (onerun.py: the test preamble plus one run).
+# The container run was first written with command = plan and errored ("Unknown condition value": the rendered
+# container definition is known only after apply); it was changed to command = apply, as the suite's other container runs are, and re-run (last block).
+
+## refuses_a_production_api_task_below_two_vcpu
+Error: Missing expected failure
+  on tests/one_refuses_a_production_api_task_below_two_vcpu.tftest.hcl line 154, in run "refuses_a_production_api_task_below_two_vcpu":
+Failure! 0 passed, 1 failed.
+## staging_may_run_a_one_vcpu_api_task
+Success! 1 passed, 0 failed.
+## the_api_container_stops_cleanly_and_bounds_its_heap
+Error: Unknown condition value
+  on tests/one_the_api_container_stops_cleanly_and_bounds_its_heap.tftest.hcl line 151, in run "the_api_container_stops_cleanly_and_bounds_its_heap":
+condition depended on is not known until after the plan has been applied.
+Error: Unknown condition value
+  on tests/one_the_api_container_stops_cleanly_and_bounds_its_heap.tftest.hcl line 155, in run "the_api_container_stops_cleanly_and_bounds_its_heap":
+condition depended on is not known until after the plan has been applied.
+Error: Unknown condition value
+  on tests/one_the_api_container_stops_cleanly_and_bounds_its_heap.tftest.hcl line 159, in run "the_api_container_stops_cleanly_and_bounds_its_heap":
+## the_api_service_scales_on_cpu_and_requests
+Error: Unsupported attribute
+  on tests/one_the_api_service_scales_on_cpu_and_requests.tftest.hcl line 152, in run "the_api_service_scales_on_cpu_and_requests":
+Error: Unsupported attribute
+  on tests/one_the_api_service_scales_on_cpu_and_requests.tftest.hcl line 153, in run "the_api_service_scales_on_cpu_and_requests":
+Error: Unsupported attribute
+  on tests/one_the_api_service_scales_on_cpu_and_requests.tftest.hcl line 154, in run "the_api_service_scales_on_cpu_and_requests":
+Error: Unsupported attribute
+  on tests/one_the_api_service_scales_on_cpu_and_requests.tftest.hcl line 160, in run "the_api_service_scales_on_cpu_and_requests":
+## refuses_a_max_count_below_the_desired_count
+  on tests/one_refuses_a_max_count_below_the_desired_count.tftest.hcl line 152, in run "refuses_a_max_count_below_the_desired_count":
+Error: Missing expected failure
+  on tests/one_refuses_a_max_count_below_the_desired_count.tftest.hcl line 154, in run "refuses_a_max_count_below_the_desired_count":
+Failure! 0 passed, 1 failed.
+## the_api_container_stops_cleanly_and_bounds_its_heap (command = apply)
+Error: Unsupported attribute
+Error: Test assertion failed
+The API container must run with an init process
+Error: Test assertion failed
+The API container's memoryReservation must be the task memory less the
+Error: Test assertion failed
+ 163:     condition     = one([for e in module.ecs.api_container.environment : e.value if e.name == "NODE_OPTIONS"]) == "--max-old-space-size=${floor((var.api_memory - module.ecs.scanner_memory) * 0.6)}"
+NODE_OPTIONS must cap the heap at 60% of the memory the scanner leaves the
+Failure! 0 passed, 1 failed.

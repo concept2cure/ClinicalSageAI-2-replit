@@ -8,6 +8,10 @@ const path = require('path');
 
 const BASE = 'http://localhost:5000';
 const SS_DIR = '/tmp/ux-audit';
+/* The seeded dev account (.env.example: DEMO_USER_EMAIL / DEMO_USER_PASSWORD).
+   Until 2026-10-15 a person's personal address and "demo123" were hard-coded. */
+const DEV_EMAIL = (process.env.DEMO_USER_EMAIL || '').trim();
+const DEV_PASSWORD = (process.env.DEMO_USER_PASSWORD || '').trim();
 
 (async () => {
   const browser = await chromium.launch({ headless: true });
@@ -42,8 +46,11 @@ const SS_DIR = '/tmp/ux-audit';
     if (await quickDemo.isVisible({ timeout: 5000 })) {
       await quickDemo.click();
     } else {
-      await page.fill('input[name="email"], input[type="email"]', 'jonmichaelpsmith@gmail.com');
-      await page.fill('input[name="password"], input[type="password"]', 'demo123');
+      if (!DEV_EMAIL || !DEV_PASSWORD) {
+        throw new Error('Set DEMO_USER_EMAIL and DEMO_USER_PASSWORD to the seeded dev account (see .env.example).');
+      }
+      await page.fill('input[name="email"], input[type="email"]', DEV_EMAIL);
+      await page.fill('input[name="password"], input[type="password"]', DEV_PASSWORD);
       await page.click('button[type="submit"]');
     }
     await page.waitForTimeout(3000);

@@ -131,15 +131,19 @@ export interface IndSafetyClassification {
 
 /**
  * "Serious" per ICH E2A / 312.32(a). Any of the qualifying seriousness criteria
- * makes an event serious. The intake model always carries one criterion; a
- * non-serious AE is conveyed via eventType === 'AE' (it has no serious flag),
- * so we treat eventType 'AE' as non-serious and SAE/SUSAR/AESI as serious.
- * Null — undetermined, neither — when the event type is missing or not one of
- * those (2026-10-15: anything but 'AE' read as serious, so an event with no
- * recorded type was listed and counted as a serious case).
+ * makes an event serious. A non-serious AE is conveyed via eventType === 'AE'
+ * (it has no serious flag); SAE and SUSAR are serious by their type. An AESI is
+ * "of special interest", which is not a seriousness criterion: it is serious
+ * when a criterion is recorded for it, else undetermined (2026-10-15: every
+ * AESI read serious). Null — undetermined, neither — also when the event type
+ * is missing or not one of those (2026-10-15: anything but 'AE' read as
+ * serious, so an event with no recorded type was listed and counted as serious).
  */
-export function isSerious(event: Pick<AdverseEvent, 'eventType'>): boolean | null {
+export function isSerious(
+  event: Pick<AdverseEvent, 'eventType'> & { seriousnessCriteria?: AdverseEvent['seriousnessCriteria'] | null },
+): boolean | null {
   if (event.eventType === 'AE') return false;
+  if (event.eventType === 'AESI') return (SERIOUSNESS_VALUES as readonly string[]).includes(event.seriousnessCriteria ?? '') ? true : null;
   return (EVENT_TYPE_VALUES as readonly string[]).includes(event.eventType) ? true : null;
 }
 
@@ -285,6 +289,16 @@ function notExpeditedOnStatedFacts(
 }
 
 /**
+ * The deadline of an event this engine classified expedited: serious,
+ * unexpected and suspected — a SUSAR whatever type the intake recorded, so it is
+ * asked for as one. calculateReportingDeadline starts the expedited clock for a
+ * recorded SUSAR only (2026-10-15); passing the recorded 'SAE' would give none.
+ */
+function expeditedDeadline(event: IndSafetyEvent): Date | null {
+  return calculateReportingDeadline('SUSAR', event.seriousnessCriteria, IND_REGION, event.reportDate).deadline;
+}
+
+/**
  * Classify a single adverse event against the IND expedited-reporting rules.
  *
  * Decision order (per 312.32(c)):
@@ -369,12 +383,7 @@ export function classifyIndSafetyReport(
     return {
       obligation: 'SEVEN_DAY',
       reportingWindowDays: 7,
-      deadline: calculateReportingDeadline(
-        event.eventType,
-        event.seriousnessCriteria,
-        IND_REGION,
-        event.reportDate,
-      ),
+      deadline: expeditedDeadline(event),
       determinations,
       regulatoryBasis: '21 CFR 312.32(c)(2)',
       rationale:
@@ -385,12 +394,7 @@ export function classifyIndSafetyReport(
   return {
     obligation: 'FIFTEEN_DAY',
     reportingWindowDays: 15,
-    deadline: calculateReportingDeadline(
-      event.eventType,
-      event.seriousnessCriteria,
-      IND_REGION,
-      event.reportDate,
-    ),
+    deadline: expeditedDeadline(event),
     determinations,
     regulatoryBasis: '21 CFR 312.32(c)(1)(i)',
     rationale:
@@ -500,7 +504,8 @@ export function buildIndSafetyReportDocument(
         event.eventDescription,
         event.reactionPt ? `MedDRA PT: ${event.reactionPt}${event.reactionPtCode ? ` (${event.reactionPtCode})` : ''}.` : '',
         event.reactionSoc ? `SOC: ${event.reactionSoc}.` : '',
-        `Onset: ${onsetText(event)}. Sponsor awareness (clock-start): ${toIsoDate(event.reportDate)}.`,
+        // 2026-10-15: reportDate is null when the case records none (it read as 1970-01-01).
+        `Onset: ${onsetText(event)}. Sponsor awareness (clock-start): ${isValidDate(event.reportDate) ? toIsoDate(event.reportDate) : 'not recorded'}.`,
         event.narrative ?? '',
       ]
         .filter(Boolean)
@@ -732,7 +737,12 @@ function toIsoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-/** The onset as the person stated it: a date, or explicitly unknown (P-20). */
+/**
+ * The onset as the person stated it: a date, or explicitly unknown (P-20); with
+ * neither, not recorded. 2026-10-15: a NULL onset from the database printed as
+ * 1970-01-01 (the mapper's `new Date(null)`); null, it would have thrown here.
+ */
 function onsetText(event: IndSafetyEvent): string {
-  return event.onsetDateUnknown === true ? 'unknown (stated as unknown)' : toIsoDate(event.onsetDate);
+  if (event.onsetDateUnknown === true) return 'unknown (stated as unknown)';
+  return isValidDate(event.onsetDate) ? toIsoDate(event.onsetDate) : 'not recorded';
 }

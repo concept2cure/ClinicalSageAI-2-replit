@@ -150,7 +150,8 @@ export class SharePointConnector implements DataConnector {
           sourceConnector: this.id,
           title: resource.name || 'Untitled',
           summary: `${resource.file?.mimeType || 'folder'} | Modified: ${resource.lastModifiedDateTime || 'unknown'} | Author: ${author}`,
-          relevanceScore: hit.rank ? 1 / hit.rank : 1 - i * 0.03,
+          // Graph's own `rank` is the hit's order in its response; fall back to our position.
+          sourceRank: typeof hit.rank === 'number' && hit.rank > 0 ? hit.rank : i + 1,
           metadata: {
             author,
             modified: resource.lastModifiedDateTime,

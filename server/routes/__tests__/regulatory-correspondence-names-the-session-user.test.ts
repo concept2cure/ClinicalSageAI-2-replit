@@ -1,15 +1,16 @@
 /**
  * The Regulatory Correspondence routes act as the signed-in user or answer
- * 401; and the learning memory the outbound path writes states no confidence.
+ * 401.
  *
  * What the code used to do (until 2026-10-15):
  *   - requireActorContext resolved a request with no user as user 0, so the
  *     submission-state gate event was recorded as decided by 'system'
  *     (`String(actor.userId || 'system')`) and an issue review was written to
  *     the governed-action ledger by user 0. Neither names anyone.
- *   - persistCorrespondenceLearning wrote `confidenceScore ?? 0.78`, and its one
- *     caller (persistOutboundCorrespondenceRecord) passed a literal 0.82 —
- *     confidences nothing computed, which the memory readers rank and print.
+ *
+ * The outbound writer this file also covered, persistOutboundCorrespondenceRecord,
+ * had no caller and was deleted on 2026-10-15
+ * (regulatory-correspondence-has-no-unattributed-outbound-writer.test.ts).
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
@@ -18,7 +19,6 @@ import request from 'supertest';
 const h = vi.hoisted(() => ({
   user: null as Record<string, unknown> | null,
   statements: [] as string[],
-  memoryInserts: [] as Array<Record<string, unknown>>,
   transition: vi.fn(async (..._a: unknown[]) => ({ persisted: true })),
   governedAction: vi.fn(async (..._a: unknown[]) => ({ actionId: 'act-1', sha256Chain: 'c'.repeat(64) })),
 }));
@@ -42,13 +42,6 @@ vi.mock('../../db', () => {
     pool,
     getPool: () => pool,
     getDb: () => ({}),
-    db: {
-      insert: () => ({
-        values: async (v: Record<string, unknown>) => {
-          h.memoryInserts.push(v);
-        },
-      }),
-    },
     transaction: async (cb: (client: typeof pool) => unknown) => cb(pool),
   };
 });
@@ -60,9 +53,8 @@ vi.mock('../../services/governed-decision-repository.js', () => ({
 vi.mock('../../services/governance-observability.js', () => ({
   governanceMetrics: { recordTransitionExecuted: () => undefined },
 }));
-vi.mock('../../services/intelligence/project-intelligence-service', () => ({ getOrCreateProfile: async () => 3 }));
 
-import routes, { persistOutboundCorrespondenceRecord } from '../regulatory-correspondence';
+import routes from '../regulatory-correspondence';
 
 const app = express();
 app.use(express.json());
@@ -74,7 +66,6 @@ const NO_USER = { organizationId: 2 };
 beforeEach(() => {
   h.user = SIGNED_IN;
   h.statements.length = 0;
-  h.memoryInserts.length = 0;
   h.transition.mockClear();
   h.governedAction.mockClear();
 });
@@ -109,18 +100,5 @@ describe('PATCH /issues/:id/review — the governed resolve', () => {
       .send({ reason: 'Confirmed against the letter', humanReviewStatus: 'confirmed' });
     expect(res.status).toBe(401);
     expect(h.governedAction).not.toHaveBeenCalled();
-  });
-});
-
-describe('persistOutboundCorrespondenceRecord — the learning memory entry', () => {
-  it('states no confidence (null), not an invented 0.82', async () => {
-    await persistOutboundCorrespondenceRecord({
-      orgId: 2,
-      projectId: 7,
-      subject: 'Readiness digest',
-      recipients: ['agency-contact'],
-    });
-    expect(h.memoryInserts).toHaveLength(1);
-    expect(h.memoryInserts[0].confidenceScore).toBeNull();
   });
 });

@@ -118,7 +118,11 @@ export function isIsoDate(v: unknown): v is string {
 }
 
 export type ApprovalReviewStatus =
-  | { undetermined: false; expirationDate: string; expirationSource: 'recorded' | 'computed'; expired: boolean; annualReviewDue: boolean | null }
+  | {
+      undetermined: false; expirationDate: string; expirationSource: 'recorded' | 'computed'; expired: boolean; annualReviewDue: boolean | null;
+      /** Why annualReviewDue is null; null when it is determined. */
+      annualReviewUndeterminedReason: string | null;
+    }
   | { undetermined: true; reason: string; expirationDate: null; expirationSource: 'none'; expired: null; annualReviewDue: null };
 
 /**
@@ -132,7 +136,12 @@ export type ApprovalReviewStatus =
  * 2026-10-15: the committee's own date was not an input, so a protocol it
  * approved for one year read as current until approval + 3 years.
  */
-export function approvalReviewStatus(approvalDate: string | null, today: string, recordedExpiration?: string | null): ApprovalReviewStatus {
+export function approvalReviewStatus(
+  approvalDate: string | null,
+  today: string,
+  recordedExpiration?: string | null,
+  lastAnnualReviewDate?: string | null,
+): ApprovalReviewStatus {
   const recorded = isIsoDate(recordedExpiration) ? recordedExpiration : null;
   const expiration = recorded ?? (approvalDate ? addYears(approvalDate, 3) : null);
   if (!expiration) {
@@ -143,11 +152,33 @@ export function approvalReviewStatus(approvalDate: string | null, today: string,
     };
   }
   const expired = today >= expiration;
+  const annual = annualReviewDue(approvalDate, today, expired, isIsoDate(lastAnnualReviewDate) ? lastAnnualReviewDate : null);
   return {
     undetermined: false,
     expirationDate: expiration,
     expirationSource: recorded ? 'recorded' : 'computed',
     expired,
-    annualReviewDue: approvalDate ? !expired && today >= addYears(approvalDate, 1) : null,
+    annualReviewDue: annual.due,
+    annualReviewUndeterminedReason: annual.reason,
   };
+}
+
+/**
+ * Annual continuing review: due a year after approval, then a year after the
+ * last recorded annual review. 2026-10-15: it was `today >= approval + 1 year`,
+ * so from the second year on it read due forever, however recently the review
+ * was held. Past the first year with no annual review recorded it is not
+ * determined.
+ */
+function annualReviewDue(
+  approvalDate: string | null,
+  today: string,
+  expired: boolean,
+  lastAnnualReviewDate: string | null,
+): { due: boolean | null; reason: string | null } {
+  if (expired) return { due: false, reason: null };
+  if (!approvalDate) return { due: null, reason: 'No approval date is recorded, so whether annual review is due cannot be determined.' };
+  if (today < addYears(approvalDate, 1)) return { due: false, reason: null };
+  if (lastAnnualReviewDate) return { due: today >= addYears(lastAnnualReviewDate, 1), reason: null };
+  return { due: null, reason: 'More than a year has passed since approval and no annual review is recorded, so whether one is due cannot be determined.' };
 }

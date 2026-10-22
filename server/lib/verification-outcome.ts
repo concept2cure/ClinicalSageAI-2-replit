@@ -16,8 +16,9 @@
  * acts on a verdict, so both collapses are worse than an error.
  *
  * ── The shape, and where it comes from ───────────────────────────────────────
- * `server/routes/innovation-routes.ts` shipped this vocabulary first, for the
- * tenant-ownership guards:
+ * `server/routes/innovation-routes.ts` (deleted 2026-10-15, d7c044897) shipped
+ * this vocabulary first, for the tenant-ownership guards; AnaToolExecutor and
+ * rbm/site-risk-engine.ts still answer `ownership_unverifiable`:
  *
  *     type GuardOutcome = { ran: true; rows } | { ran: false; reason: string }
  *     class GuardUnavailableError   -> guarded(res, fn) answers 503, never a deny
@@ -46,7 +47,8 @@ export type VerificationOutcome<T extends object> =
 
 /**
  * Thrown by a boundary that cannot proceed without a verification it could
- * not run. Same role as `GuardUnavailableError` in innovation-routes; a route
+ * not run. Same role as `GuardUnavailableError` had in the deleted
+ * innovation-routes.ts; a route
  * that catches it answers 503 and says the check did not run.
  */
 export class VerificationUnavailableError extends Error {

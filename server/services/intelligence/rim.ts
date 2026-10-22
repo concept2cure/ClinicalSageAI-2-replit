@@ -196,6 +196,8 @@ export async function runRIMAssessment(ctx: RIMContext): Promise<RIMAssessment> 
   );
 
   // ── Step 2: Build evidence chains from recommendations ──
+  // The relevance basis is kept (it was dropped until 2026-10-15): these are
+  // fixed weights, so the chain's figure is heuristic coverage, not confidence.
   const evidenceChains: EvidenceChain[] = recsResult
     .filter(r => r.evidence.length > 0)
     .map(r => buildEvidenceChain(
@@ -204,6 +206,7 @@ export async function runRIMAssessment(ctx: RIMContext): Promise<RIMAssessment> 
         sourceId: e.sourceId,
         sourceTitle: e.sourceTitle,
         relevance: e.relevance,
+        relevanceBasis: e.relevanceBasis,
       })),
       r.sourceType,
     ));

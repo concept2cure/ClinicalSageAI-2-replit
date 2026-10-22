@@ -96,13 +96,13 @@ describe('evaluatePreTransmit', () => {
 
   // 2026-10-22 (merge review of sweep VP-6): CA, UK and the other regions with
   // no published limit on file were refused on figures no agency publishes
-  // ("over the CA gateway limit of 4.29 GB"). Their size is not checked, and
-  // the check says so.
+  // ("over the CA gateway limit of 4.29 GB"). Trunk's checkGatewaySize
+  // (2026-10-15) says the size was not checked, and refuses nothing.
   it.each(['ca', 'uk', 'cn', 'kr', 'au', 'ch', 'br', 'in'] as const)('%s: no limit on file, so the size is said to be unchecked, never refused', (region) => {
     const r = evaluatePreTransmit({ region, bundle: bundle({ sizeBytes: 50 * GB }), environment: 'production', enforceExternal: false, env: {} });
     expect(r.blockers.filter((b) => /gateway limit/.test(b))).toEqual([]);
-    expect(r.warnings.filter((w) => /GB/.test(w))).toEqual([]);
-    expect(r.checks.find((c) => c.name === 'gateway-size-limit')?.detail).toMatch(/^not checked: no published .* gateway size limit is on file/);
+    expect(r.warnings).toContain(`No published ${region.toUpperCase()} gateway package-size limit is on file; the package size was not checked against one.`);
+    expect(r.checks.find((c) => c.name === 'gateway-size-limit')).toBeUndefined();
   });
 
   // 2026-10-08 (sweep VP-3): the passing detail said "the agency accepts plain

@@ -216,7 +216,7 @@ export function createContainerClosureStabilityNodes(): QuestionNode[] {
           severity: 'warning',
           title: 'Insufficient Drug Substance Stability Data',
           message:
-            'Per ICH Q1A(R2), at least 12 months of long-term stability data and 6 months of accelerated data are required at the time of NDA/BLA submission. Extrapolation beyond the available data may be possible per ICH Q1E, but is limited.',
+            'Per ICH Q1A(R2), at least 12 months of long-term stability data and 6 months of accelerated data are required at the time of NDA submission. For biotechnological/biological products submitted in a BLA, ICH Q5C applies instead: at least 6 months of real-time data at the proposed storage condition are required at submission when the proposed storage period exceeds 6 months, with data continuing through the proposed shelf life. Extrapolation beyond the available data may be possible per ICH Q1E, but is limited.',
           reference: 'ICH Q1A(R2), ICH Q1E Evaluation of Stability Data',
         },
         {

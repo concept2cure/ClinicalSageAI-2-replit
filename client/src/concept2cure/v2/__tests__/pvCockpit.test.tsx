@@ -66,13 +66,33 @@ describe('PvCockpit — real PV engine', () => {
     expect(screen.getByText('3.2')).toBeTruthy(); // PRR
   });
 
-  it('computes an expedited-reporting deadline via the real endpoint', async () => {
+  it('computes an expedited-reporting deadline via the real endpoint, from the report date entered', async () => {
+    render(<PvCockpit {...props()} />);
+    await screen.findByText('128');
+    // 2026-10-15: the card sent no report date (the server no longer counts from today).
+    fireEvent.change(screen.getByLabelText(/Report date/), { target: { value: '2026-07-21' } });
+    fireEvent.click(screen.getByRole('button', { name: /Calculate deadline/ }));
+    await waitFor(() => expect(apiRequest.mock.calls.some((c) => c[1] === '/api/pharmacovigilance/calculate-deadline')).toBe(true));
+    const call = apiRequest.mock.calls.find((c) => c[1] === '/api/pharmacovigilance/calculate-deadline')!;
+    expect(call[2].reportDate, 'the report date was not sent').toBe('2026-07-21');
+    expect(await screen.findByText(/Expedited report required/)).toBeTruthy();
+    expect(screen.getByText(/15 day/)).toBeTruthy();
+  });
+
+  it('shows the server\'s reason when the stated facts give no deadline (422)', async () => {
+    const { ApiRequestError } = await import('@/lib/queryClient');
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === '/api/pharmacovigilance/overview') return ok(OVERVIEW);
+      if (url === '/api/pharmacovigilance/calculate-deadline') {
+        throw new ApiRequestError('Unprocessable', 422, { success: false, error: 'DEADLINE_UNDETERMINED', detail: 'report date (sponsor awareness, the clock start) not recorded' });
+      }
+      return ok([]);
+    });
     render(<PvCockpit {...props()} />);
     await screen.findByText('128');
     fireEvent.click(screen.getByRole('button', { name: /Calculate deadline/ }));
-    await waitFor(() => expect(apiRequest.mock.calls.some((c) => c[1] === '/api/pharmacovigilance/calculate-deadline')).toBe(true));
-    expect(await screen.findByText(/Expedited report required/)).toBeTruthy();
-    expect(screen.getByText(/15 day/)).toBeTruthy();
+    expect(await screen.findByText(/No deadline: report date \(sponsor awareness, the clock start\) not recorded/)).toBeTruthy();
+    expect(screen.queryByText(/Expedited report required/)).toBeNull();
   });
 });
 

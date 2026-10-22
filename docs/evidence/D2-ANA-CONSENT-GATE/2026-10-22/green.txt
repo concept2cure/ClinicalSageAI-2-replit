@@ -1,0 +1,36 @@
+ ✓ server/services/protocol-consent/__tests__/protocol-consent-elements-lifecycle.pglite.integration.test.ts > a new form > is seeded with the FDA elements; the ClinicalTrials.gov statement is required unless the trial is not an applicable clinical trial 39ms
+ ✓ server/services/protocol-consent/__tests__/protocol-consent-elements-lifecycle.pglite.integration.test.ts > a new form > cannot be approved without the FDA inspection wording, and can be with it 216ms
+ ✓ server/services/protocol-consent/__tests__/protocol-consent-elements-lifecycle.pglite.integration.test.ts > a form seeded before the change > in review: is refused naming the missing element, gains it on the next edit, then approves once it is drafted 99ms
+ ✓ server/services/protocol-consent/__tests__/protocol-consent-elements-lifecycle.pglite.integration.test.ts > a form seeded before the change > recording that the trial is not an applicable clinical trial lets it approve without the statement 15ms
+ ✓ server/services/protocol-consent/__tests__/protocol-consent-elements-lifecycle.pglite.integration.test.ts > a form seeded before the change > approved: unchanged, and its completeness says it predates the requirement 10ms
+ ✓ server/services/protocol-consent/__tests__/protocol-consent-lineage-gate.pglite.integration.test.ts > protocol-consent-service updateElementTx > records author lineage for the content it writes 39ms
+ ✓ server/services/protocol-consent/__tests__/protocol-consent-lineage-gate.pglite.integration.test.ts > protocol-consent-service updateElementTx > with sources, the verbatim clause lands on the source and the rest on the author (ledger L154) 16ms
+ ✓ server/services/protocol-consent/__tests__/protocol-consent-lineage-gate.pglite.integration.test.ts > protocol-consent-service updateElementTx > a flag-only edit records no lineage (nothing authored) 7ms
+ ✓ tests/regulatory/informed-consent-elements.test.ts > the record > cites only paragraphs that exist: 50.25(a)(1)–(8), (b)(1)–(6), (c) 3ms
+ ✓ tests/regulatory/informed-consent-elements.test.ts > the record > FDA and Common Rule element sets differ only by the Common Rule-only elements and 50.25(c) 2ms
+ ✓ tests/regulatory/informed-consent-elements.test.ts > design_informed_consent reads the record > cites no 21 CFR 50.25(b) paragraph past (b)(6); the biospecimen elements are 45 CFR 46.116(c)(7)–(9) 1ms
+ ✓ tests/regulatory/informed-consent-elements.test.ts > design_informed_consent reads the record > holds the same required FDA elements the consent review checks 0ms
+ ✓ tests/regulatory/informed-consent-elements.test.ts > design_informed_consent reads the record > asks whether the trial is an applicable clinical trial rather than assuming it from the study type 0ms
+ ✓ tests/regulatory/informed-consent-elements.test.ts > review_informed_consent does not call 50.25(c) missing when it may not apply > with ACT status unknown, the ClinicalTrials.gov statement is a question, not a missing element 1ms
+ ✓ tests/regulatory/informed-consent-elements.test.ts > review_informed_consent does not call 50.25(c) missing when it may not apply > for an applicable clinical trial it is required 1ms
+ ✓ tests/regulatory/informed-consent-elements.test.ts > what the IND auditor and the protocol question flow tell clients > the IND auditor lists the 50.25(a) elements in their order, with the research statement and 50.25(c) 0ms
+ ✓ tests/regulatory/informed-consent-elements.test.ts > what the IND auditor and the protocol question flow tell clients > the protocol flow states the required elements from the record 1ms
+ ✓ server/services/protocol-consent/__tests__/protocol-consent-logic.test.ts > consentElementTemplates > requires the ten 21 CFR 50.25(a) elements and, ACT status unknown, the 50.25(c) statement 3ms
+ ✓ server/services/protocol-consent/__tests__/protocol-consent-logic.test.ts > consentElementTemplates > cites 21 CFR 50.25 on every element and includes the 50.25(b) elements as optional 0ms
+ ✓ server/services/protocol-consent/__tests__/protocol-consent-logic.test.ts > evaluateConsentCompleteness > flags every required element on a freshly seeded form and is not ready 1ms
+ ✓ server/services/protocol-consent/__tests__/protocol-consent-logic.test.ts > evaluateConsentCompleteness > is ready to approve when all required elements are present with content 1ms
+ ✓ server/services/protocol-consent/__tests__/protocol-consent-logic.test.ts > evaluateConsentCompleteness > treats present-but-empty content as not satisfied 1ms
+ ✓ server/services/protocol-consent/__tests__/protocol-consent-logic.test.ts > evaluateConsentCompleteness > warns on optional elements marked present without content but stays ready 0ms
+ ✓ server/services/protocol-consent/__tests__/protocol-consent-logic.test.ts > evaluateConsentCompleteness > an empty element list is not a complete form and does not pass the gate 0ms
+ ✓ server/services/protocol-consent/__tests__/protocol-consent-logic.test.ts > evaluateConsentCompleteness > the empty case states why, so the refusal carries a sentence 1ms
+ ✓ server/services/protocol-consent/__tests__/protocol-consent-logic.test.ts > evaluateConsentCompleteness > a form whose required elements are all satisfied still passes the gate 0ms
+ ✓ server/services/protocol-consent/__tests__/protocol-consent-logic.test.ts > evaluateConsentCompleteness > rounds partial completion percent across required elements 0ms
+ ✓ tests/regulatory/consent-form-approval-gate.test.ts > a new consent form is seeded from the shared record > holds the 21 CFR 50.25(a) elements, the research statement among them, cited to 21 CFR 50.25 2ms
+ ✓ tests/regulatory/consent-form-approval-gate.test.ts > a new consent form is seeded from the shared record > applicable-clinical-trial status: unknown or yes requires the ClinicalTrials.gov statement; no makes it optional 1ms
+ ✓ tests/regulatory/consent-form-approval-gate.test.ts > the approval gate > refuses a confidentiality element that does not say FDA may inspect the records 1ms
+ ✓ tests/regulatory/consent-form-approval-gate.test.ts > the approval gate > refuses an applicable clinical trial form without the ClinicalTrials.gov statement 0ms
+ ✓ tests/regulatory/consent-form-approval-gate.test.ts > the approval gate > approves a form that carries every element with the required wording 0ms
+ ✓ tests/regulatory/consent-form-approval-gate.test.ts > the approval gate > a required element the form does not have at all is missing, not silently absent 1ms
+ ✓ tests/regulatory/consent-form-approval-gate.test.ts > a form seeded before the change > its old element keys count for the elements they always covered 0ms
+ ✓ tests/regulatory/consent-form-approval-gate.test.ts > a form seeded before the change > is held to the ClinicalTrials.gov statement until it is added and drafted 0ms
+      Tests  35 passed (35)

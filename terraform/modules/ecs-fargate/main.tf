@@ -1,4 +1,4 @@
-// ECS Fargate cluster + services for C2C API and Worker
+// ECS Fargate cluster + the C2C API service (no worker: P-10, amended 2026-10-22)
 
 # ── Cluster ──────────────────────────────────────────────────────────────────
 
@@ -17,12 +17,6 @@ resource "aws_ecs_cluster" "this" {
 
 resource "aws_cloudwatch_log_group" "api" {
   name              = "/ecs/${var.cluster_name}/api"
-  retention_in_days = var.log_retention_days
-  tags              = var.tags
-}
-
-resource "aws_cloudwatch_log_group" "worker" {
-  name              = "/ecs/${var.cluster_name}/worker"
   retention_in_days = var.log_retention_days
   tags              = var.tags
 }
@@ -86,6 +80,10 @@ resource "aws_iam_role" "ecs_task" {
   tags = var.tags
 }
 
+# Object reads and writes under the ARNs given. No s3:ListBucket: it only ever
+# matches a bucket ARN, so on these object ARNs it granted nothing while reading
+# as if it did (MR-03 OPS-26). Listing is granted by the bucket's own policy,
+# conditioned on prefix (modules/compliance-evidence, AnchorWriterListsTheAnchors).
 resource "aws_iam_role_policy" "ecs_task_s3" {
   name = "s3-access"
   role = aws_iam_role.ecs_task.id
@@ -93,7 +91,7 @@ resource "aws_iam_role_policy" "ecs_task_s3" {
     Version = "2012-10-17"
     Statement = [{
       Effect   = "Allow"
-      Action   = ["s3:GetObject", "s3:PutObject", "s3:ListBucket"]
+      Action   = ["s3:GetObject", "s3:PutObject"]
       Resource = var.s3_bucket_arns
     }]
   })
@@ -144,12 +142,28 @@ resource "aws_ecs_task_definition" "api" {
       image     = var.api_image
       essential = true
 
+      # OPS-13 (MR-03 Stage 2). ECS sends SIGTERM, then SIGKILL after
+      # stopTimeout (default 30 s). The server drains for up to FORCE_EXIT_MS
+      # (12 s, server/startup/shutdown.ts) while the load balancer deregisters
+      # the task (deregistration_delay 30 s, modules/alb), so 60 covers both.
+      stopTimeout = 60
+      # An init process as PID 1 forwards that signal and reaps the converters'
+      # children (LibreOffice, Ghostscript, OCRmyPDF), which would otherwise be
+      # left as zombies whenever a conversion times out.
+      linuxParameters = { initProcessEnabled = true }
+      # What the scanner beside it leaves (its hard limit is scanner_memory).
+      memoryReservation = var.api_memory - var.scanner_memory
+
       portMappings = [{
         containerPort = var.api_container_port
         protocol      = "tcp"
       }]
 
       environment = concat([
+        # Node's heap at 60% of the API's share: the rest is for buffers and the
+        # converters' own processes, so a large conversion fails one request
+        # rather than the container.
+        { name = "NODE_OPTIONS", value = "--max-old-space-size=${floor((var.api_memory - var.scanner_memory) * 0.6)}" },
         { name = "NODE_ENV", value = "production" },
         { name = "PORT", value = tostring(var.api_container_port) },
         { name = "TRUST_PROXY_HOPS", value = tostring(var.trust_proxy_hops) },
@@ -276,44 +290,6 @@ locals {
   scanner_port = 3310
 }
 
-# ── Worker task definition ──────────────────────────────────────────────────
-
-resource "aws_ecs_task_definition" "worker" {
-  family                   = "${var.cluster_name}-worker"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = var.worker_cpu
-  memory                   = var.worker_memory
-  execution_role_arn       = aws_iam_role.ecs_execution.arn
-  task_role_arn            = aws_iam_role.ecs_task.arn
-
-  container_definitions = jsonencode([{
-    name      = "worker"
-    image     = var.worker_image
-    essential = true
-
-    environment = concat([
-      { name = "NODE_ENV", value = "production" },
-    ], var.worker_environment)
-
-    secrets = [for s in var.worker_secrets : {
-      name      = s.name
-      valueFrom = s.value_from
-    }]
-
-    logConfiguration = {
-      logDriver = "awslogs"
-      options = {
-        "awslogs-group"         = aws_cloudwatch_log_group.worker.name
-        "awslogs-region"        = var.region
-        "awslogs-stream-prefix" = "worker"
-      }
-    }
-  }])
-
-  tags = var.tags
-}
-
 # ── API service ─────────────────────────────────────────────────────────────
 
 resource "aws_ecs_service" "api" {
@@ -357,36 +333,60 @@ resource "aws_ecs_service" "api" {
   # one with only the image changed to the pinned digest, then moves the service
   # onto it. Without this, the next `terraform apply` moved the service back to
   # Terraform's own revision — the image by tag, not by digest — undoing the
-  # deploy it did not know had happened.
+  # deploy it did not know had happened. desired_count belongs to autoscaling
+  # once the service exists (aws_appautoscaling_target.api below); without it
+  # every apply would reset a scaled-out service to api_desired_count.
   lifecycle {
-    ignore_changes = [task_definition]
+    ignore_changes = [task_definition, desired_count]
   }
 }
 
-# ── Worker service ──────────────────────────────────────────────────────────
+# ── API autoscaling (OPS-13, MR-03 Stage 2) ─────────────────────────────────
+#
+# From api_desired_count to api_max_count, on average CPU and on requests per
+# target. Production holds the ceiling at 2 until MR-14 closes OPS-07: three
+# opt-in schedulers still run once per task, not once per window.
 
-resource "aws_ecs_service" "worker" {
-  name            = "${var.cluster_name}-worker"
-  cluster         = aws_ecs_cluster.this.id
-  task_definition = aws_ecs_task_definition.worker.arn
-  desired_count   = var.worker_desired_count
-  launch_type     = "FARGATE"
+resource "aws_appautoscaling_target" "api" {
+  service_namespace  = "ecs"
+  resource_id        = "service/${aws_ecs_cluster.this.name}/${aws_ecs_service.api.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  min_capacity       = var.api_desired_count
+  max_capacity       = var.api_max_count
+  tags               = var.tags
+}
 
-  network_configuration {
-    subnets          = var.private_subnet_ids
-    security_groups  = [aws_security_group.ecs_tasks.id]
-    assign_public_ip = false
+resource "aws_appautoscaling_policy" "api_cpu" {
+  name               = "${var.cluster_name}-api-cpu"
+  policy_type        = "TargetTrackingScaling"
+  service_namespace  = aws_appautoscaling_target.api.service_namespace
+  resource_id        = aws_appautoscaling_target.api.resource_id
+  scalable_dimension = aws_appautoscaling_target.api.scalable_dimension
+
+  target_tracking_scaling_policy_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageCPUUtilization"
+    }
+    target_value       = 60
+    scale_out_cooldown = 60
+    scale_in_cooldown  = 300
   }
+}
 
-  deployment_circuit_breaker {
-    enable   = true
-    rollback = true
+resource "aws_appautoscaling_policy" "api_requests" {
+  name               = "${var.cluster_name}-api-requests"
+  policy_type        = "TargetTrackingScaling"
+  service_namespace  = aws_appautoscaling_target.api.service_namespace
+  resource_id        = aws_appautoscaling_target.api.resource_id
+  scalable_dimension = aws_appautoscaling_target.api.scalable_dimension
+
+  target_tracking_scaling_policy_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ALBRequestCountPerTarget"
+      resource_label         = var.api_request_count_resource_label
+    }
+    target_value       = var.api_requests_per_target_per_minute
+    scale_out_cooldown = 60
+    scale_in_cooldown  = 300
   }
-
-  tags = var.tags
-
-  # No ignore_changes here, unlike the api service: no pipeline deploys the
-  # worker (deploy-aws.yml has no worker job; B7), so Terraform is the only
-  # thing that moves it to a new revision. Ignoring task_definition would pin
-  # it to its first revision for good.
 }

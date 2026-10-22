@@ -41,7 +41,7 @@ beforeAll(async()=>{
   await pg.exec("INSERT INTO organizations(id,name,slug) VALUES(9,'Organization nine','o-nine'),(10,'Organization ten','o-ten');");
   for(const id of [7,8,9,10,11,12,13])await pg.query("INSERT INTO users(id,name,email,password_hash) VALUES($1,'Actual member',$2,'fixture-hash')",[id,`member${id}@example.test`]);
   await pg.exec("INSERT INTO client_workspaces(id,organization_id,name,slug) VALUES(1,9,'Workspace nine','w-nine'),(2,10,'Workspace ten','w-ten');");
-  for(const path of ['db/migrations/20260314_phase12_multi_user_review.sql','db/migrations/20260401_project_sharing_visibility.sql','db/migrations/20260331_communication_center_scaffold.sql','db/migrations/20260401_submission_center_items.sql','migrations/20260527_concept2cure_project_links.sql'])await pg.exec(await readFile(path,'utf8'));
+  for(const path of ['db/migrations/20260314_phase12_multi_user_review.sql','db/migrations/20260401_project_sharing_visibility.sql','db/migrations/20260331_communication_center_scaffold.sql','db/migrations/20260401_submission_center_items.sql','migrations/20260527_concept2cure_project_links.sql','db/migrations/20260727_industry_context_profiles.sql'])await pg.exec(await readFile(path,'utf8'));
   await pg.exec(`INSERT INTO projects(id,organization_id,client_workspace_id,name,type,settings) VALUES(3,9,1,'Actual workspace','IND','{}'),(4,9,1,'Other private workspace','IND','{}');
     INSERT INTO project_visibility_settings(project_id,organization_id,visibility) VALUES(3,9,'private'),(4,9,'private');
     INSERT INTO project_members(project_id,organization_id,user_id,role) VALUES(3,9,9,'edit'),(4,9,10,'use'),(4,9,12,'edit');`);

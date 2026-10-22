@@ -813,8 +813,7 @@ export function AgencyResponses({
                   ...(assigning.ownerUserId != null ? [{ value: NO_OWNER, label: 'No owner' }] : []),
                   ...(team.data ?? []).map((m) => ({ value: String(m.userId), label: m.role ? `${m.name} (${m.role})` : m.name })),
                 ],
-                descLive: true,
-                desc: team.loading
+                descStatus: team.loading
                   ? "Reading the organisation's members…"
                   : team.error
                     ? "The organisation's members could not be read, so no one can be chosen now."

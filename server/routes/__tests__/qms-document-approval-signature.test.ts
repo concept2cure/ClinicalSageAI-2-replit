@@ -136,6 +136,9 @@ function scriptTransaction(row: Record<string, unknown> | null) {
     if (text.includes('FROM authoring_documents')) return { rows: [{ id: DRAFT.authoring_document_id, title: DRAFT.title, client_program_id: AUTHORED_CONTENT.programId }] };
     if (text.includes('FROM authoring_sections')) return { rows: [{ id: 'section', code: 'qms-purpose', title: 'Purpose', content: 'Controls design inputs.', order_index: 1 }] };
     if (text.includes('FOR UPDATE')) return { rows: row ? [row] : [] };
+    // The filing-agreement check (338fda664) asks first whether a filing store exists. A
+    // controlled procedure is usually bound to no filing, so it answers "nothing to compare".
+    if (text.includes("to_regclass('public.c2c_document_sections')")) return { rows: [{ ok: false }] };
     if (text.startsWith('INSERT INTO qms_document_versions') || text.startsWith('UPDATE authoring_documents')) return { rows: [] };
     if (text.startsWith('UPDATE qms_documents')) {
       return { rows: row ? [{ ...row, status: 'effective', approver_id: SIGNER, approved_at: '2026-09-21T10:00:00.000Z' }] : [] };
@@ -344,7 +347,8 @@ describe('POST /api/mdx/qms/documents/:id/approve — the signed write path', ()
     expect(res.body.meta.auditTrail).toEqual({ persisted: true, chained: true });
 
     // The write order: read under lock, update, ledger pair, signature, commit.
-    expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'SELECT', 'SELECT', 'SELECT', 'UPDATE', 'INSERT', 'UPDATE', 'COMMIT']);
+    // Five reads before the first write: the fifth is the filing-agreement check (338fda664), which precedes every write.
+    expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'SELECT', 'SELECT', 'SELECT', 'SELECT', 'UPDATE', 'INSERT', 'UPDATE', 'COMMIT']);
     expect(H.recordGoverned).toHaveBeenCalledTimes(1);
     expect(H.persistSignature).toHaveBeenCalledTimes(1);
 
@@ -405,7 +409,7 @@ describe('POST /api/mdx/qms/documents/:id/approve — the signed write path', ()
     H.persistSignature.mockRejectedValue(new Error('electronic_signatures insert failed'));
     const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
     expect(res.status).toBe(500);
-    expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'SELECT', 'SELECT', 'SELECT', 'UPDATE', 'ROLLBACK']);
+    expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'SELECT', 'SELECT', 'SELECT', 'SELECT', 'UPDATE', 'ROLLBACK']);
     expect(H.release).not.toHaveBeenCalled(); // Response completion owns release.
   });
 });

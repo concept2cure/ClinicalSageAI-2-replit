@@ -96,7 +96,8 @@ export {
   artifactSkeletonGenerator,
 } from './documents/ArtifactSkeletonGenerator';
 
-export { ECTDScaffoldingService, ectdScaffoldingService } from './ectd/ECTDScaffoldingService';
+// ECTDScaffoldingService was re-exported here, its only importer; it was deleted
+// 2026-10-15 with no caller (no route, tool or job reached it).
 
 export { ReleaseHashGenerator, releaseHashGenerator } from './export/ReleaseHashGenerator';
 
@@ -146,7 +147,7 @@ export const SERVICE_REGISTRY = {
 
   // Phase 6 - eCTD Co-Author + Document Drafting
   'documents.skeleton': 'documents/ArtifactSkeletonGenerator',
-  'ectd.scaffolding': 'ectd/ECTDScaffoldingService',
+  // 'ectd.scaffolding': removed 2026-10-15 with ECTDScaffoldingService (deleted).
   'export.hash': 'export/ReleaseHashGenerator',
   'collaboration.council': 'multi-agent-council',
 } as const;

@@ -27,6 +27,15 @@ const PROGRAM = {
   title: 'IV-415 Companion Diagnostic',
 };
 
+/* A complete review: these cases sent `{ humanReviewApproved: true }` alone,
+   a review naming no reviewer, role or time, which the gate refuses (400). */
+const REVIEWED = {
+  humanReviewApproved: true as const,
+  reviewerName: 'QA Reviewer',
+  reviewerRole: 'regulatory_affairs',
+  reviewTimestamp: '2026-10-15T09:00:00.000Z',
+};
+
 const jsonResponse = (body: unknown, ok = true, status = 200) => ({
   ok,
   status,
@@ -91,21 +100,20 @@ describe('useCerExport', () => {
     expect(body.governance.reviewTimestamp).toBeUndefined();
   });
 
-  it('carries the reviewer attestation only when actually given', async () => {
+  /* 2026-10-15: this passed a typed name and asserted the hook stamped a
+     reviewTimestamp of its own — the clock at export — with no reviewerRole,
+     which the export gate refuses (400). The review is now the signed-in
+     user's confirmation (ExportReviewConfirmation), sent as given. */
+  it('sends the review confirmation as given — name, role and confirmation time, no clock of its own', async () => {
     fetchMock.mockResolvedValue(jsonResponse(GOVERNED_OK));
     const { result } = renderHook(() => useCerExport());
 
     await act(async () => {
-      await result.current.exportCer(PROGRAM, 'docx', {
-        humanReviewApproved: true,
-        reviewerName: '  QA Reviewer ',
-      });
+      await result.current.exportCer(PROGRAM, 'docx', REVIEWED);
     });
 
     const body = JSON.parse((fetchMock.mock.calls[0] as [string, RequestInit])[1].body as string);
-    expect(body.governance.humanReviewApproved).toBe(true);
-    expect(body.governance.reviewerName).toBe('QA Reviewer');
-    expect(typeof body.governance.reviewTimestamp).toBe('string');
+    expect(body.governance).toEqual({ aiGenerated: true, ...REVIEWED });
   });
 
   it('turns downloadable_output_ref into a browser download and reports governed', async () => {
@@ -115,7 +123,7 @@ describe('useCerExport', () => {
 
     let outcome: CerExportOutcome | null = null;
     await act(async () => {
-      outcome = await result.current.exportCer(PROGRAM, 'pdf', { humanReviewApproved: true });
+      outcome = await result.current.exportCer(PROGRAM, 'pdf', REVIEWED);
     });
 
     expect(outcome).toEqual({
@@ -155,7 +163,7 @@ describe('useCerExport', () => {
 
     let outcome: CerExportOutcome | null = null;
     await act(async () => {
-      outcome = await result.current.exportCer(PROGRAM, 'zip', { humanReviewApproved: true });
+      outcome = await result.current.exportCer(PROGRAM, 'zip', REVIEWED);
     });
     expect(outcome).toMatchObject({ ok: true, governed: false, audited: true, filename: 'CER_export.zip' });
   });
@@ -202,7 +210,7 @@ describe('useCerExport', () => {
 
     let outcome: CerExportOutcome | null = null;
     await act(async () => {
-      outcome = await result.current.exportCer(PROGRAM, 'pdf', { humanReviewApproved: true });
+      outcome = await result.current.exportCer(PROGRAM, 'pdf', REVIEWED);
     });
     expect(outcome!.ok).toBe(false);
     expect(outcome!.error).toMatch(/No authored sections/);
@@ -214,7 +222,7 @@ describe('useCerExport', () => {
 
     let outcome: CerExportOutcome | null = null;
     await act(async () => {
-      outcome = await result.current.exportCer(PROGRAM, 'pdf', { humanReviewApproved: true });
+      outcome = await result.current.exportCer(PROGRAM, 'pdf', REVIEWED);
     });
     /* The hook's own wording, NOT the thrown message.
        This asserted `error: 'offline'` — the raw text of the rejection — and had

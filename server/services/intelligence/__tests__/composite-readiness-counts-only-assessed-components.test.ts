@@ -86,6 +86,9 @@ describe('computeReadiness', () => {
     const missing = all.filter((c) => c.startsWith('5.'))[0];
     const summary = await computeReadiness({
       organizationId: 42,
+      // Its validation is read through its artifact; with neither a project nor
+      // an artifact none is tied to the draft (2026-10-15).
+      artifactId: 'artifact-7',
       submissionType: 'NDA',
       targetAgency: 'FDA',
       presentSections: all.filter((c) => c !== missing),

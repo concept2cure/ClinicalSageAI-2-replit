@@ -389,9 +389,11 @@ router.post('/applications/:id/stream/:sectionCode', async (req: Request, res: R
     }
     res.write('data: [DONE]\n\n');
     res.end();
-  } catch (err: any) {
-    logger.error('Streaming generation error', err);
-    res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+  } catch (err) {
+    // 2026-10-15: the caught error's own text was written into the stream; it
+    // goes to the log, and the stream carries a fixed sentence.
+    logger.error('Streaming generation error', { error: err instanceof Error ? err.message : String(err) });
+    res.write(`data: ${JSON.stringify({ error: 'Content generation failed.' })}\n\n`);
     res.end();
   }
 });

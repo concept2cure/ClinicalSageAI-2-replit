@@ -1,0 +1,13 @@
+# Control: a planted open SSH ingress, same severity filter
+resource "aws_security_group" "open" {
+  name = "control"
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+Failures: 1 (HIGH: 1, CRITICAL: 0)
+AWS-0107 (HIGH): Security group rule allows unrestricted ingress from any IP address.

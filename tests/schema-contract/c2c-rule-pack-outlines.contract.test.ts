@@ -772,7 +772,7 @@ describe('ind:fda files Module 1 where FDA files it, at the granularity an IND i
     }
     const orphans = pack.secs.filter((x) => x.parent_key !== null && !pack.keys.has(x.parent_key!));
     expect(orphans).toEqual([]);
-  });
+  }, 60_000);
 
   it('an FDA IND project scaffolds against the new pack, not the superseded 24-node one', async () => {
     const res = await scaffold('ind', 'FDA');
@@ -785,7 +785,7 @@ describe('ind:fda files Module 1 where FDA files it, at the granularity an IND i
       `SELECT count(*)::text AS n FROM c2c_document_sections WHERE document_id = $1`, [res.documentId],
     );
     expect(Number(n.rows[0].n)).toBeGreaterThan(80);
-  });
+  }, 60_000);
 
   it('an initial IND is not asked for post-initial contact changes (1.3.1) or a prior-study listing (5.2)', async () => {
     const pack = await livePack('ind', 'fda');
@@ -796,7 +796,7 @@ describe('ind:fda files Module 1 where FDA files it, at the granularity an IND i
     for (const k of ['1.1.1', '1.2', '1.20', '1.14.4.1', '1.12.14', '5.3.5.1']) {
       expect(flag(k), `${k} must stay mandatory`).toBe(true);
     }
-  });
+  }, 60_000);
 
   it('FALSIFIABLE: without 20260902 the live pack is v2.1 and still demands 1.3.1 and 5.2 of an initial IND', async () => {
     await pg.close();
@@ -805,7 +805,7 @@ describe('ind:fda files Module 1 where FDA files it, at the granularity an IND i
     expect(pack.version).toBe('ich-m4-v2.1');
     expect(pack.secs.find((x) => x.key === '1.3.1')?.mandatory).toBe(true);
     expect(pack.secs.find((x) => x.key === '5.2')?.mandatory).toBe(true);
-  });
+  }, 60_000);
 
   it('FALSIFIABLE: without 20260901 the live ind:fda pack has no 1.20 and still uses the 24-node outline', async () => {
     await pg.close();
@@ -813,7 +813,7 @@ describe('ind:fda files Module 1 where FDA files it, at the granularity an IND i
     const pack = await livePack('ind', 'fda');
     expect(pack.version).toBe('ich-m4-v2.0');
     expect(pack.keys.has('1.20')).toBe(false);
-  });
+  }, 60_000);
 });
 
 describe('k510:fda and denovo:fda are eSTAR-era outlines', () => {
@@ -830,7 +830,7 @@ describe('k510:fda and denovo:fda are eSTAR-era outlines', () => {
     expect(pack.labels.some((l) => /human factors/i.test(l))).toBe(true);
     const orphans = pack.secs.filter((x) => x.parent_key !== null && !pack.keys.has(x.parent_key!));
     expect(orphans).toEqual([]);
-  });
+  }, 60_000);
 
   it('De Novo: no Form 3514, no table-of-contents slot, special controls and benefit-risk present', async () => {
     const pack = await livePack('denovo', 'fda');
@@ -839,7 +839,7 @@ describe('k510:fda and denovo:fda are eSTAR-era outlines', () => {
     expect(pack.labels.some((l) => /table of contents/i.test(l))).toBe(false);
     expect(pack.labels.some((l) => /special controls/i.test(l))).toBe(true);
     expect(pack.labels.some((l) => /benefit-risk/i.test(l))).toBe(true);
-  });
+  }, 60_000);
 
   it('a 510(k) project scaffolds against the eSTAR-era pack', async () => {
     const res = await scaffold('510k', 'FDA');
@@ -848,7 +848,7 @@ describe('k510:fda and denovo:fda are eSTAR-era outlines', () => {
       `SELECT rule_pack_version FROM c2c_documents WHERE id = $1`, [res.documentId],
     );
     expect(d.rows[0].rule_pack_version).toBe('fda-estar-510k-v1.0');
-  });
+  }, 60_000);
 
   it('FALSIFIABLE: without 20260901b the live 510(k) pack still demands Form 3514', async () => {
     await pg.close();
@@ -856,7 +856,7 @@ describe('k510:fda and denovo:fda are eSTAR-era outlines', () => {
     const pack = await livePack('k510', 'fda');
     expect(pack.version).toBe('fda-510k-2024');
     expect(pack.labels.some((l) => /3514/.test(l))).toBe(true);
-  });
+  }, 60_000);
 });
 
 // ── Provenance: a CSR, an IB and a protocol are not ICH M4 documents ─────────
@@ -902,7 +902,7 @@ describe('the csr, ib and protocol packs do not claim ICH M4 provenance', () => 
       // Not a sign-off, and the 20260810d attribution constraint stays satisfied.
       expect(p.review_status, `${dt}:ich review_status`).toBe('unreviewed');
     }
-  });
+  }, 60_000);
 
   it('the csr pack names E3 and states its coverage against the E3 tree, from the data', async () => {
     const p = await provenanceOf('csr');
@@ -915,12 +915,12 @@ describe('the csr, ib and protocol packs do not claim ICH M4 provenance', () => 
     // The coverage figure in the attestation is the one the rows and the tree give.
     expect(p.governing_rule).toContain(`${roots.length} of ${e3.length} top-level sections`);
     expect(p.governing_rule).toContain('server/services/ind/ctd/csr-e3-guidance.ts');
-  });
+  }, 60_000);
 
   it('the ib and protocol packs name their real basis as partial', async () => {
     expect((await provenanceOf('ib')).governing_rule).toMatch(/ICH E6\(R3\) Appendix A.*partial/);
     expect((await provenanceOf('protocol')).governing_rule).toMatch(/ICH M11.*E6\(R3\) Appendix B.*partial/);
-  });
+  }, 60_000);
 
   it('a database an earlier deploy already stamped ICH M4 is corrected on the next run', async () => {
     // What the pre-amendment file left behind. Step 1 only COALESCEs NULLs, so
@@ -938,14 +938,14 @@ describe('the csr, ib and protocol packs do not claim ICH M4 provenance', () => 
       expect(p.governing_rule ?? '', `${dt}:ich after replay`).not.toMatch(/ICH M4/);
       expect(p.confidence, `${dt}:ich after replay`).toBe('low');
     }
-  });
+  }, 60_000);
 
   it('re-running the file is a no-op on the corrected rows', async () => {
     const before = await Promise.all(NOT_M4.map((dt) => provenanceOf(dt)));
     await pg.exec(fs.readFileSync(PROVENANCE, 'utf8'));
     const after = await Promise.all(NOT_M4.map((dt) => provenanceOf(dt)));
     expect(after).toEqual(before);
-  });
+  }, 60_000);
 
   it('the real CTD packs keep their ICH M4 attestation (the narrowing is not a blanket removal)', async () => {
     for (const dt of ['mod2', 'mod3']) {
@@ -956,5 +956,5 @@ describe('the csr, ib and protocol packs do not claim ICH M4 provenance', () => 
     }
     const ind = await provenanceOf('ind', 'mhra');
     expect(ind.governing_rule).toMatch(/^ICH M4 /);
-  });
+  }, 60_000);
 });

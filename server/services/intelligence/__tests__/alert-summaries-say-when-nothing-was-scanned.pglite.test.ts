@@ -101,7 +101,7 @@ describe('the consistency alert summary', () => {
   it('says nothing was assessed when no scan result is on record', async () => {
     const s = await getConsistencyAlertsSummary(ORG, { projectId: 1 });
     expect(s.assessed).toBe(false);
-    expect(s.lastScanAt).toBeNull();
+    expect(s.lastAlertAt).toBeNull();
   });
 
   it('is an error, not a zeroed summary, when the alert table does not exist', async () => {
@@ -116,14 +116,14 @@ describe('the consistency alert summary', () => {
     });
   });
 
-  it("is the project's own: its scan time, and only its open alerts by severity", async () => {
+  it("is the project's own: its newest alert's time, and only its open alerts by severity", async () => {
     await consistencyAlert(1, 'critical', 'resolved', '2026-10-01T10:00:00Z', 1);
     await consistencyAlert(1, 'major', 'open', '2026-10-03T10:00:00Z', 2);
     await consistencyAlert(2, 'critical', 'open', '2026-10-05T10:00:00Z', 3);
 
     const s = await getConsistencyAlertsSummary(ORG, { projectId: 1 });
     expect(s.assessed).toBe(true);
-    expect(s.lastScanAt).toBe('2026-10-03T10:00:00.000Z');
+    expect(s.lastAlertAt).toBe('2026-10-03T10:00:00.000Z');
     expect(s.openBySeverity).toEqual({ critical: 0, major: 1, minor: 0, info: 0 });
     expect(s.openCritical).toBe(0);
     expect(s.totalOpen).toBe(1);
@@ -132,7 +132,7 @@ describe('the consistency alert summary', () => {
     // Organisation-wide, the other project's open critical alert is counted.
     const org = await getConsistencyAlertsSummary(ORG);
     expect(org.openCritical).toBe(1);
-    expect(org.lastScanAt).toBe('2026-10-05T10:00:00.000Z');
+    expect(org.lastAlertAt).toBe('2026-10-05T10:00:00.000Z');
   });
 });
 
@@ -140,7 +140,7 @@ describe('the guidance alert summary', () => {
   it('says nothing was assessed when no scan result is on record', async () => {
     const s = await getGuidanceAlertsSummary(ORG, { projectId: 1 });
     expect(s.assessed).toBe(false);
-    expect(s.lastScanAt).toBeNull();
+    expect(s.lastAlertAt).toBeNull();
   });
 
   it('is an error, not a zeroed summary, when the alert table does not exist', async () => {
@@ -155,14 +155,14 @@ describe('the guidance alert summary', () => {
     });
   });
 
-  it("is the project's own: its scan time, and only its open alerts by severity", async () => {
+  it("is the project's own: its newest alert's time, and only its open alerts by severity", async () => {
     await guidanceAlert(1, 'critical', 'resolved', '2026-10-01T10:00:00Z', 1);
     await guidanceAlert(1, 'minor', 'acknowledged', '2026-10-02T10:00:00Z', 2);
     await guidanceAlert(2, 'critical', 'open', '2026-10-06T10:00:00Z', 3);
 
     const s = await getGuidanceAlertsSummary(ORG, { projectId: 1 });
     expect(s.assessed).toBe(true);
-    expect(s.lastScanAt).toBe('2026-10-02T10:00:00.000Z');
+    expect(s.lastAlertAt).toBe('2026-10-02T10:00:00.000Z');
     expect(s.openBySeverity).toEqual({ critical: 0, major: 0, minor: 1, info: 0 });
     expect(s.openCritical).toBe(0);
     expect(s.totalOpen).toBe(1);

@@ -11,7 +11,8 @@
  *      for ≤10 GB, physical media above). This is a fact about the channel, not
  *      a policy toggle, so it always blocks — where the figure has a source.
  *      JP is exempt (a warning) until a PMDA size source is filed: its 1 GB
- *      figure is unsourced (see SIZE_LIMIT_UNSOURCED).
+ *      figure is unsourced (see SIZE_LIMIT_UNSOURCED). A region with no limit
+ *      on file gets no size check, and a warning saying so.
  *   2. PDF/A submission grade — blocks in production when ECTD_REQUIRE_PDFA and
  *      the bundle shows unconverted PDF leaves.
  *   3. DTD self-containment — blocks in production when ECTD_REQUIRE_DTD and the
@@ -66,7 +67,7 @@ const REGION_TO_REGULATORY: Record<Region, RegulatoryRegion> = {
 };
 
 /**
- * Gateway regions whose size figure (getGatewaySizeLimit) has no regulator
+ * Gateway regions whose size figure (getGatewaySizeLimitOnFile) has no regulator
  * source. Exceeding it is reported as a warning, never as a blocker: refusing a
  * send on a number nobody sourced is a fabricated verdict.
  *
@@ -188,6 +189,47 @@ function evaluateDtdSelfContainment(
   };
 }
 
+/**
+ * The package against the region gateway's size limit on file: a blocker over a
+ * sourced limit, a warning over an unsourced figure (SIZE_LIMIT_UNSOURCED), and
+ * no check at all where no limit is on file. 2026-10-15: this read
+ * getGatewaySizeLimit, which answered figures no agency publishes (FDA's 4 GB
+ * for CA, 1 GB for CN, KR and the rest) and refused packages against them.
+ */
+function checkGatewaySize(
+  region: Region,
+  sizeBytes: number,
+): { check?: PreTransmitCheck; blocker?: string; warning?: string } {
+  const R = region.toUpperCase();
+  const onFile = getGatewaySizeLimitOnFile(REGION_TO_REGULATORY[region]);
+  if (!onFile) {
+    return { warning: `No published ${R} gateway package-size limit is on file; the package size was not checked against one.` };
+  }
+  const limit = onFile.bytes;
+  const sizeOk = sizeBytes <= limit;
+  const unsourced = SIZE_LIMIT_UNSOURCED[region];
+  const check: PreTransmitCheck = {
+    name: 'gateway-size-limit',
+    passed: sizeOk,
+    detail:
+      `${sizeBytes} bytes vs ${limit} byte limit for ${R} (source: ${onFile.source})` +
+      (unsourced ? ` (not enforced: ${unsourced})` : ''),
+  };
+  if (sizeOk) return { check };
+  // Decimal GB (10^9 bytes): FDA states its 10 GB in it, and a figure printed in
+  // binary units read "9.31 GB" for that limit (2026-10-08, W5/D7, sweep VP-6).
+  const gb = (n: number) => (n / 1000 ** 3).toFixed(2);
+  return unsourced
+    ? { check, warning: `Package is ${gb(sizeBytes)} GB, over the ${gb(limit)} GB figure recorded for the ${R} gateway. Not enforced: ${unsourced}.` }
+    : {
+        check,
+        blocker:
+          `Package is ${gb(sizeBytes)} GB, over the ${R} gateway limit of ${gb(limit)} GB. ` +
+          // FDA's own remedy, the one its regional finding (FDA-ESG-003) gives (sweep VP-6).
+          (region === 'fda' ? FDA_OVERSIZE_REMEDY : "Submit via the agency's large-submission channel (e.g. physical media) instead of the gateway."),
+      };
+}
+
 function packageDtdCheck(passed: boolean, available: boolean): PreTransmitCheck | null {
   return available ? { name: 'package-dtd-validation', passed,
     detail: passed ? 'all package backbones/STFs passed current DTD checks with verified supportive bytes'
@@ -232,49 +274,6 @@ function checkPdfA(
   };
 }
 
-/**
- * The gateway size limit — hard, always, where the figure is sourced; a warning
- * where it is not (SIZE_LIMIT_UNSOURCED). Extracted from evaluatePreTransmit
- * (2026-10-08, sweep VP-6), same shape as checkPdfA.
- *
- * Read from getGatewaySizeLimitOnFile. With no limit on file (CA, CN, KR, UK,
- * AU, CH, BR, IN, SG) the size is not checked, and the check says so: the
- * deprecated getGatewaySizeLimit's figures for those regions are published by
- * no agency, and this gate turned them into "over the CA gateway limit"
- * refusals (2026-10-22, W5/D7, merge review of sweep VP-6).
- */
-function checkGatewaySize(region: Region, sizeBytes: number): { check: PreTransmitCheck; blocker?: string; warning?: string } {
-  const name = region.toUpperCase();
-  const onFile = getGatewaySizeLimitOnFile(REGION_TO_REGULATORY[region]);
-  if (!onFile) {
-    return {
-      check: { name: 'gateway-size-limit', passed: true, detail: `not checked: no published ${name} gateway size limit is on file (${sizeBytes} bytes)` },
-    };
-  }
-  const limit = onFile.bytes;
-  const sizeOk = sizeBytes <= limit;
-  const unsourced = SIZE_LIMIT_UNSOURCED[region];
-  const check: PreTransmitCheck = {
-    name: 'gateway-size-limit',
-    passed: sizeOk,
-    detail: `${sizeBytes} bytes vs ${limit} byte limit for ${name}` + (unsourced ? ` (not enforced: ${unsourced})` : ''),
-  };
-  if (sizeOk) return { check };
-  // Decimal GB (10^9 bytes): FDA states its 10 GB in it, and a figure printed in
-  // binary units read "9.31 GB" for that limit (2026-10-08, sweep VP-6).
-  const gb = (n: number) => (n / 1000 ** 3).toFixed(2);
-  if (unsourced) {
-    return {
-      check,
-      warning: `Package is ${gb(sizeBytes)} GB, over the ${gb(limit)} GB figure recorded for the ${name} gateway. Not enforced: ${unsourced}.`,
-    };
-  }
-  // FDA's own remedy, the same one its regional finding (FDA-ESG-003) gives.
-  const remedy =
-    region === 'fda' ? FDA_OVERSIZE_REMEDY : "Submit via the agency's large-submission channel (e.g. physical media) instead of the gateway.";
-  return { check, blocker: `Package is ${gb(sizeBytes)} GB, over the ${name} gateway limit of ${gb(limit)} GB. ${remedy}` };
-}
-
 export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult {
   const env = input.env ?? process.env;
   const blockers: string[] = [];
@@ -282,9 +281,9 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
   const checks: PreTransmitCheck[] = [];
   const isProd = input.environment === 'production';
 
-  // 1. Size limit.
+  // 1. Size limit — hard, always, where a limit is on file (checkGatewaySize).
   const size = checkGatewaySize(input.region, input.bundle.sizeBytes);
-  checks.push(size.check);
+  if (size.check) checks.push(size.check);
   if (size.blocker) blockers.push(size.blocker);
   if (size.warning) warnings.push(size.warning);
 

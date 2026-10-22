@@ -2,6 +2,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
+import { isConversionCapacityError, withConversionSlot } from './conversion-slots';
 
 const execFileAsync = promisify(execFile);
 
@@ -134,6 +135,10 @@ function resolveOutputPath(inputPath: string, outputPath?: string): string {
   return `${base}.compressed${ext || '.pdf'}`;
 }
 
+/**
+ * Version probe only: it takes no conversion slot (5 s cap, converts nothing),
+ * so a busy converter is never reported as a missing Ghostscript.
+ */
 export async function isGhostscriptAvailable(): Promise<boolean> {
   try {
     await execFileAsync(resolveGsBinary(), ['--version'], { timeout: 5000 });
@@ -186,7 +191,9 @@ export async function compressPdfWithGhostscript(
 
   await fs.mkdir(path.dirname(outputPath), { recursive: true });
 
-  await execFileAsync(
+  // One of the process's conversion slots (OPS-13, MR-03 Stage 2). A wait past
+  // CONVERTER_QUEUE_TIMEOUT_MS rejects with ConversionCapacityError.
+  await withConversionSlot('ghostscript', () => execFileAsync(
     resolveGsBinary(),
     [
       '-sDEVICE=pdfwrite',
@@ -199,7 +206,7 @@ export async function compressPdfWithGhostscript(
       inputPath,
     ],
     { timeout: 120000, maxBuffer: 10 * 1024 * 1024 }
-  );
+  ));
 
   const outputStat = await fs.stat(outputPath);
 
@@ -273,6 +280,9 @@ export async function compressPdfBatch(options: BatchCompressOptions): Promise<B
       });
       results.push({ ok: true, inputPath, result });
     } catch (error: any) {
+      // A busy converter stops the batch rather than becoming one file's
+      // failure: every later file would wait out the same queue timeout in turn.
+      if (isConversionCapacityError(error)) throw error;
       results.push({ ok: false, inputPath, error: error?.message || 'Unknown error' });
     }
   }

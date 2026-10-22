@@ -270,6 +270,15 @@ router.post('/', async (req, res) => {
           details: result.details,
         });
       }
+      // 2026-10-15: a limit not recorded (NULL max_projects) fell through to 400.
+      if (result.error === 'QUOTA_NOT_RECORDED') {
+        return res.status(403).json({
+          success: false,
+          error: result.error,
+          message: result.message,
+          details: result.details,
+        });
+      }
       return res.status(result.error === 'ORGANIZATION_NOT_FOUND' ? 404 : 400).json({
         success: false,
         error: result.error,

@@ -18,6 +18,14 @@
 import type { ComposedSection, GeneratedTable } from './module3Composer.js';
 import type { CSRSection } from './csr-builder.js';
 
+/**
+ * Where a narrative would name the drug substance and none is recorded.
+ * 2026-10-15: the builders read `|| 'the drug substance'`, so a summary for a
+ * product nobody named read as finished prose and reported no gap.
+ */
+export const DRUG_SUBSTANCE_NAME_NOT_RECORDED = '[drug substance name not recorded]';
+export const DRUG_SUBSTANCE_NAME_GAP = 'drug substance name (not recorded)';
+
 // ── Common types ────────────────────────────────────────────────────────────
 
 export interface M2Summary {
@@ -158,7 +166,7 @@ function qosSectionOpen(section: ComposedSection | undefined): string | null {
  */
 export function buildM23QualityOverallSummary(ctx: M23BuildContext): M2Summary {
   const sectionsByKey = new Map(ctx.module3Sections.map(s => [s.sectionKey, s]));
-  const ds = ctx.drugSubstanceName || 'the drug substance';
+  const ds = ctx.drugSubstanceName?.trim() || DRUG_SUBSTANCE_NAME_NOT_RECORDED;
   const dp = ctx.drugProductName || 'the drug product';
 
   // 2026-10-15: a section used to count as present whenever the composer
@@ -172,7 +180,9 @@ export function buildM23QualityOverallSummary(ctx: M23BuildContext): M2Summary {
     const section = sectionsByKey.get(q.key);
     return { ...q, section, open: qosSectionOpen(section) };
   });
-  const gaps = rows.filter(r => r.open).map(r => `${r.key} — ${r.open}`);
+  const sectionGaps = rows.filter(r => r.open).map(r => `${r.key} — ${r.open}`);
+  // Completeness is over the M4Q sections; the name is a gap, not a section.
+  const gaps = ds === DRUG_SUBSTANCE_NAME_NOT_RECORDED ? [...sectionGaps, DRUG_SUBSTANCE_NAME_GAP] : sectionGaps;
   const inputSectionKeys = rows.filter(r => r.section && r.section.lineage.length > 0).map(r => r.key);
   const completeness = Math.round((rows.filter(r => !r.open).length / rows.length) * 100);
 
@@ -187,7 +197,7 @@ export function buildM23QualityOverallSummary(ctx: M23BuildContext): M2Summary {
     `MODULE 2.3 — QUALITY OVERALL SUMMARY`,
     ``,
     `INTRODUCTION`,
-    `This Quality Overall Summary (QOS) provides a high-level summary of the chemistry, manufacturing, and controls (CMC) information for ${ds}${dp !== 'the drug product' ? ` and ${dp}` : ''}. ${gaps.length === 0 ? 'The full quality dossier is provided in Module 3.' : 'Module 3 is not yet complete; its open sections are marked below and listed under Open items.'}`,
+    `This Quality Overall Summary (QOS) provides a high-level summary of the chemistry, manufacturing, and controls (CMC) information for ${ds}${dp !== 'the drug product' ? ` and ${dp}` : ''}. ${sectionGaps.length === 0 ? 'The full quality dossier is provided in Module 3.' : 'Module 3 is not yet complete; its open sections are marked below and listed under Open items.'}`,
     ``,
     `2.3.S DRUG SUBSTANCE`,
     ...summarize('S'),
@@ -221,7 +231,7 @@ export function buildM23QualityOverallSummary(ctx: M23BuildContext): M2Summary {
  */
 export function buildM24NonclinicalOverview(ctx: M24BuildContext): M2Summary {
   const studies = ctx.nonclinicalStudies;
-  const ds = ctx.drugSubstanceName || 'the drug substance';
+  const ds = ctx.drugSubstanceName?.trim() || DRUG_SUBSTANCE_NAME_NOT_RECORDED;
 
   const byType = {
     pharmacology: studies.filter(s => s.studyType === 'pharmacology'),
@@ -245,6 +255,7 @@ export function buildM24NonclinicalOverview(ctx: M24BuildContext): M2Summary {
   // nonclinical issues preclude clinical development", whatever the studies
   // found. That is the sponsor's toxicology judgment; it is an open item.
   const gaps = categoryGaps.length > 0 ? [...categoryGaps] : ['nonclinical safety conclusion (sponsor toxicology judgment; not drawn automatically)'];
+  if (ds === DRUG_SUBSTANCE_NAME_NOT_RECORDED) gaps.push(DRUG_SUBSTANCE_NAME_GAP);
 
   const narrative = [
     `MODULE 2.4 — NONCLINICAL OVERVIEW`,

@@ -27,8 +27,9 @@ function buildApp() {
 
 function getCspHeader(headers: Record<string, string | string[] | undefined>): string {
   // Helmet emits either Content-Security-Policy or
-  // Content-Security-Policy-Report-Only depending on config. In dev (default
-  // test NODE_ENV) it's report-only; in prod it's the enforcing header.
+  // Content-Security-Policy-Report-Only depending on config. Only
+  // NODE_ENV=development selects the report-only policy; vitest's `test`
+  // selects the enforcing one.
   const enforce = headers['content-security-policy'];
   const reportOnly = headers['content-security-policy-report-only'];
   const value = enforce ?? reportOnly;
@@ -200,5 +201,48 @@ describe('report-only CSP does not carry upgrade-insecure-requests', () => {
       process.env.NODE_ENV = previous;
       vi.resetModules();
     }
+  });
+});
+
+describe('CSP frame-src — the in-browser PDF viewer (gap 3.1, 2026-10-22)', () => {
+  // PdfViewerPane frames the audited Vault download as a blob: object URL.
+  // Under frame-src 'self' alone the enforcing policy refused it and Chromium
+  // showed its error page (docs/evidence/D3/2026-10-22-pdf-viewer-csp/). Each
+  // branch is loaded under its own NODE_ENV and the header it sends is named,
+  // so neither case can pass on the other's policy (security review 2026-10-22).
+  async function cspUnder(nodeEnv: 'production' | 'development') {
+    const previous = process.env.NODE_ENV;
+    process.env.NODE_ENV = nodeEnv;
+    vi.resetModules();
+    try {
+      const mod = await import('../enterprise-security');
+      const app = express();
+      app.use(mod.cspNonce);
+      app.use(mod.securityHeaders);
+      app.get('/', (_req, res) => res.send('ok'));
+      const res = await request(app).get('/');
+      return { enforce: res.headers['content-security-policy'], reportOnly: res.headers['content-security-policy-report-only'] };
+    } finally {
+      process.env.NODE_ENV = previous;
+      vi.resetModules();
+    }
+  }
+  const tokens = (csp: string, name: string) => findDirective(csp, name).trim().split(/\s+/).slice(1).sort();
+
+  it("production enforces frame-src 'self' blob: and nothing else: no data:, no scheme or host wildcard", async () => {
+    const { enforce, reportOnly } = await cspUnder('production');
+    expect(reportOnly).toBeUndefined();
+    expect(tokens(String(enforce), 'frame-src')).toEqual(["'self'", 'blob:']);
+  });
+
+  it("production keeps object-src 'none', so no plugin content is embedded another way", async () => {
+    const { enforce } = await cspUnder('production');
+    expect(findDirective(String(enforce), 'object-src').trim()).toBe("object-src 'none'");
+  });
+
+  it('development reports against the same frame-src, so the viewer raises no report there either', async () => {
+    const { enforce, reportOnly } = await cspUnder('development');
+    expect(enforce).toBeUndefined();
+    expect(tokens(String(reportOnly), 'frame-src')).toEqual(["'self'", 'blob:']);
   });
 });

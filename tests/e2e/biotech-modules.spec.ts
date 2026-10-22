@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+import { devLoginEmail, devLoginPassword } from './dev-identity';
 
 const APP_BASE = process.env.APP_BASE || 'http://localhost:5000';
 const SCREENSHOT_DIR = 'test-artifacts/biotech-modules';
@@ -18,7 +19,7 @@ async function login(page: Page) {
   // Email step
   const emailInput = page.locator('input#email');
   await expect(emailInput).toBeVisible({ timeout: 15000 });
-  await emailInput.fill('jonmichaelpsmith@gmail.com');
+  await emailInput.fill(devLoginEmail());
 
   // Click Continue button
   const continueBtn = page.locator('button').filter({ hasText: 'Continue' });
@@ -27,7 +28,7 @@ async function login(page: Page) {
   // Password step
   const passwordInput = page.locator('input#password');
   await expect(passwordInput).toBeVisible({ timeout: 10000 });
-  await passwordInput.fill('demo123');
+  await passwordInput.fill(devLoginPassword());
 
   // Click Sign in
   const signInBtn = page.locator('button').filter({ hasText: 'Sign in' });

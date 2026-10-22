@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import type { PoolClient } from 'pg';
 import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
@@ -26,12 +26,21 @@ function mockClient(rows: unknown[] = []): PoolClient {
 
 const ORIGINAL = process.env.SEED_DEMO_USER;
 const ORIGINAL_PASSWORD = process.env.DEMO_USER_PASSWORD;
+const ORIGINAL_EMAIL = process.env.DEMO_USER_EMAIL;
 const ORIGINAL_ENV = process.env.NODE_ENV;
+// The account the seed creates is the one the operator names (2026-10-15: it
+// defaulted to a real person's address); these tests name one.
+const DEMO_ADDRESS = 'demo-admin@local.test';
+beforeEach(() => {
+  process.env.DEMO_USER_EMAIL = DEMO_ADDRESS;
+});
 afterEach(() => {
   if (ORIGINAL === undefined) delete process.env.SEED_DEMO_USER;
   else process.env.SEED_DEMO_USER = ORIGINAL;
   if (ORIGINAL_PASSWORD === undefined) delete process.env.DEMO_USER_PASSWORD;
   else process.env.DEMO_USER_PASSWORD = ORIGINAL_PASSWORD;
+  if (ORIGINAL_EMAIL === undefined) delete process.env.DEMO_USER_EMAIL;
+  else process.env.DEMO_USER_EMAIL = ORIGINAL_EMAIL;
   process.env.NODE_ENV = ORIGINAL_ENV;
   mockLog.info.mockClear();
   mockLog.warn.mockClear();
@@ -153,7 +162,7 @@ describe('seedGaDemoUser — demo password source', () => {
 
     expect(mockLog.warn).toHaveBeenCalledTimes(1);
     const warning = mockLog.warn.mock.calls[0][0] as string;
-    expect(warning).toContain('jonmichaelpsmith@gmail.com');
+    expect(warning).toContain(DEMO_ADDRESS);
     expect(warning).toContain('random, non-recoverable password');
     expect(warning).toContain('DEMO_USER_PASSWORD');
   });

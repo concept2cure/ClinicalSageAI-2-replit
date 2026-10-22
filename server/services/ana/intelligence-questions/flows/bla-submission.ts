@@ -192,7 +192,7 @@ export function createBlaSubmissionFlow(): FlowDefinition {
         question:
           'Please provide the sponsor and regulatory contact details for this BLA submission.',
         guidance:
-          'Per 21 CFR 601.2, the BLA must identify the applicant (sponsor) and include contact information for all regulatory correspondence. Foreign sponsors must designate a US Agent per 21 CFR 600.4. PDUFA user fees (21 USC 379h) must be paid before the BLA will be received for filing. The biologics division (CBER vs CDER) is determined by the product type per the 2003 inter-center transfer agreement.',
+          'Per 21 CFR 601.2, the BLA must identify the applicant (sponsor) and include contact information for all regulatory correspondence. Foreign establishments must identify a US Agent as part of establishment registration (21 CFR 207.69; 21 CFR 607.40 for blood products). PDUFA user fees (21 USC 379h) must be paid before the BLA will be received for filing. The biologics division (CBER vs CDER) is determined by the product type per the 2003 inter-center transfer agreement.',
         fields: [
           {
             id: 'sponsor_name',
@@ -231,7 +231,7 @@ export function createBlaSubmissionFlow(): FlowDefinition {
             label: 'US Agent (for foreign sponsors)',
             type: 'text',
             helpText:
-              'Per 21 CFR 600.4, each foreign establishment must designate a United States agent who resides or maintains a place of business in the US.',
+              'Per 21 CFR 207.69 (or 21 CFR 607.40 for blood establishments), each foreign establishment must designate a United States agent who resides or maintains a place of business in the US.',
           },
           {
             id: 'user_fee_paid',
@@ -845,7 +845,7 @@ export function createBlaSubmissionFlow(): FlowDefinition {
             label: 'Number of Process Validation Batches',
             type: 'number',
             placeholder: 'e.g., 3',
-            helpText: 'Typically a minimum of 3 consecutive commercial-scale batches are required for process validation.',
+            helpText: 'FDA does not set a minimum number of process validation (PPQ) batches. The number must be justified using process knowledge and risk (FDA 2011 Process Validation guidance). Three consecutive commercial-scale batches are common in practice but are not required.',
           },
           {
             id: 'cpps_defined',
@@ -937,7 +937,7 @@ export function createBlaSubmissionFlow(): FlowDefinition {
         question:
           'Provide the vaccine lot release testing details required for CBER lot release.',
         guidance:
-          'Per 21 CFR 610 (General Biological Products Standards) and 21 CFR 600.3, certain biological products including vaccines and blood products require CBER lot release. Manufacturers must submit samples and release protocols for each lot before distribution. Per 21 CFR 610.2, a lot release protocol must accompany each lot submitted for release. Testing must include potency, sterility, endotoxin, identity, and general safety (where required). Some tests may be waived under specific circumstances per 21 CFR 610.1(b).',
+          'Per 21 CFR 610 (General Biological Products Standards) and 21 CFR 600.3, certain biological products including vaccines and blood products require CBER lot release. Manufacturers must submit samples and release protocols for each lot before distribution. Per 21 CFR 610.2, a lot release protocol must accompany each lot submitted for release. Testing must include potency (21 CFR 610.10), sterility (21 CFR 610.12), purity including pyrogenic substances/endotoxin (21 CFR 610.13), and identity (21 CFR 610.14); the former general safety test (21 CFR 610.11) was removed in 2015. A prescribed test may be replaced by a modified or equivalent method under 21 CFR 610.9, and for blood and blood components FDA may approve exceptions or alternatives under 21 CFR 640.120.',
         fields: [
           {
             id: 'lot_release_protocol',
@@ -987,10 +987,10 @@ export function createBlaSubmissionFlow(): FlowDefinition {
             type: 'select',
             required: true,
             options: [
-              { value: 'required', label: 'Required (per 21 CFR 610.11)' },
-              { value: 'waived', label: 'Waived (per 21 CFR 610.11(g))' },
+              { value: 'required', label: 'Product-specific safety test required by the license or approved specification' },
+              { value: 'waived', label: 'Not required (general safety test at 21 CFR 610.11 removed, 80 FR 37971, July 2, 2015)' },
             ],
-            helpText: 'The general safety test (formerly abnormal toxicity test) may be waived if alternative methods provide equivalent assurance of safety.',
+            helpText: 'The general safety test (formerly abnormal toxicity test) under 21 CFR 610.11 is no longer required: FDA removed the requirement in 2015 (80 FR 37971). Any abnormal-toxicity or safety test is now product-specific, set in the license or approved specification.',
           },
         ],
         defaultNext: 'nonclinical_pharmacology',
@@ -1084,7 +1084,7 @@ export function createBlaSubmissionFlow(): FlowDefinition {
         question:
           'Describe the nonclinical toxicology program, including GLP studies, repeat-dose toxicity, and reproductive toxicology.',
         guidance:
-          'Per ICH S6(R1), ICH M3(R2) (Guidance on Nonclinical Safety Studies for the Conduct of Human Clinical Trials), and ICH S5(R3) (Detection of Reproductive and Developmental Toxicity for Human Pharmaceuticals), the nonclinical toxicology program for biologics should be conducted in pharmacologically relevant species under GLP conditions (21 CFR 58). Study duration should be based on the intended clinical dosing duration. For biologics, standard carcinogenicity bioassays are generally not required (per ICH S6(R1)), but a weight-of-evidence assessment of carcinogenic risk is expected. Reproductive toxicology requirements follow ICH S6(R1) Section 4.4, which may allow alternative approaches (e.g., enhanced pre- and postnatal study) for biologics.',
+          'Per ICH S6(R1), ICH M3(R2) (Guidance on Nonclinical Safety Studies for the Conduct of Human Clinical Trials), and ICH S5(R3) (Detection of Reproductive and Developmental Toxicity for Human Pharmaceuticals), the nonclinical toxicology program for biologics should be conducted in pharmacologically relevant species under GLP conditions (21 CFR 58). Study duration should be based on the intended clinical dosing duration. For biologics, standard carcinogenicity bioassays are generally not required (per ICH S6(R1)), but a weight-of-evidence assessment of carcinogenic risk is expected. Reproductive toxicology requirements follow ICH S6(R1) Part I Section 4.6 and Part II (Addendum) Section 5, which may allow alternative approaches (e.g., enhanced pre- and postnatal study) for biologics.',
         fields: [
           {
             id: 'glp_tox_completed',
@@ -1403,7 +1403,7 @@ export function createBlaSubmissionFlow(): FlowDefinition {
             title: 'ADA Assay Must Be Validated',
             message:
               'Per FDA Guidance on Immunogenicity Testing (2019), ADA screening, confirmatory, and neutralizing antibody assays must be validated before the data can support the BLA. Validation parameters include sensitivity, drug tolerance, specificity, precision, selectivity, and statistical cut point.',
-            reference: 'FDA Guidance on Immunogenicity Assessment (2019)',
+            reference: 'FDA Guidance: Immunogenicity Testing of Therapeutic Protein Products — Developing and Validating Assays for Anti-Drug Antibody Detection (2019)',
           },
           {
             id: 'ada_significant_efficacy_impact',
@@ -1842,7 +1842,7 @@ export function createBlaSubmissionFlow(): FlowDefinition {
         question:
           'Describe the post-marketing commitments, pharmacovigilance plan, and any confirmatory study requirements.',
         guidance:
-          'Per 21 CFR 601.14 (Required Postmarketing Reports), 21 CFR 601.70 (Annual Reports for Biological Products), and 21 CFR 601.41 (Accelerated Approval — Requirement for Postmarketing Studies), the BLA holder must maintain ongoing pharmacovigilance. For accelerated approval products, a confirmatory study verifying clinical benefit is required per 21 CFR 601.41. The Accelerated Approval Integrity Act (2023) strengthens FDA authority to require and enforce timely completion of confirmatory studies. Periodic safety update reports (PSUR/PADER) are required per ICH E2C(R2).',
+          'Per 21 CFR 600.80 (Postmarketing Reporting of Adverse Experiences), 21 CFR 601.70 (Annual Progress Reports of Postmarketing Studies), and 21 CFR 601.41 (Accelerated Approval — Requirement for Postmarketing Studies), the BLA holder must maintain ongoing pharmacovigilance. For accelerated approval products, a confirmatory study verifying clinical benefit is required per 21 CFR 601.41. The Food and Drug Omnibus Reform Act of 2022 (FDORA) amended FDCA 506(c) to strengthen FDA authority to require and enforce timely completion of confirmatory studies. Periodic adverse experience reports are required per 21 CFR 600.80(c)(2); an ICH E2C(R2) Periodic Benefit-Risk Evaluation Report (PBRER) may be submitted in their place under an FDA waiver.',
         fields: [
           {
             id: 'confirmatory_study_needed',
@@ -1873,7 +1873,7 @@ export function createBlaSubmissionFlow(): FlowDefinition {
             id: 'pme_list',
             label: 'Post-Marketing Requirements (PMRs)',
             type: 'textarea',
-            placeholder: 'List FDA-required post-marketing studies or clinical trials under 21 CFR 601.14.',
+            placeholder: 'List FDA-required post-marketing studies or clinical trials (e.g., under FDCA 505(o)(3), PREA (21 USC 355c), 21 CFR 601.41 accelerated approval, or the 21 CFR part 601 subpart H Animal Rule).',
           },
           {
             id: 'pharmacovigilance_plan',
@@ -1921,7 +1921,7 @@ export function createBlaSubmissionFlow(): FlowDefinition {
             severity: 'critical',
             title: 'Confirmatory Study Required',
             message:
-              'For products receiving accelerated approval, a confirmatory post-marketing study verifying clinical benefit is mandatory per 21 CFR 601.41. Under the Accelerated Approval Integrity Act (2023), FDA has enhanced authority to withdraw approval if the sponsor fails to conduct required confirmatory studies with due diligence.',
+              'For products receiving accelerated approval, a confirmatory post-marketing study verifying clinical benefit is mandatory per 21 CFR 601.41. Under the Food and Drug Omnibus Reform Act of 2022 (FDORA), which amended FDCA section 506(c), FDA has expedited authority to withdraw approval if the sponsor fails to conduct required confirmatory studies with due diligence.',
             reference: '21 CFR 601.41',
           },
         ],
@@ -2014,7 +2014,7 @@ export function createBlaSubmissionFlow(): FlowDefinition {
             severity: 'critical',
             title: 'Form FDA 356h Required',
             message:
-              'Form FDA 356h (Application to Market a New Drug, Biologic, or Antibiotic Drug for Human Use) is the mandatory cover form for all BLA submissions. The BLA will be refused to file without this form.',
+              'Form FDA 356h (Application to Market a New or Abbreviated New Drug or Biologic for Human Use) is the mandatory cover form for all BLA submissions. The BLA will be refused to file without this form.',
             reference: '21 CFR 601.2',
           },
         ],
@@ -2030,7 +2030,7 @@ export function createBlaSubmissionFlow(): FlowDefinition {
         question:
           'Describe the analytical similarity assessment comparing your proposed biosimilar to the reference product.',
         guidance:
-          'Per FDA Guidance for Industry: Scientific Considerations in Demonstrating Biosimilarity to a Reference Product (2015) and 42 USC 262(k), analytical similarity is the foundation of the 351(k) biosimilar application. The FDA statistical tiered approach includes: Tier 1 (equivalence testing for most critical attributes like potency and protein content), Tier 2 (quality range approach), and Tier 3 (raw data comparison). A fingerprint-like analytical similarity assessment using orthogonal state-of-the-art methods is expected. Multiple lots of the US-licensed reference product (typically 10+) should be analyzed to establish the reference product quality range.',
+          'Per FDA Guidance for Industry: Scientific Considerations in Demonstrating Biosimilarity to a Reference Product (2015) and 42 USC 262(k), analytical similarity is the foundation of the 351(k) biosimilar application. The tiered statistical approach (Tier 1/2/3) from FDA\'s 2017 draft guidance on statistical approaches to evaluating analytical similarity was withdrawn in 2018. FDA\'s current draft guidance on comparative analytical assessment for therapeutic protein biosimilars instead recommends risk-ranking quality attributes and evaluating each one either quantitatively (for example, equivalence testing or a quality range approach) or qualitatively (for example, graphical comparison), as justified by its risk ranking. A fingerprint-like analytical similarity assessment using orthogonal state-of-the-art methods is expected. Multiple lots of the US-licensed reference product (typically 10+) should be analyzed to establish the reference product quality range.',
         fields: [
           {
             id: 'reference_product',
@@ -2139,7 +2139,7 @@ export function createBlaSubmissionFlow(): FlowDefinition {
         question:
           'Describe the clinical studies conducted to demonstrate biosimilarity, including PK similarity, clinical efficacy, and immunogenicity comparison.',
         guidance:
-          'Per FDA Guidance: Clinical Pharmacology Data to Support a Demonstration of Biosimilarity to a Reference Product (2014) and 42 USC 262(k), the clinical development program for a biosimilar typically includes a comparative PK similarity study (first clinical study), followed by at least one comparative clinical study in a sensitive patient population. PK equivalence must be demonstrated within 80-125% bioequivalence margins. Clinical similarity is assessed using equivalence or non-inferiority designs with pre-specified margins. Extrapolation of indications may be considered based on the totality of evidence.',
+          'Per FDA Guidance: Clinical Pharmacology Data to Support a Demonstration of Biosimilarity to a Reference Product (December 2016) and 42 USC 262(k), the clinical development program for a biosimilar typically includes a comparative PK similarity study (first clinical study) together with an assessment of immunogenicity. Under FDA\'s current thinking (October 2025 draft guidance on assessing the need for comparative efficacy studies), a comparative efficacy study in a sensitive patient population is generally not expected when the comparative analytical assessment and the PK and immunogenicity data support a demonstration of biosimilarity; it may still be needed where residual uncertainty remains. PK equivalence must be demonstrated within 80-125% bioequivalence margins. Clinical similarity is assessed using equivalence or non-inferiority designs with pre-specified margins. Extrapolation of indications may be considered based on the totality of evidence.',
         fields: [
           {
             id: 'pk_similarity_study',

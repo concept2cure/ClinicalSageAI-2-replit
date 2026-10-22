@@ -1,0 +1,71 @@
+# Slice A mutants: each changes one line of the fixed tree; the run it targets must fail.
+## mutant: cpu-floor-1024 (stack/main.tf)
+242c242
+<       condition     = var.environment != "production" || var.api_cpu >= 2048
+---
+>       condition     = var.environment != "production" || var.api_cpu >= 1024
+Error: Missing expected failure
+Failure! 0 passed, 1 failed.
+
+## mutant: stop-timeout-30 (modules/ecs-fargate/main.tf)
+149c149
+<       stopTimeout = 60
+---
+>       stopTimeout = 30
+The API container must have stopTimeout = 60 (the drain plus the load
+Failure! 0 passed, 1 failed.
+
+## mutant: no-init (modules/ecs-fargate/main.tf)
+153c153
+<       linuxParameters = { initProcessEnabled = true }
+---
+>       linuxParameters = { initProcessEnabled = false }
+The API container must run with an init process
+Failure! 0 passed, 1 failed.
+
+## mutant: heap-80 (modules/ecs-fargate/main.tf)
+166c166
+<         { name = "NODE_OPTIONS", value = "--max-old-space-size=${floor((var.api_memory - var.scanner_memory) * 0.6)}" },
+---
+>         { name = "NODE_OPTIONS", value = "--max-old-space-size=${floor((var.api_memory - var.scanner_memory) * 0.8)}" },
+NODE_OPTIONS must cap the heap at 60% of the memory the scanner leaves the
+Failure! 0 passed, 1 failed.
+
+## mutant: max-fixed-6 (modules/ecs-fargate/main.tf)
+355c355
+<   max_capacity       = var.api_max_count
+---
+>   max_capacity       = 6
+The API service needs an autoscaling target from api_desired_count to
+Failure! 0 passed, 1 failed.
+
+## mutant: cpu-target-80 (modules/ecs-fargate/main.tf)
+370c370
+<     target_value       = 60
+---
+>     target_value       = 80
+Failure! 0 passed, 1 failed.
+
+## mutant: wrong-label (stack/main.tf)
+430c430
+<   api_request_count_resource_label = "${module.alb.alb_arn_suffix}/${module.alb.api_target_group_arn_suffix}"
+---
+>   api_request_count_resource_label = "${module.alb.alb_arn_suffix}"
+Failure! 0 passed, 1 failed.
+
+## mutant: desired-not-ignored (modules/ecs-fargate/main.tf)
+340c340
+<     ignore_changes = [task_definition, desired_count]
+---
+>     ignore_changes = [task_definition]
+aws_ecs_service.api must ignore desired_count, which autoscaling owns.
+Failure! 0 passed, 1 failed.
+
+## mutant: max-validation-loose (stack/variables.tf)
+109c109
+<     condition     = var.api_max_count >= var.api_desired_count
+---
+>     condition     = var.api_max_count >= 0
+Error: Missing expected failure
+Failure! 0 passed, 1 failed.
+

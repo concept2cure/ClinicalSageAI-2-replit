@@ -65,9 +65,9 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No structured benefit-risk framework is presented in the briefing document.',
-          'FDA\'s Benefit-Risk Framework (2023) requires sponsors to present a structured assessment covering analysis of condition, current treatment options, benefit, risk, and risk management across the five key decision factors.',
+          'FDA\'s Benefit-Risk Framework, described in FDA\'s 2023 draft guidance on benefit-risk assessment, is the structured approach FDA reviewers use. It assesses four dimensions: analysis of condition, current treatment options, benefit, and risk and risk management. The draft guidance is non-binding; it recommends, but does not require, that sponsors present benefit-risk information in a way that supports this assessment.',
           'FDA Benefit-Risk Framework (2023); 21 CFR Part 14; PDUFA VII Commitment Letter Section III',
-          'Include a structured benefit-risk table using FDA\'s five-factor framework: (1) Analysis of Condition, (2) Current Treatment Options, (3) Benefit, (4) Risk and Risk Management, (5) Summary Assessment. Populate each factor with evidence from the development program.',
+          'Include a structured benefit-risk table using FDA\'s Benefit-Risk Framework: the four dimensions (1) Analysis of Condition, (2) Current Treatment Options, (3) Benefit, (4) Risk and Risk Management, followed by an overall Benefit-Risk Summary Assessment (conclusions). Populate each factor with evidence from the development program.',
           ['benefit_risk_framework', 'efficacy_summary', 'safety_summary'],
         );
       }
@@ -101,7 +101,7 @@ const rules: AuditRule[] = [
     id: rid('no_120_day_safety_update'),
     dimension: 'completeness',
     title: 'No 120-Day Safety Update',
-    question: 'The briefing document does not contain a 120-day safety update. Has the sponsor provided the most current safety data available to support the Committee\'s deliberations, as required by FDA guidance?',
+    question: 'The briefing document does not contain a 120-day safety update. Has the sponsor provided the most current safety data available to support the Committee\'s deliberations, consistent with the NDA safety update required by 21 CFR 314.50(d)(5)(vi)(b)?',
     check(answers) {
       if (isBlank(answers.safety_update_120_day)) {
         return finding(
@@ -111,8 +111,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No 120-day safety update is included in the briefing document.',
-          'FDA requires a 120-day safety update per 21 CFR 314.50(d)(5)(vi)(b) to ensure the Advisory Committee has access to the most recent safety data at the time of the meeting.',
-          '21 CFR 314.50(d)(5)(vi)(b); FDA Guidance: Safety Reporting Requirements for INDs and BA/BE Studies (2012)',
+          '21 CFR 314.50(d)(5)(vi)(b) requires an NDA applicant to update its pending application with new safety information 4 months after submission (the 120-day safety update), after receipt of a complete response letter, and at other times FDA requests; the briefing document should reflect the most recent safety update so the Advisory Committee deliberates on current safety data.',
+          '21 CFR 314.50(d)(5)(vi)(b) (NDA safety update)',
           'Include a 120-day safety update covering all adverse events, serious adverse events, and deaths occurring since the NDA/BLA safety database lock. Present new safety signals and any changes to the known safety profile.',
           ['safety_update_120_day', 'safety_database_cutoff_date'],
         );
@@ -134,8 +134,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No subgroup analyses are presented in the briefing document.',
-          'FDA Advisory Committee briefing documents should include pre-specified subgroup analyses per ICH E9 Section 5.7 and FDA Guidance on Evaluation of Sex-Specific Data.',
-          'ICH E9 Section 5.7; FDA Guidance: Evaluation of Sex-Specific Data (2020); FDA Guidance: Enhancing the Diversity of Clinical Trial Populations (2020)',
+          'FDA Advisory Committee briefing documents should include pre-specified subgroup analyses per ICH E9 Section 5.7 and FDA guidance on the study of sex differences in drug development.',
+          'ICH E9 Section 5.7; FDA Guideline: Study and Evaluation of Gender Differences in the Clinical Evaluation of Drugs (1993); FDA Guidance: Enhancing the Diversity of Clinical Trial Populations (2020)',
           'Present subgroup analyses by age, sex, race/ethnicity, geographic region, disease severity at baseline, and other clinically relevant subgroups. Include forest plots showing treatment effects and interaction p-values.',
           ['subgroup_analyses', 'demographic_data', 'forest_plots'],
         );
@@ -160,8 +160,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'Data presented in the briefing document conflicts with data submitted in the NDA/BLA application.',
-          'All data presented to the Advisory Committee must be consistent with the submitted application per 21 CFR Part 14.25 and FDA Advisory Committee Guidance.',
-          '21 CFR Part 14.25; FDA Advisory Committee Guidance (2008); 21 CFR 314.50',
+          'All data presented to the Advisory Committee should be consistent with the submitted application, as FDA Advisory Committee Guidance expects. 21 CFR 14.25 governs only the portions of an advisory committee meeting and imposes no data-consistency requirement.',
+          'FDA Advisory Committee Guidance (2008); 21 CFR 314.50',
           'Reconcile all discrepancies between the briefing book and NDA/BLA submission. Provide an errata document if corrections are needed. Ensure all tables, figures, and summary statistics are derived from the same datasets.',
           ['data_conflicts_with_application', 'nda_bla_data', 'briefing_book_data'],
         );
@@ -208,8 +208,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'Safety data show discrepancies across different sections of the briefing document.',
-          'Safety data must be internally consistent throughout the briefing document, derived from a clearly defined safety population per ICH E9 Section 5.6.',
-          'ICH E9 Section 5.6; FDA Advisory Committee Guidance (2008); ICH E2E',
+          'Safety data must be internally consistent throughout the briefing document, derived from a clearly defined safety population per ICH E9 Section 6.3.',
+          'ICH E9 Section 6.3; FDA Advisory Committee Guidance (2008); ICH E2E',
           'Verify all safety tables use the same safety analysis population and database cutoff date. Provide a clear definition of the safety population and data lock point. Reconcile any discrepancies with an addendum.',
           ['safety_data_discrepancies', 'safety_population_definition', 'database_cutoff_date'],
         );
@@ -257,8 +257,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'FDA-specified discussion questions are not directly addressed in the briefing document.',
-          'The sponsor\'s briefing document must address the specific questions identified by FDA for Advisory Committee discussion per 21 CFR 14.25(b).',
-          '21 CFR 14.25(b); FDA Advisory Committee Guidance (2008); PDUFA VII Commitment Letter',
+          'The sponsor\'s briefing document should directly address the specific questions identified by FDA for Advisory Committee discussion; this is expected good practice so the Committee can deliberate on the data, although 21 CFR 14.25 itself only describes the portions of an advisory committee meeting and does not impose this requirement.',
+          'FDA Advisory Committee Guidance (2008); PDUFA VII Commitment Letter',
           'Structure the briefing document to explicitly address each FDA-specified discussion question with dedicated sections. Map each question to the supporting data and analyses.',
           ['fda_questions_addressed', 'fda_discussion_questions', 'briefing_document_structure'],
         );
@@ -306,7 +306,7 @@ const rules: AuditRule[] = [
           'No structured benefit-risk assessment table using the FDA Benefit-Risk Framework is included.',
           'FDA\'s Benefit-Risk Framework (2023) is the standard for presenting benefit-risk assessments in Advisory Committee briefing documents and throughout the drug review process.',
           'FDA Benefit-Risk Framework (2023); PDUFA VII Commitment Letter Section III; FDA Advisory Committee Guidance (2008)',
-          'Create a structured benefit-risk summary table using FDA\'s five-factor framework. Include quantitative measures of benefit (NNT, effect sizes) and risk (NNH, incidence rates) alongside qualitative assessments.',
+          'Create a structured benefit-risk summary table using the four dimensions of FDA\'s Benefit-Risk Framework, followed by an overall conclusion. Include quantitative measures of benefit (NNT, effect sizes) and risk (NNH, incidence rates) alongside qualitative assessments.',
           ['structured_benefit_risk_table', 'benefit_risk_framework', 'nnt_nnh_data'],
         );
       }
@@ -375,8 +375,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No responder analyses are presented in the briefing document.',
-          'Responder analyses are recommended per ICH E9 Section 5.4 and FDA Guidance to characterize the proportion of patients achieving clinically meaningful benefit.',
-          'ICH E9 Section 5.4; FDA Guidance: Patient-Focused Drug Development (2023); ICH E9(R1) Addendum',
+          'Responder analyses are recommended per FDA Guidance to characterize the proportion of patients achieving clinically meaningful benefit.',
+          'FDA Guidance: Patient-Focused Drug Development (2023); ICH E9(R1) Addendum',
           'Present responder analyses using clinically meaningful thresholds (e.g., MCID). Include cumulative distribution function (CDF) plots showing the full distribution of treatment responses.',
           ['responder_analyses', 'mcid_threshold', 'cdf_plots'],
         );
@@ -399,7 +399,7 @@ const rules: AuditRule[] = [
           this.question,
           'No sensitivity analyses are presented to support the robustness of the primary efficacy results.',
           'ICH E9 Section 5.2.3 and ICH E9(R1) require sensitivity analyses to evaluate the robustness of primary analysis results under different assumptions.',
-          'ICH E9 Section 5.2.3; ICH E9(R1) Addendum; FDA Guidance: Missing Data in Confirmatory Trials (2020)',
+          'ICH E9 Section 5.2.3; ICH E9(R1) Addendum; National Research Council: The Prevention and Treatment of Missing Data in Clinical Trials (2010)',
           'Include sensitivity analyses addressing: (1) alternative missing data assumptions (e.g., tipping point, pattern mixture models), (2) per-protocol population analysis, (3) alternative endpoint definitions, and (4) covariate adjustments.',
           ['sensitivity_analyses', 'missing_data_handling', 'primary_analysis_results'],
         );
@@ -422,7 +422,7 @@ const rules: AuditRule[] = [
           this.question,
           'NNT (Number Needed to Treat) and NNH (Number Needed to Harm) are not presented in the briefing document.',
           'NNT and NNH are recommended by FDA\'s Benefit-Risk Framework (2023) as quantitative measures to facilitate Advisory Committee deliberation on clinical significance.',
-          'FDA Benefit-Risk Framework (2023); ICH E9 Section 5.4; FDA Advisory Committee Guidance (2008)',
+          'FDA Benefit-Risk Framework (2023); FDA Advisory Committee Guidance (2008)',
           'Calculate and present NNT for the primary efficacy endpoint and key secondary endpoints, and NNH for the most clinically significant adverse events. Include confidence intervals for these estimates.',
           ['nnt_nnh_data', 'primary_endpoint_results', 'key_adverse_events'],
         );
@@ -539,8 +539,8 @@ const rules: AuditRule[] = [
           this.dimension,
           'warning',
           this.title,
-          `The briefing document is ${pages} pages, which exceeds the recommended 300-page limit. Excessive length may impede the Advisory Committee members' ability to review the material thoroughly within the allotted preparation time. Has the sponsor considered condensing the document?`,
-          `The briefing document is ${pages} pages, significantly exceeding the recommended maximum of approximately 300 pages.`,
+          `The briefing document is ${pages} pages, which exceeds this review's 300-page internal threshold (FDA guidance sets no page limit for briefing documents). Excessive length may impede the Advisory Committee members' ability to review the material thoroughly within the allotted preparation time. Has the sponsor considered condensing the document?`,
+          `The briefing document is ${pages} pages, significantly exceeding this review's internal threshold of approximately 300 pages.`,
           'FDA Advisory Committee Guidance recommends that briefing documents be concise and focused to allow Committee members adequate time for review, typically distributed 2-3 weeks before the meeting.',
           'FDA Advisory Committee Guidance (2008); 21 CFR Part 14',
           'Condense the briefing document to under 300 pages by moving detailed data tables, case narratives, and supporting analyses to appendices. Focus the main body on key findings and their interpretation.',

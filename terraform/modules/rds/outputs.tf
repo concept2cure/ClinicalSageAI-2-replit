@@ -48,3 +48,14 @@ output "performance_insights_kms_key_id" {
   description = "The KMS key encrypting Performance Insights data, which includes query text."
   value       = aws_db_instance.this.performance_insights_kms_key_id
 }
+
+output "instance_settings" {
+  description = "The instance's storage, snapshot-tagging, monitoring and class settings, so the stack's tests can assert them (MR-03 OPS-04, OPS-30, DATA-13)."
+  value = {
+    instance_class         = aws_db_instance.this.instance_class
+    storage_type           = aws_db_instance.this.storage_type
+    copy_tags_to_snapshot  = aws_db_instance.this.copy_tags_to_snapshot
+    database_insights_mode = aws_db_instance.this.database_insights_mode
+    performance_insights   = aws_db_instance.this.performance_insights_enabled
+  }
+}

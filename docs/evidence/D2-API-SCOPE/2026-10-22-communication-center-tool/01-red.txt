@@ -1,0 +1,6 @@
+# RED at 6b63513e4 (trunk), inventory as on trunk (2026-10-22)
+ × server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > names only real tools and commands, and only surfaces outside the launch catalog
+   → communication-center: expected true to be false // Object.is equality
+ × server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > in production, withholds tools that serve only hidden apps and keeps the rest
+   → expected 618 to be 617 // Object.is equality
+      Tests  2 failed | 5 passed (7)
