@@ -502,7 +502,14 @@
 .c2c-v2 .de-body>p.de-desc{margin:0;}
 .c2c-v2 .de-f{display:flex;gap:10px;padding:16px 20px;border-top:1px solid var(--border);}
 .c2c-v2 .de-btn{flex:1;justify-content:center;display:inline-flex;align-items:center;gap:7px;border-radius:var(--radius-md);padding:11px 14px;font-size:13px;font-weight:500;transition:background var(--dur), color var(--dur);}
-.c2c-v2 .de-btn.primary{background:var(--accent-strong);color:var(--accent-on-strong);}.c2c-v2 .de-btn.primary:hover{box-shadow:var(--shadow-sm);transform:translateY(-1px);}
+.c2c-v2 .de-btn.primary{background:var(--accent-strong);color:var(--accent-on-strong);}
+/* No lift on hover (2026-10-22). translateY(-1px) moved the button off its own
+   bottom row: a pointer resting there unhovered it, it dropped back under the
+   pointer and was hovered again, every frame, so it jittered by 1px and never
+   settled. A button's content is clipped to the button, so nothing inside it
+   can keep that row. The lift is the cards' motion, not the buttons'
+   (design-system/README.md, "Animation & motion"). */
+.c2c-v2 .de-btn.primary:hover{box-shadow:var(--shadow-sm);}
 .c2c-v2 .de-btn.primary:disabled{opacity:.5;pointer-events:none;}
 .c2c-v2 .de-btn.ghost{border:1px solid var(--border-strong);color:var(--text-300);}.c2c-v2 .de-btn.ghost:hover{background:var(--bg-100);color:var(--text-100);}
 .c2c-v2 .de-btn svg{width:15px;height:15px;}

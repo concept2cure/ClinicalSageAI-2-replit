@@ -1,0 +1,50 @@
+{
+ "css": "/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/a1865a86-3409-548a-ab71-3cf205139dc3/scratchpad/followups/journey-v2.before.css",
+ "button": {
+  "x": 319.9228820800781,
+  "y": 57,
+  "width": 235.99996948242188,
+  "height": 41
+ },
+ "results": [
+  {
+   "label": "centre",
+   "pointerY": 77.5,
+   "distinctTops": 1,
+   "tops": [
+    56
+   ],
+   "hoverStates": [
+    true
+   ],
+   "settled": true
+  },
+  {
+   "label": "bottom row",
+   "pointerY": 97.5,
+   "distinctTops": 2,
+   "tops": [
+    56,
+    57
+   ],
+   "hoverStates": [
+    true,
+    false
+   ],
+   "settled": false
+  },
+  {
+   "label": "just below",
+   "pointerY": 98.5,
+   "distinctTops": 1,
+   "tops": [
+    57
+   ],
+   "hoverStates": [
+    false
+   ],
+   "settled": true
+  }
+ ],
+ "click": "locator.click: Timeout 3000ms exceeded. | element is not stable"
+}

@@ -47,7 +47,7 @@ import {
   type EditorTargetDocType,
 } from '../editorTarget';
 import { readShellProject } from '../shellProject';
-import { locateVaultDocument, takeVaultTarget } from '../vaultTarget';
+import { locateVaultDocument, takeVaultTarget, type TakenVaultTarget } from '../vaultTarget';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
 import { VaultSourceBuildAction } from '../editor/VaultSourceBuildAction';
 import '../styles/project-home-v2.css';
@@ -670,6 +670,10 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   // The placeholder shows only before there is data to show. A re-read after a change keeps the
   // body mounted, so a confirmation held in it (a save, a post, a decision) stays on screen.
   const vault = vaultState.data;
+  /* The payload on screen when an upload settles: the document it recorded is
+     in the re-read that follows, not in this one (see `pendingTarget`). */
+  const latestVault = React.useRef(vault);
+  latestVault.current = vault;
   /* The data room's "File into Vault" (VR-11): held here so its answer
      survives the re-read that follows a filing. */
   const roomFiling = useDataRoomFiling(projectId ?? null, () => setVaultEpoch((n) => n + 1));
@@ -739,6 +743,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         return doc ? [{ file, doc }] : [];
       }),
     );
+    // Open what was recorded (the batch's first document), as "Open in Vault" opens a filed one.
+    openRecorded(outcome.recorded[0]);
     // Re-read the tree so what is shown is what the server stored.
     if (outcome.succeeded.length) setVaultEpoch((n) => n + 1);
   };
@@ -755,8 +761,14 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
     // The offer stays until the version is recorded: a dropped connection must not lose the file.
     if (outcome.succeeded.includes(file.name)) {
       setCheckInOffers((offers) => offers.filter((o) => o.file !== file));
+      // The row on screen is the version this one replaced: open the document at the new one.
+      openRecorded(outcome.recorded[0]);
       setVaultEpoch((n) => n + 1);
     }
+  };
+  /** Open `documentId` once the re-read that follows an upload holds it. */
+  const openRecorded = (documentId: string | undefined) => {
+    if (documentId) setPendingTarget({ kind: 'uploaded', documentId, after: latestVault.current });
   };
 
   /* ── Filing decisions (confirm / move / unfile) ────────────────────────────
@@ -931,25 +943,33 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   /* "Open in Vault" after File to Vault names the document it filed
      (vaultTarget.ts): open on that row, where "Place into filing…" is,
      instead of the first node. A document this tree does not hold, or one
-     filed under another project, is said, not silently ignored. */
-  const [pendingTarget, setPendingTarget] = useState(() => takeVaultTarget(projectId));
-  const [missingTarget, setMissingTarget] = useState<string | null>(null);
+     filed under another project, is said, not silently ignored.
+     An upload opens the document the server recorded the same way, once the
+     re-read it asked for has landed: `after` is the payload on screen when it
+     settled, which cannot hold that document, so it is not looked for there. */
+  const [pendingTarget, setPendingTarget] = useState<
+    TakenVaultTarget | { kind: 'uploaded'; documentId: string; after: VaultDisplayShape | null } | null
+  >(() => takeVaultTarget(projectId));
+  const [missingTarget, setMissingTarget] = useState<{ documentId: string; act: 'filed' | 'uploaded' } | null>(null);
   const [otherProjectTarget] = useState(() => pendingTarget?.kind === 'other-project');
   React.useEffect(() => {
     if (!pendingTarget || !vault) return;
-    if (pendingTarget.kind === 'here') {
+    if (pendingTarget.kind === 'uploaded' && pendingTarget.after === vault) return;
+    if (pendingTarget.kind !== 'other-project') {
       const at = locateVaultDocument(tree, pendingTarget.documentId);
       if (at) {
         setQ('');
         setActiveFolder(at.folderId);
         setExpanded((e) => ({ ...e, cabinet: true, [at.folderId]: true }));
         setSel(at.rowId);
-      } else setMissingTarget(pendingTarget.documentId);
+      } else {
+        setMissingTarget({ documentId: pendingTarget.documentId, act: pendingTarget.kind === 'uploaded' ? 'uploaded' : 'filed' });
+      }
     }
     setPendingTarget(null);
   }, [pendingTarget, vault, tree]);
   // Derived, so a re-read that now holds the document retires the note.
-  const targetMissing = missingTarget !== null && locateVaultDocument(tree, missingTarget) === null;
+  const targetMissing = missingTarget !== null && locateVaultDocument(tree, missingTarget.documentId) === null;
 
   const findFolder = (
     nodes: (VaultDoc | VaultFolder)[],
@@ -1414,9 +1434,9 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           {(downloadNote ?? uploadNote)!.text}
         </div>
       )}
-      {targetMissing && (
+      {targetMissing && missingTarget && (
         <div className="scaf-note" role="status" style={{ margin: '0 0 12px' }} data-testid="vault-target-missing">
-          The document you just filed is not in this list. Search for it by title.
+          The document you just {missingTarget.act} is not in this list. Search for it by title.
         </div>
       )}
       {otherProjectTarget && (

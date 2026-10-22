@@ -124,6 +124,25 @@ describe('useVaultUpload — filing-aware outcome copy', () => {
   });
 });
 
+describe('useVaultUpload — the document each file was recorded as', () => {
+  it('lists the ids the server returned, in the order sent, and invents none', async () => {
+    const answer = (status: number, body: unknown) => ({ ok: status < 300, status, json: async () => body }) as Response;
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(answer(201, { success: true, document: { id: 'doc-new' }, filing: {} }))
+      .mockResolvedValueOnce(answer(415, { error: { message: 'File type .exe is not allowed' } }))
+      .mockResolvedValueOnce(ingestResponse({}))
+      .mockResolvedValueOnce(answer(200, { success: true, document: { id: 'doc-held', documentTitle: 'Protocol' }, reupload: { differs: [] } })));
+    let latest: VaultUploadState | null = null;
+    render(<HookHost onState={(s) => { latest = s; }} />);
+
+    const outcome = await latest!.upload(['a.pdf', 'tool.exe', 'no-id.pdf', 'protocol.pdf'].map((n) => new File(['x'], n)));
+
+    // The refused file and the response that names no document add nothing.
+    expect(outcome.succeeded).toEqual(['a.pdf', 'no-id.pdf', 'protocol.pdf']);
+    expect(outcome.recorded).toEqual(['doc-new', 'doc-held']);
+  });
+});
+
 describe('useVaultUpload — the request actually authenticates', () => {
   /**
    * `/api/vault/ingest` is mounted behind `authMiddleware`
