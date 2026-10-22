@@ -1,0 +1,8 @@
+# GREEN: the same, with frame-src 'self' blob: (2026-10-22T05:36:09Z)
+served frame-src: frame-src 'self' blob:
+served object-src: object-src 'none'
+frame url=http://127.0.0.1:<port>/
+frame url=blob:http://127.0.0.1:<port>/<uuid>
+frame url=about:blank
+violations recorded by the page: []
+VERDICT: the PDF frame loaded (blob:http://127.0.0.1:<port>/<uuid>)
