@@ -79,8 +79,26 @@ variable "trust_proxy_hops" {
 }
 
 variable "api_desired_count" {
-  type    = number
-  default = 2
+  description = "Tasks the service starts with, and the autoscaling floor."
+  type        = number
+  default     = 2
+}
+
+variable "api_max_count" {
+  description = "The autoscaling ceiling for the API service."
+  type        = number
+  default     = 6
+}
+
+variable "api_request_count_resource_label" {
+  description = "<alb arn_suffix>/<target group arn_suffix>, for the ALBRequestCountPerTarget scaling policy."
+  type        = string
+}
+
+variable "api_requests_per_target_per_minute" {
+  description = "Requests per minute per task the request-count policy holds the service to."
+  type        = number
+  default     = 1000
 }
 
 # ── Secrets ──────────────────────────────────────────────────────────────────

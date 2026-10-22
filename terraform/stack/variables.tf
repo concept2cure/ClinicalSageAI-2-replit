@@ -102,6 +102,15 @@ variable "api_desired_count" {
   type = number
 }
 
+variable "api_max_count" {
+  description = "Autoscaling ceiling for the API service. Production holds it at 2 until MR-14 closes OPS-07."
+  type        = number
+  validation {
+    condition     = var.api_max_count >= var.api_desired_count
+    error_message = "api_max_count must be at least api_desired_count, the autoscaling floor."
+  }
+}
+
 variable "alb_deletion_protection" {
   type = bool
 }

@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import type { NextFunction, Request, Response } from 'express';
 import { anaMicrokernel, type KernelEvaluation } from '../control-plane/kernel';
 import { createScopedLogger } from '../../utils/logger';
+import { respondIfConverterBusy } from '../../lib/api-response';
 
 interface RequestContext {
   requestId: string;
@@ -150,6 +151,11 @@ export function errorHandler(err: any, req: Request, res: Response, next: NextFu
   if (res.headersSent) {
     return next(err);
   }
+
+  // Every conversion slot stayed busy (ConversionCapacityError, OPS-13): 503
+  // with Retry-After and the error's own sentence, in production too, where a
+  // 5xx message below would otherwise read "Internal server error".
+  if (respondIfConverterBusy(res, err)) return;
 
   const statusCode = err?.statusCode || err?.status || 500;
   const errorCode = err?.code || (statusCode >= 500 ? 'SERVER_ERROR' : 'CLIENT_ERROR');

@@ -1,5 +1,6 @@
 import { spawn } from 'child_process';
 import path from 'path';
+import { withConversionSlot } from './conversion-slots';
 
 export interface DocxPdfPipelineOptions {
   inputDocxPath: string;
@@ -47,8 +48,12 @@ export async function runDocxPdfPipeline(
      timed the conversion. It now runs in its own process group (detached),
      and at the limit the whole group is killed — the python wrapper and the
      soffice it started. A spawn that fails ('error', e.g. no python3) used to
-     leave the promise unsettled; it now rejects. (2026-10-01) */
-  return new Promise((resolve, reject) => {
+     leave the promise unsettled; it now rejects. (2026-10-01)
+     The python wrapper, the soffice it starts and its optional Ghostscript pass
+     run as one process group inside one of the process's conversion slots
+     (OPS-13, MR-03 Stage 2). `timeoutMs` starts once the group is running; the
+     wait for a slot is bounded separately by CONVERTER_QUEUE_TIMEOUT_MS. */
+  return withConversionSlot('docx-pdf-pipeline', () => new Promise<DocxPdfPipelineResult>((resolve, reject) => {
     let settled = false;
     const settle = (fn: () => void) => {
       if (settled) return;
@@ -99,5 +104,5 @@ export async function runDocxPdfPipeline(
         }
       });
     });
-  });
+  }));
 }

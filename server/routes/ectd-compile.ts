@@ -56,7 +56,7 @@ import {
   type RequiredSectionSet,
   type RequiredSectionProvenance,
 } from '../services/ectd/required-sections';
-import { serverError } from '../lib/api-response';
+import { serverError, isConversionCapacityError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 import { regionalDeviceApplicationClassOf } from '../../shared/regulatory/filing-catalog';
 import type { SubmissionBundle } from '../services/submission-gateways/types';
@@ -1244,6 +1244,8 @@ async function compileFromSpine(
       await assembled.cleanup();
     }
   } catch (err) {
+    // Converter busy (OPS-13): no failed compilation; serverError answers 503.
+    if (isConversionCapacityError(err)) throw err;
     assembleFailure = err instanceof Error ? err.message : String(err);
     // A refusal the assembler audited (EctdAssemblyBlockedError) carries what
     // happened to that row. Read structurally: the class arrives through a
