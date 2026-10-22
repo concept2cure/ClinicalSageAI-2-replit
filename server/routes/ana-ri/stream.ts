@@ -1410,6 +1410,11 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
               })}\n\n`
             );
             say(parsed.completion.summary);
+          } else if (parsed?.status === 'outside_composition_scope' && parsed.message) {
+            /* The CMC composition boundary refused the answer (decision P-28;
+               services/cmc/interview-composition-scope.ts): its reason, said,
+               not a silent turn. */
+            say(String(parsed.message));
           } else if (parsed?.error) {
             say(`Error: ${parsed.error}`);
           }
