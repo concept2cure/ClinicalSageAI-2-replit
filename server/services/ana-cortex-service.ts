@@ -2,6 +2,7 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 import crypto from 'crypto';
 import { db } from '../db';
+import { getRuntimeDatabaseUrl } from '../db/getDatabaseUrl';
 import { sql, and, eq, inArray } from 'drizzle-orm';
 import {
   anaDataAtoms,
@@ -54,7 +55,9 @@ export class AnaCortexService {
   }
 
   async verifyNeonConnection() {
-    const connectionString = process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL || '';
+    // The connection the API serves from: the runtime role's URL. The owner URL
+    // is not in the API process (MR-03 OPS-16), so it says nothing here.
+    const connectionString = getRuntimeDatabaseUrl() ?? '';
     const isNeon = /neon\.tech|neondb/i.test(connectionString);
     const dbInstance = this.getDb();
     await dbInstance.execute(sql`SELECT 1`);
