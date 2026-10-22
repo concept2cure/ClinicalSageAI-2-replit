@@ -10,10 +10,16 @@
  *   GET  /api/ectd-compile/:projectIdent/history    — Compilation history
  *   POST /api/ectd-compile/:projectIdent/validate   — Pre-compile validation
  *
- * `:projectIdent` accepts the legacy numeric projects.id (the key of the
- * project_sections store) OR a program identifier — a regulatory_programs UUID
- * or program code — resolved org-scoped, mirroring the eSTAR meta.ident contract
- * (see server/routes/510k-estar-routes.ts resolveProjectAnchor).
+ * `:projectIdent` names a program: a regulatory_programs UUID or program code,
+ * resolved org-scoped. A numeric id is a legacy `projects` row and is resolved
+ * through its program anchor (projects.regulatory_program_id) to that program,
+ * by the one rule for legacy numeric ids (resolveOpenProgram,
+ * services/c2c/program-access.ts); a number that anchors no program in the
+ * caller's organization is 404. Every ident therefore compiles the program
+ * spine. The numeric branch that read the legacy `project_sections` store was
+ * removed 2026-10-17 (DOCUMENT_STORE_CONSOLIDATION.md step 7): nothing writes
+ * that store for a v2 program, and the last launch path that sent a number
+ * (Tasks → Open in …) now publishes the program UUID.
  *
  * TWO COMPILE PATHS, one honest answer:
  *   • SPINE-BACKED (canonical): a program ident whose program resolves to a
@@ -24,11 +30,11 @@
  *     (ICH v3.2.2 backbone, MD5 manifest, genuine rendered PDF leaves). The
  *     response's xmlBackbone is the package's real index.xml and
  *     leafFilesRendered counts leaves actually materialized to disk.
- *   • DRAFT BACKBONE (legacy store): a numeric ident (project_sections) or a
- *     program with no linked spine compiles the honest draft backbone over
- *     authored section text — every <ectd:leaf> carries rendered="false", and
- *     submissionBlockers says exactly why no leaf file exists and where leaf
- *     rendering actually runs.
+ *   • DRAFT BACKBONE: a program with no placed leaves compiles the honest
+ *     draft backbone over an empty tracked-section set (a program has no
+ *     tracked-section store) — every response says so (SECTION_STORE_UNLINKED),
+ *     and submissionBlockers says exactly why no leaf file exists and where
+ *     leaf rendering actually runs.
  *
  * @module server/routes/ectd-compile
  * @compliance ICH M8, ICH eCTD v3.2.2, FDA ESG
@@ -57,6 +63,7 @@ import {
   type RequiredSectionProvenance,
 } from '../services/ectd/required-sections';
 import { serverError } from '../lib/api-response';
+import { resolveOpenProgram } from '../services/c2c/program-access';
 import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
@@ -114,7 +121,7 @@ function submissionBlockers(
 ): string[] {
   const blockers: string[] = [];
   const leavesPlaced = (spine?.sequence?.leafCount ?? 0) > 0;
-  if (anchor && anchor.numericProjectId === null && !leavesPlaced) {
+  if (anchor && !leavesPlaced) {
     blockers.push(PROGRAM_SECTION_STORE_BLOCKER);
   }
   if (contentErrors.length > 0) {
@@ -143,10 +150,11 @@ function submissionBlockers(
  * Organization id for the caller, taken only from authenticated request
  * context — never from params, query or body.
  *
- * Every route here reads `project_sections`, which is tenant data. Routes that
- * omitted this filter let one organization compile, validate or inspect the
- * readiness of another organization's submission by guessing a numeric project
- * id, so a null return must be treated as 401 rather than "no scope".
+ * Every route here reads program, submission and compilation records, which
+ * are tenant data. Routes that omitted this filter let one organization
+ * compile, validate or inspect the readiness of another organization's
+ * submission by guessing an id, so a null return must be treated as 401 rather
+ * than "no scope".
  */
 function resolveOrgId(req: Request): number | null {
   const raw =
@@ -159,7 +167,7 @@ function resolveOrgId(req: Request): number | null {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PROJECT-IDENT RESOLUTION (numeric legacy id | program UUID | program code)
+// PROJECT-IDENT RESOLUTION (program UUID | program code | legacy numeric anchor)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -172,15 +180,13 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 // Client-reaching copy: names the condition and the consequence, but no schema
 // object — table names must never reach a response body (BP-W0-5).
 const PROGRAM_SECTION_STORE_BLOCKER =
-  'This program has no linked section-tracking store: section tracking is keyed by the ' +
-  'legacy numeric project id and no numeric project row exists for this program, so no ' +
-  'authored sections are visible to the compiler (pending the document-identity contract).';
+  'This program has no linked section-tracking store, so no authored sections are visible ' +
+  'to the compiler. Its documents reach the package by being placed into its submission\'s ' +
+  'eCTD sequence.';
 
 interface CompileAnchor {
-  /** Legacy numeric projects.id when the ident was numeric — keys project_sections. */
-  numericProjectId: number | null;
-  /** Resolved regulatory_programs UUID when the ident named a program. */
-  programId: string | null;
+  /** The resolved regulatory_programs UUID. */
+  programId: string;
   programCode: string | null;
   /** The agency-assigned application number (IND / NDA / BLA / MAA) when the
    *  program records one — `regulatory_programs.application_number`. NULL until
@@ -198,41 +204,33 @@ interface CompileAnchor {
 }
 
 /**
- * Resolve the route's `:projectIdent`, org-scoped, mirroring the eSTAR ident
- * contract: numeric → the legacy project id (pass-through — every section query
- * is already org-scoped), UUID → regulatory_programs.id, else →
- * regulatory_programs.code. Returns null when nothing in this org matches — the
- * caller must 404, never compile against an unresolved project.
+ * Resolve the route's `:projectIdent` to a program, org-scoped: UUID →
+ * regulatory_programs.id, a whole number → the program its `projects` anchor
+ * names (resolveOpenProgram, the one rule for legacy numeric ids), else →
+ * regulatory_programs.code. Returns null when nothing in this org matches —
+ * the caller must 404, never compile against an unresolved project.
  */
 async function resolveCompileAnchor(ident: string, orgId: number): Promise<CompileAnchor | null> {
-  if (/^\d+$/.test(ident)) {
-    const numeric = parseInt(ident, 10);
-    if (!Number.isInteger(numeric) || numeric <= 0) return null;
-    return {
-      numericProjectId: numeric,
-      programId: null,
-      programCode: null,
-      applicationNumber: null,
-      title: null,
-      productName: null,
-      programType: null,
-      primaryAgency: null,
-      label: `Project ${numeric}`,
-    };
-  }
-  const byUuid = UUID_RE.test(ident);
   try {
+    let key = ident;
+    if (/^\d+$/.test(ident)) {
+      const numeric = Number(ident);
+      if (!Number.isSafeInteger(numeric) || numeric <= 0) return null;
+      const anchored = await resolveOpenProgram(pool, { organizationId: orgId, projectId: numeric });
+      if (!anchored) return null;
+      key = anchored;
+    }
+    const byUuid = UUID_RE.test(key);
     const result = await pool.query(
       `SELECT id, code, name, product_name, program_type, primary_agency, application_number
          FROM regulatory_programs
         WHERE ${byUuid ? 'id = $1' : 'code = $1'} AND organization_id = $2 AND deleted_at IS NULL
         LIMIT 1`,
-      [ident, orgId],
+      [key, orgId],
     );
     const row = result.rows[0];
     if (row) {
       return {
-        numericProjectId: null,
         programId: String(row.id),
         programCode: row.code != null ? String(row.code) : null,
         applicationNumber: row.application_number != null ? String(row.application_number) : null,
@@ -344,40 +342,27 @@ function refuseEmptyNamedSequence(res: Response, chosen: { spine: SubmissionSpin
 }
 
 /**
- * Load the anchor's tracked sections. A program-spine anchor has NO
- * project_sections store (integer FK — see PROGRAM_SECTION_STORE_BLOCKER), so it
- * loads an honestly-empty set rather than someone else's rows or a fabricated
- * one. An unavailable tracked-section read throws; it is not an empty project.
+ * A program's tracked sections for the draft backbone: none. A program has no
+ * tracked-section store (see PROGRAM_SECTION_STORE_BLOCKER); its documents
+ * reach the package as placed leaves. The legacy numeric-project read of
+ * `project_sections` was removed 2026-10-17 (DOCUMENT_STORE_CONSOLIDATION.md
+ * step 7); the honestly-empty set is what every program already compiled over.
  */
-async function loadAnchorSections(
-  anchor: CompileAnchor,
-  orgId: number,
-  columns: string,
-  opts: { orderBy?: string } = {},
-): Promise<any[]> {
-  if (anchor.numericProjectId === null) return [];
-  const result = await pool.query(
-    `SELECT ${columns}
-       FROM project_sections
-       WHERE project_id = $1 AND organization_id = $2${opts.orderBy ? ` ORDER BY ${opts.orderBy}` : ''}`,
-    [anchor.numericProjectId, orgId],
-  );
-  return result.rows;
+function programTrackedSections(): any[] {
+  return [];
 }
 
 /**
- * Prepend the unlinked-section-store finding for program-spine anchors so the
- * validation report itself names the real reason every required section reads
- * as missing.
+ * Prepend the unlinked-section-store finding so the validation report itself
+ * names the real reason every required section reads as missing.
  */
-function withAnchorFindings(results: ValidationResult[], anchor: CompileAnchor): ValidationResult[] {
-  if (anchor.numericProjectId !== null) return results;
+function withAnchorFindings(results: ValidationResult[]): ValidationResult[] {
   return [
     {
       rule: 'SECTION_STORE_UNLINKED',
       severity: 'error',
       message: PROGRAM_SECTION_STORE_BLOCKER,
-      fix: 'Author sections under a legacy sectioned project, or wait for the program → section-store mapping (document-identity contract).',
+      fix: "Place approved documents into the submission's eCTD sequence, then validate or compile that sequence.",
     },
     ...results,
   ];
@@ -395,12 +380,10 @@ interface CompilationResult {
    */
   auditTrail?: AuditRowOutcome;
   id: string;
-  /** Legacy numeric project id, or null when the ident named a program. */
-  projectId: number | null;
-  /** The ident the caller addressed (numeric id, program UUID, or code). */
+  /** The ident the caller addressed (program UUID, code, or a legacy numeric anchor id). */
   projectIdent: string;
-  /** Resolved regulatory_programs UUID for program-spine idents. */
-  programId: string | null;
+  /** The resolved regulatory_programs UUID. */
+  programId: string;
   status: 'pending' | 'compiling' | 'validating' | 'completed' | 'failed';
   startedAt: string;
   completedAt?: string;
@@ -600,30 +583,14 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
       });
     }
 
-    // DRAFT-BACKBONE PATH (legacy section store, or a spine with nothing
-    // placed): compiles the honest draft backbone; the blockers name the real
-    // reason no leaf file exists.
+    // DRAFT-BACKBONE PATH (a spine with nothing placed): compiles the honest
+    // draft backbone; the blockers name the real reason no leaf file exists.
 
-    // 1. Gather all project sections from DB.
-    //
-    // TENANCY: filtered by organization_id as well as project_id. The org
-    // filter was described in this comment but absent from the SQL, so any
-    // authenticated organization could compile a submission from another
-    // organization's sections just by guessing a numeric project id.
-    // `project_sections.organization_id` is NOT NULL (see
-    // db/migrations/20260220_ind_section_tracking.sql), so this cannot
-    // legitimately exclude rows that belong to the caller. A program-spine
-    // ident loads an honestly-empty set (no linked section store).
-    const sections = await loadAnchorSections(
-      anchor,
-      orgId,
-      `section_code, title, status, content, word_count, assigned_to, module,
-              required, updated_at`,
-      { orderBy: 'section_code' },
-    );
+    // 1. The program's tracked sections: none (no tracked-section store).
+    const sections = programTrackedSections();
 
     // 2. Run pre-compile validation
-    const validationResults = withAnchorFindings(runPreCompileValidation(sections, region, required), anchor);
+    const validationResults = withAnchorFindings(runPreCompileValidation(sections, region, required));
     const hasBlockingErrors = validationResults.some(v => v.severity === 'error');
 
     // 3. Build module compilation status
@@ -674,16 +641,12 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
     //    TRANSMISSIBLE SEQUENCE"), so it says so rather than refusing; the
     //    program code is never written there (QA 2026-10-08, j6).
     //
-    //    A legacy numeric project used to get `IND-${numericProjectId}` here —
-    //    a string shaped exactly like an agency IND number, synthesised from a
-    //    row id, for an application the agency has never seen. That is the one
-    //    thing this field must never contain, and the comment above it claimed
-    //    the opposite ("recorded identity we actually hold"). Such a project has
-    //    no program record and therefore nothing recorded, so it says so.
+    //    A legacy numeric project used to get `IND-<row id>` here — a string
+    //    shaped exactly like an agency IND number, synthesised from a row id,
+    //    for an application the agency has never seen. That is the one thing
+    //    this field must never contain.
     const xmlBackbone = generateECTD4Backbone({
-      applicationRef:
-        recordedApplicationNumber(anchor) ??
-        (anchor.numericProjectId !== null ? `UNASSIGNED-PROJECT-${anchor.numericProjectId}` : 'UNASSIGNED-PROGRAM'),
+      applicationRef: recordedApplicationNumber(anchor) ?? 'UNASSIGNED-PROGRAM',
       submissionType,
       region,
       modules: moduleStatuses,
@@ -691,7 +654,7 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
     });
 
     // 5. Record compilation
-    const compilationId = `comp_${Date.now()}_${anchor.numericProjectId ?? anchor.programId}`;
+    const compilationId = `comp_${Date.now()}_${anchor.programId}`;
     // This insert previously bound SIX values to FIVE placeholders with a
     // duplicated orgId in second position, so every remaining value landed one
     // column to the left: the org id was written as compilation_name, the name
@@ -730,7 +693,6 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
 
     const result: CompilationResult = {
       id: compilationId,
-      projectId: anchor.numericProjectId,
       projectIdent: ident,
       programId: anchor.programId,
       // The BACKBONE compiled — that part did succeed, and the caller can
@@ -1236,8 +1198,7 @@ async function compileFromSpine(
   }
 
   const result: CompilationResult = {
-    id: `comp_${Date.now()}_${anchor.programId ?? anchor.numericProjectId}`,
-    projectId: anchor.numericProjectId,
+    id: `comp_${Date.now()}_${anchor.programId}`,
     projectIdent: ident,
     programId: anchor.programId,
     status: compileStatus,
@@ -1281,16 +1242,9 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
   const { orgId, anchor, ident } = resolved;
 
   try {
-    // Get project sections (tenant-scoped — readiness is tenant data). A failed
-    // read returns an error; a program-spine ident loads an honestly-
-    // empty set (no linked section store — see PROGRAM_SECTION_STORE_BLOCKER).
-    const sections = await loadAnchorSections(
-      anchor,
-      orgId,
-      `section_code, title, status, module, required,
-                word_count, updated_at`,
-      { orderBy: 'section_code' },
-    );
+    // A program has no tracked-section store, so readiness counts placed
+    // leaves where the sequence has them (see PROGRAM_SECTION_STORE_BLOCKER).
+    const sections = programTrackedSections();
 
     // Module-level readiness, against the program's own required set.
     const required = await resolveRequiredSections(pool, {
@@ -1349,7 +1303,6 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
     const overallPct = totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0;
 
     res.json({
-      projectId: anchor.numericProjectId,
       projectIdent: ident,
       programId: anchor.programId,
       overallReadiness: overallPct,
@@ -1438,7 +1391,7 @@ router.get('/:projectIdent/history', async (req: Request, res: Response) => {
       });
     }
 
-    res.json({ projectId: anchor.numericProjectId, projectIdent: ident, programId: anchor.programId, compilations });
+    res.json({ projectIdent: ident, programId: anchor.programId, compilations });
   } catch (error) {
     return serverError(res, log, 'reading the compilation history', error, { projectIdent: ident });
   }
@@ -1492,20 +1445,13 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
         }),
       ];
     } else {
-      const sections = await loadAnchorSections(
-        anchor,
-        orgId,
-        `section_code, title, status, content, word_count, module, required`,
-        {},
-      );
-      results = withAnchorFindings(runPreCompileValidation(sections, region, required), anchor);
+      results = withAnchorFindings(runPreCompileValidation(programTrackedSections(), region, required));
     }
     const passCount = results.filter(r => r.severity === 'info').length;
     const warnCount = results.filter(r => r.severity === 'warning').length;
     const errorCount = results.filter(r => r.severity === 'error').length;
 
     res.json({
-      projectId: anchor.numericProjectId,
       projectIdent: ident,
       programId: anchor.programId,
       valid: errorCount === 0,

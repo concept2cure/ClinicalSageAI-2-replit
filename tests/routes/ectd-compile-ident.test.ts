@@ -1,26 +1,29 @@
 /**
- * eCTD compile — :projectIdent resolution (numeric legacy id | program UUID |
- * program code), org-scoped, mirroring the eSTAR meta.ident contract.
+ * eCTD compile — :projectIdent resolution (program UUID | program code |
+ * legacy numeric anchor), org-scoped.
  *
- * Pins the id-space unblock: window.C2C_PROJECT.id is a regulatory_programs
- * UUID, and these routes used to 400 anything non-numeric ("Valid project ID
- * required"), dead-ending the whole surface. Now the SERVER resolves the ident:
- *   numeric → the legacy project_sections store (unchanged behavior);
+ * Every ident compiles a PROGRAM:
  *   UUID/code → the org's regulatory_programs row — which has NO linked
  *     section store, so readiness/validation/compile run against an honestly
  *     empty section set and every response says WHY (the
  *     SECTION_STORE_UNLINKED finding / blocker), never a silent 0% and never
- *     fabricated sections.
+ *     fabricated sections;
+ *   numeric → the program its `projects` anchor names
+ *     (projects.regulatory_program_id, resolveOpenProgram), else 404. The
+ *     numeric branch that read the legacy project_sections store was removed
+ *     2026-10-17 (DOCUMENT_STORE_CONSOLIDATION.md step 7); no read of that
+ *     store is ever made.
  * An ident that resolves to nothing in the caller's org is a 404 that leaks
  * nothing; a missing org context is a 401.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createMockRequest, createMockResponse } from '../setup';
 
-const { poolQuery, programRows, sectionRows, historyRows } = vi.hoisted(() => ({
+const { poolQuery, programRows, sectionRows, anchorRows, historyRows } = vi.hoisted(() => ({
   poolQuery: vi.fn(),
   programRows: vi.fn<[], unknown[]>(() => []),
   sectionRows: vi.fn<[], unknown[]>(() => []),
+  anchorRows: vi.fn<[], unknown[]>(() => []),
   historyRows: vi.fn<[], unknown[]>(() => []),
 }));
 
@@ -52,6 +55,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   poolQuery.mockImplementation(async (sql: string) => {
     if (sql.includes('FROM regulatory_programs')) return { rows: programRows() };
+    if (sql.includes('FROM projects')) return { rows: anchorRows() };
     if (sql.includes('FROM project_sections')) return { rows: sectionRows() };
     if (sql.includes('FROM ectd_compilations')) return { rows: historyRows() };
     if (sql.includes('INSERT INTO ectd_compilations')) return { rows: [] };
@@ -60,22 +64,42 @@ beforeEach(() => {
 });
 
 describe('GET /:projectIdent/status — ident resolution', () => {
-  it('keeps the numeric legacy path: sections load by project id, org-scoped', async () => {
+  it('resolves a numeric ident through its anchor to the program, org-scoped, and never reads project_sections', async () => {
+    // A legacy section row exists for project 42; compile must not see it.
     sectionRows.mockReturnValue([
       { section_code: '1.1', title: 'Forms', status: 'approved', module: 'm1', required: true, word_count: 10, updated_at: '2026-01-01T00:00:00Z' },
     ]);
+    anchorRows.mockReturnValue([{ regulatory_program_id: UUID }]);
+    programRows.mockReturnValue([PROGRAM]);
     const req = makeReq({ params: { projectIdent: '42' } });
     const res = createMockResponse() as any;
 
     await getHandler('/:projectIdent/status', 'get')(req, res);
 
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ projectId: 42, projectIdent: '42', programId: null }),
-    );
-    const sectionsCall = poolQuery.mock.calls.find((c) => String(c[0]).includes('FROM project_sections'));
-    expect(sectionsCall![1]).toEqual([42, 7]);
-    // No program lookup happens for a numeric ident.
-    expect(poolQuery.mock.calls.some((c) => String(c[0]).includes('FROM regulatory_programs'))).toBe(false);
+    const payload = res.json.mock.calls[0][0];
+    expect(payload).toMatchObject({ projectIdent: '42', programId: UUID, overallReadiness: 0 });
+    expect(payload).not.toHaveProperty('projectId');
+    expect(payload.submissionBlockers.join(' ')).toContain('no linked section-tracking store');
+    const anchorCall = poolQuery.mock.calls.find((c) => String(c[0]).includes('FROM projects'));
+    expect(anchorCall![1]).toEqual([42, 7]);
+    const programCall = poolQuery.mock.calls.filter((c) => String(c[0]).includes('FROM regulatory_programs')).at(-1);
+    expect(programCall![1]).toEqual([UUID, 7]);
+    expect(poolQuery.mock.calls.some((c) => String(c[0]).includes('FROM project_sections'))).toBe(false);
+  });
+
+  it('404s a numeric ident that anchors no program in the caller org', async () => {
+    anchorRows.mockReturnValue([]);
+    programRows.mockReturnValue([PROGRAM]);
+    for (const path of ['/:projectIdent/status', '/:projectIdent/history'] as const) {
+      const res = createMockResponse() as any;
+      await getHandler(path, 'get')(makeReq({ params: { projectIdent: '42' } }), res);
+      expect(res.status).toHaveBeenCalledWith(404);
+    }
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq({ params: { projectIdent: '42' }, body: { region: 'FDA' } }), res);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(poolQuery.mock.calls.some((c) => String(c[0]).includes('FROM project_sections'))).toBe(false);
+    expect(poolQuery.mock.calls.some((c) => String(c[0]).includes('INSERT INTO ectd_compilations'))).toBe(false);
   });
 
   it('resolves a program UUID org-scoped and reports the unlinked section store honestly', async () => {
@@ -86,7 +110,7 @@ describe('GET /:projectIdent/status — ident resolution', () => {
     await getHandler('/:projectIdent/status', 'get')(req, res);
 
     const payload = res.json.mock.calls[0][0];
-    expect(payload).toMatchObject({ projectId: null, projectIdent: UUID, programId: UUID, overallReadiness: 0, submissionReady: false });
+    expect(payload).toMatchObject({ projectIdent: UUID, programId: UUID, overallReadiness: 0, submissionReady: false });
     // The blocker names WHY readiness is 0% — no silent empty, no fabrication.
     expect(payload.submissionBlockers.join(' ')).toContain('no linked section-tracking store');
     // The lookup was UUID-keyed and org-scoped.
@@ -143,7 +167,7 @@ describe('POST /:projectIdent/validate — program idents get the unlinked-store
     const payload = res.json.mock.calls[0][0];
     expect(payload.valid).toBe(false);
     expect(payload.results[0]).toMatchObject({ rule: 'SECTION_STORE_UNLINKED', severity: 'error' });
-    expect(payload).toMatchObject({ projectId: null, programId: UUID });
+    expect(payload).toMatchObject({ programId: UUID });
     // The finding explains the unlinked store without naming a schema object —
     // table names must never reach a response body (BP-W0-5).
     expect(JSON.stringify(payload)).not.toContain('project_sections');
@@ -160,7 +184,7 @@ describe('POST /:projectIdent/compile — program idents compile honestly (faile
 
     const payload = res.json.mock.calls[0][0];
     // Every required section is genuinely missing → failed, never a fabricated success.
-    expect(payload).toMatchObject({ projectId: null, projectIdent: UUID, programId: UUID, status: 'failed', submissionReady: false });
+    expect(payload).toMatchObject({ projectIdent: UUID, programId: UUID, status: 'failed', submissionReady: false });
     expect(payload.submissionBlockers.join(' ')).toContain('no linked section-tracking store');
     // The record is keyed by the program label so /history can find it.
     const insertCall = poolQuery.mock.calls.find((c) => String(c[0]).includes('INSERT INTO ectd_compilations'));
@@ -185,7 +209,7 @@ describe('GET /:projectIdent/history — program idents filter by the program la
     // still finds the label anywhere in a longer compilation name.
     expect(historyCall![1]).toEqual([7, '(^|[^A-Za-z0-9])Program BX-204($|[^A-Za-z0-9])']);
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ projectId: null, programId: UUID, compilations: expect.any(Array) }),
+      expect.objectContaining({ programId: UUID, compilations: expect.any(Array) }),
     );
   });
 });
@@ -224,6 +248,8 @@ describe('POST /:projectIdent/compile — the draft backbone names the applicati
   });
 
   it('a legacy numeric project does not get an IND-shaped number invented for it', async () => {
+    anchorRows.mockReturnValue([{ regulatory_program_id: UUID }]);
+    programRows.mockReturnValue([PROGRAM]);
     const res = createMockResponse() as any;
     await getHandler('/:projectIdent/compile', 'post')(
       makeReq({ params: { projectIdent: '7' }, body: { submissionType: 'initial', region: 'FDA' } }), res,

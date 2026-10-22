@@ -27,6 +27,13 @@
  *   · GET /history filtered on the compilation NAME alone, so one tenant could
  *     read another tenant's submission history.
  *
+ * 2026-10-17 (DOCUMENT_STORE_CONSOLIDATION.md step 7): eCTD compile no longer
+ * reads `project_sections` for a numeric ident. A number resolves through its
+ * program anchor (projects.regulatory_program_id) to the program, and a
+ * program has no tracked-section store, so the compile half of this journey
+ * now proves that: the seeded sections are NOT read, the response says why
+ * (SECTION_STORE_UNLINKED), and the record is filed under the program.
+ *
  * Output: tests/golden-journeys/__reports__/marketing-application.{manifest.json,report.md}
  */
 
@@ -65,6 +72,8 @@ const ORG = 1;
 const OTHER_ORG = 2;
 const PROJECT = 101;
 const OTHER_PROJECT = 202;
+const PROGRAM_ID = '7c1e2d3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f';
+const PROGRAM_CODE = 'NDA-210001';
 
 /**
  * FK prerequisites. project_sections references organizations, projects and
@@ -77,7 +86,13 @@ const PREREQ = `
   -- degrades to a membership-only decision with orgUuid = null (ledger L148).
   CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT, uuid UUID NOT NULL DEFAULT gen_random_uuid());
   CREATE TABLE users (id SERIAL PRIMARY KEY, email TEXT);
-  CREATE TABLE projects (id SERIAL PRIMARY KEY, organization_id INTEGER REFERENCES organizations(id), name TEXT);
+  -- The program spine and its anchor (migrations/20260814_projects_regulatory_program_anchor.sql).
+  CREATE TABLE regulatory_programs (
+    id UUID PRIMARY KEY, organization_id INTEGER NOT NULL, code TEXT, name TEXT, product_name TEXT,
+    program_type TEXT, primary_agency TEXT, application_number TEXT, deleted_at TIMESTAMPTZ
+  );
+  CREATE TABLE projects (id SERIAL PRIMARY KEY, organization_id INTEGER REFERENCES organizations(id), name TEXT,
+    regulatory_program_id UUID, status TEXT);
   CREATE TABLE ectd_modules (id SERIAL PRIMARY KEY, name TEXT);
   CREATE TABLE concept2cure_artifacts (
     id SERIAL PRIMARY KEY,
@@ -89,9 +104,11 @@ const PREREQ = `
   );
   INSERT INTO organizations (id, name) VALUES (${ORG}, 'journey-b-org'), (${OTHER_ORG}, 'other-org');
   INSERT INTO users (id, email) VALUES (1, 'regops@journey.example');
-  INSERT INTO projects (id, organization_id, name) VALUES
-    (${PROJECT}, ${ORG}, 'NDA 210001'),
-    (${OTHER_PROJECT}, ${OTHER_ORG}, 'Other tenant NDA');
+  INSERT INTO regulatory_programs (id, organization_id, code, name) VALUES
+    ('${PROGRAM_ID}', ${ORG}, '${PROGRAM_CODE}', 'NDA 210001');
+  INSERT INTO projects (id, organization_id, name, regulatory_program_id) VALUES
+    (${PROJECT}, ${ORG}, 'NDA 210001', '${PROGRAM_ID}'),
+    (${OTHER_PROJECT}, ${OTHER_ORG}, 'Other tenant NDA', NULL);
 `;
 
 /** ectd_compilations lives in the drizzle baseline; this is that shape. */
@@ -248,20 +265,20 @@ describe('Journey B — marketing application spine (canonical DDL)', () => {
       return { sections: res.body.sections, summary: res.body.summary };
     });
 
-    // ── 4. Pre-compile validation reads real section state ──────────────────
+    // ── 4. Pre-compile validation compiles the PROGRAM the number anchors ───
     const validation = await R.step('pre-compile-validation', async () => {
       const res = await asOrg(ORG)(request(app).post(`/api/ectd-compile/${PROJECT}/validate`)).send({ region: 'FDA' });
       expect(res.status).toBe(200);
+      expect(res.body.programId).toBe(PROGRAM_ID);
       const results = res.body.validationResults ?? res.body.results ?? [];
       expect(Array.isArray(results)).toBe(true);
-      // Proof the rows were actually read: a section we seeded as `drafting`
-      // must be reported incomplete BY NAME. Before the content-columns fix the
-      // query threw and this list described an empty dossier instead.
-      const incomplete = results.filter((v: { rule: string }) => v.rule === 'REQUIRED_SECTION_INCOMPLETE');
+      // The legacy section store is not read (step 7): the seeded sections are
+      // not reported, and the first finding says why nothing is visible.
+      expect(results[0]).toMatchObject({ rule: 'SECTION_STORE_UNLINKED', severity: 'error' });
       const ok = results.filter((v: { rule: string }) => v.rule === 'REQUIRED_SECTION_OK');
-      expect(ok.some((v: { message: string }) => v.message.includes('Clinical Overview'))).toBe(true);
-      expect(incomplete.some((v: { message: string }) => v.message.includes('Clinical Summary'))).toBe(true);
-      return { total: results.length, ok: ok.length, incomplete: incomplete.length };
+      expect(ok).toHaveLength(0);
+      expect(JSON.stringify(results)).not.toContain('Clinical Overview');
+      return { total: results.length, ok: ok.length, firstRule: results[0].rule };
     });
 
     // ── 5. Compile — the step that returned 500 unconditionally ─────────────
@@ -297,7 +314,7 @@ describe('Journey B — marketing application spine (canonical DDL)', () => {
       // compilation_type, the submission type in status and the status in
       // xml_backbone. Each assertion below pins one of those columns.
       expect(rec.organization_id).toBe(ORG);
-      expect(rec.compilation_name).toBe(`IND Compilation — Project ${PROJECT}`);
+      expect(rec.compilation_name).toBe(`IND Compilation — Program ${PROGRAM_CODE}`);
       expect(rec.compilation_type).toBe('initial');
       expect(['completed', 'failed']).toContain(rec.status);
       expect(rec.xml_backbone).toContain('<?xml');
@@ -316,7 +333,7 @@ describe('Journey B — marketing application spine (canonical DDL)', () => {
       const res = await asOrg(ORG)(request(app).get(`/api/ectd-compile/${PROJECT}/history`));
       expect(res.status).toBe(200);
       expect(res.body.compilations).toHaveLength(1);
-      expect(res.body.compilations[0].compilation_name).toContain(`Project ${PROJECT}`);
+      expect(res.body.compilations[0].compilation_name).toContain(`Program ${PROGRAM_CODE}`);
       return { count: res.body.compilations.length };
     });
 
@@ -335,11 +352,11 @@ describe('Journey B — marketing application spine (canonical DDL)', () => {
     // ── KNOWN-BAD: another tenant sees none of it ───────────────────────────
     await R.expectBlocked('cross-tenant-history-is-empty', async () => {
       const res = await asOrg(OTHER_ORG)(request(app).get(`/api/ectd-compile/${PROJECT}/history`));
-      // Blocked here means "returns no data", not an error status: the tenant
-      // filter must exclude the row. Before the fix the name-LIKE filter alone
-      // returned another organization's submission history.
+      // Blocked here means "returns no data": the number's anchor is another
+      // organization's, so it resolves to nothing (404). Before the tenant fix
+      // the name-LIKE filter alone returned another organization's history.
       return {
-        blocked: res.status === 200 && (res.body.compilations ?? []).length === 0,
+        blocked: res.status === 404 && (res.body.compilations ?? []).length === 0,
         status: res.status,
         rows: (res.body.compilations ?? []).length,
       };

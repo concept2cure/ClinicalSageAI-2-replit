@@ -10,8 +10,9 @@
  * route). This pins what a person sees of it:
  *   - another store's card is labelled with its store and offers no move;
  *   - it counts in the column it belongs to, Blocked included;
- *   - opening it says where it lives and opens that screen on its project,
- *     never the board's editing controls;
+ *   - opening it says where it lives and opens that screen on its project's
+ *     program UUID (never the numeric anchor id), never the board's editing
+ *     controls; a project that anchors no program is not opened at all;
  *   - an unread store is named, so a short board does not read as complete;
  *   - the board's own cards keep their controls.
  */
@@ -46,13 +47,18 @@ const OWN = {
   ...base, taskId: 'TASK-OWN', title: 'Confirm the pre-IND meeting date', moduleType: 'ind', priority: 'high',
   status: 'pending', source: 'unified', blocked: false,
 };
+const PROGRAM = '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70';
 const SCHEDULE = {
   ...base, taskId: 'schedule:41', title: 'Statistical analysis plan', status: 'blocked', source: 'schedule',
-  blocked: true, readOnly: true, home: { surface: 'project-home', projectId: 12 }, detail: 'Waiting on the SAP template',
+  blocked: true, readOnly: true, home: { surface: 'project-home', projectId: 12, programId: PROGRAM }, detail: 'Waiting on the SAP template',
 };
 const FILING = {
   ...base, taskId: 'filing:9f1c', title: '510(k) additional information', status: 'blocked', source: 'filing',
-  blocked: true, readOnly: true, home: { surface: 'submission-center', projectId: 12 }, detail: '510k',
+  blocked: true, readOnly: true, home: { surface: 'submission-center', projectId: 12, programId: PROGRAM }, detail: '510k',
+};
+const UNLINKED = {
+  ...base, taskId: 'review:77', title: 'Legacy reviewer comments', status: 'pending', source: 'review',
+  blocked: false, readOnly: true, home: { surface: 'submission-center', projectId: 99, programId: null }, detail: null,
 };
 const ok = (data: unknown) => ({ ok: true, status: 200, json: async () => data }) as Response;
 
@@ -67,7 +73,7 @@ beforeEach(() => {
   apiRequest.mockImplementation(async (method: string, rawPath: unknown) => {
     const path = String(rawPath ?? '');
     if (method !== 'GET') return ok({ success: true });
-    if (path === '/api/task-management/board') return ok({ data: [OWN, SCHEDULE, FILING], meta: boardMeta });
+    if (path === '/api/task-management/board') return ok({ data: [OWN, SCHEDULE, FILING, UNLINKED], meta: boardMeta });
     if (path === '/api/projects') return ok({ data: [{ id: 12, name: 'BX-1 programme' }] });
     return ok({ data: [] });
   });
@@ -109,7 +115,10 @@ describe("TaskBoard — every store's work", () => {
     expect(within(detail).queryByRole('button', { name: /Archive/ })).toBeNull();
     expect(within(detail).queryByRole('button', { name: /Advance/ })).toBeNull();
     fireEvent.click(within(detail).getByRole('button', { name: 'Open in Project home' }));
-    expect(shell.publishShellProject).toHaveBeenCalledWith(expect.objectContaining({ id: 12, title: 'BX-1 programme' }));
+    // The program, not the numeric anchor: a number handed to Submission
+    // Center reached eCTD compile as :projectIdent (step 7).
+    expect(shell.publishShellProject).toHaveBeenCalledWith(expect.objectContaining({ id: PROGRAM, title: 'BX-1 programme' }));
+    expect(shell.publishShellProject.mock.calls.some(([p]) => typeof p.id === 'number')).toBe(false);
     expect(onNav).toHaveBeenCalledWith('project-home');
     expect(apiRequest.mock.calls.filter(([m]) => m !== 'GET')).toHaveLength(0);
   });
@@ -119,7 +128,18 @@ describe("TaskBoard — every store's work", () => {
     fireEvent.click(await card(FILING.title));
     const detail = await screen.findByRole('dialog', { name: 'Task detail' });
     fireEvent.click(within(detail).getByRole('button', { name: 'Open in Submission Center' }));
+    expect(shell.publishShellProject).toHaveBeenCalledWith(expect.objectContaining({ id: PROGRAM }));
     expect(onNav).toHaveBeenCalledWith('submission-center');
+  });
+
+  it('does not open a project that anchors no program, and says why', async () => {
+    mount();
+    fireEvent.click(await card(UNLINKED.title));
+    const detail = await screen.findByRole('dialog', { name: 'Task detail' });
+    expect(within(detail).queryByRole('button', { name: /Open in/ })).toBeNull();
+    expect(within(detail).getByTestId('tb-home-unlinked').textContent).toMatch(/not linked to a program/);
+    expect(shell.publishShellProject).not.toHaveBeenCalled();
+    expect(onNav).not.toHaveBeenCalled();
   });
 
   it('names a store it could not read, and says nothing when every store was read', async () => {

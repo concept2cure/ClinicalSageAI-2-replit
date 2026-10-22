@@ -309,8 +309,10 @@ function parsedAnchor(row: unknown): ProgramAnchorRow | null {
 }
 
 /** All recorded eligible anchors, before sharing is evaluated. A malformed or
- * duplicate relationship never becomes unique by hiding its private row. */
-export async function listProgramAnchorCandidates(db: ProgramAnchorReadExecutor, params: {
+ * duplicate relationship never becomes unique by hiding its private row.
+ * Takes the request's Drizzle client (`requestDb(req)`) or a raw executor, as
+ * readProgramAnchorRow does. */
+export async function listProgramAnchorCandidates(db: RequestDb | ProgramAnchorReadExecutor, params: {
   orgId: number; eligibility?: ProgramAnchorEligibility;
 }): Promise<ProgramAnchorCandidate[]> {
   const statement = params.eligibility === 'non-deleted'
@@ -319,7 +321,14 @@ export async function listProgramAnchorCandidates(db: ProgramAnchorReadExecutor,
          AND status IS DISTINCT FROM 'deleted' ORDER BY regulatory_program_id,id`
     : `SELECT regulatory_program_id::text AS program_id,id,client_workspace_id AS "clientWorkspaceId"
        FROM projects WHERE organization_id=$1 AND regulatory_program_id IS NOT NULL ORDER BY regulatory_program_id,id`;
-  const { rows } = await db.query(statement,[params.orgId]);
+  const rows: unknown[] = 'select' in db
+    ? await db
+      .select({ program_id: sql<string>`${projects.regulatoryProgramId}::text`, id: projects.id, clientWorkspaceId: projects.clientWorkspaceId })
+      .from(projects)
+      .where(and(eq(projects.organizationId, params.orgId), sql`${projects.regulatoryProgramId} IS NOT NULL`,
+        params.eligibility === 'non-deleted' ? sql`${projects.status} IS DISTINCT FROM 'deleted'` : undefined))
+      .orderBy(asc(projects.regulatoryProgramId), asc(projects.id))
+    : (await db.query(statement,[params.orgId])).rows;
   return rows.map(row => {
     if (!row || typeof row !== 'object' || !('program_id' in row) || typeof row.program_id !== 'string') {
       throw new Error('Program anchor identity could not be read');

@@ -115,7 +115,11 @@ interface TaskItem {
   /** Work that lives in another store (schedule, correspondence, filing). The
    *  board shows it and does not write it; `home` is where it is changed. */
   readOnly?: boolean;
-  home?: { surface: 'project-home' | 'submission-center'; projectId: number | null } | null;
+  /** `programId` is the regulatory_programs UUID the numeric project anchors
+   *  (projects.regulatory_program_id), resolved by the server; null when that
+   *  project anchors no program. Only the UUID is ever published as the open
+   *  project: a v2 surface handed the number reads a legacy store. */
+  home?: { surface: 'project-home' | 'submission-center'; projectId: number | null; programId?: string | null } | null;
   /** The owning store's own note (a blocker, a module, a catalogue key). */
   detail?: string | null;
   /** unified_tasks.description: what the task asks (Assign review stores the
@@ -1108,9 +1112,9 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
           projLabel={projLabel}
           onClose={() => setSel(null)}
           onOpenHome={(t) => {
-            if (!t.home) return;
-            if (t.home.projectId != null) {
-              publishShellProject({ id: t.home.projectId, title: projLabel(String(t.home.projectId)) });
+            if (!t.home || !canOpenHome(t.home)) return;
+            if (t.home.programId) {
+              publishShellProject({ id: t.home.programId, title: projLabel(String(t.home.projectId)) });
             }
             setSel(null);
             onNav(t.home.surface);
@@ -1173,6 +1177,21 @@ const ARCHIVE_REASON_MAX = 1000;
  * store, so this panel offers none of the board's controls (move, archive,
  * sign): it says what the store records and opens the screen that owns it.
  */
+/** Whether the owning screen can be opened on this work's project: a project
+ *  must reach the screen as its program, never as the bare number. */
+function canOpenHome(home: NonNullable<TaskItem['home']>): boolean {
+  return home.projectId == null || Boolean(home.programId);
+}
+
+/** "Open in …" for another store's work, or why it cannot be opened. */
+function OpenHomeAction({ t, home, onOpenHome }: { t: TaskItem; home: string | null; onOpenHome: (t: TaskItem) => void }) {
+  if (!home || !t.home) return null;
+  if (!canOpenHome(t.home)) {
+    return <div className="tb-detail-note" data-testid="tb-home-unlinked">Its project is not linked to a program, so {home} cannot be opened on it from here.</div>;
+  }
+  return <button className="btn primary" onClick={() => onOpenHome(t)}>Open in {home}</button>;
+}
+
 /** Where another store's work lives, in one sentence. */
 function whereItLives(home: string | null, project: string | null): React.ReactNode {
   if (!home) return 'This work lives in another store. The board shows it and does not edit it.';
@@ -1209,9 +1228,7 @@ function OtherStoreTaskDetail({ t, projLabel, onClose, onOpenHome }: {
         </div>
         <div className="tb-detail-sec">
           <div className="tb-detail-note">{whereItLives(home, project)}</div>
-          {home && (
-            <button className="btn primary" onClick={() => onOpenHome(t)}>Open in {home}</button>
-          )}
+          <OpenHomeAction t={t} home={home} onOpenHome={onOpenHome} />
         </div>
       </div>
     </div>

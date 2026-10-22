@@ -4,9 +4,10 @@
  * Registry id: `ectd-compile`.
  *
  * Wired to the real persisting compiler (server/routes/ectd-compile.ts, mounted
- * /api/ectd-compile), keyed on the open program's identifier — the server
- * resolves a legacy numeric project id, a regulatory_programs UUID, or a program
- * code, org-scoped (the same 3-way ident contract as the eSTAR export routes):
+ * /api/ectd-compile), keyed on the open program's identifier — a
+ * regulatory_programs UUID or program code, resolved org-scoped (a legacy
+ * numeric project id is resolved through its program anchor; every ident
+ * compiles a program):
  *   • GET  /:projectIdent/status    — module-by-module readiness (required-section
  *                                     completion, overall %), the go/no-go picture
  *   • POST /:projectIdent/validate  — pre-compile validation findings (missing /
@@ -17,7 +18,7 @@
  *                                     server-side (rendered PDF leaves, ICH v3.2.2
  *                                     index.xml, MD5s) and returns its actual
  *                                     backbone; otherwise the honest draft backbone
- *                                     over authored section text, with blockers
+ *                                     (no tracked sections), with blockers
  *                                     saying exactly why no leaf files exist
  *   • GET  /:projectIdent/history   — prior compilations
  *
@@ -63,8 +64,6 @@ interface RequiredSectionSource {
   reason?: string;
 }
 interface StatusView {
-  /** Legacy numeric project id, or null when the ident named a program. */
-  projectId: number | null;
   projectIdent?: string;
   programId?: string | null;
   overallReadiness: number;
@@ -109,7 +108,6 @@ interface CompiledLifecycle {
 
 interface CompileResult {
   id: string;
-  projectId: number | null;
   projectIdent?: string;
   programId?: string | null;
   status: 'completed' | 'failed';
@@ -812,9 +810,10 @@ function CompiledPackageView({ result, ident }: { result: CompileResult; ident: 
 }
 
 /**
- * The open program's identifier — a regulatory_programs UUID, a program code,
- * or a legacy numeric project id. The SERVER resolves whichever it is,
- * org-scoped; this surface never demands a numeric id (that demand was a
+ * The open program's identifier — a regulatory_programs UUID or a program
+ * code (a legacy numeric project id, should one still be in this tab's mirror,
+ * is resolved by the server through its program anchor). The SERVER resolves
+ * whichever it is, org-scoped; this surface never demands a numeric id (that demand was a
  * permanent dead-end: window.C2C_PROJECT.id is a program UUID).
  */
 function readProjectIdent(): { ident: string | null; title?: string; code?: string } {
