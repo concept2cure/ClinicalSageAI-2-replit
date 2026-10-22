@@ -126,6 +126,9 @@ function optionalPriorFields(e: Partial<SequenceLeafManifestEntry>): Partial<Pri
     ...(str(e.operation) ? { operation: e.operation } : {}),
     // What a later act's modified-file names; the operator validates both.
     ...(str(e.leafId) && str(e.backbone) ? { leafId: e.leafId, backbone: e.backbone } : {}),
+    // What this leaf's own act named, so the fold can take a replaced leaf off
+    // file whatever its name (P-42, 2026-10-22).
+    ...(str(e.modifiedFile) && e.modifiedFile ? { modifiedFile: e.modifiedFile } : {}),
   };
 }
 

@@ -343,7 +343,10 @@ async function seedUnreadableWithdrawals() {
     CREATE SCHEMA IF NOT EXISTS vault;
     CREATE TABLE IF NOT EXISTS regulatory_programs (id UUID PRIMARY KEY, organization_id INTEGER, deleted_at TIMESTAMPTZ);
     CREATE TABLE IF NOT EXISTS vault.documents (
-      id UUID PRIMARY KEY, program_id UUID NOT NULL, storage_version_id TEXT, content_hash TEXT, file_name TEXT, deleted_at TIMESTAMPTZ
+      id UUID PRIMARY KEY, program_id UUID NOT NULL, storage_version_id TEXT, content_hash TEXT, file_name TEXT, deleted_at TIMESTAMPTZ,
+      -- The version lineage every deployed vault.documents carries (VR-08), which
+      -- a follow-up's Vault leaves are bound through (P-42).
+      organization_id INTEGER, supersedes_id UUID, document_code TEXT
     );
     INSERT INTO regulatory_programs (id, organization_id) VALUES ('${PROGRAM}', ${ORG});
     -- On file in the vault, but its bytes never reached the storage provider.
