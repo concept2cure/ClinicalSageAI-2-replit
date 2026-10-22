@@ -1,0 +1,9 @@
+# GREEN on real PostgreSQL 16 (RLS_ENFORCE=on, app_service) at 5efa1de6f + working tree (2026-10-22T04:45:54Z)
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is still the release a member reads for training: v1.0, eligible
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is counted in training coverage with its standing receipt
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > can still be acknowledged by a member who has not yet read it
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is named on the register beside the draft, and counted as effective by readiness
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > the controlled document register report while the revision is open > names the version in force and the signature that approved it, beside the draft
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > when the successor is signed > v2.0 is in force and v1.0 receipts no longer count
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > a periodic review date set when the document is created > is stored, signed with the version, and lists the document as due once it is effective
+      Tests  7 passed (7)
