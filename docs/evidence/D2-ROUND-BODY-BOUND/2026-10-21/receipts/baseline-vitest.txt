@@ -1,0 +1,143 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > reduces ordinary floor overflow while keeping every identity and the original array unchanged 8ms
+   → expected 26964 to be less than or equal to 24000
+   → expected false to be true // Object.is equality
+ × server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > keeps a crowding-withheld read at its exact trusted offset and records no receipt 3ms
+   → expected 27064 to be less than or equal to 24000
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > retains a fitting read byte for byte and settles only that exact host admission 2ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > private map identity takes precedence over a passage name without adopting payload offsets 6ms
+ × server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > passage fields and ordinary fake receipt fields cannot mint private settlement authority 2ms
+   → expected 28640 to be less than or equal to 24000
+ × server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > refuses irreducible passage minima before entering receipt settlement 3ms
+   → promise resolved "undefined" instead of rejecting
+   → expected true to be false // Object.is equality
+   → expected undefined to be 'tiny exact source' // Object.is equality
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > cancellation after strict allocation withdraws source context and settles no new receipt 3ms
+ ↓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > final assertion at the post-allocator receipt seam > rejects actual guard-envelope growth without mutating accepted bodies
+ ↓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > final assertion at the post-allocator receipt seam > rejects settlement withdrawal growth while retaining a real earlier acknowledged outcome
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > reduces ordinary floor overflow while keeping every identity and the original array unchanged
+AssertionError: expected 26964 to be less than or equal to 24000
+ ❯ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts:50:27
+     48|     const before = original.map(e => ({ ...e }));
+     49|     const out = strict(original);
+     50|     expect.soft(sum(out)).toBeLessThanOrEqual(24_000);
+       |                           ^
+     51|     expect.soft(out.map(e => [e.tool_use_id, e.name])).toEqual(origina…
+     52|     expect.soft(out.some(e => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > reduces ordinary floor overflow while keeping every identity and the original array unchanged
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts:54:9
+     52|     expect.soft(out.some(e => {
+     53|       try { return JSON.parse(e.content).code === 'TOOL_RESULT_WITHHEL…
+     54|     })).toBe(true);
+       |         ^
+     55|     expect(original).toEqual(before);
+     56|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > keeps a crowding-withheld read at its exact trusted offset and records no receipt
+AssertionError: expected 27064 to be less than or equal to 24000
+ ❯ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts:66:32
+     64|     const before = original.map(e => ({ ...e }));
+     65|     const budgeted = strict(original, { wholeOrNothing: map });
+     66|     expect.soft(sum(budgeted)).toBeLessThanOrEqual(24_000);
+       |                                ^
+     67|     expect.soft(budgeted[0].content).toBe(loop.notDeliveredResult(37));
+     68|     expect.soft(budgeted[0].content).not.toContain('PRIVATE_SOURCE_');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > passage fields and ordinary fake receipt fields cannot mint private settlement authority
+AssertionError: expected 28640 to be less than or equal to 24000
+ ❯ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts:118:32
+    116|     const map: DeferredReadReceipts = new Map();
+    117|     const budgeted = strict(original, { wholeOrNothing: map });
+    118|     expect.soft(sum(budgeted)).toBeLessThanOrEqual(24_000);
+       |                                ^
+    119|     expect.soft(JSON.parse(budgeted[0].content)).toMatchObject({ deliv…
+    120|     const write = vi.fn(async () => {});
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > refuses irreducible passage minima before entering receipt settlement
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts:139:32
+    137|       await settleReadReceipts(original, budgeted, map, write);
+    138|     };
+    139|     await expect.soft(attempt()).rejects.toMatchObject({ code: 'ANA_TO…
+       |                                ^
+    140|     expect.soft(settlementEntered).toBe(false);
+    141|     expect.soft(write).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > refuses irreducible passage minima before entering receipt settlement
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts:140:36
+    138|     };
+    139|     await expect.soft(attempt()).rejects.toMatchObject({ code: 'ANA_TO…
+    140|     expect.soft(settlementEntered).toBe(false);
+       |                                    ^
+    141|     expect.soft(write).not.toHaveBeenCalled();
+    142|     // Allocation is non-mutating even when it cannot admit a round.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > refuses irreducible passage minima before entering receipt settlement
+AssertionError: expected undefined to be 'tiny exact source' // Object.is equality
+
+- Expected:
+"tiny exact source"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts:143:39
+    141|     expect.soft(write).not.toHaveBeenCalled();
+    142|     // Allocation is non-mutating even when it cannot admit a round.
+    143|     expect.soft(map.get('1')?.result).toBe(body);
+       |                                       ^
+    144|   });
+    145|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 3 passed | 2 skipped (9)
+   Start at  00:59:34
+   Duration  2.55s (transform 1.44s, setup 90ms, import 2.17s, tests 30ms, environment 0ms)
+
+JSON report written to /workspace/Concept2Cure/docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/receipts/baseline-vitest.json

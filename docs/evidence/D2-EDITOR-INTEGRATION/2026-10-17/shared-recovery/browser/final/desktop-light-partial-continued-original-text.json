@@ -1,0 +1,35 @@
+{
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "documentWidth": 1440,
+  "bodyWidth": 1440,
+  "notice": {
+    "x": 172,
+    "y": 442.015625,
+    "width": 1096,
+    "height": 62,
+    "right": 1268,
+    "bottom": 504.015625
+  },
+  "noticeScrollWidth": 1092,
+  "noticeClientWidth": 1092,
+  "noticeText": "Text saved to the existing working document “Design Recommendations”. Filing binding was not rechecked.Open saved document",
+  "noticeRole": "status",
+  "controls": [
+    {
+      "text": "Open saved document",
+      "disabled": false,
+      "rect": {
+        "x": 847.59375,
+        "y": 457.015625,
+        "width": 162.765625,
+        "height": 32,
+        "right": 1010.359375,
+        "bottom": 489.015625
+      }
+    }
+  ],
+  "sourceRetained": true
+}

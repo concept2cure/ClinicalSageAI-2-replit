@@ -37,8 +37,15 @@ vi.mock('../../db.js', () => ({ get db() { return H.db; }, pool: H.pool, getPool
 vi.mock('../../middleware/auth', () => ({
   authenticateToken: (req: any, _res: any, next: any) => {
     req.user = { id: 3, organizationId: 1 };
+    // The route reads through the request-scoped client (requestPgClient).
+    req.dbClient = H.pool;
     next();
   },
+}));
+// Program authority is resolved through authoring-program-access, as in the
+// sibling reviewer-simulation route tests; it is not what these tests are about.
+vi.mock('../../services/authoring/authoring-program-access', async original => ({
+  ...(await original<typeof import('../../services/authoring/authoring-program-access')>()), authorizeAuthoringProgram: vi.fn(async () => undefined),
 }));
 vi.mock('../../services/audit/audit-write-outcome', () => ({
   recordAuditRow: async () => ({ persisted: true, chained: true }),

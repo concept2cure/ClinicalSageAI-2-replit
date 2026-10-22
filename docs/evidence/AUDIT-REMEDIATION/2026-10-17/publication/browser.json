@@ -1,0 +1,216 @@
+{
+  "cases": [
+    {
+      "file": "authenticated-app-smoke.e2e.spec.ts",
+      "title": "Tier 5 \u2014 authenticated app smoke (live server) \u203a an authenticated session renders protected surfaces (landing + projects)",
+      "duration": "8.4s",
+      "status": "passed"
+    },
+    {
+      "file": "authenticated-app-smoke.e2e.spec.ts",
+      "title": "Tier 5 \u2014 authenticated app smoke (live server) \u203a negative control: the SAME protected route bounces an unauthenticated visitor to /login",
+      "duration": "2.7s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-access-control.e2e.spec.ts",
+      "title": "OQ \u2014 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor \u203a negative control \u2014 /projects (Projects) bounces a visitor with no session",
+      "duration": "3.2s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-access-control.e2e.spec.ts",
+      "title": "OQ \u2014 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor \u203a /projects (Projects) renders for an authenticated session",
+      "duration": "3.3s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-access-control.e2e.spec.ts",
+      "title": "OQ \u2014 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor \u203a negative control \u2014 /vault (Vault) bounces a visitor with no session",
+      "duration": "3.3s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-access-control.e2e.spec.ts",
+      "title": "OQ \u2014 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor \u203a /vault (Vault) renders for an authenticated session",
+      "duration": "3.6s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-access-control.e2e.spec.ts",
+      "title": "OQ \u2014 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor \u203a negative control \u2014 /document-authoring (Authoring) bounces a visitor with no session",
+      "duration": "1.5s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-access-control.e2e.spec.ts",
+      "title": "OQ \u2014 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor \u203a /document-authoring (Authoring) renders for an authenticated session",
+      "duration": "3.4s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-access-control.e2e.spec.ts",
+      "title": "OQ \u2014 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor \u203a negative control \u2014 /submission-center (Submission Center) bounces a visitor with no session",
+      "duration": "2.9s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-access-control.e2e.spec.ts",
+      "title": "OQ \u2014 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor \u203a /submission-center (Submission Center) renders for an authenticated session",
+      "duration": "3.6s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-access-control.e2e.spec.ts",
+      "title": "OQ \u2014 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor \u203a negative control \u2014 /quality (QMS controlled documents) bounces a visitor with no session",
+      "duration": "3.1s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-access-control.e2e.spec.ts",
+      "title": "OQ \u2014 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor \u203a /quality (QMS controlled documents) renders for an authenticated session",
+      "duration": "5.1s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-access-control.e2e.spec.ts",
+      "title": "OQ \u2014 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor \u203a negative control \u2014 /cmc (CMC / Module 3) bounces a visitor with no session",
+      "duration": "3.0s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-access-control.e2e.spec.ts",
+      "title": "OQ \u2014 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor \u203a /cmc (CMC / Module 3) renders for an authenticated session",
+      "duration": "4.8s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-access-control.e2e.spec.ts",
+      "title": "OQ \u2014 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor \u203a negative control \u2014 /insights (Reporting & analytics) bounces a visitor with no session",
+      "duration": "3.0s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-access-control.e2e.spec.ts",
+      "title": "OQ \u2014 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor \u203a /insights (Reporting & analytics) renders for an authenticated session",
+      "duration": "3.9s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-access-control.e2e.spec.ts",
+      "title": "OQ \u2014 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor \u203a negative control \u2014 /compliance-reports (Audit and compliance reports) bounces a visitor with no session",
+      "duration": "2.9s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-access-control.e2e.spec.ts",
+      "title": "OQ \u2014 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor \u203a /compliance-reports (Audit and compliance reports) renders for an authenticated session",
+      "duration": "3.5s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-access-control.e2e.spec.ts",
+      "title": "OQ \u2014 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor \u203a negative control \u2014 /audit-trail (21 CFR \u00a711.10(e): the audit trail is never switchable) bounces a visitor with no session",
+      "duration": "3.2s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-access-control.e2e.spec.ts",
+      "title": "OQ \u2014 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor \u203a /audit-trail (21 CFR \u00a711.10(e): the audit trail is never switchable) renders for an authenticated session",
+      "duration": "2.3s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-access-control.e2e.spec.ts",
+      "title": "OQ \u2014 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor \u203a negative control \u2014 /part11-console (how Part 11 compliance is evidenced; never switchable) bounces a visitor with no session",
+      "duration": "2.4s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-access-control.e2e.spec.ts",
+      "title": "OQ \u2014 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor \u203a /part11-console (how Part 11 compliance is evidenced; never switchable) renders for an authenticated session",
+      "duration": "2.7s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-keyboard.e2e.spec.ts",
+      "title": "Keyboard pass \u2014 sign-in and the launch catalog \u203a sign-in page",
+      "duration": "3.3s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-keyboard.e2e.spec.ts",
+      "title": "Keyboard pass \u2014 sign-in and the launch catalog \u203a /projects (Projects)",
+      "duration": "4.0s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-keyboard.e2e.spec.ts",
+      "title": "Keyboard pass \u2014 sign-in and the launch catalog \u203a /vault (Vault)",
+      "duration": "3.1s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-keyboard.e2e.spec.ts",
+      "title": "Keyboard pass \u2014 sign-in and the launch catalog \u203a /document-authoring (Authoring)",
+      "duration": "4.2s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-keyboard.e2e.spec.ts",
+      "title": "Keyboard pass \u2014 sign-in and the launch catalog \u203a /submission-center (Submission Center)",
+      "duration": "3.7s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-keyboard.e2e.spec.ts",
+      "title": "Keyboard pass \u2014 sign-in and the launch catalog \u203a /quality (QMS controlled documents)",
+      "duration": "4.4s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-keyboard.e2e.spec.ts",
+      "title": "Keyboard pass \u2014 sign-in and the launch catalog \u203a /cmc (CMC / Module 3)",
+      "duration": "5.1s",
+      "status": "passed"
+    },
+    {
+      "file": "launch-surface-keyboard.e2e.spec.ts",
+      "title": "Keyboard pass \u2014 sign-in and the launch catalog \u203a /insights (Reporting & analytics)",
+      "duration": "3.7s",
+      "status": "passed"
+    },
+    {
+      "file": "golden-customer-journey.e2e.ts",
+      "title": "fixture-free golden journey persists evidence, content edits, review, provenance, and governed draft export",
+      "duration": "12.9s",
+      "status": "passed"
+    }
+  ],
+  "passedCases": 31,
+  "runnerExit": 0,
+  "runTimings": [
+    {
+      "cases": 2,
+      "duration": "11.9s"
+    },
+    {
+      "cases": 20,
+      "duration": "1.1m"
+    },
+    {
+      "cases": 8,
+      "duration": "32.4s"
+    },
+    {
+      "cases": 1,
+      "duration": "14.6s"
+    }
+  ],
+  "rawArtifact": {
+    "artifact": "oct17-browser.log",
+    "sha256": "e6bd76d9341ec70ae5fa1b9fb7aa43df28144dcf45ba3af1f0cf6bdacf152409",
+    "bytes": 3357043
+  },
+  "scope": "Only allowlisted test file/title/result/timing fields are copied. Raw HTTP header/payload logs remain outside the repository."
+}

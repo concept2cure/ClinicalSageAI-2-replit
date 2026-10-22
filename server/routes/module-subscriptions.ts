@@ -13,7 +13,7 @@
  * GET  /navigation       — Per-destination entitlement verdicts for the nav rail
  * GET  /license          — Org license info (tier, quotas)
  * POST /provision        — Auto-provision modules based on tier (admin only)
- * PUT  /:moduleId/toggle — Enable/disable a module (admin only)
+ * PUT  /:moduleId/toggle — Enable/disable a module (org admin; governed: reason + audit row)
  *
  * GET  /user-intelligence — Full user intelligence payload for AI
  * GET  /work-queue        — AI-recommended tasks for current user
@@ -39,7 +39,9 @@ import {
 import { resolveNavEntitlements } from '../services/entitlements/navigation-entitlements.js';
 import { resolveAdminStanding } from '../services/entitlements/master-admin.js';
 import { writeModuleGrant } from '../services/entitlements/module-grants.js';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken, roleClaimsSatisfy } from '../middleware/auth.js';
+import { requireGovernedReason } from './governed-reason.js';
+import { recordAuditRow } from '../services/audit/audit-write-outcome.js';
 import { pool } from '../db.js';
 
 import { createScopedLogger } from '../utils/logger.js';
@@ -214,15 +216,27 @@ router.post('/provision', async (req: Request, res: Response) => {
 router.put('/:moduleId/toggle', async (req: Request, res: Response) => {
   try {
     const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
-    const userRole = (req as any).user?.role || (req as any).userRole;
     const moduleId = String(req.params.moduleId);
-    const { enabled } = req.body;
+    const { enabled } = req.body ?? {};
 
     if (!orgId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
-    if (userRole !== 'admin') {
+    /* The canonical org-role decision (middleware/auth.ts roleClaimsSatisfy),
+       not `role !== 'admin'`: that compare read only the `role` claim, so an
+       administrator whose token names the role in `roles` was refused, and a
+       second copy of the role rule lived here. Settings audit 2026-10-17. */
+    const user = (req as any).user ?? { role: (req as any).userRole };
+    if (!roleClaimsSatisfy(user, ['admin'])) {
       return res.status(403).json({ error: 'Admin access required' });
+    }
+    /* Turning a module on or off for the whole organisation is a governed
+       change: it takes a stated reason (the shared 8-character floor,
+       routes/governed-reason.ts) and writes a §11.10(e) audit row below. It
+       took neither until the settings audit of 2026-10-17. */
+    const reasonVerdict = requireGovernedReason((req.body ?? {}).reason);
+    if (!reasonVerdict.ok) {
+      return res.status(400).json({ error: reasonVerdict.error, code: 'REASON_REQUIRED' });
     }
 
     // Check if module is available for this org's tier
@@ -251,18 +265,37 @@ router.put('/:moduleId/toggle', async (req: Request, res: Response) => {
        the stale date. Opening a time-limited grant is a different, deliberate
        act with its own endpoint. */
     const userId = (req as any).user?.id || (req as any).userId;
+    const nextEnabled = enabled !== false;
     await writeModuleGrant({
       organizationId: Number(orgId),
       moduleId,
-      enabled: enabled !== false,
+      enabled: nextEnabled,
       actorEmail: userId == null ? null : String(userId),
       expiresAt: null,
     });
 
+    /* The same audit row the platform-owner toggle writes
+       (routes/admin/master-admin.ts PATCH /tenants/:id/modules). The grant row
+       has no column for a justification, so this row is the only place the
+       administrator's reason is recorded. It is written beside the committed
+       grant and never reverts it; whether it landed is reported in
+       `auditTrail`, not assumed. */
+    const auditTrail = await recordAuditRow({
+      tenantId: Number(orgId),
+      userId: userId == null ? undefined : userId,
+      action: 'data_modify',
+      resourceType: 'module_subscription',
+      resourceId: `${Number(orgId)}:${moduleId}`,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string,
+      details: { orgAdminAction: 'org.module_toggle', moduleId, enabled: nextEnabled, reason: reasonVerdict.reason },
+    });
+
     return res.json({
       moduleId,
-      enabled: enabled !== false,
-      message: `Module ${enabled !== false ? 'enabled' : 'disabled'} successfully`,
+      enabled: nextEnabled,
+      auditTrail,
+      message: `Module ${nextEnabled ? 'enabled' : 'disabled'}`,
     });
   } catch (error) {
     logger.error('toggle error', { err: error instanceof Error ? error.message : String(error) });

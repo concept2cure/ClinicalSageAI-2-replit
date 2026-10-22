@@ -45,3 +45,28 @@ The three baseline guards, each broken in turn and then restored:
   × no entry is stale — each still matches a pair the scan finds
   × no entry exempts a pair the contract is happy with anyway
       Tests  3 failed | 13 passed (16)
+
+
+════════════════════════════════════════════════════════════════════════════════════
+Second round, same day (the Modules 2-5 extension built and removed; the record's
+six new ICH M4S(R2) headings; the amendment pyramid's IB off Module 5).
+
+tests/regulatory/:
+
+ Test Files  69 passed (69)
+      Tests  1395 passed (1395)
+
+tests/services/regulatory/ + server/services/ind/__tests__ + server/services/market-specs:
+
+ Test Files  33 passed (33)
+      Tests  533 passed (533)
+
+npx tsc --noEmit over the whole tree:
+
+      DONE-0
+
+ESLint over the changed files: 0 errors; 4 warnings, all pre-existing file-size and
+function-length warnings on the two pyramids, which this change did not grow.
+
+One gate this change did NOT write caught a mistake in it: ich-m4-headings.test.ts
+requires CTD order, and inserting 2.4.1-2.4.6 after 2.5.7 failed it.

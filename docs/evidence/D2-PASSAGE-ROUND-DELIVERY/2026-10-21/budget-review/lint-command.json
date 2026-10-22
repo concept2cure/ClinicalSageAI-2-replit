@@ -1,0 +1,11 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--format",
+    "json",
+    "server/services/ana/__tests__/passage-round-read-priority.test.ts"
+  ],
+  "exitCode": 0,
+  "testSha256": "140552597db383196fc74fc2795bd7d767ded8dbe3a55bdcbdc493514e48e099"
+}

@@ -1,0 +1,233 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/router/__tests__/signupVerificationRoute.test.tsx > signup verification routing > an anonymous #token= link reaches verification without signing in 5041ms
+   → Unable to find an element with the text: verifyEmail.done. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"h-full"[39m
+      [33mstyle[39m=[32m"opacity: 1; transform: none;"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [0mLogin page[0m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"h-full"[39m
+      [33mstyle[39m=[32m"opacity: 1; transform: none;"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [0mLogin page[0m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/router/__tests__/signupVerificationRoute.test.tsx > signup verification routing > an anonymous ?token= link reaches verification without signing in 5009ms
+   → Unable to find an element with the text: verifyEmail.done. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"h-full"[39m
+      [33mstyle[39m=[32m"opacity: 1; transform: none;"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [0mLogin page[0m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"h-full"[39m
+      [33mstyle[39m=[32m"opacity: 1; transform: none;"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [0mLogin page[0m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/router/__tests__/signupVerificationRoute.test.tsx > signup verification routing > waits for session bootstrap before consuming an anonymous verification token 5012ms
+   → Unable to find an element with the text: verifyEmail.done. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"h-full"[39m
+      [33mstyle[39m=[32m"opacity: 1; transform: none;"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [0mLogin page[0m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"h-full"[39m
+      [33mstyle[39m=[32m"opacity: 1; transform: none;"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [0mLogin page[0m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/router/__tests__/signupVerificationRoute.test.tsx > signup verification routing > an authenticated session redirects to the app without consuming another account verification token 5010ms
+   → expected '/concept2cure/verify-email' to be '/concept2cure' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div>[39m
+        [0mAuthenticated app[0m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ✓ client/src/concept2cure/router/__tests__/signupVerificationRoute.test.tsx > signup verification routing > ordinary anonymous app navigation still requires sign-in and keeps its return URL 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/router/__tests__/signupVerificationRoute.test.tsx > signup verification routing > an anonymous #token= link reaches verification without signing in
+ FAIL  client/src/concept2cure/router/__tests__/signupVerificationRoute.test.tsx > signup verification routing > an anonymous ?token= link reaches verification without signing in
+TestingLibraryElementError: Unable to find an element with the text: verifyEmail.done. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"h-full"[39m
+      [33mstyle[39m=[32m"opacity: 1; transform: none;"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [0mLogin page[0m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"h-full"[39m
+      [33mstyle[39m=[32m"opacity: 1; transform: none;"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [0mLogin page[0m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/router/__tests__/signupVerificationRoute.test.tsx:56:18
+     54|     render(<ZenRouter />);
+     55|
+     56|     await screen.findByText('verifyEmail.done');
+       |                  ^
+     57|     expect(window.location.pathname).toBe('/concept2cure/verify-email'…
+     58|     expect(window.location.search).toBe('');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/concept2cure/router/__tests__/signupVerificationRoute.test.tsx > signup verification routing > waits for session bootstrap before consuming an anonymous verification token
+TestingLibraryElementError: Unable to find an element with the text: verifyEmail.done. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"h-full"[39m
+      [33mstyle[39m=[32m"opacity: 1; transform: none;"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [0mLogin page[0m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"h-full"[39m
+      [33mstyle[39m=[32m"opacity: 1; transform: none;"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [0mLogin page[0m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/router/__tests__/signupVerificationRoute.test.tsx:86:18
+     84|     auth.isBootstrapping = false;
+     85|     view.rerender(<ZenRouter />);
+     86|     await screen.findByText('verifyEmail.done');
+       |                  ^
+     87|     expect(fetchSpy).toHaveBeenCalledTimes(1);
+     88|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  client/src/concept2cure/router/__tests__/signupVerificationRoute.test.tsx > signup verification routing > an authenticated session redirects to the app without consuming another account verification token
+AssertionError: expected '/concept2cure/verify-email' to be '/concept2cure' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div>[39m
+        [0mAuthenticated app[0m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+Expected: "/concept2cure"
+Received: "/concept2cure/verify-email"
+
+ ❯ client/src/concept2cure/router/__tests__/signupVerificationRoute.test.tsx:98:58
+     96|     render(<ZenRouter />);
+     97|
+     98|     await waitFor(() => expect(window.location.pathname).toBe('/concep…
+       |                                                          ^
+     99|     await screen.findByText('Authenticated app');
+    100|     expect(fetchSpy).not.toHaveBeenCalled();
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  02:08:39
+   Duration  20.93s (transform 114ms, setup 117ms, import 204ms, tests 20.08s, environment 412ms)
+

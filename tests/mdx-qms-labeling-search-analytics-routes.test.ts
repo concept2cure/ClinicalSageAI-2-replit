@@ -6,6 +6,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
+import type { RequestSqlClient } from '../server/db/requestDb';
 
 const queryFn = vi.fn();
 
@@ -63,6 +64,10 @@ vi.mock('../server/services/part11/signature-persistence', async (importOriginal
   return { ...real, persistGovernedActionSignature: (...args: unknown[]) => S.persistSignature(...args) };
 });
 
+vi.mock('../server/services/c2c/document-alias-map', () => ({ recordDocumentAlias: async () => ({ recorded: true }) }));
+vi.mock('../server/services/authoring/authoring-evidence', () => ({ createRevision: async () => 'revision', writeAuthoringAuditTrail: async () => undefined }));
+vi.mock('../server/services/authoring/authoring-program-access', () => ({ authorizeAuthoringProgram: async () => ({ principal: { id: '7', email: null, roles: ['ADMIN'] } }), AuthoringProgramAccessError: class extends Error {} }));
+vi.mock('../server/services/authoring/authoring-permissions', async (original) => ({ ...await original<typeof import('../server/services/authoring/authoring-permissions')>(), grantAuthoringPermission: async () => undefined }));
 import qmsRouter from '../server/routes/mdx-qms';
 import labelingRouter from '../server/routes/mdx-labeling';
 import searchRouter from '../server/routes/mdx-search';
@@ -74,10 +79,16 @@ function makeApp(opts: { withAuth?: boolean; requestDb?: boolean; signingTx?: bo
   if (opts.withAuth) {
     app.use((req, _res, next) => {
       (req as any).user = { id: 777, organizationId: 99 };
-      if (opts.requestDb) (req as any).dbClient = { query: (...args: unknown[]) => queryFn(...args) };
-      // Since fa39bd5d8 the approval runs on the request-owned connection (no
-      // pooled fallback), so the scripted transaction is that connection.
-      if (opts.signingTx) (req as any).dbClient = { query: (...args: unknown[]) => S.txQuery(...args) };
+      // The admitted request owns one query connection. Its existing SQL
+      // scripts distinguish ordinary reads from statements after BEGIN;
+      // constructors and approval no longer acquire a second global client.
+      let inTransaction = false;
+      (req as unknown as { dbClient: RequestSqlClient }).dbClient = { query: async (sql, params) => {
+        if (/^BEGIN/.test(sql)) inTransaction = true;
+        const result = await (inTransaction ? S.txQuery : queryFn)(sql, params);
+        if (/^(COMMIT|ROLLBACK)/.test(sql)) inTransaction = false;
+        return result;
+      } };
       next();
     });
   }
@@ -116,6 +127,9 @@ function scriptApprovalTx(current: Record<string, unknown> | null) {
   S.txQuery.mockImplementation(async (sql: unknown) => {
     const text = String(sql).trim();
     if (/^(BEGIN|COMMIT|ROLLBACK)/.test(text)) return { rows: [] };
+    if (text.includes('FROM authoring_documents')) return { rows: [{ id: '00000000-0000-4000-8000-000000000011', title: 'CAPA', client_program_id: '00000000-0000-4000-8000-000000000012' }] };
+    if (text.includes('FROM authoring_sections')) return { rows: [{ id: 'section', code: 'qms-purpose', title: 'Purpose', content: 'Correct nonconforming activities.', order_index: 1 }] };
+    if (text.startsWith('INSERT INTO qms_document_versions') || text.startsWith('UPDATE authoring_documents')) return { rows: [] };
     if (text.includes('FOR UPDATE')) return { rows: current ? [current] : [] };
     if (text.startsWith('UPDATE qms_documents')) {
       const approvable = current && String(current.status) === 'in_review';
@@ -129,8 +143,20 @@ const QMS_DOC = {
   id: 1, organization_id: 99, doc_number: 'SOP-001', title: 'CAPA', doc_type: 'sop',
   category: null, version: '1.0', status: 'draft', effective_date: null, next_review_date: null,
   author_id: 555, approver_id: null, approved_at: null, superseded_by_id: null, artifact_id: null,
-  metadata: {},
+  metadata: {}, authoring_document_id: '00000000-0000-4000-8000-000000000011',
 };
+function scriptQmsCreate(duplicate = false) {
+  S.txQuery.mockImplementation(async (sql: string, args: unknown[] = []) => {
+    if (/INSERT INTO qms_documents/.test(sql)) {
+      if (duplicate) throw Object.assign(new Error('duplicate'), { code: '23505' });
+      return { rows: [{ ...QMS_DOC, status: 'draft', authoring_document_id: args[7] }] };
+    }
+    if (/INSERT INTO authoring_documents/.test(sql)) return { rows: [{ id: args[0] }] };
+    if (/INSERT INTO authoring_sections/.test(sql)) return { rows: [{ id: 'section', code: args[1], content: args[3] }] };
+    return { rows: [] };
+  });
+}
+
 
 /* ─── Auth gate ──────────────────────────────────────────────── */
 
@@ -157,26 +183,27 @@ describe('QMS routes', () => {
     const res = await request(makeApp())
       .post('/api/mdx/qms/documents')
       .send({ docNumber: 'SOP-001', title: 'foo', docType: 'wat' });
-    expect(res.status).toBe(422);
+    expect(res.status).toBe(400);
   });
 
   it('POST document 201 on valid', async () => {
-    queryFn.mockResolvedValueOnce({
-      rows: [{ id: 1, doc_number: 'SOP-001', title: 'CAPA', status: 'draft' }],
-    });
+    scriptQmsCreate();
     const res = await request(makeApp())
       .post('/api/mdx/qms/documents')
-      .send({ docNumber: 'SOP-001', title: 'CAPA', docType: 'sop' });
+      .send({ docNumber: 'SOP-001', title: 'CAPA', docType: 'sop', programId: '00000000-0000-4000-8000-000000000012', reason: 'Create controlled procedure' });
     expect(res.status).toBe(201);
+    expect(res.body.data).toMatchObject({ status: 'draft', doc_number: 'SOP-001' });
+    expect(res.body.data.authoring_document_id).toMatch(/^[0-9a-f-]{36}$/);
   });
 
   it('POST document 409 on duplicate docNumber', async () => {
-    const err = Object.assign(new Error('duplicate'), { code: '23505' });
-    queryFn.mockRejectedValueOnce(err);
+    scriptQmsCreate(true);
     const res = await request(makeApp())
       .post('/api/mdx/qms/documents')
-      .send({ docNumber: 'SOP-001', title: 'CAPA', docType: 'sop' });
+      .send({ docNumber: 'SOP-001', title: 'CAPA', docType: 'sop', programId: '00000000-0000-4000-8000-000000000012', reason: 'Create controlled procedure' });
     expect(res.status).toBe(409);
+    expect(S.txQuery.mock.calls.some(([sql]) => /INSERT INTO qms_documents/.test(String(sql)))).toBe(true);
+    expect(S.txQuery.mock.calls.map(([sql]) => String(sql).trim().split(/\s+/)[0])).toContain('ROLLBACK');
   });
 
   /* Updated 2026-09-23: approve became a Part 11 e-signature (VSR-001 F-3,
@@ -201,6 +228,7 @@ describe('QMS routes', () => {
       .send(SIGNED_APPROVAL);
     expect(res.status).toBe(409);
     expect(S.persistSignature).not.toHaveBeenCalled();
+    expect(S.txQuery.mock.calls.map(([sql]) => String(sql).trim().split(/\s+/)[0])).toContain('ROLLBACK');
   });
 
   it('training-ack requires document in tenant', async () => {
@@ -212,6 +240,7 @@ describe('QMS routes', () => {
       if (sql.includes('FROM qms_documents')) return { rows: [], rowCount: 0 };
       throw new Error('Unexpected query in foreign-document acknowledgement test');
     });
+    S.txQuery.mockImplementation((...args: unknown[]) => queryFn(...args));
     const res = await request(makeApp({ withAuth: true, requestDb: true }))
       .post('/api/mdx/qms/documents/999/training-ack')
       .send({ documentVersion: '1.0', contentDigest: 'a'.repeat(64), understood: true, method: 'attestation' });
@@ -354,12 +383,13 @@ describe('Analytics routes', () => {
     expect(res.body.data.byRegion[0].avgToAckHours).toBe(2);
   });
 
-  it('clinical roll-up survives missing tables', async () => {
+  it('clinical roll-up reports unavailable schema rather than no clinical activity', async () => {
     const err = Object.assign(new Error('missing'), { code: '42P01' });
     queryFn.mockRejectedValue(err);
     const res = await request(makeApp()).get('/api/mdx/analytics/clinical');
-    expect(res.status).toBe(200);
-    expect(res.body.data.studies.total).toBe(0);
+    expect(res.status).toBe(503);
+    expect(res.body.error).toBe('ANALYTICS_UNAVAILABLE');
+    expect(res.body.data).toBeUndefined();
   });
 
   it('blockers returns 3 sub-aggregates', async () => {

@@ -22,6 +22,7 @@ import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob } from '../download';
 import { readShellProject } from '../shellProject';
+import { consumeNavParams } from '../navParams';
 
 /* ── Live read shape: one org-scoped IND checklist (GET /api/ind-checklist).
    Assembled by server/services/ind-lifecycle/ind-checklist-view-assembler.ts from
@@ -116,7 +117,7 @@ interface CoverLetterResult {
    The IND safety-report card is withheld from this release (decision P-32,
    2026-10-15): 21 CFR 312.32 reporting and ICSR transmission are refused by
    the API in production, so the card is hidden and its code kept, intact, in
-   ./indSafetyReportCard.ts — which this file must not import (see its header).
+   tests/fixtures/withheld/indSafetyReportCard.ts — which this file must not import (see its header).
    The types and helpers below are exported for that file. */
 export interface DelivView {
   /** The server's model, flattened to readable text — response data only. */
@@ -238,7 +239,7 @@ const FDA_CENTERS = [
   { v: 'CBER', label: 'CBER — Center for Biologics Evaluation and Research' },
 ];
 /* The safety-report option lists (event type, seriousness, causality, outcome,
-   expectedness) moved with the withheld card to ./indSafetyReportCard.ts. */
+   expectedness) moved with the withheld card to tests/fixtures/withheld/indSafetyReportCard.ts. */
 const AMENDMENT_CATEGORIES = OPTS(['protocol', 'protocol_amendment_summary', 'new_investigator', 'cmc', 'pharmacology_toxicology', 'clinical_summary', 'investigators_brochure', 'other']);
 const CHANGE_KINDS = OPTS(['added', 'revised', 'appended', 'withdrawn']);
 
@@ -396,6 +397,21 @@ function programRow(rows: IndlChecklist[], p: ShellProjectRead | null): IndlChec
 /** GET /api/c2c/projects/:id — only the program's type is read here. */
 interface ProgramTypeRead { name?: string | null; program_type?: string | null }
 
+/**
+ * A deliverable card's AnA button. Drafting is AnA's job and lands in the
+ * editor; the card's "Assemble now" is the deterministic build. Offered only on
+ * an AnA-draftable card (`ai`), and labelled as what it does: it asks AnA for a
+ * draft — nothing is assembled, saved or filed by the click (audit 2026-10-17:
+ * "Ask AnA" sent "Assemble the …", which the button beside it does).
+ */
+function DraftWithAna({ onClick }: { onClick: () => void }) {
+  return (
+    <button className="btn ghost sm" onClick={onClick} title="Asks AnA to draft it in the editor; nothing is assembled or filed here">
+      {I.sparkles} Draft with AnA
+    </button>
+  );
+}
+
 /* ════ IND Lifecycle -- the deliverable-first IND workspace (21 CFR 312) ════ */
 
 export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
@@ -410,17 +426,27 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
   /* Prefer the recorded program link; legacy name matching remains explicit.
      Never substitute another program's IND when the open program has no match. */
   const shellProject = readShellProject();
+  /* Opened from a submission (Submission Center's "Forms and letters", P-32):
+     { submissionId } through navParams, read once on mount. That submission's
+     checklist is the screen; when it has none the screen says so, and no other
+     IND — not the open program's, not the organisation's first — stands in. */
+  const [sentSubmissionId] = useState(() => consumeNavParams('ind-checklist')?.submissionId ?? null);
+  const sentRow = sentSubmissionId ? rows.find((r) => r.submissionId != null && String(r.submissionId) === sentSubmissionId) ?? null : null;
   const matched = programRow(rows, shellProject);
-  const checklist = matched ?? (shellProject ? null : rows[0] ?? null);
+  const checklist = sentSubmissionId ? sentRow : matched ?? (shellProject ? null : rows[0] ?? null);
   /* With a program open and no IND anchored to it, the program's own record
      says what it is (an NDA or BLA has no IND lifecycle) — read only then. */
   const programRecord = useLiveData<ProgramTypeRead>(
-    shellProject && !matched && !loading ? `/api/c2c/projects/${encodeURIComponent(String(shellProject.id))}` : null,
+    shellProject && !sentSubmissionId && !matched && !loading ? `/api/c2c/projects/${encodeURIComponent(String(shellProject.id))}` : null,
   );
   const openProgramType = String(programRecord.data?.program_type ?? '').trim().toUpperCase();
   const scopeNote =
     checklist == null
       ? null
+      : sentRow
+        ? rows.length > 1
+          ? `Showing the submission you opened this from (${checklist.productName ?? checklist.code}) — ${rows.length - 1} other IND${rows.length > 2 ? 's' : ''} in this organization.`
+          : null
       : matched
         ? rows.length > 1
           ? `Showing the open program's IND (${checklist.productName ?? checklist.code}) — ${rows.length - 1} other IND${rows.length > 2 ? 's' : ''} in this organization.`
@@ -524,7 +550,9 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
     }
     if (!checklist) {
       return {
-        summary: shellProject
+        summary: sentSubmissionId
+          ? 'IND lifecycle: the submission this screen was opened from has no IND checklist. Do not use another submission for drafting or filing.'
+          : shellProject
           ? 'IND lifecycle: the open program has no matching IND checklist. Do not use another program\'s submission for drafting or filing.'
           : 'IND lifecycle: this organisation has no IND checklist assembled yet, so there is no filing to work.',
       };
@@ -606,7 +634,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         'Switch between the file-the-IND and lifecycle tabs',
       ],
     };
-  }, [loading, error, checklist, shellProject, tab, R, forms, sections, clock, clockState, clockFromReceipt, targetReceiptDate]);
+  }, [loading, error, checklist, sentSubmissionId, shellProject, tab, R, forms, sections, clock, clockState, clockFromReceipt, targetReceiptDate]);
   usePublishSurfaceContext('ind-checklist', anaContext);
 
   /* Cover-letter exemplar — the first deliverable wired end-to-end (POST
@@ -699,7 +727,9 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         <EmptyState
           icon={I.fileText}
           title="No IND checklist yet"
-          hint={shellProject
+          hint={sentSubmissionId
+            ? 'The submission you opened this from has no IND checklist in this organization, so no forms or letters can be built for it here. Another IND is not shown in its place.'
+            : shellProject
             ? (openProgramType && openProgramType !== 'IND'
                 ? `${programRecord.data?.name ?? shellProject.title ?? 'The open program'} is a ${openProgramType} program, and the IND lifecycle covers IND programs. `
                 : 'No IND checklist is linked to the open program. Set up or link its IND submission; another program\'s filing is not used here. ') +
@@ -1048,7 +1078,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
       toView: modelSectionsView,
     },
     /* 'safety-report' is withheld (P-32): its card is hidden and its spec
-       lives in ./indSafetyReportCard.ts, which this file does not import. */
+       lives in tests/fixtures/withheld/indSafetyReportCard.ts, which this file does not import. */
     'annual-report': {
       assemblePath: '/api/ind-lifecycle/annual-report',
       pdf: { path: '/api/ind-lifecycle/annual-report/pdf', filename: 'ind-annual-report.pdf' },
@@ -1232,7 +1262,9 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
             ? 'Ask AnA how to populate the checklist'
             : R.ready
               ? 'Assemble the submission sequence'
-              : 'Resolve the top blocker',
+              // A question to AnA, said as one: no route clears a blocker; the
+              // section is approved, or the form completed, where it lives.
+              : 'Ask AnA how to clear the top blocker',
           onClick: () => {
             if (!R.assessed) {
               ask(
@@ -1242,10 +1274,11 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
               onNav && onNav('submission-center');
             } else if (R.blockers[0]) {
               ask(
-                'Help me resolve ' +
+                'How do I clear IND blocker ' +
                   R.blockers[0].code +
                   ': ' +
-                  R.blockers[0].message,
+                  R.blockers[0].message +
+                  '?',
               );
             }
           },
@@ -1271,19 +1304,10 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                       ? 'READY TO FILE'
                       : 'NOT YET FILEABLE'}
                 </span>
-                <button
-                  className="btn ghost sm"
-                  onClick={() =>
-                    ask(
-                      'Generate the IND filing-readiness report (21 CFR 312.23) as a governed PDF for ' +
-                        drug +
-                        '.',
-                    )
-                  }
-                  title="Sends this request to AnA in the rail — it does not download a file here"
-                >
-                  {I.sparkles} Ask AnA to draft this
-                </button>
+                {/* No AnA button (audit 2026-10-17): it asked AnA to "generate"
+                    this report as a governed PDF. The report is the server's
+                    readiness verdict, rendered below; a model does not draft a
+                    verdict, and no route renders this PDF. */}
               </div>
             </div>
             <div className="cm-doc-body indl-doc-body">
@@ -1459,14 +1483,16 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                           className="btn ghost sm"
                           onClick={() =>
                             ask(
-                              'Help me clear IND blocker ' +
+                              'How do I clear IND blocker ' +
                                 b.code +
                                 ': ' +
-                                b.message,
+                                b.message +
+                                '?',
                             )
                           }
+                          title="Asks AnA in the rail; nothing is changed here"
                         >
-                          {I.sparkles} Resolve
+                          {I.sparkles} Ask AnA how to clear it
                         </button>
                       </div>
                     );
@@ -1616,12 +1642,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                         >
                           {I.download} PDF
                         </button>
-                        <button
-                          className="btn ghost sm"
-                          onClick={() => ask(d.ask)}
-                        >
-                          {I.sparkles} Ask AnA
-                        </button>
+                        {d.ai && <DraftWithAna onClick={() => ask(d.ask)} />}
                       </div>
                       {cl.error && (
                         <div className="indl-dcard-desc" role="status">
@@ -1717,9 +1738,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                                 {I.download} PDF
                               </button>
                             )}
-                            <button className="btn ghost sm" onClick={() => ask(d.ask)}>
-                              {I.sparkles} Ask AnA
-                            </button>
+                            {d.ai && <DraftWithAna onClick={() => ask(d.ask)} />}
                           </div>
                           {run.error && (
                             <div className="indl-dcard-desc" role="status">
@@ -1804,17 +1823,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                         </>
                       );
                     })()
-                  ) : (
-                    <div className="indl-dcard-acts">
-                      <button
-                        className="btn primary sm"
-                        onClick={() => ask(d.ask)}
-                        title="Sends this request to AnA in the rail"
-                      >
-                        {I.sparkles} Ask AnA
-                      </button>
-                    </div>
-                  )}
+                  ) : null}
                 </div>
               ))}
               {withheldHere.map((d) => (

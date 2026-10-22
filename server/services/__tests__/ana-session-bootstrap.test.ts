@@ -348,4 +348,3 @@ describe('formatSessionBootstrap — completeness is claimed only when earned', 
     expect(out).not.toContain('More than these');
   });
 });
-

@@ -1,0 +1,93 @@
+# MUTATION 10 AnA is told the question figures only once measured (facts spread while loading or failed)
+# File: client/src/concept2cure/v2/surfaces/cmcAgencyQuestions.tsx
+# Replaced:
+#   -   if (f.state === 'ready') {
+# With:
+#   +   if (f.state !== 'no-program') {
+# Command: npx vitest run client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx
+# Exit code with the mutation: 1 (non-zero = the test caught it)
+# Restored: sha256 35ca575b0fa753a5… before = 35ca575b0fa753a5… after (byte-identical)
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC publishes what the screen is showing > describes the sub-tab in view, and follows the user to another 454ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC publishes what the screen is showing > gives AnA a vocabulary for driving the screen 34ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC publishes what the screen is showing > publishes MEASURED readiness once the endpoint resolves 68ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC publishes what the screen is showing > says the gate would pass when it would 74ms
+ × client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC publishes what the screen is showing > publishes NO measured fact when the readiness read fails 31ms
+   → expected 'The user is on the Overview tab of th…' not to match /approved|blocked|would pass/
+ ✓ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC publishes what the screen is showing > publishes no measured fact without a project either 30ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC publishes what the screen is showing > withdraws its context on unmount, so the next surface inherits nothing 26ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC publishes what the screen is showing > shapes onto the wire without empty keys 20ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC tells AnA the Module 3 question figures it shows, and only those > publishes the figures once measured, and they are the tile's 77ms
+ × client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC tells AnA the Module 3 question figures it shows, and only those > publishes none of them while the read is in flight 83ms
+   → expected { tab: 'overview', …(13) } to not have property "module3QuestionsOverdue"
+ × client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC tells AnA the Module 3 question figures it shows, and only those > publishes none of them when the read failed, or with no program open 77ms
+   → expected { tab: 'overview', …(13) } to not have property "module3QuestionsOverdue"
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 8 passed (11)
+   Start at  10:32:00
+   Duration  3.31s (transform 1.16s, setup 161ms, import 1.41s, tests 982ms, environment 571ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC publishes what the screen is showing > publishes NO measured fact when the readiness read fails
+AssertionError: expected 'The user is on the Overview tab of th…' not to match /approved|blocked|would pass/
+
+- Expected:
+/approved|blocked|would pass/
+
++ Received:
+"The user is on the Overview tab of the CMC Module 3 operating system. On this program, 0 Module 3 agency questions are overdue on 0 letters, and 0 are outstanding. Questions are answered and approved on their letter, in Communication."
+
+ ❯ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx:168:31
+    166|       expect(seen!.facts).not.toHaveProperty(k);
+    167|     }
+    168|     expect(seen!.summary).not.toMatch(/approved|blocked|would pass/);
+       |                               ^
+    169|   });
+    170|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC tells AnA the Module 3 question figures it shows, and only those > publishes none of them while the read is in flight
+AssertionError: expected { tab: 'overview', …(13) } to not have property "module3QuestionsOverdue"
+
+- Expected:
+undefined
+
++ Received:
+0
+
+ ❯ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx:254:61
+    252|     await waitFor(() => expect(seen).not.toBeNull());
+    253|     await waitFor(() => expect(seen!.facts?.earlierCmcFileNotClosed).t…
+    254|     for (const k of QUESTION_FACTS) expect(seen!.facts).not.toHaveProp…
+       |                                                             ^
+    255|     expect(seen!.summary).not.toMatch(/agency questions are overdue/);
+    256|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC tells AnA the Module 3 question figures it shows, and only those > publishes none of them when the read failed, or with no program open
+AssertionError: expected { tab: 'overview', …(13) } to not have property "module3QuestionsOverdue"
+
+- Expected:
+undefined
+
++ Received:
+0
+
+ ❯ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx:263:61
+    261|     const first = renderCmc();
+    262|     await waitFor(() => expect(seen?.facts?.earlierCmcFileNotClosed).t…
+    263|     for (const k of QUESTION_FACTS) expect(seen!.facts).not.toHaveProp…
+       |                                                             ^
+    264|     first.unmount();
+    265|     delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJEC…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+

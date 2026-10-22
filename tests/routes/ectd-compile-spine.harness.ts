@@ -56,6 +56,7 @@ export interface SpineOpts {
   sequenceNumber?: string;
   /** The organisation's recorded name (default SPONSOR); null for none on record. */
   organizationName?: string | null;
+  identity?: Record<string, unknown>;
 }
 
 /** The spine's reads, answered from `opts`, on the test file's hoisted pool mock. */
@@ -64,7 +65,13 @@ export function mockSpineOn(poolQuery: Mock) {
     const leaves = opts.leaves ?? LEAVES;
     const program = opts.program ?? PROGRAM;
     const organizationName = opts.organizationName === undefined ? SPONSOR : opts.organizationName;
-    const organizationRows = organizationName === null ? [] : [{ name: organizationName }];
+    const identityRows = [{
+        ...program, name: organizationName, organization_name: organizationName,
+        applicant_sponsor_id: organizationName === null ? null : '11111111-1111-4111-8111-111111111111',
+        sponsor_id: '11111111-1111-4111-8111-111111111111', sponsor_name: organizationName,
+        duns: '123456789', contact_name: 'Regulatory Contact', contact_phone: '+1 617 555 0100', contact_email: 'regulatory@example.test',
+        ...opts.identity,
+      }];
     poolQuery.mockReset();
     poolQuery.mockImplementation(async (sql: string) => {
       if (opts.failInsert && /INSERT INTO ectd_compilations/i.test(sql)) {
@@ -77,7 +84,7 @@ export function mockSpineOn(poolQuery: Mock) {
       if (/FROM c2c_rule_packs/i.test(sql)) {
         return { rows: opts.pack ? [{ version: 'v2.3-test', required_sections: opts.pack }] : [] };
       }
-      if (/FROM organizations/i.test(sql)) return { rows: organizationRows };
+      if (/FROM organizations/i.test(sql)) return { rows: identityRows };
       if (/FROM regulatory_programs/i.test(sql)) return { rows: [program] };
       // The program's own submission, anchored to it (submissions.program_id,
       // LX-22): resolveSubmissionSpine takes an anchored row as the program's.

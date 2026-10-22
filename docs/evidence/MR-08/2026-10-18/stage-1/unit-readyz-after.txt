@@ -1,0 +1,21 @@
+# After step 5 (pingClamd in server/utils/virusScan.ts; deps.virusScan in server/startup/inline-endpoints.ts)
+$ npx vitest run server/startup/__tests__/readyz-virus-scan.test.ts server/startup/__tests__/readyz-vault-storage.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > is not ready, and does not hang, when clamd accepts and never answers 2031ms
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > is ready, and says the scanner is ok, when clamd answers PONG 8ms
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > is not ready in production when no scanner is configured 3ms
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > skips the scanner outside production, as the scan does 4ms
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is ready, and says the store is ok, when the store answers 17ms
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is not ready when the store does not answer 5ms
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is not ready when the probe throws 3ms
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is not ready when no store can be selected 3ms
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is not ready, and does not hang, when the store never answers 3008ms
+
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+   Start at  18:52:59
+   Duration  6.08s (transform 225ms, setup 116ms, import 425ms, tests 5.09s, environment 0ms)
+
+exit=0

@@ -19,7 +19,7 @@
 import { and, desc, eq } from 'drizzle-orm';
 
 import { db } from '../../db';
-import { defensePackets } from '../../../shared/schema/defense-packets';
+import type { RequestSqlClient } from '../../db/requestDb';
 import {
   standardsApplicability,
 } from '../../../shared/schema/regulatory-graph';
@@ -47,6 +47,15 @@ export type FreshnessState =
   | 'no_data'
   /** An assessment exists but no check in it read the program's records (`reason` says what). */
   | 'not_assessed';
+
+export const FRESHNESS_SOURCE_UNAVAILABLE_MESSAGE = 'The stored defense packet freshness could not be verified. Try reading the report again.';
+export class FreshnessSourceUnavailableError extends Error {
+  readonly code = 'FRESHNESS_SOURCE_UNAVAILABLE';
+  constructor() {
+    super(FRESHNESS_SOURCE_UNAVAILABLE_MESSAGE);
+    this.name = 'FreshnessSourceUnavailableError';
+  }
+}
 
 export interface ArtifactFreshness {
   artifact:
@@ -84,33 +93,31 @@ export interface ProgramFreshnessReport {
 
 async function defensePacketFreshness(
   organizationId: number,
-  programId: string
+  programId: string,
+  client: RequestSqlClient
 ): Promise<ArtifactFreshness[]> {
-  const rows = await db
-    .select({
-      id: defensePackets.id,
-      status: defensePackets.status,
-      stalenessReason: defensePackets.stalenessReason,
-      updatedAt: defensePackets.updatedAt,
-    })
-    .from(defensePackets)
-    .where(
-      and(
-        eq(defensePackets.organizationId, organizationId),
-        eq(defensePackets.programId, programId)
-      )
-    );
+  let rows: Array<Record<string, unknown>>;
+  try {
+    ({ rows } = await client.query(`SELECT dp.id, dp.status,
+      dp.staleness_reason AS "stalenessReason", dp.updated_at AS "updatedAt"
+      FROM predicate.defense_packets dp
+      JOIN public.regulatory_programs rp ON rp.id = dp.program_id
+      WHERE rp.organization_id = $1 AND dp.program_id = $2::uuid AND rp.deleted_at IS NULL`,
+    [organizationId, programId]));
+  } catch {
+    throw new FreshnessSourceUnavailableError();
+  }
   return rows.map(r => ({
     artifact: 'defense_packet' as const,
-    artifactId: r.id,
+    artifactId: String(r.id),
     state:
       r.status === 'RENDERED'
         ? 'fresh'
         : r.status === 'STALE'
         ? 'stale'
         : 'no_data',
-    reason: r.stalenessReason ?? undefined,
-    updatedAt: r.updatedAt,
+    reason: typeof r.stalenessReason === 'string' ? r.stalenessReason : undefined,
+    updatedAt: r.updatedAt instanceof Date ? r.updatedAt : null,
   }));
 }
 
@@ -420,10 +427,11 @@ async function canonicalFactDriftFreshness(
 
 export async function programFreshnessReport(
   organizationId: number,
-  programId: string
+  programId: string,
+  packetClient: RequestSqlClient
 ): Promise<ProgramFreshnessReport> {
   const buckets = await Promise.all([
-    defensePacketFreshness(organizationId, programId),
+    defensePacketFreshness(organizationId, programId, packetClient),
     gsprMappingFreshness(organizationId, programId),
     standardsApplicabilityFreshness(organizationId, programId),
     postMarketFreshness(organizationId, programId),

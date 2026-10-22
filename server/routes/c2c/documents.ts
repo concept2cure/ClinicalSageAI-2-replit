@@ -12,7 +12,7 @@
  *   GET    /api/c2c/documents/:id                       — document + metadata
  *   GET    /api/c2c/documents/:id/outline               — rule pack sections joined with live statuses
  *   GET    /api/c2c/documents/:id/sections/:key         — single section content
- *   PATCH  /api/c2c/documents/:id/sections/:key         — update content (Part-11 versioned)
+ *   PATCH  /api/c2c/documents/:id/sections/:key         — move a section between unsigned states (text is refused)
  *   POST   /api/c2c/documents/:id/sections/:key/evidence — attach evidence link
  *   DELETE /api/c2c/documents/:id/sections/:key/evidence/:evId — remove evidence link
  *   POST   /api/c2c/documents/:id/lock                  — lock document via /actions/lock
@@ -33,12 +33,6 @@ import { Router, type Request, type Response } from 'express';
 import { pool } from '../../db.js';
 import { writeMutation, recordGovernedAction, verifyReauth, separationOfDutiesRefusal } from './actions.js';
 import { assertSignerIsNotAuthor } from '../../services/governance/separation-of-duties.js';
-import { detectSpans } from '../../services/sentenceTraceabilityService.js';
-import { sectionPlainText } from '../../services/c2c/section-content.js';
-import {
-  replaceAuthorSpans,
-  assertLineageCoversContent,
-} from '../../services/clinical-regulatory-evidence/span-lineage.service.js';
 import { readDocumentOutline } from '../../services/c2c/document-outline.js';
 import { checkFilingWritable } from '../../services/authoring/document-lock.js';
 import {
@@ -87,16 +81,6 @@ function withRulePackProvenance(row: Record<string, unknown>): Record<string, un
   return out;
 }
 
-/**
- * The canonical plain text of a c2c section, for lineage purposes.
- *
- * Defined in services/c2c/section-content.ts, beside the SQL predicate that
- * answers the same question for has_content, and re-exported here so the
- * existing import path keeps working. It was implemented here and read only
- * `content.paragraphs`, which is not the shape the editor saves — see that
- * module for what that cost.
- */
-export { sectionPlainText };
 
 const router = Router();
 
@@ -401,16 +385,24 @@ router.get('/:id/sections/:key/versions', async (req: Request, res: Response) =>
 
 // ── PATCH /api/c2c/documents/:id/sections/:key ───────────────────────────────
 //
-// Updates section content. The Part-11 version snapshot trigger
-// (c2c_snapshot_section_version) fires on UPDATE and writes a
-// c2c_document_section_versions row. app.actor_id + app.reason GUCs
-// must be set BEFORE the UPDATE so the trigger can attribute the change.
+// Moves a section between the unsigned states ('todo' | 'drafted' | 'review'),
+// audited in the same transaction.
 //
-// If the section does not exist yet it is created (upsert) and no
-// version row is written (INSERT doesn't trigger the BEFORE UPDATE).
+// It does NOT write section text (document store consolidation step 5,
+// 2026-10-17; docs/design/DOCUMENT_STORE_CONSOLIDATION.md). The authoring
+// editor is the one editor, and its write-through — commitSectionToFiling
+// (server/services/c2c/commit-section-to-filing.ts), called in-process inside
+// PATCH /api/authoring/sections/:sectionId's transaction — is the one writer of
+// c2c_document_sections.content. This route was the second editor's save (the
+// MDx dossier drawer, whose useSectionSave hook is deleted; the drawer now
+// shows the text read-only and opens the authoring editor). A body carrying
+// `content` is refused before anything is read or written: two editors over
+// one filing section is the split the write-through exists to close, and a
+// direct write here would leave authoring_sections disagreeing with the filing.
 //
-// Also writes a c2c_ana_actions row via writeMutation('transition')
-// so the audit ledger captures every content change.
+// The write-through does not come through this route, so refusing every
+// content body refuses nothing it needs. Readiness is recomputed by the
+// section trigger on any status change and is unaffected.
 
 router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
@@ -418,19 +410,25 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
   if (!userId || !orgId) return send403(res);
 
   const { id, key } = req.params;
-  const { content, status, reason, draftSource, anaActionId } = req.body as {
-    content?:     Record<string, unknown>;
-    status?:      string;
-    reason?:      string;
-    draftSource?: string;
-    /** The c2c_ana_actions row this save accepts, when AnA mediated it. The
-     *  version trigger records it as the backlink, so a reviewer can open the
-     *  action behind a version rather than only knowing a machine wrote it. */
-    anaActionId?: string;
+  const { content, status, reason } = req.body as {
+    content?: unknown;
+    status?:  string;
+    reason?:  string;
   };
 
-  if (content === undefined && status === undefined) {
-    return send400(res, 'content or status required');
+  /* Consolidation step 5: section text is written only by the authoring
+     write-through. Refused before anything is read or written. */
+  if (content !== undefined) {
+    return res.status(409).json({
+      code: 'SECTION_TEXT_IS_AUTHORED',
+      error: 'SECTION_TEXT_IS_AUTHORED',
+      message:
+        'Section text is written from the authoring editor, which files it into this section when you save there. ' +
+        'Open the section in the authoring editor to change it. Nothing was changed.',
+    });
+  }
+  if (status === undefined) {
+    return send400(res, 'status required');
   }
   /* Spine F1 (2026-10-08): approval and lock are signed acts, not field edits.
      This route accepted status 'approved' (and 'locked') with only a reason, so
@@ -441,10 +439,8 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
      which move the bound sections whose text is the text signed, in the
      signature's own transaction). Nothing sets a section 'locked'; the document
      lock (POST /api/c2c/documents/:id/lock) sets c2c_documents.status only.
-     Refused before anything is read or written. No client sends either value
-     here today (useSectionSave sends content only). An approved section whose
-     text changes is withdrawn to 'drafted' below, and a locked section is not
-     edited at all. */
+     Refused before anything is read or written. A locked section is not
+     moved at all. */
   if (status === 'approved' || status === 'locked') {
     return res.status(409).json({
       code: 'APPROVAL_REQUIRES_SIGNATURE',
@@ -463,31 +459,6 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
   if (status !== undefined && !VALID_STATUSES.has(status)) {
     return send400(res, `status must be one of: ${[...VALID_STATUSES].join(', ')}`);
   }
-
-  // Accepting an AnA-authored draft attributes it to 'ana', so the version
-  // trigger records who really produced the content. Only these two provenance
-  // kinds are writable through this route; 'imported'/'template' come from
-  // other paths.
-  const VALID_DRAFT_SOURCES = new Set(['human', 'ana']);
-  if (draftSource !== undefined && !VALID_DRAFT_SOURCES.has(draftSource)) {
-    return send400(res, `draftSource must be one of: ${[...VALID_DRAFT_SOURCES].join(', ')}`);
-  }
-  // NULL means "the caller did not say", and that is the whole point.
-  //
-  // This resolved to the literal 'human' when `draftSource` was absent, which
-  // turned silence into a positive claim: a save that stated nothing about the
-  // origin of its text produced a section — and, through the version trigger, a
-  // permanent version row — asserting a named person wrote it. In the system of
-  // record for a filing an inspector reads that as attribution, and it is
-  // indistinguishable from a genuine human assertion, so nothing downstream can
-  // ever separate the two. Recording nothing is a true answer; recording
-  // 'human' is a guess that cannot be audited back out.
-  //
-  // Every known caller states its origin explicitly (see useSectionSave.ts),
-  // so this is the unknown-caller path, which is exactly the one that must not
-  // invent. Readers already handle a null origin — the GET at the top of this
-  // file emits `draft_source: null` for sections that have none.
-  const resolvedDraftSource = draftSource ?? null;
 
   try {
     // Verify doc org membership + lifecycle state.
@@ -511,12 +482,14 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
       /* ── A SEALED DOCUMENT'S FILED TEXT IS SEALED TOO ────────────────────
        * The authoring freeze sets `authoring_documents.status = 'FROZEN'` and
        * writes `frozen_documents`; it does not touch `c2c_documents`, and the
-       * lifecycle check above reads only that. So this route — the MDx editor's
-       * save, and the writer of the store an eCTD leaf is materialized from —
-       * was the one content path that could change a FROZEN or APPROVED
-       * document's text while its seal, and every signature over it, covered
-       * the editing layer only. §11.10(e) requires the record a signature is
-       * applied to be protected from alteration.
+       * lifecycle check above reads only that. So this route — then the MDx
+       * editor's save, and the writer of the store an eCTD leaf is
+       * materialized from — was the one content path that could change a
+       * FROZEN or APPROVED document's text while its seal, and every signature
+       * over it, covered the editing layer only. §11.10(e) requires the record
+       * a signature is applied to be protected from alteration. It no longer
+       * writes text, and moving a sealed record through the workflow is still
+       * a change to it, so the guard stays.
        *
        * Through the ONE canonical guard, which is that module's own stated
        * rule ("one guard, called by every writer"), and on the TRANSACTION
@@ -531,52 +504,22 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
           .json({ code: seal.code, error: seal.code, message: seal.reason });
       }
 
-      // Set GUCs for Part-11 trigger attribution.
-      //
-      // `set_config(..., true)`, NOT `SET LOCAL ... = $1`. `SET` is a utility
-      // statement and its grammar has no parameter production, so a bind
-      // placeholder is a syntax error — and node-postgres uses the extended
-      // protocol whenever a values array is passed, so it fails at Parse with
-      // 42601 every single time. It threw here, before the existence check
-      // below, which meant NEITHER the INSERT branch nor the UPDATE branch ever
-      // ran: no section was ever created or updated through this route, and the
-      // catch-all turned it into a 500. The dossier editor rendered
-      // "Not saved — HTTP 500" for every save.
-      //
-      // The rest of the repository already knew this — server/middleware/
-      // tenantContext.ts, server/services/tenant/governed-tenant-context.ts and
-      // eleven call sites in server/src/routes/stability.router.ts all use
-      // set_config(). This route was the only place that deviated.
-      //
-      // `true` is the is_local flag: it scopes the setting to the surrounding
-      // transaction exactly as SET LOCAL would, so the BEFORE UPDATE trigger
-      // c2c_snapshot_section_version() sees the actor and the value does not
-      // leak to the next borrower of this pooled connection.
+      // Part-11 attribution GUCs, transaction-local (`set_config(..., true)`,
+      // never `SET LOCAL ... = $1`, which is a 42601 parse error under the
+      // extended protocol). A status change does not snapshot a version — the
+      // trigger fires on content — but the attribution is set for any trigger
+      // that reads it, and does not leak to the next borrower of the pool.
       await client.query(`SELECT set_config('app.actor_id', $1, true)`, [String(userId)]);
       await client.query(`SELECT set_config('app.reason', $1, true)`, [reason.trim()]);
-      /* The AnA backlink, same transaction-local mechanism as the two above.
-         `ana_action_id` has been declared on the version ledger since Phase 9
-         and written by nothing, so "which AnA action produced this version?"
-         had no answer — the difference between knowing a machine wrote it
-         (author_kind, which does work) and being able to open the conversation
-         and tool calls behind it. Always set, empty when absent, so a value
-         from an earlier statement in this transaction cannot carry over. */
-      await client.query(`SELECT set_config('app.ana_action_id', $1, true)`, [
-        typeof anaActionId === 'string' ? anaActionId.trim() : '',
-      ]);
 
-      // Check if section already exists. Its status is read on this
-      // transaction (FOR UPDATE) for spine F1: a locked section is not edited,
-      // and an approved one whose text changes no longer reads approved.
+      // Its status is read on this transaction (FOR UPDATE): a locked section
+      // is not moved.
       const existing = await client.query(
-        `SELECT id FROM c2c_document_sections WHERE document_id = $1 AND section_key = $2 FOR UPDATE`,
+        `SELECT id, status FROM c2c_document_sections WHERE document_id = $1 AND section_key = $2 FOR UPDATE`,
         [id, key],
       );
-      const existingId = (existing.rows[0] as { id?: unknown } | undefined)?.id;
-      const previousStatus: string | null = existingId === undefined
-        ? null
-        : ((await client.query(`SELECT status FROM c2c_document_sections WHERE id = $1`, [existingId]))
-            .rows[0] as { status?: string } | undefined)?.status ?? null;
+      const previousStatus =
+        (existing.rows[0] as { status?: string } | undefined)?.status ?? null;
       if (previousStatus === 'locked') {
         await client.query('ROLLBACK');
         return res.status(409).json({
@@ -588,8 +531,8 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
 
       let row: any;
       if (existing.rows.length === 0) {
-        // Section doesn't exist yet — INSERT (trigger won't fire, no version row).
-        // Look up label + path_order from the rule pack when available.
+        // Not created yet — INSERT with no text. Label + path_order come from
+        // the rule pack when available.
         const rpackRes = await client.query(
           `SELECT elem ->> 'label' AS label,
                   (elem ->> 'path_order')::integer AS path_order,
@@ -605,122 +548,37 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
         );
 
         const rpackRow = rpackRes.rows[0] as any;
-        const label      = rpackRow?.label      ?? key;
-        const pathOrder  = rpackRow?.path_order ?? 0;
-        const mandatory  = rpackRow?.mandatory  ?? false;
-
         const ins = await client.query(
           `INSERT INTO c2c_document_sections
-             (document_id, section_key, label, path_order, mandatory, content, status, draft_source)
-           VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8)
+             (document_id, section_key, label, path_order, mandatory, content, status)
+           VALUES ($1, $2, $3, $4, $5, '{}'::jsonb, $6)
            RETURNING *`,
-          [
-            id, key, label, pathOrder, mandatory,
-            content !== undefined ? JSON.stringify(content) : '{}',
-            status ?? 'drafted',
-            resolvedDraftSource,
-          ],
+          [id, key, rpackRow?.label ?? key, rpackRow?.path_order ?? 0, rpackRow?.mandatory ?? false, status],
         );
         row = ins.rows[0];
       } else {
-        // Section exists — UPDATE; GUCs set above activate the version trigger.
-        const setClauses: string[] = ['updated_at = now()'];
-        const params: unknown[] = [id, key];
-
-        if (content !== undefined) {
-          params.push(JSON.stringify(content));
-          setClauses.push(`content = $${params.length}::jsonb`);
-        }
-        if (status !== undefined) {
-          params.push(status);
-          setClauses.push(`status = $${params.length}`);
-        } else if (content !== undefined && previousStatus === 'approved') {
-          // Spine F1: 'approved' means the approver's signature covers this
-          // text. New text is not signed text, so the section is withdrawn to
-          // 'drafted' in this same UPDATE (an identical body keeps it). The
-          // governed-action row below records the withdrawal.
-          setClauses.push(
-            `status = CASE WHEN content IS DISTINCT FROM $3::jsonb THEN 'drafted' ELSE status END`,
-          );
-        }
-        // Rewritten on every content change, including to NULL. New text has a
-        // new origin, so carrying the previous one forward would attribute
-        // freshly-typed words to whoever — or whatever — wrote the last
-        // revision. An unstated origin for new content is unknown, not
-        // inherited.
-        if (content !== undefined) {
-          params.push(resolvedDraftSource);
-          setClauses.push(`draft_source = $${params.length}`);
-        }
-
         const upd = await client.query(
           `UPDATE c2c_document_sections
-           SET ${setClauses.join(', ')}
+           SET status = $3, updated_at = now()
            WHERE document_id = $1 AND section_key = $2
            RETURNING *`,
-          params,
+          [id, key, status],
         );
         row = upd.rows[0];
       }
 
       // 21 CFR Part 11 §11.10(e): record the audit IN the same transaction as
-      // the section change, so they commit or roll back together. Previously
-      // the audit ran fire-and-forget AFTER COMMIT with a swallowed error, so a
-      // crash (or an audit failure) left a section transition unaudited.
+      // the section change, so they commit or roll back together.
       await recordGovernedAction(client, {
         orgId,
         userId,
         command: 'transition',
         target: `section:${id}:${key}`,
         reason: reason.trim(),
-        // Spine F1: an approval this change withdrew is named in the record.
-        payload:
-          previousStatus === 'approved' && row?.status !== 'approved'
-            ? { status, from: 'approved', to: row?.status ?? null, approvalWithdrawn: true }
-            : { status },
+        payload: { status },
         domain: 'documents',
         surface: 'api',
       });
-
-      // ── Lineage gate ───────────────────────────────────────────────────────
-      //
-      // The same invariant PATCH /api/authoring/sections/:sectionId enforces:
-      // content and its provenance commit together or neither does. Until now
-      // this route had no gate at all, so the governed store — the system of
-      // record for a regulatory filing — was the one write path where text could
-      // land with nothing recorded about where it came from. Anything reading
-      // lineage would report full coverage of the spans it happened to have and
-      // say nothing about the rest, which is worse than reporting none.
-      //
-      // Inside the existing transaction on purpose: a refused save must leave no
-      // section row behind.
-      if (content !== undefined) {
-        const plain = sectionPlainText(content);
-        if (plain.trim().length > 0) {
-          const ref = {
-            documentTable: 'c2c_document_sections',
-            // bigserial id -> the lineage table's text document_id.
-            documentId: String(row.id),
-          };
-          const spans = detectSpans(plain, 'clause').map((s) => ({
-            charStart: s.charStart,
-            charEnd: s.charEnd,
-            spanText: s.text,
-          }));
-
-          await replaceAuthorSpans(
-            orgId,
-            ref,
-            spans,
-            { assertedBy: String(userId), createdBy: String(userId) },
-            client,
-          );
-
-          // Ask the database what it is about to commit rather than trusting
-          // that the writer not throwing means the rows say what they should.
-          await assertLineageCoversContent(orgId, ref, plain, client);
-        }
-      }
 
       await client.query('COMMIT');
 
@@ -733,18 +591,6 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
     }
   } catch (err: unknown) {
     console.error('[c2c/documents] PATCH /:id/sections/:key', err);
-    // Distinguish a refused save from a generic fault, so the editor can say
-    // why. A 500 that reads INTERNAL_ERROR when the real answer is "this text
-    // has no recorded provenance" trains people to retry rather than fix it.
-    const msg = err instanceof Error ? err.message : String(err);
-    if (/lineage/i.test(msg)) {
-      return res.status(500).json({
-        error: 'LINEAGE_REQUIRED',
-        message:
-          'The section was not saved: its data lineage could not be recorded. ' +
-          'Saving content without provenance is not permitted.',
-      });
-    }
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
 });

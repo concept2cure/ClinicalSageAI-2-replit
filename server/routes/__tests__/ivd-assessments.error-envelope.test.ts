@@ -38,6 +38,9 @@ vi.mock('../../services/regulatory/ivd-assessments.service', async () => {
   };
 });
 
+vi.mock('../../services/regulatory/ivd-governed-write', async original => ({ ...await original<typeof import('../../services/regulatory/ivd-governed-write')>(),
+  governedIvdWrite: async (_req: unknown, _input: unknown, run: any) => run({}, 7, 42) }));
+
 import router from '../ivd-assessments';
 
 /** What a driver actually throws: the constraint, the table, the column. */
@@ -53,7 +56,8 @@ function app() {
   const a = express();
   a.use(express.json());
   a.use((req: Request, res: Response, next: NextFunction) => {
-    (req as any).user = { id: 42, organizationId: 7 };
+    (req as any).user = { id: 42, organizationId: 7, role: 'member' };
+    (req as any).dbClient = { query: vi.fn() };
     res.setHeader('X-Request-Id', 'req-abc123');
     next();
   });
@@ -97,7 +101,7 @@ describe('IVD assessments 5xx envelope', () => {
     saveAssessment.mockRejectedValueOnce(PG_ERROR);
     const res = await request(app())
       .post('/api/ivd-assessments')
-      .send({ assessmentType: 'cdx_pairing', result: { verdict: 'ok' } });
+      .send({ assessmentType: 'cdx_pairing', programId: '11111111-1111-4111-8111-111111111111', reason: 'Retaining the measured study result', result: { verdict: 'ok' } });
     expect(res.status).toBe(500);
     expect(JSON.stringify(res.body)).not.toContain('ivd_assessments');
     expect(res.body.message).toContain('saving the IVD assessment');

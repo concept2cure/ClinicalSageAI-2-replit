@@ -1,0 +1,116 @@
+# Mutation 8 — the fulfilment binder digests the commitment without the Vault version's sha256
+#
+# Replaced in server/services/part11/governed-target-binders.ts:
+#   -     digest: commitmentFulfilmentDigest(c),# with:
+#   +     digest: commitmentFulfilmentDigest({ ...c, vaultSha256: null }), // MUTATION 8: the binder omits the Vault sha256#
+# Test run with the mutation in place: both — server/services/part11/__tests__/commitment-fulfilment-binder.test.ts|tests/db/commitment-fulfilment-evidence.dbtest.ts (-t "a project PMR")
+# Restored afterwards: sha256 before 5d8d724536536aeb8330f1b625c80bcb6d85673827456dd9d54d118824472a45, after 5d8d724536536aeb8330f1b625c80bcb6d85673827456dd9d54d118824472a45 (identical)
+
+## The mutation (git diff of the working tree while it was in place)
+diff --git a/server/services/part11/governed-target-binders.ts b/server/services/part11/governed-target-binders.ts
+index 9d34d3aa..50d8f697 100644
+--- a/server/services/part11/governed-target-binders.ts
++++ b/server/services/part11/governed-target-binders.ts
+@@ -19,6 +19,8 @@ import {
+   type SignatureDbClient,
+ } from './signature-persistence.js';
+ import { AGENCY_RESPONSE_DIGEST_RECIPE, agencyResponseDigest } from '../agency-responses/response-logic.js';
++import { COMMITMENT_FULFILMENT_DIGEST_RECIPE, commitmentFulfilmentDigest } from '../ha-interactions/ha-logic.js';
++import { readCommitmentFulfilmentContent } from '../ha-interactions/fulfilment-record.js';
+ 
+ /** One target type's binder: `rest` is the pointer after `<prefix>:`. */
+ export type ContentBinder = (
+@@ -187,6 +189,29 @@ const agencyResponseBinding: ContentBinder = async (client, rest, orgId, ledgerF
+   };
+ };
+ 
++/**
++ * regulatory-commitment:<id>: a commitment's recorded fulfilment (P-40,
++ * 2026-10-19), as the signing transaction has just written it. The digest is
++ * commitmentFulfilmentDigest over readCommitmentFulfilmentContent, the one
++ * reader the list read uses too, so the binder and "does the signature match
++ * the record" cannot disagree about the input. A commitment not fulfilled, or
++ * fulfilled without a recorder (a row from before fulfilments were recorded),
++ * has no fulfilment to bind and falls back; the database then refuses the
++ * commit, because it accepts only this basis.
++ */
++const commitmentFulfilmentBinding: ContentBinder = async (client, rest, orgId, ledgerFallback) => {
++  if (!/^\d{1,10}$/.test(rest)) return ledgerFallback('malformed regulatory commitment pointer');
++  const record = (await readCommitmentFulfilmentContent(client, orgId, [Number(rest)])).get(Number(rest));
++  if (!record) return ledgerFallback('regulatory commitment not readable at signing time');
++  if (record.status !== 'fulfilled' || !record.recorded) return ledgerFallback('the commitment carries no recorded fulfilment at signing time');
++  const c = record.content;
++  return {
++    digest: commitmentFulfilmentDigest({ ...c, vaultSha256: null }), // MUTATION 8: the binder omits the Vault sha256
++    basis: BINDING_BASIS.COMMITMENT_FULFILMENT_CONTENT,
++    note: `sha256 (recipe ${COMMITMENT_FULFILMENT_DIGEST_RECIPE}) over commitment ${rest}'s type, description, basis and due date, the date it was fulfilled (${c.fulfilledDate}), and what met it: ${c.sequenceId != null ? `sequence ${c.sequenceNumber ?? c.sequenceId} of submission ${c.submissionId ?? 'unknown'}` : 'no sequence'}; ${c.vaultDocumentId != null ? `Vault version ${c.vaultDocumentId} at sha256 ${c.vaultSha256}` : 'no Vault version'}. No status, recorder or timestamp is bound.`,
++  };
++};
++
+ /** The binders deriveGovernedTargetBinding delegates to, by target prefix. */
+ export const CONTENT_BINDERS: Readonly<Record<string, ContentBinder>> = {
+   'protocol-document': (client, rest, orgId, fallback) =>
+@@ -196,4 +221,5 @@ export const CONTENT_BINDERS: Readonly<Record<string, ContentBinder>> = {
+   'report-run': reportRunSealBinding,
+   'interim-snapshot': interimSnapshotBinding,
+   'agency-question': agencyResponseBinding,
++  'regulatory-commitment': commitmentFulfilmentBinding,
+ };
+
+## The run
+ ✓ server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > is registered, so a fulfilment signature never falls back to the ledger basis 2ms
+ × server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > digests the commitment, its date and what met it, with the shared recipe 8ms
+   → expected '3f7f3b8e9a5033759981cc76437a49f69f1e4…' to be 'f993c53f5d46280904d4c35870f01b475973a…' // Object.is equality
+ × server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > binds the Vault version’s sha256: a different pin is a different digest 1ms
+   → expected '3f7f3b8e9a5033759981cc76437a49f69f1e4…' not to be '3f7f3b8e9a5033759981cc76437a49f69f1e4…' // Object.is equality
+ ✓ server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > falls back when the commitment is not readable, or carries no recorded fulfilment 1ms
+ ✓ server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > refuses a malformed pointer rather than querying for it 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > digests the commitment, its date and what met it, with the shared recipe
+AssertionError: expected '3f7f3b8e9a5033759981cc76437a49f69f1e4…' to be 'f993c53f5d46280904d4c35870f01b475973a…' // Object.is equality
+Expected: "f993c53f5d46280904d4c35870f01b475973af471bfa4acdb5d56b61e71fe4a8"
+Received: "3f7f3b8e9a5033759981cc76437a49f69f1e420bd6af55e41f13e8042dfa0b45"
+ FAIL  server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > binds the Vault version’s sha256: a different pin is a different digest
+AssertionError: expected '3f7f3b8e9a5033759981cc76437a49f69f1e4…' not to be '3f7f3b8e9a5033759981cc76437a49f69f1e4…' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > offers only this project's sequences the agency received, and this project's Vault 67ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a viewer reads the options as unable to write or sign 49ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a PMR that names nothing is refused before the password, which is never checked 42ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a PMR with no date is refused before the password: the server never chooses the signed date 27ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > evidence but no password is a missing signature component 30ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a sequence still pending transmit, before the password, and records nothing 52ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a sequence the agency rejected, before the password, and records nothing 40ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a frozen sequence never dispatched, before the password, and records nothing 40ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another project's sequence, before the password, and records nothing 38ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another organisation's sequence, before the password, and records nothing 44ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another project's Vault version, before the password, and records nothing 43ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another organisation's Vault version, before the password, and records nothing 40ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a version that does not exist, before the password, and records nothing 33ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a version whose data was withdrawn, before the password, and records nothing 54ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a viewer cannot fulfil it at either door 38ms
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > signs: the row names the sequence and the version with its sha256, and the signature binds them 116ms
+   → expected '4cbb09fc6a397d9c8eb926fe09c38442dc8ec…' to be '6869602e2440d41f2544e18c73faf997af589…' // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > the list names what met it, who signed, and that the signature matches the record 66ms
+   → expected { rule: { …(3) }, …(6) } to match object { state: 'signed', …(4) }
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > a second fulfilment is refused 30ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > signs: the row names the sequence and the version with its sha256, and the signature binds them
+AssertionError: expected '4cbb09fc6a397d9c8eb926fe09c38442dc8ec…' to be '6869602e2440d41f2544e18c73faf997af589…' // Object.is equality
+Expected: "6869602e2440d41f2544e18c73faf997af589070166ce09dcbd650df54568bc2"
+Received: "4cbb09fc6a397d9c8eb926fe09c38442dc8ecf27dad869ba4f805d57f1a6b42e"
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > the list names what met it, who signed, and that the signature matches the record
+AssertionError: expected { rule: { …(3) }, …(6) } to match object { state: 'signed', …(4) }
+- Expected
++ Received
+-     "bindsRecord": true,
++     "bindsRecord": false,
+-   "state": "signed",
++   "state": "signature-mismatch",
+ Test Files  1 failed (1)
+      Tests  2 failed | 16 passed | 9 skipped (27)
+
+## Reading
+With the binder digesting the commitment without the Vault sha256, the binder unit tests fail on the shared recipe and on "a different pin is a different digest". In the real-PostgreSQL run the fulfilment still signs (the ceremony accepts whatever digest the binder gives), but the signature's bound_payload_digest is no longer the recipe's digest over the record ("signs: ... and the signature binds them" fails on that comparison), and the list, which recomputes the recipe through the same reader and compares, no longer reports the signature as binding the record ("the list names ... that the signature matches the record" fails). The other 16 cases in the selection pass. The sha256 is part of what is signed, and a binder that drops it is caught twice.
+
+Correction recorded: this mutation's database half was first run with -t "signs:|the list names". That selection skips the describe whose beforeAll creates the commitment, so it fails with or without the mutation (404, nothing to sign); mutation-controls.txt records it failing on the unmutated tree. The run above uses -t "a project PMR", which runs that setup and passes in full without the mutation ("M8 db", 18 passed).

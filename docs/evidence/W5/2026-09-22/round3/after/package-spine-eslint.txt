@@ -38,4 +38,3 @@
   430:21  warning  '_none' is assigned a value but never used                       @typescript-eslint/no-unused-vars
 
 ✖ 26 problems (0 errors, 26 warnings)
-

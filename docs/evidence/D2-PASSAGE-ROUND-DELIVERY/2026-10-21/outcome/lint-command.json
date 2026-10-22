@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--format",
+    "json",
+    "tests/services/tool-outcome-passage-withheld.test.ts"
+  ],
+  "cwd": "/workspace/Concept2Cure",
+  "PATH_prefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+  "nodeVersion": "v22.23.3",
+  "exitCode": 0,
+  "testSha256": "5083e50ba788ff7f7dded872c6be2152cc13d1ed5cd165e0740bd18d3074429e",
+  "completedAt": "2026-10-21T00:21:35.659737+00:00",
+  "errorCount": 0,
+  "warningCount": 0
+}

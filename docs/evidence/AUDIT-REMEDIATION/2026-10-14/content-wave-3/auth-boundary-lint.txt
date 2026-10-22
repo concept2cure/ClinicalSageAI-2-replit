@@ -1,0 +1,19 @@
+
+/workspace/ClinicalSageAI-2-replit/server/middleware/__tests__/tenantLifecycleGuard.test.ts
+  99:32  warning  'setImmediate' is not defined  no-undef
+
+/workspace/ClinicalSageAI-2-replit/server/routes/authEnterprise.ts
+    21:3    warning  'validatePasswordPolicy' is defined but never used                     @typescript-eslint/no-unused-vars
+   170:11   warning  'domain' is assigned a value but never used                            @typescript-eslint/no-unused-vars
+   226:92   warning  Async arrow function has too many lines (188). Maximum allowed is 100  max-lines-per-function
+   226:92   warning  Async arrow function has a complexity of 26. Maximum allowed is 15     complexity
+   491:114  warning  Async arrow function has too many lines (188). Maximum allowed is 100  max-lines-per-function
+   491:114  warning  Async arrow function has a complexity of 40. Maximum allowed is 15     complexity
+   717:1    warning  File has too many lines (756). Maximum allowed is 500                  max-lines
+   828:73   warning  Async arrow function has too many lines (124). Maximum allowed is 100  max-lines-per-function
+   828:73   warning  Async arrow function has a complexity of 17. Maximum allowed is 15     complexity
+  1063:12   warning  'error' is defined but never used                                      @typescript-eslint/no-unused-vars
+  1100:12   warning  'error' is defined but never used                                      @typescript-eslint/no-unused-vars
+
+✖ 12 problems (0 errors, 12 warnings)
+

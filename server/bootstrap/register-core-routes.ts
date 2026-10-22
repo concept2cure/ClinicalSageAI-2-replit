@@ -86,8 +86,9 @@ export function registerCoreRoutes({
            (server/api/cmc/routes.ts);
          · change-impact-simulator → /api/cmc/change-control, and the
            deterministic POST /api/cmc/variations/classify (routes.ts,
-           supac-classifier), which no screen calls yet and which the cmc
-           surface does not claim, so production refuses it until one does
+           supac-classifier), now reached by the deferred CMC variation
+           assessment. The route explicitly refuses when launch scope is on;
+           a UI prefix claim is not permission to widen the IND composition
            (decision P-28, docs/evidence/CMC-M3-GA/2026-10-05/
            20-cmc-api-allowlist/);
          · blueprint-generator → GET /api/cmc/quality/qbd/:projectId and
@@ -193,8 +194,10 @@ export function registerCoreRoutes({
        Module 3 sections (/api/cmc/module3-os/sections). */
     // Module 3 board — portfolio + governed section read-model for the ui-v2 cmc surface.
     app.use('/api/cmc/module3-board', authenticateToken, cmcModule3BoardRoutes());
-    // Agency questions — the org-scoped WRITE half of the correspondence loop
-    // the board reads (log a question, triage status/assignee/due date).
+    // The earlier CMC agency-question file (reg_questions), read-only history
+    // since 2026-10-19 (P-39 item 1): GET lists it; POST and PATCH answer 410.
+    // Agency questions are recorded on their letter, and CMC reads them from
+    // /api/concept2cure/projects/:projectId/agency-questions.
     app.use('/api/cmc/agency-questions', authenticateToken, cmcAgencyQuestionRoutes());
     // /api/cmc/dashboard removed — backed by Prisma which was excised in
     // 066acdb. Route file (cmc-dashboard-prisma.ts) had zero callers.

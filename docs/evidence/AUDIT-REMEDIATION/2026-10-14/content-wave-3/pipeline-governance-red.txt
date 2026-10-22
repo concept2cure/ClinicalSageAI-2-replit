@@ -1,0 +1,142 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-14T20:43:48.588Z","pid":52769,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T20:43:48.589Z","pid":52769,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T20:43:48.589Z","pid":52769,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/content-audit-consumers.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/content-audit-consumers.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/content-audit-consumers.dbtest.ts
+✅ DocumentDataCenterService initialized with AI-powered tagging
+
+stdout | tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > figure draft and mandatory lineage really persist with ancillary audit=none
+[database] Database connection successful { timestamp: '2026-10-14T20:43:50.606Z', poolSize: 1 }
+
+{"level":30,"time":"2026-10-14T20:43:50.625Z","pid":52769,"hostname":"a5f657cec57d","context":{"userId":240,"tenantId":61,"resourceId":"fig-71da863a"},"msg":"[audit-service] [AUDIT] figure_generated figure"}
+{"level":50,"time":"2026-10-14T20:43:50.668Z","pid":52769,"hostname":"a5f657cec57d","context":{"action":"figure_generated","resourceType":"figure","resourceId":"fig-b5bf2e27","reason":"Private synthetic audit outage"},"msg":"[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist"}
+{"level":30,"time":"2026-10-14T20:43:50.740Z","pid":52769,"hostname":"a5f657cec57d","context":{"userId":240,"tenantId":61,"resourceId":"fig-c856028e"},"msg":"[audit-service] [AUDIT] figure_generated figure"}
+stderr | tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > private project, stale viewer and foreign source refusals precede model execution
+[FigureService] Generation failed: Error: Figure source data could not be read. No figure was generated.
+    at resolveSourceData (/workspace/ClinicalSageAI-2-replit/server/services/figureGenerationService.ts:535:13)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at generateFigure (/workspace/ClinicalSageAI-2-replit/server/services/figureGenerationService.ts:297:24)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/audit-services.ts:68:20
+
+{"level":30,"time":"2026-10-14T20:43:50.936Z","pid":52769,"hostname":"a5f657cec57d","context":{"userId":240,"tenantId":61,"resourceId":"artifact_620c725d-ecbe-4952-a1eb-54b5b30d0858"},"msg":"[audit-service] [AUDIT] keywords_extracted document"}
+{"level":50,"time":"2026-10-14T20:43:50.988Z","pid":52769,"hostname":"a5f657cec57d","context":{"action":"keywords_extracted","resourceType":"document","resourceId":"artifact_620c725d-ecbe-4952-a1eb-54b5b30d0858","reason":"Private synthetic audit outage"},"msg":"[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist"}
+{"level":50,"time":"2026-10-14T20:43:51.116Z","pid":52769,"hostname":"a5f657cec57d","context":{"action":"DOCUMENT_TAGS_UPDATED","resourceType":"device_data_center","resourceId":"3","reason":"Private synthetic audit outage"},"msg":"[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist"}
+stderr | tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > Data Center tag mutation survives audit outage while refusing foreign tenant and viewer
+Error updating document tags: DocumentDataCenterRefusal: Document not found
+    at DocumentDataCenterService.updateDocumentTags (/workspace/ClinicalSageAI-2-replit/server/services/DocumentDataCenterService.ts:750:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/document-data-center.ts:124:20 {
+  status: 404
+}
+
+{"level":30,"time":"2026-10-14T20:43:51.297Z","pid":52769,"hostname":"a5f657cec57d","context":{"userId":240,"tenantId":61,"resourceId":"5"},"msg":"[audit-service] [AUDIT] CREATE CER_REPORT"}
+{"level":30,"time":"2026-10-14T20:43:51.325Z","pid":52769,"hostname":"a5f657cec57d","context":{"userId":243,"tenantId":62,"resourceId":"6"},"msg":"[audit-service] [AUDIT] CREATE CER_REPORT"}
+stderr | tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > two tenants create native CER identities independently and a viewer/foreign device is refused
+Error generating CER: Error: Device not found
+    at CerGenerationService.generateCER (/workspace/ClinicalSageAI-2-replit/server/services/cerGenerationService.ts:220:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at UnifiedCERService.generateReport (/workspace/ClinicalSageAI-2-replit/server/services/cer/index.ts:111:19)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/cer-routes.ts:608:20
+
+{"level":30,"time":"2026-10-14T20:43:51.404Z","pid":52769,"hostname":"a5f657cec57d","context":{"userId":240,"tenantId":61,"resourceId":"artifact_24fa437d-aa35-42a6-8305-65c0006907d4"},"msg":"[audit-service] [AUDIT] keywords_extracted document"}
+{"level":30,"time":"2026-10-14T20:43:51.627Z","pid":52769,"hostname":"a5f657cec57d","context":{"userId":240,"tenantId":61,"resourceId":"artifact_620c725d-ecbe-4952-a1eb-54b5b30d0858"},"msg":"[audit-service] [AUDIT] extraction_job_created file"}
+{"level":30,"time":"2026-10-14T20:43:51.651Z","pid":52769,"hostname":"a5f657cec57d","context":{"userId":240,"tenantId":61,"resourceId":"artifact_620c725d-ecbe-4952-a1eb-54b5b30d0858"},"msg":"[audit-service] [AUDIT] extraction_job_failed file"}
+stderr | tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > positive extraction computes and stores governed artifacts with actual source and outcome
+[AutoExtraction] Job 7366b1d3-640a-41b1-8c15-1b9bcb3ed7bb failed: Error: governed extraction main artifact invalid: originSurface import_pipeline is not allowed for documentClass evidence_memo
+    at storeExtractedArtifacts (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:681:11)
+    at processJob (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:344:29)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at processQueue (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:286:7)
+
+{"level":30,"time":"2026-10-14T20:43:51.743Z","pid":52769,"hostname":"a5f657cec57d","context":{"userId":240,"tenantId":61,"resourceId":"artifact_af686ad0-7bc7-4191-9660-32890b37982c"},"msg":"[audit-service] [AUDIT] keywords_extracted document"}
+{"level":30,"time":"2026-10-14T20:43:51.794Z","pid":52769,"hostname":"a5f657cec57d","context":{"userId":240,"tenantId":61,"resourceId":"fig-5a69095d"},"msg":"[audit-service] [AUDIT] figure_generated figure"}
+stderr | tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > canonical remove_data disposition governs all three source readers before model access
+[FigureService] Generation failed: Error: Figure source data could not be read. No figure was generated.
+    at resolveSourceData (/workspace/ClinicalSageAI-2-replit/server/services/figureGenerationService.ts:535:13)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at generateFigure (/workspace/ClinicalSageAI-2-replit/server/services/figureGenerationService.ts:297:24)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/audit-services.ts:68:20
+
+{"level":30,"time":"2026-10-14T20:43:52.035Z","pid":52769,"hostname":"a5f657cec57d","context":{"userId":240,"tenantId":61,"resourceId":"artifact_673727b1-da17-4126-88d0-d0cfa4014005"},"msg":"[audit-service] [AUDIT] extraction_job_created file"}
+{"level":30,"time":"2026-10-14T20:43:52.056Z","pid":52769,"hostname":"a5f657cec57d","context":{"userId":240,"tenantId":61,"resourceId":"artifact_673727b1-da17-4126-88d0-d0cfa4014005"},"msg":"[audit-service] [AUDIT] extraction_job_failed file"}
+stderr | tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > canonical remove_data disposition governs all three source readers before model access
+[AutoExtraction] Job 26a4a943-7436-47a9-b74d-684d196b885d failed: ExtractionSourceUnavailableError: Extraction source unavailable: no stored text for artifact_id=artifact_673727b1-da17-4126-88d0-d0cfa4014005 (withdrawn.txt). The job is failed rather than completed with a placeholder.
+    at extractText (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:435:9)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at processJob (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:314:25)
+    at processQueue (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:286:7)
+
+{"level":50,"time":"2026-10-14T20:43:52.132Z","pid":52769,"hostname":"a5f657cec57d","context":{"action":"extraction_job_created","resourceType":"file","resourceId":"artifact_620c725d-ecbe-4952-a1eb-54b5b30d0858","reason":"Private synthetic audit outage"},"msg":"[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist"}
+stdout | tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > queue returns the actual process-local job identity and status/list retain its audit warning
+[database] Database connection successful { timestamp: '2026-10-14T20:43:52.168Z', poolSize: 2 }
+
+{"level":50,"time":"2026-10-14T20:43:52.176Z","pid":52769,"hostname":"a5f657cec57d","context":{"action":"extraction_job_failed","resourceType":"file","resourceId":"artifact_620c725d-ecbe-4952-a1eb-54b5b30d0858","reason":"Private synthetic audit outage"},"msg":"[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist"}
+stderr | tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > queue returns the actual process-local job identity and status/list retain its audit warning
+[AutoExtraction] Job fb273f47-6361-426b-aa08-7e2ef1e06b6b failed: Error: Controlled model refusal
+    at /workspace/ClinicalSageAI-2-replit/tests/db/content-audit-consumers.dbtest.ts:201:51
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+    at run (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+    at limiterFn (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:38
+    at Traces.$ (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/traces.DT5aQ62U.js:142:27)
+    at trace (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/test.DNmyFkvJ.js:4398:21)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:13
+
+ ❯ tests/db/content-audit-consumers.dbtest.ts (16 tests | 1 failed) 3820ms
+     ✓ uses actual auth/ALS/lazy request connection and installed FORCE RLS 55ms
+     ✓ figure draft and mandatory lineage really persist with ancillary audit=none 95ms
+     ✓ figure draft and mandatory lineage really persist with ancillary audit=audit-loss 31ms
+     ✓ mandatory lineage failure rolls back its artifact and preserves the generated draft 81ms
+     ✓ loss after actual COMMIT is explicitly unconfirmed and never claims rollback or regenerates 60ms
+     ✓ private project, stale viewer and foreign source refusals precede model execution 96ms
+     ✓ keyword extraction uses actual source bytes, real parameters and audit=none 49ms
+     ✓ keyword extraction uses actual source bytes, real parameters and audit=audit-loss 29ms
+     ✓ keyword source and submitted text mismatches refuse before any model call 101ms
+     ✓ Data Center tag mutation survives audit outage while refusing foreign tenant and viewer 183ms
+     ✓ two tenants create native CER identities independently and a viewer/foreign device is refused 81ms
+     ✓ keyword readback uses the canonical audit store and never invents a semantic consistency verdict 89ms
+     × positive extraction computes and stores governed artifacts with actual source and outcome 235ms
+     ✓ canonical keep_data disposition governs all three source readers before model access 138ms
+     ✓ canonical remove_data disposition governs all three source readers before model access 260ms
+     ✓ queue returns the actual process-local job identity and status/list retain its audit warning 152ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/content-audit-consumers.dbtest.ts > native content consumers and current source admission > positive extraction computes and stores governed artifacts with actual source and outcome
+AssertionError: {"id":"7366b1d3-640a-41b1-8c15-1b9bcb3ed7bb","organizationId":61,"projectId":146,"userId":240,"fileId":"artifact_620c725d-ecbe-4952-a1eb-54b5b30d0858","fileName":"recorded-source.txt","fileType":"txt","fileSize":78,"status":"failed","persistence":"process-local","priority":60,"stages":[{"name":"text_extraction","status":"completed","startedAt":"2026-10-14T20:43:51.634Z","completedAt":"2026-10-14T20:43:51.649Z","details":"78 chars"},{"name":"table_extraction","status":"completed","startedAt":"2026-10-14T20:43:51.649Z","completedAt":"2026-10-14T20:43:51.649Z","details":"0 tables"},{"name":"classification","status":"completed","startedAt":"2026-10-14T20:43:51.649Z","completedAt":"2026-10-14T20:43:51.649Z","details":"CSR"},{"name":"metadata_enrichment","status":"completed","startedAt":"2026-10-14T20:43:51.650Z","completedAt":"2026-10-14T20:43:51.650Z","details":"0 figures"},{"name":"quality_scoring","status":"completed","startedAt":"2026-10-14T20:43:51.650Z","completedAt":"2026-10-14T20:43:51.650Z","details":"Score: 0.1"},{"name":"artifact_storage","status":"running","startedAt":"2026-10-14T20:43:51.650Z"}],"createdAt":"2026-10-14T20:43:51.627Z","meta":{"auditTrail":{"persisted":true,"chained":true}},"startedAt":"2026-10-14T20:43:51.634Z","error":"governed extraction main artifact invalid: originSurface import_pipeline is not allowed for documentClass evidence_memo","completedAt":"2026-10-14T20:43:51.651Z","durationMs":17}: expected 'failed' to be 'completed' // Object.is equality
+
+Expected: "completed"
+Received: "failed"
+
+ ❯ tests/db/content-audit-consumers.dbtest.ts:168:70
+    166|     let status;
+    167|     await vi.waitFor(async()=>{status=await get(`/api/audit-services/e…
+    168|     expect(status!.body.job.status,JSON.stringify(status!.body.job)).t…
+       |                                                                      ^
+    169|     expect(status!.body.job.result.artifacts.length).toBeGreaterThan(0…
+    170|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 passed (16)
+   Start at  20:43:46
+   Duration  5.32s (transform 1.60s, setup 50ms, import 1.26s, tests 3.82s, environment 0ms)
+

@@ -9,6 +9,8 @@
 import type { ReportRunStatus, TruthfulnessEvaluation } from '../truthfulness';
 import type { ReportBlock, ReportSection, RenderedReport } from './types';
 import type { InsightAtomRef } from '../providers/types';
+import { labelCurrencyMatrixOf, renderLabelCurrencyMatrix } from './label-currency-matrix';
+import { lifecycleCalendarOf, renderLifecycleCalendar } from './lifecycle-calendar';
 
 /**
  * Inputs to {@link renderReport}. Mirrors the shape produced by the
@@ -130,6 +132,7 @@ function readinessGapsOf(summary: Record<string, unknown> | null | undefined): R
  * reading of a record that does not say.
  */
 export function gapsWereEvaluated(summary: Record<string, unknown> | null | undefined): boolean {
+  if (labelCurrencyMatrixOf(asRecord(summary?.domain)) || lifecycleCalendarOf(asRecord(summary?.domain))) return true;
   /* A market assessment is the second evaluation that can set this, and it
      writes its own key: `summary.module1.missingHeadings` is a list when it
      could match this program's content against the agency's headings, and null
@@ -168,6 +171,10 @@ function gapsSectionFor(
   generatedAt: string,
   blockers: string[],
 ): ReportSection {
+  const calendar = lifecycleCalendarOf(asRecord(summary.domain));
+  if (calendar) return { id: 'gaps', title: 'Gaps', blocks: [{ kind: 'gap-list', items: calendar.gaps }] };
+  const labelMatrix = labelCurrencyMatrixOf(asRecord(summary.domain));
+  if (labelMatrix) return { id: 'gaps', title: 'Gaps', blocks: [{ kind: 'gap-list', items: labelMatrix.gaps }] };
   /* A market assessment's gaps are its own, and are read FIRST because its runs
      write no `summary.regulatory` for the readiness branches below to find. */
   const m1 = module1Gaps(summary);
@@ -307,8 +314,10 @@ function domainSection(domain: Record<string, unknown>, providers: RenderInput['
             },
       );
     } else if (Array.isArray(value) && value.length > 0) {
-      const first = asRecord(value[0]);
-      const columns = first ? Object.keys(first).filter((c) => ['string', 'number'].includes(typeof first[c])) : [];
+      // All rows define the scalar schema: a null first cell must not erase a later value.
+      const columns = [...new Set(value.flatMap(item => Object.entries(asRecord(item) ?? {})
+        .filter(([, cell]) => cell == null || typeof cell === 'string' || typeof cell === 'number')
+        .map(([key]) => key)))];
       if (columns.length > 0) {
         blocks.push({
           kind: 'table',
@@ -323,6 +332,13 @@ function domainSection(domain: Record<string, unknown>, providers: RenderInput['
     }
   }
   return { id: 'register', title: 'Register', blocks };
+}
+
+function renderedDomainSections(domain: Record<string, unknown>, providers: RenderInput['providers'], computedScope: string): ReportSection[] {
+  const calendar = lifecycleCalendarOf(domain);
+  if (calendar) return renderLifecycleCalendar(calendar, providers.flatMap(provider => provider.atoms ?? []));
+  const labelMatrix = labelCurrencyMatrixOf(domain);
+  return labelMatrix ? renderLabelCurrencyMatrix(labelMatrix, providers.flatMap(provider => provider.atoms ?? [])) : [domainSection(domain, providers, computedScope)];
 }
 
 /**
@@ -526,7 +542,7 @@ export function renderReport(input: RenderInput): RenderedReport {
   sections.push({ id: 'executive-summary', title: 'Executive summary', blocks: execBlocks });
   const metadata = computationMetadata(input.summary, input.scopeType);
   const { computedScope } = metadata;
-  if (domain) sections.push(domainSection(domain, input.providers, computedScope));
+  if (domain) sections.push(...renderedDomainSections(domain, input.providers, computedScope));
   if (market) sections.push(marketSection(module1 ?? null));
 
   // 2. Provider readiness.

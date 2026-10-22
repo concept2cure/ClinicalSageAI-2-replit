@@ -157,11 +157,16 @@ export function authoringDocOf(
   return authoringDocFromTrace(m.toolCalls);
 }
 
+/** The AnA tools that create an authoring document. save_document_to_vault is
+ *  the single-body form of draft_authoring_document (2026-10-17, document store
+ *  consolidation step 2) and writes the same store. */
+const AUTHORING_DRAFT_TOOLS: ReadonlySet<string> = new Set(['draft_authoring_document', 'save_document_to_vault']);
+
 function authoringDocFromTrace(
   calls: AnaChatMessage['toolCalls'],
 ): { docId: string; programId: string | null; title: string | null } | null {
   for (const call of calls ?? []) {
-    if (call.name !== 'draft_authoring_document' || typeof call.result !== 'string') continue;
+    if (!AUTHORING_DRAFT_TOOLS.has(call.name) || typeof call.result !== 'string') continue;
     const found = authoringDocFromToolResult(call.result);
     if (found) return found;
   }
@@ -2117,7 +2122,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
                   <span key={a.id} className="ct-att-chip" data-status={a.status}>
                     {I.paperclip} {a.name}
                     {a.status === 'uploading' && <em> · reading…</em>}
-                    {a.status === 'ready' && <em> · {readyAttachmentLabel(a.extractionMethod, a.extractionWords)}</em>}
+                    {a.status === 'ready' && <em> · {readyAttachmentLabel(a.extractionMethod, a.extractionWords, a.extractionCoverage)}</em>}
                     {a.status === 'error' && <em> · {a.error ?? 'failed'}</em>}
                     <button
                       type="button"

@@ -2,18 +2,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const h = vi.hoisted(() => ({ query: vi.fn(), rows: [] as any[] }));
 vi.mock('../../../db.js', () => ({ pool: { query: h.query } }));
 vi.mock('../document-catalog-governance.service.js', () => ({ catalogStateOf: () => null, writeCatalogSuggestion: vi.fn() }));
-import { loadDocumentForOrg, listProjectDocuments } from '../document-catalog.service.js';
+import { listProjectDocuments } from '../document-catalog.service.js';
+import { loadDocumentForAdmittedScope } from '../document-catalog-document.js';
 const program = '10000000-0000-4000-8000-000000000001';
 const doc = '20000000-0000-4000-8000-000000000002';
 beforeEach(() => { vi.clearAllMocks(); h.rows = []; h.query.mockImplementation(async () => ({ rows: h.rows })); });
 describe('server-only catalog actor query filters', () => {
   it('bounds a full-text selected source to authorized programs in SQL', async () => {
-    await loadDocumentForOrg(doc, 42, { includeText: true, allowedProgramIds: [program] } as any);
+    await loadDocumentForAdmittedScope(doc, 42, { executor: { query: h.query }, includeText: true, allowedProgramIds: [program] });
     expect(h.query.mock.calls[0][0]).toContain('d.program_id = ANY(');
     expect(h.query.mock.calls[0][1]).toContainEqual([program]);
   });
   it('an empty authorized program list cannot widen to all tenant sources', async () => {
-    await loadDocumentForOrg(doc, 42, { includeText: true, allowedProgramIds: [] } as any);
+    await loadDocumentForAdmittedScope(doc, 42, { executor: { query: h.query }, includeText: true, allowedProgramIds: [] });
     expect(h.query.mock.calls[0][0]).toContain('d.program_id = ANY(');
     expect(h.query.mock.calls[0][1]).toContainEqual([]);
   });
@@ -29,6 +30,19 @@ describe('server-only catalog actor query filters', () => {
     const q = { query: vi.fn().mockResolvedValue({ rows: [] }) };
     await listProjectDocuments(42, { executor: q, allowedProgramIds: [program] } as any);
     expect(q.query).toHaveBeenCalledOnce();
+    expect(h.query).not.toHaveBeenCalled();
+  });
+});
+
+describe('internal catalogue primitive requires admitted connection and selection', () => {
+  it('rejects an absent executor without using the global pool', async () => {
+    await expect(Reflect.apply(loadDocumentForAdmittedScope, undefined, [doc, 42, { allowedProgramIds: [program] }]))
+      .rejects.toMatchObject({ code: 'REQUEST_DB_CONTEXT_REQUIRED' });
+    expect(h.query).not.toHaveBeenCalled();
+  });
+  it('rejects an absent selected scope before SQL', async () => {
+    await expect(loadDocumentForAdmittedScope(doc, 42, { executor: { query: h.query } }))
+      .rejects.toMatchObject({ code: 'CATALOG_SOURCE_SCOPE_INVALID' });
     expect(h.query).not.toHaveBeenCalled();
   });
 });

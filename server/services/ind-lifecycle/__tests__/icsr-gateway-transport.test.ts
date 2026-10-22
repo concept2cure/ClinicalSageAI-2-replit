@@ -9,8 +9,9 @@
  *   - with a gateway CONFIGURED, makes the real call over the shared AS2
  *     transport (or HTTPS Basic) and reports `transmitted` ONLY when the
  *     agency endpoint accepted — every other outcome is a typed error and an
- *     audited refusal (runbook B7; W5 2026-09-20). Only `node:https` is
- *     stubbed: envelope construction, body signing and MDN interpretation run.
+ *     audited refusal (runbook B7; W5 2026-09-20). `node:https` and CMS
+ *     primitives are explicit semantic doubles. The actual disposition,
+ *     message-id and MIC parser runs; real CMS proofs live in as2-cms.test.ts.
  *
  * Mirrors server/services/__tests__/fdaIntegrationService.failclosed.test.ts
  * (set/restore NODE_ENV + env vars, deterministic asserted output).
@@ -18,14 +19,14 @@
 
 import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, vi } from 'vitest';
 import { promises as fs } from 'fs';
-import * as os from 'os';
-import * as path from 'path';
-import { generateKeyPairSync, createVerify } from 'crypto';
+import { makeMtlsPki, type MtlsPki } from '../../submission-gateways/__tests__/support/mtls-pki';
+import type { CmsEnvelopeInput } from '../../submission-gateways/__tests__/support/cms-semantic-double';
 
-/* ─── Network boundary — the ONLY thing stubbed ───────────────────── */
+/* ─── Explicit network and CMS boundaries ────────────────────────── */
 
-const { httpsRequests, wire } = vi.hoisted(() => ({
+const { httpsRequests, envelopes, wire } = vi.hoisted(() => ({
   httpsRequests: [] as Array<{ options: any; body: Buffer }>,
+  envelopes: [] as CmsEnvelopeInput[],
   wire: {
     statusCode: 200,
     headers: {} as Record<string, string>,
@@ -34,6 +35,10 @@ const { httpsRequests, wire } = vi.hoisted(() => ({
     error: null as string | null,
   },
 }));
+vi.mock('../../submission-gateways/as2-cms', async original => {
+  const { semanticCmsDouble } = await import('../../submission-gateways/__tests__/support/cms-semantic-double');
+  return semanticCmsDouble(await original<typeof import('../../submission-gateways/as2-cms')>(), args => envelopes.push(args));
+});
 
 vi.mock('node:https', () => {
   const request = (options: any, cb: (res: any) => void) => {
@@ -87,6 +92,8 @@ const GATEWAY_ENV = [
   'ICSR_GATEWAY_CERT_PATH',
   'ICSR_GATEWAY_KEY_PATH',
   'ICSR_GATEWAY_AGENCY_CERT_PATH',
+  'ICSR_GATEWAY_MDN_CERT_PATH',
+  'ICSR_GATEWAY_TLS_CA_PATH',
   'ICSR_GATEWAY_AS2_TO',
   'ICSR_GATEWAY_PROTOCOL',
 ] as const;
@@ -211,23 +218,17 @@ describe('ICSR gateway transport fail-closed', () => {
 let certPath: string;
 let keyPath: string;
 let agencyCertPath: string;
-let publicKeyPem: string;
-let tmpBase: string;
+let pki: MtlsPki;
 
-beforeAll(async () => {
-  tmpBase = await fs.mkdtemp(path.join(os.tmpdir(), 'icsr-as2-'));
-  const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
-  publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
-  keyPath = path.join(tmpBase, 'client-key.pem');
-  certPath = path.join(tmpBase, 'client-cert.pem');
-  agencyCertPath = path.join(tmpBase, 'agency-cert.pem');
-  await fs.writeFile(keyPath, privateKey.export({ type: 'pkcs8', format: 'pem' }) as string);
-  await fs.writeFile(certPath, publicKeyPem);
-  await fs.writeFile(agencyCertPath, publicKeyPem);
+beforeAll(() => {
+  pki = makeMtlsPki();
+  keyPath = pki.paths.clientKey;
+  certPath = pki.paths.clientCert;
+  agencyCertPath = pki.paths.ca;
 });
 
-afterAll(async () => {
-  await fs.rm(tmpBase, { recursive: true, force: true });
+afterAll(() => {
+  pki.cleanup();
 });
 
 function as2Config() {
@@ -237,6 +238,7 @@ function as2Config() {
     certPath,
     keyPath,
     agencyCertPath,
+    tlsCaPath: pki.paths.ca,
     as2To: 'FDA-CESUB',
   };
 }
@@ -251,12 +253,12 @@ describe('ICSR gateway transport — AS2 (configured gateway attempts the real t
     process.env.NODE_ENV = 'production';
     httpsRequests.length = 0;
     wire.statusCode = 200;
-    wire.headers = { 'message-id': '<mdn-1@esg.fda.example>' };
+    wire.headers = { 'message-id': '<mdn-1@esg.fda.example>', 'content-type': 'message/disposition-notification' };
     wire.body = ACCEPTING_MDN;
     wire.error = null;
   });
 
-  it('puts the E2B message on the wire as a signed AS2 envelope and reports transmitted only on an accepting MDN', async () => {
+  it('passes exact E2B bytes to the CMS boundary, posts its envelope, and requires an accepting verified MDN', async () => {
     const audit = vi.fn();
     const receipt = await transmitIcsr(readyMessage(), { now: fixedClock, audit, config: as2Config() });
 
@@ -276,29 +278,25 @@ describe('ICSR gateway transport — AS2 (configured gateway attempts the real t
     expect(options.path).toBe('/as2');
     expect(options.method).toBe('POST');
     expect(options.rejectUnauthorized).toBe(true);
-    expect(options.cert).toBe(publicKeyPem);
-    expect(options.ca).toBe(publicKeyPem);
+    expect(options.cert).toBe(pki.clientCertPem);
+    expect(options.ca).toBe(pki.caPem);
     expect(options.headers['AS2-From']).toBe('SPONSOR-AS2');
     expect(options.headers['AS2-To']).toBe('FDA-CESUB');
     expect(options.headers['Message-ID']).toMatch(/^<[0-9a-f-]{36}@SPONSOR-AS2>$/);
-    expect(options.headers['Content-Type']).toMatch(/application\/xml/);
-    expect(options.headers['Content-Disposition']).toContain('MSG-2026-0001.xml');
-    // The bytes on the wire are the built ICSR message, unaltered.
+    expect(options.headers['Content-Type']).toMatch(/application\/pkcs7-mime/);
+    expect(options.headers['Content-Disposition']).toContain('smime.p7m');
+    expect(envelopes.at(-1)).toMatchObject({ body: Buffer.from(readyMessage().message), contentType: 'application/xml; charset=utf-8', filename: 'MSG-2026-0001.xml' });
+    // The CMS isolation double preserves these bytes; real encryption is separate.
     expect(body.toString('utf8')).toBe(readyMessage().message);
 
     expect(audit).toHaveBeenCalledWith(expect.objectContaining({ outcome: 'transmitted', action: 'icsr_transmit' }));
   });
 
-  it('signs the body with the sponsor key (a real RSA-SHA256 signature, verifiable with the public key)', async () => {
-    // The envelope carries no signature header today (see the PKCS#7 gap in
-    // as2-transport.ts), so the proof is that signing with the configured key
-    // does not throw and the module signs the exact bytes it posts.
-    const { signAs2Body } = await import('../../submission-gateways/as2-transport');
+  it('passes the configured sponsor key and certificate with exact bytes to the CMS signer', async () => {
+    await transmitIcsr(readyMessage(), { now: fixedClock, config: as2Config() });
     const privateKeyPem = await fs.readFile(keyPath, 'utf8');
     const body = Buffer.from(readyMessage().message, 'utf8');
-    const sig = signAs2Body(body, privateKeyPem);
-    const v = createVerify('RSA-SHA256'); v.update(body);
-    expect(v.verify(publicKeyPem, sig, 'base64')).toBe(true);
+    expect(envelopes.at(-1)).toMatchObject({ body, clientKeyPem: privateKeyPem, clientCertPem: pki.clientCertPem, agencyCertPem: pki.caPem });
   });
 
   it('refuses — typed, audited — when the agency answers non-2xx', async () => {
@@ -369,7 +367,7 @@ describe('ICSR gateway transport — AS2 MDN folding and an MDN that names no me
     process.env.NODE_ENV = 'production';
     httpsRequests.length = 0;
     wire.statusCode = 200;
-    wire.headers = { 'message-id': '<mdn-1@esg.fda.example>' };
+    wire.headers = { 'message-id': '<mdn-1@esg.fda.example>', 'content-type': 'message/disposition-notification' };
     wire.error = null;
   });
 
@@ -449,7 +447,7 @@ describe('ICSR gateway transport — AS2 MDN dispositions and the message they n
   beforeEach(() => {
     process.env.NODE_ENV = 'production';
     wire.statusCode = 200;
-    wire.headers = { 'message-id': '<mdn-1@esg.fda.example>' };
+    wire.headers = { 'message-id': '<mdn-1@esg.fda.example>', 'content-type': 'message/disposition-notification' };
     wire.error = null;
   });
   const stageFor = async (body: string) => {
@@ -476,7 +474,7 @@ describe('ICSR gateway transport — AS2 MDN dispositions and the message they n
     expect(await stageFor(body)).toBe(stage);
   });
 
-  it('reads the MIME boundary from the HTTP Content-Type of an unsigned multipart/report', async () => {
+  it('reads the declared MIME boundary of the verified inner multipart/report', async () => {
     wire.headers = { ...wire.headers, 'content-type': 'multipart/report; report-type=disposition-notification; boundary="outer"' };
     expect(await stageFor(
       '--outer\r\nContent-Type: text/plain\r\n\r\nquoted:\r\n--fake\r\nContent-Type: message/disposition-notification\r\n\r\n' +

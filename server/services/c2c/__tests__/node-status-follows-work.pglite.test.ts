@@ -362,27 +362,6 @@ describe('2. the approval signature approves the sections it covers', () => {
     expect(audit).toHaveLength(0);
   }, T);
 
-  it('a section whose filing text is not the text signed is not approved', async () => {
-    const f = await makeFiling(['2.5', '2.6']);
-    expect((await save(f.sectionIds['2.5'], 'Signed text.')).status).toBe(200);
-    expect((await save(f.sectionIds['2.6'], 'Text the signer saw.')).status).toBe(200);
-    // The filing's 2.6 changed after the last save in this editor.
-    await q(`SELECT set_config('app.actor_id', '42', false), set_config('app.reason', 'elsewhere', false)`);
-    await q(
-      `UPDATE c2c_document_sections SET content = '{"text":"Text written elsewhere."}'::jsonb
-        WHERE document_id = $1 AND section_key = '2.6'`,
-      [f.doc],
-    );
-    await q(`SELECT set_config('app.actor_id', '', false), set_config('app.reason', '', false)`);
-
-    const res = await as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/e-sign`)).send({
-      meaning: 'APPROVER', intent: 'Approved.', password: PASSWORD,
-    });
-    expect(res.status, JSON.stringify(res.body)).toBe(200);
-    expect(await statuses(f.doc)).toEqual({ '2.5': 'approved', '2.6': 'drafted' });
-    expect(res.body.filingApproval).toEqual({ approved: ['2.5'], notApproved: ['2.6'], documentId: f.doc });
-  }, T);
-
   it('an approval on a document with no filing says so, not "nothing left to approve"', async () => {
     const f = await makeFiling(['2.5']);
     await q(`UPDATE authoring_documents SET c2c_document_id = NULL WHERE id = $1`, [f.authoringDocId]);
@@ -420,6 +399,43 @@ describe('2. the approval signature approves the sections it covers', () => {
     expect(await readiness(f.doc)).toBe(0);
   }, T);
 
+});
+
+/**
+ * A signature over a diverged filing is REFUSED whole, not applied in part
+ * (contract corrected 2026-10-18; it asserted 200 with 2.6 silently left
+ * drafted). A signature is bound to content: the signer believes they approved
+ * what is in front of them, while the submission would carry text for 2.6 they
+ * never saw, and a partial approval the signer thinks is whole is the ambiguity
+ * §11.70 exists to prevent. The second half keeps the refusal from being a dead
+ * end — the recovery the message names has to work, or the signer is stuck.
+ */
+describe('the signature a diverged filing refuses, and the way back', () => {
+  it('a signature over a diverged filing is refused whole, and the recovery it names works', async () => {
+    const f = await makeFiling(['2.5', '2.6']);
+    expect((await save(f.sectionIds['2.5'], 'Signed text.')).status).toBe(200);
+    expect((await save(f.sectionIds['2.6'], 'Text the signer saw.')).status).toBe(200);
+    const sign = () => as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/e-sign`)).send({ meaning: 'APPROVER', intent: 'Approved.', password: PASSWORD });
+    // The filing's 2.6 changed after the last save in this editor.
+    await q(`SELECT set_config('app.actor_id', '42', false), set_config('app.reason', 'elsewhere', false)`);
+    await q(`UPDATE c2c_document_sections SET content = '{"text":"x"}'::jsonb WHERE document_id = $1 AND section_key = '2.6'`, [f.doc]);
+
+    const refused = await sign();
+    expect([refused.status, refused.body.error.code], JSON.stringify(refused.body)).toEqual([409, 'FILING_DIVERGED']);
+    /* It names what diverged and how to reconcile it: an error that says only
+       "no" leaves the signer nowhere. */
+    expect(refused.body.error.message).toMatch(/section 2\.6[\s\S]*Re-file it from the editor/);
+    /* NOTHING was signed — not even the section that matched. One act, one document. */
+    expect(await statuses(f.doc)).toEqual({ '2.5': 'drafted', '2.6': 'drafted' });
+    expect(await q(`SELECT 1 FROM authoring_signatures WHERE doc_id = $1`, [f.authoringDocId])).toHaveLength(0);
+
+    /* The recovery the message names: re-file it, then sign again. */
+    expect((await save(f.sectionIds['2.6'], 'Text the signer saw, re-filed.')).status).toBe(200);
+    const signed = await sign();
+    expect(signed.status, JSON.stringify(signed.body)).toBe(200);
+    expect(await statuses(f.doc)).toEqual({ '2.5': 'approved', '2.6': 'approved' });
+    expect(signed.body.filingApproval).toEqual({ approved: ['2.5', '2.6'], notApproved: [], documentId: f.doc });
+  }, T);
 });
 
 describe('2. the approval signature approves the sections it covers: /sign, and rollback', () => {
@@ -539,7 +555,7 @@ describe('3. the old-store PATCH cannot approve or lock without a signature', ()
     expect(await q(`SELECT count(*)::int AS n FROM audit_logs`)).toEqual(before);
   }, T);
 
-  it('a content PATCH cannot rewrite a filing section protected by its approved authoring seal', async () => {
+  it('a content PATCH cannot rewrite a signed filing section (text is authored only, step 5)', async () => {
     const f = await makeFiling(['2.5']);
     expect((await save(f.sectionIds['2.5'], 'Signed text.')).status).toBe(200);
     const signed = await as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/e-sign`)).send({
@@ -553,9 +569,8 @@ describe('3. the old-store PATCH cannot approve or lock without a signature', ()
     const res = await request(app)
       .patch(`/api/c2c/documents/${f.doc}/sections/2.5`)
       .send({ content: { text: 'Text nobody signed.' }, reason: 'Edited in the dossier editor.' });
-    expect(res.status, JSON.stringify(res.body)).toBe(403);
-    expect(res.body.code).toBe('DOCUMENT_FROZEN');
-    expect(res.body.message).toMatch(/new version/);
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.code).toBe('SECTION_TEXT_IS_AUTHORED');
     expect(await sealedState(f)).toEqual(before);
     expect(await statuses(f.doc)).toEqual({ '2.5': 'approved' });
     expect(await readiness(f.doc)).toBe(100);
@@ -571,12 +586,12 @@ describe('3. the old-store PATCH cannot approve or lock without a signature', ()
     const f = await makeFiling(['2.5']);
     expect((await save(f.sectionIds['2.5'], 'Locked text.')).status).toBe(200);
     await q(`UPDATE c2c_document_sections SET status = 'locked' WHERE document_id = $1`, [f.doc]);
-    for (const body of [{ content: { text: 'New text.' } }, { status: 'todo' }]) {
+    for (const [body, code] of [[{ content: { text: 'New text.' } }, 'SECTION_TEXT_IS_AUTHORED'], [{ status: 'todo' }, 'SECTION_LOCKED']] as const) {
       const res = await request(app)
         .patch(`/api/c2c/documents/${f.doc}/sections/2.5`)
         .send({ ...body, reason: 'Trying to edit.' });
       expect(res.status, JSON.stringify(res.body)).toBe(409);
-      expect(res.body.code).toBe('SECTION_LOCKED');
+      expect(res.body.code).toBe(code);
       expect(res.body.message).toMatch(/Nothing was changed\.$/);
     }
     const [row] = await q<{ status: string; text: string }>(

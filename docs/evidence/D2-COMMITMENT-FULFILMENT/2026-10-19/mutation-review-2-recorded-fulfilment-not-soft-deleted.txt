@@ -1,0 +1,26 @@
+# Review mutation 2 — a recorded fulfilment's deleted_at is fixed (finding 4)
+#
+# Replaced in public.regulatory_commitments_fulfilment_record_guard() (as migrations/20261019_commitment_fulfilment_evidence.sql defines it), applied to the test database with psql:
+#   -                                'fulfilment_recorded_at', 'deleted_at'] LOOP
+# with:
+#   +                                'fulfilment_recorded_at'] LOOP
+#
+# Test selection: tests/db/commitment-fulfilment-database.dbtest.ts (-t "not removed from the register|removal is written once"), run as the runtime role app_service with RLS on.
+# Function definition md5: before 7faff05f705eb70e3380d0f413b4f2a4, mutated 73c6b2b21b9204824ad09abc94438d06, restored 7faff05f705eb70e3380d0f413b4f2a4 (identical to before)
+# Restored by re-applying migrations/20261019_commitment_fulfilment_evidence.sql with psql, as deploy-migrate does on every deploy.
+
+## Control: the same selection on the unmutated database
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > a recorded fulfilment is fixed > a recorded fulfilment is not removed from the register by an UPDATE (deleted_at) 11ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > a recorded fulfilment is fixed > a removal is written once: deleted_at, once set, is not cleared 135ms
+ Test Files  1 passed (1)
+      Tests  2 passed | 23 skipped (25)
+
+## With the mutation in place
+ × tests/db/commitment-fulfilment-database.dbtest.ts > a recorded fulfilment is fixed > a recorded fulfilment is not removed from the register by an UPDATE (deleted_at) 17ms
+   → a signed PMR fulfilment was hidden by setting deleted_at: expected true to be false // Object.is equality
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > a recorded fulfilment is fixed > a removal is written once: deleted_at, once set, is not cleared 142ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/commitment-fulfilment-database.dbtest.ts > a recorded fulfilment is fixed > a recorded fulfilment is not removed from the register by an UPDATE (deleted_at)
+AssertionError: a signed PMR fulfilment was hidden by setting deleted_at: expected true to be false // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 23 skipped (25)

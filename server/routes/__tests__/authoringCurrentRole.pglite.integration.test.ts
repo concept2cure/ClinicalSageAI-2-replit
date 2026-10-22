@@ -41,6 +41,9 @@ beforeAll(async () => {
     'migrations/20260814d_document_alias_map.sql',
     'migrations/20260921_audit_logs_chain_seq.sql',
     'migrations/20260921_authoring_document_provenance.sql',
+    // The current-role positive save also satisfies deployed QMS content governance.
+    'migrations/20260511_qms_and_labeling.sql',
+    'db/migrations/20261014_qms_controlled_authoring_content.sql',
   ] });
   h.db = db.db; h.pool = db.pool;
   await db.pool.query(`UPDATE organization_users SET role='admin' WHERE organization_id=$1 AND user_id=$2`, [ORG, Number(AUTHOR.id)]);
@@ -59,9 +62,13 @@ beforeAll(async () => {
     void db.pool.query('SELECT role FROM organization_users WHERE user_id=$1 AND organization_id=$2', [claims.userId, claims.organizationId]).then(result => {
       if (result.rows.length !== 1) { res.status(403).json({ error: 'CURRENT_MEMBERSHIP_REQUIRED' }); return; }
       const role = String((result.rows[0] as { role: string }).role);
-      Object.assign(req, { dbClient: db.pool, userRole: role,
-        identity: { legacyUserId: Number(claims.userId), organizationId: Number(claims.organizationId), role },
-        user: { id: claims.userId, userId: claims.userId, email: claims.email, organizationId: claims.organizationId, role, roles: [role] } });
+      (req as unknown as { dbClient: typeof db.pool }).dbClient = db.pool;
+      req.userRole = role;
+      (req as unknown as { identity: { legacyUserId: number; organizationId: number; role: string } }).identity = {
+        legacyUserId: Number(claims.userId), organizationId: Number(claims.organizationId), role,
+      };
+      req.user = { id: String(claims.userId), userId: String(claims.userId), email: String(claims.email),
+        organizationId: Number(claims.organizationId), role, roles: [role] };
       runWithTenantScope({ tenantId: String(ORG), role, source: 'request', caller: 'current-role-route-test' }, next);
     }).catch(next);
   });

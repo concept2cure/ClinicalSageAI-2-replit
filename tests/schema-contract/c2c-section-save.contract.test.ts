@@ -1,5 +1,14 @@
 /**
- * Contract: PATCH /api/c2c/documents/:id/sections/:key actually saves.
+ * Contract: PATCH /api/c2c/documents/:id/sections/:key, and the version ledger.
+ *
+ * ── 2026-10-17, document store consolidation step 5 ──────────────────────────
+ * The route no longer writes section TEXT. The authoring editor is the one
+ * editor, and its write-through (commit-section-to-filing.ts) is the one writer
+ * of c2c_document_sections.content; a content PATCH is refused with 409
+ * SECTION_TEXT_IS_AUTHORED (docs/design/DOCUMENT_STORE_CONSOLIDATION.md). The
+ * route still moves a section between the unsigned states. The ledger cases
+ * below drive the trigger the way the write-through does. The history that
+ * follows is why the real-database harness exists.
  *
  * ── The defect ────────────────────────────────────────────────────────────────
  * It did not. Not "sometimes", not "under load" — never, for anyone.
@@ -139,85 +148,110 @@ afterEach(async () => {
   await pg?.close();
 });
 
-const save = async (body: Record<string, unknown>, key = 'm2.5') =>
+const patch = async (body: Record<string, unknown>, key = 'm2.5') =>
   supertest(await buildApp())
     .patch(`/api/c2c/documents/${DOC}/sections/${key}`)
     .send({ reason: 'contract test edit', ...body });
 
-describe('the section save actually persists', () => {
-  it('returns 200 and creates the section — not 500', async () => {
-    const res = await save({ content: { paragraphs: ['first draft'] } });
-
-    // Before the fix this was 500 INTERNAL_ERROR, caused by 42601 at the GUC.
-    expect(res.status).toBe(200);
-
-    const rows = await pg.query<any>(
-      `SELECT section_key, content, version FROM c2c_document_sections WHERE document_id = $1`,
-      [DOC],
+/**
+ * Write section text the way the one remaining writer does
+ * (server/services/c2c/commit-section-to-filing.ts): the Part 11 GUCs set
+ * transaction-locally, then the UPDATE the snapshot trigger fires on. A
+ * section not yet present is inserted with its text (an INSERT writes no
+ * version row, as for the route's own first save before this change).
+ */
+const writeText = async (text: string, draftSource: string | null = null, key = 'm2.5') =>
+  pg.transaction(async (tx) => {
+    await tx.query(`SELECT set_config('app.actor_id', $1, true)`, [String(USER)]);
+    await tx.query(`SELECT set_config('app.reason', $1, true)`, ['contract test edit']);
+    const upd = await tx.query(
+      `UPDATE c2c_document_sections
+          SET content = jsonb_build_object('text', $3::text), draft_source = $4::text
+        WHERE document_id = $1 AND section_key = $2`,
+      [DOC, key, text, draftSource],
     );
-    expect(rows.rows).toHaveLength(1);
-    expect(rows.rows[0].section_key).toBe('m2.5');
-    expect(rows.rows[0].content).toEqual({ paragraphs: ['first draft'] });
+    if (upd.affectedRows === 0) {
+      await tx.query(
+        `INSERT INTO c2c_document_sections (document_id, section_key, label, path_order, content, status, draft_source)
+         VALUES ($1, $2, $2, 1, jsonb_build_object('text', $3::text), 'drafted', $4::text)`,
+        [DOC, key, text, draftSource],
+      );
+    }
+  });
+
+const sectionRows = async () =>
+  (await pg.query<any>(
+    `SELECT section_key, content, status, version FROM c2c_document_sections WHERE document_id = $1`, [DOC],
+  )).rows;
+
+describe('the route does not write section text (consolidation step 5)', () => {
+  it('refuses a content PATCH with 409 SECTION_TEXT_IS_AUTHORED and writes nothing', async () => {
+    const res = await patch({ content: { paragraphs: ['typed into the dossier drawer'] }, draftSource: 'human' });
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.code).toBe('SECTION_TEXT_IS_AUTHORED');
+    expect(res.body.message).toMatch(/authoring editor/);
+    expect(res.body.message).toMatch(/Nothing was changed\.$/);
+    expect(await sectionRows()).toEqual([]);
+    expect((await pg.query(`SELECT 1 FROM audit_logs`)).rows).toHaveLength(0);
   }, 60_000);
 
-  it('a second save updates the same row and bumps the version', async () => {
-    await save({ content: { paragraphs: ['v1'] } });
-    const res = await save({ content: { paragraphs: ['v2'] } });
-    expect(res.status).toBe(200);
-
-    const rows = await pg.query<any>(
-      `SELECT content, version FROM c2c_document_sections WHERE document_id = $1`, [DOC],
-    );
-    expect(rows.rows).toHaveLength(1);                       // updated, not duplicated
-    expect(rows.rows[0].content).toEqual({ paragraphs: ['v2'] });
-    expect(rows.rows[0].version).toBe(2);
+  it('refuses content even when a status rides with it — the status is not applied either', async () => {
+    await writeText('authored text');
+    const res = await patch({ content: { text: 'replacement' }, status: 'review' });
+    expect(res.status).toBe(409);
+    const [row] = await sectionRows();
+    expect(row.content).toEqual({ text: 'authored text' });
+    expect(row.status).toBe('drafted');
   }, 60_000);
 
-  it('the Part 11 attribution GUC really does reach the trigger', async () => {
-    // The trigger RAISES without app.actor_id. A save that updates content and
-    // returns 200 is therefore positive proof the GUC was set — this is the
-    // assertion the mocked suite structurally could not make.
-    await save({ content: { paragraphs: ['v1'] } });
-    const res = await save({ content: { paragraphs: ['v2'] } });
-    expect(res.status).toBe(200);
-
-    const v = await pg.query<any>(
-      `SELECT author_id, reason FROM c2c_document_section_versions`,
-    );
-    expect(v.rows).toHaveLength(1);
-    expect(v.rows[0].author_id).toBe(USER);                  // the real JWT user, not a placeholder
-    expect(v.rows[0].reason).toBe('contract test edit');
-  }, 60_000);
-
-  it('audits in the same transaction as the write', async () => {
-    await save({ content: { paragraphs: ['first draft'] } });
+  it('still moves a section between the unsigned states, audited in the same transaction', async () => {
+    const res = await patch({ status: 'review' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const [row] = await sectionRows();
+    expect(row.status).toBe('review');
+    expect(row.content).toEqual({});
     const audit = await pg.query<any>(`SELECT target, sha256_chain FROM audit_logs`);
     expect(audit.rows.length).toBeGreaterThan(0);
     expect(audit.rows[0].sha256_chain).toBeTruthy();
   }, 60_000);
+
+  it('a status change on authored text leaves the text and its version alone', async () => {
+    await writeText('authored text');
+    const res = await patch({ status: 'review' });
+    expect(res.status).toBe(200);
+    const [row] = await sectionRows();
+    expect(row).toMatchObject({ content: { text: 'authored text' }, status: 'review', version: 1 });
+    expect((await pg.query(`SELECT 1 FROM c2c_document_section_versions`)).rows).toHaveLength(0);
+  }, 60_000);
 });
 
-describe('the version ledger records how the superseded content was authored', () => {
-  it('AnA-drafted text is not recorded as human-authored', async () => {
-    // v1 is written by AnA...
-    await save({ content: { paragraphs: ['ana draft'] }, draftSource: 'ana' });
-    // ...then a human edits it, which snapshots v1 into the ledger.
-    await save({ content: { paragraphs: ['human revision'] }, draftSource: 'human' });
+describe('the version ledger the write-through feeds', () => {
+  it('a second write bumps the version and snapshots the first, attributed to the GUC actor', async () => {
+    await writeText('v1');
+    await writeText('v2');
+    const [row] = await sectionRows();
+    expect(row.content).toEqual({ text: 'v2' });
+    expect(row.version).toBe(2);
+    const v = await pg.query<any>(`SELECT author_id, reason FROM c2c_document_section_versions`);
+    expect(v.rows).toHaveLength(1);
+    expect(v.rows[0].author_id).toBe(USER);
+    expect(v.rows[0].reason).toBe('contract test edit');
+  }, 60_000);
 
+  it('AnA-drafted text is not recorded as human-authored', async () => {
+    await writeText('ana draft', 'ana');
+    await writeText('human revision', 'human');
     const v = await pg.query<any>(
       `SELECT version, author_kind FROM c2c_document_section_versions ORDER BY version`,
     );
     expect(v.rows).toHaveLength(1);
-    expect(v.rows[0].version).toBe(1);
-    // Hardcoded 'human' before the fix. This is the falsification 21 CFR Part 11
-    // §11.10(e) exists to prevent.
     expect(v.rows[0].author_kind).toBe('ana');
   }, 60_000);
 
   it('human-authored text stays human', async () => {
-    await save({ content: { paragraphs: ['h1'] }, draftSource: 'human' });
-    await save({ content: { paragraphs: ['h2'] }, draftSource: 'human' });
-    const v = await pg.query<any>(`SELECT author_kind FROM c2c_document_section_versions`);
+    await writeText('h1', 'human');
+    await writeText('h2', 'human');
+    const v = await pg.query<any>(`SELECT author_kind FROM c2c_document_section_versions ORDER BY version`);
     expect(v.rows[0].author_kind).toBe('human');
   }, 60_000);
 });

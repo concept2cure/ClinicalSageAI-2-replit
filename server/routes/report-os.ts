@@ -41,6 +41,9 @@ import { ReportTypeNotComputed, computeRunForType } from '../services/report-os/
 import { buildRunPdf, type RunPdfContent } from '../services/report-os/pdf/run-pdf';
 import { buildBundlePdf, buildReportPackPdf, type ReportPackPdfItem } from '../services/report-os/pdf/bundle-pdf';
 import { ReportingPdfError } from '../services/report-os/pdf/writer';
+import { REPORT_PDF_BRANDING_RENDERER } from '../services/report-os/pdf/company-branding';
+import { companyLetterheadForPurpose, companyProfileHash, CompanyDocumentsError } from '../services/company-documents/profile';
+import type { CompanyDocumentProfile } from '@shared/company-documents';
 import type { SealedRecord } from '../services/report-os/sealing/types';
 import { decideDelivery } from '../services/report-os/scheduling/delivery';
 import {
@@ -54,7 +57,7 @@ import { createScopedLogger } from '../utils/logger';
 import { writeChainedAuditRow } from '../services/auditService';
 import type { PoolClient } from 'pg';
 import { requireRole } from '../middleware/auth';
-import { requireEditorAccessForWrites } from '../middleware/orgMembership';
+import { requireEditorAccessForWrites, GOVERNED_WRITE_ROLES } from '../middleware/orgMembership';
 import { signingAttemptLimiter } from '../middleware/signing-attempt-limiter';
 import {
   GovernedSignatureRefusal,
@@ -83,7 +86,7 @@ import { listReportRunHistory } from '../services/report-os/run-history';
 import { ReportRegistryError, explicitReportRegistry } from '../services/report-os/registry-context';
 import { UnsupportedReportClientScope } from '../services/report-os/client-scope';
 import { resolveOwnedReportScope, ReportScopeOwnershipError, type OwnedReportScopeInput } from '../services/report-os/scope-ownership';
-import { requestPgClient, type RequestSqlClient } from '../db/requestDb';
+import { requestDb, requestPgClient, type RequestSqlClient } from '../db/requestDb';
 import { getAccessibleReportProjectIds, canAccessReportScope, recordedReportProjectIds, type ReportProjectActor, type ReportAccessScope } from '../services/report-os/project-access';
 import { hasOrganizationProjectManagementRole } from '../services/project-sharing-access';
 import { persistReportRun, ReportRunRecordingError } from '../services/report-os/persistence';
@@ -105,15 +108,22 @@ async function accessibleProjectIds(req: Request, organizationId: number): Promi
   return cached.reportAccessibleProjects;
 }
 
-async function canReadReportScope(req: Request, organizationId: number, scope: ReportAccessScope): Promise<boolean> {
-  if (scope.scopeType === 'account') return canAccessReportScope(organizationId, reportActor(req), scope);
-  return canAccessReportScope(organizationId, reportActor(req), scope, undefined, await accessibleProjectIds(req, organizationId));
+interface ReportReadContext {
+  actor: ReportProjectActor;
+  client: RequestSqlClient;
+  projectIds: readonly number[];
 }
 
-async function canReadBundle(req: Request, bundle: ReportBundleRecord): Promise<boolean> {
-  const ids = new Set(await accessibleProjectIds(req, bundle.organizationId));
+async function canReadReportScope(req: Request, organizationId: number, scope: ReportAccessScope, context?: ReportReadContext): Promise<boolean> {
+  const actor = context?.actor ?? reportActor(req);
+  if (scope.scopeType === 'account') return canAccessReportScope(organizationId, actor, scope, context?.client, context?.projectIds);
+  return canAccessReportScope(organizationId, actor, scope, context?.client, context?.projectIds ?? await accessibleProjectIds(req, organizationId));
+}
+
+async function canReadBundle(req: Request, bundle: ReportBundleRecord, context?: ReportReadContext): Promise<boolean> {
+  const ids = new Set(context?.projectIds ?? await accessibleProjectIds(req, bundle.organizationId));
   if (!(bundle.projectIds ?? []).every(id => ids.has(id))) return false;
-  for (const item of bundle.items) if (!(await canReadReportScope(req, bundle.organizationId, { ...item, recorded: true }))) return false;
+  for (const item of bundle.items) if (!(await canReadReportScope(req, bundle.organizationId, { ...item, recorded: true }, context))) return false;
   return true;
 }
 router.use(authMiddleware);
@@ -441,7 +451,7 @@ async function inTenantTransaction<T>(organizationId: number, fn: (client: PoolC
 }
 
 /** The chained audit row for `event`, on `client`'s open transaction. */
-function writeReportEvent(client: PoolClient, req: Request, event: ReportAuditEvent): Promise<void> {
+function writeReportEvent(client: RequestSqlClient, req: Request, event: ReportAuditEvent): Promise<void> {
   return writeChainedAuditRow(client, {
     tenantId: event.organizationId,
     userId: getUserId(req),
@@ -500,7 +510,12 @@ async function createRunOnChain(
   try {
     return await persistReportRun(rows, {
       userId: getUserId(req), ipAddress: req.ip, userAgent: req.get('user-agent') ?? undefined,
-    });
+    }, rows.run.reportTypeId === 'lifecycle.obligation_calendar' ? async client => {
+      const actor = await readCurrentProgramActor(client, { organizationId: rows.run.organizationId, userId: getUserId(req), forShare: true });
+      if (!GOVERNED_WRITE_ROLES.has(actor.role) || !await canAccessReportScope(rows.run.organizationId, actor, rows.run, client)) {
+        throw new ProgramReadAccessError(403, 'PROJECT_PERMISSION_DENIED', 'Current report source access and writing permission are required. Nothing was saved.');
+      }
+    } : undefined);
   } catch (error) {
     if (!(error instanceof ReportRunRecordingError)) throw error;
     logger.error('report run not recorded on the audit chain; rolled back', { error: (error as Error)?.message });
@@ -590,7 +605,7 @@ class FinalizeStopped extends Error {
  * run did not carry.
  */
 async function writeFinalize(
-  client: PoolClient,
+  client: RequestSqlClient,
   run: typeof reportRuns.$inferSelect,
   seal: SealedRecord,
   sealedDocument: RenderedReport
@@ -863,6 +878,7 @@ function resolveProjectsForBundleRuns(runs: Array<{ scopeType: string; scopeId: 
   for (const run of runs) {
     const projectId = resolveProjectIdForRun(run);
     if (projectId) ids.add(projectId);
+    for (const sourceId of recordedReportProjectIds(run) ?? []) ids.add(sourceId);
   }
   return [...ids];
 }
@@ -907,36 +923,101 @@ async function persistBundleRecord(req: Request, bundle: ReportBundleRecord) {
   }
 }
 
+/** Bounded SQL pages; the result limit counts admitted distinct packs, never
+ * the memory rows copied to each source project. */
+const BUNDLE_ROW_SCAN = 5000;
+const BUNDLE_REGISTER_LIMIT = 5000;
+type BundleCursor = { id: number; createdAt: string };
+type BundleRegisterRead = { bundles: ReportBundleRecord[]; moreBundle?: ReportBundleRecord };
+
+function bundleRecordWhere(organizationId: number, bundleId?: string) {
+  return and(
+    eq(projectMemoryEntries.organizationId, organizationId),
+    eq(projectMemoryEntries.category, 'regulatory'),
+    eq(projectMemoryEntries.subcategory, REPORT_OS_BUNDLE_SUBCATEGORY),
+    eq(projectMemoryEntries.sourceDocumentType, REPORT_OS_RECORD_SOURCE),
+    ...(bundleId ? [eq(projectMemoryEntries.title, `bundle:${bundleId}`)] : []),
+  );
+}
+
+async function loadBundleRows(organizationId: number, executor: ReportDb, bundleId?: string, cursor?: BundleCursor) {
+  return executor.select({
+    id: projectMemoryEntries.id,
+    title: projectMemoryEntries.title,
+    content: projectMemoryEntries.content,
+    // Retain PostgreSQL's microseconds: a driver Date would truncate the keyset.
+    createdAt: sql<string>`${projectMemoryEntries.createdAt}::text`,
+  }).from(projectMemoryEntries).where(and(
+    bundleRecordWhere(organizationId, bundleId),
+    ...(cursor ? [sql`(${projectMemoryEntries.createdAt}, ${projectMemoryEntries.id}) < (${cursor.createdAt}::timestamp, ${cursor.id}::integer)`] : []),
+  )).orderBy(desc(projectMemoryEntries.createdAt), desc(projectMemoryEntries.id)).limit(BUNDLE_ROW_SCAN);
+}
+
+function decodeBundleRow(organizationId: number, content: string): ReportBundleRecord {
+  const parsed = decodeRecordPayload(content, 'bundleRecord', reportBundleRecordSchema);
+  if (!parsed || parsed.organizationId !== organizationId) {
+    throw new ReportBundleError('A saved report pack is incomplete or invalid. The register could not be read.', 'REPORT_BUNDLE_CORRUPT');
+  }
+  return parsed;
+}
+
+async function loadBundleRegister(organizationId: number, executor: ReportDb, admit: (bundle: ReportBundleRecord) => Promise<boolean>): Promise<BundleRegisterRead> {
+  const bundles: ReportBundleRecord[] = [];
+  const seen = new Set<string>();
+  let cursor: BundleCursor | undefined;
+  for (;;) {
+    const rows = await loadBundleRows(organizationId, executor, undefined, cursor);
+    for (const row of rows) {
+      const bundle = decodeBundleRow(organizationId, row.content);
+      // Newest row wins BEFORE admission. An older public copy must never
+      // surface behind a newer private copy of the same recorded pack.
+      if (seen.has(bundle.bundleId)) continue;
+      seen.add(bundle.bundleId);
+      if (!await admit(bundle)) continue;
+      if (bundles.length === BUNDLE_REGISTER_LIMIT) return { bundles, moreBundle: bundle };
+      bundles.push(bundle);
+    }
+    if (rows.length < BUNDLE_ROW_SCAN) return { bundles };
+    const last = rows.at(-1)!;
+    if (!Number.isSafeInteger(last.id) || last.id < 1 || typeof last.createdAt !== 'string' || !last.createdAt.trim()) {
+      throw new ReportBundleError('The report register could not be read completely.', 'REPORT_BUNDLE_REGISTER_UNAVAILABLE');
+    }
+    cursor = { id: last.id, createdAt: last.createdAt };
+  }
+}
+
+async function currentBundleReadContext(req: Request, organizationId: number): Promise<ReportReadContext> {
+  const client = requestPgClient(req);
+  const actor = await readCurrentProgramActor(client, { organizationId, userId: getUserId(req) });
+  return { client, actor, projectIds: await getAccessibleReportProjectIds(organizationId, actor, client) };
+}
+
+async function assertBundleRegisterStillCurrent(req: Request, organizationId: number, before: ReportReadContext, register: BundleRegisterRead): Promise<void> {
+  const current = await currentBundleReadContext(req, organizationId);
+  const same = current.actor.userId === before.actor.userId && current.actor.role === before.actor.role
+    && current.projectIds.length === before.projectIds.length && current.projectIds.every((id, index) => id === before.projectIds[index]);
+  if (!same) throw new ProgramReadAccessError(503, 'PROJECT_ACCESS_CHANGED', 'Current project access changed during the read. No project data was supplied.');
+  // Scope parents can change without changing the actor's project allowlist.
+  // Recheck every returned pack AND the admitted extra pack behind the count.
+  const checked = register.moreBundle ? [...register.bundles, register.moreBundle] : register.bundles;
+  for (const bundle of checked) {
+    if (!await canReadBundle(req, bundle, current)) {
+      throw new ProgramReadAccessError(503, 'PROJECT_ACCESS_CHANGED', 'Current project access changed during the read. No project data was supplied.');
+    }
+  }
+}
+
+/** Exact-ID readers retain the same newest-copy behavior and their existing
+ * caller's admission; a register count is neither needed nor disclosed. */
 async function loadBundlesForOrg(organizationId: number, bundleId?: string, executor: ReportDb = db): Promise<ReportBundleRecord[]> {
-  const rows = await executor
-    .select({
-      title: projectMemoryEntries.title,
-      content: projectMemoryEntries.content,
-      createdAt: projectMemoryEntries.createdAt,
-    })
-    .from(projectMemoryEntries)
-    .where(
-      and(
-        eq(projectMemoryEntries.organizationId, organizationId),
-        eq(projectMemoryEntries.category, 'regulatory'),
-        eq(projectMemoryEntries.subcategory, REPORT_OS_BUNDLE_SUBCATEGORY),
-        eq(projectMemoryEntries.sourceDocumentType, REPORT_OS_RECORD_SOURCE),
-        ...(bundleId ? [eq(projectMemoryEntries.title, `bundle:${bundleId}`)] : []),
-      )
-    )
-    .orderBy(desc(projectMemoryEntries.createdAt))
-    .limit(1000);
-
-  const normalized = rows
-    .map(row => {
-      const parsed = decodeRecordPayload(row.content, 'bundleRecord', reportBundleRecordSchema);
-      if (!parsed || parsed.organizationId !== organizationId) throw new ReportBundleError('A saved report pack is incomplete or invalid. The register could not be read.', 'REPORT_BUNDLE_CORRUPT');
-      return { id: parsed.bundleId, ...parsed };
-    })
-    .filter((row): row is ReportBundleRecord & { id: string } => !!row);
-
-  const deduped = dedupeByLatest(normalized).map(({ id: _id, ...rest }) => rest);
-  return deduped;
+  const rows = await executor.select({
+    title: projectMemoryEntries.title, content: projectMemoryEntries.content, createdAt: projectMemoryEntries.createdAt,
+  }).from(projectMemoryEntries).where(bundleRecordWhere(organizationId, bundleId))
+    .orderBy(desc(projectMemoryEntries.createdAt), desc(projectMemoryEntries.id)).limit(BUNDLE_ROW_SCAN);
+  return dedupeByLatest(rows.map(row => {
+    const bundle = decodeBundleRow(organizationId, row.content);
+    return { id: bundle.bundleId, ...bundle };
+  })).map(({ id: _id, ...bundle }) => bundle);
 }
 
 async function loadBundleById(
@@ -1627,6 +1708,7 @@ router.post('/runs', async (req: Request, res: Response) => {
         scopeType,
         scopeId,
         clientWorkspaceId,
+        ...(reportTypeId === 'lifecycle.obligation_calendar' ? { recordContext: { executor: requestPgClient(req), userId: requestedBy } } : {}),
         declared: {
           label: type[0].label,
           region: typeof governance.region === 'string' ? governance.region : null,
@@ -1719,6 +1801,7 @@ router.post('/runs', async (req: Request, res: Response) => {
     if (error instanceof ReportRegistryError) return res.status(400).json({ error: error.message, code: error.code });
     if (error instanceof ReportScopeOwnershipError) return res.status(error.status).json({ error: error.message, code: error.code });
     if (error instanceof UnsupportedReportClientScope) return res.status(422).json({ error: error.message, code: error.code });
+    if (error instanceof ProgramReadAccessError) return res.status(error.status).json({ error: error.message, code: error.code });
     return serverError(res, logger, 'saving runs', error);
   }
 });
@@ -1767,6 +1850,12 @@ async function readRetainedRunPdfSource(client: PoolClient, run: typeof reportRu
   return { ...(await readSealForExport(client, run)), runBy: await actorName(client, run.requestedBy) };
 }
 
+/** The presentation snapshot is distinct from the retained/sealed content hash. */
+function reportBrandingAudit(profile: CompanyDocumentProfile | null) {
+  return profile ? { applied: true, revision: profile.revision, profileHash: companyProfileHash(profile), renderer: REPORT_PDF_BRANDING_RENDERER }
+    : { applied: false };
+}
+
 function retainedRunPdfContent(
   run: typeof reportRuns.$inferSelect,
   reportType: { label: string | null; truthfulnessRules: unknown } | undefined,
@@ -1784,7 +1873,10 @@ async function sendRunPdf(
   run: typeof reportRuns.$inferSelect,
   reportType: { label: string | null; truthfulnessRules: unknown } | undefined,
 ) {
-  const source = await inTenantTransaction(run.organizationId, client => readRetainedRunPdfSource(client, run));
+  const { source, companyBranding } = await inTenantTransaction(run.organizationId, async client => ({
+    source: await readRetainedRunPdfSource(client, run),
+    companyBranding: await companyLetterheadForPurpose(run.organizationId, 'report', client),
+  }));
   const { view } = source;
   if (view.verification.verdict === 'mismatch') return refuseSealMismatch(res, run.id, 'exported');
   const status = view.sealed ? 'final' : run.status;
@@ -1794,6 +1886,7 @@ async function sendRunPdf(
     ...retainedRunPdfContent(run, reportType, source),
     exportId,
     exportedAt,
+    companyBranding,
   });
   return sendRecordedPdf(
     req,
@@ -1806,6 +1899,7 @@ async function sendRunPdf(
       details: {
         runUuid: run.runUuid, reportTypeId: run.reportTypeId, status, exportId, exportedAt,
         pages: pdf.pages, sealVerdict: view.sealed ? view.verification.verdict : null,
+        companyBranding: reportBrandingAudit(companyBranding),
       },
     },
     { filename: `report-run-${run.id}.pdf`, buffer: pdf.bytes }
@@ -1850,6 +1944,7 @@ router.get('/runs/:id/export.pdf', async (req: Request, res: Response) => {
     return await sendRunPdf(req, res, run, reportType);
   } catch (error: any) {
     if (error instanceof ReportingPdfError) return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
+    if (error instanceof CompanyDocumentsError) return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
     if (error instanceof ReportBundleError) return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
     return serverError(res, logger, 'loading export.pdf', error);
   }
@@ -2228,7 +2323,7 @@ router.post('/bundles', async (req: Request, res: Response) => {
       confidence: run.confidence ?? null,
       blockers: toBlockerArray(run.blockers),
       createdAt: safeIso(run.createdAt),
-      ...(run.scopeType === 'program' && recordedReportProjectIds(run) ? { accessProjectIds: [...recordedReportProjectIds(run)!] } : {}),
+      ...(recordedReportProjectIds(run) ? { accessProjectIds: [...recordedReportProjectIds(run)!] } : {}),
     }));
     // A bundle is stored as a memory entry on each project its runs cover.
     // This list was never filled in, so persistBundleRecord wrote nothing and
@@ -2272,12 +2367,16 @@ router.get('/bundles', async (req: Request, res: Response) => {
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(400).json({ error: 'organizationId query parameter is required' });
     }
-    const rows = await loadBundlesForOrg(organizationId);
-    const allowed = [];
-    for (const bundle of rows) if (await canReadBundle(req, bundle)) allowed.push(bundle);
-    return res.json({ data: allowed });
+    const context = await currentBundleReadContext(req, organizationId);
+    const register = await loadBundleRegister(organizationId, requestDb(req), bundle => canReadBundle(req, bundle, context));
+    await assertBundleRegisterStillCurrent(req, organizationId, context, register);
+    return res.json({
+      data: register.bundles,
+      ...(register.moreBundle ? { meta: { truncated: true, registerTotalAtLeast: register.bundles.length + 1 } } : {}),
+    });
   } catch (error: any) {
     if (error instanceof ReportBundleError) return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
+    if (error instanceof ProgramReadAccessError) return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
     return serverError(res, logger, 'loading bundles', error);
   }
 });
@@ -2290,13 +2389,14 @@ router.get('/bundles', async (req: Request, res: Response) => {
  * recorded on the chain row with how many reports were final.
  */
 async function sendBundlePdf(req: Request, res: Response, bundle: ReportBundleRecord) {
-  const { now, bundledBy } = await inTenantTransaction(bundle.organizationId, async (client) => {
+  const { now, bundledBy, companyBranding } = await inTenantTransaction(bundle.organizationId, async (client) => {
     const { rows } = await client.query('SELECT id, status FROM report_runs WHERE organization_id = $1 AND id = ANY($2::int[])', [
       bundle.organizationId,
       bundle.runIds,
     ]);
     const statuses = new Map((rows as Array<{ id: unknown; status: unknown }>).map((r) => [Number(r.id), String(r.status)]));
-    return { now: statuses, bundledBy: await actorName(client, bundle.createdBy ?? null) };
+    return { now: statuses, bundledBy: await actorName(client, bundle.createdBy ?? null),
+      companyBranding: await companyLetterheadForPurpose(bundle.organizationId, 'report', client) };
   });
   const items = bundle.items.map((i) => ({
     runId: i.runId, label: i.reportTypeLabel, scopeType: i.scopeType, scopeId: i.scopeId,
@@ -2304,7 +2404,7 @@ async function sendBundlePdf(req: Request, res: Response, bundle: ReportBundleRe
   }));
   const exportId = randomUUID();
   const exportedAt = new Date().toISOString();
-  const pdf = await buildBundlePdf({ bundle, bundledBy, items, exportId, exportedAt });
+  const pdf = await buildBundlePdf({ bundle, bundledBy, items, exportId, exportedAt, companyBranding });
   return sendRecordedPdf(
     req,
     res,
@@ -2316,6 +2416,7 @@ async function sendBundlePdf(req: Request, res: Response, bundle: ReportBundleRe
       details: {
         content: 'manifest', bundleId: bundle.bundleId, runIds: bundle.runIds, reportTypeIds: [...new Set(bundle.items.map((i) => i.reportTypeId))],
         exportId, exportedAt, pages: pdf.pages, finalAtExport: items.filter((i) => i.currentStatus === 'final').length,
+        companyBranding: reportBrandingAudit(companyBranding),
       },
     },
     { filename: `report-bundle-${bundle.bundleId.slice(0, 8)}.pdf`, buffer: pdf.bytes }
@@ -2481,7 +2582,7 @@ async function requireReportPackEntitlement(client: PoolClient, bundle: ReportBu
 async function sendReportPackPdf(req: Request, res: Response, organizationId: number, bundleId: string) {
   const exportId = randomUUID();
   const exportedAt = new Date().toISOString();
-  const { bundle, pdf } = await inTenantTransaction(organizationId, async client => {
+  const { bundle, pdf, companyBranding } = await inTenantTransaction(organizationId, async client => {
     const bundle = await loadBundleById(organizationId, bundleId, onTransaction(client));
     if (!bundle || bundle.organizationId !== organizationId) reportPackNotFound();
     requireCompleteReportPack(bundle);
@@ -2494,18 +2595,20 @@ async function sendReportPackPdf(req: Request, res: Response, organizationId: nu
     const runs = await readReportPackRuns(client, bundle);
     const { items, fingerprints } = await readReportPackSources(client, bundle, runs, types);
     const bundledBy = await actorName(client, bundle.createdBy ?? null);
-    const pdf = await buildReportPackPdf({ bundle, bundledBy, items, exportId, exportedAt });
+    const companyBranding = await companyLetterheadForPurpose(organizationId, 'report', client);
+    const pdf = await buildReportPackPdf({ bundle, bundledBy, items, exportId, exportedAt, companyBranding });
     await requireCurrentReportPackAccess(client, req, bundle, runs);
     await requireReportPackEntitlement(client, bundle);
     await requireReportPackSourcesStillCurrent(client, bundle, fingerprints);
     await requireReportPackInputsStillCurrent(client, bundle, types, bundledBy);
-    return { bundle, pdf };
+    return { bundle, pdf, companyBranding };
   });
   return sendRecordedPdf(req, res, {
     organizationId, action: 'report_os.bundle_exported', resourceType: 'report_bundle', resourceId: bundleId,
     details: { content: 'reports', bundleId, runIds: bundle.runIds,
       reportTypeIds: [...new Set(pdf.constituents.map(item => item.reportTypeId))], exportId, exportedAt, pages: pdf.pages,
       finalAtExport: pdf.constituents.filter(item => item.statusAtRead === 'final').length,
+      companyBranding: reportBrandingAudit(companyBranding),
       constituents: pdf.constituents },
   }, { filename: `report-pack-${bundleId.slice(0, 8)}.pdf`, buffer: pdf.bytes });
 }
@@ -2527,7 +2630,7 @@ function sendBundlePdfError(res: Response, error: unknown) {
     const refusal = error.decision;
     return res.status(403).json({ error: `Exporting this bundle requires the ${refusal.requiredTier} plan.`, feature: refusal.feature, requiredTier: refusal.requiredTier, tier: refusal.tier });
   }
-  if (error instanceof ProgramReadAccessError || error instanceof ReportingPdfError || error instanceof ReportBundleError) {
+  if (error instanceof ProgramReadAccessError || error instanceof ReportingPdfError || error instanceof ReportBundleError || error instanceof CompanyDocumentsError) {
     return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
   }
   return serverError(res, logger, 'loading export.pdf', error);

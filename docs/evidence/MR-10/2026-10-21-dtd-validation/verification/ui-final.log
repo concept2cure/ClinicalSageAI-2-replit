@@ -1,0 +1,438 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > loads module readiness from the real status endpoint 173ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > compiles across the region and renders the server result with a backbone download 412ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > shows an honest empty state when no program is open (no fixture) 9ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > a program UUID ident is sent to the server (which resolves it) — the numeric-only dead-end is gone 52ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — what the surface may claim > names what is still missing instead of a bare negative 88ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — what the surface may claim > warns that the downloadable backbone is not a sequence 72ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — what the surface may claim > reports the readiness number as content completeness, not readiness to submit 40ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — what the surface may claim > claims nothing extra in the compile toast 65ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > opens both backbones as a navigable leaf hierarchy — Module 1 from the regional file 146ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > lists every file in the package and offers the regional backbone and the MD5 index 191ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > states the PDF/A outcome and whether the compilation was recorded 120ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > names an FDA form shipped as FDA issued apart from the PDF/A count 127ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > an unrecorded compilation says it can anchor no lifecycle 128ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > the region is the sequence's: shown, not chosen, and not sent 91ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > readiness counted from placed documents says so, and never reads as approval 42ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > history names the sequence each compilation covered and whether it anchors the next 57ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up sequence's lifecycle > a follow-up sequence shows every act against the filed state, and what was left out 120ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up sequence's lifecycle > a follow-up with no filed sequence on record says there is nothing on file to act on 103ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up sequence's lifecycle > an original sequence has no lifecycle to show 112ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > shows an imported report with its compilation, and says this product did not run it 66ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > names who imported it by account, and lists every report it replaced 88ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > replacing a report asks first, naming the report it replaces; cancelling opens nothing 204ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > imports a report against the compilation whose package it covered 136ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > a refused report is shown in the server's words, and nothing is shown as imported 71ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a rehearsal is asked for, and says it is one > is offered only for a follow-up sequence — an original has nothing to rehearse against 78ms
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a rehearsal is asked for, and says it is one > compiles as a rehearsal when asked, says which sequences were never filed, and exports the same 186ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a rehearsal is asked for, and says it is one > a compile without the toggle asks for no rehearsal 160ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a rehearsal is asked for, and says it is one > the history names a rehearsal compilation for what it is 37ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx > existing compiled-package DTD evidence > shows actual index, regional and STF execution, validity and integrity 678ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx > existing compiled-package DTD evidence > shows invalid STF diagnostics and integrity gaps despite an aggregate pass claim 209ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx > existing compiled-package DTD evidence > never reports legacy, absent, incomplete or unexecuted evidence as a pass: undefined 221ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx > existing compiled-package DTD evidence > never reports legacy, absent, incomplete or unexecuted evidence as a pass: {"required":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd"],"present":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd"],"missing":[],"requiredStylesheets":["ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"presentStylesheets":["ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"missingStylesheets":[],"selfContained":true} 302ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx > existing compiled-package DTD evidence > never reports legacy, absent, incomplete or unexecuted evidence as a pass: {"required":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd"],"present":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd"],"missing":[],"requiredStylesheets":["ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"presentStylesheets":["ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"missingStylesheets":[],"selfContained":true,"validation":{"version":1,"expectedFiles":[],"files":[],"integrity":{"verified":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd","ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"mismatched":[],"missingFiles":[],"unlistedFiles":[],"ok":true},"passed":true}} 251ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx > existing compiled-package DTD evidence > never reports legacy, absent, incomplete or unexecuted evidence as a pass: {"required":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd"],"present":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd"],"missing":[],"requiredStylesheets":["ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"presentStylesheets":["ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"missingStylesheets":[],"selfContained":true,"validation":{"version":1,"expectedFiles":["index.xml","m1/us/us-regional.xml","m5/stf-study-101.xml"],"files":[{"relPath":"index.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"dtd","valid":true,"ran":true,"errors":[]}},{"relPath":"m1/us/us-regional.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"dtd","valid":true,"ran":true,"errors":[]}}],"integrity":{"verified":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd","ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"mismatched":[],"missingFiles":[],"unlistedFiles":[],"ok":true},"passed":true}} 160ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx > existing compiled-package DTD evidence > never reports legacy, absent, incomplete or unexecuted evidence as a pass: {"required":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd"],"present":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd"],"missing":[],"requiredStylesheets":["ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"presentStylesheets":["ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"missingStylesheets":[],"selfContained":true,"validation":{"version":1,"expectedFiles":["index.xml","m1/us/us-regional.xml","m5/stf-study-101.xml"],"files":[{"relPath":"index.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"dtd","valid":true,"ran":false,"errors":["xmllint not available"]}},{"relPath":"m1/us/us-regional.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"dtd","valid":true,"ran":false,"errors":["xmllint not available"]}},{"relPath":"m5/stf-study-101.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"dtd","valid":true,"ran":false,"errors":["xmllint not available"]}}],"integrity":{"verified":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd","ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"mismatched":[],"missingFiles":[],"unlistedFiles":[],"ok":true},"passed":true}} 157ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx > existing compiled-package DTD evidence > never reports legacy, absent, incomplete or unexecuted evidence as a pass: {"required":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd"],"present":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd"],"missing":[],"requiredStylesheets":["ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"presentStylesheets":["ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"missingStylesheets":[],"selfContained":true,"validation":{"version":1,"expectedFiles":["index.xml","m1/us/us-regional.xml","m5/stf-study-101.xml"],"files":[{"relPath":"index.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"well-formed","valid":true,"ran":true,"errors":[]}},{"relPath":"m1/us/us-regional.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"well-formed","valid":true,"ran":true,"errors":[]}},{"relPath":"m5/stf-study-101.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"well-formed","valid":true,"ran":true,"errors":[]}}],"integrity":{"verified":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd","ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"mismatched":[],"missingFiles":[],"unlistedFiles":[],"ok":true},"passed":true}} 169ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx > existing compiled-package DTD evidence > never reports legacy, absent, incomplete or unexecuted evidence as a pass: {"required":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd"],"present":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd"],"missing":[],"requiredStylesheets":["ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"presentStylesheets":["ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"missingStylesheets":[],"selfContained":true,"validation":{"version":1,"expectedFiles":["index.xml","m1/us/us-regional.xml","m5/stf-study-101.xml"],"files":"malformed","integrity":{"verified":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd","ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"mismatched":[],"missingFiles":[],"unlistedFiles":[],"ok":true},"passed":true}} 155ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx > existing compiled-package DTD evidence > never reports legacy, absent, incomplete or unexecuted evidence as a pass: {"required":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd"],"present":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd"],"missing":[],"missingStylesheets":[],"selfContained":true,"validation":{"version":1,"expectedFiles":["index.xml","m1/us/us-regional.xml","m5/stf-study-101.xml"],"files":[{"relPath":"index.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"dtd","valid":true,"ran":true,"errors":[]}},{"relPath":"m1/us/us-regional.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"dtd","valid":true,"ran":true,"errors":[]}},{"relPath":"m5/stf-study-101.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"dtd","valid":true,"ran":true,"errors":[]}}],"integrity":{"verified":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd","ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"mismatched":[],"missingFiles":[],"unlistedFiles":[],"ok":true},"passed":true}} 830ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx > existing compiled-package DTD evidence > never reports legacy, absent, incomplete or unexecuted evidence as a pass: {"required":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd"],"present":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd"],"missing":[],"requiredStylesheets":["ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"presentStylesheets":["ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"missingStylesheets":[],"selfContained":true,"validation":{"version":1,"expectedFiles":["index.xml","m1/us/us-regional.xml","m5/stf-study-101.xml"],"files":[{"relPath":"index.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"dtd","valid":true,"ran":true,"errors":[]}},{"relPath":"m1/us/us-regional.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"dtd","valid":true,"ran":true,"errors":[]}},{"relPath":"m5/stf-study-101.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"dtd","valid":true,"ran":true,"errors":[]}}],"integrity":{"verified":[],"mismatched":[],"missingFiles":[],"unlistedFiles":[],"ok":true},"passed":true}} 193ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx > existing compiled-package DTD evidence > keeps historical absence unverified and labels recorded proof with its package hash 83ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx > existing compiled-package DTD evidence > renders the recorded regional fact with DTD proof rather than inferring it from region: {"dtdStatus":{"required":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd"],"present":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd"],"missing":[],"requiredStylesheets":["ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"presentStylesheets":["ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"missingStylesheets":[],"selfContained":true,"validation":{"version":1,"expectedFiles":["index.xml","m1/us/us-regional.xml","m5/stf-study-101.xml"],"files":[{"relPath":"index.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"dtd","valid":true,"ran":true,"errors":[]}},{"relPath":"m1/us/us-regional.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"dtd","valid":true,"ran":true,"errors":[]}},{"relPath":"m5/stf-study-101.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"dtd","valid":true,"ran":true,"errors":[]}}],"integrity":{"verified":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd","ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"mismatched":[],"missingFiles":[],"unlistedFiles":[],"ok":true},"passed":true}},"expected":{}} 188ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx > existing compiled-package DTD evidence > renders the recorded regional fact with DTD proof rather than inferring it from region: {"regionalStatus":{"region":"fda","file":"m1/us/us-regional.xml","regionConformant":true},"expected":{}} 247ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx > existing compiled-package DTD evidence > renders the recorded regional fact with DTD proof rather than inferring it from region: {"regionalStatus":{"region":"fda","file":"m1/us/us-regional.xml","regionConformant":false,"conformanceGap":"Applicant contact is not recorded."},"dtdStatus":{"required":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd"],"present":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd"],"missing":[],"requiredStylesheets":["ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"presentStylesheets":["ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"missingStylesheets":[],"selfContained":true,"validation":{"version":1,"expectedFiles":["index.xml","m1/us/us-regional.xml","m5/stf-study-101.xml"],"files":[{"relPath":"index.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"dtd","valid":true,"ran":true,"errors":[]}},{"relPath":"m1/us/us-regional.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"dtd","valid":true,"ran":true,"errors":[]}},{"relPath":"m5/stf-study-101.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"dtd","valid":true,"ran":true,"errors":[]}}],"integrity":{"verified":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd","ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"mismatched":[],"missingFiles":[],"unlistedFiles":[],"ok":true},"passed":true}},"expected":{}} 170ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx > existing compiled-package DTD evidence > renders the recorded regional fact with DTD proof rather than inferring it from region: {"regionalStatus":{"region":"kr","file":"m1/kr/kr-regional.xml","regionConformant":false,"placeholderOf":"ema"},"dtdStatus":{"required":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd"],"present":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd"],"missing":[],"requiredStylesheets":["ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"presentStylesheets":["ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"missingStylesheets":[],"selfContained":true,"validation":{"version":1,"expectedFiles":["index.xml","m1/us/us-regional.xml","m5/stf-study-101.xml"],"files":[{"relPath":"index.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"dtd","valid":true,"ran":true,"errors":[]}},{"relPath":"m1/us/us-regional.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"dtd","valid":true,"ran":true,"errors":[]}},{"relPath":"m5/stf-study-101.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"dtd","valid":true,"ran":true,"errors":[]}}],"integrity":{"verified":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd","ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"mismatched":[],"missingFiles":[],"unlistedFiles":[],"ok":true},"passed":true}},"expected":{}} 186ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx > existing compiled-package DTD evidence > renders the recorded regional fact with DTD proof rather than inferring it from region: {"regionalStatus":{"region":"fda","file":"m1/us/us-regional.xml","regionConformant":true},"dtdStatus":{"required":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd"],"present":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd"],"missing":[],"requiredStylesheets":["ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"presentStylesheets":["ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"missingStylesheets":[],"selfContained":true,"validation":{"version":1,"expectedFiles":["index.xml","m1/us/us-regional.xml","m5/stf-study-101.xml"],"files":[{"relPath":"index.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"dtd","valid":true,"ran":true,"errors":[]}},{"relPath":"m1/us/us-regional.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"dtd","valid":true,"ran":true,"errors":[]}},{"relPath":"m5/stf-study-101.xml","wellFormed":{"mode":"well-formed","valid":true,"ran":true,"errors":[]},"doctype":{"valid":true,"errors":[]},"dtd":{"mode":"dtd","valid":true,"ran":true,"errors":[]}}],"integrity":{"verified":["ich-ectd-3-2.dtd","us-regional-v3-3.dtd","ich-stf-v2-2.dtd","ectd-2-0.xsl","us-regional.xsl","ich-stf-stylesheet.xsl"],"mismatched":[],"missingFiles":[],"unlistedFiles":[],"ok":true},"passed":true}},"expected":{}} 541ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx > compile DTD proof ownership > drops a delayed compile success across project A → B → A 396ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx > compile DTD proof ownership > drops a delayed compile refusal across project A → B → A 387ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx > compile DTD proof ownership > drops delayed history after actor revision even when the same project returns 162ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx > compile DTD proof ownership > consumes the opened sequence once and does not carry it into another project visit 301ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx > compile DTD proof ownership > keeps the newer post-compile history when an earlier read settles last 466ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > discovers saved runs for the open UUID program without requiring a pasted id 781ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > starts from the selected program and exposes missing source inputs 215ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > forwards the real signature ceremony then offers continuation retry without a second signature 913ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > reports discovery failure instead of an empty run history 111ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > keeps the latest selected run and excludes late audit and signature results from a previous run 144ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > clears the former program run before a delayed response can become a signing target 345ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > retains the recorded signature notice while the refreshed run is still loading 882ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > fences run changes throughout the signature ceremony and a delayed signing write 709ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > does not let failed-discovery retry close a signature ceremony or release its delayed-write fence 574ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 1. a failed audit read is not an empty audit trail > reports the audit trail as unreadable, never as zero events 233ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 1. a failed audit read is not an empty audit trail > tells the assistant the audit history is unknown, not absent 114ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 1. a failed audit read is not an empty audit trail > still distinguishes a genuine empty trail that READ successfully 122ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 2. a skipped step is not a completed step > counts only completed steps as ran, excluding skipped 84ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 2. a skipped step is not a completed step > says explicitly that skipped steps never ran 98ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 2. a skipped step is not a completed step > reports skipped separately to the assistant, with its meaning 154ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 3. signature state distinguishes unsigned from tampered > renders an integrity failure as a failure, not as "not signed yet" 71ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 3. signature state distinguishes unsigned from tampered > distinguishes an unsigned run from a drifted one 162ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 3. signature state distinguishes unsigned from tampered > surfaces a verified signature with its bound digest 104ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 3. signature state distinguishes unsigned from tampered > names who signed, when, and with what meaning (§11.50) 115ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 3. signature state distinguishes unsigned from tampered > says a printed name the record does not hold is not recorded 84ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > a failed run read is not a run without steps > reports the run as unreadable rather than rendering an empty pipeline 66ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > no run loaded is its own state > does not describe an unloaded pipeline as a clean one 38ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileWithdrawal.test.tsx > EctdCompile — a follow-up whose only act is a withdrawal > can still be downloaded: it is a package, with no content file of its own 573ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileWithdrawal.test.tsx > EctdCompile — a follow-up whose only act is a withdrawal > is not called a working document: its backbone is the package's own 145ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileWithdrawal.test.tsx > EctdCompile — a follow-up whose only act is a withdrawal > says a well-formed backbone with no leaf carries none, rather than calling it malformed 130ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileWithdrawal.test.tsx > EctdCompile — a follow-up whose only act is a withdrawal > reads a withdrawal as one: the leaf it withdraws, and no file 147ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileWithdrawal.test.tsx > EctdCompile — a follow-up whose only act is a withdrawal > still says so when a backbone really is not well-formed 141ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileWithdrawal.test.tsx > EctdCompile — a follow-up whose only act is a withdrawal > a draft compile — no package built — keeps the working-document caveat and offers no package 147ms
+stderr | client/src/concept2cure/v2/__tests__/anaOperatesEctdCompile.test.tsx > the Region menu — what the next Validate or Compile is run for > switches the region, and the menu a person reads really moved
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesEctdCompile.test.tsx > the Region menu — what the next Validate or Compile is run for > switches the region, and the menu a person reads really moved 145ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesEctdCompile.test.tsx > the Region menu — what the next Validate or Compile is run for > says so rather than claiming a switch when that region is already selected 54ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesEctdCompile.test.tsx > the Region menu — what the next Validate or Compile is run for > a region this compiler has no menu entry for never reaches the screen 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesEctdCompile.test.tsx > the Region menu — what the next Validate or Compile is run for > is held while readiness loads — the menu's very presence depends on that read 44ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesEctdCompile.test.tsx > the Region menu — what the next Validate or Compile is run for > a readiness read that FAILED gets the refusal, not a twenty-second timeout 72ms
+stderr | client/src/concept2cure/v2/__tests__/anaOperatesEctdCompile.test.tsx > the Submission menu — what the next compile is run as > switches the submission type, and the menu a person reads really moved
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesEctdCompile.test.tsx > the Region menu — what the next Validate or Compile is run for > a sequence that records its own region has no Region menu, and the refusal names both 55ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesEctdCompile.test.tsx > the Submission menu — what the next compile is run as > switches the submission type, and the menu a person reads really moved 62ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesEctdCompile.test.tsx > the Submission menu — what the next compile is run as > says so rather than claiming a switch when that type is already selected 47ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesEctdCompile.test.tsx > the Submission menu — what the next compile is run as > a type this compiler does not offer never reaches the screen 2ms
+stderr | client/src/concept2cure/v2/__tests__/anaOperatesEctdCompile.test.tsx > the orchestrator run box > loads a run: the box carries the id and the pipeline panel fills
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesEctdCompile.test.tsx > the Submission menu — what the next compile is run as > is refused while a compile is in flight, though the menu itself stays enabled 318ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesEctdCompile.test.tsx > the orchestrator run box > loads a run: the box carries the id and the pipeline panel fills 74ms
+stderr | client/src/concept2cure/v2/__tests__/anaOperatesEctdCompile.test.tsx > the orchestrator run box > a run id nobody can see comes back as the panel's own honest miss, not as a result
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/anaOperatesEctdCompile.test.tsx > the orchestrator run box > a second load sent while the first read is in flight is held, then applied
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesEctdCompile.test.tsx > the orchestrator run box > a run id nobody can see comes back as the panel's own honest miss, not as a result 53ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesEctdCompile.test.tsx > the orchestrator run box > no run id says why no ids can be listed — this screen lists none 32ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesEctdCompile.test.tsx > the orchestrator run box > a second load sent while the first read is in flight is held, then applied 72ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesEctdCompile.test.tsx > with no program open — the one honest dead-end left > refuses all three and says to open a program, instead of going silent 10ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileCarriesSequence.test.tsx > compile opened on a sequence (F14) > reads, validates and compiles the sequence it was opened on, at its recorded region 592ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileCarriesSequence.test.tsx > compile opened on a sequence (F14) > opened with no sequence, it asks as it did: no sequenceId anywhere 161ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileCarriesSequence.test.tsx > the Dispatch tab opens compile on its own sequence (F14) > "Validate and compile this sequence" carries the sequence to the compile screen 67ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileHistoryHonesty.test.tsx > EctdCompile — compilation history honesty > a failed history read is reported as not loaded, never as "No compilations yet" 188ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileHistoryHonesty.test.tsx > EctdCompile — compilation history honesty > a successful empty read is the only path to "No compilations yet" 52ms
+
+ Test Files  8 passed (8)
+      Tests  98 passed (98)
+   Start at  00:32:37
+   Duration  45.66s (transform 4.44s, setup 1.42s, import 11.90s, tests 19.18s, environment 11.05s)
+

@@ -298,7 +298,6 @@ describe('the placement carries its reason', () => {
     expect((writes.find((w) => w.method === 'PUT')!.body as Record<string, unknown>).reason).toBe(REASON);
   });
 });
-
 const placeBtn = () => screen.getByRole('button', { name: /^Place into filing$/ }) as HTMLButtonElement;
 
 const PREFILLED = "Pre-filled from this document's confirmed filing.";

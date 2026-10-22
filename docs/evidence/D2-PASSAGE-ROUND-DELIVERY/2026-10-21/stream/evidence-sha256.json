@@ -1,0 +1,16 @@
+{
+  "algorithm": "sha256",
+  "files": {
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/stream/README.md": "88532b7bbb67261a89f2b836ee3e7524f09eb85738e454480e84e9cc06e30200",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/stream/baseline-command.json": "45d0351dbef80e894f0d42a7ae3d6cb7a895cf6d1d87622504c9f6a6df1f2d51",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/stream/baseline-red.txt": "fd5fea2d59769fde50305b7b8ac605442d85c89081caaebaa10ef19d30cb7948",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/stream/baseline-result.json": "7bf97735646cb6acd844930533f4564b981a4df88a6d4ac38129845f06945e11",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/stream/first-baseline-command.json": "d94ce71394d43bc4b4c48465f8dd47fe649c6f5cc5c4008d5df1b87eeac31432",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/stream/first-baseline-red.txt": "d17c661f4d712d707cb7a1a7553315d439b41723fa8ac4701ee52b46ab6db018",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/stream/first-baseline-result.json": "ec6f786c6c53b7b1dbc3bbf0de227b964c4b44e2a680abd93bee8ce08fa29bee",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/stream/frozen-test.json": "9861fe1216f6f96d1f3a65e0f1f60eef378eb35c7c88218b05dc0960023f2493",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/stream/lint-command.json": "3d0fc855e38dff4071eea45835195fe0dfc1679ef111cbb88c500899c34c3723",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/stream/lint-raw.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/stream/lint-result.json": "ff8ae5796bcef71911ff9c5c3eaea341819c471f669549e252b830106edd4305"
+  }
+}

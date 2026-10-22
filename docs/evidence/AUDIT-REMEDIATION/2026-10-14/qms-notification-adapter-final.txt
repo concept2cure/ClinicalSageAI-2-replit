@@ -1,0 +1,10 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/quality/__tests__/QualityNotificationTarget.test.tsx > Quality adapter consumes exact notification handoffs > passes the initial exact record and a later same-surface request through QualityRoute 117ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  04:01:07
+   Duration  1.06s (transform 182ms, setup 145ms, import 197ms, tests 119ms, environment 474ms)
+

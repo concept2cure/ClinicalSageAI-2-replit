@@ -1,0 +1,20 @@
+Green, 2026-10-19.
+
+The four coverage and fail-closed suites:
+  contradiction-detector-coverage, contradiction-cross-artifact-coverage,
+  contradiction-scan-failclosed, contradiction-aware-status-tenant
+
+      Tests  34 passed (34)
+
+The remaining contradiction, decision-lifecycle and assumption-registry suites:
+
+      Tests  26 passed (26)   (project-scope + assumption-registry)
+      Tests  53 passed (54)   (the rest; the 1 failure was contradiction-scan-project-scope
+                               before scanProject was migrated — green after)
+
+npm run typecheck (tsc --noEmit):
+
+      DONE-0
+
+ESLint over the three changed service files: 0 errors, 17 warnings — measured at 17 on origin
+as well (git stash, re-lint, restore). Net-new: 0.

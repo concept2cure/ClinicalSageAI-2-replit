@@ -1,0 +1,25 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-14T20:38:46.232Z","pid":49863,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T20:38:46.235Z","pid":49863,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T20:38:46.235Z","pid":49863,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | server/routes/__tests__/defense-shadow-binding.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/defense-shadow-binding.dbtest.ts > Shadow bindings on actual migration-backed tables > uses genuine authenticated pinned app_service scope, not owner or a mocked database
+[database] Database connection successful
+
+stdout | server/routes/__tests__/defense-shadow-binding.dbtest.ts > Shadow bindings on actual migration-backed tables > uses genuine authenticated pinned app_service scope, not owner or a mocked database
+[database] Database connection successful { timestamp: '2026-10-14T20:38:46.910Z', poolSize: 1 }
+
+stdout | server/routes/__tests__/defense-shadow-binding.dbtest.ts > Shadow bindings on actual migration-backed tables > admits the exact own packet, using the actual schema and programme UUID
+[database] Database connection successful { timestamp: '2026-10-14T20:38:46.992Z', poolSize: 2 }
+
+ ✓ server/routes/__tests__/defense-shadow-binding.dbtest.ts (10 tests) 1399ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  20:38:44
+   Duration  2.99s (transform 1.39s, setup 52ms, import 1.34s, tests 1.40s, environment 0ms)
+

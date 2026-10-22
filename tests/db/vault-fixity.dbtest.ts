@@ -20,13 +20,17 @@ import { Pool } from 'pg';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { databaseUrl } from '../setup.db';
+import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime, seedVaultFixtureParent, seedVaultFixtureViewer } from './vault-current-access-fixture';
+import { nativeCatalogRunId } from './catalog-native-fixture';
 
-const PROBE = 'dbtest-vfix ';
-const CODE = 'DBTEST-VFIX';
+const RUN = nativeCatalogRunId();
+const PROBE = `dbtest-vfix-${RUN} `;
+const CODE = `DBTEST-VFIX-${RUN}`;
 
 type Tenant = { orgId: number; orgUuid: string; programId: string };
 let owner: Pool;
 let userId: number;
+let viewerId: number;
 let mine: Tenant;
 let theirs: Tenant;
 const ids: Record<'intact' | 'intactV2' | 'altered' | 'missing', string> = { intact: '', intactV2: '', altered: '', missing: '' };
@@ -36,11 +40,12 @@ async function appFor(t: Tenant, role = 'admin'): Promise<express.Express> {
   const createProjectVaultRoutes = (await import('../../server/routes/c2c/project-vault')).default;
   const { establishRequestTenantScope } = await import('../../server/middleware/establishRequestTenantScope');
   const a = express();
+  const actorId = role === 'viewer' ? viewerId : userId;
   a.use(express.json());
   a.use((req, _res, next) => {
     Object.assign(req, {
-      userId, tenantId: t.orgId, userRole: role,
-      user: { id: userId, organizationId: t.orgId, organizationUuid: t.orgUuid, role },
+      userId: actorId, tenantId: t.orgId, userRole: role,
+      user: { id: actorId, organizationId: t.orgId, organizationUuid: t.orgUuid, role },
     });
     next();
   });
@@ -77,46 +82,33 @@ const fixity = async (t: Tenant, role = 'admin') =>
 
 async function tenant(slug: string): Promise<Tenant> {
   const org = await owner.query(
-    `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
-    [`${PROBE}${slug}`, `dbtest-vfix-${slug}`],
+    `INSERT INTO organizations (name, slug, status) VALUES ($1, $2, 'active') RETURNING id, uuid`,
+    [`${PROBE}${slug}`, `dbtest-vfix-${RUN}-${slug}`],
   );
   const prog = await owner.query(
     `INSERT INTO regulatory_programs (name, code, organization_id, program_type, product_type, primary_agency, product_name)
      VALUES ($1, $2, $3, 'ind', 'drug', 'FDA', 'Fixa 5mg') RETURNING id`,
     [`${PROBE}${slug} program`, `${CODE}-${slug.toUpperCase()}`, org.rows[0].id],
   );
-  return { orgId: Number(org.rows[0].id), orgUuid: String(org.rows[0].uuid), programId: String(prog.rows[0].id) };
-}
-
-async function cleanup(): Promise<void> {
-  const client = await owner.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query(`DELETE FROM audit_logs WHERE tenant_id IN (SELECT id FROM organizations WHERE slug LIKE 'dbtest-vfix-%')`);
-    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query('COMMIT');
-  } catch {
-    await client.query('ROLLBACK').catch(() => {});
-  } finally {
-    client.release();
-  }
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1 AND supersedes_id IS NOT NULL', [`${CODE}%`]);
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${CODE}%`]);
-  await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE}%`]);
+  const current = { orgId: Number(org.rows[0].id), orgUuid: String(org.rows[0].uuid), programId: String(prog.rows[0].id) };
+  await seedVaultFixtureParent(owner, current, { userId, namespace: `${PROBE}${slug}-parent` });
+  return current;
 }
 
 beforeAll(async () => {
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
+  await assertVaultFixtureDatabase(owner);
   const user = await owner.query(
-    `INSERT INTO users (email, name, password_hash) VALUES ('dbtest-vfix@example.test', 'Fay Fixity', 'not-a-real-hash')
-       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
+    `INSERT INTO users (email, name, password_hash, status) VALUES ($1, 'Fay Fixity', 'not-a-real-hash', 'active') RETURNING id`,
+    [`dbtest-vfix-${RUN}@example.test`],
   );
   userId = Number(user.rows[0].id);
-  await cleanup();
   mine = await tenant('mine');
   theirs = await tenant('theirs');
+  viewerId = Number((await owner.query("INSERT INTO users(email,name,password_hash,status) VALUES($1,'QA Viewer','not-a-real-hash','active') RETURNING id",
+    [`dbtest-viewer-${RUN}@example.test`])).rows[0].id);
+  await seedVaultFixtureViewer(owner, mine, { userId: viewerId, invitedBy: userId });
+  await assertVaultFixtureRuntime(mine);
   ids.intact = await ingest(mine, 'The intact record, version 1.', { documentCode: `${CODE}-INTACT`, documentTitle: 'Intact record' });
   ids.intactV2 = await ingest(mine, 'The intact record, version 2.', { supersedesDocumentId: ids.intact, documentTitle: 'Intact record' });
   ids.altered = await ingest(mine, 'The record someone will alter.', { documentCode: `${CODE}-ALTERED`, documentTitle: 'Altered record' });
@@ -127,11 +119,9 @@ beforeAll(async () => {
 }, 90_000);
 
 afterAll(async () => {
-  await cleanup().catch(() => {});
-  await owner.end().catch(() => {});
-  for (const t of [mine, theirs]) {
-    if (t) await fs.rm(path.resolve(process.cwd(), 'storage', 'vault', String(t.orgId)), { recursive: true, force: true }).catch(() => {});
-  }
+  // Keep this invocation's source bytes, records and append-only history.
+  try { await closeVaultFixtureRuntime(); }
+  finally { await owner?.end(); }
 });
 
 describe('fixity: every stored version re-proven (critique 15)', () => {

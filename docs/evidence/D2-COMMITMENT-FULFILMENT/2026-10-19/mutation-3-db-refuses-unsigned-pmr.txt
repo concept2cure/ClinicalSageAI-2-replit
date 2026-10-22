@@ -1,0 +1,41 @@
+# Mutation 3 — the database trigger no longer requires the signature for a fulfilled PMR, PMC or REMS
+#
+# Replaced in the database: public.regulatory_commitments_signed_fulfilment_guard() (migrations/20261019_commitment_fulfilment_evidence.sql) by:
+#   -- MUTATION 3: the guard accepts a fulfilled PMR/PMC/REMS that names evidence, with no signature check at all.
+#   CREATE OR REPLACE FUNCTION public.regulatory_commitments_signed_fulfilment_guard()
+#   RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog, public AS $fn$
+#   DECLARE cur public.regulatory_commitments%ROWTYPE;
+#   BEGIN
+#     SELECT * INTO cur FROM public.regulatory_commitments WHERE id = NEW.id;
+#     IF NOT FOUND OR cur.status <> 'fulfilled' OR cur.commitment_type NOT IN ('pmr', 'pmc', 'rems') THEN RETURN NULL; END IF;
+#     IF cur.fulfilment_sequence_id IS NULL AND cur.fulfilment_vault_document_id IS NULL THEN
+#       RAISE EXCEPTION 'COMMITMENT_EVIDENCE_REQUIRED: mutated' USING ERRCODE = 'integrity_constraint_violation';
+#     END IF;
+#     RETURN NULL;
+#   END;
+#   $fn$;
+#
+# Test run with the mutation in place: tests/db/commitment-fulfilment-database.dbtest.ts (-t "database signs exactly|fails at COMMIT|M5")
+# Function definition md5: before b5f668ac939308c03e26c827f6823b27, mutated a7f0365fca815da0ecab6a7f041e4a5d, restored b5f668ac939308c03e26c827f6823b27 (identical to before)
+# Restored by re-applying the migration file with psql, as deploy-migrate does on every deploy.
+
+## The run
+ × tests/db/commitment-fulfilment-database.dbtest.ts > the record a fulfilment is made on > the database signs exactly the types the code signs (SIGNED_FULFILMENT_TYPES), no more and no fewer 97ms
+   → pmr: {"ok":true}: expected true to be false // Object.is equality
+ × tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > a fulfilled PMR with evidence and no signature fails at COMMIT 47ms
+   → expected true to be false // Object.is equality
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > a fulfilled PMR that names nothing fails at COMMIT 26ms
+ × tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > a signature by someone else, or over other evidence, does not count (M5) 47ms
+   → expected true to be false // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/commitment-fulfilment-database.dbtest.ts > the record a fulfilment is made on > the database signs exactly the types the code signs (SIGNED_FULFILMENT_TYPES), no more and no fewer
+AssertionError: pmr: {"ok":true}: expected true to be false // Object.is equality
+ FAIL  tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > a fulfilled PMR with evidence and no signature fails at COMMIT
+AssertionError: expected true to be false // Object.is equality
+ FAIL  tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > a signature by someone else, or over other evidence, does not count (M5)
+AssertionError: expected true to be false // Object.is equality
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed | 9 skipped (13)
+
+## Reading
+With the deferred guard checking only that evidence is named, "a fulfilled PMR with evidence and no signature fails at COMMIT" fails (the COMMIT succeeds), "a signature by someone else, or over other evidence, does not count" fails, and the type pin fails on its first type (the answer reads `pmr: {"ok":true}`): it fulfils each of the five types unsigned as the runtime role and expects exactly SIGNED_FULFILMENT_TYPES to be refused with COMMITMENT_SIGNATURE_REQUIRED. The function was restored by re-running the migration; its md5 after restore equals the md5 before the mutation (header). Control: "M3 db", 4 passed.

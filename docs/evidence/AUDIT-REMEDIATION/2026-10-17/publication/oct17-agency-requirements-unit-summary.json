@@ -1,0 +1,38 @@
+{
+  "rawArtifact": {
+    "artifact": "oct17-agency-requirements-unit.json",
+    "sha256": "e4620e252d2c9b9f6b8df4898c59fcae30e728fc2e9c969f270e579cf8b6283c",
+    "bytes": 4455
+  },
+  "success": true,
+  "passedCases": 10,
+  "failedCases": 0,
+  "pendingCases": 0,
+  "files": 2,
+  "rows": [
+    {
+      "file": "server/routes/__tests__/ri-agency-requirement-validated-only-by-curator.test.ts",
+      "status": "passed",
+      "cases": 3,
+      "counts": {
+        "passed": 3,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/ri-agency-requirements-unvalidated-visible-only-to-writer-org.pglite.test.ts",
+      "status": "passed",
+      "cases": 7,
+      "counts": {
+        "passed": 7,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    }
+  ]
+}

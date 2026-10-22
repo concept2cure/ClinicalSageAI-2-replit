@@ -185,16 +185,54 @@ export function findCmcRequirements(q: CmcRequirementQuery, limit = 12): { match
   return { matches: ranked.slice(0, limit).map((x) => x.r), total: ranked.length };
 }
 
-/** Documents whose code, title or scope match the query, best match first. */
+/**
+ * Documents whose code, title or scope match the query, best match first — the
+ * named authority's own, and the ICH baseline it has adopted.
+ *
+ * ── Why ICH is included when an authority is named ──────────────────────────
+ * `findCmcRequirements` has always done this, for the reason stated beside it:
+ * "the named authority's own requirements before the ICH baseline it adopts".
+ * This function did not, and the cost was measured over 91 questions (13
+ * authorities × 7 CMC topics, docs/evidence/CMC-M3-GA/2026-10-19/
+ * 13-adopted-ich-baseline/): the requirements tool answered **91**, this one
+ * answered **49**. "Which documents govern stability for an EU CTA?" found
+ * nothing, because the governing document is ICH Q1A(R2) and the record files
+ * it under ICH — so AnA was told *not indexed* about a guideline the record
+ * holds and the authority has adopted.
+ *
+ * Every authority in this record has adopted the ICH quality guidelines
+ * (the ICH members and observers, and the WHO and PIC/S standards that
+ * reference them), which is why the baseline is included for all of them
+ * rather than by a per-authority list that would go stale.
+ *
+ * An UNRESOLVABLE authority still matches nothing: `resolveAuthorities`
+ * returns `[]` for a word the record does not know, and no baseline is lent to
+ * it — so the tool's "No authority X in the record" error still fires instead
+ * of a list of ICH documents that answers a question about nobody.
+ */
 export function findCmcGuidance(query: string, authority?: string, limit = 12): { matches: CmcSource[]; total: number } {
   const authorities = resolveAuthorities(authority);
   const qTokens = tokens(query);
   const compactQuery = query.toLowerCase().replace(/\s+/g, '');
   const ranked = CMC_RECORD.sources
-    .filter((s) => !authorities || authorities.includes(s.authority))
+    .filter((s) => !authorities || authorities.includes(s.authority) || (authorities.length > 0 && s.authority === 'ICH'))
     .map((s) => {
       const codeHit = compactQuery && s.code.toLowerCase().replace(/\s+/g, '').includes(compactQuery) ? 50 : 0;
-      return { s, rank: codeHit + score(qTokens, [[s.code, 6], [s.title, 3], [s.scope, 1], [s.ctdSections.join(' '), 2]]) };
+      /* The authority's OWN document before the baseline it adopts, at the same
+         topical strength — but a materially better topical match still wins,
+         whoever issued it, which is why `own` is worth less than one point of
+         score. The same arithmetic as `findCmcRequirements`. */
+      const own = authorities && authorities.includes(s.authority) ? 1 : 0;
+      const topical = score(qTokens, [[s.code, 6], [s.title, 3], [s.scope, 1], [s.ctdSections.join(' '), 2]]);
+      /* `own` is a TIE-BREAKER among documents that already match the question,
+         never a match of its own. Added as a flat bonus, it gave every document
+         of the named authority a positive rank, so the topical filter below
+         kept all of them: "which documents govern container closure for
+         ANVISA?" returned ANVISA's whole shelf. Measured, not reasoned —
+         coverage jumped to 91/91 for the wrong reason, which is how it was
+         caught (docs/evidence/CMC-M3-GA/2026-10-19/13-adopted-ich-baseline/). */
+      if (codeHit === 0 && topical === 0) return { s, rank: 0 };
+      return { s, rank: codeHit + topical * 10 + own * 5 };
     })
     .filter((x) => x.rank > 0)
     .sort((a, b) => b.rank - a.rank || a.s.id.localeCompare(b.s.id));

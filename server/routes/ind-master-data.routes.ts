@@ -6,12 +6,12 @@
  * Mounted at /api/ind-master-data with authenticateToken applied at mount time
  * (see server/bootstrap/register-ind-lifecycle-routes.ts). Every handler
  * resolves organizationId/userId from the authenticated session only (never
- * from body/params), validates with Zod, and is RBAC-gated. The service layer
- * is the authoritative tenant/audit boundary.
+ * from body/params) and is RBAC-gated. Sponsor business facts use canonical
+ * identifier/contact validation and exact revisions. The service layer is the
+ * authoritative tenant/audit boundary.
  */
 
 import { Router, Request, Response } from 'express';
-import { z } from 'zod';
 import { requireRole } from '../middleware/auth';
 import { createRateLimiter } from '../middleware/rateLimiter';
 import {
@@ -30,6 +30,7 @@ import {
   IndMasterDataError,
 } from '../services/ind-master-data/ind-master-data-service';
 import { createScopedLogger } from '../utils/logger.js';
+import { normalizeSponsorBusiness, sponsorReason } from '../services/ind-master-data/sponsor-input';
 
 const logger = createScopedLogger('ind-master-data-routes');
 const router = Router();
@@ -55,6 +56,7 @@ const CODE_STATUS: Record<string, number> = {
   NOT_FOUND: 404,
   VALIDATION: 400,
   FORBIDDEN: 403,
+  SPONSOR_REVISION_CHANGED: 409,
 };
 
 function fail(res: Response, err: unknown): void {
@@ -76,9 +78,8 @@ const idParam = (v: unknown): string | null => {
   return typeof raw === 'string' && raw.length > 0 && raw.length <= 64 ? raw : null;
 };
 
-// Permissive write schemas — the DB insert-zod schemas (and the service) are the
-// authoritative validators; here we only strip tenant/actor/identity fields so
-// they can never be spoofed via the request body.
+// The legacy agents/investigators factory strips trusted identity fields.
+// Sponsor writes below also validate every business field and govern revisions.
 const STRIP = ['id', 'organizationId', 'createdBy', 'createdAt', 'updatedAt'] as const;
 function stripIdentity(body: unknown): Record<string, unknown> {
   const obj = (body && typeof body === 'object' ? { ...(body as Record<string, unknown>) } : {});
@@ -141,7 +142,49 @@ function mountEntity(
   });
 }
 
-mountEntity('sponsors', { create: createSponsor, list: listSponsors, get: getSponsor, update: updateSponsor });
+function sponsorMutation(body: unknown, mode: 'create' | 'patch') {
+  const stripped = stripIdentity(body);
+  const { reason: suppliedReason, expectedRevision, ...business } = stripped;
+  const reason = sponsorReason(suppliedReason);
+  if (mode === 'create' && Object.hasOwn(stripped, 'expectedRevision')) {
+    throw new IndMasterDataError('VALIDATION', 'A newly created sponsor has no previous revision.');
+  }
+  if (mode === 'patch' && (typeof expectedRevision !== 'string' || !expectedRevision.trim() || expectedRevision.length > 100)) {
+    throw new IndMasterDataError('VALIDATION', 'expectedRevision from the last sponsor read is required. Read the current record before saving.');
+  }
+  return { facts: normalizeSponsorBusiness(business, mode), governance: { reason, ...(mode === 'patch' ? { expectedRevision: expectedRevision as string } : {}) } };
+}
+
+router.get('/sponsors', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  try { res.json(await listSponsors(ctx)); } catch (err) { fail(res, err); }
+});
+router.get('/sponsors/:id', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const id = idParam(req.params.id);
+  if (!id) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid id.' } });
+  try { res.json(await getSponsor(id, ctx)); } catch (err) { fail(res, err); }
+});
+router.post('/sponsors', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  try {
+    const { facts, governance } = sponsorMutation(req.body, 'create');
+    res.status(201).json(await createSponsor(facts as Parameters<typeof createSponsor>[0], ctx, governance));
+  } catch (err) { fail(res, err); }
+});
+router.patch('/sponsors/:id', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const id = idParam(req.params.id);
+  if (!id) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid id.' } });
+  try {
+    const { facts, governance } = sponsorMutation(req.body, 'patch');
+    res.json(await updateSponsor(id, facts, ctx, governance));
+  } catch (err) { fail(res, err); }
+});
 mountEntity('agents', {
   create: createRegulatoryAgent,
   list: listRegulatoryAgents,

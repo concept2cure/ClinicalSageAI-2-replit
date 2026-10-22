@@ -1,0 +1,31 @@
+{
+  "recordedAt": "2026-10-20T22:29:12.549370+00:00",
+  "sourcePins": {
+    "client/src/concept2cure/v2/surfaces/Projects.tsx": "dcba801e24d5af981dd799218e7298bc2b84fcf7d75f6bfad66d442b7a1d2087",
+    "server/routes/c2c/project-intake.ts": "4bb0483d8ad047d2ee98522523dbe224f6cc5861c4abc9bd4809b87bf50fff06",
+    "server/routes/c2c/projects.ts": "7511e571f7c86a389cdd691ce07d503ad85f419a31e782bb8049ba10bd1bd353",
+    "server/services/c2c/document-class.ts": "10cf42b32de096c28c7154749c9319d68b421563f7239ef65978760cbf0e8bc3",
+    "server/services/c2c/rule-pack-lookup.ts": "0d36b93cb6b05fb8723c754351fcebe4c1ea03c927b63c0bb22e86ac3e97af49",
+    "server/services/c2c/scaffold-project-documents.ts": "fa194bcf468a260fa9a1e6b24f211234ba2f685cde088f9a1b18b0a94588dd56",
+    "server/services/c2c/governed-document-binding.ts": "7806495233fe7ebf522a073716e0ab1b0b771ce463024c550c63c2efb74c2066",
+    "server/services/regulatory/market-support.ts": "39b922cf84151aa0dca8c419f456c39e3e0dd7a6b0724bea046f03e46b66a8cb",
+    "server/services/ectd/required-sections.ts": "644909c4526b9b51432588a35c869b2eef9edb69de755dcb71439a9182d926b4",
+    "server/routes/ectd-compile.ts": "14f9f80315954529baab340eb5fd401a2659bb551dc7326375046a48752decf6",
+    "server/services/vault/vault-coverage.ts": "833451eabb5ed6ee833733c63aa7a12a4f09803b9a8e12c68e592ffe39c50eff",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx": "64d20e30bbbd581c83148ce3bcf67aedf007bd7cd4995a6daab1988c16eeb0ae",
+    "server/routes/c2c/__tests__/projects-create-regional-devices.test.ts": "85625c7884898b7c073c16156efb34b931808252b6c8c2f763ce275ebaa28d56",
+    "server/services/c2c/__tests__/regional-device-document-class.test.ts": "cd62ccb42f1deb4a6bb3f37574cc0eb452ffed6024cb9cf247cb92ec40418514",
+    "server/services/regulatory/__tests__/regional-device-market-support.test.ts": "82ba132e0c100bc02af938595bd1581ea2363b929ee5d8431f8050d6689a41bb",
+    "server/routes/c2c/__tests__/project-intake-class.test.ts": "93b7cc37e97eab12363d6f83508286eb4dd659b2dd30e50d802ad52ccfad4f3a",
+    "client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts": "9803833ae2958713e0ac46bccdb5e1f8940b4537e0b9c1c71cda9d63da4fde84",
+    "client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx": "7d4a64c0e8299c7d34c63e5b99c3a996cb383b0a22759a243b1b51ae9c96c9ea",
+    "server/services/ectd/__tests__/required-sections-regional-device.test.ts": "21bdc12db2a670d0b9b9decc2c79974f6157ddee55dcc8b887e4651017659fd6",
+    "tests/routes/ectd-compile-ident.test.ts": "447dd192158e557e06e220657a54b64bec4b8d69069a697a4fcf143bfaae8a19",
+    "server/services/vault/__tests__/vault-coverage.test.ts": "18eadb060b9674a977ecffc510371121b954d584b61186dcb8b4967806cb1300",
+    "tests/routes/ectd-backbone-leaf-honesty.test.ts": "c6ea572180b5c2647c36310506438d65881db4bfb375fed691808a4d0b89dbc6",
+    "tests/routes/ectd-readiness-boundaries.test.ts": "3e0eb4f78af616a0dcb04cff0b1e1afa94980fc96b2c75b0512d85c3e804cea8",
+    "tests/routes/ectd-compile-5xx-containment.test.ts": "74abd084406828d3e46359fdc1edb4705f103fde56396449c038034b78203ecb",
+    "tests/golden-journeys/marketing-application.journey.test.ts": "1cc9934e244472f4bc683609b05cfbe70596dc80115f1556c3e86fb2825400c4"
+  },
+  "qualification": "Root final combined qualification binds these frozen current bytes; earlier focused scope receipts retain their original pins."
+}

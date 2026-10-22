@@ -45,6 +45,7 @@ import { EllucianBannerConnector } from './ellucian-banner.js';
 // without CONNECTOR_ENCRYPTION_KEY.
 const encrypt = encryptCredential;
 const decrypt = decryptCredential;
+export const decryptConnectorCredentials = decrypt;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // REGISTRY
@@ -110,7 +111,7 @@ export async function getConnectorCatalog(
     if ((e as { code?: string })?.code !== '42P01') throw e;
     // else: table not provisioned — no credentials stored, empty credMap.
   }
-  const credMap = new Map(credRows.map((r) => [r.connector_id, r.is_valid]));
+  const credMap = new Map(credRows.map(r => [r.connector_id, r.is_valid]));
 
   return CONNECTOR_CATALOG.map(entry => ({
     ...entry,
@@ -157,7 +158,10 @@ export async function storeCredentials(
 ): Promise<void> {
   // SSRF guard at storage time (see assertSafeCredentialUrl).
   assertSafeCredentialUrl(credentials.baseUrl, 'baseUrl');
-  assertSafeCredentialUrl(credentials.customHeaders?.['tokenEndpoint'], 'customHeaders.tokenEndpoint');
+  assertSafeCredentialUrl(
+    credentials.customHeaders?.['tokenEndpoint'],
+    'customHeaders.tokenEndpoint'
+  );
 
   const encrypted = encrypt(JSON.stringify(credentials));
 
@@ -197,7 +201,9 @@ async function getAuthenticatedConnector(
 
     if (credResult.rows.length === 0) return null;
 
-    const creds: ConnectorCredentials = JSON.parse(decrypt(credResult.rows[0].credentials));
+    const creds: ConnectorCredentials = JSON.parse(
+      decryptConnectorCredentials(credResult.rows[0].credentials)
+    );
     await connector.authenticate(creds);
   }
 
@@ -214,7 +220,7 @@ export async function searchConnectors(
 ): Promise<{ connectorId: string; results: ConnectorResult[]; error?: string }[]> {
   initializeConnectors();
 
-  const searchPromises = connectorIds.map(async (connectorId) => {
+  const searchPromises = connectorIds.map(async connectorId => {
     try {
       const connector = await getAuthenticatedConnector(organizationId, connectorId);
       if (!connector) {

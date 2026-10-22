@@ -37,18 +37,11 @@ function createMockDb() {
 }
 
 describe('WorkflowExecutionEngine', () => {
-  it('starts a workflow and advances steps when preconditions met', async () => {
+  it('refuses the retired engine before recording simulated effects or completion', () => {
     const db = createMockDb();
     const logger = { info: vi.fn(), error: vi.fn() };
-    const engine = new WorkflowExecutionEngine(db as any, logger as any);
-
-    const start = await engine.startWorkflow('def-1', { productName: 'Test' }, 't1', { createdBy: 'u1' });
-
-    expect(start.runId).toBe('run-1');
-
-    const res = await engine.advanceStep('run-1');
-    expect(res.ok).toBe(true);
-    expect(res.passed).toBe(true);
-    expect(res.nextStep).toBeNull();
+    expect(() => new WorkflowExecutionEngine(db, logger)).toThrowError(expect.objectContaining({ code: 'PARALLEL_WORKFLOW_RETIRED' }));
+    expect(db.calls).toEqual([]);
+    expect(logger.info).not.toHaveBeenCalled();
   });
 });

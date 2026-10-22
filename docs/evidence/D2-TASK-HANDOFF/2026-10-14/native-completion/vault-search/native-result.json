@@ -1,0 +1,135 @@
+{
+  "sourceHead": "23502318f439237cd2cc9a2246cba263f3b18f33",
+  "exitCode": 0,
+  "files": [
+    {
+      "path": "tests/db/ana-vault-search-no-key.dbtest.ts",
+      "status": "passed",
+      "cases": 5,
+      "counts": {
+        "passed": 5,
+        "failed": 0,
+        "skipped": 0,
+        "pending": 0,
+        "todo": 0
+      }
+    },
+    {
+      "path": "tests/db/vault-chunking-off.dbtest.ts",
+      "status": "passed",
+      "cases": 4,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "pending": 0,
+        "todo": 0
+      }
+    },
+    {
+      "path": "tests/db/vault-document-relationships.dbtest.ts",
+      "status": "passed",
+      "cases": 9,
+      "counts": {
+        "passed": 9,
+        "failed": 0,
+        "skipped": 0,
+        "pending": 0,
+        "todo": 0
+      }
+    },
+    {
+      "path": "tests/db/vault-fixity.dbtest.ts",
+      "status": "passed",
+      "cases": 4,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "pending": 0,
+        "todo": 0
+      }
+    },
+    {
+      "path": "tests/db/vault-library-search.dbtest.ts",
+      "status": "passed",
+      "cases": 4,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "pending": 0,
+        "todo": 0
+      }
+    },
+    {
+      "path": "tests/db/vault-passage-search-keyless.dbtest.ts",
+      "status": "passed",
+      "cases": 6,
+      "counts": {
+        "passed": 6,
+        "failed": 0,
+        "skipped": 0,
+        "pending": 0,
+        "todo": 0
+      }
+    },
+    {
+      "path": "tests/db/vault-passage-search.dbtest.ts",
+      "status": "passed",
+      "cases": 10,
+      "counts": {
+        "passed": 10,
+        "failed": 0,
+        "skipped": 0,
+        "pending": 0,
+        "todo": 0
+      }
+    },
+    {
+      "path": "tests/db/vault-reupload.dbtest.ts",
+      "status": "passed",
+      "cases": 3,
+      "counts": {
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0,
+        "pending": 0,
+        "todo": 0
+      }
+    }
+  ],
+  "cases": 45,
+  "passed": 45,
+  "failed": 0,
+  "skipped": 0,
+  "durationLine": "Duration  91.60s (transform 6.21s, setup 289ms, import 1.18s, tests 88.70s, environment 1ms)",
+  "nativeLease": "Root explicitly allocated session68785 after workflow19 release; worker released immediately after exit0.",
+  "runtime": "Canonical vitest.db.config.ts, actual restricted app_service SQL executor, matching isolated Docker PostgreSQL15 database; each direct-call helper verifies NOSUPERUSER/NOBYPASSRLS/RLS-on. HTTP fixtures retain their declared verified-principal seam plus actual tenant middleware, not a full JWT login qualification.",
+  "provider": "Remote keys/endpoints blanked before imports. Existing local embedding lane has empty endpoints and refuses provider construction, except passage suite explicit localhost deterministic embedding stub. No frontier/provider-quality qualification.",
+  "retention": "Broad reusable-prefix cleanup, audit-trigger disabling and teardown storage-tree erasure removed. Original relationships tenant-purge case and fixity altered/missing witness bytes remain intentional test subjects.",
+  "sourceUnchangedDuringRun": true,
+  "privateCredentialLiteralCheck": "passed; no private configured URL/password/JWT literals or credential-bearing database URLs/bearer JWTs found",
+  "originalOutcomesChanged": false,
+  "original45CaseDeclarationsAndExpectationLinesPreserved": true,
+  "artifacts": [
+    {
+      "path": "first-native.log.gz",
+      "sha256": "71ef723784c105d2f284a5e7d2d46b99047551d385db620336b6a1cfbbf865c3",
+      "rawSha256": "0d4e59fad0376c70cbc5cebc823880dbdb26eb31b2d59966b82ef737683de5fb",
+      "rawBytes": 56038
+    },
+    {
+      "path": "first-native.json.gz",
+      "sha256": "b59be1bd183fbc0bcbf1fbb263ca1829f1545d247cf27ec5aecf113f3e6e1c1a",
+      "rawSha256": "90b0318ead03c0b38d67f7cdefbaf0aaae31cb00a4f8bb24d8b621baaeba35ad",
+      "rawBytes": 18643
+    },
+    {
+      "path": "run-native.sh.gz",
+      "sha256": "49285b3eea7d7959f7cacac0b45402a629305140899329a5bdd48b1d1a711c01",
+      "rawSha256": "3f7b4aa19b213a611a40f3e6672f86f98919087768a2b9d3ff22bf187b0a31c2",
+      "rawBytes": 1259
+    }
+  ]
+}

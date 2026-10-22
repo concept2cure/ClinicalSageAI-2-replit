@@ -1,3 +1,4 @@
+import { requestsReadOnly, readOnlyToolRefusal, READ_ONLY_INSTRUCTION } from '../../services/ana/read-only-turn.js';
 /**
  * POST /api/ana-ri/stream — SSE streaming AnA RI chat.
  *
@@ -51,7 +52,9 @@ import {
   getOrCreateThread,
   getThreadMessages,
   ThreadAccessError,
-  saveChatMessage as saveMessage, programIdForThread } from '../../services/chat-thread-helpers.js';
+  saveChatMessage as saveMessage,
+  programIdForThread,
+} from '../../services/chat-thread-helpers.js';
 import { planKernelExecution } from '../../services/kernel-router.js';
 import { getKernelPolicyHint } from '../../services/kernel-adaptive-policy.js';
 import { buildMemoryContextForChat } from '../../services/memory-context-assembler.js';
@@ -88,7 +91,8 @@ import {
   runAgenticToolLoop,
   resolveMaxRounds,
   resolveRoundBudget,
-  capToolResultForModel,
+  assertToolResultBodyBudget,
+  ToolResultBudgetExceededError,
   assistantTurnContent,
   budgetToolResultsForModel,
   buildAdaptationNote,
@@ -295,7 +299,10 @@ function commandRoundOf<T>(roundText: string, served: T): T[] {
  * not marked twice. Exported for its test.
  */
 export function buildScreenReportTurn(report: string): GatewayMessage | null {
-  const observed = (report ?? '').trim().replace(/^\[Screen report\]\s*/i, '').trim();
+  const observed = (report ?? '')
+    .trim()
+    .replace(/^\[Screen report\]\s*/i, '')
+    .trim();
   if (!observed) return null;
   return {
     role: 'system',
@@ -763,6 +770,7 @@ export function mountStreamRoute(router: Router): void {
         return sendError(res, 400, 'Message is required', null, 'INVALID_MESSAGE');
       }
 
+      const readOnly = requestsReadOnly(message);
       // ── Prompt-injection inspection (coverage: EVERY user turn) ──────────
       // Wires the existing prompt-injection defense (server/lib/prompt-injection-
       // protection) into the streaming hot path. Detection + high-risk audit
@@ -790,7 +798,7 @@ export function mountStreamRoute(router: Router): void {
             res,
             400,
             'Message was blocked by the input safety policy',
-            null,
+            'auditTrail' in guardErr ? { auditTrail: guardErr.auditTrail } : null,
             'PROMPT_INJECTION_BLOCKED'
           );
         }
@@ -829,10 +837,22 @@ export function mountStreamRoute(router: Router): void {
       // during context assembly (orchestration + intelligence/memory/enrichment).
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
+        'X-Content-Type-Options': 'nosniff',
         'Cache-Control': 'no-cache',
         Connection: 'keep-alive',
         'X-Accel-Buffering': 'no',
       });
+
+      if (injectionGuard.auditTrail && (!injectionGuard.auditTrail.persisted || !injectionGuard.auditTrail.chained)) {
+        // nosemgrep: javascript.express.security.audit.xss.direct-response-write.direct-response-write -- SSE with nosniff; the entire payload is JSON encoded, escaping frame delimiters and never interpreted as HTML.
+        res.write(`data: ${JSON.stringify({ type: 'warning',
+          code: injectionGuard.auditTrail.persisted ? 'AUDIT_ROW_NOT_RETRIEVABLE' : 'AUDIT_ROW_NOT_PERSISTED',
+          message: injectionGuard.auditTrail.persisted
+            ? 'The input safety audit entry was stored, but is unavailable in the readable audit trail.'
+            : 'The input safety check completed, but its audit entry could not be confirmed. Review the audit history before retrying.',
+          meta: { auditTrail: injectionGuard.auditTrail },
+        })}\n\n`);
+      }
 
       // Keepalive ping. Long-running orchestration / context assembly (and the
       // AI's first-token latency on large prompts) can leave the socket silent
@@ -1042,18 +1062,29 @@ export function mountStreamRoute(router: Router): void {
           } catch {
             parsed = null;
           }
-          const fastError = parsed ? (typeof parsed.error === 'string' ? parsed.error : null) : 'The result was not JSON.';
+          const fastError = parsed
+            ? typeof parsed.error === 'string'
+              ? parsed.error
+              : null
+            : 'The result was not JSON.';
           turnRecorder?.addStep({
             round: 1,
             tool: 'answer_intelligence_question',
-            label: describeToolPlan([{ id: 'intelligence_answer', name: 'answer_intelligence_question', input: payload ?? {} }])[0].label,
+            label: describeToolPlan([
+              {
+                id: 'intelligence_answer',
+                name: 'answer_intelligence_question',
+                input: payload ?? {},
+              },
+            ])[0].label,
             status: fastError ? 'error' : 'success',
             latencyMs: Date.now() - fastStart,
             input: payload,
             result: resultStr,
             error: fastError,
           });
-          if (!parsed) throw new Error('answer_intelligence_question returned a result that is not JSON');
+          if (!parsed)
+            throw new Error('answer_intelligence_question returned a result that is not JSON');
           // The person was given the error, not an answer.
           if (fastError) fastOutcome = 'failed';
           if (parsed?.status === 'intelligence_question' && parsed.question) {
@@ -1084,7 +1115,9 @@ export function mountStreamRoute(router: Router): void {
           }
         } catch (err: any) {
           fastOutcome = 'failed';
-          turnRecorder?.warn(`The answer could not be processed: ${String(err?.message ?? err).slice(0, 500)}`);
+          turnRecorder?.warn(
+            `The answer could not be processed: ${String(err?.message ?? err).slice(0, 500)}`
+          );
           say(`Error processing intelligence answer: ${err?.message}`);
         }
         streamFailed = fastOutcome === 'failed';
@@ -1421,7 +1454,9 @@ export function mountStreamRoute(router: Router): void {
       const streamVolatileSuffix =
         memoryBlock +
         enrichment.block +
-        (driveState.enabled ? buildLiveDrivePromptBlock(driveState.mode) : buildOfferedMovesPromptBlock());
+        (driveState.enabled
+          ? buildLiveDrivePromptBlock(driveState.mode)
+          : buildOfferedMovesPromptBlock());
 
       // What AnA was given this turn that her answer can be checked against
       // (answer-grounding.ts): the person's own words, read as theirs and never
@@ -1614,7 +1649,12 @@ export function mountStreamRoute(router: Router): void {
             );
           }
           for (const f of attachedFiles) {
-            contextUploads.push({ fileId: f.fileId, fileName: f.fileName, mimeType: f.mimeType, read: 'name_only' });
+            contextUploads.push({
+              fileId: f.fileId,
+              fileName: f.fileName,
+              mimeType: f.mimeType,
+              read: 'name_only',
+            });
             uploadChecksums.set(f.fileId, f.checksumSha256);
           }
           if (attachedFiles.length > 0) {
@@ -1755,7 +1795,9 @@ export function mountStreamRoute(router: Router): void {
             // Their labels, not their ids. Every renderer shows these as
             // buttons that ask AnA for the thing named, so "rewritten_section"
             // was both what the person read and what the button sent.
-            suggestedActions: orchestration.suggestedActions.map(t => DOCUMENT_ACTIONS[t]?.label ?? t),
+            suggestedActions: readOnly ? [] : orchestration.suggestedActions.map(
+              t => DOCUMENT_ACTIONS[t]?.label ?? t
+            ),
           },
         })}\n\n`
       );
@@ -1780,6 +1822,15 @@ export function mountStreamRoute(router: Router): void {
       });
       // How the turn was routed, and why, on its record (MC-RL-8).
       turnRecorder?.setRouting(routingPlan);
+
+      // Keep each standard-chat model response bounded. The agentic loop still
+      // follows its effort and run-policy ceilings below.
+      const governedDraftRequested = requestsGovernedDraft(message);
+      const interactiveTokenBound =
+        !governedDraftRequested && effortUsed !== 'thorough' && routingPlan.riskTier !== 'high';
+      const streamMaxTokens = interactiveTokenBound
+        ? Math.min(routingPlan.maxTokens, effortUsed === 'fast' ? 1_024 : 2_048)
+        : routingPlan.maxTokens;
 
       const policyHint = await getKernelPolicyHint({
         organizationId: orgId ? Number(orgId) : null,
@@ -1863,7 +1914,8 @@ export function mountStreamRoute(router: Router): void {
           `data: ${JSON.stringify({
             type: 'warning',
             code: 'MODEL_OVERRIDE_REFUSED',
-            message: 'The model you chose is not available or approved for this work, so AnA is answering with the default model.',
+            message:
+              'The model you chose is not available or approved for this work, so AnA is answering with the default model.',
           })}\n\n`
         );
       }
@@ -2020,8 +2072,7 @@ export function mountStreamRoute(router: Router): void {
         // substantive nudge. High-stakes ('high' riskTier) and an explicit
         // Thorough effort still reason: resolveThinkingConfig enables those
         // regardless of this flag, so governance keeps its floor.
-        substantive:
-          substantiveTurn && !(driveState.enabled && driveState.mode === 'demo'),
+        substantive: substantiveTurn && !(driveState.enabled && driveState.mode === 'demo'),
       });
       const streamThinkingConfig = streamThinkingResolved.enabled
         ? streamThinkingResolved
@@ -2044,7 +2095,7 @@ export function mountStreamRoute(router: Router): void {
       // organizations.settings.anaToolPolicy.deny. Honour the deny-list on
       // the assembled toolset so disabled tools are never offered to the
       // model. Loader is fail-open (default-allow) on any DB issue.
-      const governedTools = await toolPolicyPromise;
+      const governedTools = (await toolPolicyPromise).filter(t => !readOnlyToolRefusal(t.name, {}, readOnly));
       /* run_agent is in THIS turn's governed set only when the turn hosts agents
          and the tenant allows it. The stream dispatches any registered handler by
          name, so the host below is lent only when this holds (brief D14): a tenant
@@ -2100,7 +2151,11 @@ export function mountStreamRoute(router: Router): void {
 
       // The question as the model was given it (encapsulated when the injection
       // guard wraps it), and the first call's whole input.
-      turnRecorder?.setRequest(message, injectionGuard.encapsulated ? injectionGuard.text : effectiveMessage);
+      turnRecorder?.setRequest(
+        message,
+        injectionGuard.encapsulated ? injectionGuard.text : effectiveMessage
+      );
+      if (readOnly) messages.push({ role: 'system', content: READ_ONLY_INSTRUCTION });
       turnRecorder?.setModelInput(messages);
       const gwResponse = await gw.route({
         taskType: routingPlan.taskType,
@@ -2116,7 +2171,7 @@ export function mountStreamRoute(router: Router): void {
         // The run this call belongs to, on its ledger row (D6).
         runId: runId || undefined,
         messages,
-        maxTokens: routingPlan.maxTokens,
+        maxTokens: streamMaxTokens,
         temperature: routingPlan.temperature,
         strategy: selectedStrategy,
         // Explicit-model path: a user pin wins; otherwise the cost tier picks the
@@ -2234,8 +2289,8 @@ export function mountStreamRoute(router: Router): void {
         /** One hold per turn: the checkpoint's pause wait (run-hold.ts). None without a run row. */
         const runHold =
           runId && runHandle
-            ? streamRunHold({ runId, handle: runHandle, runOrgId, res, emit: emitControl, policy: runPolicy })
-            : null;
+              ? streamRunHold({ runId, handle: runHandle, runOrgId, res, emit: emitControl, policy: runPolicy })
+              : null;
 
         /**
          * What a `run_agent` call is lent (row 74, S5): nothing unless this turn
@@ -2279,6 +2334,11 @@ export function mountStreamRoute(router: Router): void {
         ): Promise<Map<string, SettledApproval>> => {
           const out = new Map<string, SettledApproval>();
           for (const toolUse of calls) {
+            const readOnlyRefusal = readOnlyToolRefusal(toolUse.name, toolUse.input, readOnly);
+            if (readOnlyRefusal) {
+              out.set(toolUse.id, { ok: false, why: readOnlyRefusal.message, result: readOnlyRefusal, heldBack: true });
+              continue;
+            }
             const verdict = classifyToolCall(toolUse);
             if (verdict.kind === 'UNGOVERNED') continue;
 
@@ -2423,15 +2483,28 @@ export function mountStreamRoute(router: Router): void {
           const started = Date.now();
           for (;;) {
             if (runHandle!.cancelSignal.aborted) {
-              return refused('the run was stopped', 'The run was stopped before anyone decided, so this action did not run.');
+              return refused(
+                'the run was stopped',
+                'The run was stopped before anyone decided, so this action did not run.'
+              );
             }
             if (res.writableEnded) {
               await stopRunInternally(getPool(), runId, 'client_disconnected', orgId);
-              return refused('the client disconnected', 'The connection dropped before anyone decided, so this action did not run.');
+              return refused(
+                'the client disconnected',
+                'The connection dropped before anyone decided, so this action did not run.'
+              );
             }
-            const decision = await readApprovalDecision(getPool(), runId, toolUse.id).catch(() => null);
+            const decision = await readApprovalDecision(getPool(), runId, toolUse.id).catch(
+              () => null
+            );
             if (decision) {
-              emitControl({ type: 'approval_decided', round, toolUseId: toolUse.id, decided: decision.decided });
+              emitControl({
+                type: 'approval_decided',
+                round,
+                toolUseId: toolUse.id,
+                decided: decision.decided,
+              });
               if (decision.decided === 'approved' && decision.error === undefined) {
                 return { ok: true, result: decision.result ?? { success: true } };
               }
@@ -2616,24 +2689,27 @@ export function mountStreamRoute(router: Router): void {
                   // capture, so what a model writes for it is known.
                   const toolWork = runCapturingGenerations(generated, () =>
                     runWithRunScope({ runId }, () =>
-                    handler(toolUse.input, {
-                      sqlClient: requestPgClient(req),
-                      organizationId: orgId,
-                      userId: toolActorId,
-                      // The project, and the conversation, turn and model this
-                      // call serves (PF-10 S5): a document a tool creates
-                      // records them as its provenance.
-                      ...turnToolContext(streamProjectId, { threadId, turnId: runId, servingModel: lastServedModel }),
-                      // Lets navigate_to tell the model the truth about what its
-                      // directive does this turn (applied live vs offered chip).
-                      liveDrive: driveState.enabled,
-                      lockedScreens,
-                      turnState: driveTurnState,
-                      signal: runSignal,
-                      ...readReceiptContext(readReceipts, toolUse.id),
-                      // Only a run_agent call, and only on a hosting turn.
-                      ...hostForTool(toolUse.name, toolUse.id),
-                    })));
+                      handler(toolUse.input, {
+                        readOnly,
+                        sqlClient: requestPgClient(req),
+                        organizationId: orgId,
+                        userId: toolActorId,
+                        // The project, and the conversation, turn and model this
+                        // call serves (PF-10 S5): a document a tool creates
+                        // records them as its provenance.
+                        ...turnToolContext(streamProjectId, { threadId, turnId: runId, servingModel: lastServedModel }),
+                        // Lets navigate_to tell the model the truth about what its
+                        // directive does this turn (applied live vs offered chip).
+                        liveDrive: driveState.enabled,
+                        lockedScreens,
+                        turnState: driveTurnState,
+                        signal: runSignal,
+                        ...readReceiptContext(readReceipts, toolUse.id),
+                        // Only a run_agent call, and only on a hosting turn.
+                        ...hostForTool(toolUse.name, toolUse.id),
+                      }),
+                    ),
+                  );
                   const cancellationWait = abortRace(runSignal);
                   try {
                     resultStr = await Promise.race([toolWork, cancellationWait]);
@@ -2649,13 +2725,13 @@ export function mountStreamRoute(router: Router): void {
                     toolStatus = 'cancelled';
                     toolErrorMessage = undefined;
                   } else {
-                  const executionFailure = toolErr?.message || 'unknown error';
-                  resultStr = JSON.stringify({
-                    error: `Tool execution failed: ${executionFailure}`,
-                    tool: toolUse.name,
-                  });
-                  toolStatus = 'error';
-                  toolErrorMessage = executionFailure;
+                    const executionFailure = toolErr?.message || 'unknown error';
+                    resultStr = JSON.stringify({
+                      error: `Tool execution failed: ${executionFailure}`,
+                      tool: toolUse.name,
+                    });
+                    toolStatus = 'error';
+                    toolErrorMessage = executionFailure;
                   }
                 }
               } else {
@@ -2865,9 +2941,12 @@ export function mountStreamRoute(router: Router): void {
                   if (driveState.enabled && driveNavigationsApplied < driveBudget.navigations) {
                     driveNavigationsApplied += 1;
                     res.write(
-                      `data: ${JSON.stringify(buildDriveNavigationEvent(directive, round, toolUse.id))}\n\n`
+                      `data: ${JSON.stringify(
+                        buildDriveNavigationEvent(directive, round, toolUse.id)
+                      )}\n\n`
                     );
-                    if (driveAcks) awaitingMoves.set(toolUse.id, `opening the ${directive.label} screen`);
+                    if (driveAcks)
+                      awaitingMoves.set(toolUse.id, `opening the ${directive.label} screen`);
                     auditDriveNavigation(
                       {
                         organizationId: orgId,
@@ -2903,7 +2982,9 @@ export function mountStreamRoute(router: Router): void {
                   if (driveState.enabled && driveActionsApplied < driveBudget.actions) {
                     driveActionsApplied += 1;
                     res.write(
-                      `data: ${JSON.stringify(buildDriveActionEvent(actionDirective, round, toolUse.id))}\n\n`
+                      `data: ${JSON.stringify(
+                        buildDriveActionEvent(actionDirective, round, toolUse.id)
+                      )}\n\n`
                     );
                     if (driveAcks) {
                       awaitingMoves.set(
@@ -2948,7 +3029,10 @@ export function mountStreamRoute(router: Router): void {
                   // mode change for a drive already running, and says so. The
                   // turn-start event above never carries the flag.
                   res.write(
-                    `data: ${JSON.stringify({ ...buildDriveStateEvent(driveState), promoted: true })}\n\n`
+                    `data: ${JSON.stringify({
+                      ...buildDriveStateEvent(driveState),
+                      promoted: true,
+                    })}\n\n`
                   );
                   pendingOperatorTurns.push({
                     role: 'system',
@@ -3052,12 +3136,15 @@ export function mountStreamRoute(router: Router): void {
           // carry all prior results forward). Small rounds pass through under the
           // classic per-result caps, byte-identical to before. A read goes whole
           // or not at all, and its receipt is written only if it went whole.
-          const staged = budgetToolResultsForModel(entries, { wholeOrNothing: readReceipts });
+          const staged = budgetToolResultsForModel(entries, { wholeOrNothing: readReceipts, strictTotal: true });
           const budgeted = await guardReadResultsForHandoff(entries, staged, readReceipts, { signal: runSignal });
           const sourceReadIds = [...new Set([...readReceipts.keys(), ...entries.filter(e => e.name === 'read_project_document').map(e => e.tool_use_id)])];
           await settleReadReceipts(entries, budgeted, readReceipts, undefined, {
             signal: runSignal, onSourceRefused: () => sourceReadIds.forEach(id => withdrawSourceReadResult(budgeted, id, { signal: runSignal })),
           });
+          // Late source refusal can grow bodies after allocation. Do not trim
+          // after receipt settlement or claim earlier outcomes were rolled back.
+          assertToolResultBodyBudget(budgeted);
           // What the model will read of each result, where the budget or the
           // drive-budget amendment changed it from what the tool returned.
           turnRecorder?.setSentToModel(budgeted);
@@ -3094,10 +3181,12 @@ export function mountStreamRoute(router: Router): void {
           // steps that failed, then the steps that returned nothing usable — a
           // search with no hits, a service that could not be reached, a tool
           // that needs input it was not given (tool-outcome.ts, TP-RL-4).
+          const stagedById = new Map(budgeted.map(entry => [entry.tool_use_id, entry.content]));
           pendingAdaptationNote = [
             buildAdaptationNote(roundFailures, calls.length),
             buildShortfallNote(
-              ran.map(r => ({ label: describeToolPlan([r.toolUse])[0].label, status: r.toolStatus, heldBack: r.heldBack, result: r.resultStr })),
+              ran.map(r => ({ label: describeToolPlan([r.toolUse])[0].label, status: r.toolStatus, heldBack: r.heldBack,
+                result: stagedById.get(r.toolUse.id) ?? '' })),
               calls.length,
             ),
           ]
@@ -3134,10 +3223,15 @@ export function mountStreamRoute(router: Router): void {
            live; reading them interleaved made both harder to follow, and the
            mix pushed callModel past the complexity limit. */
         const stageRound = (results: ToolResultEntry[], priorText: string, round: number): void => {
+          // Replan control results bypass executeTools; all staged rounds fit.
+          assertToolResultBodyBudget(results);
           const stagedFrom = loopMessages.length;
-          loopMessages.push({ role: 'assistant', content: assistantTurnContent(priorText, results) });
-          // Entries arrive pre-budgeted from executeTools, so the per-result cap
-          // here is a no-op safety net. The adaptation note (when a tool failed
+          loopMessages.push({
+            role: 'assistant',
+            content: assistantTurnContent(priorText, results),
+          });
+          // Preserve accepted body bytes after corpus/recorder admission.
+          // The adaptation note (when a tool failed
           // last round) rides the same user turn so the model course-corrects
           // instead of retrying the identical call.
           const adaptationSuffix = pendingAdaptationNote ? `\n\n${pendingAdaptationNote}` : '';
@@ -3149,11 +3243,10 @@ export function mountStreamRoute(router: Router): void {
                 .map(
                   tr =>
                     `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${frameToolOutput(
-                      capToolResultForModel(tr.content)
+                      tr.content
                     )}`
                 )
-                .join('\n\n') +
-              adaptationSuffix,
+                .join('\n\n') + adaptationSuffix,
           });
           // Steers ride AFTER the tool results, as operator turns. Order
           // matters twice over: the gateway requires an inline system turn to
@@ -3211,7 +3304,7 @@ export function mountStreamRoute(router: Router): void {
             riskTier: routingPlan.riskTier,
             runId: runId || undefined,
             messages: loopMessages,
-            maxTokens: routingPlan.maxTokens,
+            maxTokens: streamMaxTokens,
             temperature: routingPlan.temperature,
             strategy: roundStrategy,
             // Keep the same explicit model (user pin or cost tier) across the
@@ -3369,7 +3462,8 @@ export function mountStreamRoute(router: Router): void {
               if (queued.moveId) awaitingMoves.delete(queued.moveId);
               drained.push(queued);
             }
-            if (awaitingMoves.size === 0 || runHandle.cancelSignal.aborted || res.writableEnded) break;
+            if (awaitingMoves.size === 0 || runHandle.cancelSignal.aborted || res.writableEnded)
+              break;
             const left = MOVE_SETTLE_MAX_MS - (Date.now() - settleStart);
             if (left <= 0) break;
             await runHandle.wake(Math.min(left, WAKE_CEILING_MS));
@@ -3588,7 +3682,11 @@ export function mountStreamRoute(router: Router): void {
       // top level — the client already has `done`. When the executors finish
       // (or fail) we emit `post_done` with cleanedResponse + executed actions/
       // commands + evidence, then close the stream.
-      turnRecorder?.setModel({ provider: gwResponse.provider, model: gwResponse.model, effort: effortUsed });
+      turnRecorder?.setModel({
+        provider: gwResponse.provider,
+        model: gwResponse.model,
+        effort: effortUsed,
+      });
       turnRecorder?.setReasoning(fullThinking);
       turnRecorder?.setAnswer({ streamed: fullContent });
       // A turn whose loop did not end by her choice says so in its record. The
@@ -3608,6 +3706,7 @@ export function mountStreamRoute(router: Router): void {
       // record's controls do not show them; each is written down here.
       for (const hold of turnPolicy.policyHolds) turnRecorder?.warn(policyHoldWarning(hold));
       void runStreamPostProcessing({
+        readOnly,
         res,
         fullContent,
         persistenceFailed,
@@ -3676,17 +3775,20 @@ export function mountStreamRoute(router: Router): void {
       }
       timeline.end(stopped ? 'stopped' : 'failed', stopped ? endStoppedReason(true, turnPolicyOf?.stoppedReason('cancelled')) : null);
       const turnRecord = await fileTurnRecord(stopped ? 'stopped' : 'failed');
+      const budgetRefusal = error instanceof ToolResultBudgetExceededError ? error : null;
       if (res.headersSent) {
         res.write(
           `data: ${JSON.stringify({
             type: 'error',
-            error: 'An error occurred while generating the response',
+            error: budgetRefusal?.message ?? 'An error occurred while generating the response',
+            ...(budgetRefusal ? { code: budgetRefusal.code } : {}),
             turnRecord,
           })}\n\n`
         );
         res.end();
       } else {
-        sendError(res, 500, 'Internal server error');
+        if (budgetRefusal) sendError(res, 422, budgetRefusal.message, { turnRecord }, budgetRefusal.code);
+        else sendError(res, 500, 'Internal server error');
       }
     } finally {
       // Close the run. Guarded on a live status inside endRun, so a turn that
@@ -3702,7 +3804,7 @@ export function mountStreamRoute(router: Router): void {
           getPool(),
           runId,
           streamFailed ? 'failed' : 'finished',
-          streamFailed ? 'error' : loopStoppedReason,
+          streamFailed ? 'error' : loopStoppedReason
         );
       }
     }
@@ -3719,7 +3821,7 @@ export function mountStreamRoute(router: Router): void {
    */
   const refusalResponse = (
     result: { code?: string; status: string | null },
-    action: string,
+    action: string
   ): { httpStatus: number; error: string } => {
     switch (result.code) {
       case 'NOT_FOUND':
@@ -3773,7 +3875,9 @@ export function mountStreamRoute(router: Router): void {
     const message = typeof req.body?.message === 'string' ? req.body.message : undefined;
     const moveId = readMoveId(req.body?.moveId);
 
-    if (!['pause', 'resume', 'interject', 'cancel', 'screen_report', 'move_landed'].includes(action)) {
+    if (
+      !['pause', 'resume', 'interject', 'cancel', 'screen_report', 'move_landed'].includes(action)
+    ) {
       return res.status(400).json({ ok: false, error: `Unknown control action: ${action}` });
     }
     if ((action === 'interject' || action === 'screen_report') && !message?.trim()) {
@@ -3799,14 +3903,22 @@ export function mountStreamRoute(router: Router): void {
       runId,
       organizationId,
       userId: resolveUserId(req),
-      action: action as 'pause' | 'resume' | 'interject' | 'cancel' | 'screen_report' | 'move_landed',
+      action: action as
+        | 'pause'
+        | 'resume'
+        | 'interject'
+        | 'cancel'
+        | 'screen_report'
+        | 'move_landed',
       message,
       ...(moveId ? { moveId } : {}),
     });
 
     if (!result.ok) {
       const { httpStatus, error } = refusalResponse(result, action);
-      return res.status(httpStatus).json({ ok: false, runId, action, status: result.status, error });
+      return res
+        .status(httpStatus)
+        .json({ ok: false, runId, action, status: result.status, error });
     }
 
     return res.status(200).json({

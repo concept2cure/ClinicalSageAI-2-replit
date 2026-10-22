@@ -152,4 +152,3 @@ AssertionError: no mapping may be written against tenant B's program: expected 1
       Tests  6 failed (6)
    Start at  18:10:22
    Duration  7.11s (transform 2.98s, setup 84ms, import 5.69s, tests 1.02s, environment 0ms)
-

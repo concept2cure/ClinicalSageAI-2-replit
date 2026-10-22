@@ -1,0 +1,52 @@
+{
+  "at": "2026-10-20T23:45:47.711720+00:00",
+  "workstream": "W1/D2",
+  "status": "Focused qualification complete; root combined verification required",
+  "changedProduction": [
+    "server/services/ana/saved-template-review.ts",
+    "server/services/ana/saved-document-critique.ts"
+  ],
+  "changedTests": [
+    "server/services/ana/__tests__/assembled-template-oversight.pglite.test.ts"
+  ],
+  "meaningfulRed": {
+    "initialFailures": 25,
+    "initialPasses": 1,
+    "programScopeFailures": 1,
+    "programScopeSkipped": 26
+  },
+  "green": {
+    "tests": 119,
+    "files": 6,
+    "newAssemblyCases": 33,
+    "failed": 0,
+    "pending": 0,
+    "receipt": "green.json"
+  },
+  "sourcePins": {
+    "count": 10,
+    "stable": true,
+    "before": "source-pins-before.json",
+    "after": "source-pins-after.json"
+  },
+  "strictLint": {
+    "files": 3,
+    "errors": 0,
+    "warnings": 0,
+    "receipt": "lint.json"
+  },
+  "invariants": [
+    "Actual authorized program passed from sole saved-document-critique caller",
+    "Canonical section guidance receipt validator reused without edits",
+    "Parent source, authored text, scoring, signatures and access rules unchanged",
+    "Full per-section source/limits and receipt identity participate in review snapshot and pagination",
+    "Missing/incomplete/unreadable/foreign-scope assembly provenance returns no complete document verdict",
+    "Existing identity-only nonassembly history retains its qualification; no current-template substitution"
+  ],
+  "limitation": "Stored organization/global assemblies currently do not record a full source and guidance; whole-document completeness is explicitly refused rather than inferring parent source or eligibility. Manual assembly remains available.",
+  "countsOverlap": true,
+  "notRun": [
+    "Compiler/build/global scans/Git mutations",
+    "Live provider, human acceptance, production RLS or fresh install/agency transport qualification"
+  ]
+}

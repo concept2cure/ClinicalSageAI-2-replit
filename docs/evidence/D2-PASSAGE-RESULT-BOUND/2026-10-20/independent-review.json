@@ -1,0 +1,24 @@
+{
+  "scope": "Read-only independent final source reviews; these are review conclusions, not additional test executions.",
+  "reviewedProduction": {
+    "server/services/ana/document-passage-tools.ts": "593c291d3a588a9825678cffe98a41a122150b74fa41617d3b9cd83a06bdab9d",
+    "server/services/ana/tool-outcome.ts": "e32bef67da8f61db7b8a15fd636505ae2c572d3830e293e9600cf8de087761ed"
+  },
+  "reviews": [
+    {
+      "agent": "passage_budget_audit",
+      "result": "clear",
+      "focus": "Ordered fitting, serialized metadata thresholds, preserved query/coverage/citations; helper extraction output and evaluation order unchanged."
+    },
+    {
+      "agent": "passage_cap_audit",
+      "result": "clear",
+      "focus": "Post-catch bound, unavailable/refusal semantics, native cap/frame boundary; aggregate budgeting unchanged."
+    },
+    {
+      "agent": "passage_contract_review",
+      "result": "clear",
+      "focus": "Strict omission classification, priority, adaptation guidance, ordinary note bytes; no source authority or backend query changes."
+    }
+  ]
+}

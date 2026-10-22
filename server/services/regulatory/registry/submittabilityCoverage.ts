@@ -226,6 +226,19 @@ const NOTIFIED_BODY_STEP =
 
 const DEVICE_FAMILIES = new Set(['device_approval', 'device_clearance']);
 
+/** Regional gateways do not establish a channel to these device recipients.
+ * Medicinal DCP/NCA filings retain the existing regional CESP route. */
+function unmodelledDeviceRecipient(entry: RegulatoryApplicationType): string | null {
+  if (entry.agency === 'Registered_Certification_Body') return 'Registered certification body';
+  const device = ['medical_devices', 'diagnostics_ivd'].includes(entry.segment ?? '')
+    || DEVICE_FAMILIES.has(entry.applicationFamily);
+  if (entry.region !== 'EU' || !device) return null;
+  if (entry.agency === 'National_Competent_Authority') return 'National competent authority';
+  if (entry.agency === 'EU_Reference_Laboratory') return 'EU reference laboratory';
+  if (entry.agency === 'EMA') return 'EMA';
+  return 'Applicable device or IVD recipient';
+}
+
 export function submissionChannelFor(entry: RegulatoryApplicationType): SubmissionChannel {
   // The entry's own declared format first: a registered gateway for the region
   // is not a channel for a filing whose entry says it goes to a portal.
@@ -241,10 +254,15 @@ export function submissionChannelFor(entry: RegulatoryApplicationType): Submissi
     };
   }
 
+  const recipient = unmodelledDeviceRecipient(entry);
+  if (recipient) return {
+    kind: 'unconnected',
+    channel: `${recipient} — channel not modelled`,
+    reason: `This device or IVD recipient's submission channel is not modelled on the platform; the regional default gateway is not assumed`,
+    applicantStep: `Confirm whether and where submission is required, then submit through the channel specified by the ${recipient}.`,
+  };
+
   if (entry.region === 'EU' && entry.agency === 'EMA') {
-    if (DEVICE_FAMILIES.has(String(entry.applicationFamily))) {
-      return { kind: 'gateway', region: 'ema', name: 'eudamed' };
-    }
     if (entry.submissionFormat === 'IRIS') {
       return {
         kind: 'unconnected',

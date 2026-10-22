@@ -1,0 +1,6 @@
+{
+  "refactor": "Two named synchronous registration helpers replace one oversized describe callback; all case bodies, order, names, hooks and assertions unchanged.",
+  "originalSha256": "b34c183364df5b6401ee54dcda9b22632d96d7e384b2f9e8ebc9a3361ca3c485",
+  "currentSha256": "de77a1df3d92b2a7133042033f1848f37c2bfbc47a3dc91333b80c4e55eae84c",
+  "exactExpectedTransformation": true
+}

@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-21T00:08:39.291908+00:00",
+  "exitCode": 0,
+  "head": "38c7f16061ae51489354986c0a36e1e5d11f67b8",
+  "origin": "6b9b206280bb046f70af7a2a1a9e3e16a6662612",
+  "aheadBehind": "0\t1",
+  "incomingCommits": [
+    "6b9b20628 docs: retain canonical passage fitting publication proof"
+  ],
+  "incomingPaths": [
+    "docs/evidence/D2-PASSAGE-RESULT-BOUND/2026-10-20/PUBLICATION.md",
+    "docs/evidence/D2-PASSAGE-RESULT-BOUND/2026-10-20/implementation-push-command.json",
+    "docs/evidence/D2-PASSAGE-RESULT-BOUND/2026-10-20/implementation-push-result.json",
+    "docs/evidence/D2-PASSAGE-RESULT-BOUND/2026-10-20/implementation-push.txt",
+    "docs/evidence/D2-PASSAGE-RESULT-BOUND/2026-10-20/implementation-verification.json",
+    "docs/evidence/D2-PASSAGE-RESULT-BOUND/2026-10-20/publication-manifest.json"
+  ]
+}

@@ -50,13 +50,15 @@ export function __resetXmllintProbe(): void {
   xmllintAvailable = null;
 }
 
-function run(args: string[], timeoutMs = 30000): Promise<{ code: number; stderr: string }> {
+function run(args: string[], timeoutMs = 30000): Promise<{ code: number; stderr: string; ran: boolean }> {
   return new Promise((resolve) => {
-    execFile('xmllint', args, { timeout: timeoutMs, maxBuffer: 32 * 1024 * 1024 }, (err, _stdout, stderr) => {
+    execFile('xmllint', ['--nocatalogs', ...args], { timeout: timeoutMs, maxBuffer: 32 * 1024 * 1024,
+      env: { ...process.env, XML_CATALOG_FILES: '', SGML_CATALOG_FILES: '' } }, (err, _stdout, stderr) => {
       const code = err && typeof (err as NodeJS.ErrnoException).code === 'number'
         ? ((err as unknown as { code: number }).code)
         : err ? 1 : 0;
-      resolve({ code, stderr: stderr?.toString() ?? '' });
+      const ran = !err || !['ENOENT', 'EACCES', 'ENOEXEC'].includes(String((err as NodeJS.ErrnoException).code));
+      resolve({ code, ran, stderr: stderr?.toString() || (err ? err.message || `xmllint failed with status ${code}` : '') });
     });
   });
 }
@@ -85,8 +87,8 @@ export async function checkWellFormed(xmlOrPath: string, isPath = false): Promis
     return { ran: false, valid: false, errors: ['xmllint not available'], mode: 'well-formed' };
   }
   const exec = async (file: string) => {
-    const { code, stderr } = await run(['--noout', '--nonet', file]);
-    return { ran: true, valid: code === 0, errors: parseErrors(stderr), mode: 'well-formed' as const };
+    const { code, stderr, ran } = await run(['--noout', '--nonet', file]);
+    return { ran, valid: ran && code === 0, errors: parseErrors(stderr), mode: 'well-formed' as const };
   };
   return isPath ? exec(xmlOrPath) : withTempFile(xmlOrPath, exec);
 }
@@ -104,8 +106,8 @@ export async function validateAgainstDtd(xmlPath: string, dtdPath?: string): Pro
   const args = dtdPath
     ? ['--noout', '--nonet', '--dtdvalid', dtdPath, xmlPath]
     : ['--noout', '--nonet', '--valid', xmlPath];
-  const { code, stderr } = await run(args);
-  return { ran: true, valid: code === 0, errors: parseErrors(stderr), mode: 'dtd' };
+  const { code, stderr, ran } = await run(args);
+  return { ran, valid: ran && code === 0, errors: parseErrors(stderr), mode: 'dtd' };
 }
 
 /** Validate an XML file (or string) against an XSD schema. */
@@ -114,8 +116,8 @@ export async function validateAgainstXsd(xmlOrPath: string, xsdPath: string, isP
     return { ran: false, valid: false, errors: ['xmllint not available'], mode: 'xsd' };
   }
   const exec = async (file: string) => {
-    const { code, stderr } = await run(['--noout', '--nonet', '--schema', xsdPath, file]);
-    return { ran: true, valid: code === 0, errors: parseErrors(stderr), mode: 'xsd' as const };
+    const { code, stderr, ran } = await run(['--noout', '--nonet', '--schema', xsdPath, file]);
+    return { ran, valid: ran && code === 0, errors: parseErrors(stderr), mode: 'xsd' as const };
   };
   return isPath ? exec(xmlOrPath) : withTempFile(xmlOrPath, exec);
 }

@@ -1,0 +1,23 @@
+{
+  "sourceAccepted": "218e49eb8898015938bf0a6603f077a1543f46af",
+  "branch": "concept2cure-v2",
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "publishedAtUtc": "2026-10-21T00:55:39.748107+00:00",
+  "directCanonicalPush": true,
+  "pullRequestOpened": false,
+  "forcePush": false,
+  "hooksBypassed": false,
+  "baselineChanged": false,
+  "typecheck": {
+    "errors": 0,
+    "baseline": 0,
+    "exit": 0
+  },
+  "eslintWarningGrowth": -3,
+  "localChecksPassed": true,
+  "humanWitnessed": false,
+  "agencyAcceptance": false,
+  "evidenceCommit": "Resolve from this packet\u2019s Git commit; not self-embedded.",
+  "remoteCiSnapshot": "source-ci-snapshot.json",
+  "remoteCiClaim": "Snapshot only; queued/in-progress jobs are not claimed passed."
+}

@@ -14,4 +14,3 @@ exit=0
 ### npm run --silent check:security-patterns
 check-security-patterns: 0 violations across 2835 file(s).
 exit=0
-

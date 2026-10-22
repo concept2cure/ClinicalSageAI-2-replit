@@ -1,0 +1,10 @@
+ FAIL  server/services/cmc/__tests__/register-edit-audit.test.ts > diffRows > does not report a json column that is equal but not identical
+AssertionError: expected { ichQ2Parameters: { …(2) } } to deeply equal {}
+ FAIL  server/services/cmc/__tests__/register-edit-audit.test.ts > diffRows > does not report a Date that is the same instant
+AssertionError: expected { validationDate: { …(2) } } to deeply equal {}
+ FAIL  server/services/cmc/__tests__/register-edit-audit.test.ts > diffRows > records a Date as its instant, not as an object
+AssertionError: expected { from: null, …(1) } to deeply equal { from: null, …(1) }
+ FAIL  server/services/cmc/__tests__/register-edit-audit.test.ts > diffRows > treats null and undefined as the same absence
+AssertionError: expected { notes: { from: null, to: null } } to deeply equal {}
+ FAIL  server/services/cmc/__tests__/register-edit-audit.test.ts > diffRows > never reports updated_at, in either case convention
+AssertionError: expected { updatedAt: { …(2) }, …(1) } to deeply equal {}

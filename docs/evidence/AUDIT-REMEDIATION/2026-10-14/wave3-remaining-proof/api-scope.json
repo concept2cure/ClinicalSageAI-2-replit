@@ -1,0 +1,102 @@
+[
+  {
+    "path": "/api/auth/enterprise/select-organization",
+    "verdict": "never-gated"
+  },
+  {
+    "path": "/api/ai-actions/execute",
+    "verdict": "out-of-scope"
+  },
+  {
+    "path": "/api/submission-ops/digests",
+    "verdict": "launch"
+  },
+  {
+    "path": "/api/regulatory-graph/programs/x/freshness",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/regulatory-graph/programs/x/sequences",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/ana-ri",
+    "verdict": "launch"
+  },
+  {
+    "path": "/api/report-os",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/estar/official",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/gcc/drafting",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/integration-test",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/trials",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/q-sub",
+    "verdict": "out-of-scope"
+  },
+  {
+    "path": "/api/quality-management",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/fda-forms",
+    "verdict": "out-of-scope"
+  },
+  {
+    "path": "/api/rtm-export",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/field-sync",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/biostat-bridge",
+    "verdict": "launch"
+  },
+  {
+    "path": "/api/gspr",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/cro",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/ana-features",
+    "verdict": "unmapped"
+  },
+  {
+    "path": "/api/510k/estar/official-fields",
+    "verdict": "out-of-scope"
+  },
+  {
+    "path": "/api/concept2cure/projects",
+    "verdict": "launch"
+  },
+  {
+    "path": "/api/submissions",
+    "verdict": "launch"
+  },
+  {
+    "path": "/api/quality",
+    "verdict": "out-of-scope"
+  },
+  {
+    "path": "/api/intelligent-reports",
+    "verdict": "out-of-scope"
+  }
+]

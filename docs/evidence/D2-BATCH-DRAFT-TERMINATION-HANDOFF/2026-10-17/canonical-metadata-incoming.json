@@ -1,0 +1,9 @@
+{
+  "mergeBase": "8d06f71566d01380dc772c1d5f4fa0494aa215c7",
+  "remote": "9577ec43944c86ca688e53997553f2397ba56f74",
+  "incomingFiles": [
+    "docs/reports/repo-health-scan-latest.json",
+    "docs/reports/repo-health-scan-latest.md"
+  ],
+  "codeAndProofOverlap": false
+}

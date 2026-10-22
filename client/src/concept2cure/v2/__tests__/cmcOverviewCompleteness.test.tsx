@@ -34,6 +34,7 @@ vi.mock('@/services/portal/authService', () => ({
 }));
 
 import { CmOverview } from '../surfaces/CmcModule';
+import { CmcQuestionsProvider } from '../surfaces/cmcAgencyQuestions';
 
 type CmWindow = { __cmSetTab?: (id: string) => void; C2C_PROJECT?: unknown };
 
@@ -54,22 +55,43 @@ const META = {
   portfolioProvisioned: true,
   spinePortfolioProvisioned: true,
   sectionsProvisioned: true,
-  correspondenceProvisioned: true,
-  correspondenceUnreadable: false,
   portfolioUnreadable: false,
   sectionsUnreadable: false,
   generatedAt: '2026-09-06T00:00:00.000Z',
 };
 
-/** A loaded board for project P-1: one submission, no open questions. */
+/** A loaded board for project P-1: one submission. Agency questions are not the board's (2026-10-19). */
 const board = (overrides: Record<string, unknown> = {}) => ({
-  portfolio: [{ sub: 'BLA 761234', product: 'Compound A', region: 'FDA', type: 'BLA', rpi: 82, ir: 0, source: 'rpi' }],
+  portfolio: [{ sub: 'BLA 761234', product: 'Compound A', region: 'FDA', type: 'BLA', rpi: 82, ir: null, source: 'spine' }],
   sections: [],
-  kpis: { submissions: 1, rpiAverage: 82, irOverdue: 0, sectionsApproved: 0, sectionsTotal: 0, readyPercent: 0 },
-  correspondence: [],
+  kpis: { submissions: 1, rpiAverage: 82, sectionsApproved: 0, sectionsTotal: 0, readyPercent: 0 },
   meta: META,
   ...overrides,
 });
+
+/* Module 3's view of P-1's letters (read once at the module root since
+   2026-10-19): nothing outstanding, so the section narrative below is what
+   the lead speaks. And an earlier CMC question file that holds nothing. */
+const MODULE3 = /^\/api\/concept2cure\/projects\/P-1\/agency-questions\?ctdModule=3$/;
+const MODULE3_EMPTY = {
+  module: 3, today: '2026-10-19', questions: [], lettersWithoutQuestions: [],
+  summary: { questions: 0, outstanding: 0, questionsOverdue: 0, lettersOverdue: 0, lettersWithoutQuestionsOverdue: 0, lettersOverdueOnOtherQuestions: 0, byState: {} },
+  notCounted: { unclassifiedOutstanding: 0, overdueLettersWithoutQuestions: 0 }, withheld: 0, truncated: false,
+};
+/** How the earlier CMC question file answers: a count of rows not closed there, or a failed read. */
+let earlierFile: { notClosed: number } | 'error' = { notClosed: 0 };
+/** The two agency-question reads the module root makes, or null for any other call. */
+function questionReads(m: string, u: string): Response | null {
+  if (m !== 'GET') return null;
+  if (MODULE3.test(u)) return res({ success: true, data: MODULE3_EMPTY });
+  if (u === '/api/cmc/agency-questions') {
+    if (earlierFile === 'error') throw Object.assign(new Error('The earlier CMC question file could not be read.'), { status: 500 });
+    const n = earlierFile.notClosed;
+    return res({ success: true, data: [], meta: { total: n, notClosed: n, listed: 0, truncated: false, provisioned: true } });
+  }
+  return null;
+}
+const renderOverview = () => render(<CmcQuestionsProvider><CmOverview ask={vi.fn()} /></CmcQuestionsProvider>);
 
 const BOARD = /^\/api\/cmc\/module3-board(\?projectId=P-1)?$/;
 const APPROVE = /\/api\/cmc\/module3-os\/sections\/P-1\/[^/]+\/approve$/;
@@ -109,6 +131,8 @@ const readinessOf = (overrides: Record<string, unknown> = {}) => ({
 function wire(boardData: unknown, approve?: () => Response, readiness?: () => Response, read?: () => Response) {
   apiRequest.mockImplementation(async (m: string, u: string) => {
     if (m === 'GET' && BOARD.test(u)) return res({ success: true, data: boardData });
+    const questions = questionReads(m, u);
+    if (questions) return questions;
     if (m === 'GET' && READINESS.test(u)) return readiness ? readiness() : res({ success: true, data: readinessOf() });
     if (m === 'POST' && APPROVE.test(u)) return approve ? approve() : res({ success: true, versionNumber: 1 });
     if (m === 'GET' && SECTION_READ.test(u)) {
@@ -128,6 +152,7 @@ const row = (key: string) => screen.getByText(key, { selector: 'td' }).closest('
 
 beforeEach(() => {
   apiRequest.mockReset();
+  earlierFile = { notClosed: 0 };
   (window as unknown as CmWindow).C2C_PROJECT = { id: 'P-1' };
 });
 afterEach(() => {
@@ -148,7 +173,7 @@ describe('CmOverview — completeness on the section-approval table', () => {
     }));
     const setTab = vi.fn();
     (window as unknown as CmWindow).__cmSetTab = setTab;
-    render(<CmOverview ask={vi.fn()} />);
+    renderOverview();
     await screen.findByText('3.2.P.6', { selector: 'td' });
 
     // The incomplete draft: its score, its missing inputs, and no live approval.
@@ -187,7 +212,7 @@ describe('CmOverview — completeness on the section-approval table', () => {
   it('a 409 shows the server\'s own reason — 409 no longer means only "contradictions"', async () => {
     const reason = '§3.2.P.5 is 40% complete and cannot be approved. Missing required inputs: acceptanceCriteria. Record them and recompile.';
     wire(board({ sections: [section('3.2.P.5', 'draft', 100)] }), () => res({ success: false, error: reason }, 409));
-    render(<CmOverview ask={vi.fn()} />);
+    renderOverview();
 
     await openSignatureFor();
     fireEvent.change(screen.getByPlaceholderText('Reason for this approval...'), { target: { value: 'Reviewed against the CoA.' } });
@@ -210,7 +235,7 @@ describe('CmOverview — a signature is over content, not a section number', () 
      NUMBER. "Approve section" now opens the section first. */
   it('shows the composed narrative and tables BEFORE the signature form appears', async () => {
     wire(board({ sections: [section('3.2.P.5', 'draft', 100)] }));
-    render(<CmOverview ask={vi.fn()} />);
+    renderOverview();
 
     fireEvent.click(await screen.findByRole('button', { name: /Approve section/ }));
 
@@ -233,7 +258,7 @@ describe('CmOverview — a signature is over content, not a section number', () 
      content nobody read. */
   it('sends the content hash the signer actually read with the signature', async () => {
     wire(board({ sections: [section('3.2.P.5', 'draft', 100)] }));
-    render(<CmOverview ask={vi.fn()} />);
+    renderOverview();
 
     fireEvent.click(await screen.findByRole('button', { name: /Approve section/ }));
     expect(await screen.findByText(/abc123def456/)).toBeTruthy();
@@ -258,7 +283,7 @@ describe('CmOverview — a signature is over content, not a section number', () 
       undefined,
       () => res({ success: false, error: 'boom' }, 500),
     );
-    render(<CmOverview ask={vi.fn()} />);
+    renderOverview();
 
     fireEvent.click(await screen.findByRole('button', { name: /Approve section/ }));
     expect(await screen.findByText(/could not be read/i)).toBeTruthy();
@@ -277,7 +302,7 @@ describe('CmOverview — a signature is over content, not a section number', () 
         lineage: [{ sourceType: 'specification', sourceKey: 'specification:7', changedSinceCompile: true }],
       }) }),
     );
-    render(<CmOverview ask={vi.fn()} />);
+    renderOverview();
 
     fireEvent.click(await screen.findByRole('button', { name: /Approve section/ }));
     expect(await screen.findByText(/This section is stale/)).toBeTruthy();
@@ -286,10 +311,41 @@ describe('CmOverview — a signature is over content, not a section number', () 
   });
 });
 
+/* Review of 2026-10-19: the reassurance is withheld while anything the figure
+   leaves out could be open, and the earlier CMC file's open count is not
+   established until its read succeeds. A failed read is not "nothing open". */
+describe('CmOverview — no reassurance over an earlier CMC file that was not read', () => {
+  const clearBoard = () => board({ sections: [section('3.2.S.1', 'approved', 100), section('3.2.P.5', 'review', 100)] });
+
+  it('reassures when both reads are measured and nothing is open', async () => {
+    wire(clearBoard());
+    renderOverview();
+    expect(await screen.findByText(/You're building steadily/)).toBeTruthy();
+  });
+
+  it('withholds it, and says why, when the earlier file could not be read', async () => {
+    earlierFile = 'error';
+    wire(clearBoard());
+    renderOverview();
+    expect(await screen.findByText(/The earlier CMC question file could not be read; whether it holds open questions is not known\./)).toBeTruthy();
+    await screen.findByText('3.2.P.5', { selector: 'td' });
+    expect(screen.queryByText(/building steadily/)).toBeNull();
+    expect(document.querySelector('.al-lead.al-good')).toBeNull();
+  });
+
+  it('withholds it while the earlier file holds questions not closed there', async () => {
+    earlierFile = { notClosed: 2 };
+    wire(clearBoard());
+    renderOverview();
+    expect(await screen.findByText(/holds 2 questions not\s+closed there/)).toBeTruthy();
+    expect(screen.queryByText(/building steadily/)).toBeNull();
+  });
+});
+
 describe('CmOverview — a failed register read is an error, never an empty register', () => {
   it('sectionsUnreadable renders the failed-read copy and not "No Module 3 sections yet"', async () => {
     wire(board({ sections: [], meta: { ...META, sectionsProvisioned: false, sectionsUnreadable: true } }));
-    render(<CmOverview ask={vi.fn()} />);
+    renderOverview();
     await screen.findAllByText('BLA 761234');
 
     const alerts = screen.getAllByRole('alert');
@@ -302,13 +358,22 @@ describe('CmOverview — a failed register read is an error, never an empty regi
     expect(screen.queryByText(/building steadily/)).toBeNull();
   });
 
+  it('renders a null submission count as unknown even without a portfolioUnreadable flag', async () => {
+    wire(board({ portfolio: [], kpis: { submissions: null, rpiAverage: null, sectionsApproved: null, sectionsTotal: null, readyPercent: null }, meta: { ...META, portfolioProvisioned: false } }));
+    renderOverview();
+    await screen.findAllByText(/could not be read/i);
+    expect(screen.getAllByText(/— submissions/).length).toBeGreaterThan(0);
+    expect(screen.queryByText('0 submissions')).toBeNull();
+    expect(screen.queryByText('No submissions yet')).toBeNull();
+  });
+
   it('portfolioUnreadable renders the failed-read copy and not "No submissions yet"', async () => {
     wire(board({
       portfolio: [],
-      kpis: { submissions: 0, rpiAverage: null, irOverdue: 0, sectionsApproved: null, sectionsTotal: null, readyPercent: null },
+      kpis: { submissions: 0, rpiAverage: null, sectionsApproved: null, sectionsTotal: null, readyPercent: null },
       meta: { ...META, portfolioProvisioned: false, portfolioUnreadable: true },
     }));
-    render(<CmOverview ask={vi.fn()} />);
+    renderOverview();
     await screen.findAllByText(/could not be read/i);
 
     const failed = screen.getAllByRole('alert').find((a) => /could not be read/i.test(a.textContent ?? ''));
@@ -326,7 +391,7 @@ describe('CmOverview — the build-state card reads the export gate, never a per
       undefined,
       () => res({ success: true, data: readinessOf({ totalSections: 2, approvedSections: 2, incompleteApprovedSections: ['3.2.P.6'], exportReady: false }) }),
     );
-    render(<CmOverview ask={vi.fn()} />);
+    renderOverview();
     await screen.findByText('Not export ready');
     expect(screen.queryByText('Export ready')).toBeNull();
     expect(screen.getByText(/100% approved/)).toBeTruthy();
@@ -335,13 +400,13 @@ describe('CmOverview — the build-state card reads the export gate, never a per
 
   it('says Export ready only when the gate does', async () => {
     wire(board({ sections: [section('3.2.S.1', 'approved', 100)] }));
-    render(<CmOverview ask={vi.fn()} />);
+    renderOverview();
     await screen.findByText('Export ready');
   });
 
   it('renders a failed readiness read as a failed read, not as ready and not as not-ready', async () => {
     wire(board({ sections: [section('3.2.S.1', 'approved', 100)] }), undefined, () => res({ success: false, error: 'readiness store unavailable' }, 500));
-    render(<CmOverview ask={vi.fn()} />);
+    renderOverview();
     await screen.findByText('Export readiness could not be read');
     expect(screen.queryByText('Export ready')).toBeNull();
     expect(screen.queryByText('Not export ready')).toBeNull();

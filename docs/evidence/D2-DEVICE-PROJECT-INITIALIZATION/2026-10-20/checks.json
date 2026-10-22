@@ -1,0 +1,49 @@
+{
+  "at": "2026-10-20T23:06:37.437847+00:00",
+  "workstream": "W1/D2",
+  "branch": "concept2cure-v2",
+  "publicationSourceFreeze": "source-freeze-publication.json",
+  "sourcePins": 153,
+  "sourceDrift": [],
+  "allPinnedFilesTracked": true,
+  "jsonFilesParsed": 143,
+  "localMarkdownLinksChecked": 87,
+  "missingLinks": [],
+  "rawOutputDigestsChecked": 12,
+  "rawOutputReceipts": [
+    "additional-signing-fixtures-green.json",
+    "merged-build.json",
+    "merged-typecheck.json",
+    "merged-integration-before-signing-fixture.json",
+    "landing-integration.json",
+    "typecheck-before-final-corrections.json",
+    "integration.json",
+    "additional-signing-fixtures-red.json",
+    "canonical-build.json",
+    "canonical-integration.json",
+    "canonical-typecheck.json",
+    "publication-typecheck.json"
+  ],
+  "manualCases": {
+    "total": 49,
+    "notRun": 49,
+    "passed": 0
+  },
+  "qualifiedEpochs": {
+    "regionalAndEditor": "canonical-integration.json:1892tests/85files on126pins",
+    "mergedConsumers": "landing-integration.json:250tests/18files on150pins",
+    "additionalSigningFixtures": "additional-signing-fixtures-green.json:48tests/3files on153pins",
+    "compiler": "publication-typecheck.json:0errors/baseline0",
+    "build": "merged-build.json:exit0; production sources identical in finalfreeze",
+    "static": "merged-static-gates.json:16passed; production sources identical in finalfreeze",
+    "warnings": "publication-warning-ratchet.json:48files; no warning count increase"
+  },
+  "countsOverlap": true,
+  "limitations": [
+    "No human acceptance, live provider run, deployment or agency transmission",
+    "Relevant canonical migration subset/replay tested; full fresh PostgreSQL installation not performed",
+    "Preparation outlines are not verified complete current agency forms or legal requirements"
+  ],
+  "artifactManifest": "artifact-manifest.json",
+  "manifestExcludesItself": true
+}

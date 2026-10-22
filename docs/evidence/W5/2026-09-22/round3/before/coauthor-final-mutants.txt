@@ -28,7 +28,7 @@
           Tests  1 failed | 45 passed (46)
 === mutant m_stub_after_hash  [server/services/coauthor/coauthor-snapshot.ts]
     find:      if (sealed && !('document' in sealed) && !('sections' in sealed)) return notSealed();
-    replace: 
+    replace:
     restored (cmp identical)
      × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a source whose only seal is the old approval stub, which holds no sections 18ms
     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

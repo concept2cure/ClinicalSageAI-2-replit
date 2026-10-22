@@ -51,16 +51,23 @@ const TABLES: Array<[RegExp, 'doc' | 'supplier' | 'nc' | 'audit' | 'signature']>
   [/electronic_signatures/i, 'signature'],
 ];
 
-/** One row per QMS table, read and written the way Postgres would. */
-async function fakeQuery(sql: string, params: unknown[] = []) {
-  const s = String(sql);
-  if (/FROM organization_users/i.test(s)) return { rows: [{ account_status: 'active', organization_status: 'active', payment_status: 'active', membership_role: H.session.role }], rowCount: 1 };
+async function contextQuery(s: string, params: unknown[]) {
+  if (/FROM authoring_documents/i.test(s)) return { rows: [{ id: '00000000-0000-4000-8000-000000000011', title: 'Design control', client_program_id: '00000000-0000-4000-8000-000000000012' }] };
+  if (/FROM authoring_sections/i.test(s)) return { rows: [{ id: 'section', code: 'qms-purpose', title: 'Purpose', content: 'Control the procedure numbers and approved revisions.', order_index: 1 }] };
+  if (/FROM organization_users/i.test(s)) return { rows: [{ account_status: 'active', organization_status: 'active', payment_status: 'active', membership_role: H.session.role, role: H.session.role }], rowCount: 1 };
   if (/SELECT.*FROM qms_training_records/is.test(s)) return { rows: [], rowCount: 0 };
   if (/INSERT INTO qms_training_records/i.test(s)) {
     H.writes.push(s);
     return { rows: [{ id: 99, organization_id: params[0], user_id: params[1], document_id: params[2], document_version: params[3],
       acknowledgment_method: 'attestation', acknowledged_at: params[4], expires_at: params[5], metadata: JSON.parse(String(params[6])) }], rowCount: 1 };
   }
+  return null;
+}
+
+/** One row per QMS table, read and written the way Postgres would. */
+async function fakeQuery(sql: string, params: unknown[] = []) {
+  const s = String(sql);
+  const context = await contextQuery(s, params); if (context) return context;
   if (/^\s*INSERT/i.test(s)) {
     H.writes.push(s);
     return { rows: [{ id: 99 }], rowCount: 1 };
@@ -76,7 +83,7 @@ async function fakeQuery(sql: string, params: unknown[] = []) {
     if (guarded && !['draft', 'in_review'].includes(String(row.status))) return { rows: [], rowCount: 0 };
     const next: Row = { ...row };
     for (const col of ['status', 'approval_status', 'disposition']) {
-      const m = new RegExp(`(?:SET|,)\\s*${col}\\s*=\\s*\\$(\\d+)`, 'i').exec(s);
+      const m = new RegExp(`(?:SET|,)\\s*${col}\\s*=\\s*(?:COALESCE\\()?\\$(\\d+)`, 'i').exec(s);
       if (m) next[col] = params[Number(m[1]) - 1];
     }
     H[key] = next;
@@ -105,6 +112,18 @@ vi.mock('../../services/auditService', () => ({
 vi.mock('../../services/audit/audit-write-outcome', () => ({
   recordAuditRow: async (e: Record<string, unknown>) => { H.audit.push(e); return { persisted: true, chained: true }; },
 }));
+// This mount/role regression admits its saved Authoring fixture explicitly.
+// Canonical object/membership decisions and enlisted ledger SQL are qualified
+// by the independent QMS native/PGlite lifecycle suites.
+vi.mock('../../services/authoring/authoring-permissions', async original => ({
+  ...await original<typeof import('../../services/authoring/authoring-permissions')>(),
+  resolveAuthoringDocumentScope: async () => ({ tenantId: 9, docId: '00000000-0000-4000-8000-000000000011',
+    sectionId: null, documentStatus: 'DRAFT', createdBy: '3' }),
+  decideAuthoringPermission: async () => ({ allowed: true, reason: 'allowed-object-role', matchedRoles: ['OWNER'] }),
+}));
+vi.mock('../c2c/actions', () => ({ recordGovernedAction: async (_client: unknown, entry: Record<string, unknown>) => {
+  H.audit.push(entry); return { actionId: 'action', auditId: 'audit', sha256Chain: 'chain' };
+} }));
 
 import mdxQmsRouter from '../mdx-qms';
 import { registerDocumentRoutes } from '../../bootstrap/register-document-routes';
@@ -246,10 +265,12 @@ describe('the canonical twins on /api/mdx/qms refuse a viewer and still serve an
 
   it('a manager still routes a draft for review: the twin of transition to=in_review', async () => {
     as('manager');
-    H.doc = { ...H.doc, status: 'draft' };
-    const res = await request(await productionApp()).patch('/api/mdx/qms/documents/11').send({ status: 'in_review' });
+    H.doc = { ...H.doc, status: 'draft', authoring_document_id: '00000000-0000-4000-8000-000000000011' };
+    const res = await request(await productionApp()).patch('/api/mdx/qms/documents/11').send({ status: 'in_review', reason: 'Route the saved procedure for independent review' });
     expect(res.status).toBe(200);
     expect(H.doc?.status).toBe('in_review');
+    expect(H.audit).toEqual([expect.objectContaining({ command: 'transition', target: 'qms-document:11',
+      payload: expect.objectContaining({ kind: 'send-for-review' }) })]);
   });
 
   it('a viewer still acknowledges training on a procedure: that is their own record, not a governed change', async () => {

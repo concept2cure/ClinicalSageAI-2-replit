@@ -124,7 +124,7 @@ export const GET_TMF_VIEW: AnaTool = {
 export const SAVE_DOCUMENT_TO_VAULT: AnaTool = {
   name: 'save_document_to_vault',
   description:
-    "Save a NEW document into the organization's vault: creates the artifact (status draft, version 1) with a SHA-256 content hash and an immutable version-1 snapshot. Use when AnA has drafted content the client wants filed. GOVERNED: requires a reason, is audited, and is tenant-scoped. Returns the new document's ids.",
+    "The single-body form of draft_authoring_document: save a NEW draft AnA wrote as an authoring document in the open project (the editor's store, status draft), one section holding the whole content (plain text is stored as escaped paragraphs; ctd_section, if given, is the section code). It goes through the same path as draft_authoring_document: AnA's machine-draft lineage and provenance, a genesis revision, and a Part 11 CREATE audit row whose reason for change is the stated reason. It is NOT filed in the Vault (filed_in_vault: false): filing is a separate step a person takes from the editor. Never tell the person it is in the Vault. Prefer draft_authoring_document for anything with sections. GOVERNED: requires a reason and an open project (refuses otherwise); tenant-scoped. Returns { ok, saved, documentStatus: 'draft', authoringDocId, programId, title, sectionCount: 1, filed_in_vault: false, message }; the authoringDocId opens the draft as a canvas and in the editor.",
   input_schema: {
     type: 'object',
     properties: {
@@ -141,7 +141,7 @@ export const SAVE_DOCUMENT_TO_VAULT: AnaTool = {
 export const DRAFT_AUTHORING_DOCUMENT: AnaTool = {
   name: 'draft_authoring_document',
   description:
-    "Turn a document AnA has drafted into a REAL authoring document in the open project: the editor's own store (authoring_documents / authoring_sections), status draft, one section per { code, title, content } with the content stored as sanitized HTML, provenance recorded as drafted by AnA, a genesis revision and a Part 11 CREATE audit row per section. The person then sees it as a canvas in the conversation, can open it in the full editor, and can file it into the project vault. Use this — not save_document_to_vault — whenever the deliverable is a document with sections (a Module 2.5 excerpt, an IB section set, a 510(k) summary). Requires an open project; refuses otherwise. Tenant-scoped. Returns { status: 'generated', saved: true, documentStatus: 'draft', authoringDocId, programId, title, sectionCount, content }; the durable authoringDocId proves it was saved, while approval and filing remain separate.",
+    "Turn a document AnA has drafted into a REAL authoring document in the open project: the editor's own store (authoring_documents / authoring_sections), status draft, one section per { code, title, content } with the content stored as sanitized HTML, provenance recorded as drafted by AnA, a genesis revision and a Part 11 CREATE audit row per section. The person then sees it as a canvas in the conversation, can open it in the full editor, and can file it into the project vault. Use this — not save_document_to_vault, its single-body form — whenever the deliverable is a document with sections (a Module 2.5 excerpt, an IB section set, a 510(k) summary). Requires an open project; refuses otherwise. Tenant-scoped. Returns { status: 'generated', saved: true, documentStatus: 'draft', authoringDocId, programId, title, sectionCount, content }; the durable authoringDocId proves it was saved, while approval and filing remain separate.",
   input_schema: {
     type: 'object',
     properties: {
@@ -157,10 +157,30 @@ export const DRAFT_AUTHORING_DOCUMENT: AnaTool = {
             code: { type: 'string', description: "Section code, e.g. '2.5.1'." },
             title: { type: 'string', description: 'Section title.' },
             content: { type: 'string', description: 'Section body as HTML.' },
-            sourceReferences: { type: 'array', minItems: 1, maxItems: 8, description: 'Carry the batch draft source receipts into the saved document. Each reference requires documentId, contentHash and span {start:0,end,totalChars}; the backend rechecks current project records and versions before any creation. These are declared source references, not claim-level scientific qualification or proof that the model used them.', items: { type: 'object', properties: {
-              documentId: { type: 'string', format: 'uuid' }, contentHash: { type: 'string', pattern: '^[0-9a-fA-F]{64}$' },
-              span: { type: 'object', properties: { start: { type: 'integer', const: 0 }, end: { type: 'integer', minimum: 1, maximum: 12000 }, totalChars: { type: 'integer', minimum: 1 } }, required: ['start', 'end', 'totalChars'] },
-            }, required: ['documentId', 'contentHash', 'span'] } },
+            sourceReferences: {
+              type: 'array', minItems: 1, maxItems: 8,
+              description: 'Carry complete V2 batch draft source receipts into the saved document: documentId, contentHash, version:2, extractedTextSha256, spanSha256 and span {start,end,totalChars}. Spans use absolute UTF-16 offsets anywhere in the extraction. The backend enforces nonempty windows of at most 12,000 units, a 48,000-unit aggregate budget, and rechecks current project authority, original bytes and exact extracted text before creation. These are declared source references, not scientific qualification or proof that the model used them.',
+              items: {
+                type: 'object',
+                properties: {
+                  documentId: { type: 'string', format: 'uuid' },
+                  contentHash: { type: 'string', pattern: '^[0-9a-fA-F]{64}$' },
+                  version: { type: 'integer', const: 2 },
+                  extractedTextSha256: { type: 'string', pattern: '^[0-9a-fA-F]{64}$' },
+                  spanSha256: { type: 'string', pattern: '^[0-9a-fA-F]{64}$' },
+                  span: {
+                    type: 'object',
+                    properties: {
+                      start: { type: 'integer', minimum: 0, maximum: Number.MAX_SAFE_INTEGER },
+                      end: { type: 'integer', minimum: 1, maximum: Number.MAX_SAFE_INTEGER },
+                      totalChars: { type: 'integer', minimum: 1, maximum: Number.MAX_SAFE_INTEGER },
+                    },
+                    required: ['start', 'end', 'totalChars'],
+                  },
+                },
+                required: ['documentId', 'contentHash', 'version', 'extractedTextSha256', 'spanSha256', 'span'],
+              },
+            },
           },
           required: ['code', 'title', 'content'],
         },
@@ -259,7 +279,7 @@ export const GET_PLAN_USAGE: AnaTool = {
 export const GET_BILLING_CREDITS: AnaTool = {
   name: 'get_billing_credits',
   description:
-    "The organization's usage-credit balance: current balance in cents, auto-reload settings ('top off to $X when balance is $Y'), and the most recent ledger entries. Use when a client asks about their credit balance or recent credit activity. Tenant-scoped, read-only.",
+    "The organization's credit ledger: balance in cents, auto-reload settings and the most recent ledger entries. Credits are NOT metered: nothing the platform does spends the balance (metered: false), so never present it as usage or as what the client has left. Use only when a client asks about the credit ledger itself. Tenant-scoped, read-only.",
   input_schema: { type: 'object', properties: {}, required: [] },
 };
 

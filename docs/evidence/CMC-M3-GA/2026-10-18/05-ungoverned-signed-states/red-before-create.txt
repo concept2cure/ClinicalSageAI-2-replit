@@ -1,0 +1,10 @@
+# Before — every signed state accepted on an ordinary create
+
+$ BASE=http://127.0.0.1:5000 bash probe-signed-states.sh
+# server at commit c1a6916c4 (origin/concept2cure-v2), before this change
+
+project: 0755727a-7596-4f16-bfe1-58ccfa434b50
+analytical-method      200  ACCEPTED status=validated reviewed_by=None
+process-validation     200  ACCEPTED status=approved reviewed_by=None
+comparability          200  ACCEPTED status=approved reviewed_by=None
+qc-testing             200  ACCEPTED status=None reviewed_by=1

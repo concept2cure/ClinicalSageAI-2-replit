@@ -18,7 +18,13 @@ vi.hoisted(() => {
 
 const h = vi.hoisted(() => ({
   verdict: 'independent' as string,
+  sequence: { status: 'frozen', region: 'fda', dispatchStatus: null as string | null | undefined },
+  read: vi.fn(),
   calls: [] as Array<[string, number, number]>,
+}));
+
+vi.mock('../../services/submission-service/submission-service', async original => ({
+  ...await original<object>(), getSequence: h.read,
 }));
 
 vi.mock('../../services/ectd/assess-dispatch-readiness', () => ({
@@ -54,6 +60,8 @@ app.use('/api/submissions', submissionsRouter);
 beforeEach(() => {
   h.verdict = 'independent';
   h.calls.length = 0;
+  h.sequence = { status: 'frozen', region: 'fda', dispatchStatus: null };
+  h.read.mockReset(); h.read.mockImplementation(async () => ({ ...h.sequence }));
 });
 
 describe('dispatch-readiness reports the sign step\'s own answer for this signer', () => {
@@ -61,6 +69,7 @@ describe('dispatch-readiness reports the sign step\'s own answer for this signer
     const res = await request(app).get('/api/submissions/sequences/11/dispatch-readiness');
     expect(res.status).toBe(200);
     expect(h.calls, 'the route answered without asking the enforcing check').toEqual([['ectd-sequence:11', 7, 3]]);
+    expect(h.read).toHaveBeenCalledWith(11, expect.objectContaining({ organizationId: 7, userId: 3 }));
   });
 
   it.each(['author', 'independent', 'unresolved', 'unverified'])('passes "%s" through unchanged', async (verdict) => {
@@ -74,4 +83,13 @@ describe('dispatch-readiness reports the sign step\'s own answer for this signer
     expect(res.body.gate).toEqual({ cleared: false, blockers: ['The release signature is unsigned.'] });
     expect(res.body.dispatchGateOnSigning).toEqual({ cleared: true, blockers: [] });
   });
+  it.each([null, 'pending', 'rejected', 'transmitting', 'sent', 'acknowledged', undefined])('reports canonical FDA dispatch renewal eligibility for %s', async dispatchStatus => {
+    h.sequence = { status: 'dispatched', region: 'fda', dispatchStatus };
+    const res = await request(app).get('/api/submissions/sequences/11/dispatch-readiness');
+    const eligible = dispatchStatus === null || dispatchStatus === 'pending' || dispatchStatus === 'rejected';
+    expect(res.status).toBe(200);
+    expect(res.body.dispatchAuthorization).toMatchObject({ reauthorizing: true, eligible });
+    expect(res.body.dispatchAuthorization.refusal === null).toBe(eligible);
+  });
+
 });

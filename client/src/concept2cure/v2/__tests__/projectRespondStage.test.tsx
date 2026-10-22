@@ -4,10 +4,11 @@
  *
  * Respond had one card, "Response authoring", which opened the editor with no
  * letter (FILING_SPINE §6 row 17). It now has the three steps of an answer:
- * add the agency's letter to the data room, draft the response with AnA from
- * that letter (pinned, so the turn is grounded on it), and start the response
- * sequence in the market the letter came from. Question-by-question tracking
- * is named as coming later.
+ * add the agency's letter (to the data room and, since 2026-10-17, to the
+ * project's agency inbox), work the inbox — draft a response with AnA from a
+ * letter (pinned, so the turn is grounded on it) and triage it — and start the
+ * response sequence in the market the letter came from. Since 2026-10-18 each
+ * letter also opens its questions and signed responses (AgencyResponses.tsx).
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -44,36 +45,21 @@ beforeEach(() => {
 afterEach(() => { cleanup(); delete (window as { C2C_SOURCE_PINS?: unknown }).C2C_SOURCE_PINS; });
 
 describe('Respond answers the agency (F15)', () => {
-  it('offers the three steps, and names question-by-question tracking as coming later', async () => {
+  it('offers the three steps, and no longer names question-by-question tracking as coming later', async () => {
     render(<ProjectRespond pid={PID} markets={markets([submission(55, 'ONC-221 IND', 'ind', 'fda')])} onNav={vi.fn()} onAsk={vi.fn()} />);
     expect(screen.getByRole('heading', { name: /Add the agency's letter/ })).toBeTruthy();
     expect(screen.getByRole('button', { name: /Choose the letter file/ })).toBeTruthy();
     // AnA is asked to invent no number or date; the person is told to check (2026-10-15).
     expect(screen.getByText(/Check every question number and due date in the draft against the letter/)).toBeTruthy();
-    expect(await screen.findByRole('button', { name: /Draft the response with AnA/ })).toBeTruthy();
+    // Step 2 is the project's agency inbox (Communication's store), not a data-room picker (2026-10-17).
+    expect(screen.getByRole('heading', { name: /The agency's open communications/ })).toBeTruthy();
+    expect(await screen.findByText(/No agency communications yet/)).toBeTruthy();
     expect(screen.getByRole('button', { name: /Start a response sequence/ })).toBeTruthy();
-    expect(screen.getByTestId('pj-coming-later').textContent).toMatch(/Question-by-question tracking/);
+    // Each inbox letter holds its questions and signed responses (2026-10-18).
+    expect(screen.getByTestId('pj-coming-later').textContent).not.toMatch(/Question-by-question tracking/);
+    expect(screen.getByTestId('pj-coming-later').textContent).toMatch(/Agency meetings and precedent responses/);
     // The editor with no letter is no longer offered.
     expect(screen.queryByRole('button', { name: /Response authoring/ })).toBeNull();
-  });
-
-  it('drafts from the letter chosen, pinned, and from no source whose text could not be read', async () => {
-    const onAsk = vi.fn();
-    render(<ProjectRespond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={onAsk} />);
-    const letter = (await screen.findByLabelText(/The agency's letter/)) as HTMLSelectElement;
-    expect(Array.from(letter.options).map((o) => o.textContent)).toEqual(['FDA information request 2026-10-12', 'CSR-001']);
-    fireEvent.click(screen.getByRole('button', { name: /Draft the response with AnA/ }));
-    expect((window as { C2C_SOURCE_PINS?: string[] }).C2C_SOURCE_PINS).toEqual(['41']);
-    expect(onAsk.mock.calls[0][0]).toMatch(/FDA information request 2026-10-12/);
-    expect(onAsk.mock.calls[0][0]).toMatch(/no question number or due date the letter does not state/);
-  });
-
-  it('with no readable letter in the data room, drafting is not offered as if it could be grounded', async () => {
-    apiRequest.mockImplementation(async () => ok({ sources: [source(40, 'Scanned fax', false)], currentTotal: 1 }));
-    render(<ProjectRespond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={vi.fn()} />);
-    const draft = (await screen.findByRole('button', { name: /Draft the response with AnA/ })) as HTMLButtonElement;
-    await waitFor(() => expect(draft.disabled).toBe(true));
-    expect(screen.getByText(/No letter in the data room has readable text yet/)).toBeTruthy();
   });
 
   it('"Start a response sequence" opens that market\'s Sequences tab with the follow-up type response', async () => {
@@ -89,6 +75,78 @@ describe('Respond answers the agency (F15)', () => {
     render(<ProjectRespond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={vi.fn()} />);
     expect((screen.getByRole('button', { name: /Start a response sequence/ }) as HTMLButtonElement).disabled).toBe(true);
     expect(screen.getByText(/This project has no submission to respond in yet/)).toBeTruthy();
+  });
+});
+
+const COMMS_URL = `/api/concept2cure/projects/${PID}/agency-communications`;
+const commRow = (over: Record<string, unknown> = {}) => ({
+  id: 'ace_1', sourceType: 'uploaded_official_correspondence', communicationType: 'Agency letter: IR-2026-10-12.pdf',
+  sourceChannel: 'Uploaded in Respond', linkedSectionCodes: [], linkedArtifactIds: ['cre_source:77'],
+  receivedDate: '2026-10-16T09:00:00.000Z', urgency: 'medium', responseRequired: true, extractedIssues: [],
+  humanReviewStatus: 'pending_review', closureStatus: 'open', auditMetadata: { visibilityTier: 'shared_client_c2c' }, ...over,
+});
+
+describe('One agency inbox: Respond logs into Communication\'s store and shows it (2026-10-17)', () => {
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  it('a letter uploaded in Respond is logged as an agency communication of this project, linked to its data-room source', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true, status: 200,
+      json: async () => ({ fileId: 'file_9', sourceId: 77, status: 'ready', extractionMethod: 'pdf-text', extractionWords: 120 }),
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { container } = render(<ProjectRespond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={vi.fn()} />);
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.change(input, { target: { files: [new File(['%PDF'], 'IR-2026-10-12.pdf', { type: 'application/pdf' })] } });
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST', COMMS_URL, expect.objectContaining({
+      sourceType: 'uploaded_official_correspondence',
+      linkedArtifactIds: ['cre_source:77'],
+      communicationType: expect.stringContaining('IR-2026-10-12.pdf'),
+    })));
+    // No due date, urgency assessment or issue is invented for a letter nobody has read yet.
+    const body = apiRequest.mock.calls.find((c) => c[0] === 'POST' && c[1] === COMMS_URL)![2];
+    expect(body.dueDate).toBeUndefined();
+    expect(body.extractedIssues).toEqual([]);
+  });
+
+  it('when the log is refused, says the letter is in the data room but not in the agency inbox', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ fileId: 'file_9', sourceId: 77, status: 'ready' }) })));
+    apiRequest.mockImplementation(async (m: string, url: string) => {
+      if (m === 'POST' && url === COMMS_URL) return { ok: false, status: 500, json: async () => ({ success: false, message: 'The store is unavailable' }) } as Response;
+      return String(url).startsWith(`/api/c2c/projects/${PID}/sources`) ? ok(SOURCES) : ok({ success: true, data: [] });
+    });
+    const { container } = render(<ProjectRespond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={vi.fn()} />);
+    fireEvent.change(container.querySelector('input[type="file"]')!, { target: { files: [new File(['%PDF'], 'IR.pdf', { type: 'application/pdf' })] } });
+    expect(await screen.findByText(/not logged in the agency inbox/)).toBeTruthy();
+    expect(screen.getByText(/The store is unavailable/)).toBeTruthy();
+  });
+
+  it("shows the project's agency inbox from Communication's store, with triage, and drafts from a letter with that letter pinned", async () => {
+    apiRequest.mockImplementation(async (m: string, url: string) => {
+      if (url === COMMS_URL) return ok({ success: true, data: [commRow()] });
+      if (m === 'PATCH') return ok({ success: true, data: { id: 'ace_1', humanReviewStatus: 'triaged', closureStatus: 'in_progress' } });
+      return String(url).startsWith(`/api/c2c/projects/${PID}/sources`) ? ok(SOURCES) : ok({});
+    });
+    const onAsk = vi.fn();
+    render(<ProjectRespond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={onAsk} />);
+    expect(await screen.findByText('Agency letter: IR-2026-10-12.pdf')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Draft response with AnA/ }));
+    expect((window as { C2C_SOURCE_PINS?: string[] }).C2C_SOURCE_PINS).toEqual(['77']);
+    expect(onAsk.mock.calls[0][0]).toMatch(/Agency letter: IR-2026-10-12\.pdf/);
+    expect(onAsk.mock.calls[0][0]).toMatch(/no question number or due date the letter does not state/);
+    fireEvent.click(screen.getByRole('button', { name: 'Triage' }));
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('PATCH', `${COMMS_URL}/ace_1/advance`));
+    expect(await screen.findByRole('button', { name: 'Close letter' })).toBeTruthy();
+  });
+
+  it('a communication with no linked document is drafted without a pin, and the request says no letter is attached', async () => {
+    apiRequest.mockImplementation(async (_m: string, url: string) =>
+      url === COMMS_URL ? ok({ success: true, data: [commRow({ linkedArtifactIds: [], communicationType: 'Information request' })] }) : ok({}));
+    const onAsk = vi.fn();
+    render(<ProjectRespond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={onAsk} />);
+    fireEvent.click(await screen.findByRole('button', { name: /Draft response with AnA/ }));
+    expect((window as { C2C_SOURCE_PINS?: string[] }).C2C_SOURCE_PINS).toBeUndefined();
+    expect(onAsk.mock.calls[0][0]).toMatch(/No document of the letter is linked/);
   });
 });
 

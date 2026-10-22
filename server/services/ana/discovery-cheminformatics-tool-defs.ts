@@ -10,6 +10,7 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+import { STATED_REASON_INPUT } from './stated-reason-input';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Discovery & Cheminformatics Tools
@@ -150,7 +151,7 @@ export const GENERATE_SCHEDULE_OF_EVENTS: AnaTool = {
     'type (IND, 510K, NDA, BLA, PMA, De Novo, CER, IVDR, MAA, EUA), the applicable regulatory ' +
     'framework, and the program goals, compressing or stretching the milestone offsets to hit ' +
     'the requested target date. Milestones are stored as project workflow stages and surfaced ' +
-    'on the Schedule tab. Requires an active project in context. Use when the user asks to plan, ' +
+    'on the Schedule tab. Requires an active project in context and the person\'s stated reason for the change. Use when the user asks to plan, ' +
     'lay out, or build a project timeline / schedule / milestones, or when no schedule exists yet.',
   input_schema: {
     type: 'object',
@@ -169,6 +170,7 @@ export const GENERATE_SCHEDULE_OF_EVENTS: AnaTool = {
         type: 'string',
         description: 'Anchor/start date for the schedule (ISO YYYY-MM-DD). Defaults to today.',
       },
+      reason: STATED_REASON_INPUT,
       goals: {
         type: 'array',
         description: 'Program goals to align the schedule to; the earliest goal target also pulls the program forward.',
@@ -185,7 +187,7 @@ export const GENERATE_SCHEDULE_OF_EVENTS: AnaTool = {
         },
       },
     },
-    required: [],
+    required: ['reason'],
   },
 };
 

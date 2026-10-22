@@ -20,4 +20,3 @@ $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/
       Tests  12 passed (12)
    Start at  05:06:18
    Duration  2.93s (transform 1.19s, setup 228ms, import 1.54s, tests 561ms, environment 579ms)
-

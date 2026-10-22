@@ -1,0 +1,169 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-16T21:31:02.517Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-16T21:31:02.518Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-16T21:31:02.518Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts
+✅ Template tables initialized
+
+ × server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts > extraction-bound draft lifecycle on genuine embedded PostgreSQL > same-length extraction edit inside the selected span refuses the actual save and leaves all regulated rows untouched 63ms
+   → {"success":false,"error":"sections[0]: invalid sourceReferences; retain the document IDs, hashes and spans from the batch source receipts"}: expected 400 to be 409 // Object.is equality
+ × server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts > extraction-bound draft lifecycle on genuine embedded PostgreSQL > same-length extraction edit outside the selected span refuses the actual save and leaves all regulated rows untouched 14ms
+   → {"success":false,"error":"sections[0]: invalid sourceReferences; retain the document IDs, hashes and spans from the batch source receipts"}: expected 400 to be 409 // Object.is equality
+ × server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts > extraction-bound draft lifecycle on genuine embedded PostgreSQL > a V2 span beyond 80,000 retains exact UTF-16 digests in the document, genesis and audit without source text 10ms
+   → {"success":false,"error":"sections[0]: invalid sourceReferences; retain the document IDs, hashes and spans from the batch source receipts"}: expected 400 to be 201 // Object.is equality
+ × server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts > extraction-bound draft lifecycle on genuine embedded PostgreSQL > a private parent refuses a valid V2 source before source text or a regulated write 10ms
+   → expected 400 to be 403 // Object.is equality
+ × server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts > extraction-bound draft lifecycle on genuine embedded PostgreSQL > a revoked current organization role refuses a still-valid signed JWT without writing 10ms
+   → expected 400 to be 403 // Object.is equality
+ × server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts > extraction-bound draft lifecycle on genuine embedded PostgreSQL > the same V2 source cannot be saved in another organization’s program 8ms
+   → expected 400 to be 404 // Object.is equality
+ × server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts > extraction-bound draft lifecycle on genuine embedded PostgreSQL > a saved V2 extraction edit inside its span refuses actual controlled XML export without an audit or export receipt 24ms
+   → expected false to be true // Object.is equality
+ × server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts > extraction-bound draft lifecycle on genuine embedded PostgreSQL > a saved V2 extraction edit outside its span refuses actual controlled XML export without an audit or export receipt 15ms
+   → expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts > extraction-bound draft lifecycle on genuine embedded PostgreSQL > same-length extraction edit inside the selected span refuses the actual save and leaves all regulated rows untouched
+ FAIL  server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts > extraction-bound draft lifecycle on genuine embedded PostgreSQL > same-length extraction edit outside the selected span refuses the actual save and leaves all regulated rows untouched
+AssertionError: {"success":false,"error":"sections[0]: invalid sourceReferences; retain the document IDs, hashes and spans from the batch source receipts"}: expected 400 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 400
+
+ ❯ server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts:132:60
+    130|     const before = await receipts();
+    131|     const response = await author(request(app).post('/api/authoring/do…
+    132|     expect(response.status, JSON.stringify(response.body)).toBe(409);
+       |                                                            ^
+    133|     expect(response.body.data).toBeUndefined();
+    134|     expect(await receipts()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts > extraction-bound draft lifecycle on genuine embedded PostgreSQL > a V2 span beyond 80,000 retains exact UTF-16 digests in the document, genesis and audit without source text
+AssertionError: {"success":false,"error":"sections[0]: invalid sourceReferences; retain the document IDs, hashes and spans from the batch source receipts"}: expected 400 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 400
+
+ ❯ server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts:145:60
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts > extraction-bound draft lifecycle on genuine embedded PostgreSQL > a private parent refuses a valid V2 source before source text or a regulated write
+AssertionError: expected 400 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 400
+
+ ❯ server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts:183:31
+    181|     try {
+    182|       const response = await author(request(app).post('/api/authoring/…
+    183|       expect(response.status).toBe(403);
+       |                               ^
+    184|       expect(seam.sql.some(sql => /FROM vault.documents d/.test(sql)))…
+    185|       expect(await receipts()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts > extraction-bound draft lifecycle on genuine embedded PostgreSQL > a revoked current organization role refuses a still-valid signed JWT without writing
+AssertionError: expected 400 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 400
+
+ ❯ server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts:198:31
+    196|     try {
+    197|       const response = await author(request(app).post('/api/authoring/…
+    198|       expect(response.status).toBe(403);
+       |                               ^
+    199|       expect(await receipts()).toEqual(before);
+    200|       expect(seam.sql.some(sql => /FROM vault.documents d/.test(sql)))…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts > extraction-bound draft lifecycle on genuine embedded PostgreSQL > the same V2 source cannot be saved in another organization’s program
+AssertionError: expected 400 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 400
+
+ ❯ server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts:210:29
+    208|     const before = await receipts();
+    209|     const response = await author(request(app).post('/api/authoring/do…
+    210|     expect(response.status).toBe(404);
+       |                             ^
+    211|     expect(await receipts()).toEqual(before);
+    212|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts > extraction-bound draft lifecycle on genuine embedded PostgreSQL > a saved V2 extraction edit inside its span refuses actual controlled XML export without an audit or export receipt
+ FAIL  server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts > extraction-bound draft lifecycle on genuine embedded PostgreSQL > a saved V2 extraction edit outside its span refuses actual controlled XML export without an audit or export receipt
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts:224:57
+    222|     expect(response.body.code).toBe('SOURCE_REFERENCES_UNAVAILABLE');
+    223|     expect(await receipts()).toEqual(before);
+    224|     expect(seam.sql.some(sql => /^ROLLBACK/.test(sql))).toBe(true);
+       |                                                         ^
+    225|   });
+    226| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+   Start at  21:30:58
+   Duration  7.54s (transform 3.21s, setup 64ms, import 598ms, tests 6.68s, environment 0ms)
+

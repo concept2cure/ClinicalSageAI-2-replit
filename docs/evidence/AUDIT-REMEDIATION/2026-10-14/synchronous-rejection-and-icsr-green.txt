@@ -1,0 +1,264 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > two simultaneous transmits: exactly one POST reaches the agency; the other is refused INVALID_STATE
+{
+  "timestamp": "2026-10-14T05:16:13.669Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "e2ce7824-1056-4db6-8f4b-c59d21dcaee4",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<bf0d9c16-c433-481f-84cc-fe90a85e8c44@SPONSOR-AS2>",
+    "httpStatus": 504,
+    "recordFailure": null
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > a second transmit while the first awaits the agency reads "transmitting", sends nothing and says a send is in progress
+{
+  "timestamp": "2026-10-14T05:16:14.112Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "bc7b7c93-37e6-4c55-8adb-1efd91e881c6",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<e94d3aa4-b985-43b8-a5ee-5554786a1713@SPONSOR-AS2>",
+    "httpStatus": 504,
+    "recordFailure": null
+  }
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > two simultaneous transmits: exactly one POST reaches the agency; the other is refused INVALID_STATE 374ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > a second transmit while the first awaits the agency reads "transmitting", sends nothing and says a send is in progress 440ms
+stdout | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > a received transmit leaves the row transmitted with the MDN id
+{
+  "timestamp": "2026-10-14T05:16:14.246Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Recorded ICSR transmission receipt",
+  "context": {
+    "id": "deb2ab48-8463-46c3-b7c3-5f50d3cd8f47",
+    "gateway": "FDA_FAERS",
+    "receiptId": "<mdn-icsr@FDA>",
+    "organizationId": 7
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > NOT_DELIVERED (client certificate refused): back to prepared, and a later transmit is sent
+{
+  "timestamp": "2026-10-14T05:16:14.295Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR gateway transmit failed",
+  "context": {
+    "id": "264776b8-85d4-4fbd-b1ff-811953ed2d59",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "reason": "ICSR was NOT transmitted to FDA_FAERS (transport): ICSR AS2 POST (FDA_FAERS) failed: socket hang up. Nothing reached the agency: the message was never released to an authenticated gateway, or its TLS layer refused it.",
+    "status": "prepared"
+  }
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > a received transmit leaves the row transmitted with the MDN id 134ms
+stdout | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > NOT_DELIVERED (client certificate refused): back to prepared, and a later transmit is sent
+{
+  "timestamp": "2026-10-14T05:16:14.431Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Recorded ICSR transmission receipt",
+  "context": {
+    "id": "264776b8-85d4-4fbd-b1ff-811953ed2d59",
+    "gateway": "FDA_FAERS",
+    "receiptId": "<mdn-icsr@FDA>",
+    "organizationId": 7
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > REFUSED_BY_AGENCY (HTTP 403): back to prepared
+{
+  "timestamp": "2026-10-14T05:16:14.480Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR gateway transmit failed",
+  "context": {
+    "id": "e5d582be-98b6-465d-9609-2c6504c5ba65",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "reason": "ICSR was NOT transmitted to FDA_FAERS (gateway-rejected): The agency endpoint refused the message: HTTP 403: forbidden",
+    "status": "prepared"
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > DELIVERED_UNCONFIRMED (HTTP 502): transmission_unconfirmed, never back to prepared
+{
+  "timestamp": "2026-10-14T05:16:14.523Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "ccb9fa5e-e8e9-4f3c-8f94-61237bd3c0f5",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<f2f448fb-00b0-4ff9-b965-4a6b193126f9@SPONSOR-AS2>",
+    "httpStatus": 502,
+    "recordFailure": null
+  }
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > NOT_DELIVERED (client certificate refused): back to prepared, and a later transmit is sent 184ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > REFUSED_BY_AGENCY (HTTP 403): back to prepared 49ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > DELIVERED_UNCONFIRMED (HTTP 502): transmission_unconfirmed, never back to prepared 43ms
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > HTTP 502 from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared
+{
+  "timestamp": "2026-10-14T05:16:15.585Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "529a98cb-4c38-40e1-8767-b920605df9c8",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<952fc6cd-ba12-4d6b-aa38-9de03cfb2cf0@SPONSOR-AS2>",
+    "httpStatus": 502,
+    "recordFailure": null
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > HTTP 502 from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared
+{
+  "timestamp": "2026-10-14T05:16:16.608Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "529a98cb-4c38-40e1-8767-b920605df9c8",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<2a10d406-a92d-4ddf-b889-466404904f6d@SPONSOR-AS2>",
+    "httpStatus": 502,
+    "recordFailure": null
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > HTTP 502 from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared
+{
+  "timestamp": "2026-10-14T05:16:17.665Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "529a98cb-4c38-40e1-8767-b920605df9c8",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<0fb77fd3-166c-4d99-a55e-183f6a050184@SPONSOR-AS2>",
+    "httpStatus": 502,
+    "recordFailure": null
+  }
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > HTTP 502 from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared 3173ms
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > a reset from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared
+{
+  "timestamp": "2026-10-14T05:16:18.752Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "e0b36fb5-5c95-4ded-be2c-c69f5212fde4",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<18d41dc5-b341-4a02-9857-e64dc987ae32@SPONSOR-AS2>",
+    "httpStatus": null,
+    "recordFailure": null
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > a reset from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared
+{
+  "timestamp": "2026-10-14T05:16:19.766Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "e0b36fb5-5c95-4ded-be2c-c69f5212fde4",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<fd4454c4-a416-4c10-b66c-d2947c999b10@SPONSOR-AS2>",
+    "httpStatus": null,
+    "recordFailure": null
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > a reset from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared
+{
+  "timestamp": "2026-10-14T05:16:20.778Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "e0b36fb5-5c95-4ded-be2c-c69f5212fde4",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<6292964a-1537-4b50-aebd-8a0d8d111fb3@SPONSOR-AS2>",
+    "httpStatus": null,
+    "recordFailure": null
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > a real accepting MDN whose 'transmitted' UPDATE fails: row 'transmitting', and a second transmit posts nothing
+{
+  "timestamp": "2026-10-14T05:16:20.868Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR receipt could not be recorded; row held transmitting",
+  "context": {
+    "id": "3e6b7adf-40d7-49ed-9479-587a330d3347",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "receiptId": "<mdn-icsr@FDA>",
+    "simulated": false,
+    "reason": "Failed query: update \"ind_icsr_transmissions\" set \"status\" = $1, \"transmitted_at\" = $2, \"transport_receipt_id\" = $3, \"updated_at\" = $4 where (\"ind_icsr_transmissions\".\"id\" = $5 and \"ind_icsr_transmissions\".\"organization_id\" = $6) returning \"id\", \"organization_id\", \"submission_id\", \"adverse_event_id\", \"gateway\", \"message_number\", \"sender_id\", \"receiver_id\", \"status\", \"transmit_ready\", \"transmitted_at\", \"transport_receipt_id\", \"acknowledged_at\", \"ack_code\", \"acknowledged_message_number\", \"errors\", \"gaps\", \"message\", \"created_by\", \"created_at\", \"updated_at\"\nparams: transmitted,2026-10-14T05:16:20.785Z,<mdn-icsr@FDA>,2026-10-14T05:16:20.866Z,3e6b7adf-40d7-49ed-9479-587a330d3347,7"
+  }
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > a reset from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared 3082ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > a real accepting MDN whose 'transmitted' UPDATE fails: row 'transmitting', and a second transmit posts nothing 93ms
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > DELIVERED_UNCONFIRMED (HTTP 502) whose 'transmission_unconfirmed' UPDATE fails: row 'transmitting', and a second transmit posts nothing
+{
+  "timestamp": "2026-10-14T05:16:20.907Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "835eaa7d-697a-495f-a035-3354ce2b03b6",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<0935474c-63d5-46f4-bb99-6f69e1166d65@SPONSOR-AS2>",
+    "httpStatus": 502,
+    "recordFailure": "Failed query: update \"ind_icsr_transmissions\" set \"status\" = $1, \"transport_receipt_id\" = $2, \"errors\" = $3, \"updated_at\" = $4 where (\"ind_icsr_transmissions\".\"id\" = $5 and \"ind_icsr_transmissions\".\"organization_id\" = $6) returning \"id\", \"organization_id\", \"submission_id\", \"adverse_event_id\", \"gateway\", \"message_number\", \"sender_id\", \"receiver_id\", \"status\", \"transmit_ready\", \"transmitted_at\", \"transport_receipt_id\", \"acknowledged_at\", \"ack_code\", \"acknowledged_message_number\", \"errors\", \"gaps\", \"message\", \"created_by\", \"created_at\", \"updated_at\"\nparams: transmission_unconfirmed,<0935474c-63d5-46f4-bb99-6f69e1166d65@SPONSOR-AS2>,[{\"kind\":\"transmission_unconfirmed\",\"stage\":\"receipt-unproven\",\"reason\":\"ICSR delivery to FDA_FAERS is unconfirmed (receipt-unproven): The agency endpoint answered HTTP 502, which neither accepts nor refuses the message (an intermediary or the agency's backend may hold it): Bad Gateway The gateway answered HTTP 502 to AS2 message <0935474c-63d5-46f4-bb99-6f69e1166d65@SPONSOR-AS2> and may hold it; confirm receipt at the agency before any resend.\",\"httpStatus\":502,\"agencyResponseRaw\":\"Bad Gateway\",\"transportMessageId\":\"<0935474c-63d5-46f4-bb99-6f69e1166d65@SPONSOR-AS2>\",\"recordedAt\":\"2026-10-14T05:16:20.905Z\"}],2026-10-14T05:16:20.905Z,835eaa7d-697a-495f-a035-3354ce2b03b6,7"
+  }
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > DELIVERED_UNCONFIRMED (HTTP 502) whose 'transmission_unconfirmed' UPDATE fails: row 'transmitting', and a second transmit posts nothing 38ms
+stderr | server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts
+{
+  "timestamp": "2026-10-14T05:16:22.102Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > records exact receipt bytes/audit and resolves only the retained matching sequence claim
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > records exact receipt bytes/audit and resolves only the retained matching sequence claim 111ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > records a verified receipt while keeping a newer signature claim explicitly unreconciled 50ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > never guesses a legacy sequence binding by its number 41ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > uses a tied authenticated refusal only for rejected transport state, never center acknowledgement 45ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > reconciles a retained synchronous agency rejection without authorizing its signature again 72ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses a positive receipt that conflicts with a retained rejected transmittal 57ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > cannot resolve a newer attempt with the same signature using re-encoded original receipt bytes 79ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong message without changing receipt, sequence or audit 38ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong MIC without changing receipt, sequence or audit 41ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong tenant without changing receipt, sequence or audit 19ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong viewer without changing receipt, sequence or audit 43ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > rolls back receipt and sequence changes together if the canonical audit fails 51ms
+
+ Test Files  2 passed (2)
+      Tests  22 passed (22)
+   Start at  05:16:10
+   Duration  14.37s (transform 768ms, setup 69ms, import 1.64s, tests 12.35s, environment 0ms)
+

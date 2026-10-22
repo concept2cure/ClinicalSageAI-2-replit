@@ -9,6 +9,7 @@ import { getGateway } from '../services/ai-gateway';
 import auditService from '../services/auditService';
 import { createScopedLogger } from '../utils/logger.js';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
+import { requireCurrentProjectActor, ProjectAdmissionRefusal } from './c2c/project-access';
 import { UnifiedCERService, cerGenerationService } from '../services/cer';
 
 const cerLog = createScopedLogger('cer-routes');
@@ -586,6 +587,7 @@ router.post('/mdr/generate', async (req, res) => {
     const guard = requireAuthedOrgId(req, res);
     if (!guard.ok) return;
 
+    await requireCurrentProjectActor(req, true);
     const user = (req as any).user;
     const userId = Number(user?.id ?? user?.userId);
     if (!Number.isFinite(userId)) {
@@ -609,6 +611,7 @@ router.post('/mdr/generate', async (req, res) => {
     }
     return res.status(201).json(result);
   } catch (error) {
+    if (error instanceof ProjectAdmissionRefusal) return res.status(error.status).json({error:error.message,code:error.code});
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid data', details: error.errors });
     }

@@ -3643,8 +3643,8 @@
   },
   "fulfill_regulatory_commitment": {
    "class": "confirm",
-   "writes": "UPDATE regulatory_commitments fulfilled (terminal)",
-   "site": "AnaToolExecutor.ts:12598"
+   "writes": "UPDATE regulatory_commitments fulfilled (terminal), meeting commitment or other only; a PMR, PMC or REMS writes nothing (a signed act, P-41)",
+   "site": "AnaToolExecutor.ts:13503"
   },
   "gateway_configuration_status": {
    "class": "read",
@@ -6197,12 +6197,12 @@
   },
   "save_document_to_vault": {
    "class": "confirm",
-   "writes": "new governed artifact + version + governed-action row",
-   "site": "AnaToolExecutor.ts:19670",
+   "writes": "creates a one-section authoring document, revision + audit (not the Vault)",
+   "site": "authoring/authoring-draft-tool.ts saveDocumentToVaultTool",
    "present": {
     "verb": "save",
-    "object": "a document to the Vault",
-    "source": "vault",
+    "object": "an AnA draft in the editor",
+    "source": "authoring",
     "preview": [
      "title"
     ]

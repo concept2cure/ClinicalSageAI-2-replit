@@ -1,0 +1,42 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts",
+    "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts",
+    "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts",
+    "server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts",
+    "server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts",
+    "server/services/clinical-regulatory-evidence/__tests__/processing-timestamp.pglite.test.ts",
+    "server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts",
+    "server/services/ocr/__tests__/documentIntake.test.ts",
+    "server/services/ocr/__tests__/ocr-budget.test.ts",
+    "server/services/ocr/__tests__/page-offsets.test.ts",
+    "server/routes/__tests__/chat-upload-extraction-coverage.test.ts"
+  ],
+  "nodeVersion": "v22.23.3",
+  "PATH_prefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+  "NODE_OPTIONS": "--max-old-space-size=4096",
+  "tests": {
+    "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts": "9544137f904f4170f2ba8e23d087d38a640ee7fca28ab89028e88f038410032a",
+    "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts": "1dc05c4615e2307a182add0da0c74b17444d1647699cebbab443e6cd19e59f54",
+    "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts": "8750e336d0f9004938fb9614b4833fd0d31442b32d88ca1de693797a6d30d5d6",
+    "server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts": "96cc7cabec00fd7f4b2724eebd692f8ca29d70dcfe81dd244f661fb1c9af3376",
+    "server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts": "dc0cb70018ded54fcd3a8b09b581bf926389a904cf8d95efe11a6b1d2a147cee",
+    "server/services/clinical-regulatory-evidence/__tests__/processing-timestamp.pglite.test.ts": "d3a68e51a314bad6e796b9ecb8daffb89489d87c72e1ac892aebffed55419f51",
+    "server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts": "3cda1af0a6fb0dcc04bc914d8fa1c8099f5edc9709f8982843e406488f71ff3a",
+    "server/services/ocr/__tests__/documentIntake.test.ts": "cba78a7cb6fb0cb0bc1ece5c3a4810ffcaf4eec17a871aca3b8120e46bd161d4",
+    "server/services/ocr/__tests__/ocr-budget.test.ts": "aa7158a3a0d29a40a167d56de3050cb38b64b6444ecd8f46764f97d0e4f72bc1",
+    "server/services/ocr/__tests__/page-offsets.test.ts": "ec0d969fa4620d5488c345c441389feb7176faea8bd6cdc0419b9252a0b58369",
+    "server/routes/__tests__/chat-upload-extraction-coverage.test.ts": "1c73b04ce51acf5a9461070306e81a56a5bc30de00ca7b01ca6f3bedad68b924"
+  },
+  "production": {
+    "server/services/clinical-regulatory-evidence/data-room-processing.ts": "2054682c485173a5cf79dd8a5d234755cd67ba83d05cc8addb612417da1c1e2a",
+    "server/services/clinical-regulatory-evidence/capture-extraction-evidence.ts": "281e3f7ddfb773f972d8fd37420d7fc4188503d6deadce035645cbaacf9f7c1b"
+  }
+}

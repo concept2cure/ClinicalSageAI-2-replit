@@ -53,4 +53,3 @@ AssertionError: the tenant's vault versions must go: expected 1 to be +0 // Obje
       Tests  1 failed | 11 passed (12)
    Start at  19:55:59
    Duration  2.55s (transform 847ms, setup 81ms, import 310ms, tests 1.85s, environment 0ms)
-

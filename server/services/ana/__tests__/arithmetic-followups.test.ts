@@ -7,7 +7,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { checkFigureArithmetic } from '../dossierReconciliation';
+import { checkFigureArithmetic } from '../figure-arithmetic';
 import { critiqueDraft } from '../writing-precision-gate';
 
 describe('checkFigureArithmetic — a version or amendment slash is not n/N', () => {

@@ -1,0 +1,22 @@
+# Deletion-history search, 2026-10-19, HEAD 99acc88d
+# git rev-parse --is-shallow-repository: true
+# commits reachable: 888; root commit date: 2026-10-05
+# THE CLONE IS SHALLOW: the search covers only the reachable history above, not the repository's full history.
+
+$ git log --all --diff-filter=D --oneline -- 'server/src/services/reg/*' 'server/routes/cmc-agency*' 'server/api/cmc/regulatoryIR*' 'client/**/*Corr*' '**/*AgencyQuestion*' 'server/src/services/integrations/*'
+7c1bbcfd Two dead modules deleted, and a withheld one exempted by its decision rather than baselined
+(end of output)
+
+$ git log --all --diff-filter=D --oneline -- 'client/**/*Editor*' 'client/**/*Canvas*'  (the working agreement's editor search)
+(end of output)
+
+$ git log --all --oneline -S "agency_question_response" -- client/
+eceb747d Share scoped authoring recovery across specialist editor actions
+a811b0d8 D2: step 4 safety net; readiness refuses the vault leaves freeze would refuse
+f304c87d chore: land current concept2cure-v2 work
+8e2d0bd9 Board: release the P-32..P-35 decisions with their commits; claim the agency-questions build (D2)
+7f3b84ca chore(repo-health): auto-refresh baseline after merge [skip ci]
+62ff3edc Nothing is sent to PMDA over an unsourced protocol, and Japan devices no longer show as transmittable
+e5cf4462 Unit tier back to its pre-existing reds: six suites broken since 2026-10-04 fixed
+1ba77dbf Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+(end of output)

@@ -88,4 +88,3 @@ Adjacent, not the reported defect: `apiRequest` resolves rather than throws on a
 A bare `error` code string such as 'UNAUTHORIZED', or the text `HTTP 401`, can then reach a toast. `redactInternals` would not catch "UNAUTHORIZED Nothing was written." either (I tested it: returned unchanged). It catches "HTTP 401 …" only when the string starts with it, and ProtocolDevWorkspace's "The protocol was not exported — HTTP 401. …" also passed through unchanged in the test. The fix there would be to route those helpers through `serverMessage`/`extractApiError`, not to add a `redactInternals` wrapper. That would be a separate finding, and it is not established here.
 
 ### M-0928-3 (low) — not independently verified
-

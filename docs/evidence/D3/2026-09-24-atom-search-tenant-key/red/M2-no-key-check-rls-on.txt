@@ -47,4 +47,3 @@ AssertionError: expected [] to be an instance of TenantKeyRequiredError
       Tests  1 failed | 6 passed (7)
    Start at  21:19:28
    Duration  3.00s (transform 1.12s, setup 89ms, import 2.13s, tests 411ms, environment 0ms)
-

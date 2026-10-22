@@ -26,9 +26,9 @@
  * its class, because screen names ("Vault") also appear in the navigation.
  */
 import React from 'react';
+import { Providers, turnControls, strip, stepText, flush, installDriveBrowserMocks, SEARCH, FILTER, START_ASSIST, PROMOTED } from './liveDriveShell.fixtures';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import type { DriveSseEvent, DriveTurnControls } from '../../components/ana/useAnaChat';
 import type { SurfaceActionOutcome } from '../surfaceActions';
@@ -109,64 +109,24 @@ vi.mock('../navParams', async (importOriginal) => {
   };
 });
 
-import { AuthProvider } from '@/services/portal/authService';
-import { TenantProvider } from '@/contexts/TenantContext';
 import { V2App } from '../V2App';
 import { locationForSurface } from '../routing';
 import { applySurfaceAction, cancelPendingSurfaceAction } from '../surfaceActions';
 import { setAnaLockedScreens } from '../../components/ana/anaLockedScreens';
+import { EsignModal } from '../../_shared/components/EsignModal';
+import { ceremonyOpen } from '../ceremony';
+import { RichSectionEditor } from '../editor/RichSectionEditor';
+import type { Editor } from '@tiptap/core';
+import { clearShellProject, publishShellProject, readShellProject } from '../shellProject';
 
-const SEARCH = { actionType: 'surface_action', actionId: 'vault.search', params: { query: 'stability' } };
-const FILTER = { actionType: 'surface_action', actionId: 'vault.search', params: { query: 'second' } };
 const NAV_CMC = { actionType: 'navigate', targetId: 'cmc' };
 const NAV_HERE = { actionType: 'navigate', targetId: LANDS_HERE };
-
-function turnControls(): DriveTurnControls & {
-  interject: ReturnType<typeof vi.fn>;
-  reportScreen: ReturnType<typeof vi.fn>;
-  moveLanded: ReturnType<typeof vi.fn>;
-} {
-  return {
-    stop: vi.fn(),
-    interject: vi.fn(async () => true),
-    reportScreen: vi.fn(async () => true),
-    moveLanded: vi.fn(async () => true),
-  };
-}
 
 /** Deliver one drive event, as the driving chat's stream does. */
 function drive(ev: DriveSseEvent, controls: DriveTurnControls) {
   act(() => {
     chat.shellOpts!.onDriveEvent!(ev, controls);
   });
-}
-const START_ASSIST: DriveSseEvent = { type: 'drive_state', enabled: true, mode: 'assist' };
-const PROMOTED: DriveSseEvent = { type: 'drive_state', enabled: true, mode: 'demo', promoted: true };
-
-function strip(): HTMLElement | null {
-  return document.querySelector('.ana-drive-strip');
-}
-function stepText(): string | null {
-  return strip()?.querySelector('.ana-drive-step')?.textContent ?? null;
-}
-/** Let the move queue's promise chain run. */
-async function flush(ms = 20) {
-  await act(async () => {
-    await new Promise((r) => setTimeout(r, ms));
-  });
-}
-
-function Providers({ children }: { children: React.ReactNode }) {
-  const client = new QueryClient({
-    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-  });
-  return (
-    <QueryClientProvider client={client}>
-      <AuthProvider>
-        <TenantProvider>{children}</TenantProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  );
 }
 
 async function mountShell() {
@@ -189,27 +149,11 @@ beforeEach(() => {
   bus.deferred.length = 0;
   vi.mocked(applySurfaceAction).mockClear();
   vi.mocked(cancelPendingSurfaceAction).mockClear();
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(async () => ({ ok: false, status: 503, body: null, json: async () => ({}) })),
-  );
-  if (!window.matchMedia) {
-    window.matchMedia = ((q: string) => ({
-      matches: false, media: q, onchange: null,
-      addListener: () => {}, removeListener: () => {},
-      addEventListener: () => {}, removeEventListener: () => {}, dispatchEvent: () => false,
-    })) as unknown as typeof window.matchMedia;
-  }
-  const NoopObserver = class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  };
-  (window as unknown as { ResizeObserver?: unknown }).ResizeObserver ??= NoopObserver;
-  (window as unknown as { IntersectionObserver?: unknown }).IntersectionObserver ??= NoopObserver;
+  installDriveBrowserMocks();
 });
 afterEach(() => {
   cleanup();
+  clearShellProject();
   setAnaLockedScreens([]);
   vi.unstubAllGlobals();
   localStorage.clear();
@@ -608,4 +552,84 @@ describe('one box: the drive strip draws no steer field on the conversation scre
     // Stop and take-over stay.
     expect(within(strip()!).getByRole('button', { name: /Stop/ })).toBeTruthy();
   });
+});
+
+describe('governed form ownership is checked when each queued move applies', () => {
+  const mountCeremony = () => render(<Providers><EsignModal open action="Sign package release" target="run-1" meanings={['approval']} onClose={vi.fn()} onSign={async () => ({ meaning: 'approval', reason: 'Reviewed package', signedAt: '2026-10-14T12:00:00Z' })} /></Providers>);
+
+  it('refuses navigation and another operation queued before the real signature form opened, without cancelling the operation already running', async () => {
+    await mountShell();
+    const a = turnControls();
+    drive(START_ASSIST, a);
+    drive({ type: 'drive_action', directive: SEARCH, moveId: 'running-action' }, a);
+    drive({ type: 'drive_navigation', directive: NAV_HERE, moveId: 'queued-navigation' }, a);
+    drive({ type: 'drive_action', directive: FILTER, moveId: 'queued-operation' }, a);
+    await flush();
+    expect(applySurfaceAction).toHaveBeenCalledOnce();
+    const form = mountCeremony();
+    expect(ceremonyOpen()).toBe(true);
+    fireEvent.change(screen.getByLabelText('Reason for this action'), { target: { value: 'Keep the exact signing reason' } });
+    act(() => bus.deferred[0]({ status: 'applied', detail: 'Original operation completed' }));
+    await waitFor(() => expect(a.reportScreen).toHaveBeenCalledTimes(2));
+    expect(a.reportScreen.mock.calls).toEqual([
+      [expect.stringMatching(/governed form/), 'queued-navigation'],
+      [expect.stringMatching(/governed form/), 'queued-operation'],
+    ]);
+    expect(a.moveLanded.mock.calls).toEqual([['running-action']]);
+    expect(applySurfaceAction).toHaveBeenCalledOnce();
+    expect((screen.getByLabelText('Reason for this action') as HTMLTextAreaElement).value).toBe('Keep the exact signing reason');
+    expect(chat.interject).not.toHaveBeenCalled();
+    form.unmount();
+    expect(ceremonyOpen()).toBe(false);
+    drive({ type: 'drive_navigation', directive: NAV_HERE, moveId: 'after-close-navigation' }, a);
+    await waitFor(() => expect(a.moveLanded).toHaveBeenCalledWith('after-close-navigation'));
+  });
+
+  it('allows a queued navigation when the real signature form closes before its turn to apply', async () => {
+    await mountShell();
+    const a = turnControls();
+    drive(START_ASSIST, a);
+    drive({ type: 'drive_action', directive: SEARCH, moveId: 'running-action' }, a);
+    await flush();
+    const form = mountCeremony();
+    drive({ type: 'drive_navigation', directive: NAV_HERE, moveId: 'navigation-after-form' }, a);
+    form.unmount();
+    expect(ceremonyOpen()).toBe(false);
+    act(() => bus.deferred[0]({ status: 'applied' }));
+    await waitFor(() => expect(a.moveLanded).toHaveBeenCalledWith('navigation-after-form'));
+    expect(a.reportScreen).not.toHaveBeenCalled();
+  });
+});
+
+it('checks the actual native editor dirty guard before a queued navigation publishes another program, and permits a fresh move after explicit save', async () => {
+  await mountShell();
+  const originalProgram = '10000000-0000-4000-8000-000000000001';
+  const otherProgram = '20000000-0000-4000-8000-000000000002';
+  act(() => publishShellProject({ id: originalProgram }));
+  const a = turnControls();
+  drive(START_ASSIST, a);
+  drive({ type: 'drive_action', directive: SEARCH, moveId: 'running-action' }, a);
+  drive({ type: 'drive_navigation', directive: { ...NAV_HERE, program: { id: otherProgram, name: 'Other program' } }, moveId: 'dirty-navigation' }, a);
+  await flush();
+  const onSave = vi.fn(async (_serialized: string) => undefined);
+  const ref = React.createRef<React.ComponentRef<typeof RichSectionEditor>>();
+  render(<RichSectionEditor ref={ref} value="<p>Current stored section.</p>" onSave={onSave} storageKey={null} />);
+  await waitFor(() => expect(document.querySelector('.rse-body .tiptap')).toBeTruthy());
+  const canvas = (document.querySelector('.rse-body .tiptap') as HTMLElement & { editor: Editor }).editor;
+  act(() => { canvas.commands.insertContent('Unfinished regulatory paragraph. '); });
+  const beforeUnload = () => { const event = new Event('beforeunload', { cancelable: true }); window.dispatchEvent(event); return event.defaultPrevented; };
+  await waitFor(() => expect(beforeUnload()).toBe(true));
+  act(() => bus.deferred[0]({ status: 'applied' }));
+  await waitFor(() => expect(a.reportScreen).toHaveBeenCalledOnce());
+  expect(a.reportScreen).toHaveBeenCalledWith(expect.stringMatching(/unsaved document changes/), 'dirty-navigation');
+  expect(a.moveLanded.mock.calls).toEqual([['running-action']]);
+  expect(readShellProject()?.id).toBe(originalProgram);
+  expect(canvas.getText()).toContain('Unfinished regulatory paragraph.');
+  expect(onSave).not.toHaveBeenCalled();
+  await act(async () => { await ref.current!.save(); });
+  await waitFor(() => expect(beforeUnload()).toBe(false));
+  drive({ type: 'drive_navigation', directive: { ...NAV_HERE, program: { id: otherProgram, name: 'Other program' } }, moveId: 'saved-navigation' }, a);
+  await waitFor(() => expect(a.moveLanded).toHaveBeenCalledWith('saved-navigation'));
+  expect(readShellProject()?.id).toBe(otherProgram);
+  expect(onSave).toHaveBeenCalledOnce();
 });

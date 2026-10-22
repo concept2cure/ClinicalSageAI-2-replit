@@ -1036,4 +1036,3 @@ stderr | server/services/submission-gateways/__tests__/governed-transmit-pretran
       Tests  444 passed (444)
    Start at  07:54:47
    Duration  44.59s (transform 5.61s, setup 671ms, import 23.04s, tests 13.02s, environment 3ms)
-

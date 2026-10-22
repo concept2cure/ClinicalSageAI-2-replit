@@ -1,0 +1,1112 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ × client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > saved references reopen in the one actual editor > checks history without selecting it, freshly reuses it and previews before building (AnA=false) 5522ms
+   → Unable to find role="button" and name "Check saved sources"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ed"[39m
+    [36m>[39m
+      [36m<aside[39m
+        [33mclass[39m=[32m"ed-tree"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-t"[39m
+          [36m>[39m
+            [0mDocument tree[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-m"[39m
+          [36m>[39m
+            [0m1 document · all[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note"[39m
+          [33mstyle[39m=[32m"padding: 10px 12px; font-size: 12px;"[39m
+        [36m>[39m
+          [0mThis project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-vol"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"font-weight: 600;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0mM3[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mSaved reference working document[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                [33mstyle[39m=[32m"margin-left: auto;"[39m
+              [36m>[39m
+                [0m1[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.2.S.1[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mExisting saved section[0m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</aside>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"ed-doc"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"ed-doc-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-crumbs"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sep-first"[39m
+            [36m>[39m
+              [0mM3[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"doc-title"[39m
+              [33mtitle[39m=[32m"Saved reference working document"[39m
+            [36m>[39m
+              [0mSaved reference working document[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"here"[39m
+            [36m>[39m
+              [0m3.2.S.1[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Save and sign"[39m
+            [33mclass[39m=[32m"ed-doc-commit"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn primary"[39m
+              [33mdata-testid[39m=[32m"save-section"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mstyle[39m=[32m"height: 30px;"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mSaved[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-doc-actions"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33maria-label[39m=[32m"Editor view"[39m
+              [33mclass[39m=[32m"ed-viewtoggle"[39m
+              [33mrole[39m=[32m"group"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"true"[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdata-active[39m=[32m"true"[39m
+                [33mstyle[39m=[32m"height: 30px;"[39m
+                [33mtitle[39m=[32m"Edit one section"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                  ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ed"[39m
+    [36m>[39m
+      [36m<aside[39m
+        [33mclass[39m=[32m"ed-tree"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-t"[39m
+          [36m>[39m
+            [0mDocument tree[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-m"[39m
+          [36m>[39m
+            [0m1 document · all[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note"[39m
+          [33mstyle[39m=[32m"padding: 10px 12px; font-size: 12px;"[39m
+        [36m>[39m
+          [0mThis project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-vol"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"font-weight: 600;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0mM3[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mSaved reference working document[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                [33mstyle[39m=[32m"margin-left: auto;"[39m
+              [36m>[39m
+                [0m1[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.2.S.1[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mExisting saved section[0m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</aside>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"ed-doc"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"ed-doc-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-crumbs"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sep-first"[39m
+            [36m>[39m
+              [0mM3[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"doc-title"[39m
+              [33mtitle[39m=[32m"Saved reference working document"[39m
+            [36m>[39m
+              [0mSaved reference working document[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"here"[39m
+            [36m>[39m
+              [0m3.2.S.1[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Save and sign"[39m
+            [33mclass[39m=[32m"ed-doc-commit"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn primary"[39m
+              [33mdata-testid[39m=[32m"save-section"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mstyle[39m=[32m"height: 30px;"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mSaved[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-doc-actions"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33maria-label[39m=[32m"Editor view"[39m
+              [33mclass[39m=[32m"ed-viewtoggle"[39m
+              [33mrole[39m=[32m"group"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"true"[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdata-active[39m=[32m"true"[39m
+                [33mstyle[39m=[32m"height: 30px;"[39m
+                [33mtitle[39m=[32m"Edit one section"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                  ...
+ × client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > saved references reopen in the one actual editor > checks history without selecting it, freshly reuses it and previews before building (AnA=true) 5257ms
+   → Unable to find role="button" and name "Check saved sources"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ed"[39m
+    [36m>[39m
+      [36m<aside[39m
+        [33mclass[39m=[32m"ed-tree"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-t"[39m
+          [36m>[39m
+            [0mDocument tree[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-m"[39m
+          [36m>[39m
+            [0m1 document · all[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note"[39m
+          [33mstyle[39m=[32m"padding: 10px 12px; font-size: 12px;"[39m
+        [36m>[39m
+          [0mThis project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-vol"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"font-weight: 600;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0mM3[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mSaved reference working document[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                [33mstyle[39m=[32m"margin-left: auto;"[39m
+              [36m>[39m
+                [0m1[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.2.S.1[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mExisting saved section[0m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</aside>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"ed-doc"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"ed-doc-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-crumbs"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sep-first"[39m
+            [36m>[39m
+              [0mM3[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"doc-title"[39m
+              [33mtitle[39m=[32m"Saved reference working document"[39m
+            [36m>[39m
+              [0mSaved reference working document[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"here"[39m
+            [36m>[39m
+              [0m3.2.S.1[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Save and sign"[39m
+            [33mclass[39m=[32m"ed-doc-commit"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn primary"[39m
+              [33mdata-testid[39m=[32m"save-section"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mstyle[39m=[32m"height: 30px;"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mSaved[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-doc-actions"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33maria-label[39m=[32m"Editor view"[39m
+              [33mclass[39m=[32m"ed-viewtoggle"[39m
+              [33mrole[39m=[32m"group"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"true"[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdata-active[39m=[32m"true"[39m
+                [33mstyle[39m=[32m"height: 30px;"[39m
+                [33mtitle[39m=[32m"Edit one section"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                  ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ed"[39m
+    [36m>[39m
+      [36m<aside[39m
+        [33mclass[39m=[32m"ed-tree"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-t"[39m
+          [36m>[39m
+            [0mDocument tree[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-m"[39m
+          [36m>[39m
+            [0m1 document · all[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note"[39m
+          [33mstyle[39m=[32m"padding: 10px 12px; font-size: 12px;"[39m
+        [36m>[39m
+          [0mThis project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-vol"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"font-weight: 600;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0mM3[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mSaved reference working document[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                [33mstyle[39m=[32m"margin-left: auto;"[39m
+              [36m>[39m
+                [0m1[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.2.S.1[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mExisting saved section[0m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</aside>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"ed-doc"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"ed-doc-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-crumbs"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sep-first"[39m
+            [36m>[39m
+              [0mM3[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"doc-title"[39m
+              [33mtitle[39m=[32m"Saved reference working document"[39m
+            [36m>[39m
+              [0mSaved reference working document[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"here"[39m
+            [36m>[39m
+              [0m3.2.S.1[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Save and sign"[39m
+            [33mclass[39m=[32m"ed-doc-commit"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn primary"[39m
+              [33mdata-testid[39m=[32m"save-section"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mstyle[39m=[32m"height: 30px;"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mSaved[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-doc-actions"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33maria-label[39m=[32m"Editor view"[39m
+              [33mclass[39m=[32m"ed-viewtoggle"[39m
+              [33mrole[39m=[32m"group"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"true"[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdata-active[39m=[32m"true"[39m
+                [33mstyle[39m=[32m"height: 30px;"[39m
+                [33mtitle[39m=[32m"Edit one section"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                  ...
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > saved references reopen in the one actual editor > checks history without selecting it, freshly reuses it and previews before building (AnA=false)
+ FAIL  client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > saved references reopen in the one actual editor > checks history without selecting it, freshly reuses it and previews before building (AnA=true)
+TestingLibraryElementError: Unable to find role="button" and name "Check saved sources"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ed"[39m
+    [36m>[39m
+      [36m<aside[39m
+        [33mclass[39m=[32m"ed-tree"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-t"[39m
+          [36m>[39m
+            [0mDocument tree[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-m"[39m
+          [36m>[39m
+            [0m1 document · all[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note"[39m
+          [33mstyle[39m=[32m"padding: 10px 12px; font-size: 12px;"[39m
+        [36m>[39m
+          [0mThis project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-vol"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"font-weight: 600;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0mM3[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mSaved reference working document[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                [33mstyle[39m=[32m"margin-left: auto;"[39m
+              [36m>[39m
+                [0m1[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.2.S.1[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mExisting saved section[0m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</aside>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"ed-doc"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"ed-doc-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-crumbs"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sep-first"[39m
+            [36m>[39m
+              [0mM3[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"doc-title"[39m
+              [33mtitle[39m=[32m"Saved reference working document"[39m
+            [36m>[39m
+              [0mSaved reference working document[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"here"[39m
+            [36m>[39m
+              [0m3.2.S.1[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Save and sign"[39m
+            [33mclass[39m=[32m"ed-doc-commit"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn primary"[39m
+              [33mdata-testid[39m=[32m"save-section"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mstyle[39m=[32m"height: 30px;"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mSaved[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-doc-actions"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33maria-label[39m=[32m"Editor view"[39m
+              [33mclass[39m=[32m"ed-viewtoggle"[39m
+              [33mrole[39m=[32m"group"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"true"[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdata-active[39m=[32m"true"[39m
+                [33mstyle[39m=[32m"height: 30px;"[39m
+                [33mtitle[39m=[32m"Edit one section"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                  ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ed"[39m
+    [36m>[39m
+      [36m<aside[39m
+        [33mclass[39m=[32m"ed-tree"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-t"[39m
+          [36m>[39m
+            [0mDocument tree[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-m"[39m
+          [36m>[39m
+            [0m1 document · all[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note"[39m
+          [33mstyle[39m=[32m"padding: 10px 12px; font-size: 12px;"[39m
+        [36m>[39m
+          [0mThis project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-vol"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"font-weight: 600;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0mM3[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mSaved reference working document[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                [33mstyle[39m=[32m"margin-left: auto;"[39m
+              [36m>[39m
+                [0m1[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.2.S.1[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mExisting saved section[0m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</aside>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"ed-doc"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"ed-doc-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-crumbs"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sep-first"[39m
+            [36m>[39m
+              [0mM3[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"doc-title"[39m
+              [33mtitle[39m=[32m"Saved reference working document"[39m
+            [36m>[39m
+              [0mSaved reference working document[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"here"[39m
+            [36m>[39m
+              [0m3.2.S.1[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Save and sign"[39m
+            [33mclass[39m=[32m"ed-doc-commit"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn primary"[39m
+              [33mdata-testid[39m=[32m"save-section"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mstyle[39m=[32m"height: 30px;"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mSaved[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-doc-actions"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33maria-label[39m=[32m"Editor view"[39m
+              [33mclass[39m=[32m"ed-viewtoggle"[39m
+              [33mrole[39m=[32m"group"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"true"[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mdata-active[39m=[32m"true"[39m
+                [33mstyle[39m=[32m"height: 30px;"[39m
+                [33mtitle[39m=[32m"Edit one section"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                  ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openBuild client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx:95:17
+     93| async function openBuild() {
+     94|   fireEvent.click(screen.getByText('Build document or section'));
+     95|   return screen.findByRole('button', { name: 'Check saved sources' });
+       |                 ^
+     96| }
+     97| async function inspectSaved() {
+ ❯ inspectSaved client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx:98:25
+ ❯ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx:118:52
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  00:26:51
+   Duration  14.90s (transform 2.24s, setup 219ms, import 2.81s, tests 10.78s, environment 822ms)

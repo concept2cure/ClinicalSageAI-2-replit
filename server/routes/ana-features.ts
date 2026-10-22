@@ -15,7 +15,7 @@ import { createRateLimiter } from '../middleware/rateLimiter';
 import { db, getPool } from '../db';
 import { currentTenantOrgUuid } from '../db/currentTenant';
 import { requestDb } from '../db/requestDb';
-import { eq, and, desc, or, inArray } from 'drizzle-orm';
+import { eq, and, desc, or, inArray, sql } from 'drizzle-orm';
 import {
   gapAnalysisResults,
   projectMemoryEntries,
@@ -217,6 +217,7 @@ router.get(
             and(
               eq(projectMemoryEntries.organizationId, Number(organizationId)),
               eq(projectMemoryEntries.status, 'active'),
+              sql`${projectMemoryEntries.sourceDocumentType} IS DISTINCT FROM 'report_os_state'`,
               inArray(projectMemoryEntries.category, INTELLIGENCE_MEMORY_CATEGORIES)
             )
           )

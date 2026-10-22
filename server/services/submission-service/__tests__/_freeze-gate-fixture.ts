@@ -13,9 +13,20 @@ import { assembleSequence } from '../../ectd/assemble-from-core';
 import { deriveGovernedTargetBinding } from '../../part11/signature-persistence';
 
 export const ORG = 7, USER = 3;
+export const FREEZE_PROGRAM_ID = '77777777-7777-4777-8777-777777777777';
+export const FREEZE_SPONSOR_ID = '88888888-8888-4888-8888-888888888888';
+/** Complete recorded identity, so existing governance cases reach their own gate. */
+export const FREEZE_IDENTITY_SEED_SQL = `
+    INSERT INTO organizations (id, name) VALUES (${ORG}, 'Concept2Cure Therapeutics') ON CONFLICT (id) DO NOTHING;
+    INSERT INTO ind_sponsors (id, organization_id, name, duns, contact_name, contact_phone, contact_email)
+      VALUES ('${FREEZE_SPONSOR_ID}', ${ORG}, 'Concept2Cure Therapeutics', '123456789', 'Regulatory Contact', '+1 617 555 0100', 'regulatory@example.test');
+    INSERT INTO regulatory_programs (id, organization_id, name, code, program_type, product_name, application_number, applicant_sponsor_id)
+      VALUES ('${FREEZE_PROGRAM_ID}', ${ORG}, 'Freeze identity program', 'FREEZE-1', 'IND', 'Freeze product', '123456', '${FREEZE_SPONSOR_ID}');
+`;
 
 /** The tables the harness does not create, and every submission and document the cases file. */
 export const FREEZE_GATE_SEED_SQL = `
+    ${FREEZE_IDENTITY_SEED_SQL}
     CREATE TABLE c2c_ana_actions (id TEXT PRIMARY KEY, org_id INTEGER, command TEXT, target TEXT, state TEXT, proposed_by INTEGER, payload JSONB);
     -- verification_date and updated_at: the real table's, which a void of a refused step's signature sets (P-23).
     CREATE TABLE electronic_signatures (id SERIAL PRIMARY KEY, organization_id INTEGER, signed_target TEXT, signature_manifest TEXT, bound_payload_digest TEXT, binding_basis TEXT, superseded_by INTEGER, is_valid BOOLEAN, verification_status TEXT, verification_date TIMESTAMP, updated_at TIMESTAMP);
@@ -34,6 +45,7 @@ export const FREEZE_GATE_SEED_SQL = `
       (11, 'IND transmittal pairs, higher first', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
       (12, 'withdrawal naming no document, lower', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
       (13, 'withdrawal naming no document, higher', 'ind', 'biotech', 'fda', ${ORG}, ${USER});
+    UPDATE submissions SET program_id = '${FREEZE_PROGRAM_ID}' WHERE id BETWEEN 1 AND 13;
     INSERT INTO coauthor_documents (id, organization_id, title, content, module_number, status) VALUES
       (200, ${ORG}, 'Clinical Overview', '<p>approved</p>', 'm2.5', 'approved'),
       (201, ${ORG}, 'Nonclinical Overview', '<p>still a draft</p>', 'm2.4', 'draft'),
@@ -69,8 +81,10 @@ export function freezeGateHelpers(db: () => IndPgliteDb) {
   let sigN = 0;
 
   /** A governed `sign` action bound to the sequence's CURRENT leaf-manifest digest.
-   *  `meaning` is the §11.50 meaning the signer chose; omitted, none is recorded. */
-  async function sign(seqId: number, intent: string, meaning?: string): Promise<string> {
+   *  `meaning` is the §11.50 meaning the signer chose. Omitted, it is 'approval',
+   *  which freeze, dispatch and transmit all accept (2026-10-19: each refuses any
+   *  meaning that is not approval, responsibility or release); `null` records none. */
+  async function sign(seqId: number, intent: string, meaning: string | null = 'approval'): Promise<string> {
     const h = db();
     const id = `sig-${++sigN}`;
     const binding = await deriveGovernedTargetBinding(
@@ -80,7 +94,7 @@ export function freezeGateHelpers(db: () => IndPgliteDb) {
     );
     await h.pglite.query(
       `INSERT INTO c2c_ana_actions (id, org_id, command, target, state, proposed_by, payload) VALUES ($1,$2,'sign',$3,'executed',$4,$5)`,
-      [id, ORG, `ectd-sequence:${seqId}`, USER, JSON.stringify(meaning === undefined ? { intent } : { intent, meaning })],
+      [id, ORG, `ectd-sequence:${seqId}`, USER, JSON.stringify(meaning === null ? { intent } : { intent, meaning })],
     );
     await h.pglite.query(
       `INSERT INTO electronic_signatures (organization_id, signed_target, signature_manifest, bound_payload_digest, binding_basis, is_valid, verification_status)

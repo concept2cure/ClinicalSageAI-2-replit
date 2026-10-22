@@ -54,9 +54,13 @@ function makeAccessApp(router: express.Router, gateObjects = false): express.Exp
     void jdb.pool.query('SELECT role FROM organization_users WHERE user_id=$1 AND organization_id=$2', [claims.userId, claims.organizationId]).then(result => {
       if (result.rows.length !== 1) { res.status(403).json({ error: 'CURRENT_MEMBERSHIP_REQUIRED' }); return; }
       const role = String((result.rows[0] as { role: string }).role);
-      Object.assign(req, { dbClient: jdb.pool, userRole: role,
-        identity: { legacyUserId: Number(claims.userId), organizationId: Number(claims.organizationId), role },
-        user: { id: claims.userId, userId: claims.userId, email: claims.email, organizationId: claims.organizationId, role, roles: [role] } });
+      (req as unknown as { dbClient: typeof jdb.pool }).dbClient = jdb.pool;
+      req.userRole = role;
+      (req as unknown as { identity: { legacyUserId: number; organizationId: number; role: string } }).identity = {
+        legacyUserId: Number(claims.userId), organizationId: Number(claims.organizationId), role,
+      };
+      req.user = { id: String(claims.userId), userId: String(claims.userId), email: String(claims.email),
+        organizationId: Number(claims.organizationId), role, roles: [role] };
       runWithTenantScope({ tenantId: String(ORG), role, source: 'request', caller: 'authoring-doc-access-test' }, next);
     }).catch(next);
   });
@@ -102,6 +106,9 @@ beforeAll(async () => {
       'migrations/20260814d_document_alias_map.sql',
       'migrations/20260921_audit_logs_chain_seq.sql',
       'migrations/20260921_authoring_document_provenance.sql',
+      // Access reports must consult the deployed QMS governance stores, even for an unbound authored document.
+      'migrations/20260511_qms_and_labeling.sql',
+      'db/migrations/20261014_qms_controlled_authoring_content.sql',
     ],
   });
   h.db = jdb.db;
@@ -139,10 +146,25 @@ afterAll(async () => {
 });
 
 describe('GET /docs/:docId — the caller’s access', () => {
-  it('the creator (OWNER + AUTHOR grants, org role member) may file and assign, and may neither freeze nor sign', async () => {
-    const res = await author(request(app).get(`/api/authoring/docs/${docId}`));
+  it('returns the saved project on the document detail used for creation recovery', async () => {
+    const res = await author(request(gatedApp).get(`/api/authoring/docs/${docId}`));
     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.document.id).toBe(docId);
+    expect(res.body.document.client_program_id).toBe(PROGRAM);
+    expect(res.body.document.provenance).toMatchObject({ source: 'ana', conversationId: 'thread_access' });
+    expect(Number(res.body.document.section_count)).toBe(M25_SECTIONS.length);
+    expect(Number(res.body.document.comment_count)).toBe(0);
+    expect(Number(res.body.document.revision_count)).toBe(M25_SECTIONS.length);
+    expect(res.body.access.fileToVault).toEqual({ allowed: true, reason: null });
+  });
+
+  it('the creator (OWNER + AUTHOR grants, org role member) may file and assign, and may neither freeze nor sign', async () => {
+    const res = await author(request(gatedApp).get(`/api/authoring/docs/${docId}`));
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.document.client_program_id).toBe(PROGRAM);
     const { access } = res.body;
+    expect(access.edit).toEqual({ allowed: true, reason: null });
     /* DP-35 (2026-10-01): a freeze is a signature, so it meets the same
        §11.10(g) org-role step as E-sign — the freeze route answers
        ESIGNATURE_NO_AUTHORITY for a member, and the bar is told so first. */
@@ -234,6 +256,7 @@ describe('GET /docs/:docId — the caller’s access', () => {
       /* Send for review's role step allows a member, but its grant step (the
          request's 'edit' decision, wave 2D) could not be read: unknown. */
       expect(access.assignReview).toBeNull();
+      expect(access.edit).toBeNull();
     } finally {
       await jdb.pool.query('ALTER TABLE doc_permissions_unavailable RENAME TO doc_permissions');
     }
@@ -295,5 +318,60 @@ describe('Send for review: the report is the decision the request meets', () => 
     const sent = await send(author);
     expect(sent.status, JSON.stringify(sent.body)).toBe(200);
     expect(sent.body.reviews).toEqual([expect.objectContaining({ reviewer_id: REVIEWER.id, review_status: 'pending' })]);
+  });
+});
+
+
+describe('current membership composes with editor access', () => {
+  it('a current viewer with retained OWNER and AUTHOR grants reads the document with editing refused', async () => {
+    await jdb.pool.query("UPDATE organization_users SET role='viewer' WHERE organization_id=$1 AND user_id=$2", [ORG,AUTHOR.id]);
+    try {
+      const res = await author(request(app).get(`/api/authoring/docs/${docId}`));
+      expect(res.status, JSON.stringify(res.body)).toBe(200);
+      expect(res.body.access.edit).toEqual({ allowed: false,
+        reason: 'Editing needs an editing role in this organization. Your current organization access is read-only.' });
+      const grants = await jdb.pool.query('SELECT role FROM doc_permissions WHERE doc_id=$1 AND tenant_id=$2 AND principal_id=$3 AND revoked_at IS NULL', [docId,ORG,AUTHOR.id]);
+      expect(grants.rows).toEqual(expect.arrayContaining([{ role: 'OWNER' }, { role: 'AUTHOR' }]));
+    } finally {
+      await jdb.pool.query("UPDATE organization_users SET role='member' WHERE organization_id=$1 AND user_id=$2", [ORG,AUTHOR.id]);
+    }
+  });
+});
+
+describe('current QMS standing composes with document permissions', () => {
+  it('routes a linked draft signature through Quality and refuses content and assignment once under review', async () => {
+    const linked = await jdb.pglite.query<{ id: number }>(`INSERT INTO qms_documents (organization_id,doc_number,title,doc_type,status,authoring_document_id)
+      VALUES ($1,'SOP-ACCESS','Controlled access procedure','sop','draft',$2) RETURNING id`, [ORG,docId]);
+    try {
+      const draft = await author(request(app).get(`/api/authoring/docs/${docId}`));
+      expect(draft.status).toBe(200);
+      expect(draft.body.access.edit).toEqual({ allowed: true, reason: null });
+      expect(draft.body.access.assignReview).toEqual({ allowed: true, reason: null });
+      for (const act of ['freeze','esign','esignReview']) {
+        expect(draft.body.access[act].allowed).toBe(false);
+        expect(draft.body.access[act].reason).toContain('Quality register');
+      }
+      await jdb.pool.query("UPDATE qms_documents SET status='in_review' WHERE id=$1", [linked.rows[0].id]);
+      const review = await author(request(app).get(`/api/authoring/docs/${docId}`));
+      for (const act of ['edit','assignReview']) {
+        expect(review.body.access[act].allowed).toBe(false);
+        expect(review.body.access[act].reason).toContain('controlled revision');
+      }
+    } finally {
+      await jdb.pool.query('DELETE FROM qms_documents WHERE id=$1', [linked.rows[0].id]);
+    }
+  });
+
+  it('keeps a QMS store read failure visible and refuses the affected acts', async () => {
+    await jdb.pool.query('ALTER TABLE qms_documents RENAME TO qms_documents_unavailable');
+    try {
+      const res = await author(request(app).get(`/api/authoring/docs/${docId}`));
+      expect(res.status).toBe(200);
+      for (const act of ['edit','freeze','esign','esignReview','assignReview']) {
+        expect(res.body.access[act]).toEqual({ allowed: false, reason: 'Controlled-document governance could not be verified. Nothing was changed.' });
+      }
+    } finally {
+      await jdb.pool.query('ALTER TABLE qms_documents_unavailable RENAME TO qms_documents');
+    }
   });
 });

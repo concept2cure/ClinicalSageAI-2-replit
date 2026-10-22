@@ -1,0 +1,25 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft acceptance preserves the generation termination handoff > posts the complete result status in snake_case with its own document and recorded machine text 96ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft acceptance preserves the generation termination handoff > forwards unconfirmed reason undefined without inventing a completed finish 32ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft acceptance preserves the generation termination handoff > forwards unconfirmed reason null without inventing a completed finish 29ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft acceptance preserves the generation termination handoff > forwards unconfirmed reason unknown without inventing a completed finish 24ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft acceptance preserves the generation termination handoff > keeps original machine text and exact termination metadata when the user edits accepted prose 32ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"finishReason":"max_tokens","truncated":false} while retaining the complete sibling in its original document slot 27ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"finishReason":"length","truncated":false} while retaining the complete sibling in its original document slot 27ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"finishReason":"chunk_timeout","truncated":false} while retaining the complete sibling in its original document slot 29ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"finishReason":" max_tokens ","truncated":false} while retaining the complete sibling in its original document slot 34ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"finishReason":"unknown","truncated":true} while retaining the complete sibling in its original document slot 56ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"truncated":true} while retaining the complete sibling in its original document slot 38ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"finishReason":"end_turn","truncated":true} while retaining the complete sibling in its original document slot 27ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft existing non-cutoff review controls > preserves a usable review card for reason end_turn without certifying completeness 20ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft existing non-cutoff review controls > preserves a usable review card for reason unknown without certifying completeness 17ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft existing non-cutoff review controls > preserves a usable review card for reason undefined without certifying completeness 17ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft existing non-cutoff review controls > preserves a usable review card for reason null without certifying completeness 16ms
+
+ Test Files  1 passed (1)
+      Tests  16 passed (16)
+   Start at  23:51:17
+   Duration  1.63s (transform 249ms, setup 129ms, import 346ms, tests 527ms, environment 476ms)
+

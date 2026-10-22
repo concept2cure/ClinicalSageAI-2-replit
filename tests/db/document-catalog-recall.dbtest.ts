@@ -32,6 +32,9 @@ import express from 'express';
 import http from 'node:http';
 import request from 'supertest';
 import { Pool } from 'pg';
+import { createHash } from 'node:crypto';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
 import { databaseUrl } from '../setup.db';
 import { callToolAsTurn } from './ana-tool-call';
 import type { RequestSqlClient } from '../../server/db/requestDb';
@@ -115,6 +118,25 @@ async function inTenantScope<T>(fn: (sqlClient: RequestSqlClient) => Promise<T>)
 /** A tool called as AnA's turn calls it (a read counts once delivered; see ana-tool-call.ts). */
 async function callTool(name: string, input: Record<string, unknown>, extra: { humanConfirmed?: boolean } = {}) {
   return inTenantScope(sqlClient => callToolAsTurn(name, input, { organizationId: orgId, userId, projectId, sqlClient, ...extra }));
+}
+
+/** Discovery admits an actual same-org upload and its exact capture identity. */
+async function storedChatUpload(version: number) {
+  const { Document, Packer, Paragraph } = await import('docx');
+  const fileId = `file_recall_${RUN}_v${version}`;
+  const fileName = `protocol-draft-v${version}.docx`;
+  const bytes = await Packer.toBuffer(new Document({ sections: [{ children: [
+    new Paragraph(`Retained protocol draft, version ${version}.`),
+  ] }] }));
+  const checksum = createHash('sha256').update(bytes).digest('hex');
+  const storagePath = `uploads/org-${orgId}/${fileId}`;
+  await fs.mkdir(path.resolve(process.cwd(), 'uploads', `org-${orgId}`), { recursive: true });
+  await fs.writeFile(path.resolve(process.cwd(), storagePath), bytes);
+  await owner.query(`INSERT INTO file_uploads
+    (id,user_id,organization_id,original_name,mime_type,file_size,storage_path,checksum_sha256,status)
+    VALUES($1,$2,$3,$4,'application/vnd.openxmlformats-officedocument.wordprocessingml.document',$5,$6,$7,'uploaded')`,
+  [fileId, userId, orgId, fileName, bytes.length, storagePath, checksum]);
+  return { fileId, fileName, checksum, storagePath };
 }
 
 async function buildApp(): Promise<express.Express> {
@@ -293,18 +315,21 @@ describe('chat-upload discovery', () => {
     const { createSource, createSupersedingSource } = await import(
       '../../server/services/clinical-regulatory-evidence/evidence-spine.service'
     );
+    const firstUpload = await storedChatUpload(1);
+    const currentUpload = await storedChatUpload(2);
     const v1 = await inTenantScope(() =>
       createSource(orgId, {
         sourceType: 'client_document',
         createdBy: userId,
         clientProgramId: programId,
         title: `${PROBE_PREFIX}protocol draft`,
-        checksum: 'a'.repeat(64),
+        checksum: firstUpload.checksum,
+        storedArtifactRef: firstUpload.storagePath,
         version: '1.0',
         ingestionStatus: 'ingested',
         extractionStatus: 'extracted',
-        provenance: { origin: 'chat_upload', fileUploadId: 'file_recall_v1' },
-        metadata: { originalName: 'protocol-draft-v1.docx' },
+        provenance: { origin: 'chat_upload', fileUploadId: firstUpload.fileId },
+        metadata: { originalName: firstUpload.fileName },
       }),
     );
     const v2 = await inTenantScope(() =>
@@ -315,12 +340,13 @@ describe('chat-upload discovery', () => {
           createdBy: userId,
           clientProgramId: programId,
           title: `${PROBE_PREFIX}protocol draft`,
-          checksum: 'b'.repeat(64),
+          checksum: currentUpload.checksum,
+          storedArtifactRef: currentUpload.storagePath,
           version: '2.0',
           ingestionStatus: 'ingested',
           extractionStatus: 'extracted',
-          provenance: { origin: 'chat_upload', fileUploadId: 'file_recall_v2' },
-          metadata: { originalName: 'protocol-draft-v2.docx' },
+          provenance: { origin: 'chat_upload', fileUploadId: currentUpload.fileId },
+          metadata: { originalName: currentUpload.fileName },
         },
         v1.id,
       ),
@@ -330,9 +356,9 @@ describe('chat-upload discovery', () => {
     expect(listed.ok).toBe(true);
     expect(listed.chatUploads).not.toBeNull();
     const fileIds = listed.chatUploads.map((u: { fileId: string | null }) => u.fileId);
-    expect(fileIds).toContain('file_recall_v2');
+    expect(fileIds).toContain(currentUpload.fileId);
     // The superseded v1 must not be presented as a live file.
-    expect(fileIds).not.toContain('file_recall_v1');
+    expect(fileIds).not.toContain(firstUpload.fileId);
     const v2Row = listed.chatUploads.find((u: { sourceId: number }) => u.sourceId === v2.source.id);
     expect(v2Row.fileName).toBe('protocol-draft-v2.docx');
     expect(listed.message).toContain('chat-uploaded');

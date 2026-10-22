@@ -71,7 +71,7 @@ describe('which answer states which fact', () => {
       predicateNamed: 'Acme Stent',
       predicate: 'named',
     });
-    expect(programmeFactsFrom({ predicate_device: ' K123456 ' })).toEqual({
+    expect(programmeFactsFrom({ predicate_510k_number: ' K123456 ' })).toEqual({
       predicateNamed: 'K123456',
       predicate: 'named',
     });
@@ -87,7 +87,11 @@ describe('which answer states which fact', () => {
   it('states no fact where the person said they do not know, or said nothing', () => {
     expect(programmeFactsFrom({ device_class: 'not_classified' }), 'not knowing is not a contradiction').toEqual({});
     expect(programmeFactsFrom({ eu_mdr_class: 'na' })).toEqual({});
-    expect(programmeFactsFrom({ predicate_device: '   ' })).toEqual({});
+    expect(programmeFactsFrom({ predicate_device_name: '   ' })).toEqual({});
+    /* `predicate_device` went with the question on 2026-10-19: project setup's
+       one box could fill neither column of the predicate of record. A reader
+       still holding it would have the rules firing on a field nobody asks. */
+    expect(programmeFactsFrom({ predicate_device: 'K123456' })).toEqual({});
     expect(programmeFactsFrom({ device_class: 'class_iv' })).toEqual({});
     expect(programmeFactsFrom({})).toEqual({});
   });

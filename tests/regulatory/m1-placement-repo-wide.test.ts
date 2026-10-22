@@ -34,14 +34,18 @@ import { readdirSync, statSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, it, expect } from 'vitest';
 
-import { violationsFor, type TreeNode } from './ctd-contract';
+import { checkM2to5, violationsFor, m2to5Violations, type TreeNode } from './ctd-contract';
 
 const ROOT = path.resolve(__dirname, '../..');
 const SCAN = ['server', 'shared', 'client/src', 'services', 'scripts'];
 
-/** A dotted Module 1 code under a key that names a section. A bare `'1'` is excluded: see header. */
+/**
+ * A dotted CTD code under a key that names a section. A bare `'1'` or `'5'` is excluded: a USPI's
+ * "1 Indications and Usage" and a protocol's "5 Study Design" are not CTD headings. Module 3's
+ * letter segments are included, so `3.2.S.4.1` and `3.2.P.8` are read.
+ */
 const CODE_KEY =
-  /\b(?:code|sectionCode|ctdSection|section|number|ctd_section|sectionId)\s*:\s*['"`](m?1(?:\.\d+)+)['"`]/g;
+  /\b(?:code|sectionCode|ctdSection|section|number|ctd_section|sectionId)\s*:\s*['"`](m?[1-5](?:\.(?:\d+|[SPARsparBbCc]))+)['"`]/g;
 const TITLE_KEY =
   /\b(?:title|sectionTitle|heading|label|name|displayName|sectionName)\s*:\s*(['"`])((?:\\.|(?!\1).){2,90})\1/g;
 const WINDOW = 300;
@@ -63,30 +67,45 @@ const WINDOW = 300;
 /** `M1_EU` and `M1_FDA` are how this repository names its regional blocks, and `\b` does not match
  *  inside them because `_` is a word character — the first version of this heuristic read every one
  *  of them as unmarked. The boundary therefore treats `_` as a separator. */
+type Region = 'US' | 'ICH' | 'NON_CTD';
 const EDGE = '(?<![A-Za-z0-9])';
 const EDGE_END = '(?![A-Za-z0-9])';
-const marker = (alts: string, region: 'US' | 'OTHER', flags = ''): readonly [RegExp, 'US' | 'OTHER'] => [
+const marker = (alts: string, region: Region, flags = ''): readonly [RegExp, Region] => [
   new RegExp(`${EDGE}(?:${alts})${EDGE_END}`, `g${flags}`),
   region,
 ];
-const REGION_MARKERS: ReadonlyArray<readonly [RegExp, 'US' | 'OTHER']> = [
+/**
+ * Three values, because the two halves of the CTD differ in kind.
+ *
+ * Module 1 is THE REGIONAL module: 1.1 is Forms at FDA, a Comprehensive Table of Contents in the
+ * EU, a Cover Letter at PMDA. Only a US pair may be held to the FDA contract.
+ *
+ * Modules 2-5 are the COMMON technical document, harmonised by ICH M4: 2.7.3 is Summary of
+ * Clinical Efficacy in Tokyo, Amsterdam and Silver Spring alike. So an EU or JP marker is no
+ * reason to skip a Module 2-5 pair — only a backbone that is not the CTD at all is (a 510(k)
+ * eSTAR attachment index, an IVDR technical file), because those reuse the same digits for
+ * something else entirely.
+ */
+const REGION_MARKERS: ReadonlyArray<readonly [RegExp, Region]> = [
   marker('US|USA|FDA|USFDA', 'US'),
-  marker('EU|EMA|EEA|CHMP|NtA|IVDR|MDR|CTIS|CTR|SmPC|SPC', 'OTHER'),
-  marker('JP|PMDA|Japan|Japanese|CTD-J', 'OTHER'),
-  marker('NMPA|China|Chinese|TGA|Swissmedic|MHRA|Health ?Canada|canadaCta|HPFB|CTA', 'OTHER'),
-  marker('510k|510\\\\(k\\\\)|eSTAR|De ?Novo|PMA|technical[-_ ]?file|udi', 'OTHER', 'i'),
+  marker('EU|EMA|EEA|CHMP|NtA|CTIS|CTR|SmPC|SPC', 'ICH'),
+  marker('JP|PMDA|Japan|Japanese|CTD-J', 'ICH'),
+  marker('NMPA|China|Chinese|TGA|Swissmedic|MHRA|Health ?Canada|canadaCta|HPFB|CTA', 'ICH'),
+  marker('510k|510\\(k\\)|eSTAR|De ?Novo|PMA|IVDR|MDR|technical[-_ ]?file|udi', 'NON_CTD', 'i'),
 ];
 
-/** A title that names its own backbone settles the region, whatever precedes it in the file. */
-const TITLE_SAYS_OTHER =
+/** A title that names a non-US regional artifact settles its region, whatever precedes it. */
+const TITLE_SAYS_NON_US =
   /510\(k\)|\beSTAR\b|\bDe Novo\b|\bPMA\b|\bSmPC\b|\bSPC\b|package leaflet|\bEU\b|\bEMA\b|Japanese|CTD-J|\bCTIS\b|\bIVDR\b|\bMDR\b/i;
+/** …and one that names a backbone that is not the CTD settles that, for every module. */
+const TITLE_SAYS_NON_CTD = /510\(k\)|\beSTAR\b|\bDe Novo\b|\bIVDR\b|\bMDR\b|technical file/i;
 const BACK = 4000;
 
-/** The region whose Module 1 this pair states. 'US' when nothing says otherwise. */
-export function regionOf(text: string, at: number): 'US' | 'OTHER' {
+/** The backbone this pair belongs to. 'US' when nothing says otherwise. */
+export function regionOf(text: string, at: number): Region {
   const before = text.slice(Math.max(0, at - BACK), at);
   let bestAt = -1;
-  let best: 'US' | 'OTHER' = 'US';
+  let best: Region = 'US';
   for (const [re, region] of REGION_MARKERS) {
     const g = new RegExp(re.source, re.flags.includes('g') ? re.flags : `${re.flags}g`);
     for (const m of before.matchAll(g)) if (m.index! > bestAt) { bestAt = m.index!; best = region; }
@@ -97,6 +116,8 @@ export function regionOf(text: string, at: number): 'US' | 'OTHER' {
 export interface Pair extends TreeNode {
   file: string;
   line: number;
+  /** 'US' holds Module 1 to the FDA contract; 'ICH' states only the common Modules 2-5. */
+  region: 'US' | 'ICH';
 }
 
 function sources(): string[] {
@@ -166,9 +187,14 @@ function pairsIn(file: string, text: string): Pair[] {
        the NEXT row's title and the defect disappeared — a false negative, which is worse. The
        object's own braces are the boundary that is actually meant. */
     const title = objectTitle(text, m.index!);
-    if (title && !TITLE_SAYS_OTHER.test(title) && regionOf(text, m.index!) === 'US') {
-      out.push({ file: rel, line: text.slice(0, m.index!).split('\n').length, code: m[1], title });
-    }
+    if (!title) continue;
+    const region: Region = TITLE_SAYS_NON_CTD.test(title)
+      ? 'NON_CTD'
+      : TITLE_SAYS_NON_US.test(title)
+        ? 'ICH'
+        : regionOf(text, m.index!);
+    if (region === 'NON_CTD') continue;
+    out.push({ file: rel, line: text.slice(0, m.index!).split('\n').length, code: m[1], title, region });
   }
   return out;
 }
@@ -232,7 +258,7 @@ describe('every FDA Module 1 placement in the repository agrees with the record'
   it('names each file, line, code and title that does not', () => {
     const out: string[] = [];
     for (const p of PAIRS) {
-      if (exempt(p)) continue;
+      if (p.region !== 'US' || exempt(p)) continue;
       for (const v of violationsFor([p])) out.push(`${p.file}:${p.line} — ${v}`);
     }
     expect(out, `\n${out.join('\n')}\n`).toEqual([]);
@@ -252,8 +278,8 @@ describe('the region heuristic places the real cases', () => {
       '};',
     ].join('\n');
     expect(at(src, "'1.2'")).toBe('US');
-    expect(at(src, "'1.0'")).toBe('OTHER');
-    expect(at(src, "'1.1'")).toBe('OTHER');
+    expect(at(src, "'1.0'")).toBe('ICH');
+    expect(at(src, "'1.1'")).toBe('ICH');
   });
 
   it('the record’s own three trees', () => {
@@ -270,13 +296,22 @@ describe('the region heuristic places the real cases', () => {
       '];',
     ].join('\n');
     expect(at(src, "'1.1'")).toBe('US');
-    expect(at(src, "'1.0'")).toBe('OTHER');
-    expect(at(src, "'1.6'")).toBe('OTHER');
+    expect(at(src, "'1.0'")).toBe('ICH');
+    expect(at(src, "'1.6'")).toBe('ICH');
   });
 
-  it('a 510(k) / eSTAR attachment number is not an FDA eCTD Module 1 code', () => {
+  it('a 510(k) / eSTAR attachment number is not a CTD code at all', () => {
     const src = "// 510(k) eSTAR content package\n{ sectionCode: '1.1', title: '510(k) Cover Letter' }";
-    expect(at(src, "'1.1'")).toBe('OTHER');
+    expect(at(src, "'1.1'")).toBe('NON_CTD');
+    // …and a NON_CTD pair is dropped outright, for every module, not merely skipped for Module 1.
+    expect(pairsIn('/x/a.ts', src)).toEqual([]);
+  });
+
+  it('an EU or JP marker does NOT skip a Module 2–5 pair, because those are harmonised', () => {
+    // ICH M4: 2.7.3 is Summary of Clinical Efficacy in Tokyo, Amsterdam and Silver Spring alike.
+    const src = "const M2_EU = [\n  { code: '2.7.3', title: 'Summary of Clinical Safety' },\n];";
+    expect(pairsIn('/x/a.ts', src)).toHaveLength(1);
+    expect(m2to5Violations(pairsIn('/x/a.ts', src)).join('\n')).toMatch(/2\.7\.3 .*contradicts the record/);
   });
 
   it('a file with no regional marker at all is read as US', () => {
@@ -285,7 +320,7 @@ describe('the region heuristic places the real cases', () => {
 
   it('the nearest marker wins, so a US block after an EU block is still US', () => {
     const src = "// EMA regional\n{ section: '1.0', title: 'Cover Letter' }\n// FDA regional\n{ section: '1.2', title: 'Cover Letter' }";
-    expect(at(src, "'1.0'")).toBe('OTHER');
+    expect(at(src, "'1.0'")).toBe('ICH');
     expect(at(src, "'1.2'")).toBe('US');
   });
 });
@@ -298,7 +333,7 @@ describe('a code pairs with its own object’s title, which three real files dec
     const src =
       "{ id: 'cover_letter', title: 'Cover Letter', description: 'Regulatory submission cover letter', sectionCode: '1.1' },\n" +
       "{ id: 'qos', title: 'Quality Overall Summary', sectionCode: '2.3' },";
-    expect(pairs(src)).toEqual([['1.1', 'Cover Letter']]);
+    expect(pairs(src)).toEqual([['1.1', 'Cover Letter'], ['2.3', 'Quality Overall Summary']]);
   });
 
   it('filing-placement.ts: a row does not borrow the heading of the row above it', () => {
@@ -309,7 +344,12 @@ describe('a code pairs with its own object’s title, which three real files dec
        version paired `code: '1.0'` with the 1.11.3 heading on the line before, and the contract
        then reported "1.0 \"1.11.3 Information amendment\" is not an FDA Module 1 heading" — a
        finding about a row that does not exist. 1.0's own heading says EU, so it is dropped. */
-    expect(pairs(src)).toEqual([['1.11.3', '1.11.3 Information amendment — clinical']]);
+    expect(pairs(src)).toEqual([
+      ['1.11.3', '1.11.3 Information amendment — clinical'],
+      ['1.0', 'EU Module 1.0 — cover letter with the response document'],
+    ]);
+    // …and 1.0's own heading says EU, so it is not held to the FDA Module 1 contract.
+    expect(pairsIn('/x/a.ts', src).find((q) => q.code === '1.0')!.region).toBe('ICH');
   });
 
   it('regional-module1-requirements.ts: an id-bearing `code` key is not the section code', () => {
@@ -352,5 +392,50 @@ describe('the baseline cannot become a parking space', () => {
       ),
     ).map((e) => `${e.file} ${e.code} "${e.title}"`);
     expect(pointless, `\n${pointless.join('\n')}\n`).toEqual([]);
+  });
+});
+
+describe('why this gate does NOT hold Module 2–5 titles repository-wide', () => {
+  /*
+   * It was built, measured, and removed — the same discipline the claims engine used on a rule the
+   * corpus could not make fail.
+   *
+   * The reasoning was sound: Modules 2-5 are the COMMON technical document, so unlike Module 1 the
+   * check needs no region. The measurement was not. Twenty-eight findings came back and almost none
+   * was a CTD defect, because the digits `4.x` and `5.x` belong to three other numbering systems
+   * this platform legitimately holds:
+   *
+   *   - smpc-qrd-catalog.ts — EU SmPC sections (4.4 Special warnings, 4.8 Undesirable effects, 4.9
+   *     Overdose). The QRD template, not CTD Module 4.
+   *   - the vault memory symbols seed — ISO 15223-1 symbol numbers (5.1.1 Manufacturer, 5.4.3
+   *     Consult instructions for use). Device labelling symbols, not CTD Module 5.
+   *   - csr-builder.ts — a CSR outline's own numbering (2.8 Efficacy Results, 2.9 Safety Results).
+   *
+   * A gate whose baseline would hold twenty-eight rows of other people's numbering is a gate nobody
+   * reads, so it is not here. The Module 1 half IS viable because a `1.x` code under a section key
+   * is almost always an eCTD regional placement, and because the region heuristic has real markers
+   * to work from.
+   *
+   * Two things came out of the measurement and are kept. `violationsFor`'s Module-1-document-outside
+   * -Module-1 rule now runs on the widened code key and found the IB at 5.3.5.4 in
+   * ind-amendment-pyramid.ts — the same misfiling ind-pyramid.ts carried until 2026-10-12. And six
+   * rows reported as "not an ICH M4 heading" were CORRECT: ICH M4S(R2) 2.4.1-2.4.6, the Nonclinical
+   * Overview's own subsections, which document-template-library.ts had right and the record did not
+   * hold. That was a gap in the record, filled in this change.
+   */
+  it('states the reason rather than leaving the absence to be rediscovered', () => {
+    // Module 2-5 titles ARE held, for the copies ctd-registry-consistency.test.ts registers.
+    // The claim removed here is only the repository-wide one.
+    expect(checkM2to5([{ code: '2.7.3', title: 'Summary of Clinical Safety' }]).violations.join('\n')).toMatch(
+      /contradicts the record/,
+    );
+    // And the three other numbering systems are why it cannot run over every file.
+    for (const [code, title] of [
+      ['4.8', 'Undesirable effects'],
+      ['5.4.3', 'Consult instructions for use'],
+      ['2.9', 'Safety Results'],
+    ] as const) {
+      expect(checkM2to5([{ code, title }]).violations.length, `${code} ${title}`).toBeGreaterThan(0);
+    }
   });
 });

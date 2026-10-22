@@ -1,7 +1,9 @@
 /**
  * build-server.mjs — Server production build via esbuild
  *
- * Bundles server/index.ts into dist/index.js (ESM) with CJS compatibility.
+ * Bundles server/index.ts into dist/index.js (ESM) with CJS compatibility, and
+ * the audit-chain verifier into dist/ops/verify-audit-chain.mjs
+ * (productionBuilds, below).
  */
 import { build } from 'esbuild';
 import { execSync } from 'child_process';
@@ -44,25 +46,69 @@ export const SERVER_BUILD_OPTIONS = {
   target: 'node20',
 };
 
+/**
+ * Every bundle `npm run build` emits, in order. One list, iterated below and
+ * exported, so a test builds an entry from the list the shipped build runs:
+ * an entry dropped from here is dropped from the test too, and fails it
+ * (server/services/audit/__tests__/verify-audit-chain-production-bundle.test.ts).
+ *
+ * The audit-chain verifier joined on 2026-10-18 (D5). SOP-SEC-001 §10 owes
+ * "the verifier run against production and its output filed", and it could not
+ * be: production's database admits only the API's own tasks, so the verifier
+ * has to run from the deployed image, and that image had no runnable copy.
+ * `npm run ops:verify-audit-chain` is `tsx scripts/ops/verify-audit-chain.mjs`;
+ * the production stage installs `--omit=dev` (no tsx), copies no scripts/ops,
+ * and the script imports TypeScript plain Node cannot load. Bundled with the
+ * server's options, every TypeScript import is resolved at build time and the
+ * output is one ES module plain Node runs, under dist/, which the production
+ * stage copies whole. dist/ops/ is the same depth as scripts/ops/, so the
+ * script's own `../..` from import.meta.url still reaches the app root. Its
+ * NODE_ENV is deliberately NOT baked in: an operator tool reads the environment
+ * it runs in (resolveChainSecret refuses a missing secret only in production).
+ *
+ * @param {string} [outDir] where to write; dist/ unless a test says otherwise.
+ * @returns {{ label: string, options: import('esbuild').BuildOptions & { outfile: string } }[]}
+ */
+export function productionBuilds(outDir = path.join(root, 'dist')) {
+  return [
+    {
+      label: 'Server',
+      options: {
+        ...SERVER_BUILD_OPTIONS,
+        entryPoints: [path.join(root, 'server/index.ts')],
+        // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal -- outDir is operator/test build configuration; this CLI and the production-bundle test are its only callers, and the output entry name is fixed.
+        outfile: path.join(outDir, 'index.js'),
+        define: {
+          'process.env.NODE_ENV': '"production"',
+          // Bake the served commit into the bundle: production containers often
+          // have no .git to ask, and "what is deployed here?" must stay a
+          // checkable fact (server/buildStamp.ts falls back to this).
+          'process.env.BUILD_COMMIT': JSON.stringify(resolveBuildCommit()),
+        },
+      },
+    },
+    {
+      label: 'Audit-chain verifier',
+      options: {
+        ...SERVER_BUILD_OPTIONS,
+        entryPoints: [path.join(root, 'scripts/ops/verify-audit-chain.mjs')],
+        // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal -- outDir is the same operator/test build configuration; this fixed verifier entry must ship beside the API bundle and receives no application/request input.
+        outfile: path.join(outDir, 'ops/verify-audit-chain.mjs'),
+      },
+    },
+  ];
+}
+
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === __filename;
 
 if (isMain) {
-  try {
-    await build({
-      ...SERVER_BUILD_OPTIONS,
-      entryPoints: [path.join(root, 'server/index.ts')],
-      outfile: path.join(root, 'dist/index.js'),
-      define: {
-        'process.env.NODE_ENV': '"production"',
-        // Bake the served commit into the bundle: production containers often
-        // have no .git to ask, and "what is deployed here?" must stay a
-        // checkable fact (server/buildStamp.ts falls back to this).
-        'process.env.BUILD_COMMIT': JSON.stringify(resolveBuildCommit()),
-      },
-    });
-    console.log('✅ Server build complete → dist/index.js');
-  } catch (err) {
-    console.error('❌ Server build failed:', err.message);
-    process.exit(1);
+  for (const { label, options } of productionBuilds()) {
+    try {
+      await build(options);
+      console.log(`✅ ${label} build complete → ${path.relative(root, options.outfile)}`);
+    } catch (err) {
+      console.error('❌ %s build failed: %s', label, err.message);
+      process.exit(1);
+    }
   }
 }

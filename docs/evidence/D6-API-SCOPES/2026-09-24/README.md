@@ -71,4 +71,3 @@ nothing else imports the read model.
 |---|---|
 | `red/processing-status.txt` | Old code, new tests: 3 fail — `?processingStatus=INDEXED` answered 200; `/docs` advertises the filter; the summary carries the field. |
 | `green/processing-status.txt` | 35 of 35 (route + PGlite read model). |
-

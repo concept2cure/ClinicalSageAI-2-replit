@@ -1,0 +1,460 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T16:51:01.443Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > the row and the record of who made it commit together > records the Module 3 link failure without rolling the attributed row back
+{
+  "timestamp": "2026-10-13T16:51:03.941Z",
+  "level": "error",
+  "message": "[cmc-module3-link] Module 3 canonical write-through failed",
+  "context": {
+    "recordId": "7",
+    "propagation": "write_through_drug_substance",
+    "error": "undefined"
+  }
+}
+
+ × server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > every CMC register create records the person who recorded it > 'drug_substance' 31ms
+   → drug_substance wrote no audit row: expected [] to have a length of 1 but got +0
+ × server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > every CMC register create records the person who recorded it > 'drug_product' 6ms
+   → drug_product wrote no audit row: expected [] to have a length of 1 but got +0
+ × server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > every CMC register create records the person who recorded it > 'container_closure' 6ms
+   → container_closure wrote no audit row: expected [] to have a length of 1 but got +0
+ × server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > every CMC register create records the person who recorded it > 'material_spec' 5ms
+   → material_spec wrote no audit row: expected [] to have a length of 1 but got +0
+ × server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > every CMC register create records the person who recorded it > 'formulation_record' 5ms
+   → formulation_record wrote no audit row: expected [] to have a length of 1 but got +0
+ × server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > every CMC register create records the person who recorded it > 'characterization_study' 5ms
+   → characterization_study wrote no audit row: expected [] to have a length of 1 but got +0
+ × server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > every CMC register create records the person who recorded it > 'manufacturing_process' 5ms
+   → manufacturing_process wrote no audit row: expected [] to have a length of 1 but got +0
+ × server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > a create with nobody to name writes nothing > no actor at all 6ms
+   → promise resolved "{ row: { id: 2, …(23) }, …(1) }" instead of rejecting
+ × server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > a create with nobody to name writes nothing > a session that resolved nobody 5ms
+   → promise resolved "{ row: { id: 3, …(23) }, …(1) }" instead of rejecting
+ × server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > a create with nobody to name writes nothing > a null user 4ms
+   → promise resolved "{ row: { id: 4, …(23) }, …(1) }" instead of rejecting
+ × server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > a create with nobody to name writes nothing > says what is required and that nothing was written 4ms
+   → promise resolved "{ row: { id: 5, …(23) }, …(2) }" instead of rejecting
+ × server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > the row and the record of who made it commit together > leaves no register row behind when the audit row cannot be written 5ms
+   → promise resolved "{ row: { id: 6, …(23) }, …(1) }" instead of rejecting
+ × server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > the row and the record of who made it commit together > records the Module 3 link failure without rolling the attributed row back 6ms
+   → expected [] to have a length of 1 but got +0
+ × server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > the creates join one verifiable chain > three creates by two people walk as one tenant chain 9ms
+   → expected [] to have a length of 3 but got +0
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > every CMC register create records the person who recorded it > 'drug_substance'
+AssertionError: drug_substance wrote no audit row: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+    251|
+    252|     const rows = await auditRows();
+    253|     expect(rows, `${register} wrote no audit row`).toHaveLength(1);
+       |                                                    ^
+    254|     const [row] = rows;
+    255|     expect(row.action).toBe(CMC_REGISTER_CREATE);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > every CMC register create records the person who recorded it > 'drug_product'
+AssertionError: drug_product wrote no audit row: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+    251|
+    252|     const rows = await auditRows();
+    253|     expect(rows, `${register} wrote no audit row`).toHaveLength(1);
+       |                                                    ^
+    254|     const [row] = rows;
+    255|     expect(row.action).toBe(CMC_REGISTER_CREATE);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > every CMC register create records the person who recorded it > 'container_closure'
+AssertionError: container_closure wrote no audit row: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+    251|
+    252|     const rows = await auditRows();
+    253|     expect(rows, `${register} wrote no audit row`).toHaveLength(1);
+       |                                                    ^
+    254|     const [row] = rows;
+    255|     expect(row.action).toBe(CMC_REGISTER_CREATE);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > every CMC register create records the person who recorded it > 'material_spec'
+AssertionError: material_spec wrote no audit row: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+    251|
+    252|     const rows = await auditRows();
+    253|     expect(rows, `${register} wrote no audit row`).toHaveLength(1);
+       |                                                    ^
+    254|     const [row] = rows;
+    255|     expect(row.action).toBe(CMC_REGISTER_CREATE);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > every CMC register create records the person who recorded it > 'formulation_record'
+AssertionError: formulation_record wrote no audit row: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+    251|
+    252|     const rows = await auditRows();
+    253|     expect(rows, `${register} wrote no audit row`).toHaveLength(1);
+       |                                                    ^
+    254|     const [row] = rows;
+    255|     expect(row.action).toBe(CMC_REGISTER_CREATE);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > every CMC register create records the person who recorded it > 'characterization_study'
+AssertionError: characterization_study wrote no audit row: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+    251|
+    252|     const rows = await auditRows();
+    253|     expect(rows, `${register} wrote no audit row`).toHaveLength(1);
+       |                                                    ^
+    254|     const [row] = rows;
+    255|     expect(row.action).toBe(CMC_REGISTER_CREATE);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > every CMC register create records the person who recorded it > 'manufacturing_process'
+AssertionError: manufacturing_process wrote no audit row: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+    251|
+    252|     const rows = await auditRows();
+    253|     expect(rows, `${register} wrote no audit row`).toHaveLength(1);
+       |                                                    ^
+    254|     const [row] = rows;
+    255|     expect(row.action).toBe(CMC_REGISTER_CREATE);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+ FAIL  server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > a create with nobody to name writes nothing > no actor at all
+AssertionError: promise resolved "{ row: { id: 2, …(23) }, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "module3Linked": true,
++   "row": {
++     "biologicalOrigin": null,
++     "casNumber": null,
++     "cellLine": null,
++     "controlOfMaterials": null,
++     "createdAt": null,
++     "developmentPhase": null,
++     "id": 2,
++     "impuritiesProfile": null,
++     "inn": null,
++     "manufacturingProcess": null,
++     "modality": null,
++     "molecularFormula": null,
++     "molecularWeight": null,
++     "organizationId": 4101,
++     "projectId": "aaaaaaaa-0000-4000-8000-0000000004a1",
++     "sourceOrganism": null,
++     "specifications": null,
++     "stability": null,
++     "status": null,
++     "structuralFormula": null,
++     "substanceName": "BX-701",
++     "tseStatus": null,
++     "updatedAt": null,
++     "viralSafetyEvaluation": null,
++   },
+  }
+
+    280|     await expect(
+    281|       createDrugSubstance(ORG, { substanceName: 'BX-701', projectId: P…
+    282|     ).rejects.toBeInstanceOf(RegisterActorMissingError);
+       |     ^
+    283|     expect(await count('drug_substances')).toBe(0);
+    284|     expect(await auditRows()).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+
+ FAIL  server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > a create with nobody to name writes nothing > a session that resolved nobody
+AssertionError: promise resolved "{ row: { id: 3, …(23) }, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "module3Linked": true,
++   "row": {
++     "biologicalOrigin": null,
++     "casNumber": null,
++     "cellLine": null,
++     "controlOfMaterials": null,
++     "createdAt": null,
++     "developmentPhase": null,
++     "id": 3,
++     "impuritiesProfile": null,
++     "inn": null,
++     "manufacturingProcess": null,
++     "modality": null,
++     "molecularFormula": null,
++     "molecularWeight": null,
++     "organizationId": 4101,
++     "projectId": "aaaaaaaa-0000-4000-8000-0000000004a1",
++     "sourceOrganism": null,
++     "specifications": null,
++     "stability": null,
++     "status": null,
++     "structuralFormula": null,
++     "substanceName": "BX-701",
++     "tseStatus": null,
++     "updatedAt": null,
++     "viralSafetyEvaluation": null,
++   },
+  }
+
+    280|     await expect(
+    281|       createDrugSubstance(ORG, { substanceName: 'BX-701', projectId: P…
+    282|     ).rejects.toBeInstanceOf(RegisterActorMissingError);
+       |     ^
+    283|     expect(await count('drug_substances')).toBe(0);
+    284|     expect(await auditRows()).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯
+
+ FAIL  server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > a create with nobody to name writes nothing > a null user
+AssertionError: promise resolved "{ row: { id: 4, …(23) }, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "module3Linked": true,
++   "row": {
++     "biologicalOrigin": null,
++     "casNumber": null,
++     "cellLine": null,
++     "controlOfMaterials": null,
++     "createdAt": null,
++     "developmentPhase": null,
++     "id": 4,
++     "impuritiesProfile": null,
++     "inn": null,
++     "manufacturingProcess": null,
++     "modality": null,
++     "molecularFormula": null,
++     "molecularWeight": null,
++     "organizationId": 4101,
++     "projectId": "aaaaaaaa-0000-4000-8000-0000000004a1",
++     "sourceOrganism": null,
++     "specifications": null,
++     "stability": null,
++     "status": null,
++     "structuralFormula": null,
++     "substanceName": "BX-701",
++     "tseStatus": null,
++     "updatedAt": null,
++     "viralSafetyEvaluation": null,
++   },
+  }
+
+    280|     await expect(
+    281|       createDrugSubstance(ORG, { substanceName: 'BX-701', projectId: P…
+    282|     ).rejects.toBeInstanceOf(RegisterActorMissingError);
+       |     ^
+    283|     expect(await count('drug_substances')).toBe(0);
+    284|     expect(await auditRows()).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/14]⎯
+
+ FAIL  server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > a create with nobody to name writes nothing > says what is required and that nothing was written
+AssertionError: promise resolved "{ row: { id: 5, …(23) }, …(2) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "module3Linked": false,
++   "module3Warning": "Saved to the register only. No project is set on this record, so it does not feed Module 3 yet.",
++   "row": {
++     "biologicalOrigin": null,
++     "casNumber": null,
++     "cellLine": null,
++     "controlOfMaterials": null,
++     "createdAt": null,
++     "developmentPhase": null,
++     "id": 5,
++     "impuritiesProfile": null,
++     "inn": null,
++     "manufacturingProcess": null,
++     "modality": null,
++     "molecularFormula": null,
++     "molecularWeight": null,
++     "organizationId": 4101,
++     "projectId": null,
++     "sourceOrganism": null,
++     "specifications": null,
++     "stability": null,
++     "status": null,
++     "structuralFormula": null,
++     "substanceName": "BX-701",
++     "tseStatus": null,
++     "updatedAt": null,
++     "viralSafetyEvaluation": null,
++   },
+  }
+
+    288|     await expect(
+    289|       createDrugSubstance(ORG, { substanceName: 'BX-701' }, { userId: …
+    290|     ).rejects.toThrow(/drug substance record cannot be written without…
+       |     ^
+    291|   });
+    292| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/14]⎯
+
+ FAIL  server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > the row and the record of who made it commit together > leaves no register row behind when the audit row cannot be written
+AssertionError: promise resolved "{ row: { id: 6, …(23) }, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "module3Linked": true,
++   "row": {
++     "biologicalOrigin": null,
++     "casNumber": null,
++     "cellLine": null,
++     "controlOfMaterials": null,
++     "createdAt": null,
++     "developmentPhase": null,
++     "id": 6,
++     "impuritiesProfile": null,
++     "inn": null,
++     "manufacturingProcess": null,
++     "modality": null,
++     "molecularFormula": null,
++     "molecularWeight": null,
++     "organizationId": 4101,
++     "projectId": "aaaaaaaa-0000-4000-8000-0000000004a1",
++     "sourceOrganism": null,
++     "specifications": null,
++     "stability": null,
++     "status": null,
++     "structuralFormula": null,
++     "substanceName": "BX-701",
++     "tseStatus": null,
++     "updatedAt": null,
++     "viralSafetyEvaluation": null,
++   },
+  }
+
+    298|       await expect(
+    299|         createDrugSubstance(ORG, { substanceName: 'BX-701', projectId:…
+    300|       ).rejects.toThrow();
+       |       ^
+    301|       expect(await count('drug_substances'), 'an unattributable row wa…
+    302|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/14]⎯
+
+ FAIL  server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > the row and the record of who made it commit together > records the Module 3 link failure without rolling the attributed row back
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+    310|     expect(created.module3Linked).toBe(false);
+    311|     expect(await count('drug_substances')).toBe(1);
+    312|     expect(await auditRows()).toHaveLength(1);
+       |                               ^
+    313|   });
+    314| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/14]⎯
+
+ FAIL  server/services/cmc/__tests__/register-create-attribution.pglite.integration.test.ts > the creates join one verifiable chain > three creates by two people walk as one tenant chain
+AssertionError: expected [] to have a length of 3 but got +0
+
+- Expected
++ Received
+
+- 3
++ 0
+
+    329|
+    330|     const rows = await auditRows();
+    331|     expect(rows).toHaveLength(3);
+       |                  ^
+    332|     expect(rows.map((r) => r.actor_id)).toEqual([RECORDER, RECORDER, R…
+    333|     expect(new Set(rows.map((r) => r.sha256_chain)).size).toBe(3);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/14]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  14 failed (14)
+   Start at  16:50:59
+   Duration  4.55s (transform 930ms, setup 102ms, import 1.59s, tests 2.46s, environment 0ms)
+

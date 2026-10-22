@@ -83,7 +83,6 @@
     "server/routes/grants.ts",
     "server/routes/gspr-postmarket.ts",
     "server/routes/ha-interactions.ts",
-    "server/routes/haq-manager.ts",
     "server/routes/human-factors.ts",
     "server/routes/iacuc.ts",
     "server/routes/ibc.ts",

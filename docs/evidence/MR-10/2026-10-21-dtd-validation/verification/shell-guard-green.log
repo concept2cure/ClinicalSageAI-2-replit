@@ -1,0 +1,58 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > the shell rail is drawn only where it can be seen > renders no rail on a work screen (slice 9) 269ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > the shell rail is drawn only where it can be seen > does not render the rail on a surface that owns its conversation 50ms
+stderr | client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that owns its conversation > seeds the conversation surface and goes there, instead of arming a hidden rail
+[useAnaChat] stream failed: Stream request failed: 503
+
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that owns its conversation > seeds the conversation surface and goes there, instead of arming a hidden rail 3351ms
+stderr | client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that owns its conversation > re-seeds when the user is already on the conversation surface
+[useAnaChat] stream failed: Stream request failed: 503
+
+stderr | client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > a seeded conversation carries its files > sends the seeding composer's uploads by id, so the stream can open them
+[useAnaChat] stream failed: Stream request failed: 503
+
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that owns its conversation > re-seeds when the user is already on the conversation surface 646ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > a seeded conversation carries its files > sends the seeding composer's uploads by id, so the stream can open them 83ms
+stderr | client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that keeps the rail > goes to the conversation and sends there, naming the screen it was asked from
+[useAnaChat] stream failed: Stream request failed: 503
+
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that keeps the rail > goes to the conversation and sends there, naming the screen it was asked from 231ms
+stderr | client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > an "Ask AnA" button on a work screen > lands in the conversation composer, unsent, from that screen; Enter sends it with the screen named
+[useAnaChat] stream failed: Stream request failed: 503
+
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > an "Ask AnA" button on a work screen > lands in the conversation composer, unsent, from that screen; Enter sends it with the screen named 2727ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > an "Ask AnA" button on a work screen > "Back to" returns to the screen it was asked from 413ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9) > vault has no AnA column and no seam 64ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9) > projects has no AnA column and no seam 34ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9) > submission-center has no AnA column and no seam 44ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9) > home has no AnA column and no seam 77ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9) > crl-library has no AnA column and no seam 53ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9) > ⌘\ opens nothing and persists nothing: there is no rail to toggle 71ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > publishShellProject > sets the live global AND the per-tab mirror 22ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > restoreShellProject > rehydrates the global from the mirror after a reload 3ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > restoreShellProject > never overwrites a live selection with the mirror 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > restoreShellProject > returns null with no mirror and publishes nothing 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > restoreShellProject > treats a malformed or id-less mirror as no selection — never throws, never publishes garbage 5ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > the open program rides the URL > a fresh tab on a link naming the program opens that program 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > the open program rides the URL > the link wins over a mirror naming a different program 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > the open program rides the URL > keeps what the mirror knows when it names the same program 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > the open program rides the URL > ignores a program param that is not a program UUID 3ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > the open program rides the URL > writes the open program into the URL, keeping the path and every other param 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > the open program rides the URL > drops the param when no program is open, or the open one is not a program 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > the open program rides the URL > the shell hook follows both navigation and a newly opened program 28ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > detects leaving and returning to the same program 3ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > keeps same-program and metadata updates current 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > retires pending handoffs across a tenant clear and return to the same program 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > a fresh guard belongs to the current program 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > retires a batched accepted-ident visit from 42 to 43 and back 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > retires a batched accepted-ident visit from PROGRAM-A to PROGRAM-B and back 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > keeps the same numeric identifier current across its string representation and metadata updates 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > keeps UUID case changes current without weakening the UUID-only routing helper 1ms
+
+ Test Files  3 passed (3)
+      Tests  34 passed (34)
+   Start at  00:33:29
+   Duration  16.69s (transform 8.09s, setup 475ms, import 4.23s, tests 8.21s, environment 3.11s)
+

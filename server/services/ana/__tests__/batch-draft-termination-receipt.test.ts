@@ -1,0 +1,121 @@
+/** Receipt-only controls: no model, provider, database or source-authority substitute. */
+import { describe, expect, it } from 'vitest';
+import { batchDraftReceipt, type BatchDraftResult } from '../batch-draft-result';
+import type { DocumentDraftResponse } from '../AnaDocumentDraftingService';
+import type { DraftSourceContext } from '../draft-project-sources';
+import { draftSourceIdentityForText } from '../draft-source-identity';
+
+const PARTIAL = '<p>The response rate was greater than</p>';
+const COMPLETE = '<p>The investigator must review the evidence.</p>';
+type Termination = { finishReason?: string | null; truncated?: boolean };
+
+/** Absent and contradictory flags deliberately exercise legacy/runtime callers. */
+function generated(termination: Termination, content = PARTIAL): DocumentDraftResponse {
+  return { content, model: 'receipt-fixture-model', latencyMs: 3,
+    usage: { inputTokens: 10, outputTokens: 20, estimatedCostUsd: 0 },
+    ...termination } as DocumentDraftResponse;
+}
+
+function one(result: BatchDraftResult) {
+  return batchDraftReceipt([{ section_type: '2.7.3', instructions: 'Draft efficacy.' }],
+    [{ requestIndex: 0, sectionType: '2.7.3' }], [result]);
+}
+
+function expectCutOff(receipt: ReturnType<typeof one>, finishReason: string | null) {
+  expect(receipt).toMatchObject({ status: 'failed', count: 0, failed: 1, requested: 1, savedCount: 0, retryIndices: [0] });
+  expect(receipt.sections[0]).toMatchObject({ requestIndex: 0, sectionType: '2.7.3', status: 'failed',
+    error: 'DRAFT_TRUNCATED', truncated: true, finishReason, saved: false, authoringDocId: null });
+  expect(receipt.sections[0]).not.toHaveProperty('content');
+  expect(receipt.sections[0]).not.toHaveProperty('partialContent');
+  expect((receipt.sections[0] as Record<string, unknown>).message).toMatch(/shorten|split/i);
+  expect((receipt.sections[0] as Record<string, unknown>).message).toMatch(/retry/i);
+  expect(JSON.stringify(receipt)).not.toContain(PARTIAL);
+}
+
+describe('batch receipts refuse cut-off prose as a drafted section', () => {
+  it.each(['max_tokens', 'length', 'chunk_timeout'])('refuses canonical reason %s despite a contradictory false flag', finishReason => {
+    expectCutOff(one(generated({ finishReason, truncated: false })), finishReason);
+  });
+
+  it.each(['max_tokens', 'length', 'chunk_timeout'])('refuses canonical reason %s when the flag is absent', finishReason => {
+    expectCutOff(one(generated({ finishReason })), finishReason);
+  });
+
+  it.each(['max_tokens', 'length', 'chunk_timeout'])('retains a consistent true flag and reason %s', finishReason => {
+    expectCutOff(one(generated({ finishReason, truncated: true })), finishReason);
+  });
+
+  it('uses the canonical classifier for a whitespace-padded finish reason', () => {
+    expectCutOff(one(generated({ finishReason: ' max_tokens ', truncated: false })), ' max_tokens ');
+  });
+
+  it.each([undefined, null, 'unknown', 'provider_future_stop', 'end_turn', 'stop'])('honors explicit truncation despite finish reason %s', finishReason => {
+    expectCutOff(one(generated({ finishReason, truncated: true })), finishReason ?? null);
+  });
+});
+
+describe('batch receipts preserve ordinary drafts without certifying completeness', () => {
+  it.each(['end_turn', 'stop', 'unknown', 'provider_future_stop', undefined, null])('keeps usable content for nontruncating reason %s', finishReason => {
+    const receipt = one(generated({ finishReason, truncated: false }, COMPLETE));
+    expect(receipt).toMatchObject({ status: 'drafted', count: 1, failed: 0, requested: 1, savedCount: 0, retryIndices: [] });
+    expect(receipt.sections[0]).toMatchObject({ status: 'drafted', content: COMPLETE, saved: false, authoringDocId: null });
+    expect(receipt.sections[0]).not.toHaveProperty('error');
+  });
+
+  it.each(['end_turn', 'stop', 'unknown', 'provider_future_stop', undefined, null])('retains reason %s and normalizes an absent truncation flag', finishReason => {
+    const receipt = one(generated({ finishReason }, COMPLETE));
+    expect(receipt.sections[0]).toMatchObject({ status: 'drafted', finishReason: finishReason ?? null, truncated: false });
+    expect(receipt.sections[0]).not.toHaveProperty('complete');
+    expect(receipt.sections[0]).not.toHaveProperty('verifiedComplete');
+  });
+
+  it('keeps blank and source-unavailable results failed without inventing truncation', () => {
+    const raw = [{ section_type: 'blank' }, { section_type: 'unavailable' }];
+    const requests = raw.map((section, requestIndex) => ({ requestIndex, sectionType: section.section_type }));
+    const receipt = batchDraftReceipt(raw, requests, [generated({ finishReason: 'end_turn', truncated: false }, '  '),
+      { sectionType: 'unavailable', error: 'SOURCE_CONTEXT_UNAVAILABLE', message: 'Refresh selected project sources.' }]);
+    expect(receipt).toMatchObject({ status: 'failed', count: 0, failed: 2, savedCount: 0, retryIndices: [0, 1] });
+    expect(receipt.sections.map(section => (section as Record<string, unknown>).error)).toEqual(['DRAFT_FAILED', 'SOURCE_CONTEXT_UNAVAILABLE']);
+    expect(receipt.sections.every(section => !('content' in section))).toBe(true);
+  });
+});
+
+describe('batch recovery retains successful source receipts and original slots', () => {
+  it('retries only invalid, unavailable, blank and cut-off slots while preserving successful siblings', () => {
+    const sourceText = 'SOURCE_BODY_MUST_NOT_APPEAR_IN_RECEIPTS';
+    const span = { start: 0, end: sourceText.length, totalChars: sourceText.length };
+    // This is an already-admitted receipt input fixture; it grants no source authority.
+    const source = { documentId: '10000000-0000-4000-8000-000000000001', programId: '20000000-0000-4000-8000-000000000001',
+      contentHash: 'a'.repeat(64), ...draftSourceIdentityForText(sourceText, span), span,
+      title: 'Study CSR', extractionMethod: 'pdf-text', extractionConfidence: null,
+      originalFileAvailable: false, disposition: 'keep_data', sourceAvailability: 'Original unavailable; retained data.',
+      completeText: true, text: sourceText };
+    const context: DraftSourceContext = { status: 'loaded', sources: [source] };
+    const raw = [{ section_type: 'supported' }, null, { section_type: 'cut-off' },
+      { section_type: 'unavailable' }, { section_type: 'blank' }, { section_type: 'unknown-finish' }];
+    const requests = [0, 2, 3, 4, 5].map(requestIndex => ({ requestIndex,
+      sectionType: raw[requestIndex]!.section_type, ...(requestIndex === 0 ? { sourceContext: context } : {}) }));
+    const partialWithPurportedSavedId = { ...generated({ finishReason: 'length', truncated: false }),
+      saved: true, authoringDocId: 'UNTRUSTED_SAVED_ID' };
+    const receipt = batchDraftReceipt(raw, requests, [generated({ finishReason: 'end_turn', truncated: false }, COMPLETE),
+      partialWithPurportedSavedId,
+      { sectionType: 'unavailable', error: 'SOURCE_CONTEXT_UNAVAILABLE', message: 'Refresh selected project sources.' },
+      generated({ finishReason: 'end_turn', truncated: false }, ''),
+      generated({ finishReason: 'unknown', truncated: false }, '<p>Separate planning draft.</p>')]);
+
+    expect(receipt).toMatchObject({ status: 'partial', count: 2, failed: 4, requested: 6, savedCount: 0, retryIndices: [1, 2, 3, 4] });
+    expect(receipt.sections.map(section => section.requestIndex)).toEqual([0, 1, 2, 3, 4, 5]);
+    expect(receipt.sections.map(section => section.sectionType)).toEqual(['supported', '', 'cut-off', 'unavailable', 'blank', 'unknown-finish']);
+    expect(receipt.sections[0]).toMatchObject({ status: 'drafted', content: COMPLETE, sourceStatus: 'loaded', sourceQualification: 'unassessed' });
+    const { text: sourceBody, ...sourceReceipt } = source;
+    expect((receipt.sections[0] as Record<string, unknown>).sources).toEqual([sourceReceipt]);
+    expect(receipt.sections[5]).toMatchObject({ status: 'drafted', content: '<p>Separate planning draft.</p>' });
+    expect(receipt.sections.slice(1, 5).map(section => (section as Record<string, unknown>).error)).toEqual([
+      'INVALID_SECTION', 'DRAFT_TRUNCATED', 'SOURCE_CONTEXT_UNAVAILABLE', 'DRAFT_FAILED',
+    ]);
+    expect(receipt.sections.every(section => section.saved === false && section.authoringDocId === null)).toBe(true);
+    expect(JSON.stringify(receipt)).not.toContain(PARTIAL);
+    expect(JSON.stringify(receipt)).not.toContain(sourceBody);
+    expect(JSON.stringify(receipt)).not.toContain('UNTRUSTED_SAVED_ID');
+  });
+});

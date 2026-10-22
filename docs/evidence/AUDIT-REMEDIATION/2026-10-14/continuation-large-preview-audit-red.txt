@@ -1,0 +1,71 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ❯ client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx (4 tests | 1 failed) 239ms
+     ✓ shows a notice that says the request completed and its audit entry was not written 28ms
+     ✓ shows one notice for a repeated request, and removes it on dismiss 156ms
+     ✓ shows the actual GET export transport warning while the caller receives the CSV 11ms
+     × shows a failed preview audit after a large clinical table payload without consuming the result 40ms
+ ❯ client/src/lib/__tests__/audit-row-not-persisted.test.ts (11 tests | 1 failed) 101ms
+     ✓ finds the outcome at the top level, under meta, under details, and nested in data 3ms
+     ✓ reads the header pair a 204 or a proxied body carries 1ms
+     ✓ stays silent for a persisted row, a true header, and an unrelated `persisted: false` 1ms
+     ✓ terminates on a cyclic body 0ms
+     × checks canonical audit metadata before large table payloads exhaust the bounded scan 7ms
+     ✓ a 200 PATCH carrying auditTrail.persisted=false raises it, and the caller still reads the body 7ms
+     ✓ a 204 DELETE carrying the header raises it 1ms
+     ✓ a completed audited GET export raises the header warning without consuming its bytes 1ms
+     ✓ an export with a persisted audit row and a failed GET raise no completed-request audit notice 3ms
+     ✓ an upload whose row was lost raises it 52ms
+     ✓ a persisted row, and a GET, raise nothing 21ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/lib/__tests__/audit-row-not-persisted.test.ts > findUnpersistedAuditRow — the one reader of both wire signals > checks canonical audit metadata before large table payloads exhaust the bounded scan
+AssertionError: expected null to deeply equal { code: 'AUDIT_ROW_NOT_PERSISTED' }
+
+- Expected:
+{
+  "code": "AUDIT_ROW_NOT_PERSISTED",
+}
+
++ Received:
+null
+
+ ❯ client/src/lib/__tests__/audit-row-not-persisted.test.ts:97:111
+     95|     const tables = { primaryEfficacy: { title: 'Recorded endpoint', he…
+     96|       rows: Array.from({ length: 3000 }, () => ['Recorded endpoint', '…
+     97|     expect(findUnpersistedAuditRow(none, { source: {}, approved: true,…
+       |                                                                                                               ^
+     98|     expect(findUnpersistedAuditRow(none, { source: {}, approved: true,…
+     99|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx > GlobalMutationErrors — a completed request with no audit row > shows a failed preview audit after a large clinical table payload without consuming the result
+TestingLibraryElementError: Unable to find an element by: [data-testid="global-audit-row-notice"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx:91:19
+     89|       expect(await response.json()).toEqual(body);
+     90|     });
+     91|     expect(screen.getByTestId('global-audit-row-notice').textContent).…
+       |                   ^
+     92|   });
+     93| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 13 passed (15)
+   Start at  19:52:33
+   Duration  1.98s (transform 173ms, setup 179ms, import 262ms, tests 340ms, environment 816ms)
+

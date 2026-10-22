@@ -197,3 +197,11 @@
   .adm-access .adm-audit-row { grid-template-columns: 1fr 1fr; }
   .adm-access .adm-audit-row > span { white-space: normal; }
 }
+.adm-key-create { margin-block: 12px; }
+.adm-key-create form, .adm-key-create [role="region"] { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius-lg); }
+.adm-key-create form > label { display: grid; gap: 6px; }
+.adm-key-create input:not([type="checkbox"]), .adm-key-create textarea { padding: 8px; color: inherit; background: var(--bg-000); border: 1px solid var(--border-control); border-radius: 6px; }
+.adm-key-create fieldset { display: flex; flex-wrap: wrap; gap: 12px; border: 1px solid var(--border); }
+.adm-key-create fieldset label { display: flex; align-items: center; gap: 6px; }
+.adm-key-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.adm-key-secret { display: block; overflow-wrap: anywhere; user-select: all; }

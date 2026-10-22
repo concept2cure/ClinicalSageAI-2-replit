@@ -40,4 +40,3 @@
    × client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a protocol in development with a blocker keeps the gate, with the action disabled 459ms
    Test Files  1 failed (1)
    Tests  2 failed | 2 passed (4)
-

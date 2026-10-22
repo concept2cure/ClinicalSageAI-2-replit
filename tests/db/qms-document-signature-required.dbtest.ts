@@ -21,26 +21,27 @@
  * — and the table owner for the cases the owner must not get past either.
  *
  * ── Isolation ───────────────────────────────────────────────────────────────
- * Lane "dbqsr": organisations 93180 (under test) and 93181 (the other tenant),
- * users `dbqsr-*@example.invalid`. Every document, signature and ledger row of
- * those organisations is removed before and after the run, as the owner, each
- * append-only trigger off for that one transaction (the domain-sign-ceremony
- * precedent). The guard on qms_documents is never disabled: a fixture that needs
- * an effective document gives it its signature on the same transaction.
+ * Each invocation creates fresh organizations and unique synthetic users. All
+ * documents, signed versions, signatures and ledgers remain retained afterward.
+ * No immutability or tenant trigger is disabled and no prior history is deleted.
+ * A fixture that needs an effective document gives it its signature on the same
+ * transaction. Direct owner-seeded text/status is identified as a fixture; the
+ * actual editor/review controls have separate native coverage.
  *
  * Evidence: docs/evidence/D6/2026-10-01-tranche-4/P0-18/.
  */
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { Pool } from 'pg';
+import { randomUUID } from 'node:crypto';
 import { databaseUrl } from '../setup.db';
 
-const ORG = 93180;
-const OTHER_ORG = 93181;
-const ORGS = [ORG, OTHER_ORG];
+let ORG: number;
+let OTHER_ORG: number;
+const PROGRAM = randomUUID();
 const TAG = 'dbqsr';
 const RUN = Date.now().toString(36);
 const PASSWORD = 'Dbqsr-Qms-Signature-2026!';
@@ -53,48 +54,18 @@ let owner: Pool;
 let app: express.Express;
 let orgUuid: string;
 let approver: { id: number; token: string };
+let revisionApprover: { id: number; token: string };
 let author: number;
 
-/** Remove this lane's rows as the owner, each append-only trigger off for this transaction only. */
-async function cleanup(): Promise<void> {
-  const c = await owner.connect();
-  try {
-    await c.query('BEGIN');
-    await c.query('ALTER TABLE electronic_signatures DISABLE TRIGGER trg_electronic_signatures_immutable');
-    await c.query('DELETE FROM electronic_signatures WHERE organization_id = ANY($1::int[])', [ORGS]);
-    await c.query('ALTER TABLE electronic_signatures ENABLE TRIGGER trg_electronic_signatures_immutable');
-    await c.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-    await c.query('DELETE FROM audit_logs WHERE tenant_id = ANY($1::int[])', [ORGS]);
-    await c.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
-    const { rows } = await c.query(
-      `SELECT 1 FROM pg_trigger WHERE tgname = 'trg_c2c_ana_actions_append_only' AND tgrelid = 'public.c2c_ana_actions'::regclass`,
-    );
-    if (rows.length > 0) await c.query('ALTER TABLE c2c_ana_actions DISABLE TRIGGER trg_c2c_ana_actions_append_only');
-    await c.query('DELETE FROM c2c_ana_actions WHERE org_id = ANY($1::int[])', [ORGS]);
-    if (rows.length > 0) await c.query('ALTER TABLE c2c_ana_actions ENABLE TRIGGER trg_c2c_ana_actions_append_only');
-    await c.query('DELETE FROM qms_documents WHERE organization_id = ANY($1::int[])', [ORGS]);
-    await c.query('COMMIT');
-  } catch (err) {
-    await c.query('ROLLBACK').catch(() => undefined);
-    throw err;
-  } finally {
-    c.release();
-  }
-}
-
-async function upsertUser(handle: string, name: string, role: string): Promise<number> {
+async function createUser(handle: string, name: string, role: string): Promise<number> {
   const { rows } = await owner.query(
     `INSERT INTO users (email, name, password_hash, status) VALUES ($1, $2, $3, 'active')
-     ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, status = 'active',
-       failed_login_attempts = 0, locked_until = NULL, mfa_enabled = false, mfa_secret = NULL,
-       mfa_totp_last_step = NULL, password_changed_at = NULL
      RETURNING id`,
-    [`${TAG}-${handle}@example.invalid`, name, await bcrypt.hash(PASSWORD, 4)],
+    [`${TAG}-${RUN}-${handle}@example.invalid`, name, await bcrypt.hash(PASSWORD, 4)],
   );
   const id = Number(rows[0].id);
   await owner.query(
-    `INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, $3)
-     ON CONFLICT (user_id, organization_id) DO UPDATE SET role = EXCLUDED.role`,
+    `INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, $3)`,
     [ORG, id, role],
   );
   return id;
@@ -142,9 +113,10 @@ async function asOwner<T>(fn: (c: Client) => Promise<T>): Promise<T> {
 /** A draft controlled document in this organisation, authored by someone other than the approver. */
 async function draftDoc(label: string): Promise<number> {
   const { rows } = await owner.query(
-    `INSERT INTO qms_documents (organization_id, doc_number, title, doc_type, version, status, author_id)
-     VALUES ($1, $2, $3, 'sop', '1.0', 'draft', $4) RETURNING id`,
-    [ORG, `${TAG}-${RUN}-${label}`, `P0-18 probe ${label}`, author],
+    `INSERT INTO qms_documents (organization_id, doc_number, title, doc_type, version, status, author_id, metadata)
+     VALUES ($1, $2, $3, 'sop', '1.0', 'draft', $4, $5::jsonb) RETURNING id`,
+    [ORG, `${TAG}-${RUN}-${label}`, `P0-18 probe ${label}`, author,
+      JSON.stringify({ sections: [{ key: 'procedure', label: 'Procedure', body: 'Keep the original synthetic record and record each correction with its reason.' }] })],
   );
   return Number(rows[0].id);
 }
@@ -185,32 +157,36 @@ async function signaturesOn(docId: number) {
   return rows;
 }
 
-function post(path: string, body: Record<string, unknown>) {
-  return request(app).post(`/api/mdx/qms/documents${path}`).set('Authorization', `Bearer ${approver.token}`).send(body);
+function post(path: string, body: Record<string, unknown>, by = approver) {
+  return request(app).post(`/api/mdx/qms/documents${path}`).set('Authorization', `Bearer ${by.token}`).send(body);
 }
 
-const approve = (id: number) => post(`/${id}/approve`, { password: PASSWORD, meaning: 'APPROVED', reason: REASON });
+const approve = (id: number, by = approver) => post(`/${id}/approve`, { password: PASSWORD, meaning: 'APPROVED', reason: REASON }, by);
 const retire = (id: number) => post(`/${id}/retire`, { password: PASSWORD, meaning: 'APPROVED', reason: 'Retiring this controlled document for the P0-18 proof.' });
-const revise = (id: number) => post(`/${id}/revise`, { reason: 'Opening a revision for the P0-18 proof.' });
+const revise = (id: number) => post(`/${id}/revise`, { reason: 'Opening a revision for the P0-18 proof.', programId: PROGRAM });
 
 beforeAll(async () => {
   if (!process.env.APP_DATABASE_URL) throw new Error('[dbqsr] APP_DATABASE_URL is required: owner execution proves nothing about RLS.');
   owner = new Pool({ connectionString: databaseUrl, max: 3 });
-  for (const id of ORGS) {
-    await owner.query(
-      `INSERT INTO organizations (id, name, slug, status) VALUES ($1, $2, $2, 'active') ON CONFLICT (id) DO UPDATE SET status = 'active'`,
-      [id, `${TAG}-qms-signature-${id}`],
-    );
-  }
-  orgUuid = String((await owner.query('SELECT uuid FROM organizations WHERE id = $1', [ORG])).rows[0].uuid);
-  await cleanup();
-  const approverId = await upsertUser('approver', 'Dbqsr Approver', 'admin');
-  author = await upsertUser('author', 'Dbqsr Author', 'member');
+  const organizations = await owner.query(`INSERT INTO organizations(name,slug,status,payment_status)
+    VALUES($1,$1,'active','active'),($2,$2,'active','active') RETURNING id,uuid`,
+    [`${TAG}-${RUN}-own`,`${TAG}-${RUN}-other`]);
+  ORG = Number(organizations.rows[0].id); OTHER_ORG = Number(organizations.rows[1].id);
+  orgUuid = String(organizations.rows[0].uuid);
+  const approverId = await createUser('approver', 'Dbqsr Approver', 'admin');
+  const secondApproverId = await createUser('revision-approver', 'Dbqsr Independent Revision Approver', 'admin');
+  author = await createUser('author', 'Dbqsr Author', 'member');
+  const workspace = (await owner.query('INSERT INTO client_workspaces(organization_id,name,slug) VALUES($1,$2,$2) RETURNING id',[ORG,`${TAG}-${RUN}`])).rows[0];
+  await owner.query(`INSERT INTO regulatory_programs(id,organization_id,name,code,program_type,product_type,primary_agency,product_name,lead_user_id,status)
+    VALUES($1,$2,$3::text,$3::text,'IND','small_molecule','FDA',$3::text,$4,'active')`,[PROGRAM,ORG,`${TAG}-${RUN}`,author]);
+  await owner.query(`INSERT INTO projects(organization_id,client_workspace_id,name,type,status,owner_id,created_by_id,regulatory_program_id,settings)
+    VALUES($1,$2,$3,'program','active',$4,$4,$5,'{}'::json)`,[ORG,workspace.id,`${TAG}-${RUN}`,author,PROGRAM]);
   const { activeJwtSecret } = await import('../../server/utils/jwtVerify');
   approver = {
     id: approverId,
     token: jwt.sign({ type: 'access', userId: approverId, organizationId: String(ORG), role: 'admin' }, activeJwtSecret(), { expiresIn: '10m' }),
   };
+  revisionApprover = { id: secondApproverId, token: jwt.sign({ type: 'access', userId: secondApproverId, organizationId: String(ORG), role: 'admin' }, activeJwtSecret(), { expiresIn: '10m' }) };
   const { authMiddleware } = await import('../../server/auth');
   const qms = (await import('../../server/routes/mdx-qms')).default;
   app = express();
@@ -218,13 +194,9 @@ beforeAll(async () => {
   app.use('/api/mdx', authMiddleware, qms);
 }, 120_000);
 
-beforeEach(async () => {
-  await owner.query('UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = $1', [approver.id]);
-});
-
 afterAll(async () => {
   if (!owner) return;
-  await cleanup().catch((err) => console.warn('[dbqsr] cleanup left rows:', (err as Error).message));
+  // Preserve this invocation's complete immutable history and fresh fixture identities.
   const { getPool } = await import('../../server/db/runtime');
   await getPool().end().catch(() => undefined);
   await owner.end();
@@ -335,8 +307,11 @@ describe('P0-18: the governed path, and fixtures that sign, still commit', () =>
     await toReview(id);
     expect((await approve(id)).status).toBe(200);
     expect((await revise(id)).status).toBe(200);
+    // Trusted synthetic saved prose on the new canonical draft, not an editor-API claim.
+    const revised = (await owner.query('SELECT authoring_document_id FROM qms_documents WHERE id=$1',[id])).rows[0];
+    await owner.query('UPDATE authoring_sections SET content=$2 WHERE doc_id=$1',[revised.authoring_document_id,'Saved synthetic revision procedure for independent approval.']);
     await toReview(id);
-    const res = await approve(id);
+    const res = await approve(id, revisionApprover);
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(await statusOf(id)).toBe('effective');
     expect(await signaturesOn(id)).toHaveLength(2);
@@ -353,14 +328,14 @@ describe('P0-18: the governed path, and fixtures that sign, still commit', () =>
     await expect(
       asRuntime(async (c) => {
         await c.query('SET CONSTRAINTS trg_qms_documents_signed_status_upd IMMEDIATE');
-        await approveQmsDocumentSigned(c as never, params(immediate));
+        await approveQmsDocumentSigned(c, params(immediate));
       }),
     ).rejects.toThrow(REFUSED);
     expect(await statusOf(immediate)).toBe('in_review');
     expect(await signaturesOn(immediate)).toEqual([]);
     const deferred = await draftDoc('deferred');
     await toReview(deferred);
-    await asRuntime((c) => approveQmsDocumentSigned(c as never, params(deferred)));
+    await asRuntime((c) => approveQmsDocumentSigned(c, params(deferred)));
     expect(await statusOf(deferred)).toBe('effective');
   });
 

@@ -251,7 +251,9 @@ describe('POST /:projectIdent/compile — which identifier reaches <application-
     const res = createMockResponse() as any;
     await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
 
-    expect(assembleSequenceMock).toHaveBeenCalledWith(expect.objectContaining({ sponsorName: SPONSOR }));
+    expect(assembleSequenceMock).toHaveBeenCalledWith(expect.objectContaining({ sponsorName: SPONSOR, sponsorId: '123456789',
+      contacts: [{ type: 'regulatory', name: 'Regulatory Contact', phone: '+1 617 555 0100', email: 'regulatory@example.test' }],
+      recordedPackageIdentity: { version: 1, identity: expect.objectContaining({ applicantId: '123456789', applicantName: SPONSOR }) } }));
     expect(JSON.stringify(assembleSequenceMock.mock.calls[0][0])).not.toMatch(/UNASSIGNED \(organization/);
   });
 
@@ -259,6 +261,10 @@ describe('POST /:projectIdent/compile — which identifier reaches <application-
     ['no agency number is recorded', { program: { ...PROGRAM, application_number: null } }, /records no agency application number/],
     ['the recorded number is only whitespace', { program: { ...PROGRAM, application_number: '   ' } }, /records no agency application number/],
     ['the organisation has no name on record', { organizationName: null }, /organization's record has no usable name/],
+    ['the sponsor records no DUNS', { identity: { duns: null } }, /D-U-N-S/],
+    ['the sponsor records a malformed DUNS', { identity: { duns: '12-345-6789' } }, /D-U-N-S/],
+    ['the sponsor records a partial contact', { identity: { contact_phone: null } }, /telephone/],
+    ['the FDA number has a pathway prefix', { program: { ...PROGRAM, application_number: 'IND000204' } }, /six digits/],
   ])('when %s, nothing is assembled: a failed compilation that says so — the program code is never used', async (_label, opts, says) => {
     mockSpine(opts);
     const res = createMockResponse() as any;

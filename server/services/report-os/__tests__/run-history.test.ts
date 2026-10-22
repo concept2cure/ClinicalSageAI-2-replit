@@ -182,3 +182,19 @@ describe('saved report history query semantics', () => {
     expect(query).not.toHaveBeenCalled();
   });
 });
+
+
+it('filters account and selected-public-project output by every actual source project before pagination or totals', async () => {
+  for (const scopeType of ['account','project']) {
+    const scopeId=scopeType==='account'?'7':'12';
+    await database.query(`UPDATE report_runs SET scope_type=$1,scope_id=$2,dependency_summary='{"summary":{"accessProjectIds":[11,12],"domain":{"title":"Private calendar source"}}}' WHERE id=125`,[scopeType,scopeId]);
+    try {
+      const refused=await listReportRunHistory(7,{runId:125,accessibleProjectIds:[12],limit:1},client);
+      expect(refused.data).toEqual([]); expect(refused.meta.total).toBe(0);
+      expect(JSON.stringify(refused)).not.toContain('Private calendar source');
+      expect((await listReportRunHistory(7,{runId:125,accessibleProjectIds:[11,12]},client)).data[0]?.id).toBe(125);
+      await database.exec(`UPDATE report_runs SET dependency_summary='{"summary":{"accessProjectIds":[12]}}' WHERE id=125`);
+      expect((await listReportRunHistory(7,{runId:125,accessibleProjectIds:[12]},client)).meta.total).toBe(1);
+    } finally { await database.exec(`UPDATE report_runs SET scope_type='project',scope_id='11',dependency_summary='{}' WHERE id=125`); }
+  }
+});

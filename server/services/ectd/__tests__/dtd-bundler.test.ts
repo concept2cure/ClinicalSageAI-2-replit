@@ -20,6 +20,7 @@ import {
 } from '../dtd-bundler';
 import { classifyRegionalBackbone } from '../regional-backbone-readiness';
 import type { Region } from '../../submission-gateways/types';
+import { syntheticDtdStatus } from './_dtd-validation-fixture';
 
 describe('requiredDtdsForRegion', () => {
   it('always includes the ICH backbone plus the regional DTD', () => {
@@ -120,7 +121,7 @@ describe('assessDtdReadiness', () => {
     expect(r.blockers[0]).toContain('eu-regional.dtd');
   });
 
-  it('matches DTD names case-insensitively', () => {
+  it('does not claim exact package SYSTEM paths resolve to uppercase filenames', () => {
     const r = assessDtdReadiness({
       region: 'fda',
       present: ['ICH-ECTD-3-2.DTD', 'US-REGIONAL-V3-3.DTD'],
@@ -128,7 +129,8 @@ describe('assessDtdReadiness', () => {
       environment: 'production',
       requireDtd: true,
     });
-    expect(r.selfContained).toBe(true);
+    expect(r.selfContained).toBe(false);
+    expect(r.missing).toEqual([ICH_BACKBONE_DTD, 'us-regional-v3-3.dtd']);
   });
 });
 
@@ -181,7 +183,7 @@ describe('stylesheet self-containment — the second hole the DTD gate did not c
     expect(r.blockers[0]).toContain('ectd-2-0.xsl');
   });
 
-  it('clears once the stylesheets are present too, matching names case-insensitively', () => {
+  it('requires the exact stylesheet case used by package processing instructions', () => {
     const r = assessDtdReadiness({
       region: 'fda',
       present: [ICH_BACKBONE_DTD, 'us-regional-v3-3.dtd'],
@@ -189,9 +191,9 @@ describe('stylesheet self-containment — the second hole the DTD gate did not c
       environment: 'production',
       requireDtd: true,
     });
-    expect(r.missingStylesheets).toEqual([]);
-    expect(r.selfContained).toBe(true);
-    expect(r.cleared).toBe(true);
+    expect(r.missingStylesheets).toEqual([ICH_BACKBONE_STYLESHEET]);
+    expect(r.selfContained).toBe(false);
+    expect(r.cleared).toBe(false);
   });
 
   it('report-only when not required: names the missing stylesheets but does not block', () => {
@@ -243,7 +245,8 @@ describe('a fully vendored drop-point clears the DTD gate WITHOUT making a regio
        now, and with a clean build report only FDA is. */
     const byRegionAlone = ALL.filter((r) => classifyRegionalBackbone(r as Region, `m1/x/${r}-regional.xml`).regionConformant);
     expect(byRegionAlone).toEqual([]);
-    const withCleanReport = ALL.filter((r) => classifyRegionalBackbone(r as Region, `m1/x/${r}-regional.xml`, []).regionConformant);
+    const withCleanReport = ALL.filter((r) => classifyRegionalBackbone(r as Region,
+      r === 'fda' ? 'm1/us/us-regional.xml' : `m1/x/${r}-regional.xml`, [], syntheticDtdStatus().validation).regionConformant);
     expect(withCleanReport).toEqual(['fda']);
   });
 });

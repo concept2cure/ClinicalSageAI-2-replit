@@ -1,0 +1,340 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-14T19:55:17.124Z","pid":23966,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T19:55:17.131Z","pid":23966,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T19:55:17.131Z","pid":23966,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/domain-sign-ceremony.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T19:55:17.624Z', poolSize: 1 }
+
+stdout | tests/db/domain-sign-ceremony.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/domain-sign-ceremony.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction
+[CMC Batch] Release testing for batch 8f966dab-17a7-43b4-a8bb-b3c56fde4326: released
+
+stdout | tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction
+[database] Database connection successful { timestamp: '2026-10-14T19:55:22.532Z', poolSize: 2 }
+
+stdout | tests/db/domain-sign-ceremony.dbtest.ts > CMC batch release: a rejected batch is not signed as released > signs a rejection with meaning 'responsibility', on the ledger and the signature row
+[CMC Batch] Release testing for batch 2486663b-ef26-4b28-8aeb-710b63357c53: rejected
+
+stdout | tests/db/domain-sign-ceremony.dbtest.ts > a specification is created unsigned > stores 'review' as asked, and names the creator on the audit row
+[CMC Specs] Created specification c06316bc-32d9-4548-8a0c-3446824ef351 for dbdsc 792007714 created-review
+
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts (53 tests) 8250ms
+{"level":30,"time":"2026-10-14T19:55:23.712Z","pid":24236,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T19:55:23.715Z","pid":24236,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T19:55:23.715Z","pid":24236,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/protocol-request-connection.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T19:55:23.984Z', poolSize: 1 }
+
+stdout | tests/db/protocol-request-connection.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/protocol-request-connection.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+(node:24236) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/db/protocol-request-connection.dbtest.ts > native protocol consumers on the request connection > retains foreign tenant/record refusal and cannot create under a foreign program
+[database] Database connection successful { timestamp: '2026-10-14T19:55:24.489Z', poolSize: 2 }
+
+{"level":50,"time":"2026-10-14T19:55:24.692Z","pid":24236,"hostname":"a5f657cec57d","context":{"error":"Failed login could not be recorded: no account row for user 55","stack":"Error: Failed login could not be recorded: no account row for user 55\n    at recordFailedLogin (/workspace/ClinicalSageAI-2-replit/server/services/auth-security-service.ts:251:13)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at Object.recordFailedAttempt (/workspace/ClinicalSageAI-2-replit/server/services/part11/reverify-signer-deps.ts:57:44)\n    at /workspace/ClinicalSageAI-2-replit/tests/db/protocol-request-connection.dbtest.ts:167:7\n    at scoped (/workspace/ClinicalSageAI-2-replit/tests/db/protocol-request-connection.dbtest.ts:45:93)\n    at /workspace/ClinicalSageAI-2-replit/tests/db/protocol-request-connection.dbtest.ts:160:5\n    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"},"msg":"[auth-security] Failed to record failed login"}
+ ✓ tests/db/protocol-request-connection.dbtest.ts (8 tests) 1760ms
+{"level":30,"time":"2026-10-14T19:55:25.637Z","pid":24293,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T19:55:25.638Z","pid":24293,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T19:55:25.638Z","pid":24293,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/csr-vault-source-input.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T19:55:25.682Z', poolSize: 1 }
+
+stdout | tests/db/csr-vault-source-input.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/csr-vault-source-input.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/csr-vault-source-input.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > freezes the actual selected observations and receipt through the shipped run endpoint
+[database] Database connection successful { timestamp: '2026-10-14T19:55:28.934Z', poolSize: 2 }
+
+stdout | tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > freezes the actual selected observations and receipt through the shipped run endpoint
+[database] Database connection successful { timestamp: '2026-10-14T19:55:28.938Z', poolSize: 3 }
+
+stdout | tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > freezes the actual selected observations and receipt through the shipped run endpoint
+[database] Database connection successful { timestamp: '2026-10-14T19:55:28.940Z', poolSize: 4 }
+
+stdout | tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > freezes the actual selected observations and receipt through the shipped run endpoint
+[database] Database connection successful { timestamp: '2026-10-14T19:55:28.941Z', poolSize: 5 }
+
+stdout | tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > freezes the actual selected observations and receipt through the shipped run endpoint
+[database] Database connection successful { timestamp: '2026-10-14T19:55:28.941Z', poolSize: 6 }
+
+stdout | tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > freezes the actual selected observations and receipt through the shipped run endpoint
+[database] Database connection successful { timestamp: '2026-10-14T19:55:28.944Z', poolSize: 7 }
+
+stderr | tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > freezes the actual selected observations and receipt through the shipped run endpoint
+[governed-evaluator] RIM emitter not registered — learning loop inactive
+
+{"level":30,"time":"2026-10-14T19:55:28.983Z","pid":24293,"hostname":"a5f657cec57d","context":{"code":"governed-fabric:662b6d67-527a-478b-a95f-03e45a38713e","project":0},"msg":"[decision-record] Creating decision record"}
+stderr | tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > freezes the actual selected observations and receipt through the shipped run endpoint
+{
+  "timestamp": "2026-10-14T19:55:29.089Z",
+  "level": "warn",
+  "message": "[ectd-validator-hardening] SEQ_SUBMISSIONS_UNSCOPABLE — ectd_submissions has no organization_id; excluded from history rather than read across tenants",
+  "context": {
+    "applicationNumber": "IND-SYNTHETIC",
+    "attemptedSequence": "0000"
+  }
+}
+
+stderr | tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > freezes the actual selected observations and receipt through the shipped run endpoint
+[Orchestrator] run failed: Error: package not gateway-ready: 18 structural error(s), 2 regional error(s), 0 sequence error(s); hardenedScore=0
+    at /workspace/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:1979:17
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at runStep (/workspace/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:1404:22)
+    at runOrchestrator (/workspace/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:1932:7)
+    at withCsrVaultSource (/workspace/ClinicalSageAI-2-replit/server/services/csr/vault-source-input.ts:121:20)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/submission-orchestrator.ts:290:9
+
+{"level":40,"time":"2026-10-14T19:55:29.153Z","pid":24293,"hostname":"a5f657cec57d","context":{"action":"orchestrator_csr_source_previewed","resourceType":"vault.documents","resourceId":"4a4e558a-046b-48b4-8897-e21030f2bdfd","code":"42501"},"msg":"[audit-write-outcome] Request-scoped post-commit audit unavailable"}
+{"level":30,"time":"2026-10-14T19:55:29.354Z","pid":24293,"hostname":"a5f657cec57d","context":{"code":"governed-fabric:4a8556fc-a61a-4a44-bcfa-3e7afd437f7f","project":0},"msg":"[decision-record] Creating decision record"}
+ ✓ tests/db/csr-vault-source-input.dbtest.ts (7 tests) 3945ms
+     ✓ uses actual auth tenant binding and verified original bytes for aggregate preview  376ms
+{"level":30,"time":"2026-10-14T19:55:30.616Z","pid":24458,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T19:55:30.617Z","pid":24458,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T19:55:30.617Z","pid":24458,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/mdx-qms-request-rls.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/mdx-qms-request-rls.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T19:55:30.730Z', poolSize: 1 }
+
+stdout | tests/db/mdx-qms-request-rls.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T19:55:30.734Z', poolSize: 2 }
+
+stdout | tests/db/mdx-qms-request-rls.dbtest.ts
+[database] Database connection successful
+
+{"level":30,"time":"2026-10-14T19:55:31.702Z","pid":24458,"hostname":"a5f657cec57d","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 3772ec01-45aa-4674-a9b4-ec0dc07030a9 by unknown"}
+{"level":30,"time":"2026-10-14T19:55:31.711Z","pid":24458,"hostname":"a5f657cec57d","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 3772ec01-45aa-4674-a9b4-ec0dc07030a9 by unknown"}
+{"level":30,"time":"2026-10-14T19:55:31.715Z","pid":24458,"hostname":"a5f657cec57d","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 3772ec01-45aa-4674-a9b4-ec0dc07030a9 by unknown"}
+{"level":30,"time":"2026-10-14T19:55:31.719Z","pid":24458,"hostname":"a5f657cec57d","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 3772ec01-45aa-4674-a9b4-ec0dc07030a9 by unknown"}
+{"level":30,"time":"2026-10-14T19:55:31.724Z","pid":24458,"hostname":"a5f657cec57d","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 3772ec01-45aa-4674-a9b4-ec0dc07030a9 by unknown"}
+{"level":30,"time":"2026-10-14T19:55:31.731Z","pid":24458,"hostname":"a5f657cec57d","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 3772ec01-45aa-4674-a9b4-ec0dc07030a9 by unknown"}
+{"level":30,"time":"2026-10-14T19:55:31.736Z","pid":24458,"hostname":"a5f657cec57d","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 3772ec01-45aa-4674-a9b4-ec0dc07030a9 by unknown"}
+{"level":30,"time":"2026-10-14T19:55:31.740Z","pid":24458,"hostname":"a5f657cec57d","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 3772ec01-45aa-4674-a9b4-ec0dc07030a9 by unknown"}
+{"level":30,"time":"2026-10-14T19:55:31.745Z","pid":24458,"hostname":"a5f657cec57d","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 3772ec01-45aa-4674-a9b4-ec0dc07030a9 by unknown"}
+(node:24458) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":40,"time":"2026-10-14T19:55:31.966Z","pid":24458,"hostname":"a5f657cec57d","context":{"action":"mdx.qms.training.acknowledge","resourceType":"qms_document","resourceId":8,"code":"42501"},"msg":"[audit-write-outcome] Request-scoped post-commit audit unavailable"}
+{"level":50,"time":"2026-10-14T19:55:32.084Z","pid":24458,"hostname":"a5f657cec57d","context":{"err":"Request-scoped database context is required","correlationId":null,"code":"REQUEST_DB_CONTEXT_REQUIRED"},"msg":"[mdx-qms] doc-editor failed"}
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts (9 tests) 2112ms
+{"level":30,"time":"2026-10-14T19:55:32.863Z","pid":24767,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T19:55:32.864Z","pid":24767,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T19:55:32.864Z","pid":24767,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/task-filing-home.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/task-filing-home.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T19:55:33.150Z', poolSize: 1 }
+
+stdout | tests/db/task-filing-home.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T19:55:33.152Z', poolSize: 2 }
+
+stdout | tests/db/task-filing-home.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > refuses malformed identifiers, foreign/missing filings and invalid recorded project ownership
+{
+  "timestamp": "2026-10-14T19:55:33.515Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_ID_INVALID",
+    "status": 400
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > refuses malformed identifiers, foreign/missing filings and invalid recorded project ownership
+{
+  "timestamp": "2026-10-14T19:55:33.536Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_ID_INVALID",
+    "status": 400
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > refuses malformed identifiers, foreign/missing filings and invalid recorded project ownership
+{
+  "timestamp": "2026-10-14T19:55:33.559Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_NOT_FOUND",
+    "status": 404
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > refuses malformed identifiers, foreign/missing filings and invalid recorded project ownership
+{
+  "timestamp": "2026-10-14T19:55:33.582Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_NOT_FOUND",
+    "status": 404
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > refuses malformed identifiers, foreign/missing filings and invalid recorded project ownership
+{
+  "timestamp": "2026-10-14T19:55:33.607Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_NOT_FOUND",
+    "status": 404
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > refuses malformed identifiers, foreign/missing filings and invalid recorded project ownership
+{
+  "timestamp": "2026-10-14T19:55:33.629Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_NOT_FOUND",
+    "status": 404
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > honors actual private-project grant, revocation and read recovery for a regular organization member
+{
+  "timestamp": "2026-10-14T19:55:33.656Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_ACCESS_DENIED",
+    "status": 403
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > honors actual private-project grant, revocation and read recovery for a regular organization member
+{
+  "timestamp": "2026-10-14T19:55:33.700Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_ACCESS_DENIED",
+    "status": 403
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > rechecks persisted organization membership after genuine authentication and recovers after restoration
+{
+  "timestamp": "2026-10-14T19:55:33.743Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_ACCESS_DENIED",
+    "status": 403
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > native filing access failure and recovery > rechecks active account status after genuine authentication and recovers after restoration
+{
+  "timestamp": "2026-10-14T19:55:34.012Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_ACCESS_DENIED",
+    "status": 403
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > native filing access failure and recovery > reports a failed pinned filing query as unavailable and recovers to the same exact record
+{
+  "timestamp": "2026-10-14T19:55:34.066Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_READ_UNAVAILABLE",
+    "status": 503
+  }
+}
+
+ ✓ tests/db/task-filing-home.dbtest.ts (10 tests) 1169ms
+{"level":30,"time":"2026-10-14T19:55:34.873Z","pid":26367,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T19:55:34.874Z","pid":26367,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T19:55:34.874Z","pid":26367,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/ai-feedback-persistence.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T19:55:34.979Z', poolSize: 1 }
+
+stdout | tests/db/ai-feedback-persistence.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/ai-feedback-persistence.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":20,"time":"2026-10-14T19:55:35.925Z","pid":26367,"hostname":"a5f657cec57d","context":{"auditId":"audit_1792007735921_f29dae2d97432ebe","action":"FEEDBACK","entityType":"ai_response","entityId":"synthetic-native-feedback-2ad61c1d-44a1-48f2-9b71-953206cdde67-true-opaque'; DROP TABLE ai_feedback; --"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-14T19:55:35.957Z","pid":26367,"hostname":"a5f657cec57d","context":{"auditId":"audit_1792007735954_7413a6080947b8b2","action":"FEEDBACK","entityType":"ai_response","entityId":"synthetic-native-feedback-2ad61c1d-44a1-48f2-9b71-953206cdde67-false-opaque'; DROP TABLE ai_feedback; --"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-14T19:55:36.200Z","pid":26367,"hostname":"a5f657cec57d","context":{"auditId":"audit_1792007736197_31f8c17906627d17","action":"FEEDBACK","entityType":"ai_response","entityId":"synthetic-native-feedback-2ad61c1d-44a1-48f2-9b71-953206cdde67-foreign"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":40,"time":"2026-10-14T19:55:36.254Z","pid":26367,"hostname":"a5f657cec57d","context":{"code":"42501","outcome":"refused"},"msg":"[concept2cure-context-intelligence] Feedback persistence could not be confirmed"}
+{"level":20,"time":"2026-10-14T19:55:36.289Z","pid":26367,"hostname":"a5f657cec57d","context":{"auditId":"audit_1792007736278_c2de50fce5485fd7","action":"FEEDBACK","entityType":"ai_response","entityId":"synthetic-native-feedback-2ad61c1d-44a1-48f2-9b71-953206cdde67-business-refusal"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":40,"time":"2026-10-14T19:55:36.309Z","pid":26367,"hostname":"a5f657cec57d","context":{"code":"ECONNRESET","outcome":"unconfirmed"},"msg":"[concept2cure-context-intelligence] Feedback persistence could not be confirmed"}
+{"level":20,"time":"2026-10-14T19:55:36.336Z","pid":26367,"hostname":"a5f657cec57d","context":{"auditId":"audit_1792007736334_e505a4571e966c76","action":"FEEDBACK","entityType":"ai_response","entityId":"synthetic-native-feedback-2ad61c1d-44a1-48f2-9b71-953206cdde67-after-completion-loss"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":50,"time":"2026-10-14T19:55:36.360Z","pid":26367,"hostname":"a5f657cec57d","context":{"error":"Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1792007736354_dfa61c4c2ad51e3c,94910,ai_response,synthetic-native-feedback-2ad61c1d-44a1-48f2-9b71-953206cdde67-audit-refusal,FEEDBACK,system,,{\"positive\":true},93,unknown,member,::ffff:127.0.0.xxx,,,true,{\"integrityHash\":\"3156583dd201852c3f62dad6fc26fcb83916173a1dbfd294091db09ac6ac1ae6\"}","action":"FEEDBACK","entityType":"ai_response","entityId":"synthetic-native-feedback-2ad61c1d-44a1-48f2-9b71-953206cdde67-audit-refusal"},"msg":"[concept2cure-api] Failed to persist audit entry"}
+{"level":20,"time":"2026-10-14T19:55:36.380Z","pid":26367,"hostname":"a5f657cec57d","context":{"auditId":"audit_1792007736378_175738adbe83d423","action":"FEEDBACK","entityType":"ai_response","entityId":"synthetic-native-feedback-2ad61c1d-44a1-48f2-9b71-953206cdde67-audit-recovery"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/ai-feedback-persistence.dbtest.ts (7 tests) 1601ms
+{"level":30,"time":"2026-10-14T19:55:37.236Z","pid":28084,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T19:55:37.237Z","pid":28084,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T19:55:37.237Z","pid":28084,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/bla-ivd-request-connection.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T19:55:37.372Z', poolSize: 1 }
+
+stdout | tests/db/bla-ivd-request-connection.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/bla-ivd-request-connection.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/bla-ivd-request-connection.dbtest.ts > native BLA and IVD saved work survives refresh without a privileged reader > saves and refreshes BLA, IVD assessments and generated draft documents through actual authenticated HTTP
+[database] Database connection successful { timestamp: '2026-10-14T19:55:38.667Z', poolSize: 2 }
+
+stdout | tests/db/bla-ivd-request-connection.dbtest.ts > native BLA and IVD saved work survives refresh without a privileged reader > saves and refreshes BLA, IVD assessments and generated draft documents through actual authenticated HTTP
+[database] Database connection successful { timestamp: '2026-10-14T19:55:38.667Z', poolSize: 3 }
+
+ ✓ tests/db/bla-ivd-request-connection.dbtest.ts (5 tests) 2375ms
+     ✓ saves and refreshes BLA, IVD assessments and generated draft documents through actual authenticated HTTP  395ms
+{"level":40,"time":"2026-10-14T19:55:41.435Z","pid":28627,"hostname":"a5f657cec57d","context":{"op":"pool.query","caller":"server/routes/__tests__/notification-request-binding.dbtest.ts:128:76","queryPreview":"SELECT n.*, COALESCE(receipt.read_at, CASE WHEN n.recipient_user_id IS NOT NULL THEN n.read_at END) AS read_at, receipt.archived_at AS archived_at FROM mdx_n...","enforcement":"on"},"msg":"[tenant-rls-observability] Database operation blocked because tenant scope is missing"}
+{"level":50,"time":"2026-10-14T19:55:41.607Z","pid":28627,"hostname":"a5f657cec57d","context":{"err":"Request-scoped database context is required","correlationId":null,"code":"REQUEST_DB_CONTEXT_REQUIRED"},"msg":"[mdx-notifications] list failed"}
+{"level":50,"time":"2026-10-14T19:55:41.609Z","pid":28627,"hostname":"a5f657cec57d","context":{"err":"Request-scoped database context is required","correlationId":null,"code":"REQUEST_DB_CONTEXT_REQUIRED"},"msg":"[mdx-notifications] sub-list failed"}
+ ✓ server/routes/__tests__/notification-request-binding.dbtest.ts (19 tests) 1009ms
+{"level":30,"time":"2026-10-14T19:55:42.887Z","pid":28751,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T19:55:42.888Z","pid":28751,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T19:55:42.888Z","pid":28751,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/report-label-matrix.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T19:55:43.085Z', poolSize: 1 }
+
+stdout | tests/db/report-label-matrix.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/report-label-matrix.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/report-label-matrix.dbtest.ts (5 tests) 647ms
+
+ Test Files  9 passed (9)
+      Tests  123 passed (123)
+   Start at  19:55:13
+   Duration  31.25s (transform 9.05s, setup 265ms, import 6.29s, tests 22.87s, environment 1ms)
+
+JSON report written to /workspace/audit/continuation-integrated-native-db-final.json

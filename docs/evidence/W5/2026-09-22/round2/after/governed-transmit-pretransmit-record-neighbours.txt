@@ -677,4 +677,3 @@ stderr | server/services/submission-gateways/__tests__/governed-transmit-signatu
       Tests  262 passed (262)
    Start at  05:03:48
    Duration  7.65s (transform 4.82s, setup 396ms, import 13.65s, tests 5.32s, environment 1ms)
-

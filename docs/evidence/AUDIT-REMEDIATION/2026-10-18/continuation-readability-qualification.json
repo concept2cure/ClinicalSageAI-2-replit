@@ -1,0 +1,172 @@
+{
+  "scope": "Four final helpers remove new lint complexity warnings without increasing baselines. Counts overlap earlier source qualification; do not add them.",
+  "reporting": {
+    "artifact": "oct18-report-warning-remedy.acceptance.json",
+    "sha256": "374d92101dce2486445dc4dc84609a9d5198ac3fb27fb0fce4af482f8904c7f4",
+    "receipt": {
+      "status": "frozen; all three new complexity warnings removed",
+      "headAtVerification": "b4d8bf35b084e05f0c815bca75c927cbea72ad3d",
+      "scope": "Only three authorized helper extractions, no policy/SQL/executor/recheck changes",
+      "sources": [
+        {
+          "path": "server/services/report-os/project-access.ts",
+          "sha256": "16c714e4ef719747ca6566c0101bb15d8029aebcb7db7e9248df1c847e1d0d36"
+        },
+        {
+          "path": "server/services/report-os/scheduling/generate-deliver.ts",
+          "sha256": "e01781bdd13e229d1f890b2801ebd5d61b54611c90170911ffd0d3005d96c074"
+        },
+        {
+          "path": "server/services/research-compliance/compliance-briefing.ts",
+          "sha256": "5ec3b333ff04bf02e0eb1626e7f29c91e402350001af1080a6bcb590385a908e"
+        }
+      ],
+      "qualification": {
+        "primary": {
+          "passed": 194,
+          "failed": 0,
+          "files": 13,
+          "receipt": "/workspace/audit/oct18-report-warning-remedy.json"
+        },
+        "finalScheduledMethodSpelling": {
+          "passed": 26,
+          "failed": 0,
+          "files": 3,
+          "receipt": "/workspace/audit/oct18-report-warning-remedy.scheduling-final.json",
+          "reason": "Object method renamed from require to check to avoid a CommonJS text-guard false positive; no behavior change."
+        },
+        "latestDistinct": {
+          "files": 13,
+          "passed": 194,
+          "failed": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "files": 3,
+          "errors": 0,
+          "warnings": 0,
+          "receipt": "/workspace/audit/oct18-report-warning-remedy.lint-final.json"
+        },
+        "unchangedCommonjsGuard": {
+          "passed": true,
+          "receipt": "/workspace/audit/oct18-report-warning-remedy.commonjs.log"
+        },
+        "independentSemanticReview": "/root/oct17_domain/report_review: no findings; actual SQL, source order, actor/q, schedule rechecks and briefing strict/aggregateOnly behavior preserved."
+      },
+      "files": [
+        {
+          "path": "server/routes/__tests__/report-os-audit-recording.test.ts",
+          "passed": 21,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "path": "server/routes/__tests__/report-os-report-pack-export.test.ts",
+          "passed": 29,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "path": "server/routes/__tests__/report-os-run-engine.test.ts",
+          "passed": 29,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "path": "server/routes/__tests__/report-os-saved-read-access.test.ts",
+          "passed": 25,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "path": "server/services/report-os/__tests__/domain-provenance.test.ts",
+          "passed": 4,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "path": "server/services/report-os/__tests__/lifecycle-calendar.pglite.test.ts",
+          "passed": 8,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "path": "server/services/report-os/__tests__/project-access-integration.test.ts",
+          "passed": 13,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "path": "server/services/report-os/__tests__/run-history.test.ts",
+          "passed": 12,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "path": "server/services/report-os/__tests__/scope-ownership.test.ts",
+          "passed": 14,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "path": "server/services/report-os/scheduling/__tests__/configuration.test.ts",
+          "passed": 13,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "path": "server/services/report-os/scheduling/__tests__/generate-deliver.pglite.test.ts",
+          "passed": 3,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "path": "server/services/report-os/scheduling/__tests__/generate-deliver.test.ts",
+          "passed": 9,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "path": "server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts",
+          "passed": 14,
+          "failed": 0,
+          "skipped": 0
+        }
+      ],
+      "boundaries": [
+        "Scope dispatch remains after current saved source admission on same evaluated project set and executor.",
+        "Schedule source options preserve actual creator and explicit calendar-only worker executor.",
+        "Schedule admission requirement reevaluates at each use; creator/write role and every recipient are checked before persistence and on enlisted persistence client before cursor/notification writes.",
+        "Cross-domain briefing retains exact internal aggregateOnly lifecycle provider call inside existing strict/onReport/error handling."
+      ],
+      "previousReportingReceipt": {
+        "path": "/workspace/audit/oct18-postmerge-reporting.acceptance.json",
+        "status": "289/28 receipt remains historical for pre-extraction source; this scoped verification supersedes it for the three source files."
+      },
+      "notPerformed": [
+        "Source suppression or baseline raising",
+        "Git staging/commit/push",
+        "Whole-project TypeScript",
+        "New tests or feature activation"
+      ]
+    }
+  },
+  "orchestrator": {
+    "source": "server/services/submission-package-orchestrator.ts",
+    "sha256": "55e277eb587a6e5e6b9a2870487719a0b71be52cf5714680b8447c2796795125",
+    "tests": {
+      "file": "oct18-orchestrator-readability-regression.json",
+      "sha256": "ed0727e99d730339f10985b3e03c2f834f729582b858069a333866042807532f",
+      "passed": 43,
+      "failed": 0,
+      "files": 3
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 9,
+      "newWarnings": 0
+    },
+    "behavior": "Canonical timestamp normalization and unreadable-record refusal extracted unchanged; getRun retains its error contract."
+  },
+  "historicalEvidence": "Original reporting acceptance restored byte-for-byte from the portable copy; the separate supersession note is retained outside the repository."
+}

@@ -49,4 +49,3 @@
    × client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > an HTML page on a 200 is a failed read, not an organisation with no design 5304ms
    Test Files  1 failed | 1 passed (2)
    Tests  6 failed | 9 passed | 18 skipped (33)
-

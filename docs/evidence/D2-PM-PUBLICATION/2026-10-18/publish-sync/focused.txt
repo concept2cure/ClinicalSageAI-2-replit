@@ -1,0 +1,361 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > a lookup that could not complete is a 500, never "no project record"
+{
+  "timestamp": "2026-10-18T00:33:02.555Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] loading schedule of events failed",
+  "context": {
+    "err": "connection terminated",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > resolves the numeric ident 12 org-scoped 37ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > resolves the numeric ident proj_12 org-scoped 5ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > never truncates a regulatory_programs UUID to its leading digits 5ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > 400s any digit-prefixed junk ident before a single query is issued 4ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > 404s a project outside the caller org without revealing it exists 5ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > reads the schedule of the project the program is anchored to 7ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > reads the unified work of the anchored project 4ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > answers an unanchored program with a named 404 and reads nothing 3ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > never generates a schedule for an unanchored program 17ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > a lookup that could not complete is a 500, never "no project record" 6ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > forwards the trimmed caller reason after the existing organization gate 4ms
+stderr | server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > keeps unexpected generation failures internal (conflict-shaped code: false)
+{
+  "timestamp": "2026-10-18T00:33:02.583Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] generating schedule of events failed",
+  "context": {
+    "err": "Unexpected storage failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > keeps unexpected generation failures internal (conflict-shaped code: true)
+{
+  "timestamp": "2026-10-18T00:33:02.594Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] generating schedule of events failed",
+  "context": {
+    "err": "Unexpected storage failure",
+    "correlationId": null,
+    "code": "SCHEDULE_REVIEW_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > refuses missing organization context before invoking generation
+{
+  "timestamp": "2026-10-18T00:33:02.597Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] generating schedule of events failed",
+  "context": {
+    "err": "Organization context required",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > does not invent a reason from undefined 4ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > does not invent a reason from "" 4ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > does not invent a reason from "   " 4ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > does not invent a reason from 42 5ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > returns the actionable preservation conflict as 409 4ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > keeps unexpected generation failures internal (conflict-shaped code: false) 8ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > keeps unexpected generation failures internal (conflict-shaped code: true) 6ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > refuses missing organization context before invoking generation 3ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > refuses a project outside the organization before invoking generation 3ms
+stdout | server/services/ana/__tests__/schedule-generation-reason.test.ts
+{
+  "timestamp": "2026-10-18T00:33:05.928Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:33:05.931Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/schedule-generation-reason.test.ts
+{
+  "timestamp": "2026-10-18T00:33:05.932Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/schedule-generation-reason.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/schedule-generation-reason.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/schedule-generation-reason.test.ts
+{
+  "timestamp": "2026-10-18T00:33:06.731Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > offers an optional string reason in the actual tool definition 6ms
+ ✓ server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > passes the stated reason trimmed and keeps trusted project context 17ms
+ ✓ server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > does not synthesize a reason from undefined 1ms
+ ✓ server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > does not synthesize a reason from null 1ms
+ ✓ server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > does not synthesize a reason from "" 1ms
+ ✓ server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > does not synthesize a reason from "   " 1ms
+ ✓ server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > does not synthesize a reason from 42 0ms
+ ✓ server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > does not synthesize a reason from {"approved":true} 0ms
+ ✓ server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > retains the useful no-change message from a preservation conflict 3ms
+ ✓ server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > a supplied reason does not replace the existing human confirmation gate 3ms
+ ✓ server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > a supplied reason does not replace the current editor role 1ms
+ ✓ server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > does not generate when no project is open 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/schedule-of-events.test.ts > schedule templates > resolves known submission types 2ms
+ ✓ server/services/projects/schedule-of-events/__tests__/schedule-of-events.test.ts > schedule templates > falls back to a generic template for unknown types 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/schedule-of-events.test.ts > schedule templates > resolves Japan and Canada filings (regions that already have eCTD backbones) 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/schedule-of-events.test.ts > schedule templates > resolves the FDA device request types 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/schedule-of-events.test.ts > schedule templates > grounds the new templates in their real regulatory frameworks 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/schedule-of-events.test.ts > schedule templates > keeps every dependsOn pointing at a real milestone key in the same template 3ms
+ ✓ server/services/projects/schedule-of-events/__tests__/schedule-of-events.test.ts > schedule templates > ends each new template with its submission/decision milestone 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/schedule-of-events.test.ts > schedule templates > exposes the supported type list 3ms
+ ✓ server/services/projects/schedule-of-events/__tests__/schedule-of-events.test.ts > generateSchedule > anchors milestones at the baseline and grounds them in the framework 2ms
+ ✓ server/services/projects/schedule-of-events/__tests__/schedule-of-events.test.ts > generateSchedule > compresses the timeline to hit an aggressive target and lowers confidence 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/schedule-of-events.test.ts > generateSchedule > uses the earliest goal target as a pull-forward constraint 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/schedule-of-events.test.ts > assessScheduleHealth > flags an overdue, incomplete milestone as slipped 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/schedule-of-events.test.ts > assessScheduleHealth > flags a soon-due, not-started milestone as at risk 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/schedule-of-events.test.ts > assessScheduleHealth > treats a comfortably-future milestone as on track 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/schedule-of-events.test.ts > assessScheduleHealth > does not disturb completed milestones and reports overall on_track 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/schedule-of-events.test.ts > assessScheduleHealth > escalates overall to off_track when a critical milestone slips 0ms
+stdout | server/services/ana/__tests__/tool-authorization.test.ts
+{
+  "timestamp": "2026-10-18T00:33:18.609Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:33:18.610Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/tool-authorization.test.ts
+{
+  "timestamp": "2026-10-18T00:33:18.611Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/tool-authorization.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/tool-authorization.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/tool-authorization.test.ts
+{
+  "timestamp": "2026-10-18T00:33:18.743Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > every registered tool has a class 2ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > every entry names a registered tool 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > is the whole surface, not a sample of it 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > every conditional entry has its rule, and every rule an entry 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > every refusal says where the person does it 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > only the command carrier defers to the command partition 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > cast_committee_vote is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > ack_training is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > approve_qms_document is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > retire_qms_document is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > revise_qms_document is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > transmit_submission is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > raise_monitoring_signal is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > predict_change_impact is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > catalog_project_document is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > check_consistency is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > assess_site_risk is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > set_protocol_budget_params is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > save_document_to_vault is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > seed_tmf is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > list_vault_documents is read 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > global_ri_exclusivity is read 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > set_specifications is read 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > answer_intelligence_question is self 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > a tool the register does not know is proposed, not run 2ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > qms_change_transition {"to":"under_assessment"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > qms_change_transition {"to":"approved"} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > qms_change_transition {"to":" Closed "} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > create_clinical_study {"title":"P1"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > create_clinical_study {"title":"P1","irb_approved":true} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > update_tmf_artifact_status {"status":"received"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > update_tmf_artifact_status {"status":"final"} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > set_registration_status {"market_status":"submitted"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > set_registration_status {"market_status":"approved"} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > log_cs_transaction {"quantity":2} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > log_cs_transaction {"quantity":2,"witnessed_by":"R. Ortiz"} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > report_protocol_deviation {"severity":"major"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > report_protocol_deviation {"severity":"major","affects_safety":false} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > review_schedule_of_events_health {"apply":false} is read 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > review_schedule_of_events_health {} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > run_rbm_assessment {} is read 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > run_rbm_assessment {"seed":true} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > commit_intelligence_flow {"dry_run":true} is read 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > commit_intelligence_flow {} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > convert_docx_to_pdf {"input_docx_path":"tmp/docbuilder/a/x.docx"} is self 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > convert_docx_to_pdf {"input_docx_path":"tmp/docbuilder/a/x.docx","output_pdf_path":"uploads/7/x.pdf"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > convert_docx_to_pdf {"input_docx_path":"uploads/7/x.docx"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > generate_document {"output_format":"docx"} is self 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > generate_document {"output_format":"xml"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > place_project_document {"document_id":3} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > place_project_document {"document_id":3,"confirm_suggested":true} is refuse 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > matches canonical requirements while dates and generated rationale change, without mutating input 6ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > refuses an invalid proposed key () 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > refuses an invalid proposed key ( kickoff) 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > refuses an invalid proposed key (null) 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > refuses an invalid proposed key (undefined) 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > refuses duplicate proposal keys even on first creation 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > refuses unidentifiable existing metadata (null) 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > refuses unidentifiable existing metadata ('invalid json') 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > refuses unidentifiable existing metadata ('[]') 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > refuses unidentifiable existing metadata ([]) 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > accepts JSON-string metadata and compares dependency sets regardless of order or repetition 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > refuses malformed dependency information ('unknown') 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > refuses malformed dependency information ([ null ]) 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > keeps new requirements separate from preserved identities 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > completed actuals classification > respects independent row status 'completed' and metadata status 'not_started' 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > completed actuals classification > respects independent row status 'pending' and metadata status 'completed' 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > completed actuals classification > respects independent row status 'blocked' and metadata status 'in_progress' 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > completed actuals classification > respects independent row status 'pending' and metadata status 'not_started' 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > does not acquire a connection when deterministic generation fails 3ms
+ ✓ server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > propagates connection acquisition failure without a pool write 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > commits after its response reads and releases a healthy connection 2ms
+ ✓ server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > rolls back a response-load failure and preserves the original error 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > evicts the connection if BEGIN cannot be confirmed 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > evicts on rollback failure without masking the write failure 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > rejects and evicts an uncertain COMMIT even if cleanup succeeds 1ms
+stdout | server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts
+{
+  "timestamp": "2026-10-18T00:33:22.951Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:33:22.954Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts
+{
+  "timestamp": "2026-10-18T00:33:22.954Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts
+[database] Database connection successful
+
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'negative' before service or recording 29ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'zero' before service or recording 14ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'fraction' before service or recording 6ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'null' before service or recording 8ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'false' before service or recording 10ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'true' before service or recording 6ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'numeric string' before service or recording 5ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'empty string' before service or recording 4ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'array' before service or recording 7ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'object' before service or recording 5ms
+stderr | server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for undefined
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for undefined
+{
+  "timestamp": "2026-10-18T00:33:23.301Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for undefined 47ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for 1 5ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for 3 3ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for 5 3ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for 99 3ms
+stdout | server/services/ana/__tests__/batch-draft-concurrency.test.ts
+{
+  "timestamp": "2026-10-18T00:33:24.419Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:33:24.420Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/batch-draft-concurrency.test.ts
+{
+  "timestamp": "2026-10-18T00:33:24.420Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/batch-draft-concurrency.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'negative' before reading or scheduling requests 5ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'negative infinity' before reading or scheduling requests 1ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'infinity' before reading or scheduling requests 1ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'NaN' before reading or scheduling requests 1ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'zero' before reading or scheduling requests 18ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'fraction' before reading or scheduling requests 1ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'null' before reading or scheduling requests 0ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'false' before reading or scheduling requests 2ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'true' before reading or scheduling requests 1ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'numeric string' before reading or scheduling requests 1ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'empty string' before reading or scheduling requests 0ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'array' before reading or scheduling requests 1ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'object' before reading or scheduling requests 0ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > bounds active work and keeps order for undefined 109ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > bounds active work and keeps order for 1 310ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > bounds active work and keeps order for 3 105ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > bounds active work and keeps order for 5 52ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > bounds active work and keeps order for 99 51ms
+ ✓ server/services/projects/schedule-of-events/__tests__/schedule-read-fails-closed.test.ts > getScheduleOfEvents > rejects when the schedule tables are missing, rather than answering "no schedule" 3ms
+ ✓ server/services/projects/schedule-of-events/__tests__/schedule-read-fails-closed.test.ts > getScheduleOfEvents > a project with no schedule rows is still an answer 2ms
+ ✓ server/services/projects/schedule-of-events/__tests__/schedule-health-not-assessed.test.ts > assessScheduleHealth — what was not assessed > a schedule with no milestones is not assessed 2ms
+ ✓ server/services/projects/schedule-of-events/__tests__/schedule-health-not-assessed.test.ts > assessScheduleHealth — what was not assessed > undated open milestones are not counted as on track 3ms
+ ✓ server/services/projects/schedule-of-events/__tests__/schedule-health-not-assessed.test.ts > assessScheduleHealth — what was not assessed > says which part is on track when some milestones have no date 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/schedule-health-not-assessed.test.ts > assessScheduleHealth — what was not assessed > a fully dated, on-course schedule is still on track 0ms
+
+ Test Files  10 passed (10)
+      Tests  163 passed (163)
+   Start at  00:33:01
+   Duration  26.71s (transform 11.94s, setup 277ms, import 23.20s, tests 1.09s, environment 1ms)
+

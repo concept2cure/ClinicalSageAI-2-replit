@@ -15,9 +15,10 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { svc, audit } = vi.hoisted(() => ({
+const { svc, audit, pool } = vi.hoisted(() => ({
   svc: { runReviewerSimulation: vi.fn() },
   audit: { logAction: vi.fn().mockResolvedValue({ persisted: true, chained: true, tamperProof: true }) },
+  pool: { query: vi.fn() },
 }));
 
 vi.mock('../../gspr-postmarket/gspr.service', () => ({ upsertMapping: vi.fn() }));
@@ -36,6 +37,7 @@ vi.mock('../../evidence-sufficiency/evidence-sufficiency.service', () => ({ asse
 vi.mock('../../intelligence-engine/reviewer-simulator.service', () => ({
   runReviewerSimulation: (...a: unknown[]) => svc.runReviewerSimulation(...a),
 }));
+vi.mock('../../../db', () => ({ pool }));
 vi.mock('../../auditService', () => ({ default: audit }));
 // The handler proves program ownership through the one program check
 // (server/services/c2c/program-access.ts) since 2026-10-15; these cases
@@ -113,6 +115,7 @@ describe('reviewer_simulation.run: the simulator gets only what it reads', () =>
       program,
       defensePacketId: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2',
     });
+    expect(svc.runReviewerSimulation.mock.calls[0][1]).toEqual({ executor: pool, userId: CTX.userId });
     expect(r.error, 'a refusal was reported as a failed action').toBe('DEFENSE_PACKET_STORE_NOT_AVAILABLE');
     expect(r.message).toBe(refusal.message);
   });

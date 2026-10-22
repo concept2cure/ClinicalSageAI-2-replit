@@ -101,7 +101,7 @@ describe('/api/operating-system with a user', () => {
     async (field) => {
       const res = await request(app(41)).post('/api/operating-system/assumptions').send({ ...ASSUMPTION, [field]: undefined });
       expect(res.status).toBe(400);
-      expect(res.body.error).toMatch(new RegExp(field === 'sourceType' ? 'sourceType' : field));
+      expect(res.body.error).toContain(field);
       expect(writes()).toEqual([]);
     },
   );

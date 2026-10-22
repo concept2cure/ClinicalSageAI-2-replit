@@ -48,4 +48,3 @@ stdout | tests/db/vault-chunk-backfill.dbtest.ts > the chunk backfill runs in th
       Tests  4 passed (4)
    Start at  18:26:45
    Duration  1.74s (transform 742ms, setup 63ms, import 15ms, tests 1.42s, environment 0ms)
-

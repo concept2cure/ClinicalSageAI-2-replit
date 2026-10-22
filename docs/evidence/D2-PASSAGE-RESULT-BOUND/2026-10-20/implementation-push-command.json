@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "git",
+    "push",
+    "origin",
+    "concept2cure-v2"
+  ],
+  "head": "38c7f16061ae51489354986c0a36e1e5d11f67b8",
+  "remoteBefore": "cc94a2724a1f22f53a8941b8080545ae4c6ae9db",
+  "hooksPath": ".husky",
+  "PATH_prefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+  "startedAt": "2026-10-20T23:47:42.698478+00:00",
+  "hookBypass": false
+}

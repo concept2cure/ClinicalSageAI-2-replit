@@ -27,7 +27,8 @@
 
 import { anyLeafSatisfies } from './section-code-match';
 import { requiredSectionProfileFor } from './required-sections';
-import { normalizeCtdCode } from '../../../shared/regulatory/section-code';
+import { requiresStfReference, STF_NOT_REQUIRED_SECTIONS } from '../../../shared/regulatory/ectd-leaf-rules';
+export { requiresStfReference, STF_NOT_REQUIRED_SECTIONS } from '../../../shared/regulatory/ectd-leaf-rules';
 import { canonicalRegionOf } from '../../../shared/regulatory/region-identity';
 
 import crypto from 'crypto';
@@ -126,18 +127,11 @@ export interface ECTDLeaf {
  * docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-stf-1789-fail-closed-facts.md.
  */
 
-/** Module 4/5 sections whose files need no STF (FDA TRC 1789). */
-export const STF_NOT_REQUIRED_SECTIONS: readonly string[] = ['4.3', '5.2', '5.3.6', '5.4'];
-
+// STF_NOT_REQUIRED_SECTIONS and requiresStfReference live in
+// shared/regulatory/ectd-leaf-rules (imported above).
 // 2026-10-15: ended "regulator text read through search", but only a search
 // extract was seen, and regulatory-basis files a search extract as recall.
 const TRC_1789_RULE = 'FDA TRC 1789 — a file in a Module 4/5 study section must be referenced by a Study Tagging File (FDA Study Data Technical Rejection Criteria, fda.gov/media/160970; seen in a search extract of the regulator page, 2026-10-05; the PDF was not read)';
-
-/** Whether a file placed at this CTD section must be referenced by an STF (FDA TRC 1789). */
-export function requiresStfReference(section: string): boolean {
-  const code = normalizeCtdCode(section) ?? '';
-  return /^[45](\.|$)/.test(code) && !STF_NOT_REQUIRED_SECTIONS.some((s) => code === s || code.startsWith(`${s}.`));
-}
 
 /**
  * The facts the coverage check needs about one leaf, from either leaf model:

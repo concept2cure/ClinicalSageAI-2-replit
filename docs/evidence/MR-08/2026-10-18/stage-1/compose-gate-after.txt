@@ -1,0 +1,8 @@
+# After step 2 (both compose stacks carry the clamav service)
+$ npm run ci:compose-boot-contract
+
+> concept2cure-riai@1.0.0 ci:compose-boot-contract
+> node scripts/ci/check-compose-boot-contract.mjs
+
+[ci:compose-boot-contract] OK — 2 production Compose stack(s) carry the boot contract (28 preflight names, 4 excused for Compose, + ALLOWED_ORIGINS) and the pinned virus scanner.
+exit=0

@@ -36,6 +36,7 @@ function app() {
     // What the requestId middleware and the auth boundary leave on a request.
     res.setHeader('X-Request-Id', REQUEST_ID);
     (req as unknown as { user: unknown }).user = { id: 5, organizationId: 7 };
+    Object.assign(req, { dbClient: { query: vi.fn() } });
     next();
   });
   a.use('/api/protocol-development', router);

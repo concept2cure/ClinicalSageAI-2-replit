@@ -6,7 +6,7 @@
 ## 1. Definitions
 - **Security incident:** confirmed or suspected unauthorised access, disclosure,
   alteration or loss of customer data or of a governed record; or loss of audit
-  integrity (`npm run ops:verify-audit-chain` exits non-zero).
+  integrity (the audit-chain verifier exits non-zero; `docs/SOP_KEY_MANAGEMENT.md` §10 step 5).
 - **Severity:** S1 data of more than one tenant exposed or audit chain broken;
   S2 single-tenant exposure or signature substrate compromised; S3 attempted
   attack blocked; S4 policy deviation without data impact.
@@ -14,7 +14,7 @@
 ## 2. Detection
 | Control | Status | Evidence |
 |---|---|---|
-| Audit-chain integrity verifier, runnable on demand and after every restore | **Implemented** | `scripts/ops/verify-audit-chain.mjs`; failure proof in `docs/evidence/W3b/2026-09-20/` |
+| Audit-chain integrity verifier, runnable on demand and after every restore | **Implemented** | `scripts/ops/verify-audit-chain.mjs`, built into the production image as `dist/ops/verify-audit-chain.mjs` (2026-10-18); failure proof in `docs/evidence/W3b/2026-09-20/` |
 | Security self-test at boot (audit chain integrity is a critical check) | **Implemented** | `server/services/securityHealth.ts` |
 | SIEM export of audit events (admin-only, rate-limited) | **Implemented** | `server/routes/admin/audit-siem.ts` |
 | `[SECURITY]`-class alert forwarding to a webhook | **Partial** — configurable, no receiver configured | `.env.example` security alert webhook |
@@ -27,8 +27,8 @@
 2. **Contain:** rotate the affected credential or key (`docs/SOP_KEY_MANAGEMENT.md`);
    disable the affected account; if audit integrity is in question, take a
    database snapshot before any remediation and run the verifier against it.
-3. **Eradicate and recover:** follow POLICY-BR-005 for restores; re-run
-   `ops:verify-audit-chain` and `/readyz` before returning to service.
+3. **Eradicate and recover:** follow POLICY-BR-005 for restores; re-run the
+   audit-chain verifier (`docs/SOP_KEY_MANAGEMENT.md` §10 step 5) and `/readyz` before returning to service.
 4. **Notify:** affected tenants without undue delay and within **48 hours of
    becoming aware**, the DPA's §7.1 figure (set by ADR-0014 §5 on 2026-10-01;
    it was 72 hours in this policy's draft and a bracketed 48 in the DPA's —
@@ -82,3 +82,4 @@ our notice must beat so the tenant can meet them.
 | 0.1 DRAFT | 2026-09-20 | W3b session | First draft |
 | 0.2 DRAFT | 2026-09-26 | D6 session | §3a breach-notification matrix (HIPAA §164.410, GDPR Arts. 33–34, APPI Art. 26, NIS2 Art. 23, Part 11 / Annex 11), one contractual figure (72 h from awareness) with the DPA's bracketed 48 h flagged for counsel; §3.4 reworded to it; the incident log opened (security audit 2026-09-24, INF-07; plan P1-13). |
 | 0.3 DRAFT | 2026-10-01 | D6 session | The contractual figure is 48 hours from awareness, not 72 (ADR-0014 §5): our notice starts the tenant's own GDPR Art. 33(1) and APPI Art. 26 clocks, so it must leave them time. §3.4 and §3a reworded; the DPA's bracket removed. |
+| 0.4 DRAFT | 2026-10-18 | D5 session | §1, §2 and §3.3 name the verifier as it runs from the production image; `npm run ops:verify-audit-chain` needs tsx, which the image does not have. |

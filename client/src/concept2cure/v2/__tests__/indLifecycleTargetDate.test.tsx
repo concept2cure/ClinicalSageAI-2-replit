@@ -14,8 +14,8 @@
  *    /api/ind-lifecycle/cover-letter) next to a button that never called it — a
  *    false affordance. The route text is gone; every card is now wired
  *    end-to-end (the cover-letter exemplar first, the rest mirroring it — see
- *    indLifecycleDeliverables.test.tsx), each card keeps an honest "Ask AnA"
- *    button that does exactly that, and the assemble result (the server's
+ *    indLifecycleDeliverables.test.tsx), each AnA-draftable card keeps an honest
+ *    "Draft with AnA" button that does exactly that, and the assemble result (the server's
  *    model + its gap verdict) renders in place.
  *
  * And, since 2026-10-15 (P-32 follow-up), the clock is the SERVER's:
@@ -277,19 +277,17 @@ describe('IndLifecycle — deliverable cards carry no false affordance', () => {
     expect(document.querySelector('.indl-route')).toBeNull();
   });
 
-  it('every card keeps an honest "Ask AnA" button that does exactly that', async () => {
+  it('an AnA-draftable card offers an honest "Draft with AnA" button that does exactly that', async () => {
     const p = props();
     mockApi(null);
     render(<IndLifecycle {...p} />);
     await screen.findByText('No target date set');
 
-    // The briefing-book card (now wired end-to-end) still offers Ask AnA, and
-    // that button hands its generic prompt to AnA — nothing else.
-    const askButtons = screen.getAllByText('Ask AnA');
-    expect(askButtons.length).toBeGreaterThan(0);
+    // The briefing-book card (wired end-to-end) offers Draft with AnA, and that
+    // button hands its generic prompt to AnA — nothing else.
     const briefingCard = screen.getByText('Pre-IND Briefing Book').closest('.indl-dcard')! as HTMLElement;
-    fireEvent.click(within(briefingCard).getByText('Ask AnA'));
-    expect(p.onAsk).toHaveBeenCalledWith('Assemble the Pre-IND briefing book for this program.');
+    fireEvent.click(within(briefingCard).getByText('Draft with AnA'));
+    expect(p.onAsk).toHaveBeenCalledWith('Draft the Pre-IND briefing book for this program in the editor.');
     // No POST fired from asking AnA.
     expect(apiRequest.mock.calls.some((c) => c[1] === '/api/ind-lifecycle/briefing-book')).toBe(false);
   });

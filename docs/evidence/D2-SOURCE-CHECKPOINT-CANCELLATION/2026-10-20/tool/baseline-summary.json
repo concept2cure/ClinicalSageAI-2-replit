@@ -1,0 +1,25 @@
+{
+  "baselineSource": "0793ee48ecee5dee014b266b2def014c38ea978e",
+  "contractCommit": "6ec38926c",
+  "testFile": "server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts",
+  "testSha256": "d705d6ea6142a144c97ef100a2d8e6b16562be708a3a6f0c4e49d4e9aebee5e0",
+  "tests": 13,
+  "intendedFailures": 7,
+  "passingControls": 6,
+  "fixtureImportOrSetupFailures": 0,
+  "inputFilesStable": 8,
+  "failureReasons": [
+    "Five current loader operation boundaries continue beyond real Stop: scope, metadata, body, first final current-body recheck, final actor.",
+    "Two typed cancellation rejections after real Stop are incorrectly classified DRAFT_FAILED/retryable by the current tool catch."
+  ],
+  "controls": [
+    "Final program-operation Stop already discards completed source load.",
+    "Genuine rejected catalog operation remains failed when Stop coincides.",
+    "Abort-shaped rejection without real Stop remains failed.",
+    "JSON-shaped signal is ignored.",
+    "No-signal multi-document load and source-context receipts remain intact.",
+    "Pre-aborted native signal starts no operations."
+  ],
+  "rawLogSha256": "3131cc993313ac7589d2b999b355f4535f51aef4eb328d4b05859329ffe893c5",
+  "limits": "Actual registered handler/loader/receipt with synthetic catalog/scope/drafting seams; no native SQL/socket/provider operation."
+}

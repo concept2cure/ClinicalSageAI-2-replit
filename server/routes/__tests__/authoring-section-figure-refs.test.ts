@@ -101,8 +101,9 @@ function writes(): string[] {
 beforeEach(() => {
   vi.clearAllMocks();
   h.connect.mockImplementation(async () => ({ query: h.clientQuery, release: vi.fn() }));
-  h.clientQuery.mockImplementation(async (sql: string) => {
+  h.clientQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
     const s = String(sql);
+    const statement = s.replace(/\s+/g, ' ').trim();
     if (/^\s*(BEGIN|COMMIT|ROLLBACK)/i.test(s)) return {};
     // The save reserves the real parent before writing the child. Model its
     // actual read/receipt instead of treating every SELECT as an empty object.
@@ -118,9 +119,26 @@ beforeEach(() => {
     if (/UPDATE authoring_sections/i.test(s)) {
       return { rowCount: 1, rows: [{ id: 'S1', doc_id: 'D1', content: 'saved' }] };
     }
+    if (statement === 'SELECT id, code, order_index FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index, created_at FOR UPDATE') {
+      expect(params).toEqual(['D1', 7]);
+      return { rowCount: 0, rows: [] };
+    }
+    if (statement === 'INSERT INTO authoring_sections (id, doc_id, code, title, content, order_index, created_at, updated_at, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW(), $7) RETURNING *') {
+      const [id, doc_id, code, title, content, order_index, tenant_id] = params;
+      return { rowCount: 1, rows: [{ id, doc_id, code, title, content, order_index, tenant_id }] };
+    }
     return { rowCount: 1, rows: [{}] };
   });
-  h.poolQuery.mockImplementation(async (sql: string) => {
+  h.poolQuery.mockImplementation(async (sql: string, params?: unknown[]) => {
+    const statement = String(sql).replace(/\s+/g, ' ').trim();
+    if (statement === 'SELECT status FROM authoring_documents WHERE id = $1 AND tenant_id = $2') {
+      expect(params).toEqual(['D1', 7]);
+      return { rowCount: 1, rows: [{ status: 'draft' }] };
+    }
+    if (statement === "SELECT 1 FROM authoring_documents a JOIN c2c_documents d ON d.id = to_jsonb(a)->>'c2c_document_id' AND d.org_id = a.tenant_id WHERE a.id = $1 AND a.tenant_id = $2 AND to_jsonb(d)->>'filing_scope' = 'market' LIMIT 1") {
+      expect(params).toEqual(['D1', 7]);
+      return { rowCount: 0, rows: [] };
+    }
     if (/FROM authoring_sections WHERE id = \$1/i.test(sql)) {
       return { rowCount: 1, rows: [{ id: 'S1', doc_id: 'D1', content: '<p>old</p>' }] };
     }
@@ -376,6 +394,6 @@ describe('POST /docs refuses an organization template whose section holds a non-
     const res = await createFromTemplate();
 
     expect(res.status, JSON.stringify(res.body)).toBe(201);
-    expect(sectionInserts().map((c) => (c[1] as unknown[])[3])).toEqual(['<p>Clean.</p>', figures]);
+    expect(sectionInserts().map((c) => (c[1] as unknown[])[4])).toEqual(['<p>Clean.</p>', figures]);
   });
 });

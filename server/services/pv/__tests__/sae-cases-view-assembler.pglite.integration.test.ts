@@ -4,7 +4,7 @@
  * Proves the GA read: SAE cases persisted in the REAL pharmacovigilance store
  * (`adverse_events`) are assembled into the SafetyNarrative worklist shape, with the
  * 21 CFR 312.32(c)/E2A expedited-reporting clock computed live from the real facts —
- * 15-day, 7-day, and 'none' (expected) — with strict TEXT org scope, seriousness_criteria
+ * 15-day, 7-day, and 'none' (expected) — with strict org scope, seriousness_criteria
  * parsed from JSON-in-TEXT, and trial-only fields the store lacks honestly absent.
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
@@ -27,7 +27,7 @@ const NOW = new Date('2026-07-10T12:00:00Z');
 
 const DDL = `
 CREATE TABLE adverse_events (
-  id text PRIMARY KEY, organization_id text, project_id text, event_type text,
+  id text PRIMARY KEY, organization_id integer, project_id text, event_type text,
   patient_id text, event_description text, onset_date timestamptz, report_date timestamptz,
   seriousness_criteria text, causality text, outcome text, reporter_type text,
   expectedness text, reaction_pt text, suspect_product text, suspect_product_dose text,

@@ -2,7 +2,8 @@
 import { createScopedLogger } from '../../utils/logger';
 import { authorizeAuthoringProgram, AuthoringProgramAccessError } from './authoring-program-access';
 import { getBuiltinAuthoringTemplate, builtinTemplateSnapshot, type BuiltinAuthoringTemplate } from './builtin-authoring-templates';
-import type { AuthoringPool, Binding, CreateContext, CreateDocumentInput, AuthoringRefusal } from './authoring-documents';
+import type { Binding, CreateContext, CreateDocumentInput, AuthoringRefusal } from './authoring-documents';
+import type { Queryable } from './authoring-evidence';
 
 const logger = createScopedLogger('authoring-documents');
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -12,6 +13,44 @@ export interface TemplateSectionSeed {
   title: string;
   content: string;
   ordering: number;
+}
+
+interface TemplateResolveOptions { builtin: BuiltinAuthoringTemplate | undefined; transaction?: boolean; lock?: boolean }
+
+async function globalTemplateSections(pool: Queryable, templateId: string, resolved?: TemplateResolveOptions): Promise<TemplateSectionSeed[]> {
+  try {
+    // A failed optional query aborts PostgreSQL transactions before JS catches
+    // it. Probe absent bundles safely when running on a transaction client.
+    const available = !resolved?.transaction || (await pool.query(
+      "SELECT to_regclass('intelligence.template_sections') IS NOT NULL AND to_regclass('intelligence.document_templates') IS NOT NULL AS available",
+    )).rows[0]?.available === true;
+    if (!available) return [];
+    const sql = resolved?.lock
+      ? `SELECT ts.section_code, ts.section_title, ts.ordering
+         FROM intelligence.template_sections ts
+         JOIN intelligence.document_templates t ON t.id = ts.template_id AND t.status = 'active'
+         WHERE ts.template_id = $1
+         ORDER BY ts.ordering, ts.section_code, ts.section_title FOR SHARE OF ts, t`
+      : `SELECT ts.section_code, ts.section_title, ts.ordering
+         FROM intelligence.template_sections ts
+         JOIN intelligence.document_templates t ON t.id = ts.template_id AND t.status = 'active'
+         WHERE ts.template_id = $1
+         ORDER BY ts.ordering, ts.section_code, ts.section_title`;
+    const result = await pool.query(
+      sql,
+      [templateId],
+    );
+    return result.rows.map((row: Record<string, unknown>, index: number) => ({
+      code: String(row.section_code), title: String(row.section_title), content: '',
+      ordering: Number.isFinite(Number(row.ordering)) ? Number(row.ordering) : index,
+    }));
+  } catch (error) {
+    if (resolved?.transaction) throw error;
+    logger.warn('Global template store unavailable during create; trying the org store', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return [];
+  }
 }
 
 /**
@@ -24,10 +63,10 @@ export interface TemplateSectionSeed {
  * chosen template must refuse before the INSERT, not lie after it.
  */
 export async function resolveTemplateSections(
-  pool: AuthoringPool,
+  pool: Queryable,
   tenantId: number,
   templateId: string,
-  resolved?: { builtin: BuiltinAuthoringTemplate | undefined },
+  resolved?: TemplateResolveOptions,
 ): Promise<TemplateSectionSeed[] | AuthoringRefusal> {
   if (!UUID_RE.test(templateId)) {
     return { kind: 'refused', status: 400, error: 'template_id must be a valid UUID' };
@@ -39,34 +78,16 @@ export async function resolveTemplateSections(
   // comes from the document being created. FAIL SOFT to zero rows when the
   // intelligence schema is absent (a separate bundle, missing in some
   // deployments and the authoring harness).
-  let globalSections: { rows: any[] } = { rows: [] };
-  try {
-    globalSections = await pool.query(
-      `SELECT ts.section_code, ts.section_title, ts.ordering
-         FROM intelligence.template_sections ts
-         JOIN intelligence.document_templates t ON t.id = ts.template_id AND t.status = 'active'
-        WHERE ts.template_id = $1
-        ORDER BY ts.ordering`,
-      [templateId],
-    );
-  } catch (intelErr) {
-    logger.warn('Global template store unavailable during create; trying the org store', {
-      error: intelErr instanceof Error ? intelErr.message : String(intelErr),
-    });
-  }
-  if (globalSections.rows.length > 0) {
-    return globalSections.rows.map((r: any, i: number) => ({
-      code: String(r.section_code),
-      title: String(r.section_title),
-      // Structure and guidance only — the honest scaffold starts empty.
-      content: '',
-      ordering: Number.isFinite(Number(r.ordering)) ? Number(r.ordering) : i,
-    }));
-  }
+  const globalSections = await globalTemplateSections(pool, templateId, resolved);
+  if (globalSections.length > 0) return globalSections;
   // (b) The org's own template store (tenant-scoped, carries content).
+  const sql = resolved?.lock
+    ? `SELECT template_content FROM authoring_templates
+       WHERE id = $1 AND tenant_id = $2 AND is_active = true FOR SHARE`
+    : `SELECT template_content FROM authoring_templates
+       WHERE id = $1 AND tenant_id = $2 AND is_active = true`;
   const orgTemplate = await pool.query(
-    `SELECT template_content FROM authoring_templates
-      WHERE id = $1 AND tenant_id = $2 AND is_active = true`,
+    sql,
     [templateId, tenantId],
   );
   const orgSections = orgTemplate.rows[0]?.template_content?.sections;

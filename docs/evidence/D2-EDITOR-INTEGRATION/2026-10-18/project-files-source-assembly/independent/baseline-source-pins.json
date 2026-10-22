@@ -1,0 +1,11 @@
+{
+  "algorithm": "sha256",
+  "gitHead": "3cae08d236ba5be6dd96284bca2c47b4605c007d",
+  "files": {
+    "client/src/concept2cure/v2/editor/ProjectFileActions.tsx": "79165f65b84af6f41f691ee1eb4765741fbcbe9b912da1843ad8fdf0bac9c743",
+    "client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx": "7395aa2058d4fd760db55f128236c2267017a441dff5600ccd2db5ad1fa866b8",
+    "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx": "2b85676e0f990c783c877f27579bfcaf2d35ebd23675a95741ee8958aab8f350",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "c68de607c712a2d0a6b480926b0444576425386eafb256989d1f4dcc63963727",
+    "client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx": "1149f95e13358df27ba2200e695ae837e15eddc4fdddb99c9d6bcfa65d9b04de"
+  }
+}

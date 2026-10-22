@@ -1,0 +1,26 @@
+{
+  "head": "e79626c0849f0f8c2338b32f85d4bc69bccef8f5",
+  "files": {
+    "server/services/clinical-regulatory-evidence/data-room-processing.ts": "b72a19f20f534a2273d65cf4b649a47096b50f95159c0e109b6bc7ce8d7e418f",
+    "server/services/ocr/extractDocumentText.ts": "f2c8cb2fe756a915784cb7b495a3f669bfd853b90de241de710d21f0bbd5d25e",
+    "server/services/ocr/page-offsets.ts": "865e74d435dc0bfeaa3e0069e56c6a01313c017e6382f06cf4bfc30a7f43d623",
+    "server/services/ocr/ocrService.ts": "6d6a073b7ca15424639366076786ee4706f1b77ea9beb98816f63b714da3b583",
+    "server/services/clinical-regulatory-evidence/data-room-processing-state.ts": "64f5d5fd40b1ab1201797a38b7b3ee58d176a54770d593ad8006b95a17c708e4",
+    "server/services/clinical-regulatory-evidence/data-room-processing-store.ts": "eb69cebddaf48093854b4f801432e9bb8e726dce8830263892bca65773677f3b",
+    "server/services/clinical-regulatory-evidence/data-room-processing-sweep.ts": "e4da66ec580c8d1a93b2e2d91b4f4f25904c285e1b389191c555531e2d90ff33",
+    "server/services/clinical-regulatory-evidence/evidence-spine.service.ts": "a8509ec4002de22309c1cad16ccdade15ef1e25fe8654229ae7af85e03b57dd1",
+    "server/services/clinical-regulatory-evidence/data-room-search.ts": "78862a0bf91ba1436fc3cf8cbfa259c0f2b5835134971b6c6ba925a7d6823e3c",
+    "server/services/clinical-regulatory-evidence/source-read-access.ts": "418e129df67cfa775a20a6f04464b82f460512026fcea1018dca54861953ab5c",
+    "shared/data-room-processing-status.ts": "86396fc9a0bccac5f589586c67775f0008b896ca4b0a1eb7a56c5148d5f0aacf",
+    "server/routes/chat/upload.ts": "a523c8143edaf3c1a24cb8e4621e7b8b5a5c852f86c874dd17e5e84437a7da94",
+    "server/routes/c2c/projects.ts": "f614fccdb939ace9b55566fd9c7650376596ba2b3236ba6640e66774671e3ccd",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "package.json": "a5ca393c8923bde7985b7080931cc6ec98ac13ccf59430f8e526904f26a5b7f7",
+    "package-lock.json": "8c9931e4908fb126d972ffe8701292475b344aae4684728e345acabe66f97278",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "eslint.config.js": "8980ee711992c0d216296b9cfe4351531569582b130ccb3e3f856e62901f8804",
+    ".husky/pre-push": "6e06c1338bebc01155c20eebcf2ebb2bfe474b1656ec920e7c6e7952a23bd053",
+    ".husky/pre-commit": "4d8cde3b21f91140935b021db7861221633d6feb8641fde6f884bae7cd834f40"
+  }
+}

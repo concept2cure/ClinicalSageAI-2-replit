@@ -1,0 +1,76 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts
+[database] No DATABASE_URL provided, skipping database connection
+
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > preserves an unchanged genuine Unicode context and text-free successful source receipts 6ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a spread copy of a genuine loaded context before gateway entry 2ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a json copy of a genuine loaded context before gateway entry 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a structuredClone copy of a genuine loaded context before gateway entry 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a genuine context consumed under another organizationId 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a genuine context consumed under another userId 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a genuine context consumed under another projectId 0ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a nonempty unassessed context instead of labeling its body as evidence 0ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > does not let pure prompt or audit helpers label copied context as server-issued 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > freezes the genuine context, source collection, source body and coordinates 0ms
+ × server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses queued source revocation while preserving successful no-source siblings 13ms
+   → [vitest] No "GatewayAllProvidersFailedError" export is defined on the "../../ai-gateway/gateway" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ × server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses queued actor revocation while preserving successful no-source siblings 1ms
+   → [vitest] No "GatewayAllProvidersFailedError" export is defined on the "../../ai-gateway/gateway" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > provides a callback that refuses a source changed during a gateway capacity wait 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > suppresses returned prose when extraction changes during the provider response wait 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > suppresses returned prose when private-parent changes during the provider response wait 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > pins request identity, context reference and declared project facts before its first await 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > refuses selected-source stream before gateway handoff 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > refuses selected-source tools before gateway handoff 0ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > retains eligible keep_data evidence and discloses the unavailable original 0ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > keeps ordinary no-source streaming/tools available without a source callback 0ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 18 passed (20)
+   Start at  22:43:30
+   Duration  5.03s (transform 3.60s, setup 0ms, import 4.78s, tests 32ms, environment 0ms)
+
+stderr | server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts
+{
+  "timestamp": "2026-10-17T22:43:31.886Z",
+  "level": "warn",
+  "message": "[database] DATABASE_NEON_NEW_SECRET or DATABASE_URL not found, database features will be unavailable",
+  "context": {}
+}
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses queued source revocation while preserving successful no-source siblings
+ FAIL  server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses queued actor revocation while preserving successful no-source siblings
+Error: [vitest] No "GatewayAllProvidersFailedError" export is defined on the "../../ai-gateway/gateway" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+vi.mock(import("../../ai-gateway/gateway"), async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    // your mocked methods
+  }
+})
+
+ ❯ isGatewayError server/services/ai-gateway/gateway-error-map.ts:68:20
+     66|   return (
+     67|     err instanceof GatewayContextWindowError ||
+     68|     err instanceof GatewayAllProvidersFailedError ||
+       |                    ^
+     69|     err instanceof GatewayNoProviderError ||
+     70|     err instanceof GatewayPolicyError
+ ❯ describeBatchDraftFailure server/services/ana/AnaDocumentDraftingService.ts:1229:7
+ ❯ server/services/ana/AnaDocumentDraftingService.ts:1161:22
+ ❯ AnaDocumentDraftingService.batchDraft server/services/ana/AnaDocumentDraftingService.ts:1156:15
+ ❯ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts:131:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+

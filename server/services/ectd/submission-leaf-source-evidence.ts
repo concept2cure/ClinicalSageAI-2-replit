@@ -19,10 +19,13 @@ import { getStorageProviderFor } from '../storage';
 import { readLocalUploadBuffer } from '../anthropic-files';
 import { vaultBinaryAvailableSql } from '../document-data-disposition/eligibility';
 import { vaultVersionNotTransmittable } from '../vault/vault-lifecycle';
+import { companyLegalSubmissionContext } from './company-legal-context';
 
 type Input = {
   organizationId:number; userId:number; programId:string; projectId:number;
   sequenceId:number; submissionId:number; leaves:SubmissionLeaf[];
+  /** Server-admitted sequence/submission facts, rechecked by the request reader. */
+  sequenceRegion?:string; applicationType?:string;
 };
 export interface SubmissionLeafSourceAdmission { readonly kind:'request-owned-submission-source-admission' }
 export class SubmissionLeafSourceReadError extends Error {
@@ -213,7 +216,8 @@ function retainedPlainText(bytes:Buffer):boolean {
 }
 async function vaultContentEvidence(state:State,args:{leaf:SubmissionLeaf;row:Record<string,unknown>;proof:{sha256:string;bytes:Buffer};pin:DeliverableSourceEvidence['pin']}):Promise<StoreEvidence> {
   const {leaf,row,proof,pin}=args;
-  const notFinalized=await vaultVersionNotTransmittable({query:async(sql:string,params?:unknown[])=>({rows:await tracked(state,sql,params??[])})},state.input.organizationId,String(leaf.documentUuid),proof.sha256);
+  const notFinalized=await vaultVersionNotTransmittable({query:async(sql:string,params?:unknown[])=>({rows:await tracked(state,sql,params??[])})},state.input.organizationId,String(leaf.documentUuid),proof.sha256,
+    companyLegalSubmissionContext({programId:state.input.programId,region:state.input.sequenceRegion,applicationType:state.input.applicationType}));
   if(pin!=='match')return {label:typeof row.source_label==='string'?row.source_label:undefined,found:true,storedSha256:proof.sha256,evidence:{...unknown(pin==='mismatch'?'SOURCE_PIN_MISMATCH':'SOURCE_UNPINNED'),pin}};
   const mime=String(row.mime_type??'').toLowerCase();
   if(mime!=='text/plain')return {label:typeof row.source_label==='string'?row.source_label:undefined,found:true,storedSha256:proof.sha256,evidence:{...unknown('SOURCE_BINARY_CONTENT_UNVERIFIED'),pin,lifecycle:notFinalized?'unverified':'finalized'}};

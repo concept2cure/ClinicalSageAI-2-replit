@@ -1,0 +1,32 @@
+{
+  "cwd": "/workspace/ClinicalSageAI",
+  "executable": "/workspace/scratch/editor-toolchain/node_modules/node/bin/node",
+  "nodeVersion": "v22.23.3",
+  "argv": [
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+    "server/services/vault/__tests__/vault-ingest-storage.test.ts",
+    "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts"
+  ],
+  "environment": {
+    "PATHPrefix": "/workspace/scratch/editor-toolchain/node_modules/.bin",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "dateUtc": "2026-10-21",
+  "startTimeReportedByVitest": "01:10:46",
+  "durationSecondsReportedByVitest": 18.97,
+  "finishedAtExitFileTimestamp": "2026-10-21T01:11:05.834Z",
+  "exitCode": 0,
+  "summary": [
+    "Test Files  3 passed (3)",
+    "Tests  69 passed | 2 todo (71)"
+  ],
+  "sourcePinFile": "ambiguity-red-production.sha256",
+  "sourcePinNote": "First bounded correction; these production bytes stayed unchanged through the next RED capture.",
+  "rawLog": "green.raw.log.gz",
+  "rawSha256": "5ed204d8358e583a70819266f8035ee4db100b42f5d3823cc04ee94eabce5e3e",
+  "gzipSha256": "572c3cfbb569941f64ddeaceec91f6732cfb5a741ecf446992c5b20ed781d6f8"
+}

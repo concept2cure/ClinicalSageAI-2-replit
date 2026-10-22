@@ -1,4 +1,8 @@
-# Protocol design — the leading-vendor capability is built, and unreachable
+# Protocol design convergence — historical design record
+
+**Current implementation, 2026-10-14:** The Protocol workspace now selects every live protocol by document id and explicit program scope, including older documents beyond the previous 25-record assembly limit. Its Study design tab creates the initial governed draft through the existing design writer, binds the confirmed persisted id, and shows the actual design-gate findings and projections. Creation and binding check the current program lead/manager policy. A saved design with a failed link can be retried without another creation. Legacy unfiled protocols stay visible and can be explicitly filed once with a governed reason; no inferred migration backfill runs. See [the audit-remediation contract](../evidence/AUDIT-REMEDIATION/2026-10-14/protocol-contract.md) and its verification record for current scope and evidence.
+
+The findings and work order below record the original 2026-09-22 design rationale; they are historical measurements, not the current completion status.
 
 **Status:** binding design, 2026-09-22. **Prompted by:** the founder — *"the
 protocol design solution is far from complete. Study what the leading vendors

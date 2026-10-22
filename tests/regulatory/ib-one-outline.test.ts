@@ -80,3 +80,42 @@ describe('every IB tree a client reaches carries the canonical body headings', (
     expect(src).toMatch(/investigators_brochure/);
   });
 });
+
+/*
+ * Third slice, 2026-10-15 (the library's 24-hour hold lapsed): the canonical
+ * IB outline had no E6 front matter and no sub-sections, so the IB builder
+ * kept its own (4.1–4.3, 5.1–5.3); the M4E clinical overview outline lacked
+ * 2.5.7 Literature References.
+ */
+describe('the canonical outline carries the IB front matter and sub-sections', () => {
+  it('front matter: title page, confidentiality statement, table of contents; body codes stay 1–6', () => {
+    expect((canonical.frontMatter ?? []).map((s) => s.heading)).toEqual(['Title Page', 'Confidentiality Statement', 'Table of Contents']);
+    expect(canonical.sections.map((s) => s.number)).toEqual(['1', '2', '3', '4', '5', '6']);
+  });
+  it('sub-sections 4.1–4.3 and 5.1–5.3', () => {
+    const subs = (n: string) => (canonical.sections.find((s) => s.number === n)!.subsections ?? []).map((s) => s.number);
+    expect(subs('4')).toEqual(['4.1', '4.2', '4.3']);
+    expect(subs('5')).toEqual(['5.1', '5.2', '5.3']);
+  });
+  it('the IB builder takes its sub-sections from it', async () => {
+    const { IB_STRUCTURE } = await import('../../server/services/authoring/ib-builder');
+    for (const n of ['4', '5']) {
+      const lib = canonical.sections.find((s) => s.number === n)!.subsections!;
+      const builder = IB_STRUCTURE.find((s) => s.number === n)!.childSections!;
+      expect(builder.map((c) => [c.number, c.title, c.required])).toEqual(lib.map((c) => [c.number, c.heading, c.required]));
+    }
+  });
+  it('the open-document brief for an IB shows the front matter and sub-sections', async () => {
+    const { renderOpenDocumentBlock } = await import('../../server/services/ana-ri/open-document');
+    const block = renderOpenDocumentBlock({ document: { registryId: 'ICH_IB', label: "Investigator's Brochure", source: 'surface', outline: canonical } });
+    expect(block).toMatch(/Front matter: Title Page; Confidentiality Statement; Table of Contents/);
+    expect(block).toMatch(/4\.1 Nonclinical Pharmacology/);
+  });
+});
+
+describe('the M4E clinical overview outline', () => {
+  it('ends with 2.5.7 Literature References', () => {
+    const co = getDocumentTemplate('clinical_overview')!;
+    expect(co.sections.map((s) => s.number).at(-1)).toBe('2.5.7');
+  });
+});

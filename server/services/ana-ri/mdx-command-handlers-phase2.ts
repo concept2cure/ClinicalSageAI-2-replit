@@ -570,6 +570,8 @@ export async function reviewerSimulationRun(
       trigger: 'ana',
       triggeredBy: `ana:${ctx.userId}`,
       dryRun: false,
+    }, {
+      executor: (await import('../../db.js')).pool, userId: ctx.userId,
     });
 
     // WO-16C #133: was `void auditService.logAction({…})`.

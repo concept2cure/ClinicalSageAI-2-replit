@@ -189,6 +189,7 @@ export function useFilingTarget(onChange?: () => void, programId?: string | null
         // refusal.
         const open = r.data.filter((s) => !isLocked(s.status));
         setSeqId(open.length === 1 ? open[0].id : null);
+        if (open.length === 1) onChange?.();
       });
     },
     [onChange],
@@ -406,7 +407,7 @@ export function placementReasonOk(reason: string): boolean {
 /** The disabled-button title for a placement still missing its reason. */
 export const PLACEMENT_REASON_REQUIRED = `A reason for this placement of at least ${GOVERNED_REASON_MIN} characters is required`;
 
-const REASON_KIT = {
+export const REASON_KIT = {
   dialog: { field: 'de-field', label: 'de-label', input: 'c2c-input', note: 'de-desc' },
   inline: { field: 'sc-field', label: undefined, input: 'sc-subpick', note: 'scaf-note' },
 } as const;
@@ -462,9 +463,6 @@ export function PlacementReasonField({
     </div>
   );
 }
-
-
-
 /** Confirmation returned by the existing canonical leaf write, shared by both filing dialogs. */
 export interface FilingLeafReceipt {
   id: number;
@@ -474,17 +472,20 @@ export interface FilingLeafReceipt {
   documentTable: string;
   documentId?: number | null;
   documentUuid?: string | null;
+  studyId?: string | null;
+  stfFileTag?: string | null;
   /** null when nothing was written (see `unchanged`): there is no audit row to report. */
   auditTrail?: { persisted?: boolean; chained?: boolean } | null;
   /** The document was already placed at this section; the existing leaf came back and nothing was written. */
   unchanged?: true;
+  sequenceStatusChanged?: { from: 'validated'; to: 'assembling'; auditTrail?: { persisted?: boolean; chained?: boolean } | null };
 }
 
 export function validReceiptId(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
 }
 
-type ExpectedLeaf = { sequenceId: number; sectionCode: string; lifecycleOp: string } & (
+type ExpectedLeaf = { sequenceId: number; sectionCode: string; lifecycleOp: string; studyId?: string | null; stfFileTag?: string | null } & (
   | { documentTable: 'coauthor_documents'; documentId: number }
   | { documentTable: 'vault_documents'; documentUuid: string }
 );
@@ -496,6 +497,8 @@ export function matchingLeafReceipt(value: unknown, expected: ExpectedLeaf): val
   if (!validReceiptId(row.id) || row.sequenceId !== expected.sequenceId ||
       row.sectionCode !== expected.sectionCode || row.lifecycleOp !== expected.lifecycleOp ||
       row.documentTable !== expected.documentTable) return false;
+  if ((expected.studyId !== undefined && row.studyId !== expected.studyId) ||
+      (expected.stfFileTag !== undefined && row.stfFileTag !== expected.stfFileTag)) return false;
   return expected.documentTable === 'vault_documents'
     ? row.documentUuid === expected.documentUuid
     : row.documentId === expected.documentId;
@@ -503,7 +506,13 @@ export function matchingLeafReceipt(value: unknown, expected: ExpectedLeaf): val
 
 /** Placement can stand while its audit write or retrievable history is incomplete. */
 export function placementAuditWarning(row: FilingLeafReceipt): string {
-  if (row.auditTrail?.persisted !== true) return ' The placement audit entry was not confirmed. Check the audit history and follow up before treating this as a complete governed filing.';
-  if (row.auditTrail.chained !== true) return ' The placement audit entry is not confirmed in retrievable history. Follow up before treating this as a complete governed filing.';
+  const placement = auditWarning(row.auditTrail, 'placement');
+  const sequence = row.sequenceStatusChanged ? auditWarning(row.sequenceStatusChanged.auditTrail, 'sequence transition') : '';
+  return placement + sequence;
+}
+
+function auditWarning(audit: FilingLeafReceipt['auditTrail'], subject: string): string {
+  if (audit?.persisted !== true) return ` The ${subject} audit entry was not confirmed. Check the audit history and follow up before treating this as a complete governed filing.`;
+  if (audit.chained !== true) return ` The ${subject} audit entry is not confirmed in retrievable history. Follow up before treating this as a complete governed filing.`;
   return '';
 }

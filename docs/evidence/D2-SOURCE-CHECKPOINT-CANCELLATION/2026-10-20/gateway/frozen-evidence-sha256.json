@@ -1,0 +1,11 @@
+{
+  "README.md": "fd28dd5920bc5b999393fa8d58f801d7156959b58947d79c5f3f4ffdc992d2c6",
+  "baseline-command.json": "5eda2c7985c796529f497db8e2fc806ddcb1f1e44f22ca4897d2e7a662d13a0a",
+  "baseline-pins.json": "d5a8b1e3ee0aaebacbdea7864050d6a196403e038a95c25d936d385956f58eba",
+  "baseline-raw.txt": "67a9af4306eb45179947a7fb4510908c66bf6c56496e3d4b0cb14941eb6fcbbb",
+  "lint-command.json": "dc4c379c5114069f1b2a96bbcddcf0dd6d31d1cc41642e12a64b1654232e25f6",
+  "lint-raw.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "lint-result.json": "95ce48229560c556ef8052f4e483035423a06742cd474a25e8def8b15199f027",
+  "test_sha256": "9fc869adfdd795c5bb51175a5fedeecc081d02aa9cc00964bbe4de3a3e01b14e",
+  "test_lines": 176
+}

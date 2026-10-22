@@ -1,0 +1,52 @@
+{
+  "cases": 229,
+  "files": 9,
+  "rows": [
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx",
+      "cases": 84,
+      "proof": "oct17-recovery-dto-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts",
+      "cases": 12,
+      "proof": "oct17-recovery-ui-red.json"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts",
+      "cases": 21,
+      "proof": "oct17-recovery-ui-red.json"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx",
+      "cases": 31,
+      "proof": "oct17-recovery-dto-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/cmcAuditRemediation.test.tsx",
+      "cases": 7,
+      "proof": "oct17-recovery-cmc-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx",
+      "cases": 23,
+      "proof": "oct17-recovery-ui-red.json"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx",
+      "cases": 20,
+      "proof": "oct17-recovery-cmc-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/specialistHandoffRecoveryUi.test.tsx",
+      "cases": 5,
+      "proof": "oct17-recovery-ui-red.json"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx",
+      "cases": 26,
+      "proof": "oct17-recovery-cmc-tests.json"
+    }
+  ],
+  "scope": "Latest per-file recovery selection: DTO115/2 and CMC53/3 replace the same files from the original 220-pass/six-failure run. No red case is accepted."
+}

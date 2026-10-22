@@ -222,10 +222,10 @@ beforeEach(() => {
 describe('sequence selector drives the per-sequence workspaces', () => {
   beforeEach(() =>
     mockApi((method, url) => {
-      if (method === 'GET' && url === '/api/submissions/sequences/21/leaves') {
+      if (method === 'GET' && url === '/api/submissions/sequences/21/leaves?submissionId=7') {
         return { ok: true, status: 200, json: async () => LEAVES_21 };
       }
-      if (method === 'GET' && url === '/api/submissions/sequences/22/leaves') {
+      if (method === 'GET' && url === '/api/submissions/sequences/22/leaves?submissionId=7') {
         return { ok: true, status: 200, json: async () => LEAVES_22 };
       }
       return undefined;
@@ -239,7 +239,7 @@ describe('sequence selector drives the per-sequence workspaces', () => {
     await openWorkspace('Builder');
     // Default selection = first real sequence (0000, id 21) → its real leaf.
     expect(await screen.findByText('Summary of Clinical Efficacy')).toBeTruthy();
-    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/sequences/21/leaves');
+    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/sequences/21/leaves?submissionId=7');
     expect(document.body.textContent).toContain('2.7.3');
     expect(document.body.textContent).toContain('Authored document #88');
     // The leaf table names its source store, never the relation behind it.
@@ -249,13 +249,13 @@ describe('sequence selector drives the per-sequence workspaces', () => {
     // real leaf renders (unlinked source rendered honestly).
     fireEvent.change(screen.getByLabelText('Working sequence'), { target: { value: '22' } });
     expect(await screen.findByText('Cover letter amendment')).toBeTruthy();
-    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/sequences/22/leaves');
+    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/sequences/22/leaves?submissionId=7');
     expect(document.body.textContent).toContain('unlinked');
   });
 
   it('renders the honest empty state for a sequence with no leaves', async () => {
     mockApi((method, url) => {
-      if (method === 'GET' && url === '/api/submissions/sequences/21/leaves') {
+      if (method === 'GET' && url === '/api/submissions/sequences/21/leaves?submissionId=7') {
         return { ok: true, status: 200, json: async () => [] };
       }
       return undefined;

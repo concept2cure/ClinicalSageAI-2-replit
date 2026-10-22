@@ -12,10 +12,18 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { selectLimit, poolQuery, classify } = vi.hoisted(() => ({
+const { selectLimit, poolQuery, classify, admit } = vi.hoisted(() => ({
   selectLimit: vi.fn(),
   poolQuery: vi.fn(),
   classify: vi.fn(),
+  admit: vi.fn(),
+}));
+
+// The upload admits its project (current edit authority) before reading the
+// file; the admitted project, with its regulatoryProgramId, is the seam here.
+vi.mock('../project-access', async (original) => ({
+  ...(await original<typeof import('../project-access')>()),
+  requireProjectAdmission: admit,
 }));
 
 vi.mock('../../../db', () => ({
@@ -86,6 +94,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   programType = null;
   classify.mockResolvedValue({ sourceObjectId: 9, sectionKey: '3.2.S.4' });
+  admit.mockImplementation(async () => (await selectLimit())[0]);
   poolQuery.mockImplementation(async (sql: string) => {
     if (/FROM regulatory_programs/.test(sql)) return { rows: programType ? [{ program_type: programType }] : [] };
     return { rows: [] };

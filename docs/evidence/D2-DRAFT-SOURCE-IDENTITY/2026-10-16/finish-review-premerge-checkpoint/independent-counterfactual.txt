@@ -1,0 +1,210 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts
+[database] No DATABASE_URL provided, skipping database connection
+
+ × docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > retains complete V2 identity and drops caller text and qualification 10ms
+   → expected [ { …(3) } ] to deeply equal [ { …(6) } ]
+ × docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > refuses the unversioned shape for NEW writes 2ms
+   → expected [Function] to throw an error
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > accepts an unchanged V2 source at the actual verifier 2ms
+ × docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > refuses a same-length extraction correction INSIDE the selected span 6ms
+   → promise resolved "[ { …(11) } ]" instead of rejecting
+ × docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > refuses a same-length extraction correction OUTSIDE the selected span 1ms
+   → promise resolved "[ { …(11) } ]" instead of rejecting
+ × docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > refuses an incorrect extractedTextSha256 even when file bytes and length match 5ms
+   → promise resolved "[ { …(11) } ]" instead of rejecting
+ × docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > refuses an incorrect spanSha256 even when file bytes and length match 1ms
+   → promise resolved "[ { …(11) } ]" instead of rejecting
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > preserves stored legacy references under their historical byte-and-length semantics 3ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > refuses a withdrawn source even with a stored legacy receipt 1ms
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 3 passed (9)
+   Start at  21:33:54
+   Duration  3.85s (transform 2.37s, setup 0ms, import 3.46s, tests 33ms, environment 0ms)
+
+stderr | docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts
+{
+  "timestamp": "2026-10-16T21:33:56.374Z",
+  "level": "warn",
+  "message": "[database] DATABASE_NEON_NEW_SECRET or DATABASE_URL not found, database features will be unavailable",
+  "context": {}
+}
+
+stderr | docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts
+{
+  "timestamp": "2026-10-16T21:33:57.779Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > retains complete V2 identity and drops caller text and qualification
+AssertionError: expected [ { …(3) } ] to deeply equal [ { …(6) } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "contentHash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "documentId": "d0000000-0000-4000-8000-000000000001",
+-     "extractedTextSha256": "bf6d669e6b82e52e35861dd75a82e60e83778a38baca20b90d1cae643fedad17",
+      "span": {
+        "end": 42,
+        "start": 7,
+        "totalChars": 51,
+      },
+-     "spanSha256": "1f817ca66530f5f4e796e9d7840988360fd4ced3f390fd7e7d388d3fb19a1d40",
+-     "version": 2,
+    },
+  ]
+
+ ❯ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts:52:114
+     53| describe('held-out malformed identities and historical downgrade contr…
+     54|   it.each([
+     55|     ['no version', { version: undefined }], ['string version', { versi…
+       |                 ^
+     56|     ['unknown version', { version: 3 }], ['null version', { version: n…
+     57|     ['missing extraction digest', { extractedTextSha256: undefined }],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > refuses the unversioned shape for NEW writes
+AssertionError: expected [Function] to throw an error
+ ❯ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts:55:58
+     53| describe('held-out malformed identities and historical downgrade contr…
+     54|   it.each([
+     55|     ['no version', { version: undefined }], ['string version', { versi…
+       |                                                          ^
+     56|     ['unknown version', { version: 3 }], ['null version', { version: n…
+     57|     ['missing extraction digest', { extractedTextSha256: undefined }],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > refuses a same-length extraction correction INSIDE the selected span
+AssertionError: promise resolved "[ { …(11) } ]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[
+  {
+    "completeText": false,
+    "contentHash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "disposition": null,
+    "documentId": "d0000000-0000-4000-8000-000000000001",
+    "extractionConfidence": null,
+    "extractionMethod": "pdf-text",
+    "originalFileAvailable": true,
+    "programId": "e0000000-0000-4000-8000-000000000001",
+    "sourceAvailability": "Original file available.",
+    "span": {
+      "end": 42,
+      "start": 7,
+      "totalChars": 51,
+    },
+    "title": "Diagnostic performance report",
+  },
+]
+
+ ❯ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts:65:88
+     64|     ['fractional start', { span: { ...span, start: 7.5 } }],
+     65|     ['unsafe total', { span: { ...span, totalChars: Number.MAX_SAFE_IN…
+     66|   ])('refuses %s in the strict new decoder and direct verifier', async…
+       |  ^
+     67|     const candidate = { ...reference(), ...patch };
+     68|     expect(() => parseDraftSourceReferences([candidate])).toThrow();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > refuses a same-length extraction correction OUTSIDE the selected span
+AssertionError: promise resolved "[ { …(11) } ]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[
+  {
+    "completeText": false,
+    "contentHash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "disposition": null,
+    "documentId": "d0000000-0000-4000-8000-000000000001",
+    "extractionConfidence": null,
+    "extractionMethod": "pdf-text",
+    "originalFileAvailable": true,
+    "programId": "e0000000-0000-4000-8000-000000000001",
+    "sourceAvailability": "Original file available.",
+    "span": {
+      "end": 42,
+      "start": 7,
+      "totalChars": 51,
+    },
+    "title": "Diagnostic performance report",
+  },
+]
+
+ ❯ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts:71:88
+     70|     expect(seams.load).not.toHaveBeenCalled();
+     71|   });
+     72|   it('normalizes valid UUID and digests without accepting asserted aut…
+       |                                                                                  ^
+     73|     const upper = { ...reference(), documentId: documentId.toUpperCase…
+     74|       extractedTextSha256: sha(original).toUpperCase(), spanSha256: id…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > refuses an incorrect extractedTextSha256 even when file bytes and length match
+ FAIL  docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > refuses an incorrect spanSha256 even when file bytes and length match
+AssertionError: promise resolved "[ { …(11) } ]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[
+  {
+    "completeText": false,
+    "contentHash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "disposition": null,
+    "documentId": "d0000000-0000-4000-8000-000000000001",
+    "extractionConfidence": null,
+    "extractionMethod": "pdf-text",
+    "originalFileAvailable": true,
+    "programId": "e0000000-0000-4000-8000-000000000001",
+    "sourceAvailability": "Original file available.",
+    "span": {
+      "end": 42,
+      "start": 7,
+      "totalChars": 51,
+    },
+    "title": "Diagnostic performance report",
+  },
+]
+
+ ❯ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts:74:120
+     73|     const upper = { ...reference(), documentId: documentId.toUpperCase…
+     74|       extractedTextSha256: sha(original).toUpperCase(), spanSha256: id…
+     75|       approved: true, identityVerification: 'agency_accepted', text: o…
+       |       ^
+     76|     expect(parseDraftSourceReferences([upper])).toEqual([reference()]);
+     77|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+

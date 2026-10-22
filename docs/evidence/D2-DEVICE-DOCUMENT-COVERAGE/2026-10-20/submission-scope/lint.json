@@ -1,0 +1,27 @@
+{
+  "command": [
+    "npx",
+    "eslint",
+    "--no-ignore",
+    "--max-warnings=0",
+    "--format",
+    "json",
+    "server/services/regulatory/registry/submittabilityCoverage.ts",
+    "server/services/regulatory/market-support.ts",
+    "server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts",
+    "server/services/regulatory/__tests__/market-support.test.ts"
+  ],
+  "startedAt": "2026-10-20T20:28:33.577066+00:00",
+  "elapsedSeconds": 2.182,
+  "exitCode": 0,
+  "sourcePins": {
+    "server/services/regulatory/registry/submittabilityCoverage.ts": "ff688e274c35b3a6b34c4d1c7f5ab12289defd86b51cc58615729b4fab6674b3",
+    "server/services/regulatory/market-support.ts": "ad3ef74771ea4b73f1b315320418ed928e1990a54d711664bbc84fe556a4ac40",
+    "server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts": "6475547ec2732a983ffeffffb79ecc3528e3fc75abdce8cce5c6556559130a23",
+    "server/services/regulatory/__tests__/market-support.test.ts": "247b649df6d35e89254f2d69b8466ea796d3991540be1da1ed1c9f2e83b6d52c"
+  },
+  "stdout": "[{\"filePath\":\"/workspace/ClinicalSageAI/server/services/regulatory/__tests__/market-support.test.ts\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]},{\"filePath\":\"/workspace/ClinicalSageAI/server/services/regulatory/market-support.ts\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]},{\"filePath\":\"/workspace/ClinicalSageAI/server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]},{\"filePath\":\"/workspace/ClinicalSageAI/server/services/regulatory/registry/submittabilityCoverage.ts\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]}]\n",
+  "stderr": "",
+  "stdoutSha256": "f1031bac9c26f09c3eb1b5d7d269e528e63a59da4e6d22b002b535acfeb9a8b6",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

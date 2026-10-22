@@ -17,12 +17,12 @@
  */
 
 import { authorizeAuthoringProgram, AuthoringProgramAccessError } from './authoring-program-access';
-import { parseDraftSourceReferences, verifyDraftSourceReferences, type DraftSourceReference, type VerifiedDraftSourceReference } from './draft-source-references';
-import { lockDocumentDispositionProgram } from '../document-data-disposition/program-lock';
+import { parseDraftSourceReferences, verifyDraftSourceReferences, reserveDraftSourceStores, type DraftSourceReference, type VerifiedDraftSourceReference } from './draft-source-references';
 import { checkSectionFigures, figureSpansInContent, type CitedExcerpt, type SectionFigureCheck } from './draft-figure-check';
 import { checkSectionClaims, type ClaimsExcerpt, type SectionClaimsCheck } from './section-claims-check';
 import { sectionReadableText } from './authoring-read-render';
 import crypto from 'crypto';
+import { AuthoringCreateOutcomeError } from './authoring-create-outcome';
 import { ANA_MACHINE_AUTHOR_ID, WORKFLOW_IMPORT_AUTHOR_ID, MACHINE_AUTHOR_IDS } from './revision-ledger';
 import { servedModelsForTurnOrRun } from './authoring-record';
 import type { QualifiedServedModel } from '../ai-governance/approved-models';
@@ -58,7 +58,7 @@ export interface DocumentProvenance {
   /** Declared references checked against current project records at save.
    * This is not claim-level support, generation proof, approval, or filing readiness. */
   projectSourceReferences?: Array<{
-    sectionCode: string; sources: VerifiedDraftSourceReference[]; qualification: 'unassessed'; verification: 'current_at_save';
+    sectionCode: string; sources: VerifiedDraftSourceReference[]; sourceReferenceVersion?: 2; qualification: 'unassessed'; verification: 'current_at_save';
     /** Each figure of the stored section, found in these excerpts or unverified (S5a, draft-figure-check.ts). */
     figures?: SectionFigureCheck;
     /**
@@ -337,7 +337,7 @@ const SOURCE_VERIFICATION_REFUSAL: AuthoringRefusal = { kind: 'refused', status:
 async function verifySourcesInsideSave(q: Queryable, ctx: CreateContext, programId: string, selected: SelectedDraftSources, provenance: DocumentProvenance): Promise<void> {
   if (!selected.length) return;
   try {
-    await lockDocumentDispositionProgram(q, ctx.tenantId, programId);
+    await reserveDraftSourceStores(q, ctx.tenantId, programId);
     const references: NonNullable<DocumentProvenance['projectSourceReferences']> = [];
     for (const section of selected) {
       const excerpts: Array<CitedExcerpt & ClaimsExcerpt> = [];
@@ -348,7 +348,7 @@ async function verifySourcesInsideSave(q: Queryable, ctx: CreateContext, program
       // the same frame. One load of the excerpts serves both.
       const figures = checkSectionFigures(sectionText, excerpts);
       const claims = checkSectionClaims(section.sectionCode, sectionText, excerpts);
-      references.push({ sectionCode: section.sectionCode, sources, qualification: 'unassessed', verification: 'current_at_save', figures, claims });
+      references.push({ sectionCode: section.sectionCode, sources, sourceReferenceVersion: 2, qualification: 'unassessed', verification: 'current_at_save', figures, claims });
     }
     // Keep the same object used by the document and every CREATE audit row.
     provenance.projectSourceReferences = references;
@@ -361,6 +361,9 @@ async function verifySourcesInsideSave(q: Queryable, ctx: CreateContext, program
 export interface CreateDocumentFromDraftOptions {
   /** Internal verified source receipt; public provenance parsing drops it. */
   verifiedImport?: { origin: AuthoringImportOrigin; warnings: string[]; reason: string; reserve: (q: Queryable) => Promise<void>; forceUnbound?: true };
+  /** Internal: the reason a person stated for a governed AnA save (save_document_to_vault).
+   *  Recorded as each section's genesis/CREATE reason for change in place of the generic one. */
+  changeReason?: string;
 }
 
 function workflowOriginFor(options?: CreateDocumentFromDraftOptions): WorkflowImportOrigin | null {
@@ -381,7 +384,7 @@ function draftedSectionSeeds(input: CreateDocumentFromDraftInput, contents: stri
   const contributors = machine ? [{ id: authorId, name: MACHINE_AUTHOR_IDS[authorId] }] : [];
   return input.sections.map((section, i) => ({
     code: section.code, title: section.title, content: contents[i], orderIndex: i,
-    changeReason: options?.verifiedImport?.reason ?? CHANGE_REASON[provenance.source],
+    changeReason: options?.verifiedImport?.reason ?? options?.changeReason ?? CHANGE_REASON[provenance.source],
     metadata: { provenance, drafted: true, ...(workflowImport ? { workflowSourceOrigin: workflowImport.sectionOrigins.find(origin => origin.code === section.code) ?? null } : {}) },
     contributors,
     lineage: {
@@ -483,13 +486,20 @@ export async function createDocumentFromDraft(
   if (!inserted) return SOURCE_VERIFICATION_REFUSAL;
   if (inserted instanceof AuthoringProgramAccessError) return { kind: 'refused', status: inserted.status, code: inserted.code, error: inserted.message };
   const { document, binding } = inserted;
-  await grantCreatorOwnership(ctx, docId);
-
-  const sections = await ctx.pool.query(
-    `SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id
-       FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2
-      ORDER BY order_index, created_at`,
-    [docId, ctx.tenantId],
-  );
-  return { kind: 'created', document, sections: sections.rows, provenance, binding };
+  try {
+    await grantCreatorOwnership(ctx, docId);
+    const access = { tenantId: ctx.tenantId, actor: ctx.actor, programId: input.programId, forWrite: false };
+    await authorizeAuthoringProgram(ctx.pool, access);
+    const sections = await ctx.pool.query(
+      `SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id
+         FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2
+        ORDER BY order_index, created_at`,
+      [docId, ctx.tenantId],
+    );
+    const result = globalThis.structuredClone({ kind: 'created' as const, document, sections: sections.rows, provenance, binding });
+    await authorizeAuthoringProgram(ctx.pool, access);
+    return result;
+  } catch {
+    throw new AuthoringCreateOutcomeError('committed', { organizationId: ctx.tenantId, programId: input.programId, documentId: docId });
+  }
 }

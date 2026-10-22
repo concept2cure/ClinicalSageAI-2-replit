@@ -295,4 +295,3 @@ stderr | server/jobs/__tests__/retentionCron.policies.test.ts > admin notificati
       Tests  22 passed (22)
    Start at  19:58:38
    Duration  810ms (transform 317ms, setup 156ms, import 859ms, tests 45ms, environment 0ms)
-

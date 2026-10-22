@@ -1,0 +1,23 @@
+{
+  "command": [
+    "npx",
+    "eslint",
+    "--no-ignore",
+    "--max-warnings=0",
+    "--format",
+    "json",
+    "server/services/market-specs/document-preparation.ts",
+    "server/services/ana/__tests__/device-component-scope.test.ts"
+  ],
+  "startedAt": "2026-10-20T20:58:10.539695+00:00",
+  "elapsedSeconds": 1.621,
+  "exitCode": 0,
+  "sourcePins": {
+    "server/services/market-specs/document-preparation.ts": "b1d71413e31dda871a2fa16f2435fb830cb99f9c12c5d7959d4e88e50f08a2dd",
+    "server/services/ana/__tests__/device-component-scope.test.ts": "c746ecfe4547475b7e984f7c874576a158a85f6e2df573d0e2836e9fcc9ef4b8"
+  },
+  "stdout": "[{\"filePath\":\"/workspace/ClinicalSageAI/server/services/ana/__tests__/device-component-scope.test.ts\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]},{\"filePath\":\"/workspace/ClinicalSageAI/server/services/market-specs/document-preparation.ts\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]}]\n",
+  "stderr": "",
+  "stdoutSha256": "3799f533a709e6fd5738c1d11e446eb718d11becb28597b6483deddcf5e6a911",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

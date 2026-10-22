@@ -1,0 +1,306 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/authoring/__tests__/authoring-source-import.test.ts
+{
+  "timestamp": "2026-10-16T21:32:52.474Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-16T21:32:52.475Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-source-import.test.ts
+{
+  "timestamp": "2026-10-16T21:32:52.476Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/authoring-source-import.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/authoring-source-import.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/authoring-source-import.test.ts
+{
+  "timestamp": "2026-10-16T21:32:53.758Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > requires one actual project relationship (ambiguous)
+{
+  "timestamp": "2026-10-16T21:32:55.966Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "authoring-program-access",
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "projectIds": [
+      42,
+      43
+    ]
+  }
+}
+
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses private project access before source metadata, bytes, conversion or creation 5ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > requires a current writable membership (viewer) 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > requires a current writable membership (null) 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses a noncanonical numeric actor 7tail before any lookup 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses a noncanonical numeric actor 0 before any lookup 0ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses a noncanonical numeric actor 9007199254740992 before any lookup 0ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses a noncanonical numeric actor 2147483648 before any lookup 4ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses mismatched principal and audit actor identities before any lookup 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > requires one actual project relationship (unanchored) 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > requires one actual project relationship (ambiguous) 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > fails closed when current sharing cannot be read 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > rechecks sharing on the creation transaction after conversion 3ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > refuses foreign projects before reading source bytes or writing 0ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > refuses unavailable source identities before reading bytes 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > refuses a superseded or unverified current version (false) after locking its exact source row 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > refuses a superseded or unverified current version (undefined) after locking its exact source row 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > refuses altered original bytes and records no authoring document 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > escapes extracted text, keeps custom types and verified origin, and states conversion loss 3ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > retains Word tables/headings and makes missing codes and embedded figures visible 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > refuses a changed source inside the canonical transaction 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > reopens the exact saved draft and keeps its edits and warnings 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > uses the captured upload with the same source hash rather than guessed Vault identities 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > requires the stated change reason "" 0ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > requires the stated change reason "short" 0ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > drops caller supplied import-source provenance at the public draft door 0ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > rejects source/program SQL-shaped inputs before any SQL or byte read 0ms
+stdout | server/services/authoring/__tests__/saved-draft-source-export.test.ts
+{
+  "timestamp": "2026-10-16T21:32:56.763Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-16T21:32:56.764Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/saved-draft-source-export.test.ts
+{
+  "timestamp": "2026-10-16T21:32:56.764Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/saved-draft-source-export.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/saved-draft-source-export.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/saved-draft-source-export.test.ts
+{
+  "timestamp": "2026-10-16T21:32:56.968Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses unavailable or changed saved evidence null 4ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses unavailable or changed saved evidence {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fileName":"validated-tlf.pdf","documentTitle":"Study TLFs","extractedText":"Exact study evidence","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text"},"disposition":"remove_data"} 1ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses unavailable or changed saved evidence {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fileName":"validated-tlf.pdf","documentTitle":"Study TLFs","extractedText":"Exact study evidence","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text"},"disposition":"supersede"} 1ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses unavailable or changed saved evidence {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","fileName":"validated-tlf.pdf","documentTitle":"Study TLFs","extractedText":"Exact study evidence","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text"}} 0ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses unavailable or changed saved evidence {"id":"10000000-0000-4000-8000-000000000001","programId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fileName":"validated-tlf.pdf","documentTitle":"Study TLFs","extractedText":"Exact study evidence","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text"}} 0ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses unavailable or changed saved evidence {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fileName":"validated-tlf.pdf","documentTitle":"Study TLFs","extractedText":"Exact study evidence","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extraction_failed","extractionMethod":"pdf-text"}} 0ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses unavailable or changed saved evidence {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fileName":"validated-tlf.pdf","documentTitle":"Study TLFs","extractedText":"shorter","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text"}} 0ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > keeps valid retained data usable and verifies through the caller executor 74ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > does not invent source qualification for legacy or manually authored documents 1ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > does not discard malformed persisted source groups or a conflicting saved source scope 0ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > fails closed when the current source read fails 1ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses a same-length extraction correction inside or outside the excerpt: Xxact study evidence 1ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses a same-length extraction correction inside or outside the excerpt: Exact study evidencX 0ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > retains untouched V2 and eligible original-unavailable text without storing a second text copy 1ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > a marked V2 group cannot downgrade by stripping version 0ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > a marked V2 group cannot downgrade by stripping extractedTextSha256 0ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > a marked V2 group cannot downgrade by stripping spanSha256 0ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses a missing/unknown group marker while any V2 reference identity remains 1ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > preserves legacy original-byte/length semantics without manufacturing extraction identity 1ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > privately snapshots direct verifier input and actor before its first asynchronous source load 1ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses a forged slice digest on direct typed verifier calls 1ms
+stdout | server/services/authoring/__tests__/saved-draft-source-reservation.test.ts
+{
+  "timestamp": "2026-10-16T21:32:58.601Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-16T21:32:58.602Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/saved-draft-source-reservation.test.ts
+{
+  "timestamp": "2026-10-16T21:32:58.602Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/saved-draft-source-reservation.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/saved-draft-source-reservation.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/saved-draft-source-reservation.test.ts
+{
+  "timestamp": "2026-10-16T21:32:58.795Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/saved-draft-source-reservation.test.ts > source reservations contain new rendition receipts > reserves predecessor/successor writes before reading sources and keeps the receipt inside the same transaction 5ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-reservation.test.ts > source reservations contain new rendition receipts > a source made unavailable before reservation produces no rendition receipt 2ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-reservation.test.ts > source reservations contain new rendition receipts > refused source-store locking fails closed before work 1ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-reservation.test.ts > source reservations contain new rendition receipts > a failed renderer or receipt rolls back and preserves the failure 2ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-reservation.test.ts > source reservations contain new rendition receipts > a legacy/manual rendition uses the existing path without claiming a source reservation 1ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-reservation.test.ts > source reservations contain new rendition receipts > pins V2 saved references before a connection await and preserves the same reservation through commit 2ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-reservation.test.ts > source reservations contain new rendition receipts > a same-length correction after save refuses under the held source stores and rolls back without a rendition 2ms
+stdout | server/services/authoring/__tests__/draft-source-references.test.ts
+{
+  "timestamp": "2026-10-16T21:32:59.703Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-16T21:32:59.705Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/draft-source-references.test.ts
+{
+  "timestamp": "2026-10-16T21:32:59.705Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/draft-source-references.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/draft-source-references.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/draft-source-references.test.ts
+{
+  "timestamp": "2026-10-16T21:32:59.971Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > keeps only identity/version/span, never caller qualification or source text 2ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references null 1ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references undefined 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"version":2,"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","extractedTextSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","spanSha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","span":{"start":0,"end":10,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"version":2,"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","extractedTextSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","spanSha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","span":{"start":0,"end":10,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"version":2,"documentId":"file_9_chat","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","extractedTextSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","spanSha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","span":{"start":0,"end":10,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"version":2,"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"missing","extractedTextSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","spanSha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","span":{"start":0,"end":10,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"version":2,"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","extractedTextSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","spanSha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","span":{"start":-1,"end":10,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"version":2,"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","extractedTextSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","spanSha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","span":{"start":10,"end":10,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"version":2,"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","extractedTextSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","spanSha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","span":{"start":5,"end":12006,"totalChars":20000}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"version":2,"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","extractedTextSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","spanSha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","span":{"start":0,"end":-1,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"version":2,"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","extractedTextSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","spanSha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","span":{"start":0,"end":21,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"version":2,"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","extractedTextSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","spanSha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","span":{"start":0,"end":12001,"totalChars":20000}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"version":2,"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","extractedTextSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","spanSha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","span":{"start":0,"end":1.5,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > keeps an excerpt that starts inside the document, the stretch a section needs (S5d) 1ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > counts the budget by excerpt length, wherever the excerpts start 1ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses aggregate excerpt budget overflow 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > retains source references but strips fabricated document-level verified provenance 1ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references rather than silently dropping them on parse 1ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses a stripped version without a legacy fallback 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses a stripped extractedTextSha256 without a legacy fallback 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses a stripped spanSha256 without a legacy fallback 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses unknown or coerced version 1 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses unknown or coerced version 3 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses unknown or coerced version "2" 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses unknown or coerced version null 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses a numeric-string start 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses a numeric-string end 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses a numeric-string totalChars 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > normalizes valid IDs and digests while privately copying coordinates 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > does not evaluate source identity accessors or accept sparse selections 0ms
+stdout | server/services/authoring/__tests__/import-source-references.test.ts
+{
+  "timestamp": "2026-10-16T21:33:01.490Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-16T21:33:01.492Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/import-source-references.test.ts
+{
+  "timestamp": "2026-10-16T21:33:01.492Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/import-source-references.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/import-source-references.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/import-source-references.test.ts
+{
+  "timestamp": "2026-10-16T21:33:01.708Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/import-source-references.test.ts > exact imported origins remain dependencies of the authored document > verifies vault imports even with no model excerpt receipts 3ms
+ ✓ server/services/authoring/__tests__/import-source-references.test.ts > exact imported origins remain dependencies of the authored document > verifies data-room imports even with no model excerpt receipts 1ms
+ ✓ server/services/authoring/__tests__/import-source-references.test.ts > exact imported origins remain dependencies of the authored document > refuses withdrawn or changed originals (false) 2ms
+ ✓ server/services/authoring/__tests__/import-source-references.test.ts > exact imported origins remain dependencies of the authored document > refuses withdrawn or changed originals (true) 1ms
+ ✓ server/services/authoring/__tests__/import-source-references.test.ts > exact imported origins remain dependencies of the authored document > does not silently ignore malformed saved source identities 1ms
+ ✓ server/services/authoring/__tests__/import-source-references.test.ts > exact imported origins remain dependencies of the authored document > holds exact source rows through the rendition receipt without a global table lock 1ms
+ ✓ server/services/authoring/__tests__/import-source-references.test.ts > exact imported origins remain dependencies of the authored document > an unavailable exact import source produces no rendition or receipt 1ms
+
+ Test Files  5 passed (5)
+      Tests  92 passed (92)
+   Start at  21:32:50
+   Duration  11.12s (transform 3.51s, setup 125ms, import 10.09s, tests 169ms, environment 0ms)
+

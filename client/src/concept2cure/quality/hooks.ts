@@ -12,7 +12,8 @@
 
 import { useMemo } from 'react';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
-import type { QmsDoc, DocType, DocStatus, SopTemplate, ReviewDueRow, TrainingRow } from './data';
+import type { QmsDoc, DocStatus, SopTemplate, ReviewDueRow, TrainingRow } from './data';
+import {adaptDoc,type ServerDoc} from './qmsDocumentRecord';
 
 /** Unwrap the API envelope — `ok(res, rows, meta)` returns `{ data, ... }`,
  *  but tolerate a bare array or a `{ rows }` shape too.
@@ -44,35 +45,6 @@ function listOf<T>(payload: unknown): T[] | null {
  *  from "still loading". */
 function shapeError(path: string, payload: unknown, rows: unknown[] | null): string | null {
   return payload != null && rows === null ? `unexpected response shape for ${path}` : null;
-}
-
-interface ServerDoc {
-  id: number;
-  doc_number: string;
-  title: string;
-  doc_type: string;
-  category: string | null;
-  version: string;
-  status: string;
-  effective_date: string | null;
-  next_review_date: string | null;
-  updated_at: string | null;
-  overdue?: boolean;
-}
-
-function adaptDoc(r: ServerDoc): QmsDoc {
-  return {
-    id: r.id,
-    docNumber: r.doc_number,
-    title: r.title,
-    docType: r.doc_type as DocType,
-    category: r.category,
-    version: r.version,
-    status: r.status as DocStatus,
-    effectiveDate: r.effective_date,
-    nextReviewDate: r.next_review_date,
-    updatedAt: r.updated_at,
-  };
 }
 
 /** Controlled-document register — GET /api/mdx/qms/documents. */

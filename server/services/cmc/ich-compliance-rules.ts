@@ -6,7 +6,7 @@
  * `IchCheckFinding[]` with the guideline citation, rule ID, status, and
  * evidence array.
  *
- * Covers: Q1A(R2), Q2(R2), Q3A(R2)/Q3B(R2), Q3D(R2), Q6A/Q6B, Q8(R2),
+ * Covers: Q1A(R2), Q1E, Q2(R2), Q3A(R2)/Q3B(R2), Q3D(R2), Q6A/Q6B, Q8(R2),
  * Q9(R1), Q10. The Q2 rule, which depends on the program's stage, is
  * ich-compliance-q2.ts.
  *
@@ -24,7 +24,14 @@ export type { ProgramStage } from './program-stage';
 
 /** The guidelines the engine reports against, at the revision in force. */
 export const ICH_GUIDELINES_CHECKED = [
-  'Q1A(R2)', 'Q2(R2)', 'Q3A(R2)', 'Q3B(R2)', 'Q3D(R2)', 'Q6A', 'Q6B', 'Q8(R2)', 'Q9(R1)', 'Q10',
+  /* Q1E joined 2026-10-18. The platform already computed a real Q1E
+     evaluation — the ANCOVA combinability test in shelf-life-poolability — and
+     reported no verdict for it, so a shelf-life claim beyond what the recorded
+     data supports raised no finding while the composed §3.2.P.8 printed it.
+     Judged at the program's stage: Q1E governs a registration application's
+     proposed shelf life, and a clinical-trial application answers a different
+     question (services/cmc/ich-compliance-q1e.ts). */
+  'Q1A(R2)', 'Q1E', 'Q2(R2)', 'Q3A(R2)', 'Q3B(R2)', 'Q3D(R2)', 'Q6A', 'Q6B', 'Q8(R2)', 'Q9(R1)', 'Q10',
 ] as const;
 
 export type IchGuideline = (typeof ICH_GUIDELINES_CHECKED)[number];

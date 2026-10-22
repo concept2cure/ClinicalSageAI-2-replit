@@ -9,9 +9,8 @@
 ✅ Schema migration complete — safe to roll services.
 
 ## the tables after the tenant sweep: RLS forced, the sweep's policy, the four triggers enabled (O)
-     relname      | rls | force_rls |        policies         |                               triggers                                
+     relname      | rls | force_rls |        policies         |                               triggers
 ------------------+-----+-----------+-------------------------+-----------------------------------------------------------------------
  ana_record_blobs | t   | t         | tenant_isolation_policy | trg_ana_record_blobs_append_only:O,trg_ana_record_blobs_no_truncate:O
  ana_turn_records | t   | t         | tenant_isolation_policy | trg_ana_turn_records_append_only:O,trg_ana_turn_records_no_truncate:O
 (2 rows)
-

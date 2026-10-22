@@ -11,18 +11,11 @@
  * 2026-09-23 W5/D7, MDN final pass) — no database, no transmittal rows; each
  * caller maps the four outcomes onto its own records.
  *
- * ── KNOWN CONFORMANCE GAP (carried over verbatim from fda-esg.ts) ────────────
- * The AS2 *message envelope* is NOT yet a PKCS#7/CMS S/MIME structure. The body
- * is posted as-is; `signAs2Body` computes a detached RSA-SHA256 signature but it
- * is NOT attached as an S/MIME `multipart/signed` part, and there is no PKCS#7
- * encryption. An agency AS2 endpoint that requires S/MIME will reject the
- * envelope (a 4xx or a refusing MDN), which every caller surfaces honestly (the
- * success path only runs on a 2xx whose MDN accepts the very message that was
- * sent; see classifyDelivery at the end of this file — 2026-09-23 MDN final
- * pass — for how every other answer is classed).
- * Do not represent AS2 transmission as production-conformant until a real CMS
- * implementation lands; confirm with the agency during UAT whether a
- * TLS-protected, non-S/MIME AS2 envelope is accepted for the account.
+ * Production callers build CMS-signed, recipient-encrypted MIME through
+ * as2-cms.ts and use classifyVerifiedAs2Delivery to verify the pinned agency
+ * signature and content MIC. The pure MDN syntax parser is not delivery proof.
+ * OpenSSL is a required runtime dependency. Agency/account UAT remains a
+ * separate qualification requirement; offline engineering is not agency approval.
  *
  * @module server/services/submission-gateways/as2-transport
  */
@@ -33,6 +26,7 @@ import type { Socket } from 'node:net';
 import type { TLSSocket } from 'node:tls';
 import { URL } from 'url';
 import { TransportError } from './types';
+import { as2MicMatches, verifyAs2CmsReceipt } from './as2-cms';
 
 /** The AS2 message a caller wants on the wire. */
 export interface As2Message {
@@ -45,8 +39,8 @@ export interface As2Message {
   /** MIME type of `body`. */
   contentType: string;
   body: Buffer;
-  /** Detached base64 RSA-SHA256 signature over `body` (see signAs2Body). */
-  signaturePem: string;
+  /** @deprecated Detached bare RSA signatures are not an AS2 S/MIME envelope. */
+  signaturePem?: string;
   /** `Content-Disposition` filename — the name the agency files the payload under. */
   filename?: string;
   /** `User-Agent` header value. */
@@ -70,6 +64,8 @@ export interface As2Response {
 
 /** Parsed MDN disposition. */
 export interface ParsedMdn {
+  /** The signed receipt's payload MIC, when present and unambiguous. */
+  receivedContentMic?: string;
   /**
    * The Original-Message-ID field value as it arrived (unfolded, trimmed), or
    * null when the notification has no such field or its value is empty. Not
@@ -364,7 +360,8 @@ export function parseMdn(raw: string, httpContentType?: string | string[] | null
 
   const disposition = field('Disposition');
   const { accepted, failed } = disposition === null ? NEITHER : judgeDisposition(disposition);
-  return { originalMessageId: field('Original-Message-ID'), accepted, failed, disposition };
+  const mic = field('Received-content-MIC');
+  return { originalMessageId: field('Original-Message-ID'), accepted, failed, disposition, ...(mic !== null ? { receivedContentMic: mic } : {}) };
 }
 
 /**
@@ -474,8 +471,8 @@ export function buildAs2Headers(msg: As2Message): Record<string, string> {
     'AS2-To':                    msg.to,
     'AS2-Version':               '1.2',
     'Disposition-Notification-To': msg.from,
-    'Disposition-Notification-Options': 'signed-receipt-protocol=optional, pkcs7-signature; signed-receipt-micalg=optional, sha-256',
-    'Receipt-Delivery-Option':   'sync',  /* synchronous MDN — easier to wire */
+    'Disposition-Notification-Options': 'signed-receipt-protocol=required, pkcs7-signature; signed-receipt-micalg=required, sha-256',
+    // A Receipt-Delivery-Option URL requests async delivery; omission is synchronous.
     'Content-Type':              msg.contentType,
     'Content-Disposition':       `attachment; filename="${msg.filename ?? 'ectd.zip'}"`,
     'Content-Length':            String(msg.body.length),
@@ -932,4 +929,24 @@ export function classifyAs2Delivery(attempt: DeliveryAttempt, messageId: string)
     if (refusal === null) return { kind: 'RECEIVED', receiptId: headerValue(response.headers['message-id']) ?? messageId };
     return { kind: refusal.kind === 'rejected' ? 'REFUSED_BY_AGENCY' : 'DELIVERED_UNCONFIRMED', reason: refusal.reason };
   });
+}
+
+/** Production AS2 acceptance requires a pinned CMS signature plus the original payload MIC.
+ * The synchronous syntax classifier above is retained for pure MDN parsing tests. */
+export async function classifyVerifiedAs2Delivery(attempt: DeliveryAttempt, messageId: string, proof: { agencyCertPem: string; expectedMic: string }): Promise<DeliveryOutcome> {
+  if (!attempt.ok || attempt.response.httpStatus < 200 || attempt.response.httpStatus >= 300) return classifyAs2Delivery(attempt, messageId);
+  let verdict: TwoXxVerdict;
+  try {
+    const header = attempt.response.headers['content-type'];
+    if (typeof header !== 'string') throw new Error('ambiguous or missing MIME type');
+    const signed = await verifyAs2CmsReceipt(attempt.response.body, header, proof.agencyCertPem);
+    const mdn = parseMdn(signed.toString('utf8'));
+    const refusal = mdnRefusal(mdn, messageId);
+    if (refusal) verdict = { kind: refusal.kind === 'rejected' ? 'REFUSED_BY_AGENCY' : 'DELIVERED_UNCONFIRMED', reason: refusal.reason };
+    else if (!as2MicMatches(mdn.receivedContentMic, proof.expectedMic)) verdict = { kind: 'DELIVERED_UNCONFIRMED', reason: 'Agency-signed MDN MIC does not identify the exact message content sent.' };
+    else verdict = { kind: 'RECEIVED', receiptId: headerValue(attempt.response.headers['message-id']) ?? messageId };
+  } catch {
+    verdict = { kind: 'DELIVERED_UNCONFIRMED', reason: 'The agency MDN signature could not be verified against its pinned certificate.' };
+  }
+  return classifyDelivery(attempt, messageId, () => verdict);
 }

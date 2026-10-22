@@ -39,6 +39,12 @@ import { anaScratchDir } from '../document-workspace';
 
 const CTX = { organizationId: 1, userId: 1, humanConfirmed: true };
 const PROGRAM = '7d1c2f0e-5b7a-4c1e-9a43-0f2b6d1e8c55';
+const recordedIdentity = (patch: Record<string, unknown> = {}) => ({
+  programId: PROGRAM, applicationNumber: '123456', applicantName: 'Concept2Cure Therapeutics',
+  applicantSponsorId: '11111111-1111-4111-8111-111111111111', applicantId: '123456789',
+  contact: { name: 'Regulatory Contact', phone: '+1 617 555 0100', email: 'regulatory@example.test' },
+  ...patch,
+});
 const pdf = (l: string) => Buffer.from(`%PDF-1.4\n% ${l}\ntrailer<< /Root 1 0 R >>\n%%EOF\n`, 'utf8');
 
 type Schema = { properties: Record<string, unknown>; required: string[] };
@@ -88,9 +94,7 @@ describe('package_ectd_for_region — identity from the record (P-27)', () => {
   });
 
   it('writes the recorded application number and applicant, never the model-supplied ones', async () => {
-    readRecordedPackageIdentity.mockResolvedValue({
-      programId: PROGRAM, applicationNumber: '123456', applicantName: 'Concept2Cure Therapeutics',
-    });
+    readRecordedPackageIdentity.mockResolvedValue(recordedIdentity());
     const { cover, output, modelInput } = await coverLeaf();
     try {
       const out = await run(modelInput());
@@ -103,6 +107,12 @@ describe('package_ectd_for_region — identity from the record (P-27)', () => {
       const xml = (await zip.file(regional)?.async('string')) ?? '';
       expect(xml).toMatch(/<application-number[^>]*>123456<\/application-number>/);
       expect(xml).toContain('<company-name>Concept2Cure Therapeutics</company-name>');
+      expect(xml).toContain('<id>123456789</id>');
+      expect(xml).toContain('<applicant-contacts>');
+      expect(xml).toMatch(/<applicant-contact-name[^>]*>Regulatory Contact<\/applicant-contact-name>/);
+      expect(xml).toContain('<telephone>+1 617 555 0100</telephone>');
+      expect(xml).toContain('<email>regulatory@example.test</email>');
+      expect(xml).not.toContain('UNASSIGNED-ORG-');
       expect(xml).not.toContain('MODEL-999999');
       expect(xml).not.toContain('Model Invented Sponsor');
       expect(xml).not.toContain('MODEL-DUNS');
@@ -113,9 +123,7 @@ describe('package_ectd_for_region — identity from the record (P-27)', () => {
   });
 
   it('refuses by name when the project records no application number, and builds nothing', async () => {
-    readRecordedPackageIdentity.mockResolvedValue({
-      programId: PROGRAM, applicationNumber: null, applicantName: 'Concept2Cure Therapeutics',
-    });
+    readRecordedPackageIdentity.mockResolvedValue(recordedIdentity({ applicationNumber: null }));
     const { cover, output, modelInput } = await coverLeaf();
     try {
       const out = await run(modelInput());
@@ -131,13 +139,32 @@ describe('package_ectd_for_region — identity from the record (P-27)', () => {
   });
 
   it('refuses by name when the organisation records no usable applicant name', async () => {
-    readRecordedPackageIdentity.mockResolvedValue({ programId: PROGRAM, applicationNumber: '123456', applicantName: null });
+    readRecordedPackageIdentity.mockResolvedValue(recordedIdentity({ applicantName: null }));
     const { cover, modelInput } = await coverLeaf();
     try {
       const out = await run(modelInput());
       expect(out.code).toBe('PACKAGE_IDENTITY_MISSING');
       expect(out.missing).toEqual(['applicantName']);
     } finally {
+      await fs.rm(cover, { force: true });
+    }
+  });
+
+  it.each([
+    { patch: { applicantId: null }, field: 'applicantId' },
+    { patch: { applicantId: '12-345-6789' }, field: 'applicantId' },
+    { patch: { applicationNumber: 'IND123456' }, field: 'applicationNumber' },
+    { patch: { contact: { name: 'Regulatory Contact', phone: null, email: 'regulatory@example.test' } }, field: 'contact.phone' },
+  ])('refuses missing or invalid recorded FDA identity ($field) before publishing bytes', async ({ patch, field }) => {
+    readRecordedPackageIdentity.mockResolvedValue(recordedIdentity(patch));
+    const { cover, output, modelInput } = await coverLeaf();
+    try {
+      const out = await run(modelInput());
+      expect(out.code).toBe('PACKAGE_IDENTITY_MISSING');
+      expect(out.missing).toContain(field);
+      await expect(fs.readdir(output)).rejects.toThrow();
+    } finally {
+      await fs.rm(output, { recursive: true, force: true });
       await fs.rm(cover, { force: true });
     }
   });

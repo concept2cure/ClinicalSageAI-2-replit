@@ -66,4 +66,3 @@ Result: every linked form that has elements has at least 9 required ones. The ca
 On the duplication charge: the client computes a display ratio from the rows the server sends. In every reachable state, round(present/required*100) equals the server's requiredPresentPct. It is not the model producing a figure, and it gives no verdict that disagrees with the server. The BudgetTab precedent involved a real divergent re-derivation (F&A, margin). A present/required count over server-supplied booleans is at most a style preference, not a defect against CLAUDE.md with an observable failure.
 
 Coverage: I checked every INSERT/UPDATE/DELETE on consent_form_elements in server/, migrations/ and scripts/, the protocol-consent routes, the assembler mapping, and the NOT NULL DEFAULT true column. I did not run the UI or hit the database, because no reachable input exists to test.
-

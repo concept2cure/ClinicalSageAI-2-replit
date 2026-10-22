@@ -155,16 +155,20 @@ function refuse(res: Response, status: number, code: string, message: string): v
  * a refusing state, which is rare and finite.
  *
  * ── Why it never throws ───────────────────────────────────────────────────────
- * Fire-and-forget. An audit-sink outage must not take out staff access during an
+ * An audit-sink outage must not take out staff access during an
  * incident — that would couple the recovery path to the thing being recovered.
- * The failure is logged at warn so a silently-dropped audit event is still
- * visible in the application log.
+ * The actual canonical receipt reaches response headers before the handler
+ * runs, so a resolved persistence failure is visible without blocking access.
  *
  * The import is lazy for the same reason the posture service's is: this
  * middleware sits in the chain every route passes through, and must not drag the
  * audit subsystem (and its database handle) into module-load time.
  */
-function auditPlatformOverride(req: Request, posture: TenantAccessPosture): void {
+type OverrideObservation = Pick<TenantAccessPosture, 'organizationId' | 'state' | 'code'> & {
+  decision: TenantAccessPosture['decision'] | 'unknown';
+};
+
+async function auditPlatformOverride(req: Request, res: Response, posture: OverrideObservation): Promise<void> {
   const actorId = String(req.user?.userId ?? req.user?.id ?? 'unknown');
   const path = requestFullPath(req);
 
@@ -177,9 +181,12 @@ function auditPlatformOverride(req: Request, posture: TenantAccessPosture): void
     path,
   });
 
-  void import('../services/audit/auditLogger')
-    .then(({ logAuditEvent }) =>
-      logAuditEvent({
+  const { auditRowOutcomeFrom, setAuditRowHeaders } = await import('../services/audit/audit-write-outcome');
+  let result: Awaited<ReturnType<typeof import('../services/audit/auditLogger').logAuditEvent>> | undefined;
+  let thrown: string | undefined;
+  try {
+    const { logAuditEvent } = await import('../services/audit/auditLogger');
+    result = await logAuditEvent({
         category: 'authorization',
         // A suspension bypassed on a DENY tenant is the sharper event than one on
         // a read-only tenant, and reviewers filter on severity.
@@ -205,15 +212,16 @@ function auditPlatformOverride(req: Request, posture: TenantAccessPosture): void
         },
         ipAddress: req.ip,
         userAgent: req.get?.('user-agent'),
-      })
-    )
-    .catch(error => {
-      logger.warn('Failed to record tenant lifecycle override in the audit trail', {
-        actorId,
-        organizationId: posture.organizationId,
-        error: error instanceof Error ? error.message : String(error),
       });
-    });
+  } catch (error) {
+    thrown = error instanceof Error ? error.message : String(error);
+  }
+  setAuditRowHeaders(res, auditRowOutcomeFrom(result, {
+    action: 'authorization.tenant_lifecycle_override',
+    resourceType: 'organization',
+    resourceId: posture.organizationId,
+    thrown,
+  }));
 }
 
 /**
@@ -268,6 +276,9 @@ export function enforceTenantLifecycle(req: Request, res: Response, next: NextFu
             method: req.method,
             path,
           });
+          await auditPlatformOverride(req, res, {
+            organizationId, state: 'unknown', decision: 'unknown', code: 'TENANT_STATE_UNVERIFIED',
+          });
           next();
           return;
         }
@@ -301,7 +312,7 @@ export function enforceTenantLifecycle(req: Request, res: Response, next: NextFu
           decision: 'platform_override',
           state: posture.state,
         });
-        auditPlatformOverride(req, posture);
+        await auditPlatformOverride(req, res, posture);
         next();
         return;
       }
@@ -328,6 +339,9 @@ export function enforceTenantLifecycle(req: Request, res: Response, next: NextFu
         // Same reasoning as the unreadable-posture arm above: a crash in this
         // guard must not lock staff out of the platform they are there to fix.
         tenantLifecycleDecisions.inc({ decision: 'platform_override', state: 'unknown' });
+        await auditPlatformOverride(req, res, {
+          organizationId, state: 'unknown', decision: 'unknown', code: 'TENANT_STATE_UNVERIFIED',
+        });
         next();
         return;
       }

@@ -1,0 +1,226 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts
+{
+  "timestamp": "2026-10-20T20:12:17.952Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-20T20:12:17.955Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts
+{
+  "timestamp": "2026-10-20T20:12:17.956Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts
+{
+  "timestamp": "2026-10-20T20:12:18.425Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts > registered batch tool stops between operations inside one multi-source load > starts no later operation after Stop during 'catalog scope' 38ms
+   → expected "vi.fn()" to be called +0 times, but got 6 times
+ × server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts > registered batch tool stops between operations inside one multi-source load > starts no later operation after Stop during 'first metadata' 2ms
+   → expected "vi.fn()" to be called 1 times, but got 6 times
+ × server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts > registered batch tool stops between operations inside one multi-source load > starts no later operation after Stop during 'first include-text body' 2ms
+   → expected "vi.fn()" to be called 2 times, but got 6 times
+ × server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts > registered batch tool stops between operations inside one multi-source load > starts no later operation after Stop during 'first final current-body recheck' 1ms
+   → expected "vi.fn()" to be called 5 times, but got 6 times
+ × server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts > registered batch tool stops between operations inside one multi-source load > starts no later operation after Stop during 'final actor scope' 3ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "query": [Function query],
+      },
+      Object {
+        "organizationId": 7,
+        "programId": "20000000-0000-4000-8000-000000000001",
+        "userId": 3,
+      },
+      Object {
+        "actor": Object {
+          "role": "member",
+          "userId": 3,
+        },
+        "programIds": Array [
+          "20000000-0000-4000-8000-000000000001",
+        ],
+      },
+    ]
+
+
+Number of calls: 1
+
+ ✓ server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts > registered batch tool stops between operations inside one multi-source load > keeps a stop during the final program operation cancelled without drafting 1ms
+ × server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts > registered batch tool stops between operations inside one multi-source load > classifies typed DraftCancelledError as cancelled only after real Stop 4ms
+   → expected { status: 'cancelled', …(10) } to match object { Object (status, count, ...) }
+(3 matching properties omitted from actual)
+ × server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts > registered batch tool stops between operations inside one multi-source load > classifies typed AbortError as cancelled only after real Stop 1ms
+   → expected { status: 'cancelled', …(10) } to match object { Object (status, count, ...) }
+(3 matching properties omitted from actual)
+ ✓ server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts > existing cancellation, failure and trust controls stay distinct > retains a genuine catalog rejection when Stop coincides with that rejection 1ms
+ ✓ server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts > existing cancellation, failure and trust controls stay distinct > does not relabel an abort-shaped rejection without a real Stop 1ms
+ ✓ server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts > existing cancellation, failure and trust controls stay distinct > ignores a JSON-shaped signal instead of granting it Stop authority 1ms
+ ✓ server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts > existing cancellation, failure and trust controls stay distinct > preserves ordinary multi-document loading without a signal 1ms
+ ✓ server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts > existing cancellation, failure and trust controls stay distinct > starts no operations when the existing real signal is already stopped 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts > registered batch tool stops between operations inside one multi-source load > starts no later operation after Stop during 'catalog scope'
+AssertionError: expected "vi.fn()" to be called +0 times, but got 6 times
+ ❯ server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts:96:23
+     94|     expectStopped(receipt);
+     95|     expect(seam.scope).toHaveBeenCalledTimes(1);
+     96|     expect(seam.load).toHaveBeenCalledTimes(reads);
+       |                       ^
+     97|     expect(seam.actor).toHaveBeenCalledTimes(actor);
+     98|     expect(seam.program).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts > registered batch tool stops between operations inside one multi-source load > starts no later operation after Stop during 'first metadata'
+AssertionError: expected "vi.fn()" to be called 1 times, but got 6 times
+ ❯ server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts:96:23
+     94|     expectStopped(receipt);
+     95|     expect(seam.scope).toHaveBeenCalledTimes(1);
+     96|     expect(seam.load).toHaveBeenCalledTimes(reads);
+       |                       ^
+     97|     expect(seam.actor).toHaveBeenCalledTimes(actor);
+     98|     expect(seam.program).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts > registered batch tool stops between operations inside one multi-source load > starts no later operation after Stop during 'first include-text body'
+AssertionError: expected "vi.fn()" to be called 2 times, but got 6 times
+ ❯ server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts:96:23
+     94|     expectStopped(receipt);
+     95|     expect(seam.scope).toHaveBeenCalledTimes(1);
+     96|     expect(seam.load).toHaveBeenCalledTimes(reads);
+       |                       ^
+     97|     expect(seam.actor).toHaveBeenCalledTimes(actor);
+     98|     expect(seam.program).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts > registered batch tool stops between operations inside one multi-source load > starts no later operation after Stop during 'first final current-body recheck'
+AssertionError: expected "vi.fn()" to be called 5 times, but got 6 times
+ ❯ server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts:96:23
+     94|     expectStopped(receipt);
+     95|     expect(seam.scope).toHaveBeenCalledTimes(1);
+     96|     expect(seam.load).toHaveBeenCalledTimes(reads);
+       |                       ^
+     97|     expect(seam.actor).toHaveBeenCalledTimes(actor);
+     98|     expect(seam.program).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts > registered batch tool stops between operations inside one multi-source load > starts no later operation after Stop during 'final actor scope'
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "query": [Function query],
+      },
+      Object {
+        "organizationId": 7,
+        "programId": "20000000-0000-4000-8000-000000000001",
+        "userId": 3,
+      },
+      Object {
+        "actor": Object {
+          "role": "member",
+          "userId": 3,
+        },
+        "programIds": Array [
+          "20000000-0000-4000-8000-000000000001",
+        ],
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts:98:30
+     96|     expect(seam.load).toHaveBeenCalledTimes(reads);
+     97|     expect(seam.actor).toHaveBeenCalledTimes(actor);
+     98|     expect(seam.program).not.toHaveBeenCalled();
+       |                              ^
+     99|     expect(operations.at(-1)).toBe(at);
+    100|     expect(seam.load.mock.calls.some(([input]) => (input as { document…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts > registered batch tool stops between operations inside one multi-source load > classifies typed DraftCancelledError as cancelled only after real Stop
+ FAIL  server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts > registered batch tool stops between operations inside one multi-source load > classifies typed AbortError as cancelled only after real Stop
+AssertionError: expected { status: 'cancelled', …(10) } to match object { Object (status, count, ...) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "cancelled": 2,
++   "cancelled": 1,
+    "cancelledIndices": [
+-     0,
+      1,
+    ],
+    "count": 0,
+-   "failed": 0,
++   "failed": 1,
+    "requested": 2,
+-   "retryIndices": [],
++   "retryIndices": [
++     0,
++   ],
+    "savedCount": 0,
+    "status": "cancelled",
+  }
+
+ ❯ expectStopped server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts:53:19
+     51| }
+     52| function expectStopped(receipt: Receipt) {
+     53|   expect(receipt).toMatchObject({ status: 'cancelled', count: 0, faile…
+       |                   ^
+     54|     requested: 2, savedCount: 0, retryIndices: [], cancelledIndices: […
+     55|   receipt.sections.forEach(slot => {
+ ❯ server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts:118:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 6 passed (13)
+   Start at  20:12:15
+   Duration  9.66s (transform 6.11s, setup 73ms, import 9.20s, tests 60ms, environment 0ms)
+

@@ -5,4 +5,3 @@
   146:8  warning  Function 'buildTechnicalFilePlan' has a complexity of 22. Maximum allowed is 15  complexity
 
 ✖ 3 problems (0 errors, 3 warnings)
-

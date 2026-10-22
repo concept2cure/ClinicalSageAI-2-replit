@@ -149,4 +149,3 @@ AssertionError: expected 'function public.purge_tenant_vault_re…' to be 2 // O
       Tests  6 failed | 6 passed (12)
    Start at  19:52:34
    Duration  1.99s (transform 784ms, setup 71ms, import 40ms, tests 1.58s, environment 0ms)
-

@@ -1,0 +1,96 @@
+{
+  "scope": "Authoring integration owner evidence only; root-owned browser artifacts are intentionally separate.",
+  "credentialLiteralAndUrlPasswordScan": "No matches in preserved decompressed logs/snapshots against available sensitive environment literals, credential-bearing URL pattern or full JWT pattern. Synthetic fixture identity setup remains in test source.",
+  "artifacts": [
+    {
+      "path": "README.md",
+      "bytes": 2507,
+      "sha256": "94cdb1e93cee042dbd7c38303f38166dc4f023d70268974be1f6ecd7964ee317"
+    },
+    {
+      "path": "actual-host-green.log.gz",
+      "bytes": 779,
+      "sha256": "8cba0e78025e1442c68c609987686630fe8908345dcc3321720308bbe6e0dce1"
+    },
+    {
+      "path": "actual-host-red.log.gz",
+      "bytes": 1198,
+      "sha256": "7fa6991f70de24794f62a89b9205804d6f470b4f322b7159227a6296055dab0c"
+    },
+    {
+      "path": "actual-host-red.test.tsx.gz",
+      "bytes": 4486,
+      "sha256": "de5a8b877a3fd11bddef5ff98f082b7dbd201520334cfa0cff1490c4f9fd115e"
+    },
+    {
+      "path": "explicit-host-green-first.log.gz",
+      "bytes": 2171,
+      "sha256": "24d3950845bee058d12a6e7f1baa5210b37e3f2d520d76f54006fd679412c27f"
+    },
+    {
+      "path": "explicit-host-red.log.gz",
+      "bytes": 1799,
+      "sha256": "ad011c1f7424056975a08fd23c7c87afa4dfad3a9772a5228b8214e381a4d454"
+    },
+    {
+      "path": "final-focused.json.gz",
+      "bytes": 7937,
+      "sha256": "ebc5895e3211d5fcddbbaafca7ea2b736b0cc083e5a1e42a5c5494bab508dd59"
+    },
+    {
+      "path": "final-focused.log.gz",
+      "bytes": 5333,
+      "sha256": "979c14c410f8f5269d55a1afd7e358d4e503a16128e7441a4e792ec97f3ad5b8"
+    },
+    {
+      "path": "final-host-integrated.json.gz",
+      "bytes": 8434,
+      "sha256": "7725d0dd97fed2eb680e537a1fb5f4468d946172f943e9797cb6ea52274f4bdd"
+    },
+    {
+      "path": "final-host-integrated.log.gz",
+      "bytes": 5591,
+      "sha256": "2684cae39b34b4375084b5d8e8cf456eb203a26ca68b273744cbc5d2cb25bb64"
+    },
+    {
+      "path": "green-first.log.gz",
+      "bytes": 1073,
+      "sha256": "2cd808e09cb923bf3e70f85a4d7cb3400d957c7970b79f2dbc7211d5bccd626d"
+    },
+    {
+      "path": "lint-explicit-host.json.gz",
+      "bytes": 240,
+      "sha256": "015d2633d6a8b450791f0817ba085f4b318804599d384c311537358d4aa42ef7"
+    },
+    {
+      "path": "lint-final-owned.json.gz",
+      "bytes": 240,
+      "sha256": "015d2633d6a8b450791f0817ba085f4b318804599d384c311537358d4aa42ef7"
+    },
+    {
+      "path": "lint-final.json.gz",
+      "bytes": 209,
+      "sha256": "b4d09191d8cca0be6f1095603c88adf379a392b4fe5e8f87acbf62e303c4212f"
+    },
+    {
+      "path": "lint-first.json.gz",
+      "bytes": 209,
+      "sha256": "b4d09191d8cca0be6f1095603c88adf379a392b4fe5e8f87acbf62e303c4212f"
+    },
+    {
+      "path": "phases.json",
+      "bytes": 9535,
+      "sha256": "a11e15e2f0223adee3979a55d172d99be5f05c22fbf1d6af945dd4be789d4e4e"
+    },
+    {
+      "path": "red.log.gz",
+      "bytes": 3041,
+      "sha256": "ebdcec8e28e222ad553a8bc8e4e2eb88438214833445bebe464fa4dfda2d00cd"
+    },
+    {
+      "path": "useAuthoringCreation.before.ts.gz",
+      "bytes": 3112,
+      "sha256": "a28fd771da5248412f0d829dcd9cd6d211661c966a00eb65c01a7b901b780edb"
+    }
+  ]
+}

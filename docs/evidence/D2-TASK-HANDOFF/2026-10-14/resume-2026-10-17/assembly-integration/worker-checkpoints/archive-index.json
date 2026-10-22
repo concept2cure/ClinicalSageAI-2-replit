@@ -1,0 +1,271 @@
+{
+  "captured_at_utc": "2026-10-17T23:51:37.775150+00:00",
+  "branch": "concept2cure-v2",
+  "head_at_capture": "4ca7427dcc07e97b260d45e58077f9c24a6467f5",
+  "incoming_merge_head": "bd1b9ffc9cff286d01019a29a8cd115d4286505e",
+  "incoming_assembly_change": "ad372567d29a8ad385a751dde57a397cdc20cb3f",
+  "retained_prior_qualified_commit": "fda2d692428f52a4cbfcb9380e486196f11e2c02",
+  "native_context": "Control tower reports new native impact replay 19/19 passed; its raw runtime evidence is outside this worker checkpoint archive.",
+  "exclusions": [
+    "active backend-final aggregate",
+    "root UI aggregate",
+    "typecheck output",
+    "browser output",
+    "private environment files"
+  ],
+  "archives": [
+    {
+      "archive": "c2c-assembly-merge-fixtures.log.gz",
+      "source_path": "/tmp/c2c-assembly-merge-fixtures.log",
+      "checkpoint": "ui-merge-fixtures",
+      "reported_result": "65 passed in five files",
+      "source_bytes": 14332,
+      "source_sha256": "1e09a188cb784031116f9091b7e2c4011e19566dd64671f8741dfa41e0ef69c2",
+      "gzip_bytes": 2987,
+      "gzip_sha256": "723c76cb6fd7b73b2bbed0de4b9bee6e6a5f70f2344ac79b3d901122ca6b79da",
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "c2c-assembly-merge-fixture-lint.json.gz",
+      "source_path": "/tmp/c2c-assembly-merge-fixture-lint.json",
+      "checkpoint": "ui-merge-fixtures-lint",
+      "reported_result": "Zero errors; two inherited warnings",
+      "source_bytes": 25292,
+      "source_sha256": "98309ea9787c588fe7101466ebc0c0a53dfc30f2d170c20e7e05f4601c41d182",
+      "gzip_bytes": 7217,
+      "gzip_sha256": "371c0d6d0892c216e82782332c1d970b50ae0f3ee1b2c62cec88fce28e23cfca",
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "c2c-assembly-merge-fixture-pins.json.gz",
+      "source_path": "/tmp/c2c-assembly-merge-fixture-pins.json",
+      "checkpoint": "ui-merge-fixtures-pins",
+      "reported_result": "Four fixture paths and matching index/worktree pins",
+      "source_bytes": 696,
+      "source_sha256": "ee3ae5c35cc70ad9699ed07751387483cfdf633951b2555bff2266ad5f2bf177",
+      "gzip_bytes": 341,
+      "gzip_sha256": "5d02964430e7fd97fdf1dcd0dcb77d57b2442eb64ad49fee7b651b67d99bca59",
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "c2c-assembly-hook-red.log.gz",
+      "source_path": "/tmp/c2c-assembly-hook-red.log",
+      "checkpoint": "ui-hook-first-red",
+      "reported_result": "12 failed and 13 passed before corrections",
+      "source_bytes": 14382,
+      "source_sha256": "64f73d49149f8c6bdc2e6b80b107a5c100c0d0d9b5cc8de55ae235dc244e6530",
+      "gzip_bytes": 2479,
+      "gzip_sha256": "995109b419825f93f741d555a384e31350eaa1605fe0b32250b1a58cd30454f2",
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "c2c-assembly-hook-final.log.gz",
+      "source_path": "/tmp/c2c-assembly-hook-final.log",
+      "checkpoint": "ui-hook-focused-green",
+      "reported_result": "29 passed",
+      "source_bytes": 6214,
+      "source_sha256": "43798c9dabab5ddb475f5849d606abcfaeb831e606634622db3a9f2c44adcd70",
+      "gzip_bytes": 1262,
+      "gzip_sha256": "a6b7ed03a5a2282fa72bcfdda677b983bdaf3fbec7e37a6f6df99a1d3581e1c6",
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "c2c-assembly-hook-lint-final.log.gz",
+      "source_path": "/tmp/c2c-assembly-hook-lint-final.log",
+      "checkpoint": "ui-hook-lint",
+      "reported_result": "Strict ESLint exit zero; empty log preserved",
+      "source_bytes": 0,
+      "source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_bytes": 20,
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "c2c-assembly-host-guard-red.log.gz",
+      "source_path": "/tmp/c2c-assembly-host-guard-red.log",
+      "checkpoint": "ui-host-guard-red",
+      "reported_result": "Four expected failures in targeted controls",
+      "source_bytes": 29877,
+      "source_sha256": "25dcc5c2eb783afd0797d927d717f967d67afc9657ca5dab7f2dcee3de3aca56",
+      "gzip_bytes": 3062,
+      "gzip_sha256": "3a5cb18a4d999a8e92ee2b2155fe206734164838cd6d9ba12887afaadd3d5fa2",
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "c2c-assembly-host-guard-green.log.gz",
+      "source_path": "/tmp/c2c-assembly-host-guard-green.log",
+      "checkpoint": "ui-host-guard-green",
+      "reported_result": "26 passed",
+      "source_bytes": 7895,
+      "source_sha256": "a7152e96241f4f83d1297fc159bb85b0e48f171392e6fd7e1a03efd4184773a8",
+      "gzip_bytes": 1493,
+      "gzip_sha256": "a2f53a2208f176dd81423bbc89d3d50e9adf09b0cbb5426cf3e78f98fe7210aa",
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "c2c-assembly-review-ceremony-red.log.gz",
+      "source_path": "/tmp/c2c-assembly-review-ceremony-red.log",
+      "checkpoint": "ui-review-ceremony-red",
+      "reported_result": "One additional expected refusal-control failure",
+      "source_bytes": 10494,
+      "source_sha256": "b114fc7fd0e1462716c2d3962e2a0c339d8c35300da4e0d3d56c568292a08bf2",
+      "gzip_bytes": 2764,
+      "gzip_sha256": "4a7774fa8d1d3ace04d26218480b48d55f7d6c485bbe97c7e9fb9d7473ea44f9",
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "c2c-assembly-host-guard-lint.json.gz",
+      "source_path": "/tmp/c2c-assembly-host-guard-lint.json",
+      "checkpoint": "ui-host-lint",
+      "reported_result": "Zero errors; 15 inherited Workbench warnings",
+      "source_bytes": 324748,
+      "source_sha256": "8319d20393ed698c142ed755b47df153452d2954950c73298da0fb93226bc163",
+      "gzip_bytes": 84092,
+      "gzip_sha256": "8dd3f15af3902833690201ac07b7061a78736ab7a7b26d98a1b7b0b5ddefc3e3",
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "c2c-assembly-partial-fixture-red.log.gz",
+      "source_path": "/tmp/c2c-assembly-partial-fixture-red.log",
+      "checkpoint": "ui-partial-fixture-first-red",
+      "reported_result": "51 failed and five passed; 21 missing-method mount errors",
+      "source_bytes": 93055,
+      "source_sha256": "3523a06cd62dd3facdc719f120d0923d0177f12411209e01b2b61feb9be24982",
+      "gzip_bytes": 5294,
+      "gzip_sha256": "0a167b4906910e509c37a2e83916f4ab71084d8c6d5d876c16913640cc001db7",
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "c2c-assembly-partial-fixture-green.log.gz",
+      "source_path": "/tmp/c2c-assembly-partial-fixture-green.log",
+      "checkpoint": "ui-partial-fixture-green",
+      "reported_result": "56 passed in three files after binding the real guard method",
+      "source_bytes": 14496,
+      "source_sha256": "524b22f58a48c621d6f9e77d319a47ecd15b7af06a17881fb6f7f0168bbae9cf",
+      "gzip_bytes": 2345,
+      "gzip_sha256": "acb800d9878eb6919ff7e9b0ade433cbf5e3b7e9e204c95cd671a53ed1e5bc41",
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "c2c-assembly-partial-fixture-lint.json.gz",
+      "source_path": "/tmp/c2c-assembly-partial-fixture-lint.json",
+      "checkpoint": "ui-partial-fixture-lint",
+      "reported_result": "Zero errors and warnings",
+      "source_bytes": 839,
+      "source_sha256": "4f9c5a8666ee0ae7fa3c9527bfa1a36395e44ce4335637ddf524cc8dc80e32ce",
+      "gzip_bytes": 228,
+      "gzip_sha256": "13b77ffbf7a56f5b5053315d280bcf68f6d97b461195a123a70bf5ffb2b9284f",
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "c2c-assembly-client-final-paths.json.gz",
+      "source_path": "/tmp/c2c-assembly-client-final-paths.json",
+      "checkpoint": "ui-client-final-paths",
+      "reported_result": "20 frozen client source/test paths",
+      "source_bytes": 1396,
+      "source_sha256": "1f888986e357ab3b6fa9f5c274c6504cbacc797d5e74046ec9cb557d7de1100c",
+      "gzip_bytes": 304,
+      "gzip_sha256": "2431859c0e278463e14080c561593ccf9f03fe67b4c74273da5f7fb51c8b8044",
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "c2c-assembly-client-final-pins.json.gz",
+      "source_path": "/tmp/c2c-assembly-client-final-pins.json",
+      "checkpoint": "ui-client-final-pins",
+      "reported_result": "Final frozen client index/worktree hashes",
+      "source_bytes": 4596,
+      "source_sha256": "7a143cee4863baf0f4d05cdaf712f08bb61ed892bfc330aba8260daeea08783f",
+      "gzip_bytes": 1709,
+      "gzip_sha256": "680f9ff57a15a59b80daef20e811f8dec3fd1dcbd1fd8b04c394024534d723a5",
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "c2c-assembly-client-final-tests.txt.gz",
+      "source_path": "/tmp/c2c-assembly-client-final-tests.txt",
+      "checkpoint": "ui-client-final-tests",
+      "reported_result": "10 focused client test paths",
+      "source_bytes": 733,
+      "source_sha256": "82e5ac34e9ba2fb9d5248aad11cb63d061cf8283fd19c6f69c52970311eba29a",
+      "gzip_bytes": 199,
+      "gzip_sha256": "443d19e13e41c6cc4ecb159a6ed02dd3b0cd0a472c17da9873adcffb3a9845b0",
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-assembly-backend-files.txt.gz",
+      "source_path": "/workspace/scratch/task-handoff-assembly-backend-files.txt",
+      "checkpoint": "backend-replay-paths",
+      "reported_result": "Exact 21 default-config test paths",
+      "source_bytes": 1465,
+      "source_sha256": "f6d7598750dc0ee205a177f45068aca5d9f2d3e13ef6a73a787c418f84100c04",
+      "gzip_bytes": 343,
+      "gzip_sha256": "d785adbc76bd8dba542181a34542a4a13279b4568271b365f6b1d34cf32b0747",
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-assembly-backend-first.log.gz",
+      "source_path": "/workspace/scratch/task-handoff-assembly-backend-first.log",
+      "checkpoint": "backend-first-red",
+      "reported_result": "226 cases: 222 passed and four failed; zero pending",
+      "source_bytes": 137425,
+      "source_sha256": "07e5853bf0cc31acdfb735a4327478b7cdbaa6c1bf7cf8c42989b819b9cf5de3",
+      "gzip_bytes": 15648,
+      "gzip_sha256": "f54c111aa9eee29a08e2745a7c0adf6dc8b183f6bd1edc6765b45c41b776dd97",
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-assembly-backend-first.json.gz",
+      "source_path": "/workspace/scratch/task-handoff-assembly-backend-first.json",
+      "checkpoint": "backend-first-red",
+      "reported_result": "Machine-readable first replay; unchanged",
+      "source_bytes": 95362,
+      "source_sha256": "c70e4a4af74e12c3d672e70b9aca660d578288b01bca5b63233240bd54e60e3d",
+      "gzip_bytes": 12959,
+      "gzip_sha256": "4dc481989a7c0f44108b68454d66ceefede41d87358efaa5a5bd293af500520c",
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-assembly-backend-focused-green.log.gz",
+      "source_path": "/workspace/scratch/task-handoff-assembly-backend-focused-green.log",
+      "checkpoint": "backend-repaired-focused-green",
+      "reported_result": "30 passed: 22 figure-reference and eight template cases",
+      "source_bytes": 19684,
+      "source_sha256": "82d8d3048c748348eb98378eeb4efdd74112bc910fa17bca3636b67f53025232",
+      "gzip_bytes": 2805,
+      "gzip_sha256": "7a4f96234b2755b4c3f0e9a478a84f5c3383e3de1940f890c19a864eed66ccf9",
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-assembly-backend-focused-green.json.gz",
+      "source_path": "/workspace/scratch/task-handoff-assembly-backend-focused-green.json",
+      "checkpoint": "backend-repaired-focused-green",
+      "reported_result": "Machine-readable focused replay; zero failed or pending",
+      "source_bytes": 12754,
+      "source_sha256": "aa8c3d59c7056e7bfe2d20b6be2a3aaffbe66b16500340bb693c496aada7b55b",
+      "gzip_bytes": 1936,
+      "gzip_sha256": "9b668c598f02c1c302cc8de6d80ff3c92c2c6cab2417165fe2a69043d6224b30",
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-assembly-backend-fixture-lint.log.gz",
+      "source_path": "/workspace/scratch/task-handoff-assembly-backend-fixture-lint.log",
+      "checkpoint": "backend-fixture-lint",
+      "reported_result": "Empty JSON-formatter stdout/stderr capture preserved",
+      "source_bytes": 0,
+      "source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_bytes": 20,
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-assembly-backend-fixture-lint.json.gz",
+      "source_path": "/workspace/scratch/task-handoff-assembly-backend-fixture-lint.json",
+      "checkpoint": "backend-fixture-lint",
+      "reported_result": "Two files; zero errors and warnings",
+      "source_bytes": 522,
+      "source_sha256": "4f436b5c320c0c661b74f53e8a7e7250faac8f96b0d3a34f391431152bb763df",
+      "gzip_bytes": 208,
+      "gzip_sha256": "a019103666683faa6c47ab28ea20cd9e5ca585d768efb87779acc0ffdd662c91",
+      "gzip_mtime": 0
+    }
+  ]
+}

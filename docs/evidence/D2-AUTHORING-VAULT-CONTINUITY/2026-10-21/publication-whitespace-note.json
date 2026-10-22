@@ -1,0 +1,10 @@
+{
+  "path": "server/services/vault/vault-ingest-types.ts",
+  "baseCommit": "5bf4aef01a0baf492eb8d1002fd7f29104906946",
+  "beforeSha256": "2de6f13da5b667d83440bae480a36d615d06981d17c2b8dc7d775912ff9b01d8",
+  "afterSha256": "18199808fc74641afc1bf6922edc66532bff1022805102e70ef18d0ff716de33",
+  "exactTransformation": "Remove one trailing newline byte; before[:-1] == after.",
+  "reason": "git diff --check reported a new blank line at EOF. The shell continued to commit despite the Python check failure; correct via a normal follow-up commit without amendment.",
+  "runtimeSemanticChange": false,
+  "sourceFreeze": "publication-source-freeze.json"
+}

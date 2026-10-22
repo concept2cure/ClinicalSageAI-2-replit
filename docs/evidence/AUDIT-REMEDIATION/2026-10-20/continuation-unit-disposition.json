@@ -1,0 +1,436 @@
+{
+  "completedUtc": "2026-10-20T23:20:52.392106+00:00",
+  "local": "37074f03a0ce941db09bb8699bb33e1f36a86a95",
+  "origin": "4282257ac3da9b1c5d15b8e7db6c7599f2388f28",
+  "scope": "Actual continuation rerun of the same40file bounded server/tests diagnostic after current schedule and dependency repairs; not the full unit suite or native/deployment/agency/human qualification.",
+  "exitCode": 1,
+  "seconds": 99.6,
+  "passed": 372,
+  "failed": 95,
+  "pending": 0,
+  "files": 40,
+  "failingFiles": 33,
+  "closedPriorFailureIdentities": [
+    {
+      "path": "tests/lineage/founder-path-lineage.pglite.test.ts",
+      "test": "LX-00 \u2014 the founder path: project \u2192 Data Room \u2192 AnA \u2192 editor \u2192 seal \u2192 Vault \u2192 Submission Center \u2192 agency hop 8 \u00b7 transmit \u2014 the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)"
+    },
+    {
+      "path": "tests/lineage/founder-path-lineage.pglite.test.ts",
+      "test": "LX-00 \u2014 the founder path: project \u2192 Data Room \u2192 AnA \u2192 editor \u2192 seal \u2192 Vault \u2192 Submission Center \u2192 agency walk back \u00b7 from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project"
+    },
+    {
+      "path": "tests/lineage/founder-path-lineage.pglite.test.ts",
+      "test": "LX-00 \u2014 the founder path: project \u2192 Data Room \u2192 AnA \u2192 editor \u2192 seal \u2192 Vault \u2192 Submission Center \u2192 agency walk forward \u00b7 from the project and from the source to the transmittal"
+    },
+    {
+      "path": "tests/lineage/founder-path-lineage.pglite.test.ts",
+      "test": "LX-00 \u2014 the founder path: project \u2192 Data Room \u2192 AnA \u2192 editor \u2192 seal \u2192 Vault \u2192 Submission Center \u2192 agency the baseline names only real checks, each with its verified finding and LX fix, and never grows"
+    },
+    {
+      "path": "server/routes/__tests__/session-open-contract.test.ts",
+      "test": "sign-in mints register their session each sign-in door opens its session through openSession"
+    },
+    {
+      "path": "server/routes/__tests__/session-open-contract.test.ts",
+      "test": "every access token the server signs carries a session (P1-38) a type:access payload spreads the session openSession, openConnectorSession or continuedSessionClaims gave it"
+    },
+    {
+      "path": "server/services/ana/__tests__/governed-reason-not-invented.test.ts",
+      "test": "every module that registers a handler \u2014 no ledger write can carry an invented reason every reason carried to a write is the stated one \u2014 no literal, template, fallback helper, ?? / || default, or raw input"
+    },
+    {
+      "path": "server/services/ana/__tests__/governed-reason-not-invented.test.ts",
+      "test": "every module that registers a handler \u2014 no ledger write can carry an invented reason every tool that carries a reason to a write is asked for it before confirmation, and the set names no other tool"
+    },
+    {
+      "path": "server/services/regulatory/__tests__/market-support.test.ts",
+      "test": "marketSupport \u2014 the FILING_SPINE.md F19 table no line names a rule pack, an adapter or a signature format"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts",
+      "test": "a transmit that sent nothing voids the signature given for it with no gateway credentials nothing is sent and the signature is void; once credentials exist it is refused, and a fresh one transmits"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts",
+      "test": "transmit checks the typed application number against the program record the precheck refuses a number that contradicts the record, before anyone signs"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts",
+      "test": "transmit checks the typed application number against the program record a contradicting number is refused 409, nothing is sent, and its signature is void; the recorded number transmits"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts",
+      "test": "transmit names the applicant and the application from the record the package sent names the organisation as the applicant, never a placeholder"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts",
+      "test": "transmit names the applicant and the application from the record sequence 64, with no recorded number: the precheck says so before anyone signs, and transmit is refused by name, nothing sent, its signature void"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts",
+      "test": "transmit names the applicant and the application from the record sequence 65, with no recorded number: the precheck says so before anyone signs, and transmit is refused by name, nothing sent, its signature void"
+    }
+  ],
+  "newFailureIdentities": [],
+  "remainingFirstDiagnosticsMatchPrior": 95,
+  "unchangedSourceBindings": 3354,
+  "perFile": [
+    {
+      "path": "tests/cer-mdr-routes.test.ts",
+      "passed": 8,
+      "failed": 3,
+      "other": 0
+    },
+    {
+      "path": "tests/mdx-qms-labeling-search-analytics-routes.test.ts",
+      "passed": 26,
+      "failed": 2,
+      "other": 0
+    },
+    {
+      "path": "tests/socket-tenant-isolation.contract.test.ts",
+      "passed": 11,
+      "failed": 0,
+      "other": 0
+    },
+    {
+      "path": "tests/lineage/founder-path-lineage.pglite.test.ts",
+      "passed": 15,
+      "failed": 0,
+      "other": 0
+    },
+    {
+      "path": "tests/services/autoExtractionPipeline.governance.test.ts",
+      "passed": 0,
+      "failed": 1,
+      "other": 0
+    },
+    {
+      "path": "tests/routes/chat-governed-upload.test.ts",
+      "passed": 0,
+      "failed": 1,
+      "other": 0
+    },
+    {
+      "path": "tests/routes/chat-upload-to-memory.test.ts",
+      "passed": 3,
+      "failed": 2,
+      "other": 0
+    },
+    {
+      "path": "server/routes/__tests__/qms-document-approval-signature.test.ts",
+      "passed": 17,
+      "failed": 5,
+      "other": 0
+    },
+    {
+      "path": "server/routes/__tests__/qms-effective-only-by-signature.test.ts",
+      "passed": 11,
+      "failed": 1,
+      "other": 0
+    },
+    {
+      "path": "server/routes/__tests__/qms-governed-writes-audited.test.ts",
+      "passed": 11,
+      "failed": 1,
+      "other": 0
+    },
+    {
+      "path": "server/routes/__tests__/reviewer-simulation-route-reads-nonclinical-by-ctd-program-id.test.ts",
+      "passed": 1,
+      "failed": 1,
+      "other": 0
+    },
+    {
+      "path": "server/routes/__tests__/session-open-contract.test.ts",
+      "passed": 18,
+      "failed": 0,
+      "other": 0
+    },
+    {
+      "path": "server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts",
+      "passed": 18,
+      "failed": 3,
+      "other": 0
+    },
+    {
+      "path": "server/routes/biopharma/__tests__/bla-workbench-read.test.ts",
+      "passed": 1,
+      "failed": 3,
+      "other": 0
+    },
+    {
+      "path": "server/routes/c2c/__tests__/ai-editing-readiness-is-not-completeness.test.ts",
+      "passed": 0,
+      "failed": 4,
+      "other": 0
+    },
+    {
+      "path": "server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts",
+      "passed": 0,
+      "failed": 8,
+      "other": 0
+    },
+    {
+      "path": "server/routes/c2c/__tests__/export-pptx-renders-the-submitted-content.test.ts",
+      "passed": 0,
+      "failed": 2,
+      "other": 0
+    },
+    {
+      "path": "server/routes/c2c/__tests__/exports-record-the-review-assertion.test.ts",
+      "passed": 0,
+      "failed": 3,
+      "other": 0
+    },
+    {
+      "path": "server/routes/c2c/__tests__/project-route-access-requestdb.test.ts",
+      "passed": 10,
+      "failed": 1,
+      "other": 0
+    },
+    {
+      "path": "server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts",
+      "passed": 3,
+      "failed": 1,
+      "other": 0
+    },
+    {
+      "path": "server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts",
+      "passed": 13,
+      "failed": 5,
+      "other": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/ana-launch-scope-execution.test.ts",
+      "passed": 4,
+      "failed": 2,
+      "other": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/ana-launch-scope.test.ts",
+      "passed": 5,
+      "failed": 2,
+      "other": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/billing-credits-not-metered.test.ts",
+      "passed": 1,
+      "failed": 1,
+      "other": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/capa-governed-service-handoff.test.ts",
+      "passed": 2,
+      "failed": 2,
+      "other": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/document-catalog-program-binding.test.ts",
+      "passed": 0,
+      "failed": 6,
+      "other": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/governed-reason-not-invented.test.ts",
+      "passed": 75,
+      "failed": 0,
+      "other": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts",
+      "passed": 18,
+      "failed": 0,
+      "other": 0
+    },
+    {
+      "path": "server/services/ectd/__tests__/submission-gate-posture.test.ts",
+      "passed": 6,
+      "failed": 2,
+      "other": 0
+    },
+    {
+      "path": "server/services/forms/__tests__/pdf-attach.test.ts",
+      "passed": 9,
+      "failed": 5,
+      "other": 0
+    },
+    {
+      "path": "server/services/forms/__tests__/pdf-object-store.test.ts",
+      "passed": 9,
+      "failed": 2,
+      "other": 0
+    },
+    {
+      "path": "server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts",
+      "passed": 4,
+      "failed": 16,
+      "other": 0
+    },
+    {
+      "path": "server/services/licensing/__tests__/entitlements-acceptance-not-assumed.test.ts",
+      "passed": 3,
+      "failed": 3,
+      "other": 0
+    },
+    {
+      "path": "server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts",
+      "passed": 4,
+      "failed": 1,
+      "other": 0
+    },
+    {
+      "path": "server/services/regulatory/__tests__/market-support.test.ts",
+      "passed": 30,
+      "failed": 0,
+      "other": 0
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/gateway-accounts.test.ts",
+      "passed": 10,
+      "failed": 1,
+      "other": 0
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/refused-before-wire.test.ts",
+      "passed": 13,
+      "failed": 2,
+      "other": 0
+    },
+    {
+      "path": "server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts",
+      "passed": 8,
+      "failed": 0,
+      "other": 0
+    },
+    {
+      "path": "server/services/truth-engine/__tests__/consistency-audit-outcome.test.ts",
+      "passed": 2,
+      "failed": 1,
+      "other": 0
+    },
+    {
+      "path": "server/services/truth-engine/__tests__/consistency-deterministic.test.ts",
+      "passed": 3,
+      "failed": 2,
+      "other": 0
+    }
+  ],
+  "causeGroups": [
+    {
+      "name": "Current actor and pinned request SQL fixture contracts",
+      "remainingFailed": 26,
+      "priority": "high",
+      "classification": "mixed: confirmed missing request/actor fixtures plus current intake/query expectations needing a bounded check",
+      "limit": "Original diagnosis retained; this rerun confirms counts, not every underlying cause."
+    },
+    {
+      "name": "QMS approval and controlled-content harness",
+      "remainingFailed": 9,
+      "priority": "high",
+      "classification": "current service/mocked SQL contract; positive-path cause still requires focused qualification",
+      "limit": "Original diagnosis retained; this rerun confirms counts, not every underlying cause."
+    },
+    {
+      "name": "Signature-voiding suite lacks the actual tamper-proof audit store",
+      "remainingFailed": 0,
+      "priority": "high",
+      "classification": "confirmed fixture schema gap plus cascading state failures",
+      "limit": "Original diagnosis retained; this rerun confirms counts, not every underlying cause."
+    },
+    {
+      "name": "Task sync governed write transaction",
+      "remainingFailed": 3,
+      "priority": "high",
+      "classification": "unresolved current governed transaction/fixture contract",
+      "limit": "Original diagnosis retained; this rerun confirms counts, not every underlying cause."
+    },
+    {
+      "name": "Founder lineage transmit and dependent walks",
+      "remainingFailed": 0,
+      "priority": "highest",
+      "classification": "existing end-to-end integration blocker; not established as a stale assertion",
+      "limit": "Original diagnosis retained; this rerun confirms counts, not every underlying cause."
+    },
+    {
+      "name": "Gateway TLS and verified AS2/MDN contracts",
+      "remainingFailed": 24,
+      "priority": "highest",
+      "classification": "confirmed ICSR fixture TLS role mismatch; other secure-wire fixture/guard outcomes require a bounded check",
+      "limit": "Original diagnosis retained; this rerun confirms counts, not every underlying cause."
+    },
+    {
+      "name": "Session mint static security contract",
+      "remainingFailed": 0,
+      "priority": "highest",
+      "classification": "unresolved source security contract; potential product or scanner drift",
+      "limit": "Original diagnosis retained; this rerun confirms counts, not every underlying cause."
+    },
+    {
+      "name": "Schedule reason admission static contract",
+      "remainingFailed": 0,
+      "priority": "high",
+      "classification": "confirmed current tool/prompt/static contract mismatch; not evidence of a fabricated literal reason",
+      "limit": "Original diagnosis retained; this rerun confirms counts, not every underlying cause."
+    },
+    {
+      "name": "AnA launch inventory probes",
+      "remainingFailed": 4,
+      "priority": "follow-up",
+      "classification": "confirmed stale inventory/probe expectations after communication-center admission",
+      "limit": "Original diagnosis retained; this rerun confirms counts, not every underlying cause."
+    },
+    {
+      "name": "AnA service handoff fixture contracts",
+      "remainingFailed": 10,
+      "priority": "high",
+      "classification": "mixed: confirmed stale billing/CAPA fixture inputs; catalog/consistency handler contracts unresolved",
+      "limit": "Original diagnosis retained; this rerun confirms counts, not every underlying cause."
+    },
+    {
+      "name": "eSTAR PDF object fixtures",
+      "remainingFailed": 7,
+      "priority": "high",
+      "classification": "strong stale-fixture candidate; requires actual current-PDF object validation",
+      "limit": "Original diagnosis retained; this rerun confirms counts, not every underlying cause."
+    },
+    {
+      "name": "Licensing acceptance SQL fixture",
+      "remainingFailed": 3,
+      "priority": "follow-up",
+      "classification": "confirmed stale SQL matcher",
+      "limit": "Original diagnosis retained; this rerun confirms counts, not every underlying cause."
+    },
+    {
+      "name": "Upload/extraction governed fixture outcomes",
+      "remainingFailed": 4,
+      "priority": "high",
+      "classification": "unresolved current extraction/classification/admission fixture contract",
+      "limit": "Original diagnosis retained; this rerun confirms counts, not every underlying cause."
+    },
+    {
+      "name": "Regulatory projections and deterministic consistency",
+      "remainingFailed": 3,
+      "priority": "high",
+      "classification": "unresolved semantic expectations; cannot dismiss as formatting alone",
+      "limit": "Original diagnosis retained; this rerun confirms counts, not every underlying cause."
+    },
+    {
+      "name": "Submission gate posture result contract",
+      "remainingFailed": 2,
+      "priority": "high",
+      "classification": "unresolved gate posture expectation",
+      "limit": "Original diagnosis retained; this rerun confirms counts, not every underlying cause."
+    }
+  ],
+  "preservedOriginalDiagnosticSha256": "a41912ba80e7a7af5d53786aa413cb6e96ae46ccaa23903898a0f62747d26149",
+  "rawMessagesIncluded": false,
+  "outsideArtifactSha256": {
+    "oct20-schedule-delivery-unit-diagnostic-receipt.json": "db84310fa0c8df75a40677b1b8113ffd0e8755a72472dbcc866754cc90114a96",
+    "oct20-schedule-delivery-unit-diagnostic-private.json": "bb4279c482993114680cfbde09415bce7bf8ba31fee9b02391d5a624f252880d",
+    "oct20-schedule-delivery-unit-diagnostic-private.log": "f97024b5eaab7b1d80d21f868eb7915c1a9b437fc6486151c888622089d70001"
+  },
+  "executionSnapshot": "Current corrected source on canonical4282257ac3da9b1c5d15b8e7db6c7599f2388f28 with local schedule/CI/Builder fixture/preparation-alias repairs;3354 selected test/server/shared bindings stayed unchanged through actual execution. HEAD metadata does not assert that the dirty tree equalled that commit.",
+  "commitEqualityClaimed": false
+}

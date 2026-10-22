@@ -28,12 +28,42 @@ import {
   type Refusal,
 } from '../../services/cmc/source-evidence';
 import { guardModule3Project, module3OrgId } from './module3-project-guard';
+import { requestPgClient } from '../../db/requestDb';
+import { listRegisterLinks, retryRegisterLink, RegisterLinkRefusal } from '../../services/cmc/register-link-recovery';
 
 const router = express.Router();
 const log = createScopedLogger('cmc-source-evidence');
 guardModule3Project(router, log);
 
 const SECTION_KEY = /^3\.[0-9A-Z.]{1,40}$/;
+
+// Recovery is a projection of saved records, not a second source-data intake.
+// The same project guard covers these routes before any register is addressed.
+router.get('/register-links/:projectId', async (req, res) => {
+  const orgId = orgOr401(req, res);
+  if (orgId === null) return;
+  try {
+    const links = await listRegisterLinks(requestPgClient(req), orgId, String(req.params.projectId));
+    return res.json({ success: true, data: { links } });
+  } catch (err) {
+    return serverError(res, log, 'reading Module 3 register links', err);
+  }
+});
+
+router.post('/register-links/:projectId/:register/:recordId/retry', requireEditorAccess, async (req, res) => {
+  const orgId = orgOr401(req, res);
+  if (orgId === null) return;
+  const userId = governedActorId(req);
+  if (!userId) return res.status(401).json({ success: false, error: 'AUTH_REQUIRED', message: 'Sign in to retry the saved record’s Module 3 link.' });
+  if (Object.keys(req.body ?? {}).length) return res.status(400).json({ success: false, error: 'INVALID_PAYLOAD', message: 'A retry reads the saved record. Supply no source data or project override.' });
+  try {
+    const linkage = await retryRegisterLink(requestPgClient(req), { organizationId: orgId, projectId: String(req.params.projectId), register: String(req.params.register), recordId: String(req.params.recordId), userId });
+    return res.json({ success: true, ...linkage });
+  } catch (err) {
+    if (err instanceof RegisterLinkRefusal) return res.status(err.status).json({ success: false, error: 'REGISTER_NOT_FOUND', message: err.message });
+    return serverError(res, log, 'retrying the saved record’s Module 3 link', err);
+  }
+});
 
 function refused(res: express.Response, r: Refusal) {
   return res.status(r.status).json({ success: false, error: r.code, message: r.message });

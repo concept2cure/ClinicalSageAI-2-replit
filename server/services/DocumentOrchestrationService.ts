@@ -165,7 +165,7 @@ class DocumentOrchestrationService {
       try {
         form = await generator.generate510kForm(formType, projectData);
       } catch (error) {
-        console.error(`Error drafting ${formType}:`, error);
+        console.error('Error drafting FDA form:', { formType }, error);
         failed.push({ formType, reason: FORM_NOT_DRAFTED });
         continue;
       }
@@ -191,7 +191,7 @@ class DocumentOrchestrationService {
       try {
         await db!.insert(fda510kDocuments).values({ ...row, createdAt: new Date(), updatedAt: new Date() });
       } catch (error) {
-        console.error(`Error saving ${formType}:`, error);
+        console.error('Error saving FDA form:', { formType }, error);
         failed.push({ formType, reason: FORM_NOT_SAVED });
         continue;
       }

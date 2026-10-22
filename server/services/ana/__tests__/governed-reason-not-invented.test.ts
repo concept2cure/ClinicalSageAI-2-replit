@@ -60,6 +60,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import ts from 'typescript';
+import { registerCanonicalPositionalReasonControls, registerCaughtErrorReasonControls } from './support/canonical-positional-reason-controls';
+import { findLexicalBinding as binding, resolveRegisteredHandler as resolveHandler } from './support/stated-reason-bindings';
 
 // ─── Test doubles ────────────────────────────────────────────────────────────
 // The handlers reach the database through `getPool().connect()` and their
@@ -72,6 +74,7 @@ const h = vi.hoisted(() => ({
   recordAuditRow: vi.fn(async (_entry: Record<string, unknown>) => ({ persisted: true, chained: true })),
   transitionChange: vi.fn(async (..._a: unknown[]) => ({ id: 3, change_number: 'CC-2026-070', status: 'under_assessment' })),
   createChange: vi.fn(async (..._a: unknown[]) => ({ id: 5, change_number: 'CC-2026-071', status: 'proposed', classification: 'minor' })),
+  createControlledQmsDocument: vi.fn(async (..._a: unknown[]) => ({ id: 41, doc_number: 'SOP-7', status: 'draft' })),
   upsertVersion: vi.fn(async (..._a: unknown[]) => ({ artifactId: 'artifact_1', artifactPk: 42, version: 2, created: true, contentHash: 'hash' })),
 }));
 
@@ -98,6 +101,9 @@ vi.mock('../../../db', () => ({
    person's organization role from the database this suite does not have. A
    member (GOVERNED_WRITE_ROLES), so the gate passes and the reason is what is
    under test. */
+// These unit suites isolate verified-role and stated-reason dispatch. Canonical
+// program/private-record admission is exercised by qms-vault-audit-atomicity.
+vi.mock('../tool-record-scope.js', () => ({ foreignProgramRefusal: async () => null, foreignRecordRefusal: async () => null }));
 vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole: async () => 'member' }));
 vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole: async () => 'member' }));
 
@@ -135,6 +141,10 @@ vi.mock('../../qms/changeControl.service', async (importOriginal) => ({
   transitionChange: h.transitionChange,
   createChange: h.createChange,
 }));
+
+// This unit proves handler-to-service reason forwarding. The separate
+// qms-vault-audit-atomicity PGlite suite exercises this service's real ledgers.
+vi.mock('../../qms/controlled-document-service', () => ({ createControlledQmsDocument: h.createControlledQmsDocument }));
 
 // commit_document_revision runs the real spine (defaultSpineDeps) on the fake
 // client; its version write and the derived readiness figure are observed.
@@ -178,7 +188,7 @@ type Shape = {
   input: Record<string, unknown>;
   domainWrite: ReturnType<typeof vi.fn> | null;
   /** Which ledger the row lands in. */
-  ledger: 'governed action' | 'audit row';
+  ledger: 'governed action' | 'audit row' | 'canonical service';
   /** The sentence the path used to record when no reason was given, if it had one. */
   invented: string | null;
   /** The key the domain write receives the reason under, when it receives it. */
@@ -206,9 +216,10 @@ const SHAPES: Shape[] = [
   {
     shape: 'QMS controlled document (qmsReason)',
     tool: 'create_qms_document',
-    input: { doc_number: 'SOP-7', title: 'Line clearance', doc_type: 'sop' },
-    domainWrite: null,
-    ledger: 'governed action',
+    input: { program_id: '11111111-1111-4111-8111-111111111111', doc_number: 'SOP-7', title: 'Line clearance', doc_type: 'sop' },
+    domainWrite: h.createControlledQmsDocument,
+    domainReasonKey: 'reason',
+    ledger: 'canonical service',
     invented: 'Controlled document SOP-7 created via AnA',
   },
   {
@@ -258,6 +269,7 @@ beforeEach(() => {
   h.transitionChange.mockClear();
   h.createChange.mockClear();
   h.upsertVersion.mockClear();
+  h.createControlledQmsDocument.mockClear();
   fakeClient.query.mockClear();
 });
 
@@ -306,11 +318,19 @@ describe('a governed AnA write without the person\'s reason is refused before an
 
         expect(out.error).toBeUndefined();
         expect(out.ok).toBe(true);
-        const rows = s.ledger === 'governed action' ? recordGovernedAction.mock.calls.map(([, e]) => e) : h.recordAuditRow.mock.calls.map(([e]) => e);
-        expect(rows).toHaveLength(1);
-        // In the reason column itself, which is what the ledger shows as the reason.
-        expect(rows[0].reason).toBe(stated);
-        expect(ledgerReasons()).toEqual([stated]);
+        if (s.ledger === 'canonical service') {
+          expect(ledgerRows()).toEqual([]); // This unit does not fabricate the service's audit.
+          expect(h.createControlledQmsDocument).toHaveBeenCalledWith(
+            expect.objectContaining({ tenantId: CTX.organizationId, actor: expect.objectContaining({ id: String(CTX.userId) }) }),
+            expect.objectContaining({ programId: s.input.program_id, reason: stated }),
+          );
+        } else {
+          const rows = s.ledger === 'governed action' ? recordGovernedAction.mock.calls.map(([, e]) => e) : h.recordAuditRow.mock.calls.map(([e]) => e);
+          expect(rows).toHaveLength(1);
+          // In the reason column itself, which is what the ledger shows as the reason.
+          expect(rows[0].reason).toBe(stated);
+          expect(ledgerReasons()).toEqual([stated]);
+        }
         if (s.domainWrite) expect(s.domainWrite).toHaveBeenCalledTimes(1);
         if (s.domainReasonKey) {
           expect(s.domainWrite!.mock.calls[0]).toContainEqual(expect.objectContaining({ [s.domainReasonKey]: stated }));
@@ -354,10 +374,12 @@ const GATES = new Set(['gatedReason', 'requireStatedReason']);
 /** Calls a reason may appear in without being carried to a write: a tool result, or the gate itself. */
 const NOT_A_WRITE = new Set(['stringify', 'statedReason', ...GATES]);
 const CONNECTS = new Set(['connect', 'withTransaction']);
+/** Canonical services whose reason is a positional argument rather than an object property. */
+const POSITIONAL_REASONS = new Map([['reviseControlledQmsDocument', 2], ['saveDocumentToVaultTool', 3]]);
 
 type Fn = ts.FunctionLikeDeclaration;
 type Module = { file: string; tree: ts.SourceFile; local: Map<string, Fn> };
-type Carrier = { module: Module; prop: ts.PropertyAssignment | ts.ShorthandPropertyAssignment; value: ts.Expression | ts.Identifier; fn: Fn };
+type Carrier = { module: Module; prop: ts.Node; value: ts.Expression | ts.Identifier; fn: Fn };
 
 const MODULES: Module[] = HANDLER_MODULES.map((file) => {
   const full = path.join(ANA_DIR, file);
@@ -383,24 +405,6 @@ const calleeName = (c: ts.CallExpression): string | null =>
 function each(node: ts.Node, fn: (n: ts.Node) => void) {
   const visit = (n: ts.Node) => { fn(n); ts.forEachChild(n, visit); };
   visit(node);
-}
-
-/**
- * A registration's handler: inline, a local function by name, or the last
- * argument of a wrapper (withCaughtErrors) that is not its options bag.
- * withCaughtErrors(name, handler, { safeOutcome }) has taken a trailing options
- * object since 9c266724f; the handler is the argument before it.
- */
-function resolveHandler(m: Module, n: ts.Node | undefined): Fn | null {
-  if (!n) return null;
-  if (ts.isFunctionLike(n) && 'body' in n && n.body) return n as Fn;
-  if (ts.isIdentifier(n)) return m.local.get(n.text) ?? null;
-  if (ts.isCallExpression(n)) {
-    const args = [...n.arguments];
-    while (args.length > 1 && ts.isObjectLiteralExpression(args[args.length - 1])) args.pop();
-    return resolveHandler(m, args[args.length - 1]);
-  }
-  return null;
 }
 
 /** Registrations by literal name, including through a local registering helper (registerIndustryDesignTool). */
@@ -459,6 +463,11 @@ function carriers(m: Module, fns: Fn[]): Carrier[] {
       if (!ts.isCallExpression(n)) return;
       const name = calleeName(n);
       if (!name || NOT_A_WRITE.has(name)) return;
+      const reasonPosition = POSITIONAL_REASONS.get(name);
+      if (reasonPosition !== undefined && n.arguments[reasonPosition]) {
+        const value = n.arguments[reasonPosition];
+        out.push({ module: m, prop: value, value, fn });
+      }
       for (const arg of n.arguments) {
         const inArg = (x: ts.Node) => {
           if (ts.isFunctionLike(x)) return; // a callback is walked as code in its own right
@@ -472,26 +481,6 @@ function carriers(m: Module, fns: Fn[]): Carrier[] {
     });
   }
   return out;
-}
-
-const enclosingFns = (n: ts.Node): Fn[] => {
-  const out: Fn[] = [];
-  for (let p = n.parent; p; p = p.parent) if (ts.isFunctionLike(p) && 'body' in p && p.body) out.push(p as Fn);
-  return out;
-};
-
-/** Where `name` is bound, looking outward from `at`: a const/let, or a parameter. */
-function binding(at: ts.Node, name: string): { fn: Fn; decl: ts.VariableDeclaration | null; param: ts.ParameterDeclaration | null } | null {
-  for (const fn of enclosingFns(at)) {
-    const param = fn.parameters.find((p) => ts.isIdentifier(p.name) && p.name.text === name) ?? null;
-    if (param) return { fn, decl: null, param };
-    let decl: ts.VariableDeclaration | null = null;
-    each(fn.body!, (n) => {
-      if (!decl && ts.isVariableDeclaration(n) && ts.isIdentifier(n.name) && n.name.text === name && enclosingFns(n)[0] === fn) decl = n;
-    });
-    if (decl) return { fn, decl, param: null };
-  }
-  return null;
 }
 
 const isGateCall = (e: ts.Expression | undefined): boolean =>
@@ -539,6 +528,30 @@ function notStated(c: Carrier): string | null {
 }
 
 const PATHS = REGISTRATIONS.filter((r) => r.handler).map((r) => ({ ...r, carried: carriers(r.module, reachable(r.module, r.handler!)) }));
+
+for (const [serviceName, serviceFile] of [
+  ['reviseControlledQmsDocument', '../qms/controlled-document-service.ts'],
+  ['saveDocumentToVaultTool', '../authoring/authoring-draft-tool.ts'],
+]) registerCanonicalPositionalReasonControls({
+  serviceName, serviceFile: path.resolve(ANA_DIR, serviceFile), reasonPosition: POSITIONAL_REASONS.get(serviceName)!,
+  scan: source => {
+    const tree = ts.createSourceFile('positional-control.ts', source, ts.ScriptTarget.Latest, true);
+    return carriers({ file: 'positional-control.ts', tree, local: new Map() }, [tree.statements[0] as ts.FunctionDeclaration]);
+  },
+  notStated,
+});
+
+registerCaughtErrorReasonControls({
+  wrapperSource: readAna('document-tools-shared.ts'),
+  scan: source => {
+    const tree = ts.createSourceFile('wrapper-control.ts', source, ts.ScriptTarget.Latest, true);
+    const module: Module = { file: 'wrapper-control.ts', tree, local: new Map() };
+    const handler = resolveHandler(module, (tree.statements[0] as ts.ExpressionStatement).expression);
+    expect(handler).not.toBeNull();
+    return carriers(module, [handler!]);
+  },
+  notStated,
+});
 
 describe('every module that registers a handler — no ledger write can carry an invented reason', () => {
   it('reads every handler the registry holds (a scan that matches nothing proves nothing)', () => {

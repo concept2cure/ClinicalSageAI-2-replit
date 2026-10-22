@@ -1,0 +1,16 @@
+{
+  "recordedAt": "2026-10-20T20:54:07.077147+00:00",
+  "command": [
+    "npx",
+    "tsx",
+    "-e",
+    "import {getBuiltinAuthoringTemplates,builtinTemplateSnapshot} from \"./server/services/authoring/builtin-authoring-templates.ts\"; import {GLOBAL_REGISTRY} from \"./shared/regulatory/global-document-registry.ts\"; (async()=>{const templates=await getBuiltinAuthoringTemplates();const rows=templates.map(t=>({id:t.id,entryId:t.entryId,sha256:builtinTemplateSnapshot(t),name:t.name,kind:t.kind,aiDraftable:t.aiDraftable,sectionCount:t.sections.length,filingContext:t.filingContext,segment:GLOBAL_REGISTRY.find(e=>t.entryId===`registry:${e.id}`)?.segment}));console.log(JSON.stringify(rows));})();"
+  ],
+  "exitCode": 0,
+  "currentTemplateCount": 385,
+  "allRecordedTemplatesByteEquivalent": true,
+  "inventoryFile": "template-inventory.json",
+  "inventorySha256": "5635b6e655ffd281656b089ea06f55f0a6b4d2b2664e0184bf6a412dccd0536b",
+  "oldTemplatesPreserved": 305,
+  "scope": "Runtime exact snapshot comparison; no independent current agency completeness claim."
+}

@@ -18,9 +18,12 @@ import express from 'express';
 import request from 'supertest';
 import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
+import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime, seedVaultFixtureParent } from './vault-current-access-fixture';
+import { nativeCatalogRunId } from './catalog-native-fixture';
 
-const PROBE = 'dbtest-vlib ';
-const CODE = 'DBTEST-VLIB';
+const RUN = nativeCatalogRunId();
+const PROBE = `dbtest-vlib-${RUN} `;
+const CODE = `DBTEST-VLIB-${RUN}`;
 const WORD = 'zirconoxide';
 
 type Tenant = { orgId: number; orgUuid: string };
@@ -66,9 +69,8 @@ const library = async (t: Tenant, qs: string) => request(await appFor(t)).get(`/
 
 async function tenant(slug: string): Promise<Tenant> {
   const org = await owner.query(
-    `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
-    [`${PROBE}${slug}`, `dbtest-vlib-${slug}`],
+    `INSERT INTO organizations (name, slug, status) VALUES ($1, $2, 'active') RETURNING id, uuid`,
+    [`${PROBE}${slug}`, `dbtest-vlib-${RUN}-${slug}`],
   );
   return { orgId: Number(org.rows[0].id), orgUuid: String(org.rows[0].uuid) };
 }
@@ -79,40 +81,25 @@ async function program(t: Tenant, name: string): Promise<string> {
      VALUES ($1, $2, $3, 'ind', 'drug', 'FDA', 'Librium 5mg') RETURNING id`,
     [`${PROBE}${name}`, `${CODE}-${name.toUpperCase().replace(/\W+/g, '-')}`, t.orgId],
   );
-  return String(prog.rows[0].id);
-}
-
-async function cleanup(): Promise<void> {
-  const client = await owner.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query(`DELETE FROM audit_logs WHERE tenant_id IN (SELECT id FROM organizations WHERE slug LIKE 'dbtest-vlib-%')`);
-    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query('COMMIT');
-  } catch {
-    await client.query('ROLLBACK').catch(() => {});
-  } finally {
-    client.release();
-  }
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1 AND supersedes_id IS NOT NULL', [`${CODE}%`]);
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${CODE}%`]);
-  await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE}%`]);
+  const programId = String(prog.rows[0].id);
+  await seedVaultFixtureParent(owner, { ...t, programId }, { userId, namespace: `${PROBE}${name}-parent` });
+  return programId;
 }
 
 beforeAll(async () => {
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
+  await assertVaultFixtureDatabase(owner);
   const user = await owner.query(
-    `INSERT INTO users (email, name, password_hash) VALUES ('dbtest-vlib@example.test', 'Lib Rarian', 'not-a-real-hash')
-       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
+    `INSERT INTO users (email, name, password_hash, status) VALUES ($1, 'Lib Rarian', 'not-a-real-hash', 'active') RETURNING id`,
+    [`dbtest-vlib-${RUN}@example.test`],
   );
   userId = Number(user.rows[0].id);
-  await cleanup();
   mine = await tenant('mine');
   theirs = await tenant('theirs');
   progA = await program(mine, 'alpha');
   progB = await program(mine, 'beta');
   progT = await program(theirs, 'their program');
+  await assertVaultFixtureRuntime({ ...mine, programId: progA });
   a1 = await ingest(mine, progA, `Stability report. The ${WORD} impurity stays under 0.1%.`, { documentCode: `${CODE}-A`, documentTitle: 'Alpha stability report' });
   a2 = await ingest(mine, progA, `Stability report, revised. The ${WORD} impurity stays under 0.05%.`, { supersedesDocumentId: a1, documentTitle: 'Alpha stability report' });
   b1 = await ingest(mine, progB, `Beta method validation for ${WORD}.`, { documentCode: `${CODE}-B`, documentTitle: 'Beta method validation' });
@@ -120,8 +107,9 @@ beforeAll(async () => {
 }, 90_000);
 
 afterAll(async () => {
-  await cleanup().catch(() => {});
-  await owner.end().catch(() => {});
+  // Keep this invocation's source bytes, records and append-only history.
+  try { await closeVaultFixtureRuntime(); }
+  finally { await owner?.end(); }
 });
 
 describe('library search across every project (critique 15)', () => {

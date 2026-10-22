@@ -1,0 +1,825 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > lets a platform super_admin through a DENY posture — the bypass
+{
+  "timestamp": "2026-10-14T21:12:22.016Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor overrode a tenant lifecycle refusal",
+  "context": {
+    "actorId": "1",
+    "organizationId": 42,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "POST",
+    "path": "/api/widgets"
+  }
+}
+
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > carve-outs > recognises the billing prefix 1ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > carve-outs > recognises the data-portability surfaces 0ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > carve-outs > does not let a lookalike path ride on a prefix entry 17ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > carve-outs > passes a carve-out through without consulting the posture at all 2ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > lets a platform super_admin through on a healthy tenant 2ms
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > lets a platform super_admin through a DENY posture — the bypass
+{
+  "timestamp": "2026-10-14T21:12:24.213Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > EVALUATES the posture rather than skipping it, so the bypass is auditable
+{
+  "timestamp": "2026-10-14T21:12:24.215Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor overrode a tenant lifecycle refusal",
+  "context": {
+    "actorId": "1",
+    "organizationId": 42,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/api/widgets"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > proceeds — not 503 — when the posture is unreadable
+{
+  "timestamp": "2026-10-14T21:12:24.219Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor proceeding on an unverifiable tenant posture",
+  "context": {
+    "organizationId": 42,
+    "method": "GET",
+    "path": "/api/widgets"
+  }
+}
+{
+  "timestamp": "2026-10-14T21:12:24.219Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor overrode a tenant lifecycle refusal",
+  "context": {
+    "actorId": "1",
+    "organizationId": 42,
+    "state": "unknown",
+    "decision": "unknown",
+    "method": "GET",
+    "path": "/api/widgets"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > proceeds when the posture lookup throws
+{
+  "timestamp": "2026-10-14T21:12:24.222Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Tenant lifecycle guard crashed — refusing access (fail-closed)",
+  "context": {
+    "organizationId": 42,
+    "error": "db is on fire"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > proceeds when the posture lookup throws
+{
+  "timestamp": "2026-10-14T21:12:24.223Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor overrode a tenant lifecycle refusal",
+  "context": {
+    "actorId": "1",
+    "organizationId": 42,
+    "state": "unknown",
+    "decision": "unknown",
+    "method": "GET",
+    "path": "/api/widgets"
+  }
+}
+
+stdout | server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > does NOT recognise a platform role carried in the membership roles array
+{
+  "timestamp": "2026-10-14T21:12:24.225Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 42,
+    "state": "active",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/api/widgets"
+  }
+}
+
+stdout | server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > does NOT bypass for an org-scoped admin
+{
+  "timestamp": "2026-10-14T21:12:24.227Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 42,
+    "state": "active",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/api/widgets"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > actual platform override receipt before the handler > allows authorized access with bounded lost headers and recovers
+{
+  "timestamp": "2026-10-14T21:12:24.230Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor overrode a tenant lifecycle refusal",
+  "context": {
+    "actorId": "7",
+    "organizationId": 42,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/api/widgets"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > actual platform override receipt before the handler > allows authorized access with bounded lost headers and recovers
+{
+  "timestamp": "2026-10-14T21:12:24.230Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "authorization.tenant_lifecycle_override",
+    "resourceType": "organization",
+    "resourceId": 42,
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > actual platform override receipt before the handler > allows authorized access with bounded lost headers and recovers
+{
+  "timestamp": "2026-10-14T21:12:24.232Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor overrode a tenant lifecycle refusal",
+  "context": {
+    "actorId": "7",
+    "organizationId": 42,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/api/widgets"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > actual platform override receipt before the handler > allows authorized access with bounded thrown headers and recovers
+{
+  "timestamp": "2026-10-14T21:12:24.234Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor overrode a tenant lifecycle refusal",
+  "context": {
+    "actorId": "7",
+    "organizationId": 42,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/api/widgets"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > actual platform override receipt before the handler > allows authorized access with bounded thrown headers and recovers
+{
+  "timestamp": "2026-10-14T21:12:24.235Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "authorization.tenant_lifecycle_override",
+    "resourceType": "organization",
+    "resourceId": 42,
+    "reason": "private driver connection details"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > actual platform override receipt before the handler > allows authorized access with bounded thrown headers and recovers
+{
+  "timestamp": "2026-10-14T21:12:24.236Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor overrode a tenant lifecycle refusal",
+  "context": {
+    "actorId": "7",
+    "organizationId": 42,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/api/widgets"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > actual platform override receipt before the handler > allows authorized access with bounded tamper-only headers and recovers
+{
+  "timestamp": "2026-10-14T21:12:24.239Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor overrode a tenant lifecycle refusal",
+  "context": {
+    "actorId": "7",
+    "organizationId": 42,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/api/widgets"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > actual platform override receipt before the handler > allows authorized access with bounded tamper-only headers and recovers
+{
+  "timestamp": "2026-10-14T21:12:24.240Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "authorization.tenant_lifecycle_override",
+    "resourceType": "organization",
+    "resourceId": 42
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > actual platform override receipt before the handler > allows authorized access with bounded tamper-only headers and recovers
+{
+  "timestamp": "2026-10-14T21:12:24.242Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor overrode a tenant lifecycle refusal",
+  "context": {
+    "actorId": "7",
+    "organizationId": 42,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/api/widgets"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > actual platform override receipt before the handler > waits for the real audit result before allowing the handler to respond
+{
+  "timestamp": "2026-10-14T21:12:24.244Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor overrode a tenant lifecycle refusal",
+  "context": {
+    "actorId": "7",
+    "organizationId": 42,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/api/widgets"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > actual platform override receipt before the handler > waits for the real audit result before allowing the handler to respond
+{
+  "timestamp": "2026-10-14T21:12:24.294Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "authorization.tenant_lifecycle_override",
+    "resourceType": "organization",
+    "resourceId": 42,
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > actual platform override receipt before the handler > records an honest unknown observation for a null posture override
+{
+  "timestamp": "2026-10-14T21:12:24.299Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor proceeding on an unverifiable tenant posture",
+  "context": {
+    "organizationId": 42,
+    "method": "GET",
+    "path": "/api/widgets"
+  }
+}
+{
+  "timestamp": "2026-10-14T21:12:24.299Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor overrode a tenant lifecycle refusal",
+  "context": {
+    "actorId": "7",
+    "organizationId": 42,
+    "state": "unknown",
+    "decision": "unknown",
+    "method": "GET",
+    "path": "/api/widgets"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > actual platform override receipt before the handler > records an honest unknown observation for a crashed posture override
+{
+  "timestamp": "2026-10-14T21:12:24.312Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Tenant lifecycle guard crashed — refusing access (fail-closed)",
+  "context": {
+    "organizationId": 42,
+    "error": "unreadable posture"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > actual platform override receipt before the handler > records an honest unknown observation for a crashed posture override
+{
+  "timestamp": "2026-10-14T21:12:24.312Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor overrode a tenant lifecycle refusal",
+  "context": {
+    "actorId": "7",
+    "organizationId": 42,
+    "state": "unknown",
+    "decision": "unknown",
+    "method": "GET",
+    "path": "/api/widgets"
+  }
+}
+
+stdout | server/middleware/__tests__/tenantLifecycleGuard.test.ts > decisions > refuses a suspended tenant with 403 and the machine-readable code
+{
+  "timestamp": "2026-10-14T21:12:24.321Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 42,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/api/widgets"
+  }
+}
+
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > lets a platform super_admin through a DENY posture — the bypass 2199ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > EVALUATES the posture rather than skipping it, so the bypass is auditable 4ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > proceeds — not 503 — when the posture is unreadable 3ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > proceeds when the posture lookup throws 3ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > does NOT recognise a platform role carried in the membership roles array 3ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > does NOT bypass for an org-scoped admin 2ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > actual platform override receipt before the handler > allows authorized access with bounded lost headers and recovers 5ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > actual platform override receipt before the handler > allows authorized access with bounded thrown headers and recovers 5ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > actual platform override receipt before the handler > allows authorized access with bounded tamper-only headers and recovers 4ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > actual platform override receipt before the handler > waits for the real audit result before allowing the handler to respond 55ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > actual platform override receipt before the handler > records an honest unknown observation for a null posture override 13ms
+stdout | server/middleware/__tests__/tenantLifecycleGuard.test.ts > decisions > read-only: blocks a POST
+{
+  "timestamp": "2026-10-14T21:12:24.323Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 42,
+    "state": "past_due",
+    "decision": "read_only",
+    "method": "POST",
+    "path": "/api/widgets"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > fail-closed > refuses with 503 when the posture lookup throws
+{
+  "timestamp": "2026-10-14T21:12:24.327Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Tenant lifecycle guard crashed — refusing access (fail-closed)",
+  "context": {
+    "organizationId": 42,
+    "error": "db is on fire"
+  }
+}
+
+stdout | server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: a suspended tenant > a member of a suspended tenant whose membership role is super_admin, with no grant, is REFUSED
+{
+  "timestamp": "2026-10-14T21:12:24.334Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 42,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "POST",
+    "path": "/api/widgets"
+  }
+}
+
+stdout | server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: a suspended tenant > a member of a suspended tenant whose membership role is platform_admin, with no grant, is REFUSED
+{
+  "timestamp": "2026-10-14T21:12:24.337Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 42,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "POST",
+    "path": "/api/widgets"
+  }
+}
+
+stdout | server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: a suspended tenant > a member of a suspended tenant whose membership role is app_super_admin, with no grant, is REFUSED
+{
+  "timestamp": "2026-10-14T21:12:24.339Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 42,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "POST",
+    "path": "/api/widgets"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: a suspended tenant > an active super_admin grant holder PROCEEDS past the suspension, and the override is recorded
+{
+  "timestamp": "2026-10-14T21:12:24.343Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor overrode a tenant lifecycle refusal",
+  "context": {
+    "actorId": "12",
+    "organizationId": 42,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "POST",
+    "path": "/api/widgets"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: a suspended tenant > an active platform_admin grant holder PROCEEDS past the suspension, and the override is recorded
+{
+  "timestamp": "2026-10-14T21:12:24.345Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor overrode a tenant lifecycle refusal",
+  "context": {
+    "actorId": "12",
+    "organizationId": 42,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "POST",
+    "path": "/api/widgets"
+  }
+}
+
+stdout | server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: a suspended tenant > a grant for a role the override does not accept (support) is not an override
+{
+  "timestamp": "2026-10-14T21:12:24.357Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 42,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/api/widgets"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: unreadable posture, lookup failure, owner sign-in > the posture lookup throws: a membership super_admin with no grant gets 503, not the staff override
+{
+  "timestamp": "2026-10-14T21:12:24.365Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Tenant lifecycle guard crashed — refusing access (fail-closed)",
+  "context": {
+    "organizationId": 42,
+    "error": "db is on fire"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: unreadable posture, lookup failure, owner sign-in > the posture is unreadable: a platform_admin grant holder proceeds, counted as an override
+{
+  "timestamp": "2026-10-14T21:12:24.367Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor proceeding on an unverifiable tenant posture",
+  "context": {
+    "organizationId": 42,
+    "method": "GET",
+    "path": "/api/widgets"
+  }
+}
+{
+  "timestamp": "2026-10-14T21:12:24.367Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor overrode a tenant lifecycle refusal",
+  "context": {
+    "actorId": "12",
+    "organizationId": 42,
+    "state": "unknown",
+    "decision": "unknown",
+    "method": "GET",
+    "path": "/api/widgets"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: unreadable posture, lookup failure, owner sign-in > the posture lookup throws: a platform_admin grant holder proceeds, counted as an override
+{
+  "timestamp": "2026-10-14T21:12:24.368Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Tenant lifecycle guard crashed — refusing access (fail-closed)",
+  "context": {
+    "organizationId": 42,
+    "error": "db is on fire"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: unreadable posture, lookup failure, owner sign-in > the posture lookup throws: a platform_admin grant holder proceeds, counted as an override
+{
+  "timestamp": "2026-10-14T21:12:24.368Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor overrode a tenant lifecycle refusal",
+  "context": {
+    "actorId": "12",
+    "organizationId": 42,
+    "state": "unknown",
+    "decision": "unknown",
+    "method": "GET",
+    "path": "/api/widgets"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: unreadable posture, lookup failure, owner sign-in > a grant lookup that errors refuses: fail closed, never an override
+{
+  "timestamp": "2026-10-14T21:12:24.370Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {}
+}
+
+stdout | server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: unreadable posture, lookup failure, owner sign-in > a grant lookup that errors refuses: fail closed, never an override
+{
+  "timestamp": "2026-10-14T21:12:24.370Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 42,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/api/widgets"
+  }
+}
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: unreadable posture, lookup failure, owner sign-in > the owner's own sign-in on PLATFORM_ADMIN_EMAILS proceeds with no grant lookup; a SAML session asserting that e-mail does not
+{
+  "timestamp": "2026-10-14T21:12:24.375Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor overrode a tenant lifecycle refusal",
+  "context": {
+    "actorId": "14",
+    "organizationId": 42,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/api/widgets"
+  }
+}
+
+stdout | server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: unreadable posture, lookup failure, owner sign-in > the owner's own sign-in on PLATFORM_ADMIN_EMAILS proceeds with no grant lookup; a SAML session asserting that e-mail does not
+{
+  "timestamp": "2026-10-14T21:12:24.376Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 42,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/api/widgets"
+  }
+}
+
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > actual platform override receipt before the handler > records an honest unknown observation for a crashed posture override 7ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > decisions > allows an active tenant and attaches the posture to the request 1ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > decisions > refuses a suspended tenant with 403 and the machine-readable code 2ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > decisions > read-only: lets a GET through 1ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > decisions > read-only: blocks a POST 2ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > fail-closed > refuses with 503 when the posture is indeterminate 1ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > fail-closed > refuses with 503 when the posture lookup throws 2ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > identities with no tenant > passes through when the identity carries no numeric organization 1ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > identities with no tenant > rejects a non-integer organization claim rather than coercing it 1ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > idempotency > short-circuits when an outer mount already decided the request 1ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > idempotency > lets CORS preflight through untouched 1ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: a suspended tenant > a member of a suspended tenant whose membership role is super_admin, with no grant, is REFUSED 3ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: a suspended tenant > a member of a suspended tenant whose membership role is platform_admin, with no grant, is REFUSED 2ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: a suspended tenant > a member of a suspended tenant whose membership role is app_super_admin, with no grant, is REFUSED 4ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: a suspended tenant > an active super_admin grant holder PROCEEDS past the suspension, and the override is recorded 2ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: a suspended tenant > an active platform_admin grant holder PROCEEDS past the suspension, and the override is recorded 11ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: a suspended tenant > a grant for a role the override does not accept (support) is not an override 7ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: unreadable posture, lookup failure, owner sign-in > the posture is unreadable: a membership super_admin with no grant gets 503, not the staff override 2ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: unreadable posture, lookup failure, owner sign-in > the posture lookup throws: a membership super_admin with no grant gets 503, not the staff override 2ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: unreadable posture, lookup failure, owner sign-in > the posture is unreadable: a platform_admin grant holder proceeds, counted as an override 2ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: unreadable posture, lookup failure, owner sign-in > the posture lookup throws: a platform_admin grant holder proceeds, counted as an override 2ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: unreadable posture, lookup failure, owner sign-in > a grant lookup that errors refuses: fail closed, never an override 5ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: unreadable posture, lookup failure, owner sign-in > the owner's own sign-in on PLATFORM_ADMIN_EMAILS proceeds with no grant lookup; a SAML session asserting that e-mail does not 3ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: unreadable posture, lookup failure, owner sign-in > a request the posture admits (an active tenant, POST) makes NO platform_role_grants query 4ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > D6: the platform override is a platform grant, never the membership role: unreadable posture, lookup failure, owner sign-in > a request the posture admits (a read-only tenant, GET) makes NO platform_role_grants query 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects the backslash open-redirect payloads 1ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects protocol-relative and absolute URLs 0ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects non-strings / empty 0ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > accepts a legitimate same-origin path (incl. query) 0ms
+stdout | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects a pre-MFA partial token (no 24h access minted)
+{
+  "timestamp": "2026-10-14T21:12:27.388Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:12:27.389Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects a pre-MFA partial token (no 24h access minted)
+{
+  "timestamp": "2026-10-14T21:12:27.389Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects a pre-MFA partial token (no 24h access minted) 430ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects an mfa_challenge token 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token still refreshes a VALID access token 17ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /select-organization rejects a partial token 11ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > GET /session reports unauthenticated for a partial token 33ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > GET /session reports authenticated for a VALID access token 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > serves no authenticator enrolment of its own: /mfa/setup, /mfa/enable and /mfa/disable are not routes here 10ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /session rejects a partial token (401) 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /session rejects an mfa_challenge token (401) 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /me rejects a partial token (401) 6ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/setup rejects a partial token (401) 2ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/enable rejects a partial token (401) 12ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/disable rejects a partial token (401) 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /password/change rejects a partial token (401) 5ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > findUnpersistedAuditRow — the one reader of both wire signals > finds the outcome at the top level, under meta, under details, and nested in data 2ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > findUnpersistedAuditRow — the one reader of both wire signals > reads the header pair a 204 or a proxied body carries 6ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > findUnpersistedAuditRow — the one reader of both wire signals > warns when only the tamper-proof store persisted, without misclassifying unrelated objects 1ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > findUnpersistedAuditRow — the one reader of both wire signals > stays silent for a persisted row, a true header, and an unrelated `persisted: false` 0ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > findUnpersistedAuditRow — the one reader of both wire signals > terminates on a cyclic body 0ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > findUnpersistedAuditRow — the one reader of both wire signals > checks canonical audit metadata before large table payloads exhaust the bounded scan 1ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > apiRequest / apiUpload raise the notice for a saved change with no audit row > a 200 PATCH carrying auditTrail.persisted=false raises it, and the caller still reads the body 6ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > apiRequest / apiUpload raise the notice for a saved change with no audit row > a 204 DELETE carrying the header raises it 1ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > apiRequest / apiUpload raise the notice for a saved change with no audit row > a completed audited GET export raises the header warning without consuming its bytes 1ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > apiRequest / apiUpload raise the notice for a saved change with no audit row > an export with a persisted audit row and a failed GET raise no completed-request audit notice 6ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > apiRequest / apiUpload raise the notice for a saved change with no audit row > an upload whose row was lost raises it 55ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > apiRequest / apiUpload raise the notice for a saved change with no audit row > a persisted row, and a GET, raise nothing 23ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account added through user administration (SEC-0928-2) > address unconfirmed: the refusal names the organisation it belongs to 57ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account added through user administration (SEC-0928-2) > account out of use: the refusal names the organisation it belongs to 20ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account added through user administration (SEC-0928-2) > locked: the refusal names the organisation it belongs to 4ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account added through user administration (SEC-0928-2) > wrong password: the refusal names the organisation it belongs to 19ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account with a default organisation > control: its default organisation, where it holds a membership, is named 31ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account with a default organisation > the second-factor challenge names the organisation its sign-in lands in 28ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account with a default organisation > the partial token and the challenge name a MEMBERSHIP, never a default the account does not belong to 17ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account with a default organisation > with no membership at all, the default organisation is named 3ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: which organisation the sign-in lands in > an account with a membership and no default signs in, into its membership 24ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: which organisation the sign-in lands in > an account with no membership at all is refused, and the refusal is recorded 4ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-password > a suspended account is refused (403 AUTH_ACCOUNT_INACTIVE) before its password is compared, and the refusal is audited 31ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-password > control: an active account with the wrong password is 401 7ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > a challenge for an account suspended since it was issued does not become a session; no code is spent 7ms
+stdout | server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > control: an active account with a verified code proceeds past the standing check
+{
+  "timestamp": "2026-10-14T21:12:33.118Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:12:33.119Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > control: an active account with a verified code proceeds past the standing check
+{
+  "timestamp": "2026-10-14T21:12:33.119Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > control: an active account with a verified code proceeds past the standing check
+{
+  "timestamp": "2026-10-14T21:12:33.145Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa: a sign-in begun before the account's sessions were ended > control: sessions ended before the challenge was issued do not stop it
+{
+  "timestamp": "2026-10-14T21:12:33.162Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > control: an active account with a verified code proceeds past the standing check 162ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa: a sign-in begun before the account's sessions were ended > is refused at the second factor (401 SIGN_IN_ENDED), no code is spent, and the refusal is audited 8ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa: a sign-in begun before the account's sessions were ended > control: sessions ended before the challenge was issued do not stop it 5ms
+ ✓ client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx > GlobalMutationErrors — a completed request with no audit row > shows a notice that says the request completed and its audit entry is unconfirmed 88ms
+ ✓ client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx > GlobalMutationErrors — a completed request with no audit row > shows one notice for a repeated request, and removes it on dismiss 135ms
+ ✓ client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx > GlobalMutationErrors — a completed request with no audit row > shows the actual GET export transport warning while the caller receives the CSV 41ms
+ ✓ client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx > GlobalMutationErrors — a completed request with no audit row > shows a failed preview audit after a large clinical table payload without consuming the result 36ms
+ ✓ client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx > GlobalMutationErrors — a completed request with no audit row > shows a tamper-only audit warning while preserving the successful response 13ms
+stdout | server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts > POST /select-organization rotates > mints a token for the selected organisation, keeps the session, and revokes the presented token
+{
+  "timestamp": "2026-10-14T21:12:37.443Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:12:37.444Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts > POST /select-organization rotates > mints a token for the selected organisation, keeps the session, and revokes the presented token
+{
+  "timestamp": "2026-10-14T21:12:37.444Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts > POST /select-organization rotates > keeps the rotated session usable with the actual lost audit outcome
+{
+  "timestamp": "2026-10-14T21:12:37.481Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "authorization.organization_switch",
+    "resourceType": "organization",
+    "resourceId": "7",
+    "reason": "private audit connection detail"
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts > POST /select-organization rotates > keeps the rotated session usable with the actual thrown audit outcome
+{
+  "timestamp": "2026-10-14T21:12:37.514Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "authorization.organization_switch",
+    "resourceType": "organization",
+    "resourceId": "7",
+    "reason": "private audit connection detail"
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts > POST /select-organization rotates > keeps the rotated session usable with the actual tamper-only audit outcome
+{
+  "timestamp": "2026-10-14T21:12:37.531Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "authorization.organization_switch",
+    "resourceType": "organization",
+    "resourceId": "7"
+  }
+}
+
+ ✓ server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts > POST /select-organization rotates > mints a token for the selected organisation, keeps the session, and revokes the presented token 155ms
+ ✓ server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts > POST /select-organization rotates > keeps the rotated session usable with the actual lost audit outcome 12ms
+ ✓ server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts > POST /select-organization rotates > keeps the rotated session usable with the actual thrown audit outcome 38ms
+ ✓ server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts > POST /select-organization rotates > keeps the rotated session usable with the actual tamper-only audit outcome 8ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitchAuditNotice.test.tsx > the current organization switch carries its actual audit warning through reload > lost: actual apiRequest warns, still adopts and navigates, and the reloaded shell consumes once 66ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitchAuditNotice.test.tsx > the current organization switch carries its actual audit warning through reload > tamper-only: actual apiRequest warns, still adopts and navigates, and the reloaded shell consumes once 18ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitchAuditNotice.test.tsx > the current organization switch carries its actual audit warning through reload > a healthy switch navigates without a persisted or rendered warning 7ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitchAuditNotice.test.tsx > the current organization switch carries its actual audit warning through reload > a refused switch does not adopt a token, navigate or save a completed-action notice 3ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitchAuditNotice.test.tsx > the current organization switch carries its actual audit warning through reload > restricted notice storage never breaks the completed token handoff 10ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitchAuditNotice.test.tsx > the current organization switch carries its actual audit warning through reload > stores only bounded allowed fields and rejects malformed or other-action notices without replay 1ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitchAuditNotice.test.tsx > the current organization switch carries its actual audit warning through reload > does not carry an unverified destination session into a reload notice 1ms
+stderr | server/routes/__tests__/authEnterprise-memberships.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authEnterprise-memberships.test.ts
+{
+  "timestamp": "2026-10-14T21:12:40.341Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authEnterprise-memberships.test.ts > organization selection is the authenticated account's memberships > reads memberships for the authenticated actor, ignoring a requested user 15ms
+ ✓ server/routes/__tests__/authEnterprise-memberships.test.ts > organization selection is the authenticated account's memberships > does not query the directory without an authenticated account ID 3ms
+ ✓ client/src/concept2cure/v2/__tests__/switchOrganization.test.ts > verified tenant-session handoff > probes the rotated token, preserves session storage choice, clears tenant selection and loads Projects 10ms
+ ✓ client/src/concept2cure/v2/__tests__/switchOrganization.test.ts > verified tenant-session handoff > does not rotate or clear anything while the editor refuses unload 8ms
+ ✓ client/src/concept2cure/v2/__tests__/switchOrganization.test.ts > verified tenant-session handoff > preserves the original tenant selection on a refused membership switch 5ms
+ ✓ client/src/concept2cure/v2/__tests__/switchOrganization.test.ts > verified tenant-session handoff > ends the spent old session if the destination probe fails rather than retaining an old canvas under a new token 1ms
+
+ Test Files  10 passed (10)
+      Tests  109 passed (109)
+   Start at  21:12:21
+   Duration  20.36s (transform 3.11s, setup 784ms, import 9.51s, tests 4.20s, environment 3.55s)
+

@@ -1,0 +1,24 @@
+{
+  "at": "2026-10-20T23:05:10.886781+00:00",
+  "elapsedSeconds": 77.74,
+  "argv": [
+    "npx",
+    "vitest",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--silent=true",
+    "server/services/ectd/__tests__/sequence-release-signature.pglite.integration.test.ts",
+    "server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts",
+    "server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts"
+  ],
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-publication.json",
+  "sourceDrift": [],
+  "rawOutput": "additional-signing-fixtures-green-output.txt.gz",
+  "outputSha256": "186535912df82c5aa2551ac8e4365f15650ea6ea95815ca952fdf3c1d57cde3c",
+  "summary": [
+    "Test Files  3 passed (3)",
+    "Tests  48 passed (48)"
+  ]
+}

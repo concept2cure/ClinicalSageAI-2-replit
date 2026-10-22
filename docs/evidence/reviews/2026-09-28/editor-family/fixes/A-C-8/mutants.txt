@@ -24,4 +24,3 @@
    × client/src/concept2cure/v2/__tests__/protocolSoaTargetSize.test.ts > the visit-header rename and remove buttons (A-C-8) > fit side by side inside the visit column, so the grid does not widen 5ms
    Test Files  1 failed (1)
    Tests  1 failed | 1 passed (2)
-

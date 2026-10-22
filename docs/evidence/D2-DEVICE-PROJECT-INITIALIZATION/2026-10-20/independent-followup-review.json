@@ -1,0 +1,17 @@
+{
+  "at": "2026-10-20T22:44:06.344302+00:00",
+  "reviewer": "/root/regional_initialization_review",
+  "mode": "Read-only; no edits or tests by reviewer",
+  "conclusion": "No blockers in incoming extraction evidence or final authority chip labels",
+  "findings": [
+    "Exact source bytes, untrimmed UTF8 text and method bind extraction receipt; validated detached UTF16 spans.",
+    "Invalid cached metadata forces fresh extraction; replacement text clears stale receipt and retained text preserves its evidence.",
+    "Existing claim/current-source/tenant checks retain authority; descriptive evidence does not approve source use.",
+    "ProjectHome uses existing AGENCY_LABEL only in existing chip; unknown recorded label, stored identity and AnA context preserved."
+  ],
+  "pinsRecordedByRootAfterReview": {
+    "server/services/clinical-regulatory-evidence/capture-extraction-evidence.ts": "281e3f7ddfb773f972d8fd37420d7fc4188503d6deadce035645cbaacf9f7c1b",
+    "server/services/clinical-regulatory-evidence/data-room-processing.ts": "2054682c485173a5cf79dd8a5d234755cd67ba83d05cc8addb612417da1c1e2a",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "1bfc65e9a0870453d086346418087a6e1810fa67213f32c487110141c2c81230"
+  }
+}

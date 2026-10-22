@@ -75,6 +75,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { canAccessModule } from '../services/license-manager.js';
 import { recordObservation } from '../services/entitlements/enforcement-observations.js';
 import { currentEnforcementMode } from '../services/entitlements/enforcement-mode.js';
+import { resolveMasterAdmin } from '../services/entitlements/master-admin';
 import { createScopedLogger } from '../utils/logger.js';
 import { NEVER_GATED, buildPrefixMap, modulesForPath } from '../services/entitlements/api-prefix-map.js';
 import { launchScopeApiVerdict } from '../services/entitlements/launch-scope-api.js';
@@ -187,8 +188,12 @@ export function moduleEntitlementGate(
     if (orgId == null) return next();
 
     let entitled = false;
-    let reasons: string[] = [];
+    const reasons: string[] = [];
     try {
+      // Match navigation's actor grant, using its DB-authoritative resolver.
+      // This widens commercial packaging only; release scope already ran above
+      // and the request's authenticated tenant context is never changed.
+      if (await resolveMasterAdmin(req)) return next();
       // Entitled to ANY module that claims this prefix is enough — see the
       // header. Sequential rather than Promise.all so a customer entitled via
       // the first module costs one query, which is the common case.

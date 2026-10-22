@@ -224,4 +224,3 @@ both husky hooks. Eighteen ran nowhere else, and `ci:tenant-resolvers` ran nowhe
   - Both reads go through `serverMessage()`.
   - All nineteen gates run in `ci.yml` on every push.
   - The steps are moved, not copied: `pr-checks.yml` no longer runs them.
-

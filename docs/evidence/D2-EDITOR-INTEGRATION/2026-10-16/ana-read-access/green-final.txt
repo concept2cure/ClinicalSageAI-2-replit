@@ -1,0 +1,73 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+stdout | server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts
+{
+  "timestamp": "2026-10-16T21:21:53.727Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-16T21:21:53.728Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts
+{
+  "timestamp": "2026-10-16T21:21:53.729Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts
+{
+  "timestamp": "2026-10-16T21:21:54.827Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > reads the real saved record for an active private-project member, including a read-only organization role 56ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > refuses a project member revoked after the conversation was admitted 38ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > refuses organization membership removed after an earlier successful tool call 35ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > refuses a disabled account before reading saved authoring data 23ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > refuses an unidentified actor even with a valid organization and program 21ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > fails closed when the current project sharing policy cannot be read 20ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > refuses contradictory project identifiers before reading saved authoring data 23ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > uses the supplied request executor instead of checking out an alternate pool 31ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > checks fresh access on the isolated executor when no request executor is supplied 40ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > reads the real saved record for an active private-project member, including a read-only organization role 31ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > refuses a project member revoked after the conversation was admitted 31ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > refuses organization membership removed after an earlier successful tool call 40ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > refuses a disabled account before reading saved authoring data 23ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > refuses an unidentified actor even with a valid organization and program 20ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > fails closed when the current project sharing policy cannot be read 21ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > refuses contradictory project identifiers before reading saved authoring data 26ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > uses the supplied request executor instead of checking out an alternate pool 22ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > checks fresh access on the isolated executor when no request executor is supplied 30ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > reads the real saved record for an active private-project member, including a read-only organization role 35ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > refuses a project member revoked after the conversation was admitted 23ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > refuses organization membership removed after an earlier successful tool call 28ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > refuses a disabled account before reading saved authoring data 19ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > refuses an unidentified actor even with a valid organization and program 25ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > fails closed when the current project sharing policy cannot be read 21ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > refuses contradictory project identifiers before reading saved authoring data 19ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > uses the supplied request executor instead of checking out an alternate pool 30ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > checks fresh access on the isolated executor when no request executor is supplied 35ms
+
+ Test Files  1 passed (1)
+      Tests  27 passed (27)
+   Start at  21:21:51
+   Duration  7.15s (transform 2.32s, setup 94ms, import 3.44s, tests 3.29s, environment 0ms)

@@ -1,0 +1,1119 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/batch-draft-cancellation.test.ts
+{
+  "timestamp": "2026-10-18T15:51:22.899Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T15:51:22.901Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/batch-draft-cancellation.test.ts
+{
+  "timestamp": "2026-10-18T15:51:22.901Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/batch-draft-cancellation.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > draftDocument honours the trusted stop signal > never reaches the gateway when stopped before dispatch 4ms
+ ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > draftDocument honours the trusted stop signal > forwards the same signal to the gateway 40ms
+ ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > draftDocument honours the trusted stop signal > suppresses a end_turn result that settles after stop 1ms
+ ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > draftDocument honours the trusted stop signal > suppresses a aborted result that settles after stop 1ms
+ ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > draftDocument honours the trusted stop signal > ignores a signal-shaped value that is not an AbortSignal 1ms
+stderr | server/services/ana/__tests__/batch-draft-cancellation.test.ts > batchDraft stops dispatching waves after stop > keeps an abort-shaped failure as failed when nobody stopped
+{
+  "timestamp": "2026-10-18T15:51:28.715Z",
+  "level": "error",
+  "message": "[ana-drafting-batch] batch section failed",
+  "context": {
+    "sectionType": "Section 0",
+    "err": "timeout"
+  }
+}
+
+stderr | server/services/ana/__tests__/batch-draft-cancellation.test.ts > batchDraft stops dispatching waves after stop > classifies in-wave cancellation as cancelled and keeps a genuine failure as failed
+{
+  "timestamp": "2026-10-18T15:51:28.718Z",
+  "level": "error",
+  "message": "[ana-drafting-batch] batch section failed",
+  "context": {
+    "sectionType": "Section 1",
+    "err": "driver detail"
+  }
+}
+
+ ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > batchDraft stops dispatching waves after stop > keeps a finished wave, rejects the in-flight wave late, and dispatches no later wave 57ms
+ ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > batchDraft stops dispatching waves after stop > keeps an abort-shaped failure as failed when nobody stopped 1ms
+ ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > batchDraft stops dispatching waves after stop > dispatches nothing when already stopped 0ms
+ ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > batchDraft stops dispatching waves after stop > passes the batch signal to every section 1ms
+ ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > batchDraft stops dispatching waves after stop > classifies in-wave cancellation as cancelled and keeps a genuine failure as failed 1ms
+ ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > batchDraft stops dispatching waves after stop > runs unchanged without a signal 0ms
+stdout | server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts
+{
+  "timestamp": "2026-10-18T15:51:30.498Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T15:51:30.499Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts
+{
+  "timestamp": "2026-10-18T15:51:30.499Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts
+{
+  "timestamp": "2026-10-18T15:51:30.829Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts > batch_draft_sections carries stop into nested work > reads no further source and dispatches no draft after stop during the first source read 33ms
+ ✓ server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts > batch_draft_sections carries stop into nested work > passes the trusted signal to the drafting service 1ms
+ ✓ server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts > batch_draft_sections carries stop into nested work > keeps drafted siblings and lists cancelled slots outside retryIndices 1ms
+ ✓ server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts > batch_draft_sections carries stop into nested work > keeps a source refusal as failed when stop lands during that read 2ms
+ ✓ server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts > batch_draft_sections carries stop into nested work > reports a fault after stop as the stop, keeping recorded source refusals 2ms
+ ✓ server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts > batch_draft_sections carries stop into nested work > dispatches nothing when already stopped 1ms
+stdout | server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts
+{
+  "timestamp": "2026-10-18T15:51:36.035Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T15:51:36.036Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts
+{
+  "timestamp": "2026-10-18T15:51:36.037Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts
+{
+  "timestamp": "2026-10-18T15:51:36.174Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > omitted batch submission type reaches canonical IND drafting requirements > uses the selected open-program identity in the real drafting prompt for a deep CTD section 97ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > omitted batch submission type reaches canonical IND drafting requirements > resolves a blank submission_type "" exactly like an omitted one 9ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > omitted batch submission type reaches canonical IND drafting requirements > resolves a blank submission_type "   " exactly like an omitted one 7ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > omitted batch submission type reaches canonical IND drafting requirements > accepts the recorded metadata when the driver returns a JSON string 11ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > omitted batch submission type reaches canonical IND drafting requirements > resolves the legacy project anchor through the same tenant-owned program check 8ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > omitted batch submission type reaches canonical IND drafting requirements > uses the existing exact FDA+IND legacy mapping only when no choice was recorded 13ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > omitted batch submission type reaches canonical IND drafting requirements > uses a valid chosen registry identity before a conflicting legacy type/agency pair 15ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > omitted batch submission type reaches canonical IND drafting requirements > preserves explicit nonblank type " EU_MAA " without any project read 5ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > omitted batch submission type reaches canonical IND drafting requirements > preserves explicit nonblank type "NOT_A_REAL_TYPE" without any project read 4ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > unresolved project facts never become an inferred US filing > does not fall back from an invalid recorded choice "NOT_A_REAL_TYPE" 8ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > unresolved project facts never become an inferred US filing > does not fall back from an invalid recorded choice "" 6ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > unresolved project facts never become an inferred US filing > does not fall back from an invalid recorded choice 17 6ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > unresolved project facts never become an inferred US filing > does not fall back from an invalid recorded choice {"id":"US_IND"} 6ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > unresolved project facts never become an inferred US filing > does not infer a filing from malformed metadata {"metadata":"not-json"} 6ms
+stderr | server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > inference retains bounded batch and per-section behavior > keeps malformed request slots and individual model failures without dropping successful sections
+{
+  "timestamp": "2026-10-18T15:51:41.238Z",
+  "level": "error",
+  "message": "[ana-drafting-batch] batch section failed",
+  "context": {
+    "sectionType": "2.5",
+    "err": "private-provider-detail"
+  }
+}
+
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > unresolved project facts never become an inferred US filing > does not infer a filing from malformed metadata {"metadata":[]} 6ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > unresolved project facts never become an inferred US filing > does not infer a filing from malformed metadata {"metadata":17} 5ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > unresolved project facts never become an inferred US filing > does not map an IND with unsupported or absent agency "EMA" 10ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > unresolved project facts never become an inferred US filing > does not map an IND with unsupported or absent agency "MHRA" 6ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > unresolved project facts never become an inferred US filing > does not map an IND with unsupported or absent agency "US FDA" 6ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > unresolved project facts never become an inferred US filing > does not map an IND with unsupported or absent agency null 6ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > unresolved project facts never become an inferred US filing > does not read filing facts from another tenant or a deleted program {"organizationId":8} 5ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > unresolved project facts never become an inferred US filing > does not read filing facts from another tenant or a deleted program {"deletedAt":"2026-10-01"} 6ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > unresolved project facts never become an inferred US filing > keeps absent or invalid open context unassessed without a program-fact read {"organizationId":7,"userId":3} 3ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > unresolved project facts never become an inferred US filing > keeps absent or invalid open context unassessed without a program-fact read {"organizationId":7,"userId":3,"projectRef":"invalid-id"} 4ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > unresolved project facts never become an inferred US filing > keeps absent or invalid open context unassessed without a program-fact read {"organizationId":0,"userId":3,"projectRef":"20000000-0000-4000-8000-000000000001"} 3ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > unresolved project facts never become an inferred US filing > does not trust a legacy anchor that names another tenant program 6ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > unresolved project facts never become an inferred US filing > keeps no-project drafting available without acquiring a database pool 4ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > inference read failures stop model calls with the existing batch failure receipt > reports a real missing regulatory_programs without exposing driver errors or generating 7ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > inference read failures stop model calls with the existing batch failure receipt > reports a real missing metadata without exposing driver errors or generating 6ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > inference retains bounded batch and per-section behavior > accepts 20 sections, reads filing facts once and keeps the 21-section guard before reads 7ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > inference retains bounded batch and per-section behavior > keeps malformed request slots and individual model failures without dropping successful sections 11ms
+ ✓ server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts > inference retains bounded batch and per-section behavior > keeps an unsafe selected source failure in its original slot and drafts the other section 6ms
+stdout | server/services/ana/__tests__/batch-draft-concurrency.test.ts
+{
+  "timestamp": "2026-10-18T15:51:42.241Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T15:51:42.243Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/batch-draft-concurrency.test.ts
+{
+  "timestamp": "2026-10-18T15:51:42.243Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/batch-draft-concurrency.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'negative' before reading or scheduling requests 4ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'negative infinity' before reading or scheduling requests 1ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'infinity' before reading or scheduling requests 1ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'NaN' before reading or scheduling requests 1ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'zero' before reading or scheduling requests 0ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'fraction' before reading or scheduling requests 0ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'null' before reading or scheduling requests 0ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'false' before reading or scheduling requests 0ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'true' before reading or scheduling requests 1ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'numeric string' before reading or scheduling requests 1ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'empty string' before reading or scheduling requests 0ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'array' before reading or scheduling requests 0ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'object' before reading or scheduling requests 1ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > bounds active work and keeps order for undefined 105ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > bounds active work and keeps order for 1 307ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > bounds active work and keeps order for 3 102ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > bounds active work and keeps order for 5 51ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > bounds active work and keeps order for 99 51ms
+stdout | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts
+{
+  "timestamp": "2026-10-18T15:51:45.193Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T15:51:45.195Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts
+{
+  "timestamp": "2026-10-18T15:51:45.195Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/draft' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-18T15:51:45.328Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "draft",
+    "reason": "private database refusal"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/draft' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-18T15:51:45.333Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "draft",
+    "reason": "private database rejection"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/review' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-18T15:51:45.342Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "review",
+    "reason": "private database refusal"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/review' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-18T15:51:45.347Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "review",
+    "reason": "private database rejection"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/gap-analysis' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-18T15:51:45.361Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "gap-analysis",
+    "reason": "private database refusal"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/gap-analysis' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-18T15:51:45.367Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "gap-analysis",
+    "reason": "private database rejection"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/vision' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-18T15:51:45.377Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "vision",
+    "reason": "private database refusal"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/vision' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-18T15:51:45.384Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "vision",
+    "reason": "private database rejection"
+  }
+}
+
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/draft' carries the actual model-provenance audit outcome > recorded keeps the generated output and reports the canonical outcome 35ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/draft' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome 6ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/draft' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome 5ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/review' carries the actual model-provenance audit outcome > recorded keeps the generated output and reports the canonical outcome 4ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/review' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome 4ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/review' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome 4ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/gap-analysis' carries the actual model-provenance audit outcome > recorded keeps the generated output and reports the canonical outcome 10ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/gap-analysis' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome 4ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/gap-analysis' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome 7ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/vision' carries the actual model-provenance audit outcome > recorded keeps the generated output and reports the canonical outcome 5ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/vision' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome 4ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/vision' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome 8ms
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/quick' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-18T15:51:45.393Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "quick",
+    "reason": "private database refusal"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/quick' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-18T15:51:45.396Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "quick",
+    "reason": "private database rejection"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/agent' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-18T15:51:45.405Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "agent",
+    "reason": "private database refusal"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/agent' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-18T15:51:45.409Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "agent",
+    "reason": "private database rejection"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > does not send the JSON response before a delayed audit rejection, and recovers on the next request
+{
+  "timestamp": "2026-10-18T15:51:45.462Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "quick",
+    "reason": "private delayed database rejection"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > distinguishes a tamper-proof-only provenance record from a retrievable chained row
+{
+  "timestamp": "2026-10-18T15:51:45.468Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "draft"
+  }
+}
+
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/quick' carries the actual model-provenance audit outcome > recorded keeps the generated output and reports the canonical outcome 4ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/quick' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome 4ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/quick' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome 4ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/agent' carries the actual model-provenance audit outcome > recorded keeps the generated output and reports the canonical outcome 5ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/agent' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome 4ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/agent' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome 3ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > does not send the JSON response before a delayed audit rejection, and recovers on the next request 56ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > distinguishes a tamper-proof-only provenance record from a retrievable chained row 3ms
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > streaming provenance > keeps the completion frame pending until the actual delayed audit outcome is known
+{
+  "timestamp": "2026-10-18T15:51:45.521Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "draft/stream",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > streaming provenance > the done frame reports refused without turning generated content into a stream error
+{
+  "timestamp": "2026-10-18T15:51:45.530Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "draft/stream",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > streaming provenance > the done frame reports rejected without turning generated content into a stream error
+{
+  "timestamp": "2026-10-18T15:51:45.535Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "draft/stream",
+    "reason": "private streaming database rejection"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > batch provenance > awaits every drafted result, combines a loss without hiding it behind a later success, and retains per-slot failures and the turn receipt
+{
+  "timestamp": "2026-10-18T15:51:45.588Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "private batch database rejection"
+  }
+}
+
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > streaming provenance > keeps the completion frame pending until the actual delayed audit outcome is known 55ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > streaming provenance > the done frame reports recorded without turning generated content into a stream error 4ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > streaming provenance > the done frame reports refused without turning generated content into a stream error 4ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > streaming provenance > the done frame reports rejected without turning generated content into a stream error 4ms
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > batch provenance > reports a successful batch only with the actual chained status of every generation
+{
+  "timestamp": "2026-10-18T15:51:45.594Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > does not write generation provenance when drafting itself failed
+[Claude Intelligence] Draft error: private drafting refusal
+{
+  "timestamp": "2026-10-18T15:51:45.601Z",
+  "level": "error",
+  "message": "[ana-intelligence] drafting failed",
+  "context": {
+    "err": "private drafting refusal",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > batch provenance > awaits every drafted result, combines a loss without hiding it behind a later success, and retains per-slot failures and the turn receipt 56ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > batch provenance > reports a successful batch only with the actual chained status of every generation 4ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > batch provenance > does not invent an AI generation or an aggregate audit outcome when every section failed 3ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > does not write generation provenance when drafting itself failed 4ms
+stdout | server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts
+{
+  "timestamp": "2026-10-18T15:51:46.753Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T15:51:46.755Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts
+{
+  "timestamp": "2026-10-18T15:51:46.755Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for undefined
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for undefined
+{
+  "timestamp": "2026-10-18T15:51:46.961Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'negative' before service or recording 31ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'zero' before service or recording 6ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'fraction' before service or recording 4ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'null' before service or recording 4ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'false' before service or recording 4ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'true' before service or recording 4ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'numeric string' before service or recording 3ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'empty string' before service or recording 3ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'array' before service or recording 6ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'object' before service or recording 3ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for undefined 29ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for 1 4ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for 3 4ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for 5 3ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for 99 4ms
+stdout | server/routes/__tests__/ana-intelligence-source-context.test.ts
+{
+  "timestamp": "2026-10-18T15:51:48.219Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T15:51:48.221Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-source-context.test.ts
+{
+  "timestamp": "2026-10-18T15:51:48.221Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ana-intelligence-source-context.test.ts
+[database] Database connection successful
+
+stdout | server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > preserves ordinary drafting and server-derived identity without an internal context
+{
+  "timestamp": "2026-10-18T15:51:48.386Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ai_generation ai_drafting_surface",
+  "context": {
+    "userId": 3,
+    "tenantId": 7,
+    "resourceId": "batch"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > preserves ordinary drafting and server-derived identity without an internal context
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > preserves ordinary drafting and server-derived identity without an internal context
+{
+  "timestamp": "2026-10-18T15:51:48.387Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > preserves ordinary drafting and server-derived identity without an internal context
+{
+  "timestamp": "2026-10-18T15:51:48.393Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.connect",
+    "caller": "server/services/auditService.ts:435:35",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > preserves ordinary drafting and server-derived identity without an internal context
+{
+  "timestamp": "2026-10-18T15:51:48.395Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > preserves ordinary drafting and server-derived identity without an internal context
+{
+  "timestamp": "2026-10-18T15:51:48.397Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.connect",
+    "caller": "server/lib/tamper-proof-audit.ts:471:36",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > preserves ordinary drafting and server-derived identity without an internal context
+[AuditLog] Failed to write audit entry: TypeError: Cannot read properties of undefined (reading 'rows')
+    at TamperProofAuditLog.log (/home/user/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:504:39)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:473:9)
+    at recordAuditRow (/home/user/ClinicalSageAI-2-replit/server/services/audit/audit-write-outcome.ts:185:14)
+    at recordModelProvenance (/home/user/ClinicalSageAI-2-replit/server/routes/ana-model-provenance.ts:20:12)
+    at async Promise.all (index 0)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/ana-intelligence.ts:450:32
+
+stderr | server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > preserves ordinary drafting and server-derived identity without an internal context
+{
+  "timestamp": "2026-10-18T15:51:48.398Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > preserves ordinary drafting and server-derived identity without an internal context
+{
+  "timestamp": "2026-10-18T15:51:48.399Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "Cannot read properties of undefined (reading 'rows')"
+  }
+}
+
+ ✓ server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > refuses a reserved context before generation or turn recording: {"status":"loaded","sources":[{"documentId":"00000000-0000-4000-8000-000000000001","version":2,"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","extractedTextSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","spanSha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","span":{"start":0,"end":25,"totalChars":25},"text":"FAKE_SERVER_LOADED_RESULTS"}]} 29ms
+ ✓ server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > refuses a reserved context before generation or turn recording: {"status":"unassessed","sources":[]} 4ms
+ ✓ server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > refuses a reserved context before generation or turn recording: null 4ms
+ ✓ server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > preserves ordinary drafting and server-derived identity without an internal context 40ms
+stdout | server/routes/__tests__/ana-intelligence-identity.test.ts
+{
+  "timestamp": "2026-10-18T15:51:49.633Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T15:51:49.635Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-identity.test.ts
+{
+  "timestamp": "2026-10-18T15:51:49.635Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ana-intelligence-identity.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/ana-intelligence-identity.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/ana-intelligence-identity.test.ts
+{
+  "timestamp": "2026-10-18T15:51:49.778Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /batch overwrites an organizationId and userId named in the body
+{
+  "timestamp": "2026-10-18T15:51:49.837Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /batch overwrites an organizationId and userId named in the body
+[turn-record] could not write the turn record: Request-scoped database context is required
+
+stderr | server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /draft passes the tenant the auth chain attached
+{
+  "timestamp": "2026-10-18T15:51:49.850Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "draft",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /quick passes it too, and files its provenance under the tenant
+{
+  "timestamp": "2026-10-18T15:51:49.855Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "quick",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+ ✓ server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /batch overwrites an organizationId and userId named in the body 32ms
+ ✓ server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /draft passes the tenant the auth chain attached 5ms
+ ✓ server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /quick passes it too, and files its provenance under the tenant 26ms
+stdout | server/services/ana/__tests__/draft-source-service-checkpoint.test.ts
+{
+  "timestamp": "2026-10-18T15:51:50.889Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T15:51:50.891Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/draft-source-service-checkpoint.test.ts
+{
+  "timestamp": "2026-10-18T15:51:50.891Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-source-service-checkpoint.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source generation checkpoints > keeps a successful sibling when a later preloaded source is withdrawn while queued
+{
+  "timestamp": "2026-10-18T15:51:51.846Z",
+  "level": "error",
+  "message": "[ana-drafting-batch] batch section failed",
+  "context": {
+    "sectionType": "2.5",
+    "err": "SOURCE_UNAVAILABLE"
+  }
+}
+
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses a spread loaded-context assertion before gateway handoff 9ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses a json loaded-context assertion before gateway handoff 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses a manual loaded-context assertion before gateway handoff 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses another consumer organizationId for a genuine context 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses another consumer userId for a genuine context 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses another consumer projectId for a genuine context 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses selected-source onStream before any release 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses selected-source enableTools before any release 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses a same-length extraction correction while the selected context waited 2ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source generation checkpoints > passes a genuine identity-bearing context through a private dispatch guard and text-free metadata 6ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source generation checkpoints > rechecks a retained context immediately before the stubbed provider boundary 2ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source generation checkpoints > suppresses returned content if current source identity changes during the response wait 2ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source generation checkpoints > keeps a successful sibling when a later preloaded source is withdrawn while queued 3ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > ordinary drafting and immutable request snapshots > keeps ordinary streaming/tools without a source dispatch guard 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > ordinary drafting and immutable request snapshots > keeps ordinary streaming/tools without a source dispatch guard 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > ordinary drafting and immutable request snapshots > pins request identity, source object and declared project context before the first await 2ms
+stdout | server/services/ana/__tests__/batch-draft-termination-tool.test.ts
+{
+  "timestamp": "2026-10-18T15:51:52.872Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T15:51:52.873Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/batch-draft-termination-tool.test.ts
+{
+  "timestamp": "2026-10-18T15:51:52.874Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/batch-draft-termination-tool.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/batch-draft-termination-tool.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/batch-draft-termination-tool.test.ts
+{
+  "timestamp": "2026-10-18T15:51:52.997Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > does not offer incomplete prose for max_tokens 14ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > does not offer incomplete prose for length 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > does not offer incomplete prose for chunk_timeout 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > honors the canonical max_tokens reason despite a false flag 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > honors the canonical length reason despite a false flag 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > honors the canonical chunk_timeout reason despite a false flag 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > honors a canonical cutoff reason when the flag is absent 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > honors an explicit true flag with finish reason unknown 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > honors an explicit true flag with finish reason undefined 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > keeps a complete generated draft usable and unsaved 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > does not invent truncation for unknown 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > does not invent truncation for unrecognized_vendor_reason 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > does not invent truncation for undefined 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > retains known or unconfirmed termination metadata for end_turn 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > retains known or unconfirmed termination metadata for unknown 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > retains known or unconfirmed termination metadata for undefined 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent original-slot recovery and source receipts > keeps successful source identity and original slots while omitting cutoff prose in a mixed result 3ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent original-slot recovery and source receipts > explicitly instructs saving only drafted slots and repairing cutoff slots 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent original-slot recovery and source receipts > retains blank-response refusal as an ordinary failure 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent original-slot recovery and source receipts > retains source-unavailable refusal and its successful sibling without leaking details 1ms
+stdout | server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts
+{
+  "timestamp": "2026-10-18T15:51:55.779Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T15:51:55.781Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts
+{
+  "timestamp": "2026-10-18T15:51:55.781Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses queued source revocation while preserving successful no-source siblings
+{
+  "timestamp": "2026-10-18T15:51:56.671Z",
+  "level": "error",
+  "message": "[ana-drafting-batch] batch section failed",
+  "context": {
+    "sectionType": "selected",
+    "err": "SOURCE_UNAVAILABLE"
+  }
+}
+
+stderr | server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses queued actor revocation while preserving successful no-source siblings
+{
+  "timestamp": "2026-10-18T15:51:56.674Z",
+  "level": "error",
+  "message": "[ana-drafting-batch] batch section failed",
+  "context": {
+    "sectionType": "selected",
+    "err": "SYNTHETIC_CURRENT_ACTOR_REVOKED_PRIVATE_DETAIL"
+  }
+}
+
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > preserves an unchanged genuine Unicode context and text-free successful source receipts 8ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a spread copy of a genuine loaded context before gateway entry 3ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a json copy of a genuine loaded context before gateway entry 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a structuredClone copy of a genuine loaded context before gateway entry 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a genuine context consumed under another organizationId 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a genuine context consumed under another userId 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a genuine context consumed under another projectId 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a nonempty unassessed context instead of labeling its body as evidence 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > does not let pure prompt or audit helpers label copied context as server-issued 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > freezes the genuine context, source collection, source body and coordinates 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses queued source revocation while preserving successful no-source siblings 3ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses queued actor revocation while preserving successful no-source siblings 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > provides a callback that refuses a source changed during a gateway capacity wait 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > suppresses returned prose when extraction changes during the provider response wait 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > suppresses returned prose when private-parent changes during the provider response wait 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > pins request identity, context reference and declared project facts before its first await 2ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > refuses selected-source stream before gateway handoff 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > refuses selected-source tools before gateway handoff 0ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > retains eligible keep_data evidence and discloses the unavailable original 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > keeps ordinary no-source streaming/tools available without a source callback 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason max_tokens despite a contradictory false flag 3ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason length despite a contradictory false flag 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason chunk_timeout despite a contradictory false flag 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason max_tokens when the flag is absent 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason length when the flag is absent 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason chunk_timeout when the flag is absent 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > retains a consistent true flag and reason max_tokens 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > retains a consistent true flag and reason length 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > retains a consistent true flag and reason chunk_timeout 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > uses the canonical classifier for a whitespace-padded finish reason 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason undefined 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason null 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason unknown 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason provider_future_stop 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason end_turn 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason stop 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason end_turn 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason stop 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason unknown 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason provider_future_stop 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason undefined 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason null 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason end_turn and normalizes an absent truncation flag 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason stop and normalizes an absent truncation flag 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason unknown and normalizes an absent truncation flag 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason provider_future_stop and normalizes an absent truncation flag 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason undefined and normalizes an absent truncation flag 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason null and normalizes an absent truncation flag 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps blank and source-unavailable results failed without inventing truncation 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch recovery retains successful source receipts and original slots > retries only invalid, unavailable, blank and cut-off slots while preserving successful siblings 1ms
+stdout | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+{
+  "timestamp": "2026-10-18T15:51:57.799Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T15:51:57.800Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+{
+  "timestamp": "2026-10-18T15:51:57.800Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds a drug CMC section in its ICH guidance (matched by code or title) 5ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds a device section in the device blueprint (not the drug CTD) 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds an IVD performance section for an IVD marketing type 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > returns null when the submission type is absent or unresolvable 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > returns null for a section the blueprint does not contain 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs 2.7.4, 5.3.5.3 and 3.2.P.5 from the record (the blueprint had no row for them) 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > names a US IND's 1.2 the cover letter, never the blueprint's 'Administrative Forms' 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs a US IND's 1.14.4.1 as the Investigator's Brochure 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > says a CTD code the record does not index is not indexed, instead of returning nothing 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > never gives an EU MAA the US Module 1 or the blueprint's Module 1 row 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs Modules 2–5 from the ICH record for a non-US CTD entry 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > answers a unique canonical title with that section, and lists every code for an ambiguous one 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > adds the record brief to a blueprint title match outside Module 1 (US IND "Drug Substance" → 3.2.S) 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > never briefs a non-CTD blueprint section as a CTD module (510(k) §3, an IB section 3) 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > answers a title from the entry's own blueprint row before a same-titled canonical section elsewhere 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > treats a leading section code as the code whatever title follows it, and says when the title disagrees 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > delivers processed project source records to the gateway with explicit evidence limits 7ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > sends the 2.7.4 brief in the user message and requirementsSource in gateway metadata 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > records a 510(k) section as blueprint-sourced and sends no CTD brief 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > an IND block states the IB at 1.14.4.1, required unless the sponsor is a sponsor-investigator 2ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > an IND block sends drafting through the canonical tools, not the retired ones 1ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > the IND drafting guidance distinguishes generation, saving, and approval 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > the NDA drafting guidance distinguishes generation, saving, and approval 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > the BLA drafting guidance distinguishes generation, saving, and approval 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > an IND block carries the canonical initial-IND brief, not a second hand list 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > a NDA block is headed as a New Drug Application (NDA), never as an IND 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > a BLA block is headed as a Biologics License Application (BLA), never as an IND 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > every tool the IND block names is a classified, in-scope AnA tool 1ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > every tool the NDA block names is a classified, in-scope AnA tool 1ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > every tool the BLA block names is a classified, in-scope AnA tool 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > names the open project when the client sends one 1ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > an explicit submissionType is read when the context carries none 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > fails closed for MAA: no US block borrowed for another application 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > fails closed for CTA: no US block borrowed for another application 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > fails closed for JNDA: no US block borrowed for another application 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > fails closed for 510K: no US block borrowed for another application 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > fails closed for ANDA: no US block borrowed for another application 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > fails closed for : no US block borrowed for another application 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > fails closed for undefined: no US block borrowed for another application 0ms
+stdout | server/services/ana/__tests__/batch-draft-settles-per-item.test.ts
+{
+  "timestamp": "2026-10-18T15:51:59.952Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T15:51:59.953Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/batch-draft-settles-per-item.test.ts
+{
+  "timestamp": "2026-10-18T15:51:59.954Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/batch-draft-settles-per-item.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/batch-draft-settles-per-item.test.ts > AnaDocumentDraftingService.batchDraft > reports a fault that is not the gateway's as a failure result too — without leaking the internals
+{
+  "timestamp": "2026-10-18T15:52:00.975Z",
+  "level": "error",
+  "message": "[ana-drafting-batch] batch section failed",
+  "context": {
+    "sectionType": "broken",
+    "err": "relation \"prompt_versions\" does not exist"
+  }
+}
+
+ ✓ server/services/ana/__tests__/batch-draft-settles-per-item.test.ts > AnaDocumentDraftingService.batchDraft > returns a result for every section, keeping the successful drafts when one section cannot be drafted 11ms
+ ✓ server/services/ana/__tests__/batch-draft-settles-per-item.test.ts > AnaDocumentDraftingService.batchDraft > reports a fault that is not the gateway's as a failure result too — without leaking the internals 1ms
+
+ Test Files  15 passed (15)
+      Tests  244 passed (244)
+   Start at  15:51:20
+   Duration  40.57s (transform 9.32s, setup 333ms, import 33.22s, tests 4.45s, environment 2ms)
+

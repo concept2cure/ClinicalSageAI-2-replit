@@ -35,4 +35,3 @@ Serialized Error: { length: 142, severity: 'ERROR', code: '42704', detail: undef
       Tests  1 failed | 6 passed (7)
    Start at  19:10:29
    Duration  5.80s (transform 164ms, setup 103ms, import 488ms, tests 4.89s, environment 0ms)
-

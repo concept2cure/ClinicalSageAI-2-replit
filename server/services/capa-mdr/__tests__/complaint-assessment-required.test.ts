@@ -15,11 +15,14 @@ vi.mock('../../../db', () => {
     H.dbTouched += 1;
     throw new Error('the database was reached before the assessment was checked');
   };
-  return { db: { insert: touch, select: touch, update: touch }, pool: { query: touch } };
+  return { db: { insert: touch, select: touch, update: touch }, pool: { query: touch, connect: touch } };
 });
 
 import { classify } from '../triageEngine';
 import { createComplaint, ComplaintAssessmentRequired } from '../capaMdr.service';
+import type { CapaCaller } from '../governed-context';
+
+const CALLER: CapaCaller = { userId:7 };
 
 const BASE = {
   programId: '11111111-1111-4111-8111-111111111111',
@@ -48,14 +51,14 @@ describe('classify refuses a harm nobody assessed', () => {
 describe('createComplaint requires both assessments', () => {
   it('refuses a complaint with no patient harm, before touching the database', async () => {
     await expect(
-      createComplaint(3, { ...BASE, severityAssessment: 'minor' } as never),
+      createComplaint(3, { ...BASE, severityAssessment: 'minor' } as never, CALLER),
     ).rejects.toBeInstanceOf(ComplaintAssessmentRequired);
     expect(H.dbTouched).toBe(0);
   });
 
   it('refuses a complaint with no severity assessment', async () => {
     await expect(
-      createComplaint(3, { ...BASE, patientHarm: 'injury' } as never),
+      createComplaint(3, { ...BASE, patientHarm: 'injury' } as never, CALLER),
     ).rejects.toThrow(/severityAssessment is required/);
     expect(H.dbTouched).toBe(0);
   });

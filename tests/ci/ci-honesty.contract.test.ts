@@ -26,6 +26,7 @@
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import {
   PULL_REQUEST,
   ROOT,
@@ -224,8 +225,39 @@ describe('INF-10: Semgrep blocks', () => {
 describe('INF-10: the blocking scan, run as written', () => {
   const step = () => stepNamed(readWorkflow('semgrep.yml'), 'semgrep', 'Blocking scan');
   const env = { SEMGREP_CONFIGS: '--config=p/default --config=p/ci', BASELINE: 'a'.repeat(40) };
+  const evidenceFile = 'docs/evidence/workflow-review/source.html';
+  const evidenceBytes = 'Reviewed inert third-party snapshot bytes.';
+  const runWithReview = (
+    semgrepExit: number,
+    overrides: Record<string, string> = {},
+    git = 'exit 0',
+    evidence: { bytes?: string; file?: string } = {},
+  ) => {
+    const manifest = { schemaVersion: 1, entries: [{
+      file: evidence.file ?? evidenceFile,
+      sha256: createHash('sha256').update(evidenceBytes).digest('hex'),
+      kind: 'third_party_html',
+      reviewedRules: ['html.security.audit.missing-integrity.missing-integrity'],
+      reason: 'Reviewed fixed-byte third-party snapshot; application source is never exempt.',
+    }] };
+    // Prepare the scratch checkout, then execute the workflow body unchanged.
+    // The validator is real; only Semgrep and the ancestor lookup are stand-ins.
+    const prepare = [
+      'mkdir -p scripts/ci docs/evidence/workflow-review',
+      'cp "$EVIDENCE_REVIEW_VALIDATOR" scripts/ci/review-semgrep-evidence.py',
+      'printf "%s" "$EVIDENCE_REVIEW_MANIFEST" > scripts/ci/semgrep-reviewed-evidence.json',
+      'printf "%s" "$EVIDENCE_REVIEW_BYTES" > docs/evidence/workflow-review/source.html',
+    ].join('\n');
+    return runShellStep(`${prepare}\n${step().run ?? ''}`, {
+      ...env,
+      EVIDENCE_REVIEW_VALIDATOR: path.join(ROOT, 'scripts/ci/review-semgrep-evidence.py'),
+      EVIDENCE_REVIEW_MANIFEST: JSON.stringify(manifest),
+      EVIDENCE_REVIEW_BYTES: evidence.bytes ?? evidenceBytes,
+      ...overrides,
+    }, { semgrep: `exit ${semgrepExit}`, git });
+  };
   const run = (semgrepExit: number, overrides: Record<string, string> = {}) =>
-    runShellStep(step().run ?? '', { ...env, ...overrides }, { semgrep: `exit ${semgrepExit}`, git: 'exit 0' });
+    runWithReview(semgrepExit, overrides);
 
   it('passes when Semgrep reports nothing new over the baseline', () => {
     const r = run(0);
@@ -234,6 +266,8 @@ describe('INF-10: the blocking scan, run as written', () => {
     expect(scan).toContain(`--baseline-commit ${'a'.repeat(40)}`);
     expect(scan).toContain('--error');
     expect(scan).toContain('--config=p/ci');
+    expect(scan).toContain(`--exclude=${evidenceFile}`);
+    expect(r.out).toContain('Reviewed fixed-byte historical evidence: 1 files');
   });
 
   it('fails when Semgrep finds something the baseline did not have (exit 1)', () => {
@@ -251,17 +285,14 @@ describe('INF-10: the blocking scan, run as written', () => {
     const inside = 'c'.repeat(40);
     // git merge-base --is-ancestor: not an ancestor (exit 1) for the first candidate only.
     const git = `case "$*" in *"merge-base --is-ancestor ${outside}"*) exit 1;; esac; exit 0`;
-    const r = runShellStep(step().run ?? '', { ...env, BASELINE: outside, CANDIDATES: `${outside}\n${inside}` }, { semgrep: 'exit 0', git });
+    const r = runWithReview(0, { BASELINE: outside, CANDIDATES: `${outside}\n${inside}` }, git);
     expect(r.status, r.out).toBe(0);
     const scan = r.argv.find((a) => a.startsWith('semgrep '));
     expect(scan).toContain(`--baseline-commit ${inside}`);
   });
 
   it('fails without scanning when no candidate is in this commit\'s history', () => {
-    const r = runShellStep(step().run ?? '', { ...env, CANDIDATES: 'b'.repeat(40) }, {
-      semgrep: 'exit 0',
-      git: 'case "$*" in *merge-base*) exit 1;; esac; exit 0',
-    });
+    const r = runWithReview(0, { CANDIDATES: 'b'.repeat(40) }, 'case "$*" in *merge-base*) exit 1;; esac; exit 0');
     expect(r.status).not.toBe(0);
     expect(r.argv.some((a) => a.startsWith('semgrep '))).toBe(false);
   });
@@ -269,6 +300,20 @@ describe('INF-10: the blocking scan, run as written', () => {
   it('fails without scanning when no baseline was resolved', () => {
     const r = run(0, { BASELINE: '' });
     expect(r.status).not.toBe(0);
+    expect(r.argv.some((a) => a.startsWith('semgrep '))).toBe(false);
+  });
+
+  it('refuses changed evidence before invoking Semgrep', () => {
+    const r = runWithReview(0, {}, 'exit 0', { bytes: 'Changed evidence bytes.' });
+    expect(r.status).not.toBe(0);
+    expect(r.out).toContain('Semgrep evidence review refused: reviewed evidence changed or disappeared');
+    expect(r.argv.some((a) => a.startsWith('semgrep '))).toBe(false);
+  });
+
+  it('refuses an application-source exception before invoking Semgrep', () => {
+    const r = runWithReview(0, {}, 'exit 0', { file: 'server/source.py' });
+    expect(r.status).not.toBe(0);
+    expect(r.out).toContain('Semgrep evidence review refused: evidence path must be an exact, unique historical file');
     expect(r.argv.some((a) => a.startsWith('semgrep '))).toBe(false);
   });
 });
@@ -285,6 +330,23 @@ describe('INF-10: the full scan for the Security tab fails when it does not fini
 
   it('runs after a red blocking scan, so the Security tab is still fed', () => {
     expect(String(step().if)).toMatch(/!\s*cancelled\(\)/);
+  });
+
+  it('keeps the full scan independent of reviewed-evidence exclusions and the differential baseline', () => {
+    const r = run(0);
+    const scan = r.argv.find(argument => argument.startsWith('semgrep '));
+    expect(scan).toContain('--sarif --output=semgrep.sarif');
+    expect(scan).not.toMatch(/--exclude\b|--baseline-commit\b/);
+  });
+
+  it('retains both full and differential SARIF artifacts after a failing scan', () => {
+    const workflow = readWorkflow('semgrep.yml');
+    const upload = stepNamed(workflow, 'semgrep', 'Upload SARIF artifact');
+    const paths = String(upload.with?.path ?? '').trim().split(/\r?\n/).map(value => value.trim());
+    expect(upload.if).toBe('always()');
+    expect(paths).toContain('semgrep.sarif');
+    expect(paths).toContain('${{ runner.temp }}/semgrep-new.sarif');
+    expect(stepNamed(workflow, 'semgrep', 'Upload Semgrep SARIF').with?.sarif_file).toBe('semgrep.sarif');
   });
 });
 

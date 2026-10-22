@@ -11,7 +11,7 @@
  * document with no record gets NO origin line rather than a guessed one.
  */
 
-import { isWorkflowImportOrigin, type AuthoringImportOrigin, type WorkflowImportOrigin, type WorkflowSectionOrigin } from '@shared/authoring/source-import';
+import { isWorkflowImportOrigin, isWorkflowSourceKind, WORKFLOW_SOURCE_LABELS, type AuthoringImportOrigin, type WorkflowImportOrigin, type WorkflowSectionOrigin } from '@shared/authoring/source-import';
 import { workflowOriginMatches } from '../authoringHandoff';
 import { parseRecordedTemplateSource, type RecordedTemplateSource } from '@shared/authoring/recorded-template-source';
 
@@ -48,7 +48,7 @@ function workflowImportedOrigin(r: Record<string, unknown>): DocumentProvenance[
 function importOrigin(raw: unknown): DocumentProvenance['importSource'] {
   if (!raw || typeof raw !== 'object') return undefined;
   const r = raw as Record<string, unknown>;
-  if (r.kind === 'protocol' || r.kind === 'csr') return workflowImportedOrigin(r);
+  if (isWorkflowSourceKind(r.kind)) return workflowImportedOrigin(r);
   if ((r.kind !== 'vault' && r.kind !== 'data-room') || (r.conversion !== 'docx-structure' && r.conversion !== 'extracted-text')) return undefined;
   if (!['id', 'programId', 'title', 'fileName', 'mimeType', 'reason'].every(key => typeof r[key] === 'string' && (r[key] as string).trim())) return undefined;
   if (typeof r.sha256 !== 'string' || !/^[a-f0-9]{64}$/i.test(r.sha256)) return undefined;
@@ -63,7 +63,7 @@ export function workflowOriginLine(section: WorkflowSectionOrigin): string {
 
 function importedLine(original: DocumentProvenance['importSource'], note: string | null): string {
   if (!original) return 'Imported' + (note ? ` · ${note}` : '');
-  const kind = isWorkflowImportOrigin(original) ? (original.kind === 'csr' ? 'CSR' : 'protocol') : original.kind === 'vault' ? 'Vault' : 'data room';
+  const kind = isWorkflowImportOrigin(original) ? WORKFLOW_SOURCE_LABELS[original.kind] : original.kind === 'vault' ? 'Vault' : 'data room';
   return `Working copy of “${original.title}” · ${kind} source ${original.id}`;
 }
 

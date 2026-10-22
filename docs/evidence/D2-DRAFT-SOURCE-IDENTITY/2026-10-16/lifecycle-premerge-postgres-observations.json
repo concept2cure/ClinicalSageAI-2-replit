@@ -1,0 +1,262 @@
+{
+  "fixture": {
+    "name": "c2c-draft-lifecycle-074eb1b9-1fa",
+    "database": "draft_source_lifecycle_fixture",
+    "image": [
+      "postgres@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d"
+    ]
+  },
+  "counterfactualOmittedStoreLock": false,
+  "recordedAt": "2026-10-17T22:21:22.228Z",
+  "sourceHashesBefore": {
+    "server/services/authoring/draft-source-references.ts": "048a5987fcafeba5c4decaedabd3fa857c6246342215d31713b60fe62359ad66",
+    "server/services/authoring/authoring-from-draft.ts": "49bc5f0f7c3fe69dcaee892fa87acad1222a042d24f489bb067899de7176b4bf",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+    "shared/authoring/draft-source-reference.ts": "02277e41fd4d967f1e1461ceb44b117e445a199570f521a04324fca328d6740d",
+    "server/services/document-data-disposition/program-lock.ts": "04862a0cc8becdb04267ec08975fdfc5063ca39001fa07ef2d440fdec6071a42",
+    "server/services/document-data-disposition/types.ts": "11a42a71e746d697f24abcc27e134c2b1be3c6392caebf091ca1ca80e7fcc6a4",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/CONTRACT.md": "28c2eff75cd56bad6464346295473201d0ec2e31f2be5a48ddb2053f1e9df2c8",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.test.mts": "200a29b5df74bec96a62643b375bd674e6bebca4372262a5bd9ff3db4bac8e18",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.config.mts": "e586dc552fd5f77ab78da2515d8ee6ac90dad3c3d6d47e65b9b0cb7ea88b8816",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-run-owned-postgres.mjs": "b46fd5140fbc136268f1db7bb4b4007b0006c34f2bf58da3a466deba30b3bae2"
+  },
+  "sourceHashesAfter": {
+    "server/services/authoring/draft-source-references.ts": "048a5987fcafeba5c4decaedabd3fa857c6246342215d31713b60fe62359ad66",
+    "server/services/authoring/authoring-from-draft.ts": "49bc5f0f7c3fe69dcaee892fa87acad1222a042d24f489bb067899de7176b4bf",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+    "shared/authoring/draft-source-reference.ts": "02277e41fd4d967f1e1461ceb44b117e445a199570f521a04324fca328d6740d",
+    "server/services/document-data-disposition/program-lock.ts": "04862a0cc8becdb04267ec08975fdfc5063ca39001fa07ef2d440fdec6071a42",
+    "server/services/document-data-disposition/types.ts": "11a42a71e746d697f24abcc27e134c2b1be3c6392caebf091ca1ca80e7fcc6a4",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/CONTRACT.md": "28c2eff75cd56bad6464346295473201d0ec2e31f2be5a48ddb2053f1e9df2c8",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.test.mts": "200a29b5df74bec96a62643b375bd674e6bebca4372262a5bd9ff3db4bac8e18",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.config.mts": "e586dc552fd5f77ab78da2515d8ee6ac90dad3c3d6d47e65b9b0cb7ea88b8816",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-run-owned-postgres.mjs": "b46fd5140fbc136268f1db7bb4b4007b0006c34f2bf58da3a466deba30b3bae2"
+  },
+  "sourcesUnchangedDuringRun": true,
+  "observations": [
+    {
+      "kind": "independent_blocking_barrier",
+      "label": "document-COMMIT",
+      "waiter": 75,
+      "blocker": 74,
+      "rows": [
+        {
+          "pid": 75,
+          "application_name": "lifecycle-raw-update-1",
+          "wait_event_type": "Lock",
+          "wait_event": "relation",
+          "blockers": [
+            74
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "reservation_release",
+      "store": "document",
+      "ending": "COMMIT",
+      "runtime": {
+        "role": "app_service",
+        "rolsuper": false,
+        "rolbypassrls": false,
+        "rolcreaterole": false
+      },
+      "saverPid": 74,
+      "updaterPid": 75,
+      "receiptPersisted": true,
+      "mutationCompletedAfterRelease": true,
+      "held": [
+        {
+          "relname": "document_catalog",
+          "mode": "ShareLock",
+          "granted": true
+        },
+        {
+          "relname": "documents",
+          "mode": "ShareLock",
+          "granted": true
+        }
+      ]
+    },
+    {
+      "kind": "independent_blocking_barrier",
+      "label": "catalog-COMMIT",
+      "waiter": 77,
+      "blocker": 76,
+      "rows": [
+        {
+          "pid": 77,
+          "application_name": "lifecycle-raw-update-2",
+          "wait_event_type": "Lock",
+          "wait_event": "relation",
+          "blockers": [
+            76
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "reservation_release",
+      "store": "catalog",
+      "ending": "COMMIT",
+      "runtime": {
+        "role": "app_service",
+        "rolsuper": false,
+        "rolbypassrls": false,
+        "rolcreaterole": false
+      },
+      "saverPid": 76,
+      "updaterPid": 77,
+      "receiptPersisted": true,
+      "mutationCompletedAfterRelease": true,
+      "held": [
+        {
+          "relname": "document_catalog",
+          "mode": "ShareLock",
+          "granted": true
+        },
+        {
+          "relname": "documents",
+          "mode": "ShareLock",
+          "granted": true
+        }
+      ]
+    },
+    {
+      "kind": "independent_blocking_barrier",
+      "label": "document-ROLLBACK",
+      "waiter": 79,
+      "blocker": 78,
+      "rows": [
+        {
+          "pid": 79,
+          "application_name": "lifecycle-raw-update-3",
+          "wait_event_type": "Lock",
+          "wait_event": "relation",
+          "blockers": [
+            78
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "reservation_release",
+      "store": "document",
+      "ending": "ROLLBACK",
+      "runtime": {
+        "role": "app_service",
+        "rolsuper": false,
+        "rolbypassrls": false,
+        "rolcreaterole": false
+      },
+      "saverPid": 78,
+      "updaterPid": 79,
+      "receiptPersisted": false,
+      "mutationCompletedAfterRelease": true,
+      "held": [
+        {
+          "relname": "document_catalog",
+          "mode": "ShareLock",
+          "granted": true
+        },
+        {
+          "relname": "documents",
+          "mode": "ShareLock",
+          "granted": true
+        }
+      ]
+    },
+    {
+      "kind": "independent_blocking_barrier",
+      "label": "catalog-ROLLBACK",
+      "waiter": 81,
+      "blocker": 80,
+      "rows": [
+        {
+          "pid": 81,
+          "application_name": "lifecycle-raw-update-4",
+          "wait_event_type": "Lock",
+          "wait_event": "relation",
+          "blockers": [
+            80
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "reservation_release",
+      "store": "catalog",
+      "ending": "ROLLBACK",
+      "runtime": {
+        "role": "app_service",
+        "rolsuper": false,
+        "rolbypassrls": false,
+        "rolcreaterole": false
+      },
+      "saverPid": 80,
+      "updaterPid": 81,
+      "receiptPersisted": false,
+      "mutationCompletedAfterRelease": true,
+      "held": [
+        {
+          "relname": "document_catalog",
+          "mode": "ShareLock",
+          "granted": true
+        },
+        {
+          "relname": "documents",
+          "mode": "ShareLock",
+          "granted": true
+        }
+      ]
+    },
+    {
+      "kind": "independent_blocking_barrier",
+      "label": "raw-update-before-reservation",
+      "waiter": 83,
+      "blocker": 82,
+      "rows": [
+        {
+          "pid": 83,
+          "application_name": "lifecycle-reservation-second",
+          "wait_event_type": "Lock",
+          "wait_event": "relation",
+          "blockers": [
+            82
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "raw_update_precedes_reservation",
+      "updaterPid": 82,
+      "saverPid": 83,
+      "currentChangedTextVisibleAfterReservation": true,
+      "verificationMustUseCurrentText": true
+    },
+    {
+      "kind": "independent_blocking_barrier",
+      "label": "program-admission-before-store-lock",
+      "waiter": 85,
+      "blocker": 84,
+      "rows": [
+        {
+          "pid": 85,
+          "application_name": "lifecycle-program-waiter",
+          "wait_event_type": "Lock",
+          "wait_event": "advisory",
+          "blockers": [
+            84
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "program_before_store_lock",
+      "holderPid": 84,
+      "saverPid": 85,
+      "rawWriterProgressedWhileProgramAdmissionWaited": true
+    }
+  ],
+  "limits": "Synthetic source/receipt DDL and explicit transactions over the canonical shared helper. Actual HTTP/save/export/ledger paths are covered separately on PGlite. This fixture proves independent PostgreSQL blocking/release and ordinary role attributes, not deployed RLS, workload, audit HMAC or regulatory qualification."
+}

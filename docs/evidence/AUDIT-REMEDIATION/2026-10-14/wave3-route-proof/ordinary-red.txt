@@ -1,0 +1,257 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > lineage export keeps the real file and reports its audit in headers > keeps the actual file when the audit rejects, and reports recovery on the next export
+{
+  "timestamp": "2026-10-14T20:31:47.825Z",
+  "level": "error",
+  "message": "[decision-lineage-api] Failed to export lineage",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > lineage export keeps the real file and reports its audit in headers > does not audit a download when the source export fails
+{
+  "timestamp": "2026-10-14T20:31:47.839Z",
+  "level": "error",
+  "message": "[decision-lineage-api] Failed to export lineage",
+  "context": {}
+}
+
+ ❯ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts (35 tests | 27 failed) 118ms
+     × keeps the durable response and reports { persisted: true, chained: true } 24ms
+     × keeps the durable response and reports { persisted: true, chained: false } 4ms
+     × keeps the durable response and reports { persisted: false, …(1) } 3ms
+     × reports an unexpected audit rejection without reporting a failed mutation 5ms
+     × reports recovery from the outcome of the next request 6ms
+     ✓ refuses missing authenticated identity {} before writing 3ms
+     × refuses missing authenticated identity {"organizationId":7} before writing 3ms
+     × refuses missing authenticated identity {"organizationId":7,"id":0} before writing 4ms
+     ✓ does not report a completed act or write its audit when the source mutation failed 3ms
+     × keeps the durable response and reports { persisted: true, chained: true } 3ms
+     × keeps the durable response and reports { persisted: true, chained: false } 2ms
+     × keeps the durable response and reports { persisted: false, …(1) } 2ms
+     × reports an unexpected audit rejection without reporting a failed mutation 2ms
+     × reports recovery from the outcome of the next request 3ms
+     ✓ refuses missing authenticated identity {} before writing 2ms
+     × refuses missing authenticated identity {"organizationId":7} before writing 3ms
+     × refuses missing authenticated identity {"organizationId":7,"id":0} before writing 2ms
+     ✓ does not report a completed act or write its audit when the source mutation failed 2ms
+     × keeps the durable response and reports { persisted: true, chained: true } 2ms
+     × keeps the durable response and reports { persisted: true, chained: false } 2ms
+     × keeps the durable response and reports { persisted: false, …(1) } 2ms
+     × reports an unexpected audit rejection without reporting a failed mutation 2ms
+     × reports recovery from the outcome of the next request 3ms
+     ✓ refuses missing authenticated identity {} before writing 2ms
+     × refuses missing authenticated identity {"organizationId":7} before writing 2ms
+     × refuses missing authenticated identity {"organizationId":7,"id":0} before writing 2ms
+     ✓ does not report a completed act or write its audit when the source mutation failed 2ms
+     × returns the exact download with 'true' persistence 3ms
+     × returns the exact download with 'true' persistence 2ms
+     × returns the exact download with 'false' persistence 2ms
+     × keeps the actual file when the audit rejects, and reports recovery on the next export 4ms
+     ✓ does not export for missing identity {} 3ms
+     × does not export for missing identity {"organizationId":7} 6ms
+     × does not export for missing identity {"organizationId":0,"id":5} 2ms
+     ✓ does not audit a download when the source export fails 2ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 27 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_RECORDED' actual post-commit audit outcome > keeps the durable response and reports { persisted: true, chained: true }
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_RECORDED' actual post-commit audit outcome > keeps the durable response and reports { persisted: true, chained: false }
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_RECORDED' actual post-commit audit outcome > keeps the durable response and reports { persisted: false, …(1) }
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_STAGE_ADVANCED' actual post-commit audit outcome > keeps the durable response and reports { persisted: true, chained: true }
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_STAGE_ADVANCED' actual post-commit audit outcome > keeps the durable response and reports { persisted: true, chained: false }
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_STAGE_ADVANCED' actual post-commit audit outcome > keeps the durable response and reports { persisted: false, …(1) }
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'MARKET_ACCESS_POSITION_CREATED' actual post-commit audit outcome > keeps the durable response and reports { persisted: true, chained: true }
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'MARKET_ACCESS_POSITION_CREATED' actual post-commit audit outcome > keeps the durable response and reports { persisted: true, chained: false }
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'MARKET_ACCESS_POSITION_CREATED' actual post-commit audit outcome > keeps the durable response and reports { persisted: false, …(1) }
+TypeError: Cannot read properties of undefined (reading 'auditTrail')
+ ❯ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts:87:26
+     85|     expect(res.status).toBe(status);
+     86|     expect(res.body.data).toBeTruthy();
+     87|     expect(res.body.meta.auditTrail).toMatchObject(expected);
+       |                          ^
+     88|     expect(writer).toHaveBeenCalledTimes(1);
+     89|     expect(h.logAction).toHaveBeenCalledWith(expect.objectContaining({…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/27]⎯
+
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_RECORDED' actual post-commit audit outcome > reports an unexpected audit rejection without reporting a failed mutation
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'MARKET_ACCESS_POSITION_CREATED' actual post-commit audit outcome > reports an unexpected audit rejection without reporting a failed mutation
+AssertionError: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts:96:24
+     94|     h.logAction.mockRejectedValue(new Error(LEAK));
+     95|     const res = await request(app()).post(path).send(body);
+     96|     expect(res.status).toBe(status);
+       |                        ^
+     97|     expect(res.body.meta.auditTrail).toMatchObject({ persisted: false,…
+     98|     expect(writer).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/27]⎯
+
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_RECORDED' actual post-commit audit outcome > reports recovery from the outcome of the next request
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_STAGE_ADVANCED' actual post-commit audit outcome > reports recovery from the outcome of the next request
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'MARKET_ACCESS_POSITION_CREATED' actual post-commit audit outcome > reports recovery from the outcome of the next request
+TypeError: Cannot read properties of undefined (reading 'auditTrail')
+ ❯ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts:106:28
+    104|     const first = await request(app()).post(path).send(body);
+    105|     const second = await request(app()).post(path).send(body);
+    106|     expect(first.body.meta.auditTrail.persisted).toBe(false);
+       |                            ^
+    107|     expect(second.body.meta.auditTrail).toEqual({ persisted: true, cha…
+    108|     expect(writer).toHaveBeenCalledTimes(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/27]⎯
+
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_RECORDED' actual post-commit audit outcome > refuses missing authenticated identity {"organizationId":7} before writing
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_RECORDED' actual post-commit audit outcome > refuses missing authenticated identity {"organizationId":7,"id":0} before writing
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'MARKET_ACCESS_POSITION_CREATED' actual post-commit audit outcome > refuses missing authenticated identity {"organizationId":7} before writing
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'MARKET_ACCESS_POSITION_CREATED' actual post-commit audit outcome > refuses missing authenticated identity {"organizationId":7,"id":0} before writing
+AssertionError: expected 201 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 201
+
+ ❯ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts:113:24
+    111|   it.each([{}, { organizationId: 7 }, { organizationId: 7, id: 0 }])('…
+    112|     const res = await request(app(actor)).post(path).send({ ...body, o…
+    113|     expect(res.status).toBe(403);
+       |                        ^
+    114|     expect(writer).not.toHaveBeenCalled();
+    115|     expect(h.logAction).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/27]⎯
+
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_STAGE_ADVANCED' actual post-commit audit outcome > reports an unexpected audit rejection without reporting a failed mutation
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts:96:24
+     94|     h.logAction.mockRejectedValue(new Error(LEAK));
+     95|     const res = await request(app()).post(path).send(body);
+     96|     expect(res.status).toBe(status);
+       |                        ^
+     97|     expect(res.body.meta.auditTrail).toMatchObject({ persisted: false,…
+     98|     expect(writer).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/27]⎯
+
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_STAGE_ADVANCED' actual post-commit audit outcome > refuses missing authenticated identity {"organizationId":7} before writing
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_STAGE_ADVANCED' actual post-commit audit outcome > refuses missing authenticated identity {"organizationId":7,"id":0} before writing
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts:113:24
+    111|   it.each([{}, { organizationId: 7 }, { organizationId: 7, id: 0 }])('…
+    112|     const res = await request(app(actor)).post(path).send({ ...body, o…
+    113|     expect(res.status).toBe(403);
+       |                        ^
+    114|     expect(writer).not.toHaveBeenCalled();
+    115|     expect(h.logAction).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/27]⎯
+
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > lineage export keeps the real file and reports its audit in headers > returns the exact download with 'true' persistence
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > lineage export keeps the real file and reports its audit in headers > returns the exact download with 'true' persistence
+AssertionError: expected undefined to be 'true' // Object.is equality
+
+- Expected:
+"true"
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts:140:50
+    138|     expect(res.text).toBe('actual,lineage\nrecord,1\n');
+    139|     expect(res.headers['content-disposition']).toBe('attachment; filen…
+    140|     expect(res.headers['x-audit-row-persisted']).toBe(persisted);
+       |                                                  ^
+    141|     expect(res.headers['x-audit-row-code']).toBe(code);
+    142|     expect(h.exportLineage).toHaveBeenCalledWith('document', 41, 'csv'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/27]⎯
+
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > lineage export keeps the real file and reports its audit in headers > returns the exact download with 'false' persistence
+AssertionError: expected undefined to be 'false' // Object.is equality
+
+- Expected:
+"false"
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts:140:50
+    138|     expect(res.text).toBe('actual,lineage\nrecord,1\n');
+    139|     expect(res.headers['content-disposition']).toBe('attachment; filen…
+    140|     expect(res.headers['x-audit-row-persisted']).toBe(persisted);
+       |                                                  ^
+    141|     expect(res.headers['x-audit-row-code']).toBe(code);
+    142|     expect(h.exportLineage).toHaveBeenCalledWith('document', 41, 'csv'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/27]⎯
+
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > lineage export keeps the real file and reports its audit in headers > keeps the actual file when the audit rejects, and reports recovery on the next export
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts:150:26
+    148|     const first = await request(app()).get(path);
+    149|     const second = await request(app()).get(path);
+    150|     expect(first.status).toBe(200);
+       |                          ^
+    151|     expect(first.headers['x-audit-row-persisted']).toBe('false');
+    152|     expect(first.text).toBe('actual,lineage\nrecord,1\n');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/27]⎯
+
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > lineage export keeps the real file and reports its audit in headers > does not export for missing identity {"organizationId":7}
+ FAIL  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > lineage export keeps the real file and reports its audit in headers > does not export for missing identity {"organizationId":0,"id":5}
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts:160:24
+    158|   it.each([{}, { organizationId: 7 }, { organizationId: 0, id: 5 }])('…
+    159|     const res = await request(app(actor)).get(path);
+    160|     expect(res.status).toBe(403);
+       |                        ^
+    161|     expect(h.exportLineage).not.toHaveBeenCalled();
+    162|     expect(h.logAction).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/27]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  27 failed | 8 passed (35)
+   Start at  20:31:47
+   Duration  622ms (transform 129ms, setup 63ms, import 173ms, tests 118ms, environment 0ms)
+

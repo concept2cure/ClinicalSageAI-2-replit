@@ -101,4 +101,3 @@ AssertionError: tenant B's report and its details must stay tenant B's: expected
       Tests  1 failed | 12 skipped (13)
    Start at  18:53:09
    Duration  4.16s (transform 2.16s, setup 88ms, import 3.41s, tests 306ms, environment 0ms)
-

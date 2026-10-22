@@ -14,15 +14,24 @@
 import { pool } from '../../db';
 import type { InsightAtomRef } from './providers/types';
 import { UnsupportedReportClientScope } from './client-scope';
+import type { ReportRecordContext } from './lifecycle-calendar';
 
 export interface DomainReportResult {
+  criticalBlockers?: string[];
+  accessProjectIds?: number[];
   summary: Record<string, unknown>;
   provider: { provider: string; observedAt: string; status: 'ready' | 'partial' | 'missing'; blocker?: string; atoms?: InsightAtomRef[]; calculation?: Record<string, unknown> };
   computedScope: 'organization' | 'project';
   provenance: { observedAt: string; organizationId: number; computedScope: string; queries: Array<{ query: string; parameters: unknown[]; rows: unknown[] }> };
 }
 
-export interface DomainReportOptions { scopeType?: string; scopeId?: string; clientWorkspaceId?: number | null }
+export interface DomainReportOptions {
+  scopeType?: string; scopeId?: string; clientWorkspaceId?: number | null;
+  /** Internal verified producer context, never an API body option. */
+  recordContext?: ReportRecordContext;
+  /** Internal research briefing compatibility; does not produce calendar rows. */
+  aggregateOnly?: true;
+}
 export { UnsupportedReportClientScope } from './client-scope';
 
 const now = () => new Date().toISOString();
@@ -104,6 +113,10 @@ export async function computeDomainReport(reportTypeId: string, orgId: number, o
     } };
   };
   switch (reportTypeId) {
+    case 'global.label_currency_matrix': {
+      const { computeLabelCurrencyReport } = await import('./label-currency-matrix');
+      return computeLabelCurrencyReport(orgId);
+    }
     case 'fcoi.disclosure_register': {
       const d = await countBy('financial_disclosures', 'status', orgId);
       const f = await countBy('financial_disclosures', 'form_type', orgId);
@@ -171,6 +184,10 @@ export async function computeDomainReport(reportTypeId: string, orgId: number, o
       return result('controlled_substances', s.total, { substances: s.total, bySchedule: s.byCol, activeRegistrations: reg, transactions: txns });
     }
     case 'lifecycle.obligation_calendar': {
+      if (!options?.aggregateOnly) {
+        const { computeLifecycleCalendarReport } = await import('./lifecycle-calendar');
+        return computeLifecycleCalendarReport(orgId, options?.recordContext);
+      }
       const o = await countBy('lifecycle_obligations', 'status', orgId);
       const overdue = (await query(`SELECT count(*)::int n FROM lifecycle_obligations WHERE organization_id=$1 AND deleted_at IS NULL AND status NOT IN ('approved','closed','submitted') AND due_date < CURRENT_DATE`, [orgId])).rows[0].n;
       return result('lifecycle_obligations', o.total, { obligations: o.total, byStatus: o.byCol, overdue });

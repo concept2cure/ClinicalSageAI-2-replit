@@ -17,6 +17,8 @@ import { and, eq } from 'drizzle-orm';
 import { db, pool } from '../db';
 import { evidenceClaims } from '../../shared/schema';
 import { authenticateToken } from '../middleware/auth';
+import { requestPgClient } from '../db/requestDb';
+import { assertShadowProgramAccess, requireShadowProgramAccess, sendShadowContractRefusal } from '../services/defense-packet/request-contract';
 import {
   findContradictedClaims,
   findOrphanClaims,
@@ -33,7 +35,6 @@ import {
   registerPacketDependencies,
   type StalenessReasonCode,
 } from '../services/regulatory-graph/defense-packet-staleness.service';
-import { defensePackets } from '../../shared/schema/defense-packets';
 import {
   getSimulationRun,
   listProgramSimulations,
@@ -49,7 +50,7 @@ import {
   propagateRegulatoryChange,
   type RegulatoryChangeEvent,
 } from '../services/living-file/change-router.service';
-import { programFreshnessReport } from '../services/living-file/freshness-report.service';
+import { FRESHNESS_SOURCE_UNAVAILABLE_MESSAGE, FreshnessSourceUnavailableError, programFreshnessReport } from '../services/living-file/freshness-report.service';
 import { recordAuditRow, type AuditRowOutcome } from '../services/audit/audit-write-outcome';
 import {
   FactInputRefusal,
@@ -243,16 +244,21 @@ async function requirePacketAccess(
     res.status(403).json({ error: 'Organization context required' });
     return;
   }
-  const [row] = await db
-    .select({ id: defensePackets.id })
-    .from(defensePackets)
-    .where(and(eq(defensePackets.id, packetId), eq(defensePackets.organizationId, orgId)))
-    .limit(1);
-  if (!row) {
-    res.status(403).json({ error: 'Access denied' });
-    return;
+  if (!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(packetId)) {
+    res.status(422).json({ error: 'packetId must be a UUID' }); return;
   }
-  next();
+  try {
+    const { rows } = await requestPgClient(req).query(`SELECT dp.program_id FROM predicate.defense_packets dp
+      JOIN regulatory_programs rp ON rp.id=dp.program_id
+      WHERE dp.id=$1::uuid AND rp.organization_id=$2 AND rp.deleted_at IS NULL`, [packetId, orgId]);
+    if (rows.length !== 1) { res.status(404).json({ error: 'Packet not found' }); return; }
+    await assertShadowProgramAccess(req, rows[0].program_id);
+    next();
+  } catch (error) {
+    if (sendShadowContractRefusal(res, error)) return;
+    if ((error as { status?: number }).status === 403) { res.status(403).json({ error: 'Current project and organization access is required.' }); return; }
+    res.status(503).json({ error: 'The packet and its current program access could not be verified.' });
+  }
 }
 
 const VALID_REASON_CODES: ReadonlySet<StalenessReasonCode> = new Set([
@@ -359,6 +365,7 @@ router.post('/propagate/predicate', async (req: Request, res: Response) => {
       .json({ error: 'programId and predicateKNumber are required' });
   }
   try {
+    await assertShadowProgramAccess(req, programId);
     const userId = (req as any).user?.id;
     const result = await propagatePredicateChange(
       orgId,
@@ -368,6 +375,8 @@ router.post('/propagate/predicate', async (req: Request, res: Response) => {
     );
     res.json(result);
   } catch (err: any) {
+    if (sendShadowContractRefusal(res, err)) return;
+    if (err?.status === 403) return res.status(403).json({ error: 'Current project and organization access is required.' });
     return serverError(res, logger, 'saving predicate', err);
   }
 });
@@ -454,7 +463,7 @@ router.post(
         trigger: typeof body.trigger === 'string' ? body.trigger : 'manual',
         triggeredBy,
         dryRun: body.dryRun === true,
-      });
+      }, { executor: requestPgClient(req), userId: Number(userIdRaw) });
 
       /* Persisted runs land in the audit trail; dry runs don't.
 
@@ -485,10 +494,14 @@ router.post(
 
       res.json(auditTrail ? { ...result, auditTrail } : result);
     } catch (err: any) {
-      // A defensePacketId the program has no packet for is the request's fault —
-      // and so is a ctdProgramId not on record for this organization
+      // A defensePacketId the program has no packet for is the request's fault,
+      // at the status the error states (an unavailable store is not 422) — and
+      // so is a ctdProgramId not on record for this organization
       // (CtdProgramNotFoundError; 2026-10-15: it read as a program with no studies).
-      if (err instanceof ReviewerSimulationInputError || (err instanceof Error && err.name === 'CtdProgramNotFoundError')) {
+      if (err instanceof ReviewerSimulationInputError) {
+        return res.status(err.statusCode).json({ error: err.message, code: err.code });
+      }
+      if (err instanceof Error && err.name === 'CtdProgramNotFoundError') {
         return res.status(422).json({ error: err.message, code: (err as { code?: string }).code });
       }
       return serverError(res, logger, 'saving reviewer simulation', err);
@@ -585,13 +598,16 @@ router.post(
 
 router.get(
   '/programs/:programId/freshness',
-  requireUuidProgramAccess,
+  requireShadowProgramAccess,
   async (req: Request, res: Response) => {
     const orgId = getOrgId(req)!;
     try {
-      const report = await programFreshnessReport(orgId, String(req.params.programId));
+      const report = await programFreshnessReport(orgId, String(req.params.programId), requestPgClient(req));
       res.json(report);
     } catch (err: any) {
+      if (err instanceof FreshnessSourceUnavailableError) {
+        return res.status(503).json({ code: 'FRESHNESS_SOURCE_UNAVAILABLE', error: FRESHNESS_SOURCE_UNAVAILABLE_MESSAGE });
+      }
       return serverError(res, logger, 'loading freshness', err);
     }
   }

@@ -1,0 +1,14 @@
+{
+  "algorithm": "sha256",
+  "scope": "Frozen owner baseline evidence; excludes this manifest itself.",
+  "files": {
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/outcome/README.md": "27466661a1673ec5c1d1bb1cb3c0862779ed1f17c05c01e14cc862e76626591b",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/outcome/baseline-command.json": "5711b610b44a946ba8063e81e328b9f2345a67bcdee490d14e9cb837214a5935",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/outcome/baseline-red.txt": "e9134be509c2746fb8c5dc69a7fc59d8ae62e4d8c17aff8725ccd86b829f4488",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/outcome/baseline-result.json": "c6d175be4db546818d18a112befdc7fe5caf1cb971cdec8444c95a21a26f5edb",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/outcome/frozen-test.json": "2946b0a1257ac272068ee382980a1f534e76b787f2900e4532708d7cae11075d",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/outcome/lint-command.json": "854cc370cac22a9e52f5a609f3f536acf65cd88bcf3fd157354792ed8ed30dfe",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/outcome/lint-raw.json": "c5080a596d057f8ae566b3bbdf2641bfd059f9b73b14e09d216cc81f93f1d14e",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/outcome/lint-stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

@@ -58,4 +58,3 @@ stderr | tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit tr
       Tests  8 passed | 11 skipped (19)
    Start at  04:02:59
    Duration  4.05s (transform 1.51s, setup 71ms, import 228ms, tests 3.46s, environment 0ms)
-

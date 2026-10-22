@@ -16,7 +16,12 @@ import request from 'supertest';
 const query = vi.fn();
 const logAction = vi.hoisted(() => vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true })));
 vi.mock('../../db', () => ({ pool: { query: (...a: unknown[]) => query(...a) } }));
-vi.mock('../../services/auditService', () => ({ default: { logAction } }));
+vi.mock('../../services/auditService', () => ({
+  default: { logAction },
+  // The route's optional post-commit audit now uses the named transaction
+  // writer. Capture its entry at that boundary, preserving the assertions.
+  writeChainedAuditRow: async (_client: unknown, entry: unknown) => logAction(entry),
+}));
 const REASON = 'Impact assessment opened by QA';
 
 import mdxQmsRouter from '../mdx-qms';
@@ -26,6 +31,7 @@ function appWith(org: number | null, userId = 7, role = 'member') {
   app.use(express.json());
   app.use((req: Request, _res: Response, next: NextFunction) => {
     if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org, id: userId, role };
+    if (org !== null) Object.assign(req, { dbClient: { query } });
     next();
   });
   app.use('/api/mdx', mdxQmsRouter);

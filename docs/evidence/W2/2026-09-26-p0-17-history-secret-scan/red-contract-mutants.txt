@@ -19,4 +19,3 @@
  × tests/ci/secret-history-scan.contract.test.ts > CI scans every commit on the branch, and fails on a new finding > installs a pinned gitleaks and runs it blocking over HEAD with the repository config 5ms
    → no step may be advisory: expected true to be undefined
       Tests  1 failed | 7 passed (8)
-

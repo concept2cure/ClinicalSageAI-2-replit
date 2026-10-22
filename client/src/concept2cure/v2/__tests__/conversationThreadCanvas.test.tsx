@@ -41,9 +41,9 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
-}));
+vi.mock('@/services/portal/authService', async original => {
+  const actual = await original<typeof import('@/services/portal/authService')>(); return { ...actual, authService: { getUser: () => ({ id: 1, organizationId: 1 }), captureSessionReadGuard: actual.authService.captureSessionReadGuard.bind(actual.authService), on: actual.authService.on.bind(actual.authService) }, useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }) };
+});
 vi.mock('../surfaces/AuthoringPlaceIntoFiling', () => ({
   AuthoringPlaceIntoFiling: () => <button type="button">Place into filing</button>,
 }));
@@ -176,10 +176,11 @@ describe('ConversationThread — the document canvas', () => {
     expect(screen.queryByTestId('document-canvas')).toBeNull();
   });
 
-  it('finds the document in a rehydrated turn’s tool trace, and never in prose', () => {
+  it('finds the document in a rehydrated turn’s tool trace (draft_authoring_document or, since 2026-10-17, save_document_to_vault), never in prose', () => {
     expect(authoringDocOf(REHYDRATED)).toEqual({ docId: DOC, programId: PID, title: 'From the trace' });
     expect(authoringDocOf({ id: 'x', role: 'assistant', text: `authoringDocId ${DOC}` } as AnaChatMessage)).toBeNull();
     expect(authoringDocOf({ id: 'y', role: 'assistant', text: '', toolCalls: [{ name: 'draft_authoring_document', label: 'l', status: 'success', result: 'not json' }] } as AnaChatMessage)).toBeNull();
+    expect(authoringDocOf({ id: 's', role: 'assistant', text: '', toolCalls: [{ name: 'save_document_to_vault', label: 'l', status: 'success', result: JSON.stringify({ authoringDocId: DOC, programId: PID, status: 'generated', title: 'Saved draft' }) }] } as AnaChatMessage)).toEqual({ docId: DOC, programId: PID, title: 'Saved draft' });
   });
 
   it('hides the side column while a canvas is expanded, and Open full editor mounts the one workbench in place', async () => {

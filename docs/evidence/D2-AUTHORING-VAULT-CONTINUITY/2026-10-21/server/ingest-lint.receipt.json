@@ -1,0 +1,100 @@
+{
+  "cwd": "/workspace/ClinicalSageAI",
+  "canonicalCommitReportedByRoot": "bd24ecb4c",
+  "executable": "/workspace/scratch/editor-toolchain/node_modules/node/bin/node",
+  "argv": [
+    "node_modules/eslint/bin/eslint.js",
+    "--max-warnings=2",
+    "server/services/vault/vault-ingest.service.ts"
+  ],
+  "nodeVersion": "v22.23.3",
+  "startedAt": "2026-10-21T01:19:00.647Z",
+  "finishedAt": "2026-10-21T01:19:01.594Z",
+  "exitCode": 0,
+  "signal": null,
+  "sourcePinsBefore": [
+    {
+      "file": "server/services/authoring/authoring-file-to-vault.ts",
+      "sha256": "d45dc46f3a6eb7d414da89eb22340cc309ed33c3b9c65905a34903c9b93ce43e",
+      "actualSha256": "d45dc46f3a6eb7d414da89eb22340cc309ed33c3b9c65905a34903c9b93ce43e"
+    },
+    {
+      "file": "server/services/vault/vault-ingest.service.ts",
+      "sha256": "161fb45f4530b1835455007a89d44f0a98b04a29fc417c4b5c26e3a86118b991",
+      "actualSha256": "161fb45f4530b1835455007a89d44f0a98b04a29fc417c4b5c26e3a86118b991"
+    },
+    {
+      "file": "server/services/vault/vault-ingest-types.ts",
+      "sha256": "2de6f13da5b667d83440bae480a36d615d06981d17c2b8dc7d775912ff9b01d8",
+      "actualSha256": "2de6f13da5b667d83440bae480a36d615d06981d17c2b8dc7d775912ff9b01d8"
+    },
+    {
+      "file": "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+      "sha256": "b6aac219bacc632aabbfc92d0d22ce1e432c2713448cf9fe3fd2d94642cfac3e",
+      "actualSha256": "b6aac219bacc632aabbfc92d0d22ce1e432c2713448cf9fe3fd2d94642cfac3e"
+    },
+    {
+      "file": "server/services/vault/__tests__/vault-ingest-storage.test.ts",
+      "sha256": "dc3ef7fbfecb0e07715cf8fb1c1d832e8614d790b54b076d1742b428357db09a",
+      "actualSha256": "dc3ef7fbfecb0e07715cf8fb1c1d832e8614d790b54b076d1742b428357db09a"
+    },
+    {
+      "file": "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+      "sha256": "4ceb6f59070c5fc7dd4d8d7f5de61029b69443f6af9b60a1415c94ef8a3eaa4f",
+      "actualSha256": "4ceb6f59070c5fc7dd4d8d7f5de61029b69443f6af9b60a1415c94ef8a3eaa4f"
+    },
+    {
+      "file": "server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts",
+      "sha256": "fb2ca8e40c1279018066c5ba4c86e94b05581c704161b186de41ecdebc06e7b6",
+      "actualSha256": "fb2ca8e40c1279018066c5ba4c86e94b05581c704161b186de41ecdebc06e7b6"
+    }
+  ],
+  "sourcePinsAfter": [
+    {
+      "file": "server/services/authoring/authoring-file-to-vault.ts",
+      "sha256": "d45dc46f3a6eb7d414da89eb22340cc309ed33c3b9c65905a34903c9b93ce43e",
+      "actualSha256": "d45dc46f3a6eb7d414da89eb22340cc309ed33c3b9c65905a34903c9b93ce43e"
+    },
+    {
+      "file": "server/services/vault/vault-ingest.service.ts",
+      "sha256": "161fb45f4530b1835455007a89d44f0a98b04a29fc417c4b5c26e3a86118b991",
+      "actualSha256": "161fb45f4530b1835455007a89d44f0a98b04a29fc417c4b5c26e3a86118b991"
+    },
+    {
+      "file": "server/services/vault/vault-ingest-types.ts",
+      "sha256": "2de6f13da5b667d83440bae480a36d615d06981d17c2b8dc7d775912ff9b01d8",
+      "actualSha256": "2de6f13da5b667d83440bae480a36d615d06981d17c2b8dc7d775912ff9b01d8"
+    },
+    {
+      "file": "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+      "sha256": "b6aac219bacc632aabbfc92d0d22ce1e432c2713448cf9fe3fd2d94642cfac3e",
+      "actualSha256": "b6aac219bacc632aabbfc92d0d22ce1e432c2713448cf9fe3fd2d94642cfac3e"
+    },
+    {
+      "file": "server/services/vault/__tests__/vault-ingest-storage.test.ts",
+      "sha256": "dc3ef7fbfecb0e07715cf8fb1c1d832e8614d790b54b076d1742b428357db09a",
+      "actualSha256": "dc3ef7fbfecb0e07715cf8fb1c1d832e8614d790b54b076d1742b428357db09a"
+    },
+    {
+      "file": "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+      "sha256": "4ceb6f59070c5fc7dd4d8d7f5de61029b69443f6af9b60a1415c94ef8a3eaa4f",
+      "actualSha256": "4ceb6f59070c5fc7dd4d8d7f5de61029b69443f6af9b60a1415c94ef8a3eaa4f"
+    },
+    {
+      "file": "server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts",
+      "sha256": "fb2ca8e40c1279018066c5ba4c86e94b05581c704161b186de41ecdebc06e7b6",
+      "actualSha256": "fb2ca8e40c1279018066c5ba4c86e94b05581c704161b186de41ecdebc06e7b6"
+    }
+  ],
+  "rawLog": "ingest-lint.raw.log.gz",
+  "rawSha256": "9b8b8a32332096447cbbc0efc5bdcaa1ae1899e29cef586ccec2e18d1df55448",
+  "gzipSha256": "542b50e8fe82d19254bb25af486163f2951389dfd54d0c51641e73116163e402",
+  "warnings": {
+    "count": 2,
+    "inherited": [
+      "max-lines-per-function",
+      "complexity"
+    ],
+    "baselineChanged": false
+  }
+}

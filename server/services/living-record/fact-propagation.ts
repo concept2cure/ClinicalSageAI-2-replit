@@ -22,7 +22,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { evidenceClaims } from '../../../shared/schema';
 import type { CanonicalFact, FactBinding } from '../../../shared/schema/living-record-spine';
-import auditService from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import {
   factValueView,
   getFact,
@@ -75,6 +75,7 @@ export interface PropagateFactResult {
   propagated: PropagatedCitation[];
   skipped: SkippedCitation[];
   driftResolved: number;
+  auditTrail: AuditRowOutcome;
 }
 
 /** Write the fact's value into one citing claim and heal its binding. */
@@ -188,7 +189,7 @@ export async function propagateFactToCitations(
     params.actor
   );
 
-  await auditService.logAction({
+  const auditTrail = await recordAuditRow({
     tenantId: fact.organizationId,
     userId: livingRecordAuditActor(params.actor),
     action: 'canonical_fact.propagated',
@@ -207,5 +208,5 @@ export async function propagateFactToCitations(
     },
   });
 
-  return { ok: true, fact, propagated, skipped, driftResolved };
+  return { ok: true, fact, propagated, skipped, driftResolved, auditTrail };
 }

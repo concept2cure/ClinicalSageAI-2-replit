@@ -32,7 +32,7 @@ describe('addRiskTx', () => {
     const c = client();
     await expect(
       addRiskTx(c as never, 3, 7, { protocolDocumentId: 5, description: 'Site turnover', ...ratings }),
-    ).rejects.toThrow(new RegExp(`${missing} is required`));
+    ).rejects.toThrow(`${missing} is required`);
     await expect(
       addRiskTx(c as never, 3, 7, { protocolDocumentId: 5, description: 'Site turnover', ...ratings }),
     ).rejects.toBeInstanceOf(ProtocolRiskError);

@@ -1,0 +1,18 @@
+{
+  "branch": "concept2cure-v2",
+  "sourceCommit": "3450b68b595255a6545bc7fc8863d30e5e5e9bfc",
+  "verifiedRemoteHead": "3450b68b595255a6545bc7fc8863d30e5e5e9bfc",
+  "sourceIsAncestorOfRemote": true,
+  "verifiedAtUtc": "2026-10-20T20:32:21.125360+00:00",
+  "method": "Normal authenticated direct git push; no PR, force, alternate branch or hook bypass.",
+  "normalPushLog": "gates/task-handoff-canonical-20261020-final-push.log.gz",
+  "compiler": {
+    "errors": 0,
+    "exit": 0,
+    "baseline": 0,
+    "mode": "Normal full-project tsc --noEmit --incremental",
+    "heapMb": 12288
+  },
+  "humanWitnessExecuted": false,
+  "hostedCiClaimed": false
+}

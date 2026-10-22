@@ -1,0 +1,6 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+✅ Pre-commit checks complete
+[concept2cure-v2 66d998497] docs: define D2 editor draft termination contract
+ 1 file changed, 55 insertions(+)
+ create mode 100644 docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/CONTRACT.md

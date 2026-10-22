@@ -1,0 +1,358 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts
+[database] No DATABASE_URL provided, skipping database connection
+
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > preserves an unchanged genuine Unicode context and text-free successful source receipts 8ms
+ × server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a spread copy of a genuine loaded context before gateway entry 14ms
+   → promise resolved "{ content: 'Draft selected', …(8) }" instead of rejecting
+ × server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a json copy of a genuine loaded context before gateway entry 4ms
+   → promise resolved "{ content: 'Draft selected', …(8) }" instead of rejecting
+ × server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a structuredClone copy of a genuine loaded context before gateway entry 4ms
+   → promise resolved "{ content: 'Draft selected', …(8) }" instead of rejecting
+ × server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a genuine context consumed under another organizationId 1ms
+   → promise resolved "{ content: 'Draft selected', …(8) }" instead of rejecting
+ × server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a genuine context consumed under another userId 1ms
+   → promise resolved "{ content: 'Draft selected', …(8) }" instead of rejecting
+ × server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a genuine context consumed under another projectId 1ms
+   → promise resolved "{ content: 'Draft selected', …(8) }" instead of rejecting
+ × server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a nonempty unassessed context instead of labeling its body as evidence 1ms
+   → promise resolved "{ content: 'Draft selected', …(8) }" instead of rejecting
+ × server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > does not let pure prompt or audit helpers label copied context as server-issued 2ms
+   → expected [Function] to throw an error
+ × server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > freezes the genuine context, source collection, source body and coordinates 1ms
+   → expected false to be true // Object.is equality
+ × server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses queued source revocation while preserving successful no-source siblings 2ms
+   → expected { content: 'Draft selected', …(8) } to match object { error: Any<String>, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses queued actor revocation while preserving successful no-source siblings 1ms
+   → expected { content: 'Draft selected', …(8) } to match object { error: Any<String>, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > provides a callback that refuses a source changed during a gateway capacity wait 1ms
+   → promise resolved "{ content: 'Draft selected', …(8) }" instead of rejecting
+ × server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > suppresses returned prose when extraction changes during the provider response wait 1ms
+   → promise resolved "{ content: 'Draft selected', …(8) }" instead of rejecting
+ × server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > suppresses returned prose when private-parent changes during the provider response wait 1ms
+   → promise resolved "{ content: 'Draft selected', …(8) }" instead of rejecting
+ × server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > pins request identity, context reference and declared project facts before its first await 1ms
+   → expected 99 to be 3 // Object.is equality
+ × server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses selected-source stream before gateway handoff 1ms
+   → promise resolved "{ content: 'Draft selected', …(8) }" instead of rejecting
+ × server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses selected-source tools before gateway handoff 1ms
+   → promise resolved "{ content: 'Draft selected', …(8) }" instead of rejecting
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > retains eligible keep_data evidence and discloses the unavailable original 0ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > keeps ordinary no-source streaming/tools available without a source callback 4ms
+
+ Test Files  1 failed (1)
+      Tests  17 failed | 3 passed (20)
+   Start at  22:40:10
+   Duration  5.71s (transform 4.08s, setup 0ms, import 5.41s, tests 50ms, environment 0ms)
+
+stderr | server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts
+{
+  "timestamp": "2026-10-17T22:40:12.425Z",
+  "level": "warn",
+  "message": "[database] DATABASE_NEON_NEW_SECRET or DATABASE_URL not found, database features will be unavailable",
+  "context": {}
+}
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a spread copy of a genuine loaded context before gateway entry
+ FAIL  server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a json copy of a genuine loaded context before gateway entry
+ FAIL  server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a structuredClone copy of a genuine loaded context before gateway entry
+AssertionError: promise resolved "{ content: 'Draft selected', …(8) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "cacheHit": undefined,
++   "content": "Draft selected",
++   "finishReason": "end_turn",
++   "latencyMs": 1,
++   "model": "fixture-only",
++   "thinking": undefined,
++   "toolsUsed": undefined,
++   "truncated": false,
++   "usage": {
++     "estimatedCostUsd": 0,
++     "inputTokens": 1,
++     "outputTokens": 1,
++   },
+  }
+
+ ❯ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts:88:79
+     86|     const selected = await loaded();
+     87|     const copied = kind === 'spread' ? { ...selected } : kind === 'jso…
+     88|     await expect(new AnaDocumentDraftingService().draftDocument(draft(…
+       |                                                                               ^
+     89|     expect(seams.gateway).not.toHaveBeenCalled();
+     90|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/17]⎯
+
+ FAIL  server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a genuine context consumed under another organizationId
+ FAIL  server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a genuine context consumed under another userId
+ FAIL  server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a genuine context consumed under another projectId
+AssertionError: promise resolved "{ content: 'Draft selected', …(8) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "cacheHit": undefined,
++   "content": "Draft selected",
++   "finishReason": "end_turn",
++   "latencyMs": 1,
++   "model": "fixture-only",
++   "thinking": undefined,
++   "toolsUsed": undefined,
++   "truncated": false,
++   "usage": {
++     "estimatedCostUsd": 0,
++     "inputTokens": 1,
++     "outputTokens": 1,
++   },
+  }
+
+ ❯ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts:95:73
+     93|     const selected = await loaded();
+     94|     const request = { ...draft(selected), [field]: field === 'projectI…
+     95|     await expect(new AnaDocumentDraftingService().draftDocument(reques…
+       |                                                                         ^
+     96|     expect(seams.gateway).not.toHaveBeenCalled();
+     97|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/17]⎯
+
+ FAIL  server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a nonempty unassessed context instead of labeling its body as evidence
+AssertionError: promise resolved "{ content: 'Draft selected', …(8) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "cacheHit": undefined,
++   "content": "Draft selected",
++   "finishReason": "end_turn",
++   "latencyMs": 1,
++   "model": "fixture-only",
++   "thinking": undefined,
++   "toolsUsed": undefined,
++   "truncated": false,
++   "usage": {
++     "estimatedCostUsd": 0,
++     "inputTokens": 1,
++     "outputTokens": 1,
++   },
+  }
+
+ ❯ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts:102:79
+    100|     const selected = await loaded();
+    101|     const forged = { status: 'unassessed', sources: selected.sources }…
+    102|     await expect(new AnaDocumentDraftingService().draftDocument(draft(…
+       |                                                                               ^
+    103|     expect(seams.gateway).not.toHaveBeenCalled();
+    104|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/17]⎯
+
+ FAIL  server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > does not let pure prompt or audit helpers label copied context as server-issued
+AssertionError: expected [Function] to throw an error
+ ❯ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts:108:45
+    106|   it('does not let pure prompt or audit helpers label copied context a…
+    107|     const copied = { ...await loaded() };
+    108|     expect(() => draftSourcePrompt(copied)).toThrow();
+       |                                             ^
+    109|     expect(() => draftSourceAudit(copied)).toThrow();
+    110|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/17]⎯
+
+ FAIL  server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > freezes the genuine context, source collection, source body and coordinates
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts:114:133
+    112|   it('freezes the genuine context, source collection, source body and …
+    113|     const selected = await loaded();
+    114|     for (const value of [selected, selected.sources, selected.sources[…
+       |                                                                                                                                     ^
+    115|     expect(Reflect.set(selected.sources[0], 'text', 'caller replacemen…
+    116|     expect(Reflect.set(selected.sources[0].span, 'start', 2)).toBe(fal…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/17]⎯
+
+ FAIL  server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses queued source revocation while preserving successful no-source siblings
+ FAIL  server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses queued actor revocation while preserving successful no-source siblings
+AssertionError: expected { content: 'Draft selected', …(8) } to match object { error: Any<String>, …(1) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "error": Any<String>,
+-   "sectionType": "selected",
++   "cacheHit": undefined,
++   "content": "Draft selected",
++   "finishReason": "end_turn",
++   "latencyMs": 1,
++   "model": "fixture-only",
++   "thinking": undefined,
++   "toolsUsed": undefined,
++   "truncated": false,
++   "usage": {
++     "estimatedCostUsd": 0,
++     "inputTokens": 1,
++     "outputTokens": 1,
++   },
+  }
+
+ ❯ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts:133:24
+    131|     const results = await pending;
+    132|     expect(results[0]).toMatchObject({ content: 'Draft plain-before' }…
+    133|     expect(results[1]).toMatchObject({ error: expect.any(String), sect…
+       |                        ^
+    134|     expect(results[1]).not.toHaveProperty('content');
+    135|     expect(JSON.stringify(results[1])).not.toContain('PRIVATE_DETAIL');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/17]⎯
+
+ FAIL  server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > provides a callback that refuses a source changed during a gateway capacity wait
+AssertionError: promise resolved "{ content: 'Draft selected', …(8) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "cacheHit": undefined,
++   "content": "Draft selected",
++   "finishReason": "end_turn",
++   "latencyMs": 1,
++   "model": "fixture-only",
++   "thinking": undefined,
++   "toolsUsed": undefined,
++   "truncated": false,
++   "usage": {
++     "estimatedCostUsd": 0,
++     "inputTokens": 1,
++     "outputTokens": 1,
++   },
+  }
+
+ ❯ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts:149:81
+    147|       return seams.provider(request);
+    148|     });
+    149|     await expect(new AnaDocumentDraftingService().draftDocument(draft(…
+       |                                                                                 ^
+    150|     expect(typeof suppliedCallback).toBe('function');
+    151|     expect(seams.provider).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/17]⎯
+
+ FAIL  server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > suppresses returned prose when extraction changes during the provider response wait
+ FAIL  server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > suppresses returned prose when private-parent changes during the provider response wait
+AssertionError: promise resolved "{ content: 'Draft selected', …(8) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "cacheHit": undefined,
++   "content": "Draft selected",
++   "finishReason": "end_turn",
++   "latencyMs": 1,
++   "model": "fixture-only",
++   "thinking": undefined,
++   "toolsUsed": undefined,
++   "truncated": false,
++   "usage": {
++     "estimatedCostUsd": 0,
++     "inputTokens": 1,
++     "outputTokens": 1,
++   },
+  }
+
+ ❯ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts:160:81
+    158|       return response();
+    159|     });
+    160|     await expect(new AnaDocumentDraftingService().draftDocument(draft(…
+       |                                                                                 ^
+    161|     expect(seams.provider).toHaveBeenCalledTimes(1);
+    162|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/17]⎯
+
+ FAIL  server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > pins request identity, context reference and declared project facts before its first await
+AssertionError: expected 99 to be 3 // Object.is equality
+
+- Expected
++ Received
+
+- 3
++ 99
+
+ ❯ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts:174:25
+    172|     expect(result.content).toBe('Draft selected');
+    173|     const sent = seams.gateway.mock.calls[0][0] as GatewayRequest;
+    174|     expect(sent.userId).toBe(userId); expect(sent.projectId).toBe(prog…
+       |                         ^
+    175|     expect(sent.messages[1].content).toContain('Original device');
+    176|     expect(sent.messages[1].content).not.toContain('MUTATED DEVICE');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/17]⎯
+
+ FAIL  server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses selected-source stream before gateway handoff
+ FAIL  server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses selected-source tools before gateway handoff
+AssertionError: promise resolved "{ content: 'Draft selected', …(8) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "cacheHit": undefined,
++   "content": "Draft selected",
++   "finishReason": "end_turn",
++   "latencyMs": 1,
++   "model": "fixture-only",
++   "thinking": undefined,
++   "toolsUsed": undefined,
++   "truncated": false,
++   "usage": {
++     "estimatedCostUsd": 0,
++     "inputTokens": 1,
++     "outputTokens": 1,
++   },
+  }
+
+ ❯ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts:182:73
+    180|     const selected = await loaded();
+    181|     const request = { ...draft(selected), ...(kind === 'stream' ? { on…
+    182|     await expect(new AnaDocumentDraftingService().draftDocument(reques…
+       |                                                                         ^
+    183|     expect(seams.gateway).not.toHaveBeenCalled();
+    184|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/17]⎯
+

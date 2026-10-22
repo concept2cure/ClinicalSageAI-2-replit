@@ -99,7 +99,7 @@ router.post('/demo-analysis', blockInProduction, async (req, res) => {
     const similarProtocols = await protocolAnalyzerService.findSimilarProtocols(protocolData, 5);
 
     // Enhancing analysis with knowledge-based recommendations
-    const systemPrompt = `You are an expert clinical trial protocol analyzer with comprehensive knowledge of global regulatory agencies (FDA, EMA, PMDA, NMPA, TGA, ANVISA, Health Canada, MHRA) and academic literature. 
+    const systemPrompt = `You are an expert clinical trial protocol analyzer with comprehensive knowledge of global regulatory agencies (FDA, EMA, PMDA, NMPA, TGA, ANVISA, Health Canada, MHRA) and academic literature.
 
 Analyze the provided protocol and generate detailed, evidence-based recommendations with proper citations to regulatory guidelines and academic publications. Your analysis should cover:
 

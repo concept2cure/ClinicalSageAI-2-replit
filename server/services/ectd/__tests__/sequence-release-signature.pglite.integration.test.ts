@@ -25,6 +25,8 @@ import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import fs from 'node:fs';
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
+import { PROGRAM_SPINE_PGLITE_DDL } from '../../../db/pglite-harness';
 
 const holder = vi.hoisted(() => ({
   db: null as unknown as { execute: (q: unknown) => Promise<unknown> },
@@ -40,7 +42,7 @@ vi.mock('../../../db.js', () => ({
   pool: { query: (sql: string, params?: unknown[]) => holder.query(sql, params) },
 }));
 
-import { deriveGovernedTargetBinding, BINDING_BASIS } from '../../part11/signature-persistence';
+import { deriveGovernedTargetBinding, BINDING_BASIS, manifestSignatureHash } from '../../part11/signature-persistence';
 import { resolveSequenceReleaseSignature } from '../sequence-release-signature';
 
 const ORG = 42;
@@ -127,7 +129,7 @@ async function currentDigest(sequenceId: number, orgId: number): Promise<string>
 async function sign(
   sequenceId: number,
   orgId: number,
-  opts: { intent?: string; digest?: string; basis?: string; state?: string; revoked?: boolean } = {},
+  opts: { intent?: string; meaning?: string; digest?: string; basis?: string; state?: string; revoked?: boolean; legacy?: boolean } = {},
 ): Promise<number> {
   const target = `ectd-sequence:${sequenceId}`;
   const actionId = `act_${sequenceId}_${opts.intent ?? 'dispatch'}_${Math.floor(performance.now() * 1000)}`;
@@ -138,12 +140,18 @@ async function sign(
       actionId,
       orgId,
       target,
-      JSON.stringify({ intent: opts.intent ?? 'dispatch', meaning: 'I approve this release.' }),
+      JSON.stringify({ intent: opts.intent ?? 'dispatch', meaning: opts.meaning ?? 'release' }),
       opts.state ?? 'executed',
       USER,
     ],
   );
-  const digest = opts.digest ?? (await currentDigest(sequenceId, orgId));
+  const binding = await deriveGovernedTargetBinding({ query: q }, target, orgId);
+  const digest = opts.digest ?? (opts.legacy ? binding.sequenceContentDigest : await currentDigest(sequenceId, orgId));
+  const manifest = {
+    actionId, target,
+    ...(!opts.legacy && binding.recordedPackageIdentity ? { boundPayloadDigest: digest,
+      recordedPackageIdentity: binding.recordedPackageIdentity, sequenceContentDigest: binding.sequenceContentDigest } : {}),
+  };
   const row = await q<{ id: number }>(
     `INSERT INTO electronic_signatures (
        document_id, version_id, signature_type, signature_purpose, signer_id, signer_name,
@@ -151,17 +159,18 @@ async function sign(
        signature_manifest, organization_id, signed_target, binding_basis, bound_payload_digest,
        verification_status, superseded_by
      ) VALUES (NULL, NULL, 'governed-action', 'release', $1, 'A Signer',
-       'signer@example.test', 'password', now(), 'hash',
+       'signer@example.test', 'password', now(), $9,
        $2::json, $3, $4, $5, $6, $7, $8) RETURNING id`,
     [
       USER,
-      JSON.stringify({ actionId, target }),
+      JSON.stringify(manifest),
       orgId,
       target,
       opts.basis ?? BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST,
       digest,
       opts.revoked ? 'revoked' : null,
       null,
+      manifestSignatureHash(manifest),
     ],
   );
   return row.rows[0].id;
@@ -175,10 +184,18 @@ beforeAll(async () => {
   await pglite.exec(`INSERT INTO users (id, email, name) VALUES (${USER},'s@e.test','A Signer');`);
   // The REAL sequence/leaf tables the binding is derived from.
   await pglite.exec(migration('migrations/20260604_submission_core_canonical.sql'));
+  // FDA signatures also bind the applicant/application reader. Stand up its
+  // actual deployed registry/binding/anchor migrations rather than stubbing
+  // that reader; a deliberately unbound submission remains a captured gap.
+  await pglite.exec(PROGRAM_SPINE_PGLITE_DDL);
+  await pglite.exec(migration('migrations/20260609_ind_master_data.sql'));
+  await pglite.exec(migration('migrations/20261021_regulatory_programs_applicant_sponsor.sql'));
+  await pglite.exec(migration('migrations/20260925b_submissions_program_anchor.sql'));
   // The later leaf columns the binding digests (2026-09-22, W5/D7): the content
   // pin and the uuid half of the document pointer. Both are on the applier.
   await pglite.exec(migration('migrations/20260814e_submission_leaf_source_pin.sql'));
   await pglite.exec(migration('migrations/20260917b_submission_leaf_document_uuid.sql'));
+  await pglite.exec(migration('migrations/20261012_submission_leaf_stf_study_tagging.sql'));
   await pglite.exec(ANA_ACTIONS_DDL);
   await pglite.exec(ELECTRONIC_SIGNATURES_PRE_D6_DDL);
   // The REAL migration that adds signed_target / binding_basis.
@@ -194,6 +211,30 @@ afterAll(async () => {
 
 const resolve = (sequenceId: number, orgId: number = ORG) =>
   resolveSequenceReleaseSignature({ sequenceId, organizationId: orgId });
+
+describe('recorded FDA identity renewal against actual PostgreSQL tables', () => {
+  it('keeps a legacy leaf-only signature intact but requires current identity authorization', async () => {
+    const sequenceId = await makeSequence(ORG, '0100', 1);
+    await sign(sequenceId, ORG, { legacy: true });
+    expect((await resolve(sequenceId)).verdict).toBe('unsigned');
+  });
+
+  it('distinguishes contact-only staleness from changed leaves, even when both facts change', async () => {
+    const sequenceId = await makeSequence(ORG, '0101', 1);
+    const program = randomUUID(), sponsor = randomUUID();
+    await q(`INSERT INTO ind_sponsors(id,organization_id,name,duns,contact_name,contact_phone,contact_email)
+      VALUES($1,$2,'Recorded applicant','123456789','Recorded contact','+1 555 0100','original@example.test')`, [sponsor, ORG]);
+    await q(`INSERT INTO regulatory_programs(id,organization_id,name,code,program_type,product_name,application_number,applicant_sponsor_id)
+      VALUES($1,$2,'Recorded program',$4,'IND','Recorded product','123456',$3)`, [program, ORG, sponsor, `RECORDED-${sequenceId}`]);
+    await q(`UPDATE submissions SET program_id=$1 WHERE id=(SELECT submission_id FROM ectd_sequences WHERE id=$2)`, [program, sequenceId]);
+    await sign(sequenceId, ORG);
+    expect((await resolve(sequenceId)).verdict).toBe('signed');
+    await q('UPDATE ind_sponsors SET contact_email=$1 WHERE id=$2', ['changed@example.test', sponsor]);
+    expect((await resolve(sequenceId)).verdict).toBe('unsigned');
+    await q('UPDATE submission_leaves SET title=$1 WHERE sequence_id=$2', ['Changed after approval', sequenceId]);
+    expect((await resolve(sequenceId)).verdict).toBe('invalid');
+  });
+});
 
 describe('against the real schema', () => {
   it('the query runs, and a dispatch-intent signature over the current leaves verifies', async () => {
@@ -224,6 +265,14 @@ describe('against the real schema', () => {
     const sequenceId = await makeSequence(ORG, '0002', 1);
     await sign(sequenceId, ORG, { intent: 'freeze' });
     expect((await resolve(sequenceId)).verdict).toBe('unsigned');
+  });
+
+  // 2026-10-19 (D5): the resolver read the intent and never the meaning, so a
+  // dispatch signature declaring "review" was counted as the §11.70 release.
+  it('a dispatch-intent signature declaring review is not a release', async () => {
+    const sequenceId = await makeSequence(ORG, '0090', 1);
+    await sign(sequenceId, ORG, { meaning: 'review' });
+    expect((await resolve(sequenceId)).verdict, 'a "review" signature was counted as the release').toBe('unsigned');
   });
 
   it('a sign action that never executed does not count', async () => {

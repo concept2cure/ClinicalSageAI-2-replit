@@ -27,7 +27,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { extractApiError, serverMessage, errorCodeOf } from '../queryClient';
+import { ApiRequestError, assertApiResponseOk, extractApiError, serverMessage, errorCodeOf } from '../queryClient';
 
 describe('extractApiError — enum codes never become user copy', () => {
   it('prefers the human message over an enum-shaped error token', () => {
@@ -68,6 +68,43 @@ describe('extractApiError — enum codes never become user copy', () => {
     const { message, code } = extractApiError({ error: token }, status);
     expect(message).not.toContain(token);
     expect(code).toBe(token);
+  });
+});
+
+describe('assertApiResponseOk — a returned refusal cannot confirm a mutation', () => {
+  it('preserves the server refusal, machine code, status and request reference on a returned 401', async () => {
+    const payload = { error: { code: 'SESSION_IDLE', message: 'Your session ended. Sign in again.' } };
+    const response = new Response(JSON.stringify(payload), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json', 'X-Request-Id': 'request-401-proof' },
+    });
+    const error = await assertApiResponseOk(response).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ApiRequestError);
+    expect(error).toMatchObject({ status: 401, payload, code: 'SESSION_IDLE', message: payload.error.message, correlationId: 'request-401-proof' });
+  });
+
+  it.each([201, 204])('does not consume a successful %s receipt', async status => {
+    const response = new Response(status === 204 ? null : JSON.stringify({ id: 71 }), {
+      status, headers: { 'Content-Type': 'application/json' },
+    });
+    await assertApiResponseOk(response);
+    expect(response.bodyUsed).toBe(false);
+    if (status === 201) expect(await response.json()).toEqual({ id: 71 });
+  });
+
+  it('uses sign-in guidance for an unstructured 401 without displaying the upstream body', async () => {
+    const response = new Response('<html>upstream session gateway</html>', { status: 401 });
+    const error = await assertApiResponseOk(response).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ApiRequestError);
+    expect(error).toMatchObject({ status: 401, message: 'Sign in again to continue.' });
+    expect((error as Error).message).not.toContain('upstream');
+  });
+
+  it('preserves a stale revision code and its usable reason', async () => {
+    const response = new Response(JSON.stringify({ error: 'RESPONSE_CHANGED', detail: 'Another reviewer saved this response.' }), {
+      status: 409, headers: { 'Content-Type': 'application/json' },
+    });
+    await expect(assertApiResponseOk(response)).rejects.toMatchObject({ status: 409, code: 'RESPONSE_CHANGED', message: 'Another reviewer saved this response.' });
   });
 });
 

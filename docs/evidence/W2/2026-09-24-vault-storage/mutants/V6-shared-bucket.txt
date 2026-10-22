@@ -6,12 +6,12 @@ tests/boot_contract.tftest.hcl... in progress
   run "staging_is_distinct_from_production"... fail
 ╷
 │ Error: Test assertion failed
-│ 
+│
 │   on tests/boot_contract.tftest.hcl line 384, in run "staging_is_distinct_from_production":
 │  384:     condition     = alltrue([for k, v in output.resource_names : strcontains(v, "stg") || strcontains(v, "staging")])
 │     ├────────────────
 │     │ output.resource_names is object with 10 attributes
-│ 
+│
 │ Every staging resource name must be its own:
 │ {"alb_name":"c2c-stg","ecr_prefix":"c2c-stg","ecs_cluster":"c2c-staging","evidence_bucket":"c2c-stg-part11-evidence","evidence_kms":"alias/c2c-stg-evidence","frontend_bucket":"c2c-stg-frontend","rds_identifier":"c2c-staging","secrets_prefix":"c2c/staging","signing_alias":"alias/fda-signing-key-2026-staging","vault_bucket":"c2c-prod-vault"}
 ╵

@@ -1,0 +1,13 @@
+180211cb479e53e1c28d3da40cca05732fa58c3ac0cd182348419480b1bb186c  README.md
+b94528e1ff421648dd9087096c775d69c7547ab887cba7e70203ec05ecc41b8e  backend/backend-summary.json
+1ac310d1d56f02141c648b719efc8b643e8c9e95813cc40fe9f1d4b32983488a  backend/task-handoff-pm-backend-final.command.json.gz
+87894820cbf1b4e9c419cde784b18e392dfdb6670b1d69d95f680b31710b3de7  backend/task-handoff-pm-backend-final.files.txt.gz
+a91a5dd15967280d8ac87f820e667c0a32d2a14e0e841264b6716c1697bb30e0  backend/task-handoff-pm-backend-final.json.gz
+b23f3014511c7370e56c3640a593bd38629ef6024dc697591c2b5ce227b69204  backend/task-handoff-pm-backend-final.log.gz
+73a4cfc4bf29b180f31847c234847eff64dcc36598ad6a638d8ad98b74cfdaed  backend/task-handoff-pm-backend-final.pins.json.gz
+4baf1e31bb5dc7c7a94a348c2a7a027e6d11f3b4fa514aa108958349575d04da  gates/task-handoff-pm-build-binding.json.gz
+ab29689e2616c5c3b90679c057c41fb8560a21d6cd473773ba6d9009960d2bac  gates/task-handoff-pm-build.log.gz
+dbb273abc85836190052ad18ba97362a4494d8ef7ca7c356b8411f9ff97d5438  gates/task-handoff-pm-classes.log.gz
+a108dd9622a86471ec3135b972bdcdfa66bd5eeee3f75a143f475242b9c564ce  gates/task-handoff-pm-merge.log.gz
+f2fc9df574181a8e384d9fe6af72c181f60617afc8fc6382cb19b1dd3c2e341c  gates/task-handoff-pm-push-interrupted.log.gz
+d7cc44f56c905a6f5f1a0eed8e82edc1ce44ccd4704e635fb0c1763f53b49819  source-binding.json

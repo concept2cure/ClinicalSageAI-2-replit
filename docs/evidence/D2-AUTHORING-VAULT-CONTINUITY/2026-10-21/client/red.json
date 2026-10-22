@@ -1,0 +1,43 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx",
+    "client/src/concept2cure/v2/__tests__/authoringVaultPlacementFlow.test.tsx"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "startedAt": "2026-10-21T01:11:20.204975+00:00",
+  "elapsedSeconds": 60.392,
+  "exitCode": 1,
+  "environment": {
+    "PATH_prefix": "/workspace/scratch/editor-toolchain/node_modules/.bin",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/editor/FileToVaultDialog.tsx": "50db555f4f0ca1eb5a394de8564a178c4ff2b6a4e5d16fdaf5f7077349bbe9d4",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "2c6a50489735f21bd983d5de32486083fa66c9b136257d2f7c2149dc9d9e9d79",
+    "client/src/concept2cure/v2/editor/DocumentCanvas.tsx": "ac3ede3f790d45a85fdae4ee85ad457dde5334502a27ef7f729e1529f5d13e1d",
+    "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx": "b789a7beb74226af28a267c95b0c71fabf99341540c0db67d69e75e7492feafb",
+    "client/src/concept2cure/v2/surfaces/submissionScopedRead.ts": "cf88132e99b052a174201d7f5588b4d3ff93eb4e2271979b682dacbdef56d519",
+    "client/src/concept2cure/v2/shellProject.ts": "20563ba2d357a8c10cbd7015b38593132d94b7fcfb8cb8968946ae9ab7c3cc26",
+    "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx": "bd9e7e572f211fdb8709ffaa069ef05bbe09bbb499524de03e816c87615cb52b",
+    "client/src/concept2cure/v2/__tests__/authoringVaultPlacementFlow.test.tsx": "044962680a2bc87644efc3de44171fd5fa216f39c54bd985641c7518657f8063",
+    "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx": "c21a5fa7d38f8cf788d1edf84d281de19cd47bf581fb7031a5a2644bc096832d"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/editor/FileToVaultDialog.tsx": "50db555f4f0ca1eb5a394de8564a178c4ff2b6a4e5d16fdaf5f7077349bbe9d4",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "2c6a50489735f21bd983d5de32486083fa66c9b136257d2f7c2149dc9d9e9d79",
+    "client/src/concept2cure/v2/editor/DocumentCanvas.tsx": "ac3ede3f790d45a85fdae4ee85ad457dde5334502a27ef7f729e1529f5d13e1d",
+    "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx": "b789a7beb74226af28a267c95b0c71fabf99341540c0db67d69e75e7492feafb",
+    "client/src/concept2cure/v2/surfaces/submissionScopedRead.ts": "cf88132e99b052a174201d7f5588b4d3ff93eb4e2271979b682dacbdef56d519",
+    "client/src/concept2cure/v2/shellProject.ts": "20563ba2d357a8c10cbd7015b38593132d94b7fcfb8cb8968946ae9ab7c3cc26",
+    "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx": "bd9e7e572f211fdb8709ffaa069ef05bbe09bbb499524de03e816c87615cb52b",
+    "client/src/concept2cure/v2/__tests__/authoringVaultPlacementFlow.test.tsx": "044962680a2bc87644efc3de44171fd5fa216f39c54bd985641c7518657f8063",
+    "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx": "99af822cdfe419da68555c8a62cd13098b29d59f8e4a76d77a7142b6ada2f5b6"
+  },
+  "rawOutput": "red.log.gz",
+  "rawGzipSha256": "4834fab5ec6be9459a75cb366b1892d2bf659a4791e68650ae728ba9c9824344"
+}

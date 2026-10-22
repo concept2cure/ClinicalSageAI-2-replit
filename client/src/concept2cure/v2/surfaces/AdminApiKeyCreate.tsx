@@ -4,6 +4,7 @@ import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { registerCeremonyOpen } from '../ceremony';
 import { I } from '../icons';
 import { useDialog } from '../useDialog';
+import { isApiRequestError } from '../apiCall';
 
 type KeyDraft = { name: string; expiry: string; rateLimit: string; reason: string };
 type KeyRequest = { name: string; scopes: ApiKeyScope[]; rateLimit: number; reason: string; expiresAt?: string };
@@ -13,13 +14,22 @@ function creationRequest(draft: KeyDraft, scopes: ApiKeyScope[]): { error: strin
   const expiresAt = draft.expiry ? new Date(draft.expiry) : null;
   if (!draft.name.trim() || draft.name.trim().length > 255) return { error: 'Enter a key name with 1–255 characters.' };
   if (!scopes.length) return { error: 'Select at least one read-only scope.' };
-  if (!draft.reason.trim() || draft.reason.trim().length > 2000) return { error: 'Enter a reason with 1–2000 characters.' };
+  if (draft.reason.trim().length < 3 || draft.reason.trim().length > 500) return { error: 'Enter a reason with 3–500 characters.' };
   if (!Number.isInteger(rpm) || rpm <= 0) return { error: 'Requests per minute must be a positive whole number.' };
   if (expiresAt && (!Number.isFinite(expiresAt.getTime()) || expiresAt.getTime() <= Date.now())) return { error: 'Choose an expiration in the future, or leave it empty.' };
   return { body: {
     name: draft.name.trim(), scopes: API_KEY_SCOPES.filter(scope => scopes.includes(scope)),
     rateLimit: rpm, reason: draft.reason.trim(), ...(expiresAt ? { expiresAt: expiresAt.toISOString() } : {}),
   } };
+}
+
+function issuanceFailure(error: unknown, handedOver: boolean): { uncertain: boolean; message: string } {
+  const known = isApiRequestError(error);
+  const code = known ? (error.payload as { code?: unknown } | null)?.code : undefined;
+  const uncertain = !handedOver && (!known || code === 'API_KEY_COMMIT_UNCONFIRMED');
+  return { uncertain, message: uncertain && code !== 'API_KEY_COMMIT_UNCONFIRMED'
+    ? 'The one-time key response could not be confirmed. Check the key list before issuing another.'
+    : error instanceof Error ? error.message : 'The key service could not be reached.' };
 }
 
 /** The key stays in this drawer's memory until it is dismissed. No context,
@@ -32,6 +42,7 @@ export function AdminApiKeyCreate({ onClose, onCreated }: { onClose: () => void;
   const [reason, setReason] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [uncertain, setUncertain] = useState(false);
   const pending = useRef(false);
   const [secret, setSecret] = useState<string | null>(null);
   const [copyNote, setCopyNote] = useState('');
@@ -47,27 +58,31 @@ export function AdminApiKeyCreate({ onClose, onCreated }: { onClose: () => void;
 
   const create = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (pending.current) return;
+    if (pending.current || uncertain) return;
     const parsed = creationRequest({ name, expiry, rateLimit, reason }, scopes);
     if ('error' in parsed) { setError(parsed.error); return; }
     pending.current = true; setBusy(true); setError('');
+    let handedOver = false;
     try {
       const res = await apiRequest('POST', '/api/api-keys', parsed.body);
       const body: unknown = await res.json().catch(() => null);
       if (!res.ok) {
-        setError(serverMessage(body) ?? `The server refused key creation (HTTP ${res.status}).`);
-        return;
+        throw Object.assign(new Error(serverMessage(body) ?? `The server refused key creation (HTTP ${res.status}).`), { name: 'ApiRequestError', status: res.status, payload: body });
       }
       const rawKey = body && typeof body === 'object' && 'apiKey' in body ? body.apiKey : null;
       if (typeof rawKey !== 'string' || !rawKey) {
         setError('The server accepted the request but did not return the key. Check the key list before retrying; revoke the key if its secret cannot be recovered.');
+        setUncertain(true);
         onCreated();
         return;
       }
       setSecret(rawKey);
+      handedOver = true;
       onCreated();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'The key service could not be reached.');
+      const failure = issuanceFailure(e, handedOver);
+      setError(failure.message);
+      if (failure.uncertain) { setUncertain(true); onCreated(); }
     } finally {
       pending.current = false; setBusy(false);
     }
@@ -107,7 +122,7 @@ export function AdminApiKeyCreate({ onClose, onCreated }: { onClose: () => void;
             </div>
           </>
         ) : (
-          <ApiKeyForm uid={uid} draft={{ name, expiry, rateLimit, reason }} scopes={scopes} busy={busy} error={error}
+          <ApiKeyForm uid={uid} draft={{ name, expiry, rateLimit, reason }} scopes={scopes} busy={busy} uncertain={uncertain} error={error}
             onEdit={(field, value) => ({ name: setName, expiry: setExpiry, rateLimit: setRateLimit, reason: setReason })[field](value)}
             onScope={(scope, checked) => setScopes(current => checked ? [...current, scope] : current.filter(s => s !== scope))}
             onSubmit={create} onCancel={close} />
@@ -117,8 +132,8 @@ export function AdminApiKeyCreate({ onClose, onCreated }: { onClose: () => void;
   );
 }
 
-function ApiKeyForm({ uid, draft, scopes, busy, error, onEdit, onScope, onSubmit, onCancel }: {
-  uid: string; draft: KeyDraft; scopes: ApiKeyScope[]; busy: boolean; error: string;
+function ApiKeyForm({ uid, draft, scopes, busy, uncertain, error, onEdit, onScope, onSubmit, onCancel }: {
+  uid: string; draft: KeyDraft; scopes: ApiKeyScope[]; busy: boolean; uncertain: boolean; error: string;
   onEdit: (field: keyof KeyDraft, value: string) => void;
   onScope: (scope: ApiKeyScope, checked: boolean) => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => Promise<void>;
@@ -149,14 +164,14 @@ function ApiKeyForm({ uid, draft, scopes, busy, error, onEdit, onScope, onSubmit
         </div>
         <div className="de-field">
           <label className="de-label" htmlFor={`${uid}-reason`}>Reason<span className="req" aria-hidden="true">*</span></label>
-          <textarea className="de-textarea" id={`${uid}-reason`} rows={3} maxLength={2000} value={draft.reason} onChange={e => onEdit('reason', e.target.value)} aria-required="true" disabled={busy} />
+          <textarea className="de-textarea" id={`${uid}-reason`} rows={3} maxLength={500} value={draft.reason} onChange={e => onEdit('reason', e.target.value)} aria-required="true" disabled={busy} />
         </div>
         <div className="de-gov"><span className="ico">{I.lock}</span><span className="de-gov-t">This key grants access to your organization’s data within the selected scopes. Creation records your account, the scopes and the stated reason in the audit event.</span></div>
         {error && <div className="de-err" role="alert">{error}</div>}
       </div>
       <div className="de-f">
-        <button type="button" className="de-btn ghost" onClick={onCancel} disabled={busy}>Cancel</button>
-        <button type="submit" className="de-btn primary" disabled={busy}>{I.lock} {busy ? 'Creating…' : 'Create API key'}</button>
+        <button type="button" className="de-btn ghost" onClick={onCancel} disabled={busy}>{uncertain ? 'Close and check key list' : 'Cancel'}</button>
+        <button type="submit" className="de-btn primary" disabled={busy || uncertain}>{I.lock} {busy ? 'Creating…' : 'Create API key'}</button>
       </div>
     </form>
   );

@@ -1,0 +1,173 @@
+{
+  "status": "pass",
+  "sourceCommit": "6562dd67aeb13edd17a1d9c62f214163a4e8e6a3",
+  "incomingCanonical": "e62320e0a9555188a08ce426d7c16c72d372d824",
+  "completedAt": "2026-10-18T00:25:07.428Z",
+  "scenarios": 1,
+  "measuredStages": 5,
+  "structuralCommitRequests": 1,
+  "recoverySectionReads": 2,
+  "generations": 0,
+  "acceptances": 0,
+  "sourcePinsBeforeAfter": 1942,
+  "sourcePinsMatchCommit": true,
+  "sourcePinsUnchanged": true,
+  "pageErrors": 0,
+  "unexpectedApiRequests": 0,
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 408 (Request Timeout)"
+  ],
+  "browserVersion": "154.0.8037.57",
+  "node": "22.23.3",
+  "ownedServerStopped": true,
+  "ownedPort": 5197,
+  "priorArtifactsUntouched": true,
+  "visuallyInspected": [
+    "408-unknown-back-held.png.gz",
+    "back-released-after-recovery.png.gz"
+  ],
+  "limits": [
+    "Synthetic HTTP/account replies; actual Workbench/Back/shared leave registry.",
+    "TaskTray/full shell, new selected-source interaction, backend persistence/authorization, native scheduling and live AI are not exercised.",
+    "Recovery preserves the active rich-editor buffer; explicit whole-document reading verifies refreshed saved data.",
+    "Screenshots can retain the previous blocked-click toast briefly; the recorded current guard is null after verified recovery.",
+    "Compiler/publication/human witnessing are separate; this record claims no full-suite replay."
+  ],
+  "artifacts": [
+    {
+      "path": "server.mjs.gz",
+      "sourcePath": "/workspace/scratch/source-first-browser-6562dd67a-20261018/server.mjs",
+      "rawBytes": 2888,
+      "rawSha256": "3b5054a4eb87cf957036b8e03c7ecdbbb7bb77f94d8cb1f9b8b1a52bc579a0d3",
+      "gzipBytes": 1330,
+      "gzipSha256": "10c64d190b24121faf0f18cde65f9a660086d0122f5f9d2d7198ffc98fd0683b",
+      "gzipMtime": 0
+    },
+    {
+      "path": "browser.mjs.gz",
+      "sourcePath": "/workspace/scratch/source-first-browser-6562dd67a-20261018/browser.mjs",
+      "rawBytes": 11369,
+      "rawSha256": "9d71f2ea6dc98a826d61a947122cdcd452066a25b8e628fd41fa355f041740c8",
+      "gzipBytes": 3922,
+      "gzipSha256": "82f3a94c25df71b70c995462606453496e82a4e49912e54d740ee87348bf4151",
+      "gzipMtime": 0
+    },
+    {
+      "path": "server.log.gz",
+      "sourcePath": "/workspace/scratch/source-first-browser-6562dd67a-20261018/server.log",
+      "rawBytes": 63,
+      "rawSha256": "6ca5c03756553246f4490f5fe040f81f4de7ca3d634af21c51f6cbed964ea48e",
+      "gzipBytes": 81,
+      "gzipSha256": "35697369c3196f628ce914bfc2321908eceadd240a8432774da30b8b77677e98",
+      "gzipMtime": 0
+    },
+    {
+      "path": "browser.log.gz",
+      "sourcePath": "/workspace/scratch/source-first-browser-6562dd67a-20261018/browser.log",
+      "rawBytes": 80,
+      "rawSha256": "5e461c72a2bbbad01396971cb66f3b9a92093c822c672a424eac182a311b5201",
+      "gzipBytes": 94,
+      "gzipSha256": "0677da54c231a84f7d8f9fd9a40115df955d762a55b626e8fcd59d1b988ec1fd",
+      "gzipMtime": 0
+    },
+    {
+      "path": "cleanup.json.gz",
+      "sourcePath": "/workspace/scratch/source-first-browser-6562dd67a-20261018/cleanup.json",
+      "rawBytes": 294,
+      "rawSha256": "326946993c4a5a04ce99ab978bfdb4292f80906c55214fc5754c6f0ccebc0125",
+      "gzipBytes": 204,
+      "gzipSha256": "e1f16ab02f23134e26907b73eb03390a9a5b4e4723b883c2635c06e2e391caf0",
+      "gzipMtime": 0
+    },
+    {
+      "path": "source-pins-before.json.gz",
+      "sourcePath": "/workspace/scratch/source-first-browser-6562dd67a-20261018/source-pins-before.json",
+      "rawBytes": 256965,
+      "rawSha256": "ccc265d509401f31fdb7ffb57e89499705355fff31a0418061ce0738508ce921",
+      "gzipBytes": 98047,
+      "gzipSha256": "a66c1cdad62be803bd7d8097a27947d2876515553a059f2893a848f756dc3fed",
+      "gzipMtime": 0
+    },
+    {
+      "path": "source-pins-after.json.gz",
+      "sourcePath": "/workspace/scratch/source-first-browser-6562dd67a-20261018/source-pins-after.json",
+      "rawBytes": 256964,
+      "rawSha256": "d2ceed4066c0e9cc83827cb99b51ff32ef7e4570ad391a49c1e9cdeed2b16e4e",
+      "gzipBytes": 98046,
+      "gzipSha256": "1d1565d149f060c40533815ab21e0472c0327bc15c6236320f925e2e924d27fb",
+      "gzipMtime": 0
+    },
+    {
+      "path": "configuration-binding.json.gz",
+      "sourcePath": "/workspace/scratch/source-first-browser-6562dd67a-20261018/configuration-binding.json",
+      "rawBytes": 589,
+      "rawSha256": "57965f8a150fae6b412fbcb911dc3de1611eac85d4774598a62c66bd1f6b951d",
+      "gzipBytes": 372,
+      "gzipSha256": "70b894e1f345dfb872049f385900d2adcd37fe1029a9848b1a07368e3d93027b",
+      "gzipMtime": 0
+    },
+    {
+      "path": "commands.txt.gz",
+      "sourcePath": "/workspace/scratch/source-first-browser-6562dd67a-20261018/commands.txt",
+      "rawBytes": 503,
+      "rawSha256": "c07d8c9d1b56d9fc6c0655122abf37099028fa6ebefcd4fc295214a2abf17399",
+      "gzipBytes": 209,
+      "gzipSha256": "9a634e32dab350c584529018d0c499518c816effc906948fb3f30c61f0639f53",
+      "gzipMtime": 0
+    },
+    {
+      "path": "report.json.gz",
+      "sourcePath": "/workspace/scratch/source-first-browser-6562dd67a-20261018/result/report.json",
+      "rawBytes": 530686,
+      "rawSha256": "d9e073272bae451a05585d13d63659d7093fd2ec0246a0545882017325e1fb09",
+      "gzipBytes": 198389,
+      "gzipSha256": "46fdf5b3aceb3d5a45bd983aab3ce867dd2a3d10ec3eed8ee6416174e698bf7b",
+      "gzipMtime": 0
+    },
+    {
+      "path": "408-unknown-back-held.png.gz",
+      "sourcePath": "/workspace/scratch/source-first-browser-6562dd67a-20261018/result/408-unknown-back-held.png",
+      "rawBytes": 158595,
+      "rawSha256": "2008623596dcc89b747eb9714eb4eb23fa77524195d42a591c0f0e5c913775e6",
+      "gzipBytes": 150384,
+      "gzipSha256": "c0baeeb091a00e18bf1f1250c5dfe9c46ae8b75216d1c7f6f3170c5e34c0e6b2",
+      "gzipMtime": 0
+    },
+    {
+      "path": "back-released-after-recovery.png.gz",
+      "sourcePath": "/workspace/scratch/source-first-browser-6562dd67a-20261018/result/back-released-after-recovery.png",
+      "rawBytes": 144897,
+      "rawSha256": "06156e969a7e342727ddba6379e98875dc371be52cc1fce75dc2edca862d3144",
+      "gzipBytes": 137682,
+      "gzipSha256": "eb0a3b53da3bfa2d5da83cb072331c99c839371158922f707906be2e5e41a935",
+      "gzipMtime": 0
+    },
+    {
+      "path": "pending-back-held.png.gz",
+      "sourcePath": "/workspace/scratch/source-first-browser-6562dd67a-20261018/result/pending-back-held.png",
+      "rawBytes": 159628,
+      "rawSha256": "7e7c62d2d89968ceba2bfa5c24547598809bb3e367f6d7e56dc1628bc880b8bf",
+      "gzipBytes": 149374,
+      "gzipSha256": "0992a3527868645c6169e399c983a3ca5b0b69f3ebfce3e02e27a259d8d5bf59",
+      "gzipMtime": 0
+    },
+    {
+      "path": "verified-host-read-applied.png.gz",
+      "sourcePath": "/workspace/scratch/source-first-browser-6562dd67a-20261018/result/verified-host-read-applied.png",
+      "rawBytes": 151346,
+      "rawSha256": "99cf378c1c54a4dea7ba67d4719b9aefa8580f401a8321f0fd3024c66ece923c",
+      "gzipBytes": 143767,
+      "gzipSha256": "a3f0e9855db557a826bf355f2d600dfa496a4d3aff5bb53a6bbab5cc8491e5b7",
+      "gzipMtime": 0
+    },
+    {
+      "path": "verified-host-read-pending.png.gz",
+      "sourcePath": "/workspace/scratch/source-first-browser-6562dd67a-20261018/result/verified-host-read-pending.png",
+      "rawBytes": 157139,
+      "rawSha256": "88cdb09dbce834e4a8b7f4e0d6394cf48ec231bcf01a7502646d04b3ce78ca10",
+      "gzipBytes": 148834,
+      "gzipSha256": "9d32273ee90229effd2868949419471827954305fbac8e18c8568b27687a230f",
+      "gzipMtime": 0
+    }
+  ]
+}

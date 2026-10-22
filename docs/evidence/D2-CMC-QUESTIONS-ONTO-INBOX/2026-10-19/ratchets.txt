@@ -1,0 +1,109 @@
+# The ratchets the dead Gmail ingest's deletion moves (2026-10-19). Run with DATABASE_URL set to the local PostgreSQL 16.
+#
+# RED: gmailIngestToReg and resolveSubmissionId deleted, baselines not yet shrunk.
+#   ci:insert-columns-declared and ci:unkeyed-request-tables exit 1 on the entries the deletion fixed;
+#   ci:unbacked-tables and ci:tables-live-schema tolerate stale entries (exit 0) and were shrunk anyway.
+
+════ npm run -s ci:insert-columns-declared (ingest deleted, baseline not yet shrunk)
+[ci:insert-columns-declared] columns written vs columns declared
+  Drizzle models parsed        : 703
+  static INSERTs examined      : 693
+  skipped (unjudgeable)        : 8
+  migration lineage tables     : 1428
+  tables unknown to BOTH       : 7
+  baselined (known, unfixed)   : 47
+
+✖ 4 baselined violation(s) no longer occur — the ratchet must tighten:
+
+    reg_questions.raw_text
+    reg_questions.sec_code
+    reg_questions.source
+    reg_questions.sub_id
+
+Remove them: node scripts/ci/check-insert-columns-declared.mjs --write-baseline
+
+exit=1
+════ npm run -s ci:unkeyed-request-tables (ingest deleted, baseline not yet shrunk)
+[ci:unkeyed-request-tables] 1091 tables created; 585 read by a per-request path; 103 of those carry NO tenant column; 104 baselined, 0 still unreviewed
+
+🚫 Stale baseline entries — these tables are no longer unkeyed-and-read:
+      reg_mail_ingest
+
+  A baseline that overstates the debt hides the next real entry.
+  Fix: npm run ci:unkeyed-request-tables:write-baseline
+
+exit=1
+════ npm run -s ci:unbacked-tables (ingest deleted, baseline not yet shrunk)
+[ci:unbacked-tables] 1508 tables/views created across migrations, drizzle and runtime DDL; 725 referenced in server SQL; 16 unbacked; 19 baselined
+[ci:unbacked-tables] ✅ no new references to tables nothing creates.
+exit=0
+════ npm run -s ci:tables-live-schema (ingest deleted, baseline not yet shrunk)
+[ci:tables-live-schema] 1307 relations on the live database; 750 referenced by server SQL; 14 resolved as functions; 33 absent
+[ci:tables-live-schema] ✅ 1 baselined table(s) NOW EXIST on the live database — remove them from the baseline to ratchet down:
+    • ai_feedback
+[ci:tables-live-schema] ✅ 5 baselined table(s) are NO LONGER REFERENCED by server SQL — the querying code was removed, so they are out of scope. They were NOT created; remove them from the baseline to ratchet down:
+    • correspondences
+    • enterprise_integration_credentials
+    • reg_changes
+    • reg_m3_sections
+    • reg_submissions
+[ci:tables-live-schema] ✅ no NEW references to tables missing from the live schema (39 baselined)
+exit=0
+
+# GREEN: each baseline shrunk by removing only the gmail.ts / rpi.ts entries (rpi.ts was deleted in 7c1bbcfd and its
+# entries were still standing). insert-columns and unbacked-tables were rewritten by their --write-baseline (diff: removals,
+# plus unbacked's generatedAt/total); unkeyed-request-tables and tables-live-schema were edited by hand, because their
+# --write-baseline also rewrote entries unrelated to this change (vigilance_events, ai_feedback, …), which are not this
+# slice's to touch. ci:unkeyed-request-tables:strict lists every baselined table by design and exits 1 on HEAD too
+# (104 entries there, 103 here).
+
+════ npm run -s ci:insert-columns-declared (baseline shrunk to match)
+[ci:insert-columns-declared] columns written vs columns declared
+  Drizzle models parsed        : 703
+  static INSERTs examined      : 693
+  skipped (unjudgeable)        : 8
+  migration lineage tables     : 1428
+  tables unknown to BOTH       : 7
+  baselined (known, unfixed)   : 43
+
+✅ no new violations. 43 baselined and awaiting burn-down.
+exit=0
+════ npm run -s ci:unkeyed-request-tables (baseline shrunk to match)
+[ci:unkeyed-request-tables] 1091 tables created; 585 read by a per-request path; 103 of those carry NO tenant column; 103 baselined, 0 still unreviewed
+[ci:unkeyed-request-tables] ✅ no new tables read without a tenant key.
+exit=0
+════ npm run -s ci:unkeyed-request-tables:strict (baseline shrunk to match)
+      read by    : server/routes/mdx-postmarket.ts
+
+  Every RLS sweep here keys off organization_id / org_id / tenant_id, so a
+  table with none is outside all of them — and outside every gate that looks
+  for a tenant-keyed table missing a policy. It is not protected in depth;
+  it is protected only by whatever predicate each query happens to carry.
+
+  Fix: give it a tenant column (RULE 1 — amend the creating migration in
+  place), or scope it through a parent that has one, or record it in the
+  baseline with a reason: global | derived | exempt.
+    npm run ci:unkeyed-request-tables:write-baseline
+
+exit=1
+════ npm run -s ci:unbacked-tables (baseline shrunk to match)
+[ci:unbacked-tables] 1508 tables/views created across migrations, drizzle and runtime DDL; 725 referenced in server SQL; 16 unbacked; 16 baselined
+[ci:unbacked-tables] ✅ no new references to tables nothing creates.
+exit=0
+════ npm run -s ci:tables-live-schema (baseline shrunk to match)
+[ci:tables-live-schema] 1307 relations on the live database; 750 referenced by server SQL; 14 resolved as functions; 33 absent
+[ci:tables-live-schema] ✅ 1 baselined table(s) NOW EXIST on the live database — remove them from the baseline to ratchet down:
+    • ai_feedback
+[ci:tables-live-schema] ✅ 3 baselined table(s) are NO LONGER REFERENCED by server SQL — the querying code was removed, so they are out of scope. They were NOT created; remove them from the baseline to ratchet down:
+    • correspondences
+    • enterprise_integration_credentials
+    • reg_submissions
+[ci:tables-live-schema] ✅ no NEW references to tables missing from the live schema (37 baselined)
+exit=0
+
+$ git diff --stat -- scripts/ci/insert-columns-baseline.json scripts/ci/unkeyed-request-tables-baseline.json scripts/ci/unbacked-tables-baseline.json scripts/ci/tables-live-schema-baseline.json
+ scripts/ci/insert-columns-baseline.json         |  4 ----
+ scripts/ci/tables-live-schema-baseline.json     | 12 ++----------
+ scripts/ci/unbacked-tables-baseline.json        | 14 ++------------
+ scripts/ci/unkeyed-request-tables-baseline.json |  3 +--
+ 4 files changed, 5 insertions(+), 28 deletions(-)

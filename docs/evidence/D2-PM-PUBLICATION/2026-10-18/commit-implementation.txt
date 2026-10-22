@@ -1,0 +1,53 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e 
+  server/services/ana/AnaToolExecutor.ts (21991 lines)
+  server/services/projects/schedule-of-events/service.ts (1000 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3273 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 03759e816] Preserve project schedule execution history during regeneration
+ 40 files changed, 8655 insertions(+), 133 deletions(-)
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-ATOMIC/2026-10-17/README.md
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-ATOMIC/2026-10-17/build.txt
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-ATOMIC/2026-10-17/checks.txt
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-ATOMIC/2026-10-17/green-native.txt
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-ATOMIC/2026-10-17/green-unit.txt
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-ATOMIC/2026-10-17/red-native-exit.json
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-ATOMIC/2026-10-17/red-native.txt
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-ATOMIC/2026-10-17/red-unit.txt
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-ATOMIC/2026-10-17/source-bindings.json
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-ATOMIC/2026-10-17/typecheck-final.txt
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-ATOMIC/2026-10-17/typecheck.txt
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-ATOMIC/2026-10-17/verification.json
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-PRESERVATION/2026-10-17/CONTRACT.md
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-PRESERVATION/2026-10-17/README.md
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-PRESERVATION/2026-10-17/build.txt
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-PRESERVATION/2026-10-17/check-exits.json
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-PRESERVATION/2026-10-17/checks.txt
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-PRESERVATION/2026-10-17/green-ana-reason.txt
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-PRESERVATION/2026-10-17/green-helper-lifecycle.txt
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-PRESERVATION/2026-10-17/green-native.txt
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-PRESERVATION/2026-10-17/green-route.txt
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-PRESERVATION/2026-10-17/green-unit.txt
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-PRESERVATION/2026-10-17/patch-check.txt
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-PRESERVATION/2026-10-17/red-ana-reason.txt
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-PRESERVATION/2026-10-17/red-native-exit.json
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-PRESERVATION/2026-10-17/red-native.txt
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-PRESERVATION/2026-10-17/red-route.txt
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-PRESERVATION/2026-10-17/source-bindings.json
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-PRESERVATION/2026-10-17/typecheck.txt
+ create mode 100644 docs/evidence/D2-PM-SCHEDULE-PRESERVATION/2026-10-17/verification.json
+ create mode 100644 server/services/ana/__tests__/schedule-generation-reason.test.ts
+ create mode 100644 server/services/projects/schedule-of-events/__tests__/preservation.test.ts
+ create mode 100644 server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts
+ create mode 100644 server/services/projects/schedule-of-events/preservation.ts
+ create mode 100644 tests/db/project-schedule-atomic.dbtest.ts

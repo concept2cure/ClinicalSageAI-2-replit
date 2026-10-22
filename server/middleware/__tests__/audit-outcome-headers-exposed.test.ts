@@ -52,7 +52,7 @@ const ROOT = path.resolve(__dirname, '../../..');
  * BODY. Worth knowing if a browser consumer of /audit/export is ever added — the
  * manifest would silently stop travelling with it.
  */
-const AUDIT_OUTCOME_HEADERS = ['X-Audit-Row-Persisted', 'X-Audit-Row-Code'];
+const AUDIT_OUTCOME_HEADERS = ['X-Audit-Row-Persisted', 'X-Audit-Row-Code', 'X-Audit-Row-Chained'];
 
 function exposeList(): string[] {
   const src = readFileSync(path.join(ROOT, 'server/middleware/enterprise-security.ts'), 'utf8');
@@ -83,11 +83,11 @@ describe('Access-Control-Expose-Headers covers the audit-outcome carriers', () =
     // so that file is where the literal names live and is searched too; the
     // last inline copy (routes/submissions.ts) moved onto it on 2026-09-25.
     const hits = execSync(
-      String.raw`git grep -ohE "set(Header)?\('X-Audit-Row-(Persisted|Code)'" -- server/routes server/services/audit/audit-write-outcome.ts || true`,
+      String.raw`git grep -ohE "set(Header)?\('X-Audit-Row-(Persisted|Code|Chained)'" -- server/routes server/services/audit/audit-write-outcome.ts || true`,
       { cwd: ROOT, encoding: 'utf8' },
     );
     const used = new Set(
-      [...hits.matchAll(/'(X-Audit-Row-(?:Persisted|Code))'/g)].map(m => m[1]),
+      [...hits.matchAll(/'(X-Audit-Row-(?:Persisted|Code|Chained))'/g)].map(m => m[1]),
     );
     expect(
       used.size,

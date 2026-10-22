@@ -1,0 +1,312 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | tests/artifact-routes-invalidate-bundles.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/artifact-routes-invalidate-bundles.test.ts
+{
+  "timestamp": "2026-10-14T03:08:24.504Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/artifact-routes-invalidate-bundles.test.ts
+{
+  "timestamp": "2026-10-14T03:08:24.592Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T03:08:24.592Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/artifact-routes-invalidate-bundles.test.ts
+{
+  "timestamp": "2026-10-14T03:08:24.593Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/artifact-routes-invalidate-bundles.test.ts > durable artifact edits expose the real regulatory audit writer outcome > audit storage failure=true preserves the committed edit and reports the actual audit outcome
+{
+  "timestamp": "2026-10-14T03:08:24.866Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "audit internal storage unavailable",
+    "action": "UPDATE",
+    "entityType": "artifact",
+    "entityId": "artifact_abc"
+  }
+}
+
+stdout | tests/artifact-routes-invalidate-bundles.test.ts > durable artifact edits expose the real regulatory audit writer outcome > audit storage failure=true preserves the committed edit and reports the actual audit outcome
+{
+  "timestamp": "2026-10-14T03:08:24.867Z",
+  "level": "info",
+  "message": "[concept2cure-artifacts] Updated artifact",
+  "context": {
+    "artifactId": "artifact_abc",
+    "version": 3
+  }
+}
+
+stdout | tests/artifact-routes-invalidate-bundles.test.ts > durable artifact edits expose the real regulatory audit writer outcome > audit storage failure=false preserves the committed edit and reports the actual audit outcome
+{
+  "timestamp": "2026-10-14T03:08:24.877Z",
+  "level": "info",
+  "message": "[concept2cure-artifacts] Updated artifact",
+  "context": {
+    "artifactId": "artifact_abc",
+    "version": 3
+  }
+}
+
+stdout | tests/artifact-routes-invalidate-bundles.test.ts > the four mutating artifact routes reach the invalidation with the right arguments > PUT artifact: reached with the NUMERIC row id, after the tx commits, and reported in the response
+{
+  "timestamp": "2026-10-14T03:08:24.882Z",
+  "level": "info",
+  "message": "[concept2cure-artifacts] Updated artifact",
+  "context": {
+    "artifactId": "artifact_abc",
+    "version": 3
+  }
+}
+
+stdout | tests/artifact-routes-invalidate-bundles.test.ts > the four mutating artifact routes reach the invalidation with the right arguments > PUT placement: reached with the numeric id, and the outcome reaches the RESPONSE (the audit log is best-effort and swallows its own failures)
+{
+  "timestamp": "2026-10-14T03:08:24.885Z",
+  "level": "info",
+  "message": "[concept2cure-artifacts] Artifact placement updated",
+  "context": {
+    "artifactId": "artifact_abc",
+    "operation": "relocate",
+    "from": "3.2.S.1",
+    "to": "3.2.P.1"
+  }
+}
+
+stderr | tests/artifact-routes-invalidate-bundles.test.ts > an edit that never committed must not invalidate > PUT artifact: enforceAuthorLineage throws inside the tx -> rollback, and the invalidation must NOT run
+{
+  "timestamp": "2026-10-14T03:08:24.896Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure update artifact failed",
+  "context": {
+    "error": "LINEAGE_GAP: unattributed clause",
+    "operation": "update artifact",
+    "artifactId": "artifact_abc"
+  }
+}
+
+stderr | tests/artifact-routes-invalidate-bundles.test.ts > an edit that never committed must not invalidate > POST rollback: lineage throws -> rollback, no invalidation
+{
+  "timestamp": "2026-10-14T03:08:24.899Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure rollback artifact failed",
+  "context": {
+    "error": "LINEAGE_GAP: unattributed clause",
+    "operation": "rollback artifact",
+    "artifactId": "artifact_abc"
+  }
+}
+
+ ✓ tests/artifact-routes-invalidate-bundles.test.ts > durable artifact edits expose the real regulatory audit writer outcome > audit storage failure=true preserves the committed edit and reports the actual audit outcome 28ms
+ ✓ tests/artifact-routes-invalidate-bundles.test.ts > durable artifact edits expose the real regulatory audit writer outcome > audit storage failure=false preserves the committed edit and reports the actual audit outcome 5ms
+ ✓ tests/artifact-routes-invalidate-bundles.test.ts > the four mutating artifact routes reach the invalidation with the right arguments > PUT artifact: reached with the NUMERIC row id, after the tx commits, and reported in the response 4ms
+ ✓ tests/artifact-routes-invalidate-bundles.test.ts > the four mutating artifact routes reach the invalidation with the right arguments > PUT placement: reached with the numeric id, and the outcome reaches the RESPONSE (the audit log is best-effort and swallows its own failures) 4ms
+ ✓ tests/artifact-routes-invalidate-bundles.test.ts > the four mutating artifact routes reach the invalidation with the right arguments > PUT ctd-section: reached with the numeric id and reported 4ms
+ ✓ tests/artifact-routes-invalidate-bundles.test.ts > the four mutating artifact routes reach the invalidation with the right arguments > POST rollback: reached with the numeric id, after the tx, and reported 3ms
+ ✓ tests/artifact-routes-invalidate-bundles.test.ts > an edit that never committed must not invalidate > PUT artifact: enforceAuthorLineage throws inside the tx -> rollback, and the invalidation must NOT run 3ms
+ ✓ tests/artifact-routes-invalidate-bundles.test.ts > an edit that never committed must not invalidate > POST rollback: lineage throws -> rollback, no invalidation 3ms
+stderr | tests/artifact-routes-project-scope.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/artifact-routes-project-scope.test.ts
+{
+  "timestamp": "2026-10-14T03:08:25.589Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/artifact-routes-project-scope.test.ts
+{
+  "timestamp": "2026-10-14T03:08:26.816Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T03:08:26.817Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/artifact-routes-project-scope.test.ts
+{
+  "timestamp": "2026-10-14T03:08:26.817Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > put …: a v2 project (program UUID) reaches the route
+{
+  "timestamp": "2026-10-14T03:08:27.033Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure update artifact failed",
+  "context": {
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.",
+    "operation": "update artifact",
+    "artifactId": "artifact_abc"
+  }
+}
+
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > put …: another project's artifact through this project's URL is not found, and nothing is written 32ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > put …/placement: another project's artifact through this project's URL is not found, and nothing is written 4ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/signatures: another project's artifact through this project's URL is not found, and nothing is written 4ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/snapshots: another project's artifact through this project's URL is not found, and nothing is written 3ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/provenance: another project's artifact through this project's URL is not found, and nothing is written 3ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/versions: another project's artifact through this project's URL is not found, and nothing is written 3ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/audit-report: another project's artifact through this project's URL is not found, and nothing is written 3ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/audit-report/export: another project's artifact through this project's URL is not found, and nothing is written 3ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > put …/ctd-section: another project's artifact through this project's URL is not found, and nothing is written 8ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/verify-integrity: another project's artifact through this project's URL is not found, and nothing is written 4ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/rollback: another project's artifact through this project's URL is not found, and nothing is written 3ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/comments: another project's artifact through this project's URL is not found, and nothing is written 3ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/comments: another project's artifact through this project's URL is not found, and nothing is written 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > put …/comments/c1/resolve: another project's artifact through this project's URL is not found, and nothing is written 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/reviewers: another project's artifact through this project's URL is not found, and nothing is written 3ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/reviewers: another project's artifact through this project's URL is not found, and nothing is written 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > delete …/reviewers/as1: another project's artifact through this project's URL is not found, and nothing is written 3ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/reviewers/as1/remind: another project's artifact through this project's URL is not found, and nothing is written 3ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/reviews/submit: another project's artifact through this project's URL is not found, and nothing is written 3ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/reviews/status: another project's artifact through this project's URL is not found, and nothing is written 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > put …/status: another project's artifact through this project's URL is not found, and nothing is written 2ms
+stdout | tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > put …/placement: a v2 project (program UUID) reaches the route
+{
+  "timestamp": "2026-10-14T03:08:27.040Z",
+  "level": "info",
+  "message": "[concept2cure-artifacts] Artifact placement updated",
+  "context": {
+    "artifactId": "artifact_abc",
+    "operation": "place",
+    "from": "3.2.S.1",
+    "to": "3.2.S.2"
+  }
+}
+
+stderr | tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/rollback: a v2 project (program UUID) reaches the route
+{
+  "timestamp": "2026-10-14T03:08:27.058Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure rollback artifact failed",
+  "context": {
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.",
+    "operation": "rollback artifact",
+    "artifactId": "artifact_abc"
+  }
+}
+
+stderr | tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/reviewers: a v2 project (program UUID) reaches the route
+{
+  "timestamp": "2026-10-14T03:08:27.067Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure list reviewers failed",
+  "context": {
+    "error": "__vite_ssr_import_1__.db.execute is not a function",
+    "operation": "list reviewers",
+    "artifactId": "artifact_abc"
+  }
+}
+
+stderr | tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/reviews/status: a v2 project (program UUID) reaches the route
+{
+  "timestamp": "2026-10-14T03:08:27.074Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure review status failed",
+  "context": {
+    "error": "__vite_ssr_import_1__.db.execute is not a function",
+    "operation": "review status",
+    "artifactId": "artifact_abc"
+  }
+}
+
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > put …: a v2 project (program UUID) reaches the route 4ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > put …/placement: a v2 project (program UUID) reaches the route 7ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/signatures: a v2 project (program UUID) reaches the route 3ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/snapshots: a v2 project (program UUID) reaches the route 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/provenance: a v2 project (program UUID) reaches the route 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/versions: a v2 project (program UUID) reaches the route 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/audit-report: a v2 project (program UUID) reaches the route 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/audit-report/export: a v2 project (program UUID) reaches the route 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > put …/ctd-section: a v2 project (program UUID) reaches the route 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/verify-integrity: a v2 project (program UUID) reaches the route 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/rollback: a v2 project (program UUID) reaches the route 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/comments: a v2 project (program UUID) reaches the route 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/comments: a v2 project (program UUID) reaches the route 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > put …/comments/c1/resolve: a v2 project (program UUID) reaches the route 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/reviewers: a v2 project (program UUID) reaches the route 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/reviewers: a v2 project (program UUID) reaches the route 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > delete …/reviewers/as1: a v2 project (program UUID) reaches the route 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/reviewers/as1/remind: a v2 project (program UUID) reaches the route 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/reviews/submit: a v2 project (program UUID) reaches the route 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/reviews/status: a v2 project (program UUID) reaches the route 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > put …/status: a v2 project (program UUID) reaches the route 2ms
+stderr | tests/artifact-status-audit-outcome.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/artifact-status-audit-outcome.test.ts
+{
+  "timestamp": "2026-10-14T03:08:27.804Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/artifact-status-audit-outcome.test.ts
+{
+  "timestamp": "2026-10-14T03:08:28.716Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T03:08:28.717Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/artifact-status-audit-outcome.test.ts
+{
+  "timestamp": "2026-10-14T03:08:28.717Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/artifact-status-audit-outcome.test.ts > PUT …/status carries its audit-row outcome > a status change whose row was lost still changes the status, and says the row is missing 25ms
+ ✓ tests/artifact-status-audit-outcome.test.ts > PUT …/status carries its audit-row outcome > a written row says so, and says it is not the chained audit_logs row 5ms
+ ✓ client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx > GlobalMutationErrors — a completed request with no audit row > shows a notice that says the request completed and its audit entry was not written 28ms
+ ✓ client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx > GlobalMutationErrors — a completed request with no audit row > shows one notice for a repeated request, and removes it on dismiss 118ms
+
+ Test Files  4 passed (4)
+      Tests  54 passed (54)
+   Start at  03:08:22
+   Duration  7.62s (transform 1.67s, setup 153ms, import 6.21s, tests 383ms, environment 375ms)
+

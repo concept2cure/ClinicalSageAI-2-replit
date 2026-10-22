@@ -67,6 +67,13 @@ function ingested(bytes: Buffer = PDF, overrides: Record<string, unknown> = {}) 
 describe('retainOfficialEstar', () => {
   beforeEach(() => vi.clearAllMocks());
 
+  it('retains PreSTAR administrative prefills under a distinct code that is not offered as a completed eSTAR filing', async () => {
+    ingestVaultDocument.mockResolvedValue(ingested());
+    const result = await retainOfficialEstar({ ...input, descriptorId: 'q_sub-prestar' });
+    expect(result).toMatchObject({ retained: true, documentCode: 'PreSTAR-prefill-q_sub-prestar' });
+    expect(ingestVaultDocument.mock.calls[0][0].documentCode).toBe('PreSTAR-prefill-q_sub-prestar');
+  });
+
   it('admits the delivered bytes through the canonical vault ingest', async () => {
     ingestVaultDocument.mockResolvedValue(ingested());
     const report = await retainOfficialEstar(input);

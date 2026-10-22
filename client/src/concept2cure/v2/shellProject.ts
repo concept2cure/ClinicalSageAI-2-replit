@@ -53,6 +53,7 @@ export interface ShellProject {
 }
 
 const KEY = 'c2c.shell-project';
+let projectRevision = 0;
 
 const PROGRAM_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -82,8 +83,16 @@ const writeGlobal = (p: ShellProject): void => {
   window.C2C_PROJECT = p as unknown as typeof window.C2C_PROJECT;
 };
 
+/** Read guards cover every identifier accepted by existing program surfaces. */
+function projectVisitIdentity(project: ShellProject | null = readShellProject()): string | null {
+  const id = project?.id;
+  const ident = typeof id === 'string' ? id.trim() : typeof id === 'number' && Number.isFinite(id) ? String(id) : '';
+  return ident ? PROGRAM_UUID.test(ident) ? ident.toLowerCase() : ident : null;
+}
+
 /** Set the open program: the live global plus its per-tab mirror. */
 export function publishShellProject(project: ShellProject): void {
+  if (projectVisitIdentity() !== projectVisitIdentity(project)) projectRevision += 1;
   try {
     writeGlobal(project);
   } catch {
@@ -96,6 +105,21 @@ export function publishShellProject(project: ShellProject): void {
        still works for this page's lifetime; only reload-survival is lost */
   }
   notify();
+}
+
+/** A tenant-boundary switch retires all pending handoffs and the previous selection. */
+export function clearShellProject(): void {
+  projectRevision += 1;
+  delete window.C2C_PROJECT;
+  try { sessionStorage.removeItem(KEY); } catch { /* storage unavailable */ }
+  notify();
+}
+
+/** A pending handoff belongs to one project visit, including A → B → A. */
+export function captureShellProjectGuard(): () => boolean {
+  const revision = projectRevision;
+  const identity = projectVisitIdentity();
+  return () => revision === projectRevision && projectVisitIdentity() === identity;
 }
 
 /**

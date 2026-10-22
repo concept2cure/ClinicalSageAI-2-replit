@@ -17,8 +17,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createMockRequest, createMockResponse } from '../setup';
 
-const { poolQuery, programRows, sectionRows, historyRows } = vi.hoisted(() => ({
+const { poolQuery, programRows, sectionRows, historyRows, numericRows } = vi.hoisted(() => ({
   poolQuery: vi.fn(),
+  numericRows: vi.fn<[], unknown[]>(() => []),
   programRows: vi.fn<[], unknown[]>(() => []),
   sectionRows: vi.fn<[], unknown[]>(() => []),
   historyRows: vi.fn<[], unknown[]>(() => []),
@@ -50,7 +51,9 @@ function makeReq(overrides: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  numericRows.mockReturnValue([{ regulatory_program_id: null, linked_program_id: null, program_type: null, primary_agency: null }]);
   poolQuery.mockImplementation(async (sql: string) => {
+    if (sql.includes('FROM projects p')) return { rows: numericRows() };
     if (sql.includes('FROM regulatory_programs')) return { rows: programRows() };
     if (sql.includes('FROM project_sections')) return { rows: sectionRows() };
     if (sql.includes('FROM ectd_compilations')) return { rows: historyRows() };
@@ -233,5 +236,72 @@ describe('POST /:projectIdent/compile — the draft backbone names the applicati
     expect(ref).not.toBe('IND-7');
     expect(ref).not.toMatch(/^IND-\d+$/);
     expect(ref).toMatch(/UNASSIGNED/);
+  });
+});
+
+
+describe('regional device working projects cannot enter eCTD compilation or validation', () => {
+  const types = ['hde', 'mdl', 'ivd_licence', 'shonin', 'ninsho', 'todokede', 'ivd_approval', 'jp_cdx'];
+  const actions = [
+    { action: 'compile', method: 'post' as const },
+    { action: 'status', method: 'get' as const },
+    { action: 'validate', method: 'post' as const },
+  ];
+  it.each(types.flatMap(type => actions.map(action => ({ type, ...action }))))('$type/$action resolves the real tenant anchor then refuses without writes', async ({ type, action, method }) => {
+    programRows.mockReturnValue([{ ...PROGRAM, program_type: type, primary_agency: 'PMDA' }]);
+    const req = makeReq({ params: { projectIdent: UUID }, body: {} }); const res = createMockResponse() as any;
+    await getHandler(`/:projectIdent/${action}`, method)(req, res);
+    expect(res.status).toHaveBeenCalledWith(422);
+    expect(res.json).toHaveBeenCalledWith({ error: { code: 'ECTD_NOT_APPLICABLE', message: expect.stringMatching(/device.*not.*eCTD/i) } });
+    expect(poolQuery).toHaveBeenCalledTimes(1);
+    expect(poolQuery.mock.calls[0][1]).toEqual([UUID, 7]);
+    expect(String(poolQuery.mock.calls[0][0])).toContain('FROM regulatory_programs');
+  });
+  it('imported validator reports cannot bypass the regional-device refusal', async () => {
+    programRows.mockReturnValue([{ ...PROGRAM, program_type: 'ninsho', primary_agency: 'Registered certification body' }]);
+    const req = makeReq({ params: { projectIdent: UUID }, body: { evalidatorReport: { invented: true } } }); const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/validate', 'post')(req, res);
+    expect(res.status).toHaveBeenCalledWith(422);
+    expect(poolQuery).toHaveBeenCalledTimes(1);
+    expect(res.json.mock.calls[0][0].error.code).toBe('ECTD_NOT_APPLICABLE');
+  });
+});
+
+
+describe('numeric project anchors cannot hide a linked regional device filing', () => {
+  const types = ['hde', 'mdl', 'ivd_licence', 'shonin', 'ninsho', 'todokede', 'ivd_approval', 'jp_cdx'];
+  const actions = [
+    { action: 'compile', method: 'post' as const }, { action: 'status', method: 'get' as const },
+    { action: 'validate', method: 'post' as const },
+  ];
+  it.each(types.flatMap(type => actions.map(action => ({ type, ...action }))))('numeric $type/$action checks the actual bridge before refusing without writes', async ({ type, action, method }) => {
+    numericRows.mockReturnValue([{ regulatory_program_id: UUID, linked_program_id: UUID, program_type: type, primary_agency: 'PMDA' }]);
+    const req = makeReq({ params: { projectIdent: '42' }, body: {} }); const res = createMockResponse() as any;
+    await getHandler(`/:projectIdent/${action}`, method)(req, res);
+    expect(res.status).toHaveBeenCalledWith(422);
+    expect(res.json.mock.calls[0][0].error.code).toBe('ECTD_NOT_APPLICABLE');
+    expect(poolQuery).toHaveBeenCalledTimes(1);
+    expect(poolQuery.mock.calls[0][1]).toEqual([42, 7]);
+    const sql = String(poolQuery.mock.calls[0][0]);
+    expect(sql).toContain('p.regulatory_program_id'); expect(sql).toContain('r.organization_id = p.organization_id');
+    expect(sql).toContain('p.organization_id = $2'); expect(sql).toContain('r.deleted_at IS NULL');
+  });
+  it.each(actions)('numeric $action fails closed if the bridge cannot be read', async ({ action, method }) => {
+    poolQuery.mockRejectedValueOnce(new Error('SENTINEL-private-driver-detail'));
+    const req = makeReq({ params: { projectIdent: '42' }, body: {} }); const res = createMockResponse() as any;
+    await getHandler(`/:projectIdent/${action}`, method)(req, res);
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(JSON.stringify(res.json.mock.calls[0][0])).not.toContain('SENTINEL');
+    expect(poolQuery).toHaveBeenCalledTimes(1);
+  });
+  it.each([
+    { label: 'a foreign or missing project', rows: [] },
+    { label: 'an unresolved, foreign or deleted linked program', rows: [{ regulatory_program_id: UUID, linked_program_id: null }] },
+  ])('numeric compilation refuses $label', async ({ rows }) => {
+    numericRows.mockReturnValue(rows);
+    const req = makeReq({ params: { projectIdent: '42' }, body: {} }); const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(req, res);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(poolQuery).toHaveBeenCalledTimes(1);
   });
 });

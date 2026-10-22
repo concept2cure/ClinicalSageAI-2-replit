@@ -30,6 +30,7 @@ beforeAll(async () => {
   await pg.exec(`CREATE TABLE project_memory_entries (
     id serial PRIMARY KEY, project_id integer NOT NULL, organization_id integer NOT NULL,
     category text NOT NULL, title text NOT NULL, content text NOT NULL,
+    source_document_type text,
     confidence_score real, importance_level text DEFAULT 'medium',
     status text DEFAULT 'active', created_at timestamp NOT NULL DEFAULT now()
   )`);

@@ -1,0 +1,39 @@
+{
+  "baselineSource": "0793ee48ecee5dee014b266b2def014c38ea978e",
+  "contractCommit": "6ec38926c",
+  "command": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts"
+  ],
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "exitCode": 1,
+  "inputsBefore": {
+    "server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts": "d705d6ea6142a144c97ef100a2d8e6b16562be708a3a6f0c4e49d4e9aebee5e0",
+    "server/services/ana/AnaToolExecutor.ts": "0495472622f38f7ca439ec741802fa80f809a320aeaf5e390ab5ba1ecd6dbad9",
+    "server/services/ana/draft-project-sources.ts": "ecc39eec0bf741a62e3135d117a9f3003706fc7d05bdd0f70c15895f3abe81f2",
+    "server/services/ana/batch-draft-result.ts": "fa8c9a6db5e2c0f47b6f82914e694b0b431a3cf1db67c76494da59220169d762",
+    "server/services/ana/AnaDocumentDraftingService.ts": "0ba1d6951222e44b334b033c586a3c316ae641d9eeb8be099561379b8944e70c",
+    "server/services/ana/catalog-scope.ts": "93b8f5206b85e36138a569e5f96419ca0fdc99183453df1b530b77b6d0aa0976",
+    "server/services/ana/__tests__/support/source-read-tool-fixture.ts": "3177b8b81d23612aa3814e8da98e146386020c569b874c5e335bd5eda8cfb282",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+  },
+  "inputsAfter": {
+    "server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts": "d705d6ea6142a144c97ef100a2d8e6b16562be708a3a6f0c4e49d4e9aebee5e0",
+    "server/services/ana/AnaToolExecutor.ts": "0495472622f38f7ca439ec741802fa80f809a320aeaf5e390ab5ba1ecd6dbad9",
+    "server/services/ana/draft-project-sources.ts": "ecc39eec0bf741a62e3135d117a9f3003706fc7d05bdd0f70c15895f3abe81f2",
+    "server/services/ana/batch-draft-result.ts": "fa8c9a6db5e2c0f47b6f82914e694b0b431a3cf1db67c76494da59220169d762",
+    "server/services/ana/AnaDocumentDraftingService.ts": "0ba1d6951222e44b334b033c586a3c316ae641d9eeb8be099561379b8944e70c",
+    "server/services/ana/catalog-scope.ts": "93b8f5206b85e36138a569e5f96419ca0fdc99183453df1b530b77b6d0aa0976",
+    "server/services/ana/__tests__/support/source-read-tool-fixture.ts": "3177b8b81d23612aa3814e8da98e146386020c569b874c5e335bd5eda8cfb282",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+  },
+  "inputsStable": true,
+  "testSha256": "d705d6ea6142a144c97ef100a2d8e6b16562be708a3a6f0c4e49d4e9aebee5e0"
+}

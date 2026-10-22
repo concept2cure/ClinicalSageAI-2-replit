@@ -67,4 +67,3 @@ stdout | server/services/ana-ri/__tests__/persona-client-files.test.ts
       Tests  33 passed (33)
    Start at  00:55:47
    Duration  4.08s (transform 4.80s, setup 577ms, import 7.30s, tests 57ms, environment 0ms)
-

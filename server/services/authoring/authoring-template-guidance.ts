@@ -3,18 +3,41 @@ import type { RequestSqlClient } from '../../db/requestDb';
 import type { AuthoringPrincipal } from './authoring-permissions';
 import { resolveAuthoringSectionScope, decideAuthoringPermission } from './authoring-permissions';
 import { authorizeAuthoringProgram } from './authoring-program-access';
+import { parseRecordedTemplateSource } from '../../../shared/authoring/recorded-template-source';
 
 export class TemplateGuidanceError extends Error {
   constructor(readonly status: 403 | 404 | 503, message: string) { super(message); }
 }
 
-function recordedGuide(metadata: unknown, templateId: unknown, sectionId: string) {
+function assemblyTemplateId(metadata: Record<string, unknown>, source: unknown, docId: string): unknown {
+  if (metadata.assembly === undefined) return undefined;
+  const receipt = metadata.assembly as Record<string, unknown> | null;
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const sha = /^[0-9a-f]{64}$/i;
+  if (!receipt || typeof receipt !== 'object' || receipt.version !== 1 || receipt.docId !== docId) {
+    throw new TemplateGuidanceError(503, 'The recorded assembly guidance identity could not be verified.');
+  }
+  const identities = [receipt.programId, receipt.templateId];
+  const hashes = [receipt.templateSnapshot, receipt.fingerprint];
+  if (!identities.every(value => typeof value === 'string' && uuid.test(value)) ||
+      !hashes.every(value => typeof value === 'string' && sha.test(value))) {
+    throw new TemplateGuidanceError(503, 'The recorded assembly guidance fields could not be verified.');
+  }
+  try {
+    const template = parseRecordedTemplateSource(source, receipt.templateId);
+    if (!template || template.sha256 !== receipt.templateSnapshot) throw new Error('Template snapshot mismatch');
+  } catch { throw new TemplateGuidanceError(503, 'The recorded assembly template snapshot could not be verified.'); }
+  return receipt.templateId;
+}
+
+function recordedGuide(metadata: unknown, templateId: unknown, sectionId: string, docId: string) {
   if (!metadata || typeof metadata !== 'object' || !('templateGuidance' in metadata)) return null;
   const source = 'templateSource' in metadata ? metadata.templateSource : null;
-  if (!source || typeof source !== 'object' || !('id' in source) || source.id !== templateId) throw new TemplateGuidanceError(503, 'The saved template guidance identity could not be verified.');
+  const selectedId = assemblyTemplateId(metadata as Record<string, unknown>, source, docId) ?? templateId;
+  if (!source || typeof source !== 'object' || !('id' in source) || source.id !== selectedId) throw new TemplateGuidanceError(503, 'The saved template guidance identity could not be verified.');
   const guide = metadata.templateGuidance;
   if (!guide || typeof guide !== 'object' || !('guidance_text' in guide) || typeof guide.guidance_text !== 'string') throw new TemplateGuidanceError(503, 'Saved template guidance could not be read.');
-  return [{ ...guide, id: `${sectionId}:template`, template_id: templateId, template_source: source,
+  return [{ ...guide, id: `${sectionId}:template`, template_id: selectedId, template_source: source,
     guidance_note: 'Reference guidance as recorded when this section was created. Confirm current requirements and applicability; it is not authored evidence.' }];
 }
 
@@ -33,7 +56,7 @@ export async function templateGuidanceAfterAccess(q: RequestSqlClient, identity:
   const metadata = seeded ? seeded.metadata : (await q.query(`SELECT metadata FROM authoring_audit_trail
     WHERE doc_id=$1 AND section_id=$2 AND tenant_id=$3 AND operation_type='CREATE'
     ORDER BY created_at, id LIMIT 1`, [docId, sectionId, tenantId])).rows[0]?.metadata;
-  const recorded = recordedGuide(metadata, templateId, sectionId);
+  const recorded = recordedGuide(metadata, templateId, sectionId, docId);
   if (recorded) return { authority: 'recorded', rows: recorded };
   if (typeof templateId !== 'string') return { authority: 'current-reference', rows: [] };
   const own = await q.query(`SELECT tg.* FROM template_guidance tg

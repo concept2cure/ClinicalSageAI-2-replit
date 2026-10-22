@@ -29,7 +29,7 @@ TRUNCATE concept2cure_submission_snapshots -> ERROR:  IMMUTABILITY_VIOLATION: co
 
 ## Migration gates
 ci:migration-set-order exit=0 :: [ci:migration-set-order] OK — 322 migrations, sweep last, uuid step in the final pair, all present, no duplicates.
-ci:migration-drop-safety exit=0 :: [ci:migration-drop-safety] OK — 322 migrations, 34 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed 
+ci:migration-drop-safety exit=0 :: [ci:migration-drop-safety] OK — 322 migrations, 34 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed
 ci:migration-drop-safety:selftest exit=0 :: [ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
 ci:column-reachability exit=0 :: [ci:column-reachability] OK — 3194 column add(s) on no applier, 0 queried by the server.
 db:sync-manifest:check exit=0 :: Manifest is in sync.

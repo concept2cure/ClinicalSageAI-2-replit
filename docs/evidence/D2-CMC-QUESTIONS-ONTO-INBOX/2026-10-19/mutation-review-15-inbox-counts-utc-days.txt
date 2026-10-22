@@ -1,0 +1,30 @@
+# MUTATION-REVIEW 15 daysTo back to milliseconds from the browser's clock
+# Finding: Finding: a letter due today read '-1d' from 12:00 UTC on, beside the server's 'not overdue'.
+# File: client/src/concept2cure/v2/surfaces/AgencyInbox.tsx
+# Replaced:
+#   -   return utcDaysUntil(d, now.toISOString());
+# With:
+#   +   if (!d) return null;
+#   +   return Math.round((new Date(d).getTime() - now.getTime()) / 86400000);
+# Command: npx vitest run client/src/concept2cure/v2/__tests__/agencyInboxDueDays.test.ts
+# Exit code with the mutation: 1 (non-zero = the test caught it)
+# Restored client/src/concept2cure/v2/surfaces/AgencyInbox.tsx: sha256 1ae3365185aca0f8… before = 1ae3365185aca0f8… after (byte-identical)
+
+ × client/src/concept2cure/v2/__tests__/agencyInboxDueDays.test.ts > the inbox counts UTC calendar days, as the server does > a letter due today is 0 days at 13:00 UTC, and at 23:59 UTC 9ms
+   → expected -1 to be +0 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/agencyInboxDueDays.test.ts > the inbox counts UTC calendar days, as the server does > counts whole days either side of the due day 2ms
+   → expected 2 to be 3 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/agencyInboxDueDays.test.ts > the inbox counts UTC calendar days, as the server does > words it without a negative count, and without claiming "overdue" 4ms
+   → expected '1 day ago' to be 'today' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected -1 to be +0 // Object.is equality
+- Expected
++ Received
+AssertionError: expected 2 to be 3 // Object.is equality
+- Expected
++ Received
+AssertionError: expected '1 day ago' to be 'today' // Object.is equality
+Expected: "today"
+Received: "1 day ago"

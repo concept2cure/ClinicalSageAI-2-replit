@@ -48,8 +48,8 @@ export function fixtureRoute(url: string): Response {
   if (url === '/api/510k/estar/submissions') return response({ submissions: [] });
   if (url === '/api/510k/estar/assemble') return response({ artifactKind: 'none', blockers: [] });
   if (url.includes('/pathway-manifest')) return response(manifest());
-  if (url === '/api/submissions/sequences/21/leaves') return response([{ id: 301, sectionCode: 'FILING-LEAF', title: 'Retained A leaf', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 88 }]);
-  if (url === '/api/submissions/sequences/22/leaves') return response([{ id: 302, sectionCode: 'FILING-B', title: 'Retained B leaf', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 89 }]);
+  if (new URL(url, 'https://fixture.invalid').pathname === '/api/submissions/sequences/21/leaves') return response([{ id: 301, sectionCode: 'FILING-LEAF', title: 'Retained A leaf', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 88 }]);
+  if (new URL(url, 'https://fixture.invalid').pathname === '/api/submissions/sequences/22/leaves') return response([{ id: 302, sectionCode: 'FILING-B', title: 'Retained B leaf', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 89 }]);
   return response({ data: [] });
 }
 

@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-21T00:05:35.979109+00:00",
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:migration-reachability"
+  ],
+  "elapsedSeconds": 1.138,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-qualified.json",
+  "rawOutput": "qualified-gate-ci-migration-reachability-output.txt.gz",
+  "outputSha256": "7ef3027bb1f3800cb079b225b2d5bb213c8c2b76f14c4d82dc14729de0fcde86",
+  "stdout": "[ci:migration-reachability] 1365 durably-created tables; 0 server-referenced table(s) created only by a deploy-dead migration; 0 baselined\n[ci:migration-reachability] \u2705 no new unreachable table references.\n"
+}

@@ -1,0 +1,11 @@
+{
+  "command": [
+    "./node_modules/.bin/eslint",
+    "--max-warnings",
+    "0",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx"
+  ],
+  "exitCode": 0,
+  "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "output": ""
+}

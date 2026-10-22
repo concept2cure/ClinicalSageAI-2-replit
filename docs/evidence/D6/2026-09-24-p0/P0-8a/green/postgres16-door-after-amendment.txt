@@ -3,7 +3,7 @@
 
 ## A.0 (as postgres, the owner and applier here as in Phase A) BEFORE: the installed DELETE trigger function still reads the GUC
 SELECT proname, position('app.audit_archive_bypass' in prosrc) > 0 AS reads_guc FROM pg_proc WHERE proname = 'enforce_audit_logs_no_delete';
-           proname            | reads_guc 
+           proname            | reads_guc
 ------------------------------+-----------
  enforce_audit_logs_no_delete | t
 (1 row)
@@ -25,27 +25,27 @@ psql:/tmp/p08a-migration.sql:565: NOTICE:  public.audit_logs archive door verifi
 DO
 ## A.3 AFTER: trigger reads no setting; the door is SECURITY DEFINER, owned by NOLOGIN audit_archiver; EXECUTE for app_service only; audit_archiver holds DELETE but not UPDATE/INSERT on audit_logs
 SELECT proname, prosecdef, pg_get_userbyid(proowner) AS owner, position('app.audit_archive_bypass' in prosrc) > 0 AS reads_guc FROM pg_proc WHERE proname IN ('enforce_audit_logs_no_delete','audit_logs_archive_delete') ORDER BY 1;
-           proname            | prosecdef |     owner      | reads_guc 
+           proname            | prosecdef |     owner      | reads_guc
 ------------------------------+-----------+----------------+-----------
  audit_logs_archive_delete    | t         | audit_archiver | f
  enforce_audit_logs_no_delete | f         | postgres       | t
 (2 rows)
 
 SELECT rolcanlogin, rolsuper, rolbypassrls, rolinherit FROM pg_roles WHERE rolname = 'audit_archiver';
- rolcanlogin | rolsuper | rolbypassrls | rolinherit 
+ rolcanlogin | rolsuper | rolbypassrls | rolinherit
 -------------+----------+--------------+------------
  f           | f        | f            | f
 (1 row)
 
 SELECT has_function_privilege('app_service', 'public.audit_logs_archive_delete(uuid[],text,text,timestamptz)', 'EXECUTE') AS app_service_can_execute,
        has_function_privilege('app_service_repro', 'public.audit_logs_archive_delete(uuid[],text,text,timestamptz)', 'EXECUTE') AS ungranted_role_can_execute;
- app_service_can_execute | ungranted_role_can_execute 
+ app_service_can_execute | ungranted_role_can_execute
 -------------------------+----------------------------
  t                       | f
 (1 row)
 
 SELECT has_table_privilege('audit_archiver','audit_logs','SELECT') AS sel, has_table_privilege('audit_archiver','audit_logs','DELETE') AS del, has_table_privilege('audit_archiver','audit_logs','UPDATE') AS upd, has_table_privilege('audit_archiver','audit_logs','INSERT') AS ins;
- sel | del | upd | ins 
+ sel | del | upd | ins
 -----+-----+-----+-----
  t   | t   | f   | f
 (1 row)
@@ -58,7 +58,7 @@ INSERT INTO audit_logs (tenant_id, action, table_name, record_id, created_at) VA
 INSERT 0 6
 ## A.5 (as app_service, logged in)
 SELECT current_user, session_user;
- current_user | session_user 
+ current_user | session_user
 --------------+--------------
  app_service  | app_service
 (1 row)
@@ -82,7 +82,7 @@ CONTEXT:  PL/pgSQL function enforce_audit_logs_no_delete() line 9 at RAISE
 COMMIT;
 ROLLBACK
 SELECT count(*) AS rows_left FROM audit_logs WHERE record_id = 'p0-8a-A-fresh';
- rows_left 
+ rows_left
 -----------
          1
 (1 row)
@@ -99,26 +99,26 @@ CONTEXT:  PL/pgSQL function enforce_audit_logs_no_delete() line 9 at RAISE
 COMMIT;
 ROLLBACK
 SELECT count(*) AS rows_left FROM audit_logs WHERE record_id LIKE 'p0-8a-A-old-%';
- rows_left 
+ rows_left
 -----------
          3
 (1 row)
 
 ## A.8 the door: an archived batch of old rows, with the locator and checksum the sink reported and the cutoff
 SELECT public.audit_logs_archive_delete((SELECT array_agg(id) FROM audit_logs WHERE record_id LIKE 'p0-8a-A-old-%'), 's3://audit-archive/2026/09/25/A1.json', repeat('a', 64), now() - interval '25 months') AS deleted;
- deleted 
+ deleted
 ---------
        3
 (1 row)
 
 SELECT count(*) AS rows_left FROM audit_logs WHERE record_id LIKE 'p0-8a-A-old-%';
- rows_left 
+ rows_left
 -----------
          0
 (1 row)
 
 SELECT row_count, min_created_at < cutoff AND max_created_at < cutoff AS span_before_cutoff, cutoff <= now() - interval '24 months' AS cutoff_at_or_before_floor, locator, sha256, performed_by FROM audit_log_archives ORDER BY archived_at;
- row_count | span_before_cutoff | cutoff_at_or_before_floor |                locator                |                              sha256                              | performed_by 
+ row_count | span_before_cutoff | cutoff_at_or_before_floor |                locator                |                              sha256                              | performed_by
 -----------+--------------------+---------------------------+---------------------------------------+------------------------------------------------------------------+--------------
          3 | t                  | t                         | s3://audit-archive/2026/09/25/A1.json | aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | app_service
 (1 row)
@@ -147,13 +147,13 @@ SELECT public.audit_logs_archive_delete(ARRAY[]::uuid[], 's3://audit-archive/202
 psql:/tmp/p08a-A-runtime.sql:20: ERROR:  AUDIT_ARCHIVE_REFUSED: the batch names no rows
 CONTEXT:  PL/pgSQL function audit_logs_archive_delete(uuid[],text,text,timestamp with time zone) line 23 at RAISE
 SELECT count(*) AS old2_rows_left FROM audit_logs WHERE record_id LIKE 'p0-8a-A-old2-%';
- old2_rows_left 
+ old2_rows_left
 ----------------
               2
 (1 row)
 
 SELECT count(*) AS archive_records FROM audit_log_archives;
- archive_records 
+ archive_records
 -----------------
                1
 (1 row)
@@ -172,7 +172,7 @@ psql:/tmp/p08a-A-runtime.sql:26: ERROR:  permission denied for table audit_log_a
 SET ROLE app_service_repro;
 SET
 SELECT current_user;
-   current_user    
+   current_user
 -------------------
  app_service_repro
 (1 row)
@@ -218,32 +218,32 @@ psql:/tmp/p08a-migration.sql:565: NOTICE:  public.audit_logs immutability enforc
 psql:/tmp/p08a-migration.sql:565: NOTICE:  public.audit_logs archive door verified: SECURITY DEFINER, owner audit_archiver, not executable by PUBLIC
 DO
 SELECT count(*) AS audit_logs_triggers FROM pg_trigger t JOIN pg_class c ON t.tgrelid = c.oid WHERE c.relname = 'audit_logs' AND t.tgname LIKE 'trg_audit_logs_no_%' AND NOT t.tgisinternal;
- audit_logs_triggers 
+ audit_logs_triggers
 ---------------------
                    3
 (1 row)
 
 SELECT proname, prosecdef, pg_get_userbyid(proowner) AS owner FROM pg_proc WHERE proname = 'audit_logs_archive_delete';
-          proname          | prosecdef |     owner      
+          proname          | prosecdef |     owner
 ---------------------------+-----------+----------------
  audit_logs_archive_delete | t         | audit_archiver
 (1 row)
 
 ## A.13 (as app_service) after the replay the door still works on the second batch
 SELECT public.audit_logs_archive_delete((SELECT array_agg(id) FROM audit_logs WHERE record_id LIKE 'p0-8a-A-old2-%'), 's3://audit-archive/2026/09/25/A2.json', repeat('c', 64), now() - interval '25 months') AS deleted;
- deleted 
+ deleted
 ---------
        2
 (1 row)
 
 SELECT count(*) AS old2_rows_left FROM audit_logs WHERE record_id LIKE 'p0-8a-A-old2-%';
- old2_rows_left 
+ old2_rows_left
 ----------------
               0
 (1 row)
 
 SELECT count(*) AS archive_records FROM audit_log_archives;
- archive_records 
+ archive_records
 -----------------
                2
 (1 row)

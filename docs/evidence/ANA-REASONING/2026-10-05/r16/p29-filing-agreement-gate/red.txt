@@ -1,0 +1,51 @@
+P-29.2 INCREMENT 1 — RED BEFORE GREEN
+=====================================
+
+The gate (`filingAgreesWithEditing` + the freeze refusal) removed with
+`git stash`, the test file left in place:
+
+$ env -u DATABASE_URL RLS_ENFORCE=off npx vitest run \
+    tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts \
+    -t "a freeze refuses a document whose filed copy is not its text"
+
+ × refuses, names the section, and seals nothing
+   -> a document whose filed copy differs was sealed: expected 200 to be 409
+ × is cleared by re-saving in the editor — resolvable where the author already is
+   -> expected 200 to be 409
+ ✓ a bound document whose filing agrees freezes
+ ✓ an unbound document freezes — there is no filing to compare
+ × reports — without refusing — a node the filing holds nothing for
+   -> expected undefined to deeply equal [ '2.5' ]
+ ✓ says nothing about the filing when every node agrees
+
+ Tests  3 failed | 3 passed
+
+The three controls pass BEFORE and AFTER. That is deliberate: they are what
+measures the gate's cost. A gate that also refused them would be a different,
+worse change, and nothing in the three red cases would have revealed it.
+
+AFTER the gate, with the two cases the mutants added and the describe split for
+the function-length ratchet:
+
+ Tests  9 passed   (the P-29 cases)
+ Tests 48 passed   (the whole contract file — nothing else moved)
+
+
+A FALSE RED, FIRST, AND WHAT IT HID
+-----------------------------------
+
+The first run of these cases also reported "3 failed | 3 passed" — the same
+tally — WITH the gate in place. The cause was not the gate: the helper that
+rewrites the filing ran a bare UPDATE, and
+
+  c2c_snapshot_section_version: app.actor_id GUC required for section content
+  change (Part-11 attribution)
+
+aborted it. So the first "red" proved nothing about the gate, and the matching
+tally made it look like it had. The helper now sets `app.actor_id` and
+`app.reason` the way the real filing-side route does, and resets them, and the
+red above was re-established with a working helper.
+
+Worth keeping: the trigger that broke the helper is the governed store refusing
+an unattributed write. The harness had to be made to act like the real door
+before it could test anything about it.

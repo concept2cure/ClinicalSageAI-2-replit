@@ -1,6 +1,6 @@
 # MCP client transcript — 2026-09-21T00:09:06.763Z
 
-Server: http://localhost:5300/mcp  
+Server: http://localhost:5300/mcp
 Client: @modelcontextprotocol/sdk Client over StreamableHTTPClientTransport (separate process, bearer from dev-login)
 
 ## Unauthenticated POST /mcp

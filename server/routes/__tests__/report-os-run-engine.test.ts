@@ -359,3 +359,27 @@ describe('the evidence & provenance trace', () => {
     expect(runConfidence()).toBeNull();
   });
 });
+
+
+it('injects the actual request actor and pinned executor for a recorded lifecycle calendar', async () => {
+  const calendar = { ...type('lifecycle.obligation_calendar', 'Lifecycle Obligation Calendar', 'lifecycle', ['academic']), allowedScopes: ['account'] };
+  h.queued.select.push([calendar]);
+  const response = h.respond.fn;
+  h.respond.fn = (sql, arrayMode) => sql.includes('SELECT ou.role') ? [{ role: 'manager' }] : response(sql, arrayMode);
+  const res = await post({ scopeType: 'account', scopeId: '7', reportTypeId: calendar.typeId, recordContext: { userId: 999, executor: 'caller' } });
+  expect(res.status, JSON.stringify(res.body)).toBe(201);
+  const options = x.domain.mock.calls[0][2];
+  expect(options.recordContext.userId).toBe(5);
+  expect(typeof options.recordContext.executor.query).toBe('function');
+  expect(options.recordContext.executor).not.toBe(h.pool);
+});
+
+
+it('rolls back a calendar whose current creator was revoked before persistence, including an empty-source computation', async () => {
+  const calendar = { ...type('lifecycle.obligation_calendar', 'Lifecycle Obligation Calendar', 'lifecycle', ['academic']), allowedScopes: ['account'] };
+  h.queued.select.push([calendar]);
+  const res = await post({ scopeType: 'account', scopeId: '7', reportTypeId: calendar.typeId });
+  expect(res.status, JSON.stringify(res.body)).toBe(403);
+  expect(res.body.code).toBe('PROJECT_ACTOR_ACCESS_DENIED');
+  expect(h.statements).toContain('ROLLBACK'); expect(h.statements).not.toContain('COMMIT');
+});

@@ -1,0 +1,38 @@
+{
+  "scannerScope": "All commits from cb4065898 to source451232, including concurrent work",
+  "findings": [
+    {
+      "commit": "463181413e93810938b5cd6d0bed63f7bee1d713",
+      "manifest": "docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/artifact-manifest.json",
+      "line": 122,
+      "artifact": "docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/publication-gate-ci-check-phantom-tokens-output.txt.gz",
+      "isRecordedArtifactSha256": true,
+      "matchesArtifactBytes": true
+    },
+    {
+      "commit": "9a4da8500534c19cec3d25f51f40db0081776cf1",
+      "manifest": "docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/artifact-manifest.json",
+      "line": 46,
+      "artifact": "docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/final-gate-ci-check-phantom-tokens-output.txt.gz",
+      "isRecordedArtifactSha256": true,
+      "matchesArtifactBytes": true
+    },
+    {
+      "commit": "9a4da8500534c19cec3d25f51f40db0081776cf1",
+      "manifest": "docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/artifact-manifest.json",
+      "line": 80,
+      "artifact": "docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/gate-ci-check-phantom-tokens-output.txt.gz",
+      "isRecordedArtifactSha256": true,
+      "matchesArtifactBytes": true
+    },
+    {
+      "commit": "9a4da8500534c19cec3d25f51f40db0081776cf1",
+      "manifest": "docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/artifact-manifest.json",
+      "line": 125,
+      "artifact": "docs/evidence/D2-ASSEMBLY-FILING-SCOPE/2026-10-20/qualified-gate-ci-check-phantom-tokens-output.txt.gz",
+      "isRecordedArtifactSha256": true,
+      "matchesArtifactBytes": true
+    }
+  ],
+  "disposition": "Four generic-api-key findings are verified SHA-256 digests of named compressed verification logs; no credentials. No scanner config or baseline changed."
+}

@@ -1,0 +1,206 @@
+{
+  "capturedAtUtc": "2026-10-18T00:02:40.309474+00:00",
+  "scope": "Completed assembly and incoming8d06 phase archives only; excludes active backend49 and publication hook output.",
+  "archives": [
+    {
+      "path": "task-handoff-assembly-ui-final.log.gz",
+      "sourcePath": "/workspace/scratch/task-handoff-assembly-ui-final.log",
+      "rawBytes": 457320,
+      "rawSha256": "d9d0f282688fa7fc0dffe1bae08c1d2273accdbac3752504da01f0e931cb544e",
+      "gzipSha256": "bbb88ac394a76fb52e52782a3abdeba9b5eb619ecf2aa8247fca2172bbdc5c0b",
+      "gzipMtime": 0
+    },
+    {
+      "path": "task-handoff-assembly-ui-final.json.gz",
+      "sourcePath": "/workspace/scratch/task-handoff-assembly-ui-final.json",
+      "rawBytes": 288662,
+      "rawSha256": "f2a9a8b52cf40972147f5e712017f2a2bfb9e8d88ad9fa8a9d0c9bcebdf020dc",
+      "gzipSha256": "58b348a541fd12a790482c2f92f08c7b8bb83996870ead495672d650a7a07900",
+      "gzipMtime": 0
+    },
+    {
+      "path": "task-handoff-assembly-ui-files.txt.gz",
+      "sourcePath": "/workspace/scratch/task-handoff-assembly-ui-files.txt",
+      "rawBytes": 4003,
+      "rawSha256": "671449d39bdc18291ae3e737525cfb0c986e6b25aee3a63c1d18c6081512cc2f",
+      "gzipSha256": "8d5f2d38ea3ef83a5e58ffa424eb70c8e9cc07e3b4d2a9a2c8e9ecf2667685da",
+      "gzipMtime": 0
+    },
+    {
+      "path": "task-handoff-assembly-typecheck-final.log.gz",
+      "sourcePath": "/workspace/scratch/task-handoff-assembly-typecheck-final.log",
+      "rawBytes": 319,
+      "rawSha256": "2ddd12436ef9d13a618455c1d04152db1240e3320209d1e01332d9e0b7a6e393",
+      "gzipSha256": "60f4bb23a9885b1cb80190cbcc10ea3da6dde1995f34c12228454c1040ca8e76",
+      "gzipMtime": 0
+    },
+    {
+      "path": "task-handoff-assembly-display-lint.json.gz",
+      "sourcePath": "/workspace/scratch/task-handoff-assembly-display-lint.json",
+      "rawBytes": 46895,
+      "rawSha256": "f7f676cfec9fce0c9fb32bf506211eeaf8ac1d4bbdf68f8f4a8346d8149b0b2b",
+      "gzipSha256": "3fd01613af0d977af67c7c172f7e0edbc667a933c8ef09499e231c931ae41186",
+      "gzipMtime": 0
+    },
+    {
+      "path": "task-handoff-assembly-ui-partial-red.log.gz",
+      "sourcePath": "/workspace/scratch/task-handoff-assembly-ui-partial-red.log",
+      "rawBytes": 129092,
+      "rawSha256": "a5af8f98b5821500369adf42803378c4a0c41bccaf5d3cd9e9bb75c090f1b4a0",
+      "gzipSha256": "50bbe0ba0d5c86aac25458eee3ff34c46d81420d135bdad3e96d58245c4a2dbe",
+      "gzipMtime": 0
+    },
+    {
+      "path": "task-handoff-assembly-fixture-commit.log.gz",
+      "sourcePath": "/workspace/scratch/task-handoff-assembly-fixture-commit.log",
+      "rawBytes": 548,
+      "rawSha256": "6a08cdb0ca855308cf9a0604fa25e5c7b5e6f8ee54de64de56ed99caa874957d",
+      "gzipSha256": "d7260110dffa492f50c2ecf693e6e12b898854e99d9fa1f7529cd894b6beaae3",
+      "gzipMtime": 0
+    },
+    {
+      "path": "incoming-8d06/company-6-final.log.gz",
+      "sourcePath": "/workspace/scratch/task-handoff-native/company-6-final.log",
+      "rawBytes": 45799,
+      "rawSha256": "08eb52ae5e6859af1e3e8055477217b9ca527d7269fab7308e9f06a2c7e87c50",
+      "gzipSha256": "a5a585fe0ea756655ae681adadfbb5fc049e0dcbb4a69877ba3fac3aad5c14ef",
+      "gzipMtime": 0
+    },
+    {
+      "path": "incoming-8d06/company-6-final.json.gz",
+      "sourcePath": "/workspace/scratch/task-handoff-native/company-6-final.json",
+      "rawBytes": 24410,
+      "rawSha256": "c634cd35b5c84ab7acc0a4d1a63259b84326923420ff5de5699940535e23a19e",
+      "gzipSha256": "8d515badaa9d28ed824cc258ddb72c67fff6d2af6907ea193891e3a87fe295f4",
+      "gzipMtime": 0
+    },
+    {
+      "path": "incoming-8d06/company-6-pins.json.gz",
+      "sourcePath": "/workspace/scratch/task-handoff-native/company-6-pins.json",
+      "rawBytes": 959945,
+      "rawSha256": "dbb9703bfe38ee9ae37aab20b1f5ce86271be65d3f08b09ae20e41f221ac6592",
+      "gzipSha256": "777ecddbc4a96677d641e5b6ad39054cf986ca434b5b98e7e0d60dd62ded821d",
+      "gzipMtime": 0
+    },
+    {
+      "path": "incoming-8d06/company-6-files.txt.gz",
+      "sourcePath": "/workspace/scratch/task-handoff-native/company-6-files.txt",
+      "rawBytes": 221,
+      "rawSha256": "0dc2a2ce555e14297705bbb793d5fbf25349f171f5af23e0644dca09afa77a7d",
+      "gzipSha256": "6c77d0148183a2d6b2f7b30dee80eb2b51cd618f5e930c68969c48a54a2ae48d",
+      "gzipMtime": 0
+    },
+    {
+      "path": "incoming-8d06/task-handoff-company-ui-final.log.gz",
+      "sourcePath": "/workspace/scratch/task-handoff-company-ui-final.log",
+      "rawBytes": 8456,
+      "rawSha256": "0e469e60da8c7d0a7a4f223ebc099381e5a1cff22c163447079aa19cbfd0ddf1",
+      "gzipSha256": "9ed4e308ff7041042826b0c58de7642d30a986101eb7f5934003a5ddfe798e40",
+      "gzipMtime": 0
+    },
+    {
+      "path": "incoming-8d06/task-handoff-company-ui-final.json.gz",
+      "sourcePath": "/workspace/scratch/task-handoff-company-ui-final.json",
+      "rawBytes": 16302,
+      "rawSha256": "3fbf8dcb0f2abaecaf79067cd57973736cabd63721fc79da9c9fb83a2f4cbc45",
+      "gzipSha256": "31bbc28ac02a01c6773a22c8be8afde19b8b13a0560b55d72d776c3f3247052e",
+      "gzipMtime": 0
+    },
+    {
+      "path": "incoming-8d06/task-handoff-company-ui-final-before-pins.json.gz",
+      "sourcePath": "/workspace/scratch/task-handoff-company-ui-final-before-pins.json",
+      "rawBytes": 4904,
+      "rawSha256": "e4eaecf7608e27064f1d409ff74bab6160d355b742b1103643df1d5ea9dae0a1",
+      "gzipSha256": "f93305105a6a0a1c6d5e939e893b7460bd968bdc55e3d47ac1cb1cd62062c8f2",
+      "gzipMtime": 0
+    },
+    {
+      "path": "incoming-8d06/task-handoff-company-ui-final-after-pins.json.gz",
+      "sourcePath": "/workspace/scratch/task-handoff-company-ui-final-after-pins.json",
+      "rawBytes": 5534,
+      "rawSha256": "3602bf880083a8eddee60a5c6bd475621666d6ef35b5947949251aaedc664f0d",
+      "gzipSha256": "43bc8132fd7834b4bb663803f2288b93b1cd545bbade3d2a8e1f3a223555b529",
+      "gzipMtime": 0
+    },
+    {
+      "path": "incoming-8d06/task-handoff-company-ui-final-summary.json.gz",
+      "sourcePath": "/workspace/scratch/task-handoff-company-ui-final-summary.json",
+      "rawBytes": 356,
+      "rawSha256": "81a76e22c552811cee0255549526502e6ecd102a89329193ba9151f4d57b6a37",
+      "gzipSha256": "5c8cae174b940ae29bb699e372fe7dbdaf29b6d2be71b25b5016b91909ac9651",
+      "gzipMtime": 0
+    },
+    {
+      "path": "incoming-8d06/task-handoff-company-ui-final-files.txt.gz",
+      "sourcePath": "/workspace/scratch/task-handoff-company-ui-final-files.txt",
+      "rawBytes": 276,
+      "rawSha256": "a43fe3a331d8ac1373abab39b69efca273b7a2e2b12bb4dd873ff63a63b3e351",
+      "gzipSha256": "5033352087d44cb72b46c7c6732c8dd90c275f713029d11a6a43328c0ab732a9",
+      "gzipMtime": 0
+    },
+    {
+      "path": "incoming-8d06/task-handoff-company-ui-final-command.txt.gz",
+      "sourcePath": "/workspace/scratch/task-handoff-company-ui-final-command.txt",
+      "rawBytes": 583,
+      "rawSha256": "0896f4a4f175fbfcf7e263b3c041bd0ccf26adf213098934b36bac6648e1da45",
+      "gzipSha256": "d320044fe1924bf0e9ec88180b419b3fbd81fb22642b8431864d4e00ca41688c",
+      "gzipMtime": 0
+    },
+    {
+      "path": "incoming-8d06/task-handoff-company-build.log.gz",
+      "sourcePath": "/workspace/scratch/task-handoff-company-build.log",
+      "rawBytes": 14937,
+      "rawSha256": "9a9f0a3803a12eabe2324d8321a4ba499645fcd63422f164844f7705af0b636c",
+      "gzipSha256": "da6abce38280321b9504427d59037c93fe5ecb5b876ac3aef51bd1cb0170c52d",
+      "gzipMtime": 0
+    },
+    {
+      "path": "incoming-8d06/task-handoff-company-build-binding.json.gz",
+      "sourcePath": "/workspace/scratch/task-handoff-company-build-binding.json",
+      "rawBytes": 178,
+      "rawSha256": "fbc0d602808c3ce7702c4e086c47d29ad4d4cd0665c3d8df8976a525af6d3027",
+      "gzipSha256": "2e4a69443f7147966b4d2b5221b71d29a98c61db8fef32953e4914675abcd5e8",
+      "gzipMtime": 0
+    },
+    {
+      "path": "incoming-8d06/task-handoff-company-design.log.gz",
+      "sourcePath": "/workspace/scratch/task-handoff-company-design.log",
+      "rawBytes": 212,
+      "rawSha256": "40911a7b18ca04a2bce391baad830a1aea92b263138628ff5d86cec1e2ce9fe2",
+      "gzipSha256": "a02b864f92889d97828ce8b320bafafdd8ec5d94059f01582a5d4966b8bf5d16",
+      "gzipMtime": 0
+    },
+    {
+      "path": "incoming-8d06/task-handoff-company-contrast.log.gz",
+      "sourcePath": "/workspace/scratch/task-handoff-company-contrast.log",
+      "rawBytes": 278,
+      "rawSha256": "15e0adc9c2adff404b40bb00d06ee040fb0601bb238d58f3a1cc91059ed37f3c",
+      "gzipSha256": "7d333575781f3e54e19532554f0141775d0a0468b28d2e2f4f19725291ce86e7",
+      "gzipMtime": 0
+    },
+    {
+      "path": "incoming-8d06/task-handoff-company-canvas.log.gz",
+      "sourcePath": "/workspace/scratch/task-handoff-company-canvas.log",
+      "rawBytes": 289,
+      "rawSha256": "c1ea5a44a7923f5825847776a4076bf8e8ceee76727921895bfefac004bbe489",
+      "gzipSha256": "3edd2ed34b8e75756ea02c663022c92c4c0e5f5d9a0b509d9bfbade764f3172b",
+      "gzipMtime": 0
+    },
+    {
+      "path": "incoming-8d06/task-handoff-company-classes.log.gz",
+      "sourcePath": "/workspace/scratch/task-handoff-company-classes.log",
+      "rawBytes": 450,
+      "rawSha256": "c1ab5e501d83bf6483701cc6ffeede48b2f56c04f577cf712b77dba2d8c814db",
+      "gzipSha256": "da3946d5dba9bf87898e48fda564fd3ea57988e1da3db8f826d25b192bb907b5",
+      "gzipMtime": 0
+    },
+    {
+      "path": "assembly-final-fixture-binding.json.gz",
+      "rawBytes": 17388,
+      "rawSha256": "9fd1e87878aff68c9a83fecc013b27cb3d3905bec272f926e1906e52ff6e53f8",
+      "gzipSha256": "c5bb2fb3e8ce1fd53113f682dde734c69ea67c1101f5f797ed08f185d049fa3e",
+      "gzipMtime": 0,
+      "qualification": "Derived source binding; original evidence unchanged."
+    }
+  ]
+}

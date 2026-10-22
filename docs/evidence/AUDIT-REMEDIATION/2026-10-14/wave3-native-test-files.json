@@ -1,0 +1,20 @@
+[
+  "server/routes/__tests__/defense-shadow-binding.dbtest.ts",
+  "server/routes/__tests__/notification-request-binding.dbtest.ts",
+  "tests/db/ai-feedback-persistence.dbtest.ts",
+  "tests/db/bla-ivd-request-connection.dbtest.ts",
+  "tests/db/capa-governed-transactions.dbtest.ts",
+  "tests/db/content-audit-consumers.dbtest.ts",
+  "tests/db/csr-vault-source-input.dbtest.ts",
+  "tests/db/domain-sign-ceremony.dbtest.ts",
+  "tests/db/estar-audit-admission.dbtest.ts",
+  "tests/db/ind-audit-outcomes.dbtest.ts",
+  "tests/db/mdx-qms-request-rls.dbtest.ts",
+  "tests/db/part11-audit-receipts.dbtest.ts",
+  "tests/db/protocol-request-connection.dbtest.ts",
+  "tests/db/provenance-audit-outcomes.dbtest.ts",
+  "tests/db/report-label-matrix.dbtest.ts",
+  "tests/db/task-filing-home.dbtest.ts",
+  "tests/db/tmf-assessment-audit-outcomes.dbtest.ts",
+  "tests/db/wave3-critical-history.dbtest.ts"
+]

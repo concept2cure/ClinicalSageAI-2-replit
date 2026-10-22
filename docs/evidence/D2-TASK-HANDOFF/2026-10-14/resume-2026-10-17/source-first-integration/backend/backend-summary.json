@@ -1,0 +1,94 @@
+{
+  "status": "completed-green-frozen",
+  "recorded_at_utc": "2026-10-18T00:22:14.398587+00:00",
+  "node_version": "v22.23.3",
+  "default_config": "vitest.config.ts",
+  "result": {
+    "files_passed": 14,
+    "total_cases": 164,
+    "passed": 164,
+    "failed": 0,
+    "pending": 0,
+    "todo": 0,
+    "exit_code": 0,
+    "duration_seconds": 98.654
+  },
+  "execution_tree": {
+    "type": "uncommitted frozen staged merge index",
+    "head_at_execution_start": "bda5ba9fc394791fbc97206b7b6d1a454ffe5505",
+    "incoming_merge_head": "e62320e0a9555188a08ce426d7c16c72d372d824",
+    "head_at_execution_end": "bda5ba9fc394791fbc97206b7b6d1a454ffe5505",
+    "merge_head_at_execution_end": "e62320e0a9555188a08ce426d7c16c72d372d824",
+    "claim": "Tests executed on the frozen staged/worktree server/shared bytes before the merge commit existed; no merged-HEAD execution or post-commit rerun is claimed."
+  },
+  "source_integrity": {
+    "sha256_pin_count": 7126,
+    "all_before_after_sha256_match": true,
+    "staged_server_shared_blob_count": 7123,
+    "all_frozen_index_blobs_match_tested_worktree": true,
+    "post_run_committed_tree_verification": {
+      "verified_at_utc": "2026-10-18T00:21:49.596783+00:00",
+      "commit": "8157fbfe0bae8673ef91feea1ce54a34a018cf31",
+      "frozen_index_source_blob_count": 7123,
+      "all_frozen_index_blobs_match_committed_tree": true,
+      "mismatches": [],
+      "execution_note": "Tests executed before this merge commit existed. This check binds its server/shared source bytes to the frozen tested index; no post-commit rerun is claimed."
+    },
+    "old_head_comparison_note": "The recorded old-HEAD mismatch is expected while the merge was uncommitted. It is not a source-integrity failure; the later committed-tree comparison matches."
+  },
+  "scope": "Changed catalogue source selection/assembly plan/commit and generation/acceptance routes, prior saved-base/audit/source compatibility, candidate generator receipts, canonical source identity and evidence CRUD. Prior unrelated company/finish-reason/native proof is retained; no full915 or full226 replay.",
+  "limits": "PGlite SQL and signed-JWT HTTP plus synthetic model/transport faults where declared by each suite. Connection release(Error) requests are observed, not native socket-close/concurrency proof. No native database commands, live provider, compiler/build, source implementation, deployment or human witness claim.",
+  "archives": [
+    {
+      "archive": "task-handoff-source-first-backend-final.log.gz",
+      "original_path": "/workspace/scratch/task-handoff-source-first-backend-final.log",
+      "original_sha256": "b450e3b2ddae51d4cec19394d5487f5420e5a27c560693af0606bf1c7bb5f37f",
+      "original_bytes": 88216,
+      "gzip_sha256": "2796b7a79dbe15e8dad8c396f0602ef7c2b9508f92608d87a22d9c87f25f41cf",
+      "gzip_bytes": 10105,
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-source-first-backend-final.json.gz",
+      "original_path": "/workspace/scratch/task-handoff-source-first-backend-final.json",
+      "original_sha256": "90bc3b45e4180e29481ea2f0774500aab013ffdf504d62237bc9184caac1d5de",
+      "original_bytes": 68151,
+      "gzip_sha256": "f1fe70233b2d8e02b32f98390654de3da7a44b1731a2f01af25bfa3308ed0570",
+      "gzip_bytes": 9181,
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-source-first-backend-final.pins.json.gz",
+      "original_path": "/workspace/scratch/task-handoff-source-first-backend-final.pins.json",
+      "original_sha256": "beeb3dc18ef1ad9ab183bac56be1823cabcd0951f210b7e5a563e6889bed9f31",
+      "original_bytes": 2630343,
+      "gzip_sha256": "72966c9cbd98a488e21bc9db344745b0c878fbc9d2319ce8ef33d4a3aabc48dc",
+      "gzip_bytes": 981681,
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-incoming-e623-backend-files.txt.gz",
+      "original_path": "/workspace/scratch/task-handoff-incoming-e623-backend-files.txt",
+      "original_sha256": "f4043f436d0968e8011083a67337d2e32c5bc75fd5ff149230e79d7d4f4cbfb9",
+      "original_bytes": 996,
+      "gzip_sha256": "0178cc48b750dcab9fb06fa237868c3645b6073c918b3043d56885aa2caa5fc6",
+      "gzip_bytes": 254,
+      "gzip_mtime": 0
+    },
+    {
+      "archive": "task-handoff-incoming-e623-backend-impact.json.gz",
+      "original_path": "/workspace/scratch/task-handoff-incoming-e623-backend-impact.json",
+      "original_sha256": "ade0974f660ac2b8acd7ccbee90f7192f2ca9bc7c3efee4182693ac10f0c09ad",
+      "original_bytes": 4790,
+      "gzip_sha256": "ba2905f99fd4622063508a4b0415c5374e9868b04454289a9a42127fac713bb6",
+      "gzip_bytes": 1653,
+      "gzip_mtime": 0
+    }
+  ],
+  "archive_verification": {
+    "all_raw_round_trips_match": true,
+    "gzip_timestamp_zero": true,
+    "no_gzip_embedded_filename": true,
+    "credential_pattern_scan_zero_hits": true
+  }
+}

@@ -60,9 +60,10 @@ vi.mock('../../ectd/assess-dispatch-readiness', () => ({
 
 import { Pool, type PoolClient } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { IND_PGLITE_DDL, SUBMISSION_CORE_PGLITE_DDL, LEAF_SOURCE_PGLITE_DDL, AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
+import { IND_PGLITE_DDL, SUBMISSION_CORE_PGLITE_DDL, LEAF_SOURCE_PGLITE_DDL, AUDIT_LOGS_PGLITE_DDL, PROGRAM_SPINE_PGLITE_DDL } from '../../../db/pglite-harness';
 import { deriveGovernedTargetBinding } from '../../part11/signature-persistence';
 import { freezeSequence, upsertLeaf } from '../submission-service';
+import { FREEZE_IDENTITY_SEED_SQL, FREEZE_PROGRAM_ID } from './_freeze-gate-fixture';
 
 const databaseUrl = process.env.TEST_DATABASE_URL;
 // The sentinel tests/setup.ts installs points at nothing.
@@ -83,7 +84,7 @@ async function sign(seqId: number, intent: string): Promise<string> {
   const id = `sig-${++sigN}`;
   const binding = await deriveGovernedTargetBinding({ query: (t: string, p?: unknown[]) => q(t, p) as any }, `ectd-sequence:${seqId}`, ORG);
   await q(`INSERT INTO c2c_ana_actions (id, org_id, command, target, state, proposed_by, payload) VALUES ($1,$2,'sign',$3,'executed',$4,$5)`,
-    [id, ORG, `ectd-sequence:${seqId}`, USER, JSON.stringify({ intent })]);
+    [id, ORG, `ectd-sequence:${seqId}`, USER, JSON.stringify({ intent, meaning: 'approval' })]);
   await q(`INSERT INTO electronic_signatures (organization_id, signed_target, signature_manifest, bound_payload_digest, binding_basis, is_valid, verification_status)
            VALUES ($1,$2,$3,$4,$5,true,'valid')`,
     [ORG, `ectd-sequence:${seqId}`, JSON.stringify({ actionId: id }), binding.digest, binding.basis]);
@@ -122,6 +123,9 @@ describeIfDb('the sequence row lock serializes leaf writes with a governed freez
     await q(IND_PGLITE_DDL);
     await q(SUBMISSION_CORE_PGLITE_DDL);
     await q(LEAF_SOURCE_PGLITE_DDL);
+    await q(PROGRAM_SPINE_PGLITE_DDL);
+    await q('ALTER TABLE regulatory_programs ADD COLUMN IF NOT EXISTS applicant_sponsor_id UUID');
+    await q(FREEZE_IDENTITY_SEED_SQL);
     await q(AUDIT_LOGS_PGLITE_DDL);
     await q(`
       CREATE TABLE c2c_ana_actions (id TEXT PRIMARY KEY, org_id INTEGER, command TEXT, target TEXT, state TEXT, proposed_by INTEGER, payload JSONB);
@@ -130,6 +134,7 @@ describeIfDb('the sequence row lock serializes leaf writes with a governed freez
       CREATE TABLE IF NOT EXISTS ectd_compilations (id SERIAL PRIMARY KEY, organization_id INTEGER, submission_id INTEGER, compilation_type TEXT, sequence_number TEXT, leaf_manifest JSONB, compiled_at TIMESTAMP DEFAULT NOW());
       INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by) VALUES
         (1, 'lock A', 'ind', 'biotech', 'fda', ${ORG}, ${USER}), (2, 'lock B', 'ind', 'biotech', 'fda', ${ORG}, ${USER});
+      UPDATE submissions SET program_id = '${FREEZE_PROGRAM_ID}' WHERE id IN (1,2);
       INSERT INTO coauthor_documents (id, organization_id, title, content, module_number, status) VALUES
         (200, ${ORG}, 'Clinical Overview', '<p>approved</p>', 'm2.5', 'approved'),
         (201, ${ORG}, 'Nonclinical Overview', '<p>still a draft</p>', 'm2.4', 'draft');
@@ -194,7 +199,7 @@ describeIfDb('the sequence row lock serializes leaf writes with a governed freez
       expect(blocked, 'the freeze did not wait for the leaf write holding the sequence row').toBe(true);
       expect(err, 'a leaf committed while the freeze waited was frozen without being judged').toMatchObject({
         code: 'INVALID_STATE',
-        message: expect.stringMatching(/leaves changed while this freeze was being checked/),
+        message: expect.stringMatching(/leaves or recorded application\/applicant facts changed while this freeze was being checked/),
       });
     } finally {
       leafTx.release();

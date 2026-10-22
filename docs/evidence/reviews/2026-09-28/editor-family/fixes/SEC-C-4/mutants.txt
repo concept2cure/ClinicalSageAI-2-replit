@@ -45,4 +45,3 @@
    × client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx > the fenced screen context names what those sentences point at (SEC-C-4) > carries the programme the empty state is for 5031ms
    Test Files  1 failed (1)
    Tests  1 failed | 6 passed (7)
-

@@ -121,4 +121,29 @@ describe('toModuleContext shapes the wire payload', () => {
     expect(toModuleContext({ surfaceId: 's', summary: 'x', facts: {}, availableActions: [] }))
       .toEqual({ surface: 's', summary: 'x' });
   });
+
+  it('uses a registry fallback when a surface has not published live state', () => {
+    expect(
+      toModuleContext(null, {
+        surfaceId: 'submission-center',
+        summary: 'The user is on Submission Center.',
+      })
+    ).toEqual({
+      surface: 'submission-center',
+      summary: 'The user is on Submission Center.',
+    });
+  });
+
+  it('keeps richer published state ahead of the registry fallback', () => {
+    expect(
+      toModuleContext(
+        { surfaceId: 'project-home', summary: 'Program C2C-101 at 61%.', facts: { programId: 7 } },
+        { surfaceId: 'project-home', summary: 'The user is on Project Home.' }
+      )
+    ).toEqual({
+      surface: 'project-home',
+      summary: 'Program C2C-101 at 61%.',
+      facts: { programId: 7 },
+    });
+  });
 });

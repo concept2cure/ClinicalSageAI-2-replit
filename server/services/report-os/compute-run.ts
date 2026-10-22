@@ -38,6 +38,7 @@ import { computeInitialRun, type RunComputationResult } from './orchestrator';
 import { computeDomainRun, computeRegionalRun, type ReportEngine } from './report-engine';
 import type { RenderedReport } from './render/types';
 import type { ReportScope } from '@shared/schema/report-os';
+import type { ReportRecordContext } from './lifecycle-calendar';
 
 const log = createScopedLogger('report-os-compute-run');
 
@@ -70,6 +71,8 @@ export interface ComputeRunInput {
   scopeId: string;
   /** A client filter only supported engines can substantiate. */
   clientWorkspaceId?: number | null;
+  /** Verified live actor and executor, supplied internally by the actual producer. */
+  recordContext?: ReportRecordContext;
   /** The registry row. The `regional` engine reads it; it reads the deployed row itself when omitted. */
   declared?: DeclaredType;
   /** Program scope only: the project ids of the report program group. */
@@ -178,7 +181,8 @@ function recordAccessProjects(result: ComputeRunResult, input: ComputeRunInput):
     if (!Array.isArray(input.programProjectIds) || !input.programProjectIds.every(id => Number.isSafeInteger(id) && id > 0)) {
       throw new ReportTypeNotComputed('The program group project set could not be verified, so this report was not run.');
     }
-    result.computed.summary.accessProjectIds = [...input.programProjectIds];
+    const sourceIds = result.computed.summary.accessProjectIds;
+    result.computed.summary.accessProjectIds = [...new Set([...input.programProjectIds, ...(Array.isArray(sourceIds) ? sourceIds as number[] : [])])];
   }
   return result;
 }
@@ -187,7 +191,12 @@ export async function computeRunForType(input: ComputeRunInput): Promise<Compute
   const { engine, typeId, organizationId, scopeType, scopeId } = input;
 
   if (engine === 'domain') {
-    return recordAccessProjects({ computed: await computeDomainRun(typeId, organizationId, scopeType, scopeId, { clientWorkspaceId: input.clientWorkspaceId }) }, input);
+    try {
+      return recordAccessProjects({ computed: await computeDomainRun(typeId, organizationId, scopeType, scopeId, { clientWorkspaceId: input.clientWorkspaceId, ...(input.recordContext ? { recordContext: input.recordContext } : {}) }) }, input);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'LifecycleCalendarUnavailable') throw new ReportTypeNotComputed(error.message);
+      throw error;
+    }
   }
   if (engine === 'regional') {
     return recordAccessProjects({ computed: await regionalRun(input) }, input);

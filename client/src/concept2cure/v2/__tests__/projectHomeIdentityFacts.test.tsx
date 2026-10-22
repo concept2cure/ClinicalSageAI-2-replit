@@ -55,6 +55,16 @@ afterEach(() => {
 });
 
 describe('project home shows the program identity from the database', () => {
+  it.each([
+    ['Health_Canada', 'Health Canada'],
+    ['Registered_Certification_Body', 'Registered certification body'],
+  ])('renders the catalog authority label for saved %s', async (stored, label) => {
+    mockProgram(program({ primary_agency: stored }));
+    render(<ProjectHome {...props()} />);
+    expect(await screen.findByText(label)).toBeTruthy();
+    expect(screen.queryByText(stored)).toBeNull();
+  });
+
   it('renders sponsor, product, indication and the IND number from GET /api/c2c/projects/:id', async () => {
     mockProgram(program());
     render(<ProjectHome {...props()} />);

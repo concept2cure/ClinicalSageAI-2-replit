@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:migration-guard-order"
+  ],
+  "at": "2026-10-20T22:54:40.133248+00:00",
+  "elapsedSeconds": 0.249,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-merged.json",
+  "stdout": "[ci:migration-guard-order] OK \u2014 every guarded table is created before it is guarded (0 baselined).\n",
+  "stderr": ""
+}

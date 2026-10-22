@@ -4,13 +4,13 @@
 --- FIRST APPLY ---
 DO
 columns after first apply:
- study_design_id        | text                     |           |          | 
- study_design_linked_at | timestamp with time zone |           |          | 
- study_design_linked_by | integer                  |           |          | 
+ study_design_id        | text                     |           |          |
+ study_design_linked_at | timestamp with time zone |           |          |
+ study_design_linked_by | integer                  |           |          |
     "protocol_documents_study_design_idx" btree (organization_id, study_design_id) WHERE study_design_id IS NOT NULL
 
 --- a link is written between the two deploys ---
- id | study_design_id | study_design_linked_by 
+ id | study_design_id | study_design_linked_by
 ----+-----------------+------------------------
   1 | sd_abc          |                      1
 (1 row)
@@ -22,12 +22,12 @@ psql:migrations/20260922_protocol_document_study_design.sql:72: NOTICE:  column 
 psql:migrations/20260922_protocol_document_study_design.sql:72: NOTICE:  relation "protocol_documents_study_design_idx" already exists, skipping
 DO
 columns after second apply:
- study_design_id        | text                     |           |          | 
- study_design_linked_at | timestamp with time zone |           |          | 
- study_design_linked_by | integer                  |           |          | 
+ study_design_id        | text                     |           |          |
+ study_design_linked_at | timestamp with time zone |           |          |
+ study_design_linked_by | integer                  |           |          |
     "protocol_documents_study_design_idx" btree (organization_id, study_design_id) WHERE study_design_id IS NOT NULL
 the row written between deploys still carries its link:
- id | study_design_id | study_design_linked_by 
+ id | study_design_id | study_design_linked_by
 ----+-----------------+------------------------
   1 | sd_abc          |                      1
 (1 row)

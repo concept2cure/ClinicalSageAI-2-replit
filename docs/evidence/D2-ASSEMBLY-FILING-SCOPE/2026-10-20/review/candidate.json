@@ -1,0 +1,28 @@
+{
+  "at": "2026-10-20T23:41:44.598784+00:00",
+  "argv": [
+    "npx",
+    "vitest",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--silent=true",
+    "server/services/ana/__tests__/assembled-template-oversight.pglite.test.ts",
+    "server/services/ana/__tests__/saved-template-oversight.pglite.test.ts"
+  ],
+  "elapsedSeconds": 15.231,
+  "exitCode": 0,
+  "sources": {
+    "server/services/ana/saved-template-review.ts": "d99e4de4459d99cc8296b9c65ed0664caa0b9ad8fff38b637e7bd250841d90ad",
+    "server/services/ana/__tests__/assembled-template-oversight.pglite.test.ts": "3ec42e683536cdcf80014db8ba2395392c9abd6ce97a18c8efb0ceac472a825e",
+    "server/services/ana/__tests__/_saved-document-critique-fixture.ts": "fecb8813d3a4d8a9099bd00e3fd7ab01771fd5e09a941ef55e5d14af61818369",
+    "server/services/authoring/authoring-template-guidance.ts": "6947abe6b25e812a48f448dcf83883bcb154ae12d40691e01b303267cfdf5172"
+  },
+  "sourceDrift": [],
+  "rawOutput": "candidate-output.txt.gz",
+  "outputSha256": "528aacc3aaac14fbc9d44c5f47812a5107a8148061d0ef01c1eca927d0b49da6",
+  "summary": [
+    "Test Files  2 passed (2)",
+    "Tests  56 passed (56)"
+  ]
+}

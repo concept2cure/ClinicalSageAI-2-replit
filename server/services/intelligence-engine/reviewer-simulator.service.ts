@@ -25,7 +25,8 @@ import { and, desc, eq } from 'drizzle-orm';
 
 import { db } from '../../db';
 import { reviewerSimulationRuns } from '../../../shared/schema/reviewer-simulation';
-import { defensePackets } from '../../../shared/schema/defense-packets';
+import type { RequestSqlClient } from '../../db/requestDb';
+import { authorizeAuthoringProgram, AuthoringProgramAccessError } from '../authoring/authoring-program-access';
 import {
   ALL_PERSONA_CODES,
   REVIEWER_PERSONAS,
@@ -123,8 +124,9 @@ export interface SimulatorResult {
 /** A request naming something the program's records do not hold. */
 export class ReviewerSimulationInputError extends Error {
   constructor(
-    public code: 'INVALID_DEFENSE_PACKET_ID' | 'DEFENSE_PACKET_NOT_FOUND' | 'DEFENSE_PACKET_STORE_NOT_AVAILABLE',
-    message: string
+    public code: 'INVALID_DEFENSE_PACKET_ID' | 'DEFENSE_PACKET_NOT_FOUND' | 'DEFENSE_PACKET_STORE_NOT_AVAILABLE' | 'DEFENSE_PACKET_ACCESS_DENIED' | 'DEFENSE_PACKET_ACCESS_UNAVAILABLE' | 'REVIEWER_PROGRAM_ACCESS_DENIED' | 'REVIEWER_PROGRAM_ACCESS_UNAVAILABLE',
+    message: string,
+    readonly statusCode = 422
   ) {
     super(message);
     this.name = 'ReviewerSimulationInputError';
@@ -145,58 +147,73 @@ function isMissingPacketStore(err: unknown): boolean {
   return code === '42P01' || code === '42703';
 }
 
-/** The packet facts of the program's defense packet on record; refuses one it does not hold. */
+/** Verified producer context, never constructed from model or request body fields. */
+export interface SimulatorRecordScope {
+  executor: RequestSqlClient;
+  userId: number;
+}
+
+interface RecordedPacket {
+  defenseReadinessScore: number;
+  topRisks: string[];
+  riskCodesUsed: string[];
+  predicateKNumber: string;
+  status: string;
+}
+
+/** Fresh admission on the producer's actual connection; no model-supplied actor. */
+async function admitProgramRecords(req: SimulatorRequest, scope: SimulatorRecordScope | undefined, forWrite: boolean): Promise<SimulatorRecordScope> {
+  const unavailable = req.defensePacketId ? 'DEFENSE_PACKET_ACCESS_UNAVAILABLE' : 'REVIEWER_PROGRAM_ACCESS_UNAVAILABLE';
+  const denied = req.defensePacketId ? 'DEFENSE_PACKET_ACCESS_DENIED' : 'REVIEWER_PROGRAM_ACCESS_DENIED';
+  if (!scope?.executor || typeof scope.executor.query !== 'function') {
+    throw new ReviewerSimulationInputError(unavailable, 'The verified record connection is unavailable. No program records were read or written.', 503);
+  }
+  if (!Number.isSafeInteger(scope.userId) || scope.userId <= 0) {
+    throw new ReviewerSimulationInputError(denied, 'A verified current organization member is required to access program records.', 403);
+  }
+  try {
+    await authorizeAuthoringProgram(scope.executor, {
+      tenantId: req.organizationId, actor: { id: String(scope.userId), email: '' }, programId: req.programId, forWrite,
+    });
+  } catch (error) {
+    if (!(error instanceof AuthoringProgramAccessError)) throw error;
+    throw new ReviewerSimulationInputError(error.status === 503 ? unavailable : denied,
+      'Current access to the program could not be established. No simulation was saved.', error.status === 503 ? 503 : 403);
+  }
+  return scope;
+}
+
+/** Exact canonical packet and live tenant parent, after current private-project admission. */
 async function loadRecordedPacket(
   organizationId: number,
   programId: string,
-  defensePacketId: string
+  defensePacketId: string,
+  scope: SimulatorRecordScope,
 ): Promise<{ facts: PersonaPacketFacts; status: string }> {
   if (!UUID_RE.test(defensePacketId)) {
-    throw new ReviewerSimulationInputError(
-      'INVALID_DEFENSE_PACKET_ID',
-      `defensePacketId "${defensePacketId}" is not a defense packet id.`
-    );
+    throw new ReviewerSimulationInputError('INVALID_DEFENSE_PACKET_ID', 'defensePacketId is not a defense packet UUID.');
   }
-  // 2026-10-15: on a deployed database the read failed (no migration creates the
-  // table this model reads — only predicate.defense_packets, without
-  // organization_id — and nothing writes packets), and the run answered 500.
-  const [row] = await db
-    .select({
-      defenseReadinessScore: defensePackets.defenseReadinessScore,
-      topRisks: defensePackets.topRisks,
-      riskCodesUsed: defensePackets.riskCodesUsed,
-      predicateKNumber: defensePackets.predicateKNumber,
-      status: defensePackets.status,
-    })
-    .from(defensePackets)
-    .where(
-      and(
-        eq(defensePackets.id, defensePacketId),
-        eq(defensePackets.organizationId, organizationId),
-        eq(defensePackets.programId, programId)
-      )
-    )
-    .limit(1)
-    .catch((err: unknown) => {
-      if (!isMissingPacketStore(err)) throw err;
-      throw new ReviewerSimulationInputError(
-        'DEFENSE_PACKET_STORE_NOT_AVAILABLE',
-        `No defense packet store exists on this database, so defense packet ${defensePacketId} cannot be read. ` +
-          'Run the simulation without defensePacketId; the packet checks are then reported as not run.'
-      );
-    });
-  if (!row) {
-    throw new ReviewerSimulationInputError(
-      'DEFENSE_PACKET_NOT_FOUND',
-      `Defense packet ${defensePacketId} is not on record for this program.`
-    );
-  }
+  const { rows } = await scope.executor.query(
+    `SELECT dp.defense_readiness_score AS "defenseReadinessScore", dp.top_risks AS "topRisks",
+       dp.risk_codes_used AS "riskCodesUsed", dp.predicate_k_number AS "predicateKNumber", dp.status
+     FROM predicate.defense_packets dp
+     JOIN regulatory_programs rp ON rp.id = dp.program_id
+     WHERE dp.id = $1::uuid AND dp.program_id = $2::uuid
+       AND rp.organization_id = $3 AND rp.deleted_at IS NULL
+     LIMIT 1`,
+    [defensePacketId, programId, organizationId],
+  ).catch((error: unknown) => {
+    if (!isMissingPacketStore(error)) throw error;
+    throw new ReviewerSimulationInputError('DEFENSE_PACKET_STORE_NOT_AVAILABLE',
+      'The canonical packet store is unavailable. No packet facts were read.', 503);
+  });
+  const row = rows[0] as unknown as RecordedPacket | undefined;
+  if (!row) throw new ReviewerSimulationInputError('DEFENSE_PACKET_NOT_FOUND', 'The named defense packet is not on record for this program.');
   return {
     facts: {
       defenseReadinessScore: row.defenseReadinessScore,
-      // NOT NULL DEFAULT '[]' in the table's DDL; the model types them nullable.
-      topRisks: row.topRisks ?? [],
-      riskCodesUsed: row.riskCodesUsed ?? [],
+      topRisks: row.topRisks,
+      riskCodesUsed: row.riskCodesUsed,
       predicateKNumber: row.predicateKNumber,
     },
     status: row.status,
@@ -321,14 +338,27 @@ function dedupeAndSort(questions: ReviewerQuestion[]): ReviewerQuestion[] {
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────
 
+function requiresProgramRecords(req: SimulatorRequest): boolean {
+  return !req.dryRun || Boolean(req.defensePacketId) || req.ctdProgramId !== undefined;
+}
+
+function requestedPersonaCodes(req: SimulatorRequest): ReviewerPersonaCode[] {
+  return req.personas && req.personas.length ? req.personas : ALL_PERSONA_CODES;
+}
+
 /** Run the full reviewer simulation and (optionally) persist the result. */
 export async function runReviewerSimulation(
-  req: SimulatorRequest
+  req: SimulatorRequest,
+  recordScope?: SimulatorRecordScope,
 ): Promise<SimulatorResult> {
+  // A dry classification checklist reads no records and may run standalone.
+  // Any persisted run or program-record read needs the actual producer scope.
+  const admittedScope = requiresProgramRecords(req)
+    ? await admitProgramRecords(req, recordScope, !req.dryRun)
+    : undefined;
+
   // 1. Determine in-scope personas
-  const requested =
-    req.personas && req.personas.length ? req.personas : ALL_PERSONA_CODES;
-  const scope = requested.filter(code =>
+  const scope = requestedPersonaCodes(req).filter(code =>
     REVIEWER_PERSONAS[code].appliesTo(req.program)
   );
 
@@ -336,7 +366,7 @@ export async function runReviewerSimulation(
   // 2026-10-15: the caller's packet was used as given while the named
   // defensePacketId was stored as the packet that "fed the inputs".
   const recordedPacket = req.defensePacketId
-    ? await loadRecordedPacket(req.organizationId, req.programId, req.defensePacketId)
+    ? await loadRecordedPacket(req.organizationId, req.programId, req.defensePacketId, admittedScope!)
     : null;
   const packet = recordedPacket?.facts ?? null;
 
@@ -385,30 +415,24 @@ export async function runReviewerSimulation(
   // 8. Persist (unless dryRun)
   let runId: string | null = null;
   if (!req.dryRun) {
-    const [row] = await db
-      .insert(reviewerSimulationRuns)
-      .values({
-        organizationId: req.organizationId,
-        programId: req.programId,
-        triggeredBy: req.triggeredBy ?? 'system',
-        trigger: req.trigger ?? 'manual',
-        personaScope: scope,
-        inputsHash,
-        questions,
-        questionCount: questions.length,
-        criticalCount,
-        warningCount,
-        infoCount,
-        perPersonaCounts,
-        defensePacketId: inputsSource.defensePacketId,
-        summary: {
-          personaQuestionCount: personaQuestions.length,
-          notAssessedQuestionCount: notAssessed.length,
-          inputsSource,
-        },
-      })
-      .returning({ id: reviewerSimulationRuns.id });
-    runId = row?.id ?? null;
+    // Record reads can yield while access changes. Recheck immediately before
+    // the one canonical INSERT, on the same verified producer executor.
+    const currentScope = await admitProgramRecords(req, admittedScope, true);
+    const { rows } = await currentScope.executor.query(
+      `INSERT INTO reviewer_simulation_runs
+        (organization_id, program_id, triggered_by, trigger, persona_scope, inputs_hash,
+         questions, question_count, critical_count, warning_count, info_count, per_persona_counts,
+         defense_packet_id, summary)
+       VALUES ($1,$2::uuid,$3,$4,$5::json,$6,$7::json,$8,$9,$10,$11,$12::json,$13::uuid,$14::json)
+       RETURNING id`,
+      [req.organizationId, req.programId, String(currentScope.userId), req.trigger ?? 'manual',
+        JSON.stringify(scope), inputsHash, JSON.stringify(questions), questions.length, criticalCount, warningCount, infoCount,
+        JSON.stringify(perPersonaCounts), inputsSource.defensePacketId,
+        JSON.stringify({ personaQuestionCount: personaQuestions.length, notAssessedQuestionCount: notAssessed.length, inputsSource })],
+    );
+    const row = rows[0];
+    if (typeof row?.id !== 'string' || !row.id) throw new Error('Simulation storage returned no run identity');
+    runId = row.id;
   }
 
   return {

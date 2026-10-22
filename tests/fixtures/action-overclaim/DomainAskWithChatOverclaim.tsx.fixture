@@ -1,0 +1,13 @@
+// A file whose own `ask` is a typed domain helper sets aside bare `ask(` calls
+// only. An `onAsk(` sentence behind a governed label is still the chat ask, and
+// is flagged.
+type Decision = 'approved' | 'declined';
+export function DecisionRow({ onDecide, onAsk }: { onDecide: (d: Decision) => void; onAsk: (t: string) => void }) {
+  const ask = (decision: Decision) => onDecide(decision);
+  return (
+    <div>
+      <button className="dr-b" onClick={() => ask('approved')}>Request approval</button>
+      <button className="dr-b" onClick={() => onAsk('Submit the decision to the dossier')}>Submit to dossier</button>
+    </div>
+  );
+}

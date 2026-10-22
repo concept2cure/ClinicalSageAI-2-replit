@@ -70,6 +70,7 @@ import {
   type SealVerdict,
 } from './sign-payload-seal.js';
 import type { ECTDLeaf } from './ectd4-validator.js';
+import type { RecordedPackageIdentitySnapshot } from './package-identity.js';
 import crypto from 'crypto';
 
 // ── Refusal taxonomy ────────────────────────────────────────────────────────
@@ -121,6 +122,8 @@ export interface SignedExportRefusalResult {
  * so it describes the record the signature actually binds.
  */
 export interface SignedExportDescriptor {
+  /** The exact applicant facts frozen into the signed package, when recorded. */
+  recordedPackageIdentity?: RecordedPackageIdentitySnapshot;
   runId: string;
   submissionId: string;
   organizationId: number;
@@ -346,6 +349,7 @@ export async function resolveSignedPackageForExport(params: {
     // '' is falsy — matches how buildSignedSnapshot stores fallback-region
     // packages that have no backbone, so the digest omits it on both sides.
     backboneXml: snapshot.backboneXml || undefined,
+    recordedPackageIdentity: snapshot.recordedPackageIdentity,
   });
   if (recomputed !== payload.payloadDigest) {
     return refuse(
@@ -392,6 +396,7 @@ export async function resolveSignedPackageForExport(params: {
       region: snapshot.region,
       submissionType: snapshot.submissionType,
       leaves: snapshot.leaves,
+      ...(snapshot.recordedPackageIdentity ? { recordedPackageIdentity: snapshot.recordedPackageIdentity } : {}),
       backboneXml: snapshot.backboneXml,
       totalSizeBytes: snapshot.totalSizeBytes,
       payloadDigest: payload.payloadDigest,

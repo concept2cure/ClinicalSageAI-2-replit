@@ -1,0 +1,15 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/gateway-account-qualification.test.ts > account settings disclose credential state and agency qualification separately > serializes readiness for each environment without promoting configured accounts to qualified 15ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > configured FDA credentials plus implemented offline transport never establish agency acceptance 3ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > regional generic protocol adapters remain unverified rather than becoming qualified by discovery 1ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > a missing runtime implementation is reported unavailable even if the same account has credentials 0ms
+ ✓ server/services/submission-gateways/__tests__/acknowledgement-timestamps.test.ts > receipt timestamps preserve what is actually known > never invents agency receipt time when downloading a platform-generated record 1ms
+ ✓ server/services/submission-gateways/__tests__/acknowledgement-timestamps.test.ts > receipt timestamps preserve what is actually known > preserves the recorded receipt timestamp while identifying the separately generated summary 1ms
+
+ Test Files  3 passed (3)
+      Tests  6 passed (6)
+   Start at  03:19:49
+   Duration  1.56s (transform 818ms, setup 86ms, import 1.05s, tests 28ms, environment 0ms)
+

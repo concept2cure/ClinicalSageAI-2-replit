@@ -7,7 +7,7 @@
  */
 import { liveGetOrNull } from '../dataConnect';
 import { validReceiptId } from './filingTarget';
-import { mutateVerbatim, type MutateResult } from './SubmissionSeqWorkspaces';
+import { mutateVerbatim, mutationUnconfirmed, type MutateResult } from './SubmissionSeqWorkspaces';
 import { documentSourceLabel } from '@shared/regulatory/canonical-document';
 
 export type Verdict = { tone: 'ok' | 'err'; text: string } | null;
@@ -89,7 +89,7 @@ function copyReceipt(snap: SnapshotReply, docId: string): CopyResult | null {
 }
 
 function snapshotFailure(snap: MutateResult<unknown>): CopyResult {
-  const unconfirmed = !!snap.unconfirmed || snap.data != null;
+  const unconfirmed = !!snap.unconfirmed || snap.data != null || mutationUnconfirmed(snap.status, snap.code);
   return {
     ok: false, unconfirmed,
     verdict: { tone: 'err', text: unconfirmed
@@ -98,7 +98,7 @@ function snapshotFailure(snap: MutateResult<unknown>): CopyResult {
   };
 }
 export function leafFailure(put: MutateResult<unknown>, snapshotId: number, sequence: string, sectionCode: string) {
-  const unconfirmed = !!put.unconfirmed || put.data != null;
+  const unconfirmed = !!put.unconfirmed || put.data != null || mutationUnconfirmed(put.status, put.code);
   return {
     unconfirmed,
     verdict: { tone: 'err' as const, text: unconfirmed

@@ -40,6 +40,8 @@ vi.mock('../../../routes/c2c/actions.js', () => ({ recordGovernedAction }));
 vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
 vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
 
+const canonicalRevise = vi.hoisted(() => vi.fn(async () => ({ id: 3, doc_number: 'SOP-900', version: '4.0', status: 'draft' })));
+vi.mock('../../qms/controlled-document-service', () => ({ reviseControlledQmsDocument: canonicalRevise }));
 import { getToolHandler } from '../AnaToolExecutor';
 
 const CTX = { organizationId: 7, userId: 42, humanConfirmed: true } as never;
@@ -66,6 +68,7 @@ describe('revise_qms_document refuses a caller who may not edit', () => {
     expect(out.error).toMatch(/Insufficient permissions/);
     expect(connect).not.toHaveBeenCalled();
     expect(recordGovernedAction).not.toHaveBeenCalled();
+    expect(canonicalRevise).not.toHaveBeenCalled();
   });
 
   it('reads the role for the verified principal, not for anything in the input', async () => {
@@ -81,6 +84,7 @@ describe('revise_qms_document refuses a caller who may not edit', () => {
     expect(out.error).toMatch(/at least 8 characters/i);
     expect(connect).not.toHaveBeenCalled();
     expect(recordGovernedAction).not.toHaveBeenCalled();
+    expect(canonicalRevise).not.toHaveBeenCalled();
   });
 });
 
@@ -90,7 +94,9 @@ describe('revise_qms_document runs for an editor-capable role', () => {
     const out = await revise();
     expect(out.ok).toBe(true);
     expect(out.version).toBe('4.0');
-    expect(connect).toHaveBeenCalledTimes(1);
-    expect(recordGovernedAction).toHaveBeenCalledTimes(1);
+    expect(canonicalRevise).toHaveBeenCalledTimes(1);
+    expect(canonicalRevise).toHaveBeenCalledWith(expect.objectContaining({ tenantId: 7, actor: expect.objectContaining({ id: '42' }) }), 3, INPUT.reason,undefined);
+    // The canonical service owns its transaction and audit (proved by the real PGlite atomicity suite).
+    expect(connect).not.toHaveBeenCalled();
   });
 });

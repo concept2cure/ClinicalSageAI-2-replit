@@ -1,0 +1,27 @@
+{
+  "verified": true,
+  "clients": [
+    {
+      "database": "c2c_audit_wave3_boot_tls",
+      "role": "postgres",
+      "rolsuper": true,
+      "rolbypassrls": true,
+      "ssl": true,
+      "version": "TLSv1.3",
+      "cipher": "TLS_AES_256_GCM_SHA384",
+      "encrypted": true,
+      "certificateAuthorized": true
+    },
+    {
+      "database": "c2c_audit_wave3_boot_tls",
+      "role": "app_service",
+      "rolsuper": false,
+      "rolbypassrls": false,
+      "ssl": true,
+      "version": "TLSv1.3",
+      "cipher": "TLS_AES_256_GCM_SHA384",
+      "encrypted": true,
+      "certificateAuthorized": true
+    }
+  ]
+}

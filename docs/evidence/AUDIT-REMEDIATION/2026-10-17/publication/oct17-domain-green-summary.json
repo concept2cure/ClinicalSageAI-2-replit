@@ -1,0 +1,302 @@
+{
+  "rawArtifact": {
+    "artifact": "oct17-domain-green.json",
+    "sha256": "9d8c333bb22aafeca28d820b7e45422f76f71ea1c76a7fb2517b7dfb942bbfe5",
+    "bytes": 74166
+  },
+  "success": true,
+  "passedCases": 189,
+  "failedCases": 0,
+  "pendingCases": 0,
+  "files": 24,
+  "rows": [
+    {
+      "file": "server/services/__tests__/figure-auto-insert-fails-closed.test.ts",
+      "status": "passed",
+      "cases": 3,
+      "counts": {
+        "passed": 3,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/__tests__/figure-generation-a-failed-store-or-read-is-a-failure.test.ts",
+      "status": "passed",
+      "cases": 4,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/__tests__/figure-generation-governance.test.ts",
+      "status": "passed",
+      "cases": 6,
+      "counts": {
+        "passed": 6,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/__tests__/figure-generation-reports-rows-used-not-a-confidence.test.ts",
+      "status": "passed",
+      "cases": 4,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/__tests__/figure-numbers-count-untargeted-figures.pglite.test.ts",
+      "status": "passed",
+      "cases": 1,
+      "counts": {
+        "passed": 1,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/__tests__/keyword-consistency-not-assessed.test.ts",
+      "status": "passed",
+      "cases": 1,
+      "counts": {
+        "passed": 1,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/__tests__/part11-audit-receipts.test.ts",
+      "status": "passed",
+      "cases": 10,
+      "counts": {
+        "passed": 10,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/__tests__/part11-release-signature-single-write-path.pglite.integration.test.ts",
+      "status": "passed",
+      "cases": 16,
+      "counts": {
+        "passed": 16,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/__tests__/signature-content-verification.test.ts",
+      "status": "passed",
+      "cases": 13,
+      "counts": {
+        "passed": 13,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/__tests__/signature-write-path-single.test.ts",
+      "status": "passed",
+      "cases": 7,
+      "counts": {
+        "passed": 7,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/etmf/__tests__/tmf-document-ref-guard.test.ts",
+      "status": "passed",
+      "cases": 9,
+      "counts": {
+        "passed": 9,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/etmf/__tests__/tmf-inspection-package.test.ts",
+      "status": "passed",
+      "cases": 3,
+      "counts": {
+        "passed": 3,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/etmf/__tests__/tmf-readiness-counts-only-verified-documents.test.ts",
+      "status": "passed",
+      "cases": 8,
+      "counts": {
+        "passed": 8,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ind-lifecycle/__tests__/ind-annual-report-due-from-period.test.ts",
+      "status": "passed",
+      "cases": 4,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ind-lifecycle/__tests__/ind-registers-persistence-pglite.integration.test.ts",
+      "status": "passed",
+      "cases": 23,
+      "counts": {
+        "passed": 23,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/licensing/__tests__/entitlements.test.ts",
+      "status": "passed",
+      "cases": 14,
+      "counts": {
+        "passed": 14,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/licensing/__tests__/eula-acceptance-audit.pglite.test.ts",
+      "status": "passed",
+      "cases": 12,
+      "counts": {
+        "passed": 12,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/licensing/__tests__/eula-reads-fail-closed-and-acceptance-binds-text.test.ts",
+      "status": "passed",
+      "cases": 10,
+      "counts": {
+        "passed": 10,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts",
+      "status": "passed",
+      "cases": 10,
+      "counts": {
+        "passed": 10,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/regulatory-graph/__tests__/defense-packet-staleness-names-the-machine-actor.test.ts",
+      "status": "passed",
+      "cases": 2,
+      "counts": {
+        "passed": 2,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/regulatory-graph/__tests__/defense-packet-staleness.test.ts",
+      "status": "passed",
+      "cases": 10,
+      "counts": {
+        "passed": 10,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/ack-received-at-not-invented.test.ts",
+      "status": "passed",
+      "cases": 5,
+      "counts": {
+        "passed": 5,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/acknowledgement-timestamps.test.ts",
+      "status": "passed",
+      "cases": 2,
+      "counts": {
+        "passed": 2,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts",
+      "status": "passed",
+      "cases": 12,
+      "counts": {
+        "passed": 12,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    }
+  ]
+}

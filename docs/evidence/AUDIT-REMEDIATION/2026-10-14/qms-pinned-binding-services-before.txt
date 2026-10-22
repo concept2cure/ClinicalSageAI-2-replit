@@ -1,0 +1,606 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+   ✓ QMS quality: 9 controlled docs, 0 training acks, 6 changes, 9 links seeded
+
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > seeds the controlled-document register and change-control log 6ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > summary reflects the seeded lifecycle spread 2ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > counts every change past its target whose implementation is unfinished, whatever its stage 1ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > flags each such change on the register from the server’s date, with the same predicate 2ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > reads every change’s linked records for the register in one org-scoped query 3ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > links a change to its deviation and validation records 3ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > seeds no effective document and no training against one: approval is a signature the seed cannot give 1ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > advances proposed → assessed → approved (by a different user) → implemented → verified → closed 10ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > rejects an illegal transition (closed is terminal) 3ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > refuses approval without a signature, for the proposer and anyone else, and changes nothing 4ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > adds and removes a cross-reference link 3ms
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts
+{
+  "timestamp": "2026-10-14T06:56:39.135Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:56:39.136Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/qms-legacy-api-retired.test.ts
+{
+  "timestamp": "2026-10-14T06:56:39.136Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts
+[database] Database connection successful
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ GCC Platform API routes mounted (eCTD, Vault, Signing, Site Intel, Labeling)
+✅ eCTD Co-Author (auth-gated) routes mounted successfully
+✅ eCTD Documents (auth-gated) routes mounted successfully
+✅ eCTD Compile (auth-gated) routes mounted successfully
+✅ eCTD Export (auth-gated) routes mounted successfully
+✅ CSR Jobs (auth-gated) routes mounted successfully
+✅ Project Charters (auth-gated) routes mounted successfully
+✅ eCTD Submission Agent (auth-gated) routes mounted successfully
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ eCTD Leaf Preflight route mounted (auth-gated): /api/ectd/validate/preflight
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ eCTD v4.0 + controlled-vocabulary API mounted (auth-gated): /api/ectd/v4/*, /api/ectd/controlled-vocab
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Biotech Artifact Generator routes mounted (10 document types, auth-gated)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Submission-Package Orchestrator routes mounted (M2/M3/CSR/hardened-validation, auth-gated)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Submission Release Signing route mounted (Path-to-GA §C.11, auth-gated)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ HAQ Response Manager routes mounted (question tracking, AI drafting, review workflow)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Project Sections API routes loaded
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ DocumentDataCenterService initialized with AI-powered tagging
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Document Data Center API routes mounted (AI-powered 3-axis tagging)
+✅ Evidence routes mounted successfully
+✅ Evidence Search routes mounted successfully
+✅ Evidence Management routes mounted successfully
+✅ Evidence Fabric BFF routes mounted successfully
+✅ DOCX Factory BFF routes mounted successfully
+✅ Knowledge Base BFF routes mounted successfully
+✅ Predicate Intelligence BFF routes mounted successfully
+✅ Regulatory Graph routes mounted successfully
+✅ Change Propagation (governed fact change) routes mounted successfully
+✅ Standards Catalog routes mounted successfully
+✅ AI/ML PCCP routes mounted successfully
+✅ GSPR Catalog + Mappings routes mounted successfully
+✅ Post-Market Documents routes mounted successfully
+✅ Evidence Sufficiency routes mounted successfully
+✅ Q-Submissions (Pre-Sub / SIR / SRD) routes mounted successfully
+✅ CAPA + complaint + MDR / vigilance triage routes mounted successfully
+✅ IVD lifecycle calculators (analytical, software, change, registration) routes mounted successfully
+✅ IVD knowledge base (scientific / legal / regulatory intelligence corpus) routes mounted successfully
+✅ IVD assessment persistence (saved calculator results + generated documents) routes mounted successfully
+✅ Predicate Intelligence — ops probes routes mounted successfully
+✅ Tenant data export + attestation routes mounted successfully
+✅ AnA tool policy (per-tenant allow/deny) routes mounted successfully
+✅ AI placement policy (per-tenant residency / ZDR / substrate and vendor allow-lists) routes mounted successfully
+✅ Agency gateway accounts (platform or the organisation's own, per agency and environment) routes mounted successfully
+✅ AnA MDX context snapshot (UI consumption) routes mounted successfully
+✅ 510(k) live document preview (assembled view + Markdown) routes mounted successfully
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Programs gateway routes mounted (SE Matrix + Defense Packet)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ CERV2 Sections API routes mounted (510(k) section tree navigation)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ CERV2 Versions API routes mounted (version history & sessions)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Biostatistics Platform routes mounted (7 capabilities)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ AnA Biostats Governed Documents route mounted (/api/ana-biostats/governed-documents)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ AnA Biostats Operating Function routes mounted
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Trial Corpus routes mounted (benchmark, extract, ingest)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Workflow API routes mounted
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ API Key Management routes mounted
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+Loaded 0 academic documents
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Public API v1 routes mounted (CSR, Regulatory, Endpoints, Precedent, Trial Design)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ CTD Onboarding Pipeline routes mounted (projects, upload, validation, gaps)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Biologics Intelligence & Combination Product routes mounted
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Unified Cortex Query API initialized
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Cortex Unified API gateway mounted at /api/cortex
+
+stderr | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+{
+  "timestamp": "2026-10-14T06:56:48.661Z",
+  "level": "warn",
+  "message": "[cortex-unified] Cortex management routes require explicit initialization with database pool",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+{
+  "timestamp": "2026-10-14T06:56:48.661Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /advisory (AI advisory)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+{
+  "timestamp": "2026-10-14T06:56:48.661Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /query (AI queries)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+{
+  "timestamp": "2026-10-14T06:56:48.769Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /ana (AnA 1.0 RI integration)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Cortex Management API routes mounted (graph ops, quality, versioning)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Folder management routes mounted
+✅ Document + Knowledge route family registered
+
+stderr | server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a manager still revokes a supplier, and the change is audited
+{
+  "timestamp": "2026-10-14T06:56:48.855Z",
+  "level": "error",
+  "message": "[mdx-qms] supp-patch failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a member still dispositions nonconforming product, and the change is audited
+{
+  "timestamp": "2026-10-14T06:56:48.861Z",
+  "level": "error",
+  "message": "[mdx-qms] nc-disposition failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer still acknowledges training on a procedure: that is their own record, not a governed change
+{
+  "timestamp": "2026-10-14T06:56:48.878Z",
+  "level": "error",
+  "message": "[mdx-qms] training-ack failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition 4435ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot supersede an effective document through POST /api/qms/documents/11/transition 5ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot revoke a supplier through POST /api/qms/suppliers/12/approval 3ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot disposition nonconforming product through POST /api/qms/nonconformances/13/disposition 3ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > an editor cannot either: the door is gone, not narrowed 4ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > none of its reads answer either 11ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot requalify or revoke a supplier through PATCH /api/mdx/qms/suppliers/12 7ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot disposition nonconforming product through PATCH /api/mdx/qms/nonconforming/13/disposition 4ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot qualify a supplier through POST /api/mdx/qms/suppliers 2ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot record a nonconformance through POST /api/mdx/qms/nonconforming 2ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot log an internal audit through POST /api/mdx/qms/internal-audits 3ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot close out an internal audit through PATCH /api/mdx/qms/internal-audits/14 2ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot sign off a management review through POST /api/mdx/qms/management-reviews 1ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot retire a document (already gated by 6582e3a3) through POST /api/mdx/qms/documents/11/retire 2ms
+ × server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a manager still revokes a supplier, and the change is audited 6ms
+   → expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a member still dispositions nonconforming product, and the change is audited 7ms
+   → expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a manager still routes a draft for review: the twin of transition to=in_review 6ms
+   → expected 400 to be 200 // Object.is equality
+ × server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer still acknowledges training on a procedure: that is their own record, not a governed change 8ms
+   → expected 500 to be 201 // Object.is equality
+stdout | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+{
+  "timestamp": "2026-10-14T06:56:49.648Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:56:49.649Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+{
+  "timestamp": "2026-10-14T06:56:49.650Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+{
+  "timestamp": "2026-10-14T06:56:49.740Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > creates a numbered QMS entry and canonical editable template sections on one transaction 44ms
+ ✓ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > refuses a foreign project and never creates a register entry or editing copy 4ms
+ ✓ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > refuses a same-organization private project to an unshared member, regardless of a claimed admin role 6ms
+ ✓ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > recovers a legacy registry-only effective document through an explicit authored revision and preserves honest prior history 28ms
+ ✓ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > replays the additive migration and leaves unrelated document mutation and deletion functional 7ms
+ ✓ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > review locks content; approval binds actual text; revision preserves signed content and creates a new editable copy 51ms
+stderr | server/routes/__tests__/authoringBindingColumnStates.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringBindingColumnStates.test.ts
+{
+  "timestamp": "2026-10-14T06:56:53.348Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringBindingColumnStates.test.ts
+{
+  "timestamp": "2026-10-14T06:56:53.513Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:56:53.513Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringBindingColumnStates.test.ts
+{
+  "timestamp": "2026-10-14T06:56:53.514Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringBindingColumnStates.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/authoringBindingColumnStates.test.ts > creating a document when the check could NOT RUN > does not claim the deployment lacks the column
+{
+  "timestamp": "2026-10-14T06:56:54.940Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "bb13dd03-c88e-40d7-9e39-875ae07a4e1b",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/authoringBindingColumnStates.test.ts > creating a document when the check could NOT RUN > does not claim the deployment lacks the column
+{
+  "timestamp": "2026-10-14T06:56:54.940Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "bb13dd03-c88e-40d7-9e39-875ae07a4e1b",
+    "error": "DOCUMENT_NOT_FOUND"
+  }
+}
+
+stderr | server/routes/__tests__/authoringBindingColumnStates.test.ts > creating a document when the check could NOT RUN > still creates the document, unbound
+{
+  "timestamp": "2026-10-14T06:56:54.943Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "457659e9-089a-428b-88ed-b548659cd396",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/authoringBindingColumnStates.test.ts > creating a document when the check could NOT RUN > still creates the document, unbound
+{
+  "timestamp": "2026-10-14T06:56:54.943Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "457659e9-089a-428b-88ed-b548659cd396",
+    "error": "DOCUMENT_NOT_FOUND"
+  }
+}
+
+stderr | server/routes/__tests__/authoringBindingColumnStates.test.ts > creating a document when the check could NOT RUN > DOES name the column when it is genuinely absent
+{
+  "timestamp": "2026-10-14T06:56:54.946Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "37e315cc-7af2-4321-98e1-88b9834eb2f2",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/authoringBindingColumnStates.test.ts > creating a document when the check could NOT RUN > DOES name the column when it is genuinely absent
+{
+  "timestamp": "2026-10-14T06:56:54.946Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "37e315cc-7af2-4321-98e1-88b9834eb2f2",
+    "error": "DOCUMENT_NOT_FOUND"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringBindingColumnStates.test.ts > renaming a section code where the binding column is ABSENT > does not 500 — nothing can be bound, so nothing can break 27ms
+ ✓ server/routes/__tests__/authoringBindingColumnStates.test.ts > renaming a section code where the binding column is ABSENT > does not consult the bound-document predicate at all 9ms
+ ✓ server/routes/__tests__/authoringBindingColumnStates.test.ts > renaming a section code where the check could NOT RUN > refuses rather than guessing, and says nothing was changed 4ms
+ ✓ server/routes/__tests__/authoringBindingColumnStates.test.ts > renaming a section code where the column IS present > still locks the code on a bound document 3ms
+ ✓ server/routes/__tests__/authoringBindingColumnStates.test.ts > creating a document when the check could NOT RUN > does not claim the deployment lacks the column 6ms
+ ✓ server/routes/__tests__/authoringBindingColumnStates.test.ts > creating a document when the check could NOT RUN > still creates the document, unbound 3ms
+ ✓ server/routes/__tests__/authoringBindingColumnStates.test.ts > creating a document when the check could NOT RUN > DOES name the column when it is genuinely absent 3ms
+ ✓ tests/schema-contract/governed-document-binding.contract.test.ts > an authored document binds to its project filing > binds to the governed document of the open project 1578ms
+ ✓ tests/schema-contract/governed-document-binding.contract.test.ts > unbound is legitimate — and never silent > no project open — org-wide, with a reason 1233ms
+ ✓ tests/schema-contract/governed-document-binding.contract.test.ts > unbound is legitimate — and never silent > a program type with no document class does not guess a near neighbour 1187ms
+ ✓ tests/schema-contract/governed-document-binding.contract.test.ts > unbound is legitimate — and never silent > a project with no governed document yet says so 1194ms
+ ✓ tests/schema-contract/governed-document-binding.contract.test.ts > unbound is legitimate — and never silent > a malformed project id is refused before it reaches a uuid cast 1176ms
+ ✓ tests/schema-contract/governed-document-binding.contract.test.ts > tenant isolation > another org's project is indistinguishable from one that does not exist 1158ms
+ ✓ tests/schema-contract/governed-document-binding.contract.test.ts > tenant isolation > and the other org still binds its own 1161ms
+stderr | server/routes/__tests__/authoringBindingColumnGuard.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringBindingColumnGuard.test.ts
+{
+  "timestamp": "2026-10-14T06:57:04.586Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringBindingColumnGuard.test.ts
+{
+  "timestamp": "2026-10-14T06:57:04.738Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:57:04.739Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringBindingColumnGuard.test.ts
+{
+  "timestamp": "2026-10-14T06:57:04.739Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringBindingColumnGuard.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/authoringBindingColumnGuard.test.ts > POST /docs — governed binding column > creates the document when the binding column is ABSENT, rather than failing
+{
+  "timestamp": "2026-10-14T06:57:05.639Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "e6e3f9f5-7da8-4aec-b8f2-7cc501ab09df",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/authoringBindingColumnGuard.test.ts > POST /docs — governed binding column > creates the document when the binding column is ABSENT, rather than failing
+{
+  "timestamp": "2026-10-14T06:57:05.640Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "e6e3f9f5-7da8-4aec-b8f2-7cc501ab09df",
+    "error": "DOCUMENT_NOT_FOUND"
+  }
+}
+
+stderr | server/routes/__tests__/authoringBindingColumnGuard.test.ts > POST /docs — governed binding column > says the document is NOT bound, rather than claiming a binding it dropped
+{
+  "timestamp": "2026-10-14T06:57:05.651Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "c18fec0c-5322-4188-9ccd-de6decd57a85",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/authoringBindingColumnGuard.test.ts > POST /docs — governed binding column > says the document is NOT bound, rather than claiming a binding it dropped
+{
+  "timestamp": "2026-10-14T06:57:05.652Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "c18fec0c-5322-4188-9ccd-de6decd57a85",
+    "error": "DOCUMENT_NOT_FOUND"
+  }
+}
+
+stderr | server/routes/__tests__/authoringBindingColumnGuard.test.ts > POST /docs — governed binding column > still binds when the column IS present
+{
+  "timestamp": "2026-10-14T06:57:05.656Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "e95d4573-5bc4-4d70-aa05-0181e544f070",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/authoringBindingColumnGuard.test.ts > POST /docs — governed binding column > still binds when the column IS present
+{
+  "timestamp": "2026-10-14T06:57:05.656Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "e95d4573-5bc4-4d70-aa05-0181e544f070",
+    "error": "DOCUMENT_NOT_FOUND"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringBindingColumnGuard.test.ts > POST /docs — governed binding column > creates the document when the binding column is ABSENT, rather than failing 30ms
+ ✓ server/routes/__tests__/authoringBindingColumnGuard.test.ts > POST /docs — governed binding column > says the document is NOT bound, rather than claiming a binding it dropped 6ms
+ ✓ server/routes/__tests__/authoringBindingColumnGuard.test.ts > POST /docs — governed binding column > still binds when the column IS present 4ms
+ ✓ server/services/audit/__tests__/audit-row-headers.test.ts > setAuditRowHeaders > a lost row: persisted false and the stable code, never the store text 2ms
+ ✓ server/services/audit/__tests__/audit-row-headers.test.ts > setAuditRowHeaders > a written row: persisted true and no code 0ms
+ ✓ server/services/audit/__tests__/audit-row-headers.test.ts > setAuditRowHeaders > no outcome (no audited write happened): no headers 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a manager still revokes a supplier, and the change is audited
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/qms-legacy-api-retired.test.ts:212:24
+    210|     as('manager');
+    211|     const res = await request(await productionApp()).patch('/api/mdx/q…
+    212|     expect(res.status).toBe(200);
+       |                        ^
+    213|     expect(H.supplier?.approval_status).toBe('revoked');
+    214|     expect(H.audit).toEqual([expect.objectContaining({ action: 'mdx.qm…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a member still dispositions nonconforming product, and the change is audited
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/qms-legacy-api-retired.test.ts:223:24
+    221|       .patch('/api/mdx/qms/nonconforming/13/disposition')
+    222|       .send({ disposition: 'rework', dispositionRationale: 'Deburr and…
+    223|     expect(res.status).toBe(200);
+       |                        ^
+    224|     expect(H.nc?.disposition).toBe('rework');
+    225|     expect(H.audit).toEqual([expect.objectContaining({ action: 'mdx.qm…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a manager still routes a draft for review: the twin of transition to=in_review
+AssertionError: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ server/routes/__tests__/qms-legacy-api-retired.test.ts:232:24
+    230|     H.doc = { ...H.doc, status: 'draft' };
+    231|     const res = await request(await productionApp()).patch('/api/mdx/q…
+    232|     expect(res.status).toBe(200);
+       |                        ^
+    233|     expect(H.doc?.status).toBe('in_review');
+    234|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer still acknowledges training on a procedure: that is their own record, not a governed change
+AssertionError: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/__tests__/qms-legacy-api-retired.test.ts:238:24
+    236|   it('a viewer still acknowledges training on a procedure: that is the…
+    237|     const res = await request(await productionApp()).post('/api/mdx/qm…
+    238|     expect(res.status).toBe(201);
+       |                        ^
+    239|     expect(H.audit).toEqual([expect.objectContaining({ action: 'mdx.qm…
+    240|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed | 6 passed (7)
+      Tests  4 failed | 51 passed (55)
+   Start at  06:56:35
+   Duration  30.55s (transform 8.10s, setup 139ms, import 12.56s, tests 16.95s, environment 1ms)
+

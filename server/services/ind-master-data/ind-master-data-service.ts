@@ -40,12 +40,13 @@
  * own error text stays in `recordAuditRow`'s log line and never reaches a
  * returned value; `auditTrail.message` is the caller-safe sentence.
  *
- * The read paths (`list*`, `get*`) write no audit row and are unchanged.
+ * The read paths (`list*`, `get*`) write no audit row. Sponsor reads and write
+ * receipts also carry the exact database revision for conflict-safe editing.
  *
  * @module server/services/ind-master-data/ind-master-data-service
  */
 
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, getTableColumns, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import {
   sponsors,
@@ -54,18 +55,18 @@ import {
   type Sponsor,
   type RegulatoryAgent,
   type Investigator,
-  type InsertSponsor,
   type InsertRegulatoryAgent,
   type InsertInvestigator,
 } from '../../../shared/schema/ind-master-data';
 import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { createScopedLogger } from '../../utils/logger';
+import { normalizeSponsorBusiness, sponsorBusinessFacts, sponsorReason, type SponsorBusinessPatch } from './sponsor-input';
 
 const logger = createScopedLogger('ind-master-data-service');
 
 // ── Standardized errors ─────────────────────────────────────────────────────
 
-export type IndMasterDataErrorCode = 'NOT_FOUND' | 'VALIDATION';
+export type IndMasterDataErrorCode = 'NOT_FOUND' | 'VALIDATION' | 'SPONSOR_REVISION_CHANGED';
 
 export class IndMasterDataError extends Error {
   constructor(public code: IndMasterDataErrorCode, message: string) {
@@ -81,7 +82,7 @@ interface Ctx {
 
 // Fields a caller may set; the service always overrides organizationId/createdBy
 // from ctx so request input can never spoof tenant or actor.
-type SponsorWrite = Omit<InsertSponsor, 'id' | 'organizationId' | 'createdBy' | 'createdAt' | 'updatedAt'>;
+type SponsorWrite = SponsorBusinessPatch & { name: string };
 type RegulatoryAgentWrite = Omit<InsertRegulatoryAgent, 'id' | 'organizationId' | 'createdBy' | 'createdAt' | 'updatedAt'>;
 type InvestigatorWrite = Omit<InsertInvestigator, 'id' | 'organizationId' | 'createdBy' | 'createdAt' | 'updatedAt'>;
 
@@ -93,17 +94,30 @@ type InvestigatorWrite = Omit<InsertInvestigator, 'id' | 'organizationId' | 'cre
 // travels with it — including out through the router, which passes the object
 // straight to `res.json`. Which action's row it is, is stated on each function.
 
-export type AuditedSponsor = Sponsor & { auditTrail: AuditRowOutcome };
+export type SponsorWithRevision = Sponsor & { revision: string };
+export type AuditedSponsor = SponsorWithRevision & { auditTrail: AuditRowOutcome };
 export type AuditedRegulatoryAgent = RegulatoryAgent & { auditTrail: AuditRowOutcome };
 export type AuditedInvestigator = Investigator & { auditTrail: AuditRowOutcome };
 
 // ── Sponsors ────────────────────────────────────────────────────────────────
 
-export async function createSponsor(input: SponsorWrite, ctx: Ctx): Promise<AuditedSponsor> {
+/** Exact UTC database timestamp; JS Date would discard PostgreSQL microseconds. */
+export const sponsorRevisionExpression = sql<string>`to_char(${sponsors.updatedAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`;
+const sponsorProjection = { ...getTableColumns(sponsors), revision: sponsorRevisionExpression };
+
+export interface SponsorGovernanceOptions {
+  reason: string;
+  /** Required by HTTP PATCH; optional only for compatibility with service callers. */
+  expectedRevision?: string;
+}
+
+export async function createSponsor(input: SponsorWrite, ctx: Ctx, governance?: SponsorGovernanceOptions): Promise<AuditedSponsor> {
+  const facts = normalizeSponsorBusiness(input, 'create') as SponsorWrite;
+  const reason = governance ? sponsorReason(governance.reason) : undefined;
   const [row] = await db
     .insert(sponsors)
-    .values({ ...input, organizationId: ctx.organizationId, createdBy: ctx.userId })
-    .returning();
+    .values({ ...facts, organizationId: ctx.organizationId, createdBy: ctx.userId })
+    .returning(sponsorProjection);
   // WO-16C #133: `auditTrail` is the 'IND_SPONSOR_CREATED' row. The INSERT above
   // has already returned and is the record of the new sponsor, so a lost audit
   // row does not undo it; the sponsor stands and the caller is told.
@@ -113,47 +127,57 @@ export async function createSponsor(input: SponsorWrite, ctx: Ctx): Promise<Audi
     action: 'IND_SPONSOR_CREATED',
     resourceType: 'ind_sponsor',
     resourceId: row.id,
-    details: { name: row.name },
+    reason,
+    details: { name: row.name, before: null, after: sponsorBusinessFacts(row as Sponsor) },
   });
   logger.info('Created IND sponsor', {
     sponsorId: row.id,
     organizationId: ctx.organizationId,
     auditRowPersisted: auditTrail.persisted,
   });
-  return { ...(row as Sponsor), auditTrail };
+  return { ...(row as SponsorWithRevision), auditTrail };
 }
 
-export async function listSponsors(ctx: { organizationId: number }): Promise<Sponsor[]> {
+export async function listSponsors(ctx: { organizationId: number }): Promise<SponsorWithRevision[]> {
   const rows = await db
-    .select()
+    .select(sponsorProjection)
     .from(sponsors)
     .where(eq(sponsors.organizationId, ctx.organizationId))
     .orderBy(desc(sponsors.updatedAt));
-  return rows as Sponsor[];
+  return rows as SponsorWithRevision[];
 }
 
-export async function getSponsor(id: string, ctx: { organizationId: number }): Promise<Sponsor> {
+export async function getSponsor(id: string, ctx: { organizationId: number }): Promise<SponsorWithRevision> {
   const [row] = await db
-    .select()
+    .select(sponsorProjection)
     .from(sponsors)
     .where(and(eq(sponsors.id, id), eq(sponsors.organizationId, ctx.organizationId)))
     .limit(1);
   if (!row) throw new IndMasterDataError('NOT_FOUND', 'Sponsor not found for this organization.');
-  return row as Sponsor;
+  return row as SponsorWithRevision;
 }
 
 export async function updateSponsor(
   id: string,
   patch: Partial<SponsorWrite>,
   ctx: Ctx,
+  governance?: SponsorGovernanceOptions,
 ): Promise<AuditedSponsor> {
-  await getSponsor(id, ctx); // tenant ownership check
+  const facts = normalizeSponsorBusiness(patch, 'patch');
+  const reason = governance ? sponsorReason(governance.reason) : undefined;
+  const before = await getSponsor(id, ctx); // tenant ownership check
+  if (governance?.expectedRevision !== undefined && governance.expectedRevision !== before.revision) {
+    throw new IndMasterDataError('SPONSOR_REVISION_CHANGED', 'This sponsor record changed after it was read. Read the current record before saving again. Nothing was written.');
+  }
   const [row] = await db
     .update(sponsors)
-    .set({ ...patch, updatedAt: new Date() })
-    .where(and(eq(sponsors.id, id), eq(sponsors.organizationId, ctx.organizationId)))
-    .returning();
-  if (!row) throw new IndMasterDataError('NOT_FOUND', 'Sponsor not found for this organization.');
+    // Advancing in PostgreSQL preserves all six timestamp digits and cannot
+    // leave two successful writes with the same revision, even within one tick.
+    .set({ ...facts, updatedAt: sql`GREATEST(clock_timestamp(), ${sponsors.updatedAt} + interval '1 microsecond')` })
+    .where(and(eq(sponsors.id, id), eq(sponsors.organizationId, ctx.organizationId),
+      governance?.expectedRevision === undefined ? undefined : eq(sponsorRevisionExpression, governance.expectedRevision)))
+    .returning(sponsorProjection);
+  if (!row) throw new IndMasterDataError('SPONSOR_REVISION_CHANGED', 'This sponsor record changed during the save. Read the current record before saving again. Nothing was written.');
   // WO-16C #133: `auditTrail` is the 'IND_SPONSOR_UPDATED' row. The UPDATE above
   // is committed and the patch is never rolled back over a lost audit row — but
   // that row is the only place the change itself is recorded, so the caller is
@@ -164,9 +188,10 @@ export async function updateSponsor(
     action: 'IND_SPONSOR_UPDATED',
     resourceType: 'ind_sponsor',
     resourceId: id,
-    details: { fields: Object.keys(patch) },
+    reason,
+    details: { fields: Object.keys(facts), before: sponsorBusinessFacts(before), after: sponsorBusinessFacts(row as Sponsor) },
   });
-  return { ...(row as Sponsor), auditTrail };
+  return { ...(row as SponsorWithRevision), auditTrail };
 }
 
 // ── Regulatory agents (US agent — 21 CFR 312.3) ──────────────────────────────

@@ -1,0 +1,42 @@
+{
+  "checkpointCommit": "70cb689712a9517359fc82dacf4f0d61b6084fd2",
+  "cwd": "/workspace/Concept2Cure",
+  "nodeVersion": "v22.23.3",
+  "command": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node node_modules/vitest/vitest.mjs run --config docs/evidence/D2-DRAFT-TRUNCATION-RECEIPT/2026-10-17/receipt-type-baseline.config.mts server/services/ana/__tests__/batch-draft-termination-receipt.test.ts",
+  "explicitEnvironment": {
+    "NODE_OPTIONS": "--max-old-space-size=4096",
+    "PATHPrefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin"
+  },
+  "startedUtc": "2026-10-17T23:32:59.586784+00:00",
+  "finishedUtc": "2026-10-17T23:33:01.122625+00:00",
+  "exitCode": 1,
+  "sourceHashesBefore": {
+    "server/services/ana/batch-draft-result.ts": "981daafd2b37d93cd0a1a323a9de645d428e6d2903dff63cf103b83a24650401",
+    "server/services/ana/AnaToolExecutor.ts": "4660a8a54ace84fc8f857c91a6317cfa2a5b518378fe692cffaffabfd9d9fc02",
+    "server/services/ai-gateway/finish-reason.ts": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+    "server/services/ana/__tests__/batch-draft-termination-receipt.test.ts": "8afc6c12da1c8f25f781b5039b2c5868ae238dd0c8af61f30bf9b072f4fd5d0c",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "docs/evidence/D2-DRAFT-TRUNCATION-RECEIPT/2026-10-17/receipt-type-baseline.config.mts": "c03cb4d6fc8416670a95533854af3d6793b1800b8a6c563e9fd21b6542ce7dfc",
+    "docs/evidence/D2-DRAFT-TRUNCATION-RECEIPT/2026-10-17/independent-baseline-receipt.ts.txt": "96be1e89977c1e351f903b71ca6c665e7f59b9482efc96accbedbd0254c08aa5"
+  },
+  "sourceHashesAfter": {
+    "server/services/ana/batch-draft-result.ts": "981daafd2b37d93cd0a1a323a9de645d428e6d2903dff63cf103b83a24650401",
+    "server/services/ana/AnaToolExecutor.ts": "4660a8a54ace84fc8f857c91a6317cfa2a5b518378fe692cffaffabfd9d9fc02",
+    "server/services/ai-gateway/finish-reason.ts": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+    "server/services/ana/__tests__/batch-draft-termination-receipt.test.ts": "8afc6c12da1c8f25f781b5039b2c5868ae238dd0c8af61f30bf9b072f4fd5d0c",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "docs/evidence/D2-DRAFT-TRUNCATION-RECEIPT/2026-10-17/receipt-type-baseline.config.mts": "c03cb4d6fc8416670a95533854af3d6793b1800b8a6c563e9fd21b6542ce7dfc",
+    "docs/evidence/D2-DRAFT-TRUNCATION-RECEIPT/2026-10-17/independent-baseline-receipt.ts.txt": "96be1e89977c1e351f903b71ca6c665e7f59b9482efc96accbedbd0254c08aa5"
+  },
+  "sourcesUnchangedDuringRun": true,
+  "testJavaScriptIdenticalToHistoricalRuns": "receipt-type-erasure.json",
+  "tests": {
+    "failed": 23,
+    "passed": 7
+  },
+  "scope": "Only the historical canonical batch-draft-result.ts source is substituted at its original module path by the Vite load hook; all other modules are current. This is a module-only counterfactual, not a full historical application run."
+}

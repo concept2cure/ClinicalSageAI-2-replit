@@ -1,0 +1,11 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "ci:pushed-typecheck"
+  ],
+  "exitCode": 1,
+  "elapsedSeconds": 51.74,
+  "sourceUnchanged": true,
+  "sourceBindings": "source-bindings.json"
+}

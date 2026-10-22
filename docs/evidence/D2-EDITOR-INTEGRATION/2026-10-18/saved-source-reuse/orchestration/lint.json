@@ -1,0 +1,409 @@
+{
+  "orchestration-final": {
+    "rawSha256": "a378976b7d4d2cef2aac6d6cd68aaa90530047eb9f890afab8a5de9534cca8c9",
+    "files": [
+      {
+        "filePath": "/workspace/ClinicalSageAI/client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx",
+        "messages": [],
+        "suppressedMessages": [],
+        "errorCount": 0,
+        "fatalErrorCount": 0,
+        "warningCount": 0,
+        "fixableErrorCount": 0,
+        "fixableWarningCount": 0
+      },
+      {
+        "filePath": "/workspace/ClinicalSageAI/client/src/concept2cure/v2/editor/SavedAssemblySourcesNotice.tsx",
+        "messages": [],
+        "suppressedMessages": [],
+        "errorCount": 0,
+        "fatalErrorCount": 0,
+        "warningCount": 0,
+        "fixableErrorCount": 0,
+        "fixableWarningCount": 0
+      },
+      {
+        "filePath": "/workspace/ClinicalSageAI/client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx",
+        "messages": [],
+        "suppressedMessages": [],
+        "errorCount": 0,
+        "fatalErrorCount": 0,
+        "warningCount": 0,
+        "fixableErrorCount": 0,
+        "fixableWarningCount": 0
+      },
+      {
+        "filePath": "/workspace/ClinicalSageAI/client/src/concept2cure/v2/editor/assemblyBuildState.ts",
+        "messages": [],
+        "suppressedMessages": [],
+        "errorCount": 0,
+        "fatalErrorCount": 0,
+        "warningCount": 0,
+        "fixableErrorCount": 0,
+        "fixableWarningCount": 0
+      },
+      {
+        "filePath": "/workspace/ClinicalSageAI/client/src/concept2cure/v2/editor/savedAssemblySourcesController.ts",
+        "messages": [],
+        "suppressedMessages": [],
+        "errorCount": 0,
+        "fatalErrorCount": 0,
+        "warningCount": 0,
+        "fixableErrorCount": 0,
+        "fixableWarningCount": 0
+      },
+      {
+        "filePath": "/workspace/ClinicalSageAI/client/src/concept2cure/v2/editor/savedAssemblySourcesState.ts",
+        "messages": [],
+        "suppressedMessages": [],
+        "errorCount": 0,
+        "fatalErrorCount": 0,
+        "warningCount": 0,
+        "fixableErrorCount": 0,
+        "fixableWarningCount": 0
+      },
+      {
+        "filePath": "/workspace/ClinicalSageAI/client/src/concept2cure/v2/editor/savedAssemblySourcesTransport.ts",
+        "messages": [],
+        "suppressedMessages": [],
+        "errorCount": 0,
+        "fatalErrorCount": 0,
+        "warningCount": 0,
+        "fixableErrorCount": 0,
+        "fixableWarningCount": 0
+      },
+      {
+        "filePath": "/workspace/ClinicalSageAI/client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts",
+        "messages": [],
+        "suppressedMessages": [],
+        "errorCount": 0,
+        "fatalErrorCount": 0,
+        "warningCount": 0,
+        "fixableErrorCount": 0,
+        "fixableWarningCount": 0
+      }
+    ]
+  },
+  "workbench-final": {
+    "rawSha256": "873c2a51f6e37dcbfd48f1e0fa1f747a96f1ea2a36a11aa1cec541b745327a24",
+    "files": [
+      {
+        "filePath": "/workspace/ClinicalSageAI/client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+        "messages": [
+          {
+            "ruleId": "complexity",
+            "severity": 1,
+            "message": "Function 'describeAuditMetadata' has a complexity of 39. Maximum allowed is 15.",
+            "line": 337,
+            "column": 8,
+            "messageId": "complex",
+            "endLine": 337,
+            "endColumn": 38
+          },
+          {
+            "ruleId": "max-lines",
+            "severity": 1,
+            "message": "File has too many lines (4766). Maximum allowed is 500.",
+            "line": 786,
+            "column": 1,
+            "messageId": "exceed",
+            "endLine": 6315,
+            "endColumn": 1
+          },
+          {
+            "ruleId": "max-lines-per-function",
+            "severity": 1,
+            "message": "Function 'DocumentWorkbench' has too many lines (3967). Maximum allowed is 100.",
+            "line": 1202,
+            "column": 8,
+            "messageId": "exceed",
+            "endLine": 1202,
+            "endColumn": 34
+          },
+          {
+            "ruleId": "complexity",
+            "severity": 1,
+            "message": "Function 'DocumentWorkbench' has a complexity of 368. Maximum allowed is 15.",
+            "line": 1202,
+            "column": 8,
+            "messageId": "complex",
+            "endLine": 1202,
+            "endColumn": 34
+          },
+          {
+            "ruleId": null,
+            "message": "Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps').",
+            "line": 2129,
+            "column": 26,
+            "severity": 1,
+            "fix": {
+              "range": [
+                106769,
+                106819
+              ],
+              "text": " "
+            }
+          },
+          {
+            "ruleId": "complexity",
+            "severity": 1,
+            "message": "Arrow function has a complexity of 33. Maximum allowed is 15.",
+            "line": 2182,
+            "column": 16,
+            "messageId": "complex",
+            "endLine": 2182,
+            "endColumn": 18
+          },
+          {
+            "ruleId": "complexity",
+            "severity": 1,
+            "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+            "line": 2897,
+            "column": 50,
+            "messageId": "complex",
+            "endLine": 2897,
+            "endColumn": 52
+          },
+          {
+            "ruleId": "complexity",
+            "severity": 1,
+            "message": "Async arrow function has a complexity of 36. Maximum allowed is 15.",
+            "line": 2953,
+            "column": 55,
+            "messageId": "complex",
+            "endLine": 2953,
+            "endColumn": 57
+          },
+          {
+            "ruleId": "react-hooks/exhaustive-deps",
+            "severity": 1,
+            "message": "React Hook useCallback has missing dependencies: 'activeDocId' and 'loadAudit'. Either include them or remove the dependency array.",
+            "line": 3118,
+            "column": 5,
+            "endLine": 3118,
+            "endColumn": 50,
+            "suggestions": [
+              {
+                "desc": "Update the dependencies array to be: [activeSection, fireToast, rail, loadHistory, activeDocId, loadAudit]",
+                "fix": {
+                  "range": [
+                    155623,
+                    155668
+                  ],
+                  "text": "[activeSection, fireToast, rail, loadHistory, activeDocId, loadAudit]"
+                }
+              }
+            ]
+          },
+          {
+            "ruleId": "complexity",
+            "severity": 1,
+            "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+            "line": 3485,
+            "column": 43,
+            "messageId": "complex",
+            "endLine": 3485,
+            "endColumn": 45
+          },
+          {
+            "ruleId": "no-undef",
+            "severity": 1,
+            "message": "'queueMicrotask' is not defined.",
+            "line": 3776,
+            "column": 7,
+            "messageId": "undef",
+            "endLine": 3776,
+            "endColumn": 21
+          },
+          {
+            "ruleId": "max-lines-per-function",
+            "severity": 1,
+            "message": "Arrow function has too many lines (210). Maximum allowed is 100.",
+            "line": 5948,
+            "column": 28,
+            "messageId": "exceed",
+            "endLine": 5948,
+            "endColumn": 30
+          },
+          {
+            "ruleId": "complexity",
+            "severity": 1,
+            "message": "Arrow function has a complexity of 24. Maximum allowed is 15.",
+            "line": 5948,
+            "column": 28,
+            "messageId": "complex",
+            "endLine": 5948,
+            "endColumn": 30
+          }
+        ],
+        "suppressedMessages": [],
+        "errorCount": 0,
+        "fatalErrorCount": 0,
+        "warningCount": 13,
+        "fixableErrorCount": 0,
+        "fixableWarningCount": 1
+      }
+    ]
+  },
+  "workbench-baseline": {
+    "rawSha256": "7a3fbdb9744b92de36be8dbfad6cef8cbd06556aca0ef1178e8493ef600a9e55",
+    "files": [
+      {
+        "filePath": "/workspace/ClinicalSageAI/client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+        "messages": [
+          {
+            "ruleId": "complexity",
+            "severity": 1,
+            "message": "Function 'describeAuditMetadata' has a complexity of 39. Maximum allowed is 15.",
+            "line": 337,
+            "column": 8,
+            "messageId": "complex",
+            "endLine": 337,
+            "endColumn": 38
+          },
+          {
+            "ruleId": "max-lines",
+            "severity": 1,
+            "message": "File has too many lines (4765). Maximum allowed is 500.",
+            "line": 786,
+            "column": 1,
+            "messageId": "exceed",
+            "endLine": 6314,
+            "endColumn": 1
+          },
+          {
+            "ruleId": "max-lines-per-function",
+            "severity": 1,
+            "message": "Function 'DocumentWorkbench' has too many lines (3966). Maximum allowed is 100.",
+            "line": 1202,
+            "column": 8,
+            "messageId": "exceed",
+            "endLine": 1202,
+            "endColumn": 34
+          },
+          {
+            "ruleId": "complexity",
+            "severity": 1,
+            "message": "Function 'DocumentWorkbench' has a complexity of 367. Maximum allowed is 15.",
+            "line": 1202,
+            "column": 8,
+            "messageId": "complex",
+            "endLine": 1202,
+            "endColumn": 34
+          },
+          {
+            "ruleId": null,
+            "message": "Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps').",
+            "line": 2128,
+            "column": 26,
+            "severity": 1,
+            "fix": {
+              "range": [
+                106663,
+                106713
+              ],
+              "text": " "
+            }
+          },
+          {
+            "ruleId": "complexity",
+            "severity": 1,
+            "message": "Arrow function has a complexity of 33. Maximum allowed is 15.",
+            "line": 2181,
+            "column": 16,
+            "messageId": "complex",
+            "endLine": 2181,
+            "endColumn": 18
+          },
+          {
+            "ruleId": "complexity",
+            "severity": 1,
+            "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+            "line": 2896,
+            "column": 50,
+            "messageId": "complex",
+            "endLine": 2896,
+            "endColumn": 52
+          },
+          {
+            "ruleId": "complexity",
+            "severity": 1,
+            "message": "Async arrow function has a complexity of 36. Maximum allowed is 15.",
+            "line": 2952,
+            "column": 55,
+            "messageId": "complex",
+            "endLine": 2952,
+            "endColumn": 57
+          },
+          {
+            "ruleId": "react-hooks/exhaustive-deps",
+            "severity": 1,
+            "message": "React Hook useCallback has missing dependencies: 'activeDocId' and 'loadAudit'. Either include them or remove the dependency array.",
+            "line": 3117,
+            "column": 5,
+            "endLine": 3117,
+            "endColumn": 50,
+            "suggestions": [
+              {
+                "desc": "Update the dependencies array to be: [activeSection, fireToast, rail, loadHistory, activeDocId, loadAudit]",
+                "fix": {
+                  "range": [
+                    155517,
+                    155562
+                  ],
+                  "text": "[activeSection, fireToast, rail, loadHistory, activeDocId, loadAudit]"
+                }
+              }
+            ]
+          },
+          {
+            "ruleId": "complexity",
+            "severity": 1,
+            "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+            "line": 3484,
+            "column": 43,
+            "messageId": "complex",
+            "endLine": 3484,
+            "endColumn": 45
+          },
+          {
+            "ruleId": "no-undef",
+            "severity": 1,
+            "message": "'queueMicrotask' is not defined.",
+            "line": 3775,
+            "column": 7,
+            "messageId": "undef",
+            "endLine": 3775,
+            "endColumn": 21
+          },
+          {
+            "ruleId": "max-lines-per-function",
+            "severity": 1,
+            "message": "Arrow function has too many lines (210). Maximum allowed is 100.",
+            "line": 5947,
+            "column": 28,
+            "messageId": "exceed",
+            "endLine": 5947,
+            "endColumn": 30
+          },
+          {
+            "ruleId": "complexity",
+            "severity": 1,
+            "message": "Arrow function has a complexity of 24. Maximum allowed is 15.",
+            "line": 5947,
+            "column": 28,
+            "messageId": "complex",
+            "endLine": 5947,
+            "endColumn": 30
+          }
+        ],
+        "suppressedMessages": [],
+        "errorCount": 0,
+        "fatalErrorCount": 0,
+        "warningCount": 13,
+        "fixableErrorCount": 0,
+        "fixableWarningCount": 1
+      }
+    ]
+  }
+}

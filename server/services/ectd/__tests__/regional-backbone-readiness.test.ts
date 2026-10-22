@@ -23,6 +23,7 @@ import {
 } from '../regional-backbone-readiness';
 import { packageLeafBytes } from '../package-leaf-bytes';
 import type { Region } from '../../submission-gateways/types';
+import { syntheticDtdStatus } from './_dtd-validation-fixture';
 
 const pdf = (l: string) => Buffer.from(`%PDF-1.4\n% ${l}\ntrailer<< /Root 1 0 R >>\n%%EOF\n`, 'utf8');
 
@@ -201,8 +202,9 @@ describe('classifyRegionalBackbone', () => {
     expect(s.placeholderOf).toBeUndefined();
     expect(s.conformanceGap).toMatch(/cannot be claimed for the region alone/);
   });
-  it('FDA is conformant when its builder reports nothing it cannot stand behind', () => {
-    expect(classifyRegionalBackbone('fda', 'm1/us/us-regional.xml', [])).toEqual({
+  it('FDA requires a current regional DTD result as well as its clean structural report', () => {
+    expect(classifyRegionalBackbone('fda', 'm1/us/us-regional.xml', []).regionConformant).toBe(false);
+    expect(classifyRegionalBackbone('fda', 'm1/us/us-regional.xml', [], syntheticDtdStatus().validation)).toEqual({
       region: 'fda', file: 'm1/us/us-regional.xml', regionConformant: true,
     });
   });
@@ -338,7 +340,7 @@ describe('evaluateRegionalBackboneGate', () => {
     expect(g.warnings).toHaveLength(1);
   });
   it('a conformant region passes cleanly', () => {
-    const g = evaluateRegionalBackboneGate({ status: conformant, environment: 'production', required: true });
+    const g = evaluateRegionalBackboneGate({ status: conformant, environment: 'production', required: true, validation: syntheticDtdStatus().validation });
     expect(g.check?.passed).toBe(true);
     expect(g.blockers).toEqual([]);
     expect(g.warnings).toEqual([]);
@@ -348,10 +350,11 @@ describe('evaluateRegionalBackboneGate', () => {
     const g = evaluateRegionalBackboneGate({ status: tampered, environment: 'production', required: true });
     expect(g.blockers).toHaveLength(1);
   });
-  it('a required flag with no status is a warning (cannot prove conformance), not a silent pass', () => {
+  it('a required production flag refuses absent historical evidence', () => {
     const g = evaluateRegionalBackboneGate({ status: undefined, environment: 'production', required: true });
     expect(g.warnings).toHaveLength(1);
     expect(g.check).toBeUndefined();
+    expect(g.blockers).toHaveLength(1);
   });
   it('the env flag is true only for the literal "true"', () => {
     expect(regionalBackboneRequiredFromEnv({ ECTD_REQUIRE_REGIONAL_BACKBONE: 'true' } as NodeJS.ProcessEnv)).toBe(true);

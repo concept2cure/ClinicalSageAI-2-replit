@@ -1,0 +1,91 @@
+Command: Node 22 vitest run shared/__tests__/project-team.test.ts client/src/concept2cure/v2/__tests__/ProjectTeamResponsibilities.test.tsx client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > lists the project's documents from the program-scoped read, with status in words 223ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a row opens THAT document, by id, in this program 499ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a failed read is an error with a retry, never an empty list, and the retry reads again 200ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > an empty project says so in words 49ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > "Recent drafts" and the Workspace grid are gone, and nothing reads the drafts 52ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a module row opens the project's newest document in that module, not the editor's list 135ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > offers the editor and the organisation's protocols as doors 161ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > Evidence has the data room and Author does not 157ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > "Write from these sources" hands the readable sources to AnA and never opens the editor 235ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > the Evidence blurb says what the tab holds 73ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Submit — the grid's filing doors > "Compile and download" opens eCTD compile, and "Open readiness" opens the readiness screen 111ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a module row names the sections as the figure and the document it opens in words, and how many the module holds 32ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > "Write from these sources" hands over the 10 newest readable sources, and says "newest" 188ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a data room cut by the server window says "newest", even under the limit 207ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a device project is not offered the eCTD compiler, and its coming-later line names no IND work 289ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a drug project still names IND annual-report tracking as coming later 153ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > renders disambiguated identities and publishes identity/source facts to AnA without contact details 162ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'wrong program' as unavailable, never an empty roster or identity facts 62ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'legacy shape' as unavailable, never an empty roster or identity facts 75ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'invalid identity' as unavailable, never an empty roster or identity facts 69ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'null response' as unavailable, never an empty roster or identity facts 56ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'missing store' as unavailable, never an empty roster or identity facts 65ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > distinguishes a verified empty roster from a failed read 50ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome team program-switch isolation > hides the previous program roster immediately while its replacement loads 83ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome team program-switch isolation > ignores a late successful roster from an abandoned program 75ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome team summary and recovery > keeps email-bearing account names, legacy names and display labels outside AnA facts 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome team summary and recovery > states the total and truncation when AnA receives a roster excerpt 64ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome team summary and recovery > retries the actual scoped GET after an unavailable read 235ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamResponsibilities.test.tsx > project responsibility panel > keeps same-name accounts distinct, sources responsibility and labels sharing separately 334ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamResponsibilities.test.tsx > project responsibility panel > explicitly states unconfirmed membership and name-only records without fabricated assignments 48ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamResponsibilities.test.tsx > project responsibility panel > keeps creator provenance separate from recorded responsibility 9ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamResponsibilities.test.tsx > project responsibility panel > announces loading and a verified empty roster distinctly 21ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamResponsibilities.test.tsx > project responsibility panel > fails closed for unverified read {"error":"HTTP 503"} and offers a real read retry 45ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamResponsibilities.test.tsx > project responsibility panel > fails closed for unverified read {"data":null} and offers a real read retry 30ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamResponsibilities.test.tsx > project responsibility panel > fails closed for unverified read {"data":{"program_id":"other","project_id":51,"team":[{"user_id":7,"entry_id":"user:7","identity":"active_member","label":"Alex Chen · Account #7","name":"Alex Chen","email":"alex7@example.test","role":"lead","responsibilities":["project_lead"],"sharing_role":"use","sources":["program_lead","project_member"]},{"user_id":8,"entry_id":"user:8","identity":"active_member","label":"Alex Chen · Account #8","name":"Alex Chen","email":"alex8@example.test","role":null,"responsibilities":["project_owner"],"sharing_role":"owner","sources":["project_owner","project_creator"]},{"user_id":9,"entry_id":"user:9","identity":"unconfirmed_account","label":"Account #9 — Current membership not confirmed","name":null,"email":null,"role":"lead","responsibilities":["project_lead"],"sharing_role":null,"sources":["program_lead"]},{"user_id":null,"entry_id":"recorded-name:0","identity":"recorded_name","label":"Alex Chen","name":"Alex Chen","email":null,"role":null,"responsibilities":[],"sharing_role":null,"sources":["recorded_name"]}]}} and offers a real read retry 24ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamResponsibilities.test.tsx > project responsibility panel > fails closed for unverified read {"data":{"program_id":"11111111-1111-4111-8111-111111111111","project_id":51,"team":[]},"meta":{"pendingStore":true}} and offers a real read retry 22ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamResponsibilities.test.tsx > project responsibility panel > fails closed for unverified read {"data":{"program_id":"11111111-1111-4111-8111-111111111111","project_id":51,"team":[{"user_id":7,"entry_id":"user:7","identity":"active_member","label":"Alex Chen · Account #7","name":"Alex Chen","email":"alex7@example.test","role":"lead","responsibilities":["project_lead"],"sharing_role":"approve","sources":["program_lead","project_member"]}]}} and offers a real read retry 21ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > accepts a scoped empty roster, current identities, and explicitly unconfirmed account references 2ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects foreign program 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects integer program 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects missing anchor 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects fractional anchor 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects legacy shape 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects missing team 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects duplicate account 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects duplicate recorded entry 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects null payload 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"user_id":0} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"user_id":9007199254740992} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"entry_id":"user:99"} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"label":" "} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"name":42} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"identity":"approver"} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"role":"approver"} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"responsibilities":["reviewer"]} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"responsibilities":["project_lead"]} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"responsibilities":["project_lead","project_owner","project_owner"]} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"sharing_role":"approve"} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"sources":[]} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"sources":["program_lead","made_up"]} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"sources":["project_owner"]} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"role":null} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects inconsistent account facts: {"sources":["program_lead","project_owner","recorded_name"]} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > requires a canonical current program, with no fallback to an anchor or absent selection 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > does not accept sharing inferred from a program lead fact alone 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > does not collapse distinct accounts or recorded names by name/email 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects exposed name on an unconfirmed account 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects exposed email on an unconfirmed account 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects exposed sharing_role on an unconfirmed account 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects personal identity details hidden in an unconfirmed account label 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects account or responsibility claims on a recorded name: {"user_id":4} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects account or responsibility claims on a recorded name: {"email":"alex@example.test"} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects account or responsibility claims on a recorded name: {"role":"lead"} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects account or responsibility claims on a recorded name: {"responsibilities":["project_lead"]} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects account or responsibility claims on a recorded name: {"sharing_role":"use"} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects account or responsibility claims on a recorded name: {"sources":["recorded_name","project_member"]} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects account or responsibility claims on a recorded name: {"entry_id":"user:4"} 0ms
+ ✓ shared/__tests__/project-team.test.ts > project responsibility response guard > rejects account or responsibility claims on a recorded name: {"name":""} 0ms
+
+ Test Files  4 passed (4)
+      Tests  79 passed (79)
+   Start at  00:52:35
+   Duration  11.79s (transform 2.45s, setup 764ms, import 3.60s, tests 4.41s, environment 2.32s)
+
+
+Exit code: 0

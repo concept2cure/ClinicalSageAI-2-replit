@@ -19,7 +19,7 @@ import { ingestContextualChunks } from '../../services/projects/contextual-inges
 import { extractUploadedText } from '../../services/projects/extract-text.js';
 import { refreshProjectRetrievalMode } from '../../services/projects/retrieval-mode.js';
 import * as crypto from 'crypto';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import multer from 'multer';
 import { makeUploadFileFilter, receiveUpload } from '../../middleware/uploadAllowlist';
 import { assertUploadSafe, UploadSafetyError } from '../../middleware/uploadSafety';
@@ -37,6 +37,7 @@ import {
   getOrganizationId,
   getUserId,
   logAuditEntry,
+  auditTrailFromEntry,
   normalizeConnectedApps,
   normalizeKnowledge,
   paramStr,
@@ -44,7 +45,7 @@ import {
   sendError,
   sendSuccess,
 } from './shared';
-import { normalizeProjectSettings } from './project-access';
+import { normalizeProjectSettings, projectAdmissionMiddleware, ProjectAdmissionRefusal, requireCurrentProjectActor, requireProjectAdmission } from './project-access';
 import type { DossierUploadClassification } from '../../services/module3-convergence-service';
 
 const logger = createScopedLogger('concept2cure-knowledge-sources');
@@ -55,6 +56,7 @@ router.use(concept2cureRateLimiter);
 router.use(authMiddleware);
 router.use(tenantContextMiddleware);
 router.use(requireOrganizationContext);
+router.param('projectId', projectAdmissionMiddleware());
 
 const allowedKnowledgeMimeTypes = new Set([
   'application/pdf',
@@ -380,7 +382,7 @@ router.post('/projects/:projectId/apps', async (req: Request, res: Response) => 
       .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
       .returning();
 
-    await logAuditEntry(req, 'UPDATE', 'project', req.params.projectId, project, updatedProject);
+    const auditOutcome = await logAuditEntry(req, 'UPDATE', 'project', req.params.projectId, project, updatedProject);
 
     logger.info('App connected to project', {
       projectId: numericId,
@@ -392,7 +394,7 @@ router.post('/projects/:projectId/apps', async (req: Request, res: Response) => 
       app: newApp,
       totalConnected: updatedApps.length,
       maxAllowed: MAX_CONNECTED_APPS,
-    });
+    }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
@@ -452,7 +454,7 @@ router.delete('/projects/:projectId/apps/:appId', async (req: Request, res: Resp
       .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
       .returning();
 
-    await logAuditEntry(req, 'UPDATE', 'project', req.params.projectId, project, updatedProject);
+    const auditOutcome = await logAuditEntry(req, 'UPDATE', 'project', req.params.projectId, project, updatedProject);
 
     logger.info('App disconnected from project', {
       projectId: numericId,
@@ -464,7 +466,7 @@ router.delete('/projects/:projectId/apps/:appId', async (req: Request, res: Resp
       disconnected: appId,
       totalConnected: updatedApps.length,
       maxAllowed: MAX_CONNECTED_APPS,
-    });
+    }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     logger.error('Failed to disconnect app from project', { error: error.message });
     return sendError(res, 500, 'Failed to disconnect app from project');
@@ -500,6 +502,10 @@ router.post(
       if (!allowedKnowledgeMimeTypes.has(file.mimetype)) {
         return sendError(res, 400, `Unsupported file type: ${file.mimetype}`);
       }
+      // This route carries its project in multipart form data rather than a
+      // URL parameter; router.param cannot admit it. Verify current edit
+      // authority before scanning, extracting or creating governed records.
+      const project = await requireProjectAdmission(req, String(numericId), true);
       // The declared type is the client's claim; the bytes are the fact, and
       // they are scanned before anything reads them (fail-closed in production).
       try {
@@ -509,16 +515,6 @@ router.post(
           return sendError(res, err.status, err.body.error, undefined, err.body.code);
         }
         throw err;
-      }
-
-      const [project] = await db
-        .select()
-        .from(projects)
-        .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
-        .limit(1);
-
-      if (!project) {
-        return sendError(res, 404, 'Project not found');
       }
 
       const safeOriginalName = sanitizeFilename(file.originalname);
@@ -584,7 +580,10 @@ router.post(
         documentType: 'source_document',
         generationMode: 'imported',
         lifecycleStatus: 'draft',
-        originSurface: 'import_pipeline',
+        // The registered API route is an allowed evidence origin. Imported
+        // provenance remains explicit in generationMode, sourceRefs and the
+        // artifact's uploadSource; a disallowed origin blocked every upload.
+        originSurface: 'api_route',
         clientTrack:
           req.body?.clientTrack === 'device'
             ? 'device'
@@ -790,7 +789,7 @@ router.post(
         .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
         .returning();
 
-      await logAuditEntry(req, 'UPDATE', 'project', projectIdRaw, project, updated);
+      const auditOutcome = await logAuditEntry(req, 'UPDATE', 'project', projectIdRaw, project, updated);
 
       // A2: the corpus grew with this upload — recompute the retrieval mode
       // (fire-and-forget; never blocks the upload response).
@@ -803,8 +802,9 @@ router.post(
         tokenCount,
         artifact: artifactRecord,
         module3SourceMapping,
-      });
+      }, { auditTrail: auditTrailFromEntry(auditOutcome) });
     } catch (error: any) {
+      if (error instanceof ProjectAdmissionRefusal) return sendError(res, error.status, error.message, undefined, error.code);
       logger.error('Failed to upload knowledge document', { error: error.message });
       return sendError(res, 500, 'Failed to upload knowledge document');
     }
@@ -838,20 +838,15 @@ router.patch('/documents/:documentId/activation', async (req: Request, res: Resp
       return sendError(res, 400, 'isActive must be a boolean');
     }
 
-    const dbProjects = await db
-      .select()
-      .from(projects)
-      .where(and(eq(projects.organizationId, organizationId), isNull(projects.actualEndDate)));
-
-    const target = dbProjects.find(project => {
-      const settings = normalizeProjectSettings(project.settings);
-      const knowledge = normalizeKnowledge(settings);
-      return knowledge.documents.some(doc => doc.id === documentId);
-    });
-
-    if (!target) {
+    await requireCurrentProjectActor(req, true);
+    const parents = await pool.query(`SELECT id FROM projects WHERE organization_id=$1 AND actual_end_date IS NULL
+      AND EXISTS(SELECT 1 FROM jsonb_array_elements(COALESCE(settings::jsonb #> '{knowledge,documents}', '[]'::jsonb)) doc
+        WHERE doc->>'id'=$2) LIMIT 2`, [organizationId, documentId]);
+    if (parents.rows.length === 0) {
       return sendError(res, 404, 'Document not found');
     }
+    if (parents.rows.length !== 1) return sendError(res, 409, 'The document needs one verified project relationship.', undefined, 'DOCUMENT_PROJECT_AMBIGUOUS');
+    const target = await requireProjectAdmission(req, String(parents.rows[0].id), true);
 
     const settings = normalizeProjectSettings(target.settings);
     const knowledge = normalizeKnowledge(settings);
@@ -874,10 +869,11 @@ router.patch('/documents/:documentId/activation', async (req: Request, res: Resp
       .where(and(eq(projects.id, target.id), eq(projects.organizationId, organizationId)))
       .returning();
 
-    await logAuditEntry(req, 'UPDATE', 'project', `proj_${target.id}`, target, updated);
+    const auditOutcome = await logAuditEntry(req, 'UPDATE', 'project', `proj_${target.id}`, target, updated);
 
-    return sendSuccess(res, { documentId, isActive });
+    return sendSuccess(res, { documentId, isActive }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
+    if (error instanceof ProjectAdmissionRefusal) return sendError(res, error.status, error.message, undefined, error.code);
     logger.error('Failed to toggle document activation', { error: error.message });
     return sendError(res, 500, 'Failed to toggle document activation');
   }

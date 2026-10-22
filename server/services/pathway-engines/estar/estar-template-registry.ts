@@ -99,7 +99,7 @@ export interface EstarTemplateDescriptor {
   /**
    * The vendored template revision this descriptor is pinned to. Stays `'unset'`
    * until a maintainer drops the licensed FDA PDF in and pins it; the *program*
-   * version (e.g. nIVD 7.0) is looked up from the version registry via `family`.
+   * version (e.g. nIVD 7.1) is looked up from the version registry via `family`.
    */
   version: string;
 }
@@ -110,35 +110,36 @@ export interface EstarTemplateDescriptor {
  * (pinned in its checksums.txt) and the README. Do NOT regenerate FDA's form.
  *
  * FDA distributes the marketing pathways as ONE nIVD eSTAR PDF and ONE IVD eSTAR
- * PDF (v7.0), each carrying 510(k), De Novo AND PMA — the pathway is chosen inside
+ * PDF (v7.1), each carrying 510(k), De Novo AND PMA — the pathway is chosen inside
  * the form (`root.ApplicationType.USA.ATRadioButton110`), not by downloading a
  * different file (see the family table in assets/estar-templates/README.md). So
  * the six marketing descriptors resolve to two physical files: the three nIVD
  * descriptors (510k/de_novo/pma × device) share `eSTAR-510k-non-ivd.pdf` and the
  * three IVD descriptors share `eSTAR-510k-ivd.pdf`. The descriptor ids stay
  * distinct because each pathway carries its OWN field map (the 510(k) Summary
- * page and predicate fields are 510(k)-only). The PreSTAR descriptors stay
- * `'unset'`: that template is not vendored.
+ * page and predicate fields are 510(k)-only). FDA also distributes ONE PreSTAR
+ * PDF (v3.1) for Q-Sub, IDE and 513(g), shared by the three request descriptors.
  *
- * The vendored files are v7.0 (2026-06-01, read from their XFA template
- * packet); FDA's eSTAR Program page now names 7.1 (estar-versions.ts). Until the
- * 7.1 PDFs are re-vendored and the field map re-enumerated — an ops change —
- * filing readiness reports the mismatch as a blocker. Do not bump `version`
- * here without replacing the bytes: it is the version of the file, not FDA's.
+ * Acquired verbatim from FDA on 2026-10-14; all three PDFs identify their own
+ * versions and effective date (2026-09-21) in the XFA template packet. Existing
+ * marketing maps were re-enumerated and behaviour-tested against these bytes.
+ * PreSTAR maps prepare four measured administrative fields only. This does
+ * not qualify request-specific questions, applicant declarations or automated
+ * filing; the separate capability/readiness gates preserve that boundary.
  */
 export const ESTAR_TEMPLATE_MANIFEST: EstarTemplateDescriptor[] = [
   // nIVD / IVD eSTAR — marketing pathways
-  { id: '510k-device', type: '510k', variant: 'device', family: 'nivd', expectedFileName: 'eSTAR-510k-non-ivd.pdf', version: '7.0' },
-  { id: '510k-ivd', type: '510k', variant: 'ivd', family: 'ivd', expectedFileName: 'eSTAR-510k-ivd.pdf', version: '7.0' },
+  { id: '510k-device', type: '510k', variant: 'device', family: 'nivd', expectedFileName: 'eSTAR-510k-non-ivd.pdf', version: '7.1' },
+  { id: '510k-ivd', type: '510k', variant: 'ivd', family: 'ivd', expectedFileName: 'eSTAR-510k-ivd.pdf', version: '7.1' },
   // De Novo and PMA are filed on the SAME vendored nIVD/IVD PDFs as 510(k) (FDA ships one file per family).
-  { id: 'de_novo-device', type: 'de_novo', variant: 'device', family: 'nivd', expectedFileName: 'eSTAR-510k-non-ivd.pdf', version: '7.0' },
-  { id: 'de_novo-ivd', type: 'de_novo', variant: 'ivd', family: 'ivd', expectedFileName: 'eSTAR-510k-ivd.pdf', version: '7.0' },
-  { id: 'pma-device', type: 'pma', variant: 'device', family: 'nivd', expectedFileName: 'eSTAR-510k-non-ivd.pdf', version: '7.0' },
-  { id: 'pma-ivd', type: 'pma', variant: 'ivd', family: 'ivd', expectedFileName: 'eSTAR-510k-ivd.pdf', version: '7.0' },
-  // PreSTAR2 — Early Submission Requests (serves both nIVD and IVD). Not vendored; stays 'unset'.
-  { id: 'q_sub-prestar', type: 'q_sub', variant: 'prestar', family: 'prestar', expectedFileName: 'PreSTAR-q-sub.pdf', version: 'unset' },
-  { id: 'ide-prestar', type: 'ide', variant: 'prestar', family: 'prestar', expectedFileName: 'PreSTAR-ide.pdf', version: 'unset' },
-  { id: '513g-prestar', type: '513g', variant: 'prestar', family: 'prestar', expectedFileName: 'PreSTAR-513g.pdf', version: 'unset' },
+  { id: 'de_novo-device', type: 'de_novo', variant: 'device', family: 'nivd', expectedFileName: 'eSTAR-510k-non-ivd.pdf', version: '7.1' },
+  { id: 'de_novo-ivd', type: 'de_novo', variant: 'ivd', family: 'ivd', expectedFileName: 'eSTAR-510k-ivd.pdf', version: '7.1' },
+  { id: 'pma-device', type: 'pma', variant: 'device', family: 'nivd', expectedFileName: 'eSTAR-510k-non-ivd.pdf', version: '7.1' },
+  { id: 'pma-ivd', type: 'pma', variant: 'ivd', family: 'ivd', expectedFileName: 'eSTAR-510k-ivd.pdf', version: '7.1' },
+  // One PreSTAR — Early Submission Requests PDF (serves both nIVD and IVD).
+  { id: 'q_sub-prestar', type: 'q_sub', variant: 'prestar', family: 'prestar', expectedFileName: 'PreSTAR-q-sub.pdf', version: '3.1' },
+  { id: 'ide-prestar', type: 'ide', variant: 'prestar', family: 'prestar', expectedFileName: 'PreSTAR-q-sub.pdf', version: '3.1' },
+  { id: '513g-prestar', type: '513g', variant: 'prestar', family: 'prestar', expectedFileName: 'PreSTAR-q-sub.pdf', version: '3.1' },
 ];
 
 /** Resolve the template drop-point directory (ESTAR_TEMPLATE_DIR or assets/estar-templates). */

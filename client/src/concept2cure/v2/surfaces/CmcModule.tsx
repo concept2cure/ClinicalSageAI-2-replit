@@ -10,8 +10,6 @@ import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { EmptyState, liveGetOrNull, useLiveData, useLiveRows } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
-import { saveToAuthoring } from '../authoringHandoff';
-import { setEditorTarget } from '../editorTarget';
 import {
   specRowsFromApi,
   specCreateBody,
@@ -46,7 +44,6 @@ import {
   CmProcessValidation,
   CmDrugSubstances,
   CmDrugProducts,
-  type ChangeControlApiRow,
 } from './cmcRegisters';
 import { CmModule3Build } from './CmcModule3Build';
 import { CmQuality } from './CmcQuality';
@@ -56,6 +53,7 @@ import {
   stabilityResultForm,
   stabilityResultBody,
   stabilityCloseoutForm,
+  qualifyBody,
   stabilityCloseoutBody,
   readStabilityResults,
   type StabilityResult,
@@ -73,6 +71,28 @@ import {
 import { openProgramAction } from '../programAction';
 import { C2CToast, useToast } from '../toast';
 import { useAuth } from '@/services/portal/authService';
+import { useNavEntitlements } from '../navEntitlements';
+import { CmcRegisterLinks, reportCmcLinkage } from './CmcRegisterLinks';
+import { CmcVariationAssessment } from './CmcVariationAssessment';
+import { RecordHistoryPanel } from './cmcRecordHistory';
+/* Agency questions on Module 3 are the letter's record (2026-10-19, P-38 /
+   P-39 item 1): read once at this module's root, shown by the Overview, the
+   per-tab signposts and Program records, and worked on the letter in
+   Communication. See ./cmcAgencyQuestions. */
+import {
+  CmcEarlierQuestionFile,
+  CmcModule3QuestionIndex,
+  CmcQuestionsContextProvider,
+  cmcQuestionFacts,
+  earlierFileState,
+  earlierNotClosed,
+  module3Figure,
+  module3HasOverdue,
+  openLetterInCommunication,
+  outstandingAt,
+  useCmcQuestions,
+  useCmcQuestionsRead,
+} from './cmcAgencyQuestions';
 import '../styles/project-home-v2.css';
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -102,11 +122,16 @@ import '../styles/project-home-v2.css';
    readiness, the fail-closed export gate, provenance) and ./CmcQuality
    (CQAs, CPPs, control strategy, the ICH check).
 
-   What stays an honest empty stays one: agency correspondence has no
-   backend, and no shelf life is projected that a study has not been closed
-   out with. Canonical config (ICH Q-series / CTD 3.2.S / 3.2.P catalogs,
-   market lists) and deterministic generators (the change simulator, the
-   markdown renderer) are kept and now run against the real registers.
+   What stays an honest empty stays one: no shelf life is projected that a
+   study has not been closed out with. Agency questions are not CMC's to keep
+   (2026-10-19, decisions P-38 and P-39 item 1): they are recorded, answered
+   and approved by signature on the letter they came in, in Communication.
+   CMC reads them from there (./cmcAgencyQuestions), shows the ones about
+   Module 3 and opens each on its letter; its own earlier file
+   (reg_questions) is read-only history. Canonical config (ICH Q-series / CTD 3.2.S / 3.2.P catalogs,
+   market lists) remain reference configuration. Deferred variation assessment
+   calls the server classifier; its browser rule set is retired. The launch
+   Change control tab records changes without postapproval classifications.
 
    Overrides the thin SURFACE_VIEWS['cmc'] with this full module.
    ═══════════════════════════════════════════════════════════════════ */
@@ -124,17 +149,6 @@ interface CmcPortfolio {
   m3Leaves?: number | null;
   sequences?: number | null;
 }
-/** One open agency question touching Module 3 (reg_questions, org-scoped). */
-interface CmcCorrespondence {
-  id: number | string; question: string; sectionRef: string | null;
-  priority: string | null; severity: string | null; status: string;
-  region: string | null; dueDate: string | null; overdue: boolean;
-  assignedTo: string | null;
-  /** The authoring document holding the drafted response, when one is linked. */
-  responseDocId?: string | null;
-  /** Served by the file's GET (the closed-history read); the board omits it. */
-  updatedAt?: string | null;
-}
 interface CmcSection {
   key: string; path: string; st: string; _new?: boolean;
   /** The compiler's own score for the section (null when it never scored it)
@@ -143,30 +157,25 @@ interface CmcSection {
       refuse on (server/services/cmc/compiled-record.ts). */
   completeness?: number | null; missingInputs?: string[];
 }
-interface CmcChangeType { id: string; label: string; risk: string; }
-interface CmcChangeResult { type: CmcChangeType; markets: string[]; desc: string; paths: { m: string; label: string; path: string[] }[]; }
 
 /* ── Live board types (GET /api/cmc/module3-board -> { success, data }) ──
    useLiveData unwraps the { success, data } envelope, so the hook payload is
    the display object directly (portfolio / sections / kpis / meta). rpi / ir /
    rpiAverage / section counts are number | null — honestly null when the
    backend cannot measure them; rendered as "—", never fabricated. */
-interface CmcBoardKpis { submissions: number; rpiAverage: number | null; /** null when the question store could not be read — NOT zero. */ irOverdue: number | null; sectionsApproved: number | null; sectionsTotal: number | null; readyPercent: number | null; }
+interface CmcBoardKpis { submissions: number | null; rpiAverage: number | null; sectionsApproved: number | null; sectionsTotal: number | null; readyPercent: number | null; }
 interface CmcBoardMeta {
   projectId: string | null; portfolioProvisioned: boolean; sectionsProvisioned: boolean | null; generatedAt: string;
   /** true = that register's read FAILED — as opposed to unprovisioned, or
       provisioned and empty. A failed read is rendered as an error, never as an
       empty register: "no sections" over a store that did not answer is a claim
       nothing established. */
-  sectionsUnreadable?: boolean | null; portfolioUnreadable?: boolean; correspondenceUnreadable?: boolean;
+  sectionsUnreadable?: boolean | null; portfolioUnreadable?: boolean;
 }
 interface CmcBoardData {
   portfolio?: CmcPortfolio[];
   sections?: CmcSection[] | null;
   kpis?: CmcBoardKpis;
-  /** null = the reg_questions store is unprovisioned (said, not hidden);
-      [] = provisioned and genuinely no open Module 3 questions. */
-  correspondence?: CmcCorrespondence[] | null;
   meta?: CmcBoardMeta;
 }
 
@@ -192,9 +201,9 @@ interface CmcBoardData {
      is the pattern chat-first design forbids, and the AnA panel already carries
      CMC actions on EVERY tab via ANA_SURFACE_CTX. Its prompts moved there, so
      they went from reachable on one tab to reachable on all nine.
-   • Global filings computed a market matrix from the change-control register and
-     owned no object of its own; it is a per-change expansion inside Change
-     control now, next to the change it describes. */
+   • Postapproval variation assessment remains deferred. The launch Change
+     control tab records evidence and dispositions; a deployment permitting
+     deferred work reaches the canonical classifier with its real inputs. */
 const CMC_NAV: CmcNavItem[] = [
   { id: 'overview', label: 'Overview', icon: 'beaker' },
   { id: 'materials', label: 'Substance & product', icon: 'atom' },
@@ -213,42 +222,10 @@ const CMC_SUGGEST: Record<string, string[]> = {
   specs: ['Justify the release and shelf-life limits for aggregation', 'Flag any specification without a validated method', 'Compare release vs shelf-life limits across DS and DP'],
   stability: ['Project shelf life from the long-term data with an ICH Q1E fit', 'Are my primary batches combinable for one shelf-life claim?', 'Show every study trending toward a limit', 'Draft the stability summary for §3.2.S.7'],
   batch: ['Summarize deviations across the last 10 batches', 'Show batches still pending release', 'Trend yield across drug-product batches'],
-  change: ['Classify this change and give me the filing path per market', 'Which of my open changes needs a prior-approval supplement?', 'Summarise the filing burden of these changes across all six markets', 'Which markets can I implement in before approval?'],
+  change: ['Record this change and its justification', 'Which Module 3 evidence does this change affect?', 'Review my open changes and their recorded dispositions'],
   pathway: ['Summarise every governed action taken on this Module 3', 'Which contradictions were resolved, and how?', 'Draft an audit-trail summary for an inspector'],
 };
 
-/* ── Change-simulator canonical config (real regulatory reference — KEEP) ── */
-
-const CMC_CHANGE_TYPES: CmcChangeType[] = [
-  { id: 'api_supplier_change', label: 'API supplier change', risk: 'high' },
-  { id: 'process_scale_up', label: 'Process scale-up', risk: 'med' },
-  { id: 'excipient_replacement', label: 'Excipient replacement', risk: 'high' },
-  { id: 'analytical_method_change', label: 'Analytical method change', risk: 'med' },
-  { id: 'facility_change', label: 'Facility change', risk: 'high' },
-  { id: 'equipment_change', label: 'Equipment change', risk: 'low' },
-  { id: 'process_parameter_change', label: 'Process parameter change', risk: 'med' },
-  { id: 'specification_change', label: 'Specification change', risk: 'med' },
-  { id: 'packaging_change', label: 'Packaging change', risk: 'low' },
-];
-
-/* The CTD sections each change type refiles. Type decides the sections; risk
-   only decides the filing category — a low-risk equipment change still rewrites
-   §3.2.S.2 / §3.2.P.3. Both spellings of each address are listed because the
-   correspondence store records both, exactly as CmCorrNotice's other callers
-   match them ('3.2.S.4' and the leaf-coded 'm3.2.S.4'). */
-const SECTIONS_FOR_CHANGE: Record<string, string[]> = {
-  api_supplier_change: ['3.2.S.2', 'm3.2.S.2'],
-  process_scale_up: ['3.2.S.2', '3.2.P.3', 'm3.2.S.2', 'm3.2.P.3'],
-  excipient_replacement: ['3.2.P.1', '3.2.P.2', '3.2.P.4', 'm3.2.P.1', 'm3.2.P.2', 'm3.2.P.4'],
-  analytical_method_change: ['3.2.S.4', '3.2.P.5', 'm3.2.S.4', 'm3.2.P.5'],
-  facility_change: ['3.2.S.2', '3.2.P.3', 'm3.2.S.2', 'm3.2.P.3'],
-  equipment_change: ['3.2.S.2', '3.2.P.3', 'm3.2.S.2', 'm3.2.P.3'],
-  process_parameter_change: ['3.2.S.2', '3.2.P.3', 'm3.2.S.2', 'm3.2.P.3'],
-  specification_change: ['3.2.S.4', '3.2.P.5', 'm3.2.S.4', 'm3.2.P.5'],
-  packaging_change: ['3.2.P.7', 'm3.2.P.7'],
-};
-
-const CMC_MARKETS: [string, string][] = [['fda', 'FDA'], ['ema', 'EMA'], ['pmda', 'PMDA'], ['nmpa', 'NMPA'], ['health_canada', 'Health Canada'], ['uk_mhra', 'UK MHRA']];
 
 /* ── Inline helpers ──
    `useToast` / `C2CToast` / the project-in-context read / the write-error
@@ -424,11 +401,20 @@ function signForm(target: string): C2CFormConfig {
       /* The values are the tokens the approve endpoints record, not display
          strings: the meaning is part of the signed record, so what the signer
          chooses and what an inspector later reads must be the same word. */
+      /* Authorship is NOT offered. This form signs an approval — of a Module 3
+         section or of a specification — and §11.50(a)(3)'s "authorship" meaning
+         is what switches the four-eyes check off (`requiresIndependence`). The
+         platform closed the same hole on freeze/dispatch, where a release
+         signer could be the sequence's creator by choosing it (2026-10-05);
+         the section-approve route now refuses it, and there is no authoring
+         act at either endpoint for that meaning to describe, so offering it
+         could only produce a refusal the signer could not have predicted.
+         (The specification approval's own four-eyes check is not in this
+         change; it simply never needed an authorship meaning either.) */
       { key: 'meaning', label: 'Meaning of signature', type: 'select', options: [
         { value: 'approval', label: 'Approval' },
         { value: 'review', label: 'Review' },
         { value: 'responsibility', label: 'Responsibility' },
-        { value: 'authorship', label: 'Authorship' },
       ], default: 'approval', required: true },
       { key: 'reason', label: 'Reason', type: 'textarea', placeholder: 'Reason for this approval...', required: true, desc: `At least ${GOVERNED_REASON_MIN} characters. It is recorded with the signature exactly as written.` },
       { key: 'password', label: 'Password', type: 'password', placeholder: 'Re-enter your password', required: true, half: true },
@@ -438,7 +424,15 @@ function signForm(target: string): C2CFormConfig {
 }
 
 /* ── Cross-surface navigation helpers ── */
-function cmcNav(onNav: ((id: string) => void) | undefined, id: string) { onNav && onNav(id); }
+function cmcNav(onNav: ((id: string) => void) | undefined, id: string) {
+  if (id === 'dossier') {
+    const openTab = (window as unknown as { __cmSetTab?: (tab: string) => void }).__cmSetTab;
+    if (openTab) openTab('build');
+    else onNav?.('cmc');
+    return;
+  }
+  onNav?.(id);
+}
 function cmcCtx(label: string) { try { if ((window as any).C2C) (window as any).C2C.setContext({ entityType: 'cmc', entityId: label, entityLabel: label }); } catch { /* noop */ } }
 function cmcTask(label: string) { cmcCtx(label); try { if ((window as any).C2C) (window as any).C2C.open('task'); } catch { /* noop */ } }
 function cmcCollab(label: string) { cmcCtx(label); try { if ((window as any).C2C) (window as any).C2C.open('collab'); } catch { /* noop */ } }
@@ -534,7 +528,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
      flags tell them apart, and the surface used to ignore them — so a store
      that did not answer rendered as "no governed CMC sections authored". */
   const sectionsUnreadable = meta?.sectionsUnreadable === true;
-  const portfolioUnreadable = meta?.portfolioUnreadable === true;
+  const portfolioUnreadable = meta?.portfolioUnreadable === true || kpis?.submissions === null;
 
   /* Governed section-approval working set — seeded from the live governed store.
      useLiveData memoizes its result in state, so `liveSections` is a stable
@@ -558,17 +552,35 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
   const rpiNums = port.map((r) => r.rpi).filter((v): v is number => typeof v === 'number');
   const computedAvgRpi = rpiNums.length ? Math.round(rpiNums.reduce((a, b) => a + b, 0) / rpiNums.length) : null;
   const avgRpi: number | null = kpis ? kpis.rpiAverage : computedAvgRpi;
-  /* null means "the overdue count is not established" — the backend could not
-     read the agency-question store. It is NOT zero, and it must not silently
-     become the legacy per-row sum, which counts something else. */
-  const irOverdue: number | null = kpis ? kpis.irOverdue : port.reduce((a, r) => a + (r.ir ?? 0), 0);
-  const irUnknown = irOverdue == null || meta?.correspondenceUnreadable === true;
-  /* The overdue ATTRIBUTION comes from the same read as the COUNT. The lead
-     used to count from the correspondence KPI but name submissions from the
-     legacy per-row store — two sources, and when the legacy store was empty
-     the sentence attributed the count to "()" — an empty list. */
-  const overdueQs = (board.data?.correspondence ?? []).filter((c) => c.overdue);
-  const overdueSecs = [...new Set(overdueQs.map((c) => c.sectionRef).filter((s): s is string => !!s))];
+  /* Agency questions overdue on THIS program (2026-10-19, P-38 / P-39 item 1).
+     The figure is the server's, read once at the module root from the
+     program's letters: questions not answered as they stand on a letter past
+     its due date (response-logic letterOverdue). An approved answer is never
+     in it. It is per program, so with no program open there is no figure, and
+     a read that failed is "not established", never 0. The earlier CMC file is
+     not in it; its not-closed count is stated beside it.
+     Each count is said as what it counts (review of 2026-10-19): the letters
+     the overdue questions are on; Module 3 letters with nothing to answer
+     recorded; letters overdue only on their other questions (an approved
+     Module 3 answer is never shown as overdue); questions with no section and
+     letters with neither, never added together. */
+  const questions = useCmcQuestions();
+  const fig = module3Figure(questions);
+  const irUnknown = fig.state !== 'ready';
+  const irOverdue = fig.state === 'ready' ? fig.questionsOverdue : null;
+  const m3Overdue = module3HasOverdue(fig);
+  const overdueSecs = fig.overdueSections;
+  /* null while the earlier file is read or when its read failed: not "none". */
+  const earlierOpen = earlierNotClosed(questions);
+  const earlierUnread = earlierFileState(questions) === 'unreadable';
+  /* What the figure leaves out keeps the Overview from an all-clear, and so
+     does an earlier file whose open count is not established. */
+  const questionsComplete = fig.state === 'ready' && fig.withheld === 0 && fig.unclassifiedOutstanding === 0
+    && fig.overdueLettersWithoutQuestions === 0 && earlierOpen === 0;
+  const openOverdueLetters = () => {
+    if (fig.firstOverdueLetterId && nav) openLetterInCommunication(nav, fig.firstOverdueLetterId);
+    else (window as unknown as { __cmSetTab?: (id: string) => void }).__cmSetTab?.('pathway');
+  };
 
   const approved = secs.filter((s) => s.st === 'approved').length;
   const readyPct = secs.length ? Math.round(100 * approved / secs.length) : 0;
@@ -638,6 +650,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
         },
       );
       const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
       if (res.status === 409) {
         /* 409 is the server refusing the signature for a STATED reason — an
            unresolved critical contradiction, or a section whose compiled record
@@ -691,7 +704,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
     loading: board.loading,
     unreadable: Boolean(board.error) || sectionsUnreadable || portfolioUnreadable,
     scopeExists: port.length > 0,
-    findingCount: irOverdue ?? 0,
+    findingCount: (irOverdue ?? 0) + (fig.state === 'ready' ? fig.lettersWithoutQuestionsOverdue : 0),
     assessmentRan: secs.length > 0,
   });
   const cmLead = (
@@ -701,7 +714,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
          NDA cockpit — same session, same assessmentState taxonomy — used it
          for the identical state. Two sibling surfaces rendering one state in
          two visual languages is the drift this work is meant to remove. */
-      tone={irUnknown ? 'calm' : irOverdue ? 'urgent' : cmcState === 'assessed-clear' ? 'good' : 'calm'}
+      tone={m3Overdue ? 'urgent' : cmcState === 'assessed-clear' && questionsComplete ? 'good' : 'calm'}
       eyebrow={(cmcState === 'not-assessed' || cmcState === 'unreadable') && port.length === 0
         ? 'Is your CMC package ready'
         : 'Is your CMC package ready across all ' + port.length + ' submissions'}
@@ -726,10 +739,12 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
           ? <>Nothing is being asserted about readiness until the read settles.</>
           : port.length === 0
             ? <>Module 3 readiness is measured across an organization's submissions, and there are none recorded. Nothing about this package has been assessed. Create a submission and add its CMC sections, and its specifications, batch analyses, stability data and change control appear here.</>
-            : irUnknown
-              ? <>The agency-question store could not be read, so the number of overdue information requests is <b>not established</b> — treat it as unknown, not as none. {nextSec ? <>Of what did read: §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
-              : irOverdue
-              ? <>You have <b>{irOverdue} information {irOverdue === 1 ? 'request' : 'requests'} overdue</b>{overdueSecs.length ? <> (§{overdueSecs.join(', §')})</> : null}. {nextSec ? <>And §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
+            : fig.state === 'unreadable'
+              ? <>This program's agency questions could not be read, so the number overdue is <b>not established</b> — treat it as unknown, not as none. {nextSec ? <>Of what did read: §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
+              : fig.state === 'ready' && fig.questionsOverdue
+              ? <>On this program, <b>{fig.questionsOverdue} Module 3 {fig.questionsOverdue === 1 ? 'question is' : 'questions are'} overdue</b> on {fig.lettersOverdue} {fig.lettersOverdue === 1 ? 'letter' : 'letters'}{overdueSecs.length ? <> (§{overdueSecs.join(', §')})</> : null}. They are answered and approved on the letter, in Communication. {fig.lettersWithoutQuestionsOverdue ? <>{fig.lettersWithoutQuestionsOverdue} more Module 3 {fig.lettersWithoutQuestionsOverdue === 1 ? 'letter is' : 'letters are'} overdue with no question to answer recorded. </> : null}{nextSec ? <>And §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
+              : fig.state === 'ready' && fig.lettersWithoutQuestionsOverdue
+              ? <>On this program, <b>{fig.lettersWithoutQuestionsOverdue} Module 3 {fig.lettersWithoutQuestionsOverdue === 1 ? 'letter is' : 'letters are'} overdue</b> with no question to answer recorded on {fig.lettersWithoutQuestionsOverdue === 1 ? 'it' : 'them'}. Record {fig.lettersWithoutQuestionsOverdue === 1 ? 'its' : 'their'} questions on the letter, or mark it as needing no response, in Communication. {nextSec ? <>And §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}.</> : null}</>
               : secs.length === 0
                 ? <>No governed CMC sections have been authored for {port.length === 1 ? 'this submission' : 'these submissions'} yet, so section approval has nothing to report.</>
                 : <>{approved} of {secs.length} sections are approved{nextSec ? <>. §{nextSec.key} ({nextSec.path}) is the next one to move — clear it{lowSub ? <> and {lowSub.sub} climbs with it</> : null}</> : null}.</>}
@@ -737,14 +752,18 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
          requires evidence that work is in progress. mayReassure gates it on the
          assessed-clear state and on a non-zero readiness percentage; every
          other state renders no reassurance rather than a softened one. */
-      reassure={irUnknown
-        ? undefined
-        : irOverdue
-        ? "Answer the IRs first — they're time-boxed. I'll draft the responses and route the sign-offs with you."
-        : mayReassure(cmcState, readyPct)
-          ? "You're building steadily. I'll help you move the next section to approved."
-          : undefined}
-      action={{ label: irOverdue ? 'Draft the overdue IR responses' : 'Advance the next section', onClick: () => ask(irOverdue ? ('Draft responses to the overdue Module 3 information requests' + (overdueSecs.length ? ' citing §' + overdueSecs.join(', §') : '')) : ('Prepare §' + (nextSec ? nextSec.key : '') + ' ' + (nextSec ? nextSec.path : '') + ' for approval')),
+      /* No reassurance while a question is overdue, or while anything the
+         figure leaves out (letters withheld from this person, questions with
+         no section, the earlier file's open rows) could be. The sentence that
+         stood here promised to "route the sign-offs", which CMC cannot do: a
+         response is signed on its letter. */
+      reassure={!irUnknown && !m3Overdue && questionsComplete && mayReassure(cmcState, readyPct)
+        ? "You're building steadily. I'll help you move the next section to approved."
+        : undefined}
+      action={m3Overdue
+        ? { label: 'Open the overdue letters in Communication', onClick: openOverdueLetters,
+            alt: { label: 'Open the Module 3 build board', onClick: () => (window as any).__cmSetTab && (window as any).__cmSetTab('build') } }
+        : { label: 'Advance the next section', onClick: () => ask('Prepare §' + (nextSec ? nextSec.key : '') + ' ' + (nextSec ? nextSec.path : '') + ' for approval'),
         /* The second action goes where the section actually moves: the build
            board, which is the only surface that can compile it, show what is
            blocking it and clear the export gate. */
@@ -754,7 +773,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
   );
   return (
     <div className="cm-body">
-      <CmHead title="Module 3 overview" meta={`${port.length} submissions — RPI ${avgRpi == null ? '—' : avgRpi} average`} ask={ask} suggest={CMC_SUGGEST.overview} />
+      <CmHead title="Module 3 overview" meta={`${portfolioUnreadable ? '—' : port.length} submissions — RPI ${avgRpi == null ? '—' : avgRpi} average`} ask={ask} suggest={CMC_SUGGEST.overview} />
       {board.loading ? (
         <EmptyState icon={I.beaker} title="Loading the Module 3 board…" busy testId="cmc-board-loading" />
       ) : board.error ? (
@@ -768,30 +787,65 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
         <>
           {cmLead}
           {/* No KPI strip here. `cmLead` immediately above narrates the same
-              four numbers — submissions, RPI, overdue IRs, sections approved —
-              in a sentence that also says which one to act on, and "sections
-              approved" appears a third time in the build-state bar below.
-              Repeating a figure three times does not make it more true.
-              The ONE tile that returns is IR overdue, and it returns as a
-              door, not a repeat: the questions behind the count live on the
-              Program records tab, so a positive count jumps there. At zero it
-              stays a plain figure, and over an empty portfolio it does not
-              render at all — "0 overdue" across no submissions is a claim
-              nothing has assessed. */}
-          {port.length > 0 && (
-            <div className="cm-kpis" style={{ gridTemplateColumns: 'minmax(150px, 240px)' }}>
-              <Kpi
-                l="IR overdue"
-                v={irUnknown ? '—' : irOverdue}
-                tone={irUnknown ? undefined : irOverdue ? 'err' : 'ok'}
-                s={irUnknown ? 'count not established, the question store could not be read' : undefined}
-                onClick={!irUnknown && irOverdue > 0
-                  ? () => (window as unknown as { __cmSetTab?: (id: string) => void }).__cmSetTab?.('pathway')
-                  : undefined}
-                title={!irUnknown && irOverdue > 0 ? 'Open the agency correspondence — overdue first' : undefined}
-              />
+              numbers — submissions, RPI, sections approved — in a sentence
+              that also says which one to act on. The ONE tile that stays is
+              agency questions overdue, as a door: the questions behind it are
+              listed on Program records, and each opens on its letter.
+              Since 2026-10-19 it is per program and the server's figure (the
+              letters' own overdue verdict, P-39 item 1): '—' with no program
+              open or when the read failed, never 0 for "not read"; a positive
+              count is a button; what it did not count is said with it. */}
+          <div className="cm-kpis" style={{ gridTemplateColumns: 'minmax(150px, 320px)' }}>
+            <Kpi
+              l="Module 3 questions overdue on this program"
+              v={irUnknown ? '—' : irOverdue}
+              /* Green only for an all-clear: a zero over a partial figure, an
+                 unread earlier file, or a Module 3 letter overdue with nothing
+                 recorded is a plain figure, not a reassurance. */
+              tone={irUnknown ? undefined : irOverdue ? 'err' : questionsComplete && !m3Overdue ? 'ok' : undefined}
+              s={fig.state === 'no-program'
+                ? 'counted per program; open one'
+                : fig.state === 'loading'
+                  ? "reading the program's letters"
+                  : fig.state === 'unreadable'
+                    ? 'count not established, the agency questions could not be read'
+                    : [
+                        fig.lettersOverdue ? `on ${fig.lettersOverdue} ${fig.lettersOverdue === 1 ? 'letter' : 'letters'}` : '',
+                        fig.lettersWithoutQuestionsOverdue
+                          ? `${fig.lettersWithoutQuestionsOverdue} Module 3 ${fig.lettersWithoutQuestionsOverdue === 1 ? 'letter' : 'letters'} overdue with no question to answer recorded`
+                          : '',
+                        fig.lettersOverdueOnOtherQuestions
+                          ? `${fig.lettersOverdueOnOtherQuestions} ${fig.lettersOverdueOnOtherQuestions === 1 ? 'letter' : 'letters'} overdue on other questions, Module 3's answered`
+                          : '',
+                        fig.unclassifiedOutstanding
+                          ? `${fig.unclassifiedOutstanding} outstanding ${fig.unclassifiedOutstanding === 1 ? 'question' : 'questions'} with no CTD section not counted`
+                          : '',
+                        fig.overdueLettersWithoutQuestions
+                          ? `${fig.overdueLettersWithoutQuestions} overdue ${fig.overdueLettersWithoutQuestions === 1 ? 'letter' : 'letters'} with no question or section not counted`
+                          : '',
+                        fig.withheld ? `${fig.withheld} ${fig.withheld === 1 ? 'letter' : 'letters'} you cannot open not counted` : '',
+                      ].filter(Boolean).join('; ') || undefined}
+              onClick={!irUnknown && (irOverdue ?? 0) > 0
+                ? () => (window as unknown as { __cmSetTab?: (id: string) => void }).__cmSetTab?.('pathway')
+                : undefined}
+              title={!irUnknown && (irOverdue ?? 0) > 0 ? 'Open the Module 3 agency questions, overdue first' : undefined}
+            />
+          </div>
+          {/* The earlier file is organization-wide and its rows are on no
+              letter until a person records them there: said as that, never as
+              more of this program's overdue questions. A read that failed is
+              said, so its silence is not taken for "nothing open". */}
+          {earlierOpen ? (
+            <div className="cm-meta" style={{ marginBottom: 12 }} data-testid="cmc-earlier-file-line">
+              The earlier CMC question file (organization-wide, read-only) holds {earlierOpen} {earlierOpen === 1 ? 'question' : 'questions'} not
+              closed there. {earlierOpen === 1 ? 'It is' : 'They are'} not in this figure, and nothing moves {earlierOpen === 1 ? 'it' : 'them'} onto a
+              letter: record each one still open on its letter in Communication.
             </div>
-          )}
+          ) : earlierUnread ? (
+            <div className="cm-meta" style={{ marginBottom: 12 }} role="note" data-testid="cmc-earlier-file-line">
+              The earlier CMC question file could not be read; whether it holds open questions is not known.
+            </div>
+          ) : null}
           {/* Section approvals first: it is the only content on this page a
               CMC lead can act on. The portfolio and build-state cards below
               are reference material, and reference material does not go
@@ -862,7 +916,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
             {secs.length > 0 && <div className="pj-card-b" style={{ paddingTop: 0 }}><CmPush label={'Approved Module 3 sections'} nav={nav} bar /></div>}
           </div>
           <div className="pj-card" style={{ marginBottom: 16 }}>
-            <div className="pj-card-h"><span className="t">Portfolio</span><span className="s">{port.length} submissions</span></div>
+            <div className="pj-card-h"><span className="t">Portfolio</span><span className="s">{portfolioUnreadable ? '—' : port.length} submissions</span></div>
             <div className="pj-card-b" style={{ padding: 0 }}>
               {portfolioUnreadable ? (
                 <div style={{ padding: 12 }}>
@@ -945,35 +999,38 @@ function specErr(json: unknown, status: number): string {
   return serverMessage(json) ?? `The server did not accept the change (HTTP ${status}).`;
 }
 
-/* ── Correspondence signpost — open agency questions citing THIS tab's work ──
-   The record of truth (with loading/error/empty states) is the Program-records
-   card; this bar is an extra signpost rendered only when questions EXIST that
-   reference the sections this tab owns. It asserts presence, never absence —
-   on load failure it stays silent and the primary card reports the failure. */
-function CmCorrNotice({ prefixes, noun }: { prefixes: string[]; noun: string }) {
-  const board = useLiveData<CmcBoardData>('/api/cmc/module3-board');
-  const rows = (board.data?.correspondence ?? []).filter((c) =>
-    prefixes.some((pfx) => (c.sectionRef ?? '').toLowerCase().startsWith(pfx.toLowerCase())),
-  );
+/* ── Agency-question signpost — outstanding questions citing THIS tab's work ──
+   The record of truth is the letter, in Communication; Program records lists
+   the program's Module 3 questions. This bar is an extra signpost rendered
+   only when an outstanding question (not answered as it stands, on a letter
+   not closed) cites a section this tab owns, matched on whole CTD segments
+   (3.2.S.2 is not 3.2.S.20). It asserts presence, never absence: with no
+   program, or a read that failed, it stays silent and Program records says
+   why. Its door opens the most urgent question on its letter. */
+function CmCorrNotice({ prefixes, noun, nav }: { prefixes: string[]; noun: string; nav?: (id: string) => void }) {
+  /* "Outstanding" is the server's flag on each question. When the server
+     listed a page of the program's questions, these rows are a lower bound,
+     and the count says "at least". */
+  const { rows, partial } = outstandingAt(useCmcQuestions(), prefixes);
   if (rows.length === 0) return null;
-  const overdue = rows.filter((c) => c.overdue).length;
+  const overdue = rows.filter((q) => q.overdue).length;
+  const first = rows[0];
   return (
     <div className={'pj-con' + (overdue ? '' : ' is-ok')} style={{ marginBottom: 12 }} data-testid="cmc-corr-notice">
       <span className="ico">{overdue ? I.alertTriangle : I.globe}</span>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <div>
           <div className="pj-con-t">
-            {rows.length} open agency {rows.length === 1 ? 'question references' : 'questions reference'} {noun}
+            {partial ? 'At least ' : ''}{rows.length} outstanding agency {rows.length === 1 ? 'question references' : 'questions reference'} {noun}
             {overdue ? ` — ${overdue} overdue` : ''}
           </div>
-          <div className="pj-con-d">{rows[0].sectionRef ?? 'Module 3'} · {rows[0].question.slice(0, 90)}{rows[0].question.length > 90 ? '…' : ''}</div>
+          <div className="pj-con-d">§{first.section} · {first.questionText.slice(0, 90)}{first.questionText.length > 90 ? '…' : ''}</div>
         </div>
-        <button
-          className="nda-open"
-          onClick={() => (window as unknown as { __cmSetTab?: (id: string) => void }).__cmSetTab?.('pathway')}
-        >
-          {I.scroll} Open correspondence
-        </button>
+        {nav ? (
+          <button className="nda-open" onClick={() => openLetterInCommunication(nav, first.letter.id, first.id)}>
+            {I.scroll} Open its letter in Communication
+          </button>
+        ) : null}
       </div>
     </div>
   );
@@ -1054,6 +1111,7 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
         const id = edit.id;
         const res = await apiRequest('PUT', '/api/cmc/specifications/' + id, specUpdateBody(v));
         const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
         if (!res.ok) { fireToast('Couldn’t save the specification — ' + specErr(json, res.status) + '. Nothing was persisted.', 'error'); return; }
         const adopted = specRowsFromApi([(json as { data?: QualitySpecApiRow })?.data].filter(Boolean) as QualitySpecApiRow[])[0];
         setRows((rs) => rs.map((x) => x.id === id ? { ...(adopted ?? x), _new: true } : x));
@@ -1061,6 +1119,7 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
       } else {
         const res = await apiRequest('POST', '/api/cmc/specifications', specCreateBody(v, projectId));
         const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
         if (!res.ok) { fireToast('Couldn’t create the specification — ' + specErr(json, res.status) + '. Nothing was saved.', 'error'); return; }
         const adopted = specRowsFromApi([(json as { data?: QualitySpecApiRow })?.data].filter(Boolean) as QualitySpecApiRow[])[0];
         if (!adopted) { fireToast('Saved, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
@@ -1087,6 +1146,7 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
         reauth: { password: v.password, totp: v.totp || undefined },
       });
       const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
       if (res.status === 401) { fireToast('Approval not signed — re-authentication failed. The specification was not approved.', 'error'); return; }
       if (!res.ok) { fireToast('Couldn’t approve the specification — ' + specErr(json, res.status) + '. Nothing was persisted.', 'error'); return; }
       const adopted = specRowsFromApi([(json as { data?: QualitySpecApiRow })?.data].filter(Boolean) as QualitySpecApiRow[])[0];
@@ -1103,7 +1163,7 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
     <div className="cm-body">
       <CmHead title="Specifications" meta="Release and shelf-life limits — drug substance and drug product" ask={ask} suggest={CMC_SUGGEST.specs}
         actions={<button className="nda-open" onClick={() => setEdit('new')} disabled={!projectId} title={!projectId ? 'Open a program to record specifications' : ''}>{I.plus} New specification</button>} />
-      <CmCorrNotice prefixes={['3.2.S.4', '3.2.P.5', 'm3.2.S.4', 'm3.2.P.5']} noun="these specifications" />
+      <CmCorrNotice prefixes={['3.2.S.4', '3.2.P.5']} noun="these specifications" nav={nav} />
       {noMethodCount > 0 && <div className="pj-con" style={{ marginBottom: 14 }}><span className="ico">{I.alertTriangle}</span><div><div className="pj-con-t">{noMethodCount} specification without a validated method</div><div className="pj-con-d">A specification cannot be approved until its analytical method is validated (ICH Q2). Add the method, or ask AnA to draft the validation justification.</div></div></div>}
       <div className="pj-card">
         <div className="pj-card-h"><span className="t">Specification table</span><span className="s">{rows.length} attributes</span></div>
@@ -1346,6 +1406,11 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
 
   const [registering, setRegistering] = useState(false);
   const [recording, setRecording] = useState<StabilityStudyApiRow | null>(null);
+  /* The study's §11.10(e) change history — who recorded it, who changed it and
+     what each change moved (URS-CMC-026). This register is not a RegisterCard,
+     so it needs its own action; a register whose edits are recorded and never
+     shown is the half of §11.10(e) an inspector reads for a changed record. */
+  const [historyFor, setHistoryFor] = useState<StabilityStudyApiRow | null>(null);
   const [closing, setClosing] = useState<StabilityStudyApiRow | null>(null);
   /* ICH Q1E estimates, keyed by study. Held per study rather than globally
      because the estimate belongs to the batch and condition it was fitted from —
@@ -1380,6 +1445,7 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
     try {
       const res = await apiRequest('POST', '/api/cmc/stability-studies', stabilityBody(v, projectId));
       const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
       if (!res.ok) { fireToast(cmcWriteFailed('stability study', json, res.status), 'error'); return; }
       const row = adopt(json);
       if (!row) { fireToast('Saved, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
@@ -1406,6 +1472,7 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
         ...(projectId ? { projectId } : {}),
       });
       const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
       if (!res.ok) { fireToast(cmcWriteFailed('stability result', json, res.status), 'error'); return; }
       const row = adopt(json);
       if (!row) { fireToast('Saved, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
@@ -1436,6 +1503,7 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
     try {
       const res = await apiRequest('POST', '/api/cmc/stability-studies/' + study.id + '/shelf-life', {});
       const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
       if (!res.ok) {
         fireToast(cmcWriteError(json, res.status), 'error');
         return;
@@ -1478,6 +1546,7 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
         studyIds: poolPick,
       });
       const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
       if (!res.ok) {
         setPool(null);
         fireToast(cmcWriteError(json, res.status), 'error');
@@ -1501,23 +1570,49 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
     }
   };
 
+  /**
+   * The close-out, in the two acts the server governs it as: the shelf life and
+   * its basis recorded by an ordinary (audited) edit, then the terminal status
+   * under a 21 CFR Part 11 signature.
+   *
+   * Sending them as one PUT is what this surface did until 2026-10-19, and the
+   * server took it — the shelf-life claim §3.2.S.7.1 prints was recorded with
+   * no signature at all.
+   *
+   * If the edit lands and the signature does not, the shelf life is recorded
+   * and the study is still running. That is recoverable and it is what
+   * happened, so the toast says exactly that rather than reporting a close-out
+   * that did not occur.
+   */
   const closeOut = async (v: Record<string, string>) => {
     if (!closing) return;
     const study = closing;
     try {
-      const res = await apiRequest('PUT', '/api/cmc/stability-studies/' + study.id, {
+      const recorded = await apiRequest('PUT', '/api/cmc/stability-studies/' + study.id, {
         ...stabilityCloseoutBody(v),
         ...(projectId ? { projectId } : {}),
       });
-      const json = await res.json().catch(() => null);
-      if (!res.ok) { fireToast(cmcWriteFailed('shelf life', json, res.status), 'error'); return; }
-      const row = adopt(json);
-      if (!row) { fireToast('Saved, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
+      const recordedJson = await recorded.json().catch(() => null);
+      if (!recorded.ok) { fireToast(cmcWriteFailed('shelf life', recordedJson, recorded.status), 'error'); return; }
+
+      const signed = await apiRequest('POST', `/api/cmc/stability-studies/${study.id}/close-out`, qualifyBody(v));
+      const signedJson = await signed.json().catch(() => null);
+      if (!signed.ok) {
+        /* The shelf life IS recorded; only the signature failed. Say both. */
+        const why = cmcWriteFailed('close-out', signedJson, signed.status);
+        fireToast(`${why} The shelf life is recorded; the study is still running until the close-out is signed.`, 'error');
+        const partial = adopt(recordedJson);
+        if (partial) setRows((rs) => rs.map((r) => (r.id === study.id ? partial : r)));
+        return;
+      }
+      reportCmcLinkage(signedJson, 'CMC record');
+      const row = adopt(signedJson);
+      if (!row) { fireToast('Signed, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
       setRows((rs) => rs.map((r) => (r.id === study.id ? row : r)));
       setClosing(null);
-      fireToast(`Shelf life recorded for ${row.studyTitle || row.productName}: ${row.shelfLife}.`);
+      fireToast(`${row.studyTitle || row.productName} closed out under your signature: ${row.shelfLife}.`);
     } catch (e) {
-      fireToast(cmcWriteThrew('shelf life', e), 'error');
+      fireToast(cmcWriteThrew('close-out', e), 'error');
     }
   };
 
@@ -1530,7 +1625,7 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
         suggest={CMC_SUGGEST.stability}
         actions={<button className="nda-open" onClick={() => setRegistering(true)}>{I.plus} Register study</button>}
       />
-      <CmCorrNotice prefixes={['3.2.S.7', '3.2.P.8', 'm3.2.S.7', 'm3.2.P.8']} noun="the stability program" />
+      <CmCorrNotice prefixes={['3.2.S.7', '3.2.P.8']} noun="the stability program" nav={nav} />
       <div className="cm-kpis">
         {/* Two tiles, not six. "Studies", "Long-term" and "Accelerated" were
             classification counts nobody acts on — the register below is sorted
@@ -1627,6 +1722,14 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
                             {I.sigma} {estimating === r.id ? 'Fitting…' : 'Estimate Q1E'}
                           </button>
                           <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setClosing(r)}>{I.checkCircle} Shelf life</button>
+                          <button
+                            className="nda-open"
+                            style={{ marginLeft: 6 }}
+                            title="Who recorded this study, who changed it, and what each change moved"
+                            onClick={() => setHistoryFor(historyFor?.id === r.id ? null : r)}
+                          >
+                            {I.history} History
+                          </button>
                         </td>
                       </tr>
                       {isOpen && results.length > 0 && (
@@ -1666,6 +1769,14 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
         </div>
         {rows.length > 0 && <div className="pj-card-b" style={{ paddingTop: 0 }}><CmPush label={'Stability register -> §3.2.S.7'} nav={nav} bar /></div>}
       </div>
+      {historyFor && (
+        <RecordHistoryPanel
+          registerPath="stability-studies"
+          recordId={historyFor.id}
+          subject={`Stability study · ${historyFor.studyTitle || historyFor.productName}`}
+          onClose={() => setHistoryFor(null)}
+        />
+      )}
       <div className="pj-card" style={{ marginTop: 16 }}>
         <div className="pj-card-h"><span className="t">Shelf-life evidence</span><span className="s">ICH Q1E</span></div>
         <div className="pj-card-b">
@@ -1952,6 +2063,7 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
     try {
       const res = await apiRequest('POST', '/api/cmc/batch-records', batchCreateBody(v, projectId));
       const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
       if (!res.ok) { fireToast('Couldn’t log the batch — ' + specErr(json, res.status) + '. Nothing was saved.', 'error'); return; }
       const adopted = batchRowsFromApi([(json as { data?: BatchApiRow })?.data].filter(Boolean) as BatchApiRow[])[0];
       if (!adopted) { fireToast('Saved, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
@@ -1974,6 +2086,7 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
     try {
       const res = await apiRequest('POST', '/api/cmc/batch-records/' + target.dbId + '/release', batchReleaseBody(v, releasedByName));
       const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
       if (res.status === 401) { fireToast('Release not signed — re-authentication failed. The batch was not released.', 'error'); return; }
       if (!res.ok) { fireToast('Couldn’t release the batch — ' + specErr(json, res.status) + '. Nothing was persisted.', 'error'); return; }
       const adopted = batchRowsFromApi([(json as { data?: BatchApiRow })?.data].filter(Boolean) as BatchApiRow[])[0];
@@ -2044,138 +2157,23 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
   );
 }
 
-/* ═══════════ Change simulator -- computes the filing path ═══════════
-   Deterministic, rule-backed computed output (SUPAC / ICH Q12) over canonical
-   config — no fixture data slice. KEEP. */
-
-function filingPath(changeType: string, risk: string, mkt: string): string[] {
-  const high = risk === 'high', med = risk === 'med';
-  const map: Record<string, string[]> = {
-    fda: high ? ['Prior-Approval Supplement (PAS)', 'Reviewed before implementation'] : med ? ['CBE-30', 'Implement 30 days after filing'] : ['Annual Report', 'Report in next annual report'],
-    ema: high ? ['Type II variation', 'Assessed by CHMP/RMS'] : med ? ['Type IB variation', 'Tell-wait 30 days'] : ['Type IA (IN)', 'Immediate notification'],
-    pmda: high ? ['Partial change application (PCA)', 'Prior approval required'] : med ? ['Minor change notification', '30-day notification'] : ['Minor change notification', 'Notification'],
-    nmpa: high ? ['Supplemental application', 'Prior approval'] : ['Filing / record-keeping', 'Record-keeping change'],
-    health_canada: high ? ['Level I (PAS-equivalent)', 'Prior approval'] : med ? ['Level II (notifiable)', 'Notify'] : ['Level III/IV', 'Annual notification'],
-    uk_mhra: high ? ['Type II variation', 'Prior approval'] : med ? ['Type IB', 'Tell-wait'] : ['Type IA', 'Notify'],
-  };
-  return map[mkt] || ['Assess locally', 'Region rule not modelled'];
-}
-
+/* Postapproval filing assessment is deferred; the launch app records changes
+   against the US IND's Module 3 without manufacturing a marketing category. */
 export function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
-  const [type, setType] = useState('api_supplier_change');
-  const [markets, setMarkets] = useState(['fda', 'ema']);
-  const [desc, setDesc] = useState('');
-  const [result, setResult] = useState<CmcChangeResult | null>(null);
-  const [toast, fireToast] = useToast();
-  const toggle = (id: string) => setMarkets((m) => m.includes(id) ? m.filter((x) => x !== id) : [...m, id]);
-  const ct = CMC_CHANGE_TYPES.find((c) => c.id === type)!;
-  const simulate = () => { if (!desc.trim() || !markets.length) return; setResult({ type: ct, markets: [...markets], desc: desc.trim(), paths: markets.map((m) => ({ m, label: CMC_MARKETS.find((x) => x[0] === m)![1], path: filingPath(type, ct.risk, m) })) }); };
-  const riskTone = ct.risk === 'high' ? 'err' : ct.risk === 'med' ? 'warn' : 'ok';
-  /* The sections the SIMULATED change refiles — keyed by the result's own type,
-     not the select's current value, so the signpost describes the assessment on
-     screen even after the form moves on. */
-  const collides = result ? SECTIONS_FOR_CHANGE[result.type.id] ?? [] : [];
-
-  const memoMd = (r: CmcChangeResult) => {
-    const compBy = r.type.risk === 'high' ? 'A prospective comparability protocol (ICH Q5E) with pre-defined acceptance criteria and side-by-side characterization of the pre- and post-change material is required before implementation.'
-      : r.type.risk === 'med' ? 'A comparability assessment (ICH Q5E) covering critical quality attributes is required; a reduced protocol may suffice where the change is well-understood.'
-      : 'A risk-based comparability check against release and stability data is sufficient; full protocol not expected.';
-    const rec = r.type.risk === 'high' ? 'Do not implement until the highest-tier filing in scope is approved. Sequence the comparability work first.'
-      : r.type.risk === 'med' ? 'Prepare the moderate-change filing(s) and implement per each market\'s reporting category; some markets allow do-and-tell.'
-      : 'Implement under the annual/notification category; document in the next periodic report.';
-    let s = `# Regulatory Change Impact Assessment\n\n*${r.type.label} — ${r.markets.map((m) => m.toUpperCase()).join(', ')} — ${r.type.risk} impact*\n\n`;
-    s += `## 1. Change Description\n\n${r.desc}\n\n## 2. Classification\n\n- **Change type**: ${r.type.label}\n- **Assessed risk**: ${r.type.risk}\n- **Frameworks applied**: SUPAC, ICH Q12 (post-approval change management), ICH Q5E (comparability)\n\n## 3. Filing Path by Market\n\n| Market | Reporting category | Regulatory basis |\n|---|---|---|\n`;
-    r.paths.forEach((p) => { s += `| ${p.label} | ${p.path[0]} | ${p.path[1]} |\n`; });
-    s += `\n## 4. Comparability Requirement\n\n${compBy}\n\n## 5. Supporting Data Expected\n\n- Side-by-side release testing (pre/post change) against the approved specification\n- Stability commitment on the first post-change ${r.type.risk === 'low' ? 'batch' : 'batches'} (ICH Q1A)\n- Updated §3.2.S / §3.2.P sections and, where applicable, method (re)validation\n\n## 6. Recommendation\n\n${rec}\n\n---\n*Generated from the CMC change model (SUPAC / ICH Q12 rules). Route through change control and e-signature before implementation.*\n`;
-    return s;
-  };
-
-  /*
-   * "Open in editor" — a real handoff. See the long note on the same handler in
-   * Biostatistics.tsx. This inline onClick wrote {title, md} into
-   * localStorage['c2c_biostat_doc'] and navigated; nothing has ever read that
-   * key, so the assessment did not travel and the editor opened on whatever it
-   * would have opened on anyway.
-   *
-   * The payload is CONTENT, not an id, so it is created rather than referenced:
-   * POST the document, POST the section holding the memo, then navigate. On any
-   * failure we stay put with the assessment still on screen and say why.
-   */
-  const openingRef = useRef(false);
-  const [opening, setOpening] = useState(false);
-  const openEditor = async (r: CmcChangeResult) => {
-    if (openingRef.current) return; // a second click must not create a second document
-    const title = 'Regulatory Change Impact Assessment';
-    openingRef.current = true; setOpening(true);
-    try {
-      // A CMC change assessment is quality documentation — Module 3.
-      const res = await saveToAuthoring({
-        title, module: 'M3', code: 'regulatory_change_impact_assessment',
-        content: memoMd(r), subject: 'the assessment',
-      });
-      // Navigate only on a clean write — see authoringHandoff.
-      if (!res.ok) { fireToast(res.message, 'error'); return; }
-      if (nav) nav('document-authoring');
-      else fireToast(res.message);
-    } finally {
-      openingRef.current = false; setOpening(false);
-    }
-  };
-
+  const { launchScopeEnforced } = useNavEntitlements();
   return (
     <div className="cm-body">
-      <CmHead title="Change control" meta="Model a CMC change -> filing path across markets — SUPAC / ICH Q12" ask={ask} suggest={CMC_SUGGEST.change} />
-      <div className="pj-card">
-        <div className="pj-card-b">
-          <div className="de-field"><label className="de-label" htmlFor="cmc-change-type">Change type</label>
-            <select id="cmc-change-type" className="de-select" value={type} onChange={(e) => { setType(e.target.value); setResult(null); }}>{CMC_CHANGE_TYPES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select>
-          </div>
-          <div className="de-field"><label className="de-label" htmlFor="cmc-change-desc">Describe the change<span className="req">*</span></label>
-            <textarea id="cmc-change-desc" className="de-textarea" rows={2} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="e.g. switch the drug-substance supplier from A to B; comparable process, new site" />
-          </div>
-          <div className="de-field"><label className="de-label">Markets</label>
-            <div className="cm-mkt">{CMC_MARKETS.map(([id, l]) => (<button key={id} type="button" className="cm-mkt-opt" data-on={markets.includes(id) || undefined} onClick={() => toggle(id)}>{markets.includes(id) ? I.check : I.plus}{l}</button>))}</div>
-          </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}>
-            <button className="reg-cta" onClick={simulate} disabled={!desc.trim() || !markets.length}>{I.zap} Simulate change</button>
-            <span className={'rd-chip tone-' + riskTone}>{ct.risk} impact</span>
-          </div>
-        </div>
-      </div>
-      <CmChangeRegister />
-      {/* A change of consequence carries a comparability obligation (ICH Q5E),
-          so the assessments raised against those changes sit with them. */}
-      <CmComparabilityStudies />
-      {result && (
-        <div className="cm-change-out">
-          {/* A change colliding with an open agency question is exactly what a
-              regulatory lead must see before implementing: the sections this
-              change refiles are the sections the agency is already asking
-              about, and refiling under an open question is a decision to make,
-              not an accident to discover. Same signpost, same rules as the
-              Specifications and Stability tabs — presence only; on a failed
-              read the Program-records card reports the failure. */}
-          {collides.length > 0 && (
-            <CmCorrNotice prefixes={collides} noun="the sections this change refiles" />
-          )}
-          <div className="cm-doc">
-            <div className="cm-doc-bar">
-              <div><span className="cm-doc-kind">Regulatory Change Impact Assessment</span><span className="cm-doc-prov">SUPAC — ICH Q12 — draft</span></div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button className="bs-da" onClick={() => ask('Refine the change-control assessment and draft the comparability protocol for: ' + result.desc)}>{I.sparkles} Refine with AnA</button>
-                <button className="bs-da primary" onClick={() => void openEditor(result)} disabled={opening}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
-              </div>
-            </div>
-            <div className="cm-doc-page"><div className="cm-doc-render" dangerouslySetInnerHTML={{ __html: renderSafeMarkdown(memoMd(result)) }} /></div>
-          </div>
-          <CmPush label={'Change-control package — ' + result.type.label} nav={nav} bar />
-        </div>
+      <CmHead title="Change control" meta="Record the change, its basis and its Module 3 impact" ask={ask} suggest={CMC_SUGGEST.change} />
+      {launchScopeEnforced === false ? (
+        <CmcVariationAssessment nav={nav} followup={(sections) => sections.length ? <CmCorrNotice prefixes={sections} noun="the sections this change affects" nav={nav} /> : null} />
+      ) : (
+        <div className="pj-card"><div className="pj-card-b">
+          <h2>Postapproval variation assessment is outside this release</h2>
+          <p>This release composes small-molecule Module 3 for a US IND. A PAS, CBE or international marketing variation does not classify an IND change. Record the change and review the affected evidence here; no postapproval or multi-market filing category is inferred.</p>
+        </div></div>
       )}
-      {/* The market matrix over these same changes — one screen, because "what
-          did I change" and "what does each market require for it" is one
-          question. */}
-      <CmGlobal nav={nav} />
-      <C2CToast msg={toast} />
+      <CmChangeRegister />
+      <CmComparabilityStudies />
     </div>
   );
 }
@@ -2243,130 +2241,20 @@ function CmMaterials({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
   );
 }
 
-/* ═══════════ Global filings ═══════════
-   COMPUTED, not fabricated. The former fixture here (CMC_GLOBAL) invented a
-   per-region readiness percentage and a gap list; it was rightly deleted, and
-   the tab has been an honest empty ever since because no backend reports
-   regional readiness.
-
-   What CAN be answered honestly is the question this tab is actually for: for
-   every change already under control, what does each market require? That is
-   the same deterministic SUPAC / ICH Q12 / Reg. 1234/2008 rule set the change
-   simulator runs, applied to the REAL change-control register instead of to a
-   hypothetical. Nothing is projected: a change with no assessed risk level is
-   shown as unassessed rather than defaulted into a category, and the filing
-   category already recorded on the change is shown next to what the rules say,
-   so a disagreement between the two is visible instead of hidden. */
-
-/**
- * What each market requires for the changes already under control.
- *
- * This was its own tab, and it owned no object: it reads the SAME
- * change-control register the tab above it reads and reruns the SAME
- * deterministic rule set the change simulator runs. A market matrix about a set
- * of changes belongs beside those changes, not one navigation step away from
- * them — so it renders inside Change control now. Every column, every market and
- * the comparability register that travelled with it are unchanged; only the
- * heading it used to carry as a destination is gone.
- */
-function CmGlobal({ nav }: { nav?: (id: string) => void }) {
-  const live = useLiveRows<ChangeControlApiRow>('/api/cmc/change-control');
-  const CLOSED = ['implemented', 'closed', 'rejected'];
-  const open = live.rows.filter((r) => !CLOSED.includes(String(r.status || '').toLowerCase()));
-
-  return (
-    <>
-      <div className="cm-sub-head">Filing path by market — SUPAC / ICH Q12 / Reg. 1234-2008</div>
-      <div className="pj-card">
-        <div className="pj-card-h">
-          <span className="t">Filing path by market</span>
-          <span className="s">{open.length} open {open.length === 1 ? 'change' : 'changes'} — {CMC_MARKETS.length} markets</span>
-        </div>
-        <div className="pj-card-b" style={{ padding: 0 }}>
-          {open.length === 0 ? (
-            <div style={{ padding: 12 }}>
-              {live.loading ? (
-                <EmptyState icon={I.globe} title="Loading the change register…" busy />
-              ) : live.error ? (
-                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load the change register" hint="The change register didn’t respond, so the per-market filing paths cannot be computed. Sign in to your tenant and retry." />
-              ) : (
-                <EmptyState
-                  icon={I.globe}
-                  title="No open changes to file"
-                  hint="Raise a change in Change control and its reporting category in every market is computed here from the same rules the simulator uses. Nothing is projected for a change that does not exist."
-                />
-              )}
-            </div>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table className="reg-tbl">
-                <thead>
-                  <tr>
-                    <th>Change</th><th>Type</th><th>Risk</th><th>Recorded filing</th>
-                    {CMC_MARKETS.map(([id, label]) => <th key={id}>{label}</th>)}
-                  </tr>
-                </thead>
-                <tbody>
-                  {open.map((c) => {
-                    const risk = String(c.riskAssessment?.level ?? '').toLowerCase();
-                    const modelled = risk === 'high' ? 'high' : risk === 'medium' || risk === 'med' ? 'med' : risk === 'low' ? 'low' : null;
-                    return (
-                      <tr key={c.id}>
-                        <td className="mono" style={{ fontWeight: 600 }}>{c.changeNumber}</td>
-                        <td>{c.changeType || '--'}</td>
-                        <td>
-                          {modelled
-                            ? <span className={'rd-chip tone-' + (modelled === 'high' ? 'err' : modelled === 'med' ? 'warn' : 'ok')}>{risk}</span>
-                            : <span className="sp-tone-warn">not assessed</span>}
-                        </td>
-                        <td>{c.regulatoryFiling || <span className="cm-meta">not set</span>}</td>
-                        {CMC_MARKETS.map(([id]) => (
-                          <td key={id}>
-                            {modelled ? (
-                              <>
-                                <div style={{ fontWeight: 600 }}>{filingPath(String(c.changeType || ''), modelled, id)[0]}</div>
-                                <div className="cm-meta">{filingPath(String(c.changeType || ''), modelled, id)[1]}</div>
-                              </>
-                            ) : (
-                              <span className="cm-meta">assess the risk first</span>
-                            )}
-                          </td>
-                        ))}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-        {open.length > 0 && (
-          <div className="pj-card-b" style={{ paddingTop: 0 }}>
-            <div className="cm-meta" style={{ marginBottom: 8 }}>
-              Reporting categories are computed from the modelled rules for each market and the risk recorded on
-              the change. They are a starting position for a regulatory assessment, not a filed determination —
-              where a market’s rule is not modelled the cell says so rather than guessing.
-            </div>
-            <CmPush label={'Global filing matrix'} nav={nav} bar />
-          </div>
-        )}
-      </div>
-      {/* The comparability register is NOT rendered here. It travelled with this
-          matrix when Global filings was its own tab, but Change control — which
-          now hosts the matrix — already carries it above. Mounting it twice
-          would give the tab two create buttons over one table and two local row
-          states that desync after the first write. */}
-    </>
-  );
-}
-
 /* ═══════════ Program records ═══════════
    The audit chain, for real. This tab said "No audit activity yet" while
    GET /api/cmc/module3-os/provenance/:projectId/:sectionKey served the events
    and GET /api/cmc/module3-os/contradictions/:projectId served the open
-   findings. Agency correspondence genuinely has no backend — the Module 3 board
-   returns correspondence:null — so that half stays an honest empty rather than
-   being filled with something adjacent. */
+   findings.
+
+   Agency questions (2026-10-19, P-38 / P-39 item 1). This tab used to be a
+   second home for them: log, assign, send for review, draft into an authoring
+   document, close and reopen, each a status update on CMC's own file with no
+   signature. They are now the letter's record. The tab lists the program's
+   Module 3 questions read from their letters (./cmcAgencyQuestions), each with
+   one door, "Open on its letter", into Communication, where it is recorded,
+   answered and approved by signature; and the earlier file as read-only
+   history. CMC writes nothing about agency questions. */
 
 interface ProvenanceRow {
   eventType: string;
@@ -2378,313 +2266,6 @@ interface ProvenanceRow {
 
 export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
   const projectId = cmcProjectId();
-  /* Open Module 3 agency questions — the org-scoped board serves them from
-     reg_questions. This card was a permanent empty state ("once a
-     correspondence source is connected") while the same rows fed an Overview
-     KPI; the source was connected all along. */
-  /* corrEpoch bumps after every correspondence WRITE (log / close), refetching
-     the board so the card shows the server's list — never a locally invented
-     row. useLiveData refetches when its deps change; the path never does. */
-  const [corrEpoch, setCorrEpoch] = useState(0);
-  const board = useLiveData<CmcBoardData>('/api/cmc/module3-board', ['/api/cmc/module3-board', corrEpoch]);
-  const corr = board.data?.correspondence;
-  const [toast, fireToast] = useToast();
-
-  /* ── Log an agency question ──
-     The board READS reg_questions; until this, nothing in the product could
-     WRITE it — questions arrived only through the email ingest, so an IR
-     received by phone or portal (how most agencies actually deliver them)
-     could not be recorded at all. POST /api/cmc/agency-questions stamps the
-     org from the verified session; the card reloads from the server. */
-  const [logOpen, setLogOpen] = useState(false);
-  /* A second submit while the POST is in flight would write a second
-     PERMANENT row (questions close, never delete) — same guard idiom as the
-     change memo's openingRef. */
-  const loggingRef = useRef(false);
-  const LOG_FORM: C2CFormConfig = {
-    eyebrow: 'CMC — agency correspondence',
-    title: 'Log an agency question',
-    sub: 'Records an open information request in the correspondence file. Triage, drafting and closure all work from this record.',
-    submitLabel: 'Log question',
-    fields: [
-      { key: 'questionText', label: 'Question, as received', type: 'textarea', required: true, placeholder: 'Quote the agency’s question verbatim — never a paraphrase.' },
-      { key: 'sectionReference', label: 'Module 3 section (optional)', type: 'text', half: true, placeholder: 'e.g. 3.2.S.4.1 — this file holds 3.x questions' },
-      { key: 'region', label: 'Agency / region', type: 'text', half: true, placeholder: 'e.g. FDA' },
-      { key: 'priority', label: 'Priority', type: 'seg', options: ['low', 'medium', 'high'], default: 'medium', half: true },
-      { key: 'dueDate', label: 'Response due', type: 'date', half: true },
-      { key: 'assignedTo', label: 'Assigned to', type: 'text', placeholder: 'Who owns the response (optional)' },
-    ],
-  };
-  const logQuestion = async (v: Record<string, string>) => {
-    if (loggingRef.current) return;
-    loggingRef.current = true;
-    try {
-      const res = await apiRequest('POST', '/api/cmc/agency-questions', {
-        questionText: v.questionText,
-        ...(v.sectionReference?.trim() ? { sectionReference: v.sectionReference.trim() } : {}),
-        ...(v.region?.trim() ? { region: v.region.trim() } : {}),
-        ...(v.priority ? { priority: v.priority } : {}),
-        ...(v.dueDate ? { dueDate: v.dueDate } : {}),
-        ...(v.assignedTo?.trim() ? { assignedTo: v.assignedTo.trim() } : {}),
-      });
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
-        fireToast('Couldn’t log the question — ' + (serverMessage(json) ?? `HTTP ${res.status}`) + '. Nothing was recorded.', 'error');
-        return;
-      }
-      setLogOpen(false);
-      const row = (json as { data?: { sectionRef?: string | null } })?.data;
-      fireToast('Agency question logged' + (row?.sectionRef ? ' · §' + row.sectionRef : '') + ' — open in the correspondence file.');
-      setCorrEpoch((e) => e + 1);
-    } catch (e) {
-      fireToast('Couldn’t log the question — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
-    } finally {
-      loggingRef.current = false;
-    }
-  };
-
-  /* The CLOSED file — the record the board's open filter deliberately leaves
-     out, readable at last. Loaded on demand (the open list is the working
-     set; the answered history is a look-up before the next agency
-     interaction and at inspection), with honest loading/error/empty states.
-     Reopening a mistaken close was legal in the API from day one and
-     impossible from every screen; the Reopen door closes that. */
-  const [closedOpen, setClosedOpen] = useState(false);
-  const [closedRows, setClosedRows] = useState<CmcCorrespondence[]>([]);
-  const [closedState, setClosedState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
-  const loadClosed = async () => {
-    setClosedState('loading');
-    try {
-      const res = await apiRequest('GET', '/api/cmc/agency-questions?status=CLOSED');
-      const pj = (await res.json().catch(() => null)) as { success?: boolean; data?: unknown } | null;
-      if (!res.ok || !pj?.success) throw new Error(serverMessage(pj) ?? `HTTP ${res.status}`);
-      setClosedRows(Array.isArray(pj.data) ? (pj.data as CmcCorrespondence[]) : []);
-      setClosedState('ready');
-    } catch {
-      // A failed read is an ERROR, never an empty history claiming nothing
-      // was ever closed.
-      setClosedState('error');
-      setClosedRows([]);
-    }
-  };
-  const toggleClosed = () => {
-    const next = !closedOpen;
-    setClosedOpen(next);
-    if (next) void loadClosed();
-  };
-  const reopenQuestion = async (c: CmcCorrespondence) => {
-    try {
-      /* Reopen to the truthful state: DRAFTED when a response draft is linked
-         (that draft still exists), OPEN otherwise. Guarded — only a row still
-         CLOSED reopens; a 409 means someone already moved it. */
-      await apiRequest('PATCH', '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)), {
-        status: c.responseDocId ? 'DRAFTED' : 'OPEN',
-        expectedStatus: 'CLOSED',
-      });
-      fireToast('Question reopened' + (c.sectionRef ? ' · §' + c.sectionRef : '') + ' — back on the open list.');
-    } catch (e) {
-      fireToast('Couldn’t reopen the question — ' + (e instanceof Error ? e.message : String(e)), 'error');
-    }
-    setCorrEpoch((e) => e + 1);
-    void loadClosed();
-  };
-
-  /* Close = the question is answered and submitted; the row leaves the OPEN
-     list but stays in the record. Inline confirm — a closed row disappears
-     from this view, so a misclick must not do that silently. */
-  const [closingId, setClosingId] = useState<string | number | null>(null);
-  const closeQuestion = async (c: CmcCorrespondence) => {
-    try {
-      // expectedStatus: closing applies to the row THIS screen read — if
-      // someone else already moved it, the server answers 409 with the
-      // current status instead of this click silently overwriting it.
-      const res = await apiRequest('PATCH', '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)), { status: 'CLOSED', expectedStatus: c.status });
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
-        fireToast('Couldn’t close the question — ' + (serverMessage(json) ?? `HTTP ${res.status}`) + '. It stays open.', 'error');
-        return;
-      }
-      fireToast('Question closed' + (c.sectionRef ? ' · §' + c.sectionRef : '') + ' — it leaves the open list and stays in the record.');
-      setClosingId(null);
-      setCorrEpoch((e) => e + 1);
-      // The closed file is on screen? Then the row must appear there NOW.
-      if (closedOpen) void loadClosed();
-    } catch (e) {
-      fireToast('Couldn’t close the question — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
-      setCorrEpoch((e) => e + 1);
-    }
-  };
-
-  /* Inline re-assignment. The Assigned column rendered the owner but only the
-     Log dialog could ever set one — changing who owns the response mid-life,
-     the everyday triage act, forced a raw API call. A blank value clears the
-     owner (the server stores NULL, the cell says so honestly). */
-  const [assigningId, setAssigningId] = useState<string | number | null>(null);
-  const [assignVal, setAssignVal] = useState('');
-  const saveAssignee = async (c: CmcCorrespondence) => {
-    const next = assignVal.trim();
-    if ((c.assignedTo ?? '') === next) {
-      setAssigningId(null);
-      return;
-    }
-    try {
-      await apiRequest(
-        'PATCH',
-        '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)),
-        { assignedTo: next || null },
-      );
-      fireToast(next ? 'Assigned to ' + next + '.' : 'Assignment cleared.');
-      setAssigningId(null);
-      setCorrEpoch((e) => e + 1);
-    } catch (e) {
-      fireToast(
-        'Couldn’t update the assignment — ' + (e instanceof Error ? e.message : String(e)),
-        'error',
-      );
-    }
-  };
-
-  /* The REVIEW leg of the lifecycle. IN_REVIEW has always been in the store's
-     status set and on the board's chips, but nothing in the product could SET
-     it — a drafted response went to its reviewer by email while the file
-     stayed DRAFTED, and a reviewer could not hand it back. Guarded like every
-     status write here: the transition applies only from the status this
-     screen read; a concurrent move answers 409 with the current status. */
-  const moveStatus = async (
-    c: CmcCorrespondence,
-    to: 'IN_REVIEW' | 'DRAFTED',
-    said: string,
-  ) => {
-    try {
-      await apiRequest(
-        'PATCH',
-        '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)),
-        { status: to, expectedStatus: c.status },
-      );
-      fireToast(said + (c.sectionRef ? ' · §' + c.sectionRef : '') + '.');
-    } catch (e) {
-      fireToast(
-        'Couldn’t update the question — ' + (e instanceof Error ? e.message : String(e)),
-        'error',
-      );
-    }
-    // Refetch on success AND failure: a 409 means this screen's row is
-    // stale, and the honest next state is the server's.
-    setCorrEpoch((e) => e + 1);
-  };
-
-  /* "Draft response" — the same real handoff as the change memo's editor
-     button: the response document is CREATED (POST document + section via
-     saveToAuthoring) and we navigate only on a clean write. The skeleton
-     quotes the actual question and leaves [DATA NEEDED] markers — a scaffold
-     for the responder, never a fabricated answer. One draft at a time; a
-     second click while a write is in flight must not create a second document. */
-  const draftingRef = useRef(false);
-  const [draftingId, setDraftingId] = useState<string | number | null>(null);
-  /* The skeleton is EDITOR HTML, not markdown: the authoring store holds the
-     canonical editor's serialization, and a markdown string saved there
-     renders as literal `#`/`**` characters in the canvas and the document
-     view. Only tags the editor round-trips (h1/h2, blockquote, p, ul/li,
-     strong, em, hr) so the section opens rich, never in source mode. */
-  const draftHtml = (c: CmcCorrespondence) => {
-    const esc = (t: string) =>
-      t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const sec = c.sectionRef ? `§${c.sectionRef}` : 'Module 3';
-    const due = c.dueDate ? new Date(c.dueDate).toLocaleDateString() : 'no deadline recorded';
-    return (
-      `<h1>Response to Agency Question — ${esc(sec)}</h1>` +
-      `<blockquote><p>${esc(c.question)}</p></blockquote>` +
-      `<ul>` +
-      `<li><strong>Region</strong>: ${esc(c.region ?? 'not recorded')}</li>` +
-      `<li><strong>Due</strong>: ${esc(due)}${c.overdue ? ' — <strong>overdue</strong>' : ''}</li>` +
-      `<li><strong>Priority</strong>: ${esc(c.priority ?? c.severity ?? 'not recorded')}</li>` +
-      `<li><strong>Status</strong>: ${esc(c.status)}</li>` +
-      `</ul>` +
-      `<h2>Response</h2>` +
-      `<p>[DATA NEEDED] State the position first, then the evidence. Cite the governed record (specification, method, batch, stability study) by identifier — the reviewer will trace it.</p>` +
-      `<h2>Supporting evidence</h2>` +
-      `<ul>` +
-      `<li>[ ] Approved Module 3 section(s) covering ${esc(sec)}</li>` +
-      `<li>[ ] Specification / analytical method records cited in the response</li>` +
-      `<li>[ ] Batch or stability data referenced, with lot numbers</li>` +
-      `<li>[ ] Comparability or justification memo, if the answer relies on one</li>` +
-      `</ul>` +
-      `<hr>` +
-      `<p><em>Drafted from open agency question ${esc(String(c.id))}. Route through review and e-signature before it goes to the agency.</em></p>`
-    );
-  };
-  const draftResponse = async (c: CmcCorrespondence) => {
-    if (draftingRef.current) return;
-    draftingRef.current = true; setDraftingId(c.id);
-    try {
-      const res = await saveToAuthoring({
-        title: 'Response to agency question — ' + (c.sectionRef ? '§' + c.sectionRef : 'Module 3'),
-        module: 'M3', code: 'agency_question_response',
-        content: draftHtml(c), subject: 'the draft response',
-      });
-      // Navigate only on a clean write — see authoringHandoff.
-      if (!res.ok) { fireToast(res.message, 'error'); return; }
-      /* The draft EXISTS now, so the question's lifecycle can say so: OPEN →
-         DRAFTED, the status the board already renders and the open filter
-         keeps. Only an OPEN question is advanced — a reviewer's IN_REVIEW is
-         not downgraded by re-drafting. A failed status write does not undo
-         the draft; it is stated, and we stay here so the statement is seen. */
-      /* ONE guarded write for every status the board serves. An OPEN question
-         flips to DRAFTED because the draft now exists; DRAFTED and IN_REVIEW
-         keep their status (a reviewer's IN_REVIEW is never downgraded) while
-         the LINK follows the newest draft — the file must point at the draft
-         the responder is actually working in, whatever the lifecycle says.
-         expectedStatus makes the write conditional SERVER-side: this row was
-         read when the screen loaded, and if it moved on (someone closed the
-         question), the PATCH answers 409 instead of silently rewriting a
-         closed record. responseDocId is refused unless the document exists
-         in this org — the recorded link is a door that opens.
-         EVERY failure is surfaced: "draft created, file not updated" is a
-         split state the responder must hear about, so we stay on the card
-         where the statement is visible instead of navigating away from it. */
-      // apiRequest THROWS on a non-2xx (except 401) with the server's own
-      // sentence on the error — keep it, or the 409's "the question is CLOSED
-      // now" would be replaced by a vaguer line.
-      let thrownMsg: string | null = null;
-      const patch = await apiRequest(
-        'PATCH',
-        '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)),
-        {
-          ...(c.status === 'OPEN' ? { status: 'DRAFTED' } : {}),
-          expectedStatus: c.status,
-          responseDocId: res.docId,
-        },
-      ).catch((e: unknown) => {
-        thrownMsg = e instanceof Error && e.message ? e.message : null;
-        return null;
-      });
-      if (!patch?.ok) {
-        const pj = patch ? await patch.json().catch(() => null) : null;
-        fireToast(
-          'The draft was created, but the correspondence file was not updated — ' +
-            (serverMessage(pj) ?? thrownMsg ?? 'the question could not be updated; it is unchanged in the file.') +
-            ' Open the draft from the Document editor.',
-          'error',
-        );
-        setCorrEpoch((e) => e + 1);
-        return;
-      }
-      if (nav) {
-        /* Open the editor ON the new draft — the deep-link channel names the
-           exact document, so the editor cannot land on "first doc in the
-           list". Set only when a navigation follows: the channel is one-shot
-           and a target nothing consumes is a stray claim. */
-        setEditorTarget({ docType: null, docId: res.docId });
-        nav('document-authoring');
-      } else {
-        fireToast(res.message);
-        setCorrEpoch((e) => e + 1);
-      }
-    } finally {
-      draftingRef.current = false; setDraftingId(null);
-    }
-  };
-
   const sections = useLiveRows<{ sectionKey: string; sectionPath: string; approvalState: string; stale: boolean; updatedAt: string }>(
     projectId ? '/api/cmc/module3-os/sections/' + encodeURIComponent(projectId) : null,
   );
@@ -2732,258 +2313,11 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
   const resolved = contradictions.rows.filter((c) => c.status === 'resolved');
   const open = contradictions.rows.filter((c) => c.status !== 'resolved');
 
-  /* Org-wide by design: agency questions do not require an open program. */
-  const corrCard = (
-          <div className="pj-card" style={{ marginBottom: 16 }}>
-        <div className="pj-card-h">
-          <span className="t">Open agency correspondence</span>
-          <span className="s">Module 3 questions, organization-wide — triage by deadline</span>
-          <button
-            className="nda-open"
-            style={{ marginLeft: 'auto' }}
-            title="Record an information request the agency sent — by letter, portal or call"
-            onClick={() => setLogOpen(true)}
-          >
-            {I.plus} Log question
-          </button>
-        </div>
-        <div className="pj-card-b" style={{ padding: 0 }}>
-          {board.loading ? (
-            <div style={{ padding: 12 }}><EmptyState icon={I.globe} title="Loading agency correspondence…" busy /></div>
-          ) : board.error ? (
-            <div style={{ padding: 12 }}>
-          <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load agency correspondence" hint={board.error} />
-            </div>
-          ) : corr == null ? (
-            <div style={{ padding: 12 }}>
-          <EmptyState
-            icon={I.globe}
-            title="Correspondence store not provisioned"
-            hint="The agency-question store is not provisioned in this environment — nothing is shown because nothing could be read, not because nothing is open."
-          />
-            </div>
-          ) : corr.length === 0 ? (
-            <div style={{ padding: 12 }}>
-          <EmptyState
-            icon={I.shieldCheck}
-            title="No open Module 3 agency questions"
-            hint="Open information requests and LoQs referencing §3.x appear here with their deadline, priority and assignee, nearest deadline first."
-          />
-            </div>
-          ) : (
-            <table className="reg-tbl">
-          <thead><tr><th>Due</th><th>Section</th><th>Question</th><th>Priority</th><th>Status</th><th>Assigned</th><th style={{ textAlign: 'right' }}>Actions</th></tr></thead>
-          <tbody>
-            {corr.map((c) => (
-              <tr key={c.id}>
-                <td style={{ whiteSpace: 'nowrap' }}>
-                  {c.dueDate ? (
-                    <span className={'rd-chip tone-' + (c.overdue ? 'err' : 'dim')}>
-                      {new Date(c.dueDate).toLocaleDateString()}{c.overdue ? ' · overdue' : ''}
-                    </span>
-                  ) : (
-                    <span className="cm-meta">no deadline</span>
-                  )}
-                </td>
-                <td className="mono">{c.sectionRef ?? '—'}</td>
-                <td title={c.question}>{c.question.length > 120 ? c.question.slice(0, 120) + '…' : c.question}</td>
-                <td>
-                  <span className={'rd-chip tone-' + (String(c.priority).toLowerCase() === 'high' || String(c.severity).toLowerCase() === 'critical' ? 'err' : String(c.priority).toLowerCase() === 'medium' ? 'warn' : 'dim')}>
-                    {c.priority ?? c.severity ?? '—'}
-                  </span>
-                </td>
-                <td className="mono">{c.status}</td>
-                <td>
-                  {assigningId === c.id ? (
-                    <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
-                      <input
-                        value={assignVal}
-                        autoFocus
-                        aria-label="Who owns the response — blank clears the assignment"
-                        placeholder="name or email"
-                        style={{ width: 150 }}
-                        onChange={(e) => setAssignVal(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') void saveAssignee(c);
-                          if (e.key === 'Escape') setAssigningId(null);
-                        }}
-                      />
-                      <button className="nda-open" onClick={() => void saveAssignee(c)}>Save</button>
-                      <button className="nda-open" onClick={() => setAssigningId(null)}>Cancel</button>
-                    </span>
-                  ) : (
-                    <button
-                      className="nda-open"
-                      title={c.assignedTo ? 'Change who owns the response' : 'Assign an owner for the response'}
-                      onClick={() => {
-                        setAssigningId(c.id);
-                        setAssignVal(c.assignedTo ?? '');
-                      }}
-                    >
-                      {c.assignedTo ?? 'Assign'}
-                    </button>
-                  )}
-                </td>
-                <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                  <div style={{ display: 'inline-flex', gap: 6 }}>
-                    {/* The linked draft is a recorded fact on the row — the
-                        door renders only when the file names a document AND a
-                        navigator exists to honour it. */}
-                    {c.responseDocId && nav ? (
-                      <button
-                        className="nda-open"
-                        // Held while ANY draft write is in flight: navigating
-                        // to the editor mid-write would leave that write's
-                        // own editor target unconsumed on the channel.
-                        disabled={draftingId != null}
-                        title="Open the drafted response in the document editor"
-                        onClick={() => {
-                          setEditorTarget({ docType: null, docId: c.responseDocId });
-                          nav('document-authoring');
-                        }}
-                      >
-                        {I.fileText} Open draft
-                      </button>
-                    ) : null}
-                    <button
-                      className="nda-open"
-                      disabled={draftingId != null}
-                      title="Create a governed response draft quoting this question and open it in the editor"
-                      onClick={() => void draftResponse(c)}
-                    >
-                      {draftingId === c.id ? <>Creating…</> : c.responseDocId ? <>{I.fileText} Re-draft</> : <>{I.fileText} Draft response</>}
-                    </button>
-                    <button
-                      className="nda-open"
-                      title="Ask AnA about this question"
-                      onClick={() => ask('An agency question is open against ' + (c.sectionRef ? '§' + c.sectionRef : 'Module 3') + ': "' + c.question + '" — what evidence from our specifications, batch records and stability program answers it, and what is missing?')}
-                    >
-                      {I.sparkles} Ask AnA
-                    </button>
-                    <button
-                      className="nda-open"
-                      title="Create a task for this question"
-                      onClick={() => cmcTask('Agency question ' + (c.sectionRef ? '§' + c.sectionRef : 'Module 3'))}
-                    >
-                      {I.checkSquare} Create task
-                    </button>
-                    {/* The review leg: only the transition the row's CURRENT
-                        status allows is offered — the guard on the write is
-                        mirrored by the door that proposes it. */}
-                    {c.status === 'DRAFTED' ? (
-                      <button
-                        className="nda-open"
-                        title="Send the drafted response for review — the file shows IN_REVIEW"
-                        onClick={() => void moveStatus(c, 'IN_REVIEW', 'Sent for review')}
-                      >
-                        Send for review
-                      </button>
-                    ) : null}
-                    {c.status === 'IN_REVIEW' ? (
-                      <button
-                        className="nda-open"
-                        title="Hand the question back to drafting"
-                        onClick={() => void moveStatus(c, 'DRAFTED', 'Returned to drafting')}
-                      >
-                        Return to drafting
-                      </button>
-                    ) : null}
-                    {/* Close leaves the open list (the record keeps the row),
-                        so a misclick must confirm before it disappears. */}
-                    {closingId === c.id ? (
-                      <>
-                        <span className="cm-meta">Close this question?</span>
-                        <button className="nda-open" onClick={() => setClosingId(null)}>
-                          Cancel
-                        </button>
-                        <button className="nda-open" onClick={() => void closeQuestion(c)}>
-                          {I.check} Close
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        className="nda-open"
-                        title="Close this question — it leaves the open list and stays in the record"
-                        onClick={() => setClosingId(c.id)}
-                      >
-                        Close
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-            </table>
-          )}
-          {/* ── The closed file ──
-              Rendered under BOTH branches above: a fresh screen with no open
-              questions still has (or will have) an answered history. */}
-          <div style={{ borderTop: '1px solid var(--border)', marginTop: 10, paddingTop: 8 }}>
-            <button className="nda-open" onClick={toggleClosed}>
-              {closedOpen ? 'Hide the closed file' : 'Show the closed file'}
-            </button>
-            {closedOpen ? (
-              closedState === 'loading' ? (
-                <div role="status" className="cm-meta" style={{ marginTop: 8 }}>Loading the closed file…</div>
-              ) : closedState === 'error' ? (
-                <div className="sp-tone-err" style={{ marginTop: 8, fontSize: 12.5 }}>
-                  Couldn’t read the closed file — it didn’t load, and this list would be a lie if it rendered empty. Toggle to retry.
-                </div>
-              ) : closedRows.length === 0 ? (
-                <div className="cm-meta" style={{ marginTop: 8 }}>
-                  No closed questions yet — the answered file builds as questions close.
-                </div>
-              ) : (
-                <table className="reg-tbl" style={{ marginTop: 8 }}>
-                  <thead><tr><th>Closed</th><th>Section</th><th>Question</th><th>Assigned</th><th style={{ textAlign: 'right' }}>Actions</th></tr></thead>
-                  <tbody>
-                    {closedRows.map((c) => (
-                      <tr key={'cl-' + c.id}>
-                        <td style={{ whiteSpace: 'nowrap' }} className="cm-meta">
-                          {c.updatedAt ? new Date(c.updatedAt).toLocaleDateString() : '—'}
-                        </td>
-                        <td className="mono">{c.sectionRef ?? '—'}</td>
-                        <td title={c.question}>{c.question.length > 120 ? c.question.slice(0, 120) + '…' : c.question}</td>
-                        <td>{c.assignedTo ?? '—'}</td>
-                        <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                          <div style={{ display: 'inline-flex', gap: 6 }}>
-                            {c.responseDocId && nav ? (
-                              <button
-                                className="nda-open"
-                                title="Open the response that answered this question"
-                                onClick={() => {
-                                  setEditorTarget({ docType: null, docId: c.responseDocId });
-                                  nav('document-authoring');
-                                }}
-                              >
-                                {I.fileText} Open response
-                              </button>
-                            ) : null}
-                            <button
-                              className="nda-open"
-                              title="Reopen this question — it returns to the open list"
-                              onClick={() => void reopenQuestion(c)}
-                            >
-                              Reopen
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )
-            ) : null}
-          </div>
-        </div>
-      </div>
-  );
-
   return (
     <div className="cm-body">
-      <CmHead title="Program records" meta="Agency correspondence, approval gates and the audit chain" ask={ask} suggest={CMC_SUGGEST.pathway} />
-      {corrCard}
+      <CmHead title="Program records" meta="Agency questions on Module 3, approval gates and the audit chain" ask={ask} suggest={CMC_SUGGEST.pathway} />
+      <CmcModule3QuestionIndex nav={nav} />
+      <CmcEarlierQuestionFile nav={nav} />
       {!projectId ? (
         <div className="pj-card">
           <div className="pj-card-b">
@@ -3095,8 +2429,6 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
           </div>
         </>
       )}
-      {logOpen && <C2CForm config={LOG_FORM} onCancel={() => setLogOpen(false)} onSubmit={logQuestion} />}
-      <C2CToast msg={toast} />
     </div>
   );
 }
@@ -3202,6 +2534,15 @@ export function CmcModule({ onAsk, onNav }: SurfaceViewProps) {
   }>(anaProjectId ? '/api/cmc/module3-os/readiness/' + encodeURIComponent(anaProjectId) : null);
   const tabLabel = CMC_NAV.find((n) => n.id === tab)?.label ?? 'Overview';
   const r = anaReadiness.loading || anaReadiness.error ? null : anaReadiness.data;
+  /* The program's agency questions on Module 3, read ONCE here and provided to
+     the Overview figure, the per-tab signposts and Program records, so AnA's
+     facts below are the figure the screen shows (2026-10-19, P-39 item 1).
+     They are spread only once measured: a program open, the read resolved and
+     not failed. No action is offered for them: CMC opens letters, it does not
+     work them. */
+  const questionsRead = useCmcQuestionsRead();
+  const q = cmcQuestionFacts(questionsRead);
+  const qKey = JSON.stringify(q);
   const anaContext = React.useMemo(
     () => ({
       summary:
@@ -3211,7 +2552,8 @@ export function CmcModule({ onAsk, onNav }: SurfaceViewProps) {
             (r.staleSections ? `, ${r.staleSections} went stale after approval` : '') +
             (r.openCriticalContradictions ? `, ${r.openCriticalContradictions} critical contradiction(s) are unresolved` : '') +
             `. Final export ${r.exportReady ? 'would pass' : 'is blocked'}.`
-          : '.'),
+          : '.') +
+        q.sentence,
       facts: {
         tab,
         tabLabel,
@@ -3225,6 +2567,7 @@ export function CmcModule({ onAsk, onNav }: SurfaceViewProps) {
               exportReady: r.exportReady,
             }
           : {}),
+        ...q.facts,
       },
       /* Her vocabulary for "drive this screen" requests: the tabs by name, plus
          the governed actions this module actually performs. */
@@ -3239,18 +2582,22 @@ export function CmcModule({ onAsk, onNav }: SurfaceViewProps) {
         'assess whether stability batches are combinable (ICH Q1E ANCOVA poolability)',
       ],
     }),
-    [tab, tabLabel, r?.totalSections, r?.approvedSections, r?.staleSections, r?.openCriticalContradictions, r?.exportReady],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- q is rebuilt each render; qKey is its value
+    [tab, tabLabel, r?.totalSections, r?.approvedSections, r?.staleSections, r?.openCriticalContradictions, r?.exportReady, qKey],
   );
   usePublishSurfaceContext('cmc', anaContext);
 
   const Surf = CMC_SURF[tab] || CmOverview;
   return (
-    <div className="cm">
-      <div className="cm-sub">
-        {CMC_NAV.map((n) => (<button key={n.id} className="cm-subtab" data-on={tab === n.id || undefined} onClick={() => setTab(n.id)}>{I[n.icon] || I.grid}{n.label}</button>))}
+    <CmcQuestionsContextProvider value={questionsRead}>
+      <div className="cm">
+        <div className="cm-sub">
+          {CMC_NAV.map((n) => (<button key={n.id} className="cm-subtab" data-on={tab === n.id || undefined} onClick={() => setTab(n.id)}>{I[n.icon] || I.grid}{n.label}</button>))}
+        </div>
+        <CmConnectBar nav={onNav} />
+        <CmcRegisterLinks onRecovered={() => setTab('build')} />
+        <Surf ask={ask} nav={onNav} />
       </div>
-      <CmConnectBar nav={onNav} />
-      <Surf ask={ask} nav={onNav} />
-    </div>
+    </CmcQuestionsContextProvider>
   );
 }

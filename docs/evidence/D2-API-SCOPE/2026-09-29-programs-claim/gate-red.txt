@@ -22,4 +22,3 @@ AssertionError: /api/programs/7/predicate-intel/defense-packet/build: expected f
       Tests  1 failed | 26 passed (27)
    Start at  21:32:50
    Duration  1.06s (transform 333ms, setup 115ms, import 299ms, tests 137ms, environment 0ms)
-

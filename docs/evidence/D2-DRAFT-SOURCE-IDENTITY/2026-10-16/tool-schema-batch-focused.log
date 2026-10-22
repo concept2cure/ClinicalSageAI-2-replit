@@ -1,0 +1,147 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+{
+  "timestamp": "2026-10-16T21:32:26.403Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-16T21:32:26.404Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+{
+  "timestamp": "2026-10-16T21:32:26.404Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds a drug CMC section in its ICH guidance (matched by code or title) 3ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds a device section in the device blueprint (not the drug CTD) 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds an IVD performance section for an IVD marketing type 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > returns null when the submission type is absent or unresolvable 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > returns null for a section the blueprint does not contain 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs 2.7.4, 5.3.5.3 and 3.2.P.5 from the record (the blueprint had no row for them) 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > names a US IND's 1.2 the cover letter, never the blueprint's 'Administrative Forms' 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs a US IND's 1.14.4.1 as the Investigator's Brochure 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > says a CTD code the record does not index is not indexed, instead of returning nothing 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > never gives an EU MAA the US Module 1 or the blueprint's Module 1 row 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs Modules 2–5 from the ICH record for a non-US CTD entry 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > answers a unique canonical title with that section, and lists every code for an ambiguous one 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > adds the record brief to a blueprint title match outside Module 1 (US IND "Drug Substance" → 3.2.S) 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > never briefs a non-CTD blueprint section as a CTD module (510(k) §3, an IB section 3) 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > answers a title from the entry's own blueprint row before a same-titled canonical section elsewhere 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > treats a leading section code as the code whatever title follows it, and says when the title disagrees 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > delivers processed project source records to the gateway with explicit evidence limits 17ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > sends the 2.7.4 brief in the user message and requirementsSource in gateway metadata 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > records a 510(k) section as blueprint-sourced and sends no CTD brief 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > accepts a JSON-round-tripped V2 receipt whose absolute window starts beyond 80,000 4ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires version instead of silently accepting a downgraded receipt 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires extractedTextSha256 instead of silently accepting a downgraded receipt 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires spanSha256 instead of silently accepting a downgraded receipt 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects unsupported or mistyped reference version 1 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects unsupported or mistyped reference version 3 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects unsupported or mistyped reference version 2 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects unsupported or mistyped reference version null 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires a full SHA-256 contentHash 1ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires a full SHA-256 extractedTextSha256 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires a full SHA-256 spanSha256 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires a UUID document identity 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects noninteger or negative absolute start -1 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects noninteger or negative absolute start 0.5 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects noninteger or negative absolute start 0 0ms
+stdout | server/services/ana/__tests__/batch-draft-sections.test.ts
+{
+  "timestamp": "2026-10-16T21:32:31.409Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-16T21:32:31.410Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/batch-draft-sections.test.ts
+{
+  "timestamp": "2026-10-16T21:32:31.410Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/batch-draft-sections.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/batch-draft-sections.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/batch-draft-sections.test.ts
+{
+  "timestamp": "2026-10-16T21:32:31.621Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/batch-draft-sections.test.ts > batch_draft_sections > reports an invalid section in its original slot while keeping the valid draft
+{
+  "timestamp": "2026-10-16T21:32:34.524Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/c2c/program-access.ts:241:33",
+    "queryPreview": "SELECT regulatory_program_id FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > uses actual processed source records and returns version-bound receipts without copying raw text
+{
+  "timestamp": "2026-10-16T21:32:34.527Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/c2c/program-access.ts:202:27",
+    "queryPreview": "SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1",
+    "enforcement": "off"
+  }
+}
+
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch_draft_sections > is registered 1ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch_draft_sections > errors on an empty sections array 2ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch_draft_sections > errors above the 20-section cap 0ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch_draft_sections > drafts valid sections in parallel and shapes the result 13ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch_draft_sections > reports an invalid section in its original slot while keeping the valid draft 41ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > uses actual processed source records and returns version-bound receipts without copying raw text 3ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > blocks generation for unavailable selected sources while retaining other section drafts 1ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > uses the open program UUID before a legacy project ID for drafting context 1ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > preserves successful drafts and names only failed original slots for retry 1ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > does not throw on null or non-object slots or lose their position 1ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > errors when every section is invalid 1ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > reports no usable blank draft as a failure rather than success 16ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > a failed batch retains actionable slots without exposing the thrown provider detail 1ms
+
+ Test Files  3 passed (3)
+      Tests  47 passed (47)
+   Start at  21:32:24
+   Duration  9.68s (transform 5.70s, setup 84ms, import 9.09s, tests 125ms, environment 0ms)
+

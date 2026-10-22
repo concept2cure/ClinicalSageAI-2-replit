@@ -1,0 +1,60 @@
+{
+  "implementationCommit": "db0d0a21877cde6a2bef994039edd18548b02986",
+  "bodylessReceiptCorrection": "b97d28acb3576bc3cf9616e10492be0c45620e69",
+  "nullRevisionCorrection": "cf9a57ec1f0c5efb73ada50d2805786d87aefe11",
+  "buildAnchor": "cf9a57ec1f0c5efb73ada50d2805786d87aefe11",
+  "executionPinsVerifiedAgainstBuildAnchor": 34,
+  "finalTests": {
+    "metadata": {
+      "passed": 46,
+      "files": 3
+    },
+    "ui": {
+      "passed": 82,
+      "files": 7
+    },
+    "packager": {
+      "passed": 54,
+      "files": 5
+    },
+    "browser": {
+      "stages": 7,
+      "deliberatePuts": 4,
+      "bodylessReceiptStatus": 204,
+      "sourcePinsUnchanged": 20,
+      "pageErrors": 0
+    }
+  },
+  "earlierBroaderBackendCohort": {
+    "passed": 150,
+    "files": 13,
+    "note": "Precedes final null-revision refusal; retained as historical coverage, not replayed or added to overlapping cohorts."
+  },
+  "build": {
+    "command": "PATH=<Node22> NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+    "exit": 0,
+    "clientAndServerEmbedAnchor": true,
+    "auditChainVerifierBuilt": true,
+    "artifacts": {
+      "dist/public/assets/index-Br6mVdBf.js": "ca958336b6a7d1b97203537585b10d81fcc5c6b913b9322dc2d6a22a814306d2",
+      "dist/index.js": "fbf42a2902ee73df01e2b96b2ebbec16663aeb3e75d07458a5be9f24d372b3f8",
+      "dist/ops/verify-audit-chain.mjs": "fcd682e198d1a83380a50414ee90642f9538589d2e650e00a7a94300d0faa791"
+    }
+  },
+  "humanWitnessed": false,
+  "normalPushGates": {
+    "acceptedSource": "1a1683ece52898a06d0fb525866914843786627d",
+    "typecheckErrors": 0,
+    "tscExit": 0,
+    "typecheckBaseline": 0,
+    "eslintWarningGrowth": 0,
+    "allPrePushGatesPassed": true
+  },
+  "baselinesChanged": false,
+  "secretScans": {
+    "acceptedPushRange": "76c60846d..1a1683ece",
+    "pushRangeLeaks": 0,
+    "finalEvidenceDirectoryLeaks": 0,
+    "repositoryConfigChanged": false
+  }
+}

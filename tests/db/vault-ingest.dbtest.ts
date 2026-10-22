@@ -510,4 +510,3 @@ describe('POST /api/vault/ingest — only a role that may write adds to the Vaul
     expect(out.ok).toBe(true);
   });
 });
-

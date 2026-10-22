@@ -1,0 +1,48 @@
+# BEFORE: the new --self-test cases (defects 5 and 6) against the pre-fix checkService/checkScanner. 2026-10-18T19:54:55Z
+$ npm run ci:compose-boot-contract:selftest
+
+> concept2cure-riai@1.0.0 ci:compose-boot-contract:selftest
+> node scripts/ci/check-compose-boot-contract.mjs --self-test
+
+ok   a complete stack passes
+ok   SMTP_HOST absent
+ok   a bare ${ANTHROPIC_API_KEY}
+ok   an empty default
+ok   RLS_ENFORCE defaulting to off
+ok   hmac signer nobody accepted
+ok   s3 vault with no bucket
+ok   no ALLOWED_ORIGINS
+ok   the connector turned on with no allowlist
+FAIL SECURITY_SELF_TEST_NONBLOCKING set on the app
+     expected ["SECURITY_SELF_TEST_NONBLOCKING must not be passed"], got []
+FAIL SECURITY_SELF_TEST_NONBLOCKING left for the operator to set
+     expected ["SECURITY_SELF_TEST_NONBLOCKING must not be passed"], got []
+ok   the connector turned on with an allowlist
+ok   list-form environment is read
+ok   a stack with its scanner passes
+ok   no clamav service
+ok   CLAMAV_HOST naming a missing service
+ok   CLAMAV_HOST that may resolve to anything
+ok   depends_on without service_healthy
+ok   list-form depends_on
+ok   a scanner with no healthcheck
+ok   a different digest
+ok   a StreamMaxLength mismatch
+ok   AlertExceedsMax off
+FAIL a scanner that publishes a host port
+     expected ["must publish no ports"], got []
+FAIL a scanner with expose
+     expected ["must not expose"], got []
+FAIL a scanner under a profile
+     expected ["must not be under a profile"], got []
+FAIL a scanner with network_mode
+     expected ["must not set network_mode"], got []
+FAIL a scanner on no network the app is on
+     expected ["shares no network with the app"], got []
+FAIL a scanner on the default network while the app is not
+     expected ["shares no network with the app"], got []
+FAIL a scanner on a network an optional-profile service joins
+     expected ["\"litellm\" (profile llm) can reach it"], got []
+ok   an excusal the preflight no longer needs is reported
+[ci:compose-boot-contract] self-test: 9 case(s) failed
+exit=1

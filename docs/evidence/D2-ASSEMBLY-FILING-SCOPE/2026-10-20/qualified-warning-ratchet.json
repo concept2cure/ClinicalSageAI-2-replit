@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-21T00:12:01.683269+00:00",
+  "argv": [
+    "node",
+    "scripts/ci/check-eslint-warning-ratchet.mjs",
+    "--since",
+    "6b9b206280bb046f70af7a2a1a9e3e16a6662612",
+    "--gate"
+  ],
+  "elapsedSeconds": 4.713,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-qualified.json",
+  "sourceDrift": [],
+  "rawOutput": "qualified-warning-ratchet-output.txt.gz",
+  "outputSha256": "2366466fb0195e7e8977ec3c983937c774a1fd18a2202765c4a0008e3568b62e",
+  "stdout": "[ci:eslint-warning-ratchet] --since 6b9b206280bb046f70af7a2a1a9e3e16a6662612 (6b9b20628) -- 14 lintable file(s) changed; linting both versions of each...\n[ci:eslint-warning-ratchet] no file changed its warning count since 6b9b206280bb046f70af7a2a1a9e3e16a6662612.\n",
+  "note": "All14 changed/new code files staged before comparison so new test files are included. Selected explicit Vitest run may coexist; compiler/build already complete. No commit until regression result is qualified."
+}

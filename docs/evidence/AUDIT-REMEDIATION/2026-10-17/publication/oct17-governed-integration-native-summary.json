@@ -1,0 +1,62 @@
+{
+  "rawArtifact": {
+    "artifact": "oct17-governed-integration-native.json",
+    "sha256": "1ef1b5d534103d113d757a76c03243559787586df0f26dcd1c3c52f415a3fc7c",
+    "bytes": 11051
+  },
+  "success": true,
+  "passedCases": 24,
+  "failedCases": 0,
+  "pendingCases": 0,
+  "files": 4,
+  "rows": [
+    {
+      "file": "tests/db/adoption-commit-outcome.dbtest.ts",
+      "status": "passed",
+      "cases": 4,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "tests/db/data-room-processing.dbtest.ts",
+      "status": "passed",
+      "cases": 8,
+      "counts": {
+        "passed": 8,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "tests/db/part11-audit-receipts.dbtest.ts",
+      "status": "passed",
+      "cases": 6,
+      "counts": {
+        "passed": 6,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "tests/db/tenant-source-read-receipt-retention.dbtest.ts",
+      "status": "passed",
+      "cases": 6,
+      "counts": {
+        "passed": 6,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    }
+  ]
+}

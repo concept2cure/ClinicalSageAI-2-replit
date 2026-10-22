@@ -1,0 +1,9 @@
+{
+  "exitCode": 1,
+  "expectedFailures": 13,
+  "passingControls": 11,
+  "total": 24,
+  "unchangedBaselineInputCount": 26,
+  "testSha256After": "c5240153c5ad361072fa187ccbe429fafa2ef6725d201a9a640b8398b0bb35c1",
+  "completedAt": "2026-10-21T00:22:42.655833+00:00"
+}

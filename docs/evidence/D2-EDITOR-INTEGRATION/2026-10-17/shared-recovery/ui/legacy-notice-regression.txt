@@ -1,0 +1,51 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > creates the document, saves the markdown as a section, then navigates 716ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > never writes the retired localStorage note 367ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > scopes the document to the open project, like every project-aware surface 414ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > a double click creates ONE document, not two 389ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > hands off the document the user actually chose 424ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor: every way it can fail > does NOT navigate when the document create fails — and saves no section 380ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor: every way it can fail > says so, and stays put, when the session is not authenticated 295ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor: every way it can fail > does NOT navigate when the section create fails — the text would be lost 304ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor: every way it can fail > does NOT navigate when the request throws 344ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > ReportEngine — Open in editor > creates the document and section from the AnswerLead action, then navigates 139ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > ReportEngine — Open in editor > the document-bar button runs the same handoff 96ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > ReportEngine — Open in editor > does NOT navigate when the document create fails 102ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > ReportEngine — Open in editor > does NOT navigate when the section create fails 99ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > CmcModule change simulator — Open in editor > creates the document and section carrying the assessment, then navigates 466ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > CmcModule change simulator — Open in editor > does NOT navigate when the document create fails — the assessment stays on screen 336ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > CmcModule change simulator — Open in editor > does NOT navigate when the section create fails 265ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Open in editor with no project open — nothing is created (PF-07) > Biostatistics posts nothing, stays put, and says to open a project 360ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Open in editor with no project open — nothing is created (PF-07) > a legacy numeric workspace id is not a project — Biostatistics still posts nothing 359ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Open in editor with no project open — nothing is created (PF-07) > ReportEngine posts nothing, stays put, and says to open a project 106ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Open in editor with no project open — nothing is created (PF-07) > CmcModule change simulator posts nothing, stays put, and says to open a project 420ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — the IR-overdue KPI deep-links to the correspondence > a positive count is a button that jumps to Program records 302ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — the IR-overdue KPI deep-links to the correspondence > a zero count is a plain figure — no button role, no dead-end click 53ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — the IR-overdue KPI deep-links to the correspondence > an unestablished count is shown as unknown, never as zero 53ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmChange — a simulated change collides with open agency questions > flags a change whose sections an open question cites, naming the section 193ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmChange — a simulated change collides with open agency questions > stays silent when the open questions cite unrelated sections 119ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — logging and closing agency questions > Log question POSTs the form and reloads the card from the server 206ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — logging and closing agency questions > Close confirms first, PATCHes CLOSED, and reloads 81ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — logging and closing agency questions > Close carries the guard: the write names the status this screen read 81ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — lifecycle transitions are the ones the row allows, guarded > a DRAFTED question can be SENT FOR REVIEW — the transition the row allows, guarded 78ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — lifecycle transitions are the ones the row allows, guarded > an IN_REVIEW question can be RETURNED TO DRAFTING — and only that 85ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — lifecycle transitions are the ones the row allows, guarded > a stale send-for-review states the 409 and refetches — never a silent overwrite 75ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the response owner is editable in place > the Assigned cell is editable in place: rename PATCHes the owner, blank clears it 77ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the response owner is editable in place > clearing the assignment sends NULL — the server stores the truth, not an empty string 72ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the closed file, and refused writes > the closed file is readable, and Reopen returns a question to the open list — guarded 132ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the closed file, and refused writes > a failed closed-file read is an ERROR on screen, never an empty history 82ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the closed file, and refused writes > a refused log says so and records nothing locally 127ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — draft response advances the question to DRAFTED > an OPEN question is marked DRAFTED once the draft persisted, then the editor opens 43ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — draft response advances the question to DRAFTED > a question already IN_REVIEW keeps its status but the LINK follows the new draft 50ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — draft response advances the question to DRAFTED > a failed link write is SAID, and the user stays on the card — never navigated away from the statement 54ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — draft response advances the question to DRAFTED > a linked question renders the Open-draft door, which targets the EXACT document 39ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — draft response advances the question to DRAFTED > an unlinked question offers no Open-draft door — a door must open something 36ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — with no project open, a draft response is refused (PF-07) > when no project is open: nothing is written, the question stays OPEN, and the user stays put 38ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — with no project open, a draft response is refused (PF-07) > when the open id is not a project: nothing is written, the question stays OPEN, and the user stays put 44ms
+
+ Test Files  2 passed (2)
+      Tests  43 passed (43)
+   Start at  22:32:44
+   Duration  12.97s (transform 1.89s, setup 355ms, import 2.49s, tests 8.51s, environment 1.11s)

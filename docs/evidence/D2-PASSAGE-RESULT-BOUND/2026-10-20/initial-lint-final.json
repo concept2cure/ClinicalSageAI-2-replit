@@ -1,0 +1,108 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--format",
+    "json",
+    "server/services/ana/document-passage-tools.ts",
+    "server/services/ana/tool-outcome.ts",
+    "server/services/ana/__tests__/document-passage-tools-budget.test.ts",
+    "server/services/ana/__tests__/document-passage-result-bound.test.ts",
+    "server/services/ana/__tests__/document-passage-result-cap.test.ts",
+    "server/services/ana/__tests__/document-passage-result-references.test.ts",
+    "tests/services/tool-outcome-passage-omission.test.ts"
+  ],
+  "exitCode": 0,
+  "rawStdoutSha256": "1ceb4a9e314bfdbd9c47e6a6ba93cc3b0e2b7bac0aec051a23064a2f0b0a300e",
+  "note": "Summary omits duplicated source fields; not raw output",
+  "files": [
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/__tests__/document-passage-result-bound.test.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/__tests__/document-passage-result-cap.test.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/__tests__/document-passage-result-references.test.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/__tests__/document-passage-tools-budget.test.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/document-passage-tools.ts",
+      "messages": [
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async function 'handleSearchDocumentPassages' has a complexity of 16. Maximum allowed is 15.",
+          "line": 203,
+          "column": 1,
+          "messageId": "complex",
+          "endLine": 203,
+          "endColumn": 44
+        }
+      ],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 1,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/tool-outcome.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/tests/services/tool-outcome-passage-omission.test.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    }
+  ]
+}

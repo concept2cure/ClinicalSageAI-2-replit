@@ -50,7 +50,7 @@ import { formRequirementForDocumentType } from '../services/ectd/section-to-ctd'
 import { toPackagerRegion } from '../services/ectd/core-to-packager';
 import { buildLeafManifest } from '../services/ectd/sequence-manifest';
 import { usableIdentifier } from '../services/ectd/regulatory-identifiers';
-import { readRecordedPackageIdentity, packageIdentityRefusal } from '../services/ectd/package-identity';
+import { readRecordedPackageIdentity, packageIdentityRefusal, recordedPackageIdentitySnapshot, fdaContactsForPackageIdentity } from '../services/ectd/package-identity';
 import {
   resolveRequiredSections,
   type RequiredSectionSet,
@@ -58,6 +58,10 @@ import {
 } from '../services/ectd/required-sections';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+import { regionalDeviceApplicationClassOf } from '../../shared/regulatory/filing-catalog';
+import type { SubmissionBundle } from '../services/submission-gateways/types';
+import type { DtdValidationEvidence, DtdFileValidation } from '../../shared/regulatory/ectd-dtd-validation';
+import { hasPassedPackageDtdValidation, dtdFileValidationPassed } from '../services/ectd/dtd-bundler';
 
 const router = Router();
 const log = createScopedLogger('ectd-compile');
@@ -197,6 +201,27 @@ interface CompileAnchor {
   label: string;
 }
 
+/** A numeric PM anchor may belong to a program; only a recorded null is legacy. */
+async function numericCompileAnchor(numeric: number, orgId: number): Promise<CompileAnchor | null> {
+  const { rows } = await pool.query(
+    `SELECT p.regulatory_program_id, r.id AS linked_program_id, r.program_type, r.primary_agency
+       FROM projects p
+       LEFT JOIN regulatory_programs r ON r.id = p.regulatory_program_id
+         AND r.organization_id = p.organization_id AND r.deleted_at IS NULL
+      WHERE p.id = $1 AND p.organization_id = $2 AND p.status IS DISTINCT FROM 'deleted'
+      LIMIT 1`,
+    [numeric, orgId],
+  );
+  const row = rows[0];
+  if (!row || (row.regulatory_program_id !== null && (!row.linked_program_id || !row.program_type))) return null;
+  return {
+    numericProjectId: numeric, programId: null, programCode: null, applicationNumber: null,
+    title: null, productName: null,
+    programType: row.program_type ?? null, primaryAgency: row.primary_agency ?? null,
+    label: `Project ${numeric}`,
+  };
+}
+
 /**
  * Resolve the route's `:projectIdent`, org-scoped, mirroring the eSTAR ident
  * contract: numeric → the legacy project id (pass-through — every section query
@@ -207,18 +232,8 @@ interface CompileAnchor {
 async function resolveCompileAnchor(ident: string, orgId: number): Promise<CompileAnchor | null> {
   if (/^\d+$/.test(ident)) {
     const numeric = parseInt(ident, 10);
-    if (!Number.isInteger(numeric) || numeric <= 0) return null;
-    return {
-      numericProjectId: numeric,
-      programId: null,
-      programCode: null,
-      applicationNumber: null,
-      title: null,
-      productName: null,
-      programType: null,
-      primaryAgency: null,
-      label: `Project ${numeric}`,
-    };
+    if (!Number.isSafeInteger(numeric) || numeric <= 0) return null;
+    return numericCompileAnchor(numeric, orgId);
   }
   const byUuid = UUID_RE.test(ident);
   try {
@@ -289,12 +304,29 @@ async function anchorFromRequest(
     res.status(401).json({ error: 'Organization context required' });
     return null;
   }
-  const anchor = await resolveCompileAnchor(ident, orgId);
+  let anchor: CompileAnchor | null;
+  try {
+    anchor = await resolveCompileAnchor(ident, orgId);
+  } catch (err) {
+    log.error('Project compilation applicability could not be read', { orgId, ident, err });
+    res.status(503).json({ error: { code: 'PROJECT_APPLICABILITY_UNAVAILABLE', message: 'This project’s filing context could not be checked. Try again shortly.' } });
+    return null;
+  }
   if (!anchor) {
     res.status(404).json({ error: 'Project not found in your organization' });
     return null;
   }
   return { orgId, anchor, ident };
+}
+
+/** Regional working documents cannot enter medicinal compilation or validation. */
+function refuseRegionalDeviceEctd(res: Response, anchor: CompileAnchor): boolean {
+  if (!regionalDeviceApplicationClassOf(anchor.programType)) return false;
+  res.status(422).json({ error: {
+    code: 'ECTD_NOT_APPLICABLE',
+    message: 'Device preparation projects are not eCTD applications. No submission package is built or transmitted for this preparation pathway.',
+  } });
+  return true;
 }
 
 /**
@@ -474,6 +506,9 @@ interface CompiledPackage {
   regionalBackbone: { path: string; xml: string } | null;
   /** index-md5.txt: the MD5 of index.xml, verbatim. */
   indexMd5: string | null;
+  /** Presence and actual validation are separate facts, from this exact bundle. */
+  dtdStatus: SubmissionBundle['dtdStatus'] | null;
+  regionalStatus: SubmissionBundle['regionalBackbone'] | null;
   /** PDF/A conversion outcome over the package's PDF leaves; null when the
    *  packager reported no grade. agencyFormsAsIssued are FDA forms shipped with
    *  FDA's own security (leaf-pdf-security.ts): never converted, by rule, and
@@ -513,6 +548,78 @@ interface ValidationResult {
   message: string;
   sectionCode?: string;
   fix?: string;
+  evidence?: PackageDtdRecord;
+}
+
+interface PackageDtdRecord {
+  packageSha256: string | null;
+  dtdStatus: SubmissionBundle['dtdStatus'] | null;
+}
+
+// Decode the existing JSON finding as metadata. The packager's canonical
+// helper alone judges coverage and validity; JSON shape is never proof of pass.
+const xmlProofSchema = z.object({ ran: z.boolean(), valid: z.boolean(), errors: z.array(z.string()), mode: z.enum(['well-formed', 'dtd', 'xsd']) });
+const dtdProofSchema: z.ZodType<DtdValidationEvidence> = z.object({
+  version: z.literal(1), expectedFiles: z.array(z.string()), passed: z.boolean(),
+  files: z.array(z.object({ relPath: z.string(), wellFormed: xmlProofSchema,
+    doctype: z.object({ valid: z.boolean(), errors: z.array(z.string()) }), dtd: xmlProofSchema })),
+  integrity: z.object({ verified: z.array(z.string()), mismatched: z.array(z.object({ fileName: z.string(), expected: z.string(), actual: z.string() })),
+    missingFiles: z.array(z.string()), unlistedFiles: z.array(z.string()), ok: z.boolean() }),
+});
+const dtdStatusSchema = z.object({ required: z.array(z.string()), present: z.array(z.string()), missing: z.array(z.string()),
+  missingStylesheets: z.array(z.string()).optional(), requiredStylesheets: z.array(z.string()).optional(), presentStylesheets: z.array(z.string()).optional(),
+  selfContained: z.boolean(), validation: dtdProofSchema.optional() }).passthrough();
+const packageDtdRecordSchema = z.object({ packageSha256: z.string().regex(/^[a-f0-9]{64}$/), dtdStatus: dtdStatusSchema.nullable() });
+
+function recordedPackageDtdValidation(value: unknown): PackageDtdRecord | null {
+  if (!Array.isArray(value)) return null;
+  const records = value.filter(row => row && typeof row === 'object' && row.rule === 'package_dtd_validation');
+  if (records.length !== 1) return null;
+  const decoded = packageDtdRecordSchema.safeParse(records[0].evidence);
+  if (!decoded.success) return null;
+  const status = decoded.data.dtdStatus;
+  if (status?.validation?.passed === true && !hasPassedPackageDtdValidation(status)) return null;
+  return decoded.data;
+}
+
+function dtdFileOutcome(file: DtdFileValidation, hasDiagnostics: boolean) {
+  const invalid = !file.doctype.valid || (file.wellFormed.ran && !file.wellFormed.valid) || (file.dtd.ran && !file.dtd.valid);
+  if (invalid) return { severity: 'error' as const, text: 'XML/DOCTYPE/DTD validation failed' };
+  if (!dtdFileValidationPassed(file) || hasDiagnostics) return { severity: 'warning' as const, text: 'DTD validation did not run cleanly and completely; unverified' };
+  return { severity: 'info' as const, text: 'DTD validation ran and passed' };
+}
+
+/** Actionable facts for one existing XML result, including a diagnostic-free failure. */
+function dtdFileFinding(file: DtdFileValidation): ValidationResult {
+  const diagnostics = [...file.wellFormed.errors, ...file.doctype.errors, ...file.dtd.errors];
+  const outcome = dtdFileOutcome(file, diagnostics.length > 0);
+  return { rule: 'package_dtd_file', severity: outcome.severity,
+    message: `${file.relPath}: ${outcome.text}.${diagnostics.length ? ` ${diagnostics.join('; ')}` : ''}`,
+    fix: outcome.severity !== 'info' ? 'Resolve the XML, referenced supportive files or validator capability and compile again.' : undefined };
+}
+
+function dtdIntegrityFindings(proof: DtdValidationEvidence): ValidationResult[] {
+  const integrity = proof.integrity;
+  const problems = [
+    ...integrity.mismatched.map(row => `${row.fileName}: expected SHA-256 ${row.expected}, received ${row.actual}`),
+    ...integrity.missingFiles.map(file => `${file}: checksum-listed bytes are missing`),
+    ...integrity.unlistedFiles.map(file => `${file}: bytes have no checksum entry`),
+  ];
+  if (!integrity.ok && problems.length === 0) problems.push('Package checksum verification did not pass.');
+  return problems.map(message => ({ rule: 'package_dtd_integrity', severity: 'error', message,
+    fix: 'Restore the reviewed supportive files and checksum manifest, then compile again.' }));
+}
+
+function packageDtdFindings(pkg: CompiledPackage): ValidationResult[] {
+  const passed = hasPassedPackageDtdValidation(pkg.dtdStatus);
+  const summary: ValidationResult = { rule: 'package_dtd_validation', severity: passed ? 'info' : 'warning',
+    message: passed ? 'Package DTD validation passed for the captured package bytes.' : 'Package DTD validation has not passed; absent, incomplete or failed evidence is unverified.',
+    evidence: { packageSha256: pkg.sha256, dtdStatus: pkg.dtdStatus },
+    fix: passed ? undefined : 'Inspect per-file validation and integrity evidence, resolve the reported gaps, and compile again.' };
+  const decoded = dtdStatusSchema.safeParse(pkg.dtdStatus);
+  const proof = decoded.success ? decoded.data.validation : undefined;
+  if (!proof) return [summary];
+  return [summary, ...proof.files.map(dtdFileFinding), ...dtdIntegrityFindings(proof)];
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -530,6 +637,7 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
   const resolved = await anchorFromRequest(req, res);
   if (!resolved) return;
   const { orgId, anchor, ident } = resolved;
+  if (refuseRegionalDeviceEctd(res, anchor)) return;
 
   try {
     const { modules: targetModules, submissionType = 'initial', region = 'FDA' } = req.body;
@@ -1030,17 +1138,17 @@ async function compileFromSpine(
     // assembled: the refusal becomes this compile's ASSEMBLY_REFUSED finding
     // and its `failed` status below (package-identity.ts, QA 2026-10-08 j6).
     const identity = await readRecordedPackageIdentity(pool, orgId, anchor.programId);
-    const missingIdentity = packageIdentityRefusal(identity, 'Nothing was assembled.');
+    const fda = toPackagerRegion(seq.region) === 'fda';
+    const missingIdentity = packageIdentityRefusal(identity, 'Nothing was assembled.', { fda });
     if (missingIdentity) throw missingIdentity;
     const assembled = await assembleSequence({
       sequenceId: seq.id,
       organizationId: orgId,
       userId: resolveUserId(req),
       applicationId: identity.applicationNumber as string,
-      // The applicant's <id> (D-U-N-S) has no recorded home on this path yet
-      // (package-identity.ts header); its name is the organisation's.
-      sponsorId: `UNASSIGNED-ORG-${orgId}`,
+      sponsorId: fda ? identity.applicantId as string : '',
       sponsorName: identity.applicantName as string,
+      ...(fda ? { contacts: fdaContactsForPackageIdentity(identity), recordedPackageIdentity: recordedPackageIdentitySnapshot(identity) } : {}),
       priorState,
     });
     auditTrail = assembled.auditTrail;
@@ -1067,6 +1175,8 @@ async function compileFromSpine(
       compiledPackage = {
         sha256: packageSha256,
         files,
+        dtdStatus: assembled.bundle.dtdStatus ?? null,
+        regionalStatus: assembled.bundle.regionalBackbone ?? null,
         regionalBackbone: regionalPath && regionalXml != null ? { path: regionalPath, xml: regionalXml } : null,
         indexMd5: (await zip.file('index-md5.txt')?.async('string'))?.trim() ?? null,
         pdfa: grade
@@ -1123,6 +1233,7 @@ async function compileFromSpine(
 
   const initialSequence = seq.sequenceNumber === '0000';
   const validationResults = leafPlacementFindings(leaves, { initialSequence, required, isMaterialized });
+  if (compiledPackage) validationResults.push(...packageDtdFindings(compiledPackage));
   if (assembleFailure != null) {
     validationResults.unshift({
       rule: 'ASSEMBLY_REFUSED',
@@ -1172,6 +1283,9 @@ async function compileFromSpine(
       blockers.push(
         'The package references eCTD DTDs that are not bundled under util/dtd/ — it is not self-contained. Vendor the ICH/regional DTDs before transmission.',
       );
+    }
+    if (!hasPassedPackageDtdValidation(compiledPackage?.dtdStatus)) {
+      blockers.push('Package DTD validation has not passed. Inspect the per-file XML/DTD execution and checksum evidence before treating this package as submission-ready.');
     }
     // The packager converts every PDF leaf to PDF/A when it can and ships the
     // original bytes when it cannot (no Ghostscript on the host). It reported
@@ -1279,6 +1393,7 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
   const resolved = await anchorFromRequest(req, res);
   if (!resolved) return;
   const { orgId, anchor, ident } = resolved;
+  if (refuseRegionalDeviceEctd(res, anchor)) return;
 
   try {
     // Get project sections (tenant-scoped — readiness is tenant data). A failed
@@ -1421,14 +1536,15 @@ router.get('/:projectIdent/history', async (req: Request, res: Response) => {
         `SELECT id, compilation_name, compilation_type, status, version,
                 compiled_at, created_at, sequence_number,
                 leaf_manifest IS NOT NULL AS has_manifest,
-                external_validation
+                external_validation, validation_results
          FROM ectd_compilations
          WHERE organization_id = $1 AND compilation_name ~ $2
          ORDER BY created_at DESC
          LIMIT 20`,
         [orgId, labelTokenPattern]
       );
-      compilations = result.rows;
+      compilations = result.rows.map(({ validation_results, ...row }) => ({ ...row,
+        packageDtdValidation: recordedPackageDtdValidation(validation_results) }));
     } catch (err: any) {
       // An unreadable history is not an empty one: "never compiled" is a claim
       // about this submission that a failed read cannot make.
@@ -1452,6 +1568,7 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
   const resolved = await anchorFromRequest(req, res);
   if (!resolved) return;
   const { orgId, anchor, ident } = resolved;
+  if (refuseRegionalDeviceEctd(res, anchor)) return;
 
   // An agency-validator report run outside the product, imported against the
   // compilation whose package it covered (WO-9 Click 6). Same route: it is a

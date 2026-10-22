@@ -1,0 +1,222 @@
+$ node --test scripts/ci/lib/approved-sql-predicates.test.mjs scripts/ci/__tests__/strip-comments.test.mjs
+exit=0
+TAP version 13
+# Subtest: a string holding /* or // does not open a comment
+ok 1 - a string holding /* or // does not open a comment
+  ---
+  duration_ms: 0.854788
+  type: 'test'
+  ...
+# Subtest: a quote inside a regex literal does not mis-pair the strings after it
+ok 2 - a quote inside a regex literal does not mis-pair the strings after it
+  ---
+  duration_ms: 0.90918
+  type: 'test'
+  ...
+# Subtest: a backtick inside a regex class does not swallow a template literal
+ok 3 - a backtick inside a regex class does not swallow a template literal
+  ---
+  duration_ms: 0.234418
+  type: 'test'
+  ...
+# Subtest: a division is not read as a regex
+ok 4 - a division is not read as a regex
+  ---
+  duration_ms: 0.225766
+  type: 'test'
+  ...
+# Subtest: a regex after return, =>, ( and = is skipped whole
+ok 5 - a regex after return, =>, ( and = is skipped whole
+  ---
+  duration_ms: 0.18833
+  type: 'test'
+  ...
+# Subtest: JSX closing tags are not regex literals, and comments around them still go
+ok 6 - JSX closing tags are not regex literals, and comments around them still go
+  ---
+  duration_ms: 0.113348
+  type: 'test'
+  ...
+# Subtest: lines are kept: the output has as many lines as the input, in both modes
+ok 7 - lines are kept: the output has as many lines as the input, in both modes
+  ---
+  duration_ms: 0.313506
+  type: 'test'
+  ...
+# Subtest: lineComments: 'drop' deletes a // comment instead of blanking it
+ok 8 - lineComments: 'drop' deletes a // comment instead of blanking it
+  ---
+  duration_ms: 0.109903
+  type: 'test'
+  ...
+# Subtest: proof retains exact source, builder, module, alias and counted opening
+ok 9 - proof retains exact source, builder, module, alias and counted opening
+  ---
+  duration_ms: 20.193403
+  type: 'test'
+  ...
+# Subtest: a valid AST call outside the raw regex count never creates a subtraction
+ok 10 - a valid AST call outside the raw regex count never creates a subtraction
+  ---
+  duration_ms: 2.201198
+  type: 'test'
+  ...
+# Subtest: duplicate counted offsets cannot subtract the same expression twice
+ok 11 - duplicate counted offsets cannot subtract the same expression twice
+  ---
+  duration_ms: 1.705562
+  type: 'test'
+  ...
+# Subtest: only a direct first argument to query receives proof
+ok 12 - only a direct first argument to query receives proof
+  ---
+  duration_ms: 5.192653
+  type: 'test'
+  ...
+# Subtest: caller paths are exact and do not normalize alternative paths into approval
+ok 13 - caller paths are exact and do not normalize alternative paths into approval
+  ---
+  duration_ms: 0.240037
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql(alias)
+ok 14 - unproved expression remains counted: vaultDataEligibleSql(alias)
+  ---
+  duration_ms: 1.331556
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql(req.body.alias)
+ok 15 - unproved expression remains counted: vaultDataEligibleSql(req.body.alias)
+  ---
+  duration_ms: 1.151689
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql("s")
+ok 16 - unproved expression remains counted: vaultDataEligibleSql("s")
+  ---
+  duration_ms: 2.637725
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql("d.x")
+ok 17 - unproved expression remains counted: vaultDataEligibleSql("d.x")
+  ---
+  duration_ms: 1.157809
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql("d; SELECT 1")
+ok 18 - unproved expression remains counted: vaultDataEligibleSql("d; SELECT 1")
+  ---
+  duration_ms: 2.39842
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql(`d`)
+ok 19 - unproved expression remains counted: vaultDataEligibleSql(`d`)
+  ---
+  duration_ms: 0.767279
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql("\\x64")
+ok 20 - unproved expression remains counted: vaultDataEligibleSql("\\x64")
+  ---
+  duration_ms: 1.249274
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql("d", req.body.x)
+ok 21 - unproved expression remains counted: vaultDataEligibleSql("d", req.body.x)
+  ---
+  duration_ms: 0.59272
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql(...["d"])
+ok 22 - unproved expression remains counted: vaultDataEligibleSql(...["d"])
+  ---
+  duration_ms: 0.764044
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql?.("d")
+ok 23 - unproved expression remains counted: vaultDataEligibleSql?.("d")
+  ---
+  duration_ms: 0.881428
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql<string>("d")
+ok 24 - unproved expression remains counted: vaultDataEligibleSql<string>("d")
+  ---
+  duration_ms: 0.793678
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql.call(null, "d")
+ok 25 - unproved expression remains counted: vaultDataEligibleSql.call(null, "d")
+  ---
+  duration_ms: 0.474795
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: (vaultDataEligibleSql)("d")
+ok 26 - unproved expression remains counted: (vaultDataEligibleSql)("d")
+  ---
+  duration_ms: 0.987696
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: (vaultDataEligibleSql("d"))
+ok 27 - unproved expression remains counted: (vaultDataEligibleSql("d"))
+  ---
+  duration_ms: 0.637396
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: String(vaultDataEligibleSql("d"))
+ok 28 - unproved expression remains counted: String(vaultDataEligibleSql("d"))
+  ---
+  duration_ms: 0.688922
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql("d") + req.query.x
+ok 29 - unproved expression remains counted: vaultDataEligibleSql("d") + req.query.x
+  ---
+  duration_ms: 1.102577
+  type: 'test'
+  ...
+# Subtest: named import aliases and specifier-level type-only imports fail closed
+ok 30 - named import aliases and specifier-level type-only imports fail closed
+  ---
+  duration_ms: 2.213616
+  type: 'test'
+  ...
+# Subtest: catch/function/declaration shadowing cannot borrow another scope import proof
+ok 31 - catch/function/declaration shadowing cannot borrow another scope import proof
+  ---
+  duration_ms: 3.743516
+  type: 'test'
+  ...
+# Subtest: malformed syntax receives no partial parser proof
+ok 32 - malformed syntax receives no partial parser proof
+  ---
+  duration_ms: 0.547993
+  type: 'test'
+  ...
+# Subtest: multiple actual template spans retain their own opening offsets
+ok 33 - multiple actual template spans retain their own opening offsets
+  ---
+  duration_ms: 0.895239
+  type: 'test'
+  ...
+# Subtest: query type arguments and trivia do not change the import binding proof
+ok 34 - query type arguments and trivia do not change the import binding proof
+  ---
+  duration_ms: 0.948799
+  type: 'test'
+  ...
+# Subtest: a nested backtick cannot make a later uncounted expression eligible
+ok 35 - a nested backtick cannot make a later uncounted expression eligible
+  ---
+  duration_ms: 2.419181
+  type: 'test'
+  ...
+1..35
+# tests 35
+# suites 0
+# pass 35
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 387.445442

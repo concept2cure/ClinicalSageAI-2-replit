@@ -169,4 +169,3 @@ stderr | tests/db/document-catalog.dbtest.ts > key_data is verified against the 
       Tests  17 passed (17)
    Start at  16:36:10
    Duration  7.56s (transform 3.57s, setup 54ms, import 192ms, tests 7.03s, environment 0ms)
-

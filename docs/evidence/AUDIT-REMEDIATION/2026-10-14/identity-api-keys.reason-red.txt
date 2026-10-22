@@ -1,0 +1,132 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × server/routes/__tests__/audit-api-keys-create-reason.baseline.test.ts > POST /api/api-keys creation reason > trims and records the access reason without recording the returned raw key 29ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
++   {
+      "action": "api_key_created",
+-     "details": ObjectContaining {
++     "details": {
+        "keyPrefix": "csai_TEST",
+        "outcome": "success",
+-       "reason": "Approved read-only integration",
++       "reason": undefined,
+        "scopes": [
+          "documents:read",
+        ],
+      },
++     "ipAddress": "::ffff:127.0.0.1",
+      "resourceId": "12",
+      "resourceType": "api_key",
+      "tenantId": 7,
++     "userAgent": undefined,
+      "userId": 3,
+    },
+  ]
+
+
+Number of calls: 1
+
+ ✓ server/routes/__tests__/audit-api-keys-create-reason.baseline.test.ts > POST /api/api-keys creation reason > preserves the existing API contract when a caller omits the optional reason 4ms
+ × server/routes/__tests__/audit-api-keys-create-reason.baseline.test.ts > POST /api/api-keys creation reason > refuses an invalid supplied reason ("") before issuing a key 4ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/audit-api-keys-create-reason.baseline.test.ts > POST /api/api-keys creation reason > refuses an invalid supplied reason ("x") before issuing a key 3ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/audit-api-keys-create-reason.baseline.test.ts > POST /api/api-keys creation reason > refuses an invalid supplied reason (" ab ") before issuing a key 3ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/audit-api-keys-create-reason.baseline.test.ts > POST /api/api-keys creation reason > refuses an invalid supplied reason ("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") before issuing a key 2ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/audit-api-keys-create-reason.baseline.test.ts > POST /api/api-keys creation reason > refuses an invalid supplied reason (123) before issuing a key 2ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/audit-api-keys-create-reason.baseline.test.ts > POST /api/api-keys creation reason > refuses an invalid supplied reason (null) before issuing a key 2ms
+   → expected 201 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/audit-api-keys-create-reason.baseline.test.ts > POST /api/api-keys creation reason > refuses invalid name/scopes without issuing or auditing a key ({"name":"  "}) 4ms
+ ✓ server/routes/__tests__/audit-api-keys-create-reason.baseline.test.ts > POST /api/api-keys creation reason > refuses invalid name/scopes without issuing or auditing a key ({"name":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}) 2ms
+ ✓ server/routes/__tests__/audit-api-keys-create-reason.baseline.test.ts > POST /api/api-keys creation reason > refuses invalid name/scopes without issuing or auditing a key ({"scopes":[]}) 2ms
+ ✓ server/routes/__tests__/audit-api-keys-create-reason.baseline.test.ts > POST /api/api-keys creation reason > refuses invalid name/scopes without issuing or auditing a key ({"scopes":["documents:write"]}) 2ms
+ ✓ server/routes/__tests__/audit-api-keys-create-reason.baseline.test.ts > POST /api/api-keys creation reason > refuses invalid name/scopes without issuing or auditing a key ({"scopes":["not-a-scope"]}) 2ms
+ ✓ server/routes/__tests__/audit-api-keys-create-reason.baseline.test.ts > POST /api/api-keys creation reason > refuses issuance when authenticated tenantId is absent 2ms
+ ✓ server/routes/__tests__/audit-api-keys-create-reason.baseline.test.ts > POST /api/api-keys creation reason > refuses issuance when authenticated userId is absent 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/audit-api-keys-create-reason.baseline.test.ts > POST /api/api-keys creation reason > trims and records the access reason without recording the returned raw key
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
++   {
+      "action": "api_key_created",
+-     "details": ObjectContaining {
++     "details": {
+        "keyPrefix": "csai_TEST",
+        "outcome": "success",
+-       "reason": "Approved read-only integration",
++       "reason": undefined,
+        "scopes": [
+          "documents:read",
+        ],
+      },
++     "ipAddress": "::ffff:127.0.0.1",
+      "resourceId": "12",
+      "resourceType": "api_key",
+      "tenantId": 7,
++     "userAgent": undefined,
+      "userId": 3,
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/routes/__tests__/audit-api-keys-create-reason.baseline.test.ts:58:25
+     56|     expect(result.body.apiKey).toBe(RAW_KEY);
+     57|     expect(mocks.generateApiKey).toHaveBeenCalledWith(7, 'Integration …
+     58|     expect(mocks.audit).toHaveBeenCalledWith(expect.objectContaining({
+       |                         ^
+     59|       tenantId: 7, userId: 3, action: 'api_key_created', resourceType:…
+     60|       details: expect.objectContaining({ outcome: 'success', reason: '…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/routes/__tests__/audit-api-keys-create-reason.baseline.test.ts > POST /api/api-keys creation reason > refuses an invalid supplied reason ("") before issuing a key
+ FAIL  server/routes/__tests__/audit-api-keys-create-reason.baseline.test.ts > POST /api/api-keys creation reason > refuses an invalid supplied reason ("x") before issuing a key
+ FAIL  server/routes/__tests__/audit-api-keys-create-reason.baseline.test.ts > POST /api/api-keys creation reason > refuses an invalid supplied reason (" ab ") before issuing a key
+ FAIL  server/routes/__tests__/audit-api-keys-create-reason.baseline.test.ts > POST /api/api-keys creation reason > refuses an invalid supplied reason ("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") before issuing a key
+ FAIL  server/routes/__tests__/audit-api-keys-create-reason.baseline.test.ts > POST /api/api-keys creation reason > refuses an invalid supplied reason (123) before issuing a key
+ FAIL  server/routes/__tests__/audit-api-keys-create-reason.baseline.test.ts > POST /api/api-keys creation reason > refuses an invalid supplied reason (null) before issuing a key
+AssertionError: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ server/routes/__tests__/audit-api-keys-create-reason.baseline.test.ts:76:27
+     74|   it.each(['', 'x', ' ab ', 'x'.repeat(501), 123, null])('refuses an i…
+     75|     const result = await request(app()).post('/api/api-keys').send({ .…
+     76|     expect(result.status).toBe(400);
+       |                           ^
+     77|     expect(result.body.details).toEqual(expect.arrayContaining([expect…
+     78|     expect(mocks.generateApiKey).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 8 passed (15)
+   Start at  02:16:32
+   Duration  912ms (transform 174ms, setup 119ms, import 474ms, tests 66ms, environment 0ms)
+

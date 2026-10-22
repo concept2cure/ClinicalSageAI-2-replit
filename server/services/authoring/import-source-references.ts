@@ -13,8 +13,11 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const HASH = /^[0-9a-f]{64}$/i;
 
 function hasWorkflowIdentity(source: WorkflowImportOrigin): boolean {
-  return /^[1-9]\d*$/.test(source.id) && HASH.test(source.fingerprint)
-    && source.selection?.kind === source.kind && String(source.kind === 'protocol' && source.selection.kind === 'protocol' ? source.selection.documentId : source.selection.kind === 'csr' ? source.selection.jobId : '') === source.id
+  const ivd = source.kind === 'ivd-assessment' || source.kind === 'ivd-document';
+  const idValid = ivd ? UUID.test(source.id) : /^[1-9]\d*$/.test(source.id);
+  const selectionId = source.selection?.kind === 'csr' ? source.selection.jobId : source.selection?.documentId;
+  return idValid && HASH.test(source.fingerprint)
+    && source.selection?.kind === source.kind && String(selectionId) === source.id
     && Array.isArray(source.sectionOrigins) && source.sectionOrigins.length > 0
     && source.sectionOrigins.every(s => typeof s.code === 'string' && HASH.test(s.contentSha256) && ['machine', 'template', 'unknown'].includes(s.originalAuthorship))
     && Array.isArray(source.gaps) && source.gaps.every(g => typeof g === 'string');

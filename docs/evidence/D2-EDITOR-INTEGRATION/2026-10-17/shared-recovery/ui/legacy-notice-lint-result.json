@@ -1,0 +1,7 @@
+{
+  "files": [
+    "client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx",
+    "client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx"
+  ],
+  "exitCode": 0
+}

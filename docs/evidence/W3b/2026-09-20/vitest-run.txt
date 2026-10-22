@@ -173,27 +173,27 @@ stdout | server/lib/__tests__/survivability-layer.test.ts > Survivability Layer 
 [CLIENT_SCENARIOS] ============================================================
 [CLIENT_SCENARIOS] Testing Client-Specific Regulatory Scenarios
 [CLIENT_SCENARIOS] ============================================================
-[CLIENT_SCENARIOS] 
+[CLIENT_SCENARIOS]
 --- MEDICAL DEVICE (510(k)) SCENARIO ---
   ✓ 510(k) content not blocked
 [CLIENT_SCENARIOS] 510(k) content analysis: Risk score 0
-[CLIENT_SCENARIOS] 
+[CLIENT_SCENARIOS]
 --- IVD DIAGNOSTIC SCENARIO ---
   ✓ IVD content not blocked
 [CLIENT_SCENARIOS] IVD content analysis: Risk score 0
-[CLIENT_SCENARIOS] 
+[CLIENT_SCENARIOS]
 --- PHARMA (IND) SCENARIO ---
   ✓ IND content not blocked
 [CLIENT_SCENARIOS] IND content analysis: Risk score 0
-[CLIENT_SCENARIOS] 
+[CLIENT_SCENARIOS]
 --- BIOTECH (BLA) SCENARIO ---
   ✓ BLA content not blocked
 [CLIENT_SCENARIOS] BLA content analysis: Risk score 0
-[CLIENT_SCENARIOS] 
+[CLIENT_SCENARIOS]
 --- ACADEMIC RESEARCH (IRB) SCENARIO ---
   ✓ IRB content not blocked
 [CLIENT_SCENARIOS] IRB content analysis: Risk score 0
-[CLIENT_SCENARIOS] 
+[CLIENT_SCENARIOS]
 --- MALICIOUS ATTEMPT DETECTION ---
   ✓ Detects malicious content in regulatory context
   ✓ High risk score for mixed malicious content
@@ -204,34 +204,34 @@ stdout | server/lib/__tests__/survivability-layer.test.ts > Survivability Layer 
 [FULL_PIPELINE] ============================================================
 [FULL_PIPELINE] Testing Full Survivability Pipeline
 [FULL_PIPELINE] ============================================================
-[FULL_PIPELINE] 
+[FULL_PIPELINE]
 1. Rate Limiting Check
   ✓ Request allowed by rate limiter
 [FULL_PIPELINE] Remaining: 99
-[FULL_PIPELINE] 
+[FULL_PIPELINE]
 2. Degradation Level Check
 [Degradation] Manual override cleared, returning to automatic mode
   ✓ System at FULL capability
-[FULL_PIPELINE] 
+[FULL_PIPELINE]
 3. Feature Availability Check
   ✓ Council drafting feature available
-[FULL_PIPELINE] 
+[FULL_PIPELINE]
 4. Input Sanitization
   ✓ User input passes sanitization
-[FULL_PIPELINE] 
+[FULL_PIPELINE]
 5. Circuit Breaker Check
 [CircuitBreaker:Kimi-AI] Initialized with threshold=5, resetTimeout=30000ms
 [CircuitBreaker:OpenAI] Initialized with threshold=5, resetTimeout=30000ms
   ✓ Primary provider (Kimi) selected
   ✓ Circuit breaker allows requests
-[FULL_PIPELINE] 
+[FULL_PIPELINE]
 6. Prompt Encapsulation
   ✓ Prompt properly encapsulated
-[FULL_PIPELINE] 
+[FULL_PIPELINE]
 7. Circuit Metrics
 [FULL_PIPELINE] Kimi: CLOSED, OpenAI: CLOSED
   ✓ Primary LLM available
-[FULL_PIPELINE] 
+[FULL_PIPELINE]
 ✓ Full pipeline test completed successfully
  ✓ server/lib/__tests__/survivability-layer.test.ts > Survivability Layer > runs survivability checks 17ms
  ✓ server/lib/__tests__/survivability-layer.test.ts > Survivability Layer > runs client scenarios 3ms

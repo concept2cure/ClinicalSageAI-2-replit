@@ -27,7 +27,7 @@ import request from 'supertest';
 import { randomUUID } from 'node:crypto';
 
 import { createJourneyDb, assertNoSchemaGaps, type JourneyDb } from '../../../tests/golden-journeys/harness';
-import { PREREQ, AUTHOR, ORG, mint, makeApp, asToken } from './_authoring-canvas-fixture';
+import { PREREQ, VAULT_DDL, AUTHORING_ACCESS_DDL, AUTHOR, ORG, PROGRAM, mint, makeApp, asToken } from './_authoring-canvas-fixture';
 import { loadTurnRecord, verifyStoredTurnRecord } from '../../services/ana/turn-record-verify';
 import { RETRIEVAL_STATUS_MESSAGE } from '../../services/data-room-retrieval';
 import { evidenceShown } from '../../services/ana/turn-record-draft';
@@ -62,16 +62,16 @@ vi.mock('../../services/ai-gateway/gateway.js', async (importOriginal) => ({
     },
   }),
 }));
-vi.mock('../../services/enhancedEmbeddingService.js', () => ({
-  getEmbeddingService: () => ({
-    searchHybrid: async () => {
+vi.mock('../../services/vault/document-passage-search.js', () => ({
+    searchDocumentPassages: async () => {
       if (h.searchThrows) throw h.searchThrows;
-      return h.hits;
+      return { hits: h.hits.map(hit => ({ documentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', documentTitle: hit.title, text: hit.content, locator: null })), coverage: null, ranking: 'text' };
     },
-  }),
 }));
+vi.mock('../../services/vault/document-catalog.service.js', () => ({ loadDocumentForOrg: async () => ({ id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', programId: '11111111-1111-4111-8111-111111111111', contentHash: 'a'.repeat(64), version: '1', catalog: { contentHash: 'a'.repeat(64), status: 'extracted' } }) }));
 vi.mock('../../services/clinical-regulatory-evidence/retrieval-source-link.js', () => ({
   resolveEvidenceSourceIdsByArtifact: async () => new Map(),
+  resolveEvidenceSourceIdsByVaultDocuments: async () => new Map(),
 }));
 
 const T = 180_000;
@@ -102,9 +102,11 @@ let seq = 0;
 
 beforeAll(async () => {
   jdb = await createJourneyDb({
-    prereqSql: PREREQ,
+    prereqSql: PREREQ + AUTHORING_ACCESS_DDL + VAULT_DDL,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
+      'migrations/20260727_authoring_document_program_scope.sql',
+      'migrations/20260905_document_catalog.sql',
       'db/migrations/20260725_authoring_audit_trail.sql',
       'db/migrations/20260725_authoring_signatures_and_workflow.sql',
       'db/migrations/20260725_authoring_signature_freeze_binding.sql',
@@ -123,8 +125,8 @@ beforeAll(async () => {
       'migrations/20260906c_draft_candidate_assertions.sql',
     ],
     testOnlySql: `
-      INSERT INTO authoring_documents (id, title, module, product_code, status, created_by, tenant_id) VALUES
-        ('${DOC}', 'Module 2.5 — drafted from sources', 'M2', 'ABC', 'draft', '${AUTHOR.id}', ${ORG});
+      INSERT INTO authoring_documents (id, title, module, product_code, status, created_by, tenant_id, client_program_id) VALUES
+        ('${DOC}', 'Module 2.5 — drafted from sources', 'M2', 'ABC', 'draft', '${AUTHOR.id}', ${ORG}, '${PROGRAM}');
     `,
   });
   h.db = jdb.db;
@@ -244,6 +246,91 @@ describe('a draft from sources is a recorded turn', () => {
       expect(body.warnings).toContain(said);
       expect(JSON.stringify(body)).not.toContain('10.0.0.9');
     }
+  }, T);
+});
+
+describe('known cutoff never becomes an editor candidate', () => {
+  const partial = 'UNFINISHED_EDITOR_PROSE_MUST_NOT_BE_ACCEPTABLE';
+  const formats = [
+    { label: 'valid JSON', raw: envelope(partial).content },
+    { label: 'broken JSON', raw: `{"content":"${partial}` },
+    { label: 'plain prose', raw: partial },
+  ];
+  const cases = ['max_tokens', 'length', 'chunk_timeout', ' max_tokens ']
+    .flatMap(finishReason => formats.map(format => ({ ...format, finishReason })));
+
+  it.each(cases)('refuses $finishReason with $label before publishing or parking prose', async ({ raw, finishReason }) => {
+    h.reply = async () => ({ content: raw, finishReason, model: 'claude-opus-5-5',
+      provider: 'anthropic', requestId: 'req-editor-cutoff' });
+    const sectionId = await seedSection();
+    const sectionBefore = (await jdb.pglite.query('SELECT * FROM authoring_sections WHERE id=$1', [sectionId])).rows;
+    const candidates = () => jdb.pglite.query('SELECT id FROM authoring_ai_draft_candidates WHERE organization_id=$1 ORDER BY id', [ORG]);
+    const revisions = () => jdb.pglite.query('SELECT id FROM doc_revisions WHERE section_id=$1 ORDER BY id', [sectionId]);
+    const candidatesBefore = (await candidates()).rows;
+    const revisionsBefore = (await revisions()).rows;
+    const turnsBefore = (await records()).length;
+
+    const res = await author(request(app).post(`/api/authoring/sections/${sectionId}/ai/draft`)).send({ region: 'FDA' });
+
+    expect(res.status, JSON.stringify(res.body)).toBe(422);
+    expect(res.body).toMatchObject({ success: false, error: { code: 'DRAFT_TRUNCATED' } });
+    expect(res.body.error.message).toMatch(/shorten/i);
+    expect(res.body.error.message).toMatch(/split/i);
+    expect(res.body.error.message).toMatch(/regenerat|redraft|re-draft/i);
+    expect(res.body).not.toHaveProperty('draft');
+    expect(res.body).not.toHaveProperty('draftId');
+    expect(JSON.stringify(res.body)).not.toContain(partial);
+    expect(h.calledAt).toHaveLength(1);
+
+    const after = await records();
+    expect(after).toHaveLength(turnsBefore + 1);
+    const { stored, body } = await bodyOf(after.at(-1)!.id);
+    expect(stored.outcome).toBe('failed');
+    expect(body.model).toMatchObject({ provider: 'anthropic', model: 'claude-opus-5-5' });
+    expect(body.model.calls).toEqual([expect.objectContaining({ provider: 'anthropic',
+      model: 'claude-opus-5-5', requestId: 'req-editor-cutoff' })]);
+    expect(stored.texts.get(body.answer.streamed.sha256)).toBe(raw);
+    expect(stored.texts.get(body.modelInput[0].text.sha256)).toBe(h.sent[0].messages[0].content);
+    expect(body.outputs.drafts).toEqual([]);
+    expect(body.warnings.join('\n')).toMatch(/cut.off|truncat|output limit/i);
+    expect((await candidates()).rows).toEqual(candidatesBefore);
+    expect((await revisions()).rows).toEqual(revisionsBefore);
+    expect((await jdb.pglite.query('SELECT * FROM authoring_sections WHERE id=$1', [sectionId])).rows).toEqual(sectionBefore);
+  }, T);
+});
+
+describe('viable editor candidates retain reported termination without inventing completion', () => {
+  const content = 'The investigator must review the source evidence before drawing a conclusion.';
+  const cases = [
+    { label: 'complete JSON', finishReason: 'end_turn', json: true },
+    { label: 'whitespace complete prose', finishReason: ' stop ', json: false },
+    { label: 'unknown JSON', finishReason: 'unknown', json: true },
+    { label: 'unrecognized prose', finishReason: 'provider_future_stop', json: false },
+    { label: 'null JSON', finishReason: null, json: true },
+    { label: 'absent prose', finishReason: undefined, json: false },
+  ];
+
+  it.each(cases)('keeps $label reviewable and accepts its exact candidate', async ({ finishReason, json }) => {
+    const raw = json ? envelope(content).content : content;
+    h.reply = async () => ({ content: raw, model: 'claude-opus-5-5', provider: 'anthropic',
+      requestId: 'req-editor-reviewable', ...(finishReason === undefined ? {} : { finishReason }) });
+    const { sectionId, res } = await draft();
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.draft.content).toBe(content);
+    expect(res.body.draft.draftId).toEqual(expect.any(String));
+    const candidate = (await jdb.pglite.query<{ generator: Record<string, unknown>; content: string }>(
+      'SELECT generator, content FROM authoring_ai_draft_candidates WHERE id=$1 AND organization_id=$2',
+      [res.body.draft.draftId, ORG],
+    )).rows[0];
+    expect(candidate.content).toBe(content);
+    expect(candidate.generator).toMatchObject({ finishReason: finishReason ?? null, truncated: false,
+      requestId: 'req-editor-reviewable', turnRecordId: res.body.draft.turnRecord.id });
+    const accepted = await author(request(app).post(`/api/authoring/sections/${sectionId}/ai/draft/accept`)).send({
+      draftId: res.body.draft.draftId, content, reason: 'Reviewed the reported draft status and source evidence.',
+    });
+    expect(accepted.status, JSON.stringify(accepted.body)).toBe(200);
+    expect(accepted.body.section.content).toBe(content);
+    expect((await jdb.pglite.query('SELECT id FROM authoring_ai_draft_candidates WHERE id=$1', [res.body.draft.draftId])).rows).toEqual([]);
   }, T);
 });
 

@@ -1,0 +1,188 @@
+[
+  {
+    "path": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+    "baselineRef": "ff5e065a79a99082a0fa156bdb225f87ec22784b",
+    "baselineExit": 0,
+    "currentExit": 0,
+    "baselineErrors": 0,
+    "baselineWarnings": 7,
+    "currentErrors": 0,
+    "currentWarnings": 7,
+    "baselineMessages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'DataRoom' has too many lines (317). Maximum allowed is 100.",
+        "line": 400,
+        "column": 1
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'DataRoom' has a complexity of 61. Maximum allowed is 15.",
+        "line": 400,
+        "column": 1
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (1505). Maximum allowed is 500.",
+        "line": 692,
+        "column": 1
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'AuthorWorkspace' has too many lines (146). Maximum allowed is 100.",
+        "line": 1411,
+        "column": 1
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'ProjectHome' has too many lines (300). Maximum allowed is 100.",
+        "line": 1582,
+        "column": 8
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'ProjectHome' has a complexity of 104. Maximum allowed is 15.",
+        "line": 1582,
+        "column": 8
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Arrow function has a complexity of 31. Maximum allowed is 15.",
+        "line": 1706,
+        "column": 33
+      }
+    ],
+    "currentMessages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'DataRoom' has too many lines (318). Maximum allowed is 100.",
+        "line": 413,
+        "column": 1
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'DataRoom' has a complexity of 62. Maximum allowed is 15.",
+        "line": 413,
+        "column": 1
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (1518). Maximum allowed is 500.",
+        "line": 693,
+        "column": 1
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'AuthorWorkspace' has too many lines (146). Maximum allowed is 100.",
+        "line": 1425,
+        "column": 1
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'ProjectHome' has too many lines (300). Maximum allowed is 100.",
+        "line": 1596,
+        "column": 8
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'ProjectHome' has a complexity of 104. Maximum allowed is 15.",
+        "line": 1596,
+        "column": 8
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Arrow function has a complexity of 31. Maximum allowed is 15.",
+        "line": 1720,
+        "column": 33
+      }
+    ],
+    "baselineStderr": "",
+    "currentStderr": ""
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+    "baselineRef": "ff5e065a79a99082a0fa156bdb225f87ec22784b",
+    "baselineExit": 0,
+    "currentExit": 0,
+    "baselineErrors": 0,
+    "baselineWarnings": 4,
+    "currentErrors": 0,
+    "currentWarnings": 4,
+    "baselineMessages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'VaultForProject' has too many lines (1179). Maximum allowed is 100.",
+        "line": 690,
+        "column": 1
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'VaultForProject' has a complexity of 184. Maximum allowed is 15.",
+        "line": 690,
+        "column": 1
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (1667). Maximum allowed is 500.",
+        "line": 709,
+        "column": 1
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Arrow function has a complexity of 41. Maximum allowed is 15.",
+        "line": 1132,
+        "column": 33
+      }
+    ],
+    "currentMessages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'VaultForProject' has too many lines (1180). Maximum allowed is 100.",
+        "line": 698,
+        "column": 1
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'VaultForProject' has a complexity of 184. Maximum allowed is 15.",
+        "line": 698,
+        "column": 1
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (1675). Maximum allowed is 500.",
+        "line": 703,
+        "column": 1
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Arrow function has a complexity of 41. Maximum allowed is 15.",
+        "line": 1140,
+        "column": 33
+      }
+    ],
+    "baselineStderr": "",
+    "currentStderr": ""
+  }
+]

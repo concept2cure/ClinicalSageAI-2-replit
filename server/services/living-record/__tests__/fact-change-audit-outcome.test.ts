@@ -16,7 +16,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const h = vi.hoisted(() => ({
   logAction: vi.fn(async (..._a: unknown[]) => ({ persisted: true, chained: true, tamperProof: true }) as unknown),
+  scan: vi.fn(),
 }));
+vi.mock('../document-binder.js', () => ({ scanArtifactCitations: (...args: unknown[]) => h.scan(...args), scanPostMarketCitations: (...args: unknown[]) => h.scan(...args) }));
 
 vi.mock('../../auditService', () => ({ default: { logAction: (...a: unknown[]) => h.logAction(...a) } }));
 vi.mock('../../../db', () => ({ db: {}, pool: {}, getPool: () => ({}) }));
@@ -149,14 +151,26 @@ describe("AnA's governed-fact tools pass the outcome on", () => {
     });
     expect(res.status).toBe('established');
     expect(res.auditTrail).toMatchObject({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' });
-    expect(String(res.message)).toMatch(/audit entry .* could not be written/i);
+    expect(String(res.message)).toMatch(/audit entry .* could not be confirmed/i);
+    expect(String(res.message)).toMatch(/Review the audit history before retrying/);
   });
 
   it('apply_fact_change tells AnA the record was not written', async () => {
     h.logAction.mockResolvedValueOnce(lost);
     const res = await tool('apply_fact_change', { factId: 'fact-1', reason: 'Protocol amendment 2', valueNum: 120 });
     expect(res.status).toBe('applied');
+    expect(res.cascadePacketAuditReceipts).toEqual([]);
     expect(res.auditTrail).toMatchObject({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' });
-    expect(String(res.message)).toMatch(/audit entry .* could not be written/i);
+    expect(String(res.message)).toMatch(/audit entry .* could not be confirmed/i);
+    expect(String(res.message)).toMatch(/Review the audit history before retrying/);
+  });
+  it('citation scans preserve the actual warning and leave preview without a fabricated audit', async () => {
+    const auditTrail = { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message: 'Bounded synthetic warning' };
+    h.scan.mockResolvedValue({ ok: true, persisted: true, target: 'document:doc-1', summary: {}, citations: [], unmatchedLabels: [], auditTrail });
+    const saved = await tool('scan_document_citations', { programId: 'prog-1', documentId: 'doc-1', documentKind: 'ctd_artifact', persist: true });
+    expect(saved.auditTrail).toEqual(auditTrail);
+    h.scan.mockResolvedValue({ ok: true, persisted: false, target: 'document:doc-1', summary: {}, citations: [], unmatchedLabels: [] });
+    const preview = await tool('scan_document_citations', { programId: 'prog-1', documentId: 'doc-1', documentKind: 'post_market' });
+    expect(preview).not.toHaveProperty('auditTrail');
   });
 });

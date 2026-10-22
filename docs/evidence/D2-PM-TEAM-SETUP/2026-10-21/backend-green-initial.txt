@@ -1,0 +1,123 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/o01-core-project-audits.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > seven project operations disclose actual post-action audit persistence > create, update, collaborators, export, duplicate, transfer and archive, audit unavailable=true 250ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > seven project operations disclose actual post-action audit persistence > create, update, collaborators, export, duplicate, transfer and archive, audit unavailable=false 152ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > seven project operations disclose actual post-action audit persistence > audit recovery restores actual persisted history without changing or repeating the prior saved action 46ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > seven project operations disclose actual post-action audit persistence > a failed business write returns refusal and emits no successful audit outcome 29ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > seven project operations disclose actual post-action audit persistence > an initial owner grant failure rolls back project creation and visibility 21ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > seven project operations disclose actual post-action audit persistence > a template visibility failure rolls back the copied project and owner grant 24ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > seven project operations disclose actual post-action audit persistence > a conversation archive failure rolls back the project archive too 30ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > current active author can create and privately copy under the canonical creation policy 54ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > current active tenant_regulatory_scientist can create and privately copy under the canonical creation policy 36ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > current viewer cannot create or copy despite a stale administrator claim 16ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > current readonly cannot create or copy despite a stale administrator claim 21ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > current read_only cannot create or copy despite a stale administrator claim 15ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > current guest cannot create or copy despite a stale administrator claim 12ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > a pending_deletion tenant cannot create or copy through a read-only recovery grant 18ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > a suspended tenant cannot create or copy through a read-only recovery grant 13ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > a purged tenant cannot create or copy through a read-only recovery grant 12ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > a inactive tenant cannot create or copy through a read-only recovery grant 15ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > foreign and inaccessible private export is refused before disclosure or effects 26ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > foreign and inaccessible private duplicate is refused before disclosure or effects 22ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > foreign and inaccessible private transfer is refused before disclosure or effects 20ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > a project read grant permits export and template duplication but not source mutation 88ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > a viewer with edit sharing cannot perform a governed write or create a copy 30ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > revoked current membership refuses every action despite retained sharing and an administrator token 32ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the canonical persisted project authority applies to these actions > a copied template becomes the caller’s private project and carries no source ownership or native identity 40ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the ownership-preferences PATCH is held to the PUT’s authority and audit (IAM-31) > an organization member never shared on the private project is refused, and nothing changes 16ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the ownership-preferences PATCH is held to the PUT’s authority and audit (IAM-31) > user 8, a read ("use") share, is refused, and nothing changes 14ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the ownership-preferences PATCH is held to the PUT’s authority and audit (IAM-31) > user 9, a viewer with an edit share, is refused, and nothing changes 10ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the ownership-preferences PATCH is held to the PUT’s authority and audit (IAM-31) > the owner may change them, and the change is audited (audit unavailable=true) 43ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > the ownership-preferences PATCH is held to the PUT’s authority and audit (IAM-31) > the owner may change them, and the change is audited (audit unavailable=false) 40ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > project sharing changes are audited, with what changed (DP-80) > visibility opened to the organization writes an audited UPDATE with the state before and after 31ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > project sharing changes are audited, with what changed (DP-80) > a member granted edit writes an audited UPDATE with the state before and after 29ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > project sharing changes are audited, with what changed (DP-80) > a member removed writes an audited UPDATE with the state before and after 26ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > project sharing changes are audited, with what changed (DP-80) > an audit store that refuses the row is disclosed, not reported as recorded 27ms
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts > project sharing changes are audited, with what changed (DP-80) > a caller who may not manage the project changes nothing and writes no row 20ms
+stderr | server/routes/__tests__/project-sharing-team-setup.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/project-sharing-team-setup.pglite.test.ts
+{
+  "timestamp": "2026-10-21T01:21:46.946Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > current management read and membership setup > binds current actor, UUID, anchor and workspace and disambiguates only real active candidates 68ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > current management read and membership setup > exposes no candidate directory or controls to an admitted reader with a stale admin claim 38ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > current management read and membership setup > grants a current account despite a stale viewer claim and records the existing audit outcome 52ms
+ × server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > current management read and membership setup > revokes in place and removes subsequent private read access without erasing attribution 189ms
+   → expected 403 to be 404 // Object.is equality
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > current management read and membership setup > allows revocation of a departed account without restoring or exposing its identity 23ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > denies a read-only owner on member and visibility operations despite a stale administrator claim 37ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > denies an ordinary reader attempting to grant access with a stale administrator claim 19ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > refuses inactive or foreign grant recipient 8 19ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > refuses inactive or foreign grant recipient 11 23ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > refuses wrong UUID anchors and a second client workspace 17ms
+stderr | server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > preserves existing truthful best-effort audit failure metadata after a committed grant
+{
+  "timestamp": "2026-10-21T01:21:51.735Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1792545711731_bd01cd71d79d34e0,7,project,101,UPDATE,data-change,{\"sharing\":{\"visibility\":\"private\",\"members\":[{\"id\":26,\"user_id\":6,\"role\":\"use\",\"status\":\"active\",\"invited_by_id\":5,\"accepted_at\":\"2026-01-01T00:00:00.000Z\",\"created_at\":\"2026-10-21T01:21:51.699Z\",\"updated_at\":\"2026-10-21T01:21:51.699Z\"},{\"id\":27,\"user_id\":8,\"role\":\"edit\",\"status\":\"active\",\"invited_by_id\":5,\"accepted_at\":\"2026-01-02T00:00:00.000Z\",\"created_at\":\"2026-10-21T01:21:51.699Z\",\"updated_at\":\"2026-10-21T01:21:51.699Z\"}]}},{\"sharing\":{\"visibility\":\"private\",\"members\":[{\"id\":26,\"user_id\":6,\"role\":\"use\",\"status\":\"active\",\"invited_by_id\":5,\"accepted_at\":\"2026-01-01T00:00:00.000Z\",\"created_at\":\"2026-10-21T01:21:51.699Z\",\"updated_at\":\"2026-10-21T01:21:51.699Z\"},{\"id\":28,\"user_id\":7,\"role\":\"use\",\"status\":\"active\",\"invited_by_id\":5,\"accepted_at\":\"2026-10-21T01:21:51.712Z\",\"created_at\":\"2026-10-21T01:21:51.712Z\",\"updated_at\":\"2026-10-21T01:21:51.712Z\"},{\"id\":27,\"user_id\":8,\"role\":\"edit\",\"status\":\"active\",\"invited_by_id\":5,\"accepted_at\":\"2026-01-02T00:00:00.000Z\",\"created_at\":\"2026-10-21T01:21:51.699Z\",\"updated_at\":\"2026-10-21T01:21:51.699Z\"}]}},5,a***@example.test,member,::ffff:127.0.0.xxx,,,true,{\"integrityHash\":\"6b2bede086900e0e84d2da60d736a86c60f5c254dfa2b7a8bca5b24de1d69f8d\"}",
+    "action": "UPDATE",
+    "entityType": "project",
+    "entityId": "101"
+  }
+}
+
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > protects implicit ownership and refuses archived writes 76ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > reports missing stores and missing request clients as unavailable without a pool fallback 15ms
+ ✓ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > preserves existing truthful best-effort audit failure metadata after a committed grant 41ms
+ × server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > does not claim rollback after a committed grant loses its acknowledgement 26ms
+   → expected 'PROJECT_SHARING_UNAVAILABLE' to be 'PROJECT_SHARING_UNCONFIRMED' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > current management read and membership setup > revokes in place and removes subsequent private read access without erasing attribution
+AssertionError: expected 403 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 403
+
+ ❯ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts:111:56
+    109|     const after = (await pg.query('SELECT * FROM project_members WHERE…
+    110|     expect(after).toMatchObject({ ...before, status: 'revoked', update…
+    111|     expect((await request(app(6)).get(path())).status).toBe(404);
+       |                                                        ^
+    112|     expect((await request(app()).delete(memberPath(6))).status).toBe(4…
+    113|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/routes/__tests__/project-sharing-team-setup.pglite.test.ts > sharing refuses bypasses and ambiguous results > does not claim rollback after a committed grant loses its acknowledgement
+AssertionError: expected 'PROJECT_SHARING_UNAVAILABLE' to be 'PROJECT_SHARING_UNCONFIRMED' // Object.is equality
+
+Expected: "PROJECT_SHARING_UNCONFIRMED"
+Received: "PROJECT_SHARING_UNAVAILABLE"
+
+ ❯ server/routes/__tests__/project-sharing-team-setup.pglite.test.ts:163:31
+    161|     const r = await request(app()).put(memberPath(7)).send({ role: 'us…
+    162|     expect(r.status, JSON.stringify(r.body)).toBe(503);
+    163|     expect(r.body.error.code).toBe('PROJECT_SHARING_UNCONFIRMED');
+       |                               ^
+    164|     expect(r.body.error.message).not.toMatch(/nothing was changed/i);
+    165|     expect(discard).toHaveBeenCalledOnce();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 46 passed (48)
+   Start at  01:21:32
+   Duration  19.29s (transform 3.34s, setup 198ms, import 8.44s, tests 9.84s, environment 0ms)

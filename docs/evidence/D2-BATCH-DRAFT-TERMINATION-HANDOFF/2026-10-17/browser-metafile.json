@@ -1,0 +1,26 @@
+{
+  "inputs": {
+    "shared/ai/finish-reason.ts": {
+      "bytes": 3384,
+      "imports": [],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    "termination-browser.mjs": {
+      "imports": [],
+      "exports": [
+        "TRUNCATING_FINISH_REASONS",
+        "isTruncated",
+        "isVerifiedComplete"
+      ],
+      "entryPoint": "shared/ai/finish-reason.ts",
+      "inputs": {
+        "shared/ai/finish-reason.ts": {
+          "bytesInOutput": 645
+        }
+      },
+      "bytes": 752
+    }
+  }
+}

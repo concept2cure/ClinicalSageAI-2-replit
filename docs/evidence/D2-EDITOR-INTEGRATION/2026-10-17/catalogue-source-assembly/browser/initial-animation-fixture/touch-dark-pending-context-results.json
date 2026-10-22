@@ -1,0 +1,120 @@
+{
+  "key": "touch-dark-pending-context",
+  "width": 390,
+  "height": 844,
+  "theme": "dark",
+  "mode": "pending-context",
+  "status": "pass",
+  "stages": [],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/chat/threads",
+      "query": "?program_id=bbbbbbbb-0000-4000-8000-000000000181&limit=9"
+    },
+    {
+      "method": "GET",
+      "path": "/api/concept2cure/projects/bbbbbbbb-0000-4000-8000-000000000181/unified-work",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000181/records",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000181",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000181/team",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000181/activity",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000181/workstreams",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs",
+      "query": "?programId=bbbbbbbb-0000-4000-8000-000000000181"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions",
+      "query": "?programId=bbbbbbbb-0000-4000-8000-000000000181"
+    },
+    {
+      "method": "GET",
+      "path": "/api/review/board",
+      "query": "?scope=all&programId=bbbbbbbb-0000-4000-8000-000000000181&limit=100"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/project-vault/bbbbbbbb-0000-4000-8000-000000000181",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000181/conversation-files",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000181/sources",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000181/source-changes",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs",
+      "query": "?status=all&programId=bbbbbbbb-0000-4000-8000-000000000181"
+    }
+  ],
+  "mutations": [],
+  "commits": 0,
+  "previews": 0,
+  "generations": 0,
+  "accepts": 0,
+  "savedSections": [
+    {
+      "id": "aaaaaaaa-0000-4000-8000-000000000181",
+      "doc_id": "dddddddd-0000-4000-8000-000000000181",
+      "code": "3.2.P.8.1",
+      "title": "Existing stability summary",
+      "content": "<p>Existing saved stability evidence.</p>",
+      "order_index": 7,
+      "track_changes": false,
+      "comment_count": 0,
+      "revision_count": 1,
+      "citation_count": 0,
+      "updated_at": "2026-10-17T20:00:00.000Z"
+    }
+  ],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "unexpected": [],
+  "navigation": []
+}

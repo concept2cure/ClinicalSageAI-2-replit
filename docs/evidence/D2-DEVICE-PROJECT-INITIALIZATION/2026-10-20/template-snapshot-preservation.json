@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-20T22:11:53.605370+00:00",
+  "argv": [
+    "npx",
+    "tsx",
+    "-e",
+    "import {getBuiltinAuthoringTemplates,builtinTemplateSnapshot} from \"./server/services/authoring/builtin-authoring-templates.ts\"; (async()=>{const ts=await getBuiltinAuthoringTemplates();console.log(JSON.stringify(ts.map(t=>({id:t.id,entryId:t.entryId,sha256:builtinTemplateSnapshot(t)}))));})();"
+  ],
+  "exit": 0,
+  "priorInventory": "docs/evidence/D2-DEVICE-DOCUMENT-COVERAGE/2026-10-20/template-inventory-final.json",
+  "priorSha256": "1a8a14aeaa7aba7840bc9b0e1af4eee9990c58bcdaefc2aa6b7d5fb6bc4443ba",
+  "templates": 392,
+  "priorTemplates": 392,
+  "unchanged": 392,
+  "drift": [],
+  "passed": true,
+  "stderr": ""
+}

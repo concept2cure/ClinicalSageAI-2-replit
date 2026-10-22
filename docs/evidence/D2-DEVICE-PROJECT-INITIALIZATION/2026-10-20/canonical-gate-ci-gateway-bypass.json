@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:gateway-bypass"
+  ],
+  "at": "2026-10-20T22:44:21.217604+00:00",
+  "elapsedSeconds": 15.423,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-final.json",
+  "stdout": "[check-gateway-bypass] OK \u2014 no new bypasses (8 baselined site(s) tolerated).\n",
+  "stderr": ""
+}

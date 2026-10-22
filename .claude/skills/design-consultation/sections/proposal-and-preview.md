@@ -1,0 +1,1 @@
+/root/.gstack/render/installs/claude-618674374/design-consultation/sections/proposal-and-preview.md

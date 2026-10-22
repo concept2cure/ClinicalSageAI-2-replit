@@ -257,9 +257,15 @@ describe('Apps catalog — writes the UI offers are writes the server accepts', 
     await screen.findByText('Insight Synthesis');
     showAdminControls();
     fireEvent.click(screen.getByTitle('Disable module'));
+    // A governed change: the switch opens the reason-for-change dialog first.
+    const dialog = screen.getByRole('dialog');
+    fireEvent.change(dialog.querySelector('textarea')!, { target: { value: 'Downgraded; module no longer in plan' } });
+    fireEvent.change(dialog.querySelector('input')!, { target: { value: 'yes' } });
+    fireEvent.click(screen.getByText('Confirm and log'));
     await waitFor(() =>
       expect(put).toHaveBeenCalledWith('/api/module-subscriptions/insight-synthesis/toggle', {
         enabled: false,
+        reason: 'Downgraded; module no longer in plan',
       }),
     );
     expect(await screen.findByText(/Disabled Insight Synthesis/)).toBeTruthy();

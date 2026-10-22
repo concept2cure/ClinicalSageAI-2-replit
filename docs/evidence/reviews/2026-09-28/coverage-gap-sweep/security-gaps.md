@@ -161,4 +161,3 @@ Under the task rules this is not new.
 Covered: platform-token.ts in full to line 200, findMembership in store.ts, jwtVerify.ts, the revocation and live-token calls in the REST middleware (server/middleware/auth.ts:179-226), a grep of server/mcp for revocation checks, the git log for the two MCP auth files, and the rolled-back DB reproduction of the status filter.
 
 Not covered: a live MCP server (none was running), so the revocation half was established by reading the code, not by an HTTP request with a logged-out token.
-

@@ -1,0 +1,57 @@
+{
+  "boundary": "Real TaskTray, TaskBoard, AuthProvider, query and navigation components on Vite. Synthetic intercepted API/account records; no deployed backend or human witness.",
+  "results": [
+    {
+      "scenario": "light-desktop",
+      "viewport": 1440,
+      "boardReads": 2,
+      "writes": 0,
+      "exactTaskOpened": true,
+      "refused": false,
+      "dialogOverflow": false,
+      "overflow": false,
+      "accent": "#d97757",
+      "background": "#faf9f5",
+      "pageErrors": []
+    },
+    {
+      "scenario": "dark-phone",
+      "viewport": 390,
+      "boardReads": 2,
+      "writes": 0,
+      "exactTaskOpened": true,
+      "refused": false,
+      "dialogOverflow": false,
+      "overflow": false,
+      "accent": "#d97757",
+      "background": "#262624",
+      "pageErrors": []
+    },
+    {
+      "scenario": "removed-task",
+      "viewport": 1440,
+      "boardReads": 2,
+      "writes": 0,
+      "exactTaskOpened": false,
+      "refused": true,
+      "dialogOverflow": false,
+      "overflow": false,
+      "accent": "#d97757",
+      "background": "#faf9f5",
+      "pageErrors": []
+    },
+    {
+      "scenario": "changed-account",
+      "viewport": 390,
+      "boardReads": 1,
+      "writes": 0,
+      "exactTaskOpened": false,
+      "refused": true,
+      "dialogOverflow": false,
+      "overflow": false,
+      "accent": "#d97757",
+      "background": "#262624",
+      "pageErrors": []
+    }
+  ]
+}

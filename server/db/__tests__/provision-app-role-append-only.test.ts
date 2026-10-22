@@ -117,6 +117,10 @@ describe('APPEND_ONLY_TABLES', () => {
       // DP-84 (2026-10-05): the Module 3 signed snapshots and provenance trail.
       'public.cmc_module3_section_versions',
       'public.cmc_provenance_events',
+      // 2026-10-18: every text an agency response has had (a signature binds one by digest).
+      'public.agency_question_response_revisions',
+      // 2026-10-19: the earlier CMC agency-question file, read-only (P-39 item 1).
+      'public.reg_questions',
     ]);
     const carveOuts = APPEND_ONLY_TABLES.filter((t: Store) => t.updatableColumns);
     expect(carveOuts).toEqual([{ schema: 'public', name: 'electronic_signatures', updatableColumns: SUPERSESSION }]);
@@ -132,7 +136,11 @@ describe('APPEND_ONLY_TABLES', () => {
    */
   it('holds the archive ledger to SELECT: the door, not the runtime role, appends to it', () => {
     const narrowed = APPEND_ONLY_TABLES.filter((t: Store) => t.ceiling);
-    expect(narrowed).toEqual([{ schema: 'public', name: 'audit_log_archives', ceiling: ['SELECT'] }]);
+    expect(narrowed).toEqual([
+      { schema: 'public', name: 'audit_log_archives', ceiling: ['SELECT'] },
+      // 2026-10-19: the earlier CMC agency-question file, which nothing writes any more.
+      { schema: 'public', name: 'reg_questions', ceiling: ['SELECT'] },
+    ]);
   });
 
   /**
@@ -178,6 +186,10 @@ describe('APPEND_ONLY_TABLES', () => {
       'public.ivdr_evidence_result_history': DP66_CEILING_ONLY,
       'public.ivdr_cdx_status_history': DP66_CEILING_ONLY,
       'regulatory_harmonization.export_job_audit_log': DP66_CEILING_ONLY,
+      'public.agency_question_response_revisions':
+        'the grant ceiling only (2026-10-18): its one writer INSERTs (agency-responses saveResponseTx); erased only by the cascade from its question, which runs as the owner',
+      'public.reg_questions':
+        'read-only by its own trigger (migrations/20261019b_reg_questions_read_only.sql, P-39 item 1) and a SELECT ceiling; a closed-down file, not an audit store, so the boot does not require the trigger',
     };
     const guarded = new Set(EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS.map((t) => `${t.schema}.${t.table}`));
     const stores = new Set(names(APPEND_ONLY_TABLES));

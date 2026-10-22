@@ -1,0 +1,47 @@
+🔍 Running pre-commit checks...
+
+⚠️  WARNING: console.log found in staged files:
+server/routes/ectd-compile.ts
+
+Consider using the logger utility instead:
+  import { logger } from '@/server/utils/logger';
+  logger.info('message');
+
+To bypass this check (not recommended): git commit --no-verify
+
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e 
+  client/src/concept2cure/v2/surfaces/EctdCompile.tsx (2020 lines)
+  server/routes/ectd-compile.ts (2100 lines)
+  server/services/ectd/__tests__/regional-backbone-readiness.test.ts (541 lines)
+  server/services/ectd/assemble-from-core.ts (728 lines)
+  server/services/ectd/qualification/qualify.ts (607 lines)
+  server/services/submission-gateways/__tests__/pre-transmit-check.test.ts (502 lines)
+  server/services/submission-gateways/regional-packager.ts (1516 lines)
+  server/services/submission-gateways/types.ts (583 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3313 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 c424d1f48] feat(ectd): preserve real package DTD validation through compile history
+ 31 files changed, 1864 insertions(+), 307 deletions(-)
+ create mode 100644 client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx
+ create mode 100644 docs/design/DTD_VALIDATION_COMPLETION_2026-10-21.md
+ create mode 100644 server/services/ectd/__tests__/_dtd-validation-fixture.ts
+ create mode 100644 server/services/ectd/__tests__/backbone-validation-confinement.test.ts
+ create mode 100644 server/services/ectd/__tests__/backbone-validation.test.ts
+ create mode 100644 server/services/ectd/__tests__/checksum-buffers.test.ts
+ create mode 100644 server/services/ectd/__tests__/dtd-validation-proof.test.ts
+ create mode 100644 server/services/ectd/__tests__/xml-validator-capability.test.ts
+ create mode 100644 server/services/ectd/backbone-validation.ts
+ create mode 100644 server/services/ectd/qualification/__tests__/qualification-stf.test.ts
+ create mode 100644 server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts
+ create mode 100644 shared/regulatory/ectd-dtd-validation.ts
+ create mode 100644 tests/routes/ectd-compile-dtd-evidence.test.ts

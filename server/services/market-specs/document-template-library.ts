@@ -28,11 +28,15 @@ import { e3TopLevel, type E3Section } from '../ind/ctd/index.js';
 import { e3SectionSummary } from '../ind/ctd/csr-e3-guidance.js';
 import { SMPC_QRD_SECTIONS } from '../labeling/smpc-qrd-catalog';
 import { basisLabel, type RegulatoryBasis } from '../../../shared/regulatory/regulatory-basis';
+import { IB_FRONT_MATTER, IB_SUBSECTIONS } from './ib-outline-detail.js';
+import { PBRER_TEMPLATE } from './pbrer-outline.js';
 import { citeE6R3 } from '../../../shared/regulatory/ich-e6r3';
-import { GLOBAL_REGISTRY, getApplicationType } from '../../../shared/regulatory/global-document-registry';
+import { GLOBAL_REGISTRY, isDeviceRegistryEntry, getApplicationType } from '../../../shared/regulatory/global-document-registry';
 import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-bootstrap';
 import type { RegulatoryApplicationType, SectionBlueprint } from '../../../shared/regulatory/document-taxonomy';
-import { ICH_E2F_DSUR_SECTIONS, LIFECYCLE_DOCUMENT_TYPES } from '../ind/ctd/lifecycle-document-types';
+import { ICH_E2F_DSUR_SECTIONS } from '../ind/ctd/lifecycle-document-types';
+import { lifecycleRecordOutlineFor } from './lifecycle-record-outlines';
+import { ctdComponentTemplate } from './ctd-component-outlines';
 import { ICH_M11_PROTOCOL_OUTLINE } from '../ind/ctd/protocol-m11-guidance';
 import { ICH_M11_PROTOCOL_LIMITATIONS, ICH_M11_PROTOCOL_SECTIONS } from '../../../shared/regulatory/protocol-m11';
 import { getSectionBlueprint as getDedicatedSectionBlueprint, getSectionBlueprintContext } from '../regulatory/sectionBlueprintCatalog';
@@ -44,6 +48,10 @@ export interface TemplateSection {
   /** What this section is for (concise, factual). */
   purpose: string;
   required: boolean;
+  /** Sub-sections, where the record names them (e.g. the IB's 4.1–4.3). */
+  subsections?: TemplateSection[];
+  /** Headings a correction replaced, so a document bound to an earlier outline still resolves to this section (2026-10-19). */
+  formerTitles?: string[];
 }
 
 export interface DocumentTemplateStructure {
@@ -67,6 +75,8 @@ export interface DocumentTemplateStructure {
     | { kind: 'lifecycle-record' | 'document-outline'; registryId: string; record: string };
   /** Scope/currency limitations the author must see before using an existing scaffold. */
   outlineLimitations?: string[];
+  /** Unnumbered front matter (title page, table of contents …), with non-numeric codes. */
+  frontMatter?: TemplateSection[];
   sections: TemplateSection[];
 }
 
@@ -121,6 +131,8 @@ function exactBlueprint(entry: RegulatoryApplicationType): SectionBlueprint | un
 
 /** Logical authoring families only; an unmodeled regional format is never defaulted to eCTD. */
 function authoringFamilies(entry: RegulatoryApplicationType): DocumentTemplateStructure['families'] {
+  if (entry.segment === 'diagnostics_ivd' && entry.region === 'EU') return ['eu_ivdr'];
+  if (entry.segment === 'medical_devices' && entry.region === 'EU') return ['eu_mdr'];
   if (entry.submissionFormat === 'CTIS') return ['ctis'];
   if (entry.dossierStandard === 'eSTAR') return ['estar'];
   if (['eCTD', 'CTD', 'NeeS'].includes(entry.dossierStandard)) return ['ectd'];
@@ -245,51 +257,13 @@ export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
       { number: '2.3.R', heading: 'Regional Information', purpose: 'Region-specific quality information (e.g. process validation scheme, medical devices).', required: false },
     ],
   },
-  {
-    id: 'nonclinical_overview',
-    title: 'Nonclinical Overview',
-    families: ['ectd'],
-    ctdSection: '2.4',
-    regulatoryBasis: 'ICH M4S(R2) — CTD Safety',
-    sections: [
-      { number: '2.4.1', heading: 'Overview of the Nonclinical Testing Strategy', purpose: 'Rationale and approach for the nonclinical program.', required: true },
-      { number: '2.4.2', heading: 'Pharmacology', purpose: 'Integrated overview of primary/secondary pharmacodynamics, safety pharmacology, and interactions.', required: true },
-      { number: '2.4.3', heading: 'Pharmacokinetics', purpose: 'Integrated overview of absorption, distribution, metabolism, excretion, and interactions.', required: true },
-      { number: '2.4.4', heading: 'Toxicology', purpose: 'Integrated overview of single/repeat-dose toxicity, genotoxicity, carcinogenicity, reproductive/developmental toxicity, and local tolerance.', required: true },
-      { number: '2.4.5', heading: 'Integrated Overview and Conclusions', purpose: 'Coherent risk characterisation across the nonclinical findings.', required: true },
-      { number: '2.4.6', heading: 'List of Literature References', purpose: 'References cited in the nonclinical overview.', required: false },
-    ],
-  },
-  {
-    id: 'clinical_overview',
-    title: 'Clinical Overview',
-    families: ['ectd'],
-    ctdSection: '2.5',
-    regulatoryBasis: 'ICH M4E(R2) — CTD Efficacy',
-    sections: [
-      { number: '2.5.1', heading: 'Product Development Rationale', purpose: 'Scientific rationale and the development program’s logic.', required: true },
-      { number: '2.5.2', heading: 'Overview of Biopharmaceutics', purpose: 'Critical analysis of formulation/biopharmaceutic data.', required: true },
-      { number: '2.5.3', heading: 'Overview of Clinical Pharmacology', purpose: 'PK, PD, exposure-response, and special-population pharmacology.', required: true },
-      { number: '2.5.4', heading: 'Overview of Efficacy', purpose: 'Critical analysis of efficacy across the relevant studies and endpoints.', required: true },
-      { number: '2.5.5', heading: 'Overview of Safety', purpose: 'Critical analysis of the safety database, exposure, and key risks.', required: true },
-      { number: '2.5.6', heading: 'Benefits and Risks Conclusions', purpose: 'Integrated benefit-risk assessment supporting the indication.', required: true },
-    ],
-  },
-  {
-    id: 'clinical_summary',
-    title: 'Clinical Summary',
-    families: ['ectd'],
-    ctdSection: '2.7',
-    regulatoryBasis: 'ICH M4E(R2) — CTD Efficacy',
-    sections: [
-      { number: '2.7.1', heading: 'Summary of Biopharmaceutic Studies and Associated Analytical Methods', purpose: 'Factual summary of biopharmaceutic study results and methods.', required: true },
-      { number: '2.7.2', heading: 'Summary of Clinical Pharmacology Studies', purpose: 'Factual summary of human PK/PD and clinical pharmacology.', required: true },
-      { number: '2.7.3', heading: 'Summary of Clinical Efficacy', purpose: 'Factual summary of efficacy by indication, with pooled analyses.', required: true },
-      { number: '2.7.4', heading: 'Summary of Clinical Safety', purpose: 'Factual summary of exposure, adverse events, labs, and special populations.', required: true },
-      { number: '2.7.5', heading: 'Literature References', purpose: 'References cited in the clinical summary.', required: false },
-      { number: '2.7.6', heading: 'Synopses of Individual Studies', purpose: 'Tabular study synopses.', required: false },
-    ],
-  },
+  // The Nonclinical Overview, Clinical Overview and Clinical Summary are read
+  // from the ICH M2–M5 record to its depth (ctd-component-outlines.ts). They were
+  // hand copies of their first level until 2026-10-20: a Clinical Summary had no
+  // 2.7.4.2 Adverse Events and a Clinical Overview stopped at 2.5.6.
+  ctdComponentTemplate({ id: 'nonclinical_overview', registryId: 'ICH_NONCLIN_OVERVIEW', root: '2.4', title: 'Nonclinical Overview', guideline: 'ICH M4S(R2) — CTD Safety' }),
+  ctdComponentTemplate({ id: 'clinical_overview', registryId: 'ICH_CLIN_OVERVIEW', root: '2.5', title: 'Clinical Overview', guideline: 'ICH M4E(R2) — CTD Efficacy' }),
+  ctdComponentTemplate({ id: 'clinical_summary', registryId: 'ICH_CLIN_SUMMARY', root: '2.7', title: 'Clinical Summary', guideline: 'ICH M4E(R2) — CTD Efficacy' }),
 
   // ── Administrative ──────────────────────────────────────────────────────────
   {
@@ -428,12 +402,13 @@ export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
     title: "Investigator's Brochure (IB)",
     families: ['ectd', 'ctis'],
     basis: IB_BASIS,
+    frontMatter: IB_FRONT_MATTER,
     sections: [
       { number: '1', heading: 'Summary', purpose: 'Concise summary of the significant physical, chemical, pharmaceutical, pharmacological, toxicological, and clinical information.', required: true },
       { number: '2', heading: 'Introduction', purpose: 'Chemical/generic name, properties, rationale, and anticipated indications.', required: true },
       { number: '3', heading: 'Physical, Chemical and Pharmaceutical Properties and Formulation', purpose: 'Description of the substance and formulation.', required: true },
-      { number: '4', heading: 'Nonclinical Studies', purpose: 'Nonclinical pharmacology, pharmacokinetics, and toxicology results.', required: true },
-      { number: '5', heading: 'Effects in Humans', purpose: 'Pharmacokinetics, safety, efficacy, and marketing experience in humans.', required: true },
+      { number: '4', heading: 'Nonclinical Studies', purpose: 'Nonclinical pharmacology, pharmacokinetics, and toxicology results.', required: true, subsections: IB_SUBSECTIONS['4'] },
+      { number: '5', heading: 'Effects in Humans', purpose: 'Pharmacokinetics, safety, efficacy, and marketing experience in humans.', required: true, subsections: IB_SUBSECTIONS['5'] },
       { number: '6', heading: 'Summary of Data and Guidance for the Investigator', purpose: 'Overall discussion and guidance on recognising/treating possible overdose and adverse reactions.', required: true },
     ],
   }),
@@ -455,37 +430,8 @@ export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
     ],
   },
 
-  // ── Periodic Benefit-Risk Evaluation Report (ICH E2C(R2)) ───────────────────
-  {
-    id: 'pbrer',
-    title: 'Periodic Benefit-Risk Evaluation Report (PBRER/PSUR)',
-    families: ['ectd'],
-    regulatoryBasis: 'ICH E2C(R2) §1–§19; EU GVP Module VII',
-    // Interim hand copy of the E2C(R2) numbering until one canonical E2C(R2)
-    // tree exists; the heading facts are in docs/evidence/D2-ANA-DOCUMENT-
-    // INTELLIGENCE/2026-10-04-depth/b1-template-library-facts.md.
-    sections: [
-      { number: '1', heading: 'Introduction', purpose: 'Reporting interval, product(s), and scope.', required: true },
-      { number: '2', heading: 'Worldwide Marketing Authorisation Status', purpose: 'Authorisation dates and indications by country.', required: true },
-      { number: '3', heading: 'Actions Taken for Safety Reasons', purpose: 'Significant safety-related actions in the interval.', required: true },
-      { number: '4', heading: 'Changes to Reference Safety Information', purpose: 'Changes to the RSI in the interval.', required: true },
-      { number: '5', heading: 'Estimated Exposure and Use Patterns', purpose: 'Cumulative and interval patient exposure.', required: true },
-      { number: '6', heading: 'Data in Summary Tabulations', purpose: 'Cumulative and interval adverse-event tabulations.', required: true },
-      { number: '7', heading: 'Summaries of Significant Findings from Clinical Trials', purpose: 'Completed/ongoing trial safety findings.', required: true },
-      { number: '8', heading: 'Findings from Non-Interventional Studies', purpose: 'Safety findings from observational studies.', required: false },
-      { number: '9', heading: 'Information from Other Clinical Trials and Sources', purpose: 'Other relevant safety information.', required: false },
-      { number: '10', heading: 'Non-Clinical Data', purpose: 'Relevant nonclinical safety findings.', required: false },
-      { number: '11', heading: 'Literature', purpose: 'Relevant published literature.', required: false },
-      { number: '12', heading: 'Other Periodic Reports', purpose: 'Significant findings from other periodic reports, including those from partners, not presented elsewhere.', required: false },
-      { number: '13', heading: 'Lack of Efficacy in Controlled Clinical Trials', purpose: 'Lack-of-efficacy data from clinical trials in the interval that bear on benefit-risk.', required: true },
-      { number: '14', heading: 'Late-Breaking Information', purpose: 'Significant safety or efficacy information arising after the data lock point.', required: true },
-      { number: '15', heading: 'Overview of Signals: New, Ongoing, or Closed', purpose: 'Signals new, ongoing, or closed during the reporting interval.', required: true },
-      { number: '16', heading: 'Signal and Risk Evaluation', purpose: 'Summary of safety concerns, signal evaluation, and risk characterisation.', required: true },
-      { number: '17', heading: 'Benefit Evaluation', purpose: 'Baseline and newly identified benefit information.', required: true },
-      { number: '18', heading: 'Integrated Benefit-Risk Analysis for Approved Indications', purpose: 'Integrated benefit-risk for approved indications.', required: true },
-      { number: '19', heading: 'Conclusions and Actions', purpose: 'Conclusions and any proposed/needed actions.', required: true },
-    ],
-  },
+  // ── Periodic Benefit-Risk Evaluation Report (ICH E2C(R2)) — pbrer-outline.ts
+  PBRER_TEMPLATE,
 
   // ── Clinical Study Report (ICH E3) ──────────────────────────────────────────
   {
@@ -525,34 +471,13 @@ const REGISTRY_COMPONENT_TEMPLATES: Readonly<Record<string, string>> = {
   ICH_CSR: 'clinical_study_report',
   ICH_IB: 'investigators_brochure',
   EU_RMP: 'risk_management_plan',
+  EU_PER: 'performance_evaluation_report',
   ICH_QOS: 'quality_overall_summary',
   ICH_NONCLIN_OVERVIEW: 'nonclinical_overview',
   ICH_CLIN_OVERVIEW: 'clinical_overview',
   ICH_CLIN_SUMMARY: 'clinical_summary',
   EU_PSUR: 'pbrer',
 };
-
-/** Reuse the post-approval record; an IND annual report is a different obligation. */
-function postApprovalAnnualOutline(): DocumentTemplateStructure {
-  const source = LIFECYCLE_DOCUMENT_TYPES.find(record => record.id === 'nda_bla_annual_report');
-  if (!source) throw new Error('The NDA/BLA annual-report lifecycle record is unavailable.');
-  return withBasis({
-    id: 'US_NDA_ANNUAL', title: source.label, families: ['ectd'],
-    basis: {
-      ref: source.regulatoryBasis.join('; '), confidence: 'recall',
-      note: 'Existing advisory lifecycle record; current regulator text was not independently re-read for this projection.',
-    },
-    outlineSource: { kind: 'lifecycle-record', registryId: 'US_NDA_ANNUAL', record: `LIFECYCLE_DOCUMENT_TYPES:${source.id}` },
-    outlineLimitations: [
-      'Advisory post-approval annual-report outline. Confirm the application-specific NDA or BLA obligations and current regional instructions.',
-      'Retain the original Form FDA 2252, approved labeling, distribution and manufacturing records, and postmarketing study records; this outline does not replace them.',
-      'This annual report is distinct from an IND annual report and from expedited or periodic adverse-experience reporting.',
-    ],
-    sections: source.components.map(component => ({
-      number: component.code, heading: component.title, purpose: component.authoringGuidance, required: component.required,
-    })),
-  });
-}
 
 /** Share component identity with inquiry and drafting without copying this map. */
 export function componentTemplateIdForRegistry(registryId: string): string | undefined {
@@ -572,7 +497,10 @@ export function registryOutlineRequiresReview(registryId: string): boolean {
 export async function getRegistryDocumentTemplate(registryId: string): Promise<DocumentTemplateStructure | undefined> {
   const entry = getApplicationType(registryId);
   if (!entry?.active || registryOutlineRequiresReview(entry.id)) return undefined;
-  if (entry.id === 'US_NDA_ANNUAL') return postApprovalAnnualOutline();
+  // Existing component records win over older project heading copies
+  // (lifecycle-record-outlines.ts: the annual reports, PAS/sBLA, CBE, meetings).
+  const lifecycle = lifecycleRecordOutlineFor(entry.id);
+  if (lifecycle) return lifecycle;
   const component = componentTemplateIdForRegistry(entry.id);
   if (component) {
     const outline = getDocumentTemplate(component);
@@ -592,16 +520,25 @@ export interface RegistryDocumentTemplateCoverage {
   region: RegulatoryApplicationType['region'];
   applicationFamily: RegulatoryApplicationType['applicationFamily'];
   requestedBlueprintId: string;
+  /** The project blueprint the served outline is read from; absent when the outline is a record, not a blueprint. */
   blueprintId?: string;
+  /** Where the served outline is read from (a blueprint, a lifecycle record, a document outline). */
+  outlineSource?: DocumentTemplateStructure['outlineSource'];
   outlineAvailable: boolean;
   reason?: 'existing_blueprint_requires_regional_review' | 'no_dedicated_existing_outline';
 }
 
-/** Every active biotech type, including the gaps; no guessed universal CTD fallback. */
+/** Every active medicinal/device/IVD type, including gaps; no guessed CTD fallback. */
 export async function registryDocumentTemplateCoverage(): Promise<RegistryDocumentTemplateCoverage[]> {
-  return Promise.all(GLOBAL_REGISTRY.filter((e) => e.active && e.segment === 'pharma_biotech').map(async (entry) => {
+  return Promise.all(GLOBAL_REGISTRY.filter((e) => e.active && (e.segment === 'pharma_biotech' || isDeviceRegistryEntry(e))).map(async (entry) => {
     const outline = await getRegistryDocumentTemplate(entry.id);
-    const blueprint = await getDedicatedSectionBlueprint(entry.id) ?? exactBlueprint(entry);
+    // The row names the outline actually served: a filing whose outline is a
+    // lifecycle record no longer reports the blueprint it was once read from
+    // (review nit, 2026-10-18: US_TYPE_B_MEETING reported us_type_b_meeting_sections).
+    // A blueprint id is reported only when that blueprint is what is served: a
+    // component template or a record is not a blueprint (review nit, 2026-10-18).
+    const source = outline?.outlineSource;
+    const blueprint = source && 'blueprintId' in source ? { id: source.blueprintId } : undefined;
     return {
       registryId: entry.id,
       displayName: entry.displayName,
@@ -609,6 +546,7 @@ export async function registryDocumentTemplateCoverage(): Promise<RegistryDocume
       applicationFamily: entry.applicationFamily,
       requestedBlueprintId: entry.defaultSectionBlueprint,
       ...(blueprint ? { blueprintId: blueprint.id } : {}),
+      ...(source ? { outlineSource: source } : {}),
       outlineAvailable: Boolean(outline),
       ...(!outline ? { reason: BLUEPRINTS_REQUIRING_REVIEW.has(entry.id)
         ? 'existing_blueprint_requires_regional_review' as const

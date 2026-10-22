@@ -1,0 +1,10 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--max-warnings=0",
+    "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.test.ts"
+  ],
+  "PATH_prefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+  "exitCode": 0
+}

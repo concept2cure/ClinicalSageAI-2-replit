@@ -26,8 +26,14 @@ vi.mock('../../preclinical/preclinical-intel-loader', () => ({
   loadPreclinicalIntel: (...args: unknown[]) => loadPreclinicalIntelMock(...args),
 }));
 
-import { runReviewerSimulation } from '../reviewer-simulator.service';
+import { runReviewerSimulation as runScopedReviewerSimulation } from '../reviewer-simulator.service';
 import type { PersonaProgramFacts } from '../reviewer-personas';
+
+vi.mock('../../authoring/authoring-program-access', async original => ({
+  ...(await original<typeof import('../../authoring/authoring-program-access')>()), authorizeAuthoringProgram: vi.fn(async () => undefined),
+}));
+const executor = { query: async () => ({ rows: [] }) };
+const runReviewerSimulation = (req: Parameters<typeof runScopedReviewerSimulation>[0]) => runScopedReviewerSimulation(req, { executor, userId: 3 });
 
 const ORG = 7;
 const PROGRAM = '00000000-0000-0000-0000-000000000002';

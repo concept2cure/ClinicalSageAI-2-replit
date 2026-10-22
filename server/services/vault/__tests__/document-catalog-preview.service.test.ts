@@ -26,6 +26,22 @@ beforeEach(() => {
     throw new Error('Unexpected preview query');
   });
 });
+
+describe('preview handoff requires current private source authority', () => {
+  it('withholds source facts when access is revoked after the source read', async () => {
+    h.admit.mockResolvedValueOnce({ role: 'member', projectId: 17 })
+      .mockRejectedValueOnce(new CatalogAdmissionError(403, 'ANA_PROJECT_ACCESS_DENIED', 'Current access was revoked.'));
+    const result = await previewSourceFacts(input());
+    expect(result).toMatchObject({ ok: false, code: 'ANA_PROJECT_ACCESS_DENIED', persisted: false });
+    expect(result.source).toBeUndefined();
+    expect(result.results).toBeUndefined();
+    expect(h.admit).toHaveBeenCalledTimes(2);
+    expect(h.query.mock.calls.some(([sql]) => sql === 'COMMIT')).toBe(false);
+    expect(h.query.mock.calls.at(-1)?.[0]).toBe('ROLLBACK');
+    expect(h.embed).not.toHaveBeenCalled();
+    expect(h.write).not.toHaveBeenCalled();
+  });
+});
 describe('canonical read-only scientific catalog preview service', () => {
   it('default-off gate refuses before opening a connection', async () => {
     vi.stubEnv('ANA_CATALOG_SOURCE_FACT_PREVIEW', '');

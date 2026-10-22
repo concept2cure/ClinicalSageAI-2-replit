@@ -15,6 +15,7 @@ import { findActiveTransmittal } from './fda-esg';
 import { filedEntryHolding } from '../ectd/package-sequence-lifecycle';
 import { usableIdentifier } from '../ectd/regulatory-identifiers';
 import type { GovernedTransmitInput, ResolvedBundle } from './governed-transmit';
+import { RELEASE_ACT_MEANINGS } from '../part11/signature-meanings';
 
 /* ─── Refusal vocabulary ─────────────────────────────────────────── */
 
@@ -40,6 +41,7 @@ export type GovernedTransmitRefusalCode =
   | 'ACTIVE_TRANSMITTAL'
   | 'SIGNER_IS_AUTHOR'
   | 'AUTHORSHIP_NOT_A_RELEASE'
+  | 'MEANING_NOT_A_RELEASE'
   | 'SIGNER_INDEPENDENCE_UNRESOLVED'
   | 'ESIGNATURE_NO_AUTHORITY';
 
@@ -129,8 +131,8 @@ export function agencyMetadata(input: GovernedTransmitInput, bundle: ResolvedBun
  * (2026-10-01, W5/D7, sweep F19 — the second was sent, and reported recorded
  * while the history kept the first). Asked with the writer's own question
  * (filedEntryHolding), of the history on the row loadStoredBundle read. The
- * same bundle again is not refused: re-sending it after a rollback is the
- * documented recovery, and a rollback does not un-file. Only a production send
+ * same bundle again is not refused (a re-send of the bytes already on file
+ * files nothing new). Only a production send
  * files anything, so only one is held back.
  */
 export function assertSequenceNotFiledAsAnotherBundle(input: GovernedTransmitInput, bundle: ResolvedBundle): void {
@@ -183,8 +185,7 @@ export async function assertNoActiveTransmittal(input: GovernedTransmitInput, bu
       'ACTIVE_TRANSMITTAL',
       `Sequence ${active.sequence} of this package already has an active ${input.environment} transmittal ` +
         `(id=${active.id}, status=${active.status}), sent as a different bundle, and the agency may already hold it. ` +
-        `Confirm receipt at the agency, and roll that transmittal back via POST /api/mdx/gateways/transmittals/${active.id}/rollback ` +
-        `before sending sequence ${active.sequence} again.`,
+        `Confirm with the agency what it received. If a resend is needed, send it as a new sequence from Submission Center.`,
       409,
       { transmittalId: active.id, status: active.status, sequence: active.sequence, environment: input.environment },
     );
@@ -192,7 +193,7 @@ export async function assertNoActiveTransmittal(input: GovernedTransmitInput, bu
   throw new GovernedTransmitRefusal(
     'ACTIVE_TRANSMITTAL',
     `An active transmittal already exists for this package (id=${active.id}, status=${active.status}). ` +
-      `Roll it back via POST /api/mdx/gateways/transmittals/${active.id}/rollback before re-transmitting.`,
+      `Confirm with the agency what it received. If a resend is needed, send it as a new sequence from Submission Center.`,
     409,
     { transmittalId: active.id, status: active.status },
   );
@@ -257,6 +258,17 @@ export async function assertTransmitterIndependent(
     throw new GovernedTransmitRefusal(
       'AUTHORSHIP_NOT_A_RELEASE',
       `A transmission to the agency is a release, not an authorship attestation; it cannot be signed with the meaning '${meaning}'. ` +
+        'Sign it as release, approval or responsibility. Nothing was transmitted.',
+      422,
+    );
+  }
+  // 2026-10-19 (D5): authorship was the only meaning refused, so a package
+  // went to the agency on a signature that said "I reviewed". Shared by the
+  // HTTP transmit and AnA's k510 transmit (executeGovernedTransmit).
+  if (!(RELEASE_ACT_MEANINGS as readonly string[]).includes(meaning)) {
+    throw new GovernedTransmitRefusal(
+      'MEANING_NOT_A_RELEASE',
+      `A transmission to the agency is a release; it cannot be signed with the meaning '${meaning || 'none'}'. ` +
         'Sign it as release, approval or responsibility. Nothing was transmitted.',
       422,
     );

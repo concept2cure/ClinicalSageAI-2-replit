@@ -7,11 +7,12 @@
  * (artifact + embedded atom) so AnA can retrieve the content.
  */
 
-import type { CSSProperties } from 'react';
-import { useCallback, useRef, useState } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
+import { createElement, Fragment, useCallback, useRef, useState } from 'react';
 import { ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { getAuthHeaders } from '../../utils/authToken';
 import { CHAT_UPLOAD_ACCEPT, CHAT_UPLOAD_MAX_BYTES } from '@shared/constants/document-intake-formats';
+import { readExtractionCoverage, type ExtractionCoverage } from '@shared/data-room-processing-status';
 import { archiveSummary, expandArchive, isArchiveName } from './archive-intake';
 
 export interface ChatAttachment {
@@ -24,6 +25,18 @@ export interface ChatAttachment {
   extractionMethod?: string | null;
   /** Word count extracted into project memory. */
   extractionWords?: number;
+  /**
+   * The Data Room source the upload recorded (`cre_evidence_sources.id`), as
+   * the upload answered it; null when no project was open. Respond links the
+   * agency's letter to its agency communication by this id (AgencyInbox.tsx).
+   */
+  sourceId?: number | null;
+  /**
+   * How much of a PDF OCR read, as the upload answered it and validated by
+   * readExtractionCoverage; null when OCR did not run or the field was absent
+   * or malformed (D2-OCR-BUDGET contract, Amendment A).
+   */
+  extractionCoverage?: ExtractionCoverage | null;
 }
 
 /**
@@ -35,14 +48,38 @@ export interface ChatAttachment {
  * project's records, which is all a composer knows when it draws the chip.
  * What a turn was actually given is said per turn, under "Used in this
  * session" (the stream's `context_used`), so the chip claims nothing about it.
+ *
+ * With `coverage` that a budget or an OCR failure limited, it says how many of
+ * the document's pages OCR read, or that the scanned pages were not read
+ * (D2-OCR-BUDGET, Amendment A). Without one, or with `limitedBy: null`, the
+ * label is what it was.
  */
 export function attachmentReadLabel(
   method: string | null | undefined,
   words: number | undefined,
+  coverage?: ExtractionCoverage | null,
 ): string | null {
   if (!words || words <= 0) return null;
   const w = `${words.toLocaleString()} ${words === 1 ? 'word' : 'words'}`;
-  return method === 'image-ocr' || method === 'pdf-ocr' ? `text extracted via OCR · ${w}` : `text extracted · ${w}`;
+  const ocrText = method === 'image-ocr' || method === 'pdf-ocr';
+  if (coverage?.limitedBy === 'ocr_failed') return `text layer only; scanned pages not read · ${w}`;
+  if (coverage?.limitedBy) {
+    const pages = ocrPages(coverage);
+    // The thin text layer can outlast a budget-limited OCR (D2 Amendment A, B1):
+    // the words are then the layer's, not OCR's.
+    return ocrText ? `text extracted via OCR from ${pages} · ${w}` : `text layer only; OCR covered ${pages} · ${w}`;
+  }
+  return ocrText ? `text extracted via OCR · ${w}` : `text extracted · ${w}`;
+}
+
+/**
+ * What a page- or time-budget-limited OCR read, in pages when both counts are
+ * known; never a claim that it read the whole document.
+ */
+function ocrPages({ pagesRead, pageCount }: ExtractionCoverage): string {
+  return pagesRead !== null && pageCount !== null
+    ? `${pagesRead.toLocaleString()} of ${pageCount.toLocaleString()} pages`
+    : 'part of the document';
 }
 
 /**
@@ -54,8 +91,16 @@ export function attachmentReadLabel(
  * had read was shown as read. One helper, used by every composer, so the
  * unread case cannot be spelled four ways again.
  */
-export function readyAttachmentLabel(method: string | null | undefined, words: number | undefined): string {
-  return attachmentReadLabel(method, words) ?? 'no text extracted';
+export function readyAttachmentLabel(
+  method: string | null | undefined,
+  words: number | undefined,
+  coverage?: ExtractionCoverage | null,
+): string {
+  const read = attachmentReadLabel(method, words, coverage);
+  if (read) return read;
+  if (coverage?.limitedBy === 'ocr_failed') return 'no text extracted; scanned pages not read';
+  if (coverage?.limitedBy) return `no text extracted; OCR covered ${ocrPages(coverage)}`;
+  return 'no text extracted';
 }
 
 export interface UseChatUploadOptions {
@@ -149,6 +194,58 @@ export const SR_ONLY_STYLE: CSSProperties = {
   border: 0,
 };
 
+export function ChatAttachmentList({
+  attachments,
+  onRemove,
+  statusMessage,
+  icon,
+}: {
+  attachments: ChatAttachment[];
+  onRemove?: (id: string) => void;
+  statusMessage?: string;
+  icon?: ReactNode;
+}) {
+  if (attachments.length === 0 && !statusMessage) return null;
+
+  const items = attachments.map(attachment => {
+    const read = attachmentReadLabel(attachment.extractionMethod, attachment.extractionWords, attachment.extractionCoverage);
+    const label =
+      attachment.status === 'uploading'
+        ? `Uploading ${attachment.name}…`
+        : attachment.status === 'error'
+          ? `${attachment.name} — ${attachment.error || 'Upload failed'}`
+          : read
+            ? `${attachment.name} · ${read}`
+            : attachment.name;
+
+    return createElement(
+      'span',
+      { key: attachment.id, className: `ana-file ana-file-${attachment.status}`, title: label },
+      icon && createElement('span', { className: 'ico', 'aria-hidden': true }, icon),
+      createElement('span', null, label),
+      onRemove &&
+        createElement(
+          'button',
+          {
+            type: 'button',
+            'aria-label': `Remove ${attachment.name}`,
+            onClick: () => onRemove(attachment.id),
+          },
+          '×',
+        ),
+    );
+  });
+
+  return createElement(
+    Fragment,
+    null,
+    attachments.length > 0 &&
+      createElement('div', { className: 'ana-files', 'aria-label': 'Attached files' }, items),
+    statusMessage &&
+      createElement('span', { 'aria-live': 'polite', style: SR_ONLY_STYLE }, statusMessage),
+  );
+}
+
 export function useChatUpload(options: UseChatUploadOptions = {}): UseChatUpload {
   const { projectId } = options;
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
@@ -203,14 +300,17 @@ export function useChatUpload(options: UseChatUploadOptions = {}): UseChatUpload
         const data = await res.json();
         const method: string | null = data.extractionMethod ?? null;
         const words: number = typeof data.extractionWords === 'number' ? data.extractionWords : 0;
+        const sourceId: number | null =
+          Number.isSafeInteger(data.sourceId) && data.sourceId > 0 ? data.sourceId : null;
+        const extractionCoverage = readExtractionCoverage(data.extractionCoverage);
         setAttachments((prev) =>
           prev.map((a) =>
             a.id === localId
-              ? { ...a, status: 'ready', fileId: data.fileId, extractionMethod: method, extractionWords: words }
+              ? { ...a, status: 'ready', fileId: data.fileId, extractionMethod: method, extractionWords: words, sourceId, extractionCoverage }
               : a,
           ),
         );
-        const read = attachmentReadLabel(method, words);
+        const read = attachmentReadLabel(method, words, extractionCoverage);
         setStatusMessage(read ? `${file.name}: ${read}` : `${file.name} uploaded`);
       } catch (err) {
         // Only an ApiRequestError carries copy that has been through the

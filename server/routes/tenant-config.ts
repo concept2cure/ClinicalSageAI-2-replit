@@ -17,6 +17,9 @@ import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
 // controller (P1-49, DP-58): services/tenant/tenant-settings-writer.ts.
 import {
   DISCOVERY_NOT_A_GENERAL_SETTING,
+  COMPANY_DOCUMENTS_NOT_A_GENERAL_SETTING,
+  namesCompanyDocuments,
+  generalSettingsView,
   DiscoverySettingRefusedError,
   asSettings,
   namesOnboardingDiscovery,
@@ -236,7 +239,7 @@ router.get('/:tenantId/settings', authMiddleware, requireOrganizationContext, as
     }
 
     // Return settings (or empty object if none exist)
-    return res.json(tenant[0].settings || {});
+    return res.json(generalSettingsView(tenant[0].settings));
   } catch (error) {
     logger.error(`Error fetching settings for tenant ${req.params.tenantId}`, error);
     return res.status(500).json({ error: 'Failed to fetch tenant settings' });
@@ -266,6 +269,9 @@ router.patch(
       }
       if (namesOnboardingDiscovery(req.body)) {
         return res.status(403).json({ error: DISCOVERY_NOT_A_GENERAL_SETTING });
+      }
+      if (namesCompanyDocuments(req.body)) {
+        return res.status(403).json({ error: COMPANY_DOCUMENTS_NOT_A_GENERAL_SETTING });
       }
 
       // Check permissions: this tenant's administrator, or platform staff.
@@ -300,7 +306,7 @@ router.patch(
       }
 
       // Return the updated settings
-      return res.json(stored);
+      return res.json(generalSettingsView(stored));
     } catch (error) {
       if (error instanceof DiscoverySettingRefusedError) return res.status(403).json({ error: DISCOVERY_NOT_A_GENERAL_SETTING });
       logger.error(`Error updating settings for tenant ${req.params.tenantId}`, error);
@@ -347,7 +353,7 @@ router.post(
       }
 
       // Return the default settings
-      return res.json(stored);
+      return res.json(generalSettingsView(stored));
     } catch (error) {
       if (error instanceof DiscoverySettingRefusedError) return res.status(403).json({ error: DISCOVERY_NOT_A_GENERAL_SETTING });
       logger.error(`Error resetting settings for tenant ${req.params.tenantId}`, error);

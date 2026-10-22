@@ -41,6 +41,7 @@ const S = vi.hoisted(() => ({
   models: [] as Array<Record<string, unknown>>,
   inserted: [] as Array<Record<string, unknown>>,
   updated: [] as Array<Record<string, unknown>>,
+  modelReads: 0,
 }));
 
 vi.mock('../../db', async () => {
@@ -50,7 +51,7 @@ vi.mock('../../db', async () => {
     const name = getTableName(t);
     if (name === 'arm_level_data') return S.arms;
     if (name === 'synthetic_controls') return S.control ? [S.control] : [];
-    if (name === 'propensity_models') return S.models;
+    if (name === 'propensity_models') { S.modelReads++; return S.models; }
     throw new Error(`unexpected table ${name}`);
   };
   return {
@@ -110,6 +111,7 @@ beforeEach(() => {
   S.models = [];
   S.inserted.length = 0;
   S.updated.length = 0;
+  S.modelReads = 0;
 });
 
 describe('#10 the E-value needs a treatment effect, and none is recorded', () => {
@@ -148,7 +150,7 @@ describe('#12 nothing assessed is reported as not assessed', () => {
     await synthesize('ipw');
     const d = await svc.validateControl(9, 7);
     expect(d.overlapAssessment, 'a sample-size ratio was reported as propensity overlap: 0% trimmed, range 0-1').toBeNull();
-    expect(d.notAssessed.overlapAssessment).toMatch(/No propensity model has been fitted/);
+    expect(d.notAssessed.overlapAssessment).toMatch(/fitting and model qualification are unavailable/);
     expect(d.overallQuality, 'the verdict was "good" with no covariate compared').toBe('not_assessed');
   });
 
@@ -159,21 +161,23 @@ describe('#12 nothing assessed is reported as not assessed', () => {
     expect(d.overlapAssessment, 'Math.min() of no sizes is Infinity, and Infinity > 0.2 read as overlapping').toBeNull();
   });
 
-  it('reports a recorded propensity model as recorded, with null for what it does not record', async () => {
-    S.models = [{ id: 5, syntheticControlId: 9, balanceMetrics: {}, trimmingBounds: {}, organizationId: 7 }];
+  it('unverified historical model rows cannot establish overlap, fit, or methods claims', async () => {
+    S.models = [{ id: 5, syntheticControlId: 9, balanceMetrics: { trimmedPercent: 4, effectiveSampleSize: 410 }, trimmingBounds: { lower: 0.05, upper: 0.93 }, organizationId: 7 }];
     await synthesize('propensity_score');
     const d = await svc.validateControl(9, 7);
-    expect(d.overlapAssessment, 'unrecorded metrics read 0% trimmed, range 0-1, the arms\' total n').toEqual({
-      trimmedPercent: null, effectiveSampleSize: null, minPropensity: null, maxPropensity: null, overlapping: null,
-    });
-    expect(d.notAssessed.overlapAssessment).toMatch(/records no trimmed percentage/);
-
-    S.models = [{ id: 5, syntheticControlId: 9, balanceMetrics: { trimmedPercent: 4, effectiveSampleSize: 410 }, trimmingBounds: { lower: 0.05, upper: 0.93 }, organizationId: 7 }];
-    const recorded = await svc.validateControl(9, 7);
-    expect(recorded.overlapAssessment).toEqual({
-      trimmedPercent: 4, effectiveSampleSize: 410, minPropensity: 0.05, maxPropensity: 0.93, overlapping: true,
-    });
-    expect(recorded.notAssessed.overlapAssessment).toBeUndefined();
+    expect(d.overlapAssessment).toBeNull();
+    expect(d.notAssessed.overlapAssessment).toMatch(/unverified/);
+    const pkg = await svc.generateRegulatoryPackage(9, 7);
+    expect(pkg.methodsJustification.approach).not.toContain('Propensity scores estimated');
+    expect(pkg.methodsJustification.approach).not.toContain('Propensity score methodology was used');
+    expect(pkg.limitationsDisclosure.join(' ')).toContain('UNADJUSTED');
+    const result = await svc.getControl(9, 7);
+    expect(result.propensityModels).toBeNull();
+    expect(result.propensityModelAvailability).toMatchObject({ status: 'unavailable', code: 'PROPENSITY_MODEL_QUALIFICATION_UNAVAILABLE' });
+    expect(result.propensityModelAvailability.reason).toMatch(/unverified/);
+    expect(result.sourceArms).toHaveLength(3);
+    expect(S.modelReads, 'historical model rows must not enter current qualification').toBe(0);
+    expect(S.models).toHaveLength(1);
   });
 
   it('the package affirms no balance and states what was not assessed', async () => {
@@ -200,23 +204,22 @@ describe('#12 nothing assessed is reported as not assessed', () => {
 });
 
 describe('#13 each method is described and labelled as what it computes', () => {
-  const NOT_FITTED = { propensityModelFitted: false };
 
   it('describes ipw as the inverse-variance pooling it is', () => {
-    const text = describeSynthesisMethod('ipw', NOT_FITTED);
+    const text = describeSynthesisMethod('ipw');
     expect(text, 'the methods statement said probability weighting adjusted for observed differences').not.toMatch(/Inverse probability weighting was applied/);
     expect(text).toMatch(/NO probability weights were estimated/);
     expect(text).toMatch(/inverse-variance \(fixed-effect\) pooling/);
   });
 
   it('describes the data as the arm-level summaries the service holds', () => {
-    expect(describeSynthesisMethod('naive_pooling', NOT_FITTED), 'naive pooling claimed "individual patient-level" statistics').not.toMatch(/patient-level summary/);
-    expect(describeSynthesisMethod('naive_pooling', NOT_FITTED)).toMatch(/^Arm-level summary statistics/);
-    expect(describeSynthesisMethod('propensity_score', NOT_FITTED), 'covariate means were said to serve a balance assessment no one makes').not.toMatch(/for balance assessment/);
+    expect(describeSynthesisMethod('naive_pooling'), 'naive pooling claimed "individual patient-level" statistics').not.toMatch(/patient-level summary/);
+    expect(describeSynthesisMethod('naive_pooling')).toMatch(/^Arm-level summary statistics/);
+    expect(describeSynthesisMethod('propensity_score'), 'covariate means were said to serve a balance assessment no one makes').not.toMatch(/for balance assessment/);
   });
 
   it('describes bayesian_borrowing as the random-effects pooling it is', () => {
-    const text = describeSynthesisMethod('bayesian_borrowing', NOT_FITTED);
+    const text = describeSynthesisMethod('bayesian_borrowing');
     expect(text, 'the methods statement claimed borrowing set by commensurability with the current trial').not.toMatch(/framework was employed/);
     expect(text).toMatch(/NO prior or posterior/);
     expect(text).toMatch(/random-effects pooling/);

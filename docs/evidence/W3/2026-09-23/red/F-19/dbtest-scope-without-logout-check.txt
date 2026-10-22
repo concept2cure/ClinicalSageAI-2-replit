@@ -111,4 +111,3 @@ AssertionError: expected { ok: true, rowsChecked: 6, …(3) } to match object { 
       Tests  3 failed | 5 passed (8)
    Start at  03:25:18
    Duration  4.26s (transform 1.60s, setup 81ms, import 220ms, tests 3.64s, environment 0ms)
-

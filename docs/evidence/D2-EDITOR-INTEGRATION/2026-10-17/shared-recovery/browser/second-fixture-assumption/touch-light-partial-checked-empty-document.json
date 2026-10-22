@@ -1,0 +1,59 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "documentWidth": 390,
+  "bodyWidth": 390,
+  "notice": {
+    "x": 32,
+    "y": 156.171875,
+    "width": 326,
+    "height": 226.703125,
+    "right": 358,
+    "bottom": 382.875
+  },
+  "noticeScrollWidth": 322,
+  "noticeClientWidth": 322,
+  "noticeText": "The confirmed document “Design Recommendations” is present and section “recommendations” is absent. Review it or explicitly continue saving its original text. No new document was requested.Check document sectionsContinue saving textOpen document to review",
+  "noticeRole": "alert",
+  "controls": [
+    {
+      "text": "Check document sections",
+      "disabled": false,
+      "rect": {
+        "x": 51,
+        "y": 271.875,
+        "width": 179.859375,
+        "height": 32,
+        "right": 230.859375,
+        "bottom": 303.875
+      }
+    },
+    {
+      "text": "Continue saving text",
+      "disabled": false,
+      "rect": {
+        "x": 51,
+        "y": 303.875,
+        "width": 150.359375,
+        "height": 32,
+        "right": 201.359375,
+        "bottom": 335.875
+      }
+    },
+    {
+      "text": "Open document to review",
+      "disabled": false,
+      "rect": {
+        "x": 51,
+        "y": 335.875,
+        "width": 181.921875,
+        "height": 32,
+        "right": 232.921875,
+        "bottom": 367.875
+      }
+    }
+  ],
+  "sourceRetained": true
+}

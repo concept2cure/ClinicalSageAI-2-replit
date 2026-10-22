@@ -1,0 +1,10 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--max-warnings=0",
+    "server/services/ana/__tests__/document-passage-result-bound.test.ts"
+  ],
+  "exitCode": 0,
+  "testSha256": "f44a4a9276210278cdfeae37dc621d5ea5fd9f3b2bc58e73133cca740f5cf880"
+}

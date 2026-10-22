@@ -1,0 +1,48 @@
+# Mutation 7 — the list shows evidence in every program, whether or not the reader can open it (commitmentsForViewer)
+#
+# Replaced in server/services/ha-interactions/commitment-fulfilment.ts:
+#   -   out.readablePrograms = new Set(scope.programIds);# with:
+#   +   out.readablePrograms = { has: () => true } as unknown as ReadonlySet<string>; // MUTATION 7: the projection ignores the reader's scope#
+# Test run with the mutation in place: db — tests/db/commitment-fulfilment-evidence.dbtest.ts (-t "cannot open")
+# Restored afterwards: sha256 before 285144917976251e7b96a6c5333cf8d08ed4d1ee07e2b161cee6f4233f06dd86, after 285144917976251e7b96a6c5333cf8d08ed4d1ee07e2b161cee6f4233f06dd86 (identical)
+
+## The mutation (git diff of the working tree while it was in place)
+(new, untracked file: diff -u of the file before and with the mutation)
+--- a/server/services/ha-interactions/commitment-fulfilment.ts
++++ b/server/services/ha-interactions/commitment-fulfilment.ts
+@@ -433,7 +433,7 @@
+   if (seqIds.length === 0 && vaultIds.length === 0) return out;
+   const identity = { organizationId: orgId, userId: userId ?? undefined };
+   const scope = await accessibleScope(client, identity);
+-  out.readablePrograms = new Set(scope.programIds);
++  out.readablePrograms = { has: () => true } as unknown as ReadonlySet<string>; // MUTATION 7: the projection ignores the reader's scope
+   if (seqIds.length > 0) {
+     const r = await client.query(
+       `SELECT s.id, s.sequence_number, s.region, s.dispatch_status, s.deleted_at IS NOT NULL AS removed,
+
+## The run
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > a member who cannot open program Q cannot name its sequence: 404, nothing about it said 38ms
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > the signer, who can open it, signs; the member's list says only that it is in a project they cannot open 179ms
+   → expected { readable: true, id: 344, …(9) } to deeply equal { readable: false }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > the signer, who can open it, signs; the member's list says only that it is in a project they cannot open
+AssertionError: expected { readable: true, id: 344, …(9) } to deeply equal { readable: false }
+- Expected
++ Received
+-   "readable": false,
++   "applicationType": "ind",
++   "dispatchStatus": "sent",
++   "filed": true,
++   "id": 344,
++   "programId": "14a3cdef-c1c3-472f-ad72-5640610918ad",
++   "readable": true,
++   "region": "fda",
++   "removed": false,
++   "sequenceNumber": "0917",
++   "submissionId": 152,
++   "submissionTitle": "dbcf-routes-d9aada00-64b1-4d77-87ea-e6adc38387c6 hidden-IND 654321",
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 25 skipped (27)
+
+## Reading
+With the projection ignoring the reader's program scope, the member who cannot open the program is shown the sequence number, submission title and id of what met the commitment ("the member's list says only that it is in a project they cannot open" fails; the run shows exactly the fields that leaked). The other selected case (the member's 404 on the fulfil door) still passes: it is the write door's refusal, not the list's projection. Control: "M7 db", 2 passed.

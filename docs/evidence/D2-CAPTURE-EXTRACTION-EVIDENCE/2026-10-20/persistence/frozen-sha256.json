@@ -1,0 +1,16 @@
+{
+  "test": "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts",
+  "testSha256": "0b446d881656065f8f17d817fd18149762cf3b4202e87888e9275bc13c45644b",
+  "total": 14,
+  "baselineExpectedFailures": 5,
+  "baselinePassingControls": 9,
+  "artifacts": {
+    "README.md": "9fd1e256203303d0f37c49114b8dc5955fd42b4b8f07943d514f6cd158aa8620",
+    "baseline-command.json": "099d26f8746fef477d856364bf5da7cf30c5e42add12049d8ce2557d93dc6daf",
+    "baseline-red.txt": "87e73086c5b0612a9abdafd5094a573f22599b5bd92d24dac7b84a3bce9f89f6",
+    "initial-baseline-command.json": "36b9d994e42250202e95269671e136118f62f13f6a2d3a9513430b49fcb0a3d0",
+    "initial-baseline-red.txt": "78cef7896ffa1833f034ff40eed0c4afae75264249932f369f0d61a322d6cb29",
+    "lint-command.json": "8af41c91ad7b781f7e4235a49fa3f5dcdb93f0a2fc0617163ca15f4083cb4431",
+    "lint-raw.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

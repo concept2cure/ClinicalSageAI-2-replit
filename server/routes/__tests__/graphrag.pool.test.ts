@@ -1,63 +1,43 @@
-/**
- * GraphRAG pool resolution.
- *
- * Every GraphRAG route read its pg pool from `(req as any).pool ||
- * (req.app as any).pool` — but the router is mounted with no per-request pool
- * injection and nothing ever sets `req.pool` / `req.app.pool`, so both were
- * always undefined and every route 500'd on `pool.query` of undefined
- * (independent of RLS: the pool was never wired at all).
- *
- * This mounts the router on a bare app that sets NEITHER field — exactly
- * production — and asserts a route succeeds by falling back to the canonical
- * `getPool()`. Before the fix this request 500s; the spy also proves the
- * fallback path is the one taken.
- */
-
-import { describe, it, expect, vi } from 'vitest';
+/** WO-19: shared-pool fallback is the defect. An authenticated graph read must
+ * have the request's pinned database client, never a synthetic empty result. */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
-
-// A stub pool that answers any SELECT with one graph-node-shaped row, enough for
-// the /communities handler to map entities + edges and return success.
-const stubPool = {
-  query: vi.fn(async () => ({
-    rows: [
-      {
-        id: 'n1',
-        entity_type: 'drug',
-        name: 'Aspirin',
-        description: null,
-        metadata: {},
-        confidence: 0.8,
-        source_id: 'n1',
-        target_id: 'n1',
-        relationship_type: 'TREATS',
-        weight: 1,
-      },
-    ],
-    rowCount: 1,
-  })),
+const S = vi.hoisted(() => ({ shared: vi.fn(), pinned: vi.fn() }));
+vi.mock('../../db', async original => ({ ...await original<Record<string, unknown>>(), getPool: () => ({ query: S.shared }) }));
+import router from '../graphrag';
+const app = (org: number | null, scoped = false) => {
+  const a = express(); a.use(express.json());
+  a.use((req, _res, next) => {
+    if (org != null) (req as any).user = { id: 1, organizationId: org };
+    if (scoped) (req as any).dbClient = { query: S.pinned };
+    next();
+  });
+  a.use('/api/graphrag', router); return a;
 };
-
-const getPoolSpy = vi.fn(() => stubPool);
-vi.mock('../../db', () => ({ getPool: () => getPoolSpy() }));
-
-describe('GraphRAG routes resolve a pool when none is injected on the request', () => {
-  it('falls back to getPool() instead of 500-ing on an undefined pool', async () => {
-    const graphrag = (await import('../graphrag')).default;
-
-    const app = express();
-    app.use(express.json());
-    // Deliberately set NEITHER app.pool NOR a req.pool middleware — the exact
-    // production mount, where the old code found `undefined`.
-    app.use('/api/graphrag', graphrag);
-
-    const res = await request(app).get('/api/graphrag/communities');
-
-    expect(res.status).toBe(200);
-    expect(res.body?.success).toBe(true);
-    // The fallback path — not an injected pool — is what served the request.
-    expect(getPoolSpy).toHaveBeenCalled();
-    expect(stubPool.query).toHaveBeenCalled();
+beforeEach(() => {
+  S.shared.mockReset().mockResolvedValue({ rows: [] });
+  S.pinned.mockReset().mockResolvedValue({ rows: [] });
+});
+describe('GraphRAG request connection', () => {
+  it('refuses an organization-less request without touching a pool', async () => {
+    const r = await request(app(null)).get('/api/graphrag/communities');
+    expect(r.status).toBe(403); expect(S.shared).not.toHaveBeenCalled();
+  });
+  it('reports authenticated but unscoped reads unavailable rather than empty success', async () => {
+    const r = await request(app(7)).get('/api/graphrag/communities');
+    expect(r.status).toBe(503); expect(r.body.error).toBe('GRAPH_SCOPE_UNAVAILABLE');
+    expect(S.shared).not.toHaveBeenCalled();
+  });
+  it('reads through the pinned client and never falls back to the shared pool', async () => {
+    const r = await request(app(7, true)).get('/api/graphrag/communities');
+    expect(r.status).toBe(200); expect(S.pinned).toHaveBeenCalled(); expect(S.shared).not.toHaveBeenCalled();
+  });
+  it('does not describe a missing graph schema as healthy zero activity', async () => {
+    S.pinned.mockRejectedValue(Object.assign(new Error('private schema missing'), { code: '42P01' }));
+    const r = await request(app(7, true)).get('/api/graphrag/health');
+    expect(r.status).toBe(503); expect(r.body.status).toBe('unavailable');
+    expect(JSON.stringify(r.body)).not.toContain('private schema');
+    expect(r.body.graphStore.postgres.nodes).toBeNull();
   });
 });

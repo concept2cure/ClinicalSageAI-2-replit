@@ -3745,6 +3745,14 @@ export const stabilityStudies = pgTable(
     stabilityData: json('stability_data'),
     notes: text('notes'),
     shelfLife: text('shelf_life'),
+    /* Who signed the shelf-life close-out, and when
+       (migrations/20261019_stability_shelf_life_signature.sql). Written only by
+       POST /api/cmc/stability-studies/:id/close-out; an ordinary edit cannot
+       set either, and `withoutSignatureFields` strips both from any patch.
+       NULL while the study runs, and for a study closed out before 2026-10-19,
+       when the close-out was an ordinary edit. */
+    shelfLifeSignedBy: integer('shelf_life_signed_by'),
+    shelfLifeSignedAt: timestamp('shelf_life_signed_at'),
     status: text('status').default('DRAFT').notNull(), // DRAFT, ACTIVE, PAUSED, COMPLETED
     startDate: timestamp('start_date').notNull(),
     plannedEndDate: timestamp('planned_end_date'),

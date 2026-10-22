@@ -58,6 +58,24 @@ export const REVIEW_ACT_MEANINGS = ['review'] as const satisfies readonly Govern
 /** Signing off an assessment, or closing a deviation: the signer reviewed it, approves its outcome, or answers for it. */
 export const SIGN_OFF_ACT_MEANINGS = ['review', 'approval', 'responsibility'] as const satisfies readonly GovernedSignMeaning[];
 
+/**
+ * Freezing, dispatching or transmitting a submission: an approval or release
+ * step, so the signer approves it, answers for it, or releases it. Never review
+ * (2026-10-19, D5: a dispatch signed "review" was counted as the §11.70
+ * release) and never authorship (2026-10-05).
+ */
+export const RELEASE_ACT_MEANINGS = ['approval', 'responsibility', 'release'] as const satisfies readonly GovernedSignMeaning[];
+
+/** Why `meaning` cannot sign the release step `act`, or null when it is one of RELEASE_ACT_MEANINGS. */
+export function releaseActMeaningRefusal(meaning: unknown, act: string): string | null {
+  if (typeof meaning === 'string' && (RELEASE_ACT_MEANINGS as readonly string[]).includes(meaning)) return null;
+  const declared = typeof meaning === 'string' && meaning.length > 0 ? meaning : 'none';
+  return (
+    `the signature declares the meaning '${declared}'; ${act} is an approval or release step, ` +
+    `so it is signed with the meaning ${RELEASE_ACT_MEANINGS.join(', ')}`
+  );
+}
+
 /** True only for a string that is exactly one of GOVERNED_SIGN_MEANINGS. */
 export function isGovernedSignMeaning(value: unknown): value is GovernedSignMeaning {
   return typeof value === 'string' && (GOVERNED_SIGN_MEANINGS as readonly string[]).includes(value);

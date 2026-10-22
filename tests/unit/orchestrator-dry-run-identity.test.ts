@@ -84,13 +84,15 @@ function inputs(over: Partial<OrchestratorInputs> = {}): OrchestratorInputs {
 }
 
 /** The record: submission 55 → project PROGRAM (application_number), organisation 1 (name). */
-function record(opts: { applicationNumber: string | null; orgName: string | null }) {
+function record(opts: { applicationNumber: string | null; orgName: string | null; duns?: string | null; contactEmail?: string | null }) {
   hoisted.poolQuery.mockImplementation(async (sql: string) => {
     if (/FROM submissions/i.test(sql) && /program_id/i.test(sql)) return { rows: [{ program_id: PROGRAM }], rowCount: 1 };
-    if (/FROM organizations/i.test(sql)) return { rows: opts.orgName ? [{ name: opts.orgName }] : [], rowCount: 1 };
-    if (/FROM regulatory_programs/i.test(sql)) {
-      return { rows: [{ application_number: opts.applicationNumber }], rowCount: 1 };
-    }
+    if (/JOIN ind_sponsors/i.test(sql)) return { rows: [{ organization_name: opts.orgName,
+      application_number: opts.applicationNumber, applicant_sponsor_id: '22222222-2222-4222-8222-222222222222',
+      sponsor_id: '22222222-2222-4222-8222-222222222222', sponsor_name: opts.orgName,
+      duns: opts.duns === undefined ? '123456789' : opts.duns, contact_name: 'Regulatory Contact',
+      contact_phone: '+1 212 555 0100', contact_email: opts.contactEmail === undefined ? 'ra@example.test' : opts.contactEmail,
+    }], rowCount: 1 };
     return { rows: [], rowCount: 1 };
   });
 }
@@ -114,6 +116,8 @@ describe('orchestrator validation assembly — recorded identity or a dry run (P
     expect(hoisted.packagerInputs).toHaveLength(1);
     expect(hoisted.packagerInputs[0].sponsorName).toBe('Concept2Cure Therapeutics');
     expect(hoisted.packagerInputs[0].applicationId).toBe('123456');
+    expect(hoisted.packagerInputs[0].sponsorId).toBe('123456789');
+    expect(hoisted.packagerInputs[0].fda).toMatchObject({ contacts: [{ type: 'regulatory', name: 'Regulatory Contact', phone: '+1 212 555 0100', email: 'ra@example.test' }] });
     expect(String(hoisted.packagerInputs[0].sponsorName)).not.toMatch(/UNASSIGNED/);
     expect(outputs.assembly?.dryRun).toBe(false);
     expect(run.steps.find((s) => s.key === 'package.sign')!.status).toBe('awaiting-signature');
@@ -152,5 +156,16 @@ describe('orchestrator validation assembly — recorded identity or a dry run (P
     const { run, outputs } = await runOrchestrator(inputs({ submissionFk: undefined, submissionId: 'SUB-not-a-row' }));
     expect(outputs.assembly?.dryRun).toBe(true);
     expect(run.steps.find((s) => s.key === 'package.sign')!.status).not.toBe('awaiting-signature');
+  });
+});
+
+
+describe('FDA recorded runs require the complete existing sponsor identity', () => {
+  it.each([{ duns: null }, { duns: '12-345-6789' }, { contactEmail: null }])('keeps incomplete or malformed sponsor facts unsigned: %j', async (gap) => {
+    record({ applicationNumber: '123456', orgName: 'Concept2Cure Therapeutics', ...gap });
+    const { run, outputs } = await runOrchestrator(inputs());
+    expect(outputs.assembly?.dryRun).toBe(true);
+    expect(run.steps.find((s) => s.key === 'package.sign')!.status).not.toBe('awaiting-signature');
+    expect(hoisted.packagerInputs[0].sponsorId).toMatch(/^UNASSIGNED-ORG-/);
   });
 });

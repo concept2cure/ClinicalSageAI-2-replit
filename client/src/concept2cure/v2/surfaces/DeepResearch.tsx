@@ -23,6 +23,8 @@ import {
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob } from '../download';
+import type { DeepResearchJob, AggregatedResults } from '../../../../../server/services/deep-research-orchestrator';
+import type { ConnectorResult } from '../../../../../server/services/connectors/connector-interface';
 
 /* Real deep-research contract — GET /api/deep-research/board (credits) and
    POST/GET /api/deep-research/jobs (launch + poll). No fabricated fields;
@@ -55,15 +57,25 @@ interface DrConnectorWrite {
   success?: boolean;
   error?: string;
 }
-interface DrResult { title?: string; conn?: string; source?: string; meta?: string; date?: string; url?: string }
-interface DrRunJob {
-  id: number;
-  status: string;
-  progress?: number;
-  results?: DrResult[] | null;
-  synthesis?: string | null;
-  /** As the orchestrator persists it: status 'success' | 'error', and the error of a failed search. */
-  connectorLogs?: Record<string, { status?: string; resultCount?: number; error?: string | null }> | null;
+/* GET /api/deep-research/jobs/:id → the orchestrator's DeepResearchJob, as JSON.
+   Typed from the engine itself (type-only import, erased at build) because the
+   hand-written copy that stood here had drifted from it on both fields that
+   matter (audit 2026-10-17): it waited for 'completed' / 'done' / 'cancelled',
+   which the engine never writes — it settles a job as 'complete' or 'failed',
+   and a stopped job becomes 'failed' — so a finished run polled forever; and it
+   typed `results` as an array of display rows, where the engine stores an
+   AggregatedResults object, so `(job.results || []).map` would have thrown the
+   moment the poll did stop. */
+type DrRunJob = Pick<DeepResearchJob, 'id' | 'status' | 'progress' | 'synthesis' | 'connectorLogs'> & {
+  results: AggregatedResults | null;
+};
+/** The engine's two terminal statuses (DeepResearchJob['status']). */
+const DR_TERMINAL: ReadonlySet<DeepResearchJob['status']> = new Set(['complete', 'failed']);
+/** The ranked sources the engine aggregated: `topResults`, or none. A body
+    whose `results` is not that object is not rendered as sources. */
+function topSourcesOf(job: DrRunJob | null): ConnectorResult[] {
+  const top = job?.results?.topResults;
+  return Array.isArray(top) ? top : [];
 }
 /** One connector's fan-out row. `hits` is null unless the source answered with a count. */
 interface FanoutRow {
@@ -118,8 +130,8 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
     if (!job?.synthesis || exporting) return;
     setExporting(true);
     try {
-      const cited = (job.results || [])
-        .map((r, i) => `[SRC-${i + 1}] ${r.title || r.source || 'Source'}${r.url ? ` — ${r.url}` : ''}`)
+      const cited = topSourcesOf(job)
+        .map((r, i) => `[SRC-${i + 1}] ${r.title || r.sourceConnector || 'Source'}${r.url ? ` — ${r.url}` : ''}`)
         .join('\n');
       const content =
         `${job.synthesis}\n\n` +
@@ -247,12 +259,18 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
       fireToast(serverMessage(j) ?? `Couldn't read the research job (HTTP ${res.status}).`, 'error');
       return;
     }
-    const done =
-      j.status === 'completed' || j.status === 'done' || j.status === 'failed' || j.status === 'cancelled';
+    const done = DR_TERMINAL.has(j.status);
     setJob(j);
     setJobs(fanout(j, done));
-    if (done) setPhase(j.status === 'completed' || j.status === 'done' ? 'done' : 'idle');
-    else pollRef.current = setTimeout(() => poll(id), 1600);
+    if (!done) {
+      pollRef.current = setTimeout(() => poll(id), 1600);
+    } else if (j.status === 'complete') {
+      setPhase('done');
+    } else {
+      // A failed run is not an empty result: say so rather than settle silently.
+      setPhase('idle');
+      fireToast('The research run failed before it produced a synthesis. No sources are shown for it.', 'error');
+    }
   };
 
   const launch = async () => {
@@ -730,22 +748,25 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
               <div className="pj-card" style={{ marginBottom: 14 }}>
                 <div className="pj-card-h">
                   <span className="t">Aggregated results</span>
-                  <span className="s">{(job?.results || []).length} top sources</span>
+                  <span className="s">
+                    {topSourcesOf(job).length} top sources
+                    {job?.results?.totalResults != null ? ` of ${job.results.totalResults}` : ''}
+                  </span>
                 </div>
                 <div className="pj-card-b">
                   <div className="sp-list">
-                    {(job?.results || []).length === 0 && (
+                    {topSourcesOf(job).length === 0 && (
                       <div className="sp-q-s" style={{ padding: '6px 2px' }}>
                         No sources were returned for this run.
                       </div>
                     )}
-                    {(job?.results || []).map((r, i) => (
-                      <div key={i} className="sp-row">
+                    {topSourcesOf(job).map((r, i) => (
+                      <div key={r.id || i} className="sp-row">
                         <span className="sp-tag2">SRC-{i + 1}</span>
                         <span className="sp-row-b">
-                          <span className="sp-row-t">{r.title || r.source || 'Source ' + (i + 1)}</span>
+                          <span className="sp-row-t">{r.title || connName(r.sourceConnector) || 'Source ' + (i + 1)}</span>
                           <span className="sp-row-s">
-                            {[r.conn || r.source, r.meta, r.date].filter(Boolean).join(' — ')}
+                            {[connName(r.sourceConnector), r.summary].filter(Boolean).join(' — ')}
                           </span>
                         </span>
                         {/* Was a chat prompt: "Open source SRC-1: <title>",
@@ -760,7 +781,7 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
                             href={r.url}
                             target="_blank"
                             rel="noreferrer noopener"
-                            aria-label={'Open ' + (r.title || r.source || 'source ' + (i + 1)) + ' in a new tab'}
+                            aria-label={'Open ' + (r.title || 'source ' + (i + 1)) + ' in a new tab'}
                             title={r.url}
                           >
                             {I.externalLink}

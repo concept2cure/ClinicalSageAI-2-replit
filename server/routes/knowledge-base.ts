@@ -51,6 +51,7 @@ import { extractWithTika } from '../services/ingestion/tikaClient';
 import { extractWithGrobid, looksScholarlyDocument } from '../services/literature/grobidClient';
 import { indexGovernedDocument } from '../services/search/opensearchClient';
 import { searchConnectedRepositories } from '../services/integrations/connector-search.js';
+import { decryptConnectorCredentials } from '../services/connectors/connector-registry.js';
 
 import { toBinaryBody } from '../utils/binary-body.js';
 import { serverError } from '../lib/api-response';
@@ -807,38 +808,43 @@ router.post(
   receiveUpload(upload.array('files'), { maxBytes: UPLOAD_MAX_BYTES }),
   validateUploadedFiles,
   async (req: Request, res: Response) => {
-  if (!requireToken(res)) return;
-  const projectId = String(req.body?.project_id || '');
-  if (!projectId) return void res.status(422).json({ error: 'project_id is required' });
+    if (!requireToken(res)) return;
+    const projectId = String(req.body?.project_id || '');
+    if (!projectId) return void res.status(422).json({ error: 'project_id is required' });
 
-  const files = req.files as Express.Multer.File[] | undefined;
-  if (!files || files.length === 0) {
-    return void res.status(422).json({ error: 'At least one file is required' });
-  }
-
-  try {
-    // Re-assemble as FormData for the Python service
-    const form = new FormData();
-    form.append('project_id', projectId);
-    for (const f of files) {
-      form.append('files', new Blob([toBinaryBody(f.buffer)], { type: f.mimetype }), f.originalname);
+    const files = req.files as Express.Multer.File[] | undefined;
+    if (!files || files.length === 0) {
+      return void res.status(422).json({ error: 'At least one file is required' });
     }
 
-    const url = new URL('/knowledge/ingest-files', shadowUrl());
-    const resp = await fetch(url.toString(), {
-      method: 'POST',
-      headers: { 'X-Admin-Token': adminToken() },
-      body: form,
-    });
-    const json = await resp.json();
-    if (resp.status >= 500) return void sendShadowFailure(res, 'upload proxy', resp.status, json);
-    res.status(resp.status).json(json);
-  } catch (err: any) {
-    // The transport error names the internal host and port: log, not body.
-    logger.error('upload proxy failed', { err: err?.message });
-    res.status(502).json({ error: 'Shadow service unreachable' });
+    try {
+      // Re-assemble as FormData for the Python service
+      const form = new FormData();
+      form.append('project_id', projectId);
+      for (const f of files) {
+        form.append(
+          'files',
+          new Blob([toBinaryBody(f.buffer)], { type: f.mimetype }),
+          f.originalname
+        );
+      }
+
+      const url = new URL('/knowledge/ingest-files', shadowUrl());
+      const resp = await fetch(url.toString(), {
+        method: 'POST',
+        headers: { 'X-Admin-Token': adminToken() },
+        body: form,
+      });
+      const json = await resp.json();
+      if (resp.status >= 500) return void sendShadowFailure(res, 'upload proxy', resp.status, json);
+      res.status(resp.status).json(json);
+    } catch (err: any) {
+      // The transport error names the internal host and port: log, not body.
+      logger.error('upload proxy failed', { err: err?.message });
+      res.status(502).json({ error: 'Shadow service unreachable' });
+    }
   }
-});
+);
 
 // ═════════════════════════════════════════════════════════════════════════════
 // GET /api/knowledge-base/context/:projectId
@@ -1620,34 +1626,62 @@ router.post(
   receiveUpload(upload.single('file'), { maxBytes: UPLOAD_MAX_BYTES }),
   validateUploadedFiles,
   async (req: Request, res: Response) => {
-  try {
-    const file = (req as any).file;
-    if (!file) {
-      return res.status(400).json({ error: 'No file provided' });
-    }
-
-    // Strategy 1: Forward to analytics engine (FastAPI)
-    const analyticsUrl =
-      process.env.ANALYTICS_SERVICE_URL ||
-      process.env.SHADOW_SERVICE_URL ||
-      'http://localhost:8001';
     try {
-      const base64 = file.buffer.toString('base64');
-      const analyticsResp = await fetch(`${analyticsUrl}/extract-pdf`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          file_base64: base64,
-          strategies: ['pymupdf', 'pypdf2', 'pdfminer', 'ocr'],
-          min_chars: 50,
-        }),
-      });
+      const file = (req as any).file;
+      if (!file) {
+        return res.status(400).json({ error: 'No file provided' });
+      }
 
-      if (analyticsResp.ok) {
-        const data = await analyticsResp.json();
-        const text = data.text || data.content || '';
-        // Convert plain text to HTML paragraphs
-        const html = text
+      // Strategy 1: Forward to analytics engine (FastAPI)
+      const analyticsUrl =
+        process.env.ANALYTICS_SERVICE_URL ||
+        process.env.SHADOW_SERVICE_URL ||
+        'http://localhost:8001';
+      try {
+        const base64 = file.buffer.toString('base64');
+        const analyticsResp = await fetch(`${analyticsUrl}/extract-pdf`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            file_base64: base64,
+            strategies: ['pymupdf', 'pypdf2', 'pdfminer', 'ocr'],
+            min_chars: 50,
+          }),
+        });
+
+        if (analyticsResp.ok) {
+          const data = await analyticsResp.json();
+          const text = data.text || data.content || '';
+          // Convert plain text to HTML paragraphs
+          const html = text
+            .split(/\n{2,}/)
+            .filter((p: string) => p.trim())
+            .map((p: string) => `<p>${p.replace(/\n/g, '<br/>')}</p>`)
+            .join('\n');
+          return res.json({
+            success: true,
+            html,
+            text,
+            pages: data.pages || null,
+            strategy: data.strategy_used || 'analytics-engine',
+            pageCount: data.page_count || null,
+          });
+        }
+      } catch {
+        // Analytics engine unavailable — fall through to unifiedDocumentIngestion
+      }
+
+      // Strategy 2: Use unified document ingestion service
+      try {
+        const mod = (await import('../services/unifiedDocumentIngestion.js')) as any;
+        const ingestion = new mod.UnifiedDocumentIngestion();
+        const result = await ingestion.processDocument({
+          buffer: file.buffer,
+          originalName: file.originalname,
+          mimeType: file.mimetype || 'application/pdf',
+        });
+        const content = result?.content || result?.text || '';
+        const html = content
           .split(/\n{2,}/)
           .filter((p: string) => p.trim())
           .map((p: string) => `<p>${p.replace(/\n/g, '<br/>')}</p>`)
@@ -1655,55 +1689,28 @@ router.post(
         return res.json({
           success: true,
           html,
-          text,
-          pages: data.pages || null,
-          strategy: data.strategy_used || 'analytics-engine',
-          pageCount: data.page_count || null,
+          text: content,
+          strategy: 'unified-ingestion',
         });
+      } catch {
+        // Fall through to basic text extraction
       }
-    } catch {
-      // Analytics engine unavailable — fall through to unifiedDocumentIngestion
-    }
 
-    // Strategy 2: Use unified document ingestion service
-    try {
-      const mod = (await import('../services/unifiedDocumentIngestion.js')) as any;
-      const ingestion = new mod.UnifiedDocumentIngestion();
-      const result = await ingestion.processDocument({
-        buffer: file.buffer,
-        originalName: file.originalname,
-        mimeType: file.mimetype || 'application/pdf',
-      });
-      const content = result?.content || result?.text || '';
-      const html = content
-        .split(/\n{2,}/)
-        .filter((p: string) => p.trim())
-        .map((p: string) => `<p>${p.replace(/\n/g, '<br/>')}</p>`)
-        .join('\n');
-      return res.json({
+      // Strategy 3: Return buffer info as fallback
+      res.json({
         success: true,
-        html,
-        text: content,
-        strategy: 'unified-ingestion',
+        html: `<p><em>[PDF uploaded: ${file.originalname} — ${(file.size / 1024).toFixed(
+          1
+        )} KB. Text extraction services unavailable.]</em></p>`,
+        text: '',
+        strategy: 'fallback',
       });
-    } catch {
-      // Fall through to basic text extraction
+    } catch (err: any) {
+      console.error('[knowledge-base] PDF extraction failed:', err.message);
+      return serverError(res, logger, 'saving extract PDF', err);
     }
-
-    // Strategy 3: Return buffer info as fallback
-    res.json({
-      success: true,
-      html: `<p><em>[PDF uploaded: ${file.originalname} — ${(file.size / 1024).toFixed(
-        1
-      )} KB. Text extraction services unavailable.]</em></p>`,
-      text: '',
-      strategy: 'fallback',
-    });
-  } catch (err: any) {
-    console.error('[knowledge-base] PDF extraction failed:', err.message);
-    return serverError(res, logger, 'saving extract PDF', err);
   }
-});
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // OCR — Image text extraction endpoint for the Universal Import handler
@@ -1714,71 +1721,72 @@ router.post(
   receiveUpload(upload.single('file'), { maxBytes: UPLOAD_MAX_BYTES }),
   validateUploadedFiles,
   async (req: Request, res: Response) => {
-  try {
-    const file = (req as any).file;
-    if (!file) {
-      return res.status(400).json({ error: 'No file provided' });
-    }
-
-    // Strategy 1: Forward to analytics engine
-    const analyticsUrl =
-      process.env.ANALYTICS_SERVICE_URL ||
-      process.env.SHADOW_SERVICE_URL ||
-      'http://localhost:8001';
     try {
-      const base64 = file.buffer.toString('base64');
-      const analyticsResp = await fetch(`${analyticsUrl}/extract-pdf`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          file_base64: base64,
-          strategies: ['ocr', 'ocr_enhanced'],
-          force_ocr: true,
-        }),
-      });
+      const file = (req as any).file;
+      if (!file) {
+        return res.status(400).json({ error: 'No file provided' });
+      }
 
-      if (analyticsResp.ok) {
-        const data = await analyticsResp.json();
+      // Strategy 1: Forward to analytics engine
+      const analyticsUrl =
+        process.env.ANALYTICS_SERVICE_URL ||
+        process.env.SHADOW_SERVICE_URL ||
+        'http://localhost:8001';
+      try {
+        const base64 = file.buffer.toString('base64');
+        const analyticsResp = await fetch(`${analyticsUrl}/extract-pdf`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            file_base64: base64,
+            strategies: ['ocr', 'ocr_enhanced'],
+            force_ocr: true,
+          }),
+        });
+
+        if (analyticsResp.ok) {
+          const data = await analyticsResp.json();
+          return res.json({
+            success: true,
+            text: data.text || data.content || '',
+            strategy: data.strategy_used || 'analytics-ocr',
+          });
+        }
+      } catch {
+        // Analytics engine unavailable
+      }
+
+      // Strategy 2: Use unified document ingestion OCR path
+      try {
+        const mod = (await import('../services/unifiedDocumentIngestion.js')) as any;
+        const ingestion = new mod.UnifiedDocumentIngestion();
+        const result = await ingestion.processWithOCR({
+          buffer: file.buffer,
+          originalName: file.originalname,
+          mimeType: file.mimetype || 'image/png',
+        });
         return res.json({
           success: true,
-          text: data.text || data.content || '',
-          strategy: data.strategy_used || 'analytics-ocr',
+          text: result?.text || result?.content || '',
+          strategy: 'unified-ocr',
         });
+      } catch {
+        // OCR not available
       }
-    } catch {
-      // Analytics engine unavailable
-    }
 
-    // Strategy 2: Use unified document ingestion OCR path
-    try {
-      const mod = (await import('../services/unifiedDocumentIngestion.js')) as any;
-      const ingestion = new mod.UnifiedDocumentIngestion();
-      const result = await ingestion.processWithOCR({
-        buffer: file.buffer,
-        originalName: file.originalname,
-        mimeType: file.mimetype || 'image/png',
-      });
-      return res.json({
+      // Strategy 3: Return empty (no OCR available)
+      res.json({
         success: true,
-        text: result?.text || result?.content || '',
-        strategy: 'unified-ocr',
+        text: '',
+        strategy: 'none',
+        message: 'OCR services unavailable. Image uploaded but text not extracted.',
       });
-    } catch {
-      // OCR not available
+    } catch (err: any) {
+      console.error('[knowledge-base] OCR failed:', err.message);
+      return serverError(res, logger, 'saving ocr', err);
     }
-
-    // Strategy 3: Return empty (no OCR available)
-    res.json({
-      success: true,
-      text: '',
-      strategy: 'none',
-      message: 'OCR services unavailable. Image uploaded but text not extracted.',
-    });
-  } catch (err: any) {
-    console.error('[knowledge-base] OCR failed:', err.message);
-    return serverError(res, logger, 'saving ocr', err);
   }
-});
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Save to External Connector — Veeva Vault, SharePoint, OneDrive, Google Drive
@@ -1850,11 +1858,9 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
         // Authenticate with org credentials from DB or env
         const credentials = await getConnectorCredentials(orgId, 'veeva_vault');
         if (!credentials) {
-          return res
-            .status(400)
-            .json({
-              error: 'Veeva Vault not configured. Set up credentials in Connector Library.',
-            });
+          return res.status(400).json({
+            error: 'Veeva Vault not configured. Set up credentials in Connector Library.',
+          });
         }
         await connector.authenticate(credentials);
         const uploadResult = await connector.upload(
@@ -1927,11 +1933,9 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
         const connector = new GoogleDriveConnector();
         const credentials = await getConnectorCredentials(orgId, 'google_drive');
         if (!credentials) {
-          return res
-            .status(400)
-            .json({
-              error: 'Google Drive not configured. Set up credentials in Connector Library.',
-            });
+          return res.status(400).json({
+            error: 'Google Drive not configured. Set up credentials in Connector Library.',
+          });
         }
         await connector.authenticate(credentials);
         const uploadResult = await connector.upload(
@@ -2116,17 +2120,15 @@ async function getConnectorCredentials(
 } | null> {
   if (!db) return null;
   try {
-    // Try from the organization_connectors / connector_credentials tables
+    // Connector credentials are canonical AES-GCM ciphertext in the
+    // connector registry's `credentials` column.
     const rows = await db.execute({
-      sql: `SELECT credentials_encrypted FROM connector_credentials WHERE organization_id = $1 AND connector_id = $2 LIMIT 1`,
+      sql: `SELECT credentials FROM connector_credentials WHERE organization_id = $1 AND connector_id = $2 LIMIT 1`,
       args: [orgId, connectorId],
     } as any);
     const row = (rows as any)?.rows?.[0] || (rows as any)?.[0];
-    if (row?.credentials_encrypted) {
-      // Credentials are stored as JSON (encrypted at rest by DB / app layer)
-      return typeof row.credentials_encrypted === 'string'
-        ? JSON.parse(row.credentials_encrypted)
-        : row.credentials_encrypted;
+    if (typeof row?.credentials === 'string') {
+      return JSON.parse(decryptConnectorCredentials(row.credentials));
     }
   } catch {
     // Table may not exist — check env vars as fallback

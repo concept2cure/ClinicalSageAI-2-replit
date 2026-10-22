@@ -1,0 +1,15 @@
+Selected safe fields from /workspace/scratch/6ff-projects-create-final.json
+Final native route replay after fixture/helper extraction; Node v22.23.3;
+process exit 0.
+
+"numTotalTests": 30
+"numPassedTests": 30
+"numFailedTests": 0
+"numPendingTests": 0
+"success": true
+
+Selected ESLint report counts from 6ff-projects-create-eslint-final.json:
+0 errors; 2 warnings (the same two max-lines-per-function occurrences as HEAD).
+projects-create-fixture.ts: 0 errors; 0 warnings.
+
+This is a selected reporter excerpt, not the full process log.

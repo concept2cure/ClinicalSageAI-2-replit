@@ -1,0 +1,69 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > blocks synchronous overlapping Open and Attach without sharing a success result 50ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > retains unknown outcome and refuses another document POST 15ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > reuses a confirmed complete payload only for a later deliberate action 12ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > does not release uncertainty after a wrong-project inventory 6ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > a scoped no-ID check exposes inventory without attributing a document 9ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > continues only original text into a confirmed empty document after an explicit scoped check 11ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > an existing normalized section is inspection only and never overwritten 5ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > strict recovery reads and preserved current server text > keeps unknown held after malformed inventory 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > strict recovery reads and preserved current server text > keeps unknown held after malformed inventory 1 18ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > strict recovery reads and preserved current server text > keeps unknown held after malformed inventory 2 4ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > strict recovery reads and preserved current server text > keeps unknown held after malformed inventory 3 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > strict recovery reads and preserved current server text > keeps unknown held after malformed inventory 4 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > strict recovery reads and preserved current server text > keeps unknown held after malformed inventory 5 3ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > strict recovery reads and preserved current server text > keeps unknown held after malformed inventory 6 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > strict recovery reads and preserved current server text > a definite document refusal permits a separate explicit retry 3ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > strict recovery reads and preserved current server text > a lost document check never adopts a plausible inventory ID 6ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > strict recovery reads and preserved current server text > a verified empty document opens by exact ID without an absent section target 3ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > strict recovery reads and preserved current server text > a malformed exact parent keeps the confirmed ID held 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > strict recovery reads and preserved current server text > a foreign section row cannot authorize continuation or inspection 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > strict recovery reads and preserved current server text > rechecks after Check and preserves text another actor saved before Continue 3ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > continuation and context ownership > a continuation conflict requires another check and never creates another document 3ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > continuation and context ownership > does not falsely reuse a deleted saved document or create a replacement 4ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > continuation and context ownership > blocks a second check synchronously while the first read is pending 4ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > continuation and context ownership > retains an old project uncertainty but accepts a fresh check when returning 4ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > continuation and context ownership > auth events isolate the visible account without an unrelated render 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > continuation and context ownership > an unmounted completion cannot open or continue into the editor 3ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > effect ownership outlives a response but not its attempt > a later attempt invalidates an earlier confirmed result in the same context 6ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > effect ownership outlives a response but not its attempt > a stale reuse read settles into recoverable partial state after a project round trip 3ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > returns the exact document, project and section code with its binding outcome 5ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 0 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 1 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 2 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 3 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 4 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 0 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 1 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 2 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 3 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 4 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not claim nothing was saved after a lost document response 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains confirmed document identity after a lost section response 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a project change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a project-round-trip change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a account change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a organization change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a session change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > rechecks scope after reading the response body 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > allows same-project metadata updates for the unchanged account 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > opens the exact saved target and refuses a later project or account change 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > writes the document and its section, then reports ok 6ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > says so when the new document is not bound to a filing 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > stays quiet when the document IS bound 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > invents no warning when the server reports no binding at all 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > reports NOT ok when the section write fails, even though the document exists 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > reports an unknown document outcome after a server failure and never attempts the section 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > names the 401 as a session problem rather than a server error 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > never throws — a transport failure comes back as a message 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > creates the document in the open project 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > posts nothing and keeps the work when no project is open (PF-07) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > posts nothing and keeps the work when the open id is not a project (PF-07) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > carries the caller’s module rather than defaulting it 0ms
+
+ Test Files  3 passed (3)
+      Tests  61 passed (61)
+   Start at  22:29:28
+   Duration  5.18s (transform 725ms, setup 466ms, import 773ms, tests 238ms, environment 2.47s)

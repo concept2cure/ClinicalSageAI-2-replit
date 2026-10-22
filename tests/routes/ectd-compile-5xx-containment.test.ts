@@ -69,7 +69,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.spyOn(console, 'error').mockImplementation(() => {});
   vi.spyOn(console, 'log').mockImplementation(() => {});
-  poolQuery.mockImplementation(async () => ({ rows: [] }));
+  poolQuery.mockImplementation(async (sql: string) => ({ rows: sql.includes('FROM projects p') ? [{ regulatory_program_id: null, linked_program_id: null, program_type: null, primary_agency: null }] : [] }));
   resolveRequiredSections.mockRejectedValue(new Error(SENTINEL));
 });
 
@@ -95,6 +95,7 @@ describe('ectd-compile 500s: envelope out, detail to the log', () => {
 
   it('GET /:projectIdent/history — an unreadable history is still the coded 503, unchanged', async () => {
     poolQuery.mockImplementation(async (sql: string) => {
+      if (String(sql).includes('FROM projects p')) return { rows: [{ regulatory_program_id: null, linked_program_id: null, program_type: null, primary_agency: null }] };
       if (String(sql).includes('FROM ectd_compilations')) throw new Error(SENTINEL);
       return { rows: [] };
     });

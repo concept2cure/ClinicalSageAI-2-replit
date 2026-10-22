@@ -251,7 +251,7 @@ router.post('/safety-report/file', limiter, requireRole(AUTHOR), async (req, res
         if (!(e instanceof SafetyReportError)) throw e; // unknown/foreign draft id is non-fatal to the filing
       }
     }
-    res.status(201).json({ ...filed, form1571, ...(draft ? { draft } : {}) });
+    res.status(201).json({ ...filed, form1571, ...(draft ? { draft, meta: { auditTrail: draft.auditTrail } } : {}) });
   } catch (err) {
     fail(res, err);
   }
@@ -350,7 +350,7 @@ router.post('/annual-report/file', limiter, requireRole(AUTHOR), async (req, res
     res.status(201).json({
       ...filed,
       form1571,
-      ...(draft ? { draft } : {}),
+      ...(draft ? { draft, meta: { auditTrail: draft.auditTrail } } : {}),
       ...(openSectionsFiled.length > 0 ? { filedWithOpenGaps: openSectionsFiled.length, openSectionsFiled } : {}),
     });
   } catch (err) {
@@ -395,7 +395,7 @@ router.post('/amendment/file', limiter, requireRole(AUTHOR), async (req, res) =>
         if (!(e instanceof AmendmentError)) throw e; // unknown/foreign draft id is non-fatal
       }
     }
-    res.status(201).json({ ...filed, form1571, ...(draft ? { draft } : {}) });
+    res.status(201).json({ ...filed, form1571, ...(draft ? { draft, meta: { auditTrail: draft.auditTrail } } : {}) });
   } catch (err) {
     fail(res, err);
   }

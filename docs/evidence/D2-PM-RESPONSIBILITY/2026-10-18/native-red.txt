@@ -1,0 +1,275 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-18T00:44:34.506Z","pid":17276,"hostname":"3b32dff3a1d2","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-18T00:44:34.507Z","pid":17276,"hostname":"3b32dff3a1d2","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-18T00:44:34.507Z","pid":17276,"hostname":"3b32dff3a1d2","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/project-team-responsibility.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/project-team-responsibility.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":50,"time":"2026-10-18T00:44:34.973Z","pid":17276,"hostname":"3b32dff3a1d2","context":{"error":"[AuditLog] audit.tamper_proof_log does not exist. The 21 CFR Part 11 tamper-proof store is owned by db/migrations/20260813_audit_tamper_proof_log.sql and applied by `node scripts/db/deploy-migrate.mjs`, which runs as the database OWNER. The runtime role is deliberately append-only on the audit schema and cannot create it. Run the deploy migration.","stack":"Error: [AuditLog] audit.tamper_proof_log does not exist. The 21 CFR Part 11 tamper-proof store is owned by db/migrations/20260813_audit_tamper_proof_log.sql and applied by `node scripts/db/deploy-migrate.mjs`, which runs as the database OWNER. The runtime role is deliberately append-only on the audit schema and cannot create it. Run the deploy migration.\n    at TamperProofAuditLog.initialize (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:405:13)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at ensureInitialized (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:182:5)"},"msg":"[audit-service] Failed to initialize tamper-proof audit table (non-fatal):"}
+stderr | tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > keeps lead, project owner, creator provenance and sharing separate on the unique anchor
+{
+  "timestamp": "2026-10-18T00:44:37.944Z",
+  "level": "error",
+  "message": "[c2c-projects] loading the project team failed",
+  "context": {
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "err": "function public.actor_name(integer) does not exist",
+    "correlationId": null,
+    "code": "42883"
+  }
+}
+
+ × tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > keeps lead, project owner, creator provenance and sharing separate on the unique anchor 75ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while loading the project team. The problem has been logged."}: expected 500 to be 200 // Object.is equality
+stderr | tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > disambiguates accounts and never links recorded names to matching account names
+{
+  "timestamp": "2026-10-18T00:44:37.989Z",
+  "level": "error",
+  "message": "[c2c-projects] loading the project team failed",
+  "context": {
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "err": "function public.actor_name(integer) does not exist",
+    "correlationId": null,
+    "code": "42883"
+  }
+}
+
+stderr | tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > withholds inactive/foreign account details and excludes revoked sharing-only members
+{
+  "timestamp": "2026-10-18T00:44:38.024Z",
+  "level": "error",
+  "message": "[c2c-projects] loading the project team failed",
+  "context": {
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "err": "function public.actor_name(integer) does not exist",
+    "correlationId": null,
+    "code": "42883"
+  }
+}
+
+stderr | tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > retains a departed lead reference without treating it as a current account
+{
+  "timestamp": "2026-10-18T00:44:38.060Z",
+  "level": "error",
+  "message": "[c2c-projects] loading the project team failed",
+  "context": {
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "err": "function public.actor_name(integer) does not exist",
+    "correlationId": null,
+    "code": "42883"
+  }
+}
+
+ × tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > disambiguates accounts and never links recorded names to matching account names 36ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while loading the project team. The problem has been logged."}: expected 500 to be 200 // Object.is equality
+ × tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > withholds inactive/foreign account details and excludes revoked sharing-only members 35ms
+   → expected 500 to be 200 // Object.is equality
+ × tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > retains a departed lead reference without treating it as a current account 36ms
+   → expected 500 to be 200 // Object.is equality
+ ✓ tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > conceals unassigned before roster queries 34ms
+ ✓ tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > conceals foreign before roster queries 27ms
+ ✓ tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > conceals revoked actor before roster queries 31ms
+ ✓ tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > conceals inactive actor before roster queries 31ms
+ ✓ tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > conceals inactive organization before roster queries 37ms
+ ✓ tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > conceals deleted program before roster queries 34ms
+ ✓ tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > refuses a missing live anchor before roster queries 39ms
+stderr | tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > refuses a duplicate live anchor before roster queries
+{
+  "timestamp": "2026-10-18T00:44:38.326Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "current-program-access",
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "projectIds": [
+      11,
+      13
+    ]
+  }
+}
+
+stderr | tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > reports a missing roster store as unavailable without an empty-success fallback or SQL details
+{
+  "timestamp": "2026-10-18T00:44:38.361Z",
+  "level": "error",
+  "message": "[c2c-projects] loading the project team failed",
+  "context": {
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "err": "function public.actor_name(integer) does not exist",
+    "correlationId": null,
+    "code": "42883"
+  }
+}
+
+stderr | tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > withholds the loaded roster after mid-read sharing revocation
+{
+  "timestamp": "2026-10-18T00:44:38.400Z",
+  "level": "error",
+  "message": "[c2c-projects] loading the project team failed",
+  "context": {
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "err": "function public.actor_name(integer) does not exist",
+    "correlationId": null,
+    "code": "42883"
+  }
+}
+
+ ✓ tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > refuses a duplicate live anchor before roster queries 32ms
+ × tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > reports a missing roster store as unavailable without an empty-success fallback or SQL details 36ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while loading the project team. The problem has been logged."}: expected 500 to be 503 // Object.is equality
+ × tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > withholds the loaded roster after mid-read sharing revocation 39ms
+   → expected [ 404, 409, 503 ] to include 500
+stderr | tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > withholds the loaded roster after mid-read actor revocation
+{
+  "timestamp": "2026-10-18T00:44:38.444Z",
+  "level": "error",
+  "message": "[c2c-projects] loading the project team failed",
+  "context": {
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "err": "function public.actor_name(integer) does not exist",
+    "correlationId": null,
+    "code": "42883"
+  }
+}
+
+stderr | tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > withholds the loaded roster after mid-read anchor replacement
+{
+  "timestamp": "2026-10-18T00:44:38.474Z",
+  "level": "error",
+  "message": "[c2c-projects] loading the project team failed",
+  "context": {
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "err": "function public.actor_name(integer) does not exist",
+    "correlationId": null,
+    "code": "42883"
+  }
+}
+
+ × tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > withholds the loaded roster after mid-read actor revocation 43ms
+   → expected [ 404, 409, 503 ] to include 500
+ × tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > withholds the loaded roster after mid-read anchor replacement 30ms
+   → expected [ 404, 409, 503 ] to include 500
+ ✓ tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > does not fall back to a shared pool when the request client is absent 32ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > keeps lead, project owner, creator provenance and sharing separate on the unique anchor
+AssertionError: {"error":"INTERNAL_ERROR","message":"Something went wrong while loading the project team. The problem has been logged."}: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ tests/db/project-team-responsibility.dbtest.ts:119:56
+    117|   it('keeps lead, project owner, creator provenance and sharing separa…
+    118|     const result = await read();
+    119|     expect(result.status, JSON.stringify(result.body)).toBe(200);
+       |                                                        ^
+    120|     expect(result.body).toMatchObject({ program_id: PROGRAM, project_i…
+    121|     expect(result.body.team.find((r: { user_id: number }) => r.user_id…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > disambiguates accounts and never links recorded names to matching account names
+AssertionError: {"error":"INTERNAL_ERROR","message":"Something went wrong while loading the project team. The problem has been logged."}: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ tests/db/project-team-responsibility.dbtest.ts:131:42
+    129|   it('disambiguates accounts and never links recorded names to matchin…
+    130|     const { body, status } = await read();
+    131|     expect(status, JSON.stringify(body)).toBe(200);
+       |                                          ^
+    132|     const first = body.team.find((r: { user_id: number }) => r.user_id…
+    133|     const second = body.team.find((r: { user_id: number }) => r.user_i…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > withholds inactive/foreign account details and excludes revoked sharing-only members
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ tests/db/project-team-responsibility.dbtest.ts:145:27
+    143|   it('withholds inactive/foreign account details and excludes revoked …
+    144|     const result = await read();
+    145|     expect(result.status).toBe(200);
+       |                           ^
+    146|     for (const id of [10, 11]) expect(result.body.team.find((r: { user…
+    147|       identity: 'unconfirmed_account', name: null, email: null, sharin…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > retains a departed lead reference without treating it as a current account
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ tests/db/project-team-responsibility.dbtest.ts:155:27
+    153|     await env.owner.query(`DELETE FROM ${env.t('organization_users')} …
+    154|     const result = await read();
+    155|     expect(result.status).toBe(200);
+       |                           ^
+    156|     expect(result.body.team.find((r: { user_id: number }) => r.user_id…
+    157|       identity: 'unconfirmed_account', role: 'lead', responsibilities:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > reports a missing roster store as unavailable without an empty-success fallback or SQL details
+AssertionError: {"error":"INTERNAL_ERROR","message":"Something went wrong while loading the project team. The problem has been logged."}: expected 500 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 500
+
+ ❯ tests/db/project-team-responsibility.dbtest.ts:182:56
+    180|     failRoster = true;
+    181|     const result = await read();
+    182|     expect(result.status, JSON.stringify(result.body)).toBe(503);
+       |                                                        ^
+    183|     expect(result.body.team).toBeUndefined();
+    184|     expect(JSON.stringify(result.body)).not.toContain('Synthetic');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > withholds the loaded roster after mid-read sharing revocation
+ FAIL  tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > withholds the loaded roster after mid-read actor revocation
+ FAIL  tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > withholds the loaded roster after mid-read anchor replacement
+AssertionError: expected [ 404, 409, 503 ] to include 500
+ ❯ tests/db/project-team-responsibility.dbtest.ts:196:29
+    194|     };
+    195|     const result = await read();
+    196|     expect([404, 409, 503]).toContain(result.status);
+       |                             ^
+    197|     expect(result.body.team).toBeUndefined();
+    198|     expect(JSON.stringify(result.body)).not.toContain('Same Name');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 9 passed (17)
+   Start at  00:44:32
+   Duration  6.25s (transform 2.94s, setup 83ms, import 226ms, tests 5.60s, environment 0ms)
+

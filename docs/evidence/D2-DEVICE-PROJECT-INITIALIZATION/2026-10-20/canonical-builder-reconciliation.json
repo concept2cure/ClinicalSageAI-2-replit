@@ -1,0 +1,31 @@
+{
+  "at": "2026-10-20T22:53:57.294659+00:00",
+  "ownCommit": "33e82d847",
+  "incoming": "5d18c395084a8decb8514aed586e0c0de8a14ea4",
+  "merge": "2b0cbe289fc322693608e9a2393271dc2c757b38",
+  "mode": "Normal canonical merge; automatic nonconflicting shared service merge",
+  "priorFrozenChanged": [
+    "server/services/submission-service/submission-service.ts"
+  ],
+  "unexpectedChanges": [],
+  "incomingSourceFiles": [
+    "client/src/concept2cure/v2/__tests__/_submission-deliverables-fixture.tsx",
+    "client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx",
+    "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx",
+    "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+    "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+    "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+    "server/routes/__tests__/submissions-leaf-study-tagging.test.ts",
+    "server/routes/submissions.ts",
+    "server/services/ectd/__tests__/builder-study-tagging-route.pglite.test.ts",
+    "server/services/part11/__tests__/ectd-sequence-binding-document.pglite.test.ts",
+    "server/services/part11/signature-persistence.ts",
+    "server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts",
+    "server/services/submission-service/submission-service.ts",
+    "shared/types/database.d.ts"
+  ],
+  "mergeInvariants": "Both imports, error codes/statuses and regional insertion refusal preserved",
+  "combinedSourcePins": 149,
+  "focusedSuites": 18,
+  "scopeRationale": "Independent review found isolated leaf metadata and sequence signature changes; incoming7 suites plus regional/core creation, freeze, dispatch and sequence consumers; compiler/build/static/warning checks rerun on combined tree."
+}

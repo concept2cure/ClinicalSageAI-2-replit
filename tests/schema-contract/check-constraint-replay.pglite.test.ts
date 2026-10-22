@@ -22,7 +22,8 @@
  *     nobody has accepted yet (20260908 adds the kind).
  *   c2c_documents_doc_type_check
  *     20260806b replayed over an `mdr` / `ivdr` document — any EU MDR or IVDR
- *     technical file (20260810b adds the types).
+ *     technical file (20260810b adds the types) — and either replayed over a
+ *     supplement or CSR document (20261018 adds the filing document classes).
  *   submission_orchestrator_runs_status_check
  *     the orchestrator store port replayed over an `awaiting-signature` run —
  *     any submission waiting on its e-signature (the e-sig gate port adds it).
@@ -114,12 +115,14 @@ const CASES: ReplayCase[] = [
     count: `SELECT COUNT(*)::int AS n FROM document_span_lineage WHERE provenance_kind = 'machine_draft'`,
   },
   {
-    name: 'c2c_documents doc types (20260528 → 20260806b → 20260810b)',
+    name: 'c2c_documents doc types (20260528 → 20260806b → 20260810b → 20261018 → 20261018c)',
     table: 'public.c2c_documents',
     constraints: ['c2c_documents_doc_type_check'],
     files: inSetOrder([
       '20260806b_anda_ide_filing_types.sql',
       '20260810b_eu_mdr_ivdr_outlines.sql',
+      '20261018_filing_class_rule_packs.sql',
+      '20261018c_filing_class_packs_review_corrections.sql',
     ]),
     setup: async d => {
       // The creator (20260528_phase9_document_schema) needs half the AnA schema
@@ -141,9 +144,11 @@ const CASES: ReplayCase[] = [
         )});`
       );
     },
-    newestOnly: `INSERT INTO c2c_documents (doc_type) VALUES ('mdr')`,
+    // An RMAT request: a filing document class 20261018c adds. Replaying
+    // 20261018 after it must not re-narrow the CHECK to 20261018's own list.
+    newestOnly: `INSERT INTO c2c_documents (doc_type) VALUES ('rmat')`,
     refused: `INSERT INTO c2c_documents (doc_type) VALUES ('not-a-filing')`,
-    count: `SELECT COUNT(*)::int AS n FROM c2c_documents WHERE doc_type = 'mdr'`,
+    count: `SELECT COUNT(*)::int AS n FROM c2c_documents WHERE doc_type = 'rmat'`,
   },
   {
     name: 'submission_orchestrator_runs status (store port → e-sig gate port)',

@@ -1,0 +1,88 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > generates a well-formed, checksum-verified FDA package with a working lifecycle 1094ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > qualifies region ema (well-formed + checksums) 858ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > qualifies region pmda (well-formed + checksums) 1317ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > qualifies region ca (well-formed + checksums) 1282ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v4.0 qualification > generates a well-formed RPS package, verifies checksums + in-message integrity, and a lifecycle revise 631ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > runQualification (full suite, preserved reports) > runs FDA v3 + v4 and writes reports with exact spec versions 2124ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > vendored-artifact integrity covers the stylesheets too > refuses a vendored stylesheet that checksums.txt does not record 1417ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > vendored-artifact integrity covers the stylesheets too > refuses a manifest entry whose agency artifact is GONE from the drop point 1497ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > vendored-artifact integrity covers the stylesheets too > the v4.0 schema drop point has the same three fault classes 536ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > vendored-artifact integrity covers the stylesheets too > POSITIVE CONTROL: a recorded stylesheet verifies clean 1349ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > DTD validity activates per region, not all-or-nothing > skips (does not fail) a region whose regional DTD is absent from a partial drop 1272ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > DTD validity activates per region, not all-or-nothing > states the AMENDMENT package's skip too, not only the original sequence's 1075ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > DTD validity activates per region, not all-or-nothing > POSITIVE CONTROL: with no drop-point at all, every backbone is skipped and none fails 1328ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > FAILS a backbone with no DOCTYPE at all (it must not vanish from the report) 4ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > FAILS a backbone whose DOCTYPE carries no parseable SYSTEM identifier 6ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > FAILS a backbone whose DOCTYPE points OUTSIDE the package (not self-contained) 12ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > FAILS an unreadable backbone rather than reporting nothing about its DTD 7ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > STILL skips (does not fail) when the DOCTYPE is right but the DTD is unvendored 30ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > POSITIVE CONTROL: a real generated package declares and validates its DTDs > emits an xmllint DTD row for every backbone when the drop-point is complete 1351ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > unresolvedModifiedFiles — a pointer must name a leaf the prior package carries > passes a pointer to a leaf ID the prior backbone carries, from index.xml and from the regional backbone 4ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > unresolvedModifiedFiles — a pointer must name a leaf the prior package carries > FAILS a file-path pointer, which names no leaf 3ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > unresolvedModifiedFiles — a pointer must name a leaf the prior package carries > FAILS an ID no leaf of the prior backbone carries 3ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > unresolvedModifiedFiles — a pointer must name a leaf the prior package carries > FAILS a Module 1 pointer that climbs out of the regional backbone too few folders 2ms
+ ✓ server/services/ectd/qualification/__tests__/qualification-stf.test.ts > qualification reaches every generated STF > records original and lifecycle STF checks and explicit unvendored schema notes 2169ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > executes a real contained DTD as its positive control 61ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > accepts a captured package-local secondary parameter entity 28ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > does not certify a DOCTYPE written only in a comment 15ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > does not let a benign commented declaration mask the actual escaped DTD 10ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects a symlinked XML input even when its declaration names a local DTD 13ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects a symlinked primary DTD 5ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects an intermediate DTD directory symlink 13ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects a symlinked secondary parameter entity 26ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > refuses an absolute file URI hidden in a secondary DTD declaration 9ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > refuses a missing or remote module even when libxml can validate without it: missing.ent 74ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > refuses a missing or remote module even when libxml can validate without it: https://schemas.invalid/not-captured.ent 23ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > refuses an XML internal subset that references an outside entity 7ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > does not use an ambient XML catalog as proof of a missing packaged module 7ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects URI-encoded traversal even when a literal percent-path decoy exists in the package 11ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > rejects a constructed external identifier split across parameter entities 5ms
+ ✓ server/services/ectd/__tests__/backbone-validation-confinement.test.ts > actual package-confined DTD validation > does not audit UTF-16 DTD bytes as if they were dependency-free UTF-8 21ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > canonical per-file DTD evidence > records actual well-formedness, DOCTYPE and DTD execution 154ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > canonical per-file DTD evidence > records grammar-invalid XML separately from well-formedness 134ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > canonical per-file DTD evidence > records a declared but absent DTD as unexecuted, not passed 46ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > canonical per-file DTD evidence > records a missing runtime as unexecuted, not passed 67ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > canonical per-file DTD evidence > does not let a commented declaration override the actual declaration 87ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > refuses unsafe XML path ../outside.xml before invoking xmllint 7ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > refuses unsafe XML path /outside.xml before invoking xmllint 3ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > refuses a symlinked XML file outside the package 21ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > refuses absolute primary DTD references 16ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > refuses symlink primary DTD references 6ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > refuses network primary DTD references 21ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > never certifies an unsafe outside secondary dependency 26ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > never certifies an unsafe network secondary dependency 6ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > never certifies an unsafe missing secondary dependency 12ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > never certifies an unsafe symlink secondary dependency 14ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > never certifies an unsafe public secondary dependency 4ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > allows a literal package-contained secondary dependency and lets xmllint judge its grammar 74ms
+ ✓ server/services/ectd/__tests__/backbone-validation.test.ts > validation is confined to the shipped package > refuses unprovable declarations generated by parameter entities 10ms
+ ✓ server/services/ectd/__tests__/xml-validator.test.ts > checkWellFormed > accepts well-formed XML 18ms
+ ✓ server/services/ectd/__tests__/xml-validator.test.ts > checkWellFormed > rejects malformed XML with diagnostics 9ms
+ ✓ server/services/ectd/__tests__/xml-validator.test.ts > validateAgainstDtd > validates a document against an explicit DTD (and fails an invalid one) 27ms
+ ✓ server/services/ectd/__tests__/xml-validator.test.ts > validateAgainstXsd > validates against an XSD schema 28ms
+ ✓ server/services/ectd/__tests__/schema-bundler.test.ts > schema-bundler > requires the RPS message schema for v4.0 only 4ms
+ ✓ server/services/ectd/__tests__/schema-bundler.test.ts > schema-bundler > lists vendored .xsd files and resolves their path 12ms
+ ✓ server/services/ectd/__tests__/schema-bundler.test.ts > schema-bundler > never throws on a missing directory 1ms
+ ✓ server/services/ectd/__tests__/schema-bundler.test.ts > schema-bundler > blocks a required-but-missing schema only in production 1ms
+ ✓ server/services/ectd/__tests__/schema-bundler.test.ts > schema-bundler > reads the enforcement flag 0ms
+ ✓ server/services/ectd/__tests__/schema-bundler.test.ts > checksum-manifest verifier > parses sha256sum-format entries, ignoring comments/blanks 1ms
+ ✓ server/services/ectd/__tests__/schema-bundler.test.ts > checksum-manifest verifier > verifies matching hashes and flags mismatch / missing / unlisted 17ms
+ ✓ server/services/ectd/__tests__/schema-bundler.test.ts > checksum-manifest verifier > detects a tampered file (hash mismatch) 3ms
+ ✓ server/services/ectd/__tests__/schema-bundler.test.ts > checksum-manifest verifier > is trivially ok when nothing is vendored and nothing is listed (pre-vendoring state) 8ms
+ ✓ server/services/ectd/__tests__/schema-bundler.test.ts > checksum-manifest verifier covers vendored stylesheets by default > reports a *.xsl with no manifest entry as unlisted (default extensions) 3ms
+ ✓ server/services/ectd/__tests__/schema-bundler.test.ts > checksum-manifest verifier covers vendored stylesheets by default > verifies a listed *.xsl against its digest (default extensions) 5ms
+ ✓ server/services/ectd/__tests__/checksum-buffers.test.ts > the existing checksum verifier over captured package bytes > checks the exact buffers, including stylesheets, and reports all three fault classes 4ms
+ ✓ server/services/ectd/__tests__/checksum-buffers.test.ts > the existing checksum verifier over captured package bytes > treats a missing manifest as unlisted files, and keeps the empty pre-vendoring result distinct 1ms
+ ✓ server/services/ectd/__tests__/checksum-buffers.test.ts > the existing checksum verifier over captured package bytes > honors the existing extension filter 1ms
+ ✓ server/services/ectd/__tests__/checksum-buffers.test.ts > the existing checksum verifier over captured package bytes > does not reread changed drop-point bytes; its filesystem wrapper uses the same result shape 15ms
+ ✓ server/services/ectd/__tests__/xml-validator-capability.test.ts > xmllint execution facts after its capability probe > does not report execution when the previously available binary disappears 5ms
+ ✓ server/services/ectd/__tests__/xml-validator-capability.test.ts > xmllint execution facts after its capability probe > preserves a failed execution even when stderr is empty, with catalogs disabled per command 4ms
+
+ Test Files  8 passed (8)
+      Tests  79 passed (79)
+   Start at  00:34:53
+   Duration  26.94s (transform 1.42s, setup 411ms, import 2.83s, tests 20.68s, environment 1ms)
+

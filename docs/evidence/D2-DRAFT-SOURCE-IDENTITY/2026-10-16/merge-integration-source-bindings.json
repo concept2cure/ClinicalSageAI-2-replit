@@ -1,0 +1,13 @@
+{
+  "head": "6fd49631add210ddde6c8b9c002c5bcd32cf7407",
+  "upstream": "bfec9be6bedcdddf6fe01ff59caada558b702341",
+  "files": {
+    "server/services/ana/document-surface-tool-defs.ts": "1378083e6971b1a35fd20ddc6cf3b8477967d2a1b1dd777a906aede51f7932ee",
+    "server/services/authoring/authoring-from-draft.ts": "645f1ca5775d49721baf592c4b95f08c3fb382f3cc1a00224e20547bd839d1c0",
+    "server/services/authoring/authoring-draft-tool.ts": "ac35116bd53cfa1f2bf0022638b0035db404106960b5f54b25a07a6847be0488",
+    "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts": "6222137d7d8f73b653d7b7a8309e0d52c53acaccfe4dd587da4e6dfbc8661046",
+    "server/services/ana/__tests__/save-document-to-vault-tool.pglite.integration.test.ts": "46b498c5323015927fbda32dc7b8dc4f0352a4996d304a0286af925a7dad1d9d",
+    "server/services/ana/__tests__/support/draft-source-tool-v2-controls.ts": "249009aaadaa15255284dffe21ea8613743d69b0afead129fb606e29b5443a2d",
+    "server/services/ana/__tests__/support/authoring-tool-db.ts": "984bad86bef40cdba8f69f54b16d2128141b2c3b13cc1d49f38d4d2a9d4a0e99"
+  }
+}

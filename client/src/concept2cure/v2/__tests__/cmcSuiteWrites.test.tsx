@@ -198,10 +198,59 @@ describe('CmMethodLibrary — the write half of the register', () => {
     expect(screen.getByText('No analytical methods yet')).toBeTruthy();
   });
 
-  it('an edit PUTs against the row and keeps the validation record it was seeded with', async () => {
+  /**
+   * A VALIDATED method is closed to ordinary edits, and retired with a reason.
+   *
+   * This test asserted the opposite until 2026-10-18: it clicked Edit on the
+   * `persisted` fixture — a method with status 'validated' — chose 'retired'
+   * from the status dropdown and expected the PUT to land. That is precisely
+   * the ungoverned transition the register now refuses: 'validated' is the
+   * ICH Q2 conclusion, signed at POST .../:id/validate, and a signed record's
+   * content cannot be rewritten under its signature. The surface says so
+   * before the person tries.
+   */
+  it('closes Edit on a validated method and retires it with a reason instead', async () => {
     apiRequest.mockImplementation(async (m: string, u: string) => {
       if (m === 'GET' && u === METHODS_READ) return res({ success: true, data: [persisted] });
       if (m === 'PUT') return res({ success: true, data: { ...persisted, status: 'retired' } });
+      return res({});
+    });
+    render(<CmMethodLibrary />);
+    await screen.findByText('AM-014');
+
+    // Edit is present and disabled, and says why.
+    const edit = screen.getByRole('button', { name: /Edit/i }) as HTMLButtonElement;
+    expect(edit.disabled).toBe(true);
+    expect(edit.title).toMatch(/validated under a recorded signature/i);
+
+    // Validate is withheld too: the record already holds the signature.
+    expect(screen.queryByRole('button', { name: /^Validate/i })).toBeNull();
+
+    // Retire is the one change admitted, and it asks for the reason.
+    fireEvent.click(screen.getByRole('button', { name: /Retire/i }));
+    type('Reason', 'Method superseded by AM-022; the icIEF column is no longer supplied.');
+    submit(/Retire/);
+
+    await waitFor(() => expect(callsTo('PUT', '/api/cmc/analytical-methods/31')).toHaveLength(1));
+    const body = callsTo('PUT', '/api/cmc/analytical-methods/31')[0][2] as {
+      status: string; reason: string; ichQ2Parameters?: unknown;
+    };
+    expect(body.status).toBe('retired');
+    expect(body.reason).toMatch(/superseded by AM-022/);
+    // A retirement carries the reason and nothing else: it is not a content edit.
+    expect(body.ichQ2Parameters).toBeUndefined();
+  });
+
+  /**
+   * An UNVALIDATED method still edits normally, and the ICH Q2 record it holds
+   * is carried back rather than blanked — which is what the old test above was
+   * really protecting, on a record it is still true for.
+   */
+  it('an edit PUTs against the row and keeps the validation record it was seeded with', async () => {
+    const inDevelopment = { ...persisted, status: 'validation', validationDate: undefined };
+    apiRequest.mockImplementation(async (m: string, u: string) => {
+      if (m === 'GET' && u === METHODS_READ) return res({ success: true, data: [inDevelopment] });
+      if (m === 'PUT') return res({ success: true, data: { ...inDevelopment, status: 'retired' } });
       return res({});
     });
     render(<CmMethodLibrary />);
@@ -214,10 +263,13 @@ describe('CmMethodLibrary — the write half of the register', () => {
     const body = callsTo('PUT', '/api/cmc/analytical-methods/31')[0][2] as {
       ichQ2Parameters: { characteristics: string[] };
       status: string;
+      validationDate?: unknown;
     };
     expect(body.status).toBe('retired');
     // The ICH Q2 record on file is carried back, not blanked by the edit.
     expect(body.ichQ2Parameters.characteristics).toEqual(['Specificity']);
+    // ...but the validation DATE is never sent: the signature writes it.
+    expect(body.validationDate).toBeUndefined();
   });
 });
 

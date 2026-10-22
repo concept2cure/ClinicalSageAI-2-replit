@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-21T00:05:35.605023+00:00",
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:migration-set-order"
+  ],
+  "elapsedSeconds": 0.16,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-qualified.json",
+  "rawOutput": "qualified-gate-ci-migration-set-order-output.txt.gz",
+  "outputSha256": "cd2ab42dd1e145b1a9bd5dd4195e81758c339542014ec49dfc980e0a262c220e",
+  "stdout": "[ci:migration-set-order] OK \u2014 417 migrations, sweep last, tail uuid step \u2192 child scope \u2192 sweep, all present, no duplicates.\n"
+}

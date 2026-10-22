@@ -1,0 +1,240 @@
+
+> concept2cure-riai@1.0.0 test:db
+> vitest run --config vitest.db.config.ts tests/db/project-schedule-atomic.dbtest.ts
+
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-17T23:58:09.597Z","pid":6300,"hostname":"3b32dff3a1d2","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-17T23:58:09.598Z","pid":6300,"hostname":"3b32dff3a1d2","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-17T23:58:09.598Z","pid":6300,"hostname":"3b32dff3a1d2","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > stage failure restores the exact existing plan, milestones, goals and revision history 176ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > goal_retire failure restores the exact existing plan, milestones, goals and revision history 134ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > goal_insert failure restores the exact existing plan, milestones, goals and revision history 170ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > revision failure restores the exact existing plan, milestones, goals and revision history 163ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > response failure restores the exact existing plan, milestones, goals and revision history 147ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > a first-generation failure leaves no header, milestone, goal or revision 89ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > returns the committed full view, retains plan identity and increments the version once 129ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > preserves existing goal rows when goals are 'omitted' 90ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > preserves existing goal rows when goals are 'empty' 79ms
+ × tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > preserves 'row.status only' without a task FK or fabricated completion fields 94ms
+   → expected undefined to match object { status: 'completed', …(2) }
+ × tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > preserves 'metadata.scheduleStatus only' without a task FK or fabricated completion fields 90ms
+   → expected undefined to match object { status: 'completed', …(2) }
+ × tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > leaves a completed row physically unchanged, keeps its task FK, and changes only allowed planning fields elsewhere 69ms
+   → update or delete on table "project_workflow_stages" violates foreign key constraint "project_tasks_workflow_stage_id_fkey" on table "project_tasks"
+ × tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > accepts a canonical pathway alias without replacing the existing completed milestone 70ms
+   → update or delete on table "project_workflow_stages" violates foreign key constraint "project_tasks_workflow_stage_id_fkey" on table "project_tasks"
+ × tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > records the exact prior rows, proposal, version transition and supplied reason; genuinely new keys start uncompleted 58ms
+   → expected { …(3) } to match object { before: { plan: null, …(1) }, …(4) }
+(3 matching properties omitted from actual)
+ × tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > refuses 'pathway' changes without altering plan, actuals, goals or revisions 64ms
+   → expected error: update or delete on table "project… { …(15) } to match object { Object (name) }
+(17 matching properties omitted from actual)
+ × tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > refuses 'framework' changes without altering plan, actuals, goals or revisions 69ms
+   → expected error: update or delete on table "project… { …(15) } to match object { Object (name) }
+(17 matching properties omitted from actual)
+ × tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > refuses 'title' changes without altering plan, actuals, goals or revisions 96ms
+   → expected error: update or delete on table "project… { …(15) } to match object { Object (name) }
+(17 matching properties omitted from actual)
+ × tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > refuses 'description' changes without altering plan, actuals, goals or revisions 66ms
+   → expected error: update or delete on table "project… { …(15) } to match object { Object (name) }
+(17 matching properties omitted from actual)
+ × tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > refuses 'category' changes without altering plan, actuals, goals or revisions 67ms
+   → expected error: update or delete on table "project… { …(15) } to match object { Object (name) }
+(17 matching properties omitted from actual)
+ × tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > refuses 'regulatory basis' changes without altering plan, actuals, goals or revisions 80ms
+   → expected error: update or delete on table "project… { …(15) } to match object { Object (name) }
+(17 matching properties omitted from actual)
+ × tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > refuses 'dependencies' changes without altering plan, actuals, goals or revisions 63ms
+   → expected error: update or delete on table "project… { …(15) } to match object { Object (name) }
+(17 matching properties omitted from actual)
+ × tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > refuses 'removed key' changes without altering plan, actuals, goals or revisions 66ms
+   → expected error: update or delete on table "project… { …(15) } to match object { Object (name) }
+(17 matching properties omitted from actual)
+ × tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > refuses 'missing key' changes without altering plan, actuals, goals or revisions 82ms
+   → expected error: update or delete on table "project… { …(15) } to match object { Object (name) }
+(17 matching properties omitted from actual)
+ × tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > refuses 'duplicate key' changes without altering plan, actuals, goals or revisions 63ms
+   → expected error: update or delete on table "project… { …(15) } to match object { Object (name) }
+(17 matching properties omitted from actual)
+ × tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > refuses 'orphan rows' changes without altering plan, actuals, goals or revisions 79ms
+   → expected error: update or delete on table "project… { …(15) } to match object { Object (name) }
+(17 matching properties omitted from actual)
+ × tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > a late revision fault rolls back preserved actuals, FK references and newly planned dates 74ms
+   → expected [Function] to throw error matching /pm01 injected/ but got 'update or delete on table "project_wo…'
+ × tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > a late response fault rolls back preserved actuals, FK references and newly planned dates 66ms
+   → expected [Function] to throw error matching /pm01 injected/ but got 'update or delete on table "project_wo…'
+ × tests/db/project-schedule-atomic.dbtest.ts > same-project generation serializes across actual PostgreSQL clients > produces complete per-call views and one final milestone set (existing plan: true) 10098ms
+   → two distinct runtime backends must be observed waiting on native locks: expected false to be true // Object.is equality
+ × tests/db/project-schedule-atomic.dbtest.ts > same-project generation serializes across actual PostgreSQL clients > produces complete per-call views and one final milestone set (existing plan: false) 10112ms
+   → two distinct runtime backends must be observed waiting on native locks: expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 20 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > preserves 'row.status only' without a task FK or fabricated completion fields
+ FAIL  tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > preserves 'metadata.scheduleStatus only' without a task FK or fabricated completion fields
+AssertionError: expected undefined to match object { status: 'completed', …(2) }
+
+- Expected:
+{
+  "completedAt": null,
+  "progress": 0,
+  "status": "completed",
+}
+
++ Received:
+undefined
+
+ ❯ tests/db/project-schedule-atomic.dbtest.ts:265:54
+    263|     expect(generateSchedule(input).milestones[0].targetDate.toISOStrin…
+    264|     const result = await generate(input);
+    265|     expect(result.milestones.find(m => m.id === id)).toMatchObject({ s…
+       |                                                      ^
+    266|     expect(await physicalStage(id)).toEqual(before);
+    267|     const stored = (await physicalStage(id)).row.metadata;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/20]⎯
+
+ FAIL  tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > leaves a completed row physically unchanged, keeps its task FK, and changes only allowed planning fields elsewhere
+error: update or delete on table "project_workflow_stages" violates foreign key constraint "project_tasks_workflow_stage_id_fkey" on table "project_tasks"
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ Module.generateProjectSchedule server/services/projects/schedule-of-events/service.ts:451:5
+    449|
+    450|     // 2. Replace existing schedule milestones (stored as workflow sta…
+    451|     await client.query(
+       |     ^
+    452|       `DELETE FROM project_workflow_stages
+    453|         WHERE organization_id = $1 AND project_id = $2 AND metadata->>…
+ ❯ tests/db/project-schedule-atomic.dbtest.ts:281:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 344, severity: 'ERROR', code: '23503', detail: 'Key is still referenced from table "project_tasks".', hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: 'dbpm01_6300_mvd24eqn', table: 'project_tasks', dataType: undefined, constraint: 'project_tasks_workflow_stage_id_fkey', file: 'ri_triggers.c', routine: 'ri_ReportViolation' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/20]⎯
+
+ FAIL  tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > accepts a canonical pathway alias without replacing the existing completed milestone
+error: update or delete on table "project_workflow_stages" violates foreign key constraint "project_tasks_workflow_stage_id_fkey" on table "project_tasks"
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ Module.generateProjectSchedule server/services/projects/schedule-of-events/service.ts:451:5
+    449|
+    450|     // 2. Replace existing schedule milestones (stored as workflow sta…
+    451|     await client.query(
+       |     ^
+    452|       `DELETE FROM project_workflow_stages
+    453|         WHERE organization_id = $1 AND project_id = $2 AND metadata->>…
+ ❯ tests/db/project-schedule-atomic.dbtest.ts:301:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 344, severity: 'ERROR', code: '23503', detail: 'Key is still referenced from table "project_tasks".', hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: 'dbpm01_6300_mvd24eqn', table: 'project_tasks', dataType: undefined, constraint: 'project_tasks_workflow_stage_id_fkey', file: 'ri_triggers.c', routine: 'ri_ReportViolation' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/20]⎯
+
+ FAIL  tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > records the exact prior rows, proposal, version transition and supplied reason; genuinely new keys start uncompleted
+AssertionError: expected { …(3) } to match object { before: { plan: null, …(1) }, …(4) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "before": {
+-     "milestones": [],
+-     "plan": null,
+-   },
+-   "fromVersion": null,
+-   "preservedMilestoneIds": [],
+-   "reason": null,
+-   "toVersion": 1,
++   "basisSummary": "Schedule grounded in the IND — Investigational New Drug regulatory pathway (FDA). 9 milestones anchored from 2031-01-01 over a nominal 365-day program. Aligned to 1 program goal. Pacing is within the normal range for this pathway.",
++   "confidence": "high",
++   "milestoneCount": 9,
+  }
+
+ ❯ tests/db/project-schedule-atomic.dbtest.ts:309:25
+    307|     const initial = await generate();
+    308|     const firstDetail = initial.revisions[0].detail as any;
+    309|     expect(firstDetail).toMatchObject({ before: { plan: null, mileston…
+       |                         ^
+    310|     await completedWithTask();
+    311|     // Model an earlier template which lacked this requirement. The cu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/20]⎯
+
+ FAIL  tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > refuses 'pathway' changes without altering plan, actuals, goals or revisions
+ FAIL  tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > refuses 'framework' changes without altering plan, actuals, goals or revisions
+ FAIL  tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > refuses 'title' changes without altering plan, actuals, goals or revisions
+ FAIL  tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > refuses 'description' changes without altering plan, actuals, goals or revisions
+ FAIL  tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > refuses 'category' changes without altering plan, actuals, goals or revisions
+ FAIL  tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > refuses 'regulatory basis' changes without altering plan, actuals, goals or revisions
+ FAIL  tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > refuses 'dependencies' changes without altering plan, actuals, goals or revisions
+ FAIL  tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > refuses 'removed key' changes without altering plan, actuals, goals or revisions
+ FAIL  tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > refuses 'missing key' changes without altering plan, actuals, goals or revisions
+ FAIL  tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > refuses 'duplicate key' changes without altering plan, actuals, goals or revisions
+ FAIL  tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > refuses 'orphan rows' changes without altering plan, actuals, goals or revisions
+AssertionError: expected error: update or delete on table "project… { …(15) } to match object { Object (name) }
+(17 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "name": "SchedulePreservationConflict",
++ DatabaseError {
++   "name": "error",
+  }
+
+ ❯ tests/db/project-schedule-atomic.dbtest.ts:353:112
+    351|     }
+    352|     const before = await snapshot();
+    353|     await expect(generate(params({ projectType: projectType ?? 'IND', …
+       |                                                                                                                ^
+    354|       .rejects.toMatchObject({ name: 'SchedulePreservationConflict' });
+    355|     expect(await snapshot()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/20]⎯
+
+ FAIL  tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > a late revision fault rolls back preserved actuals, FK references and newly planned dates
+ FAIL  tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves execution records and records the previous baseline > a late response fault rolls back preserved actuals, FK references and newly planned dates
+AssertionError: expected [Function] to throw error matching /pm01 injected/ but got 'update or delete on table "project_wo…'
+
+- Expected:
+/pm01 injected/
+
++ Received:
+"update or delete on table \"project_workflow_stages\" violates foreign key constraint \"project_tasks_workflow_stage_id_fkey\" on table \"project_tasks\""
+
+ ❯ tests/db/project-schedule-atomic.dbtest.ts:365:77
+    363|     const physical = await physicalStage(id);
+    364|     await setFault(phase);
+    365|     await expect(generate(params({ baselineDate: new Date('2032-01-01Z…
+       |                                                                             ^
+    366|     expect(await snapshot()).toEqual(before);
+    367|     expect(await physicalStage(id)).toEqual(physical);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/20]⎯
+
+ FAIL  tests/db/project-schedule-atomic.dbtest.ts > same-project generation serializes across actual PostgreSQL clients > produces complete per-call views and one final milestone set (existing plan: true)
+ FAIL  tests/db/project-schedule-atomic.dbtest.ts > same-project generation serializes across actual PostgreSQL clients > produces complete per-call views and one final milestone set (existing plan: false)
+AssertionError: two distinct runtime backends must be observed waiting on native locks: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/db/project-schedule-atomic.dbtest.ts:402:100
+    400|       await holder.query('COMMIT');
+    401|       released = true;
+    402|       expect(overlapped, 'two distinct runtime backends must be observ…
+       |                                                                                                    ^
+    403|       const settled = await Promise.all(pending);
+    404|       expect(settled.map(s => s.error)).toEqual([undefined, undefined]…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/20]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  20 failed | 9 passed (29)
+   Start at  23:58:07
+   Duration  25.34s (transform 1.13s, setup 88ms, import 205ms, tests 24.73s, environment 0ms)
+

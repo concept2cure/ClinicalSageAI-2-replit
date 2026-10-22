@@ -16,6 +16,10 @@ import { render, cleanup } from '@testing-library/react';
 const ATTACHMENTS = [
   { id: 'a1', name: 'scan.pdf', status: 'ready', fileId: 'f1', extractionMethod: null, extractionWords: 0 },
   { id: 'a2', name: 'protocol.docx', status: 'ready', fileId: 'f2', extractionMethod: 'docx', extractionWords: 1240 },
+  { id: 'a3', name: 'stability-report.pdf', status: 'ready', fileId: 'f3', extractionMethod: 'pdf-ocr', extractionWords: 3120,
+    extractionCoverage: { pageCount: 40, pagesRead: 12, limitedBy: 'page_budget' } },
+  { id: 'a4', name: 'site-letter.pdf', status: 'ready', fileId: 'f4', extractionMethod: 'none', extractionWords: 0,
+    extractionCoverage: { pageCount: 9, pagesRead: null, limitedBy: 'ocr_failed' } },
 ];
 
 vi.mock('../../hooks/useChatUpload', async (importOriginal) => ({
@@ -63,5 +67,16 @@ describe.each([
   it('still says how much text was extracted, without claiming AnA read it', () => {
     const { container } = render(<Component {...props} />);
     expect(container.textContent ?? '').toMatch(/protocol\.docx\s*·\s*text extracted · 1,240 words/);
+  });
+
+  /* D2 Amendment A (B5): a budget-limited OCR read was shown as a whole read. */
+  it('says how many pages OCR read when a budget stopped it', () => {
+    const { container } = render(<Component {...props} />);
+    expect(container.textContent ?? '').toMatch(/stability-report\.pdf\s*·\s*text extracted via OCR from 12 of 40 pages · 3,120 words/);
+  });
+
+  it('says the scanned pages were not read when OCR failed', () => {
+    const { container } = render(<Component {...props} />);
+    expect(container.textContent ?? '').toMatch(/site-letter\.pdf\s*·\s*no text extracted; scanned pages not read/);
   });
 });

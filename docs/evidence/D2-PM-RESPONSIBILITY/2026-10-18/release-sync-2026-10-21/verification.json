@@ -1,0 +1,118 @@
+{
+  "sourceBindings": "source-bindings.json",
+  "checks": {
+    "ui": {
+      "command": "npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/projectHome*.test.tsx client/src/concept2cure/v2/__tests__/ProjectTeamResponsibilities.test.tsx shared/__tests__/project-team.test.ts client/src/concept2cure/v2/__tests__/documentClassSubmitTab.test.tsx client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx",
+      "files": 25,
+      "tests": 220,
+      "exitCode": 0,
+      "log": "ui-integration.txt"
+    },
+    "backend": {
+      "command": [
+        "npx",
+        "vitest",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "server/services/c2c/__tests__/project-team.test.ts",
+        "server/services/c2c/__tests__/programme-profile-write.test.ts",
+        "server/services/c2c/__tests__/program-access.test.ts",
+        "server/routes/c2c/__tests__/projects-authorization.test.ts",
+        "server/routes/c2c/__tests__/project-route-access-requestdb.test.ts",
+        "server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts",
+        "tests/services/project-sharing-access.test.ts",
+        "server/services/report-os/__tests__/project-access-integration.test.ts",
+        "server/routes/c2c/__tests__/projects-create.test.ts",
+        "server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts"
+      ],
+      "files": 10,
+      "tests": 212,
+      "exitCode": 0,
+      "log": "backend-integration.txt"
+    },
+    "native": {
+      "command": "vitest run --config vitest.db.config.ts tests/db/project-team-responsibility.dbtest.ts",
+      "files": 1,
+      "tests": 20,
+      "exitCode": 0,
+      "log": "native.txt",
+      "fixture": "PostgreSQL16 restricted runtime role; FORCE RLS on tenant fixtures; authentication/full deployed schema excluded; synthetic missing-store failure at roster seam"
+    },
+    "build": {
+      "command": "npm run build",
+      "exitCode": 0,
+      "log": "build.txt"
+    },
+    "lintErrors": {
+      "command": "npm run ci:pushed-lint-errors",
+      "exitCode": 0,
+      "log": "lint-errors.txt"
+    },
+    "lintWarnings": {
+      "command": "npm run ci:pushed-lint-warnings",
+      "exitCode": 0,
+      "netNewWarnings": 0,
+      "log": "lint-warnings.txt"
+    },
+    "presence": {
+      "command": "GITHUB_BASE_REF=concept2cure-v2 VERIFY_TESTS_STRICT=true bash scripts/ai/verify-tests.sh",
+      "exitCode": 0,
+      "log": "verify-tests.txt",
+      "note": "Two pre-existing filename-case presence warnings; actual focused tests executed."
+    },
+    "browser": {
+      "command": "node docs/evidence/D2-PM-RESPONSIBILITY/2026-10-18/browser-check.mjs docs/evidence/D2-PM-RESPONSIBILITY/2026-10-18/release-sync-2026-10-21/browser",
+      "exitCode": 0,
+      "result": "browser/browser-result.json",
+      "scope": "isolated actual component with synthetic data, desktop1280/mobile390"
+    }
+  },
+  "typecheck": {
+    "command": "node scripts/ci/typecheck-no-regression.mjs --incremental",
+    "exitCode": 0,
+    "errors": 0,
+    "log": "typecheck.txt"
+  },
+  "publication": "Retrying normal canonical push after preserving the concurrent passage delivery update",
+  "productionDeployment": "not performed",
+  "finalIntegration": {
+    "upstream": "463181413e93810938b5cd6d0bed63f7bee1d713",
+    "mergeCommit": "65a53106042d07392d971bca022a4deda8ad590f",
+    "qualifiedSourceHashesUnchanged": true,
+    "review": "Incoming changes retain roster/access/profile/UI; identical Notified Body mapping moved to existing document-class helper and reused by assembly.",
+    "dependencyRegression": {
+      "files": 3,
+      "tests": 79,
+      "exitCode": 0,
+      "log": "final-incoming-tests.txt"
+    },
+    "build": {
+      "command": "npm run build",
+      "exitCode": 0,
+      "log": "final-build.txt"
+    }
+  },
+  "firstPushAttempt": {
+    "allNormalGatesPassed": true,
+    "wholeTreeTypeScriptErrors": 0,
+    "transfer": "rejected because remote advanced from463181413 to891104f7c during checks",
+    "log": "first-push-race.txt"
+  },
+  "retryIntegration": {
+    "upstream": "891104f7ccc4ad8fb776e369e11d86554a954bab",
+    "mergeCommit": "e8dbb3a16",
+    "qualifiedPMSourceHashesUnchanged": true,
+    "review": "Only passage round delivery, staging and framing changed; PM team/access/profile/context source unchanged.",
+    "regressions": {
+      "files": 6,
+      "tests": 120,
+      "exitCode": 0,
+      "log": "retry-incoming-tests.txt"
+    },
+    "build": {
+      "exitCode": 0,
+      "log": "retry-build.txt"
+    }
+  }
+}

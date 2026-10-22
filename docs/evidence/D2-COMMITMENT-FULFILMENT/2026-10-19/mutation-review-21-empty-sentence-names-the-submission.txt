@@ -1,0 +1,32 @@
+# Review mutation 21 — the empty list names the submission the commitment was made under (finding 16)
+#
+# File mutated: client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx
+# Test selection (unit): client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx (-t "names the submission an organisation commitment")
+# Restored afterwards: sha256 before c051f5e76aeeda67d75588cc79fdcc5920810eaf5b7b47bbe1ccdc6c5f98fc9d, after c051f5e76aeeda67d75588cc79fdcc5920810eaf5b7b47bbe1ccdc6c5f98fc9d (identical)
+
+## What was replaced (diff of the file while the mutation was in place)
+--- a/client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx
++++ b/client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx (mutated)
+@@ -122,7 +122,7 @@
+ 
+ /** Why the list is empty, in the terms the server built it in. */
+ function noSequenceWords(door: 'org' | 'project', submission: CommitmentSubmission | null | undefined): string {
+-  if (door === 'project') return 'No sequence the agency received is on file for this project.';
++  if (door === 'project' || door === 'org') return `No sequence the agency received is on file for ${door === 'project' ? 'this project' : 'the submissions you can open'}.`;
+   if (submission && !submission.readable) {
+     return 'This commitment was made under a submission in a project you cannot open, so none of its sequences is offered.';
+   }
+
+## Control: the same selection on the unmutated tree
+ ✓ client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: what the signature names, where the Vault is searched, and what the options say > names the submission an organisation commitment was made under when none of its sequences is on file, or says it cannot be opened 359ms
+ Test Files  1 passed (1)
+      Tests  1 passed | 22 skipped (23)
+
+## With the mutation in place
+ × client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: what the signature names, where the Vault is searched, and what the options say > names the submission an organisation commitment was made under when none of its sequences is on file, or says it cannot be opened 5331ms
+   → Unable to find an element with the text: /No sequence the agency received is on file for IND 123456, the submission this commitment was made under\./. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx > review: what the signature names, where the Vault is searched, and what the options say > names the submission an organisation commitment was made under when none of its sequences is on file, or says it cannot be opened
+TestingLibraryElementError: Unable to find an element with the text: /No sequence the agency received is on file for IND 123456, the submission this commitment was made under\./. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ Test Files  1 failed (1)
+      Tests  1 failed | 22 skipped (23)

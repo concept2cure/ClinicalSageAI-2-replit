@@ -1,0 +1,52 @@
+[
+  {
+    "gate": "ci:single-native-canvas",
+    "exitCode": 0,
+    "receipt": "canonical-gate-ci-single-native-canvas.json"
+  },
+  {
+    "gate": "ci:canvas-path",
+    "exitCode": 0,
+    "receipt": "canonical-gate-ci-canvas-path.json"
+  },
+  {
+    "gate": "ci:check-editor-integrity",
+    "exitCode": 0,
+    "receipt": "canonical-gate-ci-check-editor-integrity.json"
+  },
+  {
+    "gate": "ci:design-system",
+    "exitCode": 0,
+    "receipt": "canonical-gate-ci-design-system.json"
+  },
+  {
+    "gate": "ci:token-cascade",
+    "exitCode": 0,
+    "receipt": "canonical-gate-ci-token-cascade.json"
+  },
+  {
+    "gate": "ci:token-contrast",
+    "exitCode": 0,
+    "receipt": "canonical-gate-ci-token-contrast.json"
+  },
+  {
+    "gate": "ci:check-phantom-tokens",
+    "exitCode": 0,
+    "receipt": "canonical-gate-ci-check-phantom-tokens.json"
+  },
+  {
+    "gate": "ci:gateway-bypass",
+    "exitCode": 0,
+    "receipt": "canonical-gate-ci-gateway-bypass.json"
+  },
+  {
+    "gate": "ci:sql-interpolation",
+    "exitCode": 0,
+    "receipt": "canonical-gate-ci-sql-interpolation.json"
+  },
+  {
+    "gate": "audit:repo-health:ceiling",
+    "exitCode": 0,
+    "receipt": "canonical-gate-audit-repo-health-ceiling.json"
+  }
+]

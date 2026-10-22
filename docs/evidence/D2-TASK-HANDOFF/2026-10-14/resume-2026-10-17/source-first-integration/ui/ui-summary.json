@@ -1,0 +1,271 @@
+{
+  "status": "completed-green-frozen",
+  "recordedAtUtc": "2026-10-18T00:24:46.695085+00:00",
+  "branch": "concept2cure-v2",
+  "incomingCommit": "e62320e0a9555188a08ce426d7c16c72d372d824",
+  "source": {
+    "headBefore": "8157fbfe0bae8673ef91feea1ce54a34a018cf31",
+    "beforeBoundary": "8157 merge commit plus the frozen staged final Workbench warning cleanup and corrected fixture assertions.",
+    "finalCommit": "6562dd67aeb13edd17a1d9c62f214163a4e8e6a3",
+    "sourcePins": 34,
+    "beforeAfterHashesMatch": true,
+    "allPinsMatchFinalCommit": true,
+    "currentSourceStillMatchesPins": true
+  },
+  "runtime": {
+    "node": "22.23.3",
+    "config": "vitest.config.ts"
+  },
+  "result": {
+    "passed": 97,
+    "failed": 0,
+    "files": 5,
+    "exitCode": 0,
+    "durationSeconds": 25.38,
+    "byFile": {
+      "authoringAiDraftAssembly.test.tsx": 18,
+      "authoringAssemblyBuild.test.tsx": 29,
+      "authoringAssemblySources.test.tsx": 12,
+      "sourceAssemblyEntry.test.tsx": 29,
+      "sourceFirstAssemblyFlow.test.tsx": 9
+    }
+  },
+  "phases": [
+    {
+      "phase": "initial-fixture-integration-red",
+      "passed": 95,
+      "failed": 2,
+      "files": 5,
+      "report": "task-handoff-source-first-ui-first-red.json.gz",
+      "boundary": "The pending-commit refusal assertion was accidentally placed in the earlier completed-build source-change case. The actual pending case still expected source13. These are retained test-edit errors, not a production-regression claim."
+    },
+    {
+      "phase": "corrected-fixtures-before-final-root-cleanup",
+      "passed": 97,
+      "failed": 0,
+      "files": 5,
+      "report": "task-handoff-source-first-ui-pre-cleanup.json.gz",
+      "boundary": "Completed before the pause message was received. Retained separately; not used to qualify the subsequent final Workbench warning cleanup."
+    },
+    {
+      "phase": "final-source-replay",
+      "passed": 97,
+      "failed": 0,
+      "files": 5,
+      "report": "task-handoff-source-first-ui-final.json.gz",
+      "boundary": "Rerun after the final frozen Workbench cleanup; all34 source/test/config pins match the final6562 commit."
+    }
+  ],
+  "fixtureReconciliation": {
+    "beforePins": "task-handoff-source-first-fixtures-before-pins.json.gz",
+    "beforePinsMatchIncomingCommit": true,
+    "diff": "task-handoff-source-first-fixtures-reconciliation.patch.gz",
+    "boundary": "Real AuthService adoption uses matching synthetic actor/org JWT claims. Detail fixtures include the actual client_program_id field. The standalone hook models its explicit host acknowledgement. A source13 handoff during pending structural commit refuses and retains source12; after strict recovery, source13 is retried explicitly. Original receipt, no-second-commit and no-generation assertions remain."
+  },
+  "lint": {
+    "files": 4,
+    "errors": 0,
+    "warnings": 0,
+    "report": "task-handoff-source-first-owned-lint.json.gz"
+  },
+  "claimBoundary": "Five affected hook/source-selection/entry/actual-flow/review suites only. Synthetic HTTP and accounts; no live provider, full717 UI replay, full native replay, publication or human-acceptance claim. Other root/backend cohort results remain separately bound.",
+  "archiveVerification": {
+    "artifactCount": 19,
+    "allRawRoundTripsVerified": true,
+    "deterministicGzip": true,
+    "mtimeZero": true,
+    "embeddedFilenamesAbsent": true
+  },
+  "archives": [
+    {
+      "archive": "task-handoff-source-first-ui-final.log.gz",
+      "originalPath": "/workspace/scratch/task-handoff-source-first-ui-final.log",
+      "originalBytes": 20640,
+      "originalSha256": "bb82072d78d941b0fc5e60e03bb88c6800b039b80f0968c4f580f347144ad460",
+      "gzipBytes": 3429,
+      "gzipSha256": "6340a24463544a1b25104c1e629fb780fd47cb51018f1608fc501fe9909029f7",
+      "mtime": 0,
+      "embeddedFilename": false
+    },
+    {
+      "archive": "task-handoff-source-first-ui-final.json.gz",
+      "originalPath": "/workspace/scratch/task-handoff-source-first-ui-final.json",
+      "originalBytes": 38195,
+      "originalSha256": "64ca41178e1bdd740b1ccbf0ad0d8fd243fd1ef08ca4725d86bd554aaa485fd1",
+      "gzipBytes": 5194,
+      "gzipSha256": "964e5d4a7cf4b91a0c88689e0a1273fa9ef8b2dd9fe9bf012b139f628ea606ef",
+      "mtime": 0,
+      "embeddedFilename": false
+    },
+    {
+      "archive": "task-handoff-source-first-ui-final-summary.json.gz",
+      "originalPath": "/workspace/scratch/task-handoff-source-first-ui-final-summary.json",
+      "originalBytes": 897,
+      "originalSha256": "246045618c3c93d52b76d95e7fed7b521bd28254a257a6eb3c511dfae0c6cedd",
+      "gzipBytes": 494,
+      "gzipSha256": "5913af899b86fb8269839a43ff703f03425ebd524c9489df55728a00e540208e",
+      "mtime": 0,
+      "embeddedFilename": false
+    },
+    {
+      "archive": "task-handoff-source-first-ui-final-before-pins.json.gz",
+      "originalPath": "/workspace/scratch/task-handoff-source-first-ui-final-before-pins.json",
+      "originalBytes": 8409,
+      "originalSha256": "fbd7393647bdb0473141cd1cd637c9fff3e47a8dc5d4d431cd9973ccfdacf4d9",
+      "gzipBytes": 2931,
+      "gzipSha256": "b71f6640c6ee10b8e0f33c667e09c819e1b96a386099c2d692fac38ad602df11",
+      "mtime": 0,
+      "embeddedFilename": false
+    },
+    {
+      "archive": "task-handoff-source-first-ui-final-after-pins.json.gz",
+      "originalPath": "/workspace/scratch/task-handoff-source-first-ui-final-after-pins.json",
+      "originalBytes": 8057,
+      "originalSha256": "a609eea6d057d8fdb0a5fab60f84292edda9259d561b2bbf86ab0d24b463c7fd",
+      "gzipBytes": 2916,
+      "gzipSha256": "1d2ca57f2dda0f39148f45bb88ccfdb4664fe67a0a366a607ed020f3ae91521f",
+      "mtime": 0,
+      "embeddedFilename": false
+    },
+    {
+      "archive": "task-handoff-source-first-ui-final-files.txt.gz",
+      "originalPath": "/workspace/scratch/task-handoff-source-first-ui-final-files.txt",
+      "originalBytes": 375,
+      "originalSha256": "78aab45e16825468a104805eca36622c298346dc8c003fccd50d491be7ec2461",
+      "gzipBytes": 138,
+      "gzipSha256": "8bd3a00ce529113d37bc7ece76622ff5a66364e7990e51c836b10de9f5a6323d",
+      "mtime": 0,
+      "embeddedFilename": false
+    },
+    {
+      "archive": "task-handoff-source-first-ui-final-command.txt.gz",
+      "originalPath": "/workspace/scratch/task-handoff-source-first-ui-final-command.txt",
+      "originalBytes": 692,
+      "originalSha256": "04f6612bd20126c9be3f6f4b291679307493f1d9487b57360f0701c01cf15337",
+      "gzipBytes": 307,
+      "gzipSha256": "c14e742080de388566abfe94db88e8fe753ceb814796742654da1aeb8bbc9627",
+      "mtime": 0,
+      "embeddedFilename": false
+    },
+    {
+      "archive": "task-handoff-source-first-ui-first-red.log.gz",
+      "originalPath": "/workspace/scratch/task-handoff-source-first-ui-first-red.log",
+      "originalBytes": 67080,
+      "originalSha256": "3540baf95856aa655ad3992aad82dc623e71c7b651e42e1f1e5e43649098e9a6",
+      "gzipBytes": 6288,
+      "gzipSha256": "741399fcfaf4e62dba00cd7b91401d9e7996762d201db9981999046766bf8d4d",
+      "mtime": 0,
+      "embeddedFilename": false
+    },
+    {
+      "archive": "task-handoff-source-first-ui-first-red.json.gz",
+      "originalPath": "/workspace/scratch/task-handoff-source-first-ui-first-red.json",
+      "originalBytes": 59196,
+      "originalSha256": "b509c38acaf09a930d202e1c9bd7b968984df61ffaf4e8c3675996f8c197aadb",
+      "gzipBytes": 7184,
+      "gzipSha256": "5cbf5a634a00a8df1b2c9ab8dc0fa1d36c2c8ec0465cb866eb03588f04959669",
+      "mtime": 0,
+      "embeddedFilename": false
+    },
+    {
+      "archive": "task-handoff-source-first-ui-first-red-before-pins.json.gz",
+      "originalPath": "/workspace/scratch/task-handoff-source-first-ui-first-red-before-pins.json",
+      "originalBytes": 8447,
+      "originalSha256": "d67717fa33a645690e17bfe07da0c40d543d036593f6b14d33a45ed05b75f193",
+      "gzipBytes": 2953,
+      "gzipSha256": "26d9f3184eb2283ff14781be4a6f2eacb0595cb70d272fb9f4570f39e986ed17",
+      "mtime": 0,
+      "embeddedFilename": false
+    },
+    {
+      "archive": "task-handoff-source-first-ui-first-red-summary.json.gz",
+      "originalPath": "/workspace/scratch/task-handoff-source-first-ui-first-red-summary.json",
+      "originalBytes": 246,
+      "originalSha256": "a1d6c5ff0cbec01aae5959a87dc638db2be839601d51feb507db4b33d0d7f8c2",
+      "gzipBytes": 198,
+      "gzipSha256": "fff864d6cc6d27e2551fd5f90b669a1811a3443012124f310f59feb1cb357ca8",
+      "mtime": 0,
+      "embeddedFilename": false
+    },
+    {
+      "archive": "task-handoff-source-first-ui-pre-cleanup.log.gz",
+      "originalPath": "/workspace/scratch/task-handoff-source-first-ui-pre-cleanup.log",
+      "originalBytes": 20637,
+      "originalSha256": "2a87eeaa83ab2aa1d360e54c385900c8fe8767f084debc81dd49deda408c147a",
+      "gzipBytes": 3401,
+      "gzipSha256": "49020b4b20fbe2ba34345731349dcd708f0e481bd2b08868d4c588d30f24128b",
+      "mtime": 0,
+      "embeddedFilename": false
+    },
+    {
+      "archive": "task-handoff-source-first-ui-pre-cleanup.json.gz",
+      "originalPath": "/workspace/scratch/task-handoff-source-first-ui-pre-cleanup.json",
+      "originalBytes": 38183,
+      "originalSha256": "76bdf1a974b34c44e9ad19f663c4f8d40e5ebcd6ca507c52a5416f6a44903062",
+      "gzipBytes": 5196,
+      "gzipSha256": "cdd6a29f15e49d08f7a25604f1dbca281616202f223734521a258a4d85ac1b5e",
+      "mtime": 0,
+      "embeddedFilename": false
+    },
+    {
+      "archive": "task-handoff-source-first-ui-pre-cleanup-before-pins.json.gz",
+      "originalPath": "/workspace/scratch/task-handoff-source-first-ui-pre-cleanup-before-pins.json",
+      "originalBytes": 8409,
+      "originalSha256": "2ea100c187ef3b85909243cc493b52d33e98e127f213399bbcd2b341ff1869b8",
+      "gzipBytes": 2933,
+      "gzipSha256": "b6c335bf1251f98b5ef525271185d55fb459d516a0c5c1028a2e0c72b406230b",
+      "mtime": 0,
+      "embeddedFilename": false
+    },
+    {
+      "archive": "task-handoff-source-first-ui-pre-cleanup-summary.json.gz",
+      "originalPath": "/workspace/scratch/task-handoff-source-first-ui-pre-cleanup-summary.json",
+      "originalBytes": 270,
+      "originalSha256": "db2f93d3ddf288d5a6436f3731f87bc379a82f4f459a3cb8a7231f0420544d7a",
+      "gzipBytes": 201,
+      "gzipSha256": "413c2c1d2e369713ea51b29abdf9afb7d973bbdc8e3e5c86d3bb3f64d4e8279e",
+      "mtime": 0,
+      "embeddedFilename": false
+    },
+    {
+      "archive": "task-handoff-source-first-fixtures-before-pins.json.gz",
+      "originalPath": "/workspace/scratch/task-handoff-source-first-fixtures-before-pins.json",
+      "originalBytes": 368,
+      "originalSha256": "5a57858cf68cc66a9da0756d9b5da7943be5dfade150c5e58580f58ba19c75d7",
+      "gzipBytes": 241,
+      "gzipSha256": "a2edec4d3fcd6370d8e6d6b1bf960c3237d32f3fca07b01704b65ad3c5bc8f52",
+      "mtime": 0,
+      "embeddedFilename": false
+    },
+    {
+      "archive": "task-handoff-source-first-fixtures-reconciliation.patch.gz",
+      "originalPath": "/workspace/scratch/task-handoff-source-first-fixtures-reconciliation.patch",
+      "originalBytes": 8964,
+      "originalSha256": "1e3d9430727d00072743512e6d8eb486fd88c26d1b3d17cd224597ebd00f39fb",
+      "gzipBytes": 2748,
+      "gzipSha256": "70e1e297505b60a9daf400631f162b0c19b6c7f63a6beec8db609abd1ed65dbe",
+      "mtime": 0,
+      "embeddedFilename": false
+    },
+    {
+      "archive": "task-handoff-source-first-owned-pins.json.gz",
+      "originalPath": "/workspace/scratch/task-handoff-source-first-owned-pins.json",
+      "originalBytes": 937,
+      "originalSha256": "be80c181e5af46e1d2b420b69aae4613987eb4dd1c74d490e5b87a7a02d5f593",
+      "gzipBytes": 458,
+      "gzipSha256": "12c2e9d62acb6fb9a03b9058c17c4c215aa3636b346396ad110d2ec5b7e77cdd",
+      "mtime": 0,
+      "embeddedFilename": false
+    },
+    {
+      "archive": "task-handoff-source-first-owned-lint.json.gz",
+      "originalPath": "/workspace/scratch/task-handoff-source-first-owned-lint.json",
+      "originalBytes": 1076,
+      "originalSha256": "b45cc095082b0e593bdb3e22b87741ebc621aa88c6175ec10b63f08549855d5d",
+      "gzipBytes": 240,
+      "gzipSha256": "c3ffc1f55d8c9928dbc1266edeff14c053ba28cb85177015ab6d9b489a9a6754",
+      "mtime": 0,
+      "embeddedFilename": false
+    }
+  ]
+}
