@@ -234,7 +234,8 @@ export async function persistEvidenceChain(
       primarySourceType: chain.primarySource.sourceType,
       primarySourceId: chain.primarySource.sourceId,
       primarySourceTitle: chain.primarySource.sourceTitle,
-      primaryRelevance: chain.primarySource.relevance,
+      // 2026-10-15: the relevance basis and the coverage heuristic were dropped on persist.
+      primaryRelevance: chain.primarySource.relevance, primaryRelevanceBasis: chain.primarySource.relevanceBasis ?? null,
       supportingSources: chain.supportingSources.map(s => ({
         sourceType: s.sourceType,
         sourceId: s.sourceId,
@@ -244,6 +245,7 @@ export async function persistEvidenceChain(
       })),
       confidenceBasis: chain.confidenceBasis,
       confidenceScore: chain.confidenceScore,
+      evidenceCoverageHeuristic: chain.evidenceCoverage ?? null,
       chainStrength: chain.chainStrength,
       rimVersion: context?.rimVersion ?? null,
       judgmentFrameworkVersion: context?.judgmentFrameworkVersion ?? null,

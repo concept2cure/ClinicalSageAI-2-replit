@@ -42,17 +42,22 @@ export const CLASSIFY_MUTAGENIC_IMPURITY: AnaTool = {
     'Classify a mutagenic impurity per the ICH M7(R2) 5-class system. ' +
     'Returns the impurity class (1-5), class name and description, control ' +
     'approach, acceptable intake basis, a step-by-step decision tree, required ' +
-    'testing to reclassify (e.g., Class 3 → Class 4 via negative Ames test), ' +
+    'testing to reclassify (e.g., Class 3 → Class 5 via negative Ames test; not for an N-nitroso compound), ' +
     'and Cohort of Concern assessment (aflatoxin-like, nitrosamine, alkyl-azoxy). ' +
     'Class 1: known mutagenic carcinogen (compound-specific limit). ' +
     'Class 2: known mutagen, unknown carcinogenic potential (TTC 1.5 μg/day). ' +
     'Class 3: alerting structure, no mutagenicity data (TTC applies until Ames tested). ' +
-    'Class 4: alerting structure, Ames negative (non-mutagenic, ordinary impurity). ' +
-    'Class 5: no alerting structure (non-mutagenic, ordinary impurity). ' +
+    'Class 4: alert shared with the API or a related compound shown non-mutagenic. ' +
+    'Class 5: no alert, or an alert with a negative Ames (not for an N-nitroso compound). ' +
     DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
+      alertSharedWithApi: {
+        type: 'boolean',
+        description:
+          'True when the alert is the same as in the drug substance or a related compound shown non-mutagenic (Class 4). Leave out if not known.',
+      },
       amesMutagenicity: {
         type: 'string',
         enum: ['positive', 'negative', 'not_tested'],

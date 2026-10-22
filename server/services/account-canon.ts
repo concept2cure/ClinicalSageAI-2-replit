@@ -43,8 +43,14 @@ export interface CanonItem {
   status: string;
   sourceType: string | null;
   sourceDescription: string | null;
-  confidenceScore: number;
+  /** Null when the asserter stated none — nothing here measures one. */
+  confidenceScore: number | null;
   createdAt: string;
+  /**
+   * Set by resolveAccountContext: whether the ledger records an
+   * account_fact_validated event for this item.
+   */
+  validated?: boolean;
 }
 
 export interface AccountEventInput {
@@ -212,7 +218,8 @@ export async function assertCanonFact(input: {
       input.sourceType || 'manual',
       input.sourceDocumentId || null,
       input.sourceDescription || null,
-      input.confidenceScore ?? 0.9,
+      // 2026-10-15: an unstated confidence was stored as 0.9. Unstated is null.
+      input.confidenceScore ?? null,
       input.metadata ? JSON.stringify(input.metadata) : null,
       input.actorId || null,
     ]
@@ -238,7 +245,9 @@ export async function assertCanonFact(input: {
 }
 
 /**
- * Validate an existing canon fact. Marks it as validated and emits an event.
+ * Validate an existing canon fact. The account_fact_validated event is the
+ * record of who validated it and when. 2026-10-15: this also set
+ * confidence_score = 1.0 — a validation is an act, not a measured confidence.
  */
 export async function validateCanonFact(
   canonItemId: number,
@@ -246,11 +255,15 @@ export async function validateCanonFact(
   actorId: number,
   actorName?: string
 ): Promise<void> {
-  await pool.query(
-    `UPDATE account_canon_items SET status = $3, confidence_score = 1.0, updated_at = NOW()
+  const updated = await pool.query(
+    `UPDATE account_canon_items SET status = $3, updated_at = NOW()
      WHERE id = $1 AND organization_id = $2`,
     [canonItemId, organizationId, 'active']
   );
+  // Nothing matched: no validation happened, so none is recorded.
+  if (!updated.rowCount) {
+    throw Object.assign(new Error(`Canon item ${canonItemId} not found`), { statusCode: 404 });
+  }
 
   await appendEvent({
     organizationId,
@@ -352,7 +365,7 @@ export async function supersedeCanonFact(
         newInput.sourceType || 'manual',
         (newInput as any).sourceDocumentId || null,
         newInput.sourceDescription || null,
-        newInput.confidenceScore ?? 0.9,
+        newInput.confidenceScore ?? null, // 2026-10-15: was ?? 0.9
         JSON.stringify(metadata),
         newInput.actorId || null,
       ]
@@ -541,7 +554,12 @@ export async function resolveAccountContext(
   const maxItems = ctx.maxItems || 30;
 
   // ── Resolve Canon Items ─────────────────────────────────────────────
-  let canonQuery = `SELECT * FROM account_canon_items
+  // Validation is read from the ledger (who/when live there), not from a score.
+  let canonQuery = `SELECT *, EXISTS (
+      SELECT 1 FROM account_events e
+       WHERE e.organization_id = $1 AND e.canon_item_id = account_canon_items.id
+         AND e.event_type = 'account_fact_validated') AS validated
+    FROM account_canon_items
     WHERE organization_id = $1 AND status IN ('active', 'locked')`;
   const canonParams: unknown[] = [ctx.organizationId];
   let paramIdx = 2;
@@ -569,7 +587,8 @@ export async function resolveAccountContext(
 
   canonQuery += ` ORDER BY
     CASE WHEN status = 'locked' THEN 0 ELSE 1 END,
-    confidence_score DESC,
+    validated DESC,
+    confidence_score DESC NULLS LAST,
     created_at DESC
     LIMIT ${maxItems}`;
 
@@ -695,7 +714,7 @@ export async function resolveAccountContext(
       `Canon resolution for org ${ctx.organizationId} produced ${tokensEstimate} tokens ` +
       `(max: ${MAX_CONTEXT_TOKENS}). Truncating to fit budget.`
     );
-    // Trim canon items (lowest priority first — they're sorted locked-first, confidence DESC)
+    // Trim canon items (lowest priority first — sorted locked, validated, stated confidence)
     while (tokensEstimate > MAX_CONTEXT_TOKENS && resolved.canonItems.length > 0) {
       const removed = resolved.canonItems.pop()!;
       tokensEstimate -= estimateTokens(removed.content || '');
@@ -759,8 +778,10 @@ export function formatResolvedContextForPrompt(resolved: ResolvedAccountContext)
       parts.push(`### ${label}`);
       for (const item of items) {
         const locked = item.status === 'locked' ? ' [LOCKED]' : '';
-        const provisional = item.confidenceScore < 0.9 ? ' [PROVISIONAL — not yet validated]' : '';
-        parts.push(`- **${item.title}**${locked}${provisional}: ${item.content}`);
+        // 2026-10-15: was `item.confidenceScore < 0.9`, read off snake_case rows
+        // (always undefined), so no item was ever marked unvalidated.
+        const unvalidated = item.validated === false ? ' [NOT YET VALIDATED]' : '';
+        parts.push(`- **${item.title}**${locked}${unvalidated}: ${item.content}`);
       }
       parts.push('');
     }

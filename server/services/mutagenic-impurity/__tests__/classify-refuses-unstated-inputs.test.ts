@@ -62,9 +62,10 @@ describe('classifyMutagenicImpurity — an unstated input is refused, never read
     expect(e?.field).toBe('cohortOfConcernStructure');
   });
 
-  it('still classifies a stated Ames-negative alerting impurity as Class 4, with no "undefined" in the output', () => {
+  // 2026-10-15: was Class 4; the CMC record classes an alert with adequate negative data 5.
+  it('still classifies a stated Ames-negative alerting impurity (Class 5), with no "undefined" in the output', () => {
     const r = classifyMutagenicImpurity(STATED);
-    expect(r.impurityClass).toBe(4);
+    expect(r.impurityClass).toBe(5);
     expect(JSON.stringify(r)).not.toContain('undefined');
   });
 
