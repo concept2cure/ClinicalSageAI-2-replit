@@ -407,7 +407,7 @@ The "no channel" labels (worded "no transmit channel" on screen since 2026-10-15
 | 23 | The cross-region model answer renders as a verdict ("No Module 1 deltas reported"), with targets hard-coded (Rule 2) | `SubmissionSeqWorkspaces.tsx:1083-1195`, `:1092`, `:1175`; `submissions.ts:1055` | F21 |
 | 24 | The Planner engine substitutes a proxy region's sections | `submission-structure.ts:196-215` | F21 |
 | 25 | A second market gets no Module 1 outline; `target_agencies` is never edited | `useFilingOutline.ts:175`; `scaffold-project-documents.ts:121`, `:161`; `projects.ts:763` | F22 |
-| 26 | Three readiness figures disagree | `c2c_documents.readiness` trigger; `/workstreams` weighting (`projects.ts:1053-1055`); `ectd-compile` `/status`. `GET /:id/vault-structure` (`projects.ts:1613`) has no client caller | F23 |
+| 26 | Three readiness figures disagree | `c2c_documents.readiness` trigger; `/workstreams` weighting (`projects.ts:1053-1055`); `ectd-compile` `/status`. `GET /:id/vault-structure` (`projects.ts:1613`) has no client caller | F23 (landed 2026-10-22: one dossier read; `/workstreams` and `/vault-structure` deleted; `/status` measures placement; the trigger does not count empty headings) |
 | 27 | The decision record says compile and transmit are reached from the sequence; they are not | `docs/SURFACE_DECISIONS_2026-10-08.md:106-107` | F24 |
 
 Two corrections to the readers:
@@ -445,6 +445,7 @@ Two corrections to the readers:
 | F22 (part a): add a market | This commit | Landed 2026-10-15 | Yes | `POST /api/c2c/projects/:id/markets`: the market's Module 1 and 3.2.R (`filing_scope = 'market'`), its anchored submission, the reason; refusals by name. The outline and the binding take the home filing. Not yet: the market's Module 1 in the editor's outline and the gap rows (F22b). Evidence: `docs/evidence/D2-ONE-ANA/2026-10-15/f22-add-a-market/` |
 | F22 (part b): each market's Module 1 in the editor | `77ac97d85`, `bf366c650` (server) and this commit (editor) | Landed 2026-10-15 | Yes | The editor's outline is the filing the open document is the editing copy of: an added market's Module 1 and 3.2.R, with its gaps named and never inserted. The pane lists the project's filings, and a market's editing copy is created there, bound by the server. Commits, section creates and binds are refused outside the market's part (`shared/regulatory/filing-scope.ts`). Evidence: `docs/evidence/D2-ONE-ANA/2026-10-15/f22b-market-outline/` |
 | F18: readiness is one list, and its buttons do the job | `3eb8e0eab0`, `0d39b20cb6` and this commit | Landed 2026-10-22 | Yes | Submission Readiness lists every market from the scoped list (`useProgramMarkets`, ProjectMarkets' rows), each with its gates and findings; a finding opens the Builder at the section, the placed leaf, or Validation (`readinessFindingActs.ts`, through the F10 door, which now carries a section); a cleared gate opens the sequence's Dispatch tab. The single-sequence walk (`useProgramSequence`) is deleted. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-22/f18-readiness-acts/` |
+| F23: one source for readiness and module counts | `b660daf1ef`, `e6058e4126`, `13337e02af`, `3df9a2f722`, `de55d8bdaa`, `1a9a7d2291`, `f466866fbd` and this commit | Landed 2026-10-22 | Yes | One dossier read (`server/services/c2c/dossier-read.ts`, `GET /api/c2c/projects/:id/dossier`) serves Project home's card and module rows, the Projects list, the detail and the create, on one definition of complete; the home filing is measured on its own and each added market on its own line. `readinessByProject`, `/workstreams` and the uncalled `/vault-structure` are deleted. eCTD Compile's `/status` measures placement for the sequence's own market (`services/ectd/compile-placement.ts`). The Vault shows a market document's own part. The readiness trigger does not count an empty heading (one still `todo` that holds other sections), so 100% is reachable, and a heading someone has written in still counts. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-22/f23-one-dossier-read/` |
 
 ### 7.2 New slices
 
@@ -717,7 +718,7 @@ Every slice files its red run, then its green run, under `docs/evidence/D2-ONE-A
   Red: the route is absent, and the scaffold refuses a second document.
 - **Depends on:** F19, F20.
 
-**F23. One source for readiness and module counts. M.**
+**F23. One source for readiness and module counts. M.** *Landed 2026-10-22 (§7.1). The line references below were stale by then, and `dossier-read.ts` was written new rather than extracted from `/vault-structure`, which is deleted; the evidence README names the code as built.*
 - **Files:**
   - New `server/services/c2c/dossier-read.ts`, extracted from `GET /:id/vault-structure` (`projects.ts:1613-1715`, no client caller). It adds per-market placement by `normalizeCtdCode` (`shared/regulatory/section-code.ts`).
   - Module completion and the header read it. The `/workstreams` weighting is retired.
