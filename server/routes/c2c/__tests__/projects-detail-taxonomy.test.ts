@@ -174,7 +174,7 @@ describe('POST /api/c2c/projects — the create answers with the same serializer
     const res = await request(app(2, 1)).post('/api/c2c/projects').send({
       name: '[Demo · MDX] NeuroPanel-Dx 510(k)', productName: 'NeuroPanel-Dx', programType: '510k', productType: 'ivd',
       primaryAgency: 'FDA', indication: 'Differential diagnosis of viral CNS infection',
-      deviceClassification: { deviceClass: 'II', productCode: 'QNX', regulationNumber: '866.3985', reviewPanel: 'Microbiology', predicateK: 'K223456', flags: ['softwareAiMl', 'cyberDevice', 'clinicalData'] },
+      deviceClassification: { deviceClass: 'II', productCode: 'QNX', regulationNumber: '866.3985', reviewPanel: 'Microbiology', predicateK: 'K223456', predicateName: 'ViroPanel CNS', flags: ['softwareAiMl', 'cyberDevice', 'clinicalData'] },
     });
     expect(res.status).toBe(201);
     expect(res.body.data).toMatchObject({ id: PID, ws: 'MDX' });
