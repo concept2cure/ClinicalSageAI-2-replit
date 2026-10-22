@@ -30,7 +30,6 @@ import {
   dispatch,
   readWorkflow,
   runGithubScript,
-  simulateJobs,
   simulateSteps,
   transitiveNeeds,
   type Step,

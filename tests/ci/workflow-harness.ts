@@ -194,7 +194,7 @@ export function simulateSteps(
   job: string,
   s: Scenario,
   failing?: Step,
-  needs: Record<string, unknown> = {},
+  needs?: Record<string, unknown>,
 ): { ran: Step[]; result: JobResult } {
   const def = wf.jobs[job];
   const results: Record<string, StepResult> = {};
