@@ -12,7 +12,13 @@ opencv-python-headless==4.13.0.92 # Strategy 5: image preprocessing for enhanced
 # crafted PDF stream and JPEG2000, heap corruption in ImageCms). 12.3.0 is the
 # only later release. The used API surface is just Image.open / Image.fromarray
 # (ingestion/pdf_extractor.py), so the upgrade risk is minimal.
-Pillow==12.3.0                # Image handling for OCR
+# 12.3.0 then took seven more (2026-10-21; CVE-2026-112403 CRITICAL JPEG decoder,
+# CVE-2026-112397/112400/112404/112895/112896/112897 HIGH: zero-width OOB, GIF
+# memory exhaustion, TIFF OOB read and uninitialised buffer, PDF append DoS),
+# all fixed in 13.0.0. Image.open / Image.fromarray are unchanged in 13 (checked
+# on the cp311 wheel, MR-02 2026-10-22). These decoders run on user-uploaded
+# PDF and OCR images, so this is a real fix, not a .trivyignore entry.
+Pillow==13.0.0                # Image handling for OCR
 pdf2image==1.17.0             # Strategy 6: pdf->image via poppler (OCR fallback)
 
 # === Document Extraction - DOCX / XLSX / TXT ===
