@@ -596,7 +596,11 @@ export const UI_SURFACES: UiSurface[] = [
     // transmit among them. Those are claimed by `pharmacovigilance`, outside
     // the release; the sequence, portfolio and /submission/:id register routes
     // stay unclaimed (a prefix cannot admit the registers without the safety
-    // registers beside them). /api/ind-master-data has no screen caller.
+    // registers beside them). Of /api/ind-master-data only /sponsors is
+    // claimed (2026-10-22): IndApplicantIdentity.tsx lists, creates and edits
+    // the sponsor record the forms print, and it shipped calling an unclaimed
+    // path, so production refused it 403. Agents and investigators have no
+    // screen caller and stay unclaimed.
     // /api/ind-lifecycle/clock is the server's evaluateRegulatoryClock, which
     // the screen calls in place of the client copy it carried until 2026-10-15;
     // /readiness is not claimed — the screen's readiness verdict comes with the
@@ -605,6 +609,7 @@ export const UI_SURFACES: UiSurface[] = [
     apiPrefixes: [
       '/api/ind-checklist',
       '/api/ind-forms',
+      '/api/ind-master-data/sponsors',
       '/api/ind-lifecycle/clock',
       '/api/ind-lifecycle/cover-letter',
       '/api/ind-lifecycle/briefing-book',
