@@ -19,7 +19,7 @@ are not done here.
 |---|---|---|
 | A | `/api/tenants` off the owner connection | done |
 | B | The boot without the owner credential: the auth schema and organisation seeds into the migration set, a verify-only production boot, CI's boot smoke without `DATABASE_URL` | done |
-| C | Terraform: a migrate task definition that alone holds the owner secrets; the deploy preflight and one-off tasks | next |
+| C | Terraform: a migrate task definition that alone holds the owner secrets; the deploy preflight and one-off tasks | done |
 
 ## Re-confirmed at head before starting
 
@@ -204,11 +204,122 @@ The fix:
 On a fresh database the amended file applies, and again on replay; both boots
 without the owner URL answer 200, and the signup dbtest passes 16/16.
 
+## Slice C: the owner credential is the database task's alone
+
+**What changed.**
+
+- **`terraform/modules/ecs-fargate` owns a one-off database task.**
+  `aws_ecs_task_definition.migrate` (family `${cluster}-migrate`):
+  - one container, `migrate`, of the API image, whose command is
+    `npm run db:migrate:deploy`;
+  - no scanner, ports or health check;
+  - the API container's environment, from the same list;
+  - its secrets are the boot secrets plus the owner's (`DATABASE_URL`,
+    `APP_SERVICE_DB_PASSWORD`).
+
+  It runs with its own execution role. Each execution role is now granted
+  exactly the secret ARNs its own container references. The API's role was
+  granted every secret in the stack (`var.secret_arns`, now deleted), the
+  owner's included.
+- **`terraform/stack`**:
+  - `boot_secrets` lose `DATABASE_URL`, and `api_secrets` lose
+    `APP_SERVICE_DB_PASSWORD`;
+  - `local.owner_secrets` holds both, for the database task only;
+  - the deploy role may pass the database task's execution role;
+  - `deploy_targets` names its container.
+- **The deploy preflight** (`deploy-aws.yml`, job `migrate`):
+  - The API task definition no longer needs `DATABASE_URL`. It is refused if
+    it carries any name a production process reads an owner URL from, or the
+    mint password: `DATABASE_URL`, `DATABASE_URL_PROD`,
+    `DATABASE_NEON_NEW_SECRET`, `NEON_DATABASE_URL`, `DATABASE_OWNER_URL`,
+    `APP_SERVICE_DB_PASSWORD`.
+  - A new step, `migrate-preflight`, checks the database task's latest
+    revision. It requires one container carrying both owner secrets. It
+    requires every API secret except `SETUP_TOKEN`, from the same source, and
+    the same environment, value for value, as the checked API revision. It
+    requires an execution role that is not the API's. It then pins that
+    revision's ARN.
+  - The migration derives from that revision, not the API's. deploy-api still
+    rolls the checked API revision.
+- **`provision-database.yml`** derives the first provision from the same
+  family.
+- **`scripts/ops/ecs-one-off-task.sh`**: its logic is unchanged, and its
+  header now names the source.
+- **The boot, on an ECS task, refuses the same names**
+  (`HOSTED_OWNER_CREDENTIAL_NAMES`, `server/startup/env.ts`). That covers a
+  revision registered or edited outside the pipeline, as P-43 does for the
+  overrides. A self-hosted install keeps its owner URL. A test holds the
+  server's list and the preflight's to each other.
+- **SOP-SEC-001 §10 step 5**: the audit-chain verifier reads `DATABASE_URL`,
+  so it now derives from the database task, not the API's.
+- **The boot names no owner URL.** Outside production, `server/startup/services.ts`
+  passed `DATABASE_URL` to `ensureCoreTables` so a developer's database could
+  be filled in. It now asks with `{ ownerUrlWhenSet: true }`, and
+  `ensureCoreTables` reads the URL itself, with identical behaviour. This
+  meets the work order's acceptance grep.
+
+**Verified by making it fail.**
+
+- **Terraform** (`raw/c1`, `raw/c2`).
+  - Two new runs. At head, `the_api_task_holds_no_owner_credential` fails all
+    three assertions: the API secret names, the ARNs, and the execution
+    role's grant. That role read all 15 secrets, the owner's two among them.
+    `the_one_off_database_task_alone_holds_it` has no database task to
+    reference.
+  - After, the stack passes 74/74.
+  - Mutants, each refused:
+    - the owner URL back in the boot secrets;
+    - the API role granted the database task's secrets;
+    - the database task registered with the API's execution role. A first
+      version of the run let this one pass, because it compared the role
+      resources, not the role each task definition is registered with. The
+      run now reads the registered roles.
+- **The preflight, against what Terraform renders** (`raw/c3`). The proof runs
+  the workflow's own shell for both steps.
+  - It accepts the rendered pair and publishes both ARNs.
+  - It refuses eight definitions, each naming what it refused:
+    - an API carrying `DATABASE_URL`, `APP_SERVICE_DB_PASSWORD`, or
+      `DATABASE_URL_PROD` as a plain value;
+    - a database task without `DATABASE_URL`;
+    - a database task with another `DB_AUDIT_REQUIRED`;
+    - a database task with `APP_DATABASE_URL` from another secret;
+    - a database task on the API's execution role;
+    - a database task with a second container.
+
+  These refusals run on every proof, not once. Workflow mutants
+  (`raw/c4`), each failing the proof:
+  - the owner refusal not failing the step;
+  - the environment comparison not failing it;
+  - the migration derived from the API revision again.
+- **The boot** (`raw/c5`). Against head's `env.ts`, 7 of the 10 new cases
+  fail: the six refusals and the list tie. After, 10/10. The override-posture
+  test no longer inherits an owner URL from the runner (CI's test job sets
+  `DATABASE_URL`).
+- **The production bundle** (`raw/c6`), rebuilt from this tree:
+  - On a fresh database with `APP_DATABASE_URL` only, `/readyz` answers 200.
+  - As an ECS task holding `DATABASE_URL`, it exits 1 with the FATAL naming
+    it.
+  - The same task without it passes that check and serves.
+- **The work order's acceptance grep** (`raw/c6`). `process.env.DATABASE_URL`
+  outside tests appears only in the config and database resolvers. It no
+  longer appears in `startup/services.ts` or `routes/tenants-simple.ts`.
+  Restoring the old boot call fails the readiness test.
+
 ## Not shown here
 
-- Slice C is not done yet. Until it lands, the ECS task definition still
-  carries `DATABASE_URL`. The boot no longer uses it, as the
-  owner-present boot above shows.
+- **Any of this against AWS.** Every Terraform claim here comes from a mocked
+  provider, and every preflight claim from the workflow's own shell with `aws`
+  stubbed. These are not shown:
+  - that the database task's execution role can read the owner's secrets and
+    the API's cannot;
+  - that RDS admits the one-off task;
+  - that a deploy runs the migration from the database task end to end.
+
+  Those are Stage 5, the first apply.
+- **The order of the first apply and deploy.** Terraform must be applied
+  before the next deploy. The preflight refuses an API revision that still
+  carries `DATABASE_URL`, and a database task that does not exist yet. That
+  refusal is the intended failure, and it names what to do.
 - **The Helm chart cannot run a production install, at head or now.**
   `charts/concept2cure-app` names only `DATABASE_URL`, and its migrate init
   container runs `dist/scripts/migrate.js`, which does not exist. A production

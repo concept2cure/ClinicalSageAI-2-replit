@@ -1,26 +1,29 @@
 #!/usr/bin/env bash
-# Run one command as a one-off ECS task derived from the API task definition,
+# Run one command as a one-off ECS task derived from a checked task definition,
 # wait for it against an explicit deadline, print its log, and exit with its
 # exit code. The one runner for every one-off database job the pipeline starts:
 # the per-deploy migration (deploy-aws.yml, migrate) and the first provision of
 # an empty database (provision-database.yml).
 #
-# Why derived from the API definition: the job then runs with the same
-# execution role, secrets and log configuration the app has, and on the API
-# service's own subnets and security groups, which are the ones RDS admits
-# (the RDS security group allows 5432 from the ECS tasks' group only). Nothing
-# outside the VPC can reach the database, so this is the only way in.
+# Both derive from the database task definition Terraform registers
+# (terraform/modules/ecs-fargate, aws_ecs_task_definition.migrate): the only
+# one carrying the database owner's credential, with the only execution role
+# that can read it (MR-03 Stage 3, OPS-16). Until then this derived from the API
+# definition, which is why the API task held that credential. The job runs on
+# the API service's own subnets and security groups, which are the ones RDS
+# admits (the RDS security group allows 5432 from the ECS tasks' group only).
+# Nothing outside the VPC can reach the database, so this is the only way in.
 #
-# Deliberate differences from the API definition:
-#   • only the app container is kept (sidecars would keep a batch task alive);
+# Deliberate differences from the source definition:
+#   • only the named container is kept (sidecars would keep a batch task alive);
 #   • portMappings, healthCheck and inter-container wiring are dropped;
 #   • image and command are this job's; EXTRA_SECRETS_JSON may add secrets.
 #
 # Environment (all required unless marked):
 #   ECS_CLUSTER, ECS_API_SERVICE     where the API runs; its network config is reused
-#   SOURCE_TD_ARN                    the API revision to derive from (the one the
+#   SOURCE_TD_ARN                    the revision to derive from (the one the
 #                                    preflight CHECKED, never "the family's latest")
-#   CONTAINER_NAME                   the API container's name
+#   CONTAINER_NAME                   the container to keep (the database task's)
 #   FAMILY                           family to register the one-off definition under
 #   IMAGE                            image reference, pinned by digest (…@sha256:…)
 #   COMMAND_JSON                     the command, as a JSON array

@@ -71,12 +71,14 @@ env:
   # datadog sidecar).
   ECS_API_TASK_FAMILY: c2c-production-api
   ECS_API_CONTAINER_NAME: api
-  # Family for the one-off schema-migration task (see the `migrate` job). It is
-  # registered fresh on every deploy by deriving it from the API task def, so it
-  # inherits the same DATABASE_URL secret, execution role and log config without
-  # a second place to configure them. ECS creates the family on first register,
-  # so this needs no pre-existing infrastructure.
+  # Family and container of the one-off database task (see the `migrate` job).
+  # Terraform registers it (terraform/modules/ecs-fargate,
+  # aws_ecs_task_definition.migrate), and it alone carries the database owner's
+  # credential and an execution role that can read it (MR-03 Stage 3, OPS-16).
+  # Each deploy derives the migration from the revision its preflight checked,
+  # with the image pinned to the deploy's digest.
   ECS_MIGRATE_TASK_FAMILY: c2c-production-migrate
+  ECS_MIGRATE_CONTAINER_NAME: migrate
   # The bucket name carries the AWS account id (terraform/stack/main.tf,
   # MR-03 OPS-03), so it is the repository variable set from
   # `terraform output -raw frontend_bucket`, not a literal here.
@@ -447,13 +449,15 @@ jobs:
         # smoke in ci.yml ("Boot in production mode and require /readyz=200"):
         #   RLS_ENFORCE              server/db/rlsEnforcement.ts — production
         #                            accepts ONLY the literal `on`.
-        #   DATABASE_URL             server/startup/env.ts — owner role; migrations.
-        #   APP_DATABASE_URL         server/db/getDatabaseUrl.ts — the non-superuser
-        #                            runtime role. Under RLS_ENFORCE=on the boot
-        #                            posture probe (server/index.ts →
-        #                            assertRlsCatalogPosture) refuses a superuser
-        #                            or BYPASSRLS runtime role, so falling back to
-        #                            DATABASE_URL is not a viable production shape.
+        #   APP_DATABASE_URL         server/startup/env.ts, server/db/getDatabaseUrl.ts —
+        #                            the non-superuser runtime role, and the only
+        #                            database credential the API holds. Under
+        #                            RLS_ENFORCE=on the boot posture probe
+        #                            (server/index.ts → assertRlsCatalogPosture)
+        #                            refuses a superuser or BYPASSRLS runtime role.
+        #                            The owner's (DATABASE_URL, APP_SERVICE_DB_PASSWORD)
+        #                            is REFUSED on the API below: it belongs to the
+        #                            database task alone (MR-03 Stage 3, OPS-16).
         #   JWT_SECRET               server/config/environment.ts (>=32 chars).
         #   REFRESH_TOKEN_SECRET     server/config/environment.ts — required in
         #                            staging/prod, >=32, must differ from JWT_SECRET.
@@ -474,8 +478,8 @@ jobs:
         #                            probe or a disabled sweep into a boot refusal.
         #                            Both exactly `true` (security plan P0-9).
         #   DB_AUDIT_REQUIRED        scripts/db/database-audit.mjs — exactly
-        #                            `pgaudit`: deploy-migrate (derived from this
-        #                            definition) then refuses to roll services onto
+        #                            `pgaudit`: deploy-migrate (whose environment
+        #                            must equal this one) then refuses to roll services onto
         #                            a database whose pgaudit is not recording
         #                            (security audit INF-13, plan P1-11).
         #   CONNECTOR_ENCRYPTION_KEY server/services/connectors/connector-registry.ts
@@ -518,7 +522,7 @@ jobs:
           ' /tmp/api-td-preflight.json | sort -u)
 
           MISSING=""
-          for VAR in RLS_ENFORCE DATABASE_URL APP_DATABASE_URL JWT_SECRET \
+          for VAR in RLS_ENFORCE APP_DATABASE_URL JWT_SECRET \
                      REFRESH_TOKEN_SECRET MFA_ENCRYPTION_KEY AUDIT_HMAC_KEY \
                      AUDIT_HMAC_SECRET AUDIT_EXPORT_SIGNING_KEY AUDIT_ATTESTATION_KEY \
                      CONNECTOR_ENCRYPTION_KEY ANTHROPIC_API_KEY \
@@ -650,6 +654,22 @@ jobs:
             echo "::error::The task definition carries ENABLE_TEST_ROUTES: test routes have no production use, and the server refuses to boot with it. Remove it from terraform/stack."
             FAIL=1
           fi
+          # The database owner's credential belongs to the one-off database task
+          # alone (MR-03 Stage 3, OPS-16; checked in the next step). That role
+          # owns every table and bypasses RLS; the API boots as app_service and
+          # creates no schema. Every name a production process reads an owner
+          # URL from, and the password app_service is minted with, refused as a
+          # value or a secret. The server refuses the same names on ECS
+          # (HOSTED_OWNER_CREDENTIAL_NAMES, server/startup/env.ts).
+          OWNER_CREDENTIALS=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | ((.environment // []) + (.secrets // [])) | map(.name)
+            | map(select(IN("DATABASE_URL", "DATABASE_URL_PROD", "DATABASE_NEON_NEW_SECRET", "NEON_DATABASE_URL", "DATABASE_OWNER_URL", "APP_SERVICE_DB_PASSWORD"))) | .[]
+          ' /tmp/api-td-preflight.json | sort -u | tr '\n' ' ')
+          if [[ -n "${OWNER_CREDENTIALS// /}" ]]; then
+            echo "::error::The API task definition carries the database owner's credential: ${OWNER_CREDENTIALS% }. That role owns every table and bypasses RLS; only $ECS_MIGRATE_TASK_FAMILY may hold it. Remove it from the API in terraform/stack."
+            FAIL=1
+          fi
           # Launch scope is the release boundary (CLAUDE.md RULE 2): with
           # LAUNCH_SCOPE_ENFORCE=off every router outside the seven launch apps
           # answers any authenticated member, and the server honours an explicit
@@ -758,9 +778,9 @@ jobs:
           fi
           [[ "$FAIL" -eq 0 ]] || exit 1
 
-          # Hand the EXACT revision checked here to everything that derives a
-          # task definition from it — the migration below and deploy-api —
-          # rather than let each re-read "the family's latest". deploy-api runs
+          # Hand the EXACT revision checked here to what derives from it — the
+          # next step's comparison and deploy-api — rather than let each re-read
+          # "the family's latest". deploy-api runs
           # after the migration and a production approval, and a `terraform
           # apply` in between registers a new latest revision (the services
           # ignore task_definition changes, so nothing else rolls it). Without
@@ -774,15 +794,88 @@ jobs:
           echo "api_td_arn=$CHECKED_ARN" >> "$GITHUB_OUTPUT"
           echo "Production boot contract satisfied by $CHECKED_ARN."
 
-      - name: Migrate — one-off task derived from the checked API revision
+      # The database task (MR-03 Stage 3, OPS-16). The owner's credential is in
+      # the Terraform-registered migrate family and nowhere else; the migration
+      # derives from the revision checked here, pinned by ARN as the API's is.
+      # Checked, by name and source, never by value:
+      #   - one container, carrying DATABASE_URL and APP_SERVICE_DB_PASSWORD;
+      #   - every secret of the checked API revision but SETUP_TOKEN, from the
+      #     same source, and the same environment, value for value: deploy-migrate
+      #     verifies the readiness contract as the runtime role, under the
+      #     posture the services boot with (DB_AUDIT_REQUIRED, RLS_ENFORCE);
+      #   - an execution role that is not the API's, which cannot read the
+      #     owner's secrets (terraform/modules/ecs-fargate).
+      - name: Preflight — the database task alone carries the owner credential
+        id: migrate-preflight
+        env:
+          CHECKED_API_TD_ARN: ${{ steps.preflight.outputs.api_td_arn }}
+        run: |
+          set -euo pipefail
+
+          aws ecs describe-task-definition --task-definition "$ECS_MIGRATE_TASK_FAMILY" \
+            --no-cli-pager --query 'taskDefinition' > /tmp/migrate-td-preflight.json
+          aws ecs describe-task-definition --task-definition "$CHECKED_API_TD_ARN" \
+            --no-cli-pager --query 'taskDefinition' > /tmp/api-td-checked.json
+
+          FAIL=0
+          SHAPE=$(jq -r '[.containerDefinitions[].name] | join(",")' /tmp/migrate-td-preflight.json)
+          if [[ "$SHAPE" != "$ECS_MIGRATE_CONTAINER_NAME" ]]; then
+            echo "::error::$ECS_MIGRATE_TASK_FAMILY must be one container named $ECS_MIGRATE_CONTAINER_NAME (terraform/modules/ecs-fargate, aws_ecs_task_definition.migrate); it has: ${SHAPE:-none}."
+            FAIL=1
+          fi
+          OWNER_MISSING=$(jq -r '
+            ((.containerDefinitions[0].secrets // []) | map(.name)) as $have
+            | ["DATABASE_URL", "APP_SERVICE_DB_PASSWORD"] - $have | join(" ")
+          ' /tmp/migrate-td-preflight.json)
+          if [[ -n "$OWNER_MISSING" ]]; then
+            echo "::error::$ECS_MIGRATE_TASK_FAMILY lacks the owner secret(s) the migration runs as: $OWNER_MISSING. Apply terraform/stack before deploying."
+            FAIL=1
+          fi
+          SOURCE_DIFFERS=$(jq -rn --arg c "$ECS_API_CONTAINER_NAME" \
+            --slurpfile m /tmp/migrate-td-preflight.json --slurpfile a /tmp/api-td-checked.json '
+            ($m[0].containerDefinitions[0].secrets // [] | map({(.name): .valueFrom}) | add // {}) as $ms
+            | $a[0].containerDefinitions[] | select(.name == $c) | (.secrets // [])[]
+            | select(.name != "SETUP_TOKEN" and $ms[.name] != .valueFrom) | .name
+          ' | tr '\n' ' ')
+          if [[ -n "${SOURCE_DIFFERS// /}" ]]; then
+            echo "::error::$ECS_MIGRATE_TASK_FAMILY does not carry these API secrets from the same source: ${SOURCE_DIFFERS% }. The migration would verify the readiness contract against something other than what the services boot with."
+            FAIL=1
+          fi
+          ENV_DIFFERS=$(jq -rn --arg c "$ECS_API_CONTAINER_NAME" \
+            --slurpfile m /tmp/migrate-td-preflight.json --slurpfile a /tmp/api-td-checked.json '
+            ($m[0].containerDefinitions[0].environment // [] | map({(.name): .value}) | add // {}) as $me
+            | ($a[0].containerDefinitions[] | select(.name == $c) | .environment // [] | map({(.name): .value}) | add // {}) as $ae
+            | (($me | keys) + ($ae | keys) | unique)[] | select($me[.] != $ae[.])
+          ' | tr '\n' ' ')
+          if [[ -n "${ENV_DIFFERS// /}" ]]; then
+            echo "::error::$ECS_MIGRATE_TASK_FAMILY's environment differs from the checked API revision's in: ${ENV_DIFFERS% }. Both come from one list in terraform/modules/ecs-fargate; apply terraform/stack."
+            FAIL=1
+          fi
+          MIGRATE_ROLE=$(jq -r '.executionRoleArn // ""' /tmp/migrate-td-preflight.json)
+          API_ROLE=$(jq -r '.executionRoleArn // ""' /tmp/api-td-checked.json)
+          if [[ -z "$MIGRATE_ROLE" || "$MIGRATE_ROLE" == "$API_ROLE" ]]; then
+            echo "::error::$ECS_MIGRATE_TASK_FAMILY must run with its own execution role, not the API's ('${MIGRATE_ROLE:-<unset>}'): the API's must not be able to read the owner's secrets."
+            FAIL=1
+          fi
+          [[ "$FAIL" -eq 0 ]] || exit 1
+
+          CHECKED_ARN=$(jq -r '.taskDefinitionArn // empty' /tmp/migrate-td-preflight.json)
+          if [[ ! "$CHECKED_ARN" =~ ^arn:aws[a-z-]*:ecs:[a-z0-9-]+:[0-9]{12}:task-definition/${ECS_MIGRATE_TASK_FAMILY}:[0-9]+$ ]]; then
+            echo "::error::describe-task-definition returned no usable revision ARN ('$CHECKED_ARN') for $ECS_MIGRATE_TASK_FAMILY; cannot pin the revision that was checked."
+            exit 1
+          fi
+          echo "migrate_td_arn=$CHECKED_ARN" >> "$GITHUB_OUTPUT"
+          echo "The database task's contract is satisfied by $CHECKED_ARN."
+
+      - name: Migrate — one-off task derived from the checked database-task revision
         id: migrate-task
         env:
           IMAGE_DIGEST: ${{ needs.build-push.outputs.api_digest }}
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          CHECKED_API_TD_ARN: ${{ steps.preflight.outputs.api_td_arn }}
+          CHECKED_MIGRATE_TD_ARN: ${{ steps.migrate-preflight.outputs.migrate_td_arn }}
         # scripts/ops/ecs-one-off-task.sh derives the task from the revision the
-        # preflight above CHECKED (same execution role, secrets, logs; sidecars,
-        # ports and the health check dropped), runs it on the API service's own
+        # step above CHECKED (its execution role, secrets and logs; the image
+        # pinned to this deploy's digest), runs it on the API service's own
         # subnets and security groups (the only ones RDS admits), waits against
         # a deadline that stops the task when it passes, prints its log, and
         # exits with its exit code. The same runner starts the first provision
@@ -797,13 +890,13 @@ jobs:
             echo "::error::A deploy that skips the API image cannot migrate the schema. Re-run with deploy_api enabled."
             exit 1
           fi
-          if [[ -z "$CHECKED_API_TD_ARN" ]]; then
-            echo "::error::The preflight published no checked revision ARN; refusing to derive the migration from an unchecked one."
+          if [[ -z "$CHECKED_MIGRATE_TD_ARN" ]]; then
+            echo "::error::The preflight published no checked database-task revision ARN; refusing to derive the migration from an unchecked one."
             exit 1
           fi
 
-          SOURCE_TD_ARN="$CHECKED_API_TD_ARN" \
-          CONTAINER_NAME="$ECS_API_CONTAINER_NAME" \
+          SOURCE_TD_ARN="$CHECKED_MIGRATE_TD_ARN" \
+          CONTAINER_NAME="$ECS_MIGRATE_CONTAINER_NAME" \
           FAMILY="$ECS_MIGRATE_TASK_FAMILY" \
           IMAGE="$ECR_REGISTRY/$ECR_API_REPO@$IMAGE_DIGEST" \
           COMMAND_JSON='["npm", "run", "db:migrate:deploy"]' \

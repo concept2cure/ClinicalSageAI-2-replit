@@ -82,6 +82,7 @@ function refuseForbiddenProductionPosture(): void {
   }
 
   refuseHostedOverrides(process.env);
+  refuseHostedOwnerCredential(process.env);
 }
 
 /** Set by the ECS agent in every task; a task definition cannot remove it. */
@@ -120,6 +121,45 @@ function refuseHostedOverrides(env: NodeJS.ProcessEnv): void {
       `[FATAL] Operator overrides are not permitted on the hosted deployment (an ECS task): ` +
         `${accepted.join(', ')}. Each switches a production refusal off. Remove it from the ` +
         'task definition (terraform/stack); a self-hosted install may keep it.',
+    );
+    process.exit(1);
+  }
+}
+
+/**
+ * Every name a production process reads a database owner's URL from, and the
+ * password app_service is minted with (MR-03 Stage 3, OPS-16; MR-05 DATA-03).
+ * The owner role owns every table and bypasses RLS. The hosted API serves as
+ * app_service (APP_DATABASE_URL) and creates no schema, and only the one-off
+ * database task carries these (terraform/modules/ecs-fargate). deploy-aws.yml's
+ * preflight refuses the same names on the API task definition;
+ * env-hosted-owner-credential.test.ts holds the two lists together.
+ */
+export const HOSTED_OWNER_CREDENTIAL_NAMES = [
+  'DATABASE_URL',
+  'DATABASE_URL_PROD',
+  'DATABASE_NEON_NEW_SECRET',
+  'NEON_DATABASE_URL',
+  'DATABASE_OWNER_URL',
+  'APP_SERVICE_DB_PASSWORD',
+] as const;
+
+/**
+ * On the hosted deployment the API refuses to boot holding the owner's
+ * credential. The deploy preflight keeps it out of every revision the pipeline
+ * rolls; this keeps it out of one registered or edited outside the pipeline,
+ * as refuseHostedOverrides does for the overrides (P-43). A self-hosted install
+ * keeps its owner URL: it migrates from the same host.
+ */
+function refuseHostedOwnerCredential(env: NodeJS.ProcessEnv): void {
+  if (!isEcsTask(env)) return;
+  const held = HOSTED_OWNER_CREDENTIAL_NAMES.filter(k => (env[k] ?? '').trim() !== '');
+  if (held.length > 0) {
+    console.error(
+      `[FATAL] The database owner's credential is not permitted in the API on the hosted deployment ` +
+        `(an ECS task): ${held.join(', ')}. That role owns every table and bypasses RLS; the API ` +
+        'serves as app_service (APP_DATABASE_URL), and only the one-off database task holds it. ' +
+        'Remove it from the API task definition (terraform/stack).',
     );
     process.exit(1);
   }
