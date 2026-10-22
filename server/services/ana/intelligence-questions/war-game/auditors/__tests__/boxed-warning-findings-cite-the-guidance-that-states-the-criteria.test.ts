@@ -21,7 +21,8 @@ const GUIDANCE_TITLE =
 describe('boxed-warning findings', () => {
   it('labeling auditor: the criterion is the guidance\'s, cited by title', () => {
     const rule = createLabelingAuditor().rules.find((r) => r.id === 'lbl_no_boxed_warning')!;
-    const f = rule.check({ serious_risks: 'yes' })!;
+    // 2026-10-22: the rule reads the interview's boxed_warning_required, not serious_risks.
+    const f = rule.check({ boxed_warning_required: 'yes' })!;
     expect(f.requirement, 'the criterion was attributed to 21 CFR 201.57(c)(1)').not.toMatch(/required per 21 CFR 201\.57\(c\)\(1\)/);
     expect(f.requirement).toMatch(/^Per FDA guidance \(2011\) on the Warnings and Precautions, Contraindications and Boxed Warning sections \(cited by title\), a boxed warning is warranted when/);
     expect(f.reference).toBe(
