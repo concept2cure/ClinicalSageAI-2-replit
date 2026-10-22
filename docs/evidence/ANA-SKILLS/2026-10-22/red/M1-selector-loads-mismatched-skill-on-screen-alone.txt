@@ -1,0 +1,11 @@
+# Mutation: server/services/ana/skills/selector.ts
+# - 'if (!facets.inFront || facets.mismatches.length > 0) continue;'
+# + 'if (!facets.inFront) continue;'
+# Tests: server/services/ana/skills/__tests__/selector.test.ts
+# exit 1
+
+ × server/services/ana/skills/__tests__/selector.test.ts > selection > never loads on the screen alone a method the program says is for another segment 6ms
+   → expected [ Array(1) ] to deeply equal []
+      Tests  1 failed | 12 passed (13)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ Array(1) ] to deeply equal []

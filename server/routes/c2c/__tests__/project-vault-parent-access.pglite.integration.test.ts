@@ -68,7 +68,8 @@ beforeAll(async () => {
     CREATE TABLE vault.documents (id uuid PRIMARY KEY, program_id uuid, organization_id integer,
       document_code text,document_title text,file_name text,document_type text,file_size bigint,folder_id text,ctd_section text,
       placement_status text,version text,extracted_text text,content_hash text,supersedes_id uuid,
-      deleted_at timestamptz,created_at timestamptz DEFAULT now());
+      classification text DEFAULT 'INTERNAL',evidence_kind text,
+      deleted_at timestamptz,created_at timestamptz DEFAULT now(),updated_at timestamptz DEFAULT now());
     CREATE TABLE document_data_dispositions (id integer, organization_id integer, program_id uuid,
       captured_source_id integer, vault_document_id uuid, source_sha256 text, linked_ids jsonb,
       choice text, disposition_sequence integer, created_at timestamptz);
@@ -81,6 +82,8 @@ beforeAll(async () => {
              ('${PUBLIC_DOC}','${PUBLIC}',7,'Stability public evidence','public.pdf','REPORT','Public stability results',now()-interval '1 day');
   `);
   await h.pg.exec(fs.readFileSync('migrations/20260906_vault_documents_fulltext.sql', 'utf8'));
+  // A search hit carries its lifecycle stage (VR-18), read from canonical_documents.
+  await h.pg.exec(fs.readFileSync('migrations/20260731c_canonical_documents.sql', 'utf8'));
 });
 
 beforeEach(async () => {

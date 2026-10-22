@@ -11,7 +11,7 @@
  */
 
 import type { AnaChatMessage, AnaToolCall, RunControlStatus } from '../components/ana/useAnaChat';
-import type { AnaProgressPhase, AnaRunHold, AnaStoppedReason } from '../components/ana/useAnaChat.types';
+import type { AnaContextUsed, AnaProgressPhase, AnaRunHold, AnaStoppedReason } from '../components/ana/useAnaChat.types';
 import { AUTO_TIME_WORDS, MANUAL_UNAVAILABLE_TEXT, PAUSE_WORDS, stepLabels } from '@shared/ana/run-policy';
 import { unknownStepLabel, type StepFact } from '@shared/ana/step-verbs';
 import {
@@ -418,9 +418,9 @@ function heldChipText(runStatus: RunControlStatus, runHold: AnaRunHold | null): 
 /* ── Used in this session ─────────────────────────────────────────────────── */
 
 export interface UsedRow {
-  key: 'uploads' | 'memory' | 'tools' | 'context';
+  key: 'uploads' | 'memory' | 'skills' | 'tools' | 'context';
   /** Icon key into the shell's `I` map. */
-  icon: 'paperclip' | 'history' | 'zap' | 'folder';
+  icon: 'paperclip' | 'history' | 'bookOpen' | 'zap' | 'folder';
   label: string;
   /** One line, truncated by the row: the first few items. */
   detail: string;
@@ -507,15 +507,47 @@ function memoryRow(messages: AnaChatMessage[]): UsedRow | null {
 }
 
 /**
+ * The skills the conversation's turns loaded, once each, as the server named
+ * them. No row when no turn said which skills it loaded; a failed read on the
+ * latest turn that said anything is noted, never shown as "none".
+ */
+function skillsRow(messages: AnaChatMessage[]): UsedRow | null {
+  const names: string[] = [];
+  let latestStatus: AnaContextUsed['skillsStatus'];
+  for (const m of messages) {
+    if (!m.contextUsed?.skillsStatus) continue;
+    latestStatus = m.contextUsed.skillsStatus;
+    for (const s of m.contextUsed.skills ?? []) if (!names.includes(s.name)) names.push(s.name);
+  }
+  if (names.length === 0) {
+    return latestStatus === 'unavailable'
+      ? { key: 'skills', icon: 'bookOpen', label: 'Skills', detail: 'Could not be read' }
+      : null;
+  }
+  return {
+    key: 'skills',
+    icon: 'bookOpen',
+    label: 'Skills',
+    detail: firstAndMore(names, 2),
+    ...(latestStatus === 'unavailable' ? { note: 'Could not be read on the latest turn' } : {}),
+  };
+}
+
+/**
  * What the conversation actually drew on, as Claude-style one-line rows. Each
  * row appears only when there is something true to say: uploads that were
- * attached or read, the memory a turn reported reading, the tools she called,
- * and the project context she was given.
+ * attached or read, the memory a turn reported reading, the skills whose
+ * methods she followed, the tools she called, and the project context she was
+ * given.
  */
 export function usedInSession(messages: AnaChatMessage[], context: AnaWorkContext | undefined): UsedRow[] {
-  return [uploadsRow(messages), memoryRow(messages), toolsRow(messages, context), contextRow(messages, context)].filter(
-    (r): r is UsedRow => r !== null,
-  );
+  return [
+    uploadsRow(messages),
+    memoryRow(messages),
+    skillsRow(messages),
+    toolsRow(messages, context),
+    contextRow(messages, context),
+  ].filter((r): r is UsedRow => r !== null);
 }
 
 function toolsRow(messages: AnaChatMessage[], context: AnaWorkContext | undefined): UsedRow | null {

@@ -3496,6 +3496,14 @@ export const C2C_MIGRATION_FILES = [
   // P-44 (2026-10-22): a non-home market's submission records its own agency's
   // application number; packages read it instead of the project's. Additive.
   'migrations/20261022b_submissions_market_application_number.sql',
+  // AnA skills (2026-10-22, lane ANA-SKILLS; docs/design/ANA_SKILLS_2026-10-22.md):
+  // account_skill_bundles in its drizzle shape for a database install-fresh did
+  // not push, the skill facet columns on it, and organization_skill_settings
+  // (an administrator's on/off for each platform-library skill, with the
+  // reason). After users and organizations (base schema). Both tables are
+  // public with organization_id INTEGER NOT NULL, so the sweeps below police
+  // them. Additive and IF NOT EXISTS throughout; drops nothing.
+  'migrations/20261022_ana_skills.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

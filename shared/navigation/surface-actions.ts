@@ -920,13 +920,13 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'admin-console',
     label: 'Open an admin tab',
     description:
-      'On Admin & access, switch between the members, roles, SSO, API-keys, and settings tabs. Inviting, granting, editing scopes, revoking keys, and changing settings stay governed administrator acts.',
+      'On Admin & access, switch between the members, roles, SSO, API-keys, skills and settings tabs. Inviting, granting, editing scopes, revoking keys, changing settings and turning skills on, off or changing them stay governed administrator acts.',
     params: [
       {
         name: 'tab',
         required: true,
         description: 'The tab to open.',
-        enum: ['members', 'roles', 'sso', 'apikeys', 'settings'],
+        enum: ['members', 'roles', 'sso', 'apikeys', 'skills', 'settings'],
       },
     ],
   },

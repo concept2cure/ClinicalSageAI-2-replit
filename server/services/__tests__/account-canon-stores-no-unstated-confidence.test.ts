@@ -69,7 +69,7 @@ describe('account canon confidence', () => {
       ({ id: 1, title, content: 'c', category: 'terminology', status: 'active', validated }) as unknown as ResolvedAccountContext['canonItems'][number];
     const text = formatResolvedContextForPrompt({
       canonItems: [item('Unchecked', false), item('Checked', true)],
-      terms: [], bundles: [], templates: [], tokensEstimate: 0, requestId: 'r',
+      terms: [], templates: [], tokensEstimate: 0, requestId: 'r',
     });
     expect(text).toMatch(/\*\*Unchecked\*\* \[NOT YET VALIDATED\]/);
     expect(text).toMatch(/\*\*Checked\*\*: c/);
