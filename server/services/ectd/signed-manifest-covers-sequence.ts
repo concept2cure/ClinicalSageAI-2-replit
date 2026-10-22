@@ -363,7 +363,7 @@ async function fdaApplicantCoverage(
     // caller's duplicate submission key cannot lend another program's facts
     // to a sequence with coincidentally identical leaves.
     const sequence = await db.query(
-      `SELECT submission_id FROM ectd_sequences
+      `SELECT submission_id, region FROM ectd_sequences
         WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
       [params.sequenceId, params.organizationId],
     );
@@ -378,6 +378,7 @@ async function fdaApplicantCoverage(
       { query: (text, values) => db.query(text, values) },
       params.organizationId,
       submissionId,
+      { region: typeof sequence.rows[0]?.region === 'string' ? sequence.rows[0].region : null },
     );
     const refusal = packageIdentityRefusal(identity, 'No release covers these incomplete applicant facts.', { fda: true });
     if (refusal) return { covers: false, detail: refusal.message };

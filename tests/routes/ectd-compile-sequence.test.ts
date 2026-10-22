@@ -128,3 +128,47 @@ describe('compile carries the sequence (F14)', () => {
     expect(body.sequence?.id ?? body.spine?.sequence?.id).toBe(21);
   });
 });
+
+/* P-44 (2026-10-22): the MAA is the NDA project's EU market, so it compiles
+   under the number recorded on its own submission, never the project's
+   214321, and with none recorded it is refused before anything is assembled
+   (security review: compile read the project's number). */
+describe("compile carries the sequence's own market's number (P-44)", () => {
+  function marketMocks(maaNumber: string | null) {
+    const base = poolQuery.getMockImplementation()!;
+    poolQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
+      if (/to_jsonb\(s\)->>'application_number'/.test(sql)) {
+        const maa = Number(params[0]) === 56;
+        return { rows: [{ program_id: UUID, primary_region: maa ? 'eu' : 'fda', market_number: maa ? maaNumber : null }] };
+      }
+      const out = await base(sql, params);
+      return /FROM organizations/i.test(sql) ? { rows: out.rows.map((r: object) => ({ ...r, primary_agency: 'FDA' })) } : out;
+    });
+  }
+
+  it('with no number recorded for the EU market, nothing is assembled, and the refusal names the market', async () => {
+    marketMocks(null);
+    await selfContainedAssembly();
+    const res = createMockResponse() as any;
+    await compile(makeReq({ submissionType: 'initial', sequenceId: 21 }), res);
+    expect(assembleSequenceMock).not.toHaveBeenCalled();
+    expect(JSON.stringify(res.json.mock.calls)).toMatch(/EU market, and records no application number of its own/);
+    expect(JSON.stringify(res.json.mock.calls)).not.toContain('214321');
+  });
+
+  it("with the EU market's number recorded, the MAA compiles under it, never the project's", async () => {
+    marketMocks('EMEA-H-C-005124');
+    await selfContainedAssembly();
+    const res = createMockResponse() as any;
+    await compile(makeReq({ submissionType: 'initial', sequenceId: 21 }), res);
+    expect(assembleSequenceMock).toHaveBeenCalledWith(expect.objectContaining({ sequenceId: 21, applicationId: 'EMEA-H-C-005124' }));
+  });
+
+  it("the project's own NDA sequence still compiles under the project's number", async () => {
+    marketMocks(null);
+    await selfContainedAssembly();
+    const res = createMockResponse() as any;
+    await compile(makeReq({ submissionType: 'initial' }), res);
+    expect(assembleSequenceMock).toHaveBeenCalledWith(expect.objectContaining({ applicationId: '214321' }));
+  });
+});

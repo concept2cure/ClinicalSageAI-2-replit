@@ -1073,6 +1073,8 @@ router.get('/:id/application-number', limiter, requireRole(AUTHOR), async (req, 
   const id = idParam(req.params.id);
   if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
   try {
+    // The caller's project access, as every submission read (getSubmissionForRequest).
+    await getSubmissionForRequest(requestPgClient(req), ctx, id, readSelection(req));
     res.json(await readMarketApplicationNumber(id, ctx));
   } catch (err) {
     fail(res, err);
@@ -1092,7 +1094,8 @@ router.post('/:id/application-number', limiter, requireRole(AUTHOR), async (req,
   try {
     const orgRole = await resolveSignerOrgRole(ctx.userId, ctx.organizationId);
     res.json(await recordMarketApplicationNumber(
-      { submissionId: id, applicationNumber: parsed.data.applicationNumber, reason: reason.reason },
+      { submissionId: id, applicationNumber: parsed.data.applicationNumber, reason: reason.reason,
+        ipAddress: req.ip ?? null, userAgent: req.get('user-agent') ?? null },
       { ...ctx, orgRole },
     ));
   } catch (err) {

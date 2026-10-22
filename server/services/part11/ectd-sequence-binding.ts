@@ -40,7 +40,7 @@ export async function deriveEctdSequenceBinding(
   const leaves = await sequenceLeaves(client, id, organizationId);
   const legacyDigest = context.hashPayload({ sequence, leaves });
   const recordedPackageIdentity = canonicalRegionOf(sequence.region) === 'US'
-    ? recordedPackageIdentitySnapshot(await readSubmissionPackageIdentity(client, organizationId, Number(sequence.submission_id)))
+    ? recordedPackageIdentitySnapshot(await readSubmissionPackageIdentity(client, organizationId, Number(sequence.submission_id), { region: sequence.region }))
     : undefined;
   return {
     digest: recordedPackageIdentity ? context.hashPayload({ sequence, leaves, recordedPackageIdentity }) : legacyDigest,
