@@ -94,6 +94,25 @@ export function importFileParams(jobId: number, orgId: number, f: DetectedFile):
   ];
 }
 
+/* A job that fails after its row exists is marked 'failed' with the error; left
+   at 'detecting' it reads as an import still running. The one failure write for
+   both import paths (2026-10-15: AnA's start_legacy_import had none). Only a job
+   still 'detecting' is marked, so a cancelled or completed one keeps its state.
+   Resolves whether it marked the job. */
+export async function markImportJobFailed(jobId: number, err: unknown): Promise<boolean> {
+  try {
+    const { rows } = await pool.query(
+      `UPDATE import_jobs SET status = 'failed', error_message = $2, updated_at = NOW()
+        WHERE id = $1 AND status = 'detecting' RETURNING id`,
+      [jobId, err instanceof Error ? err.message : String(err)],
+    );
+    return rows.length > 0;
+  } catch (markErr) {
+    log.error('import job could not be marked failed', { jobId, error: markErr instanceof Error ? markErr.message : String(markErr) });
+    return false;
+  }
+}
+
 router.post('/imports', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
@@ -184,10 +203,7 @@ router.post('/imports', requireEditorAccess, async (req: Request, res: Response)
     );
     return created(res, jobRows[0]);
   } catch (err) {
-    await pool.query(
-      `UPDATE import_jobs SET status = 'failed', error_message = $2, updated_at = NOW() WHERE id = $1`,
-      [jobId, err instanceof Error ? err.message : String(err)],
-    ).catch(() => undefined);
+    await markImportJobFailed(jobId, err);
     return serverError(res, log, 'detect', err);
   }
 });
@@ -271,9 +287,11 @@ router.patch('/imports/:id/files/:fileId', requireEditorAccess, async (req: Requ
     const col = COL[k]; if (!col) continue;
     args.push(v); setFrags.push(`${col} = $${args.length}`);
   }
-  /* Manual override → mark mapping_source='manual' and confidence=1.0. */
-  setFrags.push(`mapping_source = 'manual'`, `mapping_confidence = 1.00`);
   if (setFrags.length === 0) return clientError(res, 422, 'No updatable fields');
+  /* A person's placement is their decision: mapping_source 'manual', no confidence.
+     2026-10-15: stored mapping_confidence = 1.00 on every override, 'skipped' too, and
+     the check above ran after these were added, so an empty PATCH re-labelled a row. */
+  setFrags.push(`mapping_source = 'manual'`, `mapping_confidence = NULL`);
   args.push(fileId, jobId, orgId);
   try {
     const { rows } = await pool.query(
@@ -534,67 +552,116 @@ router.post('/imports/:id/findings/:findingId/resolve', requireEditorAccess, asy
 });
 
 /* ── GET /api/mdx/onboarding/:tenantId — kit-shaped aggregate ────────────────
- * The Onboarding (migration importer) surface (client useOnboarding) consumes
- * { steps, artifacts, validations, kpis }. Tenant scope comes from the verified
- * token (the :tenantId path param is informational). artifacts ← import_job_
- * files, validations ← import_job_findings. steps is the onboarding workflow
- * sequence, marked complete by evidence. Empty-safe. */
+ * The Onboarding (migration importer) kit shape { steps, artifacts, validations,
+ * kpis }; no client calls it today. Tenant scope comes from the verified token
+ * (the :tenantId path param is informational). artifacts ← import_job_files,
+ * validations ← import_job_findings, each the newest ONBOARDING_LIST_LIMIT rows;
+ * the KPIs and `totals` count every row. steps is the onboarding workflow
+ * sequence, marked by evidence where any is recorded. 2026-10-15: a missing
+ * import table (42P01) was answered as an empty aggregate, i.e. nothing uploaded
+ * and no findings; it is an error now. */
+const ONBOARDING_LIST_LIMIT = 500;
+
+type OnboardingStepState = 'complete' | 'active' | 'pending' | 'not_recorded';
+interface OnboardingAggregate {
+  steps: Array<{ id: string; label: string; desc: string; state: OnboardingStepState; note?: string }>;
+  artifacts: Array<{
+    id: string; legacy: string; mapped: string | null; section: string | null;
+    confidence: number | null; state: string;
+    /** Unresolved findings recorded against this file's path in its job; a finding about no one file is in `validations` only. */
+    issues: number;
+  }>;
+  validations: Array<{ id: string; artifact: string | null; rule: string | null; severity: string; note: string; resolved: boolean }>;
+  kpis: Array<{ label: string; metric: string; meta: string; tone: 'ok' | 'warn' }>;
+  totals: { files: number; imported: number; mapped: number; findings: number; openFindings: number; listLimit: number };
+}
+interface OnboardingCounts { files: number; imported: number; mapped: number; findings: number; open_findings: number }
+interface OnboardingFileRow {
+  id: number; file_name: string; mapped_ctd_section: string | null; mapped_artifact_kind: string | null;
+  artifact_id: number | null; mapping_confidence: string | null; status: string; open_findings: number;
+}
+interface OnboardingFindingRow {
+  id: number; file_path: string | null; code: string | null; severity: string; message: string; resolved: boolean | null;
+}
+
+function onboardingAggregate(c: OnboardingCounts, files: OnboardingFileRow[], finds: OnboardingFindingRow[]): OnboardingAggregate {
+  return {
+    steps: [
+      /* 2026-10-15: was a constant 'complete'. Nothing records this step: no row marks
+         it done, and SSO is configured in the server's environment, not in a table. */
+      { id: 'connect', label: 'Connect', desc: 'Org account · SSO · admin', state: 'not_recorded',
+        note: 'Not recorded: nothing records whether the org account, SSO and admin set-up are complete.' },
+      { id: 'upload', label: 'Upload archive', desc: 'Legacy submission files', state: c.files > 0 ? 'complete' : 'pending' },
+      { id: 'map', label: 'Section mapping', desc: 'AnA maps files → sections', state: c.mapped > 0 ? 'active' : 'pending' },
+      { id: 'validate', label: 'Validate', desc: 'Completeness + integrity checks', state: c.findings > 0 ? 'active' : 'pending' },
+    ],
+    artifacts: files.map((r) => ({
+      id: `i-${r.id}`,
+      legacy: r.file_name,
+      mapped: r.mapped_artifact_kind ?? (r.artifact_id != null ? String(r.artifact_id) : null),
+      section: r.mapped_ctd_section,
+      /* 2026-10-15: was `: 0`, which reported a placement nobody measured (a
+         filename suggestion or an unmatched file, stored NULL) at confidence 0. */
+      confidence: r.mapping_confidence != null ? Number(r.mapping_confidence) : null,
+      state: r.status,
+      /* 2026-10-15: was a constant 0 on every row. */
+      issues: r.open_findings,
+    })),
+    /* 2026-10-15: a finding about no one file had artifact '', and no row said whether it was resolved. */
+    validations: finds.map((r) => ({
+      id: `v-${r.id}`, artifact: r.file_path, rule: r.code, severity: r.severity, note: r.message, resolved: r.resolved === true,
+    })),
+    kpis: [
+      /* 2026-10-15: the metric was the listing's length: every file row of every job, cut at 500. */
+      { label: 'Artifacts imported', metric: String(c.imported), meta: `${c.mapped} mapped`, tone: 'ok' },
+      /* 2026-10-15: counted resolved findings as open, over the newest 500 only. */
+      { label: 'Open findings', metric: String(c.open_findings), meta: '', tone: c.open_findings > 0 ? 'warn' : 'ok' },
+    ],
+    totals: {
+      files: c.files, imported: c.imported, mapped: c.mapped, findings: c.findings,
+      openFindings: c.open_findings, listLimit: ONBOARDING_LIST_LIMIT,
+    },
+  };
+}
+
 router.get('/onboarding/:tenantId', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   try {
-    const files = await pool.query(
-      `SELECT id, file_name, mapped_ctd_section, mapped_artifact_kind, artifact_id,
-              mapping_confidence, status
-         FROM import_job_files WHERE organization_id = $1
-        ORDER BY created_at DESC LIMIT 500`,
-      [orgId],
-    ).catch((e) => { if ((e as { code?: string }).code === '42P01') return { rows: [] }; throw e; });
-
-    const artifacts = files.rows.map((r: Record<string, unknown>) => ({
-      id: `i-${r.id}`,
-      legacy: (r.file_name as string) ?? '',
-      mapped: (r.mapped_artifact_kind as string) ?? (r.artifact_id != null ? String(r.artifact_id) : ''),
-      section: (r.mapped_ctd_section as string) ?? '',
-      /* 2026-10-15: was `: 0`, which reported a placement nobody measured (a
-         filename suggestion or an unmatched file, stored NULL) at confidence 0. */
-      confidence: r.mapping_confidence != null ? Number(r.mapping_confidence) : null,
-      state: (r.status as string) ?? 'pending',
-      issues: 0,
-    }));
-
-    const finds = await pool.query(
-      `SELECT id, file_path, code, severity, message, resolved
-         FROM import_job_findings WHERE organization_id = $1
-        ORDER BY created_at DESC LIMIT 500`,
-      [orgId],
-    ).catch((e) => { if ((e as { code?: string }).code === '42P01') return { rows: [] }; throw e; });
-
-    const validations = finds.rows.map((r: Record<string, unknown>) => ({
-      id: `v-${r.id}`,
-      artifact: (r.file_path as string) ?? '',
-      rule: (r.code as string) ?? '',
-      severity: (r.severity as string) ?? 'ok',
-      note: (r.message as string) ?? '',
-    }));
-
-    /* 2026-10-15: was `a.state === 'mapped' || a.mapped !== ''`, which counted every
-       row with an artifact kind — unconfirmed suggestions, the attachment bucket,
-       the md5 index and stylesheets — as mapped. */
-    const mapped = artifacts.filter((a) => a.state === 'mapped' || a.state === 'imported').length;
-    const kpis = [
-      { label: 'Artifacts imported', metric: String(artifacts.length), meta: `${mapped} mapped`, tone: 'ok' },
-      { label: 'Open findings', metric: String(validations.filter((v) => v.severity !== 'ok').length), meta: '', tone: 'warn' },
-    ];
-
-    const steps = [
-      { id: 'connect', label: 'Connect', desc: 'Org account · SSO · admin', state: 'complete' },
-      { id: 'upload', label: 'Upload archive', desc: 'Legacy submission files', state: artifacts.length > 0 ? 'complete' : 'pending' },
-      { id: 'map', label: 'Section mapping', desc: 'AnA maps files → sections', state: mapped > 0 ? 'active' : 'pending' },
-      { id: 'validate', label: 'Validate', desc: 'Completeness + integrity checks', state: validations.length > 0 ? 'active' : 'pending' },
-    ];
-
-    return ok(res, { steps, artifacts, validations, kpis });
+    const [counts, files, finds] = await Promise.all([
+      /* Over every row, not the listing. "mapped" is a backbone-declared or
+         person-confirmed file, imported or not. 2026-10-15: was
+         `a.state === 'mapped' || a.mapped !== ''` over the listing, which counted
+         unconfirmed suggestions, the attachment bucket, the md5 index and
+         stylesheets as mapped. */
+      pool.query<OnboardingCounts>(
+        `SELECT COUNT(*)::int AS files,
+                COUNT(*) FILTER (WHERE status = 'imported')::int AS imported,
+                COUNT(*) FILTER (WHERE status IN ('mapped', 'imported'))::int AS mapped,
+                (SELECT COUNT(*)::int FROM import_job_findings WHERE organization_id = $1) AS findings,
+                (SELECT COUNT(*)::int FROM import_job_findings
+                  WHERE organization_id = $1 AND resolved IS NOT TRUE) AS open_findings
+           FROM import_job_files WHERE organization_id = $1`,
+        [orgId],
+      ),
+      pool.query<OnboardingFileRow>(
+        `SELECT f.id, f.file_name, f.mapped_ctd_section, f.mapped_artifact_kind, f.artifact_id,
+                f.mapping_confidence, f.status,
+                (SELECT COUNT(*)::int FROM import_job_findings x
+                  WHERE x.organization_id = $1 AND x.import_job_id = f.import_job_id
+                    AND x.file_path = f.relative_path AND x.resolved IS NOT TRUE) AS open_findings
+           FROM import_job_files f WHERE f.organization_id = $1
+          ORDER BY f.created_at DESC, f.id DESC LIMIT $2`,
+        [orgId, ONBOARDING_LIST_LIMIT],
+      ),
+      pool.query<OnboardingFindingRow>(
+        `SELECT id, file_path, code, severity, message, resolved
+           FROM import_job_findings WHERE organization_id = $1
+          ORDER BY created_at DESC, id DESC LIMIT $2`,
+        [orgId, ONBOARDING_LIST_LIMIT],
+      ),
+    ]);
+    return ok(res, onboardingAggregate(counts.rows[0], files.rows, finds.rows));
   } catch (err) {
     return serverError(res, log, 'onboarding-aggregate', err);
   }

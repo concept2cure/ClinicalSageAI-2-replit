@@ -91,7 +91,7 @@ export class FDADrugsConnector implements DataConnector {
         sourceConnector: this.id,
         title: `${products || appNo} (${sponsor})`,
         summary: `Application: ${appNo} | Sponsor: ${sponsor} | Products: ${products} | Latest: ${latestAction}`,
-        relevanceScore: Math.max(0, 1 - i * 0.04),
+        sourceRank: i + 1,
         metadata: { applicationNumber: appNo, sponsor, products: drug.products, submissions },
         url: `https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=${appNo.replace(/\D/g, '')}`,
       };

@@ -81,13 +81,13 @@ describe('recordIcsrAcknowledgment ties the ACK to this transmission', () => {
   });
 
   it('refuses an ACK that names another message (unchanged behaviour)', async () => {
-    const err = await recordIcsrAcknowledgment('tx-1', ACK('<messagenumb>MSG-2026-9999</messagenumb>'), ctx).catch((e: unknown) => e);
+    const err = await recordIcsrAcknowledgment('tx-1', ACK('<icsrmessagenumb>MSG-2026-9999</icsrmessagenumb>'), ctx).catch((e: unknown) => e);
     expect((err as IcsrTransmissionError).code).toBe('ACK_MISMATCH');
     expect(store.updates).toEqual([]);
   });
 
   it("records an ACK naming this message, without writing the platform's clock as the agency's acknowledgement time", async () => {
-    const row = await recordIcsrAcknowledgment('tx-1', ACK('<messagenumb>MSG-2026-0001</messagenumb>'), ctx);
+    const row = await recordIcsrAcknowledgment('tx-1', ACK('<icsrmessagenumb>MSG-2026-0001</icsrmessagenumb>'), ctx);
     expect(row.status).toBe('acknowledged');
     expect(row.ackCode).toBe('AA');
     expect(row.acknowledgedMessageNumber).toBe('MSG-2026-0001');

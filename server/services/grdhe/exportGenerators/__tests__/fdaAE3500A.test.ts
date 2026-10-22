@@ -13,10 +13,11 @@
  *       20260315 in every runtime timezone — the previous UTC round-trip could
  *       shift it to 20260314.
  *
- * TZ is forced to a positive-offset zone (UTC+9) so the pre-fix toISOString()
- * behaviour would deterministically shift the Date-valued receiveDate back a day;
- * this makes the date assertions fail against the old implementation rather than
- * only on some CI machines.
+ * TZ is forced to a positive-offset zone (UTC+9), where a UTC round-trip
+ * shifted the string onset date carrying a local-midnight time back a day.
+ * 2026-10-15: the Date-valued fields are built as the service builds them
+ * (UTC midnight) and read as their UTC day; a zone west of UTC is pinned in
+ * safety-export-dates-keep-their-day-and-precision-west-of-utc.test.ts.
  */
 
 process.env.TZ = 'Asia/Tokyo';
@@ -39,10 +40,13 @@ function buildEvent(overrides: Record<string, any> = {}): CanonicalAdverseEvent 
     caseNumber: 'CASE-001',
     caseVersion: 1,
     reportType: 'initial',
-    // Date-valued field, local midnight of the boundary date. Under the old
-    // UTC round-trip in a UTC+ zone this rendered as the previous day.
-    receiveDate: new Date(2026, 2, 15), // 2026-03-15 local
-    eventDate: new Date(2026, 2, 15),
+    // Date-valued fields as the service builds them from a DATE column:
+    // new Date('YYYY-MM-DD'), UTC midnight. 2026-10-15: this fixture built
+    // local midnight (new Date(2026, 2, 15)), which the service never does; the
+    // export now reads a Date's UTC day (the zone west of UTC is pinned in
+    // safety-export-dates-keep-their-day-and-precision-west-of-utc.test.ts).
+    receiveDate: new Date('2026-03-15'),
+    eventDate: new Date('2026-03-15'),
     isSerious: false,
     // Canonical field names (server/services/grdhe/types.ts). 2026-10-15: this
     // fixture used product_name, meddra_pt_code, reaction_term and
@@ -108,9 +112,9 @@ describe('generateFDA3500AXML — date-only fields do not shift (finding b)', ()
     expect(result.content).not.toContain('value="20260314"');
   });
 
-  it('files a Date-valued receiveDate as its local calendar day', () => {
+  it('files a Date-valued receiveDate as the calendar day it was built from', () => {
     const result = generateFDA3500AXML(
-      buildEvent({ receiveDate: new Date(2026, 2, 15) }),
+      buildEvent({ receiveDate: new Date('2026-03-15') }),
       {} as any,
       MEDDRA_LOCK
     );

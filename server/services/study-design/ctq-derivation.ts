@@ -72,6 +72,7 @@
  */
 
 import { DEFAULT_CTQ_FACTORS, type CtqSeed } from '../rbm/rbm-engine';
+import type { CtqCategory } from '../rbm/rbm-actuator';
 import { structureEligibility, type StructuredEligibilityCriterion } from './eligibility-model';
 import { present } from './usdm-types';
 import {
@@ -91,7 +92,7 @@ export const CTQ_BASIS =
 
 // ─── Public shapes ───────────────────────────────────────────────────────────
 
-export type CtqCategory = CtqSeed['category'];
+// CtqCategory is the RBM actuator's (the same five as CtqSeed['category']); declared again here until 2026-10-15.
 
 /** The categories a table-rated derived row can carry (no rule emits `operational`). */
 export type CtqTableCategory = Exclude<CtqCategory, 'operational'>;

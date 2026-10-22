@@ -428,8 +428,10 @@ async function loadDecisions(
         contextType: contextKind ?? r.domain_track ?? 'unknown',
         contextDescription: r.title ?? null,
         recommendationType: r.recommendation_type ?? null,
-        recommendationSummary: r.recommendation_summary ?? '',
-        confidence: r.confidence_level ?? 'provisional',
+        // 2026-10-15: `?? ''` printed an unrecorded summary blank, and
+        // `?? 'provisional'` gave an unrecorded confidence a level.
+        recommendationSummary: r.recommendation_summary ?? 'not recorded',
+        confidence: r.confidence_level ?? 'not recorded',
         actionState: r.action_state ?? 'recommended_only',
         // The deployed table records no separate approval state; it is what the
         // action state says, not a second field guessed alongside it.

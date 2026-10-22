@@ -3,24 +3,30 @@
 # everything else is the stack's. See terraform/stack/versions.tf for why.
 
 terraform {
-  required_version = ">= 1.5"
+  required_version = ">= 1.11"
 
   required_providers {
+    # Bounded to the 5.x line the lock file pins (.terraform.lock.hcl);
+    # 5.93 is the first with aws_db_instance.database_insights_mode.
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 5.0"
+      version = "~> 5.93"
     }
     random = {
       source  = "hashicorp/random"
-      version = ">= 3.5"
+      version = "~> 3.6"
     }
   }
 
+  # The bucket is the account's (c2c-tfstate-<account id>-us-east-1, created by
+  # terraform/bootstrap), so it is not named here: copy backend.hcl.example to
+  # backend.hcl and run `terraform init -backend-config=backend.hcl`. Locking is
+  # S3-native, a lock object beside the state; the DynamoDB table it replaced
+  # is deprecated (MR-03 OPS-03/OPS-26; ci:terraform-backend).
   backend "s3" {
-    bucket         = "c2c-terraform-state"
-    key            = "staging/terraform.tfstate"
-    region         = "us-east-1"
-    dynamodb_table = "c2c-terraform-lock"
+    key          = "staging/terraform.tfstate"
+    region       = "us-east-1"
+    use_lockfile = true
     # No `encrypt = true`: without a kms_key_id it requests SSE-S3 on every write,
     # overriding the bucket's customer-managed key, and the bucket refuses it
     # (terraform/bootstrap, TRIVY-01).
@@ -132,6 +138,11 @@ output "rds_endpoint" {
 
 output "ecs_cluster" {
   value = module.stack.ecs_cluster
+}
+
+# The pipeline's repository variable FRONTEND_BUCKET (terraform.tfvars.example).
+output "frontend_bucket" {
+  value = module.stack.frontend_bucket
 }
 
 output "evidence_bucket" {

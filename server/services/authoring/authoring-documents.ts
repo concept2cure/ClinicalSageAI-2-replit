@@ -68,7 +68,7 @@ export interface CreateContext {
   audit: AuthoringAuditContext;
 }
 
-export type Refusal = { kind: 'refused'; status: 400 | 403 | 404 | 409 | 503; error: string; code?: string };
+export type AuthoringRefusal = { kind: 'refused'; status: 400 | 403 | 404 | 409 | 503; error: string; code?: string };
 
 export interface Binding {
   documentId: string | null;
@@ -372,7 +372,7 @@ export interface CreateDocumentInput {
 }
 
 export type CreateDocumentOutcome =
-  | Refusal
+  | AuthoringRefusal
   | {
       kind: 'created';
       document: Record<string, unknown>;
@@ -392,7 +392,7 @@ export type CreateDocumentOutcome =
  * or a deleted one. 404, not 403: the caller learns nothing about another
  * tenant's project ids.
  */
-async function refuseProgramAnchor(ctx: CreateContext, clientProgramId: unknown): Promise<Refusal | null> {
+async function refuseProgramAnchor(ctx: CreateContext, clientProgramId: unknown): Promise<AuthoringRefusal | null> {
   if (clientProgramId === undefined || clientProgramId === null || clientProgramId === '') {
     return { kind: 'refused', status: 400, code: 'PROJECT_REQUIRED', error: 'Open a project first: a document belongs to a project.' };
   }
@@ -419,7 +419,7 @@ async function refuseProgramAnchor(ctx: CreateContext, clientProgramId: unknown)
  * a template has no edit route, so the person creating the document can act
  * only on the choice of template (fix-up).
  */
-async function refuseTemplateFigures(seeds: TemplateSectionSeed[]): Promise<Refusal | null> {
+async function refuseTemplateFigures(seeds: TemplateSectionSeed[]): Promise<AuthoringRefusal | null> {
   for (const [i, seed] of seeds.entries()) {
     const refused = await refusedFigures(seed.content);
     if (refused.length > 0) {
@@ -446,7 +446,7 @@ async function refuseTemplateFigures(seeds: TemplateSectionSeed[]): Promise<Refu
  * the sections it carries, of any code; a market's copy holds only its Module 1
  * and 3.2.R (security review, 2026-10-15).
  */
-async function refuseStart(ctx: CreateContext, input: CreateDocumentInput): Promise<Refusal | null> {
+async function refuseStart(ctx: CreateContext, input: CreateDocumentInput): Promise<AuthoringRefusal | null> {
   const programRefusal = await refuseProgramAnchor(ctx, input.client_program_id);
   if (programRefusal) return programRefusal;
   if (!input.c2c_document_id || !input.template_id) return null;
@@ -466,7 +466,7 @@ const programIdOf = (v: unknown): string | null => (v ? String(v) : null);
  */
 async function createBinding(
   ctx: CreateContext, builtin: Parameters<typeof templateWorkingBinding>[0], clientProgramId: string | null, named: unknown,
-): Promise<Binding | Refusal> {
+): Promise<Binding | AuthoringRefusal> {
   const marketDocumentId = named ? String(named) : null;
   const binding = await templateWorkingBinding(builtin, () => resolveBinding(ctx.pool, ctx.tenantId, clientProgramId, marketDocumentId));
   if (!marketDocumentId || binding.documentId === marketDocumentId) return binding;
@@ -549,7 +549,7 @@ export interface CreateSectionInput {
 }
 
 export type CreateSectionOutcome =
-  | Refusal
+  | AuthoringRefusal
   | { kind: 'lineage_failed' }
   | { kind: 'created'; section: Record<string, unknown> };
 
@@ -564,7 +564,7 @@ export type CreateSectionOutcome =
  * Content that is not text is refused as well: the driver stores an object as
  * its JSON, which no figure check would have read.
  */
-async function refuseSectionInput(input: CreateSectionInput): Promise<Refusal | null> {
+async function refuseSectionInput(input: CreateSectionInput): Promise<AuthoringRefusal | null> {
   const { doc_id, code, title, content } = input;
   if (!doc_id || !code || !title) {
     return { kind: 'refused', status: 400, error: 'doc_id, code, and title are required' };
@@ -606,7 +606,7 @@ async function isMarketDocumentCopy(pool: Queryable, tenantId: number, docId: st
  */
 export async function refuseSectionParent(
   pool: Queryable, tenantId: number, parent: { status?: string | null }, docId: string, codeInput: string | { code: string; strict: true },
-): Promise<Refusal | null> {
+): Promise<AuthoringRefusal | null> {
   const code = typeof codeInput === 'string' ? codeInput : codeInput.code;
   const strict = typeof codeInput !== 'string';
   if (LOCKED_DOCUMENT_STATUSES.has(String(parent.status ?? '').toUpperCase())) {

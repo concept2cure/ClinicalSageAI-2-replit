@@ -308,15 +308,17 @@ WHERE schemaname = 'cortex';
 | assemble_context | cortex | ☐ | ☐ | ☐ |
 | query | cortex | ☐ | ☐ | ☐ |
 | health_check | cortex | ☐ | ☐ | ☐ |
-| extract_regulatory_signals | cortex | ☐ | ☐ | ☐ |
-| generate_intuition_prediction | cortex | ☐ | ☐ | ☐ |
+| extract_regulatory_signals (installed; refuses — note below) | cortex | ☐ | ☐ | ☐ |
+| generate_intuition_prediction (installed; refuses — note below) | cortex | ☐ | ☐ | ☐ |
 | estimate_uncertainty | cortex | ☐ | ☐ | ☐ |
-| estimate_causal_effect | cortex | ☐ | ☐ | ☐ |
+| estimate_causal_effect (installed; refuses — note below) | cortex | ☐ | ☐ | ☐ |
 | record_learning_experience | cortex | ☐ | ☐ | ☐ |
 | run_distillation | cortex | ☐ | ☐ | ☐ |
 | evolve | cortex | ☐ | ☐ | ☐ |
 | find_transfer_candidates | cortex | ☐ | ☐ | ☐ |
 | execute_transfer | cortex | ☐ | ☐ | ☐ |
+
+**Note, 2026-10-15.** `extract_regulatory_signals`, `generate_intuition_prediction` and `estimate_causal_effect` are installed and refuse every call with `feature_not_supported`: no signal extractor, prediction model or causal estimator exists. They run as their caller (SECURITY INVOKER), so their Security Definer check reads NO. They used to answer "no signals" for an extraction never performed, or store fixed priors and jittered constants as model output. `db/migrations/074_gcc_regulatory_intuition_engine.sql` and `076_gcc_causal_inference_engine.sql` create them this way; `migrations/20261015i_cortex_engine_functions_refuse.sql` (deploy set) replaces them on databases installed earlier. `generate_counterfactual`, `record_prediction_outcome`, `compute_domain_similarity` and `suggest_transfer_mapping` (074, 076, 078), not listed in this table, are installed and refuse the same way.
 
 ```sql
 -- Verification Query

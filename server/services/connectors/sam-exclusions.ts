@@ -64,7 +64,7 @@ export class SamExclusionsConnector implements DataConnector {
         sourceConnector: this.id,
         title: `EXCLUSION MATCH: ${partyName}`,
         summary: `Type: ${det.exclusionType || 'n/a'} | Classification: ${det.classificationType || 'n/a'} | Agency: ${det.excludingAgencyName || 'n/a'} | Active`,
-        relevanceScore: 1 - i * 0.02,
+        sourceRank: i + 1,
         metadata: {
           screenedName: name, exclusionType: det.exclusionType, classificationType: det.classificationType,
           excludingAgency: det.excludingAgencyName, ueiSAM: r.ueiSAM, activeDate: det.activeDate, ctCode: det.ctCode,

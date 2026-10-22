@@ -250,7 +250,9 @@ export const factDrift = pgTable(
     expectedValue: text('expected_value'),
     observedValue: text('observed_value'),
     driftType: varchar('drift_type', { length: 24 }).notNull(),
-    severity: varchar('severity', { length: 12 }).notNull().default('medium'),
+    // Stated by the writer ('unrated' when it assessed none). The default
+    // 'medium' was removed 2026-10-15: an unrated drift read as a medium one.
+    severity: varchar('severity', { length: 12 }).notNull(),
     status: varchar('status', { length: 16 }).notNull().default('open'),
     detectedAt: timestamp('detected_at', { withTimezone: true }).notNull().defaultNow(),
     detectedBy: varchar('detected_by', { length: 40 }).notNull().default('drift_sentinel'),

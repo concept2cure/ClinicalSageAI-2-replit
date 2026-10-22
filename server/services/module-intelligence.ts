@@ -130,6 +130,9 @@ Key requirements:
     : ''
 }
 ${
+  /* 2026-10-15: said "~180 calendar days (standard), ~60 days (PMA supplement)". The
+     period is 180 FDA days (FD&C Act 515(d)(1), as submission-readiness-twin-service.ts
+     records it; MDUFA goal, regulatory-timelines.ts); nothing here supports ~60 days. */
   isPMA
     ? `This is a **Premarket Approval (PMA)** application (21 CFR 814).
 Key requirements:
@@ -139,10 +142,11 @@ Key requirements:
 - Clinical investigations (pivotal study, typically randomized controlled trial)
 - Proposed labeling and indications for use
 - Complete device description and drawings
-- Review time: ~180 calendar days (standard), ~60 days (PMA supplement)`
+- Review period: 180 FDA days for an original PMA (FD&C Act §515(d)(1); the MDUFA decision goal) — review-clock days, not counting time on hold awaiting the applicant's response to a deficiency letter; supplements run on their own clocks under 21 CFR 814.39 (180 days for a 180-day or panel-track supplement, 30 days for a 30-day notice)`
     : ''
 }
 ${
+  /* 2026-10-15: said "~150 calendar days"; the MDUFA goal is 150 FDA days (regulatory-timelines.ts). */
   isDeNovo
     ? `This is a **De Novo Classification Request** (21 CFR 860.260).
 Key requirements:
@@ -151,7 +155,7 @@ Key requirements:
 - Valid scientific evidence of safety and effectiveness
 - Risk-benefit analysis comparing to standard of care
 - Can reference FDA De Novo guidance and similar device precedents
-- Review time: ~150 calendar days`
+- Review goal: 150 FDA days (the MDUFA decision goal) — review-clock days, not counting time on hold awaiting the requester's response to an additional-information request`
     : ''
 }
 

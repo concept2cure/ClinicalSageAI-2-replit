@@ -78,7 +78,12 @@ describe('POST /imports', () => {
   it('detects + persists files + findings, returns 201', async () => {
     /* Job insert returns id=42. */
     queryFn.mockResolvedValueOnce({ rows: [{ id: 42 }] });
-    /* Detection returns 2 files + 1 finding. */
+    /* Detection returns what detectArchive returns for an FDA eCTD archive whose
+       backbone declares the cover letter: the backbone XML (structure), the
+       declared leaf, a leaf placed by filename pattern alone, and the two
+       findings that go with them. 2026-10-15: this mock still had the old file
+       shape (a mappingConfidence of 1.0/0.3, no reviewStatus, a 'fallback' file
+       typed 'leaf', a 'low_confidence_mapping' finding). */
     detectFn.mockResolvedValueOnce({
       format: 'fda_ectd',
       region: 'fda',
@@ -87,26 +92,37 @@ describe('POST /imports', () => {
       sponsor: 'Acme Pharma',
       files: [
         {
+          relativePath: 'm1/us/us-regional.xml', fileName: 'us-regional.xml',
+          sizeBytes: 270, sha256: 'c'.repeat(64), detectedKind: 'backbone_xml',
+          mappedCtdSection: null, mappedSectionKey: null, mappedArtifactKind: null,
+          mappingSource: 'structure_path', mappingRuleId: null, reviewStatus: 'skipped',
+        },
+        {
           relativePath: 'm1/us/1-1/cover-letter.pdf', fileName: 'cover-letter.pdf',
           sizeBytes: 1024, sha256: 'a'.repeat(64), detectedKind: 'leaf',
-          mappedCtdSection: '1.1', mappedSectionKey: 'cover-letter',
-          mappedArtifactKind: 'cover_letter',
-          mappingConfidence: 1.0, mappingSource: 'backbone_xml',
+          mappedCtdSection: '1.1', mappedSectionKey: null, mappedArtifactKind: 'cover_letter',
+          mappingSource: 'backbone_xml', mappingRuleId: null, reviewStatus: 'mapped',
         },
         {
           relativePath: 'm3/3-2-s/spec.pdf', fileName: 'spec.pdf',
           sizeBytes: 8192, sha256: 'b'.repeat(64), detectedKind: 'leaf',
-          mappedCtdSection: '3.2.S', mappedSectionKey: null,
-          mappedArtifactKind: 'document',
-          mappingConfidence: 0.3, mappingSource: 'fallback',
+          mappedCtdSection: '3', mappedSectionKey: null, mappedArtifactKind: 'cmc',
+          mappingSource: 'filename_heuristic', mappingRuleId: 'filename.module-3', reviewStatus: 'suggested',
         },
       ],
       findings: [
-        { severity: 'warning', code: 'low_confidence_mapping', message: '1 low-confidence file' },
+        {
+          severity: 'warning', code: 'filename_suggestions_unconfirmed',
+          message: '1 file(s) were placed by filename pattern alone; nothing in the archive declares their section. They are stored as suggestions and are not imported on approval until a person confirms each placement.',
+        },
+        {
+          severity: 'info', code: 'extra_files_not_in_backbone',
+          message: '1 file(s) are in the archive but not referenced by the regional backbone XML.',
+        },
       ],
     });
-    /* Per-file inserts (2x) + per-finding insert (1x) + header update + final SELECT. */
-    queryFn.mockResolvedValue({ rows: [{ id: 42, status: 'ready_for_review', file_count: 2 }] });
+    /* Per-file inserts (3x) + per-finding inserts (2x) + header update + final SELECT. */
+    queryFn.mockResolvedValue({ rows: [{ id: 42, status: 'ready_for_review', file_count: 3 }] });
 
     const res = await request(makeApp())
       .post('/api/mdx/imports')

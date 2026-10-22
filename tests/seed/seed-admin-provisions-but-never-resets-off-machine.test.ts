@@ -49,7 +49,7 @@ vi.mock('pg', () => {
 const ROOT = path.resolve(__dirname, '../..');
 const REMOTE = 'postgresql://u:p@uat-db.example.invalid:5432/c2c';
 const LOCAL = 'postgresql://postgres:postgres@127.0.0.1:5432/c2c';
-const KEYS = ['DATABASE_URL', 'DATABASE_NEON_NEW_SECRET', 'ADMIN_EMAIL', 'ADMIN_PASSWORD', 'ADMIN_NAME'] as const;
+const KEYS = ['DATABASE_URL', 'DATABASE_NEON_NEW_SECRET', 'ADMIN_EMAIL', 'ADMIN_PASSWORD', 'ADMIN_NAME', 'ADMIN_ORG_SLUG'] as const;
 
 let db: PGlite;
 
@@ -136,6 +136,8 @@ describe('seed-admin against a database that is not on this machine', () => {
       DATABASE_URL: REMOTE,
       ADMIN_EMAIL: 'ops@customer.example',
       ADMIN_PASSWORD: 'a-real-secret-123',
+      // Off this machine the organisation is named (2026-10-15).
+      ADMIN_ORG_SLUG: 'customer',
     });
     expect(await accountRow('ops@customer.example')).toEqual({
       password_hash: 'old-hash',
@@ -151,10 +153,12 @@ describe('seed-admin against a database that is not on this machine', () => {
   }, 60_000);
 
   it('creates a new account, and does not print the password it was given', async () => {
+    await db.query(`INSERT INTO organizations (name, slug) VALUES ('Customer', 'customer')`);
     const r = await runSeedAdmin({
       DATABASE_URL: REMOTE,
       ADMIN_EMAIL: 'new-admin@customer.example',
       ADMIN_PASSWORD: 'a-real-secret-123',
+      ADMIN_ORG_SLUG: 'customer',
     });
     expect(r.exits).toEqual([]);
     const row = await accountRow('new-admin@customer.example');

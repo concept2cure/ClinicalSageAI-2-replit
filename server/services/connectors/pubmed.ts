@@ -70,7 +70,7 @@ export class PubMedConnector implements DataConnector {
         sourceConnector: this.id,
         title: article.title || `PubMed ${id}`,
         summary: `${authors}${authors ? '. ' : ''}${journal} (${year}). ${article.title || ''}`,
-        relevanceScore: 1 - i * 0.04,
+        sourceRank: i + 1,
         metadata: { pmid: id, journal, year, authors: article.authors, doi: article.elocationid },
         url: `https://pubmed.ncbi.nlm.nih.gov/${id}/`,
       };

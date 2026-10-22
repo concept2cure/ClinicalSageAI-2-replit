@@ -95,9 +95,33 @@ export interface UpsertFactInput {
   valueType?: string;
   establishedByClaimId?: number | null;
   establishedBySourceId?: number | null;
-  /** The score someone stated; null or omitted = unscored. */
+  /** The score someone stated, 0–1; null or omitted = unscored. */
   confidence?: number | null;
   createdBy?: number | null;
+}
+
+/** A fact input the store will not write, naming the field. Nothing was written. */
+export class FactInputRefusal extends Error {
+  readonly status = 422 as const;
+  constructor(readonly field: string, message: string) {
+    super(message);
+    this.name = 'FactInputRefusal';
+  }
+}
+
+/**
+ * A stated confidence is a proportion. 2026-10-15: any number was written —
+ * 1.5 above certainty, and 85 (a percent) overflowed numeric(5,4) in the INSERT
+ * after a re-version had already superseded the active fact. Checked before
+ * any write.
+ */
+function assertStatedConfidence(confidence: number | null | undefined): void {
+  if (typeof confidence === 'number' && !(Number.isFinite(confidence) && confidence >= 0 && confidence <= 1)) {
+    throw new FactInputRefusal(
+      'confidence',
+      `confidence ${String(confidence)} is outside 0–1; a fact's confidence is a proportion. Nothing was written.`,
+    );
+  }
 }
 
 /**
@@ -106,6 +130,7 @@ export interface UpsertFactInput {
  * the store keeps full history rather than mutating a cell in place.
  */
 export async function upsertCanonicalFact(input: UpsertFactInput): Promise<CanonicalFact> {
+  assertStatedConfidence(input.confidence);
   const existing = await resolveActiveFact(input.programId, input.entity, input.field);
   if (existing) return supersedeAndReversion(existing, input);
   return insertFactVersion(input, null);
@@ -126,6 +151,7 @@ export async function supersedeAndReversion(
   input: Omit<UpsertFactInput, 'organizationId' | 'programId' | 'entity' | 'field'> &
     Partial<Pick<UpsertFactInput, 'organizationId' | 'programId' | 'entity' | 'field'>>
 ): Promise<CanonicalFact> {
+  assertStatedConfidence(input.confidence);
   await db
     .update(canonicalFacts)
     .set({ status: 'superseded', updatedAt: new Date() })

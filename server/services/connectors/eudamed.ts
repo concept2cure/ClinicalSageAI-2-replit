@@ -49,7 +49,7 @@ export class EudamedConnector implements DataConnector {
       sourceConnector: this.id,
       title: device.deviceName || device.basicUdiDi || 'Unknown Device',
       summary: `Basic UDI-DI: ${device.basicUdiDi} | Manufacturer: ${device.manufacturer} | Risk class: ${device.riskClass} | Status: ${device.status}`,
-      relevanceScore: 1 - i * 0.04,
+      sourceRank: i + 1,
       metadata: { ...device, source: EUDAMED_SOURCE },
       url: device.url,
     }));

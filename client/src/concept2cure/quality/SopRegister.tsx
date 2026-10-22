@@ -197,7 +197,8 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
       setRouting(null);
     }
   };
-  const effectiveCount = docs.filter((d) => d.status === 'effective').length;
+  // In force includes an effective SOP whose next version is being drafted or reviewed.
+  const effectiveCount = docs.filter((d) => d.status === 'effective' || d.inForce).length;
   const underReviewCount = docs.filter((d) => d.status === 'in_review').length;
   const draftCount = docs.filter((d) => d.status === 'draft').length;
   const overdueCount = reviewDue.filter((r) => r.overdue).length;
@@ -424,12 +425,15 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
                   <span className="qms-tag">{DOC_TYPE_LABEL[d.docType] ?? d.docType}</span>
                 </div>
                 <div className="qms-cell mono">{d.version}</div>
-                <div className="qms-cell">
+                <div className="qms-cell" title={d.inForce ? `Version ${d.inForce.version} stays in force until version ${d.version} is approved.` : undefined}>
+                  {d.inForce && (
+                    <span className="qms-pill" data-tone="effective" data-testid="qms-in-force">v{d.inForce.version} in force</span>
+                  )}{d.inForce ? ' ' : null}
                   <span className="qms-pill" data-tone={STATUS_TONE[d.status]}>
                     {STATUS_LABEL[d.status]}
                   </span>
                 </div>
-                <div className="qms-cell">{formatDate(d.effectiveDate)}</div>
+                <div className="qms-cell">{formatDate(d.inForce?.effectiveDate ?? d.effectiveDate)}</div>
                 <div className="qms-cell">
                   {d.nextReviewDate ? (
                     <span className={overdue ? 'qms-overdue' : undefined}>

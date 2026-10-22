@@ -51,7 +51,8 @@ beforeEach(() => {
   H.selects = 0;
   H.wheres = [];
   H.rows = [];
-  // generateSAP writes <protocol_id>_sap.txt under data/sap; not from a test.
+  // generateSAP wrote <protocol_id>_sap.txt under data/sap until 2026-10-15; a
+  // regression must not reach the disk from a test.
   vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 });
 afterEach(() => {
@@ -61,7 +62,9 @@ afterEach(() => {
 describe('generateSAP', () => {
   it('plans the same primary analysis however many reports anybody holds, and reads none of them', async () => {
     H.rows = OTHER_TENANTS_REPORTS;
-    const { sapContent } = await SapGenerator.generateSAP(REQUIRED);
+    // 2026-10-15: the template's MMRM is stated only for a continuous endpoint
+    // (sap-generator-states-a-method-only-for-the-endpoint-type-it-fits.test.ts).
+    const { sapContent } = await SapGenerator.generateSAP({ ...REQUIRED, primary_endpoint_type: 'continuous' });
 
     expect(sapContent, 'six reports switched the Phase 3 primary analysis').not.toMatch(/GLMM|Reference-based imputation/);
     expect(sapContent).toContain('The primary endpoint will be analyzed using mixed model for repeated measures (MMRM).');
@@ -96,28 +99,6 @@ describe('updateSap', () => {
   });
 });
 
-describe('reading a saved SAP', () => {
-  const unreadable = () => {
-    vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-    vi.spyOn(fs, 'readFileSync').mockImplementation(() => {
-      throw Object.assign(new Error('EACCES: permission denied'), { code: 'EACCES' });
-    });
-  };
-
-  it('fails when the saved SAP cannot be read, rather than reporting that there is none', async () => {
-    unreadable();
-    const err = await SapGenerator.getSapByProtocolId('5').then(() => null, (e: unknown) => e);
-    expect(err, 'an unreadable SAP was reported as no SAP (null)').toBeInstanceOf(Error);
-  });
-
-  it('fails when the segments cannot be read, rather than reporting none', async () => {
-    unreadable();
-    const err = await SapGenerator.getSapSegmentsByProtocolId('5').then(() => null, (e: unknown) => e);
-    expect(err, 'an unreadable SAP was reported as having no segments ([])').toBeInstanceOf(Error);
-  });
-
-  it('still answers null for a SAP that was never saved', async () => {
-    vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-    expect(await SapGenerator.getSapByProtocolId('5')).toBeNull();
-  });
-});
+// 'reading a saved SAP' (getSapByProtocolId / getSapSegmentsByProtocolId) was
+// removed 2026-10-15 with the readers: no SAP file is written or read any more
+// (sap-generator-writes-no-file-shared-across-organizations.test.ts).

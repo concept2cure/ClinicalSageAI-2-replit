@@ -46,6 +46,13 @@ AUTH="Authorization: Bearer $TOKEN"
 CT="Content-Type: application/json"
 PROJECT="$DEMO_PROJECT_ID"
 
+# What this run created: one "module|status reached" line per artifact the
+# server created, counted from its answers (2026-10-15: the summary printed
+# fixed figures, "TOTAL: 29" and "Approved: 15", whatever happened; the script
+# makes 28 create calls, and a refused status change was printed as set).
+CREATED=0
+CREATED_LOG=""
+
 # Helper: create artifact and optionally set status + ctdSection
 create_artifact() {
   local TITLE="$1"
@@ -69,6 +76,10 @@ print(json.dumps({
 
   local AID
   AID=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('data',d).get('id',''))")
+  if [[ -z "$AID" ]]; then
+    echo "  $TITLE: the response named no artifact id; not counted"
+    return 0
+  fi
   echo "  Created: $TITLE -> $AID (ctd=$CTD)"
 
   # Assign CTD section if not auto-populated
@@ -77,25 +88,34 @@ print(json.dumps({
     -d "{\"ctdSection\":\"$CTD\"}" > /dev/null 2>&1 || true
 
   # Transition status if not draft
+  local REACHED="draft"
   if [[ "$STATUS" != "draft" ]]; then
-    # Must go through transitions: draft -> review -> approved -> locked
+    # Must go through transitions: draft -> review -> approved -> locked. A
+    # step counts only if the server accepted it: approve and lock are
+    # electronic signatures, refused without an attestation this never sends.
     if [[ "$STATUS" == "review" || "$STATUS" == "approved" || "$STATUS" == "locked" ]]; then
       curl -sf "$BASE/api/concept2cure/projects/$PROJECT/artifacts/$AID/status" \
         -X PUT -H "$AUTH" -H "$CT" \
-        -d '{"status":"review"}' > /dev/null 2>&1 || true
+        -d '{"status":"review"}' > /dev/null 2>&1 && REACHED="review"
     fi
-    if [[ "$STATUS" == "approved" || "$STATUS" == "locked" ]]; then
+    if [[ ( "$STATUS" == "approved" || "$STATUS" == "locked" ) && "$REACHED" == "review" ]]; then
       curl -sf "$BASE/api/concept2cure/projects/$PROJECT/artifacts/$AID/status" \
         -X PUT -H "$AUTH" -H "$CT" \
-        -d '{"status":"approved"}' > /dev/null 2>&1 || true
+        -d '{"status":"approved"}' > /dev/null 2>&1 && REACHED="approved"
     fi
-    if [[ "$STATUS" == "locked" ]]; then
+    if [[ "$STATUS" == "locked" && "$REACHED" == "approved" ]]; then
       curl -sf "$BASE/api/concept2cure/projects/$PROJECT/artifacts/$AID/status" \
         -X PUT -H "$AUTH" -H "$CT" \
-        -d '{"status":"locked"}' > /dev/null 2>&1 || true
+        -d '{"status":"locked"}' > /dev/null 2>&1 && REACHED="locked"
     fi
-    echo "    Status set to: $STATUS"
+    if [[ "$REACHED" == "$STATUS" ]]; then
+      echo "    Status set to: $REACHED"
+    else
+      echo "    Status is $REACHED: the server refused the next step towards $STATUS"
+    fi
   fi
+  CREATED=$((CREATED + 1))
+  CREATED_LOG+="${CTD%%.*}|${REACHED}"$'\n'
 }
 
 echo ""
@@ -924,17 +944,10 @@ echo "=========================================="
 echo "=== IND PYRAMID SEEDING COMPLETE ==="
 echo "=========================================="
 echo ""
-echo "Summary of artifacts created:"
-echo "  Module 1 (Administrative): 7 documents"
-echo "  Module 2 (Summaries): 6 documents"
-echo "  Module 3 (Quality/CMC): 5 documents"
-echo "  Module 4 (Nonclinical): 6 documents"
-echo "  Module 5 (Clinical): 5 documents"
-echo "  TOTAL: 29 documents across all CTD modules"
-echo ""
-echo "Status distribution:"
-echo "  Approved: 15 documents"
-echo "  Review: 7 documents"
-echo "  Draft: 7 documents"
-echo ""
-echo "The IND pyramid should now show live coverage across all 5 modules."
+echo "Artifacts this run created: $CREATED"
+if [[ "$CREATED" -gt 0 ]]; then
+  echo "  By CTD module:"
+  printf '%s' "$CREATED_LOG" | cut -d'|' -f1 | sort | uniq -c | while read -r N M; do echo "    $N in Module ${M#m}"; done
+  echo "  By the status each reached:"
+  printf '%s' "$CREATED_LOG" | cut -d'|' -f2 | sort | uniq -c | while read -r N S; do echo "    $N reached $S"; done
+fi

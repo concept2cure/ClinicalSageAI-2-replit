@@ -23,8 +23,8 @@ function makeDeps(over: Partial<ConnectorSearchDeps> = {}): ConnectorSearchDeps 
       {
         connectorId: 'google-drive',
         results: [
-          { id: '1', sourceConnector: 'google-drive', title: 'Protocol v3', summary: 'Final protocol', url: 'https://drive/1', relevanceScore: 0.9, metadata: {} },
-          { id: '2', sourceConnector: 'google-drive', title: 'Old draft', summary: 'Draft', url: 'https://drive/2', relevanceScore: 0.4, metadata: {} },
+          { id: '1', sourceConnector: 'google-drive', title: 'Protocol v3', summary: 'Final protocol', url: 'https://drive/1', sourceRank: 1, metadata: {} },
+          { id: '2', sourceConnector: 'google-drive', title: 'Old draft', summary: 'Draft', url: 'https://drive/2', sourceRank: 2, metadata: {} },
         ],
       },
     ]),
@@ -48,7 +48,8 @@ describe('searchConnectedRepositories', () => {
         { connector: 'veeva-vault', reason: 'credentials invalid or connector unhealthy' },
       ])
     );
-    // Results flattened + sorted by relevance desc.
+    // Results flattened in the repository's own order (sourceRank — a position, not
+    // a relevance; 2026-10-15 this pinned a relevanceScore that was only that position).
     expect(res.documents.map(d => d.title)).toEqual(['Protocol v3', 'Old draft']);
     expect(res.documents[0].url).toBe('https://drive/1');
   });
@@ -75,7 +76,7 @@ describe('searchConnectedRepositories', () => {
         { id: 'onedrive', configured: true, healthy: true },
       ]),
       searchConnectors: vi.fn().mockResolvedValue([
-        { connectorId: 'google-drive', results: [{ id: '1', sourceConnector: 'google-drive', title: 'Doc', summary: 's', relevanceScore: 1, metadata: {} }] },
+        { connectorId: 'google-drive', results: [{ id: '1', sourceConnector: 'google-drive', title: 'Doc', summary: 's', sourceRank: 1, metadata: {} }] },
         { connectorId: 'onedrive', results: [], error: 'token expired' },
       ]),
     });

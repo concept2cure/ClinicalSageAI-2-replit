@@ -7,8 +7,8 @@
  * CESP is NOT the channel for a centralised-procedure submission to EMA. EMA
  * has made the eSubmission Gateway / Web Client mandatory for every
  * centralised-procedure eCTD submission (MAAs, variations, renewals, PSURs,
- * ASMFs) since 2014-03-01 (regulator text, ema.europa.eu; basis in
- * docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/
+ * ASMFs) since 2014-03-01 (recall, from ema.europa.eu search extracts, the
+ * pages not read; basis in docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/
  * g-cesp-centralised-refusal-facts.md), and the platform has no connector for
  * it. `EmaCespGateway.transmit` therefore refuses — before its transmittal row
  * and before any request — every filing that `submissionChannelFor`
