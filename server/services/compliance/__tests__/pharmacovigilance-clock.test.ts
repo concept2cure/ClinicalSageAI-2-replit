@@ -5,15 +5,18 @@ const now = new Date('2026-06-10T00:00:00Z');
 const inDays = (d: number) => new Date('2026-06-10T00:00:00Z').getTime() + d * 86400000;
 
 describe('computeReportingClock', () => {
-  it('returns "none" when there is no deadline', () => {
+  // No deadline is undetermined, not "not breached" (2026-10-15: status 'none',
+  // breached and day6Flag false).
+  it('returns "undetermined" when there is no deadline', () => {
     const c = computeReportingClock(null, now);
-    expect(c.status).toBe('none');
+    expect(c.status).toBe('undetermined');
     expect(c.daysRemaining).toBeNull();
-    expect(c.day6Flag).toBe(false);
+    expect(c.day6Flag).toBeNull();
+    expect(c.breached).toBeNull();
   });
 
-  it('returns "none" for an invalid date', () => {
-    expect(computeReportingClock('not-a-date', now).status).toBe('none');
+  it('returns "undetermined" for an invalid date', () => {
+    expect(computeReportingClock('not-a-date', now).status).toBe('undetermined');
   });
 
   it('is on_track early in the 15-day window', () => {

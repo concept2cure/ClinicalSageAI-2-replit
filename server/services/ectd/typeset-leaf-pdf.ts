@@ -33,7 +33,7 @@
 
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
 import { toWinAnsiSafe, type LeafPdfOptions } from './leaf-pdf-renderer';
-import { addBookmarks, type OutlineNode } from './pdf-bookmark-generator';
+import { addBookmarks, type BookmarkNode } from './pdf-bookmark-generator';
 import { composedSectionToBlocks, type TypesetBlock } from './typeset-blocks';
 
 export { composedSectionToBlocks, literalParagraphs, type TypesetBlock } from './typeset-blocks';
@@ -314,7 +314,7 @@ interface Typesetter {
   cur: Cursor;
   font: PDFFont;
   bold: PDFFont;
-  headings: Array<{ level: number; node: OutlineNode }>;
+  headings: Array<{ level: number; node: BookmarkNode }>;
 }
 
 const textWidth = (cur: Cursor) => (cur.landscape ? LANDSCAPE.w : PORTRAIT.w) - 2 * MARGIN;
@@ -384,8 +384,8 @@ function buildOutline(
   header: string,
   sectionCode: string,
   headings: Typesetter['headings']
-): OutlineNode[] {
-  const roots: OutlineNode[] = [];
+): BookmarkNode[] {
+  const roots: BookmarkNode[] = [];
   const stack: Typesetter['headings'] = [];
   for (const h of headings) {
     while (stack.length && stack[stack.length - 1].level >= h.level) stack.pop();

@@ -9,7 +9,7 @@ import { PDFDocument, PDFName, PDFDict } from 'pdf-lib';
 import {
   buildOutlineTree,
   addBookmarks,
-  type OutlineNode,
+  type BookmarkNode,
 } from '../pdf-bookmark-generator';
 
 describe('buildOutlineTree', () => {
@@ -54,7 +54,7 @@ describe('addBookmarks', () => {
     doc.addPage([612, 792]);
     const baseBytes = await doc.save({ useObjectStreams: false });
 
-    const nodes: OutlineNode[] = buildOutlineTree([
+    const nodes: BookmarkNode[] = buildOutlineTree([
       { sectionCode: '2.5', title: 'Clinical Overview', pageIndex: 0 },
       { sectionCode: '2.5.1', title: 'Rationale', pageIndex: 1 },
       { sectionCode: '2.7', title: 'Clinical Summary', pageIndex: 2 },

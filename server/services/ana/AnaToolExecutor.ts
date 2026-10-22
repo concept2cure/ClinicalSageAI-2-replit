@@ -864,6 +864,9 @@ registerToolHandler('project_knowledge_search', async (input, rawCtx) => {
         },
         query,
         confidence: confidenceFromScore(d.finalScore),
+        // 2026-10-15: only the bucket was passed, so persisted provenance
+        // recorded retrievalScore null for every scored passage.
+        retrievalScore: typeof d.finalScore === 'number' ? d.finalScore : null,
       });
     });
     return JSON.stringify({
@@ -10523,16 +10526,25 @@ registerToolHandler('validate_udi', async (input) => {
 });
 
 registerToolHandler('get_electrical_standards', async (input) => {
-  // Pure reference + rule logic — no tenant context required.
+  // Pure reference + rule logic — no tenant context required. 2026-10-15: each fact was
+  // read `=== true`, so one left out answered "IEC 60601 does not apply" or dropped its
+  // collateral. Unstated stays unstated (the engine names it); a fact that is not true
+  // or false is refused, naming it.
+  const FACTS = ['electricallyPowered', 'hasAlarms', 'closedLoopControl', 'homeUse', 'emsUse', 'hasParticularStandard'] as const;
+  const unreadable = FACTS.filter((k) => input[k] !== undefined && input[k] !== null && typeof input[k] !== 'boolean');
+  if (unreadable.length > 0) {
+    return JSON.stringify({ error: `${unreadable.join(', ')} must be true or false; leave out a fact that is not known.` });
+  }
+  const fact = (k: (typeof FACTS)[number]): boolean | undefined => (typeof input[k] === 'boolean' ? (input[k] as boolean) : undefined);
   try {
     const { applicableElectricalStandards } = await import('../market-specs/electrical-safety.js');
     return JSON.stringify({ ok: true, ...applicableElectricalStandards({
-      electricallyPowered: input.electricallyPowered === true,
-      hasAlarms: input.hasAlarms === true,
-      closedLoopControl: input.closedLoopControl === true,
-      homeUse: input.homeUse === true,
-      emsUse: input.emsUse === true,
-      hasParticularStandard: input.hasParticularStandard === true,
+      electricallyPowered: fact('electricallyPowered'),
+      hasAlarms: fact('hasAlarms'),
+      closedLoopControl: fact('closedLoopControl'),
+      homeUse: fact('homeUse'),
+      emsUse: fact('emsUse'),
+      hasParticularStandard: fact('hasParticularStandard'),
     }) });
   } catch (err) {
     return JSON.stringify({ error: `get_electrical_standards failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -10540,11 +10552,21 @@ registerToolHandler('get_electrical_standards', async (input) => {
 });
 
 registerToolHandler('get_sterilization_requirements', async (input) => {
-  // Pure reference + rule logic — no tenant context required.
+  // Pure reference + rule logic — no tenant context required. 2026-10-15: `sterile` was
+  // read `=== true`, so one left out answered "not supplied sterile — does not apply",
+  // and an unknown method read as unspecified. Unstated stays unstated; a value that
+  // cannot be read is refused, naming it.
   try {
-    const { sterilizationRequirements } = await import('../market-specs/sterilization.js');
+    const { sterilizationRequirements, STERILIZATION_METHODS } = await import('../market-specs/sterilization.js');
+    const methods: string[] = [...STERILIZATION_METHODS.map((m) => m.id), 'unknown'];
+    const unreadable: string[] = [];
+    if (input.sterile !== undefined && input.sterile !== null && typeof input.sterile !== 'boolean') unreadable.push('sterile must be true or false');
+    if (input.method !== undefined && input.method !== null && !methods.includes(String(input.method))) {
+      unreadable.push(`method '${String(input.method)}' is not one of: ${methods.join(', ')}`);
+    }
+    if (unreadable.length > 0) return JSON.stringify({ error: `${unreadable.join('; ')}.` });
     return JSON.stringify({ ok: true, ...sterilizationRequirements({
-      sterile: input.sterile === true,
+      sterile: typeof input.sterile === 'boolean' ? input.sterile : undefined,
       method: typeof input.method === 'string' ? (input.method as never) : undefined,
     }) });
   } catch (err) {
@@ -15183,9 +15205,12 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
   const source = workspacePathOrRefusal(input.source_path, 'source_path', ctx.organizationId);
   if (!source.ok) return source.refusal;
   const sourcePath = source.path;
+  let createdJobId: number | null = null;
   try {
     const { getPool } = await import('../../db.js');
     const { detectArchive } = await import('../legacy-importer/detector.js');
+    // Loaded before the job row exists, so a failure after it can still mark the job.
+    const { IMPORT_FILE_INSERT_SQL, importFileParams } = await import('../../routes/mdx-imports.js');
     const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
       ? input.program_id : null;
 
@@ -15204,6 +15229,7 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
       ],
     );
     const jobId = jobInsert.rows[0].id;
+    createdJobId = jobId;
 
     /* Run detection. */
     const detected = await detectArchive(sourcePath);
@@ -15212,7 +15238,6 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
        derived status from mappingConfidence >= 0.5, so a filename suggestion was
        stored 'pending' at mapping_confidence 0.00 with no rule id; it also never
        set the job's skipped_count. */
-    const { IMPORT_FILE_INSERT_SQL, importFileParams } = await import('../../routes/mdx-imports.js');
     for (const f of detected.files) {
       await getPool().query(IMPORT_FILE_INSERT_SQL, importFileParams(jobId, ctx.organizationId, f));
     }
@@ -15261,8 +15286,13 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
         'Review then call approve_import.',
     });
   } catch (err) {
+    /* 2026-10-15: a failure after the job row existed left it at 'detecting', which
+       reads as an import still running; it is marked 'failed' through the REST route's write. */
+    const jobMarkedFailed = createdJobId !== null
+      && await (await import('../../routes/mdx-imports.js')).markImportJobFailed(createdJobId, err);
     return JSON.stringify({
       error: `start_legacy_import failed: ${err instanceof Error ? err.message : String(err)}`,
+      ...(createdJobId !== null ? { jobId: createdJobId, jobMarkedFailed } : {}),
     });
   }
 });
@@ -15286,8 +15316,11 @@ registerToolHandler('override_import_mapping', async (input, ctx) => {
     const col = COL[k]; if (!col || v === undefined) continue;
     args.push(v); setFrags.push(`${col} = $${args.length}`);
   }
-  setFrags.push(`mapping_source = 'ana'`, `mapping_confidence = 1.00`);
   if (setFrags.length === 0) return JSON.stringify({ error: 'No fields to update.' });
+  // A placement confirmed through AnA is a decision, not a measurement: no confidence.
+  // 2026-10-15: stored mapping_confidence = 1.00 on every override, 'skipped' too, and
+  // checked for no fields after adding these, so an empty override re-labelled the row 'ana'.
+  setFrags.push(`mapping_source = 'ana'`, `mapping_confidence = NULL`);
   args.push(fileId, jobId, ctx.organizationId);
   try {
     const { getPool } = await import('../../db.js');
@@ -21494,10 +21527,12 @@ registerToolHandler('get_portfolio_readiness', async (input, ctx) => {
     const { requireReportEntitlement } = await import('../report-os/entitlement-map.js');
     const gate = await requireReportEntitlement(orgId, 'portfolio.board_pack', 'portfolio');
     if (!gate.entitled) {
-      return JSON.stringify({
-        ok: true, locked: true, feature: gate.feature, requiredTier: gate.requiredTier, tier: gate.tier,
-        message: `Portfolio rollup requires the ${gate.requiredTier} plan.`,
-      });
+      // 2026-10-15: an unread plan (tierResolved false) said "requires the
+      // <requiredTier> plan" and named the gate's 'standard' as the org's plan.
+      const refusal = gate.tierResolved === false
+        ? { tier: null, message: 'Your plan could not be read, so the portfolio rollup was not loaded.' }
+        : { tier: gate.tier, message: `Portfolio rollup requires the ${gate.requiredTier} plan.` };
+      return JSON.stringify({ ok: true, locked: true, feature: gate.feature, requiredTier: gate.requiredTier, ...refusal });
     }
     const { fetchPortfolioSummary } = await import('../report-os/portfolio/fetch.js');
     const summary = await fetchPortfolioSummary(orgId, programGroupId);
@@ -21534,10 +21569,11 @@ registerToolHandler('generate_report', async (input, ctx) => {
     const { requireReportEntitlement } = await import('../report-os/entitlement-map.js');
     const gate = await requireReportEntitlement(orgId, reportTypeId);
     if (!gate.entitled) {
-      return JSON.stringify({
-        ok: true, locked: true, feature: gate.feature, requiredTier: gate.requiredTier, tier: gate.tier,
-        message: `This report requires the ${gate.requiredTier} plan.`,
-      });
+      // 2026-10-15: an unread plan named the gate's 'standard' as the org's plan.
+      const refusal = gate.tierResolved === false
+        ? { tier: null, message: 'Your plan could not be read, so the report was not generated.' }
+        : { tier: gate.tier, message: `This report requires the ${gate.requiredTier} plan.` };
+      return JSON.stringify({ ok: true, locked: true, feature: gate.feature, requiredTier: gate.requiredTier, ...refusal });
     }
     const { isKnownReportType, renderGovernedReport } = await import('../report-os/canvas/render-report.js');
     if (!isKnownReportType(reportTypeId)) {
@@ -21572,10 +21608,11 @@ registerToolHandler('explain_report_blockers', async (input, ctx) => {
     const { requireReportEntitlement } = await import('../report-os/entitlement-map.js');
     const gate = await requireReportEntitlement(orgId, reportTypeId);
     if (!gate.entitled) {
-      return JSON.stringify({
-        ok: true, locked: true, requiredTier: gate.requiredTier, tier: gate.tier,
-        message: `This report requires the ${gate.requiredTier} plan.`,
-      });
+      // 2026-10-15: an unread plan named the gate's 'standard' as the org's plan.
+      const refusal = gate.tierResolved === false
+        ? { tier: null, message: "Your plan could not be read, so the report's blockers were not computed." }
+        : { tier: gate.tier, message: `This report requires the ${gate.requiredTier} plan.` };
+      return JSON.stringify({ ok: true, locked: true, requiredTier: gate.requiredTier, ...refusal });
     }
     const { isKnownReportType, renderGovernedReport } = await import('../report-os/canvas/render-report.js');
     if (!isKnownReportType(reportTypeId)) return JSON.stringify({ error: `Unknown report type: ${reportTypeId}.` });

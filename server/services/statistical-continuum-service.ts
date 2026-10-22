@@ -187,10 +187,11 @@ export class StatisticalContinuumService {
     const [updated] = await db
       .update(statisticalThreads)
       .set({
+        // The SAP's kept copy. 2026-10-15: `path` named a file under data/sap
+        // keyed by protocol id alone; nothing read it, and it is not written.
         sapSnapshot: {
           content: sapResult.sapContent,
           generatedAt: new Date().toISOString(),
-          path: sapResult.sapPath,
         },
         updatedAt: new Date(),
       })

@@ -1,3 +1,25 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Evidence sources, claims and claim links (the evidence fabric).
+--
+-- eCTD/CTD Context:
+--   - Module(s): Modules 2–5 (claims traced to their source documents)
+--   - Integrity Risk Addressed: a claim stored with a confidence nobody scored
+--
+-- Notes:
+--   - On no apply path: install-fresh creates these tables from shared/schema.ts
+--     (drizzle push); this file is kept aligned with those definitions.
+--   - Idempotent (IF NOT EXISTS throughout).
+-- =============================================================================
+-- ─── AMENDED 2026-10-15 — evidence_claims.confidence is NULL when unscored ───
+-- It was NUMERIC(3,2) NOT NULL DEFAULT 0.50, so a claim written with no score
+-- read back as 0.5, and reconcileClaim established its governed fact at 0.5.
+-- Now nullable with no default, as in shared/schema.ts. Databases installed
+-- before are relaxed by migrations/20261015m_claim_confidence_and_drift_
+-- severity_unstated.sql, which is in the deploy set.
+-- ─────────────────────────────────────────────────────────────────────────────
 -- Evidence Fabric Schema
 -- Phase 5: Traceability-first document intelligence layer
 -- Aligned with shared/schema.ts Drizzle ORM definitions
@@ -43,7 +65,7 @@ CREATE TABLE IF NOT EXISTS evidence_claims (
   page_number INTEGER,
   section_reference VARCHAR(200),
   sentence_index INTEGER,
-  confidence NUMERIC(3,2) NOT NULL DEFAULT 0.50,
+  confidence NUMERIC(3,2),                  -- NULL = unscored (2026-10-15)
   extraction_method VARCHAR(50) NOT NULL DEFAULT 'pattern',
   version INTEGER NOT NULL DEFAULT 1,
   previous_version_id INTEGER,

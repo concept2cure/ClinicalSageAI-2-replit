@@ -33,6 +33,9 @@ vi.mock('../../huggingface-service', () => ({ huggingFaceService: { queryHugging
 
 import { EndpointRecommenderService, type EndpointRecommendation } from '../endpoint-recommender-service';
 
+/** The organization the corpus is seeded under; the recommender reads only its own. */
+const ORG = 7;
+
 function ddlOf(table: PgTable): string {
   const c = getTableConfig(table);
   const cols = c.columns.map((col) => `"${col.name}" ${col.getSQLType()}${col.primary ? ' PRIMARY KEY' : ''}`);
@@ -75,6 +78,7 @@ beforeEach(() => {
 describe('CSR evidence', () => {
   it('says the outcome was not recorded, instead of "Completed", and carries no invented confidence', async () => {
     const result = await serviceWithModel('[]').getComprehensiveEndpointRecommendations(
+      ORG,
       'Non-small cell lung cancer',
       'Phase 3',
       1,
@@ -90,7 +94,7 @@ describe('CSR evidence', () => {
 describe('model-suggested endpoints', () => {
   it('are labelled as model output, claim no analysis, and carry no invented confidence', async () => {
     const result = await serviceWithModel('["Change from baseline in 6-minute walk distance at week 24"]')
-      .getComprehensiveEndpointRecommendations('Fabry disease', '', 1);
+      .getComprehensiveEndpointRecommendations(ORG, 'Fabry disease', '', 1);
 
     const evidence = recsOf(result)[0]?.evidence[0];
     expect(evidence?.reference_text).not.toMatch(/analysis/i);
@@ -113,7 +117,7 @@ describe('literature evidence', () => {
       },
     ]);
 
-    const result = await serviceWithModel('[]').getComprehensiveEndpointRecommendations('Fabry disease', '', 1);
+    const result = await serviceWithModel('[]').getComprehensiveEndpointRecommendations(ORG, 'Fabry disease', '', 1);
 
     const rec = recsOf(result)[0];
     expect(rec?.evidence[0]).toMatchObject({ source_type: 'academic', confidence: null, retrieval_score: 0 });

@@ -67,7 +67,7 @@ export interface ComparableTrial {
   safetyResults: string | null;
 }
 
-export interface PrecedentComparison {
+export interface PrecedentBenchmarkComparison {
   benchmark: PrecedentBenchmark;
   /** The comparable trials the benchmark was computed from, newest first. */
   trials: ComparableTrial[];
@@ -133,7 +133,7 @@ export class PrecedentBenchmarkReader {
    * a caller listing the trials and quoting the benchmark is quoting the same
    * set. A failed read throws; it is never reported as "no comparable trials".
    */
-  async compare(indication: string, phase: string): Promise<PrecedentComparison> {
+  async compare(indication: string, phase: string): Promise<PrecedentBenchmarkComparison> {
     const reports = await db
       .select({
         id: csrReports.id,

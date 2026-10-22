@@ -65,10 +65,14 @@ describe('evidenceReady once modules are assessed', () => {
   });
 
   it('is true only when every applicable module was assessed and is ready', () => {
+    // Power and sterility stated (2026-10-15): left out, the electrical and sterilization
+    // modules are undetermined and evidenceReady is null; this pinned true without them.
     const bp = buildDeviceBlueprint({
       submissionType: 'mdr_td',
       present: { rmfSectionIds: RMF_COMPLETE, cerSectionIds: CER_COMPLETE },
       equivalenceClaimed: false,
+      electrical: { electricallyPowered: false },
+      sterilization: { sterile: false },
     });
     expect(bp.evidenceReady).toBe(true);
     expect(bp.evidenceNotAssessed).toEqual([]);

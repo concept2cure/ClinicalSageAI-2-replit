@@ -928,6 +928,10 @@ export interface CreateAdverseEventRequest {
   concomitantProducts?: SuspectProduct[];
   medicalHistory?: MedicalHistory;
   reporter: Reporter;
+  // Optional since 2026-10-15 (intake took neither, so every case it recorded
+  // failed E2B validation on sender.sender_type); see casePartyProblems.
+  sender?: CaseSender;
+  receiver?: CaseReceiver;
   caseNarrative?: string;
   status?: CaseStatus;
 }
@@ -1099,6 +1103,138 @@ export function doseNumber(recorded: unknown): string | null {
 export function meddraCode(coded: { term_code?: string; term_system?: string } | undefined): string | null {
   if (!coded?.term_code) return null;
   return !coded.term_system || coded.term_system === 'MEDDRA' ? coded.term_code : null;
+}
+
+/** A calendar date as recorded: its precision, and its digits to that precision (CCYY, CCYYMM or CCYYMMDD). */
+export interface RecordedDate {
+  precision: DatePrecision;
+  digits: string;
+}
+
+const PRECISION_RANK: Record<DatePrecision, number> = { year: 0, month: 1, day: 2 };
+
+/** [CCYY, MM?, DD?] of an ISO 'YYYY', 'YYYY-MM' or 'YYYY-MM-DD' string (a time after it ignored); null if it is none or no such day. */
+function isoDateParts(text: string): string[] | null {
+  const match = /^(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?(?:T|$)/.exec(text.trim());
+  if (!match) return null;
+  const parts = match.slice(1).filter((part): part is string => part !== undefined);
+  const [year, month, day] = parts.map(Number);
+  if (month !== undefined && (month < 1 || month > 12)) return null;
+  if (day !== undefined && new Date(Date.UTC(year, month - 1, day)).getUTCDate() !== day) return null;
+  return parts;
+}
+
+/** [CCYY, MM, DD] of a Date's UTC day; null for an invalid Date. */
+function utcDateParts(value: Date): string[] | null {
+  if (Number.isNaN(value.getTime())) return null;
+  const pad = (n: number, width: number) => String(n).padStart(width, '0');
+  return [pad(value.getUTCFullYear(), 4), pad(value.getUTCMonth() + 1, 2), pad(value.getUTCDate(), 2)];
+}
+
+/**
+ * The calendar date a case records, read without a time-zone conversion: an
+ * ISO 'YYYY', 'YYYY-MM' or 'YYYY-MM-DD' string (a time after the date is
+ * ignored), or a Date the service built from a DATE column, which is UTC
+ * midnight of that day, so its UTC fields are the day. A recorded precision
+ * coarser than the value applies; a finer one cannot add digits. Null when no
+ * readable date is recorded. 2026-10-15: the exports read dates through new
+ * Date() and local getters, so west of UTC '2026-03-15' (UTC midnight) was
+ * filed as 20260314, and a month or a year was filed as a day.
+ */
+export function recordedDate(value: unknown, precision?: unknown): RecordedDate | null {
+  const parts = value instanceof Date ? utcDateParts(value) : typeof value === 'string' ? isoDateParts(value) : null;
+  if (!parts) return null;
+  const own: DatePrecision = parts.length === 3 ? 'day' : parts.length === 2 ? 'month' : 'year';
+  const stated = precision === 'year' || precision === 'month' || precision === 'day' ? precision : own;
+  const used = PRECISION_RANK[stated] < PRECISION_RANK[own] ? stated : own;
+  return { precision: used, digits: parts.slice(0, PRECISION_RANK[used] + 1).join('') };
+}
+
+/**
+ * The dates both exports write from a case, as [field, value, recorded
+ * precision], recorded or not (the receive date apart: it is required).
+ */
+export function caseDateFields(event: CanonicalAdverseEvent): Array<[string, unknown, unknown]> {
+  const loose = (entry: unknown) => (entry ?? {}) as Record<string, unknown>;
+  const fields: Array<[string, unknown, unknown]> = [
+    ['patient.date_of_birth', event.patient?.date_of_birth, event.patient?.date_of_birth_precision],
+  ];
+  (event.medicalHistory?.conditions ?? []).map(loose).forEach((c, i) => {
+    fields.push([`medicalHistory.conditions[${i}].start_date`, c.start_date, c.start_date_precision]);
+    fields.push([`medicalHistory.conditions[${i}].end_date`, c.end_date, c.end_date_precision]);
+  });
+  (event.reactions ?? []).map(loose).forEach((r, i) => {
+    fields.push([`reactions[${i}].onset_date`, r.onset_date, r.onset_date_precision]);
+    fields.push([`reactions[${i}].end_date`, r.end_date, r.end_date_precision]);
+  });
+  for (const [list, products] of Object.entries({ suspectProducts: event.suspectProducts, concomitantProducts: event.concomitantProducts })) {
+    (products ?? []).map(loose).forEach((p, i) => {
+      fields.push([`${list}[${i}].start_date`, p.start_date, p.start_date_precision]);
+      fields.push([`${list}[${i}].end_date`, p.end_date, p.end_date_precision]);
+    });
+  }
+  return fields;
+}
+
+/** Whether a field holds a recorded value (not undefined, null or empty text). */
+export const isRecorded = (value: unknown): boolean => value !== undefined && value !== null && value !== '';
+
+/**
+ * The MedDRA-coded reactions recorded in a version other than the one the
+ * export job locked (conflicts), and those that record no version (unchecked).
+ * 2026-10-15: term_version was not read, so a reaction coded in MedDRA 25.0
+ * was filed under a 26.1 lock as a 26.1 code.
+ */
+export function meddraVersionCheck(reactions: Reaction[] | undefined, locked: string): {
+  conflicts: Array<{ index: number; term: string; recorded: string }>;
+  unrecorded: Array<{ index: number; term: string }>;
+} {
+  const coded = (reactions ?? []).map((reaction, index) => ({ reaction, index })).filter(({ reaction }) => meddraCode(reaction));
+  const recorded = (r: Reaction) => (typeof r.term_version === 'string' ? r.term_version.trim() : '');
+  return {
+    conflicts: coded
+      .filter(({ reaction }) => recorded(reaction) && recorded(reaction) !== locked.trim())
+      .map(({ reaction, index }) => ({ index, term: String(reaction.term ?? ''), recorded: recorded(reaction) })),
+    unrecorded: coded.filter(({ reaction }) => !recorded(reaction)).map(({ reaction, index }) => ({ index, term: String(reaction.term ?? '') })),
+  };
+}
+
+/** The sender block (C.3; M.1.5 sender_identifier) keyed as the exports read it. */
+export const CASE_SENDER_FIELDS = [
+  'sender_type', 'sender_identifier', 'sender_organization', 'sender_department', 'sender_title',
+  'sender_given_name', 'sender_middle_name', 'sender_family_name', 'sender_street', 'sender_city',
+  'sender_state', 'sender_postcode', 'sender_country', 'sender_telephone', 'sender_fax', 'sender_email',
+] as const;
+/** The receiver block (M.1.6 receiver_identifier) keyed as the E2B export reads it. */
+export const CASE_RECEIVER_FIELDS = ['receiver_identifier', 'receiver_type', 'receiver_organization', 'receiver_country'] as const;
+export type CaseSender = Partial<Record<(typeof CASE_SENDER_FIELDS)[number], string>>;
+export type CaseReceiver = Partial<Record<(typeof CASE_RECEIVER_FIELDS)[number], string>>;
+
+/**
+ * What stops a recorded sender or receiver block from being exported as
+ * recorded, each naming its field; empty when nothing does (or no block is
+ * recorded). Intake refuses on these and the exports apply the same rules: each
+ * value is written as text, so it is non-empty text; the type is an E2B code
+ * (one digit, as sendertype and receivertype take it); and a key the exports do
+ * not read would be stored and never exported, so it is refused.
+ */
+export function casePartyProblems(kind: 'sender' | 'receiver', block: unknown): Array<{ field: string; message: string }> {
+  if (block === undefined || block === null) return [];
+  if (typeof block !== 'object' || Array.isArray(block)) {
+    return [{ field: kind, message: `${kind} must be an object of ${kind} fields` }];
+  }
+  const fields: readonly string[] = kind === 'sender' ? CASE_SENDER_FIELDS : CASE_RECEIVER_FIELDS;
+  return Object.entries(block).flatMap(([key, value]) => {
+    const field = `${kind}.${key}`;
+    if (!fields.includes(key)) {
+      return [{ field, message: `${field} is not a field the exports read (they read ${fields.join(', ')})` }];
+    }
+    if (typeof value !== 'string' || value.trim() === '') return [{ field, message: `${field} must be non-empty text` }];
+    if (key === `${kind}_type` && !/^\d$/.test(value.trim())) {
+      return [{ field, message: `${field} "${value}" is not an E2B ${kind}type code (one digit); text is not coded by guess` }];
+    }
+    return [];
+  });
 }
 
 /** The ICH qualification code (CODE_SYSTEMS.ICH_QUALIFIER) a reporter records: qualification_code, else the qualification named; or null. */

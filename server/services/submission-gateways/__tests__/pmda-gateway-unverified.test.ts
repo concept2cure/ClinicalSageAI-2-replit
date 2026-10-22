@@ -78,7 +78,7 @@ vi.mock('node:https', () => ({
 import { getGateway, getGatewayUnguarded, refusedBeforeWire } from '../index';
 import { PmdaGateway } from '../pmda-gateway';
 import { evaluatePreTransmit } from '../pre-transmit-check';
-import { getGatewaySizeLimit } from '../../ectd/ectd-regional-rules';
+import { getGatewaySizeLimitOnFile } from '../../ectd/ectd-regional-rules';
 import { getMarket } from '../../global-markets/market-registry';
 import { UnverifiedTransportError, ValidationError, type GatewayTransmitRequest } from '../types';
 
@@ -205,8 +205,10 @@ describe('Japan devices/IVDs — not transmittable', () => {
 });
 
 describe('pre-transmit size limit — the unsourced PMDA figure warns, it does not block', () => {
+  // Both cases read the figure from getGatewaySizeLimitOnFile since 2026-10-15:
+  // getGatewaySizeLimit, which also answered figures no agency publishes, is gone.
   it('a JP bundle over the recorded 1 GB figure clears with a warning naming the figure as unsourced', () => {
-    const limit = getGatewaySizeLimit('JP');
+    const limit = getGatewaySizeLimitOnFile('JP')!.bytes;
     const r = evaluatePreTransmit({
       region: 'pmda',
       bundle: { ...bundle, sizeBytes: limit + 1 },
@@ -221,7 +223,7 @@ describe('pre-transmit size limit — the unsourced PMDA figure warns, it does n
   });
 
   it('a sourced limit still blocks (FDA control)', () => {
-    const limit = getGatewaySizeLimit('US');
+    const limit = getGatewaySizeLimitOnFile('US')!.bytes;
     const r = evaluatePreTransmit({
       region: 'fda',
       bundle: { ...bundle, format: 'ectd', builtRegion: 'fda', sizeBytes: limit + 1 },

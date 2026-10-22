@@ -23,15 +23,13 @@ const state = vi.hoisted(() => ({
 
 vi.mock('../../../db', () => {
   const dialect = new PgDialect();
-  return {
-    db: {
-      execute: vi.fn(async (query: Parameters<PgDialect['sqlToQuery']>[0]) => {
-        const text = dialect.sqlToQuery(query).sql;
-        state.statements.push(text);
-        return { rows: /UPDATE regulatory_harmonization\.export_jobs/.test(text) ? state.updated : [] };
-      }),
-    },
-  };
+  const execute = vi.fn(async (query: Parameters<PgDialect['sqlToQuery']>[0]) => {
+    const text = dialect.sqlToQuery(query).sql;
+    state.statements.push(text);
+    return { rows: /UPDATE regulatory_harmonization\.export_jobs/.test(text) ? state.updated : [] };
+  });
+  // 2026-10-15: the UPDATE and its audit row run in one transaction now.
+  return { db: { execute, transaction: vi.fn(async (fn: (tx: { execute: typeof execute }) => Promise<unknown>) => fn({ execute })) } };
 });
 
 import { grdheService, ExportJobNotFoundError } from '../grdheService';

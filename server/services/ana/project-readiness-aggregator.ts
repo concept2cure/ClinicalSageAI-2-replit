@@ -11,8 +11,9 @@
  *   - Therapeutic context      (10% weight) — small bonus for a profile being set
  *
  * Score is clamped 0..100 and covers only the components that were measured:
- * a component with no scan result on record, or whose store could not be
- * read, has no score, is listed in `notAssessed`, and the weights of the rest
+ * a component with no alert on record (scan runs are not recorded, so that is
+ * never a clean result), or whose store could not be read, has no score, is
+ * listed in `notAssessed`, and the weights of the rest
  * are renormalised (`measuredWeight`). `filingBlocking` is OR-ed across the
  * measured sources:
  *   - section coverage filingBlocking (required missing OR artifact gap blocks)
@@ -73,7 +74,10 @@ export interface ReadinessComponentScore {
 /** A component left out of the score, and why. */
 export interface ReadinessNotAssessed {
   component: ReadinessComponentKey;
-  /** no_scan_on_record: no scan result exists. unavailable: its store could not be read. */
+  /**
+   * no_scan_on_record: no alert is on record, and scan runs are not recorded, so
+   * this is never a clean result. unavailable: its store could not be read.
+   */
   reason: 'no_scan_on_record' | 'unavailable';
   detail: string;
 }
@@ -162,13 +166,15 @@ function round1(n: number): number {
 
 type AlertSummaryInput = Pick<
   ConsistencyAlertsSummary,
-  'assessed' | 'lastScanAt' | 'openBySeverity' | 'totalOpen' | 'openCritical'
+  'assessed' | 'scanHistory' | 'lastAlertAt' | 'openBySeverity' | 'totalOpen' | 'openCritical'
 >;
 
 /**
  * An alert-store component: `100 − penalty` over this project's OPEN alerts
- * (critical 20, major 10, minor 3) when a scan result is on record; no score,
- * and a stated reason, when none is or the store could not be read.
+ * (critical 20, major 10, minor 3) when an alert is on record; no score, and a
+ * stated reason, when none is or the store could not be read. Scan runs are not
+ * recorded, so both details say so (2026-10-15: they read "no scan result is on
+ * record", and gave the newest alert's time as "the last scan on record").
  * `assessed` is the summary when it was scored, else null; `blocksFiling`
  * is true only for a scored summary with an open critical alert.
  */
@@ -196,7 +202,7 @@ function alertComponent<T extends AlertSummaryInput>(
         : {
             component: key,
             reason: 'no_scan_on_record',
-            detail: `Not assessed: no ${scanName} result is on record for this project.`,
+            detail: `Not assessed: no ${scanName} alert is on record for this project. ${summary.scanHistory.note}`,
           };
     return {
       component: { weight, assessed: false, score: null, weighted: null, detail: notAssessed.detail },
@@ -214,8 +220,8 @@ function alertComponent<T extends AlertSummaryInput>(
       score,
       weighted: null, // set once the measured weight is known
       detail:
-        `${summary.totalOpen} open ${noun}${summary.totalOpen === 1 ? '' : 's'} (${summary.openCritical} critical) ` +
-        `as of the last scan on record (${summary.lastScanAt}).`,
+        `${summary.totalOpen} open ${noun}${summary.totalOpen === 1 ? '' : 's'} (${summary.openCritical} critical); ` +
+        `newest alert raised ${summary.lastAlertAt}. Scan history is not recorded.`,
     },
     notAssessed: null,
     assessed: summary,
@@ -300,7 +306,7 @@ export function deriveProjectReadinessAggregate(
   };
 
   // 3. Consistency and 4. guidance-change components: this project's open
-  // alerts, scored only when a scan result is on record.
+  // alerts, scored only when an alert is on record.
   const con = alertComponent(
     'consistency',
     inputs.consistencySummary,
@@ -521,10 +527,10 @@ export async function getProjectReadinessAggregate(
 ): Promise<ProjectReadinessAggregate> {
   const submissionType = options.submissionType ?? 'IND';
   const unavailable: { consistency?: string; guidance?: string } = {};
-  // The two alert stores are provisioned by drizzle push, not by the deploy
-  // migration set, so one may be absent: its component is then named
-  // unavailable and left out of the score rather than failing the whole
-  // aggregate, and never scored as clean.
+  // The guidance alert store is provisioned by drizzle push only, not by the
+  // deploy migration set (the consistency store joined the set 2026-10-15), so
+  // it may be absent: its component is then named unavailable and left out of
+  // the score rather than failing the whole aggregate, and never scored as clean.
   const readOrName = <T,>(read: Promise<T>, key: 'consistency' | 'guidance'): Promise<T | null> =>
     read.catch((err: unknown) => {
       unavailable[key] = err instanceof Error ? err.message : String(err);

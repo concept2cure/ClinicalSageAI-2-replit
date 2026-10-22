@@ -112,6 +112,8 @@ export interface MarketStrategy {
   exclusivity: ExclusivityResult | null;
   /** Orphan exclusivity / pediatric extension the program could add, each with its condition. Null where exclusivity is not modeled. */
   potentialExclusivity: PotentialExclusivityComponent[] | null;
+  /** Extensions the program declared that the exclusivity engine does not assess for this product class, each with why. Null where exclusivity is not modeled. */
+  potentialExclusivityNotAssessed: string[] | null;
   pediatricRequirements: PediatricPlanAssessment | null;
   pharmacovigilance: PvObligations | null;
 }
@@ -148,19 +150,22 @@ const PEDIATRIC_EXTENSION_CONDITION =
  * The orphan exclusivity and pediatric extension a program could add on top of
  * the statutory base, each with the condition it waits on. The exclusivity
  * engine decides whether a market's extension applies; the components it adds
- * are listed here and kept out of the base result's bindingMonths.
+ * are listed here and kept out of the base result's bindingMonths. An extension
+ * the engine does not assess for the class is listed in `notAssessed`, with why
+ * (2026-10-15: a generic/biosimilar was listed the FDA +6 months as potential).
  */
 function listPotentialExclusivity(
   base: Pick<ExclusivityInput, 'market' | 'productClass'>,
   baseResult: ExclusivityResult,
   orphanScreenMet: boolean,
   pediatricDeclared: boolean,
-): PotentialExclusivityComponent[] {
+): { potential: PotentialExclusivityComponent[]; notAssessed: string[] } {
   const added = (from: ExclusivityResult, to: ExclusivityResult): ExclusivityComponent[] => {
     const had = new Set(from.components.map((c) => c.type));
     return to.components.filter((c) => !had.has(c.type));
   };
   const potential: PotentialExclusivityComponent[] = [];
+  const notAssessed: string[] = [];
   let reached = baseResult;
   if (orphanScreenMet) {
     const withOrphan = computeExclusivity({ ...base, orphan: true });
@@ -170,8 +175,9 @@ function listPotentialExclusivity(
   if (pediatricDeclared) {
     const withPediatric = computeExclusivity({ ...base, orphan: orphanScreenMet, pediatricExtension: true });
     potential.push(...added(reached, withPediatric).map((c) => ({ ...c, condition: PEDIATRIC_EXTENSION_CONDITION })));
+    if (withPediatric.pediatricExtension?.status === 'not_assessed') notAssessed.push(withPediatric.pediatricExtension.note);
   }
-  return potential;
+  return { potential, notAssessed };
 }
 
 /**
@@ -253,10 +259,13 @@ export function buildStrategyBrief(input: StrategyBriefInput): RegulatoryStrateg
     // class, with what the program could add listed separately.
     let exclusivity: ExclusivityResult | null = null;
     let potentialExclusivity: PotentialExclusivityComponent[] | null = null;
+    let potentialExclusivityNotAssessed: string[] | null = null;
     if (EXCLUSIVITY_MARKETS.has(agency)) {
       const exclusivityBase = { market: agency as ExclusivityMarket, productClass: PRODUCT_CLASS_BY_TYPE[input.productType] };
       exclusivity = computeExclusivity(exclusivityBase);
-      potentialExclusivity = listPotentialExclusivity(exclusivityBase, exclusivity, orphanScreenMet, input.pediatricDevelopment === true);
+      const listed = listPotentialExclusivity(exclusivityBase, exclusivity, orphanScreenMet, input.pediatricDevelopment === true);
+      potentialExclusivity = listed.potential;
+      potentialExclusivityNotAssessed = listed.notAssessed;
     }
 
     // Pediatric study-plan obligation (PREA iPSP / EMA PIP) when pediatric
@@ -285,6 +294,7 @@ export function buildStrategyBrief(input: StrategyBriefInput): RegulatoryStrateg
       feeEstimate,
       exclusivity,
       potentialExclusivity,
+      potentialExclusivityNotAssessed,
       pediatricRequirements,
       pharmacovigilance,
     };

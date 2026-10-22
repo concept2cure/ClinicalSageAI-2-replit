@@ -1163,7 +1163,7 @@ export function planMultiplicityControl(
 // SECTION 4 — Adaptive design selection
 // ═════════════════════════════════════════════════════════════════════════════
 
-export type AdaptationType =
+export type AdaptiveDesignType =
   | 'group-sequential'
   | 'blinded-ssr'
   | 'unblinded-ssr'
@@ -1208,7 +1208,7 @@ export interface DesignAdaptiveParams {
 }
 
 export interface DesignAdaptiveResult {
-  recommendedAdaptation: AdaptationType;
+  recommendedAdaptation: AdaptiveDesignType;
   adaptationLabel: string;
   alphaSpending: AlphaSpendingFunction;
   rationale: string;
@@ -1238,7 +1238,7 @@ export interface InterimBoundary {
 }
 
 interface AdaptationMeta {
-  type: AdaptationType;
+  type: AdaptiveDesignType;
   label: string;
   citation: string;
 }
@@ -1255,7 +1255,7 @@ const ADAPTATION_META: AdaptationMeta[] = [
   { type: 'non-adaptive-fixed', label: 'Fixed (non-adaptive) design', citation: 'ICH E9 (1998) §3' },
 ];
 
-function adaptationMeta(t: AdaptationType): AdaptationMeta {
+function adaptationMeta(t: AdaptiveDesignType): AdaptationMeta {
   const m = ADAPTATION_META.find((x: AdaptationMeta): boolean => x.type === t);
   return m as AdaptationMeta;
 }
@@ -1324,7 +1324,7 @@ export function designAdaptiveDesign(params: DesignAdaptiveParams): DesignAdapti
   const looks = Math.max(1, Math.floor(params.numberOfInterims ?? 2)) + 0; // interims
   const arms = Math.max(1, Math.floor(params.numberOfArms ?? 1));
 
-  let adaptation: AdaptationType;
+  let adaptation: AdaptiveDesignType;
   let spending: AlphaSpendingFunction;
   let rationale: string;
   let typeOneErrorControl: string;
@@ -1460,7 +1460,7 @@ export function designAdaptiveDesign(params: DesignAdaptiveParams): DesignAdapti
         'sponsor/sites); document the firewall and consider an independent statistical group.',
     );
   }
-  if ((adaptation as AdaptationType) === 'response-adaptive-randomization') {
+  if ((adaptation as AdaptiveDesignType) === 'response-adaptive-randomization') {
     operationalCautions.push(
       'Response-adaptive randomization can introduce time-trend confounding and complicate ' +
         'inference; pre-specify the allocation rule and a trend-robust analysis.',
@@ -1709,11 +1709,11 @@ export function selectMissingDataStrategy(
 // SECTION 6 — Sample-size estimation (closed-form)
 // ═════════════════════════════════════════════════════════════════════════════
 
-export type EndpointKind = 'continuous' | 'binary' | 'time-to-event';
+export type SampleSizeEndpointKind = 'continuous' | 'binary' | 'time-to-event';
 export type DesignComparison = 'superiority' | 'non-inferiority' | 'equivalence';
 
 export interface EstimateSampleSizeParams {
-  endpointKind: EndpointKind;
+  endpointKind: SampleSizeEndpointKind;
   comparison: DesignComparison;
   /** Significance level. Convention: two-sided for superiority/equivalence,
    *  one-sided for non-inferiority. Provide the value you intend; the formula
@@ -1757,7 +1757,7 @@ export interface EstimateSampleSizeParams {
 }
 
 export interface EstimateSampleSizeResult {
-  endpointKind: EndpointKind;
+  endpointKind: SampleSizeEndpointKind;
   comparison: DesignComparison;
   /** Per-arm sample sizes (control, experimental) BEFORE dropout inflation. */
   nPerArm: { control: number; experimental: number };

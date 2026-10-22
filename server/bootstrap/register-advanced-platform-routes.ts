@@ -132,7 +132,8 @@ export async function registerAdvancedPlatformRoutes({
       { path: '/api/diagnostics-performance', router: diagnosticsPerformance, name: 'Diagnostics Performance (CLSI analytical + clinical)' },
       { path: '/api/device-classification', router: deviceClassification, name: 'Device Classification (IMDRF SaMD + IEC 62304)' },
       { path: '/api/substantial-equivalence', router: substantialEquivalence, name: 'Substantial Equivalence (FDA 510(k) SE flowchart)' },
-      { path: '/api/cybersecurity-524b', router: cybersecurity524b, name: 'Premarket Cybersecurity (FDA §524B SBOM + readiness)' },
+      // 2026-10-15: was "… SBOM + readiness"; the §524B engine reports artifact presence, which is not readiness.
+      { path: '/api/cybersecurity-524b', router: cybersecurity524b, name: 'Premarket Cybersecurity (FDA §524B SBOM + artifact presence)' },
       { path: '/api/human-factors', router: humanFactors, name: 'Human Factors (IEC 62366-1)' },
       { path: '/api/postmarket-surveillance', router: postmarketSurveillance, name: 'Post-market Surveillance (openFDA MAUDE + recalls)' },
       { path: '/api/udi-ivdr', router: udiIvdr, name: 'UDI/GUDID + EU IVDR Performance Evaluation' },

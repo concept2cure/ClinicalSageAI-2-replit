@@ -22,7 +22,7 @@ export type WorkspaceVocabulary = 'drug' | 'device' | 'ivd' | 'quality' | 'gener
 
 export type WorkspaceServiceId =
   | 'knowledge_base'             // ICH / pathways / standards / deficiencies lookup
-  | 'regulatory_intelligence'   // CRL/RTF prediction, blended readiness scoring
+  | 'regulatory_intelligence'   // CRL/RTF prediction, refuse-to-file score, composite readiness
   | 'cross_artifact_intelligence' // consistency across the dossier
   | 'readiness_assessment'      // per-domain readiness verdicts
   | 'precedent_intelligence'    // precedent mining / predicate intelligence

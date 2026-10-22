@@ -67,37 +67,74 @@ export interface ElectricalDeviceFacts {
   hasParticularStandard?: boolean;
 }
 
+/** A standard whose applicability turns on a fact that was not stated. */
+export interface UndeterminedElectricalStandard {
+  id: string;
+  code: string;
+  title: string;
+  /** 'undetermined — <fact> not stated': never read as "not applicable". */
+  applicability: string;
+}
+
 export interface ElectricalApplicability {
-  applicable: boolean;
+  /** null: electricallyPowered was not stated, so whether IEC 60601 applies is undetermined. */
+  applicable: boolean | null;
+  /** The standards the stated facts make applicable. */
   standards: ElectricalStandard[];
+  /** The standards whose deciding fact was not stated. */
+  undeterminedStandards: UndeterminedElectricalStandard[];
   testCategories: typeof ELECTRICAL_TEST_CATEGORIES;
   reviewerQuestions: string[];
   notes: string[];
 }
 
+/** The fact that decides each conditional collateral. */
+const CONDITION_FACT: Partial<Record<string, keyof ElectricalDeviceFacts>> = {
+  alarms: 'hasAlarms',
+  closed_loop: 'closedLoopControl',
+  home_use: 'homeUse',
+  ems: 'emsUse',
+};
+
 /**
  * Resolve the applicable IEC 60601 standards for a device. Returns applicable=false
- * (with empty sets) when the device is not electrically powered.
+ * (with empty sets) when the device is stated not to be electrically powered, and
+ * applicable=null when that is not stated. A standard whose deciding fact is not
+ * stated is listed in undeterminedStandards. 2026-10-15: every fact was read with
+ * `!` / `!!`, so an omitted one answered "IEC 60601 does not apply" or dropped its
+ * collateral as if stated absent.
  */
 export function applicableElectricalStandards(facts: ElectricalDeviceFacts): ElectricalApplicability {
-  if (!facts.electricallyPowered) {
-    return { applicable: false, standards: [], testCategories: [], reviewerQuestions: [], notes: ['Not electrically powered — IEC 60601 does not apply.'] };
+  if (facts.electricallyPowered === false) {
+    return { applicable: false, standards: [], undeterminedStandards: [], testCategories: [], reviewerQuestions: [], notes: ['Not electrically powered — IEC 60601 does not apply.'] };
   }
 
-  const conditionMet: Record<string, boolean> = {
-    alarms: !!facts.hasAlarms,
-    closed_loop: !!facts.closedLoopControl,
-    home_use: !!facts.homeUse,
-    ems: !!facts.emsUse,
-  };
+  const standards: ElectricalStandard[] = [];
+  const undeterminedStandards: UndeterminedElectricalStandard[] = [];
+  for (const s of IEC_60601_STANDARDS) {
+    const conditionFact = CONDITION_FACT[s.id];
+    // A collateral whose condition is stated absent does not apply, powered or not.
+    if (conditionFact && facts[conditionFact] === false) continue;
+    const unstated = [
+      ...(facts.electricallyPowered === undefined ? ['electricallyPowered'] : []),
+      ...(conditionFact && facts[conditionFact] === undefined ? [conditionFact] : []),
+    ];
+    if (unstated.length === 0) standards.push(s);
+    else undeterminedStandards.push({ id: s.id, code: s.code, title: s.title, applicability: `undetermined — ${unstated.join(' and ')} not stated` });
+  }
 
-  const standards = IEC_60601_STANDARDS.filter((s) => s.applicability === 'always' || conditionMet[s.id]);
   const notes: string[] = [];
   if (facts.hasParticularStandard) notes.push('A device-type particular standard (IEC 60601-2-xx) also applies — identify and test to it.');
+  else if (facts.hasParticularStandard === undefined) notes.push('Whether a device-type particular standard (IEC 60601-2-xx) applies: undetermined — hasParticularStandard not stated.');
 
+  if (facts.electricallyPowered !== true) {
+    notes.unshift('Whether IEC 60601 applies: undetermined — electricallyPowered not stated.');
+    return { applicable: null, standards, undeterminedStandards, testCategories: [], reviewerQuestions: [], notes };
+  }
   return {
     applicable: true,
     standards,
+    undeterminedStandards,
     testCategories: ELECTRICAL_TEST_CATEGORIES,
     reviewerQuestions: ELECTRICAL_REVIEWER_QUESTIONS,
     notes,
