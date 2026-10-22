@@ -31,7 +31,7 @@ const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..
 const read = (rel: string) => fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8');
 
 /** Only the shape this contract reads. `needs:` is a scalar or a list in YAML. */
-type DeployWorkflow = { jobs: Record<string, { needs?: string | string[] }> };
+type DeployWorkflow = { jobs: Record<string, { needs?: string | string[]; steps?: Array<{ run?: string }> }> };
 
 describe('deploy migration mechanism', () => {
   describe('the runtime image carries a migration payload', () => {
@@ -190,20 +190,28 @@ describe('deploy migration mechanism', () => {
     // silent when a NEW service-rolling job is added without the gate — which is
     // the case that actually ships code onto an unmigrated schema.
     //
-    // The invariant, stated once: `build-push` produces the API image, so ANY
-    // job that consumes it rolls that image onto the database, and must
-    // therefore depend on `migrate`. `deploy-frontend` is correctly excluded —
-    // it publishes static assets and consumes no image. A worker deploy, if one
-    // is ever re-introduced, is covered the moment it declares `needs:
-    // build-push`, with no edit here.
+    // The invariant, stated once: a job that registers or rolls an API task
+    // definition puts an image onto the database, and must therefore come after
+    // `migrate`, directly or through a job that does. Since MR-03 Stage 4 the
+    // image comes from build-push on staging or promote on production, and the
+    // smoke test reads build-push's digest only to mark it verified, so "needs
+    // build-push" no longer says which jobs roll an image; what the job runs
+    // does. A worker deploy, if one is ever re-introduced, is covered the
+    // moment it calls register-task-definition or update-service.
     const jobs = (yaml.load(workflow) as DeployWorkflow).jobs;
     const needsOf = (job: string): string[] => {
       const declared = jobs[job]?.needs;
       if (declared === undefined) return [];
       return Array.isArray(declared) ? declared : [declared];
     };
+    const after = (job: string, seen = new Set<string>()): Set<string> => {
+      for (const n of needsOf(job)) if (!seen.has(n)) { seen.add(n); after(n, seen); }
+      return seen;
+    };
     const rollsTheBuiltImage = Object.keys(jobs).filter(
-      (job) => job !== 'migrate' && needsOf(job).includes('build-push'),
+      (job) =>
+        job !== 'migrate' &&
+        (jobs[job]?.steps ?? []).some((s) => /aws ecs (register-task-definition|update-service)\b/.test(s.run ?? '')),
     );
 
     it('gates every job that rolls the built image on the migration', () => {
@@ -219,20 +227,23 @@ describe('deploy migration mechanism', () => {
       for (const job of rollsTheBuiltImage) {
         // The `needs:` edge is the gate. Without it the job runs in parallel with
         // the migration and ships code onto whatever schema happens to be there.
-        expect(needsOf(job), `${job} must depend on the migrate job`).toContain('migrate');
+        expect(after(job).has('migrate'), `${job} must come after the migrate job`).toBe(true);
       }
     });
 
     it('runs the migration itself against the image that was just built', () => {
       // The other half of the same edge: `migrate` is only a meaningful gate if
       // it, too, waits for build-push rather than racing it.
-      expect(needsOf('migrate')).toContain('build-push');
+      expect(needsOf('migrate')).toEqual(expect.arrayContaining(['build-push', 'promote']));
     });
 
     it('pins the migration task to the same image digest being deployed', () => {
       // A migration run from a different image than the one about to serve
       // traffic can apply a schema that the deploying code does not expect.
-      expect(workflow).toMatch(/IMAGE_DIGEST: \$\{\{ needs\.build-push\.outputs\.api_digest \}\}/);
+      // Staging's build, or production's promoted copy of it: one expression,
+      // in the migration and in the API roll.
+      const digest = /IMAGE_DIGEST: \$\{\{ needs\.build-push\.outputs\.api_digest \|\| needs\.promote\.outputs\.api_digest \}\}/g;
+      expect(workflow.match(digest)?.length).toBe(2);
       expect(workflow).toMatch(/PINNED_IMAGE="\$ECR_REGISTRY\/\$ECR_API_REPO@\$IMAGE_DIGEST"/);
     });
   });

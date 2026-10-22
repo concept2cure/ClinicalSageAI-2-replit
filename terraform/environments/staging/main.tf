@@ -86,6 +86,7 @@ module "stack" {
   # true while staging has its own AWS account (the recommended account topology);
   # set false if it shares production's account, which already created the provider.
   create_github_oidc_provider = true
+  production_account_id       = var.production_account_id
 
   jwt_secret               = var.jwt_secret
   refresh_token_secret     = var.refresh_token_secret

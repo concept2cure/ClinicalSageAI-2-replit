@@ -198,3 +198,9 @@ variable "db_credentials_rotation" {
   default     = "initial"
   description = "Rotation marker for the database passwords. Change it (e.g. to the date) to rotate both; apply, then deploy at once. See terraform/stack/variables.tf."
 }
+
+variable "staging_account_id" {
+  type        = string
+  default     = ""
+  description = "The staging account, whose verified images production promotes (F-4). Empty until staging exists; a production deploy is refused at promotion until then."
+}

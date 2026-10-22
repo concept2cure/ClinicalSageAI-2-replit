@@ -15,39 +15,43 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { TAG_PUSH, dispatch, readWorkflow, runShellStep, shellFor, simulateJobs, stepNamed, type Scenario } from './workflow-harness';
+import { RC_PUSH, TAG_PUSH, deployJobs, dispatch, readWorkflow, runShellStep, shellFor, stepNamed, type Scenario } from './workflow-harness';
 
 const wf = readWorkflow('deploy-aws.yml');
 const FAMILY = 'c2c-production-api';
 const arn = (rev: number, family = FAMILY) => `arn:aws:ecs:us-east-1:123456789012:task-definition/${family}:${rev}`;
-const DEPLOYS: Scenario[] = [TAG_PUSH, dispatch({ deploy_api: 'true', deploy_frontend: 'true', rollback_taskdef: '' })];
-const REQUEST = dispatch({ deploy_api: 'true', deploy_frontend: 'true', rollback_taskdef: arn(41) });
-const EVERY_OTHER_JOB = ['ci-verdict', 'test', 'security-gate', 'build-push', 'migrate', 'deploy-api', 'deploy-frontend', 'smoke-test'];
+const DEPLOYS: Scenario[] = [
+  TAG_PUSH,
+  RC_PUSH,
+  dispatch({ target: 'production', deploy_api: 'true', deploy_frontend: 'true', rollback_taskdef: '' }),
+];
+const REQUEST = dispatch({ target: 'production', deploy_api: 'true', deploy_frontend: 'true', rollback_taskdef: arn(41) });
+const EVERY_OTHER_JOB = ['ci-verdict', 'test', 'security-gate', 'build-push', 'promote', 'migrate', 'deploy-api', 'deploy-frontend', 'smoke-test'];
 
 describe('when the rollback job runs', () => {
-  it('has one, after deploy-api and the smoke test, in the production environment', () => {
+  it("has one, after deploy-api and the smoke test, in the target's environment", () => {
     const job = wf.jobs.rollback;
     expect(job, 'deploy-aws.yml has no rollback job').toBeDefined();
-    expect([job?.needs].flat()).toEqual(['deploy-api', 'smoke-test']);
-    expect(job?.environment).toBe('production');
+    expect([job?.needs].flat()).toEqual(['resolve', 'deploy-api', 'smoke-test']);
+    expect(job?.environment).toBe('${{ needs.resolve.outputs.target }}');
   });
 
   for (const s of DEPLOYS) {
     it(`${s.label}: the smoke test failed after a successful roll → it rolls back`, () => {
-      expect(simulateJobs(wf, s, { 'smoke-test': 'failure' }).rollback).toBe('success');
+      expect(deployJobs(wf, s, { 'smoke-test': 'failure' }).rollback).toBe('success');
     });
 
     it(`${s.label}: the smoke test passed → nothing rolls back`, () => {
-      expect(simulateJobs(wf, s).rollback).toBe('skipped');
+      expect(deployJobs(wf, s).rollback).toBe('skipped');
     });
 
     it(`${s.label}: deploy-api failed (nothing new is serving) → nothing rolls back`, () => {
-      expect(simulateJobs(wf, s, { 'deploy-api': 'failure' }).rollback).toBe('skipped');
+      expect(deployJobs(wf, s, { 'deploy-api': 'failure' }).rollback).toBe('skipped');
     });
   }
 
   it('a rollback_taskdef dispatch runs the rollback job alone', () => {
-    const jobs = simulateJobs(wf, REQUEST);
+    const jobs = deployJobs(wf, REQUEST);
     expect(jobs.rollback).toBe('success');
     expect(EVERY_OTHER_JOB.filter((j) => jobs[j] !== 'skipped'), 'these run on a rollback request').toEqual([]);
   });
