@@ -1,0 +1,72 @@
+ × server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > metadata filters narrow the page and the total > document type 38ms
+ × server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > metadata filters narrow the page and the total > classification 21ms
+ × server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > metadata filters narrow the page and the total > evidence kind 17ms
+ × server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > metadata filters narrow the page and the total > folder 21ms
+ × server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > metadata filters narrow the page and the total > filing status, as the tree defines it 18ms
+ × server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > metadata filters narrow the page and the total > CTD section, by whole segments: 3.2.P.5 holds 3.2.P.5.1 and m3.2.p.5, not 3.2.P.50 23ms
+ × server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > metadata filters narrow the page and the total > lifecycle stage, in this organisation only; none is "not sent for review" 14ms
+ × server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > metadata filters narrow the page and the total > OR within a dimension, AND across dimensions 14ms
+ × server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > metadata filters narrow the page and the total > a filter and a text query together: both must hold 18ms
+ × server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > browse: filters with no text > orders the newest version first and carries the metadata a row shows 14ms
+ × server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > browse: filters with no text > keeps current versions only unless asked, and pages with a real total 17ms
+ × server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > browse: filters with no text > never widens scope: another program, another organisation and deleted rows stay out 29ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "3.2.P.5" within "3.2.P.5" 2ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "3.2.P.5.1" within "3.2.P.5" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "3.2.P.50" within "3.2.P.5" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "m3.2.p.5.1" within "3.2.P.5" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "3.2.p.5" within "3.2.P.5" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > " 3.2.P.5.1 " within "3.2.P.5" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "3.2" within "3.2.P.5" 3ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "3.0" within "3" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "3.0" within "3.0" 2ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "4.2.1" within "3" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "32.P" within "3" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "3.2.P.5 Control" within "3.2.P.5" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "3.2.P.5.foo bar" within "3.2.P.5" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "banana" within "3" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > null within "3" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "" within "3" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "M2.7.3" within "2.7" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "2.7.30" within "2.7.3" 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > runs both reads — the count and the rows 66ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > every vault read names the caller organization in its own SQL 26ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > binds the caller organization, not a value from the request 27ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > counts over exactly the set it returns rows from 22ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > a filtered search keeps the org first, the programs third, and one WHERE for count and page 23ms
+ × server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > a filtered browse (no text) keeps the org first, the programs third, and one WHERE for count and page 15ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > verifies access but does not search the corpus for an empty query 8ms
+ ✓ server/services/vault/__tests__/vault-document-filter.test.ts > parseVaultFilters > reads repeated parameters and comma lists, drops blanks and duplicates, normalises CTD codes 3ms
+ ✓ server/services/vault/__tests__/vault-document-filter.test.ts > parseVaultFilters > checks a folder against the program view, and refuses one with no view 1ms
+ ✓ server/services/vault/__tests__/vault-document-filter.test.ts > parseVaultFilters > refuses more than twenty values in one dimension rather than truncating 0ms
+ ✓ server/services/vault/__tests__/vault-document-filter.test.ts > parseVaultFilters > offers "none" (not sent for review) beside every canonical stage 1ms
+ ✓ server/services/vault/__tests__/vault-document-filter.test.ts > vaultFilterSql > appends after the positions already bound and leaves them where they are 1ms
+ ✓ server/services/vault/__tests__/vault-document-filter.test.ts > vaultFilterSql > keeps the public API exact: a raw CTD string, no whole-segment widening 0ms
+ ✓ server/services/vault/__tests__/vault-document-filter.test.ts > one vocabulary, one predicate > the taxonomy classifications are the schema enum, in the same order 0ms
+ × server/services/vault/__tests__/vault-document-filter.test.ts > one vocabulary, one predicate > no other server module that reads vault.documents builds its own metadata predicate 242ms
+ ✓ server/routes/__tests__/vault-search.test.ts > tenant scope > refuses without organization context, concealed as 404 on a read, and searches nothing 24ms
+ ✓ server/routes/__tests__/vault-search.test.ts > tenant scope > refuses a caller who is not a current member, concealed as 404, and searches nothing 6ms
+ ✓ server/routes/__tests__/vault-search.test.ts > tenant scope > 404s when the programme is not this org's, and never searches it 4ms
+ ✓ server/routes/__tests__/vault-search.test.ts > tenant scope > 404s on a non-uuid programme id rather than 500ing on the cast 3ms
+ ✓ server/routes/__tests__/vault-search.test.ts > empty query > returns no results rather than the whole vault 6ms
+ ✓ server/routes/__tests__/vault-search.test.ts > empty query > does not query at all for an absent or whitespace query 6ms
+ ✓ server/routes/__tests__/vault-search.test.ts > results > returns the page and the REAL total, not the page length 12ms
+ ✓ server/routes/__tests__/vault-search.test.ts > results > carries a body snippet when the match was in the content 7ms
+ ✓ server/routes/__tests__/vault-search.test.ts > results > omits an empty snippet rather than rendering a blank line 4ms
+ ✓ server/routes/__tests__/vault-search.test.ts > results > clamps limit and offset to a sane page 3ms
+ ✓ server/routes/__tests__/vault-search.test.ts > results > reports an honest zero when nothing matches 3ms
+ ✓ server/routes/__tests__/vault-search.test.ts > failure is not an empty result > 500s with a message saying nothing was searched 3ms
+ × server/routes/__tests__/vault-search.test.ts > metadata filters > refuses classification=SECRET by name, with no corpus read 9ms
+ × server/routes/__tests__/vault-search.test.ts > metadata filters > refuses documentType=memo by name, with no corpus read 3ms
+ × server/routes/__tests__/vault-search.test.ts > metadata filters > refuses evidenceKind=gossip by name, with no corpus read 3ms
+ × server/routes/__tests__/vault-search.test.ts > metadata filters > refuses placementStatus=done by name, with no corpus read 4ms
+ × server/routes/__tests__/vault-search.test.ts > metadata filters > refuses ctdSection=banana by name, with no corpus read 3ms
+ × server/routes/__tests__/vault-search.test.ts > metadata filters > refuses lifecycleStage=archived by name, with no corpus read 3ms
+ × server/routes/__tests__/vault-search.test.ts > metadata filters > refuses folderId=module-9 by name, with no corpus read 3ms
+ × server/routes/__tests__/vault-search.test.ts > metadata filters > names the allowed values for a closed vocabulary 4ms
+ × server/routes/__tests__/vault-search.test.ts > metadata filters > refuses processingStatus, which the Vault does not record 3ms
+ × server/routes/__tests__/vault-search.test.ts > metadata filters > browses on filters alone, rather than answering EMPTY_QUERY 3ms
+ × server/routes/__tests__/vault-search.test.ts > metadata filters > binds filter values after the organisation, query and program list 4ms
+ × server/routes/__tests__/vault-search.test.ts > metadata filters > the library search refuses a folder (one project's cabinet) and a malformed project id 3ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 26 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  4 failed (4)
+      Tests  26 failed | 43 passed (69)
