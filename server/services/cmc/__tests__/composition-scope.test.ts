@@ -43,9 +43,11 @@ import {
   compositionRefusalBody,
   compositionRefusalStatus,
   CompositionOutOfScopeError,
+  interviewMoleculeTypeRefusal,
   isCompositionOutOfScope,
 } from '../composition-scope';
 import { classifySubstanceModality } from '../substance-modality';
+import { createCmcSpecificationFlow } from '../../ana/intelligence-questions/flows/cmc-specification';
 import type { CanonicalSource } from '../../module3Composer';
 
 /** A drug-substance source, as `cmc_source_objects` holds it. */
@@ -298,5 +300,47 @@ describe('a refusal cannot be mistaken for an empty result', () => {
   it('a read that failed is answered 503, so a screen offers the retry; a verdict is 409', () => {
     expect(compositionRefusalStatus(applicationNotReadable())).toBe(503);
     expect(compositionRefusalStatus(compositionRefusal([SMALL_MOLECULE], 'nda')!)).toBe(409);
+  });
+});
+
+/**
+ * The molecule type stated in AnA's CMC specification interview, judged by the
+ * flow's own options and its own biologic branch, so a type added to the flow
+ * cannot pass the boundary unjudged.
+ */
+describe('interviewMoleculeTypeRefusal', () => {
+  const classification = createCmcSpecificationFlow().nodes.find((n) => n.id === 'substance_classification')!;
+  const options = (classification.fields.find((f) => f.id === 'molecule_type')!.options ?? []).map((o) => String(o.value));
+  const biologicBranch = (classification.branches ?? []).find((b) => b.when.field === 'molecule_type')!;
+  const biologics = biologicBranch.when.value as string[];
+
+  it('reads the options it judges', () => {
+    // A scan that finds nothing passes everything.
+    expect(options).toEqual(expect.arrayContaining(['small_molecule', 'monoclonal_antibody', 'peptide', 'other']));
+    expect(biologics.length).toBeGreaterThanOrEqual(6);
+  });
+
+  it('admits a small molecule, and an unanswered question', () => {
+    expect(interviewMoleculeTypeRefusal('small_molecule')).toBeNull();
+    expect(interviewMoleculeTypeRefusal(undefined)).toBeNull();
+    expect(interviewMoleculeTypeRefusal('')).toBeNull();
+  });
+
+  it("refuses every type on the flow's biologic branch as a biologic", () => {
+    for (const type of biologics) {
+      expect(interviewMoleculeTypeRefusal(type), type).toMatchObject({ code: 'CMC_MODALITY_OUT_OF_SCOPE', modality: 'biologic' });
+    }
+  });
+
+  it('refuses every other option but a small molecule, by name or as not established', () => {
+    for (const type of options.filter((o) => o !== 'small_molecule')) {
+      expect(interviewMoleculeTypeRefusal(type)?.code, type).toMatch(/^CMC_MODALITY_(OUT_OF_SCOPE|NOT_ESTABLISHED)$/);
+    }
+    expect(interviewMoleculeTypeRefusal('peptide')!.message).toMatch(/a peptide/);
+    expect(interviewMoleculeTypeRefusal('other')!.code).toBe('CMC_MODALITY_NOT_ESTABLISHED');
+    // Not one of the options at all: not established, never admitted as unanswered.
+    for (const odd of [42, {}, ['small_molecule'], 'constructor', '__proto__', 'Small Molecule']) {
+      expect(interviewMoleculeTypeRefusal(odd)?.code, String(odd)).toBe('CMC_MODALITY_NOT_ESTABLISHED');
+    }
   });
 });

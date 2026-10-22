@@ -17693,11 +17693,20 @@ registerToolHandler('estimate_recorded_shelf_life', async (input, ctx) => {
     });
   }
   try {
-    const [{ db }, { stabilityStudies }, { and, eq }, { estimateRecordedShelfLife }] = await Promise.all([
+    const [
+      { db },
+      { stabilityStudies },
+      { and, eq },
+      { estimateRecordedShelfLife },
+      { studiesCompositionRefusal },
+      { anaToolCompositionRefusal },
+    ] = await Promise.all([
       import('../../db.js'),
       import('../../../shared/schema.js'),
       import('drizzle-orm'),
       import('../cmc/recorded-stability.js'),
+      import('../cmc/study-composition-scope.js'),
+      import('../cmc/composition-scope.js'),
     ]);
     const [study] = await db
       .select({
@@ -17708,6 +17717,7 @@ registerToolHandler('estimate_recorded_shelf_life', async (input, ctx) => {
         storageConditions: stabilityStudies.storageConditions,
         duration: stabilityStudies.duration,
         stabilityData: stabilityStudies.stabilityData,
+        projectId: stabilityStudies.projectId,
       })
       .from(stabilityStudies)
       .where(and(eq(stabilityStudies.id, id), eq(stabilityStudies.organizationId, orgId)));
@@ -17716,6 +17726,14 @@ registerToolHandler('estimate_recorded_shelf_life', async (input, ctx) => {
         status: 'not_found',
         message: `No stability study in this organization has id ${id}. List the register and use the ids it returns.`,
       });
+    }
+    /* The composition boundary (decision P-28), asked of the program the study
+       is filed under, as the stability route asks it: a Q1E-extrapolated shelf
+       life for a monoclonal antibody's study was answered here (2026-10-15
+       launch-boundary re-proof). */
+    const refusal = await studiesCompositionRefusal(orgId, [study]);
+    if (refusal) {
+      return anaToolCompositionRefusal(refusal, 'Do not fall back to estimate_shelf_life with numbers read off the study.');
     }
     const outcome = await estimateRecordedShelfLife(study);
     if (!outcome.ok) {
@@ -17908,13 +17926,21 @@ registerToolHandler('assess_recorded_batch_poolability', async (input, ctx) => {
     });
   }
   try {
-    const [{ db }, { stabilityStudies }, { and, eq, inArray }, { assessRecordedPoolability }] =
-      await Promise.all([
-        import('../../db.js'),
-        import('../../../shared/schema.js'),
-        import('drizzle-orm'),
-        import('../cmc/recorded-stability.js'),
-      ]);
+    const [
+      { db },
+      { stabilityStudies },
+      { and, eq, inArray },
+      { assessRecordedPoolability },
+      { studiesCompositionRefusal },
+      { anaToolCompositionRefusal },
+    ] = await Promise.all([
+      import('../../db.js'),
+      import('../../../shared/schema.js'),
+      import('drizzle-orm'),
+      import('../cmc/recorded-stability.js'),
+      import('../cmc/study-composition-scope.js'),
+      import('../cmc/composition-scope.js'),
+    ]);
     const studies = await db
       .select({
         id: stabilityStudies.id,
@@ -17924,6 +17950,7 @@ registerToolHandler('assess_recorded_batch_poolability', async (input, ctx) => {
         storageConditions: stabilityStudies.storageConditions,
         duration: stabilityStudies.duration,
         stabilityData: stabilityStudies.stabilityData,
+        projectId: stabilityStudies.projectId,
       })
       .from(stabilityStudies)
       .where(and(inArray(stabilityStudies.id, ids), eq(stabilityStudies.organizationId, orgId)));
@@ -17936,6 +17963,12 @@ registerToolHandler('assess_recorded_batch_poolability', async (input, ctx) => {
       });
     }
 
+    /* The composition boundary, asked of every program the studies are filed
+       under, as the poolability route asks it. */
+    const refusal = await studiesCompositionRefusal(orgId, studies);
+    if (refusal) {
+      return anaToolCompositionRefusal(refusal, 'Do not fall back to assess_batch_poolability with numbers read off the studies.');
+    }
     const outcome = await assessRecordedPoolability(studies);
     if (!outcome.ok) {
       return JSON.stringify({
@@ -20447,6 +20480,27 @@ function intelligenceProjectId(input: Record<string, unknown>, ctx?: ToolContext
   return supplied || null;
 }
 
+/**
+ * An interview whose answers reach no record is not offered where the launch
+ * boundary is enforced (decision P-28): the refusal, or null. Asked when a flow
+ * starts and again of the state each answer advances, which a caller with no
+ * session supplies itself. The list is the commit path's own
+ * (services/cmc/interview-commit.ts flowCommitsToRecord), not a second one here.
+ */
+async function interviewNotInRelease(label: string, category: string): Promise<string | null> {
+  const { flowCommitsToRecord } = await import('../cmc/interview-commit.js');
+  if (!launchScopeEnforced() || flowCommitsToRecord(category as Parameters<typeof flowCommitsToRecord>[0])) return null;
+  return JSON.stringify({
+    error:
+      `The "${label}" interview is not available in this release: its answers reach no record, so ` +
+      `completing it would save nothing. The interview that commits is the CMC specification flow, which ` +
+      `writes the drug substance, drug product, method, specification and stability registers. For a ` +
+      `protocol, a CSR, a 510(k), a CER or an SOP, author the document in Document editor & authoring.`,
+    flow: category,
+    commits: false,
+  });
+}
+
 function intelligenceSessionId(input: Record<string, unknown>): string | null {
   const id = typeof input.session_id === 'string' ? input.session_id.trim() : '';
   return id || null;
@@ -20475,19 +20529,22 @@ registerToolHandler('start_intelligence_flow', async (input, ctx) => {
 
      Off the boundary — a development server — every flow stays available: the
      engine and its question sets are what a person builds against. */
-  const { flowCommitsToRecord } = await import('../cmc/interview-commit.js');
-  const { launchScopeEnforced } = await import('../entitlements/launch-scope.js');
-  if (launchScopeEnforced() && !flowCommitsToRecord(category)) {
-    return JSON.stringify({
-      error:
-        `The "${documentType}" interview is not available in this release: its answers reach no record, so ` +
-        `completing it would save nothing. The interview that commits is the CMC specification flow, which ` +
-        `writes the drug substance, drug product, method, specification and stability registers. For a ` +
-        `protocol, a CSR, a 510(k), a CER or an SOP, author the document in Document editor & authoring.`,
-      flow: category,
-      commits: false,
-    });
-  }
+  const notInRelease = await interviewNotInRelease(documentType, category);
+  if (notInRelease) return notInRelease;
+
+  /* The composition boundary (decision P-28) of the program the interview
+     would bind to. The CMC interview judges its answers by small-molecule
+     rules, so on a biologic program it would be refused at its first answer;
+     it is not started (services/cmc/interview-composition-scope.ts). */
+  const { interviewCompositionRefusalResult } = await import('../cmc/interview-composition-scope.js');
+  const outOfScope = await interviewCompositionRefusalResult({
+    organizationId: ctx?.organizationId,
+    projectId: intelligenceProjectId(input, ctx),
+    flowState: { flowCategory: category },
+    nodeId: '',
+    answers: {},
+  });
+  if (outOfScope) return outOfScope;
 
   const engineCtx = intelligenceEngineContext(ctx);
 
@@ -20557,6 +20614,7 @@ registerToolHandler('answer_intelligence_question', async (input, ctx) => {
      flow_state is the fallback for a flow started without a session. */
   let flowState = input.flow_state as any;
   let sessions: typeof import('../cmc/interview-sessions.js') | null = null;
+  let projectId = intelligenceProjectId(input, ctx);
   if (sessionId) {
     try {
       sessions = await import('../cmc/interview-sessions.js');
@@ -20570,12 +20628,31 @@ registerToolHandler('answer_intelligence_question', async (input, ctx) => {
         });
       }
       flowState = session.state;
+      projectId = session.projectId;
     } catch (err: any) {
       return JSON.stringify({ error: err?.message || 'Failed to load the interview session', session_id: sessionId });
     }
   } else if (!flowState) {
     return JSON.stringify({ error: 'session_id (or, for a flow started without a session, flow_state) is required' });
   }
+
+  /* Asked again here because a caller with no session supplies the state, and
+     with it the flow, itself: start's refusal did not bind it. */
+  const flowCategory = String(flowState.flowCategory ?? '');
+  const notInRelease = await interviewNotInRelease(flowCategory, flowCategory);
+  if (notInRelease) return notInRelease;
+
+  /* The composition boundary (decision P-28), before the answer is judged: the
+     molecule type stated, and the program the session is bound to. The CMC
+     interview judged a monoclonal antibody's answers by ICH Q3A(R2) and M7 and
+     summarised it as ready for document generation (2026-10-15 launch-boundary
+     re-proof; services/cmc/interview-composition-scope.ts). */
+  const { interviewCompositionRefusalResult } = await import('../cmc/interview-composition-scope.js');
+  const outOfScope = await interviewCompositionRefusalResult(
+    { organizationId: ctx?.organizationId, projectId, flowState, nodeId, answers },
+    { session_id: sessionId },
+  );
+  if (outOfScope) return outOfScope;
 
   try {
     const result = advanceFlow(flowState, nodeId, answers, engineCtx);
@@ -20649,6 +20726,15 @@ registerToolHandler('resume_intelligence_flow', async (input, ctx) => {
     if (session.status === 'abandoned') {
       return JSON.stringify({ error: `Interview session ${sessionId} was abandoned.`, session_id: sessionId, session_status: session.status });
     }
+    /* A session that states a molecule type outside the boundary, or is bound
+       to a program outside it, is not re-presented: its summary is the
+       small-molecule judgement the boundary refuses. */
+    const { interviewCompositionRefusalResult } = await import('../cmc/interview-composition-scope.js');
+    const outOfScope = await interviewCompositionRefusalResult(
+      { organizationId: ctx?.organizationId, projectId: session.projectId, flowState: session.state, nodeId: '', answers: {} },
+      { session_id: sessionId, session_status: session.status },
+    );
+    if (outOfScope) return outOfScope;
     const result = resumeFlow(session.state, intelligenceEngineContext(ctx));
     if (result.completeEvent) {
       return JSON.stringify({
