@@ -109,7 +109,7 @@ function holdFields(scope: Scope, programs: ListState<ProgramChoice>, documents:
   const options = programs.error || isPendingStore(programs) ? [] : programs.rows.map((p) => ({ value: p.id, label: p.code ? `${p.name} · ${p.code}` : p.name }));
   return [
     { key: 'programId', label: 'Project', type: 'select', required: true, desc: 'Up to 200 projects accessible in your organization.', options },
-    ...(scope === 'document' ? [{ key: 'documentId', label: 'Vault document version', type: 'select' as const, required: true, options: documents, desc: hint, descLive: true }] : []),
+    ...(scope === 'document' ? [{ key: 'documentId', label: 'Vault document version', type: 'select' as const, required: true, options: documents, descStatus: hint }] : []),
     { key: 'reference', label: 'Hold reference', type: 'text', required: true, desc: 'Your inspection, litigation or preservation reference. Maximum 200 characters.' },
     { key: 'reason', label: 'Reason for the hold', type: 'textarea', required: true, desc: '3–2,000 characters. Recorded with your user identity and the time.' },
   ];
