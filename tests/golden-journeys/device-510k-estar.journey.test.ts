@@ -200,8 +200,7 @@ beforeAll(async () => {
     migrations: [
       // The Part 11 tamper-evident store (ledger L145) — cross-cutting.
       'db/migrations/20260813_audit_tamper_proof_log.sql',
-      // audit_logs chain columns + the c2c_ana_actions ledger the scaffold's
-      // governed action writes to.
+      // audit_logs chain columns + the c2c_ana_actions ledger the scaffold's governed action writes to.
       'migrations/20260527_mutation_primitives.sql',
       // public.actor_name (D3, 2026-09-29): the program list names its lead
       // through it since users took row-level security; after mutation
