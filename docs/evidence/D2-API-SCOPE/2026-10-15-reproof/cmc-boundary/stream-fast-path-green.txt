@@ -1,0 +1,48 @@
+# this change
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > direct intelligence answers avoid unused model-turn reads > keeps the next question, session, direct handler scope and turn record 74ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > direct intelligence answers avoid unused model-turn reads > keeps interview completion and its summary 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > direct intelligence answers avoid unused model-turn reads > says a composition-boundary refusal in its own words 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > direct intelligence answers avoid unused model-turn reads > keeps refused handler failure honest without unused reads 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > direct intelligence answers avoid unused model-turn reads > keeps throws handler failure honest without unused reads 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > direct intelligence answers avoid unused model-turn reads > keeps non-json handler failure honest without unused reads 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > direct intelligence answers avoid unused model-turn reads > handles malformed input without calling a handler or admitting unused reads 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > direct intelligence answers avoid unused model-turn reads > still starts both model-turn reads while optional route prefetch is pending 112ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > memory startup on the client streaming door > starts admitted memory before optional route prefetch finishes and waits for both before the model 80ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > memory startup on the client streaming door > awaits slow memory when optional route context has already returned 21ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > memory startup on the client streaming door > does not start memory or optional context when conversation resolve fails 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > memory startup on the client streaming door > does not start memory or optional context when conversation history fails 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > memory startup on the client streaming door > does not start memory or optional context when conversation save fails 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > memory startup on the client streaming door > handles an early memory rejection while optional context is pending 10ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > estimate_recorded_shelf_life asks the boundary of the program the study is filed under > a biologic program: the refusal in its own words, and no Q1E estimate 15ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > estimate_recorded_shelf_life asks the boundary of the program the study is filed under > a study filed under no program is not established, and not estimated 2ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > estimate_recorded_shelf_life asks the boundary of the program the study is filed under > a small-molecule IND program is estimated as before 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > assess_recorded_batch_poolability asks it of every program the studies are filed under > one study on a biologic program refuses the whole comparison 2ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > assess_recorded_batch_poolability asks it of every program the studies are filed under > a study filed under no program is named, and nothing is assessed 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > assess_recorded_batch_poolability asks it of every program the studies are filed under > studies on a small-molecule IND program are assessed as before 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a monoclonal_antibody stated as the molecule type is refused before any answer is judged 77ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a adc stated as the molecule type is refused before any answer is judged 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a recombinant_protein stated as the molecule type is refused before any answer is judged 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a cell_therapy stated as the molecule type is refused before any answer is judged 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a gene_therapy stated as the molecule type is refused before any answer is judged 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a vaccine stated as the molecule type is refused before any answer is judged 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > peptide, which ICH Q3A(R2) and M7 exclude by scope, is refused 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > oligonucleotide, which ICH Q3A(R2) and M7 exclude by scope, is refused 0ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > "other" does not establish a small molecule 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a later answer is refused when the molecule type stated earlier is a biologic 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a small molecule advances as before 3ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > the program the interview is bound to is asked too: a biologic program's interview takes no answer 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > a boundary that cannot be asked refuses as a failed read; the answer is not judged unasked 2ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > a program with no substance recorded yet is not refused: the interview is how it gets recorded 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > starting one on a biologic program is refused, so no one is walked through an interview that cannot finish 2ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > with a session, the program asked is the session's own, not the caller's 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > resume does not re-present a session whose stated molecule type is outside the boundary 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > in production, a caller-supplied flow_state for an interview that commits nothing is refused, as start refuses it 3ms
+ ✓ server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > the probes stand for hidden tools and two in-scope tools 2ms
+ ✓ server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > in production, is refused and its handler never runs 2ms
+ ✓ server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > in production, the fast path’s own tool runs now that CMC is in the catalog 2ms
+ ✓ server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > in production, a hidden write is refused before a person is asked to confirm it 0ms
+ ✓ server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > in production, an in-scope tool still runs 1ms
+ ✓ server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > with launch scope off (a development server), a hidden tool runs 0ms
+ Test Files  3 passed (3)
+      Tests  44 passed (44)
