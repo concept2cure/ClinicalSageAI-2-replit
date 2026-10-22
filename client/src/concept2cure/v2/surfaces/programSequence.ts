@@ -1,32 +1,34 @@
 /**
- * The open project's submissions, and the sequence its dispatch gate reads.
+ * The open project's submissions, and the dispatch verdict of each market's
+ * latest sequence.
  *
  * ONE_ANA_ONE_CANVAS.md slice 24: the project page shows the project's
  * readiness and submissions, and the Submission Center reads the open project.
- * Three screens now ask the same two questions — "which submissions are this
- * project's?" and "is its sequence cleared to dispatch?" — and each is answered
- * here, once:
+ * Every screen that asks "which submissions are this project's?" and "is its
+ * sequence cleared to dispatch?" is answered here, once:
  *
  *   - `programSubmissionsPath` is the project-scoped list read
  *     (GET /api/submissions?programId=<uuid>, server/routes/submissions.ts). Its
  *     envelope's `meta.notOffered` is the server's count of the organization's
  *     submissions the scope left out; a reader states it or says nothing, and
  *     never works it out.
- *   - `useProgramSequence` finds the open program's latest sequence, and
- *     `useSequenceDispatchReadiness` reads that sequence's verdict from
- *     GET /api/submissions/sequences/:seqId/dispatch-readiness. Both moved here
- *     unchanged from DispatchReadiness.tsx so the readiness screen and the
- *     project page cannot drift apart.
- *   - `useProgramMarkets` (FILING_SPINE.md F9) answers the same question for
- *     every market of the project: each submission in the scoped list, its
- *     latest sequence, and that sequence's verdict from the same endpoint.
+ *   - `useProgramMarkets` (FILING_SPINE.md F9) reads every market of the
+ *     project: each submission in the scoped list, its latest sequence, and
+ *     that sequence's verdict from
+ *     GET /api/submissions/sequences/:seqId/dispatch-readiness. The project
+ *     page, its header line and Submission Readiness (F18) all read it.
+ *
+ * Submission Readiness used to find ONE sequence of its own (the submission of
+ * the program's application type in the organisation's unscoped list, here as
+ * `useProgramSequence`), so a project filing an IND and an MAA had a verdict
+ * for one of them on that screen. F18 deleted that walk: the scoped list is
+ * the server's project scope, and no submission is matched to a project by
+ * type or name on the client.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { redactInternals } from '@/lib/queryClient';
-import { liveGetOrNull, unwrapList, useLiveData, useLiveRows, type DataState, type ListState } from '../dataConnect';
-import { readShellProject } from '../shellProject';
+import { liveGetOrNull, unwrapList, useLiveRows, type ListState } from '../dataConnect';
 import { SC_APPTYPES } from '../fixtures/submission';
-import { classNotSequencedReason, filingDocumentClassOf, filingTypeInSentence } from '@shared/regulatory/filing-document-classes';
+import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
 
 /** GET /api/submissions scoped to one program (its uuid). */
 export const programSubmissionsPath = (programId: string): string =>
@@ -176,25 +178,6 @@ export interface DispatchReadinessAssessment {
    no program open, the program could not be read, no submission for it, no
    sequence on its submission, discovery failed. */
 
-interface ProgramRecord {
-  id: string;
-  name: string | null;
-  code: string | null;
-  product_name: string | null;
-  program_type: string | null;
-}
-
-interface SubmissionRow {
-  id: number;
-  title: string | null;
-  productName: string | null;
-  applicationType: string | null;
-  /** The project the submission belongs to; null or absent when none is recorded. */
-  programId?: string | null;
-}
-
-const norm = (v: unknown): string => String(v ?? '').trim().toLowerCase();
-
 /** A program type or application type in words ("IND", "510(k)", "De Novo",
  *  "Prior Approval Supplement"): the application-type label when one matches,
  *  a filing document class's label when it is one (never its key, "pas"),
@@ -203,100 +186,6 @@ export function programTypeLabel(t: string | null | undefined): string | null {
   const v = String(t ?? '').trim();
   if (!v) return null;
   return SC_APPTYPES.find((a) => a.v === v.toLowerCase())?.l ?? filingDocumentClassOf(v)?.label ?? v;
-}
-
-/** A submission recorded to the program that the gate does not read, because
- *  its application type is not the program's. */
-export interface OtherSubmission {
-  title: string;
-  applicationType: string | null;
-}
-
-const submissionTitleOf = (sub: SubmissionRow): string => sub.title || `submission ${sub.id}`;
-
-/** Whether `sub` is of the program's application type. */
-function ofProgramType(sub: SubmissionRow, program: ProgramRecord): boolean {
-  const appType = norm(program.program_type);
-  return appType !== '' && norm(sub.applicationType) === appType;
-}
-
-/** Whether `sub` is this program's submission: of its type, and recording it.
- *  The recorded anchor is the only evidence; a name is never one. */
-function submissionBelongsToProgram(sub: SubmissionRow, program: ProgramRecord): boolean {
-  return ofProgramType(sub, program) && sub.programId != null && sub.programId === program.id;
-}
-
-export type Discovery =
-  | { state: 'discovering' }
-  | { state: 'no-program' }
-  | { state: 'error'; detail: string }
-  | {
-      state: 'no-submission';
-      programId: string;
-      programLabel: string;
-      /** The program's type (regulatory_programs.program_type): the gate reads
-       *  only a submission of this application type. Null when none is recorded. */
-      programType: string | null;
-      /** Submissions recorded to this program whose application type is not
-       *  its type. The project has these; the gate does not read them, so
-       *  "no submission" is never said over them. */
-      otherSubmissions: OtherSubmission[];
-      /** Submissions of the program's type that record no program at all. A
-       *  count, never a list: none of them is this program's until the
-       *  Submission Center anchors it, and naming one would suggest which. */
-      unanchoredOfType: number;
-    }
-  | {
-      state: 'no-sequence';
-      programId: string;
-      programLabel: string;
-      submissionId: number;
-      submissionTitle: string;
-    }
-  | {
-      state: 'sequence';
-      programId: string;
-      programLabel: string;
-      submissionId: number;
-      submissionTitle: string;
-      seqId: number;
-      /** The eCTD sequence NUMBER ("0000"), the identifier a filing is known by;
-       *  the assessment carries only the row id. Null when the row has none. */
-      sequenceNumber: string | null;
-    };
-
-/* Each discovery step answers either its data or the Discovery state that ends
-   the walk. liveGetOrNull rather than liveGet throughout: none of these reads
-   ever wanted a fixture, and a failed read is reported as a failure, never as
-   "nothing". */
-type Step<T> = { data: T } | { done: Discovery };
-
-async function readProgram(programId: string): Promise<Step<ProgramRecord>> {
-  const r = await liveGetOrNull<ProgramRecord>(`/api/c2c/projects/${encodeURIComponent(programId)}`);
-  if (r.error || r.data == null || typeof r.data !== 'object') {
-    return { done: { state: 'error', detail: r.error ?? 'The open program could not be read.' } };
-  }
-  return { data: r.data };
-}
-
-async function findProgramSubmission(program: ProgramRecord, programId: string, programLabel: string): Promise<Step<SubmissionRow>> {
-  const r = await liveGetOrNull<unknown>('/api/submissions');
-  if (r.error || r.data == null) {
-    return { done: { state: 'error', detail: r.error ?? 'The submissions could not be read.' } };
-  }
-  const list = unwrapList(r.data);
-  const rows = (Array.isArray(list) ? (list as SubmissionRow[]) : []).filter((row) => row && typeof row.id === 'number');
-  const sub = rows.find((r) => submissionBelongsToProgram(r, program));
-  if (sub) return { data: sub };
-  /* None of the program's type. The submissions recorded to it, if any, are of
-     other types (an EU MAA beside an IND, any submission of a CER program):
-     they are named, so a reader never says the project has none. */
-  const programType = String(program.program_type ?? '').trim() || null;
-  const otherSubmissions = rows
-    .filter((r) => r.programId != null && r.programId === program.id)
-    .map((r) => ({ title: submissionTitleOf(r), applicationType: r.applicationType ?? null }));
-  const unanchoredOfType = rows.filter((r) => r.programId == null && ofProgramType(r, program)).length;
-  return { done: { state: 'no-submission', programId, programLabel, programType, otherSubmissions, unanchoredOfType } };
 }
 
 /** A submission's latest sequence, as GET /api/submissions/:id/sequences
@@ -324,208 +213,20 @@ export function latestSequenceOf(payload: unknown): LatestSequence | null {
 const sequencesPath = (submissionId: number): string => `/api/submissions/${submissionId}/sequences`;
 const dispatchReadinessPath = (seqId: number): string => `/api/submissions/sequences/${seqId}/dispatch-readiness`;
 
-async function findLatestSequence(sub: SubmissionRow, programId: string, programLabel: string): Promise<Discovery> {
-  const r = await liveGetOrNull<unknown>(sequencesPath(sub.id));
-  if (r.error || r.data == null) {
-    return { state: 'error', detail: r.error ?? 'The sequences could not be read.' };
-  }
-  const latest = latestSequenceOf(r.data);
-  const submissionTitle = submissionTitleOf(sub);
-  if (!latest) {
-    return { state: 'no-sequence', programId, programLabel, submissionId: sub.id, submissionTitle };
-  }
-  return { state: 'sequence', programId, programLabel, submissionId: sub.id, submissionTitle, seqId: latest.id, sequenceNumber: latest.sequenceNumber };
-}
-
-export async function discoverProgramSequence(programId: string, shellTitle: string | undefined): Promise<Discovery> {
-  const prog = await readProgram(programId);
-  if ('done' in prog) return prog.done;
-  const program = prog.data;
-  const programLabel = program.name || program.code || shellTitle || programId;
-  const found = await findProgramSubmission(program, programId, programLabel);
-  if ('done' in found) return found.done;
-  return findLatestSequence(found.data, programId, programLabel);
-}
-
-/** The open program's latest sequence. `reloadKey` re-runs the walk: a reader
- *  that offers "Try again" after a failed read bumps it. */
-export function useProgramSequence(reloadKey = 0): Discovery {
-  const shell = readShellProject();
-  const programId = shell ? String(shell.id) : null;
-  const shellTitle = shell?.title;
-  const [d, setD] = useState<Discovery>(programId ? { state: 'discovering' } : { state: 'no-program' });
-  useEffect(() => {
-    if (!programId) {
-      setD({ state: 'no-program' });
-      return undefined;
-    }
-    let cancelled = false;
-    setD({ state: 'discovering' });
-    discoverProgramSequence(programId, shellTitle)
-      .then((next) => {
-        if (!cancelled) setD(next);
-      })
-      .catch((e: unknown) => {
-        if (!cancelled) setD({ state: 'error', detail: redactInternals(e instanceof Error ? e.message : '', 'the read failed') });
-      });
-    return () => {
-      cancelled = true;
-    };
-    // The shell program is read on every render; the effect keys on its id.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [programId, reloadKey]);
-  return d;
-}
-
-/** The submissions recorded to a program that its gate does not read, in
- *  words: 'MAA "ONC-221 EU MAA"', joined. Empty when there are none. */
-export function otherSubmissionsLine(others: OtherSubmission[]): string {
-  return others
-    .map((o) => [programTypeLabel(o.applicationType), `"${o.title}"`].filter(Boolean).join(' '))
-    .join(', ');
-}
-
-/** The gate's not-ready state when the program has no submission of its type,
- *  in words, about `subject` ("this project", "OQ-005"). Never "no
- *  submission" over submissions the program has. */
-export function noSubmissionWords(
-  d: Extract<Discovery, { state: 'no-submission' }>,
-  subject: string,
-): { title: string; hint: string } {
-  /* A filing document class has no submission of its own type to gate: it is
-     authored here and this platform builds no sequence for it, so "create its
-     submission" would be an instruction the platform refuses (review finding,
-     2026-10-18). */
-  const documentClass = filingDocumentClassOf(d.programType);
-  if (documentClass) {
-    return {
-      title: `Nothing to gate for ${subject}`,
-      hint:
-        `It is ${filingTypeInSentence(documentClass.docType, true)}, authored here. ` +
-        `${classNotSequencedReason(documentClass)} The dispatch gate reads an application's sequence, so there is none for it to read.`,
-    };
-  }
-  const type = programTypeLabel(d.programType);
-  const others = otherSubmissionsLine(d.otherSubmissions);
-  const unanchored = unanchoredLine(d.unanchoredOfType, type, subject);
-  if (!type) {
-    return {
-      title: `No submission is gated for ${subject}`,
-      hint:
-        `No program type is recorded for ${subject}, so the dispatch gate cannot tell which submission to read.` +
-        (others ? ` Its submissions: ${others}.` : ''),
-    };
-  }
-  if (others) {
-    return {
-      title: `No ${type} submission for ${subject} yet`,
-      hint: `The dispatch gate reads only ${subject}'s ${type} submission. Its submissions of other types are not gated here: ${others}.${unanchored}`,
-    };
-  }
-  // Nothing is recorded to the program at all: "no submission" is then true.
-  return {
-    title: `No submission for ${subject} yet`,
-    hint: `The dispatch gate reads ${subject}'s ${type} submission, and none is recorded, so there is no sequence to gate yet.${unanchored}`,
-  };
-}
-
-/** The organisation's submissions of the program's type that record no
- *  program, as a count and the way one becomes the program's — or nothing.
- *  P-20 follow-up: a submission is never matched to a program by name. */
-function unanchoredLine(count: number, type: string | null, subject: string): string {
-  if (!type || !Number.isInteger(count) || count <= 0) return '';
-  const one = count === 1;
-  return (
-    ` ${count} ${type} submission${one ? '' : 's'} in this organisation ${one ? 'has' : 'have'} no program recorded. ` +
-    `A submission is never matched to a program by name: one is gated here only once the Submission Center records it to ${subject}.`
-  );
-}
-
-/* What the gate's state is when there is no verdict to give — one value per
-   not-ready state, each about the open program. */
-export type GateState = 'evaluating' | 'error' | 'no-program' | 'no-submission' | 'no-sequence' | 'evaluated';
-
-function notReadyState(discovery: Discovery): Exclude<GateState, 'evaluating' | 'evaluated'> | null {
-  switch (discovery.state) {
-    case 'error':
-      return 'error';
-    case 'no-program':
-      return 'no-program';
-    case 'no-submission':
-      return 'no-submission';
-    case 'no-sequence':
-      return 'no-sequence';
-    default:
-      return null;
-  }
-}
-
-export interface SequenceDispatchReadiness {
-  /** The sequence row id being gated, or null when discovery found none. */
-  seqId: number | null;
-  live: DataState<DispatchReadinessAssessment>;
-  assessment: DispatchReadinessAssessment | null;
-  /** The server's composed verdict; {cleared:false, blockers:[]} when it gave none. */
-  gate: DispatchGate;
-  /** Whether the server stated a verdict at all. False is UNANSWERED, never cleared. */
-  answered: boolean;
-  loading: boolean;
-  gateState: GateState;
-}
-
-/** The server's composed verdict, or null when it stated none. */
+/** The server's composed verdict, or null when it stated none.
+ *
+ *  THE GATE IS THE SERVER'S, NOT OURS. The readiness screen used to RECOMPUTE
+ *  the verdict from the server's raw inputs, merging a local copy of
+ *  evaluateDispatchGate with the external-validation result: two gates, while
+ *  the server composes four (assess-dispatch-readiness.ts: structural,
+ *  external, shadowPresence, releaseSignature). A sequence no Shadow Review
+ *  had read was then shown "cleared to dispatch" while the server answered
+ *  `cleared: false`, and the local copy coerced "could not determine" to 0.
+ *  A recomputed verdict cannot be kept in step with a gate set that grows, so
+ *  the composed verdict is consumed as it is; when the server supplies none,
+ *  the gate is UNANSWERED, which is not cleared. */
 function serverGate(a: DispatchReadinessAssessment | null): DispatchGate | null {
   return a?.gate && typeof a.gate.cleared === 'boolean' ? { cleared: a.gate.cleared, blockers: a.gate.blockers ?? [] } : null;
-}
-
-/** A read in flight, or one asked for whose first fetch has not started yet. */
-function readPending(live: DataState<unknown>): boolean {
-  return live.loading || (!live.error && !live.empty && live.data == null);
-}
-
-/** The dispatch-readiness verdict for the sequence `discovery` found. A re-run
- *  of the discovery (its `reloadKey`) passes through 'discovering', which has no
- *  sequence, so the verdict is read again when the sequence is found again. */
-export function useSequenceDispatchReadiness(discovery: Discovery): SequenceDispatchReadiness {
-  const seqId = discovery.state === 'sequence' ? discovery.seqId : null;
-  const live = useLiveData<DispatchReadinessAssessment>(
-    seqId === null ? null : dispatchReadinessPath(seqId),
-    [seqId],
-  );
-  const a = live.data;
-
-  /* THE GATE IS THE SERVER'S, NOT OURS.
-     The readiness screen used to RECOMPUTE the verdict from the server's raw
-     inputs, by merging a local copy of evaluateDispatchGate with the
-     external-validation result. Two gates — and the server composes FOUR
-     (assess-dispatch-readiness.ts: structural, external, shadowPresence,
-     releaseSignature). So a sequence with zero validation errors, no external
-     validator configured, and ZERO completed Shadow Review runs had the server
-     answering `cleared: false` (shadowPresence blocks: never-reviewed is
-     unassessed, not clean) while the screen rendered "cleared to dispatch"
-     and published `facts.cleared: true` to AnA. The same applied to a missing
-     §11.70 release signature.
-
-     The local copy had also drifted: it did `Number.isFinite(x) ? x : 0`, the
-     exact coercion the server deliberately INVERTED because it made "could not
-     determine" indistinguishable from "none".
-
-     A recomputed verdict cannot be kept in step with a gate set that grows, and
-     duplicating it is what let these diverge. Consume the composed verdict; when
-     the server did not supply one, the gate is UNANSWERED, which is not
-     cleared. */
-  const answered = serverGate(a) !== null;
-  const gate = useMemo<DispatchGate>(() => serverGate(a) ?? { cleared: false, blockers: [] as string[] }, [a]);
-
-  /* Between discovery naming a sequence and its read starting, the read is
-     neither loading nor answered; that is still evaluating, not "no sequence". */
-  const loading = discovery.state === 'discovering' || (seqId !== null && readPending(live));
-  const gateState: GateState = loading
-    ? 'evaluating'
-    : live.error
-      ? 'error'
-      : notReadyState(discovery) ?? (seqId === null || !a ? 'no-sequence' : 'evaluated');
-  return { seqId, live, assessment: a, gate, answered, loading, gateState };
 }
 
 /* ── The project's markets (FILING_SPINE.md F9, §6 row 12) ─────────────────
