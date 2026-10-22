@@ -89,7 +89,7 @@ const fakeChildProcess = vi.hoisted(() => async () => {
       child.emit('exit', 0);
       child.emit('close', 0);
     };
-    if (args.includes('--version')) setImmediate(() => finish('1.0'));
+    if (args.includes('--version')) globalThis.setImmediate(() => finish('1.0'));
     else startChild(command, args, finish);
     return child;
   };
@@ -98,7 +98,7 @@ const fakeChildProcess = vi.hoisted(() => async () => {
     const callback = (typeof opts === 'function' ? opts : cb) as (e: unknown, out: string, err: string) => void;
     if (args.includes('--version')) {
       const absent = cp.missing.includes(command) ? Object.assign(new Error(`spawn ${command} ENOENT`), { code: 'ENOENT' }) : null;
-      setImmediate(() => callback(absent, '10.0', ''));
+      globalThis.setImmediate(() => callback(absent, '10.0', ''));
       return;
     }
     startChild(command, args, (stdout) => callback(null, stdout, ''));
