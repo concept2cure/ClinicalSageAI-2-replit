@@ -1,0 +1,8 @@
+# The first, uncommitted interviewMoleculeTypeRefusal (plain-object tables; a non-string read as unanswered), re-run in isolation:
+42 → null
+{} → null
+["small_molecule"] → null
+"constructor" → CMC_MODALITY_OUT_OF_SCOPE
+"__proto__" → CMC_MODALITY_OUT_OF_SCOPE
+"Small Molecule" → CMC_MODALITY_NOT_ESTABLISHED
+# Now: every one of these is CMC_MODALITY_NOT_ESTABLISHED (composition-scope.test.ts, 'refuses every other option').
