@@ -12,12 +12,24 @@
 -- every column already exists, and the seed's upsert is refused to the runtime
 -- role. They are now the deploy's work. deploy-migrate applies this file as the
 -- owner; the API boots as app_service and only verifies the result
--- (server/db/bootstrap/index.ts). The statements are the boot's, unchanged.
+-- (server/db/bootstrap/index.ts). The column statements are the boot's,
+-- unchanged; the tables themselves are migrations/0000_sweet_joseph.sql's.
+--
+-- AMENDED 2026-10-22, the same day, before any deploy applied it (no hosted
+-- environment exists yet): the CREATE TABLE IF NOT EXISTS statements for
+-- organization_users, available_modules and module_subscriptions, copied from
+-- the boot, are removed. migrations/0000_sweet_joseph.sql creates all three,
+-- with a superset of those columns, and install-fresh applies it to every
+-- database before deploy-migrate will run, so here they were no-ops. As text
+-- they were a second, narrower definition of each table, which
+-- ci:duplicate-table-ddl, ci:model-migration-agreement and
+-- ci:unkeyed-request-tables (each reads the last creator) refused. For those
+-- tables this file adds only the column 0000 lacks (organization_users.persona).
 --
 -- ── Re-runnable, per CLAUDE.md RULE 1 ───────────────────────────────────────
 -- Every entry of C2C_MIGRATION_FILES executes on every deploy. Everything here
--- is additive and guarded: ADD COLUMN IF NOT EXISTS, CREATE TABLE IF NOT
--- EXISTS, a catalog-guarded constraint, ON CONFLICT seeds. It drops nothing.
+-- is additive and guarded: ADD COLUMN IF NOT EXISTS, a catalog-guarded
+-- constraint, ON CONFLICT seeds. It creates no table and drops nothing.
 -- On a database install-fresh provisioned (drizzle push) every object already
 -- exists and the DDL is a no-op; it matters for a database the boot used to
 -- keep in step.
@@ -107,42 +119,12 @@ DO $$ BEGIN
 END $$;
 
 -- ── organization_users: the membership junction ─────────────────────────────
-CREATE TABLE IF NOT EXISTS organization_users (
-  id              SERIAL PRIMARY KEY,
-  organization_id INTEGER NOT NULL REFERENCES organizations(id),
-  user_id         INTEGER NOT NULL REFERENCES users(id),
-  role            TEXT DEFAULT 'member' NOT NULL,
-  permissions     JSONB,
-  created_at      TIMESTAMP DEFAULT NOW() NOT NULL,
-  updated_at      TIMESTAMP DEFAULT NOW() NOT NULL,
-  UNIQUE(organization_id, user_id)
-);
-
+-- Created by migrations/0000_sweet_joseph.sql, as are available_modules and
+-- module_subscriptions (the module catalog). permissions is there already;
+-- persona is not.
 ALTER TABLE organization_users
   ADD COLUMN IF NOT EXISTS permissions JSONB,
   ADD COLUMN IF NOT EXISTS persona     TEXT;
-
--- ── The module catalog ──────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS available_modules (
-  id          SERIAL PRIMARY KEY,
-  module_id   TEXT NOT NULL UNIQUE,
-  name        TEXT NOT NULL,
-  description TEXT,
-  category    TEXT,
-  icon        TEXT,
-  path        TEXT,
-  sort_order  INTEGER DEFAULT 0,
-  metadata    JSONB DEFAULT '{}'
-);
-
-CREATE TABLE IF NOT EXISTS module_subscriptions (
-  id              SERIAL PRIMARY KEY,
-  organization_id INTEGER NOT NULL REFERENCES organizations(id),
-  module_id       TEXT NOT NULL,
-  enabled         BOOLEAN DEFAULT true,
-  created_at      TIMESTAMP DEFAULT NOW(),
-  UNIQUE(organization_id, module_id)
-);
 
 -- ── The two organisations the boot seeded ───────────────────────────────────
 -- At least one organisation exists.

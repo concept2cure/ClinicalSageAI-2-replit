@@ -1,0 +1,49 @@
+# Slice B amendment (same day, before any deploy): the migration no longer re-declares organization_users, available_modules and
+# module_subscriptions, which migrations/0000_sweet_joseph.sql creates. Found by running ci.yml's Lint steps locally after a
+# guard failure upstream of them (docs/evidence/MR-03/2026-10-22-stage-2/raw/d6) had kept them from running in CI since 07:27Z.
+
+## Before the amendment, at e218851a1 (plus the Node guard fix): the gates the duplicate tables tripped
+FAIL  12 rc=1     1s Guardrails — duplicate CREATE TABLE across BOTH migration lineages
+FAIL  55 rc=1     8s Gates that existed but ran nowhere
+FAIL  69 rc=1     1s Guardrails — no per-request table without a tenant key
+FAIL  70 rc=1     1s Guardrails — the unkeyed-table gate can still fail
+  ci:duplicate-table-ddl: available_modules, module_subscriptions, organization_users each defined in 0000_sweet_joseph.sql AND 20261022
+  ci:model-migration-agreement (step 55): module_subscriptions, available_modules newly diverge (the narrower definition read as the creator)
+  ci:unkeyed-request-tables (steps 69, 70): available_modules attributed to 20261022 as its creator, outside the baseline
+
+## After
+ci:duplicate-table-ddl               rc=0  [ci:duplicate-table-ddl] ✅ no new duplicate table definitions.
+ci:model-migration-agreement         rc=0  ✅ no new divergence. 28 baselined and awaiting burn-down.
+ci:unkeyed-request-tables            rc=0  [ci:unkeyed-request-tables] ✅ no new tables read without a tenant key.
+ci:unkeyed-request-tables:selftest   rc=0  
+ci:migration-set-order               rc=0  [ci:migration-set-order] OK — 422 migrations, sweep last, tail uuid step → child scope → sweep, all pres
+ci:migration-drop-safety             rc=0  [ci:migration-drop-safety] OK — 422 migrations, 41 DROP(s), none re-created by the set; 7 constraint replace
+ci:migration-deploy-path             rc=0  [ci:migration-deploy-path] OK — 105 baselined file(s) on no deploy path, none new.
+
+## The test that ties the boot to the deploy, rewritten to read 0000 as the creator: 13/13; three mutants, each caught by its own case
+  1. the migration defines a table again            -> "defines no table: 0000_sweet_joseph.sql creates each one the boot checks" fails
+  2. the boot checks users.nickname, which nothing creates -> "users: every column the boot checks is created or added by the deploy" fails
+  3. the migration adds a column the boot does not check  -> "adds no column the boot does not check, to no table it does not check" fails
+
+## On Postgres 16.15 + TLS: fresh install-fresh + deploy-migrate with the amended file, deploy-migrate replayed, booted with APP_DATABASE_URL only
+install-fresh exit 0
+deploy-migrate exit 0
+app_service rolsuper,rolbypassrls = false,false
+/readyz=200 after 20s
+readyz: {"ready":true,"dependencies":{"database":"ok","schema":"ok","ana":"ok","storage":"ok","virusScan":"ok","redis":"skipped","worker":"skipped"},"schemaState":"ready","anaState":"deterministic","capabilityRegistry":"pending","anaDetail":"AI_GATEWAY_DETERMINISTIC is set — AnA serves fixed responses, not live model output"}
+boot.log FATAL/refusal lines:
+  ✓ applied: migrations/20261022_auth_schema_and_seeded_organizations.sql
+  ✓ applied: migrations/20260923_organization_default_client_workspace.sql
+--- deploy-migrate again (replay):
+deploy-migrate (2nd) exit 0
+  ✓ applied: migrations/20261022_auth_schema_and_seeded_organizations.sql
+concept2cure tier=enterprise workspaces=1
+default tier=standard workspaces=1
+organization_users.persona=1
+--- boot again after the replay
+/readyz=200 after 10s
+readyz: {"ready":true,"dependencies":{"database":"ok","schema":"ok","ana":"ok","storage":"ok","virusScan":"ok","redis":"skipped","worker":"skipped"},"schemaState":"ready","anaState":"deterministic","capabilityRegistry":"pending","anaDetail":"AI_GATEWAY_DETERMINISTIC is set — AnA serves fixed responses, not live model output"}
+boot.log FATAL/refusal lines:
+--- signup dbtest
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > the organisation's own workspace, under each creator's scope > the seeded organisations: the migration and the workspace sweep, applied twice, leave one workspace each
+      Tests  16 passed (16)

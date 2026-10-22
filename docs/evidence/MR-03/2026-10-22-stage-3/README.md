@@ -175,6 +175,35 @@ owner URL. Two tests that mocked the `postgres` driver now mock the pool.
   - `ci:runtime-ddl` and its self-test. The baseline entry for
     `auth-schema.ts` is removed, because the file has no DDL left.
 
+**Amended the same day, before any deploy applied it** (`raw/b5`). The
+migration copied the boot's `CREATE TABLE IF NOT EXISTS` statements for
+`organization_users`, `available_modules` and `module_subscriptions`.
+`migrations/0000_sweet_joseph.sql` already creates all three, with a superset
+of those columns, and install-fresh applies it to every database before
+deploy-migrate will run. So the statements were no-ops on every database, but
+as text each was a second, narrower definition of its table.
+
+Three gates refuse that:
+- `ci:duplicate-table-ddl`;
+- `ci:model-migration-agreement`;
+- `ci:unkeyed-request-tables`, which attributed `available_modules` to the new
+  file as its creator.
+
+None of them ran in CI on this push. A guard broken by Stage 2 slice D stopped
+the Lint job before them (Stage 2 README, the correction under slice D), and
+they are not in the pre-push hook.
+
+The fix:
+- The statements are removed, with a dated note in the file (Rule 1). For
+  those tables the file adds only `organization_users.persona`.
+- `auth-schema-migration.test.ts` now reads 0000 as the creator. It requires
+  that the boot checks nothing the deploy does not create, that the migration
+  adds nothing the boot does not check, and that it defines no table. Three
+  mutants, one per requirement, are each caught by their own case.
+
+On a fresh database the amended file applies, and again on replay; both boots
+without the owner URL answer 200, and the signup dbtest passes 16/16.
+
 ## Not shown here
 
 - Slice C is not done yet. Until it lands, the ECS task definition still

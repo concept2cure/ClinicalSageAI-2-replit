@@ -1,0 +1,315 @@
+# ci.yml's Lint job, every step with a run: block, run locally (scripts: each step's shell, job/workflow env, CI=true).
+# Steps 1, 2 and 5 (checkout, setup-node, npm ci) are the environment and are not run here.
+
+## 1. Before the fix, at e218851a1, guard only (the step CI stopped at since 540e00b12):
+node scripts/ci/check-node-runtime.mjs  -> 'Dockerfile.optimized: builder and production stages must both use node:22-slim', exit 1
+
+## 2. e218851a1 + the Node guard fix: every step. Steps 12, 55 (model-migration-agreement), 69, 70 are Stage 3 slice B's
+##    duplicate table definitions (fixed in the same commit; docs/evidence/MR-03/2026-10-22-stage-3/raw/b5). Step 33 hit this
+##    run's 900 s per-step limit.
+PASS   3 rc=0     0s Guardrails — Node 22 runtime contracts
+PASS   4 rc=0     0s Guardrails — Node 22 guard rejects simulated drift
+PASS   6 rc=0     8s Guardrails — release-evidence manifest gate self-tests
+PASS   7 rc=0     0s Guardrails — eCTD migration headers (reg audit)
+PASS   8 rc=0     6s Guardrails — ban direct new Pool()
+PASS   9 rc=0     0s Guardrails — migration prefix collisions (no regressions)
+PASS  10 rc=0     0s Guardrails — a new migration is on a DEPLOY path (with selftest)
+PASS  11 rc=0     0s Guardrails — RLS allowlist TS↔SQL parity
+FAIL  12 rc=1     1s Guardrails — duplicate CREATE TABLE across BOTH migration lineages
+      | 
+      |   Fix: define the table in exactly one migration (see ADR-0006).
+      |   If this is a pre-existing collision being tracked for reconciliation:
+      |     npm run ci:duplicate-table-ddl:write-baseline
+PASS  13 rc=0     0s Guardrails — golden-journey migrations must be on a durable apply path
+PASS  14 rc=0     1s Guardrails — server SQL references a table no APPLIER creates
+PASS  15 rc=0     4s Guardrails — server SQL references a COLUMN no applier creates
+PASS  16 rc=0     4s Guardrails — server code runs no DDL on the runtime connection
+PASS  17 rc=0    71s Guardrails — the security and tenant gates fail on what they exist to catch (selftests)
+PASS  18 rc=0     4s Guardrails — no jsonb operator on a json column
+PASS  19 rc=0     7s Guardrails — server SQL references a table nothing creates
+PASS  20 rc=0     4s Guardrails — source files nothing can reach
+PASS  21 rc=0    42s Guardrails — no live credentials committed to the tree
+PASS  22 rc=0     1s Guardrails — the Compose stacks carry the production boot contract
+PASS  23 rc=0     0s Guardrails — the production image is pinned, stamped and starts node
+PASS  24 rc=0     1s Guardrails — requirements.txt pins must install on the declared Python
+PASS  25 rc=0     4s Guardrails — content cannot be saved without its data lineage
+PASS  26 rc=0     2s Guardrails — a store nothing writes may not gain readers
+PASS  27 rc=0     0s Guardrails — the document alias map holds no attributes
+PASS  28 rc=0     2s Guardrails — every artifact producer emits a provenance event
+PASS  29 rc=0     0s Guardrails — no direct Pool construction in runtime code
+PASS  30 rc=0     3s Guardrails — eCTD stub bundle + generated risk-code types
+PASS  31 rc=0     2s Guardrails — security patterns (tenant / identity / role trust)
+PASS  32 rc=0     0s Guardrails — proof surface must not shrink or overclaim
+FAIL  33 rc=TIMEOUT   900s Proof tier — schema contracts + golden journeys + export contracts
+PASS  34 rc=0     0s Guardrails — i18n locale integrity (key/placeholder/markup parity)
+PASS  35 rc=0     0s Guardrails — surfaces are discoverable, or declared not to be
+PASS  36 rc=0     1s Guardrails — no ungated fixture fallback in client surfaces
+PASS  37 rc=0     0s Guardrails — every routable surface publishes screen state to AnA
+PASS  38 rc=0     1s Guardrails — launch scope is real and fixture-free (with selftest)
+PASS  39 rc=0     4s Guardrails — no launch screen calls an API production refuses (with selftest)
+PASS  40 rc=0     1s Guardrails — AnA document canvas path is wired (with selftest)
+PASS  41 rc=0     2s Guardrails — untracked-imports gate is trustworthy (selftest)
+PASS  42 rc=0     4s Guardrails — only the PQ runner calls evaluateModel (with selftest)
+PASS  43 rc=0     3s Guardrails — AnA AI dispatch binds its tenant (with selftest)
+PASS  44 rc=0     3s Guardrails — no new pin to an unapproved model (with selftest)
+PASS  45 rc=0     3s Guardrails — one source for the client address (with selftest)
+PASS  46 rc=0     1s Guardrails — validation traceability resolves (with selftest)
+PASS  47 rc=0     1s Compliance claim check
+PASS  48 rc=0     0s Microcopy tone check
+PASS  49 rc=0     0s GA completion ledger check
+PASS  50 rc=0     3s No server error carries the failure text to the client
+PASS  51 rc=0     1s No hand-rolled error-envelope reads
+FAIL  52 rc=1     1s INSERT columns are declared in the model
+      | 
+      |     projects.submission_type
+      | 
+      | Remove them: node scripts/ci/check-insert-columns-declared.mjs --write-baseline
+PASS  53 rc=0    19s No verdict for a check that did not run
+PASS  54 rc=0     4s A Part 11 audit row written and its outcome discarded
+FAIL  55 rc=1     8s Gates that existed but ran nowhere
+      |   migrations/20260821_vault_documents_canonical_shape.sql.
+      | 
+      |   Fix by adding a migration that reconciles the table, not by widening this
+      |   baseline. Use --list to see every divergence.
+PASS  56 rc=0    10s Security gates that ran only in the pre-push hook
+PASS  57 rc=0     1s Guardrails — no API route or table name in user-visible copy
+FAIL  58 rc=1     4s Guardrails — every in-scope AnA tool reads from its register entry (with selftest)
+      | PASS  6. an empty in-scope list throws, never passes
+      | 
+      | ci:step-presentation:selftest — 17/20 cases behaved.
+      | FAILED: 1. the real tree passes (CLI exit 0); 2a. deleting the present entry of search_project_documents fails MISSING, naming it; 3. source 'engine' on convene_drafting_council (its handler calls a model) fails ENGINE
+PASS  59 rc=0     1s Guardrails — no clearance copy chosen by an empty collection
+PASS  60 rc=0     1s Guardrails — no control promising an action it only asks about
+PASS  61 rc=0     1s Guardrails — no success message before the response is checked
+PASS  62 rc=0     4s Guardrails — no invented signer or applicant identity
+PASS  63 rc=0     1s Guardrails — one program-ownership check (with selftest)
+PASS  64 rc=0     1s Guardrails — audit_logs fixtures accept the audit writer's columns
+PASS  65 rc=0     0s Guardrails — tenant column types (no TEXT-typed tenant cols)
+PASS  66 rc=0     1s Guardrails — org path params are checked against the caller
+PASS  67 rc=0     0s Guardrails — every biostat form field is one the server reads
+PASS  68 rc=0     0s Guardrails — no tenant-blind Drizzle models
+FAIL  69 rc=1     1s Guardrails — no per-request table without a tenant key
+      |   Fix: give it a tenant column (RULE 1 — amend the creating migration in
+      |   place), or scope it through a parent that has one, or record it in the
+      |   baseline with a reason: global | derived | exempt.
+      |     npm run ci:unkeyed-request-tables:write-baseline
+FAIL  70 rc=1     1s Guardrails — the unkeyed-table gate can still fail
+      |   Fix: give it a tenant column (RULE 1 — amend the creating migration in
+      |   place), or scope it through a parent that has one, or record it in the
+      |   baseline with a reason: global | derived | exempt.
+      |     npm run ci:unkeyed-request-tables:write-baseline
+PASS  71 rc=0     0s Guardrails — WCAG AA contrast on design tokens
+PASS  72 rc=0     0s Guardrails — theme aliases frozen to their light values
+FAIL  73 rc=1     1s Guardrails — the generated text ramp matches the stylesheets
+      |     client/src/concept2cure/v2/styles/surface-text-ramp.css — stale
+      |   A stylesheet gained or lost a tinted-surface rule, so the re-based
+      |   text ramp no longer covers what the sources imply. Regenerate:
+      |     node scripts/design/generate-surface-text-ramp.mjs
+PASS  74 rc=0     2s Guardrails — tenant-isolation in raw SQL (no regressions)
+PASS  75 rc=0     1s Guardrails — every tenant entry point considers entitlement
+PASS  76 rc=0     1s Guardrails — request values must not reach a path unconstrained
+PASS  77 rc=0     0s Guardrails — workflows must not invoke files that do not exist
+PASS  78 rc=0     1s Guardrails — the frontend deploy uploads every file the app fetches (with selftest)
+PASS  79 rc=0     0s Guardrails — one native canvas library in the lockfile (with selftest)
+PASS  80 rc=0     0s Guardrails — required workflows keep a per-commit run on the canonical branch
+PASS  81 rc=0     0s Guardrails — concurrency guard rejects simulated drift
+PASS  82 rc=0     0s Guardrails — ECS deploy uses pinned task-def revisions (rollback safety)
+PASS  83 rc=0     1s Guardrails — tenant baseline ↔ justification parity
+PASS  84 rc=0     0s Guardrails — requestDb (RLS) adoption (no regressions)
+PASS  85 rc=0     0s Guardrails — no leaky dev-auth gates in prod paths
+PASS  86 rc=0     1s Guardrails — password hygiene
+PASS  87 rc=0     0s Guardrails — SAML SSO fail-closed (no auth bypass)
+PASS  88 rc=0     1s Guardrails — design-system non-negotiables (Lucide-only, no spring)
+PASS  89 rc=0     0s Guardrails — regulated-data delete audit coverage (Part 11)
+PASS  90 rc=0     1s Guardrails — no unreachable catch around an audit write (Part 11)
+PASS  91 rc=0     1s Guardrails — a sign ledger row comes from a signature ceremony (Part 11)
+PASS  92 rc=0     2s Guardrails — a seal asks whether the filing holds the document's text (P-29.2)
+PASS  93 rc=0     1s Guardrails — only named writers change a recorded Vault version (Part 11)
+PASS  94 rc=0     0s Guardrails — route mount authority audit (no regressions)
+PASS  95 rc=0     0s Guardrails — route ownership matrix artifact (required review evidence)
+PASS  96 rc=0    12s Guardrails — AI gateway bypass (no direct LLM clients)
+PASS  97 rc=0     1s Guardrails — jwt.verify pins algorithms (no alg-confusion)
+PASS  98 rc=0     1s Guardrails — legacy dependency quarantine (supabase-js, aws-sdk v2)
+PASS  99 rc=0     2s Guardrails — no mock data in prod routes (no regressions)
+PASS 100 rc=0     0s Guardrails — js/ts shadow guard (no new same-basename .js/.ts pairs)
+PASS 101 rc=0     1s Guardrails — DOCX runtime canonicality (approved runtimes only)
+PASS 102 rc=0     1s Guardrails — PDF runtime canonicality (approved entry points only)
+PASS 103 rc=0     0s Guardrails — cross-shell CSS collisions (ratchet, may only shrink)
+PASS 104 rc=0     0s Guardrails — CSS selector shadowing (allowlist, may only shrink)
+PASS 105 rc=0     1s Guardrails — chip tones must have a CSS rule
+PASS 106 rc=0     2s Guardrails — one toast implementation, and it can say "failed"
+PASS 107 rc=0     1s Guardrails — phantom design tokens (ratchet, may only shrink)
+PASS 108 rc=0     0s Guardrails — client reachability from main.tsx (ratchet, may only shrink)
+PASS 109 rc=0     3s Guardrails — every registered route + blueprint reaches the bundle
+PASS 110 rc=0     0s Guardrails — no route defined twice under a shared prefix
+PASS 111 rc=0     0s Guardrails — every rule pack declares what it was built from
+PASS 112 rc=0     3s Guardrails — every client /api call has a server route
+PASS 113 rc=0     2s Guardrails — every local import in every test file resolves
+PASS 114 rc=0     0s Guardrails — orphaned stylesheets (ratchet, may only shrink)
+PASS 115 rc=0     0s Guardrails — every test file is reachable by a runner
+PASS 116 rc=0     2s Guardrails — real-database tests never inherit the pg mock
+PASS 117 rc=0     1s Guardrails — embedding runtime canonicality (corpus policy)
+PASS 118 rc=0     0s Guardrails — editor extension integrity (@tiptap imports declared)
+PASS 119 rc=0     0s Guardrails — Reasoning Tier readiness suite (governed exports + GA evidence)
+PASS 120 rc=0     0s Guardrails — design-token cascade (ADVISORY)
+PASS 121 rc=0     2s Audit — repo health scan (no regressions)
+PASS 122 rc=0     2s Guardrails — no new file over the size ceiling
+PASS 123 rc=0     1s Audit — orphaned endpoints (threshold 1184)
+PASS 125 rc=0   282s Run ESLint
+PASS 126 rc=0   267s Render ESLint findings (failure only)
+PASS 127 rc=0     1s Guardrails — ESLint warning ratchet (may only shrink)
+PASS 128 rc=0    89s Guardrails — CI guard self-tests
+FAIL 129 rc=1   498s Run TypeScript check (no regression vs baseline)
+      |     3. Scoped, NOT equivalent: npx tsc --noEmit --skipLibCheck <changed files>
+      |        — catches within-file errors only; blind to callers. A narrow
+      |        tsconfig include is not a substitute either: it double-loads the
+      |        global .d.ts augmentations and invents errors in untouched files.
+PASS 130 rc=0     4s Run beta-slice TypeScript check
+DONE
+
+## 3. The corrected tree (the commit that files this): every step, 3000 s limit
+PASS   3 rc=0     0s Guardrails — Node 22 runtime contracts
+PASS   4 rc=0     0s Guardrails — Node 22 guard rejects simulated drift
+PASS   6 rc=0     2s Guardrails — release-evidence manifest gate self-tests
+PASS   7 rc=0     0s Guardrails — eCTD migration headers (reg audit)
+PASS   8 rc=0     0s Guardrails — ban direct new Pool()
+PASS   9 rc=0     0s Guardrails — migration prefix collisions (no regressions)
+PASS  10 rc=0     0s Guardrails — a new migration is on a DEPLOY path (with selftest)
+PASS  11 rc=0     0s Guardrails — RLS allowlist TS↔SQL parity
+PASS  12 rc=0     0s Guardrails — duplicate CREATE TABLE across BOTH migration lineages
+PASS  13 rc=0     0s Guardrails — golden-journey migrations must be on a durable apply path
+PASS  14 rc=0     1s Guardrails — server SQL references a table no APPLIER creates
+PASS  15 rc=0     3s Guardrails — server SQL references a COLUMN no applier creates
+PASS  16 rc=0     4s Guardrails — server code runs no DDL on the runtime connection
+PASS  17 rc=0    99s Guardrails — the security and tenant gates fail on what they exist to catch (selftests)
+PASS  18 rc=0     5s Guardrails — no jsonb operator on a json column
+PASS  19 rc=0     5s Guardrails — server SQL references a table nothing creates
+PASS  20 rc=0     1s Guardrails — source files nothing can reach
+PASS  21 rc=0    13s Guardrails — no live credentials committed to the tree
+PASS  22 rc=0     1s Guardrails — the Compose stacks carry the production boot contract
+PASS  23 rc=0     1s Guardrails — the production image is pinned, stamped and starts node
+PASS  24 rc=0     1s Guardrails — requirements.txt pins must install on the declared Python
+PASS  25 rc=0     4s Guardrails — content cannot be saved without its data lineage
+PASS  26 rc=0     2s Guardrails — a store nothing writes may not gain readers
+PASS  27 rc=0     0s Guardrails — the document alias map holds no attributes
+PASS  28 rc=0     2s Guardrails — every artifact producer emits a provenance event
+PASS  29 rc=0     0s Guardrails — no direct Pool construction in runtime code
+PASS  30 rc=0     1s Guardrails — eCTD stub bundle + generated risk-code types
+PASS  31 rc=0     2s Guardrails — security patterns (tenant / identity / role trust)
+PASS  32 rc=0     0s Guardrails — proof surface must not shrink or overclaim
+FAIL  33 rc=1  1324s Proof tier — schema contracts + golden journeys + export contracts
+      |      85|       // It is still in the draft — which is exactly why the guard mus…
+      |      86|       expect(droppedTables).toContain(table);
+      | 
+      | ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+PASS  34 rc=0     0s Guardrails — i18n locale integrity (key/placeholder/markup parity)
+PASS  35 rc=0     0s Guardrails — surfaces are discoverable, or declared not to be
+PASS  36 rc=0     1s Guardrails — no ungated fixture fallback in client surfaces
+PASS  37 rc=0     0s Guardrails — every routable surface publishes screen state to AnA
+PASS  38 rc=0     1s Guardrails — launch scope is real and fixture-free (with selftest)
+PASS  39 rc=0     2s Guardrails — no launch screen calls an API production refuses (with selftest)
+PASS  40 rc=0     1s Guardrails — AnA document canvas path is wired (with selftest)
+PASS  41 rc=0     2s Guardrails — untracked-imports gate is trustworthy (selftest)
+PASS  42 rc=0     4s Guardrails — only the PQ runner calls evaluateModel (with selftest)
+PASS  43 rc=0     3s Guardrails — AnA AI dispatch binds its tenant (with selftest)
+PASS  44 rc=0     3s Guardrails — no new pin to an unapproved model (with selftest)
+PASS  45 rc=0     3s Guardrails — one source for the client address (with selftest)
+PASS  46 rc=0     1s Guardrails — validation traceability resolves (with selftest)
+PASS  47 rc=0     1s Compliance claim check
+PASS  48 rc=0     0s Microcopy tone check
+PASS  49 rc=0     0s GA completion ledger check
+PASS  50 rc=0     2s No server error carries the failure text to the client
+PASS  51 rc=0     1s No hand-rolled error-envelope reads
+FAIL  52 rc=1     1s INSERT columns are declared in the model
+      | 
+      |     projects.submission_type
+      | 
+      | Remove them: node scripts/ci/check-insert-columns-declared.mjs --write-baseline
+PASS  53 rc=0    17s No verdict for a check that did not run
+PASS  54 rc=0     3s A Part 11 audit row written and its outcome discarded
+PASS  55 rc=0    20s Gates that existed but ran nowhere
+PASS  56 rc=0    10s Security gates that ran only in the pre-push hook
+PASS  57 rc=0     1s Guardrails — no API route or table name in user-visible copy
+FAIL  58 rc=1     4s Guardrails — every in-scope AnA tool reads from its register entry (with selftest)
+      | PASS  6. an empty in-scope list throws, never passes
+      | 
+      | ci:step-presentation:selftest — 17/20 cases behaved.
+      | FAILED: 1. the real tree passes (CLI exit 0); 2a. deleting the present entry of search_project_documents fails MISSING, naming it; 3. source 'engine' on convene_drafting_council (its handler calls a model) fails ENGINE
+PASS  59 rc=0     1s Guardrails — no clearance copy chosen by an empty collection
+PASS  60 rc=0     1s Guardrails — no control promising an action it only asks about
+PASS  61 rc=0     1s Guardrails — no success message before the response is checked
+PASS  62 rc=0     3s Guardrails — no invented signer or applicant identity
+PASS  63 rc=0     1s Guardrails — one program-ownership check (with selftest)
+PASS  64 rc=0     1s Guardrails — audit_logs fixtures accept the audit writer's columns
+PASS  65 rc=0     0s Guardrails — tenant column types (no TEXT-typed tenant cols)
+PASS  66 rc=0     1s Guardrails — org path params are checked against the caller
+PASS  67 rc=0     0s Guardrails — every biostat form field is one the server reads
+PASS  68 rc=0     0s Guardrails — no tenant-blind Drizzle models
+PASS  69 rc=0     1s Guardrails — no per-request table without a tenant key
+PASS  70 rc=0     5s Guardrails — the unkeyed-table gate can still fail
+PASS  71 rc=0     0s Guardrails — WCAG AA contrast on design tokens
+PASS  72 rc=0     0s Guardrails — theme aliases frozen to their light values
+FAIL  73 rc=1     1s Guardrails — the generated text ramp matches the stylesheets
+      |     client/src/concept2cure/v2/styles/surface-text-ramp.css — stale
+      |   A stylesheet gained or lost a tinted-surface rule, so the re-based
+      |   text ramp no longer covers what the sources imply. Regenerate:
+      |     node scripts/design/generate-surface-text-ramp.mjs
+PASS  74 rc=0     2s Guardrails — tenant-isolation in raw SQL (no regressions)
+PASS  75 rc=0     1s Guardrails — every tenant entry point considers entitlement
+PASS  76 rc=0     1s Guardrails — request values must not reach a path unconstrained
+PASS  77 rc=0     0s Guardrails — workflows must not invoke files that do not exist
+PASS  78 rc=0     0s Guardrails — the frontend deploy uploads every file the app fetches (with selftest)
+PASS  79 rc=0     0s Guardrails — one native canvas library in the lockfile (with selftest)
+PASS  80 rc=0     0s Guardrails — required workflows keep a per-commit run on the canonical branch
+PASS  81 rc=0     0s Guardrails — concurrency guard rejects simulated drift
+PASS  82 rc=0     0s Guardrails — ECS deploy uses pinned task-def revisions (rollback safety)
+PASS  83 rc=0     1s Guardrails — tenant baseline ↔ justification parity
+PASS  84 rc=0     0s Guardrails — requestDb (RLS) adoption (no regressions)
+PASS  85 rc=0     0s Guardrails — no leaky dev-auth gates in prod paths
+PASS  86 rc=0     1s Guardrails — password hygiene
+PASS  87 rc=0     0s Guardrails — SAML SSO fail-closed (no auth bypass)
+PASS  88 rc=0     1s Guardrails — design-system non-negotiables (Lucide-only, no spring)
+PASS  89 rc=0     0s Guardrails — regulated-data delete audit coverage (Part 11)
+PASS  90 rc=0     1s Guardrails — no unreachable catch around an audit write (Part 11)
+PASS  91 rc=0     1s Guardrails — a sign ledger row comes from a signature ceremony (Part 11)
+PASS  92 rc=0     1s Guardrails — a seal asks whether the filing holds the document's text (P-29.2)
+PASS  93 rc=0     1s Guardrails — only named writers change a recorded Vault version (Part 11)
+PASS  94 rc=0     0s Guardrails — route mount authority audit (no regressions)
+PASS  95 rc=0     0s Guardrails — route ownership matrix artifact (required review evidence)
+PASS  96 rc=0     8s Guardrails — AI gateway bypass (no direct LLM clients)
+PASS  97 rc=0     1s Guardrails — jwt.verify pins algorithms (no alg-confusion)
+PASS  98 rc=0     1s Guardrails — legacy dependency quarantine (supabase-js, aws-sdk v2)
+PASS  99 rc=0     2s Guardrails — no mock data in prod routes (no regressions)
+PASS 100 rc=0     0s Guardrails — js/ts shadow guard (no new same-basename .js/.ts pairs)
+PASS 101 rc=0     1s Guardrails — DOCX runtime canonicality (approved runtimes only)
+PASS 102 rc=0     1s Guardrails — PDF runtime canonicality (approved entry points only)
+PASS 103 rc=0     0s Guardrails — cross-shell CSS collisions (ratchet, may only shrink)
+PASS 104 rc=0     0s Guardrails — CSS selector shadowing (allowlist, may only shrink)
+PASS 105 rc=0     1s Guardrails — chip tones must have a CSS rule
+PASS 106 rc=0     1s Guardrails — one toast implementation, and it can say "failed"
+PASS 107 rc=0     1s Guardrails — phantom design tokens (ratchet, may only shrink)
+PASS 108 rc=0     0s Guardrails — client reachability from main.tsx (ratchet, may only shrink)
+PASS 109 rc=0     3s Guardrails — every registered route + blueprint reaches the bundle
+PASS 110 rc=0     0s Guardrails — no route defined twice under a shared prefix
+PASS 111 rc=0     0s Guardrails — every rule pack declares what it was built from
+PASS 112 rc=0     3s Guardrails — every client /api call has a server route
+PASS 113 rc=0     2s Guardrails — every local import in every test file resolves
+PASS 114 rc=0     0s Guardrails — orphaned stylesheets (ratchet, may only shrink)
+PASS 115 rc=0     0s Guardrails — every test file is reachable by a runner
+PASS 116 rc=0     2s Guardrails — real-database tests never inherit the pg mock
+PASS 117 rc=0     1s Guardrails — embedding runtime canonicality (corpus policy)
+PASS 118 rc=0     0s Guardrails — editor extension integrity (@tiptap imports declared)
+PASS 119 rc=0     0s Guardrails — Reasoning Tier readiness suite (governed exports + GA evidence)
+PASS 120 rc=0     0s Guardrails — design-token cascade (ADVISORY)
+PASS 121 rc=0     2s Audit — repo health scan (no regressions)
+PASS 122 rc=0     2s Guardrails — no new file over the size ceiling
+PASS 123 rc=0     1s Audit — orphaned endpoints (threshold 1184)
+PASS 125 rc=0   236s Run ESLint
+PASS 126 rc=0   233s Render ESLint findings (failure only)
+PASS 127 rc=0     1s Guardrails — ESLint warning ratchet (may only shrink)
+
+## The four failures that remain, none from MR-03:
+##   33  tests/schema-contract/drop-draft-safety.contract.test.ts: cmc-auditor.ts no longer mentions doe_studies (changed by cf07e244c / de3634a35, D2)
+##   52  INSERT columns are declared in the model: projects.submission_type (failed in the baseline run 39728613967 too)
+##   58  every in-scope AnA tool reads from its register entry (failed in the baseline run 39728613967 too)
+##   73  surface-text-ramp.css stale against the stylesheets (client/src/concept2cure/v2/styles, other lanes' commits)
