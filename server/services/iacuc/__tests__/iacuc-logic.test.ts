@@ -71,8 +71,10 @@ describe('approvalReviewStatus / addYears', () => {
     expect(r.expirationDate).toBe('2026-01-01');
     expect(r.expired).toBe(true);
   });
-  it('flags annual continuing review due within the 3-year window', () => {
-    const r = approvalReviewStatus('2025-01-01', '2026-06-10');
+  it('flags annual continuing review due a year after the last recorded one, within the 3-year window', () => {
+    // 2026-10-15: this pinned `due` from the approval date alone, which read due
+    // every day after the first year whatever annual review had been held.
+    const r = approvalReviewStatus('2025-01-01', '2026-06-10', null, '2025-05-01');
     expect(r.expired).toBe(false);
     expect(r.annualReviewDue).toBe(true);
   });

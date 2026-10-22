@@ -10939,12 +10939,12 @@ function expiryText(e: { expirationDate: string; expirationSource: 'recorded' | 
 
 type IacucReviewStatusShape =
   | { undetermined: true; reason: string }
-  | { undetermined: false; expirationDate: string; expirationSource: 'recorded' | 'computed'; expired: boolean; annualReviewDue: boolean | null };
+  | { undetermined: false; expirationDate: string; expirationSource: 'recorded' | 'computed'; expired: boolean; annualReviewDue: boolean | null; annualReviewUndeterminedReason?: string | null };
 
 function iacucReviewStatusText(rs: IacucReviewStatusShape): string {
   if (rs.undetermined) return ` Review status: ${rs.reason}`;
   const annual = rs.annualReviewDue === null
-    ? '; whether annual review is due is not determined: no approval date is recorded'
+    ? '; whether annual review is due is not determined: ' + (rs.annualReviewUndeterminedReason ?? 'no approval date is recorded')
     : rs.annualReviewDue ? '; annual review due' : '';
   return ` Expiry: ${expiryText(rs, 'approval + 3 years')}${annual}.`;
 }

@@ -167,7 +167,7 @@ describe('QOS preserves the upstream stability qualification', () => {
     const sourcesBefore = globalThis.structuredClone(sources);
     const stabilitySections = composeModule3FromCanonicalSources(sources).filter(section => ['3.2.S.7', '3.2.P.8'].includes(section.sectionKey));
     const sectionsBefore = globalThis.structuredClone(stabilitySections);
-    const qos = buildM23QualityOverallSummary({ module3Sections: stabilitySections });
+    const qos = buildM23QualityOverallSummary({ module3Sections: stabilitySections, drugSubstanceName: 'ABC-123' });
     expect(qos.inputSectionKeys).toEqual(['3.2.S.7', '3.2.P.8']);
     // 2026-10-15: gaps and completeness are over the 15 ICH M4Q sections the QOS
     // summarizes; this pinned 8 of an invented `expected = 10` (20%).
@@ -182,7 +182,7 @@ describe('QOS preserves the upstream stability qualification', () => {
   });
 
   it('keeps missing-section placeholders and absence metadata', () => {
-    const qos = buildM23QualityOverallSummary({ module3Sections: [] });
+    const qos = buildM23QualityOverallSummary({ module3Sections: [], drugSubstanceName: 'ABC-123' });
     expect(qos.narrative).toContain('[Section 3.2.S.7 not yet composed — stability data missing]');
     expect(qos.narrative).toContain('[Section 3.2.P.8 not yet composed]');
     expect(qos.inputSectionKeys).toEqual([]);
