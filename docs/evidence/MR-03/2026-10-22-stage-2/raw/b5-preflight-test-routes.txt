@@ -1,0 +1,15 @@
+# Slice B: deploy-aws.yml's preflight (scripts/ops/terraform-preflight-proof.mjs --td-json) on the task definition slice A renders, and on the same one with ENABLE_TEST_ROUTES=true added.
+## deploy-aws.yml preflight against the rendered (slice A) task definition
+[terraform-preflight-proof] ok — deploy-aws.yml's preflight accepted the task definition
+[terraform-preflight-proof] ok — the preflight published the revision it checked (arn:aws:ecs:us-east-1:123456789012:task-definition/c2c-production-api:1)
+
+[terraform-preflight-proof] every check holds.
+exit 0
+
+## the same task definition with ENABLE_TEST_ROUTES=true added to the api container
+[terraform-preflight-proof] ok — preflight step found in job "migrate" (16177 bytes of shell)
+[terraform-preflight-proof] ok — rendered family matches the pipeline's ECS_API_TASK_FAMILY (c2c-production-api)
+::error::The task definition carries ENABLE_TEST_ROUTES: test routes have no production use, and the server refuses to boot with it. Remove it from terraform/stack.
+[terraform-preflight-proof] FAIL — deploy-aws.yml's preflight refused the task definition (exit 1)
+[terraform-preflight-proof] 1 check(s) failed.
+exit 1

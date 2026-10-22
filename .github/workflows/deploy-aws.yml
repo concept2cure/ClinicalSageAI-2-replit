@@ -541,7 +541,7 @@ jobs:
           FAIL=0
           if [[ -n "$MISSING" ]]; then
             echo "::error::Task definition $ECS_API_TASK_FAMILY (container $ECS_API_CONTAINER_NAME) is missing required production env:$MISSING"
-            echo "::error::The app refuses to boot without each of these, with two exceptions it would boot through: without SMTP_* no one can sign in (login OTP is the mandatory second factor), and without AUDIT_TRAIL_ENABLED / AUDIT_REQUIRE_ENFORCE the tamper-proof audit trail is off or its checks only warn; without ANTHROPIC_API_KEY no model approved for regulatory drafting is enabled, so every Authoring draft is refused and /readyz reports AnA down. Without MCP_* the connector for Claude is not mounted, or admits no client. Without AUDIT_ANCHOR_BUCKET nothing outside the database records the audit chain's head, so removal of the newest audit rows cannot be detected. Add them to the task definition (terraform/stack) before deploying."
+            echo "::error::The app refuses to boot without each of these, with one exception it would boot through: without SMTP_* no one can sign in (login OTP is the mandatory second factor). Without AUDIT_TRAIL_ENABLED the tamper-proof audit trail is off and enforcement, the production default, refuses the boot; without ANTHROPIC_API_KEY no model approved for regulatory drafting is enabled, so every Authoring draft is refused and /readyz reports AnA down. Without MCP_* the connector for Claude is not mounted, or admits no client. Without AUDIT_ANCHOR_BUCKET nothing outside the database records the audit chain's head, so removal of the newest audit rows cannot be detected. Add them to the task definition (terraform/stack) before deploying."
             FAIL=1
           fi
           if [[ "$NODE_ENV_VALUE" != "production" ]]; then
@@ -585,10 +585,11 @@ jobs:
           fi
           # The Part 11 audit posture (security plan P0-9, DP-06). The tamper-proof
           # trail and the chain-integrity monitor run only with
-          # AUDIT_TRAIL_ENABLED=true, and production merely WARNS without it
-          # unless AUDIT_REQUIRE_ENFORCE=true makes the missing trail, a failed
-          # immutability probe or a disabled daily sweep refuse to boot
-          # (server/startup/audit-enforcement.ts). Both exactly `true`.
+          # AUDIT_TRAIL_ENABLED=true. Enforcement (a missing trail, a failed
+          # immutability probe or a disabled daily sweep refuses the boot) is the
+          # production default since MR-03 Stage 2; only AUDIT_REQUIRE_ENFORCE=false
+          # turns it into a warning, and on ECS the server refuses that value
+          # (server/startup/audit-enforcement.ts, env.ts). Both exactly `true`.
           for AUDIT_FLAG in AUDIT_TRAIL_ENABLED AUDIT_REQUIRE_ENFORCE; do
             AUDIT_FLAG_VALUE=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" --arg n "$AUDIT_FLAG" '
               .containerDefinitions[] | select(.name == $c)
@@ -630,6 +631,19 @@ jobs:
           ' /tmp/api-td-preflight.json | sort -u | tr '\n' ' ')
           if [[ -n "${DETERMINISTIC_FLAGS// /}" ]]; then
             echo "::error::The task definition carries ${DETERMINISTIC_FLAGS% }: AnA would serve fixed responses in place of model output. Remove it from terraform/stack."
+            FAIL=1
+          fi
+          # ENABLE_TEST_ROUTES mounted the test-assembly and integration-test
+          # routes in production. The server now refuses to boot on it
+          # (server/startup/env.ts, MR-03 OPS-28); named here so a revision
+          # carrying it is refused before it rolls, not after it crash-loops.
+          TEST_ROUTE_FLAG=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | ((.environment // []) + (.secrets // [])) | map(.name)
+            | map(select(. == "ENABLE_TEST_ROUTES")) | .[]
+          ' /tmp/api-td-preflight.json | sort -u | tr '\n' ' ')
+          if [[ -n "${TEST_ROUTE_FLAG// /}" ]]; then
+            echo "::error::The task definition carries ENABLE_TEST_ROUTES: test routes have no production use, and the server refuses to boot with it. Remove it from terraform/stack."
             FAIL=1
           fi
           # Launch scope is the release boundary (CLAUDE.md RULE 2): with
