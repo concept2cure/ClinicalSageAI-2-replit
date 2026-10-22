@@ -41,6 +41,7 @@ let viewer: Actor;
 let secondViewer: Actor;
 let documentId: number;
 let v1: { documentVersion: string; contentDigest: string };
+let v1SignatureId: number;
 
 async function account(key: string, role: string): Promise<Actor> {
   const user = (await owner.query(`INSERT INTO users(email,name,password_hash,status) VALUES($1,$2,$3,'active') RETURNING id`,
@@ -90,6 +91,7 @@ beforeAll(async () => {
   documentId = Number(row.id);
   const approved = await sign(documentId);
   expect(approved.status, JSON.stringify(approved.body)).toBe(200);
+  v1SignatureId = Number(approved.body.meta.signature.id);
   const read = await http(viewer, 'get', `/api/mdx/qms/documents/${documentId}`);
   v1 = read.body.meta.training;
   expect(read.body.meta.training).toMatchObject({ eligible: true, documentVersion: '1.0' });
@@ -141,6 +143,26 @@ describe('an effective SOP while its next version is drafted', () => {
   });
 });
 
+describe('the controlled document register report while the revision is open', () => {
+  it('names the version in force and the signature that approved it, beside the draft', async () => {
+    const { findReport } = await import('../../server/services/audit/compliance-reports/catalog');
+    const { runComplianceReport } = await import('../../server/services/audit/compliance-reports/generate');
+    const { platformIntegrityChecks } = await import('../../server/services/audit/compliance-reports/integrity-checks');
+    const { parseReportPeriod } = await import('../../server/services/audit/compliance-reports/period');
+    const { runWithTenantScope } = await import('../../server/db/tenantStore');
+    const { getPool } = await import('../../server/db/runtime');
+    const window = parseReportPeriod({}, 'as-of');
+    if (!window.ok) throw new Error(window.message);
+    const { data } = await runWithTenantScope({ tenantId: String(orgId), orgUuid, role: 'admin', source: 'request', caller: 'qms-in-force-report' },
+      () => runComplianceReport(getPool(), findReport('controlled-documents')!, orgId, window, {
+        walkChain: async () => ({ ok: null, reason: 'not walked by this probe' }), checks: platformIntegrityChecks }));
+    const row = data.sections.find((x) => x.key === 'documents')!.rows.find((x) => Number(x.id) === documentId);
+    expect(row).toMatchObject({ version: '2.0', status: 'draft', approval_signature_id: null,
+      in_force_version: '1.0', in_force_approval_signature_id: v1SignatureId });
+    expect(String(row!.in_force_approval_signer_name)).toContain('invented signer');
+  });
+});
+
 describe('when the successor is signed', () => {
   it('v2.0 is in force and v1.0 receipts no longer count', async () => {
     const row = (await owner.query('SELECT authoring_document_id FROM qms_documents WHERE id=$1', [documentId])).rows[0];
@@ -167,5 +189,34 @@ describe('when the successor is signed', () => {
     expect(await coverageOf(documentId)).toMatchObject({ document_version: '2.0', current: 0 });
     const list = await http(viewer, 'get', '/api/mdx/qms/documents');
     expect(list.body.data.find((r: { id: number }) => r.id === documentId)).toMatchObject({ version: '2.0', status: 'effective', in_force: null });
+  }, 60_000);
+});
+
+// Gap 5.1 (docs/design/VEEVA_GAP_2026-10-22.md): a review date chosen at create reaches review-due.
+describe('a periodic review date set when the document is created', () => {
+  it('is stored, signed with the version, and lists the document as due once it is effective', async () => {
+    const due = new Date(Date.now() + 10 * 86_400_000).toISOString().slice(0, 10);
+    const created = await http(author, 'post', '/api/mdx/qms/documents',
+      { title: `${TAG} reviewed procedure`, docType: 'sop', programId, nextReviewDate: due, reason: 'Establish a reviewed invented procedure' });
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+    const id = Number(created.body.data.id);
+    const docId = String(created.body.data.authoring_document_id);
+    expect(String(created.body.data.next_review_date).slice(0, 10)).toBe(due);
+    await owner.query(`UPDATE authoring_sections SET content = '<p>Review this procedure every year.</p>' WHERE doc_id = $1 AND code = 'qms-purpose'`, [docId]);
+    const { withNativeCatalogClient } = await import('./catalog-native-fixture');
+    const { grantAuthoringPermission } = await import('../../server/services/authoring/authoring-permissions');
+    await withNativeCatalogClient({ organizationId: orgId, organizationUuid: orgUuid, userId: author.id, role: 'member', caller: 'qms-review-date-share' },
+      (sqlClient) => grantAuthoringPermission({ pool: sqlClient, tenantId: orgId, docId, principalId: String(signer.id),
+        role: 'APPROVER', grantedBy: String(author.id), reason: 'Independent approver' }));
+    expect((await http(author, 'patch', `/api/mdx/qms/documents/${id}`, { status: 'in_review', reason: 'Saved text ready for review' })).status).toBe(200);
+    const signed = await sign(id);
+    expect(signed.status, JSON.stringify(signed.body)).toBe(200);
+    const { rows: [version] } = await owner.query(
+      `SELECT controlled_document->>'next_review_date' AS due FROM qms_document_versions
+        WHERE document_id = $1 AND record_kind = 'signed' ORDER BY id DESC LIMIT 1`, [id]);
+    expect(String(version?.due).slice(0, 10)).toBe(due);
+    const list = await http(viewer, 'get', '/api/mdx/qms/documents/review-due?within=30');
+    expect(list.status, JSON.stringify(list.body)).toBe(200);
+    expect(list.body.data.find((row: { id: number }) => row.id === id)).toMatchObject({ status: 'effective', overdue: false });
   }, 60_000);
 });

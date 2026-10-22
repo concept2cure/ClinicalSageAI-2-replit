@@ -62,7 +62,14 @@ Two tests that pinned implementation rather than behaviour were updated:
 ## Found, not changed
 
 - **Training reach depends on manual sharing.** An authored SOP version is readable only by the people its editing copy is shared with. After v2.0 is approved, trainees must be shared onto it to read it; the dbtest shares the trainee through `grantAuthoringPermission`, as the product does. Whether an effective SOP should be readable by every member is a product decision for MR-12 Stage 4 (training assignment).
-- **Not covered yet.** The compliance report's controlled-documents register (`audit/compliance-reports/queries/controlled-documents.ts`) still lists the working row. It shows a document under revision as its draft, without the version in force.
+- **The controlled-document register report (closed after).** `audit/compliance-reports/queries/controlled-documents.ts` listed a document under revision as its bare draft, with no approval. It now carries four columns beside the draft:
+  - `in_force_version`;
+  - `in_force_effective_date`;
+  - `in_force_approval_signature_id`;
+  - `in_force_approval_signer_name`.
+  The version is decided by the resolver, not re-derived in SQL. The signature is read with the report's own standing rule and as-of bound. A section note states this.
+  - Red: `04-red-report.txt`, where the report case fails.
+  - Green: `05-green-report.txt` (real Postgres 25/25, including the existing `compliance-reports.dbtest.ts`; report unit tests 104/104).
 
 ## The 7 trunk failures, closed after
 
