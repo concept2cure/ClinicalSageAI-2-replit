@@ -23,7 +23,11 @@ import { SapInputRefusal } from '../services/sap-generator-service';
 import { regulatoryOutcomeOptimizerService } from '../services/regulatory-outcome-optimizer-service';
 import { estimandEngineService } from '../services/estimand-engine-service';
 import { CollaborativeSapService } from '../services/collaborative-sap-service';
-import { ExternalControlArmService, type SynthesisMethod } from '../services/external-control-arm-service';
+import {
+  ExternalControlArmService,
+  SyntheticControlNotFoundError,
+  type SynthesisMethod,
+} from '../services/external-control-arm-service';
 import biostatDesignStatsRouter from './biostat-design-stats';
 import {
   runJudgmentPipeline,
@@ -89,6 +93,26 @@ function resolveUserId(req: Request): number {
   const id = signedInUserId(req);
   if (id == null) throw new Error('No signed-in user on the request');
   return id;
+}
+
+/** A non-blank string: what the sponsor stated, as opposed to absent or empty. */
+function isStatedText(v: unknown): v is string {
+  return typeof v === 'string' && v.trim() !== '';
+}
+
+/**
+ * The :controlId path parameter as a positive integer, or null. It was
+ * Number(param) until 2026-10-15, so "abc" reached Postgres as NaN (500).
+ */
+function controlIdParam(req: Request): number | null {
+  const id = Number(req.params.controlId);
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
+}
+
+/** An external-control route's failure: a control not in this organization is 404. */
+function externalControlFailure(res: Response, where: string, error: unknown): Response {
+  if (error instanceof SyntheticControlNotFoundError) return clientError(res, 404, error.message);
+  return serverError(res, logger, where, error);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -662,8 +686,19 @@ router.post('/external-control/search', authMiddleware, async (req: Request, res
     const orgId = resolveOrganizationId(req);
     const { indication, endpoints, population, dataSources } = req.body;
 
+    /* Until 2026-10-15 an unstated term reached the service as undefined, which
+       searched for the text "undefined" and answered "no arms". */
+    const endpoint: unknown = Array.isArray(endpoints) ? endpoints[0] : undefined;
+    if (!isStatedText(indication) || !isStatedText(endpoint)) {
+      const unstated = [
+        ...(isStatedText(indication) ? [] : ['indication']),
+        ...(isStatedText(endpoint) ? [] : ['endpoints']),
+      ];
+      return clientError(res, 400, `Required to search historical arms: ${unstated.join(', ')} (the first of endpoints is searched).`, { fields: unstated });
+    }
+
     const result = await externalControlArmService.searchHistoricalArms(
-      { indication, endpoint: endpoints?.[0], phase: req.body.phase, armType: req.body.armType },
+      { indication, endpoint, phase: req.body.phase, armType: req.body.armType },
       orgId
     );
     res.json({ success: true, data: { arms: result } });
@@ -685,11 +720,10 @@ router.post('/external-control/synthesize', authMiddleware, async (req: Request,
     /* Each is the sponsor's to state. A missing method was built as
        'propensity_score', and a missing indication or endpoint stored as '',
        until 2026-10-15; an unknown method reached the service as a 500. */
-    const stated = (v: unknown): boolean => typeof v === 'string' && v.trim() !== '';
     const inputs: Array<[string, boolean]> = [
       ['method', SYNTHESIS_METHODS.some((m) => m === method)],
-      ['indication', stated(req.body.indication)],
-      ['endpoint', stated(req.body.endpoint)],
+      ['indication', isStatedText(req.body.indication)],
+      ['endpoint', isStatedText(req.body.endpoint)],
       ['sourceIds', Array.isArray(sourceIds) && sourceIds.length > 0],
     ];
     const unstated = inputs.filter(([, ok]) => !ok).map(([field]) => field);
@@ -698,7 +732,7 @@ router.post('/external-control/synthesize', authMiddleware, async (req: Request,
     }
     /* matchingVariables is the request's name for the service's covariates.
        It was destructured and dropped until 2026-10-15. */
-    if (matchingVariables != null && !(Array.isArray(matchingVariables) && matchingVariables.every(stated))) {
+    if (matchingVariables != null && !(Array.isArray(matchingVariables) && matchingVariables.every(isStatedText))) {
       return clientError(res, 400, 'matchingVariables must be a list of covariate names, or omitted.', { fields: ['matchingVariables'] });
     }
 
@@ -725,15 +759,16 @@ router.post('/external-control/synthesize', authMiddleware, async (req: Request,
  * Validate an external control arm (balance diagnostics, sensitivity).
  */
 router.post('/external-control/:controlId/validate', authMiddleware, async (req: Request, res: Response) => {
+  const controlId = controlIdParam(req);
+  if (controlId === null) return clientError(res, 400, 'controlId must be a positive integer.');
   try {
     const orgId = resolveOrganizationId(req);
-    const controlId = Number(req.params.controlId);
     const { validationMethods } = req.body;
 
     const result = await externalControlArmService.validateControl(controlId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    return serverError(res, logger, 'validating external control', error);
+    return externalControlFailure(res, 'validating external control', error);
   }
 });
 
@@ -742,14 +777,15 @@ router.post('/external-control/:controlId/validate', authMiddleware, async (req:
  * Get the regulatory submission package for an external control arm.
  */
 router.get('/external-control/:controlId/regulatory-package', authMiddleware, async (req: Request, res: Response) => {
+  const controlId = controlIdParam(req);
+  if (controlId === null) return clientError(res, 400, 'controlId must be a positive integer.');
   try {
     const orgId = resolveOrganizationId(req);
-    const controlId = Number(req.params.controlId);
 
     const result = await externalControlArmService.generateRegulatoryPackage(controlId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    return serverError(res, logger, 'loading regulatory package', error);
+    return externalControlFailure(res, 'loading regulatory package', error);
   }
 });
 
@@ -775,14 +811,15 @@ router.post('/external-control/ingest-arm', authMiddleware, async (req: Request,
  * Get details of an external control arm.
  */
 router.get('/external-control/:controlId', authMiddleware, async (req: Request, res: Response) => {
+  const controlId = controlIdParam(req);
+  if (controlId === null) return clientError(res, 400, 'controlId must be a positive integer.');
   try {
     const orgId = resolveOrganizationId(req);
-    const controlId = Number(req.params.controlId);
 
     const result = await externalControlArmService.getControl(controlId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    return serverError(res, logger, 'loading external control', error);
+    return externalControlFailure(res, 'loading external control', error);
   }
 });
 

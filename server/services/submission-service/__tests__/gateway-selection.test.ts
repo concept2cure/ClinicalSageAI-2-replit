@@ -10,7 +10,8 @@
  * non-device EU dossier was routed to ema:cesp, so an e-signed centralised MAA
  * sequence would have been POSTed to CESP's /baskets. EMA has made the
  * eSubmission Gateway / Web Client mandatory for every centralised-procedure
- * eCTD submission since 2014-03-01 (regulator text; basis in docs/evidence/
+ * eCTD submission since 2014-03-01 (recall: a search extract of an
+ * ema.europa.eu page, not a fetched copy; basis in docs/evidence/
  * D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-cesp-centralised-refusal-
  * facts.md), and the platform has no connector for it (DECISIONS.md row 10).
  * Only a filing the channel function routes to ema:cesp — the national, MRP

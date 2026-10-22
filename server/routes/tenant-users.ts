@@ -241,6 +241,8 @@ router.post('/invitations/:invitationId/accept', async (req, res) => {
         FORBIDDEN: 403,
         NOT_PENDING: 409,
         QUOTA_EXCEEDED: 403,
+        // 2026-10-15: a limit not recorded (NULL max_users) answered 400.
+        QUOTA_NOT_RECORDED: 403,
         ORGANIZATION_NOT_FOUND: 404,
         DATABASE_ERROR: 500,
       };
@@ -472,6 +474,15 @@ router.post('/', async (req, res) => {
         return res.status(403).json({
           success: false,
           error: 'Quota exceeded',
+          message: result.message,
+          details: result.details,
+        });
+      }
+      // 2026-10-15: a limit not recorded (NULL max_users) fell through to 400.
+      if (result.error === 'QUOTA_NOT_RECORDED') {
+        return res.status(403).json({
+          success: false,
+          error: result.error,
           message: result.message,
           details: result.details,
         });

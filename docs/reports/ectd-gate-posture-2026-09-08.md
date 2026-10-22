@@ -63,6 +63,10 @@ Computed from the repo's real drop-points by the test, not asserted from memory:
   (`PreSTAR-q-sub.pdf`, `PreSTAR-ide.pdf`, `PreSTAR-513g.pdf`) are absent, so Q-Sub, IDE
   and 513(g) builds would block. Recording this gate as "blocks everything" would be as
   wrong as recording it as "blocks nothing".
+  *Update 2026-10-22:* PreSTAR 3.1 (`PreSTAR-q-sub.pdf`, one PDF for Q-Sub, IDE and
+  513(g)) was vendored in e1f3fd425 on 2026-10-17 and matches checksums.txt, so every
+  manifest pathway now clears this gate. The gate stays off by default pending the
+  owner's posture decision (`submission-gate-posture.test.ts`).
 
 ## How this is kept true
 

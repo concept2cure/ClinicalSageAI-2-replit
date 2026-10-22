@@ -1101,8 +1101,10 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
 
         // Seed the governed org industry profile from the signup signals so the
         // effective-context resolver has a real organization layer from day one.
-        // Best-effort: a failure here must never fail signup — the resolver
-        // fails open to biopharma defaults when the profile row is absent.
+        // Best-effort: a failure here must never fail signup. Without the
+        // profile row the resolver (server/services/industry-context/resolver.ts)
+        // leaves the vertical unset (null, source 'none'); it no longer falls
+        // back to biopharma defaults (2026-10-15).
         try {
           await db
             .insert(organizationIndustryProfiles)

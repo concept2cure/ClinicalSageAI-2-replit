@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+import { devLoginEmail } from './dev-identity';
 
 const BASE_URL = process.env.BASE_URL || process.env.APP_BASE || 'http://localhost:5000';
 const SCREENSHOT_DIR = 'test-results/beta-core-pulse';
@@ -30,7 +31,7 @@ async function loginToCore(page: Page): Promise<void> {
     }
   } else {
     await page.request.post(`${BASE_URL}/api/auth/dev-login`, {
-      data: { email: 'jonmichaelpsmith@gmail.com' },
+      data: { email: devLoginEmail() },
     });
   }
 
@@ -50,7 +51,7 @@ async function loginToCore(page: Page): Promise<void> {
 
   if (!redirected) {
     const devLogin = await page.request.post(`${BASE_URL}/api/auth/dev-login`, {
-      data: { email: 'jonmichaelpsmith@gmail.com' },
+      data: { email: devLoginEmail() },
     });
     const payload = await devLogin.json();
 

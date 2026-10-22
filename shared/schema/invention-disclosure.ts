@@ -32,7 +32,8 @@ export const inventionDisclosures = pgTable(
     title: text('title').notNull(),
     inventors: text('inventors'),
     fundingSource: text('funding_source'),
-    federalFunding: boolean('federal_funding').notNull().default(false),
+    /** NULL = not yet determined. 2026-10-15: was .notNull().default(false), disagreeing with the migration. */
+    federalFunding: boolean('federal_funding'),
     federalAward: text('federal_award'),
     /** Date the inventor disclosed to the institution (drives the Bayh-Dole clock). */
     disclosureDate: date('disclosure_date'),

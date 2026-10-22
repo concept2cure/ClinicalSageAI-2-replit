@@ -1,7 +1,7 @@
 /**
  * Expedited SAE reporting clock — 21 CFR 312.32(c) IND safety reports / ICH E2A.
  *
- * PURE, DB-FREE, DETERMINISTIC. No imports, no I/O, no Date.now() except the
+ * PURE, DB-FREE, DETERMINISTIC. No I/O, no Date.now() except the
  * injectable `today` argument (defaulted). This is patient-safety-critical: the
  * output drives when an IND safety report is legally due, so every branch is
  * unit-tested and the module never claims a deadline it cannot anchor.
@@ -26,6 +26,8 @@
  * unaffected by DST/local-zone drift; both the awareness date and `today` are
  * reduced to their UTC calendar day before differencing.
  */
+
+import { calculateReportingDeadline, type SeriousnessCriteria } from '../compliance/pharmacovigilanceService';
 
 export interface ExpeditedReportingClockInput {
   /** Date the sponsor first became aware of the event (Day 0), ISO 'YYYY-MM-DD'. */
@@ -130,6 +132,15 @@ function formatUtcDay(ms: number): string {
   return new Date(ms).toISOString().slice(0, 10);
 }
 
+/** The case's most severe criterion in the canonical vocabulary (death, then
+ *  life-threatening, then the first recorded), or null when none maps. */
+function canonicalCriterion(criteria: string[], fatalOutcome: boolean): SeriousnessCriteria | null {
+  const spelled = criteria.map((c) => (c === 'fatal' ? 'death' : c.replace(/[\s-]+/g, '_')));
+  if (fatalOutcome || spelled.includes('death')) return 'death';
+  if (spelled.includes('life_threatening')) return 'life_threatening';
+  return (spelled[0] as SeriousnessCriteria | undefined) ?? null;
+}
+
 /**
  * Compute the expedited reporting clock for a single SAE case.
  *
@@ -173,20 +184,16 @@ export function computeExpeditedReportingClock(
 
   // ── Category (the regulatory determination) ──────────────────────────────
   let category: ExpeditedReportingCategory;
-  let clockDays: number | null;
   let basis: string;
 
   if (isSerious && isUnexpected && isSuspected && isFatalOrLifeThreatening) {
     category = '7-day';
-    clockDays = 7;
     basis = 'Serious + unexpected + suspected causality + fatal/life-threatening → 7-calendar-day IND safety report (21 CFR 312.32(c)(1)(i)).';
   } else if (isSerious && isUnexpected && isSuspected) {
     category = '15-day';
-    clockDays = 15;
     basis = 'Serious + unexpected + suspected causality (not fatal/life-threatening) → 15-calendar-day IND safety report (21 CFR 312.32(c)(1)(i)).';
   } else {
     category = 'none';
-    clockDays = null;
     const missing: string[] = [];
     if (!isSerious) missing.push(seriousnessAssessed ? 'not serious' : 'seriousness not assessed');
     if (!isUnexpected) {
@@ -237,7 +244,20 @@ export function computeExpeditedReportingClock(
     };
   }
 
-  const dueMs = startMs + (clockDays as number) * MS_PER_DAY;
+  /* 2026-10-15: this added its own 7 / 15 days here — a second copy of the
+     expedited window rule. The due date is now the canonical rule's
+     (calculateReportingDeadline, IND → FDA region), from the case's most
+     severe criterion; a criterion that rule does not take gives no due date. */
+  const { deadline, reason } = calculateReportingDeadline(
+    'SUSAR', canonicalCriterion(criteria, normalize(input.outcome) === 'fatal'), 'FDA', new Date(startMs),
+  );
+  if (!deadline) {
+    return {
+      category, clockStart: formatUtcDay(startMs), dueDate: null, daysRemaining: null, overdue: false,
+      basis: `${basis} Due date not determined: ${reason}.`, unassessedInputs, reportabilityDetermined: true,
+    };
+  }
+  const dueMs = startMs + Math.round((deadline.getTime() - startMs) / MS_PER_DAY) * MS_PER_DAY;
   const todayMs = utcDayOf(today);
   const daysRemaining = Math.round((dueMs - todayMs) / MS_PER_DAY);
   const overdue = todayMs > dueMs;

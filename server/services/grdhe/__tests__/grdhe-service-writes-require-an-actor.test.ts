@@ -41,11 +41,11 @@ const WRITERS: Array<[string, (actor: string) => Promise<unknown>]> = [
     grdheService.addTerminologyMapping({ sourceSystem: 'MEDDRA', targetSystem: 'MEDDRA' } as Omit<TerminologyMapping, 'id' | 'createdAt'>, actor)],
   ['createExportJob', actor =>
     grdheService.createExportJob(
-      { tenantId: TENANT, sourceEntityType: 'adverse_event', sourceEntityIds: [JOB], targetFormat: 'FDA_AE_3500A', targetJurisdiction: 'FDA' },
+      { tenantId: TENANT, sourceEntityType: 'adverse_event', sourceEntityIds: [JOB], targetFormat: 'FDA_3500A', targetJurisdiction: 'FDA' },
       actor
     )],
-  ['updateExportJobStatus', actor => grdheService.updateExportJobStatus(JOB, 'cancelled', {}, actor)],
-  ['completeExportJob', actor => grdheService.completeExportJob(JOB, { fileName: 'out.xml', content: '<x/>' }, actor)],
+  ['updateExportJobStatus', actor => grdheService.updateExportJobStatus(TENANT, JOB, 'cancelled', {}, actor)],
+  ['completeExportJob', actor => grdheService.completeExportJob(TENANT, JOB, { fileName: 'out.xml', content: '<x/>' }, actor)],
   ['createCanonicalAdverseEvent', actor =>
     grdheService.createCanonicalAdverseEvent({ tenantId: TENANT, caseNumber: 'C-1', isSerious: false } as CreateAdverseEventRequest, actor)],
   ['logAudit', actor =>

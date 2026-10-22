@@ -81,7 +81,7 @@ describe('GET /api/nonclinical-summary', () => {
     expect(data.m4.find((m: { code: string }) => m.code === '4.2.3').pct).toBe(100);
     // SEND: repeat-dose tox in scope + fully validated → validated >= 1.
     expect(data.send.inScope).toBeGreaterThanOrEqual(1);
-    expect(data.send.validated).toBeGreaterThanOrEqual(1);
+    expect(data.send.declaredPassed).toBeGreaterThanOrEqual(1);
     expect(typeof data.completeness).toBe('number');
   });
 

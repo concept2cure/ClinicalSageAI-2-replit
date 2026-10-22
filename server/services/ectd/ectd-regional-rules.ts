@@ -79,6 +79,8 @@ export interface RegionalLeafRef {
   fileSize: number;
   studyId?: string;
   language?: string;
+  /** The PDF header version (e.g. '1.7'), when the caller read it. Absent: FDA-ESG-006 is not assessed. */
+  pdfVersion?: string | null;
 }
 
 export interface RegionalFinding {
@@ -474,6 +476,70 @@ export function isRegionalRulePackEncoded(region: RegulatoryRegion): boolean {
   return REGIONAL_RULE_PACKS.has(region);
 }
 
+/**
+ * Catalogued rules of an encoded region that its validator does not evaluate.
+ * 2026-10-15: these were neither evaluated nor reported, so a clean result
+ * implied they had been checked. They are named as not assessed.
+ */
+const ENCODED_RULES_NOT_ASSESSED: Partial<Record<RegulatoryRegion, readonly string[]>> = {
+  EU: ['EMA-CESP-003'],
+  JP: ['PMDA-005'],
+  CA: ['HC-REP-002'],
+};
+
+function pushEncodedRulesNotAssessed(region: RegulatoryRegion, findings: RegionalFinding[]): void {
+  const ids = ENCODED_RULES_NOT_ASSESSED[region];
+  if (!ids?.length) return;
+  const rules = getRulesForRegion(region).filter(r => ids.includes(r.id));
+  findings.push({
+    ruleId: 'REGION_RULES_NOT_ASSESSED',
+    region,
+    severity: 'info',
+    message: `Not assessed: ${rules.map(r => `${r.id} (${r.description})`).join('; ')}.`,
+    fix: `Check the package against ${ids.join(', ')} before filing; this validator does not evaluate them.`,
+    scope: 'package',
+  });
+}
+
+const isPdfLeaf = (l: RegionalLeafRef): boolean =>
+  /pdf/i.test(l.mimeType ?? '') || /\.pdf$/i.test(l.filePath ?? '');
+
+/**
+ * FDA-ESG-006: a PDF leaf must be PDF 1.4–1.7 (PDF/A-1b is PDF 1.4-based); PDF
+ * 2.0 is refused. Evaluated per leaf where the caller read the version.
+ * 2026-10-15: the rule (error severity) was catalogued and never evaluated, so
+ * a US package of unchecked PDFs could be gatewayReady. A PDF leaf whose
+ * version was not read is a blocking "not assessed" finding.
+ */
+function checkFdaPdfVersions(leaves: RegionalLeafRef[], findings: RegionalFinding[]): void {
+  const pdfs = leaves.filter(isPdfLeaf);
+  const unread = pdfs.filter(l => !l.pdfVersion);
+  for (const leaf of pdfs) {
+    if (!leaf.pdfVersion || /^1\.[4-7]$/.test(leaf.pdfVersion.trim())) continue;
+    findings.push({
+      ruleId: 'FDA-ESG-006',
+      region: 'US',
+      severity: 'error',
+      message: `PDF ${leaf.filePath} is version ${leaf.pdfVersion}; FDA accepts PDF 1.4–1.7 or PDF/A-1b (no PDF 2.0)`,
+      fix: 'Re-save the PDF as PDF 1.4–1.7 or PDF/A-1b',
+      scope: 'leaf',
+      leafPath: leaf.filePath,
+    });
+  }
+  if (unread.length > 0) {
+    findings.push({
+      ruleId: 'FDA-ESG-006',
+      region: 'US',
+      severity: 'error',
+      message:
+        `PDF version not assessed for ${unread.length} PDF leaf/leaves (e.g. ${unread[0].filePath}): ` +
+        'no version was read, so conformance to PDF 1.4–1.7 / PDF/A-1b is unknown',
+      fix: 'Validate the package through a path that reads each PDF header version before marking it gateway-ready',
+      scope: 'package',
+    });
+  }
+}
+
 /** Say, for a universal-checks-only region, what was not assessed. */
 function pushRulesNotEncoded(
   region: RegulatoryRegion,
@@ -559,6 +625,7 @@ export function validateRegionalPackage(
 
   const evaluatedOnly = UNIVERSAL_CHECKS_ONLY[context.region];
   if (evaluatedOnly) pushRulesNotEncoded(context.region, evaluatedOnly, findings);
+  pushEncodedRulesNotAssessed(context.region, findings);
 
   return findings;
 }
@@ -611,6 +678,8 @@ function validateFDAPackage(
     'Generate and include the US regional XML at /m1/us/us-regional.xml',
     findings
   );
+
+  checkFdaPdfVersions(leaves, findings);
 
   // STF check for M4/M5 study leaves
   const studyLeaves = leaves.filter(

@@ -11,6 +11,14 @@
 -- - ICH Guidelines (M4, E6, E8, E9, Q series)
 -- =========================================================================================
 
+-- AMENDED IN PLACE 2026-10-15 (label only): the 3.2.S.4.2 and 3.2.S.4.3 templates'
+-- ich_guidance cited ICH Q2(R1), which Q2(R2) replaced at Step 4 on 2023-11-01; the
+-- citation label now names Q2(R2), as migrations/20260919_cmc_playbook_schema.sql
+-- did the same day. Stored rows are not corrected here: these rows are versioned
+-- (version '2.0'), so a correction is a new version row, and this file is on no
+-- applier (scripts/db/migration-set.mjs does not list it) and re-inserts without a
+-- conflict guard, so nothing here would reach a deployed database.
+
 -- Create function to insert templates with proper error handling
 CREATE OR REPLACE FUNCTION insert_regulatory_template(
     p_org_id INTEGER,
@@ -2795,7 +2803,7 @@ Calculations:
         "method_principle": {"type": "textarea", "required": true},
         "column_specs": {"type": "text", "required": true}
     }'::jsonb,
-    'Analytical procedures per ICH Q2(R1). Include complete method details for reproducibility.',
+    'Analytical procedures per ICH Q2(R2). Include complete method details for reproducibility.',
     ARRAY['fda', 'ema', 'ich', 'module-3', 'analytical-methods']
 );
 
@@ -2848,7 +2856,7 @@ Results: {{robustness_results}}',
         "r_value": {"type": "number", "required": true, "min": 0.99},
         "percent_recovery": {"type": "text", "required": true}
     }'::jsonb,
-    'Analytical validation per ICH Q2(R1). Include all validation parameters appropriate for method type.',
+    'Analytical validation per ICH Q2(R2). Include all validation parameters appropriate for method type.',
     ARRAY['fda', 'ema', 'ich', 'module-3', 'validation']
 );
 

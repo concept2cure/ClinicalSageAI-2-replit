@@ -96,15 +96,27 @@ router.get('/jobs', async (req: Request, res: Response) => {
 /**
  * GET /api/deep-research/jobs/:id — Get job status + results
  */
-router.get('/jobs/:id', async (req: Request, res: Response) => {
-  try {
-    const orgId = (req as any).user?.organizationId || (req as any).tenantContext?.organizationId;
-    if (!orgId) return res.status(400).json({ error: 'Organization context required' });
+/**
+ * Whether getJobStatus refused because no job with the id is the caller's. It
+ * throws a plain Error whose message is exactly this (deep-research-orchestrator.ts).
+ */
+const isJobNotFound = (err: unknown, jobId: number): boolean =>
+  err instanceof Error && err.message === `Job ${jobId} not found`;
 
-    const job = await getJobStatus(parseInt(String(req.params.id), 10), Number(orgId));
+router.get('/jobs/:id', async (req: Request, res: Response) => {
+  const orgId = (req as any).user?.organizationId || (req as any).tenantContext?.organizationId;
+  if (!orgId) return res.status(400).json({ error: 'Organization context required' });
+  const raw = String(req.params.id);
+  if (!/^[1-9]\d*$/.test(raw)) return res.status(400).json({ error: 'Job id must be a positive integer' });
+  const jobId = Number(raw);
+  try {
+    const job = await getJobStatus(jobId, Number(orgId));
     res.json(job);
   } catch (err) {
-    res.status(404).json({ error: String(err) });
+    // 2026-10-22: every error was a 404 carrying String(err), so a failed read
+    // (with the driver's text) read as "no such job". 404 is for not found only.
+    if (isJobNotFound(err, jobId)) return res.status(404).json({ error: 'Job not found' });
+    return serverError(res, logger, 'loading the job', err);
   }
 });
 
@@ -149,8 +161,10 @@ router.get('/jobs/:id/stream', async (req: Request, res: Response) => {
       res.end();
       return;
     }
-  } catch {
-    res.write(`data: ${JSON.stringify({ error: 'Job not found' })}\n\n`);
+  } catch (err) {
+    // 2026-10-22: every failure was streamed as "Job not found".
+    if (!isJobNotFound(err, jobId)) logger.error('deep research job stream: the job could not be read', { jobId, error: err instanceof Error ? err.message : String(err) });
+    res.write(`data: ${JSON.stringify({ error: isJobNotFound(err, jobId) ? 'Job not found' : 'The job could not be read' })}\n\n`);
     res.end();
     return;
   }

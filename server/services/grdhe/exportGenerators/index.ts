@@ -92,6 +92,7 @@ export const SUPPORTED_FORMATS = {
   }
 } as const;
 
+/** An export generator key (the POST /exports targetFormat). Not a regulatory_format value: see RECORDED_AS. */
 export type SupportedFormat = keyof typeof SUPPORTED_FORMATS;
 
 /**
@@ -114,6 +115,30 @@ export const RECORDED_AS: Readonly<Record<SupportedFormat, RegulatoryFormat | nu
   FDA_PMA: null,
   EMA_ECTD_32: null,
 };
+
+/**
+ * Each format as GET /exports/formats lists it: whether an export job can be
+ * recorded for it, and why not. 2026-10-22: the list carried the formats
+ * alone, so a client offered every one while POST /exports refused each with
+ * 422 EXPORT_FORMAT_NOT_RECORDABLE.
+ */
+export function exportFormatCatalog() {
+  return Object.fromEntries(
+    (Object.keys(SUPPORTED_FORMATS) as SupportedFormat[]).map(key => {
+      const recordedAs = RECORDED_AS[key];
+      return [key, {
+        ...SUPPORTED_FORMATS[key],
+        recordedAs,
+        recordable: recordedAs !== null,
+        notRecordableReason: recordedAs === null
+          ? `No regulatory_format value names what ${key} writes, so export_jobs cannot record a job for it; POST /exports answers 422 EXPORT_FORMAT_NOT_RECORDABLE.`
+          : null,
+      }];
+    })
+  ) as Record<SupportedFormat, (typeof SUPPORTED_FORMATS)[SupportedFormat] & {
+    recordedAs: RegulatoryFormat | null; recordable: boolean; notRecordableReason: string | null;
+  }>;
+}
 
 /** Why no export job can be recorded for any format, or null once one can. */
 export const EXPORT_JOBS_UNAVAILABLE: string | null = Object.values(RECORDED_AS).some(value => value !== null)

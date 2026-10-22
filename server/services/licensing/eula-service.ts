@@ -112,6 +112,20 @@ export class AgreementTextMissingError extends Error {
 }
 
 /**
+ * An agreement published with neither a body nor a url. 2026-10-15: it was
+ * stored and superseded the active agreement, leaving every user owing an
+ * acceptance of terms nobody could read.
+ */
+export class AgreementPublishTextMissingError extends Error {
+  readonly code = 'AGREEMENT_TEXT_MISSING';
+  readonly statusCode = 400;
+  constructor() {
+    super('An agreement cannot be published without its text: give a body or a url.');
+    this.name = 'AgreementPublishTextMissingError';
+  }
+}
+
+/**
  * sha256 of the agreement text an acceptance is given against: the inline body
  * and the url, as a labelled pair. null when the agreement holds neither.
  * For a url-only agreement this binds the url, not the document behind it.
@@ -308,13 +322,17 @@ export async function recordAcceptance(input: RecordAcceptanceInput): Promise<Ac
   try {
     await client.query('BEGIN');
     const agreementRes = await client.query(
-      `SELECT id, agreement_key, version, title, body, url FROM license_agreements WHERE id = $1 FOR SHARE`,
+      `SELECT id, agreement_key, version, title, body, url, status FROM license_agreements WHERE id = $1 FOR SHARE`,
       [input.agreementId]
     );
     if (agreementRes.rows.length === 0) {
       throw new Error(`Agreement '${input.agreementId}' not found`);
     }
     const agreement = agreementRes.rows[0];
+    // 2026-10-15: a draft or superseded agreement was accepted like the active one.
+    if (agreement.status !== 'active') {
+      throw new Error(`Active agreement '${input.agreementId}' not found: this agreement is ${agreement.status}, not active.`);
+    }
     // Bind the acceptance to the exact available text held under this lock.
     // For a URL-only agreement this binds its URL, not unverified remote bytes.
     const contentHash = hashAgreementContent({ body: agreement.body ?? null, url: agreement.url ?? null });
@@ -439,6 +457,9 @@ export async function publishAgreement(input: {
   required?: boolean;
   createdBy?: string;
 }): Promise<LicenseAgreement> {
+  const body = input.body?.trim() ? input.body : undefined;
+  const url = input.url?.trim() ? input.url : undefined;
+  if (!body && !url) throw new AgreementPublishTextMissingError();
   await ensureSchema();
   const client = await pool.connect();
   try {
@@ -458,8 +479,8 @@ export async function publishAgreement(input: {
         input.version,
         input.title,
         input.summary ?? null,
-        input.body ?? null,
-        input.url ?? null,
+        body ?? null,
+        url ?? null,
         input.scope ?? 'user',
         input.required !== false,
         input.createdBy ?? null,

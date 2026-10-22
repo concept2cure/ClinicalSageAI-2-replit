@@ -1,52 +1,56 @@
 /**
- * Informed Consent Form pure logic — required-element seed set and the
- * completeness/approval gate (45 CFR 46.116). Pure, no DB/LLM.
+ * Informed Consent Form pure logic — the seed set and the completeness/approval
+ * gate. Pure, no DB/LLM. Since 2026-10-22 the seed set is the shared record
+ * (shared/regulatory/informed-consent-elements.ts) for an FDA-regulated form;
+ * tests/regulatory/consent-form-approval-gate.test.ts pins the prescribed
+ * wording and the forms seeded before that.
  */
 
 import { describe, it, expect } from 'vitest';
 import {
-  REQUIRED_CONSENT_ELEMENTS,
   consentElementTemplates,
   evaluateConsentCompleteness,
   type ConsentElementView,
 } from '../protocol-consent-logic';
 
-describe('REQUIRED_CONSENT_ELEMENTS', () => {
-  it('includes the nine basic 45 CFR 46.116(b) elements as required', () => {
-    const requiredKeys = REQUIRED_CONSENT_ELEMENTS.filter((e) => e.required).map((e) => e.elementKey);
-    for (const key of ['purpose_duration', 'procedures', 'risks', 'benefits', 'alternatives', 'confidentiality', 'compensation', 'contacts', 'voluntary']) {
+const TEMPLATES = consentElementTemplates();
+const WORDING: Record<string, string> = {
+  confidentiality: 'Records are confidential; the FDA may inspect the records.',
+  clinicaltrials_gov: 'A description of this clinical trial will be available on http://www.ClinicalTrials.gov.',
+};
+
+describe('consentElementTemplates', () => {
+  it('requires the ten 21 CFR 50.25(a) elements and, ACT status unknown, the 50.25(c) statement', () => {
+    const requiredKeys = TEMPLATES.filter((e) => e.required).map((e) => e.elementKey);
+    for (const key of ['research_statement', 'purpose', 'procedures', 'risks', 'benefits', 'alternatives', 'confidentiality', 'compensation_injury', 'contacts', 'voluntary', 'clinicaltrials_gov']) {
       expect(requiredKeys).toContain(key);
     }
-    expect(requiredKeys.length).toBe(9);
+    expect(requiredKeys.length).toBe(11);
   });
 
-  it('cites 45 CFR 46.116 on every element and includes additional (c) elements as optional', () => {
-    expect(REQUIRED_CONSENT_ELEMENTS.every((e) => e.basis === '45 CFR 46.116')).toBe(true);
-    const optional = REQUIRED_CONSENT_ELEMENTS.filter((e) => !e.required).map((e) => e.elementKey);
+  it('cites 21 CFR 50.25 on every element and includes the 50.25(b) elements as optional', () => {
+    expect(TEMPLATES.every((e) => /21 CFR 50\.25/.test(e.basis))).toBe(true);
+    const optional = TEMPLATES.filter((e) => !e.required).map((e) => e.elementKey);
     expect(optional).toContain('unforeseeable_risks');
-    expect(optional.length).toBeGreaterThan(0);
-  });
-
-  it('consentElementTemplates returns the canonical set', () => {
-    expect(consentElementTemplates()).toBe(REQUIRED_CONSENT_ELEMENTS);
+    expect(optional.length).toBe(6);
   });
 });
 
 describe('evaluateConsentCompleteness', () => {
   function seed(): ConsentElementView[] {
-    return REQUIRED_CONSENT_ELEMENTS.map((e) => ({ elementKey: e.elementKey, required: e.required, present: false, content: null }));
+    return TEMPLATES.map((e) => ({ elementKey: e.elementKey, required: e.required, present: false, content: null }));
   }
   function complete(): ConsentElementView[] {
-    return REQUIRED_CONSENT_ELEMENTS.map((e) => ({ elementKey: e.elementKey, required: e.required, present: true, content: 'Drafted content for this element.' }));
+    return TEMPLATES.map((e) => ({ elementKey: e.elementKey, required: e.required, present: true, content: WORDING[e.elementKey] ?? 'Drafted content for this element.' }));
   }
 
   it('flags every required element on a freshly seeded form and is not ready', () => {
     const r = evaluateConsentCompleteness(seed());
     expect(r.readyToApprove).toBe(false);
     expect(r.requiredPresentPct).toBe(0);
-    expect(r.missingRequired.length).toBe(9);
+    expect(r.missingRequired.length).toBe(11);
     expect(r.findings.every((f) => f.severity === 'critical')).toBe(true);
-    expect(r.findings[0].message).toMatch(/45 CFR 46\.116/);
+    expect(r.findings[0].message).toMatch(/21 CFR 50\.25\(a\)\(1\)/);
   });
 
   it('is ready to approve when all required elements are present with content', () => {
@@ -109,10 +113,10 @@ describe('evaluateConsentCompleteness', () => {
 
   it('rounds partial completion percent across required elements', () => {
     const els = seed();
-    // satisfy 3 of 9 required → 33%
+    // satisfy 3 of 11 required → 27%
     for (let i = 0; i < 3; i++) els[i] = { ...els[i], present: true, content: 'x' };
     const r = evaluateConsentCompleteness(els);
     expect(r.requiredPresent).toBe(3);
-    expect(r.requiredPresentPct).toBe(33);
+    expect(r.requiredPresentPct).toBe(27);
   });
 });

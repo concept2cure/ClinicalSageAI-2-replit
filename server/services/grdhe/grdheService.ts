@@ -83,6 +83,12 @@ function requireActor(actor: string): string {
   return actor;
 }
 
+/** The tenant a by-id read or write is held to; none given is a programming error, never "any tenant". */
+function requireTenant(tenantId: string): string {
+  if (typeof tenantId !== 'string' || tenantId.trim() === '') throw new Error('A GRDHE by-id read or write names the tenant it is held to, and none was given');
+  return tenantId;
+}
+
 /** The transaction a write shares with its audit row. */
 type GrdheTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -1029,16 +1035,19 @@ export class GRDHEService {
     `);
 
     const jobId = (result.rows[0] as any).job_id;
-    return this.getExportJob(jobId);
+    return this.getExportJob(request.tenantId, jobId);
   }
 
   /**
-   * Get export job by ID
+   * Get export job by ID, within one tenant. 2026-10-22: this and the by-id
+   * writes and reads below matched the UUID alone, so only row security kept
+   * another tenant's job or case out; on a connection it does not bind they
+   * were read, executed and cancelled by id. Another tenant's id is not found.
    */
-  async getExportJob(jobId: string): Promise<ExportJob> {
+  async getExportJob(tenantId: string, jobId: string): Promise<ExportJob> {
     const result = await db.execute(sql`
       SELECT * FROM regulatory_harmonization.export_jobs
-      WHERE id = ${jobId}::uuid AND NOT is_deleted
+      WHERE id = ${jobId}::uuid AND tenant_id = ${requireTenant(tenantId)}::uuid AND NOT is_deleted
     `);
 
     if (result.rows.length === 0) {
@@ -1084,6 +1093,7 @@ export class GRDHEService {
    * Update export job status
    */
   async updateExportJobStatus(
+    tenantId: string,
     jobId: string,
     status: ExportStatus,
     options: {
@@ -1111,7 +1121,7 @@ export class GRDHEService {
           started_at = CASE WHEN ${status} = 'validating' AND started_at IS NULL THEN NOW() ELSE started_at END,
           completed_at = CASE WHEN ${status} IN ('completed', 'failed', 'cancelled') THEN NOW() ELSE NULL END,
           updated_at = NOW()
-        WHERE id = ${jobId}::uuid
+        WHERE id = ${jobId}::uuid AND tenant_id = ${requireTenant(tenantId)}::uuid
         RETURNING id
       `);
       // Row security filters the UPDATE to the caller's tenant, so another
@@ -1151,6 +1161,7 @@ export class GRDHEService {
    * the content returned. A signature is made through POST /api/esignature/sign.
    */
   async completeExportJob(
+    tenantId: string,
     jobId: string,
     output: { fileName: string; content: string; mimeType?: string },
     actor: string
@@ -1174,7 +1185,7 @@ export class GRDHEService {
           completed_at = NOW(),
           completed_by = ${by},
           updated_at = NOW()
-        WHERE id = ${jobId}::uuid
+        WHERE id = ${jobId}::uuid AND tenant_id = ${requireTenant(tenantId)}::uuid
         RETURNING id
       `);
       // As in updateExportJobStatus: no audit row for a job this session did not update.
@@ -1392,12 +1403,12 @@ export class GRDHEService {
   }
 
   /**
-   * Get canonical adverse event by ID
+   * Get canonical adverse event by ID, within one tenant (2026-10-22; see getExportJob).
    */
-  async getCanonicalAdverseEventById(eventId: string): Promise<CanonicalAdverseEvent> {
+  async getCanonicalAdverseEventById(tenantId: string, eventId: string): Promise<CanonicalAdverseEvent> {
     const result = await db.execute(sql`
       SELECT * FROM regulatory_harmonization.canonical_adverse_events
-      WHERE id = ${eventId}::uuid AND NOT is_deleted
+      WHERE id = ${eventId}::uuid AND tenant_id = ${requireTenant(tenantId)}::uuid AND NOT is_deleted
     `);
 
     if (result.rows.length === 0) {

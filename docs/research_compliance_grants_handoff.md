@@ -209,7 +209,7 @@ USDA pain-category catalog (cited); `recommendReviewType` (category E → full c
 `create_irb_submission`, `add_irb_site`, `review_irb_submission` (read-only gate).
 
 ### Deterministic core (`irb-logic.ts`, pure, tested)
-`recommendReviewType` (greater-than-minimal → full board; minimal+category → expedited/exempt); `evaluateIrbCompleteness` (45 CFR 46.111: consent/waiver, vulnerable-population safeguards, sIRB for multi-site, risk-vs-review-type — cited findings + risk); `continuingReviewStatus` (full board → annual continuing review + 1-yr expiration; expedited/exempt exempt under the revised Common Rule).
+`recommendReviewType` (greater-than-minimal → full board; minimal+category → expedited/exempt); `evaluateIrbCompleteness` (45 CFR 46.111: consent/waiver, vulnerable-population safeguards, sIRB for multi-site, risk-vs-review-type — cited findings + risk); `lifecycleStatus` in `server/services/irb/lifecycle.ts` (full board → annual continuing review + 1-yr expiration; expedited/exempt exempt under the revised Common Rule).
 
 ### Central-module wiring
 - **Reports:** `irb.submission_register` in `REPORT_TYPE_SEED`.

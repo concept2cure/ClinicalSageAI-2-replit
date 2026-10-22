@@ -109,6 +109,18 @@ const LEAF: ECTDLeaf = {
   fileSize: 1024,
 };
 
+/* 2026-10-22: since ccd509c06 a release signature binds an FDA package's recorded
+   applicant facts (packageSignIdentityRefusal), and FDA's application number is
+   the six digits FDA assigned. This fixture froze 'NDA210001' and no applicant,
+   so the continued run refused package.sign and ended 'failed'. Shape mirrors
+   server/services/__tests__/sign-payload-snapshot.test.ts. */
+const APPLICATION_NUMBER = '210001';
+const RECORDED_PACKAGE_IDENTITY = { version: 1 as const, identity: {
+  programId: PROGRAM_ID, applicationNumber: APPLICATION_NUMBER,
+  applicantSponsorId: '22222222-2222-4222-8222-222222222222', applicantName: 'Journey Sponsor Inc',
+  applicantId: '123456789', contact: { name: 'Regulatory Contact', phone: '+1 555 0100', email: 'ra@example.test' },
+} };
+
 /** Each run owns its own snapshot: the identity tuple includes the tenant. */
 function snapshotFor(organizationId: number) {
   return {
@@ -117,19 +129,12 @@ function snapshotFor(organizationId: number) {
     validatorOutcome: VALIDATOR_OUTCOME,
     submissionId: SUBMISSION_ID,
     organizationId,
-    applicationNumber: '210001',
+    applicationNumber: APPLICATION_NUMBER,
     sequenceNumber: '0000',
     region: 'US' as const,
     submissionType: 'original',
     totalSizeBytes: 2048,
-    // The recorded applicant the release signature covers (ccd509c0): a US
-    // package names its application and applicant from the record, never a
-    // placeholder, and FDA application numbers are six bare digits.
-    recordedPackageIdentity: { version: 1 as const, identity: {
-      programId: PROGRAM_ID, applicationNumber: '210001',
-      applicantSponsorId: '5b1c2a10-0000-4000-8000-0000000000b1', applicantName: 'Journey Sponsor Inc',
-      applicantId: '123456789', contact: { name: 'Regulatory Contact', phone: '+1 555 0100', email: 'ra@journey.example' },
-    } },
+    recordedPackageIdentity: RECORDED_PACKAGE_IDENTITY,
   };
 }
 
@@ -349,7 +354,7 @@ beforeAll(async () => {
        (run_id, organization_id, submission_id, submission_id_fk, application_number,
         region, submission_type, started_at, status, steps)
      VALUES ($1,$2,$3,$4,$5,'US','original',NOW(),'awaiting-signature',$6::jsonb)`,
-    [RUN_ID, ORG, SUBMISSION_ID, DOC_ID, '210001', steps],
+    [RUN_ID, ORG, SUBMISSION_ID, DOC_ID, APPLICATION_NUMBER, steps],
   );
   // A second run owned by the OTHER organization, same shape.
   await jdb.pool.query(
@@ -360,7 +365,7 @@ beforeAll(async () => {
     // Its OWN snapshot, so the cross-tenant refusal below is proven by the
     // run lookup's organization scope and not by a record that would have
     // failed identity anyway.
-    [OTHER_RUN_ID, OTHER_ORG, SUBMISSION_ID, DOC_ID, '210001', stepsFor(snapshotFor(OTHER_ORG))],
+    [OTHER_RUN_ID, OTHER_ORG, SUBMISSION_ID, DOC_ID, APPLICATION_NUMBER, stepsFor(snapshotFor(OTHER_ORG))],
   );
   // A second pending run contains the same frozen package. Its active-signature
   // hit must still require current credentials; completing the first run does
@@ -368,12 +373,12 @@ beforeAll(async () => {
   await jdb.pool.query(`INSERT INTO submission_orchestrator_runs
     (run_id, organization_id, submission_id, submission_id_fk, application_number,
      region, submission_type, started_at, status, steps)
-    VALUES ($1,$2,$3,$4,'210001','US','original',NOW(),'awaiting-signature',$5::jsonb)`,
-  [RETRY_RUN_ID, ORG, SUBMISSION_ID, DOC_ID, steps]);
+    VALUES ($1,$2,$3,$4,$5,'US','original',NOW(),'awaiting-signature',$6::jsonb)`,
+  [RETRY_RUN_ID, ORG, SUBMISSION_ID, DOC_ID, APPLICATION_NUMBER, steps]);
   for (const runId of [RUN_ID, RETRY_RUN_ID]) {
     await captureOrchestratorInputs(runId, {
       organizationId: ORG, programId: PROGRAM_ID, userId: APPROVER.id,
-      submissionId: SUBMISSION_ID, submissionFk: DOC_ID, applicationNumber: '210001',
+      submissionId: SUBMISSION_ID, submissionFk: DOC_ID, applicationNumber: APPLICATION_NUMBER,
       sequenceNumber: '0000', region: 'US', submissionType: 'original',
       cmcSources: [], csrInputs: [], clinicalStudyData: [], nonclinicalStudies: [],
     });

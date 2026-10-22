@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { devLoginEmail } from './dev-identity';
 
 // NOTE: These tests mock network responses for the front-end flows. They require the app to be running locally
 // at http://localhost:5173 (or adjust the baseURL in playwright.config.ts). They are intended to run in CI
@@ -11,7 +12,7 @@ test.describe('Login -> Client Portal flows', () => {
     await page.goto(`${APP_BASE}/concept2cure/login`);
 
     // fill email -> continue -> password
-    await page.fill('input[type="email"]', 'jonmichaelpsmith@gmail.com');
+    await page.fill('input[type="email"]', devLoginEmail());
     await page.click('button:has-text("Continue")');
 
     const passwordInput = page.locator('input[type="password"]');
@@ -50,7 +51,7 @@ test.describe('Login -> Client Portal flows', () => {
           accessToken: 'dummy-sso-token',
           user: {
             id: '1',
-            email: 'jonmichaelpsmith@gmail.com',
+            email: devLoginEmail(),
             organizationId: '1',
             roles: ['user'],
           },

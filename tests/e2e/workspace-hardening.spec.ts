@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { devLoginEmail } from './dev-identity';
 
 /**
  * E2E: Governed Document Workspace — Hardening Validation
@@ -18,7 +19,7 @@ async function login(page: import('@playwright/test').Page) {
   await page.goto(`${APP_BASE}/concept2cure/login`);
   const emailInput = page.locator('input[type="email"], input#email');
   await expect(emailInput).toBeVisible({ timeout: 15000 });
-  await emailInput.fill('jonmichaelpsmith@gmail.com');
+  await emailInput.fill(devLoginEmail());
   await page.click('button:has-text("Continue")');
   const passwordInput = page.locator('input[type="password"], input#password');
   await expect(passwordInput).toBeVisible({ timeout: 10000 });

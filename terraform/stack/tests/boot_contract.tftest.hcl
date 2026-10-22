@@ -115,7 +115,6 @@ variables {
   api_cpu                         = 1024
   api_memory                      = 6144
   api_desired_count               = 2
-  worker_desired_count            = 1
   image_tag                       = "v1.0.0"
   acm_certificate_arn             = "arn:aws:acm:us-east-1:111122223333:certificate/alb"
   cloudfront_certificate_arn      = "arn:aws:acm:us-east-1:111122223333:certificate/cf"
@@ -164,18 +163,6 @@ run "renders_the_boot_contract" {
     error_message = "The API container is missing a variable the deploy preflight requires (and the app refuses to boot without)."
   }
 
-  # The worker runs the same image, so it carries the same contract.
-  assert {
-    condition = length(setsubtract(
-      toset(concat(["APP_URL", "NODE_ENV"], regexall("[A-Z][A-Z0-9_]+", one(regex("for VAR in ([A-Z0-9_\\\\\\s]+); do", file("../../.github/workflows/deploy-aws.yml")))))),
-      toset(concat(
-        [for e in module.ecs.worker_container.environment : e.name],
-        [for s in module.ecs.worker_container.secrets : s.name],
-      ))
-    )) == 0
-    error_message = "The worker container is missing part of the boot contract."
-  }
-
   # The preflight reads these VALUES from `environment` only; a value placed in
   # `secrets` passes the name check and is then refused at boot.
   assert {
@@ -198,7 +185,7 @@ run "renders_the_boot_contract" {
   # production refuses every registration, so no client could connect.
   assert {
     condition = alltrue([
-      for defs in [module.ecs.api_container, module.ecs.worker_container] : alltrue([
+      for defs in [module.ecs.api_container] : alltrue([
         one([for e in defs.environment : e.value if e.name == "MCP_ENABLED"]) == "true",
         one([for e in defs.environment : e.value if e.name == "MCP_PUBLIC_URL"]) == "https://${var.domain_aliases[0]}",
         one([for e in defs.environment : e.value if e.name == "MCP_CLIENT_REDIRECT_ALLOWLIST"]) == "https://claude.ai,https://claude.com",
@@ -212,8 +199,7 @@ run "renders_the_boot_contract" {
   # (PLATFORM_ADMIN_EMAILS) and the Business Center (BUSINESS_CENTER_EMAILS),
   # whose holder can then designate a super_admin in the audited in-app console,
   # after which the lists can shrink. Both apply to a password sign-in only.
-  # MASTER_ADMIN_EMAILS stays unset: that grant follows a designation. API only;
-  # the worker serves no requests.
+  # MASTER_ADMIN_EMAILS stays unset: that grant follows a designation.
   assert {
     condition = alltrue([
       for n in ["PLATFORM_ADMIN_EMAILS", "BUSINESS_CENTER_EMAILS"] :
@@ -223,14 +209,8 @@ run "renders_the_boot_contract" {
   }
 
   assert {
-    condition = length([
-      for e in concat(module.ecs.api_container.environment, module.ecs.worker_container.environment) : e.name
-      if e.name == "MASTER_ADMIN_EMAILS"
-      ]) == 0 && length([
-      for e in module.ecs.worker_container.environment : e.name
-      if contains(["PLATFORM_ADMIN_EMAILS", "BUSINESS_CENTER_EMAILS"], e.name)
-    ]) == 0
-    error_message = "MASTER_ADMIN_EMAILS stays unset, and the worker carries no owner allowlist."
+    condition     = length([for e in module.ecs.api_container.environment : e.name if e.name == "MASTER_ADMIN_EMAILS"]) == 0
+    error_message = "MASTER_ADMIN_EMAILS stays unset."
   }
 
   # First-run setup takes the deployment's own secret in production
@@ -239,10 +219,9 @@ run "renders_the_boot_contract" {
   assert {
     condition = (
       one([for s in module.ecs.api_container.secrets : s.valueFrom if s.name == "SETUP_TOKEN"]) == module.secrets.secret_arns["setup_token"] &&
-      length([for s in module.ecs.worker_container.secrets : s.name if s.name == "SETUP_TOKEN"]) == 0 &&
       length([for e in module.ecs.api_container.environment : e.name if e.name == "SETUP_TOKEN"]) == 0
     )
-    error_message = "SETUP_TOKEN must reach the API (only) from the setup_token secret."
+    error_message = "SETUP_TOKEN must reach the API from the setup_token secret, never as a plain variable."
   }
 
   # Every upload is scanned before it is stored, and production refuses one the
@@ -295,29 +274,17 @@ run "renders_the_boot_contract" {
     error_message = "The scanner must report a file it could not scan whole (AlertExceedsMax yes), not answer OK for it."
   }
 
-  # The worker has no scanner beside it, so it is given no address for one.
-  # Since MR-08 stage 1 that means the worker cannot boot: a production process
-  # with no CLAMAV_HOST fails the boot security self-test (clamav_connectivity,
-  # server/services/securityHealth.ts) and exits. No worker image exists to run
-  # (deploy-aws.yml, "No worker image"); giving the worker a scanner or retiring
-  # it is MR-14's call. This assertion pins today's definition, not a working
-  # worker.
-  assert {
-    condition     = length([for e in module.ecs.worker_container.environment : e.name if e.name == "CLAMAV_HOST"]) == 0
-    error_message = "The worker task has no scanner; it must not be pointed at one."
-  }
-
   # Sign-in is accepted only from ALLOWED_ORIGINS (csrfProtection); the
-  # deployment's own origin must be in it, in both containers.
+  # deployment's own origin must be in it.
   assert {
     condition = alltrue([
-      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      for defs in [module.ecs.api_container] :
       one([for e in defs.environment : e.value if e.name == "ALLOWED_ORIGINS"]) == "https://${var.domain_aliases[0]}"
     ])
-    error_message = "ALLOWED_ORIGINS must carry the deployment's own origin (the first CloudFront alias) in the API and worker environments."
+    error_message = "ALLOWED_ORIGINS must carry the deployment's own origin (the first CloudFront alias) in the API environment."
   }
 
-  # The API and the worker serve no static files: CloudFront serves the SPA
+  # The API serves no static files: CloudFront serves the SPA
   # straight from the frontend bucket. A task role that can write that bucket
   # lets one compromised task rewrite the site every user loads (security plan
   # P0-15, INF-03). The deploy role publishes the bundle; the task needs nothing.
@@ -333,10 +300,7 @@ run "renders_the_boot_contract" {
   # the RDS-managed secret used to be outside its grant, so no task could start.
   assert {
     condition = length(setsubtract(
-      toset(concat(
-        [for s in module.ecs.api_container.secrets : s.valueFrom],
-        [for s in module.ecs.worker_container.secrets : s.valueFrom],
-      )),
+      toset([for s in module.ecs.api_container.secrets : s.valueFrom]),
       toset(flatten([jsondecode(module.ecs.execution_secrets_policy).Statement[0].Resource]))
     )) == 0
     error_message = "A task references a secret the ECS execution role cannot read; the task would fail before its container starts."
@@ -374,25 +338,23 @@ run "renders_the_boot_contract" {
 
   # The migrate task is cloned from the API definition and re-aligns app_service
   # from APP_SERVICE_DB_PASSWORD, so the API carries it — as a secret, from the
-  # generated password's own secret. The worker has no such clone, and neither
-  # container may carry it as a plain variable.
+  # generated password's own secret, and never as a plain variable.
   assert {
     condition = alltrue([
       one([for s in module.ecs.api_container.secrets : s.valueFrom if s.name == "APP_SERVICE_DB_PASSWORD"]) == module.secrets.secret_arns["app_service_db_password"],
-      !contains([for s in module.ecs.worker_container.secrets : s.name], "APP_SERVICE_DB_PASSWORD"),
       alltrue([
-        for defs in [module.ecs.api_container, module.ecs.worker_container] :
+        for defs in [module.ecs.api_container] :
         !contains([for e in defs.environment : e.name], "APP_SERVICE_DB_PASSWORD")
       ]),
     ])
-    error_message = "APP_SERVICE_DB_PASSWORD must be an API secret (for the migrate clone), not on the worker, and never a plain variable."
+    error_message = "APP_SERVICE_DB_PASSWORD must be an API secret (for the migrate clone), never a plain variable."
   }
 
   # No secret value in a plain environment variable, where any caller of
   # ecs:DescribeTaskDefinition reads it. Substrings too: a URL embeds a password.
   assert {
     condition = nonsensitive(alltrue(flatten([
-      for defs in [module.ecs.api_container, module.ecs.worker_container] : [
+      for defs in [module.ecs.api_container] : [
         for e in defs.environment : [
           # An unset optional key (openai_api_key, no tenant elected OpenAI) is "",
           # which every string contains; it is not a secret to look for.
@@ -445,11 +407,11 @@ run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use" {
 
   assert {
     condition = alltrue([
-      for c in [module.ecs.api_container, module.ecs.worker_container] :
+      for c in [module.ecs.api_container] :
       contains([for e in c.environment : "${e.name}=${e.value}"], "STORAGE_PROVIDER=s3") &&
       contains([for e in c.environment : "${e.name}=${e.value}"], "AWS_S3_BUCKET=${aws_s3_bucket.vault.bucket}")
     ])
-    error_message = "Both containers must name S3 and this stack's vault bucket."
+    error_message = "The API container must name S3 and this stack's vault bucket."
   }
   assert {
     condition     = aws_s3_bucket.vault.bucket == "c2c-prod-vault-123456789012"
@@ -528,7 +490,7 @@ run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use" {
 # rewriting the newest audit rows left a valid, shorter chain. The daily sweep
 # (server/jobs/auditChainIntegritySweep.ts) now verifies the database against
 # the latest anchor in the object-locked evidence bucket, then writes the next
-# one under anchors/. Both containers run the sweep, so both name the bucket.
+# one under anchors/. The API runs the sweep, so it names the bucket.
 # The task role reaches anchors/ and nothing else there: put and get anchor
 # objects, list that prefix, use the evidence key only through S3, and never
 # delete or unlock what it wrote. The module's policies name the bucket by the
@@ -539,10 +501,10 @@ run "the_audit_chain_head_is_anchored_in_the_object_locked_evidence_bucket" {
 
   assert {
     condition = alltrue([
-      for c in [module.ecs.api_container, module.ecs.worker_container] :
+      for c in [module.ecs.api_container] :
       contains([for e in c.environment : "${e.name}=${e.value}"], "AUDIT_ANCHOR_BUCKET=${module.evidence.evidence_bucket}")
     ])
-    error_message = "Both containers must name the evidence bucket in AUDIT_ANCHOR_BUCKET; without it the sweep reports the anchor not configured."
+    error_message = "The API container must name the evidence bucket in AUDIT_ANCHOR_BUCKET; without it the sweep reports the anchor not configured."
   }
   assert {
     condition     = module.evidence.evidence_bucket == "c2c-prod-part11-evidence-123456789012" && module.evidence.object_lock.mode == "COMPLIANCE" && module.evidence.object_lock.days >= 2555
@@ -930,14 +892,14 @@ run "refuses_a_domain_alias_with_a_trailing_dot" {
 }
 
 # Login OTP is the mandatory second factor: without SMTP the app boots, reads
-# ready, and admits no one. Both containers carry it; the credentials only as
+# ready, and admits no one. The API carries it; the credentials only as
 # secrets; the port only as 465, the one the mailer uses with TLS required.
 run "every_container_can_send_login_codes" {
   command = apply
 
   assert {
     condition = alltrue([
-      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      for defs in [module.ecs.api_container] :
       contains([for e in defs.environment : "${e.name}=${e.value}"], "SMTP_PORT=465") &&
       contains([for e in defs.environment : e.name], "SMTP_HOST") &&
       contains([for e in defs.environment : e.name], "SMTP_FROM") &&
@@ -960,14 +922,14 @@ run "refuses_an_smtp_port_without_required_tls" {
   expect_failures = [var.smtp_port]
 }
 
-# Regulatory drafting runs only on an approved Anthropic model: both containers
-# carry the key, as a secret only.
+# Regulatory drafting runs only on an approved Anthropic model: the API
+# carries the key, as a secret only.
 run "every_container_can_reach_the_drafting_provider" {
   command = apply
 
   assert {
     condition = alltrue([
-      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      for defs in [module.ecs.api_container] :
       contains([for e in defs.secrets : e.name], "ANTHROPIC_API_KEY") &&
       !contains([for e in defs.environment : e.name], "ANTHROPIC_API_KEY")
     ])
@@ -1004,7 +966,7 @@ run "openai_is_absent_unless_a_tenant_elected_it" {
 
   assert {
     condition = alltrue([
-      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      for defs in [module.ecs.api_container] :
       !contains([for e in defs.secrets : e.name], "OPENAI_API_KEY") &&
       !contains([for e in defs.environment : e.name], "OPENAI_API_KEY")
     ]) && !contains(keys(module.secrets.secret_arns), "openai_api_key")
@@ -1022,7 +984,7 @@ run "openai_is_a_secret_when_a_tenant_elected_it" {
 
   assert {
     condition = alltrue([
-      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      for defs in [module.ecs.api_container] :
       one([for e in defs.secrets : e.valueFrom if e.name == "OPENAI_API_KEY"]) == module.secrets.secret_arns["openai_api_key"] &&
       !contains([for e in defs.environment : e.name], "OPENAI_API_KEY")
     ])
@@ -1063,7 +1025,7 @@ run "refuses_an_anthropic_key_as_the_openai_key" {
 # Tenant-export attestations are signed with AUDIT_ATTESTATION_KEY. No deploy path
 # provided it before 2026-10-01, so every attestation failed to sign in
 # production (D1, docs/evidence/W2/2026-10-01-inventory-gaps/). The preflight now
-# names it, so renders_the_boot_contract requires it in both containers.
+# names it, so renders_the_boot_contract requires it in the API container.
 run "refuses_a_short_attestation_key" {
   command = plan
 
@@ -1102,10 +1064,10 @@ run "error_reporting_reaches_both_containers_when_configured" {
 
   assert {
     condition = alltrue([
-      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      for defs in [module.ecs.api_container] :
       one([for e in defs.environment : e.value if e.name == "SENTRY_DSN"]) == "https://0123456789abcdef@o0.ingest.sentry.io/0"
     ])
-    error_message = "SENTRY_DSN must reach the API and the worker when sentry_dsn is set."
+    error_message = "SENTRY_DSN must reach the API when sentry_dsn is set."
   }
 }
 
@@ -1163,6 +1125,33 @@ run "rds_is_gp3_with_tagged_snapshots_and_database_insights" {
   }
 }
 
+# NEW-1 (decided 2026-10-22, P-10 as amended in docs/LAUNCH_DEFINITION_OF_DONE.md):
+# no worker. Its task definition had no command, so it would have booted a third
+# full API server outside the load balancer, from a repository nothing pushes
+# to, and since MR-08 Stage 1 it could not boot at all (no scanner beside it).
+# Background work runs in the API's own schedulers, once per window across
+# tasks (server/db/scheduledOnce.ts; tests/db/scheduled-once-*.dbtest.ts).
+run "one_service_and_one_repository_no_worker" {
+  command = plan
+  assert {
+    condition     = module.ecs.service_names == [module.ecs.api_service_name]
+    error_message = "The stack must create the API service and no other: ${jsonencode(module.ecs.service_names)}"
+  }
+  # service_names is written by hand, so it is held to the module's source: every
+  # aws_ecs_service the module declares must be in it.
+  assert {
+    condition = length(flatten([
+      for f in fileset("../modules/ecs-fargate", "*.tf") :
+      regexall("(?m)^resource\\s+\"aws_ecs_service\"", file("../modules/ecs-fargate/${f}"))
+    ])) == length(module.ecs.service_names)
+    error_message = "terraform/modules/ecs-fargate declares an ECS service that its service_names output does not list."
+  }
+  assert {
+    condition     = keys(module.ecr.repository_urls) == ["api"]
+    error_message = "The stack must create the api repository and no other: ${jsonencode(keys(module.ecr.repository_urls))}"
+  }
+}
+
 run "refuses_a_burstable_production_database" {
   command = plan
   variables {
@@ -1194,34 +1183,34 @@ run "staging_may_run_a_burstable_database" {
 # BAAI bge-m3) inside the VPC: in the private subnets, reachable from the
 # application tasks alone, behind no load balancer.
 
-run "the_api_and_worker_embed_through_the_self_hosted_lane" {
+run "the_api_embeds_through_the_self_hosted_lane" {
   command = apply
 
   # Read from the rendered containers, not from the module that will set them.
   assert {
     condition = alltrue([
-      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      for defs in [module.ecs.api_container] :
       one([for e in defs.environment : e.value if e.name == "EMBEDDING_PROVIDER"]) == "local" &&
       can(regex("^http://[a-z0-9.-]+\\.internal:[0-9]+/v1$", one([for e in defs.environment : e.value if e.name == "EMBEDDING_LOCAL_BASE_URL"])))
     ])
-    error_message = "The API and the worker must carry EMBEDDING_PROVIDER=local and EMBEDDING_LOCAL_BASE_URL=http://<host>.internal:<port>/v1 (the self-hosted lane in the VPC)."
+    error_message = "The API must carry EMBEDDING_PROVIDER=local and EMBEDDING_LOCAL_BASE_URL=http://<host>.internal:<port>/v1 (the self-hosted lane in the VPC)."
   }
 
   # And the address is the service's own, as registered in service discovery.
   assert {
     condition = alltrue([
-      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      for defs in [module.ecs.api_container] :
       one([for e in defs.environment : e.value if e.name == "EMBEDDING_LOCAL_BASE_URL"]) == module.embeddings.base_url
     ]) && module.embeddings.base_url == "http://${module.embeddings.discovery.service_name}.${module.embeddings.discovery.namespace}:${module.embeddings.port}/v1"
     error_message = "EMBEDDING_LOCAL_BASE_URL must be the embedding service's service-discovery name and port."
   }
 
-  # The model the API and the worker ask for, and name on the ledger, is the one
+  # The model the API asks for, and names on the ledger, is the one
   # the server serves, and the one the corpus policy says every corpus holds
   # (server/services/embedding-corpus-policy.ts, SELF_HOSTED_EMBEDDING_MODEL).
   assert {
     condition = alltrue([
-      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      for defs in [module.ecs.api_container] :
       one([for e in defs.environment : e.value if e.name == "EMBEDDING_LOCAL_MODEL"]) == one([for e in module.embeddings.container.environment : e.value if e.name == "MODEL_ID"])
     ]) && module.embeddings.model_id == one(regex("SELF_HOSTED_EMBEDDING_MODEL[^=]*= \\{ model: '([^']+)'", file("../../server/services/embedding-corpus-policy.ts")))
     error_message = "EMBEDDING_LOCAL_MODEL must be the model the embedding server loads (MODEL_ID), and that must be the model the corpus policy names for the self-hosted lane."
@@ -1231,7 +1220,7 @@ run "the_api_and_worker_embed_through_the_self_hosted_lane" {
   # reach the lane (the security group is the boundary).
   assert {
     condition = alltrue([
-      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      for defs in [module.ecs.api_container] :
       length([for s in defs.secrets : s.name if startswith(s.name, "EMBEDDING_")]) == 0
     ])
     error_message = "The embedding lane's settings are plain environment values, not secrets."
@@ -1255,7 +1244,7 @@ run "the_embedding_service_runs_in_the_private_subnets_with_no_public_address" {
     error_message = "The embedding service's tasks must have no public IP."
   }
 
-  # No load balancer of any kind: the API and the worker reach the tasks by
+  # No load balancer of any kind: the API reaches the tasks by
   # their private addresses, which service discovery publishes in a private
   # namespace that resolves inside this VPC only.
   assert {
@@ -1280,7 +1269,7 @@ run "the_embedding_service_runs_in_the_private_subnets_with_no_public_address" {
 run "the_embedding_service_admits_the_application_tasks_alone" {
   command = apply
 
-  # One rule: the serving port, from the security group the API and worker run in.
+  # One rule: the serving port, from the security group the API runs in.
   assert {
     condition = length(module.embeddings.ingress) == 1 && alltrue([
       for r in module.embeddings.ingress :
@@ -1425,11 +1414,11 @@ run "an_openai_election_does_not_move_the_embedding_lane" {
 
   assert {
     condition = alltrue([
-      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      for defs in [module.ecs.api_container] :
       one([for e in defs.environment : e.value if e.name == "EMBEDDING_PROVIDER"]) == "local" &&
       one([for e in defs.environment : e.value if e.name == "EMBEDDING_LOCAL_BASE_URL"]) == module.embeddings.base_url
     ])
-    error_message = "An OpenAI election must leave both containers on the self-hosted embedding lane (ADR-0014 §1.5, amended 2026-10-01)."
+    error_message = "An OpenAI election must leave the API on the self-hosted embedding lane (ADR-0014 §1.5, amended 2026-10-01)."
   }
 }
 
@@ -1494,7 +1483,7 @@ run "database_level_audit_is_loaded_and_required" {
   }
   assert {
     condition = alltrue([
-      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      for defs in [module.ecs.api_container] :
       one([for e in defs.environment : e.value if e.name == "DB_AUDIT_REQUIRED"]) == "pgaudit"
     ])
     error_message = "Every task must carry DB_AUDIT_REQUIRED=pgaudit, so the deploy refuses a database that is not recording."

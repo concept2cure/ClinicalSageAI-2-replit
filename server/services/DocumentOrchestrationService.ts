@@ -27,7 +27,11 @@ interface GeneratedFormRecord {
   version: number;
   status: string;
   formData: Record<string, unknown>;
-  complianceScore: number;
+  /**
+   * The share of the form's fields filled, 0-100. 2026-10-15: it was also
+   * returned as `complianceScore`, which nothing assessed. (The
+   * fda510k_documents column it is stored in keeps that name.)
+   */
   completeness: number;
   createdBy: number;
   updatedBy: number;
@@ -183,13 +187,12 @@ class DocumentOrchestrationService {
         version: 1,
         status: 'draft',
         formData: { ...form.formData, completeness: form.completeness },
-        complianceScore: form.completeness,
         createdBy: userId,
         updatedBy: userId,
         organizationId
       };
       try {
-        await db!.insert(fda510kDocuments).values({ ...row, createdAt: new Date(), updatedAt: new Date() });
+        await db!.insert(fda510kDocuments).values({ ...row, complianceScore: form.completeness, createdAt: new Date(), updatedAt: new Date() });
       } catch (error) {
         console.error('Error saving FDA form:', { formType }, error);
         failed.push({ formType, reason: FORM_NOT_SAVED });

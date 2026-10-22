@@ -97,6 +97,8 @@ describe('executeCommands — central RBAC gate', () => {
     rbac.hasRole.mockResolvedValue(true);
     dbState.query.mockImplementation(async (sql: string) => {
       if (SETTINGS_SQL.test(sql)) return { rows: [], rowCount: 0 };
+      // create_project resolves the organization's one client workspace (2026-10-15).
+      if (/FROM client_workspaces/.test(sql)) return { rows: [{ workspace_count: 1, first_workspace_id: 3 }], rowCount: 1 };
       return { rows: [{ id: 77, name: 'Legit Program', status: 'active' }], rowCount: 1 };
     });
 
@@ -247,6 +249,8 @@ describe('executeCommands — fail-CLOSED governance configuration', () => {
     rbac.hasRole.mockResolvedValue(true);
     dbState.query.mockImplementation(async (sql: string) => {
       if (SETTINGS_SQL.test(sql)) return { rows: [{ settings: null }], rowCount: 1 };
+      // create_project resolves the organization's one client workspace (2026-10-15).
+      if (/FROM client_workspaces/.test(sql)) return { rows: [{ workspace_count: 1, first_workspace_id: 3 }], rowCount: 1 };
       return { rows: [{ id: 5, name: 'Default Tenant Program', status: 'active' }], rowCount: 1 };
     });
 

@@ -201,7 +201,7 @@ export function ConsentTab({ doc }: { doc: Record<string, unknown> }) {
             ? <>The linked consent form <strong>{str(form.title)}</strong> has no elements recorded, so there is no checklist to report against.</>
             : <><strong>No consent form is linked to this protocol.</strong> Consent elements are authored on a consent form, which carries its own version and approval; until one is linked there is no completeness to report.</>}
         </div>
-        <PG.Citation basis="45 CFR 46.116 — General requirements for informed consent" />
+        <PG.Citation basis="21 CFR 50.25; 45 CFR 46.116 — Elements of informed consent" />
       </div>
     );
   }
@@ -220,7 +220,7 @@ export function ConsentTab({ doc }: { doc: Record<string, unknown> }) {
       <div className="pd-consent-meter">
         <div className="pd-consent-bar"><div className="pd-consent-fill" style={{ width: pct + '%' }} /></div>
         <span className="pd-consent-pct">{pct + '% complete'}</span>
-        <PG.Citation basis="45 CFR 46.116 — General requirements for informed consent" />
+        <PG.Citation basis="21 CFR 50.25; 45 CFR 46.116 — Elements of informed consent" />
       </div>
       <ul className="pd-consent-list">{consent.map((c) => (
         <li key={str(c.id)} className={'pd-consent-row' + (c.present ? '' : ' missing')}>

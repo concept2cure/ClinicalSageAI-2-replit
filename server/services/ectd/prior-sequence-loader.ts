@@ -226,7 +226,7 @@ function foldManifestRows(
   for (const row of rows) {
     const seq = String(row.sequence_number ?? '');
     if (seq) priorSequenceNumber = seq; // rows are ascending: the last is the newest
-    for (const leaf of manifestToPriorLeaves(row.leaf_manifest)) {
+    for (const leaf of manifestToPriorLeaves(row.leaf_manifest, seq || undefined)) {
       // Same identity the lifecycle diff uses (leafKey, else section + filename).
       const key = leaf.leafKey ?? `${leaf.ctdSection}/${leaf.fileName}`;
       if ((leaf.operation ?? '').trim().toLowerCase() === 'delete') {

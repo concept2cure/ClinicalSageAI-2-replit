@@ -12,7 +12,7 @@ AWS account (F-4). This folder holds one slice per finding group:
 |---|---|---|
 | A | OPS-03 (state bucket), OPS-26 (locking, provider bounds, lock files, task-role grant, staging secret recovery) | done |
 | B | OPS-04, OPS-30 (RDS storage, snapshot tags, Database Insights), DATA-13 (Postgres major, instance class) | done |
-| C | OPS-08 (the worker), after decision NEW-1 | next |
+| C | OPS-08 (the worker), after decision NEW-1 | done |
 
 ## Re-confirmed at head before starting
 
@@ -38,6 +38,9 @@ open as the work order describes it:
 | Global names | `terraform/stack/main.tf` (`evidence_bucket`, `frontend_bucket`), `vault_storage.tf` (`vault_bucket`), `deploy-aws.yml` `FRONTEND_BUCKET` | Fixed names `c2c-prod-*` | Avoid a name another account already holds |
 | Task S3 grant | `terraform/modules/ecs-fargate/main.tf` `ecs_task_s3` | Get/Put on `anchors/` objects (narrowed earlier by another lane) | Also listed `s3:ListBucket`, which never matches an object ARN |
 | Secrets | `terraform/modules/secrets` | One CMK-encrypted secret per name | Let staging be torn down and re-applied: a deleted secret is held 30 days |
+| Worker decision | `docs/LAUNCH_DEFINITION_OF_DONE.md` P-10 (B7, 2026-10-01) | No separate worker at launch: count 0, no worker image built | Say whether the Terraform for one stays; the production default was still 1 |
+| Worker infrastructure | `terraform/modules/ecs-fargate` (log group, task definition, service), `terraform/modules/ecr` (`worker` repository), both roots (`worker_desired_count`, `ecr_worker_url`) | Declares a worker service from a repository nothing pushes to | Run anything useful: no command (so the API's CMD), no scanner (so the boot self-test exits) |
+| Background work | `server/index.ts`, `server/startup/services.ts`, `server/db/scheduledOnce.ts` | Every scheduler runs in the API process, once per window across tasks | Need a separate service |
 
 Nothing was rebuilt. Each of these is completed in place: no second bootstrap,
 no second stack, no new lock mechanism beside Terraform's own.
@@ -220,7 +223,102 @@ Overall: 61 passed, 2 failed.
   - refused head's two Postgres 16 workflows (`raw/13`);
   - passes after with 16 images checked (`raw/14`).
 
-## Trivy (both slices)
+## Slice C — the worker (OPS-08), after decision NEW-1
+
+**The decision.** NEW-1 (keep or remove the ECS worker) was decided under the
+CPO mandate: **remove.** P-10 already said "no separate worker at launch", so
+the decision is recorded as a dated amendment to P-10 in
+`docs/LAUNCH_DEFINITION_OF_DONE.md`, not as a new entry beside it (Rule 3).
+Kept at a count of zero, the worker was a hazard, not an option:
+
+- its task definition named no command, so it ran the API's;
+- one change of `worker_desired_count` (production's default was still 1)
+  would boot a third API server outside the load balancer;
+- that server would pull from an ECR repository nothing pushes to;
+- since MR-08 Stage 1 it could not boot anyway, because it has no scanner
+  beside it and the boot self-test exits without one.
+
+**Nothing user-facing is removed.** Background work runs in the API's own
+schedulers, started in `server/index.ts` and `server/startup/services.ts`. They
+run once per window across tasks through `server/db/scheduledOnce.ts`, proven
+by `tests/db/scheduled-once-lease.dbtest.ts` and
+`tests/db/scheduled-once-window.dbtest.ts`. A worker that returns under P-10's
+condition comes back as a new service with its own entrypoint, command and
+evidence.
+
+**What changed.**
+
+- **`terraform/modules/ecs-fargate`:**
+  - removed the worker log group, task definition and service;
+  - removed the variables `worker_image`, `worker_cpu`, `worker_memory`,
+    `worker_desired_count`, `worker_environment` and `worker_secrets`;
+  - removed the outputs `worker_service_name` and `worker_container`;
+  - added a `service_names` output, so the stack's tests can say which
+    services exist.
+- **`terraform/modules/ecr`:** the default is `["api"]`. The stack creates only
+  the `api` repository.
+- **`terraform/stack`:**
+  - `module "ecs"` loses its worker inputs, and the variable
+    `worker_desired_count` and the output `ecr_worker_url` are gone;
+  - comments that described two containers now describe one (`main.tf`,
+    `release_signing.tf`, `modules/embedding-service`).
+- **Both roots:** removed `worker_desired_count` (wiring, variable, tfvars
+  example) and `ecr_worker_url`.
+- **`terraform/stack/tests/boot_contract.tftest.hcl`:**
+  - new run `one_service_and_one_repository_no_worker`, with three checks:
+    - the services are exactly the API's;
+    - the repositories are exactly `api`;
+    - `service_names` lists every `aws_ecs_service` declared in
+      `modules/ecs-fargate` (it is written by hand, so it is held to the
+      source).
+  - every assertion that looped over the API and worker containers now covers
+    the API container. Each one's API half is unchanged.
+  - Worker-only assertions are gone: its boot contract, its absent scanner, and
+    its lack of `SETUP_TOKEN`, `APP_SERVICE_DB_PASSWORD` and the owner
+    allowlists.
+  - `the_api_and_worker_embed_through_the_self_hosted_lane` is renamed
+    `the_api_embeds_through_the_self_hosted_lane`.
+- **`deploy-aws.yml`:**
+  - the `TODO(infra)` block is replaced by a note that the worker was removed;
+  - the preflight's remark that "the worker carries that list" now gives the
+    real reason `CLAMAV_HOST` is checked by value.
+- **`server/db/scheduledOnce.ts`:** a dated note in the header, which counted
+  "a worker task" among production's processes (MR-14 Stage 7 step 6 asks for
+  this).
+- **Not edited:** `migrations/20261001d_scheduled_job_claims.sql`. Its comment
+  mentions a worker, but a comment edit to a migration only registers drift
+  (Rule 1).
+
+**Verified by making it fail.**
+
+- **Before** (`raw/18`): the new run fails on the pre-change stack (66 passed,
+  1 failed). The services are a tuple of two, and the repositories are
+  `["api","worker"]`.
+- **After** (`raw/19`):
+  - stack 67/67, modules 26/26, and bootstrap and both roots validate, from the
+    committed lock files;
+  - the work order's acceptance grep returns nothing:
+    `worker_desired_count|ecr_worker_url|aws_ecs_service" "worker` under
+    `terraform/`;
+  - `terraform fmt -check` passes.
+- **Mutants** (`raw/20`), each failing the new run:
+  - the `worker` repository restored;
+  - an `aws_ecs_service "worker"` appended to the module without listing it.
+    This one is caught by the source check. Before that check was added, this
+    mutant passed: the first run of it was on a copy made before the check
+    existed, and it showed the gap.
+  - the same service, listed in `service_names`.
+- **Gates** (`raw/21`):
+  - `ci:terraform-backend` self-test passes 12/12, and the guard passes;
+  - `ci:workflow-targets` and `ci:frontend-sync-coverage` are OK.
+- **Preflight proof** (`raw/22`):
+  - deploy-aws.yml's own preflight, run against the rendered API task
+    definition, holds;
+  - so does every other check: the ARN pinned end to end, provision-database,
+    38 job×action IAM pairs, and the health check;
+  - the suite it runs reports 67 passed.
+
+## Trivy (all three slices)
 
 The scan used `trivy config` with CI's exact settings: HIGH and CRITICAL,
 `exit-code 1`, the same skip-files, over the whole tree (`raw/16`).
@@ -230,6 +328,7 @@ The scan used `trivy config` with CI's exact settings: HIGH and CRITICAL,
 - **Control** (`raw/17`): the same binary and filter on a planted open-SSH
   security group exit 1 with AWS-0107 (HIGH). The checks were loaded; the
   clean result is a real one.
+- After slice C, the same scan again exits 0 (`raw/23`).
 - The binary is v0.69.3, built from the Go module proxy because GitHub release
   downloads are not reachable from here.
 
@@ -241,3 +340,6 @@ The scan used `trivy config` with CI's exact settings: HIGH and CRITICAL,
   nothing reads that name any more.
 - **No `.terraform.lock.hcl` for `terraform/stack` or the modules.** These are
   test-only roots; the deployable roots are locked.
+- **A plan against a real account showing only the worker removed.** Nothing
+  has been applied, so there is nothing to destroy. The first apply (Stage 5)
+  creates one service and one repository, which the mocked plan asserts.

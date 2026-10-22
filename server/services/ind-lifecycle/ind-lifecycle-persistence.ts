@@ -30,6 +30,7 @@
  */
 
 import { createSequence, upsertLeaf } from '../submission-service/submission-service';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import type { RenderedLeafSource } from '../ectd/rendered-leaf-files';
 import type { IndSafetyReportAmendmentIntent } from './ind-safety-report-service';
 import type { IndAmendmentPlan } from './ind-amendment-service';
@@ -170,9 +171,21 @@ export async function persistSafetyReportIntent(
   return { sequence, leaves, leavesAwaitingDocument: awaitingDocument(leaves) };
 }
 
+/** The open 312.33 sections a filer acknowledged, and the audit row recording it. */
+export interface GapAcknowledgement {
+  sectionKeys: string[];
+  auditTrail: AuditRowOutcome;
+}
+
 /**
  * Persist a 312.33 IND Annual Report as an `annual` sequence + its m1.13 leaf.
  * (The annual report has no per-event "intent"; it is a single scheduled leaf.)
+ *
+ * 2026-10-15: open sections filed with the filer's acknowledgement were recorded
+ * only on the HTTP response. With `acknowledgement`, an audit row names the
+ * actor, the acknowledged section keys and the sequence, written as soon as the
+ * sequence exists and before its leaves; its outcome is returned. It is not in
+ * one transaction with the sequence: createSequence commits on its own.
  */
 export async function persistAnnualReport(
   submissionId: number,
@@ -180,11 +193,26 @@ export async function persistAnnualReport(
   ctx: PersistCtx,
   /** Retained bytes per CTD section — the same shape every other persister takes. */
   sourceBySection?: LeafSourceBySection,
-): Promise<PersistedAmendment> {
+  /** The open 312.33 sections filed with the filer's acknowledgement, by section key. */
+  acknowledgement?: { sectionKeys: string[] },
+): Promise<PersistedAmendment & { gapAcknowledgement?: GapAcknowledgement }> {
   const sequence = await createSequence(
     { submissionId, region: 'fda', sequenceNumber, type: 'annual' },
     ctx,
   );
+  const gapAcknowledgement = acknowledgement
+    ? {
+        sectionKeys: acknowledgement.sectionKeys,
+        auditTrail: await recordAuditRow({
+          organizationId: ctx.organizationId,
+          userId: ctx.userId,
+          action: 'ANNUAL_REPORT_OPEN_SECTIONS_ACKNOWLEDGED',
+          resourceType: 'ectd_sequence',
+          resourceId: sequence.id,
+          details: { submissionId, sequenceNumber, acknowledgedSectionKeys: acknowledgement.sectionKeys },
+        }),
+      }
+    : undefined;
   const leaves = await persistLeaves(
     sequence.id,
     withTransmittalPair(
@@ -194,7 +222,7 @@ export async function persistAnnualReport(
     ctx,
     sourceBySection,
   );
-  return { sequence, leaves, leavesAwaitingDocument: awaitingDocument(leaves) };
+  return { sequence, leaves, leavesAwaitingDocument: awaitingDocument(leaves), ...(gapAcknowledgement ? { gapAcknowledgement } : {}) };
 }
 
 /**

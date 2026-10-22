@@ -51,11 +51,6 @@ variable "api_desired_count" {
   default = 1
 }
 
-variable "worker_desired_count" {
-  type    = number
-  default = 0
-}
-
 # ── Image, TLS, domain ───────────────────────────────────────────────────────
 
 variable "image_tag" {

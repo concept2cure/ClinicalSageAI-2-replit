@@ -33,6 +33,7 @@ import { evaluateIndReadiness, type IndReadinessReport } from './ind-readiness-s
 import { compareSectionCode, normalizeCtdCode } from '../../../shared/regulatory/section-code';
 import { IND_FORM_REQUIREMENTS, indFormForDocumentType } from '../ectd/section-to-ctd';
 import { leafSourceKey } from '../ectd/leaf-source-resolver';
+import { canonicalIdFor } from '../c2c/document-alias-map';
 
 const MAX_DOCS = 10;
 
@@ -48,10 +49,10 @@ const FORM_PRESENTATION: Record<string, { title: string; label: string; ref: str
 };
 
 /** Module-1 forms the surface renders separately from sections, keyed by the
- *  requirement's code. A form is "done" when its requirement is authored to a
- *  complete status, or a sponsor-attached copy is filed that its uploader
- *  attested is the completed, signed form and the forms engine checked
- *  complete (resolveAttachedForms). */
+ *  requirement's code. A form is "done" when its authored document is 'signed'
+ *  with a signature record behind it (resolveSignedFormDocs), or a
+ *  sponsor-attached copy is filed that its uploader attested is the completed,
+ *  signed form and the forms engine checked complete (resolveAttachedForms). */
 const FORM_SECTIONS: Array<{ code: string; id: string; title: string; label: string; ref: string }> =
   IND_FORM_REQUIREMENTS.map((f) => ({
     code: `m${f.requirement}`,
@@ -116,7 +117,6 @@ const RANK: Record<string, number> = {
   not_started: 0, data_gathering: 1, drafting: 2, revision: 3, internal_review: 3,
   qa_review: 4, frozen: 5, locked: 5, approved: 6, signed: 7,
 };
-const COMPLETE = new Set(['approved', 'signed', 'locked']);
 
 /** Blueprint enrichment for a section code; honest fallback when the code is custom. */
 function enrichSection(code: string, status: string, name: string) {
@@ -236,6 +236,37 @@ function attachmentOf(row: AttachedFileRow): FormAttachment {
   };
 }
 
+/**
+ * The authored documents at a form's code that are 'signed' AND have a
+ * signature record: an authoring_signatures row on the co-author copy's source
+ * document (through the alias map), in this tenant.
+ *
+ * 2026-10-15: an approved or locked authored document counted the form done
+ * with no signature on it (COMPLETE was approved | signed | locked), while the
+ * upload path requires an attestation that the file is the completed, signed
+ * form. A lock or a document approval is not the form's signature (DP-35). A
+ * store or column that is absent here (42P01 / 42703) means no signature is
+ * known.
+ */
+async function resolveSignedFormDocs(docIds: number[], orgId: number): Promise<Set<number>> {
+  const signed = new Set<number>();
+  for (const docId of docIds) {
+    const canonical = await canonicalIdFor(pool, { organizationId: orgId, store: 'coauthor_documents', nativeId: String(docId) });
+    if (!canonical.available || canonical.canonicalId == null) continue;
+    try {
+      const res = await pool.query(
+        'SELECT 1 FROM authoring_signatures WHERE doc_id = $1 AND tenant_id = $2 LIMIT 1',
+        [canonical.canonicalId, orgId],
+      );
+      if (res.rows.length > 0) signed.add(docId);
+    } catch (err) {
+      if (isUnprovisioned(err)) continue;
+      throw err;
+    }
+  }
+  return signed;
+}
+
 /** Keep the most complete of a form's attachments. */
 function keepMostComplete(forms: Map<string, FormAttachment>, formId: string, attachment: FormAttachment): void {
   const prev = forms.get(formId);
@@ -350,6 +381,85 @@ function resolveTargetReceiptDate(
   if (!match || match.target_submission_date == null) return null;
   const d = new Date(match.target_submission_date as string | Date);
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+type FormDoc = { id: number; status: string };
+
+/**
+ * The submission's Module 1 forms. `attachment` is the sponsor-attached file's
+ * state (null when none is placed); `authored` the authored document's state,
+ * signed only at 'signed' with a signature record for every current document at
+ * the code (null when none is placed). Either one that counts makes it done.
+ */
+function formRows(
+  statusByCode: Map<string, { status: string; name: string }>,
+  attachments: ReadonlyMap<string, FormAttachment>,
+  formDocs: Map<string, FormDoc[]>,
+  signedFormDocs: Set<number>,
+) {
+  return FORM_SECTIONS.map((f) => {
+    const attachment = attachments.get(f.id) ?? null;
+    const authoredStatus = statusByCode.get(f.code)?.status;
+    const docs = formDocs.get(f.code) ?? [];
+    const authored = authoredStatus === undefined ? null : {
+      status: authoredStatus,
+      signed: authoredStatus === 'signed' && docs.length > 0 && docs.every((d) => signedFormDocs.has(d.id)),
+    };
+    return {
+      id: f.id, title: f.title, label: f.label, ref: f.ref,
+      done: authored?.signed === true || (attachment !== null && attachmentCounts(attachment)),
+      attachment,
+      authored,
+    };
+  });
+}
+
+/**
+ * Placed sections per submission: leaf.section_code (authoritative) → the
+ * referenced coauthor doc's mapped status; and the authored documents at each
+ * form's code, per submission, whose signature is checked separately.
+ */
+function placedDocuments(leaves: ChecklistLeaf[], docById: Map<number, CoauthorDoc>, seqToSub: Map<number, number>) {
+  const placedBySub = new Map<number, Map<string, { status: string; name: string }>>();
+  const formDocsBySub = new Map<number, Map<string, FormDoc[]>>();
+  for (const l of leaves) {
+    if (l.document_table !== 'coauthor_documents' || l.document_id == null) continue;
+    const doc = docById.get(Number(l.document_id));
+    const subId = seqToSub.get(Number(l.sequence_id));
+    if (!doc || subId == null) continue;
+    const m = placedBySub.get(subId) ?? new Map<string, { status: string; name: string }>();
+    const code = sectionKey(str(l.section_code));
+    put(m, code, mapStatus(doc.status), str(doc.module_name));
+    placedBySub.set(subId, m);
+    if (FORM_CODES.has(code)) {
+      const byCode = formDocsBySub.get(subId) ?? new Map<string, FormDoc[]>();
+      byCode.set(code, [...(byCode.get(code) ?? []), { id: Number(doc.id), status: mapStatus(doc.status) }]);
+      formDocsBySub.set(subId, byCode);
+    }
+  }
+  return { placedBySub, formDocsBySub };
+}
+
+/**
+ * The placed sections' statuses as readiness reads them. A form's requirement
+ * is complete exactly when the form is done (2026-10-15: its authored
+ * document's own status — approved, locked — stood in for it), and the forms
+ * heading exactly when the IND's own forms are.
+ */
+function readinessSectionStatus(
+  statusByCode: Map<string, { status: string; name: string }>,
+  forms: Array<{ id: string; done: boolean }>,
+): Record<string, SectionStatus> {
+  const sectionStatus = Object.fromEntries(
+    [...statusByCode].map(([code, value]) => [code, value.status]),
+  ) as Record<string, SectionStatus>;
+  for (const form of FORM_SECTIONS) {
+    delete sectionStatus[form.code];
+    if (forms.some((f) => f.id === form.id && f.done)) sectionStatus[form.code] = 'approved';
+  }
+  delete sectionStatus[FORMS_HEADING];
+  if (forms.every((f) => f.done)) sectionStatus[FORMS_HEADING] = 'approved';
+  return sectionStatus;
 }
 
 /** Merge CURRENT documents, keeping the least-advanced status. */
@@ -488,19 +598,11 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
      completed, signed form (2026-10-15). */
   const attachedFormsBySub = await resolveAttachedForms(leaves, seqToSub, orgId);
 
-  // Placed sections per submission: leaf.section_code (authoritative) → the referenced
-  // coauthor doc's mapped status.
-  const placedBySub = new Map<number, Map<string, { status: string; name: string }>>();
-  for (const l of leaves) {
-    if (l.document_table !== 'coauthor_documents' || l.document_id == null) continue;
-    const doc = docById.get(Number(l.document_id));
-    if (!doc) continue;
-    const subId = seqToSub.get(Number(l.sequence_id));
-    if (subId == null) continue;
-    const m = placedBySub.get(subId) ?? new Map();
-    put(m, sectionKey(str(l.section_code)), mapStatus(doc.status), str(doc.module_name));
-    placedBySub.set(subId, m);
-  }
+  const { placedBySub, formDocsBySub } = placedDocuments(leaves, docById, seqToSub);
+  const signedFormDocs = await resolveSignedFormDocs(
+    [...formDocsBySub.values()].flatMap((m) => [...m.values()].flat().filter((d) => d.status === 'signed').map((d) => d.id)),
+    orgId,
+  );
 
   return subs.map((s) => {
     const subId = Number(s.id);
@@ -514,28 +616,16 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
       .map(([code, v]) => enrichSection(code, v.status, v.name))
       .sort((a, b) => compareSectionCode(a.code, b.code));
 
-    const attachments = attachedFormsBySub.get(subId) ?? NO_ATTACHMENTS;
-    const forms = FORM_SECTIONS.map((f) => {
-      // The attached file's state; null when none is placed for the form.
-      const attachment = attachments.get(f.id) ?? null;
-      return {
-        id: f.id, title: f.title, label: f.label, ref: f.ref,
-        done: COMPLETE.has(statusByCode.get(f.code)?.status ?? '') || (attachment !== null && attachmentCounts(attachment)),
-        attachment,
-      };
-    });
+    const forms = formRows(
+      statusByCode,
+      attachedFormsBySub.get(subId) ?? NO_ATTACHMENTS,
+      formDocsBySub.get(subId) ?? new Map<string, FormDoc[]>(),
+      signedFormDocs,
+    );
 
     // Evaluate the full existing required set, not only placed sections. The
     // displayed section list remains an inventory; its length is not readiness.
-    const sectionStatus = Object.fromEntries(
-      [...statusByCode].map(([code, value]) => [code, value.status]),
-    ) as Record<string, SectionStatus>;
-    for (const form of FORM_SECTIONS) {
-      if (forms.some((f) => f.id === form.id && f.done)) sectionStatus[form.code] = 'approved';
-    }
-    // The forms heading is complete exactly when the IND's own forms are.
-    delete sectionStatus[FORMS_HEADING];
-    if (forms.every((f) => f.done)) sectionStatus[FORMS_HEADING] = 'approved';
+    const sectionStatus = readinessSectionStatus(statusByCode, forms);
     const readiness = evaluateIndReadiness({
       filingType: 'initial', sectionStatus,
       completedForms: forms.filter((f) => f.done).map((f) => f.id),

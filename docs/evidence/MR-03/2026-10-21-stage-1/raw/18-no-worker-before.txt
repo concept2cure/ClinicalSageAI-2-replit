@@ -1,0 +1,32 @@
+# Slice C (OPS-08), before: the no-worker assertion against the current stack
+# tfcheck.sh slicec-before keep-locks
+terraform/bootstrap                  Success! The configuration is valid. 
+terraform/environments/production    Success! The configuration is valid. 
+terraform/environments/staging       Success! The configuration is valid. 
+terraform/stack                        run "one_service_and_one_repository_no_worker"... fail Failure! 66 passed, 1 failed. 
+terraform/modules/alb                Success! 4 passed, 0 failed. 
+terraform/modules/cloudfront         Success! 9 passed, 0 failed. 
+terraform/modules/compliance-evidence Success! 5 passed, 0 failed. 
+terraform/modules/github-deploy-roles Success! 6 passed, 0 failed. 
+terraform/modules/vpc-secure         Success! 2 passed, 0 failed. 
+
+# terraform test -filter=tests/boot_contract.tftest.hcl (stack), assertion errors
+Error: Test assertion failed
+
+  on tests/boot_contract.tftest.hcl line 1175, in run "one_service_and_one_repository_no_worker":
+1175:     condition     = module.ecs.service_names == [module.ecs.api_service_name]
+    ├────────────────
+    │ module.ecs.api_service_name is "c2c-production-api"
+    │ module.ecs.service_names is tuple with 2 elements
+
+The stack must create the API service and no other:
+--
+Error: Test assertion failed
+
+  on tests/boot_contract.tftest.hcl line 1179, in run "one_service_and_one_repository_no_worker":
+1179:     condition     = keys(module.ecr.repository_urls) == ["api"]
+    ├────────────────
+    │ module.ecr.repository_urls is object with 2 attributes
+
+The stack must create the api repository and no other: ["api","worker"]
+  run "refuses_a_burstable_production_database"... pass
