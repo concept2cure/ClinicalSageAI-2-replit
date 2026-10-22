@@ -28,7 +28,7 @@ import { eq, and, isNull, desc } from 'drizzle-orm';
 import { db } from '../../db';
 import { submissions, ectdSequences, submissionLeaves } from '../../../shared/schema';
 import { usableIdentifier } from './regulatory-identifiers';
-import { readRecordedPackageIdentity, packageIdentityRefusal, dryRunPackageIdentity, recordedPackageIdentitySnapshot, sameRecordedPackageIdentitySnapshot, fdaContactsForPackageIdentity, type RecordedPackageIdentity, type RecordedPackageIdentitySnapshot } from './package-identity';
+import { readSubmissionPackageIdentity, packageIdentityRefusal, dryRunPackageIdentity, recordedPackageIdentitySnapshot, sameRecordedPackageIdentitySnapshot, fdaContactsForPackageIdentity, type RecordedPackageIdentity, type RecordedPackageIdentitySnapshot } from './package-identity';
 import { queryableFromDrizzle } from '../../db/drizzle-queryable';
 import { packageSequenceFromCore, type PackageFromCoreResult, type PriorState } from './package-from-core';
 import { materializeLeafSources, leafSourceKey, type UnresolvedLeaf } from './leaf-source-resolver';
@@ -547,7 +547,7 @@ export interface AssembleSubmissionResult {
  * "UNASSIGNED (organization N)".
  */
 async function exportIdentity(
-  submission: { programId: string | null },
+  submission: { id: number; programId: string | null },
   organizationId: number,
   supplied: string | undefined,
   fda: boolean,
@@ -560,7 +560,9 @@ async function exportIdentity(
         'letters, digits, ".", "_" or "-" (up to 64).',
     );
   }
-  const identity = await readRecordedPackageIdentity(queryableFromDrizzle(db), organizationId, submission.programId);
+  // The submission's own market's number (P-44): an added market's package never
+  // carries the project's home-market number.
+  const identity = await readSubmissionPackageIdentity(queryableFromDrizzle(db), organizationId, submission.id);
   const refusal = packageIdentityRefusal(identity, 'Nothing was built.', { fda });
   if (refusal) throw refusal;
   const recorded = identity.applicationNumber as string;
