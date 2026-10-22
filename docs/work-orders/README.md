@@ -252,6 +252,16 @@ is claimed, take the next unclaimed finding in §3 rather than duplicating it.
 Each fails identically on trunk `178f0b477` without the CMC boundary change
 (`docs/evidence/D2-API-SCOPE/2026-10-15-reproof/cmc-boundary/README.md`).
 
+**Re-run on trunk `ceb2ba25f`, 2026-10-22 (`…01E8btkB`): every item below is now
+closed.** 15 of the 18 files pass as they stand, fixed in their own lanes. The
+other three, the `report-os-*` suites, were never a trunk defect. Their PDF
+writer refuses honestly when its fonts are absent (`REPORT_PDF_FONTS_UNAVAILABLE`,
+then `REPORT_PDF_GLYPH_UNSUPPORTED` for U+4E2D), and this container lacked
+`fonts-noto-core` and `fonts-noto-cjk`, which `Dockerfile.optimized` and CI
+(`.github/workflows/ci.yml`) install. With both installed: 75/75. A local run
+without those fonts reproduces the 18 failures; that is the environment, not
+the code.
+
 - **→ `…01TzCCfq`:** `server/services/ana-ri/__tests__/reviewer-simulation-run-takes-no-model-supplied-facts.test.ts` fails 4 of its tests: `No "getPool" export is defined on the "../../../db" mock`. The suite's db mock predates a `getPool` import on the path it exercises (file last touched `fac5dfb02`, 2026-10-22).
 - **→ `…01TzCCfq`:** `server/services/ana-ri/__tests__/context-enrichment-claims-coverage-is-labelled-a-heuristic.pglite.test.ts` fails 1: `expected '' to contain '**Evidence coverage (heuristic, not a…'` (`203ca9c82`).
 - **→ `…01471vSK`:** `server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts` fails 5: "AS2 signing/encryption preparation failed. Nothing was transmitted." It may be this container's crypto; that was not verified.
