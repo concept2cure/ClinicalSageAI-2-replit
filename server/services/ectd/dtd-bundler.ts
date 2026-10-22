@@ -136,6 +136,7 @@ async function listVendored(dir: string, extension: string): Promise<VendoredDtd
   for (const name of names.sort()) {
     if (!name.toLowerCase().endsWith(extension)) continue;
     try {
+      // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal -- name comes from readdir(dir); symlinks and non-files are skipped below
       const stat = await fs.lstat(path.join(dir, name));
       if (!stat.isFile() || stat.isSymbolicLink()) continue;
       out.push({ fileName: name, bytes: await fs.readFile(path.join(dir, name)) });

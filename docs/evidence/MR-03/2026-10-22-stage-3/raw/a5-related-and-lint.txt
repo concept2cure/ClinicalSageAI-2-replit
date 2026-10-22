@@ -1,0 +1,5 @@
+# Slice A: vitest related server/routes/tenants-simple.ts server/services/ana-cortex-service.ts --run
+ Test Files  13 passed (13)
+      Tests  97 passed (97)
+
+# eslint warnings per file, head -> after: ana-cortex-service.ts 1 -> 1, tenants-simple.ts 0 -> 0, the contract test 0 -> 0; 0 errors

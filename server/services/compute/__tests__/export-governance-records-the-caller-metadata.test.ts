@@ -40,6 +40,7 @@ const ATTESTATION = {
 
 /** The JSON parameters of the INSERT into `table`, parsed. */
 function jsonParamsOf(table: string): Array<Record<string, unknown>> {
+  // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp -- table is a literal table name at each call in this file
   const call = query.mock.calls.find((c) => new RegExp(`INSERT INTO ${table}\\b`).test(String((c as unknown[])[0])));
   expect(call, `no INSERT into ${table}`).toBeTruthy();
   return ((call as unknown[])[1] as unknown[])

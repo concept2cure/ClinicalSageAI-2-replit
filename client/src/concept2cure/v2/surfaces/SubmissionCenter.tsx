@@ -85,7 +85,7 @@ import { SubmissionProgramAnchor } from './SubmissionProgramAnchor';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 import { consumeNavParams, stashNavParamsForTarget, NAV_PARAMS_EVENT } from '../navParams';
 import { ceremonyOpen } from '../ceremony';
-import { readSubmissionNavTarget, useOpenOnNavTarget } from './submissionNavTarget';
+import { readSubmissionNavTarget, useOpenOnNavTarget, type SubmissionNavTarget } from './submissionNavTarget';
 import { TrackedFilingDetail } from './TrackedFilingDetail';
 import { isTrackedFilingId } from '@shared/types/task-filing-home';
 import { SubmissionRequiredDeliverables, type SubmissionCoverageSequence } from './SubmissionRequiredDeliverables';
@@ -714,6 +714,9 @@ export function SubmissionCenter({
   const navMiss = useOpenOnNavTarget(navTarget, {
     subs, sub, seqs, ws, selSeq, selectSubmission: setSelSub, selectSequence: setSelSeq, openWorkspace: setWs,
   });
+  /* F18: the Builder section a readiness finding's act names, given to the
+     Builder on the named sequence until it is used once, per hand-off. */
+  const [sectionUsed, setSectionUsed] = React.useState<SubmissionNavTarget | null>(null);
 
   /**
    * Create a submission — POST /api/submissions.
@@ -1898,7 +1901,9 @@ export function SubmissionCenter({
               {ws === 'builder' && (
                 <BuilderWorkspace key={`${readSession.key}:${builderGeneration}:${seq.id}`} seq={seq} submission={sub}
                   session={readSession} scopeContext={`${builderContext}:${builderGeneration}`} isScopeCurrent={builderIsCurrent}
-                  onSequenceChanged={builderSequenceChanged} onNav={onNav} />
+                  onSequenceChanged={builderSequenceChanged} onNav={onNav}
+                  section={navTarget?.section && sectionUsed !== navTarget && String(seq.id) === navTarget.sequenceId ? navTarget.section : null}
+                  onSectionApplied={() => setSectionUsed(navTarget)} />
               )}
               {ws === 'validation' && <ValidationWorkspace key={seq.id} sub={sub} seq={seq} />}
               {ws === 'shadow-review' && (
