@@ -26,6 +26,7 @@ import {
   applicationNotReadable,
   CompositionOutOfScopeError,
   compositionRefusal,
+  programNotRecorded,
   type CompositionRefusal,
 } from './composition-scope';
 import { getPool } from '../../db';
@@ -70,6 +71,8 @@ export async function loadCanonicalSources(client: Queryable, orgId: number, pro
  * 3.2.R is 21 CFR 312.23(a)(7)'s, not a marketing application's
  * (services/cmc/us-ind-regional.ts).
  */
+const LEGACY_NUMERIC_PROJECT = /^\d+$/;
+
 export async function resolveProjectRegional(
   client: Queryable,
   orgId: number,
@@ -83,6 +86,14 @@ export async function resolveProjectRegional(
   /** The product class the person recorded on the program (P-21). */
   productType: string | null;
 }> {
+  /* A legacy numeric project (a projects.id, from before programs; recognised
+     as place-module3-into-submission's isOtherProject does) has no program
+     row, and asking regulatory_programs — a uuid column — for one raised a
+     cast error, which a caller holding a transaction then had to recover
+     from. Not a program: nothing is read. */
+  if (LEGACY_NUMERIC_PROJECT.test(String(projectId).trim())) {
+    return { region: null, applicationType: null, programType: null, productType: null };
+  }
   const prog = await client.query(
     `SELECT id, program_type AS "programType", product_type AS "productType",
             product_name AS "productName", name, code
@@ -193,6 +204,9 @@ async function judgeProgramComposition(
     console.warn('[module3-compile] submission spine unreadable; refused at the composition boundary:', detail);
     return { refusal: applicationNotReadable(), regional: null };
   }
+  /* No program row: program_type is NOT NULL, so a null one means the
+     project is not a program at all — a settled answer, not a failed read. */
+  if (regional.programType === null) return { refusal: programNotRecorded(), regional };
   /* The program's own declared type, not the spine's: the spine can only
      carry the same one (see resolveProjectRegional), and reaching for it would
      make a failed spine read look like an unknown application. */

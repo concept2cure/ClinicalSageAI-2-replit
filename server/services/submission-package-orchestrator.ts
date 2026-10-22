@@ -1495,7 +1495,7 @@ export async function runOrchestrator(
          (load-approved-cmc-sources-for-project.ts). */
       const targetRefusal = applicationRefusal(inputs.submissionType, 'submission');
       if (targetRefusal) return { skip: targetRefusal.message };
-      const fullM3 = composeFullModule3(inputs.cmcSources, inputs.region);
+      const fullM3 = composeFullModule3(inputs.cmcSources, inputs.region, { applicationType: inputs.submissionType });
       // Split: S/P core go to m3.compose; A/R get split into their own steps for traceability
       const core = fullM3.filter(s => /^3\.[123]|^3\.2\.[SP]/.test(s.sectionKey));
       outputs.module3Sections = fullM3;
@@ -2098,8 +2098,12 @@ function rederiveSyncOutputsForResume(inputs: OrchestratorInputs): OrchestratorO
     csrTables: [],
   };
 
-  if (inputs.cmcSources.length > 0) {
-    outputs.module3Sections = composeFullModule3(inputs.cmcSources, inputs.region);
+  /* The same rule m3.compose applies: Module 3 only for a US IND target, with
+     the IND's regional section. */
+  if (inputs.cmcSources.length > 0 && !applicationRefusal(inputs.submissionType, 'submission')) {
+    outputs.module3Sections = composeFullModule3(inputs.cmcSources, inputs.region, {
+      applicationType: inputs.submissionType,
+    });
   }
   if (inputs.clinicalStudyData.length > 0) {
     outputs.csrTables = inputs.clinicalStudyData.map(buildCSRTables);

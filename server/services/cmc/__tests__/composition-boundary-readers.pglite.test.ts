@@ -66,7 +66,7 @@ vi.mock('../resolve-cmc-artifact-project', () => ({
 
 import { getModule3BuildStatus } from '../../module3-convergence-service';
 import { assessProgramCompositionScope, composeProjectModule3 } from '../module3-compile';
-import { isCompositionOutOfScope } from '../composition-scope';
+import { compositionRefusalStatus, isCompositionOutOfScope } from '../composition-scope';
 import { draftQualityOverallSummary } from '../../ana/cmc-quality-summary-tool';
 
 const ORG = 43;
@@ -258,6 +258,18 @@ describe('the build board (getModule3BuildStatus)', () => {
     await q(`UPDATE regulatory_programs SET product_type = 'biologic' WHERE id = $1`, [PROGRAM]);
     const refusal = await refusalOf(getModule3BuildStatus(ORG, PROGRAM));
     expect(refusal?.code).toBe('CMC_PRODUCT_CLASS_OUT_OF_SCOPE');
+  });
+});
+
+describe('a legacy numeric project, which is not a program', () => {
+  it('is refused as not a program — a settled answer, never a failed read or a driver error', async () => {
+    const refusal = await assessProgramCompositionScope(ORG, '42');
+    expect(refusal?.code).toBe('CMC_PROGRAM_NOT_RECORDED');
+    expect(compositionRefusalStatus(refusal!)).toBe(409);
+    expect(refusal?.message).not.toMatch(/uuid|invalid input syntax/i);
+    const board = await refusalOf(getModule3BuildStatus(ORG, '42'));
+    expect(board?.code).toBe('CMC_PROGRAM_NOT_RECORDED');
+    await noTransactionOpen();
   });
 });
 

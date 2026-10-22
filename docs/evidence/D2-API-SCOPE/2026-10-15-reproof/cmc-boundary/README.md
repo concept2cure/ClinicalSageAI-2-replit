@@ -136,9 +136,22 @@ regression. Each is closed, and each closure was seen failing:
 - The board's verdict is compared with compose's for two substances in both
   orders, on a real engine. Readers: 12/12.
 
-The review also raised legacy numeric project ids. They reach the boundary as
-a program-row read that cannot succeed, and are now answered 503 rather than
-quoting a uuid cast error. Compose has refused them since `ebde394d7`.
+The review's final tally: 16 of 20 findings survived three skeptics, and all
+16 are fixed. Two of them were finished after the push of `506d814ae`:
+
+- **The orchestrator composed the marketing application's 3.2.R into every
+  US package, an IND's included.** `composeFullModule3` passed no application
+  type to `composeRegional`; the compile route always did. It now takes one,
+  the orchestrator passes its target's, and the resume re-derivation follows
+  the same target rule. Red: the IND package's 3.2.R.1.US was titled
+  "Regional Information — United States (FDA)" (`orchestrator-regional-red.txt`);
+  green 40/40.
+- **A legacy numeric project** reached the boundary as a uuid cast error
+  inside the savepoint, answered "could not be read … try again" for as long
+  as the project existed. It is now not looked up as a program at all (`/^\d+$/`,
+  as `isOtherProject` recognises one) and gets `CMC_PROGRAM_NOT_RECORDED`, a
+  settled 409 that names the program to open instead
+  (`readers-legacy-red.txt`: `CMC_APPLICATION_NOT_READABLE` before).
 
 ## Behaviour a reader should know
 
