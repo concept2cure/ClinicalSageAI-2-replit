@@ -38,6 +38,26 @@ vi.mock('../shared', async () => {
   };
 });
 
+// Exports admit their actor from persisted membership (exportActorAdmission →
+// requireCurrentProjectActor → readCsrProjectActor), never from the session
+// claim. The real readCsrProjectActor runs; only its executor is replaced, so
+// the membership read is answered with the actor's own organization_users row
+// for (org 7, user 3) and nothing else.
+const membership = vi.hoisted(() => ({ rows: [{ role: 'member' }] as Array<{ role: string }> }));
+vi.mock('../../../services/csr/project-scope', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../services/csr/project-scope')>();
+  const executor = {
+    query: async (sql: string, params?: unknown[]) => ({
+      rows: /FROM organization_users/.test(sql) && params?.[0] === 7 && params?.[1] === 3 ? membership.rows : [],
+    }),
+  };
+  return {
+    ...actual,
+    readCsrProjectActor: (_database: unknown, ...rest: [number, number | undefined, Record<string, boolean>?]) =>
+      actual.readCsrProjectActor(executor, ...rest),
+  };
+});
+
 import exportsRouter from '../exports';
 
 const sha = (b: Buffer) => crypto.createHash('sha256').update(b).digest('hex');
@@ -63,6 +83,7 @@ function app() {
 const body = { title: 'Safety briefing', content: '### Findings\n- No new signal in the 2026 data cut' };
 
 beforeEach(() => {
+  membership.rows = [{ role: 'member' }];
   logAction.mockReset();
   logAction.mockResolvedValue({ persisted: true });
   nano.isConfigured.mockReturnValue(true);
@@ -104,5 +125,14 @@ describe('POST /api/concept2cure/artifacts/export-pptx', () => {
     expect(text).toContain('NOT AGENCY-VALIDATED');
     expect(logAction).toHaveBeenCalledTimes(1);
     expect(logAction.mock.calls[0][0].details.sha256).toBe(sha(res.body));
+  });
+
+  it('refuses an actor whose organization membership was revoked, before anything is generated or recorded', async () => {
+    membership.rows = [];
+    const res = await request(app()).post('/api/concept2cure/artifacts/export-pptx').send(body);
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe('PROJECT_MEMBERSHIP_REQUIRED');
+    expect(nano.generatePresentation).not.toHaveBeenCalled();
+    expect(logAction).not.toHaveBeenCalled();
   });
 });
