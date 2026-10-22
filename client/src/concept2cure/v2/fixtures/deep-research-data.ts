@@ -50,12 +50,6 @@ export interface DrResult {
   meta: string;
 }
 
-export interface DrJob {
-  name: string;
-  state: 'run' | 'done';
-  hits: number;
-}
-
 /**
  * The depths the research engine actually has.
  *

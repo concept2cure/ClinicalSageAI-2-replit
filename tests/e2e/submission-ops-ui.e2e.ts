@@ -21,6 +21,7 @@
  *   SS-6  Health & Trends consolidated drawer open
  */
 import { test, expect, Page } from '@playwright/test';
+import { devLoginEmail } from './dev-identity';
 
 const BASE_URL = process.env.BASE_URL || process.env.APP_BASE || 'http://localhost:5173';
 const SCREENSHOT_DIR = 'test-results/submission-ops-screenshots';
@@ -38,7 +39,7 @@ async function loginAndNavigate(page: Page): Promise<void> {
   await page.goto(`${BASE_URL}/concept2cure/login`, { waitUntil: 'domcontentloaded' });
 
   // Fill login form
-  await page.fill('input[type="email"]', 'jonmichaelpsmith@gmail.com');
+  await page.fill('input[type="email"]', devLoginEmail());
   await page.click('button:has-text("Continue")');
 
   const passwordInput = page.locator('input[type="password"]');

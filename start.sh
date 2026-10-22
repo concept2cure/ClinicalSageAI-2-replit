@@ -63,8 +63,10 @@ done
 echo ""
 echo "=== Ready ==="
 echo "  URL:      http://localhost:5000"
-echo "  Login:    jonmichaelpsmith@gmail.com"
-echo "  Password: demo123"
+# 2026-10-15: printed one person's personal address and "demo123"; the seeded
+# account is the one DEMO_USER_EMAIL names, with DEMO_USER_PASSWORD (or a random one).
+echo "  Login:    ${DEMO_USER_EMAIL:-none seeded (set DEMO_USER_EMAIL)}"
+echo "  Password: DEMO_USER_PASSWORD (random and unrecoverable when unset)"
 echo ""
 echo "  Logs: tail -f /tmp/app.log"
 echo "  Stop: pkill -f 'tsx server/index.ts'"
