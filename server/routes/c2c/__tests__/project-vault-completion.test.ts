@@ -5,8 +5,8 @@
  * The vault tree rendered two different meanings of `pct` in the same column:
  *
  *   document row   pct = c2c_documents.readiness — the proportion of that
- *                        document's sections approved or locked, maintained by
- *                        the c2c_recompute_document_readiness() trigger
+ *                        document's counted sections (an empty heading is not
+ *                        one) approved or locked, kept by the readiness trigger
  *   section leaf   pct = hasContent ? 100 : 0
  *
  * So a section with one sentence typed into it reported 100% complete, directly
