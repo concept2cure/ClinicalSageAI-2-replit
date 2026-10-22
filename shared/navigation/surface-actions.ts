@@ -166,12 +166,12 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'vault',
     label: 'Search the vault',
     description:
-      'On the project Vault, run a document search — filters the filing-cabinet tree and document list to title matches for the term the user asked about.',
+      'On the project Vault, run the server full-text search for the term the user asked about: the document list shows the uploaded documents whose title, file name or text matches it. The folder tree is not filtered, and the reader\'s metadata filters (type, filing, classification, evidence kind, review stage, CTD section) still apply.',
     params: [
       {
         name: 'query',
         required: true,
-        description: 'The search term to filter vault documents by (title match).',
+        description: 'The search term, matched against document titles, file names and extracted text.',
       },
     ],
   },
