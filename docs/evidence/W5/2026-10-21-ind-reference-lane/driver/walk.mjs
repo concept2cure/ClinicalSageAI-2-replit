@@ -8,7 +8,7 @@ const PROGRAM_CODE = 'BX-512';
 const STOP_AFTER = process.env.STOP_AFTER || 'all';
 const VIDEO = process.env.VIDEO === '1';
 const transcript = [];
-const say = (line) => { transcript.push(line); console.log(line); };
+const say = (line) => { transcript.push(line); console.info(line); };
 let t0 = Date.now();
 const mmss = (ms) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`;
 // With VIDEO=1 the heading carries the time into the recording (it starts with the page).
@@ -386,7 +386,7 @@ try {
   }
 } catch (err) {
   say(`\n  !! ${err.message.split('\n')[0]}`);
-  console.log(String(err.message).slice(0, 3000));
+  console.info(String(err.message).slice(0, 3000));
   await shot(page, 'zz-failure').catch(() => {});
   process.exitCode = 1;
 } finally {

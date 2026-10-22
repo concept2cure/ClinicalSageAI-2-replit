@@ -25,4 +25,4 @@ const head = (v) => [
 ];
 await make('1.0', head('1.0'), 'out/BX-512-3-2-S-4-2-analytical-procedures.v1.pdf');
 await make('2.0', [...head('2.0'), [12, 'Revision 2.0: related-substances method gradient extended; specificity re-demonstrated.']], 'out/BX-512-3-2-S-4-2-analytical-procedures.v2.pdf');
-console.log(fs.statSync('out/BX-512-3-2-S-4-2-analytical-procedures.v1.pdf').size, fs.statSync('out/BX-512-3-2-S-4-2-analytical-procedures.v2.pdf').size);
+console.info(fs.statSync('out/BX-512-3-2-S-4-2-analytical-procedures.v1.pdf').size, fs.statSync('out/BX-512-3-2-S-4-2-analytical-procedures.v2.pdf').size);

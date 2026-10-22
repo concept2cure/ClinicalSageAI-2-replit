@@ -25,4 +25,4 @@ if (filled === 0) {
 }
 doc.setKeywords(['stand-in', 'sandbox', 'not-signed']);
 fs.writeFileSync(output, await doc.save());
-console.log(JSON.stringify({ filled, names, bytes: fs.statSync(output).size }));
+console.info(JSON.stringify({ filled, names, bytes: fs.statSync(output).size }));
