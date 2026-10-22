@@ -742,8 +742,9 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           `Serious safety risks identified ("${answers.serious_safety_risks}") but no Boxed Warning is proposed. FDA may require one under 21 CFR 201.57(c)(1).`,
-          'A Boxed Warning is required for adverse reactions so serious relative to the drug\'s benefit that they are essential to consider in deciding whether to prescribe the drug, per 21 CFR 201.57(c)(1).',
-          '21 CFR 201.57(c)(1); 21 CFR 201.56(d)(1); FDA Guidance: Warnings and Precautions in Labeling (2011)',
+          // 2026-10-15: attributed this criterion to 21 CFR 201.57(c)(1) and cited the guidance by a wrong title.
+          'A Boxed Warning is required for adverse reactions so serious relative to the drug\'s benefit that they are essential to consider in deciding whether to prescribe the drug, per FDA guidance (2011) on the Warnings and Precautions, Contraindications and Boxed Warning sections.',
+          '21 CFR 201.57(c)(1); 21 CFR 201.56(d)(1); FDA guidance (2011), Warnings and Precautions, Contraindications, and Boxed Warning Sections of Labeling for Human Prescription Drug and Biological Products — Content and Format (title only)',
           'Evaluate whether a Boxed Warning is warranted based on the safety data. If serious risks are identified, propose Boxed Warning language and corresponding Medication Guide. If a Boxed Warning is not warranted, provide detailed justification with supportive data.',
           ['serious_safety_risks', 'proposed_boxed_warning', 'proposed_labeling', 'rems_proposal'],
         );

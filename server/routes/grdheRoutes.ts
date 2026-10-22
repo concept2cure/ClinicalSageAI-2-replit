@@ -33,7 +33,8 @@ import {
   ExportStatus,
   ExportJob,
   CreateExportJobRequest,
-  CreateAdverseEventRequest
+  CreateAdverseEventRequest,
+  casePartyProblems
 } from '../services/grdhe/types';
 import {
   generateFDA3500AXML,
@@ -41,7 +42,9 @@ import {
   validateForFDA,
   validateForE2BR3,
   SUPPORTED_FORMATS,
-  SupportedFormat
+  SupportedFormat,
+  RECORDED_AS,
+  EXPORT_JOBS_UNAVAILABLE
 } from '../services/grdhe/exportGenerators';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
@@ -195,6 +198,21 @@ const isIsoDate = (value: unknown): boolean =>
   /^\d{4}-\d{2}-\d{2}$/.test(value) &&
   !Number.isNaN(Date.parse(`${value}T00:00:00Z`)) &&
   new Date(`${value}T00:00:00Z`).toISOString().startsWith(value);
+
+/**
+ * Answers 400 and returns false when the case's sender or receiver could not be
+ * exported as recorded (casePartyProblems, the rules the exports apply).
+ * 2026-10-15: intake took neither block; both were dropped without a word.
+ */
+const partiesExportable = (request: CreateAdverseEventRequest, res: Response): boolean => {
+  const problems = [...casePartyProblems('sender', request.sender), ...casePartyProblems('receiver', request.receiver)];
+  if (problems.length === 0) return true;
+  res.status(400).json({
+    success: false,
+    error: { code: 'INVALID_SENDER_OR_RECEIVER', message: problems.map(p => p.message).join('; ') },
+  });
+  return false;
+};
 
 /** The SQLSTATE of a database error, under drizzle's "Failed query" wrapper. */
 const sqlstate = (err: unknown): unknown =>
@@ -598,8 +616,22 @@ router.post('/exports', asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
+  // 2026-10-15: the format key went to the database as the job's
+  // regulatory_format, which has no value for it, and failed at the cast (500).
+  const format = request.targetFormat as SupportedFormat;
+  const recordedAs = RECORDED_AS[format];
+  if (!recordedAs) {
+    return res.status(422).json({
+      success: false,
+      error: {
+        code: 'EXPORT_FORMAT_NOT_RECORDABLE',
+        message: `Export format ${format} (${SUPPORTED_FORMATS[format].name}) has no matching regulatory_format value, so export_jobs cannot record a job for it. No job was created.`,
+      },
+    });
+  }
+
   try {
-    const job = await grdheService.createExportJob(request, actor);
+    const job = await grdheService.createExportJob({ ...request, targetFormat: recordedAs }, actor);
 
     res.status(201).json({
       success: true,
@@ -702,13 +734,14 @@ router.post('/exports/:jobId/execute', asyncHandler(async (req: Request, res: Re
         // Get adverse event
         const event = await grdheService.getCanonicalAdverseEventById(entityId);
         
-        // Generate XML based on format. job.targetFormat is typed as the
-        // broad RegulatoryFormat union, but adverse-event export jobs store
-        // the narrower SupportedFormat keys (the generators are keyed by
-        // those), so compare against that vocabulary.
+        // Generate XML based on format: the generator whose format the job
+        // records (RECORDED_AS, read backwards), else the stored key itself.
         let exportResult;
+        const generatorFormat =
+          (Object.keys(RECORDED_AS) as SupportedFormat[]).find(key => RECORDED_AS[key] === job.targetFormat) ??
+          (job.targetFormat as SupportedFormat);
 
-        switch (job.targetFormat as SupportedFormat) {
+        switch (generatorFormat) {
           case 'FDA_AE_3500A':
             exportResult = generateFDA3500AXML(event, job, job.terminologyVersions);
             break;
@@ -869,6 +902,7 @@ router.post('/adverse-events', asyncHandler(async (req: Request, res: Response) 
       }
     });
   }
+  if (!partiesExportable(request, res)) return;
 
   try {
     const event = await grdheService.createCanonicalAdverseEvent(request, actor);
@@ -1181,13 +1215,16 @@ router.get('/health', asyncHandler(async (req: Request, res: Response) => {
         dataResidency: true,
         terminologyManagement: true,
         mappingRules: true,
-        exportJobs: true,
+        // 2026-10-15: this said true while POST /exports could not create a
+        // job for any format (see RECORDED_AS).
+        exportJobs: EXPORT_JOBS_UNAVAILABLE === null,
         adverseEvents: true,
         // 2026-10-15: this said true while both signature routes answer 410
         // (retired 2026-09-10); signatures are made through /api/esignature/sign.
         electronicSignatures: false,
         auditTrail: true
       },
+      unavailableReasons: EXPORT_JOBS_UNAVAILABLE === null ? {} : { exportJobs: EXPORT_JOBS_UNAVAILABLE },
       supportedFormats: Object.keys(SUPPORTED_FORMATS)
     }
   });

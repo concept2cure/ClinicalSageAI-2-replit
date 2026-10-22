@@ -116,8 +116,9 @@ export interface ECTDLeaf {
  * `untagged` count was always 0), auditStudyIdTagging accepted the lifecycle
  * operator as a study id and warned, and neither said 1789.
  *
- * Basis — regulator text read through search (fda.gov is refused by this
- * environment's egress policy, so the PDFs were not opened), checked
+ * Basis — search extracts of the regulator pages, which regulatory-basis files
+ * as recall (fda.gov is refused by this environment's egress policy, so the
+ * PDFs were not opened), checked
  * 2026-10-05, fda.gov/media/160970, 165675 and 135247: validation 1789 fires
  * when "a file has been submitted in a study section without providing an STF
  * file"; STFs are not required for 4.3 Literature references, 5.2 Tabular
@@ -126,7 +127,11 @@ export interface ECTDLeaf {
  * docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-stf-1789-fail-closed-facts.md.
  */
 
-const TRC_1789_RULE = 'FDA TRC 1789 — a file in a Module 4/5 study section must be referenced by a Study Tagging File (FDA Study Data Technical Rejection Criteria, fda.gov/media/160970; regulator text read through search, 2026-10-05)';
+// STF_NOT_REQUIRED_SECTIONS and requiresStfReference live in
+// shared/regulatory/ectd-leaf-rules (imported above).
+// 2026-10-15: ended "regulator text read through search", but only a search
+// extract was seen, and regulatory-basis files a search extract as recall.
+const TRC_1789_RULE = 'FDA TRC 1789 — a file in a Module 4/5 study section must be referenced by a Study Tagging File (FDA Study Data Technical Rejection Criteria, fda.gov/media/160970; seen in a search extract of the regulator page, 2026-10-05; the PDF was not read)';
 
 /**
  * The facts the coverage check needs about one leaf, from either leaf model:

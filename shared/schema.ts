@@ -17656,7 +17656,10 @@ export const evidenceClaims = pgTable(
     pageNumber: integer('page_number'),
     sectionReference: varchar('section_reference', { length: 200 }),
     sentenceIndex: integer('sentence_index'),
-    confidence: numeric('confidence', { precision: 3, scale: 2 }).notNull().default('0.50'),
+    // As the extractor scored it; null when nothing did. It was NOT NULL DEFAULT
+    // 0.50, so an unscored claim — and the governed fact established from it —
+    // read back at 0.5 (2026-10-15; migrations/20261015m).
+    confidence: numeric('confidence', { precision: 3, scale: 2 }),
     extractionMethod: varchar('extraction_method', { length: 50 }).notNull().default('pattern'),
     version: integer('version').notNull().default(1),
     previousVersionId: integer('previous_version_id'),

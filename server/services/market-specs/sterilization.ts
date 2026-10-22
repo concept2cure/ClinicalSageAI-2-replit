@@ -85,7 +85,8 @@ export interface SterilizationFacts {
 }
 
 export interface SterilizationRequirements {
-  applicable: boolean;
+  /** null: `sterile` was not stated, so whether sterilization validation applies is undetermined. */
+  applicable: boolean | null;
   method?: SterilizationMethodInfo;
   packagingStandard?: string;
   reviewerQuestions: string[];
@@ -93,13 +94,17 @@ export interface SterilizationRequirements {
 }
 
 /**
- * Resolve sterilization requirements. Not applicable for a non-sterile device.
- * When sterile but the method is unknown, returns the reviewer questions + a note
- * to identify the method.
+ * Resolve sterilization requirements. Not applicable for a device stated non-sterile;
+ * undetermined (applicable null) when `sterile` is not stated — 2026-10-15: an omitted
+ * `sterile` read as "not supplied sterile — does not apply". When sterile but the
+ * method is unknown, returns the reviewer questions + a note to identify the method.
  */
 export function sterilizationRequirements(facts: SterilizationFacts): SterilizationRequirements {
-  if (!facts.sterile) {
+  if (facts.sterile === false) {
     return { applicable: false, reviewerQuestions: [], notes: ['Device is not supplied sterile — sterilization validation does not apply.'] };
+  }
+  if (facts.sterile !== true) {
+    return { applicable: null, reviewerQuestions: [], notes: ['Whether sterilization validation applies: undetermined — sterile not stated.'] };
   }
   const method = facts.method && facts.method !== 'unknown' ? BY_METHOD.get(facts.method) : undefined;
   const notes: string[] = [];

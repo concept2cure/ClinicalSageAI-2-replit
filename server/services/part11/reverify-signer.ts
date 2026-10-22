@@ -93,7 +93,7 @@ export function signerNeedsAuthenticator(env: NodeJS.ProcessEnv = process.env): 
  * can say "Enrol an authenticator in Account to sign" before a password is
  * typed. The server's refusal at signing is the control; this is its notice.
  */
-export interface SigningPosture {
+export interface AuthenticatorPosture {
   authenticatorRequired: boolean;
   authenticatorEnrolled: boolean;
 }
@@ -101,7 +101,7 @@ export interface SigningPosture {
 export function signingPostureOf(
   account: { mfaEnabled?: boolean | null },
   env: NodeJS.ProcessEnv = process.env,
-): SigningPosture {
+): AuthenticatorPosture {
   return { authenticatorRequired: signerNeedsAuthenticator(env), authenticatorEnrolled: account.mfaEnabled === true };
 }
 

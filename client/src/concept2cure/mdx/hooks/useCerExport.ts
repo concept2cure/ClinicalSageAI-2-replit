@@ -10,7 +10,9 @@
  * the org's real authored sections, never a client-fabricated payload. The
  * governance block is an honest attestation: humanReviewApproved is whatever
  * the user actually confirmed — a production server rejects unreviewed exports
- * with 403 HUMAN_REVIEW_REQUIRED, and that refusal is surfaced verbatim.
+ * with 403 HUMAN_REVIEW_REQUIRED, and that refusal is surfaced verbatim. It is
+ * the block ExportReviewConfirmation builds (2026-10-15: this hook took a typed
+ * name, sent no role, and stamped the review time with the clock at export).
  *
  * The response's downloadable_output_ref (base64) becomes a real browser
  * download. `governed: true` means the artifact registry placed the export;
@@ -27,6 +29,7 @@ import { useCallback, useState } from 'react';
 import { serverMessage } from '@/lib/queryClient';
 import { buildAuthHeaders } from './useFetchJson';
 import { downloadBase64 } from '../../v2/download';
+import type { ExportReviewGovernance } from '../../v2/ExportReviewConfirmation';
 
 interface DownloadRef {
   encoding: 'base64';
@@ -59,11 +62,8 @@ export interface CerProgramRef {
   title?: string | null;
 }
 
-export interface CerExportGovernance {
-  /** True only when a human has actually reviewed the assembled content. */
-  humanReviewApproved: boolean;
-  reviewerName?: string;
-}
+/** The signed-in user's review confirmation (useExportReview), or not reviewed. */
+export type CerExportGovernance = ExportReviewGovernance;
 
 /* Was a local copy of the save-a-blob dance, byte-identical to the one in the
    sibling export hook — and both revoked the object URL synchronously right
@@ -154,16 +154,7 @@ export function useCerExport(): UseCerExportResult {
             title: program.title || undefined,
           },
           useProjectContent: true,
-          governance: {
-            aiGenerated: true,
-            humanReviewApproved: governance.humanReviewApproved,
-            ...(governance.reviewerName?.trim()
-              ? {
-                  reviewerName: governance.reviewerName.trim(),
-                  reviewTimestamp: new Date().toISOString(),
-                }
-              : {}),
-          },
+          governance: { aiGenerated: true, ...governance },
         });
         setOutcome(result);
         return result;

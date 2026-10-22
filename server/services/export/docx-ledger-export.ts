@@ -143,14 +143,19 @@ export function renderProvenanceSummaryText(ledger: ArtifactLedger): string {
   if (ledger.citations) {
     const c = ledger.citations;
     lines.push('Citations:');
-    lines.push(
-      `  ${c.totalSentences} sentences — ` +
-        `${c.supportedCount} supported, ${c.contradictedCount} contradicted, ${c.gapCount} gaps`
-    );
-    lines.push(
-      `  Readiness delta: ${c.totalReadinessDelta}` +
-        (c.filingBlocked ? ' (filing BLOCKED)' : '')
-    );
+    if (c.statsNotRecorded) {
+      // 2026-10-15: printed "0 sentences" and "Readiness delta: 0" here.
+      lines.push(`  Counts: not recorded — ${c.statsNotRecorded}`);
+    } else {
+      lines.push(
+        `  ${c.totalSentences} sentences — ` +
+          `${c.supportedCount} supported, ${c.contradictedCount} contradicted, ${c.gapCount} gaps`
+      );
+      lines.push(
+        `  Readiness delta: ${c.totalReadinessDelta}` +
+          (c.filingBlocked ? ' (filing BLOCKED)' : '')
+      );
+    }
     if (c.citationsAt) lines.push(`  Computed at: ${c.citationsAt}`);
     if (c.citationRunId) lines.push(`  Run id: ${c.citationRunId}`);
   } else {

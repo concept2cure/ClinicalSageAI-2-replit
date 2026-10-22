@@ -35,6 +35,7 @@ import {
 import { readEquivalentDevices } from './EquivalenceTab';
 import type { EditorSectionRef } from '../../../v2/editorTarget';
 import { downloadCsv } from '../../../v2/download';
+import { ExportReviewConfirmation, useExportReview } from '../../../v2/ExportReviewConfirmation';
 
 export interface GeneratorTabProps {
   program: Program | null;
@@ -80,8 +81,9 @@ export function GeneratorTab({
   const structure = useCerStructure();
   const { busy: exportBusy, outcome: exportOutcome, exportCer } = useCerExport();
 
-  const [reviewed, setReviewed] = React.useState(false);
-  const [reviewerName, setReviewerName] = React.useState('');
+  // 2026-10-15: a typed reviewer name and no role (the gate refused it, 400);
+  // now the signed-in user's confirmation, with the session's name and role.
+  const review = useExportReview(program?.id ?? '');
   const [equivalenceClaimed, setEquivalenceClaimed] = React.useState<boolean | null>(null);
   const [checking, setChecking] = React.useState(false);
   const [assessment, setAssessment] = React.useState<CerStructureAssessment | null>(null);
@@ -116,11 +118,7 @@ export function GeneratorTab({
 
   async function onExport(format: CerExportFormat) {
     if (!program || exportBusy) return;
-    await exportCer(
-      { id: program.id, code: program.code, title: program.title },
-      format,
-      { humanReviewApproved: reviewed, reviewerName: reviewed ? reviewerName : undefined },
-    );
+    await exportCer({ id: program.id, code: program.code, title: program.title }, format, review.governance);
   }
 
   const exportStatus = exportBusy
@@ -246,40 +244,8 @@ export function GeneratorTab({
               </div>
             </div>
             <div className="panel-body pad">
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: 12, color: 'var(--text-200)', lineHeight: 1.5 }}>
-                <input
-                  type="checkbox"
-                  checked={reviewed}
-                  onChange={(e) => setReviewed(e.target.checked)}
-                  style={{ marginTop: 2 }}
-                />
-                <span>
-                  A human has reviewed the assembled content. Production exports are refused
-                  without this attestation.
-                </span>
-              </label>
-              {reviewed && (
-                <label style={{ display: 'block', marginTop: 8 }}>
-                  <span style={{ fontSize: 11, color: 'var(--text-300)', display: 'block', marginBottom: 3 }}>
-                    Reviewer name
-                  </span>
-                  <input
-                    value={reviewerName}
-                    onChange={(e) => setReviewerName(e.target.value)}
-                    placeholder="Who reviewed this content"
-                    style={{
-                      width: '100%',
-                      maxWidth: 280,
-                      fontSize: 12,
-                      padding: '5px 8px',
-                      background: 'var(--bg-050)',
-                      border: '1px solid var(--border-control)',
-                      borderRadius: 6,
-                      color: 'var(--text-200)',
-                    }}
-                  />
-                </label>
-              )}
+              {/* Production exports are refused without this confirmation. */}
+              <ExportReviewConfirmation review={review} subject="the assembled content" disabled={exportBusy} />
               <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
                 {(['pdf', 'docx', 'zip'] as CerExportFormat[]).map((format) => (
                   <button

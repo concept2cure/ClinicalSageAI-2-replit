@@ -13,8 +13,9 @@
  * Honest behaviour pinned here: a filename placement is `reviewStatus:
  * 'suggested'` and names the rule that matched; only a leaf the archive's own
  * backbone XML declares is 'mapped'; no rule weight is reported as a
- * confidence (`mappingConfidence` is 1 only where the archive declares the
- * placement, 0 where nothing does).
+ * confidence: a detected file carries no `mappingConfidence` at all (until
+ * 2026-10-15 it carried a 1/0 "declared" flag under that name, which no caller
+ * read), and the import stores one only where the archive declares the placement.
  */
 import { describe, it, expect, afterAll } from 'vitest';
 import JSZip from 'jszip';
@@ -56,10 +57,8 @@ describe('detectArchive — a filename pattern suggests, it does not map', () =>
     expect(software?.mappingSource).toBe('filename_heuristic');
 
     // The rule weight (0.80) is not a confidence anyone measured.
-    expect(
-      [protocol?.mappingConfidence, software?.mappingConfidence],
-      'a filename rule weight was reported as a mapping confidence',
-    ).toEqual([0, 0]);
+    expect(protocol, 'a filename rule weight was reported as a mapping confidence').not.toHaveProperty('mappingConfidence');
+    expect(software).not.toHaveProperty('mappingConfidence');
     expect(protocol?.reviewStatus, 'a filename match is not a mapping until a person confirms it').toBe('suggested');
     expect(software?.reviewStatus).toBe('suggested');
     expect(protocol?.mappingRuleId).toBe('filename.protocol');
@@ -85,7 +84,7 @@ describe('detectArchive — a filename pattern suggests, it does not map', () =>
 
     const declared = files.find((f) => f.relativePath === 'm1/us/1-1/cover-letter.pdf');
     expect(declared).toMatchObject({
-      mappingSource: 'backbone_xml', reviewStatus: 'mapped', mappingConfidence: 1, mappingRuleId: null, mappedCtdSection: '1.1',
+      mappingSource: 'backbone_xml', reviewStatus: 'mapped', mappingRuleId: null, mappedCtdSection: '1.1',
     });
     // In the archive but not in its backbone: still only a suggestion.
     const undeclared = files.find((f) => f.relativePath === 'm5/53-clin-stud-rep/protocol-amendment-2.pdf');
@@ -99,7 +98,7 @@ describe('detectArchive — a filename pattern suggests, it does not map', () =>
     const archive = await zipOf({ 'notes.txt': 'n', 'cover-letter.pdf': 'c' });
     const { files, findings } = await detectArchive(archive);
     const unmatched = files.find((f) => f.fileName === 'notes.txt');
-    expect(unmatched).toMatchObject({ mappingSource: 'fallback', reviewStatus: 'skipped', mappingConfidence: 0, mappingRuleId: null });
+    expect(unmatched).toMatchObject({ mappingSource: 'fallback', reviewStatus: 'skipped', mappingRuleId: null });
     const warn = findings.find((f) => f.code === 'unmatched_files');
     expect(warn?.message).toMatch(/^1 file\(s\)/);
     expect(warn?.message).not.toMatch(/confidence/i);

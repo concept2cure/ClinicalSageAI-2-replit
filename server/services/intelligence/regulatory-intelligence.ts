@@ -496,7 +496,11 @@ export interface ReadinessSummary {
   /** The components the composite was computed from, and those with no data. */
   readonly componentsAssessed: readonly CompositeComponent[];
   readonly componentsNotAssessed: readonly CompositeComponent[];
-  /** The latest template validation's conformance (0..100), of the date below. */
+  /**
+   * The draft's latest template validation's conformance (0..100), of the date
+   * below. Null when not assessed: no validation on record, or neither a
+   * project nor an artifact was given, so none can be tied to the draft.
+   */
   readonly templateConformance: number | null;
   readonly templateName: string | null;
   /**
@@ -609,6 +613,11 @@ export async function computeReadiness(input: ScoreDraftInput & { artifactId?: s
   // Delegate to the existing orchestrator for completeness + risk scoring.
   const riskScores = await scoreSubmissionDraft(input);
 
+  // 2026-10-15: with neither a project nor an artifact the template read below
+  // matched the organization's latest validation of ANY draft and reported it
+  // as this draft's. With neither, nothing ties a validation to this draft.
+  const templateTiedToDraft = input.projectId != null || input.artifactId != null;
+
   // Pull the missing pieces from existing services (no new tables, no new
   // aggregation paths). A piece with no data is null and stays out of the
   // composite.
@@ -628,17 +637,19 @@ export async function computeReadiness(input: ScoreDraftInput & { artifactId?: s
           return getCachedSignalReliability(input.projectId!, input.organizationId);
         })()
       : Promise.resolve(null),
-    pool.query<{ conformance_score: string; template_name: string; validated_at: Date | string | null }>(
-      `SELECT tv.conformance_score, dt.template_name, tv.validated_at
-         FROM intelligence.template_validations tv
-         JOIN intelligence.document_templates dt ON dt.id = tv.template_id
-        WHERE tv.organization_id = $1
-          AND ($2::bigint IS NULL OR tv.project_id = $2)
-          AND ($3::text IS NULL OR tv.artifact_id = $3)
-        ORDER BY tv.validated_at DESC NULLS LAST
-        LIMIT 1`,
-      [input.organizationId, input.projectId ?? null, input.artifactId ?? null],
-    ),
+    templateTiedToDraft
+      ? pool.query<{ conformance_score: string; template_name: string; validated_at: Date | string | null }>(
+          `SELECT tv.conformance_score, dt.template_name, tv.validated_at
+             FROM intelligence.template_validations tv
+             JOIN intelligence.document_templates dt ON dt.id = tv.template_id
+            WHERE tv.organization_id = $1
+              AND ($2::bigint IS NULL OR tv.project_id = $2)
+              AND ($3::text IS NULL OR tv.artifact_id = $3)
+            ORDER BY tv.validated_at DESC NULLS LAST
+            LIMIT 1`,
+          [input.organizationId, input.projectId ?? null, input.artifactId ?? null],
+        )
+      : Promise.resolve(null),
   ]);
 
   // A warning exists only where a replay put one, so an empty open list is a
@@ -646,15 +657,16 @@ export async function computeReadiness(input: ScoreDraftInput & { artifactId?: s
   const warningsAssessed = warnings.length > 0 || replayReachedOrg;
   const highSeverityWarnings = warnings.filter(w => w.severity === 'high').length;
 
+  const templateRows = templateLatest?.rows ?? [];
   const templateConformance =
-    templateLatest.rows.length > 0
-      ? Math.round(parseFloat(templateLatest.rows[0].conformance_score) * 100)
+    templateRows.length > 0
+      ? Math.round(parseFloat(templateRows[0].conformance_score) * 100)
       : null;
-  const templateName = templateLatest.rows.length > 0 ? templateLatest.rows[0].template_name : null;
+  const templateName = templateRows.length > 0 ? templateRows[0].template_name : null;
   // 2026-10-15: the latest validation was reported undated, so one of any age
   // read as current. It is dated now; undated, its age is unknown and it stays
   // out of the composite.
-  const templateValidatedAt = templateLatest.rows.length > 0 ? isoTimestampOrNull(templateLatest.rows[0].validated_at) : null;
+  const templateValidatedAt = templateRows.length > 0 ? isoTimestampOrNull(templateRows[0].validated_at) : null;
   const reliabilityScore =
     reliability && reliability.reliabilityIndex !== null
       ? Math.round(reliability.reliabilityIndex * 100)
@@ -679,7 +691,9 @@ export async function computeReadiness(input: ScoreDraftInput & { artifactId?: s
   const band = scoreBand === 'ready' && missingCritical > 0 ? 'caution' : scoreBand;
 
   const recommendations = compositeVerdict(band, scoreBand, composite, missingCritical);
-  if (templateConformance !== null && templateValidatedAt === null) {
+  if (!templateTiedToDraft) {
+    recommendations.push('Template conformance not assessed: no project or artifact was given, so no template validation can be tied to this draft.');
+  } else if (templateConformance !== null && templateValidatedAt === null) {
     recommendations.push(`Template conformance ${templateConformance}% is from a validation with no recorded date; its age is unknown, so it is not counted as current.`);
   } else if (templateConformance !== null && templateConformance < 70) {
     recommendations.push(`Template conformance was ${templateConformance}% at the latest validation (${templateValidatedAt}). Check missing sections.`);

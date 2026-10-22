@@ -159,22 +159,29 @@ console.log(`UDI DI ${di.deviceIdentifier}: ${di.valid ? 'valid' : 'INVALID'}; G
 // ── Capstone: submission readiness ───────────────────────────────────────────
 h('Submission-readiness capstone — pathway: ivd-510k');
 
+// 2026-10-15: analytical and clinical performance and the post-market plan were typed
+// in as 1, and UDI/GUDID as 0.5 when incomplete. Nothing here computes a completeness
+// figure for those three domains, so they are left out and reported not assessed;
+// UDI/GUDID is the GUDID record's computed completeness.
 const readiness = assessSubmissionReadiness({
   pathway: 'ivd-510k',
   domainScores: {
-    analyticalPerformance: 1, // precision, LoD, linearity, method comparison all complete
-    clinicalPerformance: 1, // sensitivity/specificity + ROC complete
     substantialEquivalence: se.determination === 'SE' ? 1 : 0,
-    udiGudid: di.valid && gudid.complete ? 1 : 0.5,
-    postMarketPlan: 1, // PMS plan finalized
+    udiGudid: gudid.completenessScore,
   },
 });
 
-console.log(`Overall readiness: ${(readiness.overallScore * 100).toFixed(0)}%  →  VERDICT: ${readiness.verdict.toUpperCase()}`);
-console.log('Per-domain:');
-readiness.perDomain.forEach(d =>
-  console.log(`  ${d.complete ? '✓' : '○'} ${d.domain}: ${(d.score * 100).toFixed(0)}%`)
+const pct = (n: number) => `${(n * 100).toFixed(0)}%`;
+console.log(
+  readiness.assessedDomainCompleteness === null
+    ? 'Completeness of the assessed domains: none assessed'
+    : `Completeness of the assessed domains: ${pct(readiness.assessedDomainCompleteness)} (${readiness.perDomain.length} of ${readiness.requiredDomains.length} required domains)  →  verdict: ${readiness.verdict}`,
 );
+console.log('Per assessed domain:');
+readiness.perDomain.forEach(d =>
+  console.log(`  ${d.complete ? '✓' : '○'} ${d.domain}: ${pct(d.score)}`)
+);
+if (readiness.notAssessedDomains.length) console.log(`Not assessed: ${readiness.notAssessedDomains.join(', ')}`);
 if (readiness.prioritizedGaps.length) {
   console.log('Prioritized gaps:');
   readiness.prioritizedGaps.forEach((g, i) =>

@@ -288,7 +288,9 @@ export const anaPlatformWisdom = pgTable(
     recommendation: text('recommendation').notNull(), // what AnA recommends
 
     // ── Evidence & confidence ───────────────────────────────────
-    confidenceScore: real('confidence_score').default(0.5).notNull(), // 0-1
+    // 0-1 as measured; null when nothing measured it. It was NOT NULL DEFAULT
+    // 0.5 and stamped 0.5 + 0.05·organizations (2026-10-15; migration 0013).
+    confidenceScore: real('confidence_score'),
     evidenceCount: integer('evidence_count').default(0).notNull(), // data points supporting this
     minEvidenceThreshold: integer('min_evidence_threshold').default(10).notNull(),
     effectivenessScore: real('effectiveness_score'), // measured improvement when followed

@@ -134,7 +134,7 @@ export class OneDriveConnector implements DataConnector {
         sourceConnector: this.id,
         title: String(item.name || ''),
         summary: `OneDrive document — ${formatBytes(Number(item.size || 0))} — modified ${String(item.lastModifiedDateTime || 'unknown')}`,
-        relevanceScore: 1 - idx * 0.02,
+        sourceRank: idx + 1,
         metadata: {
           size: item.size,
           webUrl: item.webUrl,

@@ -10,6 +10,11 @@
  * total_tasks is now the number of steps, estimated_time is not recorded, and
  * because the seed is ON CONFLICT DO NOTHING the file also corrects the rows it
  * seeded on earlier deploys, and nothing else. Run here, against PGlite.
+ *
+ * The method-validation template also cited ICH Q2(R1), superseded by Q2(R2)
+ * (Step 4, 2023-11-01). The template rows carry no version (keyed by slug, at
+ * organization_id 0), so the label is updated in place, and on earlier
+ * deploys only where the row still holds the exact seeded text.
  */
 import { describe, it, expect } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
@@ -35,6 +40,14 @@ const templates = async (pg: PGlite) =>
   (await pg.query<{ id: string; total_tasks: number | null; steps: number; estimated_time: string | null }>(
     `SELECT id, total_tasks, jsonb_array_length(template_data->'steps') AS steps, estimated_time
        FROM cmc_workflows WHERE organization_id = 0 ORDER BY id`)).rows;
+
+/** The method-validation template's description as first seeded, and as seeded now. */
+const Q2R1_LABEL = 'ICH Q2(R1) compliant analytical method validation protocol';
+const Q2R2_LABEL = 'ICH Q2(R2) compliant analytical method validation protocol';
+
+const description = async (pg: PGlite, id: string, org: number) =>
+  (await pg.query<{ description: string | null }>(
+    `SELECT description FROM cmc_workflows WHERE id = $1 AND organization_id = $2`, [id, org])).rows[0]?.description;
 
 async function withDb(fn: (pg: PGlite) => Promise<void>) {
   const pg = new PGlite();
@@ -82,5 +95,44 @@ describe('migrations/20260919_cmc_playbook_schema.sql, applied on every deploy',
       const own = await pg.query(
         `SELECT total_tasks, estimated_time FROM cmc_workflows WHERE id = 'tenant-own-template'`);
       expect(own.rows).toEqual([{ total_tasks: 9, estimated_time: '2 weeks' }]);
+    }), 120_000);
+
+  it('cites ICH Q2(R2), not the superseded Q2(R1)', () =>
+    withDb(async (pg) => {
+      await pg.exec(SQL);
+      await pg.exec(SQL);
+      expect(await description(pg, 'method-validation-template', 0)).toBe(Q2R2_LABEL);
+      const superseded = await pg.query(`SELECT id FROM cmc_workflows WHERE description LIKE '%Q2(R1)%'`);
+      expect(superseded.rows).toEqual([]);
+    }), 120_000);
+
+  it('updates the citation on the row an earlier deploy seeded, and on nothing it did not seed', () =>
+    withDb(async (pg) => {
+      await pg.exec(SQL);
+      await pg.exec(`
+        UPDATE cmc_workflows SET description = '${Q2R1_LABEL}'
+         WHERE id = 'method-validation-template' AND organization_id = 0;
+        INSERT INTO cmc_workflows (id, organization_id, name, description)
+          VALUES ('tenant-method-validation', 7, 'Our method validation', '${Q2R1_LABEL}');
+      `);
+
+      await pg.exec(SQL);
+      await pg.exec(SQL);
+
+      expect(await description(pg, 'method-validation-template', 0)).toBe(Q2R2_LABEL);
+      expect(await description(pg, 'tenant-method-validation', 7)).toBe(Q2R1_LABEL);
+    }), 120_000);
+
+  it('leaves a global description someone has since edited', () =>
+    withDb(async (pg) => {
+      await pg.exec(SQL);
+      await pg.exec(`
+        UPDATE cmc_workflows SET description = 'Validation per ICH Q2(R1), kept for legacy methods'
+         WHERE id = 'method-validation-template' AND organization_id = 0;
+      `);
+      await pg.exec(SQL);
+      expect(await description(pg, 'method-validation-template', 0)).toBe(
+        'Validation per ICH Q2(R1), kept for legacy methods',
+      );
     }), 120_000);
 });

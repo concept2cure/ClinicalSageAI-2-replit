@@ -611,9 +611,9 @@ async function recordTransmissionUnconfirmed(
  * the status to 'acknowledged' (AA/AE) or 'rejected' (AR), storing the ack code
  * and any errors. Accepted from 'transmitted' and 'transmission_unconfirmed',
  * and only when the ACK names this transmission's message number.
- * `acknowledgedAt` is left null: the agency's acknowledgement time is not read
- * from the ACK, and the time the platform recorded it is `updatedAt` (and the
- * audit row). Audited, org-scoped.
+ * `acknowledgedAt` is the ACK's own message date (its header <messagedate>),
+ * or null when the ACK carries none; the time the platform recorded it is
+ * `updatedAt` (and the audit row). Audited, org-scoped.
  */
 export async function recordIcsrAcknowledgment(
   id: string,
@@ -672,9 +672,10 @@ export async function recordIcsrAcknowledgment(
       acknowledgedMessageNumber: ack.acknowledgedMessageNumber,
       errors: ack.errors as unknown as Record<string, unknown>[],
       // 2026-10-15: this was `new Date()` — when the platform recorded the
-      // ACK, stored as when the agency acknowledged. The ACK's own time is not
-      // parsed, so it is not stated; updatedAt carries the recording time.
-      acknowledgedAt: null,
+      // ACK, stored as when the agency acknowledged — and then null, the ACK's
+      // date unread. It is the ACK's own date, or null when it carries none;
+      // updatedAt carries the recording time.
+      acknowledgedAt: ack.ackMessageDate,
       updatedAt: new Date(),
     })
     .where(and(eq(indIcsrTransmissions.id, id), eq(indIcsrTransmissions.organizationId, ctx.organizationId)))

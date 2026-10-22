@@ -804,6 +804,16 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260331_regulatory_correspondence_os.sql',
   'db/migrations/20260401_submission_center_items.sql',
   'db/migrations/20260508_artifact_citations.sql',
+  // cross_artifact_consistency_alerts (2026-10-15): read and written by the
+  // mounted /api/ana/consistency/* routes, the readiness aggregate and the
+  // authoring plan, and created by no deploy. A database provisioned before
+  // shared/schema.ts declared the table has none (42P01); one pushed after has
+  // it without the unique partial index the scanner's ON CONFLICT names, so
+  // every alert insert fails (42P10). public + organization_id INTEGER NOT NULL,
+  // CREATE … IF NOT EXISTS only, drops nothing; no dependency. Its sibling
+  // 20260508_guidance_alerts.sql is NOT listed: it also creates the unkeyed
+  // global guidance_reference_index (CLAUDE.md RULE 1, last corollary).
+  'db/migrations/20260508_consistency_alerts.sql',
   'db/migrations/20260520_growth_mindset_extensions.sql',
   'db/migrations/20260621_weekly_usage_limits.sql',
 
@@ -3377,9 +3387,10 @@ export const C2C_MIGRATION_FILES = [
   // created them. Conditional on the table and the live shape; creates nothing.
   'migrations/20261015h_ibc_unrecorded_facts_nullable.sql',
 
-  // Four cortex engine functions stored fixed priors and random jitter as
-  // model output, or "no signals" for an extraction nothing ran (2026-10-15).
-  // Their creators, db/migrations/074_ and 076_gcc_*, are amended in place but
+  // Seven cortex engine functions stored fixed priors and random jitter as
+  // model output, "no signals" for an extraction nothing ran, an invented
+  // prediction error, a 0.5 similarity or fixed risk bands (2026-10-15).
+  // Their creators, db/migrations/074_, 076_ and 078_gcc_*, are amended in place but
   // run on install-fresh only; this replaces the functions on databases
   // installed earlier. Conditional on each function existing; creates nothing.
   'migrations/20261015i_cortex_engine_functions_refuse.sql',
@@ -3449,6 +3460,25 @@ export const C2C_MIGRATION_FILES = [
   // line ~2029); no set file issues DML on it. Creates no table (the sweeps are
   // unaffected) and drops nothing; CREATE OR REPLACE throughout.
   'migrations/20261019b_reg_questions_read_only.sql',
+
+  // client_memory_entries / project_memory_entries.confidence_score defaulted
+  // to 0.8, so a memory entry whose writer stated no confidence claimed 80%
+  // (2026-10-15). The creator, shared/schema.ts, dropped the default, but it is
+  // pushed by install-fresh only; this drops it on databases provisioned
+  // earlier. Conditional on each table and the live default; keeps stored
+  // scores; nothing in the set re-creates the default; creates nothing.
+  'migrations/20261015l_memory_confidence_no_default.sql',
+
+  // evidence_claims.confidence was NOT NULL DEFAULT 0.50, so an unscored claim
+  // (and the governed fact established from it) read back at 0.5; and
+  // fact_drift.severity defaulted to 'medium', so an unrated drift read as a
+  // medium one (2026-10-15). The creators — shared/schema.ts (pushed by
+  // install-fresh), db/migrations/20260319_evidence_fabric.sql and
+  // migrations/20260603_living_record_spine.sql — are amended in place but none
+  // runs on a deploy; this relaxes the columns on databases installed earlier.
+  // Conditional on each table and the live shape; keeps stored values; creates
+  // nothing, drops nothing.
+  'migrations/20261015m_claim_confidence_and_drift_severity_unstated.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

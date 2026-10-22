@@ -28,7 +28,7 @@ import {
   type LabelingPiSectionRow,
 } from '../services/labeling/labeling-pi-service';
 import {
-  generateSplXml, validateSplStructure, type SplGenerationInput,
+  generateSplXml, validateGeneratedSpl, type SplGenerationInput,
 } from '../services/labeling/spl-generation-service';
 /*
  * WO-16C #133. The three audit writes in this router were
@@ -394,11 +394,12 @@ router.post('/spl', async (req: Request, res: Response) => {
     if ('refused' in built) return res.status(400).json({ error: { code: 'VALIDATION', message: built.refused } });
     const { result } = built;
     // Say honestly whether what we just produced passes the generator's own
-    // structural check, rather than handing back XML labelled "generated".
-    const validation = validateSplStructure(result.xml);
+    // structural check — spec and XML (2026-10-15: the XML's shape alone, so a
+    // malformed NDC "passed the structural check").
+    const validation = validateGeneratedSpl(result);
 
     /* WO-16C #133. Not a log beside a write — this handler persists nothing.
-       `generateSplXml` and `validateSplStructure` are pure (no store is reached
+       `generateSplXml` and `validateGeneratedSpl` are pure (no store is reached
        from either) and `listLabelingPiSections` above is a read, so there is no
        committed mutation here to revert or to keep: the audit row is the only
        record anywhere that this organization's label was rendered to SPL. The

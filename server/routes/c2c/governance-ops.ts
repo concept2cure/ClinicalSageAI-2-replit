@@ -22,8 +22,28 @@ import {
   sendSuccess,
 } from './shared';
 import { verifyProjectAccess } from './project-access';
+import type { GovernedLifecycleState } from '../../services/governed-decision-repository';
 
 const logger = createScopedLogger('concept2cure-governance-ops');
+
+/**
+ * The status for a transition the lifecycle did not make. Until 2026-10-15
+ * every one was a 400 carrying `result.error`: refusals, a missing decision,
+ * and a database failure with the driver's message alike. The controller
+ * refuses an action missing what it needs before reading the decision (no
+ * previousState): 422. The repository reports 'unknown' as the previous state
+ * only for a decision not found and for a thrown error. A move the recorded
+ * state does not allow is a conflict; an allowed move that failed is ours.
+ */
+export function transitionFailureStatus(
+  result: { previousState?: string; newState?: string; error?: string },
+  isValidMove: (from: string, to: string) => boolean,
+): 404 | 409 | 422 | 500 {
+  if (result.previousState === undefined) return 422;
+  if (result.previousState === 'unknown') return result.error === 'Decision not found' ? 404 : 500;
+  return isValidMove(result.previousState, result.newState ?? '') ? 500 : 409;
+}
+
 const router = Router();
 
 // The same chain the main router applies, in the same order.
@@ -151,7 +171,13 @@ router.post('/projects/:projectId/governance/decisions/:decisionId/transition', 
     });
 
     if (result && !result.success) {
-      return sendError(res, 400, result.error || 'Transition failed');
+      const { isValidTransition } = await import('../../services/governed-decision-repository.js');
+      const status = transitionFailureStatus(result, (from, to) => isValidTransition(from, to as GovernedLifecycleState));
+      if (status === 500) {
+        logger.error('Governed decision transition failed', { decisionId: paramStr(req.params.decisionId), error: result.error });
+        return sendError(res, 500, 'The transition could not be completed and recorded. Reload the decision to see its current state before retrying.', undefined, 'TRANSITION_FAILED');
+      }
+      return sendError(res, status, result.error ?? 'Transition refused', undefined, status === 404 ? 'DECISION_NOT_FOUND' : 'TRANSITION_REFUSED');
     }
 
     return sendSuccess(res, result);

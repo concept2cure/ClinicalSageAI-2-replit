@@ -57,7 +57,7 @@ export class GrantsGovConnector implements DataConnector {
       sourceConnector: this.id,
       title: h.title || 'Untitled opportunity',
       summary: `Agency: ${h.agency || h.agencyCode || 'n/a'} | Opp #: ${h.number || 'n/a'} | Status: ${h.oppStatus || 'n/a'} | Close: ${h.closeDate || 'n/a'}`,
-      relevanceScore: 1 - i * 0.03,
+      sourceRank: i + 1,
       metadata: {
         opportunityNumber: h.number, agency: h.agency, agencyCode: h.agencyCode,
         oppStatus: h.oppStatus, openDate: h.openDate, closeDate: h.closeDate, docType: h.docType,

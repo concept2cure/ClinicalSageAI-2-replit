@@ -115,14 +115,19 @@ export function serializeAnALedgerXml(ledger: ArtifactLedger): string {
     out.push(attr('citationsAt', c.citationsAt));
     out.push(attr('ranAgainstContentHash', c.ranAgainstContentHash));
     out.push(`>\n`);
-    out.push(`    <Stats`);
-    out.push(attr('totalSentences', c.totalSentences));
-    out.push(attr('supportedCount', c.supportedCount));
-    out.push(attr('contradictedCount', c.contradictedCount));
-    out.push(attr('gapCount', c.gapCount));
-    out.push(attr('totalReadinessDelta', c.totalReadinessDelta));
-    out.push(attr('filingBlocked', String(c.filingBlocked)));
-    out.push(`/>\n`);
+    // A run with no recorded row has no counts: say so (2026-10-15: zeros).
+    if (c.statsNotRecorded) {
+      out.push(`    <Stats recorded="false"${attr('reason', c.statsNotRecorded)}/>\n`);
+    } else {
+      out.push(`    <Stats`);
+      out.push(attr('totalSentences', c.totalSentences));
+      out.push(attr('supportedCount', c.supportedCount));
+      out.push(attr('contradictedCount', c.contradictedCount));
+      out.push(attr('gapCount', c.gapCount));
+      out.push(attr('totalReadinessDelta', c.totalReadinessDelta));
+      out.push(attr('filingBlocked', String(c.filingBlocked)));
+      out.push(`/>\n`);
+    }
     out.push(jsonEl('Sentences', c.sentences, '    '));
     out.push(`  </Citations>\n`);
   } else {

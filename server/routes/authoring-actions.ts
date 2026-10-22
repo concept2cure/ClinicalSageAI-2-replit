@@ -1261,11 +1261,21 @@ router.post('/correction-draft', async (req: Request, res: Response) => {
 router.post('/harmonize-sections', async (req: Request, res: Response) => {
   try {
     const { projectId, sectionCodes, submissionType, productName } = req.body;
-    // Tenant context from verified auth middleware (non-failing here: decision
-    // recording below is best-effort and skips DB persistence without it).
-    const rawTenantId = Number((req as any).tenantId ?? (req as any).organizationId);
-    const orgId = Number.isFinite(rawTenantId) && rawTenantId > 0 ? rawTenantId : undefined;
+    /* 2026-10-15: this ran without an organization, read each section's
+       artifact by project id alone (any organization's), assumed 'IND' when no
+       submissionType was sent, and answered a failed read as
+       "insufficient_content". */
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
     if (!projectId) return res.status(400).json({ error: 'projectId is required' });
+    const projectIdNum = Number(projectId);
+    if (!Number.isSafeInteger(projectIdNum) || projectIdNum <= 0) {
+      return res.status(400).json({ error: 'projectId must be a positive integer' });
+    }
+    const { projectBelongsToTenant } = await import('../services/cmc/project-membership.js');
+    if (!(await projectBelongsToTenant({ organizationId: orgId, projectId: String(projectIdNum) }))) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
     if (!sectionCodes || !Array.isArray(sectionCodes) || sectionCodes.length === 0) {
       return res.json({
         status: 'no_sections',
@@ -1274,23 +1284,43 @@ router.post('/harmonize-sections', async (req: Request, res: Response) => {
       });
     }
 
-    // Fetch content for each section from artifacts
+    // The submission track as the request states it, else as the project's
+    // regulatory program records it (resolveDraftSubmissionType); never assumed.
+    let track = typeof submissionType === 'string' && submissionType.trim() ? submissionType.trim() : undefined;
+    if (!track) {
+      const [{ resolveDraftSubmissionType }, { getPool }] = await Promise.all([
+        import('../services/ana/draft-submission-context.js'),
+        import('../db.js'),
+      ]);
+      track = await resolveDraftSubmissionType(getPool(), { organizationId: orgId, projectId: projectIdNum });
+    }
+    if (!track) {
+      return res.status(422).json({
+        status: 'submission_track_unrecorded',
+        action: 'harmonize_sections',
+        error: 'SUBMISSION_TRACK_UNRECORDED',
+        message:
+          'This project records no submission track: it is not anchored to a regulatory program whose filing type ' +
+          'resolves to a registry entry. Send submissionType, or record the program\'s submission type.',
+      });
+    }
+
+    // Each section's latest artifact in this organization's project. A failed
+    // read propagates to the error response below.
     const sections: Record<string, string> = {};
-    try {
-      const { db } = await import('../db.js');
-      for (const code of sectionCodes) {
-        const artifact = await db.query.concept2cureArtifacts?.findFirst?.({
-          where: (a: any, { and, eq }: any) =>
-            and(eq(a.projectId, Number(projectId)), eq(a.ctdSection, code)),
-          orderBy: (a: any, { desc }: any) => [desc(a.updatedAt)],
-        }).catch(() => null);
-        if (artifact?.content) {
-          sections[code] = typeof artifact.content === 'string'
-            ? artifact.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
-            : '';
-        }
+    const { db } = await import('../db.js');
+    for (const code of sectionCodes) {
+      const artifact = await db.query.concept2cureArtifacts.findFirst({
+        where: (a: any, { and, eq }: any) =>
+          and(eq(a.projectId, projectIdNum), eq(a.organizationId, orgId), eq(a.ctdSection, code)),
+        orderBy: (a: any, { desc }: any) => [desc(a.updatedAt)],
+      });
+      if (artifact?.content) {
+        sections[code] = typeof artifact.content === 'string'
+          ? artifact.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+          : '';
       }
-    } catch { /* DB unavailable */ }
+    }
 
     if (Object.keys(sections).length < 2) {
       return res.json({
@@ -1307,7 +1337,7 @@ router.post('/harmonize-sections', async (req: Request, res: Response) => {
       const engine = new HarmonizeEngine();
       const result = await engine.check({
         sections,
-        submissionType: submissionType || 'IND',
+        submissionType: track,
         productName: productName || undefined,
       });
 
@@ -1367,6 +1397,7 @@ router.post('/harmonize-sections', async (req: Request, res: Response) => {
         checkedDimensions: result.checkedDimensions,
         skippedDimensions: result.skippedDimensions,
         sectionsCompared: Object.keys(sections),
+        submissionType: track,
         decisionId: harmonizeDecision?.id || null,
         authority: harmonizeDecision?.authority || null,
       });
@@ -1554,7 +1585,9 @@ router.get('/section-evidence/:projectId/:sectionCode', async (req: Request, res
         gapAnalysis: gapAnalysis ? {
           completeness: gapAnalysis.completeness,
           gaps: (gapAnalysis.gaps || []).slice(0, 5),
-          criticalGaps: gapAnalysis.critical_gaps || [],
+          // The count summarizeRequirementCoverage holds, or null when none is
+          // recorded. Was `critical_gaps || []`: a recorded 0 read as an empty list.
+          criticalGaps: typeof gapAnalysis.critical_gaps === 'number' ? gapAnalysis.critical_gaps : null,
         } : null,
         context: { projectId, sectionCode },
       });

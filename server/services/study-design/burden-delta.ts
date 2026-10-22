@@ -27,7 +27,7 @@ import {
   type BurdenPeakVisit,
   type BurdenProfile,
   type BurdenVisitLoad,
-  type Measure,
+  type BurdenMeasure,
   BURDEN_BASIS,
 } from './burden-model';
 
@@ -66,7 +66,7 @@ export interface BurdenDelta {
   basis: string;
 }
 
-function numericDelta(measure: string, before: Measure<number>, after: Measure<number>): MeasureDelta {
+function numericDelta(measure: string, before: BurdenMeasure<number>, after: BurdenMeasure<number>): MeasureDelta {
   const b = before.status === 'computed' ? before.value : null;
   const a = after.status === 'computed' ? after.value : null;
   if (b === null || a === null) {
@@ -84,7 +84,7 @@ function numericDelta(measure: string, before: Measure<number>, after: Measure<n
   return { measure, before: b, after: a, delta: round2(a - b), status: 'computed' };
 }
 
-function peakAsMeasure(profile: BurdenProfile): Measure<number> {
+function peakAsMeasure(profile: BurdenProfile): BurdenMeasure<number> {
   const peak = profile.peakVisitLoad;
   if (peak.status !== 'computed' || peak.value === null) {
     return absentMeasure(peak.basis, peak.absentReason ?? 'No peak visit.');

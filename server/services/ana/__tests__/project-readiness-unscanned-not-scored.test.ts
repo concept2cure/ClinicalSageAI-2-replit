@@ -95,7 +95,8 @@ function consistencySummary(over: Record<string, unknown> = {}) {
     projectId: PROJECT,
     asOf: '2026-10-15T00:00:00.000Z',
     assessed: false,
-    lastScanAt: null,
+    scanHistory: { recorded: false, note: 'Scan history is not recorded; no alerts is not a clean result.' },
+    lastAlertAt: null,
     bySeverity: { ...ZERO },
     openBySeverity: { ...ZERO },
     byStatus: { open: 0, acknowledged: 0, resolved: 0 },
@@ -113,7 +114,8 @@ function guidanceSummary(over: Record<string, unknown> = {}) {
     projectId: PROJECT,
     asOf: '2026-10-15T00:00:00.000Z',
     assessed: false,
-    lastScanAt: null,
+    scanHistory: { recorded: false, note: 'Scan history is not recorded; no alerts is not a clean result.' },
+    lastAlertAt: null,
     bySeverity: { ...ZERO },
     openBySeverity: { ...ZERO },
     byStatus: { open: 0, acknowledged: 0, resolved: 0 },
@@ -175,7 +177,7 @@ describe('a scanned project', () => {
     const resolvedOnly = derive({
       consistencySummary: consistencySummary({
         assessed: true,
-        lastScanAt: '2026-10-10T00:00:00.000Z',
+        lastAlertAt: '2026-10-10T00:00:00.000Z',
         bySeverity: { ...ZERO, critical: 1 },
         byStatus: { open: 0, acknowledged: 0, resolved: 1 },
       }),
@@ -187,7 +189,7 @@ describe('a scanned project', () => {
     const openCritical = derive({
       consistencySummary: consistencySummary({
         assessed: true,
-        lastScanAt: '2026-10-10T00:00:00.000Z',
+        lastAlertAt: '2026-10-10T00:00:00.000Z',
         bySeverity: { ...ZERO, critical: 1 },
         openBySeverity: { ...ZERO, critical: 1 },
         byStatus: { open: 1, acknowledged: 0, resolved: 0 },

@@ -38,6 +38,8 @@ vi.mock('../../huggingface-service', () => ({ huggingFaceService: { queryHugging
 import { EndpointRecommenderService } from '../endpoint-recommender-service';
 
 const NSCLC = 'Non-small cell lung cancer';
+/** The organization the corpus is seeded under; the recommender reads only its own. */
+const ORG = 7;
 
 /** CREATE TABLE from the drizzle definition: column names and types. */
 function ddlOf(table: PgTable): string {
@@ -109,7 +111,7 @@ describe('endpoint recommender: the CSR corpus is read, or the answer says it wa
   it('reads the corpus across every matching report, not only when exactly one matches', async () => {
     const { svc } = serviceWithModel(async () => '[]');
 
-    const result = await svc.getComprehensiveEndpointRecommendations(NSCLC, 'Phase 3', 2);
+    const result = await svc.getComprehensiveEndpointRecommendations(ORG, NSCLC, 'Phase 3', 2);
 
     const os = recsOf(result).find((r) => r.endpoint === 'Overall survival');
     expect(recsOf(result).map((r) => r.endpoint)).toContain('Overall survival');
@@ -124,7 +126,7 @@ describe('endpoint recommender: the CSR corpus is read, or the answer says it wa
     );
 
     try {
-      await expect(svc.getComprehensiveEndpointRecommendations(NSCLC, 'Phase 3', 5)).rejects.toMatchObject({
+      await expect(svc.getComprehensiveEndpointRecommendations(ORG, NSCLC, 'Phase 3', 5)).rejects.toMatchObject({
         name: 'EndpointCorpusUnavailableError',
         unavailable: ['csr_corpus'],
       });
@@ -145,7 +147,7 @@ describe('endpoint recommender: the CSR corpus is read, or the answer says it wa
         FROM generate_series(1001, 1101) AS g;`);
     const { svc } = serviceWithModel(async () => '[]');
 
-    const result = await svc.getComprehensiveEndpointRecommendations('Hypertension', 'Phase 3', 1);
+    const result = await svc.getComprehensiveEndpointRecommendations(ORG, 'Hypertension', 'Phase 3', 1);
 
     expect(recsOf(result)[0]?.occurrence_count).toBe(100);
     expect((result as { sources?: Record<string, unknown> }).sources?.csr_corpus).toEqual({
@@ -157,7 +159,7 @@ describe('endpoint recommender: the CSR corpus is read, or the answer says it wa
   it('reports no matching reports as no_matches, which is a different fact from unreadable', async () => {
     const { svc } = serviceWithModel(async () => '[]');
 
-    const result = await svc.getComprehensiveEndpointRecommendations('Fabry disease', '', 3);
+    const result = await svc.getComprehensiveEndpointRecommendations(ORG, 'Fabry disease', '', 3);
 
     expect((result as { sources?: unknown }).sources).toMatchObject({ csr_corpus: { status: 'no_matches' } });
   });
@@ -168,7 +170,7 @@ describe('endpoint recommender: a supplementary source that fails is reported, n
     academic.searchAcademicKnowledge.mockRejectedValue(new Error('embedding service down'));
     const { svc } = serviceWithModel(async () => '[]');
 
-    const result = await svc.getComprehensiveEndpointRecommendations(NSCLC, 'Phase 3', 2);
+    const result = await svc.getComprehensiveEndpointRecommendations(ORG, NSCLC, 'Phase 3', 2);
 
     expect((result as { sources?: Record<string, unknown> }).sources?.academic_literature).toEqual({
       status: 'unavailable',
@@ -182,7 +184,7 @@ describe('endpoint recommender: a supplementary source that fails is reported, n
     academic.getRecentlyProcessedDocuments.mockReturnValue([]);
     const { svc } = serviceWithModel(async () => '[]');
 
-    const result = await svc.getComprehensiveEndpointRecommendations(NSCLC, 'Phase 3', 2);
+    const result = await svc.getComprehensiveEndpointRecommendations(ORG, NSCLC, 'Phase 3', 2);
 
     expect((result as { sources?: Record<string, unknown> }).sources?.academic_literature).toEqual({
       status: 'unavailable',
@@ -196,7 +198,7 @@ describe('endpoint recommender: a supplementary source that fails is reported, n
       throw new Error('AI gateway unavailable');
     });
 
-    const result = await svc.getComprehensiveEndpointRecommendations('Fabry disease', '', 3);
+    const result = await svc.getComprehensiveEndpointRecommendations(ORG, 'Fabry disease', '', 3);
 
     expect(recsOf(result)).toEqual([]);
     expect((result as { sources?: Record<string, { status: string }> }).sources?.language_model?.status).toBe(
@@ -207,7 +209,7 @@ describe('endpoint recommender: a supplementary source that fails is reported, n
   it('does not turn a model reply that is not a list of endpoints into endpoints', async () => {
     const { svc } = serviceWithModel(async () => 'Sure! Here are some endpoints:\n1. Overall survival');
 
-    const result = await svc.getComprehensiveEndpointRecommendations('Fabry disease', '', 3);
+    const result = await svc.getComprehensiveEndpointRecommendations(ORG, 'Fabry disease', '', 3);
 
     expect(recsOf(result).map((r) => r.endpoint)).not.toContain('Sure! Here are some endpoints:');
     expect((result as { sources?: Record<string, { status: string }> }).sources?.language_model?.status).toBe(
@@ -218,7 +220,7 @@ describe('endpoint recommender: a supplementary source that fails is reported, n
   it('says the model was not consulted when the corpus supplied what was asked', async () => {
     const { svc, hf } = serviceWithModel(async () => '["Anything"]');
 
-    const result = await svc.getComprehensiveEndpointRecommendations(NSCLC, 'Phase 3', 2);
+    const result = await svc.getComprehensiveEndpointRecommendations(ORG, NSCLC, 'Phase 3', 2);
 
     expect(hf.queryHuggingFace).not.toHaveBeenCalled();
     expect((result as { sources?: Record<string, { status: string }> }).sources?.language_model?.status).toBe(
@@ -229,7 +231,7 @@ describe('endpoint recommender: a supplementary source that fails is reported, n
   it('reports regulatory guidance as unavailable when no guidance source is loaded, not as none issued', async () => {
     const { svc } = serviceWithModel(async () => '[]');
 
-    const result = await svc.getComprehensiveEndpointRecommendations(NSCLC, 'Phase 3', 2);
+    const result = await svc.getComprehensiveEndpointRecommendations(ORG, NSCLC, 'Phase 3', 2);
 
     expect((result as { sources?: Record<string, unknown> }).sources?.regulatory_guidance).toEqual({
       status: 'unavailable',
