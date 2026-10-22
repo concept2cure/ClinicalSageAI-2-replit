@@ -142,6 +142,66 @@ export function programNotRecorded(): CompositionRefusal {
   };
 }
 
+/** The CMC interview's biologic molecule types: the flow's own biologic branch (flows/cmc-specification.ts). */
+const INTERVIEW_BIOLOGIC_TYPES = new Map<string, string>([
+  ['monoclonal_antibody', 'monoclonal antibody'],
+  ['adc', 'antibody-drug conjugate'],
+  ['recombinant_protein', 'recombinant protein'],
+  ['cell_therapy', 'cell therapy'],
+  ['gene_therapy', 'gene therapy'],
+  ['vaccine', 'vaccine'],
+]);
+/** Not biologics, and not small molecules either: ICH Q3A(R2) and M7 exclude both by scope. */
+const INTERVIEW_EXCLUDED_TYPES = new Map<string, [article: string, plural: string]>([
+  ['peptide', ['a peptide', 'peptides']],
+  ['oligonucleotide', ['an oligonucleotide', 'oligonucleotides']],
+]);
+
+/**
+ * The composition boundary for the molecule type a person states in AnA's CMC
+ * specification interview (`substance_classification.molecule_type`). The
+ * interview applies small-molecule reasoning to every answer after it — ICH
+ * Q3A(R2) impurity qualification, ICH M7, ICH Q1A(R2) — and offered a
+ * monoclonal antibody, a cell therapy or a vaccine the same findings
+ * (2026-10-15 launch-boundary re-proof). Null for a small molecule, and while
+ * the question is unanswered; the refusal otherwise, and for any answer that
+ * is not one of the flow's options.
+ */
+export function interviewMoleculeTypeRefusal(moleculeType: unknown): CompositionRefusal | null {
+  if (moleculeType === undefined || moleculeType === null) return null;
+  const stated = typeof moleculeType === 'string' ? moleculeType.trim() : null;
+  if (stated === '' || stated === 'small_molecule') return null;
+  const biologic = stated === null ? undefined : INTERVIEW_BIOLOGIC_TYPES.get(stated);
+  if (biologic) {
+    return {
+      code: 'CMC_MODALITY_OUT_OF_SCOPE',
+      modality: 'biologic',
+      message:
+        `The drug substance is stated as a ${biologic}, a biologic. This interview applies small-molecule ` +
+        `reasoning — ICH Q3A(R2) impurity qualification and ICH M7 — and both exclude biological and ` +
+        `biotechnological products from their scope. ${AUTHORED_INSTEAD}`,
+    };
+  }
+  const excluded = stated === null ? undefined : INTERVIEW_EXCLUDED_TYPES.get(stated);
+  if (excluded) {
+    return {
+      code: 'CMC_MODALITY_OUT_OF_SCOPE',
+      message:
+        `The drug substance is stated as ${excluded[0]}. Module 3 is composed here only for a small molecule, and ` +
+        `the reasoning this interview applies — ICH Q3A(R2) and ICH M7 — excludes ${excluded[1]} from its scope. ` +
+        AUTHORED_INSTEAD,
+    };
+  }
+  return {
+    code: 'CMC_MODALITY_NOT_ESTABLISHED',
+    modality: 'unknown',
+    message:
+      `Whether this drug substance is a small molecule is not established by the answer given, and this interview ` +
+      `applies small-molecule reasoning only to a small molecule. If it is one, choose Small Molecule. If it is ` +
+      `not, ${AUTHORED_INSTEAD.charAt(0).toLowerCase()}${AUTHORED_INSTEAD.slice(1)}`,
+  };
+}
+
 /**
  * A stability study filed under no program. The boundary judges a program, and
  * a study with none has no product class, no substance and no application to
@@ -332,6 +392,26 @@ export function anaCompositionRefusal(
   };
 }
 
+/**
+ * An AnA tool result for a refusal at the boundary, in the refusal's own words.
+ * `doNot` names the workaround the assistant must not take — the generic
+ * calculator on numbers read off a record, or an answer chosen on the person's
+ * behalf — because the refusal is a property of the program, not of the tool.
+ */
+export function anaToolCompositionRefusal(
+  refusal: CompositionRefusal,
+  doNot: string,
+  extra: Record<string, unknown> = {},
+): string {
+  return JSON.stringify({
+    status: 'outside_composition_scope',
+    code: refusal.code,
+    message: refusal.message,
+    ...extra,
+    instruction: `Relay this reason to the user verbatim. ${doNot}`,
+  });
+}
+
 /** True only when the boundary refused — for a handler that otherwise rethrows. */
 export function refusedByCompositionScope(err: unknown): boolean {
   return isCompositionOutOfScope(err);
@@ -341,10 +421,12 @@ export default {
   compositionRefusal,
   applicationRefusal,
   anaCompositionRefusal,
+  anaToolCompositionRefusal,
   refusedByCompositionScope,
   compositionRefusalBody,
   compositionRefusalStatus,
   applicationNotReadable,
+  interviewMoleculeTypeRefusal,
   CompositionOutOfScopeError,
   isCompositionOutOfScope,
 };

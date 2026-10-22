@@ -1,0 +1,59 @@
+# this change
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > estimate_recorded_shelf_life asks the boundary of the program the study is filed under > a biologic program: the refusal in its own words, and no Q1E estimate 41ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > estimate_recorded_shelf_life asks the boundary of the program the study is filed under > a study filed under no program is not established, and not estimated 2ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > estimate_recorded_shelf_life asks the boundary of the program the study is filed under > a small-molecule IND program is estimated as before 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > assess_recorded_batch_poolability asks it of every program the studies are filed under > one study on a biologic program refuses the whole comparison 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > assess_recorded_batch_poolability asks it of every program the studies are filed under > a study filed under no program is named, and nothing is assessed 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > assess_recorded_batch_poolability asks it of every program the studies are filed under > studies on a small-molecule IND program are assessed as before 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a monoclonal_antibody stated as the molecule type is refused before any answer is judged 69ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a adc stated as the molecule type is refused before any answer is judged 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a recombinant_protein stated as the molecule type is refused before any answer is judged 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a cell_therapy stated as the molecule type is refused before any answer is judged 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a gene_therapy stated as the molecule type is refused before any answer is judged 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a vaccine stated as the molecule type is refused before any answer is judged 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > peptide, which ICH Q3A(R2) and M7 exclude by scope, is refused 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > oligonucleotide, which ICH Q3A(R2) and M7 exclude by scope, is refused 0ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > "other" does not establish a small molecule 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a later answer is refused when the molecule type stated earlier is a biologic 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a small molecule advances as before 3ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > the program the interview is bound to is asked too: a biologic program's interview takes no answer 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > a boundary that cannot be asked refuses as a failed read; the answer is not judged unasked 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > a program with no substance recorded yet is not refused: the interview is how it gets recorded 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > starting one on a biologic program is refused, so no one is walked through an interview that cannot finish 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > with a session, the program asked is the session's own, not the caller's 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > resume does not re-present a session whose stated molecule type is outside the boundary 1ms
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > in production, a caller-supplied flow_state for an interview that commits nothing is refused, as start refuses it 2ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > classifySubstanceModality — one rule, shared with §3.2.A.2 > honours an explicit modality, either way 3ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > classifySubstanceModality — one rule, shared with §3.2.A.2 > reads any biological signal as biologic, and says which one 1ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > classifySubstanceModality — one rule, shared with §3.2.A.2 > catches an expression system in the route, and an INN stem in the name 1ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > classifySubstanceModality — one rule, shared with §3.2.A.2 > does not fire on a chemical substance whose text incidentally says tissue or plasma 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > classifySubstanceModality — one rule, shared with §3.2.A.2 > reads a recorded chemical process with no biological signal as a small molecule 1ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > classifySubstanceModality — one rule, shared with §3.2.A.2 > reads NOTHING recorded as unknown — never as an assumed small molecule 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > the product class the person recorded is asked first > refuses a biologic, a device, an IVD and a combination product 1ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > the product class the person recorded is asked first > refuses a program recorded as a biologic even while its substance register says small molecule 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > the product class the person recorded is asked first > composes a program recorded as a drug 1ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > the product class the person recorded is asked first > falls through to the substance record when no class is recorded (pre-P-21 data) 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > composes a small molecule for a US IND, however the type is cased 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > composes for an IND program that has no submission row yet 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > refuses a CTA or NDA program that has no submission row yet 1ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > refuses when the program row itself could not be read 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > refuses the simulation’s own monoclonal antibody 1ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > refuses a biologic on each signal alone, so one missing field does not open the door 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > refuses a substance whose modality the record does not establish, and asks for the route 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > refuses a program that records no drug substance at all, and says so differently 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > refuses every application that is not a US IND 1ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > says what a marketing application needs that is not produced here 1ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > judges the modality BEFORE the application — the substance is the stronger refusal 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > judges the NEWEST drug substance, as the source read orders them 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > every refusal names the path that does author it > points at Authoring, Vault and the Submission center 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > every refusal names the path that does author it > carries the code and the hint in the 409 body 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > a refusal cannot be mistaken for an empty result > is a typed error, recognised by its own guard 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > a refusal cannot be mistaken for an empty result > an unreadable submission refuses rather than composing on an unestablished application 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > a refusal cannot be mistaken for an empty result > a read that failed is answered 503, so a screen offers the retry; a verdict is 409 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > interviewMoleculeTypeRefusal > reads the options it judges 1ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > interviewMoleculeTypeRefusal > admits a small molecule, and an unanswered question 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > interviewMoleculeTypeRefusal > refuses every type on the flow's biologic branch as a biologic 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > interviewMoleculeTypeRefusal > refuses every other option but a small molecule, by name or as not established 2ms
+ Test Files  2 passed (2)
+      Tests  55 passed (55)
