@@ -96,6 +96,8 @@ describe('project home — Dossier readiness', () => {
     const card = await readinessCard();
     await waitFor(() => expect(card.textContent).toContain('62%'));
     expect(card.textContent).toContain('31 of 50 sections approved or locked.');
+    // F23 (8/9): what the count leaves out is said.
+    expect(card.textContent).toContain('Empty headings that hold other sections are not counted.');
     expect(card.textContent).not.toMatch(/\b(0|10)%/);
     await waitFor(() => expect(seen.ctx?.summary).toContain('dossier readiness 62%'));
     expect((seen.ctx?.facts as { dossier?: { home?: unknown } }).dossier?.home).toEqual(measured(62, 50));

@@ -123,10 +123,14 @@ describe('one definition of complete, for the header and every module row', () =
     expect(modules).toContain('1');
     const m1 = d.rows.find((r) => r.module === '1')!;
     const [pack] = await rows(`SELECT required_sections FROM c2c_rule_packs WHERE doc_type = 'nda' AND agency = 'fda' AND superseded_by IS NULL LIMIT 1`);
-    const sections = pack.required_sections as Array<{ key: string; label: string }>;
-    expect(m1.counted).toBe(sections.filter((s) => s.key === 'M1' || s.key.startsWith('1.')).length);
+    const sections = pack.required_sections as Array<{ key: string; label: string; parent_key?: string | null }>;
+    // F23 (8/9): an empty heading that holds other sections is not counted (all
+    // are 'todo' here); the module row is still named by it.
+    const counted = sections.filter((s) => !sections.some((o) => o.parent_key === s.key));
+    expect(m1.counted).toBe(counted.filter((s) => s.key === 'M1' || s.key.startsWith('1.')).length);
     expect(m1.label).toBe(sections.find((s) => s.key === 'M1')!.label);
-    expect(d.rows.reduce((n, r) => n + r.counted, 0)).toBe(sections.length);
+    expect(d.rows.reduce((n, r) => n + r.counted, 0)).toBe(counted.length);
+    expect(counted.length).toBeLessThan(sections.length);
   });
 
   it('a one-document home reads what the readiness trigger stores on the document', async () => {
@@ -153,8 +157,14 @@ describe('each market on its own line (F22)', () => {
     const ema = after.markets.find((m) => m.scope === 'market')!;
     expect(ema.agency.toLowerCase()).toBe('ema');
     // The home filing's common sections plus EMA's own Module 1 and 3.2.R.
-    const home = await rows(`SELECT section_key, status FROM c2c_document_sections WHERE document_id = 'doc_home'`);
-    const own = await rows(`SELECT section_key, status FROM c2c_document_sections WHERE document_id = $1`, [marketDoc]);
+    // Each document's counted sections (F23 8/9): every section but an empty
+    // heading, one still 'todo' that another section names as its parent.
+    const sectionsOf = async (doc: string) => {
+      const all = await rows(`SELECT section_key, parent_key, status FROM c2c_document_sections WHERE document_id = $1`, [doc]);
+      return all.filter((r) => r.status !== 'todo' || !all.some((o) => o.parent_key === r.section_key));
+    };
+    const home = await sectionsOf('doc_home');
+    const own = await sectionsOf(marketDoc);
     const counted = [...home.filter((r) => !isRegionalSectionKey(String(r.section_key))), ...own.filter((r) => isRegionalSectionKey(String(r.section_key)))];
     const complete = counted.filter((r) => ['approved', 'locked'].includes(String(r.status))).length;
     expect(ema.figure).toEqual({ state: 'measured', pct: Math.round((100 * complete) / counted.length), counted: counted.length, complete });

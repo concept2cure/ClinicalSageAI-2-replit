@@ -48,12 +48,13 @@ const BIOPHARMA_TYPES = ['IND', 'NDA', 'BLA', 'MAA', 'JNDA', 'DE_NOVO'];
  * looks measured and can never move is worse than the absent one above, because
  * nothing about it invites the question.
  *
- * It is now derived from the governed sections, on the same predicate
- * c2c_recompute_document_readiness() uses for one document — the same figure
- * GET /api/c2c/projects reports, from the same constant, so the two surfaces
- * cannot disagree about how complete a program is. This router already
- * aggregates c2c_document_sections for `section_counts`, so the dependency and
- * the scan were both already here; only the honest arithmetic was missing.
+ * It is derived from the governed sections, on the same complete-status set
+ * the readiness trigger uses. It is NOT the figure GET /api/c2c/projects
+ * reports (FILING_SPINE F23, 2026-10-22): that is the home filing's figure
+ * (server/services/c2c/dossier-read.ts), which leaves out added markets and
+ * empty headings (countedSectionSql), and this pools every document and every
+ * section row. No client calls this route; converging or retiring it is
+ * handed on (docs/evidence/D2-ONE-ANA/2026-10-22/f23-one-dossier-read/).
  */
 const PROGRAM_FIELDS = `
   p.id, p.code, p.name, p.program_type, p.status,

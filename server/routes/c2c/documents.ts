@@ -531,12 +531,15 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
 
       let row: any;
       if (existing.rows.length === 0) {
-        // Not created yet — INSERT with no text. Label + path_order come from
-        // the rule pack when available.
+        // Not created yet — INSERT with no text. Label, path_order and the
+        // parent come from the rule pack when available. Without its parent a
+        // section reads as a root, and the heading above it as a section that
+        // holds nothing, which readiness then counts (F23 8/9).
         const rpackRes = await client.query(
           `SELECT elem ->> 'label' AS label,
                   (elem ->> 'path_order')::integer AS path_order,
-                  (elem ->> 'mandatory')::boolean AS mandatory
+                  (elem ->> 'mandatory')::boolean AS mandatory,
+                  elem ->> 'parent_key' AS parent_key
            FROM c2c_documents d
            JOIN c2c_rule_packs rp
              ON rp.doc_type = d.doc_type AND rp.agency = d.agency
@@ -550,10 +553,10 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
         const rpackRow = rpackRes.rows[0] as any;
         const ins = await client.query(
           `INSERT INTO c2c_document_sections
-             (document_id, section_key, label, path_order, mandatory, content, status)
-           VALUES ($1, $2, $3, $4, $5, '{}'::jsonb, $6)
+             (document_id, section_key, label, path_order, mandatory, content, status, parent_key)
+           VALUES ($1, $2, $3, $4, $5, '{}'::jsonb, $6, $7)
            RETURNING *`,
-          [id, key, rpackRow?.label ?? key, rpackRow?.path_order ?? 0, rpackRow?.mandatory ?? false, status],
+          [id, key, rpackRow?.label ?? key, rpackRow?.path_order ?? 0, rpackRow?.mandatory ?? false, status, rpackRow?.parent_key ?? null],
         );
         row = ins.rows[0];
       } else {

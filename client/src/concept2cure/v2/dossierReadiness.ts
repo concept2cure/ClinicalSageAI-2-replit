@@ -18,7 +18,7 @@ export const DOSSIER_READINESS_LABEL = 'Dossier readiness';
 
 /** What the figure measures, for a tooltip or a hint. */
 export const DOSSIER_READINESS_MEANS =
-  'The share of this program’s own filing sections that are approved or locked. A market added to the project is measured on its own line.';
+  'The share of this program’s own filing sections that are approved or locked. Empty headings that hold other sections are not counted. A market added to the project is measured on its own line.';
 
 /** The state of a figure, as the server states it: measured, nothing to
  *  count, or not read. */

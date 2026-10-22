@@ -1,0 +1,97 @@
+# F23 (8/9) green, after its review (review-commit-8.md)
+## The counting suites
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save with text leaves the bound section drafted, not todo 279ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save of only whitespace is not work: the section stays todo 82ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards 276ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > new text on an approved section is not the signed text: the section is withdrawn to drafted, and that is recorded 221ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a locked section is not written by a save; the filing result says why 120ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > e-sign as APPROVER: written sections are approved, readiness rises above 0, one governed-action row 251ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a signature that does not mean approval approves nothing (e-sign as REVIEWER, AUTHOR) 157ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > an approval on a document with no filing says so, not "nothing left to approve" 89ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a second authoring document bound to the same filing cannot leave unsigned text approved 229ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > the signature a diverged filing refuses, and the way back > a signature over a diverged filing is refused whole, and the recovery it names works 248ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not 252ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a completed signed workflow refuses status changes and permits only a new review signature over unchanged content 151ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a signature that rolls back leaves the sections exactly as they were 149ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status approved returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing 88ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status locked returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing 76ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a status PATCH on a section not created yet files it under its pack parent (F23 8/9: else the heading above reads as holding nothing, and is counted) 28ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a content PATCH cannot rewrite a signed filing section (text is authored only, step 5) 122ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a PATCH on a locked section is refused with 409 SECTION_LOCKED and changes nothing 73ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > the same PATCH still moves a section between the unsigned states 39ms
+ ✓ server/services/c2c/__tests__/dossier-read.pglite.test.ts > one definition of complete, for the header and every module row > every section locked reads 100 on the header and on every row (at head: 100 beside 0) 69ms
+ ✓ server/services/c2c/__tests__/dossier-read.pglite.test.ts > one definition of complete, for the header and every module row > every section in review reads 0 approved on both, with the review counted beside it (at head: 0 beside 75) 63ms
+ ✓ server/services/c2c/__tests__/dossier-read.pglite.test.ts > one definition of complete, for the header and every module row > a module is one row: "M1" and its sections are Module 1, named by the pack (at head: two rows) 70ms
+ ✓ server/services/c2c/__tests__/dossier-read.pglite.test.ts > one definition of complete, for the header and every module row > a one-document home reads what the readiness trigger stores on the document 48ms
+ ✓ server/services/c2c/__tests__/dossier-read.pglite.test.ts > each market on its own line (F22) > adding EMA leaves the home figure where it was (at head the pooled figure fell) 111ms
+ ✓ server/services/c2c/__tests__/dossier-read.pglite.test.ts > each market on its own line (F22) > with two home applications a market says why it has no figure 118ms
+ ✓ server/services/c2c/__tests__/dossier-read.pglite.test.ts > documents that are not CTD applications > a clinical study report is one row; its '1'…'13' are not CTD modules 41ms
+ ✓ server/services/c2c/__tests__/dossier-read.pglite.test.ts > documents that are not CTD applications > a 510(k)'s top-level headings are its rows, named by its pack 15ms
+ ✓ server/services/c2c/__tests__/dossier-read.pglite.test.ts > a figure is measured, empty or unavailable, never a made-up 0 > a project with no governed sections has no figure 7ms
+ ✓ server/services/c2c/__tests__/dossier-read.pglite.test.ts > a figure is measured, empty or unavailable, never a made-up 0 > another organization's documents are not read 21ms
+ ✓ server/services/c2c/__tests__/dossier-read.pglite.test.ts > a figure is measured, empty or unavailable, never a made-up 0 > a store this environment has not provisioned is unavailable, with the reason, and no 0 anywhere 6ms
+ ✓ server/services/c2c/__tests__/dossier-read.pglite.test.ts > a figure is measured, empty or unavailable, never a made-up 0 > any other failure is thrown, not answered 4ms
+ ✓ tests/schema-contract/biopharma-programs-router-columns.contract.test.ts > biopharma/programs.ts SQL matches the schema > the fixture table matches the Drizzle definition column-for-column 27ms
+ ✓ tests/schema-contract/biopharma-programs-router-columns.contract.test.ts > biopharma/programs.ts SQL matches the schema > extracts every SELECT in the router — the gate is not vacuous 1ms
+ ✓ tests/schema-contract/biopharma-programs-router-columns.contract.test.ts > biopharma/programs.ts SQL matches the schema > no statement references a column its table does not have 1ms
+ ✓ tests/schema-contract/biopharma-programs-router-columns.contract.test.ts > biopharma/programs.ts SQL matches the schema > no statement references a table that does not exist 0ms
+ ✓ tests/schema-contract/biopharma-programs-router-columns.contract.test.ts > biopharma/programs.ts SQL matches the schema > every extracted statement plans cleanly 0ms
+ ✓ tests/schema-contract/biopharma-programs-router-columns.contract.test.ts > biopharma route registration order > registers /meetings before /:id so it is reachable 2ms
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > the pack has headings, and they are never approved 4ms
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > with every content section approved, the document reads 100, and so does the home figure (at head: 79) 19ms
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > a replay with nothing stale changes nothing: not the figure, not updated_at 13ms
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > replaying the migration keeps the value, corrects a stale one and leaves updated_at alone 14ms
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > a document with no sections keeps the figure it was inserted with on replay (a legacy row is not zeroed) 10ms
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > an empty heading is not counted; a heading someone has written in is (review: unsigned text at a heading must not read 100) 12ms
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > a todo section that gains a child stops being counted: 1 of 2 becomes 2 of 2, never 2 of 3 6ms
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > re-parenting a section recounts the document 5ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > draws the dossier read’s figure, and ignores a stale progress_percent and the detail row 155ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > states when the server measured the figure 50ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > a program with no approved sections reads a measured 0% 47ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > a program with nothing to measure is stated as "not measured", never left out or drawn as 0 82ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > every section in review reads 0% on the card and on its rows, with the review counted 63ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > while the dossier is read the card says so, never "not measured" 49ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > a failed read says it failed and offers Retry, which reads again; no 0 is drawn 382ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > a 200 without the dossier’s shape is a failed read, not an empty dossier 51ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > a store the server could not read says why, on the card and the rows 66ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > an added market is its own line, and the header figure is the home filing’s 73ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects: each card reads its home filing’s figure > is the share of the home filing’s sections approved or locked, with its state 30ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects: each card reads its home filing’s figure > a market added to the project does not move the home figure (at head the two were pooled: 25) 5ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects: each card reads its home filing’s figure > asks only about the projects on this page, in the caller’s organization 5ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects: each card reads its home filing’s figure > never reads the stored progress_percent 4ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects: each card reads its home filing’s figure > an unprovisioned section store: the list still answers, each figure unavailable with the reason 6ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects: each card reads its home filing’s figure > any other failure: the list still answers, each figure unavailable, never 0 and never "no sections" 4ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id: the same figure the card reads > reads the home figure, its state and when it was measured 5ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id: the same figure the card reads > agrees with the list for the same program 8ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id: the same figure the card reads > no governed sections: no figure, no time, and the state says why 3ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id: the same figure the card reads > a failed read: the page still loads, the figure is unavailable with the reason, never the stored 0 3ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id: the same figure the card reads > an upper-case id in the URL reads the same measured figure (review of e6058e4126: it read "no sections") 3ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id: the same figure the card reads > scopes the read to this program and the caller’s organization 3ms
+ ✓ server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > reads the project’s sections in the caller’s organization and answers the dossier 24ms
+ ✓ server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > a project the caller cannot read is 404 and no section is read 5ms
+ ✓ server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > an unprovisioned store is every figure unavailable, with the reason, and no 0 4ms
+ ✓ server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > any other failure is a 500, never an empty dossier 4ms
+ ✓ server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > /workstreams, which it replaces, is gone 5ms
+ ✓ server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > /vault-structure, which no client called, is gone: the Vault tree is project-vault /:id and the figures are /dossier 3ms
+ ✓ tests/schema-contract/c2c-section-completion.contract.test.ts > a section is complete only when the filing says so > counts approved and locked, and nothing else 2ms
+ ✓ tests/schema-contract/c2c-section-completion.contract.test.ts > a section is complete only when the filing says so > a drafted section is NOT complete — this is the whole defect 1ms
+ ✓ tests/schema-contract/c2c-section-completion.contract.test.ts > a section is complete only when the filing says so > an absent or unrecognised status is 0, never a guess 1ms
+ ✓ tests/schema-contract/c2c-section-completion.contract.test.ts > a section is complete only when the filing says so > never returns an invented middle value 1ms
+ ✓ tests/schema-contract/c2c-section-completion.contract.test.ts > the definition matches the trigger that maintains readiness > the TypeScript set is exactly the SQL FILTER set 1ms
+ ✓ tests/schema-contract/c2c-section-completion.contract.test.ts > readiness counts sections, not headings, on one rule > the readiness function carries countedSectionSql('s') verbatim 2ms
+ ✓ tests/schema-contract/c2c-section-completion.contract.test.ts > readiness counts sections, not headings, on one rule > the TypeScript twin marks a heading uncounted and a section counted, per document 1ms
+ ✓ tests/schema-contract/c2c-section-completion.contract.test.ts > readiness counts sections, not headings, on one rule > refuses an alias it could not safely place in SQL 1ms
+ Test Files  8 passed (8)
+      Tests  81 passed (81)
+
+## Every test that applies the readiness migration, and every projects-* and project-vault-* route test (67 files)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed | 65 passed (67)
+      Tests  7 failed | 780 passed (787)
+The 7 failures are two files that fail identically at the pushed head 1a9a7d2291 without this work (checked with the tree stashed):
+  tests/authoring-market-document-binding.pglite.test.ts (1): relation "authoring_audit_trail" does not exist; section create has written that table since 9a4da85005
+  tests/lineage/founder-path-lineage.pglite.test.ts (6): from hop 8, 'Invalid sequence id'
+
+## Gates
+OK: ci:migration-drop-safety, ci:migration-set-order, ci:migration-guard-order, ci:migration-deploy-path, ci:migration-reachability, ci:migration-prefix-collisions, ci:sql-interpolation.
+Typecheck 0 errors. ESLint per-file counts unchanged. The eCTD audit header is within the migration's first 40 lines (require-migration-headers.sh).

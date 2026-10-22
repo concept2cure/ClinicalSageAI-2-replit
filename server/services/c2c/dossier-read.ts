@@ -44,7 +44,7 @@
  *
  * @module server/services/c2c/dossier-read
  */
-import { C2C_SECTION_COMPLETE_STATUSES } from './section-content.js';
+import { C2C_SECTION_COMPLETE_STATUSES, markCountedSections } from './section-content.js';
 import { readDocumentOutline } from './document-outline.js';
 import { isRegionalSectionKey } from '../../../shared/regulatory/filing-scope.js';
 import { normalizeCtdCode } from '../../../shared/regulatory/section-code.js';
@@ -112,6 +112,10 @@ interface SectionRow {
   label: string | null;
   status: string;
   updated_at: string | Date | null;
+  /** Whether readiness counts it: false for a heading that holds other
+   *  sections (markCountedSections, the trigger's rule). Required, so a row
+   *  that did not pass through the read cannot be counted by default. */
+  counted: boolean;
 }
 
 const isUnprovisioned = (err: unknown) => UNPROVISIONED.has(String((err as { code?: string })?.code ?? ''));
@@ -125,11 +129,14 @@ function emptyCounts(): DossierCounts {
   return { counted: 0, complete: 0, inReview: 0, drafted: 0 };
 }
 
-function add(c: DossierCounts, status: string): void {
+/** Count one section, unless it is a heading that holds other sections:
+ *  those are never approved, and the trigger does not count them (F23 8/9). */
+function add(c: DossierCounts, s: SectionRow): void {
+  if (!s.counted) return;
   c.counted += 1;
-  if (C2C_SECTION_COMPLETE_STATUSES.has(status)) c.complete += 1;
-  else if (status === 'review') c.inReview += 1;
-  else if (status === 'drafted') c.drafted += 1;
+  if (C2C_SECTION_COMPLETE_STATUSES.has(s.status)) c.complete += 1;
+  else if (s.status === 'review') c.inReview += 1;
+  else if (s.status === 'drafted') c.drafted += 1;
 }
 
 /** The CTD module a section key belongs to ('M1' and '1.1' are '1'), or null. */
@@ -156,13 +163,13 @@ export const DOSSIER_SECTIONS_SQL = `SELECT d.project_id::text AS project_id, d.
 
 async function readSections(db: Queryable, orgId: number, projectIds: string[]): Promise<Array<SectionRow & { project_id: string }>> {
   const { rows } = await db.query(DOSSIER_SECTIONS_SQL, [projectIds, orgId]);
-  return rows as Array<SectionRow & { project_id: string }>;
+  return markCountedSections(rows as Array<Omit<SectionRow, 'counted'> & { project_id: string }>);
 }
 
 /** The home filing's figure from one project's rows. */
 function homeFigure(rows: SectionRow[]): DossierFigure {
   const c = emptyCounts();
-  for (const r of rows) if (r.filing_scope !== 'market') add(c, r.status);
+  for (const r of rows) if (r.filing_scope !== 'market') add(c, r);
   return figureOf(c);
 }
 
@@ -240,7 +247,7 @@ function moduleRows(doc: DocGroup, keep: (key: string) => boolean, agency: strin
     const heading = module ? `M${module}` : rootOf(s.section_key);
     const id = module ? `ctd:${module}` : `root:${heading}`;
     const g = groups.get(id) ?? { module, heading, order: module ?? `~${heading}`, c: emptyCounts(), last: null };
-    add(g.c, s.status);
+    add(g.c, s);
     g.last = later(g.last, iso(s.updated_at));
     groups.set(id, g);
   }
@@ -259,7 +266,7 @@ function documentRow(doc: DocGroup): DossierRow {
   const c = emptyCounts();
   let last: string | null = null;
   for (const s of doc.sections) {
-    add(c, s.status);
+    add(c, s);
     last = later(last, iso(s.updated_at));
   }
   const cls = filingDocumentClassOf(doc.docType);
@@ -275,7 +282,7 @@ async function dossierMarkets(db: Queryable, orgId: number, homeApps: DocGroup[]
   const homeCommon = homeApps.flatMap((d) => d.sections.filter((s) => !isRegionalSectionKey(s.section_key)));
   const markets: DossierMarket[] = homeApps.map((d) => {
     const c = emptyCounts();
-    for (const s of d.sections) add(c, s.status);
+    for (const s of d.sections) add(c, s);
     return { scope: 'home', agency: d.agency, docType: d.docType, documentId: d.id, figure: figureOf(c), notHeld: [] };
   });
   for (const d of marketDocs) {
@@ -284,8 +291,8 @@ async function dossierMarkets(db: Queryable, orgId: number, homeApps: DocGroup[]
       figure = { state: 'unavailable', pct: null, reason: TWO_HOMES_REASON(homeApps.length) };
     } else {
       const c = emptyCounts();
-      for (const s of homeCommon) add(c, s.status);
-      for (const s of d.sections) if (isRegionalSectionKey(s.section_key)) add(c, s.status);
+      for (const s of homeCommon) add(c, s);
+      for (const s of d.sections) if (isRegionalSectionKey(s.section_key)) add(c, s);
       figure = figureOf(c);
     }
     const outline = await readDocumentOutline(db, orgId, d.id);

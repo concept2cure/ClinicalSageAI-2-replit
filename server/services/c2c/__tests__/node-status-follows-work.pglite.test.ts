@@ -555,6 +555,22 @@ describe('3. the old-store PATCH cannot approve or lock without a signature', ()
     expect(await q(`SELECT count(*)::int AS n FROM audit_logs`)).toEqual(before);
   }, T);
 
+  it('a status PATCH on a section not created yet files it under its pack parent (F23 8/9: else the heading above reads as holding nothing, and is counted)', async () => {
+    const f = await makeFiling([]);
+    const [spec] = await q<{ parent_key: string | null }>(
+      `SELECT elem ->> 'parent_key' AS parent_key
+         FROM c2c_rule_packs rp, jsonb_array_elements(rp.required_sections) AS elem
+        WHERE rp.doc_type = 'ind' AND rp.agency = 'fda' AND elem ->> 'key' = '2.5' LIMIT 1`,
+    );
+    expect(spec?.parent_key, 'the IND pack files 2.5 under a heading').toBeTruthy();
+    const res = await request(app).patch(`/api/c2c/documents/${f.doc}/sections/2.5`).send({ status: 'review', reason: 'Ready for review.' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const [row] = await q<{ parent_key: string | null }>(
+      `SELECT parent_key FROM c2c_document_sections WHERE document_id = $1 AND section_key = '2.5'`, [f.doc],
+    );
+    expect(row.parent_key).toBe(spec.parent_key);
+  }, T);
+
   it('a content PATCH cannot rewrite a signed filing section (text is authored only, step 5)', async () => {
     const f = await makeFiling(['2.5']);
     expect((await save(f.sectionIds['2.5'], 'Signed text.')).status).toBe(200);
