@@ -507,7 +507,9 @@ router.post('/qms/documents/:id/periodic-review', signedActAttempts, async (req:
   if (!Number.isSafeInteger(id) || id <= 0) return clientError(res, 400, 'id must be a positive integer. Nothing was signed.');
   const parsed = qmsPeriodicReviewBody.safeParse({ outcome: req.body?.outcome, nextReviewDate: req.body?.nextReviewDate || undefined });
   if (!parsed.success) {
-    return clientError(res, 400, `${parsed.error.issues[0]?.message ?? 'Invalid periodic review.'} Nothing was signed.`, parsed.error.flatten().fieldErrors);
+    const custom = parsed.error.issues.find((issue) => issue.code === 'custom')?.message;
+    return clientError(res, 400, `${custom ?? 'The review needs an outcome (current or revision-required) and, for current, a next review date as YYYY-MM-DD.'} Nothing was signed.`,
+      parsed.error.flatten().fieldErrors);
   }
   const target = `qms-document:${id}`;
   await signGovernedAct(req, res, {

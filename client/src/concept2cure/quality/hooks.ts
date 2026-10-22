@@ -81,6 +81,7 @@ export function useReviewDue(within = 120) {
         version: r.in_force?.version ?? r.version,
         underRevision: !!r.in_force,
         lastReview: adaptPeriodicReview(r),
+        signedReviewDate: r.next_review_date,
       })) ?? null,
     [raw],
   );

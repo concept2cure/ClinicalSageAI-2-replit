@@ -19,6 +19,12 @@
  * @module client/src/concept2cure/quality/qmsApproval
  */
 import { apiRequest, serverMessage } from '@/lib/queryClient';
+
+const NOTHING_SIGNED = 'Nothing was signed.';
+/** The server's sentence, ending once with "Nothing was signed." (the ceremony's refusals already do). */
+function refusedSigning(message: string): Error {
+  return new Error(message.trimEnd().endsWith(NOTHING_SIGNED) ? message : `${message} ${NOTHING_SIGNED}`);
+}
 import type { EsigSignedManifest } from '../_shared/components/EsignModal';
 
 export type QmsApprovalTarget = { kind: 'document' | 'change' | 'document-retire'; id: number };
@@ -46,7 +52,7 @@ export async function postQmsApproval(
   // apiRequest returns a 401 rather than throwing it; here it is the signing
   // ceremony refusing the password or code.
   if (res.status === 401) {
-    throw new Error((serverMessage(json) ?? 'Your password or code was not verified.') + ' Nothing was signed.');
+    throw refusedSigning(serverMessage(json) ?? 'Your password or code was not verified. Re-enter them and sign again.');
   }
   const sig = json?.meta?.signature;
   if (!sig?.signedAt) {
@@ -75,22 +81,31 @@ export async function postQmsPeriodicReview(
   decision: QmsPeriodicReviewDecision,
   input: { reason: string; password: string; totp?: string },
 ): Promise<EsigSignedManifest> {
-  const res = await apiRequest('POST', `/api/mdx/qms/documents/${id}/periodic-review`, {
-    ...decision,
-    password: input.password,
-    ...(input.totp ? { mfaToken: input.totp } : {}),
-    meaning: 'review',
-    reason: input.reason,
-  });
-  const json = (await res.json().catch(() => null)) as { signedAt?: string } | null;
+  let res: Response;
+  try {
+    res = await apiRequest('POST', `/api/mdx/qms/documents/${id}/periodic-review`, {
+      ...decision,
+      password: input.password,
+      ...(input.totp ? { mfaToken: input.totp } : {}),
+      meaning: 'review',
+      reason: input.reason,
+    });
+  } catch (err) {
+    // A coded refusal (4xx) is the server's sentence. A dropped connection or a
+    // server error may have come after the commit, so it is not "nothing was
+    // signed", and signing again could record a second review.
+    const status = (err as { status?: unknown } | null)?.status;
+    if (typeof status === 'number' && status < 500) throw err;
+    throw new Error(UNCONFIRMED_REVIEW);
+  }
+  const json = (await res.json().catch(() => null)) as { signedAt?: string; sha256Chain?: string } | null;
   if (res.status === 401) {
-    throw new Error((serverMessage(json) ?? 'Your password or code was not verified.') + ' Nothing was signed.');
+    throw refusedSigning(serverMessage(json) ?? 'Your password or code was not verified. Re-enter them and sign again.');
   }
-  if (!json?.signedAt) {
-    throw new Error('The server did not return the signature record. Reload the register to see whether the review was recorded.');
-  }
-  return { meaning: 'review', reason: input.reason, signedAt: json.signedAt };
+  if (!json?.signedAt) throw new Error(UNCONFIRMED_REVIEW);
+  return { meaning: 'review', reason: input.reason, signedAt: json.signedAt, ...(json.sha256Chain ? { hash: json.sha256Chain } : {}) };
 }
+const UNCONFIRMED_REVIEW = 'The server did not confirm the review. Reload the register and check the document’s last review before you sign again.';
 
 /**
  * Send a draft controlled document for review: the existing edit route,

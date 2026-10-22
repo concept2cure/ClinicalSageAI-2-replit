@@ -13,7 +13,7 @@
  *     outcome on its manifest and the sign ledger pair written;
  *   - "revision required" is recorded and leaves the date due;
  *   - refused, with nothing signed: a past date, a document under revision, a
- *     viewer, a wrong password;
+ *     viewer, a wrong password, a version whose approval no longer stands;
  *   - a review of v1.0 stops counting once v2.0 is approved.
  */
 import { randomUUID } from 'node:crypto';
@@ -90,6 +90,7 @@ let current: number;
 let toRevise: number;
 let stale: number;
 let lapsed: number;
+let withdrawn: number;
 
 beforeAll(async () => {
   if (!process.env.APP_DATABASE_URL) throw new Error('APP_DATABASE_URL must use the provisioned non-owner runtime role.');
@@ -110,6 +111,7 @@ beforeAll(async () => {
   toRevise = await effectiveDocument('REV', day(-3));
   stale = await effectiveDocument('OLD', day(12));
   lapsed = await effectiveDocument('LAP', day(-2));
+  withdrawn = await effectiveDocument('WDN', day(40));
 }, 120_000);
 
 afterAll(async () => {
@@ -138,7 +140,7 @@ describe('a signed periodic review that finds the document current', () => {
     expect(String(listed.next_review_date).slice(0, 10), 'the signed date stays as approved').toBe(before.next_review_date);
     expect(listed).toMatchObject({
       next_review_due: next,
-      periodic_review: { outcome: 'current', nextReviewDate: next, reviewerId: signer.id, nextDue: next, version: '1.0' },
+      periodic_review: { outcome: 'current', nextReviewDate: next, reviewerId: signer.id, nextDue: next, version: '1.0', reason: REASON },
     });
   });
 
@@ -148,7 +150,9 @@ describe('a signed periodic review that finds the document current', () => {
     const sigs = await reviewSignatures(current);
     expect(sigs).toHaveLength(1);
     expect(sigs[0]).toMatchObject({ signer_id: signer.id, signature_meaning: 'review', bound_payload_digest: computeQmsDocumentContentDigest(full) });
-    expect(sigs[0].manifest.act).toMatchObject({ kind: 'qms-periodic-review', documentId: current, version: '1.0', outcome: 'current' });
+    // The act names the due date the reviewer saw, beside the date the approval signed.
+    expect(sigs[0].manifest.act).toMatchObject({ kind: 'qms-periodic-review', documentId: current, version: '1.0', outcome: 'current',
+      previousNextReviewDate: day(10), previousNextReviewDue: day(10) });
     const ledger = (await owner.query(
       `SELECT domain, payload FROM c2c_ana_actions WHERE org_id = $1 AND command = 'sign' AND target = $2`,
       [orgId, `qms-document:${current}`])).rows;
@@ -201,6 +205,17 @@ describe('a review is refused, and nothing is signed', () => {
     const res = await send();
     expect(res.status, JSON.stringify(res.body)).toBe(status);
     expect((await reviewSignatures(current)).length).toBe(before);
+  });
+
+  it('a version whose approval signature no longer stands', async () => {
+    const approval = (await owner.query(`SELECT id FROM electronic_signatures WHERE organization_id = $1 AND signed_target = $2
+      AND signature_type = 'qms-document-approval'`, [orgId, `qms-document:${withdrawn}`])).rows[0];
+    await owner.query(`UPDATE electronic_signatures SET verification_status = 'voided', is_valid = false WHERE id = $1`, [approval.id]);
+    const res = await review(withdrawn, { outcome: 'current', nextReviewDate: day(200) });
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.error).toMatchObject({ code: 'QMS_REVIEW_APPROVAL_NOT_STANDING' });
+    expect(res.body.error.message).toContain('Nothing was signed.');
+    expect(await reviewSignatures(withdrawn)).toHaveLength(0);
   });
 });
 
@@ -256,5 +271,16 @@ describe('readiness counts what is overdue after the last standing review', () =
     await owner.query(`UPDATE electronic_signatures SET verification_status = 'voided', is_valid = false WHERE id = $1`, [sig.id]);
     expect(await overdue()).toBe(2);
     expect((await dueList()).find((r) => r.id === lapsed)).toMatchObject({ overdue: true, periodic_review: null });
+  });
+});
+
+describe('a later review of the same version', () => {
+  it('records the due date the earlier review set, beside the date the approval signed, and supersedes it', async () => {
+    const res = await review(current, { outcome: 'current', nextReviewDate: day(400) });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    const sigs = await reviewSignatures(current);
+    expect(sigs.at(-1)!.manifest.act).toMatchObject({ previousNextReviewDate: day(10), previousNextReviewDue: day(365), nextReviewDate: day(400) });
+    const list = await http(viewer, 'get', '/api/mdx/qms/documents');
+    expect(list.body.data.find((d: { id: number }) => d.id === current)).toMatchObject({ next_review_due: day(400) });
   });
 });

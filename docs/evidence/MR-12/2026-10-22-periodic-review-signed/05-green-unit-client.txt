@@ -1,9 +1,3 @@
-# GREEN at 149ef8ccd + this change: the QMS client, the QMS route unit suites, the Part 11 binder suites and the register report (2026-10-22T15:18:23Z)
- ✓ client/src/concept2cure/quality/__tests__/ControlledDocumentWorkbench.integration.test.tsx > Quality → actual Authoring workbench > authors an empty template section, saves it through the canonical revision path and reloads its saved text 3211ms
- ✓ client/src/concept2cure/quality/__tests__/ControlledDocumentWorkbench.integration.test.tsx > Quality → actual Authoring workbench > honors the canonical current-version read-only decision before offering edits 173ms
- ✓ client/src/concept2cure/quality/__tests__/ControlledDocumentWorkbench.integration.test.tsx > Quality → actual Authoring workbench > uses the canonical unsaved-work decision before returning to the register 756ms
- ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > advances a legal transition (proposed → under_assessment), recording the reason 5ms
- ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > 409 on an illegal transition (closed → approved) 5ms
- ✓ server/routes/__tests__/qms-change-approval-signature.test.ts > the unsigned door is closed > an illegal move is still named as one (closed → approved is 409) 5ms
- Test Files  55 passed (55)
-      Tests  685 passed (685)
+# GREEN at b2cbab76d + the review fixes: the QMS client, every EsignModal consumer, the QMS route unit suites, the Part 11 binder suites and the register report (2026-10-22T16:08:05Z)
+ Test Files  89 passed (89)
+      Tests  1051 passed (1051)

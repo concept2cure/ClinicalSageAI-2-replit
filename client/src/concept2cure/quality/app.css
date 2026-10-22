@@ -177,10 +177,16 @@
 }
 .qms-review-open {
   display: grid; grid-template-columns: 100px minmax(0, 1fr) 96px; gap: 10px; align-items: center;
-  width: 100%; text-align: left; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer;
+  width: 100%; min-height: 24px; text-align: left; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer;
 }
 .qms-review-open:disabled { cursor: default; }
 .qms-review-last { grid-column: 1 / -1; color: var(--text-300); font-size: 11.5px; }
+.qms-review-row[data-overdue] .qms-review-last { color: var(--text-200); }
+.qms-review-by { display: block; color: var(--text-300); font-size: 11px; }
+@media (max-width: 480px) {
+  .qms-review-row { grid-template-columns: minmax(0, 1fr); }
+  .qms-review-open { grid-template-columns: auto minmax(0, 1fr) auto; }
+}
 .qms-review-row:last-child { border-bottom: 0; }
 .qms-review-row:hover { background: var(--bg-100); }
 .qms-review-row[data-overdue] { background: var(--error-muted); }

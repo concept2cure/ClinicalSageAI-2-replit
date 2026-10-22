@@ -18,6 +18,8 @@ Gap 5.2 of `docs/design/VEEVA_GAP_2026-10-22.md`: "a signed review-complete act"
   - the domain write and the `sign` ledger pair;
   - one `electronic_signatures` row whose manifest carries the act's payload.
   - A content binder per target type (`part11/governed-target-binders.ts`) binds the signature to a content digest. There is no binder for `qms-document` yet: approval and retirement compute their own.
+  - The approval's basis, `qms-document-version-content-sha256`, was a QMS-module constant and not in `BINDING_BASIS` (`part11/signature-persistence.ts`), the vocabulary that names every basis a row can carry.
+  - The approval that put a release in force is checked where it is used (`readCurrentQmsReleaseApproval`, `current-release-approval.ts`): training refuses a release whose approval was withdrawn or no longer matches.
   - `REVIEW_ACT_MEANINGS` (`['review']`) exists.
 - **The organisation-wide review record.** `compliance_review_records` (`migrations/20261001_compliance_review_records.sql`, `services/audit/compliance-reviews.ts`) holds the audit-trail and access reviews.
   - Its rules are built for one kind of review: continuous periods, a sealed report run and one decision line per account.
@@ -32,15 +34,17 @@ Gap 5.2 of `docs/design/VEEVA_GAP_2026-10-22.md`: "a signed review-complete act"
 2. **The body.** `outcome` is `current` or `revision-required`. `nextReviewDate` is required for `current`; it must be after today and within five years.
 3. **The domain write** (`services/qms/periodic-review.ts`):
    - It locks the row and refuses unless the document is effective. A document under revision is refused, because the revision's approval sets its next review. Retired and draft-only documents are refused too.
-   - It writes nothing to `qms_documents`. Its payload, which goes on the signature manifest and into the ledger, names exactly what was reviewed and what was decided: `{ kind: 'qms-periodic-review', documentId, docNumber, version, approvedAt, contentDigest, outcome, nextReviewDate, previousNextReviewDate }`.
-4. **The binding.** A `qms-document` content binder computes `computeQmsDocumentContentDigest` of the row as it stands, which is the same digest its approval signed. So the review signature is bound to the content of the version it attests.
+   - It refuses a release whose approval signature no longer stands (`readCurrentQmsReleaseApproval`, the check training makes): a review cannot attest a version nobody's standing approval put in force.
+   - It writes nothing to `qms_documents`. Its payload, which goes on the signature manifest and into the ledger, names exactly what was reviewed and what was decided: `{ kind: 'qms-periodic-review', documentId, docNumber, version, approvedAt, contentDigest, outcome, nextReviewDate, previousNextReviewDate, previousNextReviewDue }`. The last two are the date the approval signed and the date the reviewer saw as due, after any earlier review.
+   - The date may not be in the past, in UTC. The register offers the day after the reviewer's own today, which is never before the UTC day.
+4. **The binding.** A `qms-document` content binder computes `computeQmsDocumentContentDigest` of the row as it stands, which is the same digest its approval signed. So the review signature is bound to the content of the version it attests. Its basis is now named in `BINDING_BASIS` (`QMS_DOCUMENT_VERSION_CONTENT`); the QMS constant is the same literal, held to it by `satisfies`.
 5. **The readers.** `readQmsPeriodicReviews` reads the latest standing review signature per document (not superseded, not invalid, not revoked).
    - It counts a review only if it is of the release in force: the same version, approval time and content digest.
    - The effective next review is then that review's date for `current`; for `revision-required` it is the row's date, unchanged.
    - Without a counted review it is the row's own date.
    - Review-due, readiness and the register list read through it, and the register report adds the last review.
    - A new version, once approved, starts from its own row date.
-6. **The UI.** The register's Periodic review panel offers **Record review** to anyone with signing authority. It asks for the outcome and, for "remains current", the next review date, then opens the shared `EsignModal` with meaning `review`. Each row says when it was last reviewed, by whom, and with what outcome.
+6. **The UI.** The register's Periodic review panel, and each effective document's register row, offer **Record review**. The server refuses anyone without signing authority, as it does the approval; the client does not know a signer's authority before it asks (the same is true of Approve and Retire). It asks for the outcome and, for "remains current", the next review date, then opens the shared `EsignModal` with meaning `review`. The signed confirmation names the version, the outcome and the next date. Each panel row, and the register row's Next review cell, says when it was last reviewed (in UTC), by whom, and with what outcome; for "revision required", the reason, which is what needs revising.
 7. **AnA** cannot sign, and gets no tool for this.
 
 ## Tests (red first)

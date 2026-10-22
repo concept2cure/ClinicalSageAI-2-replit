@@ -19,9 +19,12 @@
  *     decided (`act`, below).
  *
  * ── What it may review ───────────────────────────────────────────────────────
- * Only an effective document. A document under revision is refused: the
- * revision's approval sets its next review. A draft with nothing in force,
- * and a retired document, have nothing to review.
+ * Only an effective document whose approval signature still stands
+ * (readCurrentQmsReleaseApproval, the check training admission makes): a
+ * review cannot attest a release nobody's standing approval put in force. A
+ * document under revision is refused: the revision's approval sets its next
+ * review. A draft with nothing in force, and a retired document, have nothing
+ * to review.
  *
  * ── Reading it back ──────────────────────────────────────────────────────────
  * `readQmsPeriodicReviews` takes the latest standing review signature per
@@ -37,13 +40,18 @@
 import { z } from 'zod';
 import { computeQmsDocumentContentDigest, type QmsDocumentRow } from './document-approval-signature';
 import { readInForceReleases, type InForceRelease, type InForceSqlClient } from './in-force-release';
+import { readCurrentQmsReleaseApproval } from './current-release-approval';
 import { isSignatureWithdrawn } from '../part11/signature-persistence';
 
 export const QMS_PERIODIC_REVIEW_KIND = 'qms-periodic-review';
 export const QMS_PERIODIC_REVIEW_OUTCOMES = ['current', 'revision-required'] as const;
 export type QmsPeriodicReviewOutcome = (typeof QMS_PERIODIC_REVIEW_OUTCOMES)[number];
 
-/** The longest a review may schedule the next one: five years. */
+/**
+ * The longest a review may schedule the next one: five years. The earliest is
+ * today, in UTC: the register offers the day after the reviewer's own today,
+ * which is never before the UTC day in any time zone.
+ */
 const MAX_DAYS_AHEAD = 5 * 366;
 
 const isoDay = (value: unknown): string | null =>
@@ -63,8 +71,8 @@ export const qmsPeriodicReviewBody = z.object({
   }
   const today = new Date().toISOString().slice(0, 10);
   const latest = new Date(Date.now() + MAX_DAYS_AHEAD * 86_400_000).toISOString().slice(0, 10);
-  if (body.nextReviewDate <= today) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['nextReviewDate'], message: 'The next review date must be after today.' });
+  if (body.nextReviewDate < today) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['nextReviewDate'], message: 'The next review date cannot be in the past.' });
   } else if (body.nextReviewDate > latest) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['nextReviewDate'], message: 'The next review date must be within five years.' });
   }
@@ -80,6 +88,7 @@ export const QMS_PERIODIC_REVIEW_CODE_STATUS: Readonly<Record<string, number>> =
   QMS_REVIEW_NOT_FOUND: 404,
   QMS_REVIEW_UNDER_REVISION: 409,
   QMS_REVIEW_NOT_EFFECTIVE: 409,
+  QMS_REVIEW_APPROVAL_NOT_STANDING: 409,
 };
 
 /** What the signature's manifest records: the version reviewed, its content, and the decision. */
@@ -92,7 +101,10 @@ export interface QmsPeriodicReviewAct {
   contentDigest: string;
   outcome: QmsPeriodicReviewOutcome;
   nextReviewDate: string | null;
+  /** The date the approval signed, on the row; a review never changes it. */
   previousNextReviewDate: string | null;
+  /** When the version was due as the reviewer saw it: after its last standing review, or the signed date. */
+  previousNextReviewDue: string | null;
 }
 
 /**
@@ -111,16 +123,14 @@ export async function recordQmsPeriodicReview(
     [documentId, orgId],
   );
   const row = rows[0] as QmsDocumentRow | undefined;
-  if (!row) throw new QmsPeriodicReviewRefused('QMS_REVIEW_NOT_FOUND', 'That controlled document was not found. Nothing was signed.');
-  if (row.status !== 'effective') {
-    const revising = (row.metadata as { lastRevision?: unknown } | null)?.lastRevision;
-    if ((row.status === 'draft' || row.status === 'in_review') && revising) {
-      throw new QmsPeriodicReviewRefused('QMS_REVIEW_UNDER_REVISION',
-        `A revision of ${row.doc_number} is open, and its approval sets the next review. Nothing was signed.`);
-    }
-    throw new QmsPeriodicReviewRefused('QMS_REVIEW_NOT_EFFECTIVE',
-      `${row.doc_number} is ${row.status}, so it has no version in force to review. Nothing was signed.`);
+  if (!row) throw new QmsPeriodicReviewRefused('QMS_REVIEW_NOT_FOUND', 'That controlled document was not found. Reload the register. Nothing was signed.');
+  refuseUnlessEffective(row);
+  const approval = await readCurrentQmsReleaseApproval(client, row, { lock: true });
+  if (approval.state !== 'valid') {
+    throw new QmsPeriodicReviewRefused('QMS_REVIEW_APPROVAL_NOT_STANDING',
+      `The approval of ${row.doc_number} v${String(row.version)} does not stand (${approval.state}), so a review cannot attest it. Nothing was signed.`);
   }
+  const before = await readQmsPeriodicReviews(client, orgId, new Map([[Number(row.id), { release: row, underRevision: false }]]));
   return {
     kind: QMS_PERIODIC_REVIEW_KIND,
     documentId: Number(row.id),
@@ -131,7 +141,19 @@ export async function recordQmsPeriodicReview(
     outcome: input.outcome,
     nextReviewDate: input.outcome === 'current' ? input.nextReviewDate ?? null : null,
     previousNextReviewDate: isoDay(row.next_review_date),
+    previousNextReviewDue: nextReviewDue(row, before.get(Number(row.id))),
   };
+}
+
+function refuseUnlessEffective(row: QmsDocumentRow): void {
+  if (row.status === 'effective') return;
+  const revising = (row.metadata as { lastRevision?: unknown } | null)?.lastRevision;
+  if ((row.status === 'draft' || row.status === 'in_review') && revising) {
+    throw new QmsPeriodicReviewRefused('QMS_REVIEW_UNDER_REVISION',
+      `A revision of ${row.doc_number} is open, so it cannot be reviewed. Approving the revision sets the next review date. Nothing was signed.`);
+  }
+  throw new QmsPeriodicReviewRefused('QMS_REVIEW_NOT_EFFECTIVE',
+    `${row.doc_number} is ${String(row.status).replace(/_/g, ' ')}, so it has no version in force to review. Nothing was signed.`);
 }
 
 /** The last counted review of a document's version in force, as the register shows it. */
@@ -140,6 +162,8 @@ export interface QmsPeriodicReview {
   reviewedAt: string;
   reviewerId: number;
   reviewerName: string | null;
+  /** The reason the reviewer signed with: for "revision required", what needs revising. */
+  reason: string | null;
   outcome: QmsPeriodicReviewOutcome;
   /** The date the reviewer set; null when a revision is required. */
   nextReviewDate: string | null;
@@ -184,7 +208,7 @@ export async function readQmsPeriodicReviews(
   const targets = [...releases.keys()].map((id) => `qms-document:${id}`);
   // signed_at is UTC wall-clock time without a zone (persistGovernedSignSignature).
   const { rows } = await client.query(
-    `SELECT s.id, s.signed_target, s.signer_id, s.signer_name, s.superseded_by, s.is_valid, s.verification_status,
+    `SELECT s.id, s.signed_target, s.signer_id, s.signer_name, s.signature_purpose, s.superseded_by, s.is_valid, s.verification_status,
             to_char(COALESCE(s.signed_at, s.created_at), 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS reviewed_at,
             s.signature_manifest::jsonb -> 'act' AS act
        FROM electronic_signatures s
@@ -209,6 +233,7 @@ export async function readQmsPeriodicReviews(
       reviewedAt: String(r.reviewed_at),
       reviewerId: Number(r.signer_id),
       reviewerName: r.signer_name == null ? null : String(r.signer_name),
+      reason: r.signature_purpose == null ? null : String(r.signature_purpose),
       outcome: act.outcome,
       nextReviewDate: act.nextReviewDate,
       nextDue: act.outcome === 'current' ? act.nextReviewDate : rowDue,
