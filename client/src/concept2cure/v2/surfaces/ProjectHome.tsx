@@ -144,6 +144,24 @@ interface ActivityRow {
   /** COALESCE(users.name, users.email) for actor_id; null for system rows. */
   actor_name: string | null;
   occurred_at: string | null;
+  /** The reason recorded with the row (21 CFR 11.10(e)); absent from an older server. */
+  reason?: string | null;
+  /** The governed action's own event and agency, when the row is one (2026-10-21). */
+  event?: string | null;
+  event_agency?: string | null;
+}
+
+/** Governed events the feed names in words; any other row reads as before. */
+const ACTIVITY_EVENT_LABEL: Record<string, string> = {
+  market_added: 'Market added',
+  home_submission_added: 'Submission added',
+};
+
+/** What the feed says a row was: the governed event by name, else the action as recorded. */
+export function activityLabel(a: Pick<ActivityRow, 'action' | 'resource_type' | 'event' | 'event_agency'>): string {
+  const named = a.event ? ACTIVITY_EVENT_LABEL[a.event] : undefined;
+  if (named) return a.event_agency ? `${named} · ${a.event_agency.toUpperCase()}` : named;
+  return `${String(a.action ?? '').replace(/_/g, ' ')}${a.resource_type ? ' · ' + a.resource_type : ''}`;
 }
 
 /** GET /api/c2c/projects/:id/workstreams → { workstreams: [...] } (section rollup). */
@@ -1510,7 +1528,11 @@ function AuthorWorkspace({
                   {(d.activity ?? []).map((a, i) => (
                     <div key={i} className="pj-act">
                       <span className="pj-act-w">{a.actor_name ?? (a.actor_id != null ? 'User ' + a.actor_id : 'System')}</span>
-                      <span className="pj-act-t">{String(a.action ?? '').replace(/_/g, ' ')}{a.resource_type ? ' · ' + a.resource_type : ''}</span>
+                      <span className="pj-act-t">
+                        {activityLabel(a)}
+                        {/* The reason recorded with the act, available for review (21 CFR 11.10(e)). */}
+                        {a.reason ? <span data-testid="pj-act-reason">. Reason: {a.reason}</span> : null}
+                      </span>
                       <span className="pj-act-n">{fmtWhen(a.occurred_at) ?? ''}</span>
                     </div>
                   ))}
