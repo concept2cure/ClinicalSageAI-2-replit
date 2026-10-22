@@ -163,7 +163,7 @@ const rules: AuditRule[] = [
     dimension: 'completeness',
     title: 'Primary objective not stated',
     question:
-      'ICH E3 Sections 2 and 6 require a clear statement of the primary study ' +
+      'ICH E3 Sections 2 and 8 require a clear statement of the primary study ' +
       'objective in unambiguous, testable terms that link the intervention to the ' +
       'endpoint and the target population. Is the primary objective present?',
     check(answers) {
@@ -174,7 +174,7 @@ const rules: AuditRule[] = [
           'articulated primary objective to anchor the review of efficacy evidence.',
           'The primary objective must be stated in the synopsis and protocol summary, and it ' +
           'must correspond directly to the primary endpoint and the statistical hypothesis.',
-          'ICH E3, Sections 2 & 6; ICH E9, Section 2.1',
+          'ICH E3, Sections 2 & 8; ICH E9, Section 2.1',
           'State the primary objective using language that specifies the intervention, ' +
           'the comparator, the primary endpoint, and the target population.',
           ['primary_objective'],
@@ -230,7 +230,7 @@ const rules: AuditRule[] = [
     dimension: 'risk_identification',
     title: 'Discontinuation rate exceeds acceptable threshold',
     question:
-      'Per ICH E9 Section 5.3 and the NRC/FDA report on missing data (2010), a ' +
+      'ICH E9 Section 5.3 and the 2010 NRC report on missing data (commissioned by FDA) set no numeric cutoff, but as an internal screening heuristic, a ' +
       'discontinuation rate above 20% raises concerns about informative censoring ' +
       'and potential bias in the ITT analysis. What is the observed rate, and how ' +
       'was differential dropout handled analytically?',
@@ -241,8 +241,8 @@ const rules: AuditRule[] = [
       if (pct > 20) {
         return makeFinding(
           this.id, this.dimension, 'warning', this.title, this.question,
-          `Discontinuation rate of ${pct.toFixed(1)}% exceeds the 20% threshold commonly ` +
-          'flagged by FDA reviewers. High attrition may introduce bias, particularly if ' +
+          `Discontinuation rate of ${pct.toFixed(1)}% exceeds this review's internal 20% screening ` +
+          'threshold (no regulatory or ICH cutoff exists). High attrition may introduce bias, particularly if ' +
           'dropout is differential between treatment arms.',
           'High dropout biases ITT analyses and may invalidate efficacy conclusions. The ' +
           'estimand framework (ICH E9(R1)) requires explicit handling of intercurrent events ' +
@@ -454,7 +454,7 @@ const rules: AuditRule[] = [
     dimension: 'completeness',
     title: 'Adverse events summary missing',
     question:
-      'Per ICH E3 Section 12.2 and 21 CFR 312.32, the CSR must include a ' +
+      'Per ICH E3 Section 12.2, the CSR must include a ' +
       'comprehensive summary of adverse events tabulated by system organ class, ' +
       'preferred term, severity grade, and relationship to study treatment. Is this ' +
       'summary present for all treatment arms?',
@@ -466,7 +466,7 @@ const rules: AuditRule[] = [
           'would halt FDA review of the safety profile.',
           'ICH E3 Section 12.2 requires tabulation of all AEs by SOC, preferred term, ' +
           'severity grade, and investigator-assessed causality, presented by treatment arm.',
-          'ICH E3, Section 12.2; 21 CFR 312.32; ICH E2A',
+          'ICH E3, Section 12.2; ICH E2A',
           'Provide a tabular AE summary including incidence by treatment arm, SOC, ' +
           'preferred term (MedDRA), severity (CTCAE grade or mild/moderate/severe), ' +
           'and causality assessment. Include AEs occurring in >= 5% of any treatment group.',
@@ -496,10 +496,10 @@ const rules: AuditRule[] = [
           this.id, this.dimension, 'critical', this.title, this.question,
           'Neither serious adverse events nor deaths have been documented. An FDA medical ' +
           'officer cannot assess the safety profile without this information.',
-          'Every SAE and death must have an individual narrative per ICH E3 Section 12.3.3, ' +
+          'Every SAE and death must have an individual narrative per ICH E3 Section 12.3.2, ' +
           'including subject demographics, event timeline, diagnostic workup, interventions, ' +
           'outcome, and causality assessment.',
-          'ICH E3, Sections 12.3.1 & 12.3.3; ICH E6(R3) Annex 1 §2.7; 21 CFR 312.32(c)',
+          'ICH E3, Section 12.3.2; ICH E6(R3) Annex 1 §2.7; 21 CFR 312.32(c)',
           'Provide individual SAE/death narratives. For each, include: subject ID, demographics, ' +
           'medical history, treatment details, event timeline, interventions, outcome, ' +
           'investigator causality, and sponsor adjudication.',
@@ -588,7 +588,7 @@ const rules: AuditRule[] = [
     dimension: 'regulatory_alignment',
     title: 'GCP compliance statement absent',
     question:
-      'ICH E6(R3) and 21 CFR 312.120 require an explicit statement confirming the ' +
+      'ICH E6(R3) and ICH E3 Section 5 (and, for foreign studies not conducted under an IND, 21 CFR 312.120) call for an explicit statement confirming the ' +
       'study was conducted in accordance with GCP, applicable regulations, and the ' +
       'ethical principles of the Declaration of Helsinki. Is this statement present?',
     check(answers) {
@@ -600,7 +600,7 @@ const rules: AuditRule[] = [
           'The CSR must include an explicit statement attesting GCP compliance, IRB/IEC ' +
           'approval at each investigational site, and confirmation that informed consent ' +
           'was obtained per 21 CFR 50.',
-          'ICH E6(R3) principles; 21 CFR 312.120; ICH E3, Section 9.6; 21 CFR 50',
+          'ICH E6(R3) principles; 21 CFR 312.120 (foreign clinical studies not conducted under an IND); ICH E3, Sections 1 and 5 (5.1 IEC/IRB, 5.2 Ethical Conduct of the Study, 5.3 Patient Information and Consent); 21 CFR 50',
           'Add a statement attesting GCP compliance. Reference the specific ICH E6 version ' +
           'followed, confirm IRB/IEC approval at each site, and confirm written informed ' +
           'consent was obtained from all subjects.',
@@ -620,8 +620,8 @@ const rules: AuditRule[] = [
     dimension: 'scientific_rigor',
     title: 'DMC charter or independence not documented',
     question:
-      'FDA Guidance on Data Monitoring Committees (2006) and ICH E9 Section 4.5 ' +
-      'require that the DMC operate under a written charter with documented statistical ' +
+      'FDA Guidance on Data Monitoring Committees (2006) and ICH E9 Section 4.6 ' +
+      'recommend that the DMC operate under a written charter with documented statistical ' +
       'and clinical independence from the sponsor. Is the DMC described, and is ' +
       'independence from the sponsor assured?',
     check(answers) {
@@ -633,7 +633,7 @@ const rules: AuditRule[] = [
           'FDA guidance recommends DMC use for controlled trials with mortality/morbidity ' +
           'endpoints. The charter must specify member qualifications, voting procedures, ' +
           'and separation of unblinded and blinded analyses.',
-          'FDA Guidance on Establishment and Operation of Clinical Trial DMCs (2006); ICH E9, Section 4.5',
+          'FDA Guidance on Establishment and Operation of Clinical Trial DMCs (2006); ICH E9, Section 4.6',
           'Describe the DMC composition (names and qualifications), charter provisions, ' +
           'meeting schedule, and confirm statistical independence. Reference the DMC ' +
           'charter as a CSR appendix.',
@@ -668,7 +668,7 @@ const rules: AuditRule[] = [
             'Interim analyses must be overseen by an independent DMC operating under a ' +
             'pre-specified alpha-spending function (e.g., O\'Brien-Fleming, Lan-DeMets). ' +
             'Unmonitored interim analyses create bias risk.',
-            'ICH E9, Section 4.5; FDA Guidance on DMCs (2006); ICH E3, Section 11.4.6',
+            'ICH E9, Section 4.5; FDA Guidance on DMCs (2006); ICH E3, Section 11.4.2.3',
             'Document: (1) the alpha-spending function used, (2) number and timing of ' +
             'interim looks, (3) stopping boundaries, (4) DMC composition and charter, ' +
             'and (5) all DMC recommendations and sponsor actions.',
@@ -689,7 +689,7 @@ const rules: AuditRule[] = [
     dimension: 'consistency',
     title: 'Deviations from the Statistical Analysis Plan not addressed',
     question:
-      'ICH E9 Section 2.3 requires that any deviation from the pre-specified SAP be ' +
+      'ICH E9 Section 5.1 requires that any deviation from the pre-specified SAP be ' +
       'documented, justified, and characterized as pre- or post-unblinding. Is there ' +
       'a statement on SAP adherence, and are all deviations enumerated?',
     check(answers) {
@@ -703,7 +703,7 @@ const rules: AuditRule[] = [
           'All post-hoc changes to the SAP must be described with rationale. The timing ' +
           'relative to unblinding is critical: post-unblinding changes are presumed to ' +
           'be outcome-driven and are viewed with extreme skepticism.',
-          'ICH E9, Section 2.3; ICH E3, Section 11.4.1',
+          'ICH E9, Section 5.1; ICH E3, Section 9.8',
           'Include an explicit statement confirming full SAP adherence, or document each ' +
           'deviation with: (1) the original SAP specification, (2) the actual analysis ' +
           'performed, (3) the rationale, and (4) the timing relative to unblinding.',
@@ -770,7 +770,7 @@ const rules: AuditRule[] = [
           'were not performed, the FDA may request them during review.',
           'All subgroup analyses should be identified in the SAP. Post-hoc subgroup analyses ' +
           'must be clearly labeled as exploratory with appropriate caveats.',
-          'ICH E9, Section 5.7; FDA Guidance on Subgroup Analyses (2019)',
+          'ICH E9, Section 5.7; EMA Guideline on the Investigation of Subgroups in Confirmatory Clinical Trials (EMA/CHMP/539146/2013)',
           'List all subgroup analyses performed. For each, state: (1) whether it was ' +
           'pre-specified or post-hoc, (2) the treatment-by-subgroup interaction p-value, ' +
           '(3) the subgroup-specific treatment effect with CI, and (4) present results in ' +
@@ -804,7 +804,7 @@ const rules: AuditRule[] = [
           'At least one sensitivity analysis must be pre-specified in the SAP. Common ' +
           'approaches include per-protocol analysis, alternative imputation methods, and ' +
           'covariate-adjusted analyses.',
-          'ICH E9, Section 5.2.3; ICH E9(R1) Addendum; ICH E3, Section 11.4.3',
+          'ICH E9, Section 5.2.3; ICH E9(R1) Addendum; ICH E3, Section 11.4.2',
           'Report at minimum: (1) per-protocol population analysis, (2) tipping-point or ' +
           'pattern-mixture analysis for missing data, (3) covariate-adjusted analysis, and ' +
           '(4) results excluding subjects with major protocol deviations. Present a ' +
@@ -859,7 +859,7 @@ const rules: AuditRule[] = [
     dimension: 'completeness',
     title: 'Safety conclusions missing',
     question:
-      'ICH E3 Section 12.5 requires an integrated safety summary with conclusions ' +
+      'ICH E3 Section 12.6 (Safety Conclusions) requires an overall summary and assessment of safety with conclusions ' +
       'addressing the overall tolerability profile, dose-response for AEs, and any ' +
       'safety signals warranting label language. Are safety conclusions present?',
     check(answers) {
@@ -871,7 +871,7 @@ const rules: AuditRule[] = [
           'Safety conclusions must address overall tolerability, the AE profile relative to ' +
           'comparator, identified safety signals, and any risks requiring mitigation strategies ' +
           'or label warnings.',
-          'ICH E3, Section 12.5; ICH E2E; 21 CFR 314.50(d)(5)(vi)',
+          'ICH E3, Section 12.6; ICH E2E; 21 CFR 314.50(d)(5)(vi)',
           'Provide integrated safety conclusions covering: (1) overall AE profile and ' +
           'tolerability, (2) SAE patterns, (3) laboratory and vital sign abnormalities, ' +
           '(4) identified safety signals with proposed label language, and (5) an overall ' +
@@ -906,8 +906,8 @@ const rules: AuditRule[] = [
           'When deaths occur, the CSR must include a detailed benefit-risk assessment ' +
           'addressing whether the drug\'s benefits outweigh the observed mortality signal, ' +
           'with comparison to background rates and the comparator arm.',
-          'FDA Benefit-Risk Framework (PDUFA VI); ICH E3, Section 12.5; 21 CFR 314.50(d)(5)(vi)',
-          'Provide: (1) a structured benefit-risk analysis using the FDA five-dimension ' +
+          'FDA Benefit-Risk Framework (PDUFA VI); ICH E3, Section 12.6; 21 CFR 314.50(d)(5)(vi)',
+          'Provide: (1) a structured benefit-risk analysis using the four dimensions of FDA\'s Benefit-Risk ' +
           'framework, (2) an individual narrative for each death, (3) causality adjudication ' +
           'by the sponsor, and (4) comparison with expected background mortality rates.',
           ['deaths_reported', 'safety_conclusions', 'efficacy_conclusions'],

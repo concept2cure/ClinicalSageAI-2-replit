@@ -260,7 +260,7 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
             severity: 'critical',
             title: 'Death Case — Comprehensive Narrative Required',
             message:
-              'Per ICH E3 Section 12.3.2, all death cases require detailed individual narratives in the CSR regardless of the investigator\'s causality assessment. The narrative must include cause of death, contributing factors, autopsy findings (if available), and an independent sponsor assessment of causality.',
+              'Per ICH E3 Section 12.3.2, all death cases require detailed individual narratives in the CSR regardless of the investigator\'s causality assessment. The narrative should describe the clinical course leading to death and its timing relative to study drug administration, relevant laboratory findings, post-mortem (autopsy) findings (if available), the investigator\'s opinion on causality, and, where appropriate, the sponsor\'s opinion on causality.',
             reference: 'ICH E3 Section 12.3.2, ICH E2B(R3)',
           },
         ],
@@ -344,7 +344,7 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
         question:
           'Document the patient\'s demographic information, relevant medical history, baseline laboratory values, and other pertinent clinical context.',
         guidance:
-          'Per ICH E3 Section 12.3.1, the patient context is essential for causality assessment. Document conditions relevant to the event, pre-existing conditions, surgical history, and known allergies. Baseline laboratory values should be included when relevant to the adverse event under evaluation.',
+          'Per ICH E3 Section 12.3.2, the patient context is essential for causality assessment. Document conditions relevant to the event, pre-existing conditions, surgical history, and known allergies. Baseline laboratory values should be included when relevant to the adverse event under evaluation.',
         fields: [
           {
             id: 'age',
@@ -421,7 +421,7 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
             title: 'Incomplete Medical History',
             message:
               'A complete relevant medical history is essential for causality assessment. ICH E2B(R3) requires documentation of relevant past and concurrent medical conditions.',
-            reference: 'ICH E2B(R3) Section B.1.7',
+            reference: 'ICH E2B(R3) Section D.7',
           },
         ],
       },
@@ -693,7 +693,7 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
             title: 'Time-to-Onset Not Documented',
             message:
               'The temporal relationship between drug administration and event onset is critical for causality assessment. This must be documented.',
-            reference: 'ICH E2B(R3) Section B.2.i.4',
+            reference: 'ICH E2B(R3) G.k.9.i.3.1 (time interval between beginning of drug administration and start of reaction/event); E.i.4 (date of start of reaction/event)',
           },
         ],
       },
@@ -837,7 +837,7 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
             title: 'No Dechallenge Information',
             message:
               'Dechallenge information (response to drug withdrawal) is valuable for causality assessment. If the drug was stopped, document the clinical response.',
-            reference: 'FDA CIOMS Form Guidance',
+            reference: 'CIOMS I Form (CIOMS); ICH E2B(R3)',
           },
           {
             id: 'no_rechallenge_info',
@@ -850,7 +850,7 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
             title: 'No Rechallenge Information',
             message:
               'Rechallenge data, when available, provides strong evidence for or against causality. Document the rationale if rechallenge was not performed.',
-            reference: 'ICH E2B(R3) Section B.4',
+            reference: 'ICH E2B(R3) Section G.k.9.i.4',
           },
         ],
       },

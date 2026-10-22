@@ -113,7 +113,7 @@ const rules: AuditRule[] = [
           this.question,
           'The risk management file does not contain a risk estimation matrix with defined severity and probability scales.',
           'ISO 14971:2019 Clause 5.5 requires risk estimation for each identified hazardous situation using defined severity of harm and probability of occurrence categories.',
-          'ISO 14971:2019 Clause 5.5; ISO/TR 24971 Clause 6; ICH Q9(R1) Section 4.2',
+          'ISO 14971:2019 Clause 5.5; ISO/TR 24971 Clause 6; ICH Q9(R1) Section 4.3',
           'Develop a risk estimation matrix with clearly defined severity levels (e.g., negligible, marginal, critical, catastrophic) and probability categories supported by available data.',
           ['risk_estimation_matrix', 'severity_scale', 'probability_scale'],
         );
@@ -231,7 +231,7 @@ const rules: AuditRule[] = [
           this.question,
           'The risk management file does not contain a traceability matrix linking risk control measures to their corresponding identified hazards.',
           'ISO 14971:2019 Clause 7.1 requires implementation of risk control measures for each risk requiring reduction, with traceability to the hazardous situation being addressed.',
-          'ISO 14971:2019 Clause 7.1; ISO 14971:2019 Clause 9 (traceability); MDR 2017/745 Annex II Section 4',
+          'ISO 14971:2019 Clause 7.1; ISO 14971:2019 Clause 4.5 (traceability); MDR 2017/745 Annex II Section 4',
           'Create a comprehensive traceability matrix mapping each identified hazard to its risk control measures, verification activities, and resulting residual risk level.',
           ['hazard_control_traceability', 'risk_controls', 'hazard_list'],
         );
@@ -255,7 +255,7 @@ const rules: AuditRule[] = [
           this.question,
           'Post-mitigation severity levels are shown as lower than pre-mitigation levels for some hazards. Risk controls typically reduce probability of occurrence, not severity of harm.',
           'ISO 14971:2019 Clause 5.5 distinguishes between severity and probability. Severity is an intrinsic property of the harm and generally cannot be reduced by risk control measures.',
-          'ISO 14971:2019 Clause 5.5; ISO/TR 24971 Clause 6.2; ICH Q9(R1) Section 4.2',
+          'ISO 14971:2019 Clause 5.5; ISO/TR 24971 Clause 6.2; ICH Q9(R1) Section 4.3',
           'Review all risk entries where severity was reduced post-mitigation. Unless the control changes the nature of the potential harm itself, only the probability component should change.',
           ['severity_reduced_by_controls', 'risk_estimation_matrix', 'risk_controls'],
         );
@@ -365,7 +365,7 @@ const rules: AuditRule[] = [
           this.question,
           'No mapping from risk management outputs to MDR 2017/745 Annex I GSPRs is provided.',
           'MDR 2017/745 Article 10(2) and Annex I require that the risk management process address all applicable GSPRs. A traceability matrix linking risks to GSPRs is expected in technical documentation.',
-          'MDR 2017/745 Annex I; MDR 2017/745 Annex II Section 4; MDCG 2021-24',
+          'MDR 2017/745 Annex I; MDR 2017/745 Annex II Section 4',
           'Create a GSPR checklist mapping each applicable requirement from MDR Annex I to the corresponding risk control measures and verification evidence in the risk management file.',
           ['gspr_mapping', 'technical_documentation', 'risk_controls'],
         );
@@ -387,7 +387,7 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No overall benefit-risk analysis evaluating whether the medical benefits outweigh the overall residual risk is documented.',
-          'ISO 14971:2019 Clause 8 requires that when individual residual risks are judged acceptable but the overall residual risk has not been evaluated, a benefit-risk analysis shall be performed.',
+          'ISO 14971:2019 Clause 8 requires that, after all risk controls have been implemented and verified, the manufacturer evaluate the overall residual risk, taking into account the contributions of all residual risks, against the method and criteria for acceptability defined in the risk management plan. If the overall residual risk is not judged acceptable, the manufacturer may review data to determine whether the medical benefits of the intended use outweigh it.',
           'ISO 14971:2019 Clause 8; MDR 2017/745 Annex I Section 1; FDA Guidance: Factors to Consider Regarding Benefit-Risk',
           'Conduct a documented benefit-risk analysis that identifies clinical benefits, weighs them against overall residual risks, and concludes with a justified determination that benefits outweigh risks.',
           ['benefit_risk_analysis', 'residual_risks', 'clinical_benefits'],
@@ -416,8 +416,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           `Device class "${answers.device_class}" but no quantitative risk data are provided. Higher-risk devices warrant quantitative estimation.`,
-          'ISO 14971:2019 Clause 5.5 allows qualitative or quantitative estimation but notes that quantitative methods should be used when sufficient data exist. ICH Q9(R1) Section 4.2 emphasizes data-driven estimation.',
-          'ISO 14971:2019 Clause 5.5; ICH Q9(R1) Section 4.2; ISO/TR 24971 Clause 6',
+          'ISO 14971:2019 Clause 5.5 allows qualitative or quantitative estimation but notes that quantitative methods should be used when sufficient data exist. ICH Q9(R1) Section 4.3 (Risk Assessment) addresses risk estimation, which may be quantitative or qualitative, as part of risk analysis based on the available data.',
+          'ISO 14971:2019 Clause 5.5; ICH Q9(R1) Section 4.3; ISO/TR 24971 Clause 6',
           'Supplement qualitative assessments with quantitative probability data from complaint databases (e.g., MAUDE), clinical studies, reliability testing, or published failure rate data.',
           ['quantitative_risk_data', 'device_class', 'probability_data_sources'],
         );
@@ -651,7 +651,7 @@ const rules: AuditRule[] = [
           this.question,
           'No traceability matrix or equivalent mechanism links hazards through risk analysis, controls, verification, and residual risk documentation.',
           'ISO 14971:2019 Clause 4.5 requires that the risk management file provide traceability for each identified hazard to the risk analysis, risk evaluation, risk control, and residual risk evaluation.',
-          'ISO 14971:2019 Clause 4.5; MDR 2017/745 Annex II Section 4; MDCG 2021-24',
+          'ISO 14971:2019 Clause 4.5; MDR 2017/745 Annex II Section 4',
           'Develop a comprehensive traceability matrix that links each hazard ID through risk estimation, risk evaluation decision, risk control measure, verification evidence, and post-control residual risk level.',
           ['traceability_matrix', 'hazard_control_traceability', 'risk_management_file'],
         );
@@ -683,7 +683,7 @@ const rules: AuditRule[] = [
           this.question,
           `The risk management file is missing ${missingCount} of 6 key components. This constitutes a substantially incomplete risk management file.`,
           'ISO 14971:2019 Clause 4.5 specifies the required contents of the risk management file. All elements must be present or referenced for the file to be considered complete.',
-          'ISO 14971:2019 Clause 4.5; MDR 2017/745 Annex II Section 4; FDA 21 CFR 820.30(g)',
+          'ISO 14971:2019 Clause 4.5; MDR 2017/745 Annex II Section 4; FDA 21 CFR 820.10 (QMSR, incorporating ISO 13485:2016 Clause 7.1)',
           'Conduct a gap analysis against ISO 14971:2019 Clause 4.5 requirements. Systematically create or reference all missing components before the file can be considered audit-ready.',
           ['risk_management_plan', 'hazard_identification', 'risk_estimation_matrix', 'risk_controls', 'residual_risks', 'risk_management_report'],
         );

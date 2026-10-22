@@ -697,7 +697,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             type: 'textarea',
             placeholder: 'List solvents used in synthesis and purification with Class (1/2/3) and observed levels.',
             helpText:
-              'Per ICH Q3C(R8), classify all solvents used in the process and report residual levels against PDEs. Class 1 solvents should be avoided; Class 2 solvents should be limited.',
+              'Per ICH Q3C(R9), classify all solvents used in the process and report residual levels against PDEs. Class 1 solvents should be avoided; Class 2 solvents should be limited.',
             required: true,
             validation: { minLength: 10, maxLength: 3000 },
           },
@@ -728,7 +728,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             title: 'Unqualified Impurities Detected',
             message:
               'Impurities above the ICH Q3A(R2) qualification threshold must be qualified through toxicological studies, literature justification, or clinical qualification before regulatory submission. This is a common Complete Response Letter (CRL) issue.',
-            reference: 'ICH Q3A(R2) Impurities in New Drug Substances, Section 5',
+            reference: 'ICH Q3A(R2) Impurities in New Drug Substances, Section 7 (Qualification of Impurities) and Attachment 3',
           },
         ],
         defaultNext: 'genotoxic_impurities',
@@ -767,7 +767,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             type: 'textarea',
             placeholder: 'List confirmed mutagenic impurities with ICH M7 class, control strategy, and acceptance limit.',
             helpText:
-              'Provide details for each confirmed or suspected mutagenic impurity including ICH M7 classification (Class 1–5), control strategy (Option 1–5 per ICH M7), and the justified acceptance limit.',
+              'Provide details for each confirmed or suspected mutagenic impurity including ICH M7 classification (Class 1–5), control strategy (Option 1–4 per ICH M7 Section 8.1: Option 1, test in the drug substance specification; Option 2, test in a raw material, starting material or intermediate specification, or as an in-process control, at or below the acceptable limit; Option 3, test upstream with a higher limit supported by fate and purge understanding; Option 4, control through process understanding and purge without testing), and the justified acceptance limit.',
             required: false,
             visibleWhen: { field: 'mutagenic_impurity_assessment', operator: 'eq', value: true },
             validation: { maxLength: 5000 },
@@ -779,14 +779,14 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             required: true,
             visibleWhen: { field: 'mutagenic_impurity_assessment', operator: 'eq', value: true },
             options: [
-              { value: 'option_1', label: 'Option 1 — Avoid (eliminate from process)' },
-              { value: 'option_2', label: 'Option 2 — Control at intermediate step' },
-              { value: 'option_3', label: 'Option 3 — Control in drug substance spec' },
-              { value: 'option_4', label: 'Option 4 — Demonstrate purge (spike & purge studies)' },
-              { value: 'option_5', label: 'Option 5 — Wider limit (LTL, clinical trial)' },
+              { value: 'option_1', label: 'Option 1 — Test in drug substance specification' },
+              { value: 'option_2', label: 'Option 2 — Test in starting material/intermediate specification or as in-process control, at or below the acceptable limit' },
+              { value: 'option_3', label: 'Option 3 — Test upstream with a higher limit, supported by fate and purge understanding' },
+              { value: 'option_4', label: 'Option 4 — Control through process understanding and purge, without testing' },
+              { value: 'option_5', label: 'Less-than-lifetime (LTL) acceptable intake per ICH M7 Section 7.3 (an acceptable-limit basis, not an M7 control option)' },
               { value: 'multiple', label: 'Multiple strategies (per impurity)' },
             ],
-            helpText: 'Primary control strategy for mutagenic impurities per ICH M7(R2) Table 1.',
+            helpText: 'Primary control strategy for mutagenic impurities per ICH M7(R2) Section 8.1 (control options 1–4).',
           },
         ],
         issueChecks: [
@@ -1125,7 +1125,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
         question:
           'Describe the process validation strategy for the drug product.',
         guidance:
-          'Per FDA Process Validation Guidance (2011, updated 2021) and ICH Q8/Q10, process validation follows three stages: Stage 1 (Process Design), Stage 2 (Process Qualification — PPQ), and Stage 3 (Continued Process Verification). Commercial processes must be validated before NDA/BLA approval.',
+          'Per FDA Process Validation Guidance (January 2011, Revision 1) and ICH Q8/Q10, process validation follows three stages: Stage 1 (Process Design), Stage 2 (Process Qualification — PPQ), and Stage 3 (Continued Process Verification). Commercial processes must be validated before NDA/BLA approval.',
         provideExpertFeedback: true,
         fields: [
           {
@@ -1150,7 +1150,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             type: 'text',
             placeholder: 'e.g., 3 planned, 2 completed',
             helpText:
-              'Per FDA guidance, a minimum of 3 consecutive PPQ batches at commercial scale is typically expected, though more may be needed based on process complexity and variability.',
+              'FDA\'s Process Validation guidance (2011) sets no minimum number of PPQ batches. The number must be justified by process understanding and variability, and more may be needed for complex or highly variable processes. Three commercial-scale batches is common industry practice, not an FDA requirement.',
             required: true,
           },
           {
@@ -1180,7 +1180,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             title: 'Process Validation Incomplete at Submission',
             message:
               'FDA expects process performance qualification (PPQ) to be complete before NDA/BLA approval. If PPQ data will not be available, discuss with FDA pre-approval. Include a detailed validation plan with timeline and commitment to complete PPQ prior to commercial distribution.',
-            reference: 'FDA Guidance for Industry: Process Validation — General Principles and Practices (2011, Rev. 2021)',
+            reference: 'FDA Guidance for Industry: Process Validation — General Principles and Practices (January 2011, Rev. 1)',
           },
           {
             id: 'cmc_validation_not_started',
@@ -1189,7 +1189,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             title: 'Process Validation Not Initiated',
             message:
               'Process validation has not yet been initiated. For NDA/BLA submissions, begin Stage 1 process design activities early in development and plan Stage 2 PPQ well before the target submission date. Late initiation of validation is a common cause of submission delays.',
-            reference: 'FDA Guidance for Industry: Process Validation (2011, Rev. 2021), ICH Q10',
+            reference: 'FDA Guidance for Industry: Process Validation (January 2011, Rev. 1), ICH Q10',
           },
         ],
         defaultNext: 'in_process_controls',

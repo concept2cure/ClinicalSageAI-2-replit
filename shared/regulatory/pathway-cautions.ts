@@ -416,9 +416,9 @@ const CAUTION_RULES: readonly CautionRule[] = [
     availability: 'needs_basis',
     when: f => f.deviceClass === 'I' || f.deviceClass === 'II',
     reason: f =>
-      `Premarket approval is the route for a Class III device, and you have said Class ${f.deviceClass}. A PMA for a ` +
-      'device of a lower class is answerable — a transitional device, or one reclassified into Class II, for which ' +
-      'FDA has called for premarket approval — but that is a basis the application has to state.',
+      `Premarket approval is the route for a Class III device, and you have said Class ${f.deviceClass}. A ` +
+      'Class I or II device does not need one; a transitional device (FD&C Act section 520(l)) is Class III, and ' +
+      'a PMA for this device needs that basis, or a corrected class, stated.',
     authority: 'FD&C Act 515; 21 CFR 814.1(c)',
   },
 ];

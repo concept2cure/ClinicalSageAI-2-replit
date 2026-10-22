@@ -280,7 +280,7 @@ export function createDevice510kFlow(): FlowDefinition {
             id: 'contains_dehp',
             label: 'Does the device contain DEHP or other phthalates?',
             type: 'yes_no',
-            helpText: 'DEHP and phthalates require labeling per 21 CFR 801.437',
+            helpText: 'FDA guidance recommends disclosing DEHP in PVC devices; this is a recommendation, not a 21 CFR 801 labeling requirement. 21 CFR 801.437 applies to natural rubber latex only.',
           },
           {
             id: 'mri_compatibility',
@@ -622,7 +622,7 @@ export function createDevice510kFlow(): FlowDefinition {
         question:
           'Describe the biocompatibility evaluation for this device.',
         guidance:
-          'ISO 10993-1 provides a framework for biological evaluation of medical devices based on the nature and duration of patient contact. The evaluation should consider the device materials, contact type (surface, external communicating, or implant), and contact duration. FDA\'s 2020 guidance on ISO 10993-1 emphasizes a risk-based approach and encourages chemical characterization before biological testing.',
+          'ISO 10993-1 provides a framework for biological evaluation of medical devices based on the nature and duration of patient contact. The evaluation should consider the device materials, contact type (surface, external communicating, or implant), and contact duration. FDA\'s guidance on ISO 10993-1 (Use of International Standard ISO 10993-1, September 2023) emphasizes a risk-based approach and encourages chemical characterization before biological testing.',
         fields: [
           {
             id: 'biocompat_required',
@@ -672,7 +672,7 @@ export function createDevice510kFlow(): FlowDefinition {
             options: [
               { value: 'cytotoxicity', label: 'Cytotoxicity (ISO 10993-5)' },
               { value: 'sensitization', label: 'Sensitization (ISO 10993-10)' },
-              { value: 'irritation', label: 'Irritation (ISO 10993-10)' },
+              { value: 'irritation', label: 'Irritation (ISO 10993-23)' },
               { value: 'systemic_toxicity', label: 'Systemic Toxicity (ISO 10993-11)' },
               { value: 'genotoxicity', label: 'Genotoxicity (ISO 10993-3)' },
               { value: 'implantation', label: 'Implantation (ISO 10993-6)' },
@@ -812,7 +812,7 @@ export function createDevice510kFlow(): FlowDefinition {
         question:
           'Provide detailed biocompatibility information for this extended-contact device.',
         guidance:
-          'Devices with prolonged (>24 hours) or permanent contact require an expanded biological evaluation per ISO 10993-1 Table A.1. This typically includes systemic toxicity, subacute/subchronic toxicity, genotoxicity, and (for implants) implantation studies. FDA\'s 2020 guidance emphasizes using chemical characterization (ISO 10993-18) as a risk-based approach before conducting animal studies.',
+          'Devices with prolonged (>24 hours) or permanent contact require an expanded biological evaluation per ISO 10993-1 Table A.1. This typically includes systemic toxicity, subacute/subchronic toxicity, genotoxicity, and (for implants) implantation studies. FDA\'s ISO 10993-1 guidance (September 2023) emphasizes using chemical characterization (ISO 10993-18) as a risk-based approach before conducting animal studies.',
         fields: [
           {
             id: 'biological_evaluation_plan',
@@ -1043,7 +1043,7 @@ export function createDevice510kFlow(): FlowDefinition {
         question:
           'Describe the quality management system and design controls for this device.',
         guidance:
-          'While the 510(k) submission does not require a full QMS audit, FDA may request evidence of design controls per 21 CFR 820.30 and quality system compliance. Design control documentation including design inputs, outputs, verification, validation, and design review records should be available. ISO 13485 certification demonstrates QMS compliance.',
+          'While the 510(k) submission does not require a full QMS audit, FDA may request evidence of design and development controls under the Quality Management System Regulation (21 CFR Part 820, effective February 2, 2026), which incorporates ISO 13485:2016 by reference (design and development is clause 7.3; formerly 21 CFR 820.30), and of quality system compliance. Design control documentation including design inputs, outputs, verification, validation, and design review records should be available. An ISO 13485 certificate can support, but does not substitute for, compliance with 21 CFR Part 820.',
         fields: [
           {
             id: 'iso_13485_certified',
@@ -1059,7 +1059,7 @@ export function createDevice510kFlow(): FlowDefinition {
           },
           {
             id: 'design_controls_21cfr820',
-            label: 'Design Controls per 21 CFR 820.30 Documented',
+            label: 'Design and Development Controls per ISO 13485:2016 Clause 7.3 (21 CFR 820.10, QMSR; formerly 820.30) Documented',
             type: 'yes_no',
             required: true,
           },
@@ -1091,7 +1091,7 @@ export function createDevice510kFlow(): FlowDefinition {
             id: 'supplier_controls',
             label: 'Supplier Controls Established',
             type: 'yes_no',
-            helpText: 'Per 21 CFR 820.50 — purchasing controls for critical suppliers',
+            helpText: 'Per ISO 13485:2016 clause 7.4 (purchasing), as required by the QMSR at 21 CFR 820.10 (formerly 21 CFR 820.50) — purchasing controls for critical suppliers',
           },
         ],
         branches: [
@@ -1115,7 +1115,7 @@ export function createDevice510kFlow(): FlowDefinition {
         question:
           'Let\'s document the software aspects of the device. What is the software classification and is this a Software as a Medical Device (SaMD)?',
         guidance:
-          'FDA\'s 2023 guidance on Content of Premarket Submissions for Device Software Functions updates the documentation requirements based on IEC 62304 software safety classification. SaMD (Software as a Medical Device) has specific regulatory considerations under the IMDRF framework. The software safety classification (Class A, B, or C) determines the required level of documentation.',
+          'FDA\'s 2023 guidance on Content of Premarket Submissions for Device Software Functions replaces the former Level of Concern with a Documentation Level, Basic or Enhanced, which determines the software documentation required in the submission. Enhanced Documentation applies where a failure or flaw of the device software function could present a hazardous situation with a probable risk of death or serious injury (assessed prior to implementation of risk control measures); Basic Documentation applies otherwise. SaMD (Software as a Medical Device) has specific regulatory considerations under the IMDRF framework. The IEC 62304 software safety classification (Class A, B, or C) determines the rigor of the software lifecycle processes under that standard; it is a separate determination from the FDA Documentation Level.',
         fields: [
           {
             id: 'is_samd',
@@ -1188,7 +1188,7 @@ export function createDevice510kFlow(): FlowDefinition {
             severity: 'warning',
             title: 'Software Without IEC 62304 Classification',
             message:
-              'All software in medical devices should be classified per IEC 62304. The software safety classification determines the level of documentation and process rigor required.',
+              'All software in medical devices should be classified per IEC 62304. The software safety classification determines the process rigor required under IEC 62304; the FDA submission documentation (Basic or Enhanced Documentation Level) is determined separately.',
             reference: 'IEC 62304:2006+AMD1:2015',
           },
         ],
@@ -1201,7 +1201,7 @@ export function createDevice510kFlow(): FlowDefinition {
         question:
           'Describe the software architecture and cybersecurity measures.',
         guidance:
-          'FDA\'s 2023 guidance "Cybersecurity in Medical Devices: Quality System Considerations and Content of Premarket Submissions" requires comprehensive cybersecurity documentation including a Software Bill of Materials (SBOM), threat modeling, and vulnerability management. This applies to all devices with software that connect to networks or exchange data.',
+          'FDA\'s guidance "Cybersecurity in Medical Devices: Quality System Considerations and Content of Premarket Submissions" (June 2025), which implements FD&C Act section 524B, recommends comprehensive cybersecurity documentation including threat modeling and vulnerability management; for cyber devices (devices that include software, can connect to the internet, and could be vulnerable to cybersecurity threats), section 524B requires a Software Bill of Materials (SBOM) and related cybersecurity information.',
         fields: [
           {
             id: 'architecture_description',
@@ -1215,7 +1215,7 @@ export function createDevice510kFlow(): FlowDefinition {
             label: 'Software Bill of Materials (SBOM) Prepared',
             type: 'yes_no',
             required: true,
-            helpText: 'Required per FDA 2023 Cybersecurity Guidance for connected devices',
+            helpText: 'Required for cyber devices under FD&C Act section 524B; see FDA Cybersecurity in Medical Devices guidance (June 2025)',
           },
           {
             id: 'network_connected',
@@ -1272,8 +1272,8 @@ export function createDevice510kFlow(): FlowDefinition {
             severity: 'critical',
             title: 'SaMD/Connected Device Without Cybersecurity Assessment',
             message:
-              'FDA\'s 2023 Cybersecurity Guidance requires a comprehensive cybersecurity risk assessment for all devices with software that connect to networks or exchange data. Submissions without adequate cybersecurity documentation will be refused.',
-            reference: 'FDA Guidance: Cybersecurity in Medical Devices (2023)',
+              'FD&C Act section 524B (for cyber devices) and FDA\'s Cybersecurity in Medical Devices guidance (June 2025) call for a comprehensive cybersecurity risk assessment for devices with software that connect to networks or exchange data. Submissions without adequate cybersecurity documentation will be refused.',
+            reference: 'FDA Guidance: Cybersecurity in Medical Devices (June 2025); FD&C Act Section 524B',
           },
           {
             id: 'no_sbom_check',
@@ -1281,8 +1281,8 @@ export function createDevice510kFlow(): FlowDefinition {
             severity: 'warning',
             title: 'No Software Bill of Materials (SBOM)',
             message:
-              'FDA\'s 2023 Cybersecurity Guidance requires a Software Bill of Materials (SBOM) for devices with software. The SBOM must list all software components including commercial, open-source, and off-the-shelf (OTS) software.',
-            reference: 'FDA Guidance: Cybersecurity in Medical Devices (2023)',
+              'FD&C Act section 524B(b)(3) requires a Software Bill of Materials (SBOM) for cyber devices, as described in FDA\'s Cybersecurity in Medical Devices guidance (June 2025). The SBOM must list all software components including commercial, open-source, and off-the-shelf (OTS) software.',
+            reference: 'FDA Guidance: Cybersecurity in Medical Devices (June 2025); FD&C Act Section 524B(b)(3)',
           },
         ],
         defaultNext: 'software_vv',
@@ -1805,7 +1805,7 @@ export function createDevice510kFlow(): FlowDefinition {
             id: 'mdr_reporting_timeframes',
             label: 'MDR Reporting Timeframes Documented',
             type: 'yes_no',
-            helpText: '5-day reports, 30-day reports, and annual certification',
+            helpText: '5-day reports, 30-day reports, and supplemental reports (21 CFR 803.53, 803.50, 803.56)',
           },
           {
             id: 'corrections_removals_plan',
@@ -1854,7 +1854,7 @@ export function createDevice510kFlow(): FlowDefinition {
         question:
           'For this implantable device, provide additional information required by FDA.',
         guidance:
-          'Implantable devices face heightened scrutiny from FDA and require additional documentation. This includes fatigue testing, corrosion testing (for metallic implants), MRI safety assessment, explant analysis protocols, and patient implant cards. Long-term biocompatibility and mechanical performance must be demonstrated for the expected implant duration.',
+          'Implantable devices face heightened scrutiny from FDA and require additional documentation. This includes fatigue testing, corrosion testing (for metallic implants), MRI safety assessment, explant analysis protocols, and (for the EU MDR) patient implant cards. Long-term biocompatibility and mechanical performance must be demonstrated for the expected implant duration.',
         fields: [
           {
             id: 'expected_implant_duration',
@@ -1899,7 +1899,7 @@ export function createDevice510kFlow(): FlowDefinition {
             label: 'Patient Implant Card Prepared',
             type: 'yes_no',
             required: true,
-            helpText: 'Required for implantable devices to provide to patients',
+            helpText: 'Required under EU MDR Article 18 for implantable devices. No general FDA requirement; may be expected where device-specific special controls or FDA guidance call for patient information (e.g. MR safety information for implants)',
           },
           {
             id: 'explant_retrieval_program',
