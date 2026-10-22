@@ -1,0 +1,3 @@
+ ✓ client/src/concept2cure/v2/__tests__/dialogButtonHoverSettles.test.ts > dialog buttons hold still under a resting pointer > finds the hover rules it holds, so an empty scan is not a pass 39ms
+ ✓ client/src/concept2cure/v2/__tests__/dialogButtonHoverSettles.test.ts > dialog buttons hold still under a resting pointer > a hover rule for a dialog button changes paint only, never the box 31ms
+      Tests  2 passed (2)
