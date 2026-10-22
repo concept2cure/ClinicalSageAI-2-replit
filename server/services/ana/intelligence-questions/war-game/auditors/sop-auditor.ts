@@ -37,13 +37,6 @@ function str(val: unknown): string {
   return String(val).trim();
 }
 
-/** Coerce a value to a number (NaN-safe). */
-function num(val: unknown): number {
-  if (val == null) return 0;
-  const n = Number(val);
-  return Number.isNaN(n) ? 0 : n;
-}
-
 /** Prefixed rule ID for SOP auditor. */
 const rid = (suffix: string) => 'sop_' + suffix;
 
@@ -163,7 +156,7 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'The purpose of this SOP is not clearly stated. Per ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR), procedures must be adequate for their intended use. How do you demonstrate adequacy without a defined purpose?',
       check(answers): WarGameFinding | null {
-        const purpose = str(answers.purpose_statement);
+        const purpose = str(answers.sop_purpose);
         if (purpose.length >= 30) return null;
         return {
           id: rid('004'),
@@ -182,7 +175,7 @@ export function createSopAuditor(): WarGameAuditor {
           recommendation:
             'Write a purpose statement that clearly defines: (1) the objective of the procedure, ' +
             '(2) the regulatory requirement it satisfies, and (3) the expected outcome when the procedure is correctly followed.',
-          relatedFields: ['purpose_statement'],
+          relatedFields: ['sop_purpose'],
         };
       },
     },
@@ -230,7 +223,7 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'This SOP does not define who is responsible for performing each step. Per ICH E6(R3) Principle 10, responsibilities must be clearly assigned. Who performs this procedure, who supervises, and who approves?',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.roles_responsibilities)) return null;
+        if (!isEmpty(answers.responsible_roles)) return null;
         return {
           id: rid('006'),
           dimension: 'completeness',
@@ -249,7 +242,7 @@ export function createSopAuditor(): WarGameAuditor {
           recommendation:
             'Add a Roles and Responsibilities section that specifies: the performing role, the reviewing/verifying role, ' +
             'the approving role, and the Quality Assurance oversight role for this procedure.',
-          relatedFields: ['roles_responsibilities'],
+          relatedFields: ['responsible_roles'],
         };
       },
     },
@@ -298,7 +291,7 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'What happens when personnel deviate from this SOP? I see no deviation handling instructions. Per 21 CFR 211.192, any unexplained discrepancy must be investigated. Show me your deviation process.',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.deviation_handling)) return null;
+        if (!isEmpty(answers.deviation_classification)) return null;
         return {
           id: rid('008'),
           dimension: 'risk_identification',
@@ -316,7 +309,7 @@ export function createSopAuditor(): WarGameAuditor {
           recommendation:
             'Add a Deviation Handling section that either describes the deviation process or references the site deviation SOP. ' +
             'Include instructions for immediate actions, documentation requirements, notification thresholds, and timelines for investigation.',
-          relatedFields: ['deviation_handling'],
+          relatedFields: ['deviation_classification'],
         };
       },
     },
@@ -331,7 +324,7 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'This SOP makes no reference to your CAPA system. Per 21 CFR 820.10 (QMSR), which incorporates ISO 13485:2016 clauses 8.5.2 and 8.5.3 by reference, you are required to establish procedures for corrective and preventive action. How are systemic failures from this process captured and remediated?',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.capa_reference)) return null;
+        if (!isEmpty(answers.corrective_action_triggers)) return null;
         return {
           id: rid('009'),
           dimension: 'regulatory_alignment',
@@ -349,7 +342,7 @@ export function createSopAuditor(): WarGameAuditor {
           recommendation:
             'Add a cross-reference to the site CAPA SOP. Define the criteria for escalating a deviation to a CAPA ' +
             '(e.g., repeat deviations, product impact, patient safety implications) and the responsible roles for initiation.',
-          relatedFields: ['capa_reference'],
+          relatedFields: ['corrective_action_triggers'],
         };
       },
     },
@@ -364,7 +357,8 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'This SOP does not specify training requirements. Under 21 CFR 211.25, personnel must be trained before performing GMP activities. What training is required before an operator can execute this procedure?',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.training_requirements)) return null;
+        // training_required is yes_no: only an explicit "yes" defines training requirements.
+        if (answers.training_required === true) return null;
         return {
           id: rid('010'),
           dimension: 'completeness',
@@ -382,7 +376,7 @@ export function createSopAuditor(): WarGameAuditor {
           recommendation:
             'Define training prerequisites including: required read-and-understand of this SOP, any prerequisite SOPs, ' +
             'hands-on demonstration requirements, initial qualification criteria, and retraining frequency.',
-          relatedFields: ['training_requirements'],
+          relatedFields: ['training_required'],
         };
       },
     },
@@ -397,7 +391,7 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'How do you verify that personnel are competent to perform this procedure? ISO 13485:2016 clause 6.2, incorporated by reference into 21 CFR Part 820 by the QMSR (21 CFR 820.10), requires that training effectiveness be evaluated. Show me your competency evaluation records.',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.competency_assessment)) return null;
+        if (!isEmpty(answers.competency_assessment_method)) return null;
         return {
           id: rid('011'),
           dimension: 'scientific_rigor',
@@ -415,7 +409,7 @@ export function createSopAuditor(): WarGameAuditor {
           recommendation:
             'Define a competency assessment method appropriate to the procedure complexity: written exam, practical demonstration, ' +
             'observed performance, or a combination. Include pass/fail criteria, documentation requirements, and reassessment frequency.',
-          relatedFields: ['competency_assessment'],
+          relatedFields: ['competency_assessment_method'],
         };
       },
     },
@@ -430,8 +424,8 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'What training method is used for this SOP — read-and-understand, classroom, on-the-job, or practical demonstration? Per 21 CFR 211.25 training must be appropriate to the function performed.',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.training_method)) return null;
-        if (isEmpty(answers.training_requirements)) return null;
+        if (!isEmpty(answers.training_methods)) return null;
+        if (answers.training_required !== true) return null;
         return {
           id: rid('012'),
           dimension: 'consistency',
@@ -450,7 +444,7 @@ export function createSopAuditor(): WarGameAuditor {
           recommendation:
             'Specify the training delivery method: read-and-understand, instructor-led classroom, on-the-job training with qualified trainer, ' +
             'practical demonstration, or simulation. Match the modality to the procedure complexity and GMP criticality.',
-          relatedFields: ['training_method', 'training_requirements'],
+          relatedFields: ['training_methods', 'training_required'],
         };
       },
     },
@@ -465,7 +459,7 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'Where is the revision history for this SOP? Per ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR), document changes must be reviewed and approved. I need to see what was changed, when, and by whom for every revision.',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.version_history)) return null;
+        if (!isEmpty(answers.change_history_tracking)) return null;
         return {
           id: rid('013'),
           dimension: 'documentation',
@@ -483,7 +477,7 @@ export function createSopAuditor(): WarGameAuditor {
           recommendation:
             'Add a revision history table documenting: version number, effective date, description of changes, author, and approver for each revision. ' +
             'Reference the change control record number that authorized each revision.',
-          relatedFields: ['version_history'],
+          relatedFields: ['change_history_tracking'],
         };
       },
     },
@@ -498,7 +492,7 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'How are changes to this SOP controlled? ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR) requires procedures for document changes. I see no reference to a change control process. Is this a controlled document?',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.change_control_process)) return null;
+        if (!isEmpty(answers.change_request_process)) return null;
         return {
           id: rid('014'),
           dimension: 'regulatory_alignment',
@@ -517,7 +511,7 @@ export function createSopAuditor(): WarGameAuditor {
           recommendation:
             'Reference the site change control SOP and describe the process for initiating, reviewing, approving, and implementing changes to this document. ' +
             'Include requirements for impact assessment, affected document updates, and retraining.',
-          relatedFields: ['change_control_process'],
+          relatedFields: ['change_request_process'],
         };
       },
     },
@@ -532,7 +526,7 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'Who approved this SOP and through what workflow? Per ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR), documents must be reviewed and approved by designated individuals. Show me your approval chain.',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.approval_workflow)) return null;
+        if (!isEmpty(answers.approval_chain)) return null;
         return {
           id: rid('015'),
           dimension: 'documentation',
@@ -550,7 +544,7 @@ export function createSopAuditor(): WarGameAuditor {
           recommendation:
             'Define the approval workflow specifying: the author/drafter, subject matter expert reviewer(s), QA reviewer, and final approver. ' +
             'For electronic systems, ensure the workflow complies with 21 CFR Part 11 requirements for electronic signatures.',
-          relatedFields: ['approval_workflow'],
+          relatedFields: ['approval_chain'],
         };
       },
     },
@@ -565,7 +559,7 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'When did this SOP become effective? I see no effective date. How do you know that the version in use at the time of a specific batch was the current approved version?',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.effective_date)) return null;
+        if (!isEmpty(answers.sop_effective_date)) return null;
         return {
           id: rid('016'),
           dimension: 'consistency',
@@ -583,7 +577,7 @@ export function createSopAuditor(): WarGameAuditor {
           recommendation:
             'Add an effective date that indicates when this version of the SOP was approved and became the current controlled version. ' +
             'The effective date should be set after all approvals and training have been completed.',
-          relatedFields: ['effective_date'],
+          relatedFields: ['sop_effective_date'],
         };
       },
     },
@@ -598,7 +592,9 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'How often is this SOP reviewed for continued adequacy? No FDA regulation sets a fixed SOP review interval, but ISO 13485:2016 clause 4.2.4 (incorporated by reference in 21 CFR Part 820) requires documents to be reviewed and updated as necessary. What is your review cycle, and can you show me evidence that the last review was conducted on schedule?',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.review_cycle)) return null;
+        // review_frequency is a select; 'as_needed' is no periodic cycle at all.
+        const frequency = str(answers.review_frequency);
+        if (frequency !== '' && frequency !== 'as_needed') return null;
         return {
           id: rid('017'),
           dimension: 'regulatory_alignment',
@@ -617,7 +613,7 @@ export function createSopAuditor(): WarGameAuditor {
           recommendation:
             'Establish a periodic review cycle (typically every 2 years for GMP SOPs, annually for high-risk procedures). ' +
             'Document the review date, reviewer, and outcome (no change needed, revision initiated, or SOP retired).',
-          relatedFields: ['review_cycle'],
+          relatedFields: ['review_frequency'],
         };
       },
     },
@@ -766,7 +762,10 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'Does this SOP operate in isolation? I see no cross-references to related SOPs, forms, or work instructions. How do your operators know which forms to complete or which upstream and downstream procedures apply?',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.related_documents)) return null;
+        // The interview asks for related SOPs and, twice, for associated forms/templates;
+        // the SOP references no related document only when all three are blank.
+        if (!isEmpty(answers.cross_reference_sops) || !isEmpty(answers.forms_and_templates) ||
+            !isEmpty(answers.associated_forms_templates)) return null;
         return {
           id: rid('022'),
           dimension: 'completeness',
@@ -784,7 +783,7 @@ export function createSopAuditor(): WarGameAuditor {
           recommendation:
             'Add a Related Documents section listing all associated SOPs, work instructions, forms, templates, specifications, ' +
             'and regulatory guidance that personnel need to reference when executing this procedure.',
-          relatedFields: ['related_documents'],
+          relatedFields: ['cross_reference_sops', 'forms_and_templates', 'associated_forms_templates'],
         };
       },
     },
@@ -799,7 +798,7 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'What is the scope of this SOP? I cannot determine what processes are included and, more importantly, what is excluded. An SOP with unclear boundaries leads to gaps and overlaps with other procedures.',
       check(answers): WarGameFinding | null {
-        const scope = str(answers.process_scope);
+        const scope = str(answers.sop_scope_description);
         if (scope.length >= 30) return null;
         return {
           id: rid('023'),
@@ -819,7 +818,7 @@ export function createSopAuditor(): WarGameAuditor {
           recommendation:
             'Define the scope clearly, including: what processes, equipment, and products are covered, ' +
             'what is explicitly excluded, the start and end points of the procedure, and any limitations or preconditions.',
-          relatedFields: ['process_scope'],
+          relatedFields: ['sop_scope_description'],
         };
       },
     },
@@ -834,11 +833,11 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'Does this SOP involve electronic records or electronic signatures? If so, where are your 21 CFR Part 11 controls — audit trails, access controls, and electronic signature requirements?',
       check(answers): WarGameFinding | null {
-        const regs = str(answers.applicable_regulations).toLowerCase();
-        if (regs.includes('part 11') || regs.includes('part11') || regs.includes('11.10')) return null;
+        const regs = Array.isArray(answers.applicable_regulations) ? answers.applicable_regulations.map(String) : [];
+        if (regs.includes('21_cfr_11')) return null;
         // Only flag if the SOP involves electronic systems
         const steps = str(answers.procedure_steps).toLowerCase();
-        const scope = str(answers.process_scope).toLowerCase();
+        const scope = str(answers.sop_scope_description).toLowerCase();
         const hasElectronic =
           steps.includes('electronic') || steps.includes('system') || steps.includes('software') ||
           steps.includes('database') || steps.includes('lims') || steps.includes('edms') ||
@@ -862,7 +861,7 @@ export function createSopAuditor(): WarGameAuditor {
           recommendation:
             'Add 21 CFR Part 11 to the applicable regulations. Address audit trail requirements, user access controls, ' +
             'electronic signature manifest, system validation status, and backup/recovery procedures for electronic records generated by this SOP.',
-          relatedFields: ['applicable_regulations', 'procedure_steps', 'process_scope'],
+          relatedFields: ['applicable_regulations', 'procedure_steps', 'sop_scope_description'],
         };
       },
     },
@@ -877,7 +876,7 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'Which department owns and operates under this SOP? Without departmental attribution, training assignments and management review cannot be properly directed.',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.department)) return null;
+        if (!isEmpty(answers.sop_department)) return null;
         return {
           id: rid('025'),
           dimension: 'consistency',
@@ -895,7 +894,7 @@ export function createSopAuditor(): WarGameAuditor {
           recommendation:
             'Identify the owning department and any supporting departments. This enables proper routing for review cycles, ' +
             'training assignments, and management responsibility for procedure compliance.',
-          relatedFields: ['department'],
+          relatedFields: ['sop_department'],
         };
       },
     },
@@ -948,14 +947,12 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'Your review cycle exceeds 3 years. In my inspection experience, SOPs that are not reviewed regularly become outdated and lead to deviations. What justifies such a long review interval?',
       check(answers): WarGameFinding | null {
-        const cycle = str(answers.review_cycle).toLowerCase();
-        if (isEmpty(cycle)) return null;
-        const years = num(answers.review_cycle);
-        const hasLong =
-          cycle.includes('5 year') || cycle.includes('4 year') ||
-          cycle.includes('5-year') || cycle.includes('4-year') ||
-          (years > 3 && years <= 100);
-        if (!hasLong) return null;
+        // review_frequency is a select; map each fixed cycle to years. 'as_needed'
+        // has no interval (sop_017 owns that case).
+        const cycleYears: Record<string, number> = { annual: 1, biennial: 2, triennial: 3 };
+        const cycle = str(answers.review_frequency);
+        const years = cycleYears[cycle];
+        if (years === undefined || years <= 3) return null;
         return {
           id: rid('027'),
           dimension: 'practical_feasibility',
@@ -964,7 +961,7 @@ export function createSopAuditor(): WarGameAuditor {
           question:
             'Your review cycle exceeds 3 years. In my inspection experience, SOPs that are not reviewed regularly become outdated and lead to deviations. What justifies such a long review interval?',
           observation:
-            `The review cycle is specified as "${str(answers.review_cycle)}". ` +
+            `The review cycle is specified as "${cycle}". ` +
             'Industry best practice and regulatory expectations generally call for SOP review every 2-3 years at most. ' +
             'Longer intervals increase the risk of process drift, outdated regulatory references, and non-compliance.',
           requirement:
@@ -974,7 +971,7 @@ export function createSopAuditor(): WarGameAuditor {
           recommendation:
             'Reduce the review cycle to no more than 2-3 years. High-risk procedures (aseptic processing, sterility testing) ' +
             'should be reviewed annually. Document the rationale for the chosen review interval in the document control SOP.',
-          relatedFields: ['review_cycle'],
+          relatedFields: ['review_frequency'],
         };
       },
     },
@@ -989,10 +986,10 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'Your deviation handling section does not classify deviations by severity. How do you differentiate a minor procedural deviation from one with direct product impact? 21 CFR 211.192 requires that deviations be investigated commensurate with their significance.',
       check(answers): WarGameFinding | null {
-        const deviation = str(answers.deviation_handling).toLowerCase();
-        if (isEmpty(deviation)) return null;
-        if (deviation.includes('critical') || deviation.includes('major') || deviation.includes('minor') ||
-            deviation.includes('severity') || deviation.includes('classification') || deviation.includes('tier')) return null;
+        // deviation_classification is a multi_select of severity levels; empty is sop_008's case.
+        const levels = Array.isArray(answers.deviation_classification) ? answers.deviation_classification.map(String) : [];
+        if (levels.length === 0) return null;
+        if (levels.some((l) => l === 'critical' || l === 'major' || l === 'minor')) return null;
         return {
           id: rid('028'),
           dimension: 'risk_identification',
@@ -1012,7 +1009,7 @@ export function createSopAuditor(): WarGameAuditor {
             'Implement a severity classification system: Critical (direct product quality/patient safety impact), ' +
             'Major (potential impact requiring further assessment), Minor (no product impact, procedural in nature). ' +
             'Define investigation timelines and escalation requirements for each category.',
-          relatedFields: ['deviation_handling'],
+          relatedFields: ['deviation_classification'],
         };
       },
     },
@@ -1027,16 +1024,16 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'This appears to be a clinical operations SOP, yet it does not reference ICH E6(R3). GCP is the foundational regulation for clinical trial conduct. How do you demonstrate GCP compliance without referencing the applicable guideline?',
       check(answers): WarGameFinding | null {
-        const dept = str(answers.department).toLowerCase();
-        const scope = str(answers.process_scope).toLowerCase();
+        const dept = str(answers.sop_department).toLowerCase();
+        const scope = str(answers.sop_scope_description).toLowerCase();
         const title = str(answers.sop_title).toLowerCase();
         const isClinical =
           dept.includes('clinical') || scope.includes('clinical') || scope.includes('trial') ||
           scope.includes('investigator') || title.includes('clinical') || title.includes('gcp') ||
           dept.includes('cro') || scope.includes('subject') || scope.includes('patient');
         if (!isClinical) return null;
-        const regs = str(answers.applicable_regulations).toLowerCase();
-        if (regs.includes('ich e6') || regs.includes('e6(r2)') || regs.includes('gcp')) return null;
+        const regs = Array.isArray(answers.applicable_regulations) ? answers.applicable_regulations.map(String) : [];
+        if (regs.includes('ich_gcp')) return null;
         return {
           id: rid('029'),
           dimension: 'regulatory_alignment',
@@ -1054,7 +1051,7 @@ export function createSopAuditor(): WarGameAuditor {
           recommendation:
             'Add ICH E6(R3) to the applicable regulations. Map specific GCP requirements to the relevant procedure steps ' +
             'to demonstrate that the SOP fulfills its intended GCP obligations.',
-          relatedFields: ['applicable_regulations', 'department', 'process_scope', 'sop_title'],
+          relatedFields: ['applicable_regulations', 'sop_department', 'sop_scope_description', 'sop_title'],
         };
       },
     },
@@ -1069,11 +1066,10 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'When this SOP is revised, how do you ensure all affected personnel are retrained on the new version? I need to see the linkage between SOP revisions and retraining records. Per 21 CFR 211.25, training must be current.',
       check(answers): WarGameFinding | null {
-        if (isEmpty(answers.training_requirements)) return null;
-        const changeControl = str(answers.change_control_process).toLowerCase();
-        if (changeControl.includes('retrain') || changeControl.includes('re-train') ||
-            changeControl.includes('training impact') || changeControl.includes('training assessment')) return null;
-        if (isEmpty(changeControl)) return null;
+        if (answers.training_required !== true) return null;
+        const triggers = Array.isArray(answers.retraining_triggers) ? answers.retraining_triggers.map(String) : [];
+        if (triggers.length === 0) return null;
+        if (triggers.includes('revision_update')) return null;
         return {
           id: rid('030'),
           dimension: 'documentation',
@@ -1082,8 +1078,8 @@ export function createSopAuditor(): WarGameAuditor {
           question:
             'When this SOP is revised, how do you ensure all affected personnel are retrained on the new version? I need to see the linkage between SOP revisions and retraining records. Per 21 CFR 211.25, training must be current.',
           observation:
-            'The SOP defines training requirements and references a change control process, but the change control description ' +
-            'does not mention retraining or training impact assessment. This gap means that revised SOPs may be issued without ensuring personnel are trained on the changes.',
+            'The SOP requires training and defines retraining triggers, but an SOP revision is not one of them. ' +
+            'This gap means that revised SOPs may be issued without ensuring personnel are trained on the changes.',
           requirement:
             '21 CFR 211.25(a) requires that training be conducted in particular operations the employee performs and in cGMP as it relates to the function. ' +
             'ISO 13485:2016 clause 6.2, incorporated by reference at 21 CFR 820.10 (QMSR), requires documented training. When an SOP is revised, all personnel who execute the procedure must be retrained before the new version becomes effective.',
@@ -1091,7 +1087,7 @@ export function createSopAuditor(): WarGameAuditor {
           recommendation:
             'Include retraining requirements in the change control process. The change control record should include a training impact assessment, ' +
             'identify affected personnel, and track retraining completion before the revised SOP becomes effective.',
-          relatedFields: ['training_requirements', 'change_control_process'],
+          relatedFields: ['training_required', 'retraining_triggers'],
         };
       },
     },
