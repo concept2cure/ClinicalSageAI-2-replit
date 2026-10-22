@@ -77,7 +77,8 @@ export interface CompositionRefusal {
     | 'CMC_MODALITY_OUT_OF_SCOPE'
     | 'CMC_MODALITY_NOT_ESTABLISHED'
     | 'CMC_APPLICATION_OUT_OF_SCOPE'
-    | 'CMC_APPLICATION_NOT_READABLE';
+    | 'CMC_APPLICATION_NOT_READABLE'
+    | 'CMC_PROGRAM_NOT_RECORDED';
   message: string;
   /** What the record established, for the audit row. */
   modality?: SubstanceModality;
@@ -121,6 +122,23 @@ export function applicationNotReadable(): CompositionRefusal {
       `This program's submission could not be read, so whether it files a US IND is not established, and ` +
       `Module 3 is not composed on an unestablished application type — a marketing application's content ` +
       `differs from an IND's. Try again; if it persists, the failure is in the server log.`,
+  };
+}
+
+/**
+ * The project named is not one of the organisation's regulatory programs (a
+ * legacy numeric project, from before programs), so what it files is not
+ * recorded. A settled answer, not a failed read: trying again changes nothing.
+ * It used to reach the boundary as a uuid cast error, answered "could not be
+ * read … try again" for as long as the project existed (2026-10-22).
+ */
+export function programNotRecorded(): CompositionRefusal {
+  return {
+    code: 'CMC_PROGRAM_NOT_RECORDED',
+    message:
+      `This project is not one of this organisation's regulatory programs, so the application it files is not ` +
+      `recorded, and Module 3 is composed here only for a program recorded as filing a US IND. Open the ` +
+      `program this project belongs to and work on its Module 3 there.`,
   };
 }
 

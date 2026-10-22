@@ -654,9 +654,16 @@ describe('submission-package-orchestrator', () => {
     expect(outputs.module3Sections ?? []).toEqual([]);
   });
 
-  it('composes Module 3 for its US IND target', async () => {
-    const { run } = await runOrchestrator(baseInputs);
+  it('composes Module 3 for its US IND target, with the IND’s regional section, not the marketing one', async () => {
+    const { run, outputs } = await runOrchestrator(baseInputs);
     expect(run.steps.find(s => s.key === 'm3.compose')?.status).toBe('complete');
+    /* 21 CFR 312.23(a)(7)'s regional items. The marketing application's
+       3.2.R ('Regional Information — United States (FDA)') was composed into
+       every US package, an IND's included (2026-10-22). */
+    const regional = outputs.module3Sections.find(s => s.sectionKey === '3.2.R.1.US');
+    expect((regional?.structuredPayload as { title?: string } | undefined)?.title).toBe(
+      'Regional Information — United States (FDA IND)',
+    );
   });
 
   it('marks downstream steps stale when an upstream step changes', () => {

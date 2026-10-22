@@ -1626,11 +1626,19 @@ export function composeRegional(
  */
 export function composeFullModule3(
   sourceObjects: CanonicalSource[],
-  region: RegionCode
+  region: RegionCode,
+  /**
+   * What the package files. An IND's US regional section is 21 CFR
+   * 312.23(a)(7)'s, not the marketing application's; without this the
+   * orchestrator composed the marketing 3.2.R into every US package, an IND's
+   * included (2026-10-22, the launch-boundary re-proof's review). The compile
+   * route already passes it (module3-compile.ts).
+   */
+  opts: { applicationType?: string | null } = {},
 ): ComposedSection[] {
   const core = composeModule3FromCanonicalSources(sourceObjects);
   /* The same emission rule the compile route applies — one policy, both paths. */
   const appendices = emittableAppendices(composeAppendices(sourceObjects));
-  const regional = composeRegional(sourceObjects, region);
+  const regional = composeRegional(sourceObjects, region, opts);
   return injectAllCrossReferences([...core, ...appendices, ...regional]);
 }
