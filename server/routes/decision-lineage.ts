@@ -291,7 +291,8 @@ router.get('/verify-chain', async (req: Request, res: Response) => {
       // WO-16B finding 12. The verifier did not run — the store failed to
       // initialise, or the query threw. That is not an integrity failure and
       // it is not compliance; it is an answer nobody has yet. 503, the same
-      // status innovation-routes gives an ownership check that could not run.
+      // status VerificationUnavailableError (server/lib/verification-outcome.ts)
+      // maps a check that could not run to.
       // The reason goes to the log, not the body (ci:server-error-leaks).
       logger.error('chain verification could not run', { scope: result.scope, reason: result.reason });
       return res.status(503).json({
