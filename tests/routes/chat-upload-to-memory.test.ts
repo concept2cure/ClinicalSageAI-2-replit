@@ -3,8 +3,11 @@
  *
  * Drives a real file through the actual `POST /api/chat/upload` handler (via the
  * mounted chat router) and asserts the extracted text lands in the project's
- * memory: the `concept2cure_artifacts` row and the embedded `lumen_data_atoms`
- * atom both carry the document's real content, and the atom is embedded.
+ * memory: the embedded `lumen_data_atoms` atom, keyed to the file's Data Room
+ * source (`cre_source:<id>`), carries the document's real content, and the atom
+ * is embedded. Since 2026-10-17 (19087b9f0, document store consolidation step 3)
+ * the upload writes no `concept2cure_artifacts` copy: the Data Room source is
+ * the file's one record, and this suite pins that no copy comes back.
  *
  * The DB pool and embedding service are stubbed (so no Postgres / OpenAI), but
  * extraction is REAL — extractDocumentText runs end to end:
@@ -150,6 +153,25 @@ async function runUpload(
   return res;
 }
 
+/** A valid governed context, should anything on the upload path consult one. */
+const VALID_GOVERNED_CONTEXT = {
+  contract: {
+    clientTrack: 'biotech',
+    submissionProgram: 'general_ri',
+    persona: 'regulatory',
+    regulatorScope: 'fda',
+    documentClass: 'evidence_memo',
+    readinessGate: 'internal_review',
+    workspaceTarget: 'project',
+    originSurface: 'import_pipeline',
+    recommendationSource: 'report_engine',
+    regulatorIntent: 'evidence_analysis',
+    exportEligibility: { gateChecks: [], blockingReasons: [], readinessOutcome: 'ready' },
+  },
+  validation: { valid: true, errors: [], warnings: [] },
+  resolved: {},
+};
+
 describe('chat upload → extraction → project memory (e2e)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -157,26 +179,10 @@ describe('chat upload → extraction → project memory (e2e)', () => {
     // to return an id so the embedding branch runs.
     mockPoolQuery.mockResolvedValue({ rows: [] });
     mockGetEmbeddingService.mockReturnValue({ embedAtom: mockEmbedAtom });
-    mockResolveGovernedContext.mockReturnValue({
-      contract: {
-        clientTrack: 'biotech',
-        submissionProgram: 'general_ri',
-        persona: 'regulatory',
-        regulatorScope: 'fda',
-        documentClass: 'evidence_memo',
-        readinessGate: 'internal_review',
-        workspaceTarget: 'project',
-        originSurface: 'import_pipeline',
-        recommendationSource: 'report_engine',
-        regulatorIntent: 'evidence_analysis',
-        exportEligibility: { gateChecks: [], blockingReasons: [], readinessOutcome: 'ready' },
-      },
-      validation: { valid: true, errors: [], warnings: [] },
-      resolved: {},
-    });
+    mockResolveGovernedContext.mockReturnValue(VALID_GOVERNED_CONTEXT);
   });
 
-  it('writes a text file’s real content into the artifact and embedded memory atom', async () => {
+  it('writes a text file’s real content into the embedded memory atom of its Data Room source, and no artifact copy', async () => {
     const body = 'Patient enrollment reached 412 of 680 across 14 sites in 3 countries.';
     // Make the atom insert return an id so the embedding path fires.
     mockPoolQuery.mockImplementation((sql: string) =>
@@ -199,19 +205,21 @@ describe('chat upload → extraction → project memory (e2e)', () => {
         // Extraction summary surfaced for the chat UI's "read · N words" chip.
         extractionMethod: 'utf8',
         extractionWords: body.trim().split(/\s+/).length,
+        // The Data Room holds the file: its source is the one record.
+        sourceId: 4242,
+        dataRoom: expect.objectContaining({ recorded: true }),
       }),
     );
+    expect(res.status).not.toHaveBeenCalled();
 
-    // Artifact carries the extracted text (not a filename placeholder).
-    const artifactInsert = findArtifactInsert();
-    expect(artifactInsert).toBeDefined();
-    expect(artifactInsert![1]).toEqual(expect.arrayContaining([expect.stringContaining(body)]));
+    // One record per uploaded file: no concept2cure_artifacts copy beside the source.
+    expect(findArtifactInsert()).toBeUndefined();
 
-    // Memory atom carries the same content → AnA can retrieve it.
+    // The atom carries the extracted content, keyed to the source retrieval cites.
     const atomInsert = findAtomInsert();
     expect(atomInsert).toBeDefined();
-    const atomContent = atomInsert![1][3] as string;
-    expect(atomContent).toContain(body);
+    expect(atomInsert![1][1]).toBe('cre_source:4242');
+    expect(atomInsert![1][3] as string).toContain(body);
 
     // The atom was embedded with the id the insert returned.
     expect(mockEmbedAtom).toHaveBeenCalledWith(4242);
@@ -247,7 +255,7 @@ describe('chat upload → extraction → project memory (e2e)', () => {
     expect(mockEmbedAtom).not.toHaveBeenCalled();
   });
 
-  it('reports extraction status for an org-scoped upload (no project, no artifact)', async () => {
+  it('reports extraction status for an org-scoped upload (no project, no Data Room source)', async () => {
     const body = 'Org scoped note with several words here.';
     const res = await runUpload(
       { originalname: 'org.txt', mimetype: 'text/plain', buffer: Buffer.from(body, 'utf8') },
@@ -261,7 +269,9 @@ describe('chat upload → extraction → project memory (e2e)', () => {
         status: 'ready',
         extractionMethod: 'utf8',
         extractionWords: body.trim().split(/\s+/).length,
-        artifactId: null,
+        // No project open: the file stays a conversation file (PF-07).
+        sourceId: null,
+        dataRoom: expect.objectContaining({ recorded: false }),
       }),
     );
     // No project → no artifact / memory atom insert.

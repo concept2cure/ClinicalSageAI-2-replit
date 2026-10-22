@@ -14,9 +14,21 @@
  * one has to be read first, out of a stream that is deflated and enciphered.
  *
  * Verified against the real templates, and the expectations below were measured
- * from them (pypdf, 2026-09-07): nIVD catalog 212 → `/Names 221 0 R`, which is
- * object-stream entry 1 of ObjStm 272 and holds `/JavaScript 222 0 R`; IVD
- * catalog 227 → `/Names 236 0 R` holding `/JavaScript 237 0 R`.
+ * from them: nIVD catalog 212 → `/Names 221 0 R`, which is object-stream entry
+ * 1 of ObjStm 249 and holds `/JavaScript 222 0 R`; IVD catalog 225 →
+ * `/Names 234 0 R`, entry 1 of ObjStm 337, holding `/JavaScript 235 0 R`.
+ *
+ * Re-measured 2026-10-22 after e1f3fd425 replaced both 510(k) templates with
+ * FDA's current versions. The 2026-09-07 pypdf row (IVD catalog 227 / names 236
+ * / javascript 237; nIVD ObjStm 272) was correct for the templates it measured;
+ * in the replacement IVD file, object 227 is an unrelated compressed stream,
+ * and the nIVD names dictionary moved to ObjStm 249. How: take the last
+ * `startxref` offset, read `/Root N 0 R` from the raw cross-reference-stream
+ * dictionary there (catalog); `readXrefTable(bytes).get(N)` (type 1);
+ * `readIndirectObjectText` on the catalog for `/Names M 0 R`; `readXrefTable`
+ * for M (type 2, `a` = its ObjStm); `readIndirectObjectText` on M for
+ * `/JavaScript K 0 R`. Run as a `npx tsx` script against each template.
+ * Re-measure the same way whenever a template is replaced.
  */
 import { describe, it, expect, beforeAll } from 'vitest';
 import { promises as fs } from 'fs';
@@ -29,8 +41,8 @@ import { appendIncrementalUpdate, readPdfSecurity } from '../fill-official-pdf';
 
 const DIR = process.env.ESTAR_TEMPLATE_DIR ?? 'assets/estar-templates';
 const TEMPLATES = [
-  { label: 'nIVD', file: 'eSTAR-510k-non-ivd.pdf', catalog: 212, names: 221, objstm: 272, javascript: 222 },
-  { label: 'IVD', file: 'eSTAR-510k-ivd.pdf', catalog: 227, names: 236, javascript: 237 },
+  { label: 'nIVD', file: 'eSTAR-510k-non-ivd.pdf', catalog: 212, names: 221, objstm: 249, javascript: 222 },
+  { label: 'IVD', file: 'eSTAR-510k-ivd.pdf', catalog: 225, names: 234, objstm: 337, javascript: 235 },
 ].map((t) => ({ ...t, path: path.resolve(DIR, t.file), exists: fsSync.existsSync(path.resolve(DIR, t.file)) }));
 
 for (const t of TEMPLATES) {
@@ -49,6 +61,8 @@ for (const t of TEMPLATES) {
       expect(table.get(t.catalog)?.type).toBe(1);
       /* The names dictionary is COMPRESSED — that is the whole difficulty. */
       expect(table.get(t.names)?.type).toBe(2);
+      /* ...and it is compressed into the object stream measured above. */
+      expect(table.get(t.names)?.a).toBe(t.objstm);
     });
 
     it('reads a top-level object — the catalog, with its /Names reference', () => {

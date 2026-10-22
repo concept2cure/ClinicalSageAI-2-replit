@@ -15,6 +15,36 @@
 
 > **Stage 2 landed on 2026-10-22** in four slices: A `d69aed032` (OPS-13 Terraform: two vCPUs, stop timeout, init process, heap, autoscaling held at 2 until OPS-07), C `081b17ef4` (one converter limiter, 503 with Retry-After), B `6edbf5c58` (OPS-28, SEC-18) and D, the commit that adds this note (OPS-19). **Step 7 departs from the text above by decision P-43** (`docs/LAUNCH_DEFINITION_OF_DONE.md`): the hosted deployment (an ECS task) refuses every `*_ACCEPT_*` override at boot, a self-hosted install keeps its written acceptances, and there is no CI escape variable, because the CI boots are not ECS tasks. Evidence, and what is not shown (the Stage 5 load test; a local image build, refused by Docker Hub's rate limit, so CI's production-image-boot job is the build proof): [`docs/evidence/MR-03/2026-10-22-stage-2/`](../evidence/MR-03/2026-10-22-stage-2/README.md). The next session starts at Stage 3, and confirms `ci.yml`'s production-image-boot job went green on the push that carried slice D.
 
+> **Stage 3 landed on 2026-10-22** (OPS-16) in three slices:
+>
+> - A `3df1c9d5e`: `/api/tenants` on the runtime pool.
+> - B `e1b0e5390`: the auth schema and the organisation seeds are
+>   `migrations/20261022_auth_schema_and_seeded_organizations.sql`, and the
+>   production boot verifies only, as `app_service`. It was amended the same day
+>   in `edd746936` to drop three duplicate table definitions.
+> - C, the commit that adds this note. `aws_ecs_task_definition.migrate` alone
+>   holds `DATABASE_URL` and `APP_SERVICE_DB_PASSWORD`, with its own execution
+>   role; the API's role reads only the API's secrets. The preflight refuses an
+>   API revision carrying an owner credential, checks and pins the database
+>   task's revision, and derives the migration and the first provision from it.
+>   On an ECS task the boot refuses the same names.
+>
+> **Two departures from the text above.**
+>
+> - Step 2's `ensureCoreTables` DDL stays in that file: on a provisioned
+>   database it creates nothing, and production now runs it verify-only.
+> - Step 5's migrate secrets are the boot secrets plus the owner's, so
+>   deploy-migrate verifies the readiness contract as the API boots.
+>
+> **Also found and fixed:** slice D of Stage 2 had broken `ci:node-runtime`.
+> That stopped every Lint run from `540e00b12` on (correction in the Stage 2
+> README).
+>
+> **Not shown:** anything against AWS. Apply Terraform before the next deploy;
+> the preflight refuses the old shape by name. Evidence:
+> [`docs/evidence/MR-03/2026-10-22-stage-3/`](../evidence/MR-03/2026-10-22-stage-3/README.md).
+> Delivers MR-05 Stage 2 (DATA-03) and Stage 1 steps 2–5.
+
 ## Goal
 
 C2C runs in two AWS environments the founder controls, staging and production, each created by Terraform from this repository and each showing "No changes" on a second plan. Every production release is the exact container image that passed CI and the staging smoke test, promoted by digest, never rebuilt. A failed smoke test rolls the service back on its own. The API task holds only the runtime database role, never the RDS master credential. It is sized so a PDF/A or OCR job cannot starve it into a health-check restart. Long eCTD compiles finish behind the 60-second edge. An auditor can read the apply logs, the run URLs and the image digest for each release and trace production back to a tested commit.

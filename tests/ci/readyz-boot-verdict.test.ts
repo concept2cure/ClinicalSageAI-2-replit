@@ -207,4 +207,10 @@ describe('the auth schema, and the verify-only production boot', () => {
     expect(ensureCoreTables).toHaveBeenCalledWith(undefined, { verifyOnly: true });
   });
 
+  it('elsewhere the boot names no URL: ensureCoreTables uses the owner URL when one is set', async () => {
+    vi.stubEnv('DATABASE_URL', 'postgresql://owner@localhost:5432/dev');
+    await verifyDatabaseConnection(okPool);
+    expect(ensureCoreTables).toHaveBeenCalledWith(undefined, { ownerUrlWhenSet: true });
+  });
+
 });

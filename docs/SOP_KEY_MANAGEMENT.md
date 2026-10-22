@@ -151,14 +151,16 @@ policy and sets the three variables on both task definitions.
 4. Sign one release on staging; export it; file the `payloadSignature` envelope
    and an offline `openssl` verification of it.
 5. Run the audit-chain verifier against production; file the output under
-   `docs/evidence/W3b/<date>/`. The database admits only the API's own tasks
-   (`scripts/ops/ecs-one-off-task.sh` says why), so the verifier runs as a
-   one-off task from the deployed image, through the runner the migration uses,
-   with an operator's credentials (the GitHub deploy role may run only the
-   migrate and provision families):
+   `docs/evidence/W3b/<date>/`. The database admits only the ECS tasks
+   (`scripts/ops/ecs-one-off-task.sh` says why), and the verifier reads
+   `DATABASE_URL`, the owner's credential, which only the database task
+   (`c2c-production-migrate`) carries (MR-03 Stage 3, OPS-16). So it runs as a
+   one-off task derived from that family, from the deployed image, through the
+   runner the migration uses, with an operator's credentials (the GitHub deploy
+   role may run only the migrate and provision families):
    ```sh
    ECS_CLUSTER=c2c-production ECS_API_SERVICE=c2c-production-api \
-   SOURCE_TD_ARN=<the running API task definition revision> CONTAINER_NAME=api \
+   SOURCE_TD_ARN=<the c2c-production-migrate revision the last deploy checked> CONTAINER_NAME=migrate \
    FAMILY=c2c-production-verify-audit-chain \
    IMAGE=<the deployed API image>@sha256:<digest> \
    COMMAND_JSON='["node","dist/ops/verify-audit-chain.mjs","--json"]' \
@@ -184,3 +186,4 @@ policy and sets the three variables on both task definitions.
 | 0.2 | 2026-09-20 | Rewritten against the code. Names every key and env var; marks each section implemented / partial / planned; adds the signer-mode boot gate, the envelope, offline verification and the live steps still owed. |
 | 0.3 | 2026-09-23 | Production signer mode decided: `kms` (§2a). The key, key policy, alias and task-definition variables are written as Terraform (`release_signing.tf`) and validated; not yet applied. §10 steps 1–3 collapse into one apply. |
 | 0.4 | 2026-10-18 | §5: a rotated-out key stays trusted for verification by public-key fingerprint (`CONCEPT2CURE_SIGNER_KMS_VERIFY_KEY_IDS`); before this, the rotation step would have failed every earlier release. §8 and §10 step 5: the audit-chain verifier runs from the production image (`node dist/ops/verify-audit-chain.mjs` as a one-off task); the command named before could not run there. |
+| 0.5 | 2026-10-22 | §10 step 5: the audit-chain verifier derives from the database task (`c2c-production-migrate`, `CONTAINER_NAME=migrate`). It reads `DATABASE_URL`, and since MR-03 Stage 3 (OPS-16) the API task definition carries no owner credential, so a task derived from it could not connect. |

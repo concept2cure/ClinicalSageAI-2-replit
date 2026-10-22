@@ -79,6 +79,66 @@ The work was a convergence. One read, `server/services/c2c/dossier-read.ts`, rep
 | 8/9 | `red-commit-8.txt` | `green-commit-8.txt` | 13, all red (`mutations-commit-8.txt`), including both rejected rules |
 | 8/9 review | `review-commit-8.md`: 11 findings, 3 confirmed | the same | the first draft's rule, as a mutation |
 
+## After landing: sections the old PATCH wrote without a parent
+
+The F23 (8/9) hand-on, closed. `PATCH /api/c2c/documents/:id/sections/:key` inserted a missing section without `parent_key` from `f47d664dae` (2026-05-28) until `f466866fbd`. Such a row reads as a root. The heading the pack files it under then reads as holding nothing, so readiness counts that heading.
+
+### What already exists
+
+An inventory workflow ran at `59105431a9`: five read-only angles, each claim put to a refuter, and a completeness critic.
+
+- **Writers.** Six production statements write `c2c_document_sections`, plus three INSERTs in `20260529_phase9_backfill.sql`.
+  - The scaffold (`scaffold-project-documents.ts:173-186`) and add-a-market (the regional subtree with its ancestors) copy each pack parent verbatim.
+  - The editor write-through and the signature approval update only content or status.
+  - No path writes or keeps NULL on purpose for a key the pack files under a parent. No production statement updates `parent_key`.
+- **The legacy backfill also writes NULL parents.** `20260529` does so for legacy 510(k) and CER rows. Their keys are slugs, not pack keys, and the CER pack is all roots, so the repair does not reach them in practice.
+- **Readers.**
+  - The trees people see nest by the pack's parent, not the row's: the outline route, the editor tree, the Vault and `regionalSubtree`.
+  - The row's parent is read by three: the counted rule (SQL and TypeScript), `dossier-read.ts`'s module grouping for device packs (keys that are not CTD codes), and AnA's `read_governed_document` (raw).
+  - All of them tolerate a parent that names no row.
+- **Triggers.** The table has two, both from `20260528`.
+  - The readiness trigger fires on `UPDATE OF parent_key` and stamps `c2c_documents.updated_at`.
+  - The version snapshot acts only on a content change, so a parent change writes no version and needs no attribution GUC.
+  - No database-level guard refuses an update to a locked or approved row.
+  - `set_updated_at` exists only where `db/migrations/20260526_updated_at_triggers.sql` was run by hand (`scripts/db_migrate.sh`).
+- **Packs.** Every pack writer in the set was replayed in order on PGlite: 86 pack versions, no key listed twice, no self-parent, no dangling parent, no cycle. Each document resolves to exactly one pack row through its composite foreign key.
+- **Repairs.** None exists, and none was deleted: `git log --all --diff-filter=D` on parent_key, reparent, resync, reconcile, backfill, repair, outline sync and scaffold.
+- **Trace convention.** No migration in the set writes an audit row when it rewrites rows. The convention is a dated header note and a `RAISE NOTICE`, which the applier copies into the deploy log.
+
+### What changed
+
+- **`20260528_phase9_document_schema.sql` is amended in place** (Rule 1). A dated note is added to the header and at the repair.
+  - Between the `DROP TRIGGER` and the `CREATE TRIGGER` of the readiness trigger, a DO block files every section whose `parent_key` is NULL under the parent its document's own pack gives it.
+  - The trigger cannot fire there, so no document is stamped. The backfill that follows recounts the figures without touching `updated_at`, as it already does.
+  - `set_updated_at` on the section table is set aside for the one UPDATE where it exists, then put back.
+  - The count goes to the deploy log as a NOTICE.
+- **Only a NULL parent is filled.** A parent already set is not this repair's to change.
+- **These are left alone:** a key the pack lists twice, a key that is its own parent, and a pack whose `required_sections` is not an array. Without that last guard `jsonb_array_elements` raises and the deploy fails.
+- **Locked and approved rows are filed too.** `parent_key` is structure taken from the pack. It is not text, a status or a signature, and no version is written.
+  - No signed digest moves. `server/services/part11/signature-persistence.ts:573-611` hashes a document's id, type, agency, pack version, title and status, and each section's key, version, status and content. It hashes no `parent_key`, `readiness` or `updated_at`.
+  - The stored readiness of a locked or submitted *document* is recounted too, as the commit-8 backfill already does. Readiness is derived and is in no lock snapshot.
+- **Market documents.** The PATCH has never checked filing scope, and a client called it until `981c27b3a7` (2026-10-17) deleted its last caller. So a market document can hold a key outside its own part, for example `2.5`.
+  - The repair files such a row too. Its pack parent is either a heading the market document has no row for (`M2`) or the market's `M3` container (for `3.2.S`).
+  - Neither changes a figure. A parent with no row marks nothing. `M3` already holds `3.2.R`, so it was already a heading.
+  - No tree shows the row: the Vault and the outline cut a market document to its regional subtree of the pack.
+  - A filter on `filing_scope` cannot be put in this block. That column arrives at set index 404 (`20261015e`), and the reference fails a fresh install with 42703 even on empty tables (the inventory critic's probe).
+- **The repair does not require the parent's row to exist.** The canonical writers do not either, and every reader tolerates a parent with no row. With that guard, a heading inserted later as `todo` would be counted again.
+- **Idempotent.** A filed row no longer matches, and with nothing to file the block returns before it sets any trigger aside.
+- **A row `20260529` inserts in the same run is filed on the next replay.** That file runs after this one, and its keys are not pack keys in practice.
+- **A test fixture gains `rule_pack_version`.** `authoringDraftTerminationAccept.pglite.test.ts` builds a narrow `c2c_documents` before it applies the migration, and it already adds the phase-9 columns the real file needs. On the deploy path the column always exists: this file creates it, and the composite foreign key depends on it.
+
+### Red, then green
+
+| | File | Result |
+|---|---|---|
+| Red at `59105431a9` | `red-parent-repair.txt` | The repair case is red on the defect: `expected null to be 'M1'` |
+| Green | `green-parent-repair.txt` | The readiness suite and the contract test, 18/18. Every suite that applies the migration: 37 files. The fixture failure was this change's and is fixed. The two trunk reds fail the same 7 tests with the head migration |
+| Mutations | `mutations-parent-repair.txt` | 9/9 red: no repair; overwriting a set parent; the trigger left in place (it stamps the document); the section stamp not set aside, or left off; no array guard (the deploy raises); a doubled key filed; a self-parent filed; the early return inverted |
+
+**Not measured:** how many rows a deployed database holds. No deployment exists yet (D1). When a deploy files any row, its log carries a NOTICE with the count. No NOTICE means none was filed: the block returns early when nothing matches. The applier sets no `app.rls_enforce`, so the block sees every row, as the commit-8 backfill does.
+
+The inventory's critic read the landed block at `7730e04ab4` and found no defect. It ran `ci:json-operator-types` and `db:sync-manifest:check` besides the gates above, all OK, and four test files, 38/38. The market, digest, locked-document and NOTICE notes above are its findings about this record.
+
 ## Handed on
 
 - **Two trunk reds, not F23's.**
@@ -90,9 +150,9 @@ The work was a convergence. One read, `server/services/c2c/dossier-read.ts`, rep
   - `server/routes/biopharma/ctd.ts` with `server/services/regulatory/ctd-module-structure.ts`: `/api/biopharma/ctd/build-state`, which AnA's BLA tool describes.
   - For L33 (`…01E8btkB`).
 - **The trigger has no DELETE branch.** No production path deletes a section. The replayed backfill corrects a deletion at the next deploy.
-- **Rows the old PATCH path wrote have no `parent_key`.** The path is fixed for new rows only, and nothing repairs the existing ones. Such a row reads as a root, so the heading above it can still be counted. The fix is a repair from the pack, a write to governed rows, and it is left for its own change.
-- **Denominators shown beside the figure.** AnA's `read_governed_document` says "Outline with N sections" and the editor's tree header says "N sections". Both count every outline row, beside a figure that leaves empty headings out. Owner: the AnA and editor lanes.
-- **`server/services/ectd/leaf-source-resolver.ts`** comments still say the status set mirrors `c2c_recompute_document_readiness()`. It is now in `c2c_document_counted_readiness()`. The contract test's regex still finds it.
+- ~~**Rows the old PATCH path wrote have no `parent_key`.**~~ Closed: a replay files them under the parent their own pack gives them ("After landing", above).
+- ~~**Denominators shown beside the figure.**~~ Closed by `dfe94a3002` (another lane, evidence `../ana-outline-denominator/`): AnA's outline read states the counted denominator. Its editor half does not apply, because no editor file draws the figure beside its "N sections".
+- ~~**`server/services/ectd/leaf-source-resolver.ts`** comments named the old function.~~ Closed in `59105431a9`: it and two test headers name `c2c_document_counted_readiness()` and the counted sections.
 - **`notOffered` on the scoped list** is still never sent (F18's hand-on).
 
 ## Not doing (from the design)

@@ -121,20 +121,21 @@ const rules: AuditRule[] = [
     title: 'Boxed Warning Missing When Required',
     question: 'The product has known serious risks that may warrant a boxed warning, yet none is included. Can the sponsor justify the absence of a boxed warning given the safety profile?',
     check(answers) {
-      const hasSerious = answers.serious_risks === true || answers.serious_risks === 'yes' || answers.serious_risks === 'Yes';
-      if (hasSerious && isBlank(answers.boxed_warning_text)) {
+      // 2026-10-22: read the interview's own determination (boxed_warning_required),
+      // not `serious_risks`, which the labeling interview does not ask.
+      if (onPrescribingPath(answers) && answers.boxed_warning_required === 'yes' && isBlank(answers.boxed_warning_text)) {
         return finding(
           this.id,
           this.dimension,
           'critical',
           this.title,
           this.question,
-          'Serious risks are documented but no boxed warning is included in the labeling.',
+          'A boxed warning is stated to be required, but no boxed warning text is included in the labeling.',
           // 2026-10-15: attributed this criterion to 21 CFR 201.57(c)(1), which sets the box's content and format.
           'Per FDA guidance (2011) on the Warnings and Precautions, Contraindications and Boxed Warning sections (cited by title), a boxed warning is warranted when there is an adverse reaction so serious relative to the drug\'s benefit that it is essential to consider in deciding whether to prescribe the drug.',
           '21 CFR 201.57(c)(1); 21 CFR 201.80(e); FDA guidance (2011), Warnings and Precautions, Contraindications, and Boxed Warning Sections of Labeling (title only)',
           'Evaluate whether the identified serious risks meet the threshold for a boxed warning. If so, draft the warning using the format prescribed by 21 CFR 201.57(c)(1) and include it in both Highlights and Full Prescribing Information.',
-          ['boxed_warning_text', 'serious_risks', 'boxed_warning_required'],
+          ['boxed_warning_required', 'boxed_warning_text'],
         );
       }
       return null;
@@ -364,8 +365,9 @@ const rules: AuditRule[] = [
     title: 'Medication Guide Required but Not Provided',
     question: 'This product meets the criteria for requiring a Medication Guide under 21 CFR 208, yet none has been submitted. How does the sponsor plan to fulfill the patient communication requirements?',
     check(answers) {
-      const medGuideRequired = answers.medication_guide_required === true || answers.medication_guide_required === 'yes' || answers.medication_guide_required === 'Yes';
-      if (medGuideRequired && isBlank(answers.medication_guide)) {
+      // 2026-10-22: `medication_guide` is not asked; the interview asks its status.
+      const status = String(answers.medication_guide_status ?? '');
+      if (isYes(answers.medication_guide_required) && (status === '' || status === 'not_started')) {
         return finding(
           this.id,
           this.dimension,
@@ -376,7 +378,7 @@ const rules: AuditRule[] = [
           'Under 21 CFR 208.1, a Medication Guide is required when FDA determines that patient labeling could help prevent serious adverse effects, the drug has serious risks relative to benefits, or patient adherence to directions is crucial to effectiveness.',
           '21 CFR 208.1; 21 CFR 208.24; FDA Guidance: Useful Written Consumer Medication Information (2006)',
           'Develop a Medication Guide conforming to 21 CFR 208.20 formatting requirements, written in patient-friendly language at an 8th-grade reading level, covering indications, important safety information, dosing instructions, and what to avoid.',
-          ['medication_guide_required', 'medication_guide', 'serious_risks'],
+          ['medication_guide_required', 'medication_guide_status'],
         );
       }
       return null;
@@ -744,8 +746,11 @@ const rules: AuditRule[] = [
     title: 'REMS Required but No Medication Guide',
     question: 'This product has a Risk Evaluation and Mitigation Strategy (REMS) requirement, but no Medication Guide has been developed as part of the REMS. A Medication Guide is a common REMS element for patient communication. How does the sponsor intend to ensure patients receive adequate risk information?',
     check(answers) {
-      const remsRequired = answers.rems_required === true || answers.rems_required === 'yes' || answers.rems_required === 'Yes';
-      if (remsRequired && isBlank(answers.medication_guide)) {
+      // 2026-10-22: read the interview's Medication Guide answers, not the unasked `medication_guide`.
+      const status = String(answers.medication_guide_status ?? '');
+      const noMedGuide = isNo(answers.medication_guide_required)
+        || (isYes(answers.medication_guide_required) && (status === '' || status === 'not_started'));
+      if (isYes(answers.rems_required) && noMedGuide) {
         return finding(
           this.id,
           this.dimension,
@@ -756,7 +761,7 @@ const rules: AuditRule[] = [
           'Under FDCA Section 505-1 and 21 CFR 208, FDA may require a Medication Guide as an element of a REMS to ensure patients are informed of serious risks. Most REMS programs include a Medication Guide or communication plan.',
           'FDCA Section 505-1; 21 CFR 208; FDA Guidance: Format and Content of Proposed REMS (2009)',
           'Develop a Medication Guide as a REMS element, or justify why alternative ETASU (Elements to Assure Safe Use) are sufficient for patient risk communication. Include the REMS assessment timeline.',
-          ['rems_required', 'medication_guide', 'serious_risks'],
+          ['rems_required', 'medication_guide_required', 'medication_guide_status'],
         );
       }
       return null;

@@ -2531,14 +2531,15 @@ jobs:
           exit-code: '1'
           format: table
           skip-dirs: node_modules
-          # DS002 (image runs as root) is excepted for this one file alone: a
-          # vendored skill's own CI image, never built, published or deployed
-          # here (Dockerfile.optimized runs as appuser). Every other Dockerfile
-          # is checked. .trivyignore could only drop DS002 for the whole tree.
-          # Also the D1 document-runtime evidence record (2eda0ed0f): a verbatim
-          # copy of a build that ran, never built, published or deployed, and not
-          # to be edited (it is evidence). CI run 12734: DS-0002 on it.
-          skip-files: .claude/skills/gstack/.github/docker/Dockerfile.ci,docs/evidence/D1/2026-10-01-image-document-runtime/green/Dockerfile.green
+          # DS002 (image runs as root) is excepted for this one file alone: the
+          # D1 document-runtime evidence record (2eda0ed0f), a verbatim copy of
+          # a build that ran, never built, published or deployed, and not to be
+          # edited (it is evidence). CI run 12734: DS-0002 on it. Every other
+          # Dockerfile is checked. .trivyignore could only drop DS002 for the
+          # whole tree. The gstack skill's Dockerfile.ci exception was dropped
+          # when 7df89f4f7 made .claude/skills/gstack a submodule no workflow
+          # checks out: the file is not in the scanned tree.
+          skip-files: docs/evidence/D1/2026-10-01-image-document-runtime/green/Dockerfile.green
 
   secret-history-scan:
     # Security plan P0-17 / audit INF-22. check-committed-secrets.mjs (Lint)

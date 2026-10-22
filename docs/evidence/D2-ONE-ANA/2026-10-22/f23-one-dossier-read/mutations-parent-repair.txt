@@ -1,0 +1,12 @@
+# F23 hand-on: sections the old PATCH wrote without a parent. Each mutation applied alone to migrations/20260528_phase9_document_schema.sql,
+# the file restored and the restore checked byte for byte after (mutate2.py: a mutation may be several edits applied together).
+# Test: server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts. 9 mutations, 9 red, each on the assertion it names.
+RED  no repair (the head behaviour): 1 test failed | → expected null to be 'M1' // Object.is equality
+RED  the repair overwrites a parent already set: 1 test failed | → expected 'M1' to be 'X.9' // Object.is equality
+RED  the repair runs with the readiness trigger in place (it stamps the document): 1 test failed | → a structural repair is not an edit: expected { sections: +0, documents: 1 } to deeply equal { sections: +0, documents: +0 }
+RED  the section stamp is not set aside: 1 test failed | → a structural repair is not an edit: expected { sections: 1, documents: +0 } to deeply equal { sections: +0, documents: +0 }
+RED  the section stamp is left off: 1 test failed | → the section stamp is back on: expected 'D' to be 'O' // Object.is equality
+RED  no guard for a pack whose sections are not an array: 1 test failed | → cannot extract elements from an object
+RED  a key listed twice is filed anyway: 1 test failed | → expected 'P1' to be null
+RED  a key that is its own parent is filed anyway: 1 test failed | → expected 'S' to be null
+RED  the early return skips work that is due (EXISTS inverted): 1 test failed | → expected null to be 'M1' // Object.is equality

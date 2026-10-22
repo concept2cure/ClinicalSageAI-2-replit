@@ -89,7 +89,7 @@ describe('a war game finds only what its interview could have told it', () => {
    ids: 299 of 435 (from 94). The rest read questions no interview asks. */
 const MIN_ASSESSED: Record<WarGameCategory, number> = {
   protocol: 22, ind: 22, csr: 21, '510k': 24, cer: 22, sop: 23, nda: 15, bla: 33,
-  pma: 22, cmc: 15, risk_management: 17, safety_narrative: 14, labeling: 17, briefing_book: 11, stability: 21,
+  pma: 22, cmc: 15, risk_management: 17, safety_narrative: 14, labeling: 18, briefing_book: 11, stability: 21,
 };
 
 describe('assessable checks only rise', () => {
@@ -127,6 +127,17 @@ describe('a converged rule fires on the case it names, and only then', () => {
 
   it('510(k): a non-sterile device is not missing its sterilization validation', () => {
     expect(ids('510k', 'device_510k', { is_sterile: false })).not.toContain('510k_sterilization_missing');
+  });
+
+  it('labeling: the boxed warning and Medication Guide rules read the interview\'s own answers', () => {
+    const lbl = (a: Record<string, unknown>) => ids('labeling', 'labeling', a);
+    expect(lbl({ boxed_warning_required: 'yes' })).toContain('lbl_no_boxed_warning');
+    expect(lbl({ boxed_warning_required: 'yes', boxed_warning_text: 'WARNING: HEPATOTOXICITY' })).not.toContain('lbl_no_boxed_warning');
+    expect(lbl({ boxed_warning_required: 'no' })).not.toContain('lbl_no_boxed_warning');
+    expect(lbl({ medication_guide_required: 'yes', medication_guide_status: 'not_started' })).toContain('lbl_no_medication_guide');
+    expect(lbl({ medication_guide_required: true, medication_guide_status: 'drafted' })).not.toContain('lbl_no_medication_guide');
+    expect(lbl({ rems_required: 'yes', medication_guide_required: 'no' })).toContain('lbl_rems_no_medguide');
+    expect(lbl({ rems_required: 'yes', medication_guide_required: 'yes', medication_guide_status: 'fda_approved' })).not.toContain('lbl_rems_no_medguide');
   });
 
   it('a "No" to a required yes/no draws its finding (it read as answered before)', () => {

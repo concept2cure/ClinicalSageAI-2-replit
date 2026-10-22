@@ -137,14 +137,32 @@ describe('refusedBeforeWire — refusals inside a gateway that PROVE nothing was
     expect(refusedBeforeWire(err)).toBe(true);
   });
 
+  // 2026-10-22 (MR-02 Stage 1): driven through EMA CESP, not MHRA. Since
+  // e1f3fd425 the guard refuses every unsourced adapter (MHRA among them) with
+  // UnverifiedTransportError before impl.transmit, so MHRA's in-adapter
+  // refusals are unreachable through getGateway; CESP is sourced and reaches
+  // the same requiredAgencyMetadata call before its transmittal row.
   it('is true for the requiredAgencyMetadata refusal raised before the transmittal row', async () => {
-    // Spied, not mocked: the real MHRA transmit runs, and requiredAgencyMetadata
-    // is its first act — before insertTransmittal and before any socket.
-    const wire = vi.spyOn(MhraGateway.prototype, 'transmit');
-    const err = await failureOf(getGateway('uk', 'mhra_gateway').transmit(request({ metadata: { applicationId: 'PL12345' } })));
+    // Spied, not mocked: the real CESP transmit runs, and requiredAgencyMetadata
+    // precedes createTransmittalRow and any socket.
+    dbCalls.length = 0;
+    const wire = vi.spyOn(EmaCespGateway.prototype, 'transmit');
+    const err = await failureOf(getGateway('ema', 'cesp').transmit(request({ metadata: { applicationId: 'EMEA/H/C/000000' } })));
     expect(wire).toHaveBeenCalledTimes(1);
     expect(err).toBeInstanceOf(ValidationError);
     expect(String((err as Error).message)).toMatch(/four-digit eCTD sequence number/);
+    expect(dbCalls.some((t) => /INSERT INTO submission_transmittals/.test(t))).toBe(false);
+    expect(refusedBeforeWire(err)).toBe(true);
+  });
+
+  it('is true for the guard refusal of an unsourced adapter (MHRA), and the adapter is never called', async () => {
+    dbCalls.length = 0;
+    const wire = vi.spyOn(MhraGateway.prototype, 'transmit');
+    const err = await failureOf(getGateway('uk', 'mhra_gateway').transmit(request({ metadata: { applicationId: 'PL12345', sequence: '0000' } })));
+    expect(err).toBeInstanceOf(UnverifiedTransportError);
+    expect((err as UnverifiedTransportError).transmitted).toBe(false);
+    expect(wire).not.toHaveBeenCalled();
+    expect(dbCalls.some((t) => /submission_transmittals/.test(t))).toBe(false);
     expect(refusedBeforeWire(err)).toBe(true);
   });
 
@@ -206,11 +224,16 @@ vi.mock('../../../db', () => ({
 }));
 
 describe('refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic)', () => {
-  it('is true for a CredentialError raised by a gateway\'s credential check (real MHRA transmit, no credentials)', async () => {
-    for (const k of ['MHRA_STAGING_URL', 'MHRA_STAGING_API_KEY', 'MHRA_STAGING_ORG_ID']) delete process.env[k];
+  // 2026-10-22 (MR-02 Stage 1): EMA CESP, not MHRA — the guard now refuses the
+  // unsourced MHRA adapter before its credential check can run (pinned above).
+  it('is true for a CredentialError raised by a gateway\'s credential check (real CESP transmit, no credentials)', async () => {
+    for (const k of ['EMA_CESP_STAGING_URL', 'EMA_CESP_STAGING_CLIENT_ID', 'EMA_CESP_STAGING_CLIENT_SECRET', 'EMA_CESP_STAGING_ORG_ID']) delete process.env[k];
     dbCalls.length = 0;
-    const err = await failureOf(getGateway('uk', 'mhra_gateway').transmit(request({ metadata: { applicationId: 'PL12345', sequence: '0000' } })));
+    const wire = vi.spyOn(EmaCespGateway.prototype, 'transmit');
+    const err = await failureOf(getGateway('ema', 'cesp').transmit(request({ metadata: { applicationId: 'EMEA/H/C/000000', sequence: '0000' } })));
+    expect(wire).toHaveBeenCalledTimes(1);
     expect(err).toBeInstanceOf(CredentialError);
+    expect((err as CredentialError).missing).toContain('EMA_CESP_STAGING_URL');
     // The gateway recorded its own row as refused before any request.
     expect(dbCalls.some((t) => /UPDATE submission_transmittals/.test(t))).toBe(true);
     expect(refusedBeforeWire(err)).toBe(true);

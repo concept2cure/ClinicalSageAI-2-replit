@@ -56,7 +56,11 @@ export function checkRuntimeContracts({ read = readText, workflows = activeWorkf
   }
 
   const dockerfile = read('Dockerfile.optimized');
-  const baseImages = [...dockerfile.matchAll(/^FROM\s+node:([^\s]+).*$/gm)].map((match) => match[1]);
+  // The tag, apart from the digest each stage is pinned by (MR-03 OPS-19;
+  // scripts/ci/check-image-hardening.mjs requires the pin). A pinned image is
+  // still the version its tag names, and a FROM whose digest is malformed does
+  // not count as a node stage at all.
+  const baseImages = [...dockerfile.matchAll(/^FROM\s+node:([^\s@]+)(?:@sha256:[a-f0-9]{64})?(?:\s.*)?$/gm)].map((match) => match[1]);
   if (baseImages.length !== 2 || baseImages.some((image) => image !== '22-slim')) {
     errors.push('Dockerfile.optimized: builder and production stages must both use node:22-slim');
   }
@@ -131,13 +135,21 @@ function runSelfTest() {
   if (baseline.length > 0) {
     throw new Error(`self-test requires a clean baseline; the repo already violates:\n${baseline.map((e) => `  ${e}`).join('\n')}`);
   }
+  // A mutation that matches nothing proves nothing: fail loudly instead of
+  // checking an unchanged file (this case silently stopped mutating when the
+  // stages were pinned by digest).
+  const replaceOnce = (value, pattern, replacement) => {
+    if (!pattern.test(value)) throw new Error(`self-test mutation ${pattern} matches nothing`);
+    return value.replace(pattern, replacement);
+  };
   const cases = [
     ['package engine downgrade', 'package.json', (value) => value.replace(NODE_ENGINE, '>=20.0.0')],
     ['package engine broadening', 'package.json', (value) => value.replace(NODE_ENGINE, '>=22.0.0')],
     ['lockfile root downgrade', 'package-lock.json', (value) => value.replace(NODE_ENGINE, '>=20.0.0')],
     ['lockfile root broadening', 'package-lock.json', (value) => value.replace(NODE_ENGINE, '>=22.0.0')],
     ['version file downgrade', '.nvmrc', () => '20\n'],
-    ['production container downgrade', 'Dockerfile.optimized', (value) => value.replace('FROM node:22-slim AS production', 'FROM node:20-slim AS production')],
+    ['production container downgrade', 'Dockerfile.optimized', (value) => replaceOnce(value, /^FROM node:22-slim((?:@sha256:[a-f0-9]{64})? AS production)$/m, 'FROM node:20-slim$1')],
+    ['builder container downgrade, digest kept', 'Dockerfile.optimized', (value) => replaceOnce(value, /^FROM node:22-slim(@sha256:[a-f0-9]{64} AS builder)$/m, 'FROM node:20-slim$1')],
     ['deployment runtime downgrade', 'app.yaml', (value) => value.replace('nodejs22', 'nodejs20')],
   ];
   for (const [name, path, mutate] of cases) {

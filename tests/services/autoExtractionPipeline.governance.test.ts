@@ -91,13 +91,15 @@ describe('autoExtractionPipeline governed artifact enforcement', () => {
       },
       resolved: {},
     });
-    mockPoolQuery.mockImplementation((sql: string) => {
+    mockPoolQuery.mockImplementation((sql: string, params?: unknown[]) => {
       const statement = String(sql).toLowerCase();
-      if (statement.includes('select content from concept2cure_artifacts')) {
-        return Promise.resolve({ rows: [{ content: 'Clinical evidence text with section support.' }] });
-      }
-      if (statement.includes('select content, file_path from uploads')) {
-        return Promise.resolve({ rows: [] });
+      // The source read is tenant- and project-scoped: it answers only for the
+      // artifact, organization and project the job was queued under.
+      if (statement.includes('select a.content from concept2cure_artifacts a')) {
+        const scoped = JSON.stringify(params) === JSON.stringify(['file-1', 22, 101]);
+        return Promise.resolve({
+          rows: scoped ? [{ content: 'Clinical evidence text with section support.' }] : [],
+        });
       }
       if (statement.includes('insert into auto_extraction_jobs')) {
         return Promise.resolve({ rows: [] });
