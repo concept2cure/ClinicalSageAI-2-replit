@@ -86,6 +86,10 @@ resource "aws_iam_role" "ecs_task" {
   tags = var.tags
 }
 
+# Object reads and writes under the ARNs given. No s3:ListBucket: it only ever
+# matches a bucket ARN, so on these object ARNs it granted nothing while reading
+# as if it did (MR-03 OPS-26). Listing is granted by the bucket's own policy,
+# conditioned on prefix (modules/compliance-evidence, AnchorWriterListsTheAnchors).
 resource "aws_iam_role_policy" "ecs_task_s3" {
   name = "s3-access"
   role = aws_iam_role.ecs_task.id
@@ -93,7 +97,7 @@ resource "aws_iam_role_policy" "ecs_task_s3" {
     Version = "2012-10-17"
     Statement = [{
       Effect   = "Allow"
-      Action   = ["s3:GetObject", "s3:PutObject", "s3:ListBucket"]
+      Action   = ["s3:GetObject", "s3:PutObject"]
       Resource = var.s3_bucket_arns
     }]
   })

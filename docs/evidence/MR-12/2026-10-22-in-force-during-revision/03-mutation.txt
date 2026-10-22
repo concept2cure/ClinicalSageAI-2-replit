@@ -1,0 +1,12 @@
+# MUTATION: readInForceReleases returns no release for a row under revision (2026-10-22T00:15:03Z)
+ × tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is still the release a member reads for training: v1.0, eligible 32ms
+   → {"error":"You do not have permission to read this authored document.","details":{"code":"QMS_DOCUMENT_VIEW_DENIED"}}: expected 403 to be 200 // Object.is equality
+ × tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is counted in training coverage with its standing receipt 18ms
+   → expected undefined to match object { document_version: '1.0', …(2) }
+ × tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > can still be acknowledged by a member who has not yet read it 54ms
+   → {"error":"You do not have permission to read this authored document.","details":{"code":"QMS_DOCUMENT_VIEW_DENIED"}}: expected 403 to be 201 // Object.is equality
+ × tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is named on the register beside the draft, and counted as effective by readiness 36ms
+   → expected { id: 33, organization_id: 437, …(19) } to match object { version: '2.0', …(2) }
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > when the successor is signed > v2.0 is in force and v1.0 receipts no longer count 158ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 1 passed (5)
