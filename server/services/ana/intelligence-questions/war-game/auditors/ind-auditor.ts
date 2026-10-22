@@ -23,8 +23,16 @@ const rid = (suffix: string) => 'ind_' + suffix;
 function isBlank(value: unknown): boolean {
   if (value === undefined || value === null) return true;
   if (typeof value === 'string') return value.trim().length === 0;
+  if (Array.isArray(value)) return value.length === 0;
   return false;
 }
+
+/** Phases of the interview's `first_study_phase` for which it asks `dose_escalation_plan`. */
+const DOSE_ESCALATION_PHASES = ['phase_1_fih', 'phase_1', 'phase_1b'];
+/** Oral solid forms of the interview's `dosage_form` options. */
+const ORAL_DOSAGE_FORMS = ['tablet', 'capsule'];
+/** Injectable forms of the interview's `dosage_form` options. */
+const INJECTABLE_DOSAGE_FORMS = ['lyophilized'];
 
 function asString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
@@ -90,31 +98,31 @@ const rules: AuditRule[] = [
       'Per 21 CFR 312.23(a)(7)(iv)(b), the composition, manufacture, and control of the drug product must be described. ' +
       'Is the formulation type consistent with the proposed route of administration?',
     check(answers) {
-      const formulation = asString(answers.formulation_type).toLowerCase();
-      const route = asString(answers.route_of_administration).toLowerCase();
-      if (isBlank(answers.formulation_type) || isBlank(answers.route_of_administration)) {
+      // `dosage_form` and `route_of_administration` are selects; they store option values.
+      const formulation = asString(answers.dosage_form);
+      const route = asString(answers.route_of_administration);
+      if (isBlank(answers.dosage_form) || isBlank(answers.route_of_administration)) {
         return finding(
           this.id, this.dimension, 'warning', this.title, this.question,
           'Formulation type or route of administration has not been specified.',
           'The IND must describe the drug product composition and intended route of administration.',
           '21 CFR 312.23(a)(7)(iv)(b)',
           'Specify both the dosage form/formulation type and the route of administration, and ensure they are pharmacologically compatible.',
-          ['formulation_type', 'route_of_administration'],
+          ['dosage_form', 'route_of_administration'],
         );
       }
-      // Detect obvious mismatches
-      const oralForms = ['tablet', 'capsule', 'oral solution', 'oral suspension', 'syrup'];
-      const injectableForms = ['injection', 'infusion', 'lyophilized', 'solution for injection'];
-      const isOralForm = oralForms.some((f) => formulation.includes(f));
-      const isInjectableForm = injectableForms.some((f) => formulation.includes(f));
-      if (isOralForm && route.includes('intravenous')) {
+      // Detect obvious mismatches. 'solution', 'suspension' and 'powder' can be
+      // oral or parenteral, so they are not judged.
+      const isOralForm = ORAL_DOSAGE_FORMS.includes(formulation);
+      const isInjectableForm = INJECTABLE_DOSAGE_FORMS.includes(formulation);
+      if (isOralForm && route === 'iv') {
         return finding(
           this.id, this.dimension, 'critical', 'Formulation-route mismatch detected', this.question,
           `Oral dosage form "${formulation}" is inconsistent with intravenous route of administration.`,
           'The drug product formulation must be appropriate for the intended route per 21 CFR 312.23(a)(7).',
           '21 CFR 312.23(a)(7)(iv)(b); FDA Guidance for Industry: Sterile Drug Products Produced by Aseptic Processing',
           'Reconcile the formulation type with the proposed route. An IV route requires a sterile injectable formulation.',
-          ['formulation_type', 'route_of_administration'],
+          ['dosage_form', 'route_of_administration'],
         );
       }
       if (isInjectableForm && route === 'oral') {
@@ -124,7 +132,7 @@ const rules: AuditRule[] = [
           'The drug product formulation must be appropriate for the intended route.',
           '21 CFR 312.23(a)(7)(iv)(b)',
           'Reconcile the formulation type with the proposed route. An oral route requires an orally bioavailable dosage form.',
-          ['formulation_type', 'route_of_administration'],
+          ['dosage_form', 'route_of_administration'],
         );
       }
       return null;
@@ -174,14 +182,16 @@ const rules: AuditRule[] = [
       'ICH S6(R1) and ICH M3(R2) require toxicology studies in pharmacologically relevant species. ' +
       'What species were used in the pivotal toxicology studies, and what is the scientific justification for their selection?',
     check(answers) {
-      if (isBlank(answers.toxicology_species)) {
+      // `species_used` (multi_select) lists every species of the nonclinical program;
+      // when it is empty, no toxicology species has been identified either.
+      if (isBlank(answers.species_used)) {
         return finding(
           this.id, this.dimension, 'critical', this.title, this.question,
           'No toxicology species have been identified. The reviewer cannot assess whether the nonclinical safety package uses pharmacologically relevant species.',
           'Toxicology studies must be conducted in species that are pharmacologically responsive to the drug candidate. For small molecules, one rodent and one non-rodent species are typically required. For biologics, ICH S6(R1) mandates relevant species.',
           'ICH M3(R2) Section 3; ICH S6(R1) Section 2; 21 CFR 312.23(a)(8)',
           'Identify the toxicology species used and provide a scientific rationale (e.g., target homology data, in vitro cross-reactivity results) demonstrating pharmacological relevance.',
-          ['toxicology_species', 'mechanism_of_action', 'nonclinical_studies_complete'],
+          ['species_used', 'mechanism_of_action', 'glp_tox_completed'],
         );
       }
       return null;
@@ -197,14 +207,16 @@ const rules: AuditRule[] = [
       'Under ICH M3(R2), a gene mutation (Ames) assay supports single-dose first-in-human trials, an assessment of chromosomal damage in a mammalian system is added before multiple-dose trials, and the complete ICH S2(R1) standard battery is completed before Phase 2. ' +
       'Has the sponsor conducted the Ames test, an in vitro chromosomal aberration assay, and an in vivo micronucleus study?',
     check(answers) {
-      if (isBlank(answers.genotoxicity_studies)) {
+      // `genetic_tox_completed` is yes_no. Unanswered is "not addressed"; a "no" is
+      // the interview's own critical issue check (genetic_tox_required).
+      if (asBool(answers.genetic_tox_completed) === null) {
         return finding(
           this.id, this.dimension, 'warning', this.title, this.question,
           'The submission does not address genotoxicity study status. FDA reviewers will expect the ICH S2(R1) standard battery to be completed or a justified deviation.',
           'Under ICH M3(R2), a bacterial reverse mutation (Ames) assay is completed before single-dose first-in-human trials and a mammalian chromosomal damage assessment before multiple-dose trials. The complete ICH S2(R1) standard battery (Option 1: Ames, an in vitro mammalian cell assay and an in vivo assay; or Option 2: Ames and an in vivo assessment in two tissues) is completed before Phase 2.',
           'ICH S2(R1); ICH M3(R2) Section 9; 21 CFR 312.23(a)(8)',
           'Describe the genotoxicity battery conducted (or planned), including assay type, test article concentration ranges, and study outcomes. If any study is deferred, provide the scientific rationale.',
-          ['genotoxicity_studies', 'nonclinical_studies_complete'],
+          ['genetic_tox_completed', 'glp_tox_completed'],
         );
       }
       return null;
@@ -220,15 +232,15 @@ const rules: AuditRule[] = [
       'Per ICH S1A, a carcinogenicity assessment is required for drugs intended for chronic use (> 6 months) or drugs with cause for concern. ' +
       'Has the sponsor addressed whether carcinogenicity studies are required, and if so, what is the plan?',
     check(answers) {
-      const required = asBool(answers.carcinogenicity_required);
-      if (required === null) {
+      // `carcinogenicity_needed` is a select (not_yet | completed | waived), always shown.
+      if (isBlank(answers.carcinogenicity_needed)) {
         return finding(
           this.id, this.dimension, 'warning', this.title, this.question,
           'The sponsor has not addressed whether carcinogenicity studies are required. This will raise questions during FDA review of the nonclinical safety package.',
           'ICH S1A requires sponsors to determine the need for carcinogenicity studies based on treatment duration, patient population, and mechanism of action.',
           'ICH S1A; ICH S1B(R1); 21 CFR 312.23(a)(8)',
           'Provide a carcinogenicity risk assessment addressing ICH S1A criteria. If studies are not required for the initial phase, document the rationale and planned timeline.',
-          ['carcinogenicity_required', 'phase', 'indication'],
+          ['carcinogenicity_needed', 'first_study_phase', 'proposed_indication'],
         );
       }
       return null;
@@ -244,14 +256,17 @@ const rules: AuditRule[] = [
       'FDA Guidance for Industry: Estimating the Maximum Safe Starting Dose requires a systematic approach ' +
       'using NOAEL-based HED calculations. What is the basis for the proposed starting dose, and how was the human equivalent dose derived?',
     check(answers) {
-      if (isBlank(answers.starting_dose_rationale)) {
+      // The interview asks the starting-dose justification (its `starting_dose_justification`
+      // node, whose narrative is `dose_calculation_narrative`) only when the first study is
+      // first-in-human. For any other phase it is not asked, so its absence is not a gap.
+      if (asString(answers.first_study_phase) === 'phase_1_fih' && isBlank(answers.dose_calculation_narrative)) {
         return finding(
           this.id, this.dimension, 'critical', this.title, this.question,
           'No starting dose rationale has been provided. This is a critical deficiency that will likely result in a clinical hold under 21 CFR 312.42(b)(1)(iv).',
           'The starting dose must be justified based on NOAEL from the most sensitive relevant species, converted to human equivalent dose (HED) using appropriate body surface area scaling, and incorporating a safety margin (typically 1/10 HED for small molecules).',
           'FDA Guidance: Estimating the Maximum Safe Starting Dose in Initial Clinical Trials for Therapeutics in Adult Healthy Volunteers (2005); ICH S9 (for oncology); 21 CFR 312.23(a)(8)',
           'Provide a complete starting dose justification including: (1) NOAEL from pivotal toxicology studies, (2) species and study duration, (3) HED calculation with body surface area conversion factors, (4) safety margin applied, (5) rationale for safety margin selection. For oncology, ICH S9 allows alternative approaches such as HNSTD-based calculations.',
-          ['starting_dose_rationale', 'dose_escalation_scheme', 'toxicology_species'],
+          ['dose_calculation_narrative', 'dose_derivation_method', 'first_study_phase'],
         );
       }
       return null;
@@ -267,15 +282,17 @@ const rules: AuditRule[] = [
       'For Phase 1 dose-escalation studies, what scheme will be used (e.g., modified Fibonacci, 3+3, accelerated titration, BOIN)? ' +
       'How are dose-limiting toxicities defined, and what are the stopping rules?',
     check(answers) {
-      const phase = asString(answers.phase).toLowerCase();
-      if ((phase.includes('1') || phase === '') && isBlank(answers.dose_escalation_scheme)) {
+      // `dose_escalation_plan` is shown only for the Phase 1 values of `first_study_phase`;
+      // for any other (or no) phase it is hidden, and blank by design.
+      const phase = asString(answers.first_study_phase);
+      if (DOSE_ESCALATION_PHASES.includes(phase) && isBlank(answers.dose_escalation_plan)) {
         return finding(
           this.id, this.dimension, 'warning', this.title, this.question,
           'No dose escalation scheme has been specified for what appears to be a Phase 1 study. FDA reviewers will require a clear escalation methodology to assess subject safety.',
           'A dose escalation design with pre-specified DLT definitions and stopping rules is expected for first-in-human studies.',
           'FDA Guidance: Estimating the Maximum Safe Starting Dose (2005); FDA Guidance for Industry: Adaptive Design Clinical Trials (2019)',
           'Define the dose escalation scheme, including: (1) escalation methodology, (2) DLT definitions with grading criteria per CTCAE, (3) DLT evaluation window, (4) dose increment rationale, (5) stopping rules for safety.',
-          ['dose_escalation_scheme', 'starting_dose_rationale', 'phase'],
+          ['dose_escalation_plan', 'proposed_starting_dose', 'first_study_phase'],
         );
       }
       return null;
@@ -348,7 +365,16 @@ const rules: AuditRule[] = [
       'ICH Q1A(R2) establishes the requirements for stability testing. What stability data support the proposed ' +
       'shelf life and storage conditions for the investigational drug product?',
     check(answers) {
-      const available = asBool(answers.stability_data_available);
+      // The interview asks availability per condition: `long_term_stability_data` and
+      // `accelerated_stability_data` are selects whose 'none' option means no data.
+      // Data are available when either holds a duration; unavailable when both are
+      // 'none'; otherwise availability has not been addressed.
+      const longTerm = asString(answers.long_term_stability_data);
+      const accelerated = asString(answers.accelerated_stability_data);
+      const available: boolean | null =
+        (longTerm !== '' && longTerm !== 'none') || (accelerated !== '' && accelerated !== 'none') ? true
+          : longTerm === 'none' && accelerated === 'none' ? false
+            : null;
       if (available === false) {
         return finding(
           this.id, this.dimension, 'critical', this.title, this.question,
@@ -356,7 +382,7 @@ const rules: AuditRule[] = [
           'Sufficient stability data must be submitted to support the proposed storage conditions and retest/expiry dating per ICH Q1A(R2) and 21 CFR 312.23(a)(7).',
           'ICH Q1A(R2); ICH Q5C (for biologics); 21 CFR 312.23(a)(7)(iv)(b); FDA Guidance: INDs for Phase 1 Studies of Drugs',
           'Initiate stability studies under ICH conditions (25C/60% RH long-term; 40C/75% RH accelerated). For Phase 1 INDs, a minimum of 1-month accelerated and available real-time data may suffice, but a commitment to ongoing stability testing must be included.',
-          ['stability_data_available', 'drug_product_description'],
+          ['long_term_stability_data', 'accelerated_stability_data', 'proposed_shelf_life'],
         );
       }
       if (available === null) {
@@ -366,7 +392,7 @@ const rules: AuditRule[] = [
           'Stability data are required to support the clinical use period.',
           'ICH Q1A(R2); 21 CFR 312.23(a)(7)',
           'Confirm availability of stability data, including conditions tested, time points, and results summary.',
-          ['stability_data_available'],
+          ['long_term_stability_data', 'accelerated_stability_data'],
         );
       }
       return null;
@@ -411,7 +437,7 @@ const rules: AuditRule[] = [
           'The sponsor must be identified on Form FDA 1571, including name, address, and telephone number. Foreign sponsors must designate a US agent per 21 CFR 312.23(a)(1)(ix).',
           '21 CFR 312.23(a)(1); FDA Form 1571',
           'Provide the sponsor name, address, and contact information. If the sponsor is a foreign entity, identify the US agent.',
-          ['sponsor_name', 'ind_number'],
+          ['sponsor_name', 'previous_ind_number'],
         );
       }
       return null;
@@ -427,14 +453,14 @@ const rules: AuditRule[] = [
       '21 CFR 312.53 requires Form FDA 1572 with a signed statement from each investigator. ' +
       'Are investigator qualifications (CV, training, experience) documented and does the principal investigator meet 21 CFR 312.53 requirements?',
     check(answers) {
-      if (isBlank(answers.investigator_qualifications)) {
+      if (isBlank(answers.pi_qualifications_summary)) {
         return finding(
           this.id, this.dimension, 'warning', this.title, this.question,
           'Investigator qualifications have not been described. Form FDA 1572 and supporting CVs are required for each participating investigator.',
           'Per 21 CFR 312.53(a), the sponsor must select only investigators qualified by training and experience as appropriate experts to investigate the drug. Before an investigator may begin, 312.53(c)(1) requires a signed Form FDA 1572 and 312.53(c)(2) a curriculum vitae or other statement of qualifications — the CV is obtained alongside the 1572, not a field of it. (312.53(c)(4) is the separate financial-disclosure item feeding 21 CFR Part 54.)',
           '21 CFR 312.53; 21 CFR 312.23(a)(6)(iii)(b); FDA Form 1572',
           'Provide investigator qualifications including relevant therapeutic area experience, GCP training certification, and clinical trial experience. Ensure Form 1572 is completed for each site.',
-          ['investigator_qualifications', 'irb_approval_status'],
+          ['pi_qualifications_summary', 'fda_1572_status', 'irb_status'],
         );
       }
       return null;
@@ -450,25 +476,17 @@ const rules: AuditRule[] = [
       '21 CFR 312.23(a)(1)(iv) requires a commitment that an IRB complying with 21 CFR Part 56 will be responsible for the initial and continuing review and approval of each study. ' +
       'What is the current status of IRB review and approval at each proposed clinical site?',
     check(answers) {
-      const status = asString(answers.irb_approval_status).toLowerCase();
-      if (isBlank(answers.irb_approval_status)) {
+      // `irb_status` is a select (approved | pending | not_submitted). It has no
+      // denied/rejected option, so the interview cannot report a denial; that branch
+      // was removed rather than kept as a check that can never fire.
+      if (isBlank(answers.irb_status)) {
         return finding(
           this.id, this.dimension, 'warning', this.title, this.question,
           'IRB approval status has not been specified. While IRB approval is not required at IND submission, the FDA must be informed of the IRB status before subjects are enrolled.',
           '21 CFR 56 requires IRB review and approval before initiation of research involving human subjects. 21 CFR 312.23(a)(1)(iv) requires a commitment that an IRB complying with 21 CFR Part 56 will be responsible for the initial and continuing review and approval of each study in the proposed clinical investigation.',
           '21 CFR 312.23(a)(1)(iv); 21 CFR 56; 21 CFR 312.66',
           'Specify IRB approval status (pending, submitted, approved) and identify the reviewing IRB. If using a central IRB, confirm the arrangement. Include the IRB name, address, and FWA number.',
-          ['irb_approval_status', 'investigator_qualifications'],
-        );
-      }
-      if (status.includes('denied') || status.includes('rejected')) {
-        return finding(
-          this.id, this.dimension, 'critical', 'IRB approval denied', this.question,
-          'The submission indicates IRB approval has been denied or rejected. This is a significant barrier to initiating clinical investigations.',
-          'Clinical studies may not proceed without IRB approval per 21 CFR 56.',
-          '21 CFR 56; 21 CFR 312.66',
-          'Address the IRB\'s concerns and resubmit. Provide details of the IRB\'s objections and the sponsor\'s plan to remediate.',
-          ['irb_approval_status'],
+          ['irb_status', 'central_irb_used', 'pi_qualifications_summary'],
         );
       }
       return null;
@@ -484,15 +502,16 @@ const rules: AuditRule[] = [
       'Per 21 CFR 50, informed consent must include all elements described in 21 CFR 50.25. ' +
       'Has a draft informed consent form been prepared, and does it include the eight required basic elements?',
     check(answers) {
-      const consent = asBool(answers.informed_consent_draft);
-      if (consent === false || isBlank(answers.informed_consent_draft)) {
+      // `informed_consent_status` is a select (finalized | draft | not_started), always shown.
+      // 'not_started' is "not prepared"; unanswered is "not provided".
+      if (asString(answers.informed_consent_status) === 'not_started' || isBlank(answers.informed_consent_status)) {
         return finding(
           this.id, this.dimension, 'warning', this.title, this.question,
           'An informed consent draft has not been provided or has not been prepared. While not required for IND submission, the informed consent form is a critical study document that must comply with 21 CFR 50.25.',
           '21 CFR 50.25(a) specifies eight basic elements, 50.25(b) six additional elements to include when appropriate, and 50.25(c) the ClinicalTrials.gov statement for an applicable clinical trial (citations recall).',
           '21 CFR 50.25; 21 CFR 50.27; FDA Guidance: Informed Consent (final guidance; date to confirm — 2014 was the draft)',
           `Prepare a draft informed consent form that includes every 21 CFR 50.25(a) basic element — ${FDA_REQUIRED_CONSENT} — and, for an applicable clinical trial, the 21 CFR 50.25(c) ClinicalTrials.gov statement.`,
-          ['informed_consent_draft', 'irb_approval_status'],
+          ['informed_consent_status', 'irb_status'],
         );
       }
       return null;
@@ -508,25 +527,26 @@ const rules: AuditRule[] = [
       'Per 21 CFR 312.42, FDA may impose a clinical hold for safety concerns or protocol deficiencies. ' +
       'Has this drug or related compounds been subject to a prior clinical hold, and if so, have all hold conditions been resolved?',
     check(answers) {
-      const history = asString(answers.clinical_hold_history).toLowerCase();
-      if (isBlank(answers.clinical_hold_history)) {
+      // `clinical_hold_history` is yes_no: it stores a boolean, so a text match on it never fired.
+      const history = asBool(answers.clinical_hold_history);
+      if (history === null) {
         return finding(
           this.id, this.dimension, 'info', this.title, this.question,
           'Clinical hold history has not been addressed. Full transparency regarding any prior clinical holds on this IND or related INDs is expected.',
           'Sponsors should disclose any prior clinical holds and their resolution in the IND submission.',
           '21 CFR 312.42; 21 CFR 312.23(a)(9)',
           'State whether the drug, related compounds, or the sponsor has been subject to any prior clinical holds. If yes, provide the hold date, basis, and documentation of resolution.',
-          ['clinical_hold_history', 'previous_human_experience'],
+          ['clinical_hold_history', 'ib_prior_human_experience'],
         );
       }
-      if (history.includes('yes') || history.includes('hold') || history.includes('placed')) {
+      if (history === true) {
         return finding(
           this.id, this.dimension, 'warning', 'Prior clinical hold identified', this.question,
           'The submission indicates a prior clinical hold exists. FDA will closely scrutinize whether all hold conditions have been satisfactorily addressed.',
           'All clinical hold conditions must be resolved before the study may proceed per 21 CFR 312.42(e).',
           '21 CFR 312.42(e); FDA Guidance: Clinical Holds (1998)',
           'Provide complete documentation of the prior clinical hold including: (1) hold date and basis, (2) sponsor response, (3) FDA feedback and resolution date, (4) any modifications made to address the hold conditions.',
-          ['clinical_hold_history', 'safety_database_size'],
+          ['clinical_hold_history', 'related_inds'],
         );
       }
       return null;
@@ -549,7 +569,7 @@ const rules: AuditRule[] = [
           '21 CFR 312.23(a)(8) requires a section describing the pharmacological effects and mechanism of action of the drug in animals.',
           '21 CFR 312.23(a)(8); ICH M3(R2)',
           'Describe the mechanism of action including: (1) molecular target, (2) target validation data, (3) relationship between target modulation and disease pathophysiology, (4) any biomarker strategy for confirming target engagement in clinical studies.',
-          ['mechanism_of_action', 'indication', 'therapeutic_area'],
+          ['mechanism_of_action', 'proposed_indication', 'therapeutic_class'],
         );
       }
       return null;
@@ -611,14 +631,16 @@ const rules: AuditRule[] = [
       '21 CFR 312.23(a)(9) requires information from previous human experience with the investigational drug. ' +
       'Has the drug or related compounds been administered to humans previously, and if so, what safety and efficacy signals were observed?',
     check(answers) {
-      if (isBlank(answers.previous_human_experience)) {
+      // `ib_prior_human_experience` is a select (no_prior | included | pending_inclusion);
+      // 'no_prior' is the explicit first-in-human statement this rule asks for.
+      if (isBlank(answers.ib_prior_human_experience)) {
         return finding(
           this.id, this.dimension, 'info', this.title, this.question,
           'No information on previous human experience has been provided. If this is a first-in-human study, an explicit statement to that effect is expected.',
           '21 CFR 312.23(a)(9) requires a summary of previous human experience with the investigational drug, including prior clinical investigations, foreign marketing experience, and any adverse events.',
           '21 CFR 312.23(a)(9)',
           'If prior human experience exists (e.g., foreign clinical studies, compassionate use), summarize the safety and efficacy data. If this is first-in-human, state so explicitly and cross-reference the nonclinical data supporting safety.',
-          ['previous_human_experience', 'safety_database_size', 'clinical_hold_history'],
+          ['ib_prior_human_experience', 'first_study_phase', 'clinical_hold_history'],
         );
       }
       return null;
@@ -634,14 +656,17 @@ const rules: AuditRule[] = [
       'For INDs with prior human experience, what is the size of the existing safety database? ' +
       'Is the safety database adequate to support the proposed phase of development per ICH E1 guidance?',
     check(answers) {
-      if (!isBlank(answers.previous_human_experience) && isBlank(answers.safety_database_size)) {
+      // Prior human experience is referenced when the IB includes it or it exists but is
+      // pending inclusion. The interview does not ask the safety database size.
+      const prior = asString(answers.ib_prior_human_experience);
+      if ((prior === 'included' || prior === 'pending_inclusion') && isBlank(answers.safety_database_size)) {
         return finding(
           this.id, this.dimension, 'warning', this.title, this.question,
           'Prior human experience is referenced but the safety database size is not quantified. Reviewers need to assess whether the existing safety data are sufficient.',
           'ICH E1 provides guidance on the size of the safety database needed to support different phases of clinical development.',
           'ICH E1; 21 CFR 312.23(a)(9)',
           'Quantify the safety database: number of subjects exposed, dose ranges, duration of exposure, and a summary of adverse events by system organ class and severity.',
-          ['safety_database_size', 'previous_human_experience'],
+          ['safety_database_size', 'ib_prior_human_experience'],
         );
       }
       return null;
@@ -657,14 +682,14 @@ const rules: AuditRule[] = [
       '21 CFR 312.23(a)(1)(ii) requires identification of the phase of the proposed clinical investigation. ' +
       'What phase is this IND application supporting, and is the nonclinical and CMC data package appropriate for that phase?',
     check(answers) {
-      if (isBlank(answers.phase)) {
+      if (isBlank(answers.first_study_phase)) {
         return finding(
           this.id, this.dimension, 'critical', this.title, this.question,
           'The phase of clinical investigation has not been specified. This is required information for Form FDA 1571 and determines the regulatory expectations for the supporting data package.',
           '21 CFR 312.23(a)(1)(ii) and Form 1571 require identification of the phase of clinical study.',
           '21 CFR 312.23(a)(1)(ii); FDA Form 1571 Item 8',
           'Specify the phase (Phase 1, Phase 1/2, Phase 2, Phase 3) and ensure that the CMC, nonclinical, and clinical sections are consistent with phase-appropriate regulatory expectations per ICH M3(R2) Table 1.',
-          ['phase', 'nonclinical_studies_complete', 'gmp_compliance'],
+          ['first_study_phase', 'glp_tox_completed', 'gmp_compliance'],
         );
       }
       return null;
@@ -679,14 +704,14 @@ const rules: AuditRule[] = [
     question:
       'What is the proposed indication for the investigational drug? Is there a clear unmet medical need, and how does this molecule fit within the existing therapeutic landscape?',
     check(answers) {
-      if (isBlank(answers.indication)) {
+      if (isBlank(answers.proposed_indication)) {
         return finding(
           this.id, this.dimension, 'warning', this.title, this.question,
           'No indication has been specified. While FDA does not formally "approve" indications at the IND stage, a clearly defined target indication is essential for assessing the adequacy of the nonclinical and clinical plans.',
           '21 CFR 312.23(a)(3)(i) requires an introductory statement describing the broad objectives and planned duration of the proposed clinical investigation.',
           '21 CFR 312.23(a)(3)(i)',
           'Define the specific indication, including the target patient population and disease stage. Provide context on the unmet medical need and the current standard of care.',
-          ['indication', 'therapeutic_area', 'mechanism_of_action'],
+          ['proposed_indication', 'therapeutic_class', 'mechanism_of_action'],
         );
       }
       return null;
@@ -702,14 +727,16 @@ const rules: AuditRule[] = [
       'Form FDA 1571 Item 5 requires the name of the investigational drug. ' +
       'Has the sponsor provided the drug name (proprietary and/or code name) and the established/USAN name if available?',
     check(answers) {
-      if (isBlank(answers.drug_name)) {
+      // The interview asks the name as `drug_name_generic` and the code designation as
+      // `drug_code_number`; either identifies the drug, so the finding needs both blank.
+      if (isBlank(answers.drug_name_generic) && isBlank(answers.drug_code_number)) {
         return finding(
           this.id, this.dimension, 'warning', this.title, this.question,
           'No drug name has been provided. The IND filing requires identification of the drug by name.',
           'Form 1571 requires the drug name, including any proprietary name, code designation, and chemical name.',
           'FDA Form 1571 Item 5; 21 CFR 312.23(a)(7)',
           'Provide the drug name including: (1) sponsor code designation, (2) USAN/INN name if assigned, (3) chemical name, and (4) any proprietary name if applicable.',
-          ['drug_name', 'drug_substance'],
+          ['drug_name_generic', 'drug_code_number'],
         );
       }
       return null;
@@ -725,14 +752,16 @@ const rules: AuditRule[] = [
       'Has an IND number been assigned by FDA, and is this an original IND, a protocol amendment, or an IND amendment? ' +
       'Cross-reference any prior IND submissions for this compound.',
     check(answers) {
-      if (isBlank(answers.ind_number)) {
+      // `previous_ind_number` is shown only when `ind_application_type` is 'amendment'.
+      // For an original IND it is hidden: FDA has not assigned a number yet.
+      if (asString(answers.ind_application_type) === 'amendment' && isBlank(answers.previous_ind_number)) {
         return finding(
           this.id, this.dimension, 'info', this.title, this.question,
           'No IND number has been provided. For an original IND submission this is expected (FDA assigns the number upon receipt). For amendments, the existing IND number must be referenced.',
           'For original INDs, an IND number will be assigned by FDA. For subsequent submissions, the assigned IND number must be referenced.',
           '21 CFR 312.23(a)(1); FDA Form 1571 Item 6',
           'If this is an original IND, indicate "To Be Assigned." If an IND number has been previously assigned, include it on all correspondence and submissions.',
-          ['ind_number', 'sponsor_name'],
+          ['previous_ind_number', 'ind_application_type'],
         );
       }
       return null;

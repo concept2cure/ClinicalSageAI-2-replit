@@ -720,6 +720,34 @@ Code: `server/services/ectd/version-lineage-binding.ts` and its callers in `pack
 `prior-sequence-loader.ts` and `ind-checklist-view-assembler.ts`. Evidence:
 `docs/evidence/W5/2026-10-21-ind-reference-lane/`.
 
+## Product decisions, 2026-10-22 (CPO, under the founder's mandate of 2026-10-01)
+
+### P-43 — The hosted deployment refuses every operator override at boot; a self-hosted install keeps its written acceptances
+
+The `*_ACCEPT_*` variables (`AUDIT_SEAL_ACCEPT_UNSEALED`, `AI_GOVERNANCE_ACCEPT_PERMISSIVE`, `STORAGE_ACCEPT_LOCAL_DISK`,
+`CONCEPT2CURE_SIGNER_ACCEPT_HMAC`, `AI_GATEWAY_ACCEPT_DETERMINISTIC` and any later one) each switch a production
+refusal off on the operator's written word. MR-03 SEC-18 proposed refusing them in every production boot. Done
+literally, that would stop the canonical self-host install (`docker-compose.yml`, "the install SKU"): with no KMS and
+no object store it runs on an HMAC signer and a local volume, and it says so through exactly these variables. The
+hosted product never needs one: it has a KMS signer, an S3 vault and a sealed chain.
+
+So the line is drawn by where the process runs, not by `NODE_ENV`:
+
+- **Hosted (an ECS task).** The boot refuses any `*_ACCEPT_*` variable set to anything but `false`, and
+  `AUDIT_REQUIRE_ENFORCE=false`. It recognises ECS by `ECS_CONTAINER_METADATA_URI_V4`, which the ECS agent sets in
+  every task and a task definition cannot remove. The deploy preflight already refused these by name before a revision
+  rolled (`deploy-aws.yml`); the boot now refuses them too, so a revision registered or edited outside the pipeline
+  cannot run with one.
+- **Self-hosted (compose, Helm, the CI single-container boots).** Each acceptance stays what it was: an explicit
+  operator statement in the install's own configuration.
+- **Everywhere in production:** `ENABLE_TEST_ROUTES` is refused, like the dev, mock and demo route flags before it.
+  Nothing sets it, and test routes have no production use. `AUDIT_REQUIRE_ENFORCE` defaults to enforce: a production
+  process whose tamper-proof audit trail is off refuses to boot unless the operator writes `AUDIT_REQUIRE_ENFORCE=false`,
+  which only a self-hosted install may.
+
+No CI escape variable is added. The CI boots are not ECS tasks, so they keep working without one, and an escape would
+be one more override to guard. Evidence: `docs/evidence/MR-03/2026-10-22-stage-2/`.
+
 ## How sessions run under this file
 
 - One control-tower session, at most four scoped workers, each with one

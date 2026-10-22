@@ -85,13 +85,52 @@ describe('a war game finds only what its interview could have told it', () => {
  * rise. Converging an auditor onto its interview's real field ids raises it;
  * a rule left below it means its interview does not ask what it checks.
  */
+/* 2026-10-22, after converging the auditors onto their interviews' real field
+   ids: 299 of 435 (from 94). The rest read questions no interview asks. */
 const MIN_ASSESSED: Record<WarGameCategory, number> = {
-  protocol: 11, ind: 6, csr: 5, '510k': 8, cer: 2, sop: 4, nda: 4, bla: 33,
-  pma: 3, cmc: 2, risk_management: 3, safety_narrative: 4, labeling: 2, briefing_book: 3, stability: 4,
+  protocol: 22, ind: 22, csr: 21, '510k': 24, cer: 22, sop: 23, nda: 15, bla: 33,
+  pma: 22, cmc: 15, risk_management: 17, safety_narrative: 14, labeling: 17, briefing_book: 11, stability: 21,
 };
 
 describe('assessable checks only rise', () => {
   it.each(CASES.map((c) => [c.category, c] as const))('%s', (_c, { category, flow }) => {
     expect(runWarGame(category, flow.id, {}).rulesAssessed).toBeGreaterThanOrEqual(MIN_ASSESSED[category]);
+  });
+});
+
+describe('a yes/no answer means the same from the interview UI and from AnA', () => {
+  it.each(CASES.map((c) => [c.category, c] as const))('%s: "yes"/"no" strings and booleans give the same findings', (_c, { category, flow }) => {
+    const asBool = fullyAnswered(flow);
+    const asText = Object.fromEntries(Object.entries(asBool).map(([node, fields]) => [node, Object.fromEntries(Object.entries(fields).map(([k, v]) => [k, typeof v === 'boolean' ? (v ? 'yes' : 'no') : v]))]));
+    const ids = (r: ReturnType<typeof runWarGame>) => r.findings.map((f) => f.id).sort();
+    expect(ids(runWarGame(category, flow.id, asText))).toEqual(ids(runWarGame(category, flow.id, asBool)));
+  });
+});
+
+/* Rules that fired, or stayed silent, against the answers given. Measured on
+   the pre-change tree: the NDA, protocol and yes/no cases fail there; the
+   510(k) case passes there too and pins the new is_sterile gate. */
+describe('a converged rule fires on the case it names, and only then', () => {
+  const ids = (category: WarGameCategory, flowCase: FlowCategory, answers: Record<string, unknown>) =>
+    runWarGame(category, getFlowDefinition(flowCase, {} as never)!.id, { n: answers }).findings.map((f) => f.id);
+
+  it('NDA: patent certifications are asked of a 505(b)(2), not a 505(b)(1)', () => {
+    expect(ids('nda', 'nda_submission', { nda_type: '505b1' })).not.toContain('nda_missing_patent_certifications');
+    expect(ids('nda', 'nda_submission', { nda_type: '505b2' })).toContain('nda_missing_patent_certifications');
+    expect(ids('nda', 'nda_submission', { nda_type: '505b2', patent_certifications: 'not_applicable' })).not.toContain('nda_missing_patent_certifications');
+  });
+
+  it('protocol: a single arm against a historical control is not a contradiction', () => {
+    expect(ids('protocol', 'protocol_development', { number_of_arms: 1, control_type: 'historical' })).not.toContain('protocol_arms_vs_control');
+    expect(ids('protocol', 'protocol_development', { number_of_arms: 1, control_type: 'placebo' })).toContain('protocol_arms_vs_control');
+  });
+
+  it('510(k): a non-sterile device is not missing its sterilization validation', () => {
+    expect(ids('510k', 'device_510k', { is_sterile: false })).not.toContain('510k_sterilization_missing');
+  });
+
+  it('a "No" to a required yes/no draws its finding (it read as answered before)', () => {
+    expect(ids('nda', 'nda_submission', { cover_letter_prepared: false })).toContain('nda_missing_cover_letter');
+    expect(ids('nda', 'nda_submission', { cover_letter_prepared: 'yes' })).not.toContain('nda_missing_cover_letter');
   });
 });
