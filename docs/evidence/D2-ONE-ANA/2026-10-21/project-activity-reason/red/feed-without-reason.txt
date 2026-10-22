@@ -1,0 +1,5 @@
+ × server/services/c2c/__tests__/project-activity-reason.pglite.test.ts > the Project home feed names a governed act and its reason > a market added reads as that, with the person who added it and their reason 12ms
+ ✓ server/services/c2c/__tests__/project-activity-reason.pglite.test.ts > the Project home feed names a governed act and its reason > another organization's feed holds none of it 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected undefined to match object { …(2) }
+      Tests  1 failed | 1 passed (2)
