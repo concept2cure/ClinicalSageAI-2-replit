@@ -12,7 +12,10 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import request from 'supertest';
 
 const query = vi.fn();
-vi.mock('../../../db', () => ({ pool: { query: (...a: unknown[]) => query(...a) } }));
+// The route reads through the request-scoped client (requestPgClient(req)).
+// The shared pool must never serve it: any pool use fails the test.
+const poolQuery = vi.fn(async () => { throw new Error('shared pool must not serve a request read'); });
+vi.mock('../../../db', () => ({ pool: { query: (...a: unknown[]) => poolQuery(...(a as [])) } }));
 
 import blaRouter from '../bla-workbench';
 
@@ -21,13 +24,14 @@ function appWith(org: number | null) {
   app.use(express.json());
   app.use((req: Request, _res: Response, next: NextFunction) => {
     if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org };
+    (req as unknown as { dbClient: unknown }).dbClient = { query: (...a: unknown[]) => query(...a) };
     next();
   });
   app.use('/api/biopharma/bla', blaRouter);
   return app;
 }
 
-beforeEach(() => query.mockReset());
+beforeEach(() => { query.mockReset(); poolQuery.mockClear(); });
 
 describe('GET /api/biopharma/bla/assessments', () => {
   it('403 without org context', async () => {
@@ -47,6 +51,21 @@ describe('GET /api/biopharma/bla/assessments', () => {
     expect(query.mock.calls[0][1][0]).toBe(42); // org id is the first bound param
     expect(res.body.assessments).toHaveLength(1);
     expect(res.body.assessments[0].kind).toBe('filing_risk');
+    expect(poolQuery).not.toHaveBeenCalled();
+  });
+
+  it('fails closed with 500 when the request carries no request-scoped client', async () => {
+    const app = express();
+    app.use((req: Request, _res: Response, next: NextFunction) => {
+      (req as unknown as { user: unknown }).user = { organizationId: 42 };
+      next();
+    });
+    app.use('/api/biopharma/bla', blaRouter);
+    const res = await request(app).get('/api/biopharma/bla/assessments');
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('INTERNAL_ERROR');
+    expect(query).not.toHaveBeenCalled();
+    expect(poolQuery).not.toHaveBeenCalled();
   });
 
   it('fails closed to an empty list when the store is missing (42P01)', async () => {

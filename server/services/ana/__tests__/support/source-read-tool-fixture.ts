@@ -26,8 +26,10 @@ function syntheticScopeFor(input: AnaSourceReadScopeInput, programId: string | n
 
 export async function syntheticActorDocument(input: AnaSourceReadScopeInput & { documentId: string }, opts: any,
   load: (id: string, org: number, opts?: any) => Promise<any>) {
-  return syntheticReadWrapper(input, async (_q, scope) => {
-    const doc = await load(input.documentId, input.organizationId, opts);
+  return syntheticReadWrapper(input, async (q, scope) => {
+    // As the canonical coordinator does (runLoadDocumentForActor): the source
+    // load reads on the admitted scope's owned executor, never without one.
+    const doc = await load(input.documentId, input.organizationId, { ...opts, executor: q });
     if (!doc) return null;
     if (scope.programId && doc.programId?.toLowerCase() !== scope.programId.toLowerCase()) throw new AnaProjectScopeError(403, 'CROSS_PROJECT', 'Open the source’s project to work with it.');
     const admittedScope = { ...scope, accessibleProgramIds: [doc.programId] };
