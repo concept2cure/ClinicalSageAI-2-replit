@@ -1,8 +1,16 @@
-name: Deploy to AWS (Production)
+name: Deploy to AWS
 
 on:
   workflow_dispatch:
     inputs:
+      # Which environment (MR-03 Stage 4): staging builds and verifies, and
+      # production promotes the image staging verified. Tags choose for
+      # themselves: rc-* is staging, v* is production.
+      target:
+        description: 'Environment to deploy to'
+        type: choice
+        options: [staging, production]
+        default: staging
       deploy_api:
         description: 'Deploy API service'
         type: boolean
@@ -23,75 +31,98 @@ on:
   push:
     tags:
       - 'v*'
+      - 'rc-*'
 
 concurrency:
-  group: deploy-production
-  cancel-in-progress: false # Never cancel production deploys
+  # One deploy at a time per environment; the resolve job reads the same rule
+  # (tests/ci/deploy-staging-promote.contract.test.ts holds the two together).
+  group: deploy-${{ github.event.inputs.target || (startsWith(github.ref, 'refs/tags/rc-') && 'staging' || 'production') }}
+  cancel-in-progress: false # Never cancel a deploy
 
 permissions:
   id-token: write # OIDC for AWS
   contents: read
 
-env:
-  AWS_REGION: us-east-1
-  ECR_API_REPO: c2c-prod-api
-  ECS_CLUSTER: c2c-production
-  ECS_API_SERVICE: c2c-production-api
-  # ── No worker image ────────────────────────────────────────────────────────
-  # This workflow used to build `-f worker/Dockerfile` and roll a
-  # c2c-production-worker ECS service. `worker/` has never existed in this
-  # repository (no commit in history adds it), so that build step could not
-  # succeed and every tag-triggered production deploy failed at build-push —
-  # which also blocked `migrate`, `deploy-api` and `deploy-frontend`, since they
-  # all hang off it.
-  #
-  # The path was removed rather than a Dockerfile invented, because there is no
-  # worker to put in one:
-  #   • `npm run build` (scripts/build-server.mjs) emits ONE server artifact,
-  #     dist/index.js, from server/index.ts. There is no second server
-  #     entrypoint. (Since 2026-10-18 it also emits dist/ops/verify-audit-chain.mjs,
-  #     an operator CLI run as a one-off task, never a service.)
-  #   • Every background job — driftSentinel, auditChainIntegrity,
-  #     corpusIngestion, regulatoryHorizon, externalIntelligence,
-  #     scheduleOfEvents, taskDue (server/jobs/*) — is started IN-PROCESS by
-  #     server/index.ts. There is no queue consumer to run separately.
-  #   • The ECS worker task definition (terraform/modules/ecs-fargate/main.tf)
-  #     set no `command`, so a container built from the app image would run the
-  #     app's CMD (`npm run start`) — a SECOND copy of the API, with a SECOND
-  #     copy of every scheduler. Duplicated retention deletes and audit sweeps
-  #     are worse than no worker, so pointing the "worker" build at
-  #     Dockerfile.optimized would have been an actively harmful fix.
-  #
-  # The Python Celery worker that lived under services/ (services/worker.Dockerfile)
-  # was a different stack entirely — exercised only by its own E2E harness and
-  # never the NODE_ENV=production image this ECS service expects. It was deleted
-  # (D9, 2026-08-13) along with docker-compose.e2e.yml and its workflows.
-  #
-  # The worker service, task definition, log group and ECR repository were
-  # removed from terraform/ on 2026-10-22 (MR-03 OPS-08, P-10 as amended).
-  #
-  # Task definition family and container name for the digest-pinned
-  # register-then-deploy path in deploy-api. The container name must match the
-  # name in the existing task definition so the patch step modifies the right
-  # container's image and not a sibling (e.g. a fluent-bit log router or a
-  # datadog sidecar).
-  ECS_API_TASK_FAMILY: c2c-production-api
-  ECS_API_CONTAINER_NAME: api
-  # Family and container of the one-off database task (see the `migrate` job).
-  # Terraform registers it (terraform/modules/ecs-fargate,
-  # aws_ecs_task_definition.migrate), and it alone carries the database owner's
-  # credential and an execution role that can read it (MR-03 Stage 3, OPS-16).
-  # Each deploy derives the migration from the revision its preflight checked,
-  # with the image pinned to the deploy's digest.
-  ECS_MIGRATE_TASK_FAMILY: c2c-production-migrate
-  ECS_MIGRATE_CONTAINER_NAME: migrate
-  # The bucket name carries the AWS account id (terraform/stack/main.tf,
-  # MR-03 OPS-03), so it is the repository variable set from
-  # `terraform output -raw frontend_bucket`, not a literal here.
-  FRONTEND_BUCKET: ${{ vars.FRONTEND_BUCKET }}
-  CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
+# ── Names: one file, one entry per environment (MR-03 Stage 4) ─────────────
+# The names each job deploys to (repository, cluster, service, task families,
+# containers, region) are .github/deploy-targets.json's entry for the target the
+# resolve job chooses; terraform/stack's deploy_targets output is held to it by
+# tests/boot_contract.tftest.hcl, for staging and production both. Values tied
+# to an account (FRONTEND_BUCKET, CLOUDFRONT_DISTRIBUTION_ID, STAGING_ACCOUNT_ID
+# and the role ARNs) are the GitHub environment's own variables and secrets.
+#
+# ── No worker image ────────────────────────────────────────────────────────
+# This workflow used to build `-f worker/Dockerfile` and roll a
+# c2c-production-worker ECS service. `worker/` has never existed in this
+# repository (no commit in history adds it), so that build step could not
+# succeed and every tag-triggered production deploy failed at build-push —
+# which also blocked `migrate`, `deploy-api` and `deploy-frontend`, since they
+# all hang off it.
+#
+# The path was removed rather than a Dockerfile invented, because there is no
+# worker to put in one:
+#   • `npm run build` (scripts/build-server.mjs) emits ONE server artifact,
+#     dist/index.js, from server/index.ts. There is no second server
+#     entrypoint. (Since 2026-10-18 it also emits dist/ops/verify-audit-chain.mjs,
+#     an operator CLI run as a one-off task, never a service.)
+#   • Every background job — driftSentinel, auditChainIntegrity,
+#     corpusIngestion, regulatoryHorizon, externalIntelligence,
+#     scheduleOfEvents, taskDue (server/jobs/*) — is started IN-PROCESS by
+#     server/index.ts. There is no queue consumer to run separately.
+#   • The ECS worker task definition (terraform/modules/ecs-fargate/main.tf)
+#     set no `command`, so a container built from the app image would run the
+#     app's CMD (`npm run start`) — a SECOND copy of the API, with a SECOND
+#     copy of every scheduler. Duplicated retention deletes and audit sweeps
+#     are worse than no worker, so pointing the "worker" build at
+#     Dockerfile.optimized would have been an actively harmful fix.
+#
+# The Python Celery worker that lived under services/ (services/worker.Dockerfile)
+# was a different stack entirely — exercised only by its own E2E harness and
+# never the NODE_ENV=production image this ECS service expects. It was deleted
+# (D9, 2026-08-13) along with docker-compose.e2e.yml and its workflows.
+#
+# The worker service, task definition, log group and ECR repository were
+# removed from terraform/ on 2026-10-22 (MR-03 OPS-08, P-10 as amended).
 
 jobs:
+  # ── Which environment this run deploys to (MR-03 Stage 4, OPS-10) ─────────
+  # An rc-* tag deploys to staging, a v* tag to production, a dispatch to the
+  # target it names. Every later job reads its names from this job's output.
+  resolve:
+    name: Resolve the target
+    runs-on: ubuntu-latest
+    outputs:
+      target: ${{ steps.target.outputs.target }}
+      names: ${{ steps.target.outputs.names }}
+      image_tag: ${{ steps.target.outputs.image_tag }}
+      sha12: ${{ steps.target.outputs.sha12 }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Resolve the target and its names
+        id: target
+        env:
+          INPUT_TARGET: ${{ github.event.inputs.target }}
+        run: |
+          set -euo pipefail
+          case "$GITHUB_EVENT_NAME:$GITHUB_REF" in
+            push:refs/tags/rc-*) TARGET=staging ;;
+            push:refs/tags/v*) TARGET=production ;;
+            workflow_dispatch:*) TARGET="$INPUT_TARGET" ;;
+            *) echo "::error::$GITHUB_EVENT_NAME on $GITHUB_REF names no target."; exit 1 ;;
+          esac
+          if ! NAMES=$(jq -ce --arg t "$TARGET" '.[$t] | select(type == "object")' "$GITHUB_WORKSPACE/.github/deploy-targets.json"); then
+            echo "::error::'$TARGET' is not a target in .github/deploy-targets.json."
+            exit 1
+          fi
+          {
+            echo "target=$TARGET"
+            echo "names=$NAMES"
+            echo "image_tag=sha-${GITHUB_SHA::12}"
+            echo "sha12=${GITHUB_SHA::12}"
+          } >> "$GITHUB_OUTPUT"
+          echo "Deploying ${GITHUB_SHA::12} to $TARGET."
+
   # ── Gate: the commit's own CI must have passed ────────────────────────────
   # Security audit 2026-09-24 INF-09 (plan P1-12). A `v*` tag deployed whatever
   # commit it named; nothing asked whether CI had passed there, or run at all.
@@ -276,26 +307,33 @@ jobs:
           skip-files: docs/evidence/D1/2026-10-01-image-document-runtime/green/Dockerfile.green
 
   # ── Build & Push container images ─────────────────────────────────────────
+  # Staging only: production never builds (MR-03 Stage 4, OPS-10). It promotes
+  # the image this job built, once staging's smoke test has verified it.
   build-push:
-    name: Build & Push to ECR
-    needs: [ci-verdict, test, security-gate]
+    name: Build & Push to ECR (staging)
+    needs: [ci-verdict, test, security-gate, resolve]
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.deploy_api == 'true' || startsWith(github.ref, 'refs/tags/v') }}
+    if: ${{ needs.resolve.outputs.target == 'staging' && (github.event.inputs.deploy_api == 'true' || startsWith(github.ref, 'refs/tags/rc-')) }}
     outputs:
       image_tag: ${{ steps.meta.outputs.tag }}
       # Image content digest captured at push time so deploy-api can register a
       # task-def revision pinned to @sha256:<digest>. Without this the deploy
       # would --force-new-deployment whatever the current task def references
       # and rollback would not be deterministic. See deploy-api.
-      api_digest: ${{ steps.api-push.outputs.digest }}
+      api_digest: ${{ steps.api-push.outputs.digest || steps.existing.outputs.digest }}
 
     steps:
+      - name: The target's names (.github/deploy-targets.json, via resolve)
+        env:
+          NAMES: ${{ needs.resolve.outputs.names }}
+        run: jq -r 'to_entries[] | "\(.key)=\(.value)"' <<<"$NAMES" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
-          # The BUILD role: this job runs outside the production environment, and
+          # The BUILD role (staging's): this job runs outside the environment, and
           # the deploy role trusts only jobs inside it (terraform/modules/github-deploy-roles).
           role-to-assume: ${{ secrets.AWS_BUILD_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
@@ -306,13 +344,23 @@ jobs:
 
       - name: Determine image tag
         id: meta
+        # One name per commit, whatever triggered the build (the resolve job's).
+        run: echo "tag=sha-${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+
+      # Tags are immutable, so a re-run on the same commit cannot push again. It
+      # deploys the image already pushed for this commit, which was scanned when
+      # it was pushed, and the build, scan and push below are skipped.
+      - name: Reuse the image already pushed for this commit
+        id: existing
+        env:
+          IMAGE_TAG: ${{ steps.meta.outputs.tag }}
         run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            TAG="${GITHUB_REF#refs/tags/}"
-          else
-            TAG="sha-${GITHUB_SHA::8}"
+          DIGEST=$(aws ecr describe-images --repository-name "$ECR_API_REPO" --image-ids imageTag="$IMAGE_TAG" \
+            --query 'imageDetails[0].imageDigest' --output text 2>/dev/null || true)
+          if [[ "$DIGEST" == sha256:* ]]; then
+            echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+            echo "Reusing $IMAGE_TAG, already pushed at $DIGEST."
           fi
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       # Build, scan, push — three steps (security audit 2026-09-24 INF-09, plan
       # P1-12). The image went from `docker build` straight to ECR; the only
@@ -322,7 +370,7 @@ jobs:
       # finding not excepted in .trivyignore (owner, reason, expiry) stops the
       # push. Pinned by tests/ci/deploy-refuses-unproven-sha.contract.test.ts.
       - name: Setup Node.js (for the Trivy exception checks)
-        if: ${{ github.event.inputs.deploy_api != 'false' }}
+        if: ${{ github.event.inputs.deploy_api != 'false' && steps.existing.outputs.digest == '' }}
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
@@ -330,7 +378,7 @@ jobs:
       - name: Trivy exceptions are attached, owned and dated (with selftests)
         # The same checks security-gate runs before its scans, for the same
         # reason: a scan cannot tell that an exception it was given is wrong.
-        if: ${{ !cancelled() && github.event.inputs.deploy_api != 'false' }}
+        if: ${{ !cancelled() && github.event.inputs.deploy_api != 'false' && steps.existing.outputs.digest == '' }}
         run: |
           node scripts/ci/check-trivy-inline-ignores.mjs --selftest
           node scripts/ci/check-trivy-inline-ignores.mjs
@@ -338,7 +386,7 @@ jobs:
           node scripts/ci/check-trivyignore-hygiene.mjs
 
       - name: Build API image
-        if: ${{ github.event.inputs.deploy_api != 'false' }}
+        if: ${{ github.event.inputs.deploy_api != 'false' && steps.existing.outputs.digest == '' }}
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ steps.meta.outputs.tag }}
@@ -355,7 +403,7 @@ jobs:
         # what the image carries; the push below runs only if every step passed.
         # No ignore-unfixed: an exception is a .trivyignore entry with an owner,
         # a reason and an expiry, not a blanket flag.
-        if: ${{ !cancelled() && github.event.inputs.deploy_api != 'false' }}
+        if: ${{ !cancelled() && github.event.inputs.deploy_api != 'false' && steps.existing.outputs.digest == '' }}
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           scan-type: image
@@ -367,7 +415,7 @@ jobs:
 
       - name: Push API image
         id: api-push
-        if: ${{ github.event.inputs.deploy_api != 'false' }}
+        if: ${{ github.event.inputs.deploy_api != 'false' && steps.existing.outputs.digest == '' }}
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ steps.meta.outputs.tag }}
@@ -398,6 +446,89 @@ jobs:
       # see the "No worker image" block under `env:` at the top of this file for
       # why there is no worker artifact to build.
 
+  # ── Promote: production runs the image staging verified (MR-03 Stage 4) ───
+  # No build. The image staging built, deployed and smoke-tested carries the
+  # tag staging-verified-<sha12> in staging's repository (smoke-test). This job
+  # copies it into production's repository by digest, byte for byte, and hands
+  # that digest on, so production runs exactly what staging verified. A commit
+  # staging never verified is refused here, before anything migrates.
+  promote:
+    name: Promote the staging-verified image (production)
+    needs: [ci-verdict, test, security-gate, resolve]
+    runs-on: ubuntu-latest
+    if: ${{ needs.resolve.outputs.target == 'production' && github.event.inputs.deploy_api != 'false' }}
+    environment: ${{ needs.resolve.outputs.target }}
+    outputs:
+      api_digest: ${{ steps.copy.outputs.digest }}
+
+    steps:
+      - name: The target's names (.github/deploy-targets.json, via resolve)
+        env:
+          NAMES: ${{ needs.resolve.outputs.names }}
+        run: jq -r 'to_entries[] | "\(.key)=\(.value)"' <<<"$NAMES" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Find the image staging verified for this commit
+        id: verified
+        env:
+          # The staging account (F-4): this environment's variable, set from the
+          # production root's staging_account_id.
+          STAGING_ACCOUNT_ID: ${{ vars.STAGING_ACCOUNT_ID }}
+          VERIFIED_TAG: staging-verified-${{ needs.resolve.outputs.sha12 }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$STAGING_ACCOUNT_ID" =~ ^[0-9]{12}$ ]]; then
+            echo "::error::The production environment's variable STAGING_ACCOUNT_ID is not a 12-digit account ID ('$STAGING_ACCOUNT_ID'). Production promotes only from staging; nothing else is deployed."
+            exit 1
+          fi
+          STAGING_REPO=$(jq -r '.staging.ECR_API_REPO' "$GITHUB_WORKSPACE/.github/deploy-targets.json")
+          DIGEST=$(aws ecr describe-images --registry-id "$STAGING_ACCOUNT_ID" --repository-name "$STAGING_REPO" \
+            --image-ids imageTag="$VERIFIED_TAG" --query 'imageDetails[0].imageDigest' --output text 2>/dev/null || true)
+          if [[ "$DIGEST" != sha256:* ]]; then
+            echo "::error::Staging never verified this commit: $STAGING_REPO has no $VERIFIED_TAG. Deploy an rc-* tag of ${GITHUB_SHA::12} to staging first; production runs only what staging's smoke test passed."
+            exit 1
+          fi
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+          echo "source=$STAGING_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$STAGING_REPO" >> "$GITHUB_OUTPUT"
+          echo "Staging verified ${GITHUB_SHA::12} at $DIGEST."
+
+      - name: Copy it into production's repository, by digest
+        id: copy
+        env:
+          DIGEST: ${{ steps.verified.outputs.digest }}
+          SOURCE: ${{ steps.verified.outputs.source }}
+          IMAGE_TAG: ${{ needs.resolve.outputs.image_tag }}
+        # skopeo copies the manifest and layers as they are (--preserve-digests),
+        # so the digest production runs is the digest staging verified. A re-run
+        # finds the digest already there and copies nothing.
+        run: |
+          set -euo pipefail
+          have() {
+            aws ecr describe-images --repository-name "$ECR_API_REPO" --image-ids imageDigest="$DIGEST" \
+              --query 'imageDetails[0].imageDigest' --output text 2>/dev/null || true
+          }
+          if [[ "$(have)" != "$DIGEST" ]]; then
+            command -v skopeo >/dev/null || { echo "::error::skopeo is not on this runner; nothing was promoted."; exit 1; }
+            ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
+            PASSWORD=$(aws ecr get-login-password)
+            skopeo copy --all --preserve-digests \
+              --src-creds "AWS:$PASSWORD" --dest-creds "AWS:$PASSWORD" \
+              "docker://$SOURCE@$DIGEST" "docker://$ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_API_REPO:$IMAGE_TAG"
+          fi
+          if [[ "$(have)" != "$DIGEST" ]]; then
+            echo "::error::$ECR_API_REPO does not hold $DIGEST after the copy; nothing was promoted."
+            exit 1
+          fi
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+          echo "Promoted $DIGEST into $ECR_API_REPO as $IMAGE_TAG."
+
   # ── Migrate the database BEFORE any service rolls ─────────────────────────
   #
   # C2C-DB-001 / REM-7. Until this job existed there was no production migration
@@ -418,15 +549,22 @@ jobs:
   # rollout instead of shipping code onto a schema that cannot serve it.
   migrate:
     name: Migrate Database (one-off ECS task)
-    needs: build-push
+    # The image is staging's own build, or production's promoted copy of it.
+    needs: [resolve, build-push, promote]
     runs-on: ubuntu-latest
-    environment: production
+    if: ${{ !cancelled() && needs.resolve.result == 'success' && (needs.build-push.result == 'success' || needs.promote.result == 'success') }}
+    environment: ${{ needs.resolve.outputs.target }}
     outputs:
       # The exact API revision the preflight checked. deploy-api derives from
       # it, not from "the family's latest" (see the preflight's last lines).
       api_td_arn: ${{ steps.preflight.outputs.api_td_arn }}
 
     steps:
+      - name: The target's names (.github/deploy-targets.json, via resolve)
+        env:
+          NAMES: ${{ needs.resolve.outputs.names }}
+        run: jq -r 'to_entries[] | "\(.key)=\(.value)"' <<<"$NAMES" >> "$GITHUB_ENV"
+
       # For scripts/ops/ecs-one-off-task.sh, the runner the migration uses.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -885,7 +1023,7 @@ jobs:
       - name: Migrate — one-off task derived from the checked database-task revision
         id: migrate-task
         env:
-          IMAGE_DIGEST: ${{ needs.build-push.outputs.api_digest }}
+          IMAGE_DIGEST: ${{ needs.build-push.outputs.api_digest || needs.promote.outputs.api_digest }}
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           CHECKED_MIGRATE_TD_ARN: ${{ steps.migrate-preflight.outputs.migrate_td_arn }}
         # scripts/ops/ecs-one-off-task.sh derives the task from the revision the
@@ -960,10 +1098,10 @@ jobs:
     name: Deploy API → ECS
     # `migrate` is a hard gate: rolling the API onto a schema whose migration
     # failed is exactly the outcome this deploy path is meant to prevent.
-    needs: [build-push, migrate]
+    needs: [resolve, build-push, promote, migrate]
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.deploy_api != 'false' }}
-    environment: production
+    if: ${{ !cancelled() && needs.migrate.result == 'success' && github.event.inputs.deploy_api != 'false' }}
+    environment: ${{ needs.resolve.outputs.target }}
     outputs:
       # For the rollback job: the revision serving before this deploy, and the
       # one this deploy rolled.
@@ -971,6 +1109,11 @@ jobs:
       task_def_arn: ${{ steps.register-api-td.outputs.task_def_arn }}
 
     steps:
+      - name: The target's names (.github/deploy-targets.json, via resolve)
+        env:
+          NAMES: ${{ needs.resolve.outputs.names }}
+        run: jq -r 'to_entries[] | "\(.key)=\(.value)"' <<<"$NAMES" >> "$GITHUB_ENV"
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
@@ -984,11 +1127,9 @@ jobs:
       - name: Register pinned task definition revision (API)
         id: register-api-td
         env:
-          # Immutable image tag built+pushed by build-push (e.g. sha-<gitsha> or
-          # the release tag). Combined with the captured digest so the new task
-          # def is pinned to a specific image, not a mutable tag.
-          IMAGE_TAG: ${{ needs.build-push.outputs.image_tag }}
-          IMAGE_DIGEST: ${{ needs.build-push.outputs.api_digest }}
+          # The digest staging built, or production promoted: the new revision is
+          # pinned to that image, never to a tag.
+          IMAGE_DIGEST: ${{ needs.build-push.outputs.api_digest || needs.promote.outputs.api_digest }}
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           # The revision migrate's preflight checked; see that step.
           CHECKED_API_TD_ARN: ${{ needs.migrate.outputs.api_td_arn }}
@@ -1112,18 +1253,30 @@ jobs:
   # tests/schema-contract/deploy-frontend-after-api.contract.test.ts
   deploy-frontend:
     name: Deploy Frontend → S3/CloudFront
-    needs: [ci-verdict, test, security-gate, deploy-api]
+    needs: [ci-verdict, test, security-gate, resolve, deploy-api]
     runs-on: ubuntu-latest
     if: >-
       ${{ always()
       && needs.ci-verdict.result == 'success'
       && needs.test.result == 'success'
       && needs.security-gate.result == 'success'
+      && needs.resolve.result == 'success'
       && github.event.inputs.deploy_frontend != 'false'
       && (needs.deploy-api.result == 'success' || github.event.inputs.deploy_api == 'false') }}
-    environment: production
+    environment: ${{ needs.resolve.outputs.target }}
+    env:
+      # The bucket name carries the account id (terraform/stack/main.tf, MR-03
+      # OPS-03): the environment's variable, set from `terraform output -raw
+      # frontend_bucket`, not a literal here.
+      FRONTEND_BUCKET: ${{ vars.FRONTEND_BUCKET }}
+      CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
 
     steps:
+      - name: The target's names (.github/deploy-targets.json, via resolve)
+        env:
+          NAMES: ${{ needs.resolve.outputs.names }}
+        run: jq -r 'to_entries[] | "\(.key)=\(.value)"' <<<"$NAMES" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Node.js
@@ -1158,7 +1311,7 @@ jobs:
       #   index.html  revalidated on every load.
       - name: Sync to S3
         run: |
-          : "${FRONTEND_BUCKET:?Set the repository variable FRONTEND_BUCKET to \`terraform output -raw frontend_bucket\` (terraform/environments/production)}"
+          : "${FRONTEND_BUCKET:?Set the environment variable FRONTEND_BUCKET to \`terraform output -raw frontend_bucket\` (terraform/environments/<target>)}"
           aws s3 sync dist/public/assets/ "s3://$FRONTEND_BUCKET/assets/" \
             --cache-control "public,max-age=31536000,immutable"
 
@@ -1181,20 +1334,28 @@ jobs:
   # ── Post-deploy smoke test ────────────────────────────────────────────────
   smoke-test:
     name: Post-deploy Smoke Test
-    needs: [deploy-api, deploy-frontend]
+    needs: [resolve, build-push, deploy-api, deploy-frontend]
     runs-on: ubuntu-latest
     # A failed or skipped API deploy is never followed by a green smoke test
     # against the old tasks (audit SMOKE-01). A frontend-only dispatch
     # (deploy_api=false) is still checked.
     if: always() && (needs.deploy-api.result == 'success' || (github.event.inputs.deploy_api == 'false' && needs.deploy-frontend.result == 'success'))
+    # In the environment, on its deploy role: on staging it marks the image it
+    # verified (below), which changes what production may run.
+    environment: ${{ needs.resolve.outputs.target }}
+    env:
+      CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
 
     steps:
+      - name: The target's names (.github/deploy-targets.json, via resolve)
+        env:
+          NAMES: ${{ needs.resolve.outputs.names }}
+        run: jq -r 'to_entries[] | "\(.key)=\(.value)"' <<<"$NAMES" >> "$GITHUB_ENV"
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
-          # The BUILD role: this job runs outside the production environment, and
-          # the deploy role trusts only jobs inside it (terraform/modules/github-deploy-roles).
-          role-to-assume: ${{ secrets.AWS_BUILD_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       # Readiness the way users reach the product: through CloudFront, on the
@@ -1237,6 +1398,35 @@ jobs:
           echo "::error::https://$HOST/readyz did not report ready."
           exit 1
 
+      # Staging's verdict on the image it built (MR-03 Stage 4, OPS-10): the
+      # same manifest gets the tag staging-verified-<sha12>, which is the only
+      # thing production's promote job will deploy. Only after the smoke test
+      # above passed, and only for the image this run built.
+      - name: Mark the image staging verified
+        if: ${{ needs.resolve.outputs.target == 'staging' && needs.build-push.outputs.api_digest != '' }}
+        env:
+          DIGEST: ${{ needs.build-push.outputs.api_digest }}
+          VERIFIED_TAG: staging-verified-${{ needs.resolve.outputs.sha12 }}
+        run: |
+          set -euo pipefail
+          HAVE=$(aws ecr describe-images --repository-name "$ECR_API_REPO" --image-ids imageTag="$VERIFIED_TAG" \
+            --query 'imageDetails[0].imageDigest' --output text 2>/dev/null || true)
+          if [[ "$HAVE" == "$DIGEST" ]]; then
+            echo "$VERIFIED_TAG already marks $DIGEST."
+            exit 0
+          fi
+          if [[ "$HAVE" == sha256:* ]]; then
+            echo "::error::$VERIFIED_TAG already marks another image ($HAVE); tags are immutable, and this run verified $DIGEST."
+            exit 1
+          fi
+          aws ecr batch-get-image --repository-name "$ECR_API_REPO" --image-ids imageDigest="$DIGEST" \
+            --output json > image.json
+          jq -j '.images[0].imageManifest' image.json > manifest.json
+          MEDIA=$(jq -r '.images[0].imageManifestMediaType' image.json)
+          aws ecr put-image --repository-name "$ECR_API_REPO" --image-tag "$VERIFIED_TAG" \
+            --image-manifest file://manifest.json --image-manifest-media-type "$MEDIA" > /dev/null
+          echo "Marked $DIGEST as $VERIFIED_TAG."
+
   # ── Roll back the API (MR-03 Stage 4, OPS-10 / OPS-23) ────────────────────
   # Automatically when the smoke test fails after a successful roll: the service
   # returns to the revision deploy-api recorded as serving before it moved. On
@@ -1253,15 +1443,20 @@ jobs:
   # was published only after the API it pairs with rolled.
   rollback:
     name: Roll back the API → previous revision
-    needs: [deploy-api, smoke-test]
+    needs: [resolve, deploy-api, smoke-test]
     runs-on: ubuntu-latest
     if: >-
-      ${{ !cancelled()
+      ${{ !cancelled() && needs.resolve.result == 'success'
       && ((needs.deploy-api.result == 'success' && needs.smoke-test.result == 'failure')
       || (github.event_name == 'workflow_dispatch' && github.event.inputs.rollback_taskdef != '')) }}
-    environment: production
+    environment: ${{ needs.resolve.outputs.target }}
 
     steps:
+      - name: The target's names (.github/deploy-targets.json, via resolve)
+        env:
+          NAMES: ${{ needs.resolve.outputs.names }}
+        run: jq -r 'to_entries[] | "\(.key)=\(.value)"' <<<"$NAMES" >> "$GITHUB_ENV"
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:

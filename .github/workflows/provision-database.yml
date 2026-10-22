@@ -22,14 +22,21 @@ name: Provision database (first run)
 # docs/evidence/W2/2026-09-23b/rds-shaped-provision-e2e.txt.
 #
 # Safe to re-run: every step of db:provision is idempotent on a provisioned
-# database. It is still a production write, so it needs a typed confirmation
-# and the production environment's approval.
+# database. It is still a write to the target's database, so it needs a typed
+# confirmation naming the target, and that environment's approval. Staging and
+# production each run it once (MR-03 Stage 4); the names come from
+# .github/deploy-targets.json, as deploy-aws.yml's do.
 
 on:
   workflow_dispatch:
     inputs:
+      target:
+        description: 'Environment whose database to provision'
+        type: choice
+        options: [staging, production]
+        default: staging
       confirm:
-        description: 'Type "provision production database" to run'
+        description: 'Type "provision <target> database" (e.g. "provision staging database") to run'
         required: true
         type: string
 
@@ -38,28 +45,30 @@ permissions:
   contents: read
 
 concurrency:
-  # Never two provisions at once, and never cancel one halfway.
-  group: provision-database
+  # Never two provisions of one database at once, and never cancel one halfway.
+  group: provision-database-${{ github.event.inputs.target }}
   cancel-in-progress: false
 
-env:
-  AWS_REGION: us-east-1
-  ECR_API_REPO: c2c-prod-api
-  ECS_CLUSTER: c2c-production
-  ECS_API_SERVICE: c2c-production-api
-  ECS_MIGRATE_TASK_FAMILY: c2c-production-migrate
-  ECS_MIGRATE_CONTAINER_NAME: migrate
-  ECS_PROVISION_TASK_FAMILY: c2c-production-provision
+# The names (region, repository, cluster, service, the database task's family
+# and container, the provision family) are .github/deploy-targets.json's entry
+# for the target, loaded by the first step.
 
 jobs:
   provision:
     name: Provision the database (one-off ECS task)
-    if: ${{ github.event.inputs.confirm == 'provision production database' }}
+    if: ${{ github.event.inputs.confirm == format('provision {0} database', github.event.inputs.target) }}
     runs-on: ubuntu-latest
-    environment: production
+    environment: ${{ github.event.inputs.target }}
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: The target's names (.github/deploy-targets.json)
+        env:
+          TARGET: ${{ github.event.inputs.target }}
+        run: |
+          set -euo pipefail
+          jq -er --arg t "$TARGET" '.[$t] | to_entries[] | "\(.key)=\(.value)"' .github/deploy-targets.json >> "$GITHUB_ENV"
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
@@ -117,7 +126,7 @@ jobs:
             jq -e --arg n "$NAME" 'any(.[]; .name == $n)' <<<"$SECRETS" >/dev/null || MISSING="$MISSING $NAME"
           done
           if [[ -n "$MISSING" ]]; then
-            echo "::error::$ARN lacks secret(s):$MISSING. Apply terraform/environments/production first."
+            echo "::error::$ARN lacks secret(s):$MISSING. Apply terraform/environments/${{ github.event.inputs.target }} first."
             exit 1
           fi
           # db:provision takes the owner connection as DATABASE_OWNER_URL; it is
