@@ -61,7 +61,10 @@ function serve(assessment: unknown) {
     if (url === `/api/c2c/projects/${PROGRAM_UUID}`) {
       return { ok: true, status: 200, json: async () => ({ id: PROGRAM_UUID, name: 'BX-512 IND', code: 'BX-512', product_name: 'Vorelinib', program_type: 'ind' }) } as Response;
     }
-    if (url === '/api/submissions') return ok([{ id: 4, title: 'BX-512 IND', productName: 'Vorelinib', applicationType: 'IND', programId: PROGRAM_UUID }]);
+    // F18: the screen reads the project's scoped list (each market), never the organisation's.
+    if (url === `/api/submissions?programId=${PROGRAM_UUID}`) {
+      return ok([{ id: 4, title: 'BX-512 IND', productName: 'Vorelinib', applicationType: 'ind', primaryRegion: 'fda', status: 'active', lifecycleStage: 'original', programId: PROGRAM_UUID }]);
+    }
     if (url === '/api/submissions/4/sequences') return ok([{ id: 12, sequenceNumber: '0000' }]);
     if (url.endsWith('/dispatch-readiness')) return ok(assessment);
     return ok([]);
