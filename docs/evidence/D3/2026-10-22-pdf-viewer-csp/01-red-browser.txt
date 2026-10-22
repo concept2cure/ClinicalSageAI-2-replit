@@ -1,0 +1,9 @@
+# RED: the production policy as on trunk c6556aa1a (frame-src 'self'), served by the real cspNonce + securityHeaders (NODE_ENV=production), Chromium 141.0.7390.37 , headless (2026-10-22T05:36:09Z)
+served frame-src: frame-src 'self'
+served object-src: object-src 'none'
+frame url=http://127.0.0.1:<port>/
+frame url=chrome-error://chromewebdata/
+violations recorded by the page: [{"directive":"frame-src","blocked":"blob","disposition":"enforce"}]
+console: Refused to frame 'blob:http://127.0.0.1:<port>/<uuid>' because it violates the following Content Security Policy directive: "frame-src 'self'".
+
+VERDICT: the policy blocked the PDF frame
