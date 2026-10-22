@@ -1,0 +1,11 @@
+# Green
+ Test Files  2 passed (2)
+      Tests  78 passed (78)
+
+## Every Vault, placement and filing-path client suite (43 files)
+ Test Files  43 passed (43)
+      Tests  379 passed (379)
+
+## ESLint per file: unchanged from head
+VaultPlaceIntoSubmission.tsx: 1 warning at head (max-lines-per-function on VaultPlaceIntoSubmissionForDocument), 1 now. An intermediate draft raised complexity to 18 and the file to 504 lines; the sequence choice moved into FilingRecovery.
+vaultPlaceIntoSubmission.test.tsx: 0 and 0. filing-path-reachability.test.ts: 1 (max-lines) and 1.

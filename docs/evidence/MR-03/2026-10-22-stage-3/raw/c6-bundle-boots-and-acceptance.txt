@@ -1,0 +1,33 @@
+# Slice C: the production bundle (npm run build from the slice C tree), on Postgres 16.15 + TLS, from a root without .env.
+
+## 1. The production bundle rebuilt from the slice C tree (build exit 0 at 15:55Z), on a freshly provisioned database; booted with APP_DATABASE_URL only (not an ECS task)
+install-fresh exit 0
+deploy-migrate exit 0
+app_service rolsuper,rolbypassrls = false,false
+/readyz=200 after 9s
+readyz: {"ready":true,"dependencies":{"database":"ok","schema":"ok","ana":"ok","storage":"ok","virusScan":"ok","redis":"skipped","worker":"skipped"},"schemaState":"ready","anaState":"deterministic","capabilityRegistry":"pending","anaDetail":"AI_GATEWAY_DETERMINISTIC is set — AnA serves fixed responses, not live model output"}
+boot.log FATAL/refusal lines:
+
+## 2. The same bundle with ECS_CONTAINER_METADATA_URI_V4 set: the hosted posture. Every import-time production check must pass first, so
+##    this environment uses the hosted shape: S3 storage, a KMS signer (both are configuration checks at boot; nothing is called), and
+##    the placement approvals. An earlier attempt with local storage and an HMAC signer stopped at those checks, before this one.
+## 2a. As an ECS task holding DATABASE_URL (the owner URL)
+exit code: 1
+[FATAL] The database owner's credential is not permitted in the API on the hosted deployment (an ECS task): DATABASE_URL. That role owns every table and bypasses RLS; the API serves as app_service (APP_DATABASE_URL), and only the one-off database task holds it. Remove it from the API task definition (terraform/stack).
+
+## 2b. Control: the same ECS task without it (45 s, then stopped): no owner refusal; what it says instead
+exit code: 124 (124 = still running when stopped)
+owner-credential FATAL lines: 0
+🚀 Server running on http://0.0.0.xxx:5197
+
+## 3. MR-03 Stage 3 acceptance: process.env.DATABASE_URL in server/ (excluding tests): only the CLI/config resolvers, not the boot or the route
+server/config/environment.ts:104
+server/config/environment.ts:106
+server/db/getDatabaseUrl.ts:44
+server/db/ensureCoreTables.ts:322
+server/db/ensureCoreTables.ts:343
+(server/startup/services.ts and server/routes/tenants-simple.ts: none. The non-production boot used to pass DATABASE_URL to ensureCoreTables;
+ it now asks with { ownerUrlWhenSet: true } and ensureCoreTables reads it, identically. tests/ci/readyz-boot-verdict.test.ts pins the call;
+ restoring the old call fails it:)
+ × tests/ci/readyz-boot-verdict.test.ts > the auth schema, and the verify-only production boot > elsewhere the boot names no URL: ensureCoreTables uses the owner URL when one is set
+      Tests  1 failed | 13 passed (14)

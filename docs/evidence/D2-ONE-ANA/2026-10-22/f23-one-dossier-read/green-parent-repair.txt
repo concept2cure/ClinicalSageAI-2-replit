@@ -1,0 +1,53 @@
+# F23 hand-on green: sections the old PATCH wrote without a parent are filed under their pack parent
+
+## The new cases, with the readiness suite and the contract test (18/18)
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > the pack has headings, and they are never approved
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > with every content section approved, the document reads 100, and so does the home figure (at head: 79)
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > a replay with nothing stale changes nothing: not the figure, not updated_at
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > replaying the migration keeps the value, corrects a stale one and leaves updated_at alone
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > a document with no sections keeps the figure it was inserted with on replay (a legacy row is not zeroed)
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > an empty heading is not counted; a heading someone has written in is (review: unsigned text at a heading must not read 100)
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > a todo section that gains a child stops being counted: 1 of 2 becomes 2 of 2, never 2 of 3
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > re-parenting a section recounts the document
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > a replay files a section the old PATCH wrote without its parent > the heading stops being counted; a locked row is filed too; nothing else moves, updated_at included
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > a replay files a section the old PATCH wrote without its parent > a pack it cannot read one way does not fail the deploy: no array, a key listed twice, a section its own parent
+ ✓ tests/schema-contract/c2c-section-completion.contract.test.ts > a section is complete only when the filing says so > counts approved and locked, and nothing else
+ ✓ tests/schema-contract/c2c-section-completion.contract.test.ts > a section is complete only when the filing says so > a drafted section is NOT complete — this is the whole defect
+ ✓ tests/schema-contract/c2c-section-completion.contract.test.ts > a section is complete only when the filing says so > an absent or unrecognised status is 0, never a guess
+ ✓ tests/schema-contract/c2c-section-completion.contract.test.ts > a section is complete only when the filing says so > never returns an invented middle value
+ ✓ tests/schema-contract/c2c-section-completion.contract.test.ts > the definition matches the trigger that maintains readiness > the TypeScript set is exactly the SQL FILTER set
+ ✓ tests/schema-contract/c2c-section-completion.contract.test.ts > readiness counts sections, not headings, on one rule > the readiness function carries countedSectionSql('s') verbatim
+ ✓ tests/schema-contract/c2c-section-completion.contract.test.ts > readiness counts sections, not headings, on one rule > the TypeScript twin marks a heading uncounted and a section counted, per document
+ ✓ tests/schema-contract/c2c-section-completion.contract.test.ts > readiness counts sections, not headings, on one rule > refuses an alias it could not safely place in SQL
+ Test Files  2 passed (2)
+      Tests  18 passed (18)
+
+## Every suite that applies migrations/20260528_phase9_document_schema.sql (37 files)
+First run: 3 files failed, 7 tests. authoringDraftTerminationAccept.pglite.test.ts failed to load (column d.rule_pack_version does not exist):
+its fixture builds a narrow c2c_documents before the migration. It is green at head and was red with this change, so it was this change's.
+The fixture now adds rule_pack_version beside the phase-9 columns it already adds for the real migration, and the suite is 14/14.
+The other 7 failures are the two trunk reds handed on above. With the HEAD version of the migration swapped in, they fail the same 7:
+     × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is
+     × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to 
+     × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and 
+     × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed 
+     × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held eve
+     × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, 
+     × tests/authoring-market-document-binding.pglite.test.ts > authoring a market's own part of the filing (F22b) > creates the market's own Module 1 section
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+     Test Files  2 failed (2)
+          Tests  7 failed | 15 passed (22)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed | 34 passed (37)
+      Tests  7 failed | 417 passed | 14 skipped (438)
+(of which 7 are the trunk reds above; authoringDraftTerminationAccept re-run alone after the fixture fix: 14/14)
+
+## Gates
+ci:migration-drop-safety rc=0 :: [ci:migration-drop-safety] OK — 422 migrations, 41 DROP(s), none re-created by the set; 7 constraint replacement(s) a later file redefines, all conditional, 2
+ci:migration-set-order rc=0 :: [ci:migration-set-order] OK — 422 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+ci:migration-guard-order rc=0 :: [ci:migration-guard-order] OK — every guarded table is created before it is guarded (0 baselined).
+ci:migration-deploy-path rc=0 :: [ci:migration-deploy-path] OK — 105 baselined file(s) on no deploy path, none new.
+ci:migration-reachability rc=0 :: [ci:migration-reachability] ✅ no new unreachable table references.
+ci:migration-prefix-collisions rc=0 :: [ci:migration-prefix-collisions] OK — no NEW collisions (3 baselined collision prefix(es) tolerated)
+ci:sql-interpolation rc=0 :: [ci:sql-interpolation] OK — no new value interpolated into SQL text. 1075 baselined interpolation(s) in 225 file(s); the baseline may only shrink.

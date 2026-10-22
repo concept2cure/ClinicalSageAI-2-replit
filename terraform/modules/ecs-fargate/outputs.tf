@@ -53,8 +53,43 @@ output "scanner_memory" {
 }
 
 output "execution_secrets_policy" {
-  description = "The execution role's Secrets Manager grant (JSON policy document)"
+  description = "The API execution role's Secrets Manager grant (JSON policy document)"
   value       = aws_iam_role_policy.ecs_execution_secrets.policy
+}
+
+output "migrate_container" {
+  description = <<-EOT
+    The one-off database task's container as rendered: the only container that
+    carries the database owner's credential. Names, plain environment values and
+    secret ARNs; never a secret's value.
+  EOT
+  value       = jsondecode(aws_ecs_task_definition.migrate.container_definitions)[0]
+}
+
+output "migrate_task_containers" {
+  description = "Every container of the one-off database task definition: one, with no scanner beside it."
+  value       = jsondecode(aws_ecs_task_definition.migrate.container_definitions)
+}
+
+output "migrate_task_family" {
+  value = aws_ecs_task_definition.migrate.family
+}
+
+output "migrate_execution_role_arn" {
+  value = aws_iam_role.migrate_execution.arn
+}
+
+output "task_execution_role_arns" {
+  description = "The execution role each task definition is registered with: the API's, and the one-off database task's, which alone reads the owner's secrets."
+  value = {
+    api     = aws_ecs_task_definition.api.execution_role_arn
+    migrate = aws_ecs_task_definition.migrate.execution_role_arn
+  }
+}
+
+output "migrate_execution_secrets_policy" {
+  description = "The one-off database task's execution role's Secrets Manager grant (JSON policy document)"
+  value       = aws_iam_role_policy.migrate_execution_secrets.policy
 }
 
 output "task_s3_policy" {

@@ -22,13 +22,24 @@ import { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const state = vi.hoisted(() => ({
-  db: null as unknown as { query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; affectedRows?: number }> },
+  db: null as unknown as {
+    query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; affectedRows?: number }>;
+    exec: (sql: string) => Promise<Array<{ rows: unknown[]; affectedRows?: number }>>;
+  },
   settle: (_how: string) => {},
 }));
 
 vi.mock('pg', () => {
   class Pool {
     async query(sql: string, params?: unknown[]) {
+      // A query with no parameters may carry several statements (seed-admin runs
+      // the workspace repair migration through ensureOrganizationWorkspace); pg
+      // sends those over the simple protocol, which is PGlite's exec.
+      if (params === undefined) {
+        const results = await state.db.exec(sql);
+        const last = results[results.length - 1];
+        return { rows: last?.rows ?? [], rowCount: last?.affectedRows ?? 0 };
+      }
       const r = await state.db.query(sql, params);
       return { rows: r.rows, rowCount: r.affectedRows ?? r.rows.length };
     }
@@ -58,6 +69,10 @@ beforeAll(async () => {
       status text, default_organization_id int, failed_login_attempts int DEFAULT 0, password_changed_at timestamptz,
       locked_until timestamptz, must_change_password boolean DEFAULT false);
     CREATE TABLE organization_users (organization_id int, user_id int, role text, PRIMARY KEY (organization_id, user_id));
+    CREATE TABLE client_workspaces (
+      id serial PRIMARY KEY, organization_id int NOT NULL REFERENCES organizations(id), name text NOT NULL,
+      slug text NOT NULL, description text, status text, created_by_id int, metadata json,
+      CONSTRAINT unique_org_slug UNIQUE (organization_id, slug));
   `);
 }, 60_000);
 
@@ -66,7 +81,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-  await db.exec('TRUNCATE organization_users, users, organizations RESTART IDENTITY');
+  await db.exec('TRUNCATE client_workspaces, organization_users, users, organizations RESTART IDENTITY');
 });
 
 /** Run scripts/seed-admin.mjs as written, in this process, with only `env` set. */
@@ -114,6 +129,14 @@ async function account(email: string) {
   return r.rows;
 }
 
+/** The client workspaces as organisation slug and workspace slug: the one seed-admin's repair sweep gives the organisation. */
+const workspaces = async () =>
+  (
+    await db.query<{ org: string; slug: string }>(
+      `SELECT o.slug AS org, w.slug FROM client_workspaces w JOIN organizations o ON o.id = w.organization_id ORDER BY o.slug, w.slug`,
+    )
+  ).rows;
+
 const slugs = async () => (await db.query<{ slug: string }>(`SELECT slug FROM organizations ORDER BY slug`)).rows.map((r) => r.slug);
 
 describe('seed-admin against a database that is not on this machine', () => {
@@ -136,6 +159,7 @@ describe('seed-admin against a database that is not on this machine', () => {
       },
     ]);
     expect(await slugs()).toEqual(['customer-bio']);
+    expect(await workspaces()).toEqual([{ org: 'customer-bio', slug: 'customer-bio' }]);
   }, 60_000);
 
   it('refuses an organisation that is not there, and writes nothing', async () => {
@@ -149,6 +173,7 @@ describe('seed-admin against a database that is not on this machine', () => {
     expect(r.out).toContain('no organisation with slug "no-such-org"');
     expect(await account('admin@customer.example')).toEqual([]);
     expect(await slugs()).toEqual([]);
+    expect(await workspaces()).toEqual([]);
   }, 60_000);
 
   it('with no ADMIN_ORG_SLUG, refuses before connecting: no built-in organisation', () => {
@@ -176,5 +201,6 @@ describe('seed-admin against a database on this machine', () => {
     expect(await account('jm.smith@concept2cure.pro')).toEqual([
       { name: 'JM Smith', title: null, department: null, home: 'concept2cure', memberships: ['concept2cure'] },
     ]);
+    expect(await workspaces()).toEqual([{ org: 'concept2cure', slug: 'concept2cure' }]);
   }, 60_000);
 });

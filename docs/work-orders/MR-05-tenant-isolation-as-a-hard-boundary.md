@@ -65,6 +65,17 @@ and nothing else, and a deploy that refuses to ship anything weaker.
 
 ## Already done at head — do not redo
 
+- **DATA-03, and Stage 1 steps 2–5 (in code, 2026-10-22; not yet applied
+  to AWS).** Delivered by MR-03 Stage 3, as that row says (OPS-16 is the same
+  finding).
+  - `/api/tenants` is on the runtime pool (`3df1c9d5e`).
+  - The boot verifies the schema as `app_service` and runs no DDL in
+    production (`e1b0e5390`, `edd746936`).
+  - The owner credential is a Terraform-owned database task's alone, refused
+    on the API by the deploy preflight and, on ECS, by the boot.
+
+  Evidence: `docs/evidence/MR-03/2026-10-22-stage-3/`. Stage 1 steps 6–7
+  (extra drivers, `ci:single-db-pool`) are not done.
 - **SEC-12 (fixed).** All 101 unkeyed request-read tables carry a decision
   (31 global, 51 derived, 19 exempt, 0 unreviewed). Commits a5bc45b71,
   b1b2f2c5b, fa8c212e5 (`capa_records`, `q_submissions` into

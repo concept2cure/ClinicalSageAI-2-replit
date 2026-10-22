@@ -1,0 +1,6 @@
+# Each mutation applied alone to VaultPlaceIntoSubmission.tsx, the file restored and checked after. Tests: vaultPlaceIntoSubmission.test.tsx and filing-path-reachability.test.ts.
+# 4 mutations, 4 red.
+RED  the door stashes nothing (the head behaviour): 3 tests failed | → expected null to deeply equal { submissionId: '4', …(2) }
+RED  the door names the submission but not the sequence: 3 tests failed | → expected { submissionId: '4', ws: 'builder' } to deeply equal { submissionId: '4', …(2) }
+RED  the door does not open the Builder: 2 tests failed | → expected { submissionId: '4', sequenceId: '9' } to deeply equal { submissionId: '4', …(2) }
+RED  the door names no submission: 2 tests failed | → expected { sequenceId: '9', ws: 'builder' } to deeply equal { submissionId: '4', …(2) }

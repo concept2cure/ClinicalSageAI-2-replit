@@ -30,7 +30,8 @@ beforeAll(async () => {
     id serial PRIMARY KEY, project_id integer NOT NULL, organization_id integer NOT NULL,
     category text NOT NULL, title text NOT NULL, content text NOT NULL,
     confidence_score real, importance_level text DEFAULT 'medium',
-    status text DEFAULT 'active', created_at timestamp NOT NULL DEFAULT now()
+    status text DEFAULT 'active', source_document_type text,
+    created_at timestamp NOT NULL DEFAULT now()
   )`);
 });
 afterAll(async () => { await pg?.close(); });

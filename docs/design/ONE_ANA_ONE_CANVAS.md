@@ -618,6 +618,7 @@ locked.
    (`registryModel.ts:98`). Compile, validation (dispatch readiness) and transmit are
    inside a sequence.
 7. **Quality** (`quality`). It has no nav entry today (`registryModel.ts:95-100`).
+   *Built 2026-10-08 (`9a94754c6a`). 2026-10-22, by the founder's decision: **CMC / Module 3** (`cmc`) sits on the rail directly before Quality. It joined the launch catalog on 2026-10-12 (P-28), and the professional band still decides who may open it.*
 8. **Records & reports**: the audit trail (`audit-trail`) as the place, with Reports
    (`insights`), Compliance reports and Integrity (`part11-console`) as its tabs. Replaces
    "Reporting & analytics" (`registryModel.ts:100`).
