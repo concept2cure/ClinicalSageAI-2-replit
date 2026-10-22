@@ -218,3 +218,16 @@ export function evaluateIf(cond: unknown, scope: ExprScope): boolean {
   const value = truthy(parser.parse());
   return parser.sawStatusFunction ? value : scope.status.success && value;
 }
+
+/**
+ * A string with ${{ }} expressions in it, as the runner renders it: each
+ * expression's value, as text, in place (a missing value is the empty string).
+ * For values that are not conditions, such as a concurrency group's name.
+ */
+export function interpolate(template: string, contexts: Record<string, unknown>): string {
+  return template.replace(/\$\{\{([\s\S]*?)\}\}/g, (_m, src: string) => {
+    const v = new Parser(tokenize(src), { status: { success: true, failure: false, cancelled: false }, contexts }).parse();
+    return v === null || v === undefined ? '' : String(v);
+  });
+}
+

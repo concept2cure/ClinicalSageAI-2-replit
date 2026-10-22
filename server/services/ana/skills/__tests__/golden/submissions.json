@@ -1,0 +1,114 @@
+[
+  {
+    "question": "Put together a submission plan for our NDA: the required documents and the filing plan by module.",
+    "expect": "submissions"
+  },
+  {
+    "question": "What are the submission requirements for a BLA, and what is still missing from our dossier?",
+    "expect": "submissions",
+    "context": { "surfaceId": "submission-center", "segments": ["biotech"] }
+  },
+  {
+    "question": "Which review clock applies to our application and what does the submission timeline look like from here?",
+    "expect": "submissions"
+  },
+  {
+    "question": "What has to be in our initial IND under 312.23, and how much CMC do we need for a phase 1 study?",
+    "expect": "submissions.ind-initial"
+  },
+  {
+    "question": "Prepare Form 1571 and the 1572s for the original IND.",
+    "expect": "submissions.ind-initial",
+    "context": { "surfaceId": "ind-checklist", "submissionType": "US_IND", "segments": ["pharma"] }
+  },
+  {
+    "question": "When does the 30-day wait end, and do we need a letter of authorization for the DMF we cross-reference?",
+    "expect": "submissions.ind-initial",
+    "context": { "submissionType": "US_IND", "segments": ["pharma"] }
+  },
+  {
+    "question": "A new investigator is joining the study next month. Does that go to FDA as a protocol amendment?",
+    "expect": "submissions.ind-maintenance"
+  },
+  {
+    "question": "What goes into the IND annual report this year, and can the DSUR stand in for it?",
+    "expect": "submissions.ind-maintenance",
+    "context": { "submissionType": "US_IND_ANNUAL", "segments": ["biotech"] }
+  },
+  {
+    "question": "Can we implement this change in protocol immediately to remove an immediate hazard, and notify FDA afterwards?",
+    "expect": "submissions.ind-maintenance",
+    "context": { "submissionType": "US_IND_AMENDMENT", "segments": ["pharma"] }
+  },
+  {
+    "question": "Which lifecycle operation do I use when I update the stability leaf in the next eCTD sequence?",
+    "expect": "submissions.ectd-assembly"
+  },
+  {
+    "question": "Where does this document go in regional Module 1 for the EU, and what leaf title should it carry?",
+    "expect": "submissions.ectd-assembly",
+    "context": { "surfaceId": "ectd-compile" }
+  },
+  {
+    "question": "How should granularity and hyperlinks work for the study reports so we avoid a technical rejection?",
+    "expect": "submissions.ectd-assembly"
+  },
+  {
+    "question": "We received an information request from FDA with twelve questions. Help me plan the IR response.",
+    "expect": "submissions.agency-response"
+  },
+  {
+    "question": "How should we structure our answers to the EMA day 120 list of questions?",
+    "expect": "submissions.agency-response",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "Draft our deficiency response to the CMC items in the complete response letter.",
+    "expect": "submissions.agency-response"
+  },
+  {
+    "question": "Is sequence 0004 ready to dispatch, and what is still blocking the dispatch gate?",
+    "expect": "submissions.readiness-review"
+  },
+  {
+    "question": "The shadow review raised a critical finding that we have since fixed. How do we close it so the dispatch gate clears?",
+    "expect": "submissions.readiness-review"
+  },
+  {
+    "question": "Give me the go/no-go on this sequence.",
+    "expect": "submissions.readiness-review",
+    "context": { "surfaceId": "dispatch-readiness" }
+  },
+  {
+    "question": "What goes into the substantial equivalence section of our 510(k) eSTAR, and how should the comparison with the predicate device be laid out?",
+    "expect": "submissions.device-510k"
+  },
+  {
+    "question": "What performance testing summaries and consensus standard declarations does a traditional 510(k) need in eSTAR?",
+    "expect": "submissions.device-510k",
+    "context": { "segments": ["device"], "submissionType": "US_510K" }
+  },
+  {
+    "question": "What special controls should we propose in our De Novo request for this risk profile?",
+    "expect": "submissions.device-de-novo-and-pma"
+  },
+  {
+    "question": "Can we run this as a modular PMA, and what would go in each PMA module?",
+    "expect": "submissions.device-de-novo-and-pma",
+    "context": { "segments": ["device"], "submissionType": "US_PMA" }
+  },
+  {
+    "question": "What does the notified body expect in our MDR technical documentation under Annex II?",
+    "expect": "submissions.eu-technical-documentation"
+  },
+  {
+    "question": "Generate the GSPR checklist and the EU declaration of conformity for our Class IIb device.",
+    "expect": "submissions.eu-technical-documentation",
+    "context": { "segments": ["device"] }
+  },
+  {
+    "question": "Do we need to register in EUDAMED and get an SRN before CE marking our IVD?",
+    "expect": "submissions.eu-technical-documentation",
+    "context": { "segments": ["ivd"] }
+  }
+]

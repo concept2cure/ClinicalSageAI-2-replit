@@ -1,0 +1,14 @@
+# Mutation: server/services/ana/skills/turn-skills.ts
+# - '    const [orgSkills, settings, therapeuticArea] = await Promise.all([\n      listOrgSkills(client, input.organizationId),\n      readSkillSettings(client, input.organizationId),'
+# + '    const [orgSkills, settings, therapeuticArea] = await Promise.all([\n      listOrgSkills(client, input.organizationId).catch(() => []),\n      readSkillSettings(client, input.organizationId).catch(() => new Map()),'
+# Tests: server/services/ana/skills/__tests__/turn-skills.test.ts server/routes/ana-ri/__tests__/stream-skills.test.ts
+# exit 1
+
+ × server/routes/ana-ri/__tests__/stream-skills.test.ts > skills on a conversation turn > loads nothing when the organization’s skill state cannot be read, and warns 16ms
+   → expected 'You are AnA.\n\n\n## Skills for this …' not to contain '## Skills for this turn'
+ × server/services/ana/skills/__tests__/turn-skills.test.ts > a turn whose skills cannot be read > loads none, says why, and does not throw 53ms
+   → expected 'loaded' to be 'unavailable' // Object.is equality
+      Tests  2 failed | 15 passed (17)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'You are AnA.\n\n\n## Skills for this …' not to contain '## Skills for this turn'
+AssertionError: expected 'loaded' to be 'unavailable' // Object.is equality

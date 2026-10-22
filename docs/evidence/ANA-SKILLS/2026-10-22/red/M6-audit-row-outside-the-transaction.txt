@@ -1,0 +1,11 @@
+# Mutation: server/services/account-skill-bundles.ts
+# - "    await writeChainedAuditRow(client, {\n      tenantId: organizationId,\n      userId: actor.userId,\n      action: enabled ? 'ana_skill.library_enabled' : 'ana_skill.library_disabled',"
+# + "    void writeChainedAuditRow(client, {\n      tenantId: organizationId,\n      userId: actor.userId,\n      action: enabled ? 'ana_skill.library_enabled' : 'ana_skill.library_disabled',"
+# Tests: server/routes/__tests__/ana-skills-routes.test.ts
+# exit 1
+
+ × server/routes/__tests__/ana-skills-routes.test.ts > turning a library skill on or off > rolls the change back when its audit row is refused 10ms
+   → expected 200 to be 500 // Object.is equality
+      Tests  1 failed | 14 passed (15)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 200 to be 500 // Object.is equality

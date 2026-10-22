@@ -385,9 +385,7 @@ async function loadAccountCanon(
     submissionType: submissionType || undefined,
     projectId: projectId || undefined,
   });
-  return resolved.canonItems.length > 0 ||
-    resolved.terms.length > 0 ||
-    resolved.bundles.length > 0
+  return resolved.canonItems.length > 0 || resolved.terms.length > 0
     ? formatResolvedContextForPrompt(resolved)
     : null;
 }
@@ -496,7 +494,7 @@ export async function buildAnAContext(params: {
           null
         )
       : Promise.resolve(null),
-    // Account Canon — selectively resolved governed memory (canon items, terms, bundles)
+    // Account Canon — selectively resolved governed memory (canon items, terms, templates)
     organizationId
       ? read(
           'account canon (governed decisions and locked terminology)',

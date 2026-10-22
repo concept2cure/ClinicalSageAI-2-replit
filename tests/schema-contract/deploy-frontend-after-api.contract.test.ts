@@ -17,49 +17,19 @@
  * 2026-10-01 these scenarios carried no verdict, which this model reads as
  * `skipped`, so the two publishing cases were red from 08:02 that day.
  *
- * This evaluates the job's real `if:` and `needs:` under the GitHub Actions
- * rule that a job with no status function in its condition runs only when
- * every job it needs succeeded, for the scenarios that matter.
+ * The job conditions are evaluated by the shared runner simulator
+ * (tests/ci/workflow-harness.ts, deployJobs), with deploy-aws.yml's own resolve
+ * job choosing the target for each scenario. Until MR-03 Stage 4 this file
+ * carried its own expression model; it could not read the target that every
+ * deploy job's condition now depends on, and one evaluator is enough.
  */
 import { describe, it, expect } from 'vitest';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import * as yaml from 'js-yaml';
+import { RC_PUSH, TAG_PUSH, deployJobs, dispatch, readWorkflow, type JobResult, type Scenario } from '../ci/workflow-harness';
 
-const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const workflow = yaml.load(fs.readFileSync(path.join(REPO_ROOT, '.github/workflows/deploy-aws.yml'), 'utf8')) as {
-  jobs: Record<string, { needs?: string | string[]; if?: string }>;
-};
-
-type Result = 'success' | 'failure' | 'skipped' | 'cancelled';
-interface Scenario {
-  results: Record<string, Result>;
-  inputs: Record<string, string>;
-}
-
-/** Would `job` run? Models the expression forms this workflow uses. */
-function runs(job: string, s: Scenario): boolean {
-  const def = workflow.jobs[job];
-  const needs = def.needs === undefined ? [] : Array.isArray(def.needs) ? def.needs : [def.needs];
-  const expr = String(def.if ?? '').replace(/^\$\{\{\s*|\s*\}\}$/g, '');
-  const allSucceeded = needs.every((n) => s.results[n] === 'success');
-  const hasStatusFn = /\b(always|success|failure|cancelled)\(\)/.test(expr);
-  if (!hasStatusFn && !allSucceeded) return false;
-  if (!expr.trim()) return true;
-  const js = expr
-    .replace(/\balways\(\)/g, 'true')
-    .replace(/\bsuccess\(\)/g, String(allSucceeded))
-    .replace(/\bfailure\(\)/g, String(needs.some((n) => s.results[n] === 'failure')))
-    .replace(/\bcancelled\(\)/g, 'false')
-    .replace(/startsWith\(github\.ref,\s*'([^']*)'\)/g, (_m, p) => String('refs/tags/v1.0.0'.startsWith(p) && s.inputs.__tag === 'true'))
-    .replace(/needs\.([\w-]+)\.result/g, (_m, n) => JSON.stringify(s.results[n] ?? 'skipped'))
-    .replace(/github\.event\.inputs\.(\w+)/g, (_m, n) => JSON.stringify(s.inputs[n] ?? ''))
-    .replace(/([!=])=(?!=)/g, '$1==');
-  return Boolean(new Function(`return (${js});`)());
-}
-
-const GATES = { 'ci-verdict': 'success', test: 'success', 'security-gate': 'success' } as const;
+const workflow = readWorkflow('deploy-aws.yml');
+const publishes = (s: Scenario, given: Record<string, JobResult> = {}) => deployJobs(workflow, s, given)['deploy-frontend'] === 'success';
+const FRONTEND_ONLY = dispatch({ target: 'production', deploy_api: 'false', deploy_frontend: 'true' });
+const API_ONLY = dispatch({ target: 'production', deploy_api: 'true', deploy_frontend: 'false' });
 
 describe('deploy-frontend publishes only behind a deployed API', () => {
   it('needs deploy-api and the CI verdict', () => {
@@ -67,27 +37,25 @@ describe('deploy-frontend publishes only behind a deployed API', () => {
     expect(Array.isArray(needs) ? needs : [needs]).toEqual(expect.arrayContaining(['deploy-api', 'ci-verdict']));
   });
 
-  const cases: Array<[string, Scenario, boolean]> = [
-    ['a full release, API rolled', { results: { ...GATES, 'build-push': 'success', migrate: 'success', 'deploy-api': 'success' }, inputs: { __tag: 'true' } }, true],
-    ['the migration failed, so the API was not rolled', { results: { ...GATES, 'build-push': 'success', migrate: 'failure', 'deploy-api': 'skipped' }, inputs: { __tag: 'true' } }, false],
-    ['the API deploy failed or was rolled back', { results: { ...GATES, 'build-push': 'success', migrate: 'success', 'deploy-api': 'failure' }, inputs: { __tag: 'true' } }, false],
-    ['a frontend-only dispatch (deploy_api=false)', { results: { ...GATES, 'build-push': 'skipped', migrate: 'skipped', 'deploy-api': 'skipped' }, inputs: { deploy_api: 'false', deploy_frontend: 'true' } }, true],
-    ['an API-only dispatch (deploy_frontend=false)', { results: { ...GATES, 'build-push': 'success', migrate: 'success', 'deploy-api': 'success' }, inputs: { deploy_api: 'true', deploy_frontend: 'false' } }, false],
-    ['tests failed on a frontend-only dispatch', { results: { ...GATES, test: 'failure', 'build-push': 'skipped', migrate: 'skipped', 'deploy-api': 'skipped' }, inputs: { deploy_api: 'false', deploy_frontend: 'true' } }, false],
-    ["the commit's CI is red, on a full release", { results: { ...GATES, 'ci-verdict': 'failure', 'build-push': 'success', migrate: 'success', 'deploy-api': 'success' }, inputs: { __tag: 'true' } }, false],
-    ["the commit's CI is red, on a frontend-only dispatch", { results: { ...GATES, 'ci-verdict': 'failure', 'build-push': 'skipped', migrate: 'skipped', 'deploy-api': 'skipped' }, inputs: { deploy_api: 'false', deploy_frontend: 'true' } }, false],
+  const cases: Array<[string, Scenario, Record<string, JobResult>, boolean]> = [
+    ['a full release to production, API rolled', TAG_PUSH, {}, true],
+    ['a full release to staging, API rolled', RC_PUSH, {}, true],
+    ['the migration failed, so the API was not rolled', TAG_PUSH, { migrate: 'failure' }, false],
+    ['the API deploy failed or was rolled back', TAG_PUSH, { 'deploy-api': 'failure' }, false],
+    ['a frontend-only dispatch (deploy_api=false)', FRONTEND_ONLY, {}, true],
+    ['an API-only dispatch (deploy_frontend=false)', API_ONLY, {}, false],
+    ['tests failed on a frontend-only dispatch', FRONTEND_ONLY, { test: 'failure' }, false],
+    ["the commit's CI is red, on a full release", TAG_PUSH, { 'ci-verdict': 'failure' }, false],
+    ["the commit's CI is red, on a frontend-only dispatch", FRONTEND_ONLY, { 'ci-verdict': 'failure' }, false],
   ];
 
-  for (const [label, scenario, expected] of cases) {
+  for (const [label, scenario, given, expected] of cases) {
     it(`${expected ? 'publishes' : 'does not publish'}: ${label}`, () => {
-      expect(runs('deploy-frontend', scenario)).toBe(expected);
+      expect(publishes(scenario, given)).toBe(expected);
     });
   }
 
   it('the smoke test still runs after a frontend-only dispatch', () => {
-    expect(runs('smoke-test', {
-      results: { ...GATES, 'build-push': 'skipped', migrate: 'skipped', 'deploy-api': 'skipped', 'deploy-frontend': 'success' },
-      inputs: { deploy_api: 'false', deploy_frontend: 'true' },
-    })).toBe(true);
+    expect(deployJobs(workflow, FRONTEND_ONLY)['smoke-test']).toBe('success');
   });
 });

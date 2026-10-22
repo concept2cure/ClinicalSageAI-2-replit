@@ -22,13 +22,14 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  RC_PUSH,
   TAG_PUSH,
   actionsApi,
   continuesOnError,
+  deployJobs,
   dispatch,
   readWorkflow,
   runGithubScript,
-  simulateJobs,
   simulateSteps,
   transitiveNeeds,
   type Step,
@@ -66,7 +67,8 @@ describe('INF-09: the deploy reads the CI verdict for the SHA it deploys', () =>
   });
 
   it('every job that builds, migrates, deploys or smoke-tests waits for it', () => {
-    const exempt = new Set(['ci-verdict', 'test', 'security-gate']);
+    // resolve only reads .github/deploy-targets.json: it builds and deploys nothing.
+    const exempt = new Set(['ci-verdict', 'test', 'security-gate', 'resolve']);
     for (const job of Object.keys(wf.jobs).filter((j) => !exempt.has(j))) {
       expect(transitiveNeeds(wf, job).has('ci-verdict'), `${job} does not need ci-verdict`).toBe(true);
     }
@@ -177,9 +179,16 @@ describe('INF-09: the built image is scanned before it is pushed', () => {
   });
 });
 
-// The events that deploy: a v* tag, and a dispatch with each half switched on.
-const DEPLOYS = [TAG_PUSH, dispatch({ deploy_api: 'true', deploy_frontend: 'true' })];
-const DEPLOY_JOBS = ['build-push', 'migrate', 'deploy-api', 'deploy-frontend', 'smoke-test'];
+// The events that deploy (MR-03 Stage 4): an rc-* tag or a staging dispatch
+// builds; a v* tag or a production dispatch promotes what staging verified.
+const STAGING_DISPATCH = dispatch({ target: 'staging', deploy_api: 'true', deploy_frontend: 'true' });
+const PRODUCTION_DISPATCH = dispatch({ target: 'production', deploy_api: 'true', deploy_frontend: 'true' });
+const DEPLOYS = [TAG_PUSH, RC_PUSH, STAGING_DISPATCH, PRODUCTION_DISPATCH];
+const BUILDS = [RC_PUSH, STAGING_DISPATCH];
+const DEPLOY_JOBS = (s: (typeof DEPLOYS)[number]) => [
+  BUILDS.includes(s) ? 'build-push' : 'promote',
+  'migrate', 'deploy-api', 'deploy-frontend', 'smoke-test',
+];
 
 describe('INF-09: a red verdict stops every job after it', () => {
   const gated = Object.keys(wf.jobs).filter((j) => transitiveNeeds(wf, j).has('ci-verdict'));
@@ -197,21 +206,21 @@ describe('INF-09: a red verdict stops every job after it', () => {
 
   for (const s of DEPLOYS) {
     it(`${s.label}: ci-verdict runs, and so does its verdict step`, () => {
-      expect(simulateJobs(wf, s)['ci-verdict']).not.toBe('skipped');
+      expect(deployJobs(wf, s)['ci-verdict']).not.toBe('skipped');
       expect(simulateSteps(wf, 'ci-verdict', s).ran, 'the verdict step is skipped, and a skipped step passes the job').toContain(verdictStep());
     });
 
     it(`${s.label}: a failing verdict fails ci-verdict and no build, migrate or deploy job runs`, () => {
       const { result } = simulateSteps(wf, 'ci-verdict', s, verdictStep());
       expect(result, 'the verdict step failed and ci-verdict still passed').toBe('failure');
-      const jobs = simulateJobs(wf, s, { 'ci-verdict': result });
+      const jobs = deployJobs(wf, s, { 'ci-verdict': result });
       expect(gated.filter((j) => jobs[j] !== 'skipped'), 'these run after a red verdict').toEqual([]);
     });
 
     it(`${s.label}: with a green verdict the deploy jobs do run (so the check above can fail)`, () => {
-      const jobs = simulateJobs(wf, s);
-      expect(DEPLOY_JOBS.filter((j) => jobs[j] === 'skipped')).toEqual([]);
-      expect(DEPLOY_JOBS.every((j) => gated.includes(j))).toBe(true);
+      const jobs = deployJobs(wf, s);
+      expect(DEPLOY_JOBS(s).filter((j) => jobs[j] === 'skipped')).toEqual([]);
+      expect(DEPLOY_JOBS(s).every((j) => gated.includes(j))).toBe(true);
     });
   }
 });
@@ -232,7 +241,7 @@ describe('INF-09: the image is pushed only after its scan ran and passed', () =>
     expect([build, scan, push].map((x) => x !== undefined)).toEqual([true, true, true]);
   });
 
-  for (const s of DEPLOYS) {
+  for (const s of BUILDS) {
     it(`${s.label}: a failed image scan stops the push and fails the job`, () => {
       const r = ranIn(s, scan);
       expect(r.scanned, 'the image scan does not run').toBe(true);
@@ -252,7 +261,7 @@ describe('INF-09: the image is pushed only after its scan ran and passed', () =>
 
   it('whenever the push runs, the scan ran too: no condition skips the scan alone', () => {
     expect(scan).toBeDefined();
-    for (const s of [...DEPLOYS, dispatch({ deploy_api: 'false', deploy_frontend: 'true' })]) {
+    for (const s of [...BUILDS, dispatch({ target: 'staging', deploy_api: 'false', deploy_frontend: 'true' })]) {
       const r = ranIn(s);
       if (r.pushed) expect(r.scanned, s.label).toBe(true);
     }

@@ -228,3 +228,81 @@ describe('failure is not an empty result', () => {
     expect(res.body.data).toBeUndefined();
   });
 });
+
+/* VR-18 (Veeva gap 7 slice B, row D2): metadata filters on the same search.
+   A value outside the Vault's vocabularies is refused by name before the
+   corpus is read; a dropped filter would answer a wider question than the one
+   asked. Filters with no text browse instead of answering EMPTY_QUERY. */
+describe('metadata filters', () => {
+  const vaultReads = () => query.mock.calls.filter(c => /FROM vault\.documents d/.test(String(c[0])));
+
+  it.each([
+    ['classification=SECRET', 'classification'],
+    ['documentType=memo', 'documentType'],
+    ['evidenceKind=gossip', 'evidenceKind'],
+    ['placementStatus=done', 'placementStatus'],
+    ['ctdSection=banana', 'ctdSection'],
+    ['lifecycleStage=archived', 'lifecycleStage'],
+    ['folderId=module-9', 'folderId'],
+  ])('refuses %s by name, with no corpus read', async (qs, parameter) => {
+    store({ total: 3, rows: [HIT] });
+    const res = await request(app()).get(`${url('stability')}&${qs}`);
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({ success: false, error: 'INVALID_FILTER', parameter });
+    expect(vaultReads()).toHaveLength(0);
+  });
+
+  it('names the allowed values for a closed vocabulary', async () => {
+    store();
+    const res = await request(app()).get(`${url('stability')}&classification=SECRET`);
+    expect(res.body.allowed).toEqual(['CONFIDENTIAL', 'INTERNAL', 'CONTROLLED', 'PUBLIC']);
+  });
+
+  it('refuses processingStatus, which the Vault does not record', async () => {
+    store();
+    const res = await request(app()).get(`${url('stability')}&processingStatus=INDEXED`);
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({ error: 'UNSUPPORTED_PARAMETER', parameter: 'processingStatus' });
+    expect(vaultReads()).toHaveLength(0);
+  });
+
+  it('browses on filters alone, rather than answering EMPTY_QUERY', async () => {
+    store({ total: 1, rows: [{ ...HIT, evidence_kind: 'report', classification: 'CONTROLLED', lifecycle_stage: 'approved', updated_at: '2026-10-02T00:00:00Z' }] });
+    const res = await request(app()).get(`${url('')}&documentType=REPORT&documentType=SAR`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.reason).toBeUndefined();
+    expect(res.body.data.mode).toBe('browse');
+    expect(res.body.data.filters).toEqual({ documentTypes: ['REPORT', 'SAR'] });
+    expect(res.body.data.total).toBe(1);
+    expect(res.body.data.results[0]).toMatchObject({ evidenceKind: 'report', classification: 'CONTROLLED', lifecycleStage: 'approved', updatedAt: '2026-10-02T00:00:00.000Z' });
+    expect(vaultReads()).toHaveLength(2);
+    // No text, so no text match: browse is not a search that matched everything.
+    // The query is bound as null and the predicate holds no full-text match.
+    for (const [sql, params] of vaultReads()) {
+      expect((params as unknown[])[1]).toBeNull();
+      expect(String(sql).slice(String(sql).search(/\n\s*WHERE\s/))).not.toMatch(/@@/);
+    }
+  });
+
+  it('binds filter values after the organisation, query and program list', async () => {
+    store({ total: 0 });
+    await request(app()).get(`${url('stability')}&classification=CONTROLLED&ctdSection=m3.2.p`);
+    const [counted] = vaultReads();
+    const params = counted[1] as unknown[];
+    expect(params[0]).toBe(7);
+    expect(params[1]).toBe('stability');
+    expect(params.slice(3)).toEqual([['CONTROLLED'], ['3.2.P'], ['3.2.P.%']]);
+  });
+
+  it('the library search refuses a folder (one project\'s cabinet) and a malformed project id', async () => {
+    store();
+    const lib = (qs: string) => request(app()).get(`/api/c2c/project-vault/search?q=stability&${qs}`);
+    const folder = await lib('folderId=module-3');
+    expect(folder.status).toBe(400);
+    expect(folder.body.parameter).toBe('folderId');
+    const program = await lib('programId=not-a-uuid');
+    expect(program.status).toBe(400);
+    expect(program.body.parameter).toBe('programId');
+    expect(vaultReads()).toHaveLength(0);
+  });
+});

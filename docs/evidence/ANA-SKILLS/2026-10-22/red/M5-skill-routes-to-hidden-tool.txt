@@ -1,0 +1,14 @@
+# Mutation: server/services/ana/skills/library/safety.ts
+# - 'tools: ['
+# + "tools: ['build_sae_line_listing', "
+# Tests: server/services/ana/skills/__tests__/library.test.ts
+# exit 1
+
+ × server/services/ana/skills/__tests__/library.test.ts > the platform skill library > routes only to tools AnA has in the launch scope 6ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/ana/skills/__tests__/library.test.ts > the platform skill library > names in its method exactly the tools it lists, so Settings and AnA read the same skill 2ms
+   → expected [ Array(1) ] to deeply equal []
+      Tests  2 failed | 14 passed (16)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ Array(1) ] to deeply equal []
+AssertionError: expected [ Array(1) ] to deeply equal []

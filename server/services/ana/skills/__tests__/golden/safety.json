@@ -1,0 +1,125 @@
+[
+  {
+    "question": "What does our pharmacovigilance system need before the first EU marketing authorisation? Do we need a QPPV and a PSMF?",
+    "expect": "safety"
+  },
+  {
+    "question": "Can IND safety reporting and ICSR transmission to FDA go out directly from the platform?",
+    "expect": "safety"
+  },
+  {
+    "question": "Is our pharmacovigilance system master file complete?",
+    "expect": "safety",
+    "context": {
+      "documentType": "EU_PSMF"
+    }
+  },
+  {
+    "question": "Is this SAE a SUSAR? The event isn't in the reference safety information and the investigator thinks it's related.",
+    "expect": "safety.case-assessment"
+  },
+  {
+    "question": "Run a causality assessment with Naranjo for this hepatotoxicity case that recurred on rechallenge.",
+    "expect": "safety.case-assessment"
+  },
+  {
+    "question": "Draft the patient narrative for the serious adverse event in subject 104 and code the event in MedDRA.",
+    "expect": "safety.case-assessment",
+    "context": {
+      "segments": [
+        "biotech"
+      ]
+    }
+  },
+  {
+    "question": "When is the DSUR due relative to the DIBD, and which data lock point do we use?",
+    "expect": "safety.aggregate-reports"
+  },
+  {
+    "question": "What goes into the integrated benefit-risk section of a periodic benefit-risk evaluation report?",
+    "expect": "safety.aggregate-reports"
+  },
+  {
+    "question": "Do we still need a quarterly PADER, or can we send FDA a PBRER instead?",
+    "expect": "safety.aggregate-reports",
+    "context": {
+      "segments": [
+        "pharma"
+      ],
+      "documentType": "US_PADER"
+    }
+  },
+  {
+    "question": "We found a PRR of 3.2 in FAERS for hepatic failure. Is that a safety signal we have to act on?",
+    "expect": "safety.signal-management"
+  },
+  {
+    "question": "How should we validate and prioritise a signal of disproportionate reporting picked up in EudraVigilance?",
+    "expect": "safety.signal-management"
+  },
+  {
+    "question": "Run a disproportionality screen with EBGM and BCPNN on these counts.",
+    "expect": "safety.signal-management",
+    "context": {
+      "documentType": "ICH_SIGNAL"
+    }
+  },
+  {
+    "question": "Which additional risk minimisation measures belong in the EU RMP, and how do we show they work?",
+    "expect": "safety.risk-management-plans"
+  },
+  {
+    "question": "Is FDA likely to require a REMS with ETASU for this liver injury risk?",
+    "expect": "safety.risk-management-plans"
+  },
+  {
+    "question": "How do we decide what is an important identified risk versus an important potential risk in the safety specification?",
+    "expect": "safety.risk-management-plans",
+    "context": {
+      "segments": [
+        "biotech"
+      ]
+    }
+  },
+  {
+    "question": "Help me build an effects table and a value tree for the advisory committee benefit-risk discussion.",
+    "expect": "safety.benefit-risk"
+  },
+  {
+    "question": "Draft the benefits and risks conclusions for Module 2.5.6.",
+    "expect": "safety.benefit-risk"
+  },
+  {
+    "question": "How fragile is our benefit-risk conclusion given that the efficacy rests on a surrogate endpoint?",
+    "expect": "safety.benefit-risk",
+    "context": {
+      "documentType": "ICH_BENEFIT_RISK"
+    }
+  },
+  {
+    "question": "A catheter tip broke during a procedure but the patient wasn't hurt. Is this MDR reportable under Part 803?",
+    "expect": "safety.device-vigilance"
+  },
+  {
+    "question": "Is a false-negative result that delayed treatment a serious incident for IVDR vigilance purposes?",
+    "expect": "safety.device-vigilance",
+    "context": {
+      "segments": [
+        "ivd"
+      ]
+    }
+  },
+  {
+    "question": "Do we need a correction and removal report and a field safety notice for this software fix?",
+    "expect": "safety.device-vigilance"
+  },
+  {
+    "question": "What should our PMS plan say about trend reporting?",
+    "expect": "safety.device-vigilance",
+    "context": {
+      "segments": [
+        "device"
+      ]
+    }
+  }
+]

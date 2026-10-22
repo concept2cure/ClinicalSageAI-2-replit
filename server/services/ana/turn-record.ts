@@ -177,6 +177,9 @@ export interface TurnRecordBody {
     unresolvedUploads: number;
     memory: ContextUsedEvent['memory'];
     memoryStatus: ContextUsedEvent['memoryStatus'] | null;
+    /** The skills whose methods the model call carried, by version and content hash. */
+    skills: ContextUsedEvent['skills'];
+    skillsStatus: ContextUsedEvent['skillsStatus'] | null;
   };
   model: {
     provider: string | null;
@@ -293,7 +296,14 @@ export class TurnRecorder {
   private request: TurnRecordBody['request'] | null = null;
   private modelInput: ModelInputMessage[] = [];
   private readonly roundInputs: TurnRecordBody['roundInputs'] = [];
-  private context: TurnRecordBody['context'] = { files: [], unresolvedUploads: 0, memory: [], memoryStatus: null };
+  private context: TurnRecordBody['context'] = {
+    files: [],
+    unresolvedUploads: 0,
+    memory: [],
+    memoryStatus: null,
+    skills: [],
+    skillsStatus: null,
+  };
   private readonly model: TurnRecordBody['model'] = { provider: null, model: null, effort: null, calls: [] };
   private readonly plan: TurnRecordBody['plan'] = [];
   private readonly steps: RecordedStep[] = [];
@@ -391,6 +401,8 @@ export class TurnRecorder {
       unresolvedUploads: event.unresolvedUploads,
       memory: event.memory,
       memoryStatus: event.memoryStatus,
+      skills: event.skills,
+      skillsStatus: event.skillsStatus,
     };
   }
 
