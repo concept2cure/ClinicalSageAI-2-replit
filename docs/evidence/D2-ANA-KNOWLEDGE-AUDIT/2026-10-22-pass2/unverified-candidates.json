@@ -1,0 +1,2243 @@
+[
+ {
+  "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+  "line": 1581,
+  "quote": "per FDA Guidance on Formal Meetings Between CDER and Sponsors (2017)",
+  "error": "This cites the December 2017 draft, whose actual title was 'Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products'. That draft was replaced by the September 2023 PDUFA VII revised draft of the same title. The 2023 draft added Type D and INTERACT meetings, so the 2017 document is no longer current, and its title is quoted wrongly too.",
+  "correct": "FDA draft guidance 'Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products' (September 2023, PDUFA VII), which covers Type A, B, B(EOP), C, D and INTERACT meetings.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+  "line": 2319,
+  "quote": "Digital Health Technologies for Remote Data Acquisition in Clinical Investigations (2024)",
+  "error": "The final guidance was issued in December 2023 (the draft came out in December 2021), so the year is wrong.",
+  "correct": "FDA Guidance: Digital Health Technologies for Remote Data Acquisition in Clinical Investigations (final, December 2023).",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+  "line": 1263,
+  "quote": "specify the design per FDA Guidance on Oncology Dose Optimization (2023)",
+  "error": "2023 is the year of the draft (January 2023). FDA finalized 'Optimizing the Dosage of Human Prescription Drugs and Biological Products for the Treatment of Oncologic Diseases' in August 2024, so the current document is the 2024 final.",
+  "correct": "FDA Guidance: Optimizing the Dosage of Human Prescription Drugs and Biological Products for the Treatment of Oncologic Diseases (final, August 2024).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+  "line": 586,
+  "quote": "reference: 'ICH E9 Section 2.2.5 — Multiplicity'",
+  "error": "ICH E9 Section 2.2.5 is 'Multiple Primary Variables'. It is not a general multiplicity section and it does not cover pairwise comparisons across multiple treatment arms. Adjusting for multiple comparisons, such as multiple arms, is covered in ICH E9 Section 5.6, 'Adjustment of Significance and Confidence Levels'.",
+  "correct": "ICH E9 Section 5.6 (Adjustment of Significance and Confidence Levels) for multiple-arm and pairwise multiplicity; Section 2.2.5 covers multiple primary variables only.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+  "line": 530,
+  "quote": "ICH E9 Section 3.3 requires each arm to be adequately powered if formal pairwise comparisons are planned.",
+  "error": "ICH E9 Section 3.3 is 'Type of Comparison' (superiority, equivalence/non-inferiority, dose-response). It sets no requirement about powering each arm. Sample size is covered in Section 3.5.",
+  "correct": "Sample size and power considerations are in ICH E9 Section 3.5 (Sample Size). Section 3.3 covers the type of comparison.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+  "line": 118,
+  "quote": "ICH E8(R1) Section 4 recommends the title convey the intervention, condition, phase, and design.",
+  "error": "ICH E8(R1) Section 4 is 'Drug Development Planning'. Nothing in E8(R1) recommends what a protocol title should contain, so this attribution is invented.",
+  "correct": "Content of the protocol title page comes from ICH E6(R3) Annex 1 Appendix B (and ICH M11 for structured protocols), not ICH E8(R1) Section 4.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+  "line": 2488,
+  "quote": "EMA requires an EU Risk Management Plan per Directive 2001/83/EC Article 104a.",
+  "error": "Article 104a is a transitional provision. It lets authorities impose a risk management system on products authorised before 21 July 2012. The general obligation to submit an RMP and operate a risk management system is in Article 8(3)(iaa) and Article 104(3)(c), and in Regulation (EC) No 726/2004 for centrally authorised products.",
+  "correct": "EU RMP: Directive 2001/83/EC Article 8(3)(iaa) and Article 104(3)(c) (and Regulation (EC) No 726/2004 for centrally authorised products); GVP Module V.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+  "line": 2503,
+  "quote": "Per ICH E2A and FDA Guidance on Safety Reporting (2015)",
+  "error": "The 2015 FDA document, 'Safety Assessment for IND Safety Reporting', was only ever a draft. It was replaced by the June 2021 draft 'Sponsor Responsibilities — Safety Reporting Requirements and Safety Assessment for IND and Bioavailability/Bioequivalence Studies'. Citing it as current FDA guidance misstates both its status and whether it is still in effect.",
+  "correct": "FDA draft guidance 'Sponsor Responsibilities — Safety Reporting Requirements and Safety Assessment for IND and BA/BE Studies' (June 2021), with the final 2012 guidance 'Safety Reporting Requirements for INDs and BA/BE Studies'.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+  "line": 1411,
+  "quote": "ICH E14 requires QTc assessment for all new molecular entities. Failing to assess cardiac safety may result in a clinical hold or Refuse to File.",
+  "error": "ICH E14 does not require QTc assessment for every NME. It applies to new drugs with systemic bioavailability, and the guideline itself notes that a dedicated QT study is often not needed for large proteins and monoclonal antibodies. The same overstatement appears in the helpText at line 1338 ('QTc assessment is required for all new molecular entities'). The finding is also rated 'critical'.",
+  "correct": "ICH E14, as updated by the E14/S7B Q&As, recommends evaluating QT/QTc prolongation for new drugs with systemic bioavailability, through a TQT study or concentration-QTc modelling. A sponsor can justify a different approach, for example for large-molecule biologics with low risk of direct ion-channel interaction.",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+  "line": 2279,
+  "quote": "FDORA Section 3601 (explained in FDA draft guidance on Diversity Action Plans, June 2024) requires Phase 3 and pivotal trials to submit a Diversity Action Plan. Sponsors must provide justification if a plan is not submitted.",
+  "error": "This states the Diversity Action Plan obligation as currently binding. Under FD&C Act 505(z) and 520(g)(9), the requirement applies only to studies whose enrollment begins 180 days or more after FDA publishes FINAL guidance. The file itself cites only the June 2024 draft, and line 2195 says this correctly. The helpText at line 2203 ('Diversity Action Plans are required for Phase 3 and other pivotal studies unless an exemption is granted') repeats the error.",
+  "correct": "Diversity Action Plans will be required for Phase 3 and other pivotal studies (and certain device studies) whose enrollment begins 180 days or more after FDA issues final DAP guidance. Until then, submitting one is voluntary and recommended.",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+  "line": 2319,
+  "quote": "Per FDA Guidance on Digital Health Technologies for Remote Data Acquisition in Clinical Investigations (2024)",
+  "error": "Wrong date. FDA finalized this guidance in December 2023; the draft was December 2021.",
+  "correct": "FDA Guidance: Digital Health Technologies for Remote Data Acquisition in Clinical Investigations (final, December 2023).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+  "line": 1263,
+  "quote": "specify the design per FDA Guidance on Oncology Dose Optimization (2023).",
+  "error": "2023 is the date of the draft. FDA finalized 'Optimizing the Dosage of Human Prescription Drugs and Biological Products for the Treatment of Oncologic Diseases' in August 2024, so the citation points to a superseded draft.",
+  "correct": "FDA Guidance: Optimizing the Dosage of Human Prescription Drugs and Biological Products for the Treatment of Oncologic Diseases (final, August 2024).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+  "line": 758,
+  "quote": "Trials exceeding 5,000 subjects require robust safety monitoring infrastructure, centralized statistical monitoring, and potentially a larger DSMB per FDA Guidance on Clinical Trial DSMBs (2006).",
+  "error": "The 2006 FDA DMC guidance sets no 5,000-subject threshold and does not require centralized statistical monitoring or a larger DMC for big trials. The requirement is attributed to a source that does not contain it.",
+  "correct": "The 2006 FDA guidance (Establishment and Operation of Clinical Trial Data Monitoring Committees) discusses when a DMC is advisable: large, multicenter or long trials with mortality or major morbidity endpoints. It sets no enrollment-size threshold or associated requirements.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/csr-auditor.ts",
+  "line": 1014,
+  "quote": "'ICH E3, Section 10; 21 CFR 314.50(d)(5)(ii); FDA Guidance on Diversity (2020)'",
+  "error": "ICH E3 Section 10 is 'Study Patients' (10.1 Disposition, 10.2 Protocol Deviations). It does not cover demographics or baseline characteristics. The question at line 998 and the reference at line 1017 cite it for demographics, baseline characteristics and eligibility criteria.",
+  "correct": "Demographics and baseline characteristics are in ICH E3 Section 11.2 ('Demographic and Other Baseline Characteristics'). Eligibility criteria are in Section 9.3 ('Selection of Study Population').",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/csr-auditor.ts",
+  "line": 767,
+  "quote": "'ICH E9(R1) Addendum on Estimands; NRC Report (2010); FDA Guidance on Missing Data (2020)'",
+  "error": "FDA has issued no general 'Guidance on Missing Data (2020)'. Line 755 cites the same non-existent document ('FDA Guidance (2020)'). Line 763 also credits FDA with a 10% discontinuation threshold ('FDA considers this a significant omission, particularly for trials with discontinuation rates above 10%') that no FDA document sets.",
+  "correct": "The applicable sources are the 2010 NRC report 'The Prevention and Treatment of Missing Data in Clinical Trials' (commissioned by FDA), ICH E9(R1) (adopted by FDA in 2021) and, for the EU, EMA/CPMP/EWP/1776/99 Rev. 1. No FDA discontinuation-rate threshold exists.",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/csr-auditor.ts",
+  "line": 696,
+  "quote": "'Interim analyses must be overseen by an independent DMC operating under a ' +",
+  "error": "This presents a requirement that does not exist. ICH E9 Section 4.5 asks that interim analyses be pre-planned with procedures that preserve Type I error and confidentiality. It does not require every interim analysis to be overseen by an independent DMC, and it does not require an alpha-spending function specifically (fixed group-sequential boundaries are also acceptable). The question at line 682 makes the same claim and attributes it to E9 4.5.",
+  "correct": "ICH E9 4.5/4.6 and FDA's 2006 DMC guidance recommend independent DMCs for many trials with interim efficacy or safety looks. Interim analyses must be pre-specified with a method that controls Type I error (group-sequential boundaries or an alpha-spending function). DMC oversight is a recommendation, not a universal requirement.",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/protocol-auditor.ts",
+  "line": 335,
+  "quote": "recommends DMCs for controlled trials intended to support marketing applications.",
+  "error": "This misstates the 2006 FDA DMC guidance. The guidance says most clinical trials do not need a DMC. It recommends one mainly for large, randomized, multicenter trials of treatments meant to prolong life or reduce the risk of major adverse health outcomes, and for some other high-risk settings. It does not recommend DMCs for all controlled trials that support marketing applications. Line 334 says the same thing ('FDA strongly recommends independent data monitoring for pivotal studies').",
+  "correct": "FDA's 2006 guidance 'Establishment and Operation of Clinical Trial Data Monitoring Committees' recommends DMCs for controlled trials with mortality or major-morbidity endpoints, for vulnerable populations or high-risk interventions, and for large multicenter studies of that kind. It states that many trials, including some pivotal trials, do not need one.",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/protocol-auditor.ts",
+  "line": 181,
+  "quote": "FDA Guidance for Industry: Phase 1 Investigations (2015)",
+  "error": "No FDA guidance with the title 'Phase 1 Investigations' was issued in 2015. The citation appears to be fabricated.",
+  "correct": "The relevant FDA documents include 'Content and Format of Investigational New Drug Applications (INDs) for Phase 1 Studies of Drugs, Including Well-Characterized, Therapeutic, Biotechnology-derived Products' (1995), 'Estimating the Maximum Safe Starting Dose in Initial Clinical Trials for Therapeutics in Adult Healthy Volunteers' (2005) and 'CGMP for Phase 1 Investigational Drugs' (2008). Phase 1 is defined in 21 CFR 312.21(a).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/csr-auditor.ts",
+  "line": 352,
+  "quote": "'Every confirmatory trial must designate a single primary endpoint that is clinically ' +",
+  "error": "ICH E9 does not require a single primary endpoint. Section 2.2.2 says there should 'generally' be only one primary variable, and Section 2.2.5 explicitly allows multiple primary variables with suitable Type I error control. FDA's Multiple Endpoints guidance (2022) covers co-primary and multiple primary endpoints. The question at line 342 makes the same claim.",
+  "correct": "ICH E9 recommends generally one primary variable. Multiple or co-primary endpoints are acceptable when pre-specified with appropriate multiplicity control (ICH E9 2.2.2 and 2.2.5; FDA Multiple Endpoints in Clinical Trials, 2022).",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/csr-auditor.ts",
+  "line": 932,
+  "quote": "'The FDA benefit-risk framework (PDUFA VI) requires explicit weighing of ' +",
+  "error": "FDA's structured Benefit-Risk Framework was introduced under PDUFA V (the 2013 implementation plan). PDUFA VI continued it but did not create it. Neither one, nor ICH E3, requires an individual CSR to contain a structured benefit-risk assessment when deaths occur. The framework governs FDA's own review and the marketing-application benefit-risk summary (CTD 2.5.6). The same claims appear at lines 943 and 946.",
+  "correct": "The FDA Benefit-Risk Framework dates from PDUFA V and was carried forward in PDUFA VI and VII. A benefit-risk discussion belongs in the marketing application (21 CFR 314.50(d)(5)(viii); CTD Module 2.5.6), not as a mandatory part of a CSR. ICH E3 12.3 requires death narratives and analysis, not a structured benefit-risk assessment.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/csr-auditor.ts",
+  "line": 765,
+  "quote": "'the primary assumption (e.g., MAR, MNAR), the analytical method, and at least ' +",
+  "error": "No regulation or guidance requires 'at least two sensitivity analyses under alternative assumptions'. The number is invented and presented as a requirement.",
+  "correct": "ICH E9(R1) asks for pre-specified sensitivity analyses that test the robustness of the main estimator's assumptions. It does not set a minimum number.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/csr-auditor.ts",
+  "line": 768,
+  "quote": "'Describe: (1) the estimand (treatment policy, composite, hypothetical, or ' +",
+  "error": "Treatment policy, composite, hypothetical and principal stratum are not estimands. They are ICH E9(R1) strategies for handling intercurrent events. The list also leaves out the fifth strategy, while-on-treatment.",
+  "correct": "ICH E9(R1) defines an estimand by five attributes: treatment, population, variable, intercurrent-event handling and population-level summary. It names five intercurrent-event strategies: treatment policy, hypothetical, composite variable, while on treatment, and principal stratum.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/protocol-auditor.ts",
+  "line": 286,
+  "quote": "The study phase must be declared per 21 CFR 312.23(a)(1)(iv) to allow FDA to assess developmental appropriateness.",
+  "error": "21 CFR 312.23(a)(1)(iv) is the Form FDA 1571 commitment that an IRB complying with Part 56 will review and approve the study. It does not cover the study phase. The same wrong paragraph is repeated in the reference string at line 287.",
+  "correct": "The requirement to identify the phase or phases of the clinical investigation is in 21 CFR 312.23(a)(1)(ii).",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/protocol-auditor.ts",
+  "line": 181,
+  "quote": "'ICH E8(R1) Section 3.1.3.1; FDA Guidance for Industry: Phase 1 Investigations (2015)'",
+  "error": "ICH E8(R1) has no Section 3.1.3.1. Its Section 3 is 'Designing Quality into Clinical Studies'. Section 3.1.3.1 (Phase I) existed only in the original 1997 ICH E8, which E8(R1) replaced. Line 180 cites that superseded 'ICH E8 Section 3.1.3.1' as current.",
+  "correct": "Cite ICH E8(R1) Section 4.3 (Clinical studies: human pharmacology, exploratory, confirmatory, post-approval) and its Annex on types of studies.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/protocol-auditor.ts",
+  "line": 661,
+  "quote": "'ICH E9 Section 3.1.2; ICH E10 Section 2.6.1'",
+  "error": "ICH E10 has no Section 2.6.1. Section 2 ends at 2.5 (External Control). Line 660 makes the same claim: 'ICH E10 Section 2.6.1 discusses comparator selection considerations.'",
+  "correct": "Choice of comparator is covered in ICH E10 Section 2.4 (Active (Positive) Concurrent Control) and Section 3 (Choosing the Concurrent Control).",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/protocol-auditor.ts",
+  "line": 287,
+  "quote": "'21 CFR 312.23(a)(1)(iv); ICH E8(R1) Section 3'",
+  "error": "ICH E8(R1) Section 3 is 'Designing Quality into Clinical Studies' (quality by design and critical-to-quality factors). It does not cover development phases or whether a study suits its stage of development.",
+  "correct": "Development stages and study types are covered in ICH E8(R1) Section 4 (Drug Development Planning), Section 4.3 in particular.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/protocol-auditor.ts",
+  "line": 456,
+  "quote": "'ICH E9 Section 2.3.2; FDA Guidance: Adaptive Designs (2019) Section IV.A'",
+  "error": "Section IV.A of FDA's 2019 'Adaptive Designs for Clinical Drug and Biological Products' covers controlling the chance of erroneous conclusions (Type I error). It does not cover stratified randomization.",
+  "correct": "For stratified randomization, cite ICH E9 Section 2.3.2 alone. Drop the Adaptive Designs Section IV.A reference.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
+  "line": 1889,
+  "quote": "Per FDAAA 2007 (Section 505-1), REMS may be required",
+  "error": "Section 505-1 is a section of the Federal Food, Drug, and Cosmetic Act, not of FDAAA. FDAAA (Pub. L. 110-85) Title IX, section 901, added section 505-1 to the FD&C Act (21 U.S.C. 355-1). FDAAA has no section 505-1.",
+  "correct": "Per FD&C Act section 505-1 (21 U.S.C. 355-1), added by FDAAA 2007 section 901, FDA may require a REMS if it determines one is necessary to ensure the benefits outweigh the risks.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
+  "line": 804,
+  "quote": "Per ICH E9 Section 5.5, the primary analysis should be fully pre-specified in the statistical analysis plan (SAP).",
+  "error": "ICH E9 Section 5.5 is 'Estimation, Confidence Intervals and Hypothesis Testing'. Pre-specifying the analysis in the SAP is covered in Section 5.1, 'Prespecification of the Analysis'.",
+  "correct": "Per ICH E9 Section 5.1 (Prespecification of the Analysis), the primary analysis should be pre-specified in the protocol/statistical analysis plan.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
+  "line": 1560,
+  "quote": "while the PP population is preferred for non-inferiority and equivalence trials",
+  "error": "ICH E9 (Section 5.2.3) does not say the per-protocol set is preferred for equivalence or non-inferiority trials. It says only that using the full analysis set in those trials is generally not conservative, and that its role should be considered carefully. Both analyses are expected, and conclusions should be robust across them (FDA's 2016 non-inferiority guidance says the same).",
+  "correct": "Per ICH E9 Section 5.2.3, the full analysis set is generally primary for superiority trials. In equivalence and non-inferiority trials, the full analysis set is not conservative, so both the FAS and the PP analyses should be presented and the conclusions should hold under both.",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
+  "line": 1429,
+  "quote": "Per FDA Guidance \"Safety Reporting Requirements for INDs and BA/BE Studies\" (2012), AESIs should be defined in the protocol and monitored via Standardized MedDRA Queries (SMQs) or Customized MedDRA Queries (CMQs).",
+  "error": "This is a misattribution. The 2012 FDA final guidance on IND/BA-BE safety reporting covers 21 CFR 312.32/320.31 expedited reporting: definitions, causality, the 15-day and 7-day clocks, and aggregate analysis. It does not require AESIs to be defined in the protocol, and it does not tell sponsors to monitor them with SMQs or CMQs.",
+  "correct": "Defining AESIs in the protocol and searching for them with SMQs or CMQs is industry practice that draws on CIOMS VI and MedDRA guidance. The 2012 FDA safety reporting guidance does not require it.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+  "line": 1131,
+  "quote": "Per 21 CFR 312.31 (Amendments to an IND), amendments must describe the nature and significance of each change.",
+  "error": "21 CFR 312.31 is titled \"Information amendments\". It does not cover IND amendments in general. Protocol amendments are a separate section, 312.30, and no CFR section is titled \"Amendments to an IND\".",
+  "correct": "21 CFR 312.31 (Information amendments). IND amendments as a whole fall under 21 CFR 312.30 (protocol amendments) and 312.31 (information amendments).",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+  "line": 1131,
+  "quote": "Information amendments (21 CFR 312.31(b)) cover all other changes.",
+  "error": "The scope rule (essential information not covered by a protocol amendment, an IND safety report or the annual report) is in 312.31(a), 'Requirement for information amendment'. 312.31(b) covers only the content and format of an information amendment.",
+  "correct": "Information amendments (21 CFR 312.31(a)) cover essential information not within the scope of a protocol amendment, IND safety report or annual report.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+  "line": 1966,
+  "quote": "{ value: 'planned', label: 'Planned — timing per ICH M3(R2) Table 3' }",
+  "error": "ICH M3(R2) Table 3 lists the nonclinical studies recommended for exploratory clinical trials (Section 7, approaches 1–5). It says nothing about when reproductive or embryo-fetal development studies are due. That timing is set out in the text of Section 11.",
+  "correct": "Timing per ICH M3(R2) Section 11 (Reproduction Toxicity Studies).",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+  "line": 2000,
+  "quote": "requires embryo-fetal development (EFD) studies to be completed per ICH M3(R2) Table 3",
+  "error": "ICH M3(R2) Table 3 covers the nonclinical studies recommended for exploratory clinical trials. The rules on when EFD studies are needed before enrolling WOCBP are in Section 11 (11.3), not in a table.",
+  "correct": "EFD studies completed per ICH M3(R2) Section 11 (Reproduction Toxicity Studies).",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+  "line": 255,
+  "quote": "Per 21 CFR 312.23(a)(7), the IND must include a description of the drug substance and drug product, including the name, chemical structure, mechanism of action, route of administration, and proposed indication.",
+  "error": "21 CFR 312.23(a)(7) is the chemistry, manufacturing and controls section. Route of administration, pharmacological class and broad objectives belong to the introductory statement, 312.23(a)(3). Mechanism of action belongs to pharmacology, 312.23(a)(8)(i). Neither is an (a)(7) requirement.",
+  "correct": "Name, structure, pharmacological class, formulation, route and objectives go in the introductory statement (21 CFR 312.23(a)(3)(i)). Mechanism of action goes under 312.23(a)(8)(i). Drug substance and drug product CMC goes under 312.23(a)(7).",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+  "line": 1068,
+  "quote": "FDA Guidance \"Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products\" (2017)",
+  "error": "The December 2017 draft was replaced by the September 2023 revised guidance of the same title, issued under PDUFA VII. That revision added Type D and INTERACT meetings. Citing the 2017 version as current refers to a superseded document.",
+  "correct": "FDA Guidance \"Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products\" (September 2023 revision), which describes Type A, B, B (EOP), C, D and INTERACT meetings.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+  "line": 1099,
+  "quote": "placeholder: 'e.g., Division of Oncology Products 1, Office of New Drugs / CDER',",
+  "error": "CDER's 2019 reorganisation of the Office of New Drugs ended the 'Division of Oncology Products 1'. Oncology review now sits in the Office of Oncologic Diseases, in the Divisions of Oncology 1, 2 and 3 and the hematology divisions.",
+  "correct": "e.g., Division of Oncology 1, Office of Oncologic Diseases, Office of New Drugs / CDER",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+  "line": 1185,
+  "quote": "adds 45 days of FDA review for protocol agreement",
+  "error": "An SPA does not add time to the IND's 30-day review. It is a separate request, usually made for a Phase 3 protocol after the IND is already in effect, and its 45-day response clock runs on its own without delaying when the IND takes effect. Line 1253 repeats the same claim: 'A Special Protocol Assessment adds 45 days to the FDA review timeline.'",
+  "correct": "FDA aims to answer an SPA request within 45 days under the PDUFA goals. The request is separate from the 21 CFR 312.40 30-day IND review and does not lengthen it.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+  "line": 1253,
+  "quote": "FDA agreement is binding unless the sponsor fails to follow the agreed-upon protocol.",
+  "error": "The exceptions to an SPA agreement are incomplete. Under FD&C Act 505(b)(5)(C), FDA can also change the agreement with the sponsor's written agreement, or when a substantial scientific issue essential to judging safety or effectiveness is identified after testing has begun. Under the SPA guidance, it can also do so when the data the sponsor relied on prove false, misleading or materially incomplete.",
+  "correct": "An SPA agreement binds the review division. It can change if the sponsor agrees in writing, if a substantial scientific issue essential to safety or effectiveness is identified after testing begins, if the sponsor does not follow the agreed protocol, or if the data it relied on prove false or incomplete.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+  "line": 1068,
+  "quote": "\"Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products\" (2017)",
+  "error": "The 2017 document was a draft guidance. FDA replaced it with a final guidance of the same title in September 2023 under PDUFA VII. The final guidance added Type D and INTERACT meetings to Types A, B, B(EOP) and C.",
+  "correct": "Cite FDA Guidance 'Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products' (final, September 2023). Pre-IND meetings remain Type B.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+  "line": 1482,
+  "quote": "ICH Q1A(R2) requires stability data at submission.",
+  "error": "ICH Q1A(R2) sets the stability data package for registration (marketing) applications. It does not set IND stability requirements. IND stability content comes from 21 CFR 312.23(a)(7)(iv)(a)-(b) and FDA's IND CMC guidances (Phase 1 guidance of 1995; Phase 2/3 guidance of 2003): stability data adequate to cover the duration of the planned trial. The guidance at line 1411 makes the same misattribution: 'A minimum of 1-2 months accelerated data ... per ICH Q1A(R2)'.",
+  "correct": "Under 21 CFR 312.23(a)(7) and FDA's IND CMC guidances, the IND must describe the stability program and give data showing the material stays within specification for the duration of the clinical study. ICH Q1A(R2) governs registration stability packages.",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+  "line": 672,
+  "quote": "Not yet — typically required before Phase 3 / NDA",
+  "error": "Under ICH M3(R2) Section 8, carcinogenicity studies, when needed, are normally completed for marketing approval. They are not needed before large-scale clinical trials (Phase 3) unless there is a special concern. 'Before Phase 3' is wrong.",
+  "correct": "When needed, carcinogenicity studies are typically completed before the marketing application (NDA/BLA). Phase 3 can proceed without them unless there is a specific cause for concern.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+  "line": 1966,
+  "quote": "Planned — timing per ICH M3(R2) Table 3",
+  "error": "ICH M3(R2) Table 3 covers recommended nonclinical studies for exploratory clinical trials. Reproductive toxicity timing relative to enrolling WOCBP is set out in M3(R2) Section 11, not in a table. The finding at line 2000 makes the same miscitation: 'EFD studies to be completed per ICH M3(R2) Table 3'.",
+  "correct": "Reproductive and developmental toxicity timing is given in ICH M3(R2) Section 11 (Reproduction toxicity studies, 11.3 Women of childbearing potential).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+  "line": 1842,
+  "quote": "FDA requires all drug product sponsors to complete a nitrosamine impurity risk assessment per the current FDA guidance",
+  "error": "The FDA nitrosamine guidance (Rev. 2, September 2024) is non-binding. Its recommendations are addressed to manufacturers and applicants of marketed products and of pending or approved NDAs, ANDAs and BLAs. It does not impose a requirement that IND sponsors complete the assessment before IND submission. The help text at line 1822 says the same: 'all sponsors must conduct a risk assessment'.",
+  "correct": "FDA recommends (non-binding guidance) that manufacturers of APIs and drug products, chiefly for marketed products and marketing applications, assess and control nitrosamine risk. For an IND it is good practice to assess the risk early, but it is not a regulatory requirement for submission.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+  "line": 1937,
+  "quote": "a dedicated study is recommended when renal clearance accounts for ≥30% of total clearance or the drug has a narrow therapeutic index",
+  "error": "FDA's renal impairment guidance has no 30% renal-clearance cut-off. It recommends characterising PK in renal impairment for most drugs intended for patients who may have impaired renal function, including drugs eliminated mainly by non-renal routes, because renal impairment also changes metabolism and transport. A reduced design is an option, not an exemption below 30%. The option 'Not needed — minimal renal elimination (<30%)' at line 1933 relies on the same false threshold.",
+  "correct": "FDA recommends a renal impairment PK study for most drugs likely to be used in patients with renal impairment, whatever the main elimination route. A reduced or staged design is possible for drugs that are not mainly renally eliminated.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+  "line": 1333,
+  "quote": "single-enantiomer development is generally preferred. A racemate requires justification.",
+  "error": "FDA's 1992 Policy Statement for the Development of New Stereoisomeric Drugs states no preference for single enantiomers. It leaves the choice of racemate or single enantiomer to the sponsor and asks for stereochemistry-specific characterisation and controls either way.",
+  "correct": "Under the 1992 FDA policy the sponsor may develop either a racemate or a single enantiomer. Either way, the stereoisomeric composition must be characterised and controlled, and the individual enantiomers' pharmacology and PK assessed.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+  "line": 142,
+  "quote": "Dun & Bradstreet number required for FDA submissions per OMB guidance.",
+  "error": "Form FDA 1571 and 21 CFR 312.23 do not require a DUNS number for an IND. The OMB DUNS requirement applied to federal grants and awards, and the federal government replaced DUNS with the SAM Unique Entity ID in April 2022. FDA uses DUNS for establishment registration and listing, not IND submission.",
+  "correct": "An IND does not require a DUNS number. DUNS or FEI numbers apply to establishment registration and listing and to some application forms, not to Form FDA 1571.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+  "line": 1099,
+  "quote": "e.g., Division of Oncology Products 1, Office of New Drugs / CDER",
+  "error": "CDER reorganised the Office of New Drugs in 2019-2020, and 'Division of Oncology Products 1' no longer exists. Oncology review now sits in the Office of Oncologic Diseases, under Divisions of Oncology 1, 2 and 3 and the hematologic malignancies divisions.",
+  "correct": "e.g., Division of Oncology 1, Office of Oncologic Diseases, Office of New Drugs / CDER.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/ind-auditor.ts",
+  "line": 666,
+  "quote": "ICH E1 provides guidance on the size of the safety database needed to support different phases of clinical development.",
+  "error": "ICH E1 does not cover the safety database for each phase of development. It sets the total population exposure expected at marketing approval for drugs meant for long-term treatment of non-life-threatening conditions: about 1500 subjects in total, 300-600 treated for 6 months, and 100 treated for 1 year. The question at line 657 makes the same claim when it asks whether the database is adequate 'to support the proposed phase of development per ICH E1'.",
+  "correct": "ICH E1 (Extent of Population Exposure to Assess Clinical Safety for Drugs Intended for Long-Term Treatment of Non-Life-Threatening Conditions) sets the expected exposure at marketing approval. Phase-appropriate nonclinical support for each clinical phase comes from ICH M3(R2). Phase-by-phase clinical safety data needs are not defined by E1.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/ind-auditor.ts",
+  "line": 192,
+  "quote": "ICH M3(R2) Section 3; ICH S6(R1) Section 2; 21 CFR 312.23(a)(8)",
+  "error": "This citation is offered for selecting pharmacologically relevant toxicology species. ICH M3(R2) Section 3 is 'Toxicokinetic and Pharmacokinetic Studies', not species selection.",
+  "correct": "M3(R2) covers species for general toxicity studies under Repeated-Dose Toxicity Studies (Section 5) and its general principles (Section 1). For biologics, species selection is ICH S6(R1) (the addendum's Section 2, Species Selection).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/ind-auditor.ts",
+  "line": 157,
+  "quote": "ICH M3(R2) Section 4; 21 CFR 312.23(a)(8); FDA Guidance: Content and Format of INDs for Phase 1 Studies",
+  "error": "This is cited for the overall requirement that nonclinical pharmacology and toxicology studies be complete before first-in-human dosing. ICH M3(R2) Section 4 is 'Acute Toxicity Studies'.",
+  "correct": "The general principles and timing of nonclinical studies relative to clinical trials are in M3(R2) Section 1 (General Principles), Section 5 (Repeated-Dose Toxicity, Table 1) and the guideline as a whole. Section 4 covers acute toxicity only.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/safety-narrative-auditor.ts",
+  "line": 715,
+  "quote": "ICH E3 Section 12.2.2 requires that individual serious case narratives be interpretable in the context of the overall safety summary.",
+  "error": "ICH E3 Section 12.2.2 is 'Display of Adverse Events', the summary tables of adverse events. Narratives of deaths, other serious adverse events and other significant adverse events are in Section 12.3.2. The reference string at line 716 ('ICH E3 Section 12.2.2') repeats the error.",
+  "correct": "Individual narratives are covered by ICH E3 Section 12.3.2. Section 12.3.3 covers the analysis and discussion of deaths and serious events in the context of the overall safety data.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/safety-narrative-auditor.ts",
+  "line": 549,
+  "quote": "ICH E2D Section III.B requires sponsors to make reasonable efforts to obtain follow-up information on serious cases.",
+  "error": "ICH E2D uses Arabic section numbers (1-5) and has no Section III.B. Follow-up information is in Section 5.4 (Good Case Management Practices). E2D is also the post-approval ICSR guideline, not the clinical-trial one. The same nonexistent numbering appears in other E2D references in this file ('Section III', 'III.A', 'II.B', 'II.C', 'IV').",
+  "correct": "ICH E2D Section 5.4 (Follow-up Information) covers follow-up of post-approval ICSRs. For a clinical-trial case under an IND, cite 21 CFR 312.32(d).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/safety-narrative-auditor.ts",
+  "line": 498,
+  "quote": "ICH E6(R3) Appendix B; ICH E6(R3) Annex 1 §2.11; ICH E2A Section III.D; 21 CFR 312.32(c)(1)(iv)",
+  "error": "21 CFR 312.32(c)(1)(iv) is the IND safety-report trigger for a clinically important increase in the rate of serious suspected adverse reactions over the rate in the protocol or Investigator's Brochure. It says nothing about unblinding or emergency unblinding procedures, so it is cited here for something it does not contain.",
+  "correct": "Unblinding of individual SUSAR cases is covered by ICH E2A Section III.D. For a US IND it is covered by FDA's 2010 final rule preamble and the guidance 'Safety Reporting Requirements for INDs and BA/BE Studies' (2012), not by 312.32(c)(1)(iv). Remove the 312.32(c)(1)(iv) citation or replace it.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+  "line": 1879,
+  "quote": "Per 21 USC 355-1(g), REMS assessments must be submitted at 18 months, 3 years, and 7 years after initial REMS approval",
+  "error": "The 18-month / 3-year / 7th-year assessment timetable is in section 505-1(d) (21 USC 355-1(d), 'Minimal strategy'). Section 505-1(g) covers assessment and modification of an approved strategy. The statute also says 'in the 7th year', not 'at 7 years'.",
+  "correct": "Per 21 USC 355-1(d), a REMS must include a timetable for assessments by 18 months and 3 years after initial approval and in the 7th year after approval, unless FDA specifies otherwise.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+  "line": 2167,
+  "quote": "debarment certification (21 CFR 314.50(a)(5)(iv))",
+  "error": "21 CFR 314.50(a)(5) is the signature and countersignature requirement for the application form, and it has no subparagraph (iv). The NDA debarment certification comes from FD&C Act section 306(k)(1) (21 USC 335a(k)(1)), not from 314.50(a)(5)(iv).",
+  "correct": "Debarment certification under FD&C Act section 306(k)(1) (21 USC 335a(k)(1)).",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+  "line": 2187,
+  "quote": "Debarment Certification (21 CFR 314.50(a)(5)(iv)) Complete",
+  "error": "Same nonexistent citation as line 2167. 314.50(a)(5) is the signature requirement and has no (iv). The debarment certification is required by FD&C Act 306(k)(1).",
+  "correct": "Debarment Certification (FD&C Act section 306(k)(1); 21 USC 335a(k)(1)) Complete",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+  "line": 2261,
+  "quote": "Form FDA 356h (Application to Market a New Drug, Biologic, or Antibiotic Drug for Human Use)",
+  "error": "This is the old title of Form FDA 356h. The antibiotic category was dropped after FDAMA 1997, and the current form has a different title.",
+  "correct": "Form FDA 356h, 'Application to Market a New or Abbreviated New Drug or Biologic for Human Use'.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+  "line": 1946,
+  "quote": "PMC 3: Renal impairment PK study (Child-Pugh classification).",
+  "error": "Child-Pugh classifies hepatic impairment, not renal impairment. Renal impairment studies stratify by eGFR/CrCl (e.g., mild/moderate/severe/ESRD).",
+  "correct": "PMC 3: Renal impairment PK study (stratified by eGFR/creatinine clearance); Child-Pugh applies to a hepatic impairment study.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+  "line": 1484,
+  "quote": "Per 21 CFR 314.50(d)(5)(vi)(b) and ICH E2D \"Post-Approval Safety Data Management,\" all deaths and serious adverse events must be thoroughly analyzed.",
+  "error": "ICH E2D covers post-approval safety data, so it is not the basis for analysing deaths and SAEs in a pre-approval clinical program for an NDA. 314.50(d)(5)(vi)(b) is the safety-update provision, not a deaths/SAE analysis requirement. The pre-approval framework is ICH E2A, ICH E3 section 12.3 and the ISS under 314.50(d)(5)(vi)(a).",
+  "correct": "Per 21 CFR 314.50(d)(5)(vi)(a) (integrated summary of safety), ICH E3 section 12.3 and ICH E2A, deaths and SAEs must be analysed; ICH E2D applies post-approval.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+  "line": 1544,
+  "quote": "reference: '21 CFR 314.50(d)(5)(vi)(b); ICH E2A; ICH E2D',",
+  "error": "ICH E2D is a post-approval guideline and does not govern analysis of drug-related deaths in the NDA clinical program. 314.50(d)(5)(vi)(b) is the safety-update requirement.",
+  "correct": "21 CFR 314.50(d)(5)(vi)(a); ICH E2A; ICH E3 section 12.3",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+  "line": 1472,
+  "quote": "FDA may require a REMS (with Medication Guide as a minimum element) when a boxed warning is warranted",
+  "error": "A Medication Guide is not a minimum element of a REMS. Under 21 USC 355-1(d) the only required minimum is a timetable for assessments; a Medication Guide, communication plan and ETASU are each optional elements (355-1(e),(f)). A boxed warning also does not by itself trigger a REMS.",
+  "correct": "FDA may require a REMS under 21 USC 355-1, which may include a Medication Guide, a communication plan and/or ETASU; the statutory minimum is a timetable for assessments.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+  "line": 1950,
+  "quote": "label: 'Post-Marketing Requirements (PMEs) — Mandatory Studies',",
+  "error": "FDA's term for mandatory postmarketing studies under FD&C Act 505(o)(3) is 'postmarketing requirements (PMRs)'. 'PME' is not an FDA term, and the file's own placeholder uses 'PMR'.",
+  "correct": "Post-Marketing Requirements (PMRs) — Mandatory Studies",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+  "line": 1918,
+  "quote": "FDAAA Section 505(o)(3)",
+  "error": "Section 505(o)(3) is a section of the FD&C Act (added by FDAAA section 901), not a section of FDAAA. The same guidance also calls PMRs 'PMEs' (line 1916).",
+  "correct": "FD&C Act section 505(o)(3) (21 USC 355(o)(3)), added by FDAAA section 901.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+  "line": 962,
+  "quote": "Per FDA Guidance and ICH E1/E7, sponsors should analyze PK and safety data by sex.",
+  "error": "Neither guideline covers sex-based analysis. ICH E1 covers the extent of population exposure for long-term treatment of non-life-threatening conditions, and ICH E7 covers geriatric populations.",
+  "correct": "Sex-based analysis is addressed by FDA guidance (e.g., 'Evaluation of Sex-Specific Data in Medical Device Clinical Studies' for devices; for drugs, the 1993 FDA gender guideline and 21 CFR 314.50(d)(5)(v)-(vi) requiring effectiveness and safety data by gender, age and race), not ICH E1/E7.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+  "line": 302,
+  "quote": "Per 21 CFR 314.50(d)(1), the NDA must contain a full description of the drug substance, its mechanism of action, dosage form, route, and all proposed strengths.",
+  "error": "21 CFR 314.50(d)(1) is the chemistry, manufacturing and controls (CMC) technical section. It requires a description of the drug substance's physical/chemical characteristics, manufacture and controls, but not the mechanism of action or the proposed brand name. Mechanism and pharmacologic class belong to the application summary (314.50(c)) and the labeling (201.57(c)(13)).",
+  "correct": "314.50(d)(1) requires the CMC description of the drug substance and drug product; mechanism of action is presented in the summary (314.50(c)) and in labeling section 12.1 (21 CFR 201.57(c)(13)).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+  "line": 1637,
+  "quote": "All sequence numbers must follow the FDA Comprehensive Table of Contents (CTOCh) and CDER/CBER numbering conventions.",
+  "error": "The FDA Comprehensive Table of Contents Headings and Hierarchy defines the CTD/eCTD heading structure, not eCTD sequence numbering. Sequence numbering is set by the FDA eCTD technical specifications / eCTD Technical Conformance Guide.",
+  "correct": "Document placement must follow the FDA Comprehensive Table of Contents Headings and Hierarchy; sequence numbering follows the FDA eCTD technical specifications and eCTD Technical Conformance Guide.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+  "line": 603,
+  "quote": "The standard battery includes Ames test, in vitro chromosomal aberration or micronucleus, and in vivo micronucleus assay.",
+  "error": "ICH S2(R1) has two acceptable standard battery options. Option 2 is the Ames test plus an in vivo assessment in two tissues, and it has no in vitro mammalian cell test. So the in vitro chromosomal aberration or micronucleus test is not a required part of a complete S2(R1) battery.",
+  "correct": "ICH S2(R1) Option 1: Ames + in vitro mammalian cell test (chromosomal aberration, micronucleus or mouse lymphoma TK) + in vivo micronucleus/chromosomal damage assay. Option 2: Ames + in vivo assessment in two tissues (e.g., micronucleus plus a second in vivo assay such as comet).",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+  "line": 579,
+  "quote": "Standard battery: (1) bacterial reverse mutation (Ames test), (2) in vitro chromosomal aberration or micronucleus assay, (3) in vivo micronucleus or equivalent.",
+  "error": "This presents S2(R1) Option 1 as the only standard battery. ICH S2(R1) also accepts Option 2 (Ames + in vivo genotoxicity assessment in two tissues), which has no in vitro mammalian test.",
+  "correct": "ICH S2(R1) allows either Option 1 (Ames + in vitro mammalian cell test + in vivo test) or Option 2 (Ames + in vivo assessment with two tissues/endpoints).",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/labeling-auditor.ts",
+  "line": 475,
+  "quote": "FDA Guidance: In Vitro Drug Interaction Studies (2020); FDA Guidance: Clinical Drug Interaction Studies (2020)",
+  "error": "Both 2020 FDA DDI guidances were withdrawn and replaced by ICH M12 (FDA final guidance, August 2024). Citing them as current is wrong.",
+  "correct": "ICH M12 Drug Interaction Studies (FDA final guidance, 2024); the companion Q&A may also be cited.",
+  "severity": "high",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/labeling-auditor.ts",
+  "line": 762,
+  "quote": "FDA Guidance: Format and Content of Proposed REMS (2009)",
+  "error": "The 2009 draft guidance 'Format and Content of Proposed Risk Evaluation and Mitigation Strategies (REMS), REMS Assessments, and Proposed REMS Modifications' was superseded. It is cited as current.",
+  "correct": "FDA guidance 'Format and Content of a REMS Document' (final, October 2017), together with the current REMS guidances.",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/labeling-auditor.ts",
+  "line": 857,
+  "quote": "FDA Guidance: General Clinical Pharmacology Considerations for Pediatric Studies (2014)",
+  "error": "The December 2014 document was a draft. It was superseded by the final guidance of September 2022, which carries a different title.",
+  "correct": "FDA Guidance: General Clinical Pharmacology Considerations for Pediatric Studies of Drugs, Including Biological Products (final, 2022).",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/labeling-auditor.ts",
+  "line": 354,
+  "quote": "FDA Guidance: Labeling for Human Prescription Drug and Biological Products -- Content and Format of the Pregnancy and Lactation Subsections",
+  "error": "No FDA guidance has this title. The PLLR implementation guidance has a different name.",
+  "correct": "FDA draft guidance 'Pregnancy, Lactation, and Reproductive Potential: Labeling for Human Prescription Drug and Biological Products — Content and Format' (draft Dec 2014; revised draft July 2020).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/labeling-auditor.ts",
+  "line": 709,
+  "quote": "Manufacturing establishments must be registered with FDA per 21 CFR 207.20 and must have an FEI number.",
+  "error": "Section 207.20 ('Who must register') belongs to the pre-2016 Part 207. The 2016 rewrite of Part 207 moved the registration obligation to 207.17. Part 207 also requires a unique facility identifier (FDA designated the DUNS number), not an FEI.",
+  "correct": "Registration is required under FD&C Act 510 and 21 CFR 207.17, with registration information under 207.25, including a unique facility identifier (DUNS). An FEI is assigned by FDA, but Part 207 does not require it.",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/labeling-auditor.ts",
+  "line": 281,
+  "quote": "FDA Guidance: Dosage and Administration Section (2018)",
+  "error": "The year is wrong. The FDA guidance on the D&A section was issued as a draft in 2010 and finalized in 2023, not 2018.",
+  "correct": "FDA Guidance: Dosage and Administration Section of Labeling for Human Prescription Drug and Biological Products — Content and Format (final, 2023).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/labeling-auditor.ts",
+  "line": 329,
+  "quote": "Previously approved drugs must convert per the implementation timeline in 71 FR 3922.",
+  "error": "Under 21 CFR 201.56(b) and 71 FR 3922, only applications approved from June 30, 2001 onward (plus new ones and certain efficacy supplements) must convert to PLR format. Drugs approved earlier are not required to convert; they may stay in 201.80 format.",
+  "correct": "Under 201.56(b)(1), PLR conversion is required for applications approved on or after June 30, 2001 and for new submissions. Older labeling may stay in the 201.80 format unless converted voluntarily or triggered by a qualifying supplement.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/nda-auditor.ts",
+  "line": 561,
+  "quote": "FDA MAPP 6020.3 (NDA Review Timelines)",
+  "error": "MAPP 6020.3 is CDER's 'Review Designation Policy: Priority (P) and Standard (S)'. It is not a document on 'NDA Review Timelines'.",
+  "correct": "MAPP 6020.3, Review Designation Policy: Priority (P) and Standard (S). The review clocks themselves are set by the PDUFA VII Commitment Letter.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/nda-auditor.ts",
+  "line": 341,
+  "quote": "21 CFR 314.101(d); FDA Guidance: Refuse to File (2017); MAPP 5000.3",
+  "error": "CDER's refuse-to-file MAPP is MAPP 6025.4 (Good Review Practice: Refuse to File). MAPP 5000.3 is not the RTF procedure.",
+  "correct": "21 CFR 314.101; FDA Guidance: Refuse to File: NDA and BLA Submissions to CDER (2017); MAPP 6025.4.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/nda-auditor.ts",
+  "line": 654,
+  "quote": "eCTD format is mandatory for all NDA submissions as of May 5, 2017 per FDA Guidance and 21 CFR 314.50(l).",
+  "error": "The eCTD mandate comes from FD&C Act section 745A(a), implemented through FDA's binding eCTD guidance. 21 CFR 314.50(l) covers the format of an original application (archival copy, and content of labeling in electronic form). It does not impose eCTD.",
+  "correct": "Under FD&C Act section 745A(a) and FDA guidance 'Providing Regulatory Submissions in Electronic Format — Certain Human Pharmaceutical Product Applications and Related Submissions Using the eCTD Specifications', eCTD has been required for NDAs since May 5, 2017.",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/nda-auditor.ts",
+  "line": 203,
+  "quote": "a bridging bioequivalence study must be provided per 21 CFR 314.50(d)(1) and ICH M4Q.",
+  "error": "21 CFR 314.50(d)(1) is the CMC technical section. Bioavailability and bioequivalence data, including bridging BE studies, belong to the human pharmacokinetics and bioavailability section, 21 CFR 314.50(d)(3) (with Part 320).",
+  "correct": "Bridging BA/BE data go under 21 CFR 314.50(d)(3) and 21 CFR Part 320, filed in CTD Module 5.3.1 and summarized in 2.7.1.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/nda-auditor.ts",
+  "line": 233,
+  "quote": "FDA Guidance: Indication-Specific Labeling (2018)",
+  "error": "No FDA guidance is titled 'Indication-Specific Labeling'. The 2018 document on this topic is a draft on the Indications and Usage section.",
+  "correct": "FDA draft guidance 'Indications and Usage Section of Labeling for Human Prescription Drug and Biological Products — Content and Format' (2018).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/nda-auditor.ts",
+  "line": 630,
+  "quote": "FDA Guidance: Drug Shortage Management (2020)",
+  "error": "No FDA guidance is titled 'Drug Shortage Management'. The 2020 final guidance implementing section 506C has a different title.",
+  "correct": "FDA Guidance: Notifying FDA of a Permanent Discontinuance or Interruption in Manufacturing Under Section 506C of the FD&C Act (final, 2020).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/nda-auditor.ts",
+  "line": 607,
+  "quote": "FDA Guidance: Pre-Approval Inspections (2020)",
+  "error": "Pre-approval inspections are governed by FDA Compliance Program 7346.832 (Preapproval Inspections). That is a compliance program, not a 2020 guidance.",
+  "correct": "FDA Compliance Program Guidance Manual 7346.832, Preapproval Inspections.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/nda-auditor.ts",
+  "line": 585,
+  "quote": "Provide process validation data at commercial scale, including at least three consecutive production batches demonstrating process consistency",
+  "error": "This recommendation cites FDA's 2011 Process Validation guidance for a three-consecutive-batch requirement. That guidance dropped the fixed 'three batches' expectation: the number of PPQ batches is set by the manufacturer from risk and process knowledge. The guidance also does not require PPQ data in the NDA. PPQ must be finished before commercial distribution, not before approval. Line 583 says the CMC section 'must demonstrate that the manufacturing process is validated at commercial scale per 21 CFR 314.50(d)(1)'. That is also not an NDA requirement; for most non-sterile processes, PPQ data are not submitted in the application.",
+  "correct": "Under the 2011 Process Validation guidance, the number of PPQ batches is justified by the manufacturer (no fixed three-batch minimum). PPQ must be completed and the process qualified before commercial distribution. The NDA describes the commercial process and controls. It does not have to contain commercial-scale validation data, except for items such as sterilization validation.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/labeling-auditor.ts",
+  "line": 520,
+  "quote": "Per 21 CFR 201.57(c)(9), the Use in Specific Populations section must address dosing in hepatic and renal impairment",
+  "error": "21 CFR 201.57(c)(9) requires subsections on pregnancy, lactation, females and males of reproductive potential, pediatric use and geriatric use. Renal and hepatic impairment are optional additional subsections, included when data on those subpopulations are available. The regulation does not require them.",
+  "correct": "Under 21 CFR 201.57(c)(9), additional subsections such as renal or hepatic impairment may be included when sufficient data are available. They are expected when relevant but are not a required subsection.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/nda-auditor.ts",
+  "line": 700,
+  "quote": "The eCTD backbone itself provides structural navigation, but a reader-friendly ToC document is also expected.",
+  "error": "For an eCTD submission, the XML backbone serves as the comprehensive table of contents that 21 CFR 314.50(b) requires. FDA's eCTD specifications say not to submit separate table-of-contents documents. A ToC document is not expected, so a missing one is not a deficiency.",
+  "correct": "In eCTD, the backbone and its hierarchy satisfy the comprehensive index/ToC requirement. Separate ToC documents are not needed and should not be added to Modules 2-5.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/nda-auditor.ts",
+  "line": 656,
+  "quote": "Reformat the entire submission in eCTD v4.0 format",
+  "error": "This implies eCTD v4.0 is required. FDA requires eCTD format under FD&C Act 745A(a) but has not made v4.0 mandatory. Since September 2024, v4.0 has been accepted for new applications alongside eCTD v3.2.2, which is still accepted. A compliant non-eCTD submission needs eCTD, not v4.0 specifically.",
+  "correct": "Reformat the submission into an FDA-supported eCTD version (v3.2.2 or v4.0). v4.0 is optional and not mandated.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/briefing-book-auditor.ts",
+  "line": 68,
+  "quote": "described in FDA's 2023 draft guidance on benefit-risk assessment",
+  "error": "FDA's guidance 'Benefit-Risk Assessment for New Drug and Biological Products' was issued in draft in September 2021 and finalized in October 2023. The 2023 version is final guidance, not a draft. The sentence that follows ('The draft guidance is non-binding') repeats the wrong status.",
+  "correct": "FDA's final guidance 'Benefit-Risk Assessment for New Drug and Biological Products' (October 2023; draft September 2021). Like all guidance it is non-binding.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/labeling.ts",
+  "line": 1180,
+  "quote": "21 CFR 801.4; FDA Guidance: Medical Device Home-Use Initiative (2023)",
+  "error": "No FDA guidance has this title, and there is none from 2023. The Medical Device Home Use Initiative was a 2010 CDRH initiative, not a guidance. FDA's guidance on home-use device labeling and design is 'Design Considerations for Devices Intended for Home Use' (final, November 2014). 21 CFR 801.4 defines 'intended uses'. It says nothing about home-use labeling.",
+  "correct": "FDA Guidance: Design Considerations for Devices Intended for Home Use (November 2014). General device labeling requirements are in 21 CFR Part 801, for example 801.5 (adequate directions for use).",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/labeling.ts",
+  "line": 646,
+  "quote": "FDA Guidance: REMS Integration with Labeling",
+  "error": "FDA has never issued a guidance titled 'REMS Integration with Labeling'. The citation names a document that does not exist.",
+  "correct": "Cite real REMS guidance, for example 'REMS: FDA's Application of Statutory Factors in Determining When a REMS Is Necessary' (2019) or 'Format and Content of a REMS Document' (2017), together with 21 CFR 201.57(c)(1) for the boxed warning.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/labeling.ts",
+  "line": 969,
+  "quote": "FDA Guidance: Medication Guides — Distribution Requirements and Inclusion in REMS (2011)",
+  "error": "This 2011 guidance covers when Medication Guides must be distributed and how they fit into REMS. It does not set or recommend a 6th-8th grade reading level, so it does not support the finding it is attached to.",
+  "correct": "The readability requirement for Medication Guides is in 21 CFR 208.20(a) (nontechnical, understandable language). FDA's written consumer medication information guidance ('Useful Written Consumer Medication Information (CMI)', 2006) addresses readability.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/labeling.ts",
+  "line": 1258,
+  "quote": "Per 21 CFR 830, all medical devices must bear a Unique Device Identifier (UDI) on their label.",
+  "error": "The requirement that a device label bear a UDI is in 21 CFR 801.20, not Part 830. Part 830 sets up the UDI system: issuing agencies, UDI format and GUDID. 'All medical devices' is also wrong, because 21 CFR 801.30 lists general exceptions. The helpText at line 1265 in the same node states both points correctly.",
+  "correct": "Per 21 CFR 801.20, device labels must bear a UDI, subject to the exceptions in 21 CFR 801.30. 21 CFR Part 830 governs the UDI system and GUDID data submission.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/labeling.ts",
+  "line": 327,
+  "quote": "Not all sections are required for every product — include only those relevant. Sections 9 (Drug Abuse and Dependence) and 16 (How Supplied / Storage and Handling) are commonly included.",
+  "error": "Under 21 CFR 201.56(d), most FPI sections are mandatory. Only a few listed sections may be left out when they clearly do not apply, such as Boxed Warning, Drug Abuse and Dependence, Clinical Studies and References. Section 16 (How Supplied/Storage and Handling, 201.57(c)(17)) is required for every product, not just 'commonly included'. Contraindications (Section 4) must appear even when there are none, and then it says 'None'.",
+  "correct": "FPI sections 1–8, 11–13, 16 and 17 are required. Section 4 must state 'None' if there are no contraindications. Only the sections that 201.56(d) allows to be left out when inapplicable (e.g., Boxed Warning, Section 9, 14, 15) may be dropped.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/labeling.ts",
+  "line": 292,
+  "quote": "list sections with substantive labeling changes within the past year",
+  "error": "21 CFR 201.57(a)(5) allows Recent Major Changes to list only five FPI sections: Boxed Warning, Indications and Usage, Dosage and Administration, Contraindications, and Warnings and Precautions. It does not cover any section with a substantive change.",
+  "correct": "Recent Major Changes lists substantive changes approved or authorized within the past year, but only in the Boxed Warning, Indications and Usage, Dosage and Administration, Contraindications, or Warnings and Precautions sections, with the section number and the month/year of the change.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/labeling.ts",
+  "line": 218,
+  "quote": "Electronic SPL submission to FDA DailyMed is required.",
+  "error": "SPL is submitted to FDA, through the Electronic Submissions Gateway as part of the application or listing. DailyMed is the National Library of Medicine's public site, which shows SPL that FDA has received. Sponsors do not submit to DailyMed. Line 204 says the same wrong thing ('submitted ... to the FDA's DailyMed system').",
+  "correct": "Content of labeling is submitted to FDA in SPL format (21 CFR 314.50(l)(1)(i); 601.14). NLM's DailyMed then publishes it.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/labeling.ts",
+  "line": 204,
+  "quote": "All prescription drug and biologic labeling must follow the Physician Labeling Rule (PLR) format",
+  "error": "PLR format is required only for applications submitted on or after June 30, 2006, and for those approved from June 30, 2001 onward, on the phased schedule. Older prescription products may keep the non-PLR format under 21 CFR 201.80 unless they convert.",
+  "correct": "PLR format (21 CFR 201.56(d), 201.57) is required for new NDAs/BLAs/efficacy supplements submitted on or after June 30, 2006, and for products approved since June 30, 2001 on the implementation schedule. Older labeling may follow 21 CFR 201.80.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/labeling.ts",
+  "line": 1042,
+  "quote": "Inactive ingredients, and Questions? phone number.",
+  "error": "Under 21 CFR 201.66(c)(9), the 'Questions?' / 'Questions or comments?' heading with a phone number is optional in Drug Facts, not a required element.",
+  "correct": "The 'Questions?' heading and phone number may be included in Drug Facts (optional per 201.66(c)(9)). Separately, a domestic address or phone number for adverse event reporting is required on the label under FD&C Act 502(x).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/labeling.ts",
+  "line": 969,
+  "quote": "reference: 'FDA Guidance: Medication Guides — Distribution Requirements and Inclusion in REMS (2011)'",
+  "error": "The cited guidance covers when and how Medication Guides are distributed, and when they fall within REMS. It does not set a 6th–8th grade reading level. 21 CFR 208.20 requires only nontechnical, understandable language and does not name a grade level.",
+  "correct": "21 CFR 208.20 requires Medication Guides to be written in nontechnical, understandable language. A 6th–8th grade target is a health-literacy best practice, not something this guidance recommends.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/labeling.ts",
+  "line": 1180,
+  "quote": "FDA Guidance: Medical Device Home-Use Initiative (2023)",
+  "error": "No FDA guidance has this title or date. The Medical Device Home Use Initiative was launched in 2010. The guidance on home-use device labeling and design is 'Design Considerations for Devices Intended for Home Use', final November 2014. 21 CFR 801.4 defines intended use and does not set home-use labeling requirements.",
+  "correct": "FDA Guidance: Design Considerations for Devices Intended for Home Use (November 2014). Home-use labeling recommendations come from guidance, not from 21 CFR 801.4.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/briefing-book-auditor.ts",
+  "line": 93,
+  "quote": "FDA Advisory Committee briefing documents must present a complete summary of efficacy findings from all adequate and well-controlled studies per 21 CFR 314.126.",
+  "error": "21 CFR 314.126 defines what makes a study adequate and well-controlled for substantial evidence. It does not set any content requirement for advisory committee briefing documents.",
+  "correct": "21 CFR 314.126 sets the characteristics of adequate and well-controlled investigations. Briefing-document content is guided by FDA's advisory committee guidance, and 314.126 does not mandate it.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
+  "line": 954,
+  "quote": "Per 21 CFR 610.2, samples and protocols must be submitted to CBER for lot release before distribution of vaccines and blood products.",
+  "error": "21 CFR 610.2(a) does not impose automatic lot release on every vaccine and blood product. CBER can require samples and protocols for any lot at any time, and a lot may not be distributed before release only after the manufacturer is notified by the Director, CBER. Whole blood and blood components are also generally not subject to CBER lot release. Plasma derivatives can be, when CBER so notifies the manufacturer.",
+  "correct": "Under 21 CFR 610.2(a), CBER may require samples of any lot, with protocols, at any time. Once the manufacturer has been notified by the Director, CBER, it may not distribute a lot until CBER releases it. Most vaccines and plasma-derived products are under routine lot release by such notification. It is not a blanket requirement for all blood products.",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
+  "line": 2128,
+  "quote": "Fewer lots may not provide sufficient statistical power for the tiered analytical similarity assessment.",
+  "error": "This text points to the tiered (Tier 1/2/3) analytical similarity approach. FDA withdrew that approach in 2018, as this file's own guidance at line 2033 says. The current 2019 draft comparative analytical assessment guidance uses risk-ranked quantitative or qualitative evaluation (for example, equivalence testing or a quality range), not tiers.",
+  "correct": "Fewer than about 10 reference product lots may not adequately characterize reference product variability for the risk-based comparative analytical assessment, whether quantitative (for example, equivalence testing or a quality range) or qualitative. This is the approach of FDA's 2019 draft guidance on comparative analytical assessment for therapeutic protein biosimilars.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
+  "line": 1893,
+  "quote": "{ value: 'pader', label: 'PADER (Periodic Adverse Drug Experience Report)' },",
+  "error": "For a licensed biologic, the US periodic safety report required by 21 CFR 600.80(c)(2) is the Periodic Adverse Experience Report (PAER). The PADER is the NDA/ANDA report under 21 CFR 314.80(c)(2). The options also leave out the PBRER, which FDA accepts in place of the PAER under a waiver, as line 1845 of this file says.",
+  "correct": "For a BLA, the periodic report is the PAER under 21 CFR 600.80(c)(2), or an ICH E2C(R2) PBRER submitted under an FDA waiver. PADER is the drug (21 CFR 314.80) term.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
+  "line": 1141,
+  "quote": "Per ICH S6(R1) and ICH S8, immunotoxicity assessment is especially important for immunomodulatory biologics.",
+  "error": "ICH S8 (Immunotoxicity Studies for Human Pharmaceuticals) excludes biotechnology-derived products from its scope. Its scope section says it does not apply to products covered by ICH S6. Citing S8 as authority for immunotoxicity assessment of biologics is a misapplied citation.",
+  "correct": "For biologics, immunotoxicity assessment is covered by ICH S6(R1) (Part I section 4.5, and the immunomodulation considerations in the Addendum). ICH S8 applies to small-molecule pharmaceuticals and explicitly excludes biotechnology-derived products.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
+  "line": 796,
+  "quote": "Per 42 USC 262(c) and 21 CFR 600.21, FDA must inspect and approve the manufacturing facility before a BLA can be licensed.",
+  "error": "42 USC 262(c) is FDA's general authority to inspect biologics establishments, and 21 CFR 600.21 covers when inspections take place. Neither one sets the rule that a license issues only after inspection. That rule is in 21 CFR 601.20(d). The same pairing is cited again at line 816, and line 817 gives '21 CFR 600.21' as the reference.",
+  "correct": "The pre-license inspection requirement is 21 CFR 601.20(d): a biologics license is issued only after inspection of the establishment(s) listed in the application. 21 CFR 600.21 covers inspection timing, and 42 USC 262(c) gives the inspection authority.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/cmc-auditor.ts",
+  "line": 690,
+  "quote": "should be included in Module 3.2.S.7.1 (DS) or 3.2.P.8.1 (DP) of the CTD",
+  "error": "In ICH M4Q, 3.2.S.7.1 and 3.2.P.8.1 are 'Stability Summary and Conclusions'. The stability protocol does not go there.",
+  "correct": "The post-approval stability protocol and stability commitment go in 3.2.S.7.2 (DS) and 3.2.P.8.2 (DP). Stability data go in 3.2.S.7.3 and 3.2.P.8.3. The same wrong section numbers appear in the reference string on line 691.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/cmc-auditor.ts",
+  "line": 76,
+  "quote": "including identification and qualification of all impurities above reporting thresholds",
+  "error": "ICH Q3A(R2) does not require every impurity above the reporting threshold to be identified and qualified. It sets three separate thresholds: reporting, identification and qualification.",
+  "correct": "Impurities above the reporting threshold are reported. Those above the identification threshold are structurally identified. Those above the qualification threshold are qualified. The thresholds are in Q3A(R2)/Q3B(R2) Attachment 1.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/cmc-auditor.ts",
+  "line": 271,
+  "quote": "ICH Q1E permits shelf life extrapolation beyond observed data only when statistical analysis supports the projection and no significant change is observed.",
+  "error": "This misstates ICH Q1E. Extrapolation does not always need statistical support. When data show little or no change over time and little or no variability, Q1E says statistical analysis is normally unnecessary and still allows extrapolation. Extrapolation is also possible, with limits, when there is significant change at the intermediate condition but not at the accelerated condition.",
+  "correct": "Under ICH Q1E, the allowed extrapolation depends on the data. With no significant change at accelerated and little variability, the shelf life can be up to twice the long-term data period, but no more than 12 months beyond it, and statistical analysis is normally unnecessary. In other cases statistical analysis supports a smaller extrapolation (for example, 1.5x, but no more than 6 months beyond the data).",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/bla-auditor.ts",
+  "line": 833,
+  "quote": "(e.g., pure red cell aplasia with EPO, acquired hemophilia with Factor VIII)",
+  "error": "Acquired hemophilia is a spontaneous autoimmune disease. It is not caused by ADA from a therapeutic protein cross-reacting with an endogenous counterpart. FVIII inhibitors in hemophilia A patients act against a replacement protein the patient lacks, so they are not an example of neutralizing an endogenous protein.",
+  "correct": "The standard examples of cross-reactive neutralization of an endogenous protein, including in FDA's 2014 immunogenicity guidance, are pure red cell aplasia with recombinant erythropoietin and thrombocytopenia with PEG-rHuMGDF (megakaryocyte growth and development factor).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/bla-auditor.ts",
+  "line": 116,
+  "quote": "'ICH Q5A(R2); 21 CFR 601.2; 9 CFR 113'",
+  "error": "9 CFR Part 113 is USDA's standard requirements for veterinary biologics under the Virus-Serum-Toxin Act. It does not apply to a human BLA. The same wrong citation appears on line 811.",
+  "correct": "For human biologics, viral safety rests on ICH Q5A(R2), 21 CFR 610 (for example, 610.18 on cultures) and FDA guidance. 9 CFR 113 should not be cited for a BLA.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/bla-auditor.ts",
+  "line": 379,
+  "quote": "Per 42 USC 262(c), FDA must inspect and approve the establishment before a biologics license can be issued.",
+  "error": "42 USC 262(c) only authorizes inspection of establishments. It does not require a pre-license inspection and approval.",
+  "correct": "The pre-license inspection requirement is 21 CFR 601.20(d): a license is issued only after the establishment has been inspected and found to comply. Licensure also depends on the facility meeting standards under 42 USC 262(a)(2)(C). The same citation is used on line 389.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/cmc-auditor.ts",
+  "line": 811,
+  "quote": "'ICH Q8(R2) Section 2.3; FDA Guidance: Quality Considerations for Continuous Manufacturing (2019)'",
+  "error": "ICH Q8(R2) Section 2.3 covers manufacturing process development, not drug-excipient compatibility. The continuous manufacturing guidance does not address excipient compatibility either.",
+  "correct": "ICH Q8(R2) covers drug substance-excipient compatibility in Section 2.1.1 (Drug Substance), under 2.1 Components of the Drug Product.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/cmc-auditor.ts",
+  "line": 301,
+  "quote": "'ICH Q3A(R2) Table 1; ICH Q3B(R2) Table 1;",
+  "error": "ICH Q3A(R2) and Q3B(R2) put their reporting, identification and qualification thresholds in Attachment 1. Neither guideline has a 'Table 1'.",
+  "correct": "ICH Q3A(R2) Attachment 1 (Thresholds); ICH Q3B(R2) Attachment 1 (Thresholds for Degradation Products in New Drug Products).",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/cmc-auditor.ts",
+  "line": 787,
+  "quote": "FDA requires nitrosamine risk evaluations per the September 2020 guidance",
+  "error": "The text cites the September 2020 original (and the February 2021 Rev. 1 on line 788) as if it were current. FDA issued Revision 2 of 'Control of Nitrosamine Impurities in Human Drugs' in September 2024. Rev. 2 is the version in force, and it adds the NDSRI recommended acceptable-intake framework.",
+  "correct": "FDA Guidance: Control of Nitrosamine Impurities in Human Drugs, Revision 2 (September 2024).",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/bla-auditor.ts",
+  "line": 142,
+  "quote": "FDA Guidance on Comparability Protocols (2016)",
+  "error": "The 2016 document was a draft guidance ('Comparability Protocols for Human Drugs and Biologics: CMC Information', April 2016). FDA replaced it with a final guidance in October 2022, so citing the 2016 draft as current is wrong.",
+  "correct": "FDA Guidance: Comparability Protocols for Postapproval Changes to the Chemistry, Manufacturing, and Controls Information in an NDA, ANDA, or BLA (final, October 2022).",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/cmc-auditor.ts",
+  "line": 272,
+  "quote": "'ICH Q1E; ICH Q1A(R2) Section 2.2.5; FDA Guidance: Stability Testing (2014)'",
+  "error": "ICH Q1A(R2) Section 2.2.5 is 'Specification'. Evaluating stability data and extrapolating shelf life is covered in Section 2.2.9 (Evaluation), together with Q1E.",
+  "correct": "ICH Q1E; ICH Q1A(R2) Section 2.2.9 (Evaluation), or 2.1.9 for drug substance.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/cmc-auditor.ts",
+  "line": 125,
+  "quote": "required per 21 CFR 314.50(d)(1)(ii)(b)",
+  "error": "21 CFR 314.50(d)(1)(ii)(b) requires the proposed or actual master production record. The drug product description, including components, packaging and controls, is under (d)(1)(ii)(a). The same citation is repeated on line 126.",
+  "correct": "21 CFR 314.50(d)(1)(ii)(a) for the drug product description. The container closure system description is filed in CTD 3.2.P.7.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/cmc-auditor.ts",
+  "line": 740,
+  "quote": "FDA Guidance: Genotoxic and Carcinogenic Impurities in Drug Substances and Products (2008)",
+  "error": "This 2008 FDA document was only ever a draft ('Recommended Approaches'), and FDA later withdrew it in favour of ICH M7. It is not current guidance.",
+  "correct": "Cite ICH M7(R2) (FDA guidance 'M7(R2) Assessment and Control of DNA Reactive (Mutagenic) Impurities in Pharmaceuticals to Limit Potential Carcinogenic Risk') only.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/cmc-auditor.ts",
+  "line": 596,
+  "quote": "WHO TRS 961 Annex 7 recommend a structured technology transfer process",
+  "error": "WHO TRS 961 Annex 7 (2011) has been replaced by the revised WHO guidelines on technology transfer in pharmaceutical manufacturing, published as WHO TRS 1044 Annex 4 (2022). The same citation is repeated on line 597.",
+  "correct": "WHO TRS 1044 (2022), Annex 4: WHO guidelines on technology transfer in pharmaceutical manufacturing.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/cmc-auditor.ts",
+  "line": 838,
+  "quote": "ICH Q6A Decision Tree #6",
+  "error": "ICH Q6A Decision Tree #6 covers microbiological quality attributes of drug substances and excipients. This finding is about drug product microbiological controls by route of administration. In Q6A, Decision Tree #8 covers non-sterile drug products, and no decision tree covers sterile products.",
+  "correct": "ICH Q6A Decision Tree #8 (Microbiological Attributes of Non-sterile Drug Products). For sterile products, cite 21 CFR 211.113(b) and USP <71>/<85>.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/cmc-auditor.ts",
+  "line": 347,
+  "quote": "FDA Guidance: Setting Specifications for Biotechnological/Biological Products (1999)",
+  "error": "No FDA guidance has this title. The 1999 FDA document is the published version of ICH Q6B itself.",
+  "correct": "FDA Guidance for Industry: Q6B Specifications: Test Procedures and Acceptance Criteria for Biotechnological/Biological Products (August 1999).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/cmc-auditor.ts",
+  "line": 765,
+  "quote": "FDA Guidance: Elemental Impurities in Drug Products (2022)",
+  "error": "FDA's final guidance 'Elemental Impurities in Drug Products' was issued in August 2018. The 2022 FDA document is the ICH Q3D(R2) guideline, not this guidance.",
+  "correct": "FDA Guidance: Elemental Impurities in Drug Products (August 2018); ICH Q3D(R2) (2022).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/cmc-auditor.ts",
+  "line": 171,
+  "quote": "ICH Q6A Section 3.1 and S.3.1 of the CTD require comprehensive structural elucidation",
+  "error": "ICH Q6A Section 3.1 is 'Specifications: Definition and Justification' (the same file cites it that way on line 246). It does not set structural elucidation requirements. Structural elucidation belongs in CTD 3.2.S.3.1 under ICH M4Q.",
+  "correct": "ICH M4Q(R1) 3.2.S.3.1 (Elucidation of Structure and other Characteristics). Q6A Section 3.1 is not the source.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cmc-specification.ts",
+  "line": 509,
+  "quote": "reference: 'ICH Q9 Quality Risk Management, ICH Q8(R2) Section 2.6',",
+  "error": "ICH Q8(R2) Section 2.6 does not cover risk assessment. In Part I, Section 2.6 is 'Compatibility'. In Part II (the Annex), Section 2.6 is 'Product Lifecycle Management and Continual Improvement'.",
+  "correct": "The section on risk assessment for identifying CPPs and CQAs is ICH Q8(R2) Part II Section 2.3, 'Risk Assessment: Linking Material Attributes and Process Parameters to Drug Product CQAs'.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cmc-specification.ts",
+  "line": 595,
+  "quote": "'Per ICH Q6A (Section 3.1) for small molecules and Q6B (Section 3) for biologics, provide evidence confirming the molecular structure.",
+  "error": "ICH Q6A Section 3.1 is 'Specifications: Definition and Justification', and ICH Q6B Section 3 is 'Justification of the Specification'. Neither section covers structural characterization.",
+  "correct": "Characterization of biotech products is in ICH Q6B Section 2.1 ('Characterisation', which includes physicochemical properties and structure). Structure elucidation evidence goes in CTD 3.2.S.3.1 (ICH M4Q). Q6A does not have a structural-characterization section.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cmc-specification.ts",
+  "line": 258,
+  "quote": "'Per ICH Q6A (Section 3) and Q6B (Section 3), characterize relevant physicochemical properties",
+  "error": "ICH Q6B Section 3 is 'Justification of the Specification', not the characterization of physicochemical or higher-order structure properties.",
+  "correct": "Physicochemical properties of biotech products are in ICH Q6B Section 2.1.1 ('Physicochemical properties'), under 2.1 Characterisation.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cmc-specification.ts",
+  "line": 581,
+  "quote": "reference: 'ICH Q11, FDA Guidance on Drug Shortages (2023)',",
+  "error": "I know of no FDA guidance titled 'Drug Shortages' issued in 2023. The citation looks invented.",
+  "correct": "Cite a real FDA guidance. 'Risk Management Plans to Mitigate the Potential for Drug Shortages' was a draft in May 2022. 'Notifying FDA of a Permanent Discontinuance or Interruption in Manufacturing Under Section 506C of the FD&C Act' covers shortage notification.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cmc-specification-container-closure-stability.ts",
+  "line": 127,
+  "quote": "'Per ICH Q1A(R2)–Q1F, stability studies must be conducted under defined storage conditions",
+  "error": "The range Q1A(R2)–Q1F includes ICH Q1F, which ICH withdrew in 2006. It is presented here as part of the current stability guidance.",
+  "correct": "Cite the stability guidances still in force (ICH Q1A(R2), Q1B, Q1C, Q1D, Q1E) and note that Q1F was withdrawn in 2006. Zone III/IV conditions are now set by WHO and regional guidance.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cmc-specification.ts",
+  "line": 680,
+  "quote": "Identification threshold ≥ 0.10% or ≥ 0.05%. Qualification threshold ≥ 0.15% or ≥ 0.05%.",
+  "error": "For a maximum daily dose of 2 g/day or less, ICH Q3A(R2) Attachment 1 sets the identification threshold at 0.10% or 1.0 mg per day total daily intake, whichever is lower, and the qualification threshold at 0.15% or 1.0 mg per day TDI, whichever is lower. The text leaves out the 1.0 mg/day alternative. For doses above about 0.67 g/day (qualification) or 1 g/day (identification), that alternative is the threshold that applies, so the percentages given are wrong for those doses.",
+  "correct": "Q3A(R2), dose ≤2 g/day: reporting 0.05%; identification 0.10% or 1.0 mg/day TDI, whichever is lower; qualification 0.15% or 1.0 mg/day TDI, whichever is lower. Dose >2 g/day: reporting 0.03%, identification 0.05%, qualification 0.05%.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cmc-specification.ts",
+  "line": 1128,
+  "quote": "Commercial processes must be validated before NDA/BLA approval.",
+  "error": "FDA's 2011 Process Validation guidance ties successful PPQ to commercial distribution, not to application approval: a manufacturer must complete PPQ before any batch is commercially distributed. For NDAs there is no rule that PPQ is finished before approval. The same claim appears at line 1172 ('FDA expects PPQ to be complete before NDA/BLA approval') and line 1182. Line 1182 also contradicts itself, since it goes on to describe a commitment to complete PPQ before commercial distribution.",
+  "correct": "Per FDA's Process Validation guidance (2011), PPQ must be completed successfully before commercial distribution of product. For BLAs, FDA typically expects PPQ or validation data in the application. For NDAs, PPQ can be completed after approval, as long as it is done before commercial distribution.",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cmc-specification.ts",
+  "line": 509,
+  "quote": "ICH Q9 Quality Risk Management, ICH Q8(R2) Section 2.6",
+  "error": "Section 2.6 of ICH Q8(R2) Part I is 'Compatibility'. In the Annex (Part II), Section 2.6 is product lifecycle management. Neither covers quality risk assessment for identifying CPPs and CQAs. That topic is Q8(R2) Part II Section 2.3, 'Risk Assessment: Linking Material Attributes and Process Parameters to Drug Product CQAs'.",
+  "correct": "ICH Q9, ICH Q8(R2) Part II (Annex) Section 2.3 (Risk Assessment)",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cmc-specification.ts",
+  "line": 530,
+  "quote": "Per ICH Q11, starting materials should be commercially available substances with well-defined specifications.",
+  "error": "ICH Q11 does not require starting materials to be commercially available. Its Section 5 criteria are that the material has defined chemical properties and structure, is not a non-isolated intermediate, is incorporated as a significant structural fragment, and sits enough steps upstream. Commercial availability is only one case discussed in the Q11 Q&A, for justifying a commercially available chemical as a starting material. It is not a general requirement.",
+  "correct": "Per ICH Q11 Section 5, a starting material should be a substance with defined chemical properties and structure, controlled by an appropriate specification, and incorporated as a significant structural fragment. Commercial availability is not required.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cmc-specification.ts",
+  "line": 766,
+  "quote": "Confirmed mutagenic impurities (Class 1, 2, or 3)",
+  "error": "In ICH M7, Class 3 means an alerting structure, unrelated to the drug substance structure, with no mutagenicity data. A Class 3 impurity is not a confirmed mutagen. Only Class 1 (known mutagenic carcinogens) and Class 2 (known mutagens with unknown carcinogenic potential) are confirmed mutagenic.",
+  "correct": "Confirmed mutagenic impurities are ICH M7 Class 1 or 2. Class 3 impurities have alerts but no data, and are treated as mutagenic until tested, for example by an Ames test.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cmc-specification-container-closure-stability.ts",
+  "line": 127,
+  "quote": "Per ICH Q1A(R2)–Q1F, stability studies must be conducted",
+  "error": "ICH Q1F (Stability Data Package for Registration Applications in Climatic Zones III and IV) was withdrawn by ICH in 2006. It is not a guideline in force and should not be cited as part of the current stability guidance set. The file header comment repeats the citation, but that comment is not shown to clients.",
+  "correct": "Cite ICH Q1A(R2) through Q1E (Q1A(R2), Q1B, Q1C, Q1D, Q1E). For Zone III/IV conditions, refer to WHO stability guidance (TRS 1010 Annex 10). Q1F was withdrawn in 2006.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cmc-specification-container-closure-stability.ts",
+  "line": 137,
+  "quote": "30°C / 65% RH (Long-Term, Zone III/IV)",
+  "error": "30°C/65% RH as the long-term condition for Zones III and IV came from ICH Q1F, which was withdrawn in 2006. Under current WHO zone definitions, 30°C/65% RH is Zone IVa only. Zone III is 30°C/35% RH and Zone IVb is 30°C/75% RH. The same label appears at line 164 for the drug product.",
+  "correct": "30°C/65% RH is the long-term condition for Zone IVa, and an ICH Q1A(R2) alternative long-term condition. Zone IVb is 30°C/75% RH and Zone III is 30°C/35% RH.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/stability-auditor.ts",
+  "line": 304,
+  "quote": "'ICH Q1A(R2); 21 CFR 211.166; FDA Guidance for Industry: Stability Testing (2004)'",
+  "error": "FDA never issued a 2004 guidance titled 'Stability Testing'. The FDA document with that name was the June 1998 draft 'Stability Testing of Drug Substances and Drug Products'. It was never finalised and was later withdrawn in favour of ICH Q1A(R2) (FDA adoption Nov 2003) and Q1E (FDA adoption June 2004). The same nonexistent citation appears again at lines 329, 460, 634, 657, 736 and 760, and in the module header.",
+  "correct": "Cite ICH Q1A(R2) (FDA guidance, Nov 2003) and/or ICH Q1E 'Evaluation of Stability Data' (FDA guidance, June 2004). Do not cite an 'FDA Guidance for Industry: Stability Testing (2004)'.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/stability-study.ts",
+  "line": 448,
+  "quote": "reference: 'FDA Guidance for Industry: Stability Testing; EMA Note for Guidance on In-Use Stability Testing",
+  "error": "No current FDA guidance called 'Stability Testing' exists. The 1998 draft of that name was never finalised and was withdrawn. FDA also has no stability guidance that sets in-use stability expectations.",
+  "correct": "Cite EMA CPMP/QWP/2934/99 (correct as given) and, for the US, ICH Q1A(R2) Section 2.2.1 (testing after constitution/dilution) or 21 CFR 211.166(a)(5). Remove the nonexistent FDA title.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/stability-study.ts",
+  "line": 362,
+  "quote": "WHO TRS 953 Annex 2 defines long-term storage conditions by climatic zone",
+  "error": "WHO TRS 953 Annex 2 (2009) is superseded. WHO replaced it in 2018 with TRS 1010, Annex 10, 'Stability testing of active pharmaceutical ingredients and finished pharmaceutical products', which also updated the country zone list. The superseded document is cited as current here and at lines 344, 360, 474 and 493, and in auditor lines 360-361.",
+  "correct": "WHO TRS 1010 (2018), Annex 10 (which replaced TRS 953 Annex 2) defines the climatic zones and long-term conditions, including Zone IVb at 30 C/75% RH. WHO Prequalification applies this guideline.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/stability-auditor.ts",
+  "line": 360,
+  "quote": "'ICH Q1F (withdrawn but referenced by WHO) and WHO Technical Report Series No. 953 require long-term stability testing at 30 ± 2 °C / 35 ± 5% RH (Zone III)",
+  "error": "The finding says ICH Q1F requires these zone conditions. Q1F was withdrawn in 2006 and requires nothing. It also never specified 30 C/35% RH for Zone III or 30 C/75% RH for Zone IVb: it set one 30 C/65% RH long-term condition for Zones III and IV, and it had no Zone IVb. The reference on line 361 and the question on line 341 ('ICH Q1F and WHO guidelines require') also present Q1F as a current requirement.",
+  "correct": "The zone-specific long-term conditions (Zone III 30/35, IVa 30/65, IVb 30/75) come from the WHO stability guideline, now TRS 1010 Annex 10 (2018). ICH Q1F was withdrawn in 2006 and should not be cited as a requirement.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/stability-study.ts",
+  "line": 474,
+  "quote": "ICH Q1F was withdrawn from the ICH process in 2006 but remains adopted by WHO and several national regulatory authorities.",
+  "error": "WHO did not adopt ICH Q1F. After Q1F was withdrawn, ICH left the zone conditions to WHO, which issued its own guideline (TRS 953 Annex 2, now TRS 1010 Annex 10) with different conditions, including Zone IVb. The question on line 472 also says Q1F 'provides guidance for registration in Climatic Zones III and IV' as if it were in force.",
+  "correct": "ICH Q1F was withdrawn in 2006. Zone III/IV conditions are now set by the WHO stability guideline (TRS 1010 Annex 10, which superseded TRS 953 Annex 2) and by regional authorities (e.g., ASEAN, 30 C/75% RH).",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/stability-study.ts",
+  "line": 271,
+  "quote": "per FDA Guidance for Industry \"Container Closure System Guidance for Human Drug Products.\"",
+  "error": "The FDA guidance title is wrong. The 1999 guidance is 'Container Closure Systems for Packaging Human Drugs and Biologics'. The low-humidity testing for semi-permeable containers also comes from ICH Q1A(R2) Section 2.2.7.3, not from that FDA guidance.",
+  "correct": "ICH Q1A(R2) Section 2.2.7.3 (drug products in semi-permeable containers) sets the low-RH testing. Its companion is FDA Guidance for Industry 'Container Closure Systems for Packaging Human Drugs and Biologics' (May 1999).",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/stability-auditor.ts",
+  "line": 709,
+  "quote": "and the shelf life should be based on long-term data without extrapolation.",
+  "error": "ICH Q1A(R2) Section 2.2.7.1 only says that significant change at accelerated triggers intermediate testing. It does not forbid extrapolation. ICH Q1E (Appendix A, Section 2.4) allows limited extrapolation, up to 1.5x and no more than 6 months beyond the long-term data, when significant change occurs at accelerated but not at intermediate. The recommendation on line 711 ('Limit shelf life to available long-term data without extrapolation') repeats the error.",
+  "correct": "Under ICH Q1A(R2) 2.2.7.1, significant change at accelerated triggers intermediate testing. Under ICH Q1E Section 2.4.1.2 and Appendix A, if the intermediate data show no significant change, limited extrapolation (up to 1.5x, not more than 6 months beyond the long-term data) may be justified. No extrapolation is allowed only when significant change also occurs at intermediate.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/stability-auditor.ts",
+  "line": 583,
+  "quote": "21 CFR 211.150 requires appropriate storage during distribution",
+  "error": "21 CFR 211.150 (Distribution procedures) requires only FIFO stock rotation (a) and a lot-distribution system that allows recall (b). It contains no requirement for storage conditions during distribution. Storage under appropriate conditions is in 21 CFR 211.142 (Warehousing procedures).",
+  "correct": "21 CFR 211.142(b) requires storage under appropriate conditions of temperature, humidity and light. 21 CFR 211.150 covers distribution procedures (FIFO and recall traceability).",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/stability-auditor.ts",
+  "line": 385,
+  "quote": "FDA Guidance: Content and Format of Chemistry, Manufacturing and Controls Information for a Therapeutic Recombinant DNA-Derived Product (1996)",
+  "error": "The 1996 FDA/CBER guidance title is misstated.",
+  "correct": "'Guidance for Industry for the Submission of Chemistry, Manufacturing, and Controls Information for a Therapeutic Recombinant DNA-Derived Product or a Monoclonal Antibody Product for In Vivo Use' (August 1996).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/stability-study.ts",
+  "line": 1146,
+  "quote": "ICH Q1A(R2) Section 2.2.8 expects the post-approval stability protocol to be described in CTD Module 3.2.P.8.2 (drug product) or 3.2.S.7.2 (drug substance).",
+  "error": "ICH Q1A(R2) Section 2.2.8 (Stability Commitment) does not mention CTD section numbers. The 3.2.P.8.2 / 3.2.S.7.2 placement of the post-approval stability protocol and commitment is set by ICH M4Q (CTD Quality).",
+  "correct": "ICH M4Q places the post-approval stability protocol and stability commitment in 3.2.S.7.2 (drug substance) and 3.2.P.8.2 (drug product). ICH Q1A(R2) 2.1.8/2.2.8 describe the commitment itself.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/stability-study.ts",
+  "line": 1281,
+  "quote": "a field alert report must be submitted within 3 working days of a confirmed stability failure on a distributed batch.",
+  "error": "21 CFR 314.81(b)(1) requires the field alert within three working days of the applicant's receipt of the information. It is not conditioned on the failure being confirmed. FDA's Field Alert Report guidance (2021) says to file the initial FAR within 3 working days even if the investigation is not complete.",
+  "correct": "Per 21 CFR 314.81(b)(1), submit a field alert report within three working days of receiving information about a distributed batch's failure to meet specification (or a significant change or deterioration), with follow-up reports as the investigation proceeds. Confirmation is not a prerequisite.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/stability-study.ts",
+  "line": 71,
+  "quote": "ICH Q1A(R2) Section 2.1 further distinguishes requirements for drug substances versus drug products.",
+  "error": "ICH Q1A(R2) Section 2.1 covers only the drug substance. The drug product is Section 2.2, and it is Section 2 (Guidelines) that sets the two apart.",
+  "correct": "ICH Q1A(R2) Section 2.1 (Drug Substance) and Section 2.2 (Drug Product) set out the separate requirements.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/stability-study.ts",
+  "line": 359,
+  "quote": "description: 'Brazil, Ghana, Philippines'",
+  "error": "These three countries are given as examples of Zone IVa (30 C / 65% RH). They are Zone IVb markets. WHO TRS 953 Annex 2 lists Brazil, Ghana and the Philippines as IVb. ANVISA requires 30 C / 75% RH, and ASEAN, which includes the Philippines, adopted 30 C / 75% RH. A sponsor who follows this label could plan 30/65 long-term data for markets that require 30/75.",
+  "correct": "Brazil, Ghana and the Philippines are Zone IVb (hot/very humid, 30 C / 75% RH long-term). They should not be listed as Zone IVa examples.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/stability-study.ts",
+  "line": 982,
+  "quote": "The proposed shelf life should not exceed the available long-term data by more than 2x (e.g., 12 months data allows a maximum 24-month shelf-life claim).",
+  "error": "This states 2x as the limit and leaves out the other half of the ICH Q1E rule: no more than 12 months beyond the long-term data. It also leaves out the narrower limits that apply when there is significant change at accelerated, for refrigerated products (1.5x, at most +6 months), and for frozen products (no extrapolation). For example, 24 months of data does not allow a 48-month claim, only 36. The same 2x-only rule appears at line 905, line 991 and line 1046 ('generally no more than twice').",
+  "correct": "ICH Q1E Appendix A / 2.4.1.2: for room-temperature products with no significant change at accelerated, extrapolation may be up to twice the long-term data, but no more than 12 months beyond it. Refrigerated products: up to 1.5x, at most +6 months. Frozen products: no extrapolation.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/stability-study.ts",
+  "line": 429,
+  "quote": "ICH Q1A(R2) Section 2.2.7 requires six months of accelerated stability data (40 C/75% RH) at the time of submission.",
+  "error": "This presents 40 C / 75% RH accelerated data as a universal requirement. Under Q1A(R2) 2.2.7, 40/75 is the accelerated condition only for the general (room-temperature) case. For refrigerated products the accelerated condition is 25 C / 60% RH. For freezer products there is no standard accelerated study (a single batch is tested at an elevated temperature). The check fires on any 'No', including refrigerated and frozen products, and calls the absence of 40/75 data a likely Refuse-to-File. Line 383 makes the same unconditional claim.",
+  "correct": "Six months of accelerated data is expected at submission for room-temperature products (40 C / 75% RH). For refrigerated products the accelerated condition is 25 C / 60% RH (Q1A(R2) 2.2.7.3). For freezer storage, an elevated-temperature study on a single batch applies instead (2.2.7.5).",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/stability-study.ts",
+  "line": 1139,
+  "quote": "ICH Q1A(R2) Section 2.2.8 states that a post-approval stability protocol and commitment should be provided in the registration application. The commitment typically includes placing at least one production batch per year",
+  "error": "This misstates Q1A(R2) 2.2.8. The stability commitment there applies only when the long-term data on production batches do not cover the proposed shelf life. It requires either continuing the studies through the shelf life or placing more production batches on study to total at least three. The annual 'one production batch per year' program comes from FDA/cGMP practice (21 CFR 211.166). Q1A(R2) 2.2.8 does not contain it.",
+  "correct": "Q1A(R2) 2.2.8: when the available long-term data on production batches do not cover the proposed shelf life, commit to continue the studies through the shelf life, or to place more production batches on study until there are at least three, using the same protocol as the primary batches. The annual-batch program is a separate FDA/cGMP expectation.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/stability-study.ts",
+  "line": 271,
+  "quote": "additional studies at low humidity may be needed per FDA Guidance for Industry \"Container Closure System Guidance for Human Drug Products.\"",
+  "error": "The low-relative-humidity stability requirement for aqueous products in semi-permeable containers comes from ICH Q1A(R2) Section 2.2.7.4 (Drug products packaged in semi-permeable containers). The FDA container closure guidance (1999) does not set out this storage-condition study.",
+  "correct": "ICH Q1A(R2) 2.2.7.4 requires aqueous products in semi-permeable containers to be evaluated for water loss under low-RH conditions (for example, 25 C / 40% RH long-term, or 40 C / not more than 25% RH accelerated).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/device-pma.ts",
+  "line": 683,
+  "quote": "FDA conducts a pre-approval inspection for most PMA applications per 21 CFR 814.20(b)(4)",
+  "error": "21 CFR 814.20(b)(4) sets out what the PMA application must contain: a complete description of the device, its components, properties and principles of operation, and the methods, facilities and controls used to manufacture it. It says nothing about FDA conducting a pre-approval inspection, so it is the wrong citation for that statement.",
+  "correct": "Pre-approval inspection is FDA's practice in the PMA review under 21 CFR 814.44 (approval may depend on a finding that the manufacturing facilities, methods and controls comply with 21 CFR Part 820). Under 21 CFR 814.45(a)(3), FDA may deny approval if the facilities, methods or controls do not conform to Part 820. 814.20(b)(4) is only the application-content requirement for the manufacturing description.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/device-pma.ts",
+  "line": 708,
+  "quote": "The biological evaluation plan and report should follow the structure in ISO 10993-1 Annex A.",
+  "error": "In ISO 10993-1:2018, which this flow cites as its edition at lines 795 and 804, Annex A is the table of biological endpoints to address (Table A.1). It does not set a structure for the biological evaluation plan or report. Guidance on carrying out the biological evaluation within the risk management process is in Annex B.",
+  "correct": "ISO 10993-1:2018 Annex A (Table A.1) lists the biological endpoints to consider for each contact category and duration. Annex B gives guidance on conducting the biological evaluation within a risk management process, including planning and reporting.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/device-pma.ts",
+  "line": 1467,
+  "quote": "MRI labeling per ASTM F2503 is required for implantable devices",
+  "error": "No regulation requires MRI labeling per ASTM F2503 for implantable devices. ASTM F2503 is an FDA-recognized consensus standard. FDA's guidance 'Testing and Labeling Medical Devices for Safety in the Magnetic Resonance (MR) Environment' (2023) recommends MR safety labeling for implants that may enter the MR environment. A recommendation is not a requirement.",
+  "correct": "FDA recommends, through guidance, MR safety testing and labeling (MR Safe, MR Conditional or MR Unsafe, using the ASTM F2503 terms) for implants that may enter the MR environment. ASTM F2503 is a recognized standard, not a regulatory requirement.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/device-pma.ts",
+  "line": 1065,
+  "quote": "The primary endpoint must be met with statistical significance.",
+  "error": "The string presents statistical significance on the primary endpoint as a requirement for PMA approval, and no regulation says that. FDA approves on reasonable assurance of safety and effectiveness from valid scientific evidence (21 CFR 860.7; 814.45), weighing the totality of the evidence. Accepted designs include Bayesian designs and single-arm studies against an objective performance criterion, which this same flow offers as options. The flow's own check at line 1126 also says FDA weighs the totality of evidence.",
+  "correct": "FDA decides whether the totality of valid scientific evidence gives reasonable assurance of safety and effectiveness (21 CFR 860.7, 814.45). The pre-specified success criterion should be met. It is not a regulatory requirement that the primary endpoint reach frequentist statistical significance.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/pma-auditor.ts",
+  "line": 174,
+  "quote": "'21 CFR 814.20(b)(3)(i)',",
+  "error": "The reference for the 'Device Description Incomplete' finding cites 21 CFR 814.20(b)(3)(i). That paragraph is the summary's indications for use, not the device description. The finding's own requirement text on line 173 correctly names 814.20(b)(4)(i) for the complete description and 814.20(b)(3)(ii) for the summary device description.",
+  "correct": "21 CFR 814.20(b)(4) for the complete device description, with its functional components, properties and principles of operation, and 814.20(b)(3)(ii) for the summary device description.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/pma-auditor.ts",
+  "line": 105,
+  "quote": "FDA Guidance: Recommended Content and Format of Non-Clinical Bench Performance Testing Information in PMA Submissions",
+  "error": "The guidance title is wrong. The FDA final guidance (2019) is titled '...in Premarket Submissions'. It covers 510(k)s, De Novos, PMAs, HDEs and IDEs, not PMAs only.",
+  "correct": "FDA Guidance: Recommended Content and Format of Non-Clinical Bench Performance Testing Information in Premarket Submissions (December 2019)",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/pma-auditor.ts",
+  "line": 151,
+  "quote": "21 CFR 801; FDA Guidance: Device Labeling Guidance (2018)",
+  "error": "There is no 2018 CDRH guidance titled 'Device Labeling Guidance'. The closest FDA document with that name is the 1991 'Device Labeling Guidance' blue-book memorandum (#G91-1), so the citation names a document and year that do not exist as stated.",
+  "correct": "Cite 21 CFR Part 801 and real labeling references, for example 'Labeling: Regulatory Requirements for Medical Devices' (FDA 89-4203) or 'Guidance on Medical Device Patient Labeling' (2001), or remove the guidance reference.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/pma-auditor.ts",
+  "line": 227,
+  "quote": "21 CFR 801.4; FDA Guidance: Device Labeling Guidance (2018)",
+  "error": "This repeats the same non-existent 'Device Labeling Guidance (2018)' citation as line 151.",
+  "correct": "Remove it or replace it with an existing labeling reference, for example 21 CFR Part 801 or 'Guidance on Medical Device Patient Labeling' (2001).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/device-510k-auditor.ts",
+  "line": 279,
+  "quote": "FDA Form 3881; FDA Guidance: Device Labeling Guidance — Indications for Use Section",
+  "error": "No FDA guidance with the title 'Device Labeling Guidance — Indications for Use Section' exists. The citation is fabricated.",
+  "correct": "Cite FDA Form 3881 (Indications for Use) and, if a guidance is wanted, 'General/Specific Intended Use' (1998) or 'The 510(k) Program: Evaluating Substantial Equivalence in Premarket Notifications [510(k)]' (2014).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/device-510k-auditor.ts",
+  "line": 401,
+  "quote": "A complete device description is required under 21 CFR 807.87(e), including sufficient detail for the reviewer to understand how the device works",
+  "error": "21 CFR 807.87(e) requires proposed labels, labeling and advertisements sufficient to describe the device, its intended use and its directions for use. It does not set a device-description requirement. The engineering and technical device description comes from 807.87(f), the comparison with similar devices and its supporting data, and from FDA's RTA/eSTAR content expectations. The same citation appears in the question on line 392 and the reference on line 406.",
+  "correct": "Cite 21 CFR 807.87(f) together with the 510(k) RTA policy and eSTAR device-description content, not 807.87(e), which is the labeling paragraph.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/pma-auditor.ts",
+  "line": 418,
+  "quote": "'21 CFR 812; 21 CFR 50; 21 CFR 56; ICH E6(R3)'",
+  "error": "ICH E6(R3) is cited as the GCP standard for a medical device pivotal investigation. ICH E6 covers clinical trials of investigational medicinal products (drugs and biologics). For device clinical investigations, FDA relies on 21 CFR 812/50/56 and the FDA-recognized device GCP standard, ISO 14155.",
+  "correct": "21 CFR 812; 21 CFR 50; 21 CFR 56; ISO 14155:2020 (Clinical investigation of medical devices for human subjects — Good clinical practice)",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
+  "line": 354,
+  "quote": "reference: 'FD&C Act 513(f)(2)(A); 21 CFR 860.220(a)',",
+  "error": "The finding cites 21 CFR 860.220(a) for the two conditions that make a device eligible for a De Novo request: a prior NSE determination, or no legally marketed predicate. 860.220 sets out what a De Novo request must contain; paragraph (a) covers administrative information. The eligibility conditions are in 21 CFR 860.200, 'Purpose and applicability', in Subpart D.",
+  "correct": "FD&C Act 513(f)(2)(A); 21 CFR 860.200 (who may submit a De Novo request: after an NSE determination, or when there is no legally marketed predicate).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/device-510k-auditor.ts",
+  "line": 72,
+  "quote": "This is a mandatory field and its absence will trigger an RTA (Refuse to Accept) determination.",
+  "error": "Since 2023-10-01, 510(k) submissions to CDRH must be made through eSTAR. eSTAR submissions are not subject to the Refuse to Accept checklist review. FDA instead runs a technical screening, and an incomplete submission is put on hold. The eSTAR template also does not let a submission be built without the device name.",
+  "correct": "In eSTAR the device name is a required field. A missing or incomplete element leads to a technical screening hold, not an RTA determination; RTA review does not apply to eSTAR 510(k)s.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/device-510k-auditor.ts",
+  "line": 881,
+  "quote": "may result in an Additional Information (AI) request or Refuse to Accept (RTA) decision.",
+  "error": "It names a Refuse to Accept decision as a possible outcome for a current 510(k). 510(k)s must now be submitted through eSTAR, and eSTAR submissions are not subject to RTA review.",
+  "correct": "An inconsistency may lead to a technical screening hold, or to an Additional Information request during substantive review. RTA does not apply to eSTAR 510(k) submissions.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/pma-auditor.ts",
+  "line": 761,
+  "quote": "is required per ISO 14971:2019 and ISO 13485:2016 Sections 7.1 and 7.3.7 (via 21 CFR 820.10, QMSR) as part of design validation.",
+  "error": "ISO 13485:2016 clause 7.3.7 (design and development validation) does not require risk analysis. Risk analysis as part of design validation was a requirement of the former QSR, 21 CFR 820.30(g), and was mapped onto 7.3.7 incorrectly. ISO 14971 also does not require FMEA or FTA specifically; ISO/TR 24971 describes those techniques as informative options.",
+  "correct": "Risk management throughout product realization is required by ISO 13485:2016 clause 7.1 and is carried out per ISO 14971:2019 (via 21 CFR 820.10). Risk-management outputs feed design inputs (7.3.3). FMEA and FTA are recommended techniques, not mandated ones.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/pma-auditor.ts",
+  "line": 151,
+  "quote": "FDA Guidance: Device Labeling Guidance (2018)",
+  "error": "No FDA guidance called 'Device Labeling Guidance' was issued in 2018. The general device labeling guidance is the 1991 Device Labeling Guidance (#G91-1), supported by 'Labeling - Regulatory Requirements for Medical Devices' (1989). The same citation appears again at line 227.",
+  "correct": "Cite 21 CFR Part 801 together with FDA's Device Labeling Guidance #G91-1 (1991), or with 'Labeling - Regulatory Requirements for Medical Devices' (FDA 89-4203).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
+  "line": 703,
+  "quote": "Devices with patient contact >24 hours require a comprehensive biocompatibility evaluation including systemic toxicity, genotoxicity, and (for implants) implantation and chronic toxicity testing per ISO 10993-1 Table A.1.",
+  "error": "The statement says ISO 10993-1 Table A.1 requires systemic toxicity and genotoxicity for every device with more than 24 hours of contact. That is wrong. For surface devices on intact skin, Table A.1 lists only cytotoxicity, sensitization and irritation at every duration, including prolonged and permanent. Chronic toxicity is an endpoint only for long-term (permanent, more than 30 days) contact, so it is not called for in every implant with more than 24 hours of contact. The check fires as 'critical' on any prolonged or permanent contact, including intact-skin devices.",
+  "correct": "ISO 10993-1:2018 Table A.1 sets the endpoints by both contact category and duration. Systemic toxicity and genotoxicity apply only to some categories with prolonged or permanent contact (for example breached surfaces, externally communicating devices and implants), not to intact-skin surface devices. Chronic toxicity applies to long-term contact.",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
+  "line": 344,
+  "quote": "the routes are a De Novo request or a 510(k) for the new intended use.",
+  "error": "A 510(k) cannot clear a new intended use. A device with a different intended use from its predicate is not substantially equivalent by definition (21 CFR 807.100(b); FD&C Act 513(i)). This text tells clients a 510(k) is a valid route for a new intended use, which contradicts the flow's own warning at line 424.",
+  "correct": "If the indications and the technology come from different devices, the options are: a 510(k) on a single predicate (or several predicates, each with the same intended use) that has both the intended use and comparable technology, or a De Novo request (or a PMA) where no such predicate exists. A new intended use cannot be reached through a 510(k).",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
+  "line": 742,
+  "quote": "4th Edition (2014) — Required for new submissions",
+  "error": "No edition of IEC 60601-1-2 is 'required' for new submissions. Conformance to a recognized consensus standard is voluntary. The edition FDA currently recognizes is also not the unamended 2014 4th edition: it is IEC 60601-1-2:2014+AMD1:2020 (Edition 4.1). The flow itself cites that version at line 613.",
+  "correct": "FDA currently recognizes IEC 60601-1-2:2014+AMD1:2020 (Edition 4.1) and recommends it in its EMC guidance. Declaring conformity to it is a voluntary means of demonstrating EMC, not a requirement.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/gspr-compliance-nodes.ts",
+  "line": 55,
+  "quote": "clinical benefits (6), chemical properties (7), performance characteristics (8), design for safety (9)",
+  "error": "Most of this description of MDR Annex I Chapter I is wrong. Risk management is GSPR 3, not GSPR 2. GSPR 6 covers performance over the device lifetime under normal conditions of use, not clinical benefits. GSPR 7 covers transport and storage, not chemical properties. GSPR 8 says known risks and side-effects are minimised and acceptable against benefits; it is not about performance characteristics. GSPR 9 covers Annex XVI products with no medical purpose, not design for safety.",
+  "correct": "MDR Annex I Chapter I: 1 performance and safety; 2 reduce risks as far as possible; 3 risk management system; 4 risk control measures and information on residual risk; 5 use error and ergonomics; 6 performance and safety over the device lifetime; 7 transport and storage; 8 known risks and side-effects minimised and acceptable against benefits; 9 Annex XVI products.",
+  "severity": "high",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/gspr-compliance-nodes.ts",
+  "line": 36,
+  "quote": "GSPR 1 (safety/performance), 2 (risk management), 6 (clinical benefits), 8 (performance characteristics)",
+  "error": "The wrong GSPR numbers are given as the ones usually needing clinical evidence. GSPR 6 is about lifetime performance, not clinical benefits. GSPR 8 is about side-effects and residual risks weighed against benefits, not performance characteristics. Risk management is GSPR 3, not GSPR 2.",
+  "correct": "GSPR 1 (performance and safety), GSPR 8 (side-effects acceptable against benefits) and, where relevant, GSPRs 2-4 (risk reduction, risk management system, residual risk) and 6 (lifetime performance) are the ones usually supported by clinical data.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/gspr-compliance-nodes.ts",
+  "line": 62,
+  "quote": "chemical/physical/biological properties (10-11), infection (12), substances (13-14), software (15-17), active devices (18-22)",
+  "error": "This misnumbers MDR Annex I Chapter II. Infection and microbial contamination is GSPR 11, not 12. GSPR 12 covers devices that incorporate a medicinal substance or are made of substances absorbed by the body. GSPR 13 covers materials of biological origin. GSPR 14 covers construction and interaction with the environment. GSPRs 15 and 16 cover diagnostic or measuring function and radiation, not software. Software is GSPR 17. GSPRs 20-22 (mechanical and thermal risks, energy or substance supply, lay-person devices) are not limited to active devices.",
+  "correct": "10 chemical, physical and biological properties; 11 infection and microbial contamination; 12 medicinal substances and absorbed substances; 13 materials of biological origin; 14 construction and interaction with the environment; 15 diagnostic and measuring function; 16 radiation; 17 electronic programmable systems and software; 18 active devices; 19 active implantable devices; 20 mechanical and thermal risks; 21 supply of energy or substances; 22 lay-person devices.",
+  "severity": "high",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/gspr-compliance-nodes.ts",
+  "line": 124,
+  "quote": "provides equivalent safety and performance per EU MDR Article 9(2)",
+  "error": "Article 9(2) is the presumption of conformity for devices that meet a Common Specification. The rule that manufacturers must comply with a CS unless they justify an at-least-equivalent alternative is in Article 9(3).",
+  "correct": "EU MDR Article 9(3).",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/gspr-compliance-nodes.ts",
+  "line": 69,
+  "quote": "Labeling requirements including label, IFU, implant card per Annex I Section 23",
+  "error": "The implant card is not an Annex I Section 23 requirement. Section 23 covers the label and the instructions for use. The implant card and the information supplied to implanted patients are set out in MDR Article 18.",
+  "correct": "Label and IFU: MDR Annex I Section 23. Implant card: MDR Article 18.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/device-description-nodes.ts",
+  "line": 22,
+  "quote": "The CER must include a complete description of the device per MEDDEV 2.7/1 Rev 4 Section A1.",
+  "error": "MEDDEV 2.7/1 Rev 4 Appendix A1 is 'Demonstration of equivalence'; these same flow files cite it correctly for that elsewhere. The typical contents of a device description are in Appendix A3.",
+  "correct": "MEDDEV 2.7/1 Rev 4 Appendix A3 (Device description – typical contents).",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/device-description-nodes.ts",
+  "line": 96,
+  "quote": "Per MEDDEV 2.7/1 Rev 4 Section A1.",
+  "error": "Appendix A1 covers demonstrating equivalence, not the device description.",
+  "correct": "MEDDEV 2.7/1 Rev 4 Appendix A3.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/device-description-nodes.ts",
+  "line": 162,
+  "quote": "Per MEDDEV 2.7/1 Rev 4 Section A1, the scope of the clinical evaluation is directly defined by the intended purpose.",
+  "error": "Appendix A1 covers equivalence. The scope of the clinical evaluation (Stage 0) is MEDDEV 2.7/1 Rev 4 Section 7.",
+  "correct": "MEDDEV 2.7/1 Rev 4 Section 7 (Definition of the scope of the clinical evaluation).",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/device-description-nodes.ts",
+  "line": 243,
+  "quote": "the strictest classification prevails per Article 51(7)",
+  "error": "Article 51 has no paragraph 7. The rule that the strictest applicable rule decides the class is in MDR Annex VIII, Chapter II, Section 3.5.",
+  "correct": "EU MDR Annex VIII, Chapter II, Section 3.5.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/device-description-nodes.ts",
+  "line": 162,
+  "quote": "Per EU MDR Article 2(12), the intended purpose includes the medical condition, target patient population, and clinical benefits.",
+  "error": "Article 2(12) defines intended purpose as the use for which a device is intended according to the manufacturer's label, IFU, promotional or sales materials and clinical evaluation. It does not list medical condition, patient population or clinical benefits. Those elements are required in the device description under Annex II Section 1.1.",
+  "correct": "Article 2(12) defines intended purpose by the manufacturer's data. Indications, patient population and related elements are required by MDR Annex II Section 1.1.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/device-description-nodes.ts",
+  "line": 117,
+  "quote": "BSI 0086, TUV SUD 0123",
+  "error": "0086 is BSI's UK body, now a UK Approved Body under UKCA. It is not an EU MDR Notified Body and cannot certify CE marking under the MDR. BSI's EU MDR Notified Body is BSI Group The Netherlands, number 2797.",
+  "correct": "e.g. BSI Group The Netherlands 2797, TÜV SÜD 0123.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/clinical-data-identification-nodes.ts",
+  "line": 122,
+  "quote": "Under EU MDR Article 61(5), manufacturers demonstrating equivalence to a device of another manufacturer must have a contract in place",
+  "error": "The Article 61(5) contract requirement applies only to implantable and Class III devices. For other classes, MDR Annex XIV Part A Section 3 requires sufficient access to the other manufacturer's data. It does not require a contract under Article 61(5). The same over-broad attribution to Article 61(5) appears at lines 163 and 184.",
+  "correct": "Article 61(5): contract required for implantable and Class III devices claiming equivalence to another manufacturer's device. For all classes, Annex XIV Part A Section 3 requires sufficient access to the equivalent device's data.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/clinical-data-identification-nodes.ts",
+  "line": 22,
+  "quote": "MDCG 2020-5 provides guidance on clinical evaluation adequacy and the clinical data sets that should be considered.",
+  "error": "MDCG 2020-5 is 'Clinical Evaluation – Equivalence: A guide for manufacturers and notified bodies'. It covers demonstrating equivalence, not clinical evaluation adequacy or which clinical data sets to consider.",
+  "correct": "MDCG 2020-5 covers equivalence. Sufficiency of clinical evidence is covered by MDCG 2020-6, and data identification by MEDDEV 2.7/1 Rev 4 Section 8.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/clinical-data-identification-nodes.ts",
+  "line": 22,
+  "quote": "Per MEDDEV 2.7/1 Rev 4 Section 7, all data from the manufacturer's post-market surveillance system should be included.",
+  "error": "Section 7 of MEDDEV 2.7/1 Rev 4 covers the scope of the clinical evaluation (Stage 0). Identifying pertinent data, including data generated and held by the manufacturer such as PMS data, is Section 8 (Stage 1, Section 8.1).",
+  "correct": "MEDDEV 2.7/1 Rev 4 Section 8.1.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/clinical-investigation-nodes.ts",
+  "line": 236,
+  "quote": "This data feeds into the CER as clinical experience per MEDDEV 2.7/1 Rev 4 Section 7.",
+  "error": "Section 7 covers scope (Stage 0). Post-market and clinical-experience data held by the manufacturer is identified under Section 8 (Stage 1, Section 8.1).",
+  "correct": "MEDDEV 2.7/1 Rev 4 Section 8.1.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/literature-appraisal-nodes.ts",
+  "line": 22,
+  "quote": "ISO 14155:2020 Annex A provides guidance on literature search methodology for clinical investigations.",
+  "error": "ISO 14155:2020 Annex A is the Clinical investigation plan (CIP). ISO 14155 has no annex on literature search methodology. The literature search and review protocol for a CER is in MEDDEV 2.7/1 Rev 4 Appendix A5.",
+  "correct": "MEDDEV 2.7/1 Rev 4 Appendix A5 (literature search and literature review protocol). ISO 14155:2020 Annex A is the CIP.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/benefit-risk-pmcf-nodes.ts",
+  "line": 107,
+  "quote": "Per EU MDR Article 61(11), CERs for implantable and Class III devices must be updated at least annually.",
+  "error": "Article 61(11) requires the clinical evaluation to be updated throughout the device life cycle. For Class III and implantable devices, what it requires at least annually is the PMCF evaluation report and, if indicated, the SSCP, not the CER. The same misattribution appears in the option label at line 149.",
+  "correct": "Article 61(11): clinical evaluation updated throughout the life cycle. For Class III and implantable devices, the PMCF evaluation report and, if indicated, the SSCP (Article 32) are updated at least annually.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/benefit-risk-pmcf-nodes.ts",
+  "line": 178,
+  "quote": "The CER must be reviewed and approved by the Person Responsible for Regulatory Compliance (PRRC) per EU MDR Article 15",
+  "error": "Article 15 does not require the PRRC to review or approve the CER. Article 15(3) makes the PRRC responsible for checking device conformity before release, keeping the technical documentation and EU declaration of conformity up to date, PMS obligations, vigilance reporting, and the clinical investigation statement.",
+  "correct": "MDR Article 15(3) lists the PRRC's responsibilities, and CER approval is not among them. The CER is signed by the qualified clinical evaluators (MEDDEV 2.7/1 Rev 4 Section 6.4).",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/benefit-risk-pmcf-nodes.ts",
+  "line": 190,
+  "quote": "MDCG 2020-7 provides detailed guidance on PMCF plan and PMCF evaluation report content.",
+  "error": "MDCG 2020-7 is the PMCF Plan template only. The PMCF Evaluation Report template is MDCG 2020-8, which the file itself cites at line 261.",
+  "correct": "MDCG 2020-7: PMCF Plan template. MDCG 2020-8: PMCF Evaluation Report template.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/benefit-risk-pmcf-nodes.ts",
+  "line": 347,
+  "quote": "Required for interventional PMCF studies per EU MDR Article 70",
+  "error": "Article 70 governs applications for pre-market clinical investigations. Under Article 74(1), a PMCF investigation that adds invasive or burdensome procedures needs a notification to the Member States at least 30 days before it starts. That route does not go through the Article 70 application procedure.",
+  "correct": "EU MDR Article 74(1): notify the Member States concerned at least 30 days before starting.",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/gspr-compliance-nodes.ts",
+  "line": 55,
+  "quote": "risk management (2), acceptability of benefit-risk (3-4), design for performance (5), clinical benefits (6), chemical properties (7), performance characteristics (8), design for safety (9)",
+  "error": "This mapping of the Chapter I GSPRs is wrong. In MDR Annex I: GSPR 2 is reducing risk as far as possible; 3 is the risk management system; 4 is risk control measures; 5 is use error and ergonomics; 6 is that performance is kept over the device lifetime; 7 is transport and storage; 8 is that undesirable side-effects are minimised and acceptable; 9 is Annex XVI products. None of them is 'clinical benefits' or 'chemical properties'.",
+  "correct": "1 performance and safety; 2 risk reduction as far as possible; 3 risk management system; 4 risk control measures and information for safety; 5 use error and ergonomics; 6 characteristics kept during lifetime; 7 transport and storage; 8 side-effects minimised and acceptable against benefits; 9 Annex XVI products without a medical purpose.",
+  "severity": "high",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/gspr-compliance-nodes.ts",
+  "line": 36,
+  "quote": "Typically includes GSPR 1 (safety/performance), 2 (risk management), 6 (clinical benefits), 8 (performance characteristics).",
+  "error": "The GSPR numbers are given the wrong subjects. GSPR 2 is risk reduction as far as possible (risk management is GSPR 3). GSPR 6 is keeping performance over the device lifetime, not clinical benefits. GSPR 8 is minimising undesirable side-effects, not performance characteristics.",
+  "correct": "The GSPRs that usually need clinical evidence are GSPR 1 (performance and safety, benefit-risk), GSPR 8 (undesirable side-effects acceptable against benefits) and, where relevant, GSPR 6 (lifetime). GSPR 2 is risk reduction as far as possible and GSPR 3 is risk management.",
+  "severity": "high",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/gspr-compliance-nodes.ts",
+  "line": 62,
+  "quote": "Includes: chemical/physical/biological properties (10-11), infection (12), substances (13-14), software (15-17), active devices (18-22)",
+  "error": "This mapping of the Chapter II GSPRs is wrong. GSPR 11 is infection and microbial contamination. GSPR 12 is devices incorporating a medicinal substance or made of absorbed substances. GSPR 13 is materials of biological origin. GSPR 14 is construction and interaction with the environment. GSPR 15 is diagnostic and measuring function. GSPR 16 is radiation. Software is GSPR 17 only. GSPRs 18-19 are active and active implantable devices. GSPRs 20-22 are mechanical and thermal risks, devices supplying energy or substances, and lay-person devices.",
+  "correct": "10 chemical/physical/biological properties; 11 infection and microbial contamination; 12 medicinal substances and absorbed substances; 13 biological origin; 14 construction and environment; 15 diagnostic and measuring function; 16 radiation; 17 software and electronic programmable systems; 18 active devices; 19 active implantable devices; 20 mechanical and thermal risks; 21 energy or substance delivery; 22 lay persons.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/gspr-compliance-nodes.ts",
+  "line": 110,
+  "quote": "provide justification that the alternative approach provides equivalent safety and performance per EU MDR Article 9(2)",
+  "error": "The wrong paragraph is cited. Article 9(2) is the presumption of conformity for devices that conform to the CS. The duty to comply with CS unless an equivalent alternative is justified is in Article 9(3).",
+  "correct": "EU MDR Article 9(3).",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/device-description-nodes.ts",
+  "line": 96,
+  "quote": "all variants/models covered by this CER. Per MEDDEV 2.7/1 Rev 4 Section A1.",
+  "error": "Appendix A1 covers demonstration of equivalence, not the device description.",
+  "correct": "MEDDEV 2.7/1 Rev 4 Appendix A3.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/device-description-nodes.ts",
+  "line": 104,
+  "quote": "Implantable as defined by EU MDR Article 2(5) — intended to be totally or partially introduced into the human body",
+  "error": "This misstates the Article 2(5) definition. Being 'totally or partially introduced' alone describes any invasive device. Under Article 2(5), an implantable device must be introduced by surgical intervention and intended to remain in place after the procedure. A partially introduced device must be intended to remain for at least 30 days.",
+  "correct": "Article 2(5): a device intended to be totally introduced into the body, or to replace an epithelial surface or the surface of the eye, by surgical intervention, and to remain after the procedure. A device partially introduced by surgical intervention counts only if it is intended to remain for at least 30 days.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/device-description-nodes.ts",
+  "line": 243,
+  "quote": "For devices where multiple rules apply, the strictest classification prevails per Article 51(7).",
+  "error": "The 'strictest rule applies' principle is an implementing rule in Annex VIII, Chapter II, Section 3.5. Article 51 does not contain it.",
+  "correct": "Annex VIII, Chapter II, Section 3.5: where several rules apply, the strictest rule, giving the higher class, applies.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/device-description-nodes.ts",
+  "line": 117,
+  "quote": "Name and NB number of the Notified Body (e.g. BSI 0086, TUV SUD 0123)",
+  "error": "Since Brexit, BSI 0086 is a UK Approved Body and is not designated as an EU MDR Notified Body. BSI's EU MDR Notified Body is BSI Group The Netherlands B.V., number 2797.",
+  "correct": "Give an EU-designated Notified Body as the example, e.g. BSI 2797 or TÜV SÜD 0123.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/clinical-data-identification-nodes.ts",
+  "line": 122,
+  "quote": "An equivalent device must have the same clinical purpose, similar design, and use similar materials.",
+  "error": "The biological criterion is wrong. MDR Annex XIV Part A Section 3 and MEDDEV 2.7/1 Rev 4 A1 require the SAME materials or substances in contact with the same human tissues or body fluids, not similar materials.",
+  "correct": "Biologically, the device must use the same materials or substances in contact with the same human tissues or body fluids, for a similar kind and duration of contact.",
+  "severity": "high",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/clinical-data-identification-nodes.ts",
+  "line": 163,
+  "quote": "EU MDR Article 61(5) requires access to the equivalent device's technical documentation via contract when claiming equivalence to another manufacturer's device",
+  "error": "The Article 61(5) contract requirement is limited to implantable and Class III devices. For other classes, Annex XIV Part A requires sufficient access to the data, not a contract.",
+  "correct": "For implantable and Class III devices, Article 61(5) requires a contract giving full, ongoing access. For other classes, Annex XIV Part A Section 3 requires sufficient levels of access to the data.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/clinical-data-identification-nodes.ts",
+  "line": 204,
+  "quote": "Same clinical condition, same clinical purpose, same clinical effect, same site in body, same target population",
+  "error": "Annex XIV Part A Section 3 requires a SIMILAR population (including age, anatomy and physiology), not the same population. It also requires the same kind of user and similar relevant critical performance, not the 'same clinical effect'.",
+  "correct": "Same clinical condition or purpose (similar severity and stage of disease), same site in the body, similar population, same kind of user, and similar relevant critical performance for the expected clinical effect.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/benefit-risk-pmcf-nodes.ts",
+  "line": 149,
+  "quote": "Annual (required for Class III and implantable per Article 61(11))",
+  "error": "Article 61(11) makes the annual update apply to the PMCF evaluation report and the SSCP, not the CER itself.",
+  "correct": "Annual update of the PMCF evaluation report and SSCP is required for Class III and implantable devices (Article 61(11)). The CER is updated throughout the life cycle with that data.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/cer-report/benefit-risk-pmcf-nodes.ts",
+  "line": 287,
+  "quote": "For Class III and implantable devices, a PMCF plan is always required.",
+  "error": "The MDR does not exempt any class from the justification route. Annex III 1.1(b) and Annex XIV Part B allow, for any class, a PMCF plan or a justification of why PMCF is not applicable. A PMCF plan for Class III or implantable devices is an expectation, not an absolute legal rule.",
+  "correct": "For all classes, including Class III and implantable devices, the MDR requires a PMCF plan or a justification of why PMCF is not applicable (Annex III 1.1(b)). For Class III and implantable devices that justification is rarely accepted.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/risk-management-auditor.ts",
+  "line": 660,
+  "quote": "'ISO 14971:2019 Clause 4.4; MDR 2017/745 Annex II Section 4; ISO/TR 24971 Clause 4.4'",
+  "error": "MDR Annex II Section 4 covers the General Safety and Performance Requirements (applicable GSPRs, methods, standards, controlled documents). It does not cover risk management. The technical-documentation section on risk management is Annex II Section 5 ('Benefit-risk analysis and risk management').",
+  "correct": "MDR 2017/745 Annex II Section 5 (benefit-risk analysis and risk management, with reference to Annex I Sections 1, 3 and 8)",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/risk-management-auditor.ts",
+  "line": 685,
+  "quote": "'ISO 14971:2019 Clause 9; ISO/TR 24971 Clause 9; MDR 2017/745 Annex II Section 4'",
+  "error": "This cites Annex II Section 4 (GSPRs) for the risk management report. Risk management results belong to Annex II Section 5.",
+  "correct": "MDR 2017/745 Annex II Section 5",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/risk-management-auditor.ts",
+  "line": 710,
+  "quote": "'ISO 14971:2019 Clause 4.5; MDR 2017/745 Annex II Section 4'",
+  "error": "This cites Annex II Section 4 (GSPRs) for risk management traceability. Risk management documentation belongs to Annex II Section 5.",
+  "correct": "MDR 2017/745 Annex II Section 5",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/risk-management-auditor.ts",
+  "line": 744,
+  "quote": "'ISO 14971:2019 Clause 4.5; MDR 2017/745 Annex II Section 4; FDA 21 CFR 820.10",
+  "error": "This cites Annex II Section 4 (GSPRs) for completeness of the risk management file. The risk management content of the technical documentation is Annex II Section 5.",
+  "correct": "MDR 2017/745 Annex II Section 5",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/risk-management-auditor.ts",
+  "line": 273,
+  "quote": "'ISO 14971:2019 Clause 7.1; ISO 14971:2019 Clause 4.5 (traceability); MDR 2017/745 Annex II Section 4'",
+  "error": "This cites Annex II Section 4 (GSPR conformity) for tracing risk controls to hazards. Risk management results are Annex II Section 5. It also cites Clause 7.1 (risk control option analysis) as requiring implementation, but implementation is Clause 7.2.",
+  "correct": "ISO 14971:2019 Clauses 7.1/7.2 and 4.5; MDR 2017/745 Annex II Section 5",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/risk-management-auditor.ts",
+  "line": 199,
+  "quote": "'ISO 14971:2019 Clause 5.4; ISO/TR 24971 Annex A; IEC 60812 (FMEA); IEC 61025 (FTA)'",
+  "error": "ISO/TR 24971:2020 Annex A is 'Identification of hazards and characteristics related to safety'. Risk analysis techniques such as FMEA, FTA, HAZOP and HACCP are in Annex B ('Techniques that support risk analysis').",
+  "correct": "ISO/TR 24971:2020 Annex B",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/risk-management-auditor.ts",
+  "line": 485,
+  "quote": "'ISO 14971:2019 Clause 5.4; IEC 60812; IEC 61025; ISO/TR 24971 Annex A'",
+  "error": "This cites ISO/TR 24971 Annex A for structured failure-mode methods (FMEA, FTA). Those techniques are in Annex B. Annex A covers identification of hazards and characteristics related to safety.",
+  "correct": "ISO/TR 24971:2020 Annex B",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/risk-management-auditor.ts",
+  "line": 513,
+  "quote": "'ISO 14971:2019 Clause 5.4; ISO/TR 24971 Annex A; ICH Q9(R1) Section 4.1'",
+  "error": "Causal-analysis techniques (e.g. FTA) are in ISO/TR 24971 Annex B, not Annex A. ICH Q9(R1) Section 4.1 is 'Responsibilities', not risk analysis or causal analysis; risk assessment is Section 4.3.",
+  "correct": "ISO/TR 24971:2020 Annex B; ICH Q9(R1) Section 4.3 (Risk Assessment)",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/risk-management-auditor.ts",
+  "line": 560,
+  "quote": "'ISO 14971:2019 Clause 7.1 requires that risk control measures be implemented and verified.",
+  "error": "ISO 14971:2019 Clause 7.1 is risk control option analysis. Implementation and verification of risk control measures (including effectiveness) are Clause 7.2.",
+  "correct": "ISO 14971:2019 Clause 7.2 requires that the selected risk control measures be implemented and that their implementation and effectiveness be verified.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/risk-management-auditor.ts",
+  "line": 225,
+  "quote": "'ISO 14971:2019 Clause 5.5; ISO/TR 24971 Clause 6.2'",
+  "error": "ISO/TR 24971:2020 mirrors the clause structure of ISO 14971:2019. Its Clause 6 is risk evaluation, so a Clause 6.2/6.3 on severity or probability estimation does not exist. Risk estimation guidance is in Clause 5.5. The same mis-citation appears at line 248 ('ISO/TR 24971 Clause 6.3'), line 297 ('Clause 6.2') and lines 152/462 ('ISO/TR 24971 Clause 6' for risk estimation).",
+  "correct": "ISO/TR 24971:2020 Clause 5.5 (risk estimation)",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/risk-management-auditor.ts",
+  "line": 324,
+  "quote": "recognized by FDA (via the RHTF)",
+  "error": "FDA recognizes ISO 14971:2019 as a consensus standard through the CDRH Recognized Consensus Standards program (FD&C Act section 514(c)). No FDA mechanism called 'RHTF' exists.",
+  "correct": "recognized by FDA as a consensus standard (FDA Recognized Consensus Standards database, under FD&C Act section 514(c))",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/risk-management-auditor.ts",
+  "line": 823,
+  "quote": "FDA Guidance: Cybersecurity in Medical Devices (2023)",
+  "error": "The September 2023 final guidance 'Cybersecurity in Medical Devices: Quality System Considerations and Content of Premarket Submissions' was superseded by an updated final version issued in June 2025, so citing the 2023 version as current is out of date.",
+  "correct": "FDA Guidance: Cybersecurity in Medical Devices: Quality System Considerations and Content of Premarket Submissions (final, June 2025, superseding the September 2023 version)",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/cer-auditor.ts",
+  "line": 795,
+  "quote": "reference: 'MEDDEV 2.7/1 Rev 4 Section 9; EU MDR Recital 1',",
+  "error": "MDR Recital 1 says that Directives 90/385/EEC and 93/42/EEC need a fundamental revision. It says nothing about unmet clinical needs or the clinical context that justifies a device.",
+  "correct": "Remove 'EU MDR Recital 1'. If an MDR anchor is wanted, Article 61(3)(c) / Annex XIV Part A Section 1 (consideration of currently available alternative treatment options and the state of the art) is the relevant provision.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/risk-management-auditor.ts",
+  "line": 560,
+  "quote": "ISO 14971:2019 Clause 7.1 requires that risk control measures be implemented and verified.",
+  "error": "In ISO 14971:2019, Clause 7.1 is risk control option analysis. Implementing risk control measures and verifying their implementation and effectiveness is Clause 7.2.",
+  "correct": "ISO 14971:2019 Clause 7.2 requires that the selected risk control measures be implemented, and that their implementation and effectiveness be verified. Clause 7.1 covers selecting them through option analysis.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/risk-management-auditor.ts",
+  "line": 608,
+  "quote": "ISO 14971:2019 Clause 7.3 requires evaluation of residual risk after each risk control is implemented, including assessment of whether new hazards or hazardous situations have been introduced.",
+  "error": "Clause 7.3 (residual risk evaluation) does not cover new hazards. Checking whether risk control measures introduce new hazards or hazardous situations, or affect earlier risk estimates, is Clause 7.5 (risks arising from risk control measures).",
+  "correct": "Clause 7.3 requires each residual risk to be evaluated against the acceptability criteria. Clause 7.5 requires review of whether risk control measures introduce new hazards or hazardous situations.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/risk-management-auditor.ts",
+  "line": 198,
+  "quote": "ISO 14971:2019 Clause 5.4 requires systematic techniques for hazard identification. ISO/TR 24971 recommends FMEA, FTA, HAZOP, or equivalent methods.",
+  "error": "ISO 14971:2019 Clause 5.4 requires the manufacturer to identify and document known and foreseeable hazards and hazardous situations. It does not require any particular technique, or FMEA/FTA/HAZOP-type techniques at all. ISO/TR 24971:2020 only describes such techniques as informative support, in Annex B ('Techniques that support risk analysis'), not in the Annex A cited here. The rule therefore treats a missing FMEA/FTA as a breach of a requirement that does not exist.",
+  "correct": "Clause 5.4 requires identification of known and foreseeable hazards in normal and fault conditions, with no method mandated. ISO/TR 24971:2020 Annex B describes optional techniques (PHA, FMEA, FTA, HAZOP, HACCP).",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/risk-management-auditor.ts",
+  "line": 484,
+  "quote": "ISO 14971:2019 Clause 5.4 requires systematic techniques for hazard identification. IEC 60812 provides a standardized methodology for FMEA.",
+  "error": "ISO 14971:2019 Clause 5.4 does not require systematic techniques. It requires known and foreseeable hazards to be identified and documented, without prescribing a method.",
+  "correct": "Clause 5.4 requires identification and documentation of known and foreseeable hazards and hazardous situations. FMEA (IEC 60812) is an optional technique, described in ISO/TR 24971 Annex B.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/risk-management-auditor.ts",
+  "line": 152,
+  "quote": "'ISO 14971:2019 Clause 5.5; ISO/TR 24971 Clause 6; ICH Q9(R1) Section 4.3'",
+  "error": "ISO/TR 24971:2020 uses the same clause numbering as ISO 14971:2019, so its guidance on risk estimation is in Clause 5.5 and Clause 6 is risk evaluation. Risk-estimation statements cite 'ISO/TR 24971 Clause 6' here and Clause 6, 6.2 or 6.3 at lines 225, 248, 297 and 462.",
+  "correct": "Cite ISO/TR 24971:2020 Clause 5.5 (risk estimation) for severity and probability estimation. Clause 6 is risk evaluation.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/risk-management-auditor.ts",
+  "line": 421,
+  "quote": "The file does not contain an overall benefit-risk analysis as required by ISO 14971:2019 Clause 8.",
+  "error": "ISO 14971:2019 Clause 8 requires evaluation of the overall residual risk against the plan's criteria. A benefit-risk analysis is needed only when the overall residual risk is not judged acceptable, and then the manufacturer 'may' gather data to show that benefits outweigh it. The rule's own requirement text at line 432 says this correctly, so the question (and the title at line 420) state a requirement that does not exist.",
+  "correct": "Clause 8 requires an evaluation of overall residual risk. A benefit-risk determination is needed under Clause 8 (and under Clause 7.4 for an individual risk) only when the residual risk is not acceptable under the criteria.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/cer-auditor.ts",
+  "line": 113,
+  "quote": "EU MDR Annex XIV Part A Section 1 requires clear identification of the device, including trade name, model/size variants, and a precise statement of intended purpose.",
+  "error": "MDR Annex XIV Part A Section 1 sets out what the clinical evaluation plan must contain: the applicable GSPRs, intended purpose, target groups, clinical benefits and so on. It does not require the trade name or model/size variants. Device identification by trade name and variants is a technical documentation requirement under Annex II Section 1.1.",
+  "correct": "Annex XIV Part A Section 1(a) requires the clinical evaluation plan to specify the device's intended purpose and target groups. Identification by trade name and variants comes from Annex II Section 1.1 (and MEDDEV 2.7/1 Rev 4 Appendix A3 for the CER's device description).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/sop-development.ts",
+  "line": 1085,
+  "quote": "reference: 'FDA Inspection Best Practices',",
+  "error": "FDA has published no document called \"FDA Inspection Best Practices\". The reference points the client to a source that does not exist. No FDA regulation or guidance requires a mock-audit program or sets how often one is run.",
+  "correct": "Remove the reference, or say plainly that mock audits are industry practice with no FDA citation. For internal-audit requirements, cite the real ones: ISO 13485:2016 §8.2.4 (internal audit, devices, via 21 CFR 820.10) and ICH Q10 (pharma).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/risk-management.ts",
+  "line": 1109,
+  "quote": "The risk management file must be complete before the risk management review. Ensure all required documents (risk management plan, risk analysis, risk evaluation, risk control records, residual risk evaluation, risk management report) are included.",
+  "error": "This string says the risk management report must already be in the risk management file before the risk management review. Under ISO 14971:2019 clause 9, the report is the documented result of that review, so it cannot exist before the review. A file with no report is the normal state going into the review, not a gap.",
+  "correct": "Before the clause 9 review, the file should contain the plan and the records of risk analysis, evaluation, control, residual-risk evaluation and overall residual-risk evaluation. Clause 9 then requires the results of the review to be documented as the risk management report and added to the risk management file.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/sop-auditor.ts",
+  "line": 987,
+  "quote": "21 CFR 211.192 requires that deviations be investigated commensurate with their significance.",
+  "error": "21 CFR 211.192 contains no proportionality or 'commensurate with significance' language. It requires that any unexplained discrepancy or failure to meet specifications be 'thoroughly investigated, whether or not the batch has already been distributed', with the investigation extended to other batches that may be affected. Risk-proportionate investigation depth comes from ICH Q9/Q10 thinking, not from the regulation. The same misattribution appears in the finding question at line 999.",
+  "correct": "21 CFR 211.192 requires that any unexplained discrepancy or failure of a batch or its components to meet specifications be thoroughly investigated, with the investigation extended to other potentially affected batches and documented in writing. Scaling investigation depth to risk is an ICH Q9/Q10 principle.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/sop-auditor.ts",
+  "line": 57,
+  "quote": "Per 21 CFR 211.188, every batch production and control record must be identifiable.",
+  "error": "21 CFR 211.188 covers batch production and control records: it requires one for each batch, with the listed contents. It does not govern SOP titles or SOP identification. Citing it as the basis for an SOP-title finding applies the wrong section. The same wording is repeated at line 67.",
+  "correct": "Written procedures are required by 21 CFR 211.100(a), and document identification and control for devices falls under ISO 13485:2016 clause 4.2.4 via the QMSR. 211.188 applies only to batch records.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/sop-auditor.ts",
+  "line": 574,
+  "quote": "requires that documents be available at locations of use and that obsolete documents be promptly removed",
+  "error": "The words 'obsolete documents be promptly removed' come from the superseded QSR, former 21 CFR 820.40(a). ISO 13485:2016 clause 4.2.4 has no removal requirement. It requires the organization to prevent unintended use of obsolete documents and apply suitable identification to them. The same misattribution to 4.2.4 appears at line 745: 'Obsolete documents must be promptly removed from all points of use.'",
+  "correct": "ISO 13485:2016 clause 4.2.4 requires that relevant versions of applicable documents be available at points of use, and that unintended use of obsolete documents be prevented and those documents suitably identified. 'Promptly removed' was the language of former 21 CFR 820.40(a), which no longer exists under the QMSR.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/sop-auditor.ts",
+  "line": 475,
+  "quote": "The approved changes must be communicated to appropriate personnel in a timely manner.",
+  "error": "This sentence continues a statement of what ISO 13485:2016 clause 4.2.4 requires, but it is the text of former 21 CFR 820.40(b) under the superseded QSR. ISO 13485:2016 clause 4.2.4 has no 'communicated in a timely manner' requirement.",
+  "correct": "ISO 13485:2016 clause 4.2.4 requires that document changes be reviewed and approved by the original approving function or another designated function with access to pertinent background information, and that changes and current revision status be identified. The 'timely communication' wording was in former 21 CFR 820.40(b).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/sop-auditor.ts",
+  "line": 474,
+  "quote": "requires that changes to documents be reviewed and approved by the same function/organization that performed the original review",
+  "error": "ISO 13485:2016 clause 4.2.4 does not restrict change approval to the original function. It allows changes to be reviewed and approved either by the original approving function or by another designated function that has access to pertinent background information. The sentence that follows ('approved changes must be communicated to appropriate personnel in a timely manner') is wording from the old QSR 21 CFR 820.40(b), not from ISO 13485 clause 4.2.4.",
+  "correct": "ISO 13485:2016 clause 4.2.4: changes to documents are reviewed and approved either by the original approving function or by another designated function with access to pertinent background information on which to base its decisions.",
+  "severity": "low",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/safety-narrative.ts",
+  "line": 937,
+  "quote": "reference: 'ICH E2A Section III.B',",
+  "error": "ICH E2A Section III.B is 'Reporting Time Frames': the 7-day and 15-day clocks and the minimum criteria for reporting. It does not set out the sponsor's duty to assess causality, which is what this check cites it for. Causality appears in E2A's definitions (II.A.1, 'reasonable causal relationship') and in III.A.1, which covers cases judged by the reporter or the sponsor to have a reasonable suspected causal relationship.",
+  "correct": "Cite ICH E2A Section II.A.1 (ADR definition / reasonable causal relationship) and Section III.A.1 (cases where either the investigator or the sponsor suspects a causal relationship), not III.B.",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/briefing-book.ts",
+  "line": 512,
+  "quote": "Per ICH E1, FDA expects at least 1,500 patients exposed for chronic-use drugs, with at least 300-600 exposed for 6 months and 100 for 12 months.",
+  "error": "This misstates ICH E1. E1 is an ICH guideline, not a stand-alone FDA expectation. It applies only to long-term treatment of non-life-threatening conditions, and it gives approximate figures: 'about 1500' in total and 300-600 for 6 months, not 'at least'. The first-pass correction at line 490 of the same file already states this scope limit. This helpText still states the old, overbroad version, so the two strings shown to the client contradict each other.",
+  "correct": "Per ICH E1, for drugs intended for long-term (beyond 6 months) treatment of non-life-threatening conditions, the safety database is generally about 1,500 patients in total, 300-600 exposed for 6 months and at least 100 for 1 year; it does not apply to life-threatening indications.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/briefing-book.ts",
+  "line": 780,
+  "quote": "reference: 'PDUFA VI Commitment Letter; FDA Benefit-Risk Framework (2023)',",
+  "error": "FDA's Benefit-Risk Framework does not date from 2023. FDA introduced it under PDUFA V (the 2013 'Structured Approach to Benefit-Risk Assessment in Drug Regulatory Decision-Making' plan), and the 2018 PDUFA VI implementation plan updated it. The 2023 document is a separate draft guidance, 'Benefit-Risk Assessment for New Drug and Biological Products' (September 2023), and it is not final. The guidance text at line 729 cites these documents correctly; this reference does not.",
+  "correct": "PDUFA VI Commitment Letter; FDA 'Benefit-Risk Assessment in Drug Regulatory Decision-Making' (PDUFA VI implementation plan, 2018); FDA draft guidance 'Benefit-Risk Assessment for New Drug and Biological Products' (2023).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/briefing-book.ts",
+  "line": 130,
+  "quote": "placeholder: 'e.g., Division of Oncology Products 1, CDER',",
+  "error": "CDER has not had a 'Division of Oncology Products 1' since the 2019-2020 reorganization of the Office of New Drugs. Oncology review divisions now sit in the Office of Oncologic Diseases, under names such as 'Division of Oncology 1'. The example shows clients a division name that no longer exists.",
+  "correct": "e.g., Division of Oncology 1, Office of Oncologic Diseases, CDER",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/safety-narrative.ts",
+  "line": 1074,
+  "quote": "FDA expects narratives to be included in IND annual reports (21 CFR 312.33)",
+  "error": "21 CFR 312.33 does not call for individual patient safety narratives. 312.33(b) asks for a narrative or tabular summary of the most frequent and most serious adverse experiences by body system, a summary of all IND safety reports, a list of deaths with cause, and a list of discontinuations due to adverse experiences. It is an aggregate summary, not case narratives.",
+  "correct": "Individual case narratives go in CSR Section 12.3.2/14.3.3 (ICH E3) and the NDA/BLA safety summaries. The IND annual report (21 CFR 312.33(b)), or a DSUR filed in its place, holds aggregate narrative or tabular summaries of adverse experiences, a list of deaths and a list of discontinuations, not individual safety narratives.",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/flows/briefing-book.ts",
+  "line": 199,
+  "quote": "FDA typically publishes its own briefing document 1-2 business days before the meeting.",
+  "error": "Under FDA's 2008 Advisory Committee guidance, FDA makes briefing materials public no later than 2 full business days before the meeting. Posting 1 business day before would fall short of that. This line also contradicts line 76 of the same flow ('at least two business days before the meeting').",
+  "correct": "FDA posts its briefing document, and the sponsor's, publicly no later than 2 business days before the meeting. In practice this is usually exactly 2 business days.",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/issue-detector.ts",
+  "line": 509,
+  "quote": "reference: 'FDAAA §505-1; FDA REMS Guidance (2022)',",
+  "error": "Section 505-1 belongs to the FD&C Act (21 U.S.C. 355-1), not to FDAAA. FDAAA (Pub. L. 110-85) added it through FDAAA §901, and FDAAA has no section 505-1 of its own.",
+  "correct": "FD&C Act §505-1 (21 U.S.C. 355-1), added by FDAAA §901 (2007).",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/issue-detector.ts",
+  "line": 353,
+  "quote": "FDA Guidance on Expedited Programs (2014, updated 2023)",
+  "error": "FDA's 'Expedited Programs for Serious Conditions — Drugs and Biologics' guidance was finalised in May 2014 and was not updated in 2023. The later accelerated-approval documents are separate drafts: the oncology-specific 'Clinical Trial Considerations to Support Accelerated Approval of Oncology Therapeutics' (March 2023), 'Expedited Program for Serious Conditions — Accelerated Approval of Drugs and Biologics' (December 2024), and the confirmatory-trial-underway draft (January 2025).",
+  "correct": "FDA Guidance 'Expedited Programs for Serious Conditions — Drugs and Biologics' (final, May 2014), plus the separate draft guidance 'Expedited Program for Serious Conditions — Accelerated Approval of Drugs and Biologics' (December 2024).",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/issue-detector.ts",
+  "line": 353,
+  "quote": "reference: 'FDORA §3210; 21 CFR 314.530;",
+  "error": "This rule fires for bla_submission too, but 21 CFR 314.530 is the withdrawal procedure for drugs approved under accelerated approval (Part 314 subpart H, NDAs). For biologics the counterpart is 21 CFR 601.43 (Part 601 subpart E), so a BLA sponsor is pointed to a regulation that does not govern their product.",
+  "correct": "21 CFR 314.530 for NDAs; 21 CFR 601.43 for BLAs (accelerated approval withdrawal procedures).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/issue-detector.ts",
+  "line": 615,
+  "quote": "Draft the ICH E3 §16 patient safety narrative",
+  "error": "ICH E3 puts patient narratives of deaths, other serious adverse events and certain other significant adverse events in section 12.3.2, which says they may go in the report text or in section 14.3.3. Section 16 holds the appendices: 16.2.7 is the per-patient adverse event listings, not the narratives.",
+  "correct": "ICH E3 §12.3.2 / §14.3.3 (narratives of deaths, other serious and certain other significant adverse events).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/issue-detector.ts",
+  "line": 374,
+  "quote": "reference: 'FDA Guidance on Rare Disease Drug Development (2019); Orphan Drug Act §526',",
+  "error": "Two errors. (1) Section 526 is an FD&C Act section (21 U.S.C. 360bb, orphan designation); the Orphan Drug Act of 1983 added it to the FD&C Act but does not number it §526. (2) The 2019 rare-disease guidance ('Rare Diseases: Common Issues in Drug Development') was a revised draft, and FDA replaced it with the final 'Rare Diseases: Considerations for the Development of Drugs and Biological Products' (December 2023). Citing the 2019 draft as current is wrong. For natural history specifically, the relevant guidance is 'Rare Diseases: Natural History Studies for Drug Development' (2019).",
+  "correct": "FD&C Act §526 (21 U.S.C. 360bb), as added by the Orphan Drug Act; FDA Guidance 'Rare Diseases: Considerations for the Development of Drugs and Biological Products' (final, December 2023); 'Rare Diseases: Natural History Studies for Drug Development' (2019).",
+  "severity": "low",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/governed-options.ts",
+  "line": 82,
+  "quote": "`${agencyFor('EU')} has no part in them, beyond the companion-diagnostic consultation.`",
+  "error": "This sentence is shown for both MDR and IVDR route lists. Under the MDR, EMA's role is not a companion-diagnostic consultation (that one is IVDR-only, Art 48 / Annex IX §5.2). Under the MDR, EMA (or a national medicines authority) is consulted on devices that incorporate an ancillary medicinal substance, human blood or plasma derivatives, and Rule 21 systemically absorbed substances (MDR Annex IX §5.2). The line 81 claim that 'a notified body assesses them' is also wrong for self-declared routes: MDR Class I that is not sterile, measuring or reusable surgical, and IVDR Class A that is not sterile. The IVDR list on the same page labels Class A 'no notified body'.",
+  "correct": "For MDR: the notified body assesses Class Is/Im/Ir, IIa, IIb and III; plain Class I is self-declared; EMA or a national competent authority is consulted for devices with an ancillary medicinal substance (MDR Annex IX §5.2). For IVDR: Class A non-sterile is self-declared; EMA or a national competent authority is consulted for companion diagnostics (IVDR Art 48(3)/(4), Annex IX §5.2).",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/issue-detector.ts",
+  "line": 532,
+  "quote": "ICH Q1E limits extrapolation to 2x the period covered by long-term data.",
+  "error": "This misstates the ICH Q1E limit. Twice the long-term period is the most Q1E allows, and only in the best case (room-temperature storage, little or no change, statistics where applicable). Even then the cap is \"up to twice, but not more than 12 months beyond\" the long-term data. Refrigerated products, and products where data are amenable to statistics but none was done, are limited to 1.5x and no more than 6 months beyond. As written, the finding treats a 48-month shelf life on 24 months of data as within the limit, but Q1E caps it at 36 months.",
+  "correct": "ICH Q1E allows extrapolation of up to twice the long-term period, but no more than 12 months beyond it, and only where the data support it (little or no change, statistical analysis where applicable, room-temperature storage). In other cases the limit is 1.5x and no more than 6 months beyond, and refrigerated products are limited further.",
+  "severity": "high",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/issue-detector.ts",
+  "line": 508,
+  "quote": "If a REMS is required, the Elements to Assure Safe Use (ETASU) must be clearly defined.",
+  "error": "Not every REMS includes ETASU. Under FD&C Act 505-1, a REMS can consist only of a Medication Guide, a patient package insert and/or a communication plan. ETASU (505-1(f)) are required only when FDA decides those other elements are not enough to mitigate a specific serious risk. Saying any REMS must define ETASU states as a requirement something that is not one.",
+  "correct": "A REMS may consist of a Medication Guide, a patient package insert and/or a communication plan. ETASU are required only when FDA determines they are needed (FD&C Act 505-1(f)). If the REMS includes ETASU, they must be specified, together with an implementation system where required.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/governed-options.ts",
+  "line": 82,
+  "quote": "has no part in them, beyond the companion-diagnostic consultation.",
+  "error": "This text is shown for MDR (medical device) routes as well as IVDR routes. Companion-diagnostic consultation happens under the IVDR (Annex IX §5.2 / Art 48(3)-(4)), not under the MDR. Under the MDR, EMA or a national medicines authority is consulted by the notified body for devices that incorporate an ancillary medicinal substance (MDR Annex IX §5.2, Rule 14). EMA consultation is mandatory for substances derived from human blood or plasma, and for medicines within centralised-procedure scope. Systemically absorbed substance-based devices (Rule 21, Annex IX §5.4) also involve a medicines authority. So for MDR the sentence is wrong.",
+  "correct": "For MDR routes: a notified body assesses them, and EMA or a national medicines authority is consulted for devices that incorporate an ancillary medicinal substance (Annex IX §5.2) and for Rule 21 substance-based devices. Companion-diagnostic consultation with EMA or a national authority is an IVDR feature.",
+  "severity": "medium",
+  "confidence": "high"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/issue-detector.ts",
+  "line": 271,
+  "quote": "FDA and EMA both expect an independent Data Safety Monitoring Board (DSMB) for studies involving children.",
+  "error": "Neither FDA nor EMA expects an independent DSMB for every pediatric study. FDA's DMC guidance and EMA's DMC guideline treat a vulnerable population, children included, as one factor in a risk-based decision on whether a DMC is warranted. Most pediatric PK or short low-risk studies run without one. The finding is CRITICAL and presents a case-by-case consideration as a blanket requirement.",
+  "correct": "For studies in children, FDA (DMC guidance) and EMA (Guideline on Data Monitoring Committees) say an independent DMC/DSMB should be considered. Pediatric status is one factor, alongside trial risk, endpoints such as mortality or serious morbidity, and duration. It is not a universal expectation.",
+  "severity": "medium",
+  "confidence": "medium"
+ },
+ {
+  "file": "server/services/ana/intelligence-questions/engine.ts",
+  "line": 615,
+  "quote": "Draft the ICH E3 §16 patient safety narrative from the collected case facts",
+  "error": "ICH E3 does not put patient safety narratives in section 16. Section 16 holds the appendices, for example 16.2.7 adverse event listings and 16.3 CRFs. E3 places narratives of deaths, other serious AEs and certain other significant AEs in section 12.3.2 or section 14.3.3.",
+  "correct": "Patient safety narratives per ICH E3 §12.3.2, placed in §12.3.2 or §14.3.3.",
+  "severity": "low",
+  "confidence": "medium"
+ }
+]
