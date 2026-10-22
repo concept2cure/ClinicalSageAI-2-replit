@@ -13,6 +13,8 @@ import { useLiveData, EmptyState } from '../dataConnect';
 import { RecordHistory } from '../RecordHistory';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 import { useVaultUpload, VAULT_UPLOAD_ACCEPT } from '../useVaultUpload';
+import { FileDropZone, type FileDropZoneControls } from '../FileDropZone';
+import { VaultUploadStaging, fieldsOf, stageFiles, type StagedFile, type Staging } from './VaultUploadStaging';
 import {
   VAULT_INGEST_DOCUMENT_TYPES,
   vaultDocKindLabel,
@@ -693,7 +695,6 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
      + ClamAV verified, tenant-scoped storage, one vault.documents row per file.
      Nothing is faked here — the row appears in the tree because the server
      wrote it, and a refusal is reported as a refusal. */
-  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   /* Moved to ../useVaultUpload and shared with the MDX Document vault, which
      had no upload control at all (its button opened a chat prompt). Copying
      these forty lines into that surface would have produced a second copy of a
@@ -714,8 +715,22 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
      (VR-09), rather than left at a dead end. The document is the tree's leaf
      with that code, which is its current version. */
   const [checkInOffers, setCheckInOffers] = useState<Array<{ file: File; doc: VaultDoc }>>([]);
-  const uploadFiles = async (files: FileList | null) => {
-    const outcome = await upload(files, { documentType: docType });
+  /* Files chosen or dropped wait here, one row each, until the person sends
+     them (VaultUploadStaging.tsx, gap 7.1): each row's title, type, version,
+     classification and filing go with its own file. */
+  const [staging, setStaging] = useState<Staging | null>(null);
+  /* The header's drop zone, so Coverage's "upload here" opens the same picker. */
+  const uploadControls = React.useRef<FileDropZoneControls | null>(null);
+  const patchStaged = (key: string, patch: Partial<StagedFile>) =>
+    setStaging((st) => st && { ...st, rows: st.rows.map((r) => (r.key === key ? { ...r, ...patch } : r)) });
+  const uploadStaged = async () => {
+    if (!staging) return;
+    const pending = staging.rows.filter((r) => !r.status || r.status.state === 'refused');
+    const outcome = await upload(pending.map((r) => r.file), {
+      documentType: docType,
+      fields: pending.map(fieldsOf),
+      onFileStatus: (index, status) => patchStaged(pending[index].key, { status }),
+    });
     setCheckInOffers(
       outcome.conflicts.flatMap(({ name, file }) => {
         const doc = allDocs.find((d) => d.src === 'upload' && d.docId && d.documentCode === name);
@@ -724,7 +739,6 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
     );
     // Re-read the tree so what is shown is what the server stored.
     if (outcome.succeeded.length) setVaultEpoch((n) => n + 1);
-    if (fileInputRef.current) fileInputRef.current.value = '';
   };
   /** Add `file` as the next version of `doc`: the server numbers it and keeps the code and filing. */
   const uploadNewVersion = async (file: File, doc: VaultDoc, currentId?: string) => {
@@ -1316,36 +1330,43 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
             </option>
           ))}
         </select>
-        {/* The picker itself. Accepts exactly what POST /api/vault/ingest
-            accepts, so the OS dialog does not offer files the server will
-            refuse. */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
+        {/* The one drop zone (FileDropZone.tsx, shared with the Data Room):
+            files or a folder, chosen or dropped here. The pickers accept
+            exactly what POST /api/vault/ingest accepts; what was gathered goes
+            to the staging rows below, which list anything not uploaded. */}
+        <FileDropZone
+          className="vd-upload-zone"
           accept={VAULT_UPLOAD_ACCEPT}
-          style={{ display: 'none' }}
-          onChange={(e) => void uploadFiles(e.target.files)}
-          /* Labelled even though it is visually hidden and driven by the button
-             beside it: WCAG 3.3.2 applies to the control, not to whether it is
-             painted, and assistive technology can still reach a file input that
-             a script focuses. */
-          aria-label="Choose documents to upload to the Vault"
-          data-testid="vault-upload-input"
-        />
-        <button
-          className="sp-primary"
+          directory
+          activation="controls"
           disabled={uploading || !projectId}
-          onClick={() => fileInputRef.current?.click()}
-          title={
-            projectId
-              ? 'Choose files to file into this project’s Vault'
-              : 'Open a project first — a Vault document is filed against a program.'
-          }
-          data-testid="vault-upload-button"
+          label="Upload documents to the Vault"
+          testId="vault-upload-zone"
+          controlsRef={uploadControls}
+          onFiles={(picked) => setStaging((st) => stageFiles(picked, docType, st ?? undefined))}
         >
-          {I.upload} {uploading ? 'Uploading…' : 'Upload'}
-        </button>
+          {({ chooseFiles, chooseFolder }) => (
+            <>
+              <button
+                className="sp-primary"
+                disabled={uploading || !projectId}
+                onClick={chooseFiles}
+                title={
+                  projectId
+                    ? 'Choose files to file into this project’s Vault'
+                    : 'Open a project first — a Vault document is filed against a program.'
+                }
+                data-testid="vault-upload-button"
+              >
+                {I.upload} {uploading ? 'Uploading…' : 'Upload'}
+              </button>
+              <button className="sp-ask" disabled={uploading || !projectId} onClick={chooseFolder} data-testid="vault-upload-folder-button">
+                {I.folder} Upload a folder
+              </button>
+              <span className="vd-upload-zone-t">or drop files or a folder here</span>
+            </>
+          )}
+        </FileDropZone>
         {/* The conversational route is kept, but as what it is: a second way
             in, not the thing the upload icon promises. */}
         <button
@@ -1363,6 +1384,17 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         ) : null}
       </div>
 
+      {staging && canWrite ? (
+        <VaultUploadStaging
+          staging={staging}
+          folders={cabinetFolders}
+          uploading={uploading}
+          onChange={patchStaged}
+          onRemove={(key) => setStaging((st) => st && { ...st, rows: st.rows.filter((r) => r.key !== key) })}
+          onUpload={() => void uploadStaged()}
+          onDone={() => setStaging(null)}
+        />
+      ) : null}
       {(uploadNote || downloadNote) && (
         <div
           className="scaf-note"
@@ -1495,7 +1527,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           <VaultCoverage
             coverage={vault?.coverage}
             documents={coverageDocuments}
-            onUpload={() => fileInputRef.current?.click()}
+            onUpload={() => uploadControls.current?.chooseFiles()}
             onFileHere={(docId, target) =>
               void fileDocument(docId, { ...target, note: `Filed at ${target.ctdSection} from Vault coverage.` })
             }

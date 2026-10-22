@@ -32,7 +32,7 @@
 import * as React from 'react';
 import { redactInternals } from '@/lib/queryClient';
 import { getAuthHeaders } from '@/utils/authToken';
-import type { VaultIngestDocumentType } from '@shared/constants/domain/vault-taxonomy';
+import type { VaultClassification, VaultIngestDocumentType } from '@shared/constants/domain/vault-taxonomy';
 import { vaultDocumentCodeForFile } from '@shared/constants/domain/vault-document-code';
 export { VAULT_UPLOAD_ACCEPT } from '@shared/constants/document-intake-formats';
 
@@ -56,6 +56,31 @@ export interface VaultUploadOutcome {
   newVersions: Array<{ name: string; version: string; title: string; folderLabel: string | null }>;
 }
 
+/**
+ * What the person said about one file, row by row, before it was sent (gap 7.1,
+ * docs/design/VEEVA_GAP_2026-10-22.md). Every field is one POST /api/vault/ingest
+ * already validates: a blank one is not sent, and the server's default applies
+ * (the title from the file name, version 1.0, classification INTERNAL, and a
+ * placement the classifier suggests). A folder named here is recorded as a
+ * person's filing ('confirmed'), and only with a folder are the evidence kind
+ * and CTD section written, so they are sent only with one.
+ */
+export interface VaultUploadFileFields {
+  title?: string;
+  documentType?: VaultIngestDocumentType;
+  version?: string;
+  classification?: VaultClassification;
+  folderId?: string;
+  evidenceKind?: string;
+  ctdSection?: string;
+}
+
+/** Where one file of a batch stands, reported as each settles. */
+export type VaultUploadFileStatus =
+  | { state: 'uploading' }
+  | { state: 'stored'; version: string | null; folderLabel: string | null; already: boolean }
+  | { state: 'refused'; reason: string };
+
 export interface VaultUploadOptions {
   /**
    * What the user says the file IS — one of the ingest schema's types
@@ -72,6 +97,10 @@ export interface VaultUploadOptions {
    * the document's own.
    */
   newVersionOf?: { documentId: string; title: string };
+  /** Per-file fields, in the order of `files`. Not used for a new version, which keeps its document's. */
+  fields?: ReadonlyArray<VaultUploadFileFields | undefined>;
+  /** Told as each file starts and settles, by its index in `files`. */
+  onFileStatus?: (index: number, status: VaultUploadFileStatus) => void;
 }
 
 export interface VaultUploadState {
@@ -96,11 +125,27 @@ function alreadyRecordedText(list: VaultUploadOutcome['alreadyRecorded']): strin
   return `Already in the Vault, nothing changed: ${named}.${hint}`;
 }
 
+/** The person's fields, as form entries: only what was given, and the filing details only with a folder. */
+function appendFileFields(form: FormData, fields: VaultUploadFileFields | undefined): void {
+  const given = (v: string | undefined) => (v && v.trim() ? v.trim() : null);
+  const version = given(fields?.version);
+  if (version) form.append('version', version);
+  if (fields?.classification) form.append('classification', fields.classification);
+  const folderId = given(fields?.folderId);
+  if (!folderId) return;
+  form.append('folderId', folderId);
+  const kind = given(fields?.evidenceKind);
+  if (kind) form.append('evidenceKind', kind);
+  const section = given(fields?.ctdSection);
+  if (section) form.append('ctdSection', section);
+}
+
 async function uploadOne(
   programId: string,
   file: File,
   documentType: VaultIngestDocumentType,
   newVersionOf?: VaultUploadOptions['newVersionOf'],
+  fields?: VaultUploadFileFields,
 ): Promise<
   | {
       ok: true;
@@ -126,9 +171,10 @@ async function uploadOne(
        verbatim; the type is the caller's stated choice, defaulting to OTHER. */
     // The file name as uploaded: the same code the data room files this file under (QA-2026-10-08).
     form.append('documentCode', vaultDocumentCodeForFile(file.name, 'document'));
-    form.append('documentTitle', file.name.replace(/\.[^.]+$/, ''));
+    form.append('documentTitle', fields?.title?.trim() || file.name.replace(/\.[^.]+$/, ''));
+    appendFileFields(form, fields);
   }
-  form.append('documentType', documentType);
+  form.append('documentType', fields?.documentType ?? documentType);
 
   let res: Response;
   try {
@@ -233,8 +279,15 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
         /* Sequential, deliberately. These are 50 MB-capped uploads that each
            run a virus scan and a text extraction server-side; firing a whole
            drop-zone's worth in parallel is how one user stalls the pool. */
-        for (const file of list) {
-          const r = await uploadOne(programId, file, opts?.documentType ?? DEFAULT_DOCUMENT_TYPE, opts?.newVersionOf);
+        for (const [index, file] of list.entries()) {
+          opts?.onFileStatus?.(index, { state: 'uploading' });
+          const r = await uploadOne(
+            programId, file, opts?.documentType ?? DEFAULT_DOCUMENT_TYPE, opts?.newVersionOf,
+            opts?.newVersionOf ? undefined : opts?.fields?.[index],
+          );
+          opts?.onFileStatus?.(index, r.ok
+            ? { state: 'stored', version: r.version, folderLabel: r.folderLabel, already: Boolean(r.already) }
+            : { state: 'refused', reason: r.reason });
           if (r.ok && r.already) {
             outcome.succeeded.push(file.name);
             outcome.alreadyRecorded.push({ name: file.name, ...r.already });
