@@ -485,7 +485,7 @@ describe('GET /:projectIdent/status — a program\'s readiness comes from what i
     expect(payload.readinessBasis).toBe('placed');
     // 2026-10-08 (FILING_SPINE.md F14): the sequence carries its id, so the
     // compile screen can name the sequence it was opened on.
-    expect(payload.sequence).toEqual({ id: 9, sequenceNumber: '0000', region: 'fda', leafCount: 2 });
+    expect(payload.sequence).toEqual({ id: 9, sequenceNumber: '0000', region: 'fda', leafCount: 2, type: null });
   });
 });
 
