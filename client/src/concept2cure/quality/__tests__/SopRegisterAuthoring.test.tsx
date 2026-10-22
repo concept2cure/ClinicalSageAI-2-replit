@@ -120,6 +120,18 @@ describe('QMS controls reach the canonical authoring workbench', () => {
     expect(H.request).toHaveBeenCalledWith('POST', '/api/mdx/qms/documents', expect.objectContaining({ templateKey: 'sop', docType: 'sop' }));
     expect(H.ask).not.toHaveBeenCalled();
   });
+  // Gap 5.1 (docs/design/VEEVA_GAP_2026-10-22.md): the server has always taken nextReviewDate at
+  // create, and review-due reads it; no screen sent it, so nothing created here ever came due.
+  it('sends the periodic review date chosen at create, which review-due reads', async () => {
+    renderRegister();
+    fireEvent.click(screen.getByRole('button', { name: /New controlled document/ }));
+    const dialog = screen.getByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText('Next periodic review (optional)'), { target: { value: '2027-10-01' } });
+    await completeForm('Create and open', 'Document control');
+    await screen.findByTestId('canonical-workbench');
+    expect(H.request).toHaveBeenCalledWith('POST', '/api/mdx/qms/documents', expect.objectContaining({
+      title: 'Document control', nextReviewDate: '2027-10-01' }));
+  });
   it('opens the bound record directly and forwards workbench navigation to the host', async () => {
     renderRegister(); fireEvent.click(screen.getByRole('button', { name: 'SOP-004' }));
     await screen.findByTestId('canonical-workbench');

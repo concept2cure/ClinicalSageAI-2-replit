@@ -25,6 +25,8 @@ import { loadLatestPriorManifestBySubmission, loadRehearsalPriorManifestBySubmis
 import { computeLifecycleOperations, type DesiredLeaf, type PriorLeaf } from './lifecycle-operator';
 import { computeSequencePrefix } from './sequence-manifest';
 import { leafFileCarriesKey, leafSourceKey } from './leaf-source-resolver';
+import { bindToFiledPredecessor, readVaultPredecessorKeys } from './version-lineage-binding';
+import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import type { FdaApplicantContact } from '../submission-gateways/ectd-packager/types';
 import { fdaContactsForPackageIdentity, packageIdentityRefusal, recordedPackageIdentitySnapshot, sameRecordedPackageIdentitySnapshot, type RecordedPackageIdentitySnapshot } from './package-identity';
@@ -139,12 +141,17 @@ function recordDeclaredAct(
  * carried by no filed leaf, or by more than one, the withdrawal is
  * reported in `skipped` — never guessed, never dropped.
  *
+ * 2026-10-22 (W5/D7, P-42): a row naming a Vault version whose own key no
+ * filed leaf carries binds to the one filed leaf carrying a recorded earlier
+ * version of it (version-lineage-binding) — withdrawing the document withdraws
+ * the version that is on file. Two such leaves are ambiguous and bind nothing.
+ *
  * Returns the bound filed leaf's name, or null when the withdrawal was
  * reported in `skipped` instead.
  */
 function bindWithdrawalToFiledLeaf(
   leaf: { ctdSection: string; fileName: string },
-  ref: { key: string | null },
+  ref: { key: string | null; predecessorKeys?: readonly string[] },
   priorLeaves: readonly PriorLeaf[],
   skipped: Array<{ sectionCode: string; reason: string }>,
 ): string | null {
@@ -154,7 +161,18 @@ function bindWithdrawalToFiledLeaf(
     const byName = !!fileName && inSection.some((pl) => pl.fileName === fileName);
     if (!byName) {
       const key = ref.key;
-      const mine = inSection.filter((pl) => leafFileCarriesKey(pl.fileName, key));
+      let mine = inSection.filter((pl) => leafFileCarriesKey(pl.fileName, key));
+      if (mine.length === 0) {
+        const lineage = bindToFiledPredecessor(inSection, ref.predecessorKeys, (pl, k) => leafFileCarriesKey(pl.fileName, k));
+        if (lineage.kind === 'bound') mine = [lineage.target];
+        if (lineage.kind === 'ambiguous') {
+          skipped.push({
+            sectionCode: leaf.ctdSection,
+            reason: `withdrawal of ${key}: ${lineage.count} filed leaves in ${leaf.ctdSection} carry earlier versions of this document, so which one it withdraws is not established`,
+          });
+          return null;
+        }
+      }
       if (mine.length !== 1) {
         // Named by its source key, the one identity it always has.
         const subject = `withdrawal of ${key}`;
@@ -184,6 +202,77 @@ function bindWithdrawalToFiledLeaf(
   }
   return fileName;
 }
+
+/**
+ * A later Vault version acts on the leaf its predecessor was filed as (P-42,
+ * 2026-10-22, W5/D7; WO-9 §20's open decision).
+ *
+ * A Vault leaf whose own name is not on file in its section binds to the one
+ * filed leaf there that carries a recorded earlier version of the document
+ * (version-lineage-binding): the two are given one identity, so the lifecycle
+ * diff supersedes that leaf — `replace`, or `append` when declared — and names it
+ * by modified-file, while the new version ships under its own name. Placed as
+ * `new`, it is still that replace: filing it beside the filed version would
+ * leave both current at the agency. Nothing binds when the filed leaf is
+ * withdrawn in this same sequence (the author declared delete-and-new). Two
+ * filed leaves carrying earlier versions, two versions superseding one filed
+ * leaf, or a version beside its filed predecessor's own act leave each version
+ * concerned out, never one picked by order, and say why in `skipped`, which
+ * blocks transmit.
+ */
+function bindVaultVersionsToFiledPredecessors<L extends EctdLeafLike>(args: {
+  leaves: readonly L[];
+  vaultUuids: readonly string[];
+  predecessors: ReadonlyMap<string, string[]>;
+  prior: readonly PriorLeaf[];
+  /** `section/fileName` of each filed leaf this sequence withdraws. */
+  withdrawn: ReadonlySet<string>;
+  skipped: Array<{ sectionCode: string; reason: string }>;
+}): { identity: Map<L, string>; dropped: Set<L>; prior: PriorLeaf[] } {
+  const prior = args.prior.map((pl) => ({ ...pl }));
+  const identity = new Map<L, string>();
+  const dropped = new Set<L>();
+  const refuse = (leaf: L, why: string) => {
+    args.skipped.push({ sectionCode: leaf.ctdSection, reason: `declared ${leaf.operation}: ${why}` });
+    dropped.add(leaf);
+  };
+  const sources = args.vaultUuids.map((uuid) => ({ uuid, key: leafSourceKey('vault_documents', null, uuid) }));
+  // Each filed leaf a version binds to, with every version binding to it.
+  const binders = new Map<PriorLeaf, L[]>();
+  for (const leaf of args.leaves) {
+    if (leaf.operation === 'delete') continue;
+    const source = sources.find((s) => leafFileCarriesKey(leaf.fileName, s.key));
+    const inSection = prior.filter((pl) => pl.ctdSection === leaf.ctdSection);
+    if (!source || inSection.some((pl) => pl.fileName === leaf.fileName)) continue;
+    const binding = bindToFiledPredecessor(
+      inSection.filter((pl) => !args.withdrawn.has(`${pl.ctdSection}/${pl.fileName}`)),
+      args.predecessors.get(source.uuid),
+      (pl, key) => leafFileCarriesKey(pl.fileName, key),
+    );
+    if (binding.kind === 'ambiguous') {
+      refuse(leaf, `${binding.count} filed leaves in ${leaf.ctdSection} carry earlier versions of this document, so which one it supersedes is not established`);
+    } else if (binding.kind === 'bound') {
+      binders.set(binding.target, [...(binders.get(binding.target) ?? []), leaf]);
+    }
+  }
+  for (const [target, versions] of binders) {
+    const actsItself = args.leaves.some((other) => other.ctdSection === target.ctdSection && other.fileName === target.fileName);
+    if (versions.length > 1 || actsItself) {
+      for (const leaf of versions) {
+        refuse(leaf, versions.length > 1
+          ? `${versions.length} versions of this document in this sequence supersede ${target.fileName} — file one version of a document per sequence`
+          : `this sequence also acts on ${target.fileName}, the filed earlier version of this document — file one version of a document per sequence`);
+      }
+      continue;
+    }
+    target.leafKey = `version-lineage:${target.ctdSection}/${target.fileName}`;
+    identity.set(versions[0], target.leafKey);
+  }
+  return { identity, dropped, prior };
+}
+
+/** The packager-input leaf fields the lineage binding reads. */
+type EctdLeafLike = { ctdSection: string; fileName: string; operation?: string };
 
 /**
  * Assemble + package a sequence's leaves from the canonical core. Tenant-scoped:
@@ -253,7 +342,10 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
       key: l.documentTable && (l.documentId || l.documentUuid)
         ? leafSourceKey(l.documentTable, l.documentId, l.documentUuid)
         : null,
+      vaultUuid: l.documentTable === 'vault_documents' ? l.documentUuid ?? null : null,
     }));
+  // The Vault versions this sequence names: what P-42 binds through lineage.
+  const vaultUuids = coreLeaves.flatMap((l) => (l.documentTable === 'vault_documents' && l.documentUuid ? [l.documentUuid] : []));
 
   if (capturedIdentity && toPackagerRegion(sequence.region) === 'fda') {
     const identity = capturedIdentity.identity;
@@ -315,6 +407,10 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
     priorSequence = prior.priorSequenceNumber || null;
     if (prior.leaves.length > 0) {
       const desired: DesiredLeaf[] = [];
+      const desiredOf = new Map<(typeof input.leaves)[number], DesiredLeaf>();
+      const predecessors = vaultUuids.length > 0
+        ? await readVaultPredecessorKeys(queryableFromDrizzle(db), organizationId, vaultUuids)
+        : new Map<string, string[]>();
       // What the author declared for each non-delete leaf, keyed as the
       // lifecycle operator keys it. 2026-09-22 (W5/D7): the declaration used to
       // be thrown away before the diff, so a declared append was filed as a
@@ -331,7 +427,9 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
         // prior conservatively becomes `replace` (re-ships content).
         const { operation, ...rest } = leaf;
         if (operation !== 'delete') {
-          desired.push({ ...rest, md5: leaf.md5 ?? '', ...(operation === 'append' ? { appendOnChange: true } : {}) });
+          const wanted: DesiredLeaf = { ...rest, md5: leaf.md5 ?? '', ...(operation === 'append' ? { appendOnChange: true } : {}) };
+          desired.push(wanted);
+          desiredOf.set(leaf, wanted);
           recordDeclaredAct(declared, leaf, operation);
           continue;
         }
@@ -342,7 +440,12 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
               '— refusing to bind a withdrawal to an unknown document.',
           );
         }
-        const fileName = bindWithdrawalToFiledLeaf(leaf, ref, prior.leaves, skipped);
+        const fileName = bindWithdrawalToFiledLeaf(
+          leaf,
+          { key: ref.key, predecessorKeys: ref.vaultUuid ? predecessors.get(ref.vaultUuid) : undefined },
+          prior.leaves,
+          skipped,
+        );
         if (fileName === null) continue;
         if (desired.some((d) => d.withdraw && d.ctdSection === leaf.ctdSection && d.fileName === fileName)) {
           // Two declared deletes bound to the same filed leaf — the operator
@@ -357,7 +460,22 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
         // resolved sourcePath from every delete it emits (2026-09-23, W5/D7).
         desired.push({ ...rest, fileName, md5: '', withdraw: true });
       }
-      const life = computeLifecycleOperations(prior.leaves, desired, {
+      const lineage = bindVaultVersionsToFiledPredecessors({
+        leaves: input.leaves,
+        vaultUuids,
+        predecessors,
+        prior: prior.leaves,
+        withdrawn: new Set(desired.filter((d) => d.withdraw).map((d) => `${d.ctdSection}/${d.fileName}`)),
+        skipped,
+      });
+      for (const [leaf, leafKey] of lineage.identity) {
+        const wanted = desiredOf.get(leaf);
+        if (wanted) wanted.leafKey = leafKey;
+      }
+      // A version left out is reported once, by its binding's reason.
+      for (const leaf of lineage.dropped) declared.delete(`${leaf.ctdSection}/${leaf.fileName}`);
+      const droppedWanted = new Set([...lineage.dropped].map((leaf) => desiredOf.get(leaf)));
+      const life = computeLifecycleOperations(lineage.prior, desired.filter((d) => !droppedWanted.has(d)), {
         priorSequencePrefix: computeSequencePrefix(prior.priorSequenceNumber),
       });
       // life.leaves carries the declared withdrawals as backbone-only `delete`

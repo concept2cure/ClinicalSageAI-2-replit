@@ -14626,6 +14626,7 @@ registerToolHandler('create_qms_document', async (input, ctx) => {
     const row = await createControlledQmsDocument(await qmsAuthoringContext(ctx), {
       title, docType, docNumber,
       programId: input.program_id, templateKey: input.template_key, category: input.category, reason,
+      ...(input.next_review_date ? { nextReviewDate: input.next_review_date } : {}),
     });
     return JSON.stringify({ ok: true, ...row, message: `Created ${row.doc_number} with a canonical draft. Open it in Quality to author the procedure; review and a person's signature are still required.` });
   } catch (err) {
