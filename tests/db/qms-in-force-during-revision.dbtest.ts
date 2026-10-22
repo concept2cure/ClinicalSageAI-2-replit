@@ -191,3 +191,32 @@ describe('when the successor is signed', () => {
     expect(list.body.data.find((r: { id: number }) => r.id === documentId)).toMatchObject({ version: '2.0', status: 'effective', in_force: null });
   }, 60_000);
 });
+
+// Gap 5.1 (docs/design/VEEVA_GAP_2026-10-22.md): a review date chosen at create reaches review-due.
+describe('a periodic review date set when the document is created', () => {
+  it('is stored, signed with the version, and lists the document as due once it is effective', async () => {
+    const due = new Date(Date.now() + 10 * 86_400_000).toISOString().slice(0, 10);
+    const created = await http(author, 'post', '/api/mdx/qms/documents',
+      { title: `${TAG} reviewed procedure`, docType: 'sop', programId, nextReviewDate: due, reason: 'Establish a reviewed invented procedure' });
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+    const id = Number(created.body.data.id);
+    const docId = String(created.body.data.authoring_document_id);
+    expect(String(created.body.data.next_review_date).slice(0, 10)).toBe(due);
+    await owner.query(`UPDATE authoring_sections SET content = '<p>Review this procedure every year.</p>' WHERE doc_id = $1 AND code = 'qms-purpose'`, [docId]);
+    const { withNativeCatalogClient } = await import('./catalog-native-fixture');
+    const { grantAuthoringPermission } = await import('../../server/services/authoring/authoring-permissions');
+    await withNativeCatalogClient({ organizationId: orgId, organizationUuid: orgUuid, userId: author.id, role: 'member', caller: 'qms-review-date-share' },
+      (sqlClient) => grantAuthoringPermission({ pool: sqlClient, tenantId: orgId, docId, principalId: String(signer.id),
+        role: 'APPROVER', grantedBy: String(author.id), reason: 'Independent approver' }));
+    expect((await http(author, 'patch', `/api/mdx/qms/documents/${id}`, { status: 'in_review', reason: 'Saved text ready for review' })).status).toBe(200);
+    const signed = await sign(id);
+    expect(signed.status, JSON.stringify(signed.body)).toBe(200);
+    const { rows: [version] } = await owner.query(
+      `SELECT controlled_document->>'next_review_date' AS due FROM qms_document_versions
+        WHERE document_id = $1 AND record_kind = 'signed' ORDER BY id DESC LIMIT 1`, [id]);
+    expect(String(version?.due).slice(0, 10)).toBe(due);
+    const list = await http(viewer, 'get', '/api/mdx/qms/documents/review-due?within=30');
+    expect(list.status, JSON.stringify(list.body)).toBe(200);
+    expect(list.body.data.find((row: { id: number }) => row.id === id)).toMatchObject({ status: 'effective', overdue: false });
+  }, 60_000);
+});

@@ -1,0 +1,1147 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > materializeLeafSources — approval tally and key space > does not count a document referenced only by a delete toward unfinalized 63ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > materializeLeafSources — approval tally and key space > keys every unresolved entry exactly as the ref it came from 3ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it
+{
+  "timestamp": "2026-10-22T04:41:40.644Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it
+{
+  "timestamp": "2026-10-22T04:41:40.647Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it
+{
+  "timestamp": "2026-10-22T04:41:40.648Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it 2574ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its document identity when the derived file name changed since filing
+{
+  "timestamp": "2026-10-22T04:41:40.901Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 4
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its document identity when the derived file name changed since filing
+{
+  "timestamp": "2026-10-22T04:41:40.902Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 4
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its document identity when the derived file name changed since filing
+{
+  "timestamp": "2026-10-22T04:41:40.902Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 4,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its document identity when the derived file name changed since filing 242ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly
+{
+  "timestamp": "2026-10-22T04:41:41.131Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 6
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly
+{
+  "timestamp": "2026-10-22T04:41:41.132Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 6
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly
+{
+  "timestamp": "2026-10-22T04:41:41.132Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 6,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section
+{
+  "timestamp": "2026-10-22T04:41:41.308Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 8
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section
+{
+  "timestamp": "2026-10-22T04:41:41.309Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 8
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section
+{
+  "timestamp": "2026-10-22T04:41:41.309Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 8,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly 231ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section 176ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal
+{
+  "timestamp": "2026-10-22T04:41:41.461Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal
+{
+  "timestamp": "2026-10-22T04:41:41.462Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal
+{
+  "timestamp": "2026-10-22T04:41:41.462Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal 152ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf
+{
+  "timestamp": "2026-10-22T04:41:41.633Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 15
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf
+{
+  "timestamp": "2026-10-22T04:41:41.634Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 15
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf
+{
+  "timestamp": "2026-10-22T04:41:41.634Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 15,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf 172ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section
+{
+  "timestamp": "2026-10-22T04:41:41.807Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 13
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section
+{
+  "timestamp": "2026-10-22T04:41:41.811Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 13
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section
+{
+  "timestamp": "2026-10-22T04:41:41.811Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 13,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section 183ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section
+{
+  "timestamp": "2026-10-22T04:41:41.975Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 17
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section
+{
+  "timestamp": "2026-10-22T04:41:41.977Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 17
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section
+{
+  "timestamp": "2026-10-22T04:41:41.977Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 17,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section 160ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > neither stages nor reports as unresolved a document referenced only by a delete 3ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees
+{
+  "timestamp": "2026-10-22T04:41:42.447Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 41
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees
+{
+  "timestamp": "2026-10-22T04:41:42.448Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 41
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees
+{
+  "timestamp": "2026-10-22T04:41:42.448Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 41,
+    "organizationId": 7,
+    "materialized": 3,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees 483ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-22T04:41:42.870Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 43
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-22T04:41:42.870Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 43
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-22T04:41:42.870Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 43,
+    "organizationId": 7,
+    "materialized": 3,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees 414ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-22T04:41:43.363Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 45
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-22T04:41:43.364Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 45
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-22T04:41:43.364Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 45,
+    "organizationId": 7,
+    "materialized": 3,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-22T04:41:43.740Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 47
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-22T04:41:43.741Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 47
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-22T04:41:43.741Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 47,
+    "organizationId": 7,
+    "materialized": 3,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees 497ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees 374ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > a document filed twice in the section is reported, never guessed and never dropped
+{
+  "timestamp": "2026-10-22T04:41:44.160Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 49
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > a document filed twice in the section is reported, never guessed and never dropped
+{
+  "timestamp": "2026-10-22T04:41:44.161Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 49
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > a document filed twice in the section is reported, never guessed and never dropped
+{
+  "timestamp": "2026-10-22T04:41:44.161Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 49,
+    "organizationId": 7,
+    "materialized": 3,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > a document filed twice in the section is reported, never guessed and never dropped 405ms
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files a declared replace against the leaf its predecessor was filed as
+{
+  "timestamp": "2026-10-22T04:41:51.864Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files a declared replace against the leaf its predecessor was filed as
+{
+  "timestamp": "2026-10-22T04:41:51.867Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stdout | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files a declared replace against the leaf its predecessor was filed as
+{
+  "timestamp": "2026-10-22T04:41:51.867Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files a declared replace against the leaf its predecessor was filed as 235ms
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files a declared append against the leaf its predecessor was filed as
+{
+  "timestamp": "2026-10-22T04:41:52.019Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 21
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files a declared append against the leaf its predecessor was filed as
+{
+  "timestamp": "2026-10-22T04:41:52.021Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 21
+  }
+}
+
+stdout | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files a declared append against the leaf its predecessor was filed as
+{
+  "timestamp": "2026-10-22T04:41:52.021Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 21,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files a declared append against the leaf its predecessor was filed as 144ms
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > never files it beside the filed version: placed as new, it is the replace of its predecessor
+{
+  "timestamp": "2026-10-22T04:41:52.155Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 4
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > never files it beside the filed version: placed as new, it is the replace of its predecessor
+{
+  "timestamp": "2026-10-22T04:41:52.158Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 4
+  }
+}
+
+stdout | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > never files it beside the filed version: placed as new, it is the replace of its predecessor
+{
+  "timestamp": "2026-10-22T04:41:52.158Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 4,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > binds a withdrawal naming the current version to the filed earlier version
+{
+  "timestamp": "2026-10-22T04:41:52.202Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 9
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > binds a withdrawal naming the current version to the filed earlier version
+{
+  "timestamp": "2026-10-22T04:41:52.204Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 9
+  }
+}
+
+stdout | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > binds a withdrawal naming the current version to the filed earlier version
+{
+  "timestamp": "2026-10-22T04:41:52.204Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 9,
+    "organizationId": 7,
+    "materialized": 0,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > never files it beside the filed version: placed as new, it is the replace of its predecessor 139ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > binds a withdrawal naming the current version to the filed earlier version 43ms
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files the delete-and-new the author declared, the withdrawal placed first: a version whose predecessor this sequence withdraws binds nothing
+{
+  "timestamp": "2026-10-22T04:41:52.350Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 15
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files the delete-and-new the author declared, the withdrawal placed first: a version whose predecessor this sequence withdraws binds nothing
+{
+  "timestamp": "2026-10-22T04:41:52.351Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 15
+  }
+}
+
+stdout | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files the delete-and-new the author declared, the withdrawal placed first: a version whose predecessor this sequence withdraws binds nothing
+{
+  "timestamp": "2026-10-22T04:41:52.351Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 15,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files the delete-and-new the author declared, the new version placed first: a version whose predecessor this sequence withdraws binds nothing
+{
+  "timestamp": "2026-10-22T04:41:52.522Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 19
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files the delete-and-new the author declared, the new version placed first: a version whose predecessor this sequence withdraws binds nothing
+{
+  "timestamp": "2026-10-22T04:41:52.523Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 19
+  }
+}
+
+stdout | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files the delete-and-new the author declared, the new version placed first: a version whose predecessor this sequence withdraws binds nothing
+{
+  "timestamp": "2026-10-22T04:41:52.524Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 19,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files the delete-and-new the author declared, the withdrawal placed first: a version whose predecessor this sequence withdraws binds nothing 160ms
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > leaves only the new version on file once the replace is filed
+{
+  "timestamp": "2026-10-22T04:41:52.682Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > leaves only the new version on file once the replace is filed
+{
+  "timestamp": "2026-10-22T04:41:52.687Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stdout | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > leaves only the new version on file once the replace is filed
+{
+  "timestamp": "2026-10-22T04:41:52.687Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files the delete-and-new the author declared, the new version placed first: a version whose predecessor this sequence withdraws binds nothing 161ms
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses to choose when two filed leaves carry earlier versions of it
+{
+  "timestamp": "2026-10-22T04:41:52.747Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 7
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses to choose when two filed leaves carry earlier versions of it
+{
+  "timestamp": "2026-10-22T04:41:52.748Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 7
+  }
+}
+
+stdout | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses to choose when two filed leaves carry earlier versions of it
+{
+  "timestamp": "2026-10-22T04:41:52.748Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 7,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses both when two versions of one document in a sequence supersede the same filed leaf, never picking one
+{
+  "timestamp": "2026-10-22T04:41:52.799Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 13
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses both when two versions of one document in a sequence supersede the same filed leaf, never picking one
+{
+  "timestamp": "2026-10-22T04:41:52.800Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 13
+  }
+}
+
+stdout | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses both when two versions of one document in a sequence supersede the same filed leaf, never picking one
+{
+  "timestamp": "2026-10-22T04:41:52.800Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 13,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 2,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > leaves only the new version on file once the replace is filed 170ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses to choose when two filed leaves carry earlier versions of it 53ms
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses a version placed beside an act on its own filed predecessor
+{
+  "timestamp": "2026-10-22T04:41:52.941Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 17
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses a version placed beside an act on its own filed predecessor
+{
+  "timestamp": "2026-10-22T04:41:52.942Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 17
+  }
+}
+
+stdout | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses a version placed beside an act on its own filed predecessor
+{
+  "timestamp": "2026-10-22T04:41:52.942Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 17,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses both when two versions of one document in a sequence supersede the same filed leaf, never picking one 53ms
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > does not follow a link the database rules refuse
+{
+  "timestamp": "2026-10-22T04:41:52.996Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > does not follow a link the database rules refuse
+{
+  "timestamp": "2026-10-22T04:41:52.996Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > does not follow a link the database rules refuse
+{
+  "timestamp": "2026-10-22T04:41:52.997Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses a version placed beside an act on its own filed predecessor 143ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > does not follow a link the database rules refuse 53ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > maps a full real IND into the IndLifecycle contract (placed-leaf path) 36ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > renders an honest empty section list (no org-wide fallback) when a submission has no placed leaves 13ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > does not leak one submission's org docs into a sibling submission with no leaves 21ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > returns [] for an org with no IND submission, and never crosses tenants 19ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > excludes soft-deleted submissions 15ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > ignores non-IND submissions 2ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > resolves the org's RECORDED target_submission_date by identity match 18ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > matches on the program name/code when product names differ 17ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > returns null when the matching program records no target date 23ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > returns null when no program matches the submission identity 16ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > never resolves across tenants, program type, or soft-deleted programs 18ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — sponsor-completed official form leaves > a placed form_3674 leaf backed by a retained file marks FDA 3674 complete; the others keep their authored state 19ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — sponsor-completed official form leaves > a leaf whose file belongs to another organisation does not complete the form 37ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — sponsor-completed official form leaves > an attached form whose recorded check found required fields missing is not complete 20ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — sponsor-completed official form leaves > an attached form with no check recorded (a server render, or attached before the check) is not complete 20ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — sponsor-completed official form leaves > a form leaf with no document behind it (awaiting the sponsor's file) does not complete the form 21ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a missing authoring store degrades sections, not the IND > still reports the IND, with honest empty sections, when coauthor_documents is absent 28ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > completes a form and enriches a blueprint section whatever the stored spelling 8ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > maps finalized to frozen, never signed or complete; another approval cannot hide current unsigned content 10ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > two spellings of one section are one section, with the least complete current document 7ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > a section the blueprint does not model keeps the document’s own name, never an invented title 6ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist authoritative readiness and program identity > does not call three forms and a single approved section a complete IND 20ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist authoritative readiness and program identity > uses the recorded program ID and its date despite duplicate names and a rename 12ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist authoritative readiness and program identity > does not guess a date between two same-named unlinked programs 13ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist authoritative readiness and program identity > does not borrow a name-matched date when a recorded link cannot be resolved 18ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist current lifecycle inventory > does not hide a later draft behind an earlier approval in the same section 15ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist current lifecycle inventory > removes a named withdrawn leaf without removing another document in that section 16ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist current lifecycle inventory > a withdrawn authored FDA form is no longer complete, including when sequence IDs are out of order 9ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist current lifecycle inventory > a unique section-only withdrawal removes the old content; a later new placement remains current 14ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist current lifecycle inventory > does not mistake a named withdrawal of an unknown document for a section withdrawal 12ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist lifecycle refusals and retained form history > a withdrawn sponsor-completed form does not remain complete merely because its retained file still exists 14ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist lifecycle refusals and retained form history > an ambiguous section withdrawal blocks readiness and preserves the documents instead of guessing 10ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist lifecycle refusals and retained form history > a replacement without a matching document identity blocks readiness 11ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist lifecycle refusals and retained form history > an append to the same document identity remains current once, while deleted sequences do not withdraw it 21ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist: the forms heading counts only the forms an IND requires > an approved Form 356h placed at 1.1 does not satisfy m1.1, and is not listed as the forms section 13ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist: the forms heading counts only the forms an IND requires > m1.1 is complete when the IND's own forms are, whatever else sits at the heading 16ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts > IND checklist — Vault versions bound through recorded lineage > a replace by a later version supersedes the current earlier version without a blocker 24ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts > IND checklist — Vault versions bound through recorded lineage > a later version placed as new replaces the current earlier version, so a withdrawal of it leaves nothing current 12ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts > IND checklist — Vault versions bound through recorded lineage > a withdrawal naming the later version withdraws the earlier version on record 9ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts > IND checklist — Vault versions bound through recorded lineage > does not follow a predecessor link the database rules refuse 9ms
+stderr | tests/routes/ectd-compile-spine.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-spine.test.ts
+{
+  "timestamp": "2026-10-22T04:42:05.670Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > assembles the sequence and returns the package's REAL index.xml + rendered-leaf count
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > refuses submission-ready while placed leaves cannot be materialized
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 1 leaf file(s) rendered, 1 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > a placed leaf with no document behind it does not satisfy its required section
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 1 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces a DTD-incomplete package as a blocker, never as ready
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces an assembly refusal as a structured failed compilation, not a 500
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > records the compilation with the real sequence identity (continuity gate feed)
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > stamps the RECORDED agency application number when the program has one
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > names the organisation’s recorded name as the applicant, never a placeholder
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when no agency number is recorded, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the recorded number is only whitespace, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the organisation has no name on record, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the sponsor records no DUNS, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the sponsor records a malformed DUNS, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the sponsor records a partial contact, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the FDA number has a pathway prefix, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > returns every file the package holds, the FDA regional backbone and the MD5 index
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a package whose PDFs were not converted to PDF/A is not ready, and names them
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > an FDA form shipped as FDA issued is named as such — neither converted nor a PDF/A failure
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stderr | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against
+[eCTD Compile] could not record spine compilation for Program BX-204: column "leaf_manifest" of relation "ectd_compilations" does not exist
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a recorded compilation says so
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a form filed at 1.1 satisfies the pack's per-form requirement by its form type
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 1 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > accepts the sequence's own region however it is spelled
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stderr | tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > a history that could not be read is an error, never an empty history
+[eCTD History] query failed for Program BX-204: relation "ectd_compilations" does not exist
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards a lost row on a completed compilation
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards the refusal row's outcome on a refused assembly
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > assembles the sequence and returns the package's REAL index.xml + rendered-leaf count 992ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > refuses submission-ready while placed leaves cannot be materialized 5ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > a placed leaf with no document behind it does not satisfy its required section 7ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces a DTD-incomplete package as a blocker, never as ready 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces an assembly refusal as a structured failed compilation, not a 500 2ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > records the compilation with the real sequence identity (continuity gate feed) 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/validate — spine-backed programs validate leaf placement > reports placement findings from the sequence's leaves, not the empty section store 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/status — spine leaf state drives the blockers > names the placed-document count and defers readiness to compile-time verification 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > stamps the RECORDED agency application number when the program has one 5ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > names the organisation’s recorded name as the applicant, never a placeholder 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when no agency number is recorded, nothing is assembled: a failed compilation that says so — the program code is never used 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the recorded number is only whitespace, nothing is assembled: a failed compilation that says so — the program code is never used 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the organisation has no name on record, nothing is assembled: a failed compilation that says so — the program code is never used 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the sponsor records no DUNS, nothing is assembled: a failed compilation that says so — the program code is never used 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the sponsor records a malformed DUNS, nothing is assembled: a failed compilation that says so — the program code is never used 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the sponsor records a partial contact, nothing is assembled: a failed compilation that says so — the program code is never used 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the FDA number has a pathway prefix, nothing is assembled: a failed compilation that says so — the program code is never used 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > returns every file the package holds, the FDA regional backbone and the MD5 index 10ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a package whose PDFs were not converted to PDF/A is not ready, and names them 5ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > an FDA form shipped as FDA issued is named as such — neither converted nor a PDF/A failure 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a recorded compilation says so 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a form filed at 1.1 satisfies the pack's per-form requirement by its form type 6ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > refuses a region that is not the region the sequence was created for 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > accepts the sequence's own region however it is spelled 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > names the sequence each compilation covered and whether it carries a leaf manifest 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > a history that could not be read is an error, never an empty history 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/status — a program's readiness comes from what is placed > counts required sections covered by placed leaves, and names the sequence and its region 9ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards a lost row on a completed compilation 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards the refusal row's outcome on a refused assembly 1ms
+stderr | tests/routes/ectd-compile-recorded-type.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-recorded-type.test.ts
+{
+  "timestamp": "2026-10-22T04:42:07.953Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > an amendment compiled with no type stated is recorded as an amendment
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > an original is recorded in the history’s word for it, initial
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > a sequence that records no type keeps the stated one
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > an amendment compiled with no type stated is recorded as an amendment 1048ms
+ ✓ tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > an original is recorded in the history’s word for it, initial 7ms
+ ✓ tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > a stated type that contradicts the recorded one is refused, and nothing is assembled 4ms
+ ✓ tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > a sequence that records no type keeps the stated one 3ms
+ ✓ tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > the status read names the type the compile will be recorded as 3ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileRecordedType.test.tsx > the compile screen and a sequence’s recorded type > opened on amendment 0001, it shows the recorded type and sends none 390ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileRecordedType.test.tsx > the compile screen and a sequence’s recorded type > a sequence that records no type keeps the selector, and its choice is sent 95ms
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleEctdFormat.test.tsx > IndLifecycle — the format it names > names eCTD v3.2.2, the format FDA packages are built in, and never v4.0 282ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > folds EVERY preceding sequence, not just the most recent 12ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > a later filing of the same leaf supersedes the earlier one 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > a withdrawn leaf drops out of the effective state 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > each surviving leaf remembers the sequence that actually holds it 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > reports the most recent prior sequence number 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > does NOT read only a single prior compilation 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > lifecycle diff over the folded prior state > supersedes a leaf last filed two sequences back as REPLACE pointing at that sequence 2ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > lifecycle diff over the folded prior state > still emits new for a genuinely first-time leaf 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > the fold follows each act to the leaf it names > a replace under a new name takes the leaf it names off file 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > the fold follows each act to the leaf it names > an append leaves the leaf it adds to on file 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > the fold follows each act to the leaf it names > a pointer naming no leaf takes nothing off file, and no surviving leaf carries its own act 0ms
+
+ Test Files  9 passed (9)
+      Tests  116 passed (116)
+   Start at  04:41:22
+   Duration  52.51s (transform 7.67s, setup 483ms, import 19.14s, tests 29.65s, environment 1.56s)
+
+EXIT 0

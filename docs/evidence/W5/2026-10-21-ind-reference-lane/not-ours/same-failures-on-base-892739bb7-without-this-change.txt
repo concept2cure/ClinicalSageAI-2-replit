@@ -1,0 +1,1526 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > shows the open program’s IND, not rows[0], when a match exists
+An error occurred in the <IndFormsPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > with no program open and several INDs, says which one is shown and how to scope
+An error occurred in the <IndFormsPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ × client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > shows the open program’s IND, not rows[0], when a match exists 5040ms
+   → Unable to find role="heading" and name `/BX-701 — Initial IND/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > does not expose another IND for drafting or filing when the open program has none 26ms
+stderr | client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > shows the IND anchored to the open program, not a same-named IND of another project
+An error occurred in the <IndFormsPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ × client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > with no program open and several INDs, says which one is shown and how to scope 5005ms
+   → Unable to find role="heading" and name `/AAA-100 — Initial IND/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+stderr | client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > a single IND with no program open needs no note — nothing to disambiguate
+An error occurred in the <IndFormsPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ × client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > shows the IND anchored to the open program, not a same-named IND of another project 5006ms
+   → Unable to find role="heading" and name `/BX-701 — Initial IND/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > a same-named IND anchored to another project is not the open program’s 28ms
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > does not guess between two unlinked, identically named INDs 11ms
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > an IND whose submission names no program is never matched to the open program by name 19ms
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > a BLA program is told its own type, and is not shown a same-named legacy IND 23ms
+ × client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > a single IND with no program open needs no note — nothing to disambiguate 5008ms
+   → Unable to find role="heading" and name `/AAA-100 — Initial IND/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts
+{
+  "timestamp": "2026-10-22T05:05:07.198Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-22T05:05:07.199Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts
+{
+  "timestamp": "2026-10-22T05:05:07.199Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-22T05:05:12.525Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "column \"eu_mdr_class\" of relation \"regulatory_programs\" does not exist",
+    "correlationId": null,
+    "code": "42703"
+  }
+}
+
+ × tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey 53ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while creating the project. The problem has been logged."}: expected 500 to be 201 // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > F19: a copied link opens the exact non-first sequence and a failed read retries that retained target 541ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > F19: a repeated notification handoff opens its exact submission and sequence while this surface is already mounted 5115ms
+   → expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/submissions",
+  ]
+
+  2nd vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/c2c/projects",
+  ]
+
+  3rd vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/510k/estar/submissions",
+  ]
+
+  4th vi.fn() call:
+
+  [
+-   "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "POST",
++   "/api/510k/estar/assemble",
++   {
++     "pathway": "510k",
++     "variant": "device",
++   },
+  ]
+
+  5th vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/submissions/3/sequences",
+  ]
+
+  6th vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/region-profiles/fda",
+  ]
+
+  7th vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/submissions/5/sequences",
+  ]
+
+  8th vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/submissions/sequences/7/history",
+  ]
+
+  9th vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/submissions/sequences/7/leaves?submissionId=5",
+  ]
+
+  10th vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/client-branding/company-documents",
++   undefined,
+  ]
+
+
+Number of calls: 10
+
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sp sc-page"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sp-head"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"sp-eyebrow"[39m
+            [36m>[39m
+              [0mSubmission[0m
+            [36m</div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"sp-title"[39m
+            [36m>[39m
+              [0mSubmission center[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"sp-state"[39m
+            [36m>[39m
+              [0mPlan, build, validate and dispatch each market's eCTD v3.2.2 sequences.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<select[39m
+            [33maria-label[39m=[32m"Submission to work on"[39m
+            [33mclass[39m=[32m"sc-subpick"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"3"[39m
+            [36m>[39m
+              [0mAB-1 Phase 2 IND[0m
+              [0m · [0m
+              [0mIND[0m
+              [0m · [0m
+              [0mFDA (US)[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"5"[39m
+            [36m>[39m
+              [0mZX-9 First-in-Human[0m
+              [0m · [0m
+              [0mIND[0m
+              [0m · [0m
+              [0mFDA (US)[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-lead al-calm"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-k"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mWhere ZX-9 First-in-Human stands[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-h"[39m
+          [36m>[39m
+            [0mZX-9 First-in-Human[0m
+            [0m (Zexanib)[0m
+            [0m — [0m
+            [0mIND[0m
+            [0m · [0m
+            [0mFDA (US)[0m
+            [0m, at the [0m
+            [36m<b>[39m
+              [0moriginal[0m
+            [36m</b>[39m
+            [0m stage.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-b"[39m
+          [36m>[39m
+            [36m<b>[39m
+              [0m2[0m
+            [36m</b>[39m
+            [0m eCTD [0m
+            [0msequences[0m
+            [0m [0m
+            [0mtracked[0m
+            [0m. Plan, assemble, validate and dispatch it across the workspaces below; validation findings load per sequence once it is assembled.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-re"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mI can plan the sequence from the region profile, assemble the leaves, and walk the validation and dispatch gates with you.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-act"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"al-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.58...
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > an already mounted response handoff sets only an admitted follow-up type on the exact submission 117ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > after placing into sequence 7, the Submission Center opens on sequence 7 in the Builder 214ms
+   → expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/submissions",
+  ]
+
+  2nd vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/c2c/projects",
+  ]
+
+  3rd vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/510k/estar/submissions",
+  ]
+
+  4th vi.fn() call:
+
+  [
+-   "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "POST",
++   "/api/510k/estar/assemble",
++   {
++     "pathway": "510k",
++     "variant": "device",
++   },
+  ]
+
+  5th vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/submissions/3/sequences",
+  ]
+
+  6th vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/region-profiles/fda",
+  ]
+
+  7th vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/submissions/5/sequences",
+  ]
+
+  8th vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/submissions/sequences/7/history",
+  ]
+
+  9th vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/submissions/sequences/7/leaves?submissionId=5",
+  ]
+
+  10th vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/client-branding/company-documents",
++   undefined,
+  ]
+
+
+Number of calls: 10
+
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > a sequence not in the submission is not guessed at: the sequence list, with a line saying so 51ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > on the first submission too: an unknown sequence is said, never replaced by sequence 0000 46ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into — recovery > a failed sequence read is said as a failed read, not as "not found" 31ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into — recovery > a submission not in the list is not guessed at: the submission list, with a line saying so 33ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into — recovery > the line about the link is cleared once the person moves to another tab 75ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into — recovery > the line about the link is cleared once the person picks another submission 38ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into — recovery > with nothing carried, the Submission Center opens on its portfolio as before 34ms
+stderr | tests/golden-journeys/drug-nda-ectd.journey.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts
+{
+  "timestamp": "2026-10-22T05:05:24.346Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-22T05:05:24.346Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/golden-journeys/drug-nda-ectd.journey.test.ts
+{
+  "timestamp": "2026-10-22T05:05:24.347Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-22T05:05:27.280Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "column \"eu_mdr_class\" of relation \"regulatory_programs\" does not exist",
+    "correlationId": null,
+    "code": "42703"
+  }
+}
+
+ × tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey 61ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while creating the project. The problem has been logged."}: expected 500 to be 201 // Object.is equality
+stderr | tests/golden-journeys/cer-eu-mdr.journey.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/golden-journeys/cer-eu-mdr.journey.test.ts
+{
+  "timestamp": "2026-10-22T05:05:31.282Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-22T05:05:31.284Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/golden-journeys/cer-eu-mdr.journey.test.ts
+{
+  "timestamp": "2026-10-22T05:05:31.284Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey
+{
+  "timestamp": "2026-10-22T05:05:33.513Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "column \"eu_mdr_class\" of relation \"regulatory_programs\" does not exist",
+    "correlationId": null,
+    "code": "42703"
+  }
+}
+
+ × tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey 59ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while creating the project. The problem has been logged."}: expected 500 to be 201 // Object.is equality
+ × tests/golden-journeys/submission-export-package.journey.test.ts > golden journey — eCTD export to submittable package (canonical) > produces a structurally valid, tenant-isolated, completeness-gated eCTD package 31ms
+   → A package names its application and its applicant from the record, never a placeholder, and its project has no explicitly bound sponsor record (select the recorded applicant in Module 1 forms); and the bound sponsor records no usable D-U-N-S number (record its nine digits in the sponsor registry); and FDA’s us-regional backbone names a regulatory contact for the application: record the contact’s name, telephone and e-mail.. Nothing was built.
+ ✓ server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — the agency refuses our client certificate: NOT_DELIVERED, stage transport > TLSv1.3: transport, NOT transmitted, nothing reached the application 46ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — the agency refuses our client certificate: NOT_DELIVERED, stage transport > TLSv1.2: transport, NOT transmitted, nothing reached the application 36ms
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — the agency refuses our client certificate: NOT_DELIVERED, stage transport > control: a trusted certificate and an accepting MDN is transmitted 43ms
+   → ICSR was NOT transmitted to FDA_FAERS (transport): ICSR AS2 POST (FDA_FAERS) failed: self-signed certificate in certificate chain. Nothing reached the agency: the message was never released to an authenticated gateway, or its TLS layer refused it.
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — an authenticated gateway read the whole message and reset: DELIVERED_UNCONFIRMED > TLSv1.3: receipt-unproven, never transport 35ms
+   → expected [] to have a length of 1 but got +0
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — an authenticated gateway read the whole message and reset: DELIVERED_UNCONFIRMED > TLSv1.2: receipt-unproven, never transport 37ms
+   → expected [] to have a length of 1 but got +0
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 500 after the whole message: receipt-unproven, confirm before any resend 32ms
+   → expected [] to have a length of 1 but got +0
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 502 after the whole message: receipt-unproven, confirm before any resend 38ms
+   → expected [] to have a length of 1 but got +0
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 503 after the whole message: receipt-unproven, confirm before any resend 37ms
+   → expected [] to have a length of 1 but got +0
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 504 after the whole message: receipt-unproven, confirm before any resend 39ms
+   → expected [] to have a length of 1 but got +0
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 400: gateway-rejected 43ms
+   → expected 'transport' to be 'gateway-rejected' // Object.is equality
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 401: gateway-rejected 42ms
+   → expected 'transport' to be 'gateway-rejected' // Object.is equality
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 403: gateway-rejected 31ms
+   → expected 'transport' to be 'gateway-rejected' // Object.is equality
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 404: gateway-rejected 30ms
+   → expected 'transport' to be 'gateway-rejected' // Object.is equality
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 413: gateway-rejected 39ms
+   → expected 'transport' to be 'gateway-rejected' // Object.is equality
+stderr | server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR persistence — a receipt-unproven outcome locks the row > records transmission_unconfirmed with the agency response and our AS2 Message-ID; a second transmit sends nothing; the ACK is accepted
+{
+  "timestamp": "2026-10-22T05:05:41.163Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR gateway transmit failed",
+  "context": {
+    "id": "tx-1",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "reason": "ICSR was NOT transmitted to FDA_FAERS (transport): ICSR AS2 POST (FDA_FAERS) failed: self-signed certificate in certificate chain. Nothing reached the agency: the message was never released to an authenticated gateway, or its TLS layer refused it.",
+    "status": "prepared"
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR persistence — a receipt-unproven outcome locks the row > a TLS certificate refusal returns the row to prepared (nothing reached the agency)
+{
+  "timestamp": "2026-10-22T05:05:41.201Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR gateway transmit failed",
+  "context": {
+    "id": "tx-1",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "reason": "ICSR was NOT transmitted to FDA_FAERS (transport): ICSR AS2 POST (FDA_FAERS) failed: self-signed certificate in certificate chain. Nothing reached the agency: the message was never released to an authenticated gateway, or its TLS layer refused it.",
+    "status": "prepared"
+  }
+}
+
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 422: gateway-rejected 32ms
+   → expected 'transport' to be 'gateway-rejected' // Object.is equality
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR persistence — a receipt-unproven outcome locks the row > records transmission_unconfirmed with the agency response and our AS2 Message-ID; a second transmit sends nothing; the ACK is accepted 37ms
+   → expected [] to have a length of 1 but got +0
+ ✓ server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR persistence — a receipt-unproven outcome locks the row > a TLS certificate refusal returns the row to prepared (nothing reached the agency) 36ms
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — through a proxy: corrupted answers and WAN latency > TLSv1.3: whole ICSR read, the answer fails decryption — receipt-unproven 34ms
+   → expected [] to have a length of 1 but got +0
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — through a proxy: corrupted answers and WAN latency > TLSv1.2: whole ICSR read, the answer fails decryption — receipt-unproven 31ms
+   → expected [] to have a length of 1 but got +0
+ ✓ server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — through a proxy: corrupted answers and WAN latency > TLS 1.3: a certificate refusal 60 ms away (each way) — transport, nothing reached the application 161ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/golden-journeys/cer-eu-mdr.journey.test.ts [ tests/golden-journeys/cer-eu-mdr.journey.test.ts ]
+Error: This journey ran against a database missing 1 relation(s)/column(s) its own subject asked for, and still reached its assertions:
+
+  [42703] column "eu_mdr_class" of relation "regulatory_programs" does not exist
+      INSERT INTO regulatory_programs (organization_id, name, code, program_type, product_type, primary_agency, target_agencies, product_name, indication, status, pha
+
+Add the missing table(s) to this journey's extractTableDdl list, or the missing column(s) via the ALTER the real migration performs. A journey whose database is smaller than the code under test proves less than it says it does.
+ ❯ Module.assertNoSchemaGaps tests/golden-journeys/harness.ts:213:9
+    211|     })
+    212|     .map((g) => `  [${g.code}] ${g.message}\n      ${g.sql}`);
+    213|   throw new Error(
+       |         ^
+    214|     `This journey ran against a database missing ${seen.size} relation…
+    215|       `subject asked for, and still reached its assertions:\n\n${lines…
+ ❯ tests/golden-journeys/cer-eu-mdr.journey.test.ts:283:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/29]⎯
+
+ FAIL  tests/golden-journeys/device-510k-estar.journey.test.ts [ tests/golden-journeys/device-510k-estar.journey.test.ts ]
+Error: This journey ran against a database missing 1 relation(s)/column(s) its own subject asked for, and still reached its assertions:
+
+  [42703] column "eu_mdr_class" of relation "regulatory_programs" does not exist
+      INSERT INTO regulatory_programs (organization_id, name, code, program_type, product_type, primary_agency, target_agencies, product_name, indication, status, pha
+
+Add the missing table(s) to this journey's extractTableDdl list, or the missing column(s) via the ALTER the real migration performs. A journey whose database is smaller than the code under test proves less than it says it does.
+ ❯ Module.assertNoSchemaGaps tests/golden-journeys/harness.ts:213:9
+    211|     })
+    212|     .map((g) => `  [${g.code}] ${g.message}\n      ${g.sql}`);
+    213|   throw new Error(
+       |         ^
+    214|     `This journey ran against a database missing ${seen.size} relation…
+    215|       `subject asked for, and still reached its assertions:\n\n${lines…
+ ❯ tests/golden-journeys/device-510k-estar.journey.test.ts:350:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/29]⎯
+
+ FAIL  tests/golden-journeys/drug-nda-ectd.journey.test.ts [ tests/golden-journeys/drug-nda-ectd.journey.test.ts ]
+Error: This journey ran against a database missing 1 relation(s)/column(s) its own subject asked for, and still reached its assertions:
+
+  [42703] column "eu_mdr_class" of relation "regulatory_programs" does not exist
+      INSERT INTO regulatory_programs (organization_id, name, code, program_type, product_type, primary_agency, target_agencies, product_name, indication, status, pha
+
+Add the missing table(s) to this journey's extractTableDdl list, or the missing column(s) via the ALTER the real migration performs. A journey whose database is smaller than the code under test proves less than it says it does.
+ ❯ Module.assertNoSchemaGaps tests/golden-journeys/harness.ts:213:9
+    211|     })
+    212|     .map((g) => `  [${g.code}] ${g.message}\n      ${g.sql}`);
+    213|   throw new Error(
+       |         ^
+    214|     `This journey ran against a database missing ${seen.size} relation…
+    215|       `subject asked for, and still reached its assertions:\n\n${lines…
+ ❯ tests/golden-journeys/drug-nda-ectd.journey.test.ts:377:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/29]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 26 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey
+AssertionError: {"error":"INTERNAL_ERROR","message":"Something went wrong while creating the project. The problem has been logged."}: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ tests/golden-journeys/cer-eu-mdr.journey.test.ts:303:52
+    301|         indication: 'Continuous glucose monitoring in adults',
+    302|       });
+    303|       expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                    ^
+    304|       programId = res.body.data.id;
+    305|       anchorProjectId = res.body.meta.projectAnchorId;
+ ❯ JourneyRecorder.step tests/golden-journeys/harness.ts:393:24
+ ❯ tests/golden-journeys/cer-eu-mdr.journey.test.ts:295:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/29]⎯
+
+ FAIL  tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+AssertionError: {"error":"INTERNAL_ERROR","message":"Something went wrong while creating the project. The problem has been logged."}: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ tests/golden-journeys/device-510k-estar.journey.test.ts:397:52
+    395|         deviceClassification: { flags: [] },
+    396|       });
+    397|       expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                    ^
+    398|       programId = res.body.data.id;
+    399|       anchorProjectId = res.body.meta.projectAnchorId;
+ ❯ JourneyRecorder.step tests/golden-journeys/harness.ts:393:24
+ ❯ tests/golden-journeys/device-510k-estar.journey.test.ts:385:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/29]⎯
+
+ FAIL  tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+AssertionError: {"error":"INTERNAL_ERROR","message":"Something went wrong while creating the project. The problem has been logged."}: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ tests/golden-journeys/drug-nda-ectd.journey.test.ts:406:52
+    404|         indication: 'Advanced solid tumours',
+    405|       });
+    406|       expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                    ^
+    407|       programId = res.body.data.id;
+    408|       submissionId = res.body.meta.submissionId;
+ ❯ JourneyRecorder.step tests/golden-journeys/harness.ts:393:24
+ ❯ tests/golden-journeys/drug-nda-ectd.journey.test.ts:398:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/29]⎯
+
+ FAIL  tests/golden-journeys/submission-export-package.journey.test.ts > golden journey — eCTD export to submittable package (canonical) > produces a structurally valid, tenant-isolated, completeness-gated eCTD package
+PackageIdentityMissingError: A package names its application and its applicant from the record, never a placeholder, and its project has no explicitly bound sponsor record (select the recorded applicant in Module 1 forms); and the bound sponsor records no usable D-U-N-S number (record its nine digits in the sponsor registry); and FDA’s us-regional backbone names a regulatory contact for the application: record the contact’s name, telephone and e-mail.. Nothing was built.
+ ❯ packageIdentityRefusal server/services/ectd/package-identity.ts:204:27
+    202|     }
+    203|   }
+    204|   return missing.length ? new PackageIdentityMissingError(missing,
+       |                           ^
+    205|     `A package names its application and its applicant from the record…
+    206| }
+ ❯ exportIdentity server/services/ectd/assemble-from-core.ts:564:19
+ ❯ Module.assembleSubmissionEctd server/services/ectd/assemble-from-core.ts:655:35
+ ❯ tests/golden-journeys/submission-export-package.journey.test.ts:172:21
+ ❯ JourneyRecorder.step tests/golden-journeys/harness.ts:393:24
+ ❯ tests/golden-journeys/submission-export-package.journey.test.ts:171:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { missing: [ 'applicantSponsorId', 'applicantId', 'contact' ], code: 'PACKAGE_IDENTITY_MISSING' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/29]⎯
+
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — the agency refuses our client certificate: NOT_DELIVERED, stage transport > control: a trusted certificate and an accepting MDN is transmitted
+IcsrGatewayTransmitError: ICSR was NOT transmitted to FDA_FAERS (transport): ICSR AS2 POST (FDA_FAERS) failed: self-signed certificate in certificate chain. Nothing reached the agency: the message was never released to an authenticated gateway, or its TLS layer refused it.
+ ❯ receiptOrRefusal server/services/ind-lifecycle/icsr-gateway-transport.ts:335:13
+    333|       return { receiptId: outcome.receiptId, agencyResponseRaw: outcom…
+    334|     case 'NOT_DELIVERED':
+    335|       throw new IcsrGatewayTransmitError(
+       |             ^
+    336|         gateway, 'transport',
+    337|         `${outcome.reason}. Nothing reached the agency: the message wa…
+ ❯ transmitViaAs2 server/services/ind-lifecycle/icsr-gateway-transport.ts:414:10
+ ❯ Module.transmitIcsr server/services/ind-lifecycle/icsr-gateway-transport.ts:504:11
+ ❯ server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts:123:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { stage: 'transport', transmitted: false, httpStatus: null, agencyResponseRaw: null, transportMessageId: '<5fe70d28-dc08-4253-a53c-5505ba981343@SPONSOR-AS2>' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/29]⎯
+
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — an authenticated gateway read the whole message and reset: DELIVERED_UNCONFIRMED > TLSv1.3: receipt-unproven, never transport
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — an authenticated gateway read the whole message and reset: DELIVERED_UNCONFIRMED > TLSv1.2: receipt-unproven, never transport
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts:138:25
+    136|     server.respond = (_req, res) => { res.socket?.destroy(); };
+    137|     const err = await attempt(as2Config());
+    138|     expect(server.seen).toHaveLength(1);
+       |                         ^
+    139|     expect(server.seen[0].body.toString('utf8')).toBe(MESSAGE);
+    140|     expect((err as IcsrGatewayTransmitError).stage).toBe('receipt-unpr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/29]⎯
+
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 500 after the whole message: receipt-unproven, confirm before any resend
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 502 after the whole message: receipt-unproven, confirm before any resend
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 503 after the whole message: receipt-unproven, confirm before any resend
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 504 after the whole message: receipt-unproven, confirm before any resend
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts:150:25
+    148|     server.respond = (_req, res) => { res.writeHead(code); res.end(`up…
+    149|     const err = await attempt(as2Config());
+    150|     expect(server.seen).toHaveLength(1);
+       |                         ^
+    151|     expect((err as IcsrGatewayTransmitError).stage).toBe('receipt-unpr…
+    152|     expect((err as IcsrGatewayTransmitError).httpStatus).toBe(code);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/29]⎯
+
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 400: gateway-rejected
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 401: gateway-rejected
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 403: gateway-rejected
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 404: gateway-rejected
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 413: gateway-rejected
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 422: gateway-rejected
+AssertionError: expected 'transport' to be 'gateway-rejected' // Object.is equality
+
+Expected: "gateway-rejected"
+Received: "transport"
+
+ ❯ server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts:161:53
+    159|     server.respond = (_req, res) => { res.writeHead(code); res.end(`re…
+    160|     const err = await attempt(as2Config());
+    161|     expect((err as IcsrGatewayTransmitError).stage).toBe('gateway-reje…
+       |                                                     ^
+    162|     expect((err as IcsrGatewayTransmitError).httpStatus).toBe(code);
+    163|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/29]⎯
+
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR persistence — a receipt-unproven outcome locks the row > records transmission_unconfirmed with the agency response and our AS2 Message-ID; a second transmit sends nothing; the ACK is accepted
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts:172:25
+    170|
+    171|     const first = await transmitIcsrTransmission('tx-1', ctx, { config…
+    172|     expect(server.seen).toHaveLength(1);
+       |                         ^
+    173|     const sentId = String(server.seen[0].headers['message-id']);
+    174|     expect(first).toBeInstanceOf(IcsrTransmissionError);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/29]⎯
+
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — through a proxy: corrupted answers and WAN latency > TLSv1.3: whole ICSR read, the answer fails decryption — receipt-unproven
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — through a proxy: corrupted answers and WAN latency > TLSv1.2: whole ICSR read, the answer fails decryption — receipt-unproven
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts:223:27
+    221|     try {
+    222|       const err = await attempt({ ...as2Config(), url: `https://127.0.…
+    223|       expect(server.seen).toHaveLength(1);
+       |                           ^
+    224|       expect(server.seen[0].body.toString('utf8')).toBe(MESSAGE);
+    225|       expect((err as IcsrGatewayTransmitError).stage).toBe('receipt-un…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/29]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > shows the open program’s IND, not rows[0], when a match exists
+TestingLibraryElementError: Unable to find role="heading" and name `/BX-701 — Initial IND/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx:89:25
+     87|     render(<IndLifecycle {...surfaceProps()} />);
+     88|
+     89|     expect(await screen.findByRole('heading', { name: /BX-701 — Initia…
+       |                         ^
+     90|     const note = screen.getByTestId('indl-scope-note');
+     91|     expect(note.textContent).toMatch(/open program's IND \(BX-701 IND\…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/29]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > with no program open and several INDs, says which one is shown and how to scope
+TestingLibraryElementError: Unable to find role="heading" and name `/AAA-100 — Initial IND/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx:113:25
+    111|     render(<IndLifecycle {...surfaceProps()} />);
+    112|
+    113|     expect(await screen.findByRole('heading', { name: /AAA-100 — Initi…
+       |                         ^
+    114|     expect(screen.getByTestId('indl-scope-note').textContent).toMatch(…
+    115|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/29]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > shows the IND anchored to the open program, not a same-named IND of another project
+TestingLibraryElementError: Unable to find role="heading" and name `/BX-701 — Initial IND/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx:129:25
+    127|     render(<IndLifecycle {...surfaceProps()} />);
+    128|
+    129|     expect(await screen.findByRole('heading', { name: /BX-701 — Initia…
+       |                         ^
+    130|     const note = screen.getByTestId('indl-scope-note').textContent ?? …
+    131|     expect(note).toMatch(/open program's IND \(BX-701 IND \(program 2\…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/29]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > a single IND with no program open needs no note — nothing to disambiguate
+TestingLibraryElementError: Unable to find role="heading" and name `/AAA-100 — Initial IND/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx:183:25
+    181|     render(<IndLifecycle {...surfaceProps()} />);
+    182|
+    183|     expect(await screen.findByRole('heading', { name: /AAA-100 — Initi…
+       |                         ^
+    184|     expect(screen.queryByTestId('indl-scope-note')).toBeNull();
+    185|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/29]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > F19: a repeated notification handoff opens its exact submission and sequence while this surface is already mounted
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/submissions",
+  ]
+
+  2nd vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/c2c/projects",
+  ]
+
+  3rd vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/510k/estar/submissions",
+  ]
+
+  4th vi.fn() call:
+
+  [
+-   "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "POST",
++   "/api/510k/estar/assemble",
++   {
++     "pathway": "510k",
++     "variant": "device",
++   },
+  ]
+
+  5th vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/submissions/3/sequences",
+  ]
+
+  6th vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/region-profiles/fda",
+  ]
+
+  7th vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/submissions/5/sequences",
+  ]
+
+  8th vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/submissions/sequences/7/history",
+  ]
+
+  9th vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/submissions/sequences/7/leaves?submissionId=5",
+  ]
+
+  10th vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/client-branding/company-documents",
++   undefined,
+  ]
+
+
+Number of calls: 10
+
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sp sc-page"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sp-head"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"sp-eyebrow"[39m
+            [36m>[39m
+              [0mSubmission[0m
+            [36m</div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"sp-title"[39m
+            [36m>[39m
+              [0mSubmission center[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"sp-state"[39m
+            [36m>[39m
+              [0mPlan, build, validate and dispatch each market's eCTD v3.2.2 sequences.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<select[39m
+            [33maria-label[39m=[32m"Submission to work on"[39m
+            [33mclass[39m=[32m"sc-subpick"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"3"[39m
+            [36m>[39m
+              [0mAB-1 Phase 2 IND[0m
+              [0m · [0m
+              [0mIND[0m
+              [0m · [0m
+              [0mFDA (US)[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"5"[39m
+            [36m>[39m
+              [0mZX-9 First-in-Human[0m
+              [0m · [0m
+              [0mIND[0m
+              [0m · [0m
+              [0mFDA (US)[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-lead al-calm"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-k"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mWhere ZX-9 First-in-Human stands[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-h"[39m
+          [36m>[39m
+            [0mZX-9 First-in-Human[0m
+            [0m (Zexanib)[0m
+            [0m — [0m
+            [0mIND[0m
+            [0m · [0m
+            [0mFDA (US)[0m
+            [0m, at the [0m
+            [36m<b>[39m
+              [0moriginal[0m
+            [36m</b>[39m
+            [0m stage.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-b"[39m
+          [36m>[39m
+            [36m<b>[39m
+              [0m2[0m
+            [36m</b>[39m
+            [0m eCTD [0m
+            [0msequences[0m
+            [0m [0m
+            [0mtracked[0m
+            [0m. Plan, assemble, validate and dispatch it across the workspaces below; validation findings load per sequence once it is assembled.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-re"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mI can plan the sequence from the region profile, assemble the leaves, and walk the validation and dispatch gates with you.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-act"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"al-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.58...
+ ❯ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx:115:42
+    113|     act(()=>stashNavParamsForTarget('submission-center',{submissionId:…
+    114|     await waitFor(()=>expect(tab('Builder').getAttribute('aria-selecte…
+    115|     await waitFor(()=>expect(apiRequest).toHaveBeenCalledWith('GET','/…
+       |                                          ^
+    116|     act(()=>stashNavParamsForTarget('submission-center',{submissionId:…
+    117|     await waitFor(()=>expect(tab('Sequences').getAttribute('aria-selec…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/29]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > after placing into sequence 7, the Submission Center opens on sequence 7 in the Builder
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/submissions",
+  ]
+
+  2nd vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/c2c/projects",
+  ]
+
+  3rd vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/510k/estar/submissions",
+  ]
+
+  4th vi.fn() call:
+
+  [
+-   "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "POST",
++   "/api/510k/estar/assemble",
++   {
++     "pathway": "510k",
++     "variant": "device",
++   },
+  ]
+
+  5th vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/submissions/3/sequences",
+  ]
+
+  6th vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/region-profiles/fda",
+  ]
+
+  7th vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/submissions/5/sequences",
+  ]
+
+  8th vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/submissions/sequences/7/history",
+  ]
+
+  9th vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/submissions/sequences/7/leaves?submissionId=5",
+  ]
+
+  10th vi.fn() call:
+
+  [
+    "GET",
+-   "/api/submissions/sequences/7/leaves",
++   "/api/client-branding/company-documents",
++   undefined,
+  ]
+
+
+Number of calls: 10
+
+ ❯ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx:165:24
+    163|     expect((screen.getByLabelText('Working sequence') as HTMLSelectEle…
+    164|     expect(await screen.findByText('M2.7 Clinical Summary')).toBeTruth…
+    165|     expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/s…
+       |                        ^
+    166|     // Never the first row's leaves: the default was not used.
+    167|     expect(apiRequest).not.toHaveBeenCalledWith('GET', '/api/submissio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/29]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 4 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+vi.mock(import("@/services/portal/authService"), async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    // your mocked methods
+  }
+})
+
+ ❯ VitestMocker.createError node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:62:17
+ ❯ Object.get node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:324:16
+ ❯ useSubmissionReadSession client/src/concept2cure/v2/surfaces/submissionScopedRead.ts:19:16
+     17|   const [, refresh] = useReducer((value: number) => value + 1, 0);
+     18|   const snapshot = useRef<SessionSnapshot | null>(null);
+     19|   const user = authService.getUser();
+       |                ^
+     20|   const actor = `${user?.organizationId ?? ''}:${user?.id ?? ''}`;
+     21|   if (!snapshot.current || snapshot.current.actor !== actor || !snapsh…
+ ❯ IndFormsPanel client/src/concept2cure/v2/surfaces/IndFormsPanel.tsx:155:19
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "shows the open program’s IND, not rows[0], when a match exists". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+vi.mock(import("@/services/portal/authService"), async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    // your mocked methods
+  }
+})
+
+ ❯ VitestMocker.createError node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:62:17
+ ❯ Object.get node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:324:16
+ ❯ useSubmissionReadSession client/src/concept2cure/v2/surfaces/submissionScopedRead.ts:19:16
+     17|   const [, refresh] = useReducer((value: number) => value + 1, 0);
+     18|   const snapshot = useRef<SessionSnapshot | null>(null);
+     19|   const user = authService.getUser();
+       |                ^
+     20|   const actor = `${user?.organizationId ?? ''}:${user?.id ?? ''}`;
+     21|   if (!snapshot.current || snapshot.current.actor !== actor || !snapsh…
+ ❯ IndFormsPanel client/src/concept2cure/v2/surfaces/IndFormsPanel.tsx:155:19
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "with no program open and several INDs, says which one is shown and how to scope". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+vi.mock(import("@/services/portal/authService"), async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    // your mocked methods
+  }
+})
+
+ ❯ VitestMocker.createError node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:62:17
+ ❯ Object.get node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:324:16
+ ❯ useSubmissionReadSession client/src/concept2cure/v2/surfaces/submissionScopedRead.ts:19:16
+     17|   const [, refresh] = useReducer((value: number) => value + 1, 0);
+     18|   const snapshot = useRef<SessionSnapshot | null>(null);
+     19|   const user = authService.getUser();
+       |                ^
+     20|   const actor = `${user?.organizationId ?? ''}:${user?.id ?? ''}`;
+     21|   if (!snapshot.current || snapshot.current.actor !== actor || !snapsh…
+ ❯ IndFormsPanel client/src/concept2cure/v2/surfaces/IndFormsPanel.tsx:155:19
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "shows the IND anchored to the open program, not a same-named IND of another project". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+vi.mock(import("@/services/portal/authService"), async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    // your mocked methods
+  }
+})
+
+ ❯ VitestMocker.createError node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:62:17
+ ❯ Object.get node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:324:16
+ ❯ useSubmissionReadSession client/src/concept2cure/v2/surfaces/submissionScopedRead.ts:19:16
+     17|   const [, refresh] = useReducer((value: number) => value + 1, 0);
+     18|   const snapshot = useRef<SessionSnapshot | null>(null);
+     19|   const user = authService.getUser();
+       |                ^
+     20|   const actor = `${user?.organizationId ?? ''}:${user?.id ?? ''}`;
+     21|   if (!snapshot.current || snapshot.current.actor !== actor || !snapsh…
+ ❯ IndFormsPanel client/src/concept2cure/v2/surfaces/IndFormsPanel.tsx:155:19
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "a single IND with no program open needs no note — nothing to disambiguate". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  7 failed (7)
+      Tests  26 failed | 18 passed (44)
+     Errors  4 errors
+   Start at  05:04:39
+   Duration  61.65s (transform 7.70s, setup 384ms, import 6.90s, tests 52.12s, environment 1.06s)
+
+EXIT 1

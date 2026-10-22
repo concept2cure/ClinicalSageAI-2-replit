@@ -1,5 +1,5 @@
 {
- "$note": "Every AnA tool and platform command, classified against the launch catalog on 2026-09-26 by reading its handler (docs/evidence/D2-API-SCOPE/2026-09-26-ana-tools/). hiddenApp: operates records of surfaces outside the launch catalog only; withheld/refused in production. inScope: operates a launch surface, or no tenant records (knowledge). A new tool or command must be added to one of the two, or ana-launch-scope.test.ts fails. Amended 2026-10-12 (decision P-28): CMC / Module 3 joined the launch catalog, so its 10 tools and 6 commands moved from hiddenApp to inScope. The move is bookkeeping, not the mechanism — anaCapabilityInLaunchScope re-checks the surface against LAUNCH_SURFACE_IDS rather than trusting this file, so the tools came back the moment the surface did. What this file would otherwise say is that a launch surface is outside the catalog.",
+ "$note": "Every AnA tool and platform command, classified against the launch catalog on 2026-09-26 by reading its handler (docs/evidence/D2-API-SCOPE/2026-09-26-ana-tools/). hiddenApp: operates records of surfaces outside the launch catalog only; withheld/refused in production. inScope: operates a launch surface, or no tenant records (knowledge). A new tool or command must be added to one of the two, or ana-launch-scope.test.ts fails. Amended 2026-10-12 (decision P-28): CMC / Module 3 joined the launch catalog, so its 10 tools and 6 commands moved from hiddenApp to inScope. The move is bookkeeping, not the mechanism — anaCapabilityInLaunchScope re-checks the surface against LAUNCH_SURFACE_IDS rather than trusting this file, so the tools came back the moment the surface did. What this file would otherwise say is that a launch surface is outside the catalog. Amended 2026-10-22: Communication Center joined the launch catalog on 2026-10-16 (327bc9fb6, shared/constants/launch-scope.ts), so create_ha_interaction, which serves it and agency-meetings, moved to inScope by the rule above for a tool that touches a launch surface. It was already offered in production; only this file still called it hidden.",
  "classifiedOn": "2026-09-26",
  "tools": {
   "hiddenApp": [
@@ -10,15 +10,6 @@
     "names": [
      "prepare_meeting_package",
      "review_ha_interaction"
-    ]
-   },
-   {
-    "surfaces": [
-     "agency-meetings",
-     "communication-center"
-    ],
-    "names": [
-     "create_ha_interaction"
     ]
    },
    {
@@ -618,6 +609,7 @@
    "convert_to_rps_v4",
    "create_calendar_event",
    "create_consent_form",
+   "create_ha_interaction",
    "create_irb_submission",
    "create_protocol_amendment",
    "create_protocol_document",
@@ -1266,5 +1258,5 @@
    "variations_classify"
   ]
  },
- "amendedOn": "2026-10-12"
+ "amendedOn": "2026-10-22"
 }

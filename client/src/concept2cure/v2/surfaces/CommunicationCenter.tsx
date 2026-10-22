@@ -39,7 +39,8 @@ import { AnswerLead } from '../AnswerLead';
 import { useLiveRows, useLiveData, EmptyState } from '../dataConnect';
 import { C2CForm } from '../C2CForm';
 import { CC_SOURCE_TYPES, CC_INTERACTION_TYPES } from '../fixtures/commcenter';
-import { AgencyInboxList, daysTo, dueInWords, draftResponseWithAna, letterSourceOptions, letterSourceRef, useAgencyInbox, type LetterOpening } from './AgencyInbox';
+import { AgencyInboxList, daysTo, dueInWords, draftResponseWithAna, letterSourceOptions, letterSourceRef, submissionLabel, useAgencyInbox, type LetterOpening } from './AgencyInbox';
+import { programSubmissionsPath, type MarketSubmission } from './programSequence';
 import { consumeNavParams, NAV_PARAMS_EVENT } from '../navParams';
 import { isSourcesPage, sourcesUrl, type SourcesPage } from './projectSources';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -195,6 +196,16 @@ function letterFieldDesc(read: { loading: boolean; error?: string; data: Sources
   );
 }
 
+/** What the log form's submission field says about the project's submissions read. */
+function submissionFieldDesc(read: { loading: boolean; error?: string | null }, count: number): string {
+  if (read.loading) return "Reading this project's submissions…";
+  if (read.error) {
+    return "This project's submissions could not be read, so none can be named now. The communication can still be logged without one.";
+  }
+  if (count === 0) return 'This project has no submission yet.';
+  return 'The submission the agency wrote about. Leave it empty for a communication that concerns none, such as a meeting request.';
+}
+
 /* ── Main component ── */
 
 export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
@@ -229,6 +240,12 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
   const sourcesRead = useLiveData<SourcesPage>(form && projectId ? sourcesUrl(projectId, '', 0) : null, [form, projectId], isSourcesPage);
   const letterOptions = letterSourceOptions(sourcesRead.data?.sources ?? [], comms);
   const letterDesc = letterFieldDesc(sourcesRead, letterOptions.length);
+  /* The submission a communication concerns: one of this project's own, read
+     from the Submission Center's scoped list only while the form is open. The
+     server refuses any other (resolveLinkedSubmission). */
+  const submissionsRead = useLiveRows<MarketSubmission>(form && projectId ? programSubmissionsPath(projectId) : null, [form, projectId]);
+  const submissionOptions = submissionsRead.rows.map((s) => ({ value: String(s.id), label: submissionLabel(s) }));
+  const submissionDesc = submissionFieldDesc(submissionsRead, submissionOptions.length);
 
   const open = comms.filter((c) => c.closureStatus !== 'closed');
   const responseDue = comms.filter((c) => c.responseRequired && c.closureStatus !== 'closed');
@@ -418,6 +435,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
       sourceChannel: v.sourceChannel || 'Manually logged',
       linkedSectionCodes: [] as string[],
       linkedArtifactIds: Number.isSafeInteger(letter) && letter > 0 ? [letterSourceRef(letter)] : [],
+      ...(v.linkedSubmissionId ? { linkedSubmissionId: v.linkedSubmissionId } : {}),
       dueDate: v.dueDate || undefined,
       urgency: (v.urgency || 'medium') as 'low' | 'medium' | 'high' | 'critical',
       responseRequired: v.responseRequired === 'yes',
@@ -915,6 +933,13 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
                 type: 'select',
                 options: letterOptions,
                 descStatus: letterDesc,
+              },
+              {
+                key: 'linkedSubmissionId',
+                label: 'Submission it concerns (optional)',
+                type: 'select',
+                options: submissionOptions,
+                descStatus: submissionDesc,
               },
               {
                 key: 'urgency',

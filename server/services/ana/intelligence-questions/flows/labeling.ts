@@ -289,7 +289,7 @@ export function createLabelingFlow(): FlowDefinition {
             label: 'Recent Major Changes (within last 12 months)',
             type: 'textarea',
             placeholder: 'List each section changed and the month/year, e.g.:\n- Indications and Usage (1.1): 03/2025\n- Warnings and Precautions (5.2): 06/2025',
-            helpText: 'Per 21 CFR 201.57(a)(4), list sections with substantive labeling changes within the past year. Include section number and date of change.',
+            helpText: 'Per 21 CFR 201.57(a)(5) (Recent Major Changes), list sections with substantive labeling changes within the past year. Include section number and date of change.',
           },
           {
             id: 'highlights_limitations',
@@ -359,7 +359,7 @@ export function createLabelingFlow(): FlowDefinition {
               { value: 'standard_plr', label: 'Standard PLR Numbering (1.1, 5.1, etc.)' },
               { value: 'custom', label: 'Custom Subsection Numbering' },
             ],
-            helpText: 'Standard PLR numbering is strongly recommended per 21 CFR 201.57(d).',
+            helpText: 'Standard PLR section and subsection numbering is required per 21 CFR 201.56(d).',
           },
         ],
         defaultNext: 'mechanism_and_pk',
@@ -374,7 +374,7 @@ export function createLabelingFlow(): FlowDefinition {
         question:
           'Describe the mechanism of action and key pharmacokinetic parameters for the Clinical Pharmacology section (Section 12).',
         guidance:
-          'Per 21 CFR 201.57(c)(12), the Clinical Pharmacology section must include: (i) Mechanism of Action, (ii) Pharmacodynamics, and (iii) Pharmacokinetics (absorption, distribution, metabolism, elimination). Include relevant parameters: Cmax, Tmax, AUC, t½, bioavailability, protein binding, and clearance.',
+          'Per 21 CFR 201.57(c)(13), the Clinical Pharmacology section must include: (i) Mechanism of Action, (ii) Pharmacodynamics, and (iii) Pharmacokinetics (absorption, distribution, metabolism, elimination). Include relevant parameters: Cmax, Tmax, AUC, t½, bioavailability, protein binding, and clearance.',
         fields: [
           {
             id: 'mechanism_of_action',
@@ -430,7 +430,7 @@ export function createLabelingFlow(): FlowDefinition {
         question:
           'What drug-drug interaction studies have been conducted?',
         guidance:
-          'Per 21 CFR 201.57(c)(7), the Drug Interactions section must describe clinically significant interactions. Include both clinical DDI studies and in-vitro assessments (CYP inhibition/induction, transporter interactions). Reference FDA DDI guidance (2020) for study expectations.',
+          'Per 21 CFR 201.57(c)(8), the Drug Interactions section must describe clinically significant interactions. Include both clinical DDI studies and in-vitro assessments (CYP inhibition/induction, transporter interactions). Reference ICH M12 Drug Interaction Studies (FDA final guidance, August 2024) for study expectations.',
         fields: [
           {
             id: 'ddi_studies_conducted',
@@ -471,7 +471,7 @@ export function createLabelingFlow(): FlowDefinition {
             title: 'No Dedicated DDI Studies Conducted',
             message:
               'FDA expects dedicated drug-drug interaction studies for most NDA/BLA products. Absence of DDI data may result in an Information Request or labeling deficiency. Consider in-vitro CYP/transporter assessments at minimum.',
-            reference: 'FDA Guidance: In Vitro Drug Interaction Studies — Cytochrome P450 Enzyme- and Transporter-Mediated Drug Interactions (January 2020)',
+            reference: 'ICH M12: Drug Interaction Studies (FDA final guidance, August 2024)',
           },
         ],
         defaultNext: 'indications_and_usage',
@@ -823,7 +823,7 @@ export function createLabelingFlow(): FlowDefinition {
         question:
           'Address Use in Specific Populations (Section 8).',
         guidance:
-          'Per 21 CFR 201.57(c)(9) and the Pregnancy and Lactation Labeling Rule (PLLR, 2015), Section 8 must include: 8.1 Pregnancy (including lactation risk summary and data), 8.2 Lactation, 8.3 Females and Males of Reproductive Potential, 8.4 Pediatric Use, and 8.5 Geriatric Use. The old pregnancy letter categories (A/B/C/D/X) have been replaced by the PLLR narrative format.',
+          'Per 21 CFR 201.57(c)(9) and the Pregnancy and Lactation Labeling Rule (PLLR, 2015), Section 8 must include: 8.1 Pregnancy (including pregnancy exposure registry, risk summary, clinical considerations and data), 8.2 Lactation (including risk summary, clinical considerations and data), 8.3 Females and Males of Reproductive Potential, 8.4 Pediatric Use, and 8.5 Geriatric Use. The old pregnancy letter categories (A/B/C/D/X) have been replaced by the PLLR narrative format.',
         fields: [
           {
             id: 'pregnancy_risk_summary',
@@ -1262,7 +1262,7 @@ export function createLabelingFlow(): FlowDefinition {
             label: 'Is the device UDI-compliant?',
             type: 'yes_no',
             required: true,
-            helpText: 'UDI is required for all devices except certain exemptions (21 CFR 830.30).',
+            helpText: 'UDI is required on device labels (21 CFR 801.20), except as provided by the general exceptions in 21 CFR 801.30.',
           },
           {
             id: 'udi_issuing_agency',
@@ -1300,7 +1300,7 @@ export function createLabelingFlow(): FlowDefinition {
             id: 'symbol_glossary_included',
             label: 'Is a symbol glossary included in the labeling?',
             type: 'yes_no',
-            helpText: 'Per 21 CFR 801.15(c)(2), if symbols are used without adjacent explanatory text, a glossary must be included in the labeling or available via a toll-free number or website.',
+            helpText: 'Per 21 CFR 801.15(c)(1), if stand-alone symbols are used without adjacent explanatory text, they must be explained in a paper or electronic symbols glossary included in the labeling, and the labeling must bear a prominent and conspicuous statement identifying the location of the glossary.',
           },
           {
             id: 'labeling_expiration_info',

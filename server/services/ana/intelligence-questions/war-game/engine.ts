@@ -15,6 +15,8 @@ import type {
   WarGameAuditor,
 } from './types.js';
 import { getAuditor, getAvailableAuditors } from './auditors/index.js';
+import { getFlowDefinition } from '../flows/index.js';
+import type { FlowCategory, FlowDefinition } from '../types.js';
 
 /* ─── Helpers ──────────────────────────────────────────────────────────── */
 
@@ -53,6 +55,43 @@ function flattenAnswers(
   return flat;
 }
 
+/* ─── What the source interview asks ───────────────────────────────────── */
+
+/** The interview each auditor audits. */
+export const WAR_GAME_SOURCE_FLOW: Readonly<Record<WarGameCategory, FlowCategory>> = Object.freeze({
+  protocol: 'protocol_development', ind: 'ind_submission', csr: 'csr_report', '510k': 'device_510k',
+  cer: 'cer_report', sop: 'sop_development', nda: 'nda_submission', bla: 'bla_submission',
+  pma: 'device_pma', cmc: 'cmc_specification', risk_management: 'risk_management',
+  safety_narrative: 'safety_narrative', labeling: 'labeling', briefing_book: 'briefing_book',
+  stability: 'stability_study',
+});
+
+interface SourceInterview { flow: FlowDefinition | null; asked: ReadonlySet<string>; note: string | null }
+
+/**
+ * The interview whose answers these are. `sourceFlowId` may be the flow's id
+ * or its category; anything else is said, and the category's own interview is
+ * used to judge what could have been asked.
+ */
+function sourceInterview(category: WarGameCategory, sourceFlowId: string): SourceInterview {
+  const own = getFlowDefinition(WAR_GAME_SOURCE_FLOW[category], {} as never);
+  const named = sourceFlowId === own?.id || sourceFlowId === WAR_GAME_SOURCE_FLOW[category];
+  const asked = new Set((own?.nodes ?? []).flatMap((n) => n.fields.map((f) => f.id)));
+  const note = named || !own ? null
+    : `The source interview "${sourceFlowId}" is not one this platform runs; checks were judged against the questions of the ${own.name} interview.`;
+  return { flow: own, asked, note };
+}
+
+/** Run one rule, recording every answer key it reads. */
+function runRecorded(rule: WarGameAuditor['rules'][number], answers: Record<string, unknown>): { finding: WarGameFinding | null; read: Set<string> } {
+  const read = new Set<string>();
+  const view = new Proxy(answers, {
+    get(target, key) { if (typeof key === 'string') read.add(key); return target[key as string]; },
+    has(target, key) { if (typeof key === 'string') read.add(key); return key in target; },
+  });
+  return { finding: rule.check(view), read };
+}
+
 /* ─── Engine ───────────────────────────────────────────────────────────── */
 
 /**
@@ -74,13 +113,27 @@ export function runWarGame(
   const flatAnswers = flattenAnswers(answers);
 
   // ── Run all rules and collect findings ──────────────────────────────
+  const source = sourceInterview(category, sourceFlowId);
+  /* 2026-10-22 (D2): most auditors read answer keys their own interview never
+     asks, so a fully answered interview drew "missing" criticals about
+     questions the client was never put, and value checks never fired. A rule
+     that reads such a key is not assessed: no finding, no score.
+     tests/ana-intelligence/war-game-reads-what-the-interview-asks.test.ts. */
   const findings: WarGameFinding[] = [];
+  const notAssessed: WarGameReport['notAssessed'] = [];
   for (const rule of auditor.rules) {
-    const finding = rule.check(flatAnswers);
-    if (finding) {
-      findings.push(finding);
+    const { finding, read } = runRecorded(rule, flatAnswers);
+    const unaskedFields = source.flow ? [...read].filter((k) => !source.asked.has(k)) : [];
+    if (unaskedFields.length > 0) {
+      notAssessed.push({ ruleId: rule.id, title: rule.title, unaskedFields });
+      continue;
     }
+    if (!finding) continue;
+    // A related field the interview does not ask is a link to nothing.
+    findings.push(source.flow ? { ...finding, relatedFields: finding.relatedFields.filter((f) => source.asked.has(f)) } : finding);
   }
+  const rulesTotal = auditor.rules.length;
+  const rulesAssessed = rulesTotal - notAssessed.length;
 
   // ── Calculate dimension scores ──────────────────────────────────────
   const dimensionScores = {} as Record<
@@ -154,6 +207,8 @@ export function runWarGame(
     cur: WarGameReport['regulatoryRiskLevel'],
     floor: WarGameReport['regulatoryRiskLevel'],
   ) => (RISK_RANK[cur] >= RISK_RANK[floor] ? cur : floor);
+  // A check that could not run is not a pass: nothing is audit-ready on it.
+  if (notAssessed.length > 0) overallAssessment = capAssessment(overallAssessment, 'needs_work');
   if (criticalCount > 0) {
     overallAssessment = capAssessment(overallAssessment, 'significant_gaps');
     regulatoryRiskLevel = capRisk(regulatoryRiskLevel, 'high');
@@ -189,9 +244,11 @@ export function runWarGame(
           .join('; ')}.`
       : '';
 
+  const coverage = notAssessed.length === 0 ? ''
+    : ` ${notAssessed.length} of ${rulesTotal} checks could not be assessed from this interview, which does not ask what they read; they are listed, not scored.`;
   const executiveSummary =
-    `War Game assessment: ${assessmentLabel[overallAssessment]} (score ${overallScore}/100). ` +
-    `${findingSummary}${topIssuesSummary}`;
+    `War Game assessment: ${assessmentLabel[overallAssessment]} (score ${overallScore}/100, over ${rulesAssessed} assessed checks). ` +
+    `${findingSummary}${topIssuesSummary}${coverage}${source.note ? ` ${source.note}` : ''}`;
 
   // ── Top priorities ──────────────────────────────────────────────────
   const prioritized = [
@@ -217,6 +274,9 @@ export function runWarGame(
     executiveSummary,
     topPriorities,
     regulatoryRiskLevel,
+    rulesTotal,
+    rulesAssessed,
+    notAssessed,
   };
 }
 

@@ -1,0 +1,33 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/indLifecycleEctdFormat.test.tsx > IndLifecycle — the format it names > names eCTD v3.2.2, the format FDA packages are built in, and never v4.0 394ms
+   → expected ' IND Lifecycle — 21 CFR 312Vorelinib …' not to match /eCTD v4\.0/
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/indLifecycleEctdFormat.test.tsx > IndLifecycle — the format it names > names eCTD v3.2.2, the format FDA packages are built in, and never v4.0
+AssertionError: expected ' IND Lifecycle — 21 CFR 312Vorelinib …' not to match /eCTD v4\.0/
+
+- Expected:
+/eCTD v4\.0/
+
++ Received:
+" IND Lifecycle — 21 CFR 312Vorelinib — Initial INDVorelinib · BX-512 — KIT-mutant GIST — Concept2Cure Therapeutics — eCTD v4.0 (FDA) Dossier Ask AnA Is the Vorelinib IND ready to file — and what stands between you and submissionNothing has been assessed for this IND yet — the checklist holds no required sections or Module 1 forms to evaluate.Readiness is computed from the org's IND checklist. Until it carries section and form state, no statement about blockers — present or absent — can be made. Ask AnA how to populate the checklistLive from this program's IND checklist — readiness checks the full required set, including missing sections.Vorelinib_IND_filing-readiness_312.23NOT ASSESSEDIND Filing Readiness — 21 CFR 312.23Vorelinib · BX-512Concept2Cure TherapeuticsInitial IND — eCTD v4.0 (FDA)Not yet assessed0%1 — Module progressNo eCTD sections have been placed into this submission's filing yet. Sections appear here — scoped to this program — once they're added to the submission's sequence. (Documents in the authoring workspace that aren't placed into this filing are intentionally not shown.)2 — Module 1 forms — 21 CFR 312.23(a)(1)Form FDA 1571 — IND Application21 CFR 312.23(a)(1)Complete2a — Build & render the FDA form PDFs -- real form engineCouldn’t reach the IND forms engineThe IND forms engine didn’t respond. Sign in to your tenant and retry.3 — Blockers to filing — 0 — ready = assessed with zero blockersNothing has been assessed — the checklist holds no sections or forms to evaluate, so no blocker statement can be made. Regulatory clock No target date--days, projected from the target dateTarget FDA receiptNo target date set30-day clears--21 CFR312.40(b) / 312.42No target submission date is recorded for this program, so there is nothing to project. Set a target submission date on the regulatory program and the 30-day clock projects from it.Documents AnA assemblesFor filingLifecycleIND Cover Letter AnAeCTD m1.221 CFR 312.23(a)(1)Introduces the IND, summarizes contents, and highlights key points for the FDA reviewer.FDA centerNot stated — chooseCDER — Center for Drug Evaluation and ResearchCBER — Center for Biologics Evaluation and Research Assemble now PDF Draft with AnAPre-IND Briefing Book AnAMeeting packageFDA Type B (Pre-IND)FDA meeting briefing book -- background, questions, and sponsor positions for the Pre-IND meeting.Meeting typeNot stated — choosePre-INDType AType BType CIndicationProduct background and rationaleNonclinical data summaryProposed clinical development planQuestions for FDA (one per line, \"topic | question\") Assemble now PDF Draft with AnALetter of AuthorizationeCTD m1.4.121 CFR 312.23(b)Authorization to reference another IND or Drug Master File, with LOA-coverage QC.Referenced file typeNot stated — chooseDMFINDNDABLAReferenced file numberFile holder (grantor)Subject (drug substance / product)Authorized scope (sections, one per line)Signatory (for the holder) Assemble now PDFStatement of Right of ReferenceeCTD m1.4.221 CFR 312.23(b)The sponsor’s statement that a right of reference to another file has been granted, with its gap list.Referenced file typeNot stated — chooseDMFINDNDABLAReferenced file numberSubject (drug substance / product)Authorized scope (sections, one per line)Signatory (for the sponsor) Assemble now PDFEach document assembles here end-to-end from this IND's recorded identity plus the particulars you enter — the rendered model and its gap list are the server's verdict. The lifecycle documents can then be filed into a real eCTD sequence under this application."
+
+ ❯ client/src/concept2cure/v2/__tests__/indLifecycleEctdFormat.test.tsx:59:22
+     57|     await screen.findByRole('heading', { name: /Vorelinib — Initial IN…
+     58|     const body = document.body.textContent ?? '';
+     59|     expect(body).not.toMatch(/eCTD v4\.0/);
+       |                      ^
+     60|     expect(body.match(/eCTD v3\.2\.2 \(FDA\)/g)?.length ?? 0).toBeGrea…
+     61|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  00:26:54
+   Duration  3.24s (transform 1.33s, setup 177ms, import 1.61s, tests 401ms, environment 715ms)
+

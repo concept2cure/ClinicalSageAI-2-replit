@@ -28,6 +28,7 @@ export const CREATE_QMS_DOCUMENT: AnaTool = {
       category:   { type: 'string', description: "e.g. design / production / capa / training." },
       program_id: { type: 'string', description: 'UUID of an explicitly selected owned project for the canonical authored procedure.' },
       template_key: { type: 'string', description: 'Optional key from the Quality SOP template library; seeds editable canonical sections.' },
+      next_review_date: { type: 'string', description: 'Optional YYYY-MM-DD the user named for the periodic review. Once effective, the document is listed for review from this date. Never choose one yourself.' },
       reason:     STATED_REASON_INPUT,
     },
     required: ['title', 'doc_type', 'program_id', 'reason'],
