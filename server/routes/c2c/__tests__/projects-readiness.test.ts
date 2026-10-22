@@ -196,6 +196,15 @@ describe('GET /api/c2c/projects/:id: the same figure the card reads', () => {
     });
   });
 
+  it('an upper-case id in the URL reads the same measured figure (review of e6058e4126: it read "no sections")', async () => {
+    const MIXED = 'abcdef12-3456-4789-8abc-def123456789';
+    seatProgram(7, MIXED);
+    serve([section(MIXED, 'approved'), section(MIXED, 'todo')]);
+    const res = await request(app(7)).get(`/api/c2c/projects/${MIXED.toUpperCase()}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ readiness: 50, readinessState: 'measured' });
+  });
+
   it('scopes the read to this program and the caller’s organization', async () => {
     serve([]);
     await request(app(7)).get(`/api/c2c/projects/${P1}`);

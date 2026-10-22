@@ -170,7 +170,10 @@ function homeFigure(rows: SectionRow[]): DossierFigure {
  * The home filing's figure for each project, for the Projects list, the
  * detail read and a create's response. A project with no governed sections is
  * 'no_sections'; an unprovisioned store makes every figure 'unavailable'; any
- * other failure throws.
+ * other failure throws. The result is keyed by the ids as given; they are
+ * matched to the rows case-insensitively, because Postgres prints a uuid in
+ * lower case and a URL may not (an upper-case id read 'no_sections' for a
+ * program with sections: review of e6058e4126).
  */
 export async function readDossierFigures(db: Queryable, orgId: number, projectIds: string[]): Promise<Map<string, DossierFigure>> {
   const out = new Map<string, DossierFigure>();
@@ -185,11 +188,12 @@ export async function readDossierFigures(db: Queryable, orgId: number, projectId
   }
   const byProject = new Map<string, SectionRow[]>();
   for (const r of rows) {
-    const list = byProject.get(r.project_id) ?? [];
+    const key = String(r.project_id).toLowerCase();
+    const list = byProject.get(key) ?? [];
     list.push(r);
-    byProject.set(r.project_id, list);
+    byProject.set(key, list);
   }
-  for (const id of projectIds) out.set(id, homeFigure(byProject.get(id) ?? []));
+  for (const id of projectIds) out.set(id, homeFigure(byProject.get(id.toLowerCase()) ?? []));
   return out;
 }
 
