@@ -64,6 +64,10 @@ const TF_DIR = path.join(repoRoot, 'terraform', 'stack');
 const TEST_FILE = 'tests/boot_contract.tftest.hcl';
 const WORKFLOW = path.join(repoRoot, '.github', 'workflows', 'deploy-aws.yml');
 const PROVISION_WORKFLOW = path.join(repoRoot, '.github', 'workflows', 'provision-database.yml');
+// The names each job deploys to (MR-03 Stage 4): the resolve job loads one entry
+// into the job's environment at run time; the proof checks production's.
+const TARGETS = JSON.parse(fs.readFileSync(path.join(repoRoot, '.github', 'deploy-targets.json'), 'utf8'));
+const STAGING_RENDER = 'staging_builds_and_lets_production_read_its_images';
 const PREFLIGHT_STEP = 'Preflight — task definition must carry the production boot contract';
 const MIGRATE_PREFLIGHT_ID = 'migrate-preflight';
 const TAG = '[terraform-preflight-proof]';
@@ -84,9 +88,9 @@ function loadPreflight() {
   for (const [jobName, job] of Object.entries(wf.jobs ?? {})) {
     for (const step of job.steps ?? []) {
       if ((step.name ?? '').startsWith(PREFLIGHT_STEP)) {
-        const env = { ...(wf.env ?? {}), ...(job.env ?? {}), ...(step.env ?? {}) };
+        const env = { ...TARGETS.production, ...(wf.env ?? {}), ...(job.env ?? {}), ...(step.env ?? {}) };
         const mStep = (job.steps ?? []).find((st) => st.id === MIGRATE_PREFLIGHT_ID);
-        const migrate = mStep ? { run: mStep.run, env: { ...(wf.env ?? {}), ...(job.env ?? {}), ...(mStep.env ?? {}) } } : null;
+        const migrate = mStep ? { run: mStep.run, env: { ...TARGETS.production, ...(wf.env ?? {}), ...(job.env ?? {}), ...(mStep.env ?? {}) } } : null;
         return { jobName, run: step.run, env, migrate, needs: [].concat(job.needs ?? []), wf };
       }
     }
@@ -140,7 +144,7 @@ function checkProvisionSource(td) {
   const job = Object.values(wf.jobs ?? {}).find((j) => (j.steps ?? []).some((st) => st.id === 'source'));
   const step = job?.steps.find((st) => st.id === 'source');
   if (!step) return fail('provision-database.yml has no step with id "source"');
-  const res = runPreflight({ run: step.run, env: { ...(wf.env ?? {}), ...(job.env ?? {}), ...(step.env ?? {}) } }, td);
+  const res = runPreflight({ run: step.run, env: { ...TARGETS.production, ...(wf.env ?? {}), ...(job.env ?? {}), ...(step.env ?? {}) } }, td);
   if (res.status !== 0) {
     process.stderr.write(res.stdout + res.stderr);
     return fail(`provision-database.yml's source check refused the rendered task definition (exit ${res.status})`);
@@ -187,6 +191,11 @@ const CLI_TO_IAM = {
   's3 cp': ['s3:PutObject'],
   'cloudfront create-invalidation': ['cloudfront:CreateInvalidation'],
   'cloudfront get-distribution': ['cloudfront:GetDistribution'],
+  'ecr batch-get-image': ['ecr:BatchGetImage'],
+  'ecr put-image': ['ecr:PutImage'],
+  'ecr get-login-password': ['ecr:GetAuthorizationToken'],
+  // Needs no permission: every principal may ask who it is.
+  'sts get-caller-identity': [],
 };
 const ECR_LOGIN = ['ecr:GetAuthorizationToken'];
 const ECR_PUSH = ['ecr:BatchCheckLayerAvailability', 'ecr:InitiateLayerUpload', 'ecr:UploadLayerPart', 'ecr:CompleteLayerUpload', 'ecr:PutImage'];
@@ -232,6 +241,9 @@ function checkWorkflowIam() {
         if (String(st.uses ?? '').includes('amazon-ecr-login')) ECR_LOGIN.forEach((a) => need.add(a));
         const run = String(st.run ?? '');
         if (/\bdocker push\b/.test(run)) ECR_PUSH.forEach((a) => need.add(a));
+        // Promotion's copy (MR-03 Stage 4): it reads the source image and pushes
+        // it, layer by layer, into this account's repository.
+        if (/\bskopeo copy\b/.test(run)) [...ECR_PUSH, 'ecr:BatchGetImage', 'ecr:GetDownloadUrlForLayer'].forEach((a) => need.add(a));
         const calls = awsCalls(run);
         if (run.includes('scripts/ops/ecs-one-off-task.sh')) awsCalls(runner).forEach((c) => calls.add(c));
         for (const c of calls) {
@@ -365,16 +377,16 @@ function stringEnv(env) {
  * output passed the longest string Node can hold (ERR_STRING_TOO_LONG), which
  * crashed this proof, and with it the CI job that runs it.
  */
-function terraformTestLines(wantState) {
+function terraformTestLines(wantStates) {
   return new Promise((resolve, reject) => {
     const child = spawn('terraform', ['test', '-json', '-verbose', `-filter=${TEST_FILE}`], { cwd: TF_DIR });
-    const kept = { summary: null, state: null, errors: [] };
+    const kept = { summary: null, states: {}, errors: [] };
     const rl = readline.createInterface({ input: child.stdout, crlfDelay: Infinity });
     rl.on('line', (line) => {
       if (!line.trim()) return;
       const l = JSON.parse(line);
       if (l.type === 'test_summary') kept.summary = l;
-      else if (l.type === 'test_state' && l['@testrun'] === wantState) kept.state = l;
+      else if (l.type === 'test_state' && wantStates.includes(l['@testrun'])) kept.states[l['@testrun']] = l;
       if (l['@level'] === 'error') kept.errors.push(l['@message']);
     });
     child.stderr.on('data', () => {});
@@ -397,7 +409,7 @@ async function renderTaskDefinitions() {
       process.exit(1);
     }
   }
-  const t = await terraformTestLines('renders_the_boot_contract');
+  const t = await terraformTestLines(['renders_the_boot_contract', STAGING_RENDER]);
   const summary = t.summary;
   if (t.status !== 0 || !summary || summary.test_summary.status !== 'pass') {
     for (const m of t.errors) console.error(`  ${m}`);
@@ -407,7 +419,7 @@ async function renderTaskDefinitions() {
   const s = summary.test_summary;
   ok(`terraform test: ${s.passed} passed, ${s.failed} failed, ${s.errored} errored`);
 
-  const state = t.state;
+  const state = t.states.renders_the_boot_contract;
   if (!state) {
     console.error(`${TAG} FAIL — no state for run "renders_the_boot_contract"; cannot read the rendered task definition.`);
     process.exit(1);
@@ -418,10 +430,17 @@ async function renderTaskDefinitions() {
     return out;
   };
   const all = walk(state.test_state.root_module);
-  // The GitHub roles' rendered permissions, for checkWorkflowIam().
-  for (const r of all.filter((x) => x.type === 'aws_iam_role_policy' && x.address.includes('module.github_deploy'))) {
-    renderedIam[r.name] = JSON.parse(r.values.policy);
+  // The GitHub roles' rendered permissions, for checkWorkflowIam(): the deploy
+  // role as production renders it, and the build role as staging does
+  // (production has none: it never builds).
+  const iamOf = (s) => walk(s.test_state.root_module).filter((x) => x.type === 'aws_iam_role_policy' && x.address.includes('module.github_deploy'));
+  for (const r of iamOf(state)) if (r.name === 'deploy') renderedIam.deploy = JSON.parse(r.values.policy);
+  const staging = t.states[STAGING_RENDER];
+  if (!staging) {
+    console.error(`${TAG} FAIL — no state for run "${STAGING_RENDER}"; cannot read staging's build role.`);
+    process.exit(1);
   }
+  for (const r of iamOf(staging)) if (r.name === 'build') renderedIam.build = JSON.parse(r.values.policy);
   const tds = all.filter((r) => r.type === 'aws_ecs_task_definition');
   return Object.fromEntries(tds.map((r) => [r.name, {
     family: r.values.family,

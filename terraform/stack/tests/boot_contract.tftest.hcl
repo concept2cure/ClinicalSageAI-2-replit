@@ -607,19 +607,30 @@ run "the_site_is_served_with_security_headers" {
 
 run "production_names_are_the_ones_the_deploy_workflow_targets" {
   command = plan
+  # deploy-aws.yml and provision-database.yml read their names from
+  # .github/deploy-targets.json, one entry per target (MR-03 Stage 4). Each
+  # must be what this stack creates, or a deploy registers into
+  # infrastructure that does not exist.
   assert {
-    condition = alltrue([
-      for k, v in output.deploy_targets :
-      v == one(regex("\n  ${k}: ([^\\s]+)", file("../../.github/workflows/deploy-aws.yml")))
-      if k != "FRONTEND_BUCKET"
-    ])
-    error_message = "A production name differs from deploy-aws.yml: ${join("; ", [for k, v in output.deploy_targets : "${k} terraform=${v} workflow=${one(regex("\n  ${k}: ([^\\s]+)", file("../../.github/workflows/deploy-aws.yml")))}" if k != "FRONTEND_BUCKET" && v != one(regex("\n  ${k}: ([^\\s]+)", file("../../.github/workflows/deploy-aws.yml")))])}"
+    condition     = jsondecode(file("../../.github/deploy-targets.json")).production == { for k, v in output.deploy_targets : k => v if k != "FRONTEND_BUCKET" }
+    error_message = "deploy-targets.json's production entry differs from what this stack creates: ${jsonencode({ for k, v in output.deploy_targets : k => v if k != "FRONTEND_BUCKET" })}"
   }
   # The frontend bucket's name carries the account id, so the workflow reads it
-  # from the repository variable set from this stack's frontend_bucket output.
+  # from the environment variable set from this stack's frontend_bucket output.
   assert {
-    condition     = one(regex("\n  FRONTEND_BUCKET: ([^\n]+)", file("../../.github/workflows/deploy-aws.yml"))) == "$${{ vars.FRONTEND_BUCKET }}" && output.frontend_bucket == output.deploy_targets.FRONTEND_BUCKET
-    error_message = "deploy-aws.yml must publish to $${{ vars.FRONTEND_BUCKET }}, the repository variable set from `terraform output -raw frontend_bucket`, not a literal name."
+    condition     = strcontains(file("../../.github/workflows/deploy-aws.yml"), "FRONTEND_BUCKET: $${{ vars.FRONTEND_BUCKET }}") && output.frontend_bucket == output.deploy_targets.FRONTEND_BUCKET
+    error_message = "deploy-aws.yml must publish to $${{ vars.FRONTEND_BUCKET }}, the environment variable set from `terraform output -raw frontend_bucket`, not a literal name."
+  }
+}
+
+run "staging_names_are_the_ones_the_deploy_workflow_targets" {
+  command = plan
+  variables {
+    environment = "staging"
+  }
+  assert {
+    condition     = jsondecode(file("../../.github/deploy-targets.json")).staging == { for k, v in output.deploy_targets : k => v if k != "FRONTEND_BUCKET" }
+    error_message = "deploy-targets.json's staging entry differs from what the staging stack creates: ${jsonencode({ for k, v in output.deploy_targets : k => v if k != "FRONTEND_BUCKET" })}"
   }
 }
 
@@ -721,21 +732,15 @@ run "staging_is_distinct_from_production" {
 # (github_deploy.tf) against a cluster that does not exist.
 run "provision_workflow_names_are_the_ones_terraform_creates" {
   command = plan
+  # provision-database.yml takes its names from the same file, for the target
+  # it is given, so the first provision registers a family the deploy role can
+  # run (github_deploy.tf) in a cluster that exists.
   assert {
-    condition = alltrue([
-      for k, v in merge(output.deploy_targets, { ECS_PROVISION_TASK_FAMILY = "c2c-production-provision" }) :
-      v == one(regex("\n  ${k}: ([^\\s]+)", file("../../.github/workflows/provision-database.yml")))
-      # Provisioning derives from the database task (MR-03 OPS-16), not the API's.
-      if !contains(["FRONTEND_BUCKET", "ECS_API_TASK_FAMILY", "ECS_API_CONTAINER_NAME"], k)
-    ])
-    error_message = "A name in provision-database.yml differs from what Terraform creates."
-  }
-  assert {
-    condition = anytrue([
+    condition = strcontains(file("../../.github/workflows/provision-database.yml"), ".github/deploy-targets.json") && anytrue([
       for st in jsondecode(output.github_deploy_policies.deploy).Statement :
-      contains(st.Action, "ecs:RunTask") && try(contains(st.Resource, "arn:aws:ecs:us-east-1:123456789012:task-definition/c2c-production-provision:*"), false)
+      contains(st.Action, "ecs:RunTask") && try(contains(st.Resource, "arn:aws:ecs:us-east-1:123456789012:task-definition/${jsondecode(file("../../.github/deploy-targets.json")).production.ECS_PROVISION_TASK_FAMILY}:*"), false)
     ])
-    error_message = "The deploy role cannot run the provision family."
+    error_message = "provision-database.yml must read its names from .github/deploy-targets.json, and the deploy role must be able to run the provision family it names."
   }
 }
 
@@ -840,6 +845,75 @@ run "the_one_off_database_task_alone_holds_it" {
     )
     error_message = "The deploy role must be able to run the database task's family and pass its execution role."
   }
+}
+
+# MR-03 Stage 4 (OPS-10). Production never builds: it promotes, by digest, the
+# image staging built, deployed and smoke-tested. So production has no build
+# role, its deploy role may read staging's repository and nothing else of
+# staging's, and staging lets the production account read its images, never
+# push them. The account IDs are the founder's (F-4); these are test values.
+run "production_never_builds_and_promotes_from_staging" {
+  command = apply
+  variables {
+    staging_account_id = "444455556666"
+  }
+
+  assert {
+    condition     = output.github_build_role_arn == null
+    error_message = "Production must have no build role: nothing outside the environment may push an image it will run."
+  }
+  assert {
+    condition = anytrue([
+      for st in jsondecode(output.github_deploy_policies.deploy).Statement :
+      try(st.Sid, "") == "ReadTheImageToPromote"
+      && toset(flatten([st.Resource])) == toset(["arn:aws:ecr:us-east-1:444455556666:repository/${jsondecode(file("../../.github/deploy-targets.json")).staging.ECR_API_REPO}"])
+      && toset(flatten([st.Action])) == toset(["ecr:DescribeImages", "ecr:BatchGetImage", "ecr:GetDownloadUrlForLayer", "ecr:BatchCheckLayerAvailability"])
+    ])
+    error_message = "The production deploy role must read staging's repository, read only, to promote from it."
+  }
+  assert {
+    condition     = length(module.ecr.repository_policies) == 0
+    error_message = "No other account may read production's images."
+  }
+}
+
+run "staging_builds_and_lets_production_read_its_images" {
+  command = apply
+  variables {
+    environment           = "staging"
+    production_account_id = "111122223333"
+  }
+
+  assert {
+    condition = (
+      output.github_build_role_arn != null
+      && toset(jsondecode(module.github_deploy.build_trust).Statement[0].Condition.StringLike["token.actions.githubusercontent.com:sub"])
+      == toset(["repo:concept2cure/ClinicalSageAI-2-replit:ref:refs/tags/rc-*", "repo:concept2cure/ClinicalSageAI-2-replit:ref:refs/heads/concept2cure-v2"])
+    )
+    error_message = "Staging's build role must answer to rc-* tags and the branch, and to no v* tag."
+  }
+  assert {
+    condition = alltrue([
+      for k, pol in module.ecr.repository_policies : alltrue([
+        for st in jsondecode(pol).Statement :
+        toset(flatten([st.Principal.AWS])) == toset(["arn:aws:iam::111122223333:root"])
+        && toset(flatten([st.Action])) == toset(["ecr:DescribeImages", "ecr:BatchGetImage", "ecr:GetDownloadUrlForLayer", "ecr:BatchCheckLayerAvailability"])
+      ])
+    ]) && length(module.ecr.repository_policies) == 1
+    error_message = "Staging's repository must let the production account read its images, and nothing more."
+  }
+  assert {
+    condition     = !strcontains(output.github_deploy_policies.deploy, "ReadTheImageToPromote")
+    error_message = "Staging promotes from nowhere."
+  }
+}
+
+run "refuses_an_account_id_that_is_not_one" {
+  command = plan
+  variables {
+    staging_account_id = "4444-5555-6666"
+  }
+  expect_failures = [var.staging_account_id]
 }
 
 # ── Each of these must FAIL. A check only ever seen to pass has not been tested.

@@ -422,8 +422,39 @@ variable "github_repository" {
 
 variable "github_build_subjects" {
   type        = list(string)
-  description = "OIDC subjects (after repo:<repo>:) for the build role: jobs outside the GitHub environment. deploy-aws.yml runs on v* tags and on workflow_dispatch from the branch."
-  default     = ["ref:refs/tags/v*", "ref:refs/heads/concept2cure-v2"]
+  description = <<-EOT
+    OIDC subjects (after repo:<repo>:) for the build role: build-push, which
+    runs outside the GitHub environment. Null (the default) is the
+    environment's own: staging builds, on rc-* tags and on dispatch from the
+    branch; production never builds (it promotes the image staging verified,
+    MR-03 Stage 4), so it has no build role.
+  EOT
+  default     = null
+}
+
+# Promotion across accounts (MR-03 Stage 4; the account IDs are F-4's). Staging
+# names the production account, which may then read its image repository;
+# production names the staging account, whose repository its deploy role may
+# then read. Empty: no promotion path, and a production deploy is refused at
+# its promote step.
+variable "production_account_id" {
+  type        = string
+  description = "Staging only: the production account, which may read staging's images to promote them."
+  default     = ""
+  validation {
+    condition     = can(regex("^([0-9]{12})?$", var.production_account_id))
+    error_message = "An AWS account ID is 12 digits, or empty."
+  }
+}
+
+variable "staging_account_id" {
+  type        = string
+  description = "Production only: the staging account, whose verified images production promotes."
+  default     = ""
+  validation {
+    condition     = can(regex("^([0-9]{12})?$", var.staging_account_id))
+    error_message = "An AWS account ID is 12 digits, or empty."
+  }
 }
 
 variable "create_github_oidc_provider" {

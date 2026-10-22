@@ -83,6 +83,7 @@ module "stack" {
 
   # The account's GitHub OIDC provider is created here.
   create_github_oidc_provider = true
+  staging_account_id          = var.staging_account_id
 
   jwt_secret               = var.jwt_secret
   refresh_token_secret     = var.refresh_token_secret
