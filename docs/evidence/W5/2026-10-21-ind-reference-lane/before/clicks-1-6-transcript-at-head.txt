@@ -1,0 +1,75 @@
+# program BX-512 = 547ccb6c-b31d-4d8a-83d7-0d9594943265
+
+  ## Click 1 — open BX-512 from Projects
+   identity: Sponsor=Concept2Cure Therapeutics | Product=Vorelinib · BX-512 | Indication=KIT-mutant gastrointestinal stromal tumor · 4L+ | IND number=000512
+
+  ## Click 2a — record the applicant identity (sponsor record, then the program binding)
+   sponsor: Sponsor record saved — it is not bound to this program. Select it and save the program facts to bind it.
+   program facts: Program facts saved.
+   recorded: Recorded sponsor: Concept2Cure Therapeutics. DUNS: 000000512. Regulatory contact: Sarah Chen · +1 (617) 555-0151 · regulatory@concept2cure.example. Authorized representative: JM Smith · Chief Scientific Officer.
+
+  ## Click 2b — Form FDA 1571: build & check, then the PDF
+   build: REQUIRED FIELDS PRESENT
+   rendered 1571: FDA-1571.pdf 2922079 bytes
+
+  ## Click 2c — file the completed 1571 at m1.1 in sequence 0000
+   sequences offered: Choose a sequence… | 0000 · original · Draft
+   stand-in: the rendered 1571 plus one appended comment line — not sponsor-completed, not signed
+   attach: REQUIRED FIELDS PRESENT · COMPLETED FORM FILED · m1.1 · sequence 0000 · 2.8 MB · SHA-256 4aee582d02ff…
+   notices: Program facts saved. | Completed FDA 1571 filed at m1.1 in sequence 0000, with your attestation that it is the completed, signed form.
+
+  ## Click 3 — place the approved 3.2.S.4 document in 0000, at the code the dialog proposes
+   editor: /concept2cure/document-authoring?program=547ccb6c-b31d-4d8a-83d7-0d9594943265
+   sequences offered: Choose a sequence… | 0000 · original · Draft
+   verdict: Files as 3.2.S.4 at m3/3-2-s-4/. | Placed as leaf 3.2.S.4 in sequence 0000 · original — server-confirmed (leaf #54, from Authored document #60).
+
+  ## Click 3b — Vault: upload 3.2.S.4.2 analytical procedures v1.0, confirm its filing, place it in 0000
+   upload: Auto-filed BX-512-analytical-procedures.pdf → Module 3 · Quality — suggested until confirmed.
+   filing: FILED | FILED | FILED | v1.0 | Folder | v1.0 · current
+   sequences offered: Choose a sequence… | 0000 · original · Draft
+   verdict: This version would not be transmitted: not reviewed. It can be placed now, but the sequence will not be frozen, dispatched or transmitted until this leaf names an approved, current version. | Files as 3.2.S.4.2 at m3/3-2-s-4-2/. | Filed as leaf 3.2.S.4.2 in sequence 0000. The vault copy is what will be assembled — nothing was duplicated. It will not be transmitted until this leaf names an approved, current version (not reviewed).
+
+  ## Click 4 — compile and export sequence 0000
+   compile surface: /concept2cure/ectd-compile?program=547ccb6c-b31d-4d8a-83d7-0d9594943265
+   "Submission" selector reads: initial
+   leaf hierarchy: Leaf hierarchy | index.xml — ICH backbone | ectd | m1-administrative-information-and-prescribing-information | Module 1 regional backbone (us-regional.xml) NEW m1/us/us-regional.xml | m3-quality | m3-2-body-of-data | m3-2-s-drug-substance | Control of Drug Substance (CTD 3.2.S.4) NEW m3/3-2-s-4/3-2-s-4-coauthor-documents-60.pdf | BX-512-analytical-procedures NEW m3/3-2-s-4-2/bx-512-vault-documents-51bc0b59-864d-4e08-95ec-e284cb9cc020.pdf | m1/us/us-regional.xml — regional Module 1 | fda-regional | m1-regional | m1-1-forms | Form FDA 1571 (sponsor-completed) NEW 1-1/form-fda-1571-pdf-rendered-leaf-files-1.pdf
+   package facts: Region FDA · recorded on sequence 0000 | Validate | The package references eCTD DTDs that are not bundled under util/dtd/ — it is not self-contained. Vendor the ICH/regional DTDs before transmission. | Package DTD validation has not passed. Inspect the per-file XML/DTD execution and checksum evidence before treating this package as submission-ready. | Sequence 0000 · region FDA · package SHA-256 22f268c5f7fd44e8… | Recorded — its leaf manifest is what the next sequence is diffed against. | 2 of 2 PDF leaves converted to PDF/A. | One FDA form shipped as FDA issued, with FDA's security settings intact, and not converted: form-fda-1571-pdf-rendered-leaf-files-1.pdf | Package DTD validation | DTD validation has not passed — unverified. | Package SHA-256 22f268c5f7fd44e850f4f3fcf250955ba99ae5e4ca30dd30270deef6fba702c2 | XML FILE	XML STRUCTURE	DOCTYPE	DTD EXECUTION	DIAGNOSTICS | Declared DTD ich-ectd-3-2.dtd is missing from the package. | Declared DTD us-regional-v3-3.dtd is missing from the package. | Validation findings | WARNING	—	Package DTD validation has not passed; absent, incomplete or failed evidence is unverified.	Inspect per-file validation and integrity evidence, resolve the reported gaps, and compile again. | WARNING	—	index.xml: DTD validation did not run cleanly and completely; unverified. Declared DTD ich-ectd-3-2.dtd is missing from the package.	Resolve the XML, referenced supportive files or validator capability and compile again. | WARNING	—	m1/us/us-regional.xml: DTD validation did not run cleanly and completely; unverified. Declared DTD us-regional-v3-3.dtd is missing from the package.	Resolve the XML, referenced supportive files or validator capability and compile again. | NAME	SEQUENCE	LEAF MANIFEST	TYPE	VERSION	STATUS	AGENCY VALIDATOR	COMPILED | IND Compilation — Program BX-512	0000	manifest recorded	initial	1.0	COMPLETED	 | Import eValidator report	10/22/2026, 1:00:19 AM | Package DTD validation | DTD validation has not passed — unverified. | Package SHA-256 22f268c5f7fd44e850f4f3fcf250955ba99ae5e4ca30dd30270deef6fba702c2 | XML FILE	XML STRUCTURE	DOCTYPE	DTD EXECUTION	DIAGNOSTICS
+   notices: No orchestrator run loaded
+Build a run from this program’s recorded filing and governed inputs, select a saved run, or load an existing run id. Missing inputs remain visible in the saved step outcomes. | eCTD backbone compiled — see what is still needed below.
+   download package control: 1
+   exported: 000512-0000-fda.zip 2937393 bytes
+
+  ## Click 5 — dispatch readiness on sequence 0000 (Submission Center → Dispatch)
+   dispatch tab: Dispatch | Working sequence | 0000 · original · Draft | DRAFT | Dispatch · sequence 0000 | dispatch readiness · QC | Dispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate below is computed server-side from the canonical leaves and open Shadow Review criticals — the same gate the freeze/dispatch endpoints enforce atomically with the e-signature. | Dispatch blocked — 4 blockers | 7 open error-severity validation finding(s) must be resolved before dispatch. | 1 leaf points at a document not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved. | No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting. | Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:6). | 7 validation errors · 0 unacknowledged shadow criticals · 0 shadow reviews run · 3 leaves · status Draft | No completed Shadow Review has run for this sequence — that is one of the reasons the gate blocks. Dispatch is not permitted until it has been adversarially reviewed. | You created this sequence, so you cannot sign its freeze or dispatch. Separation of duties requires a different colleague with signing rights to sign both steps — arrange who that is before the sequence is ready. | TEST PACKAGE | Assembles sequence 0000's leaves into an eCTD package on the server, reports what in those leaves would stop it being transmitted, and discards it. Nothing is sent. The test package carries no agency identifiers: its application number and applicant are placeholders, not the ones on record. | Assemble a test package | Validate and compile this sequence | PACKAGE AND TRANSMIT | Download an inspection copy of the package (zip) | Transmit opens once sequence 0000 is dispatched. It sends this package to the region's agency gateway, under its own Part 11 e-signature, and only when that gateway holds credentials for this organization. | Freeze and dispatch stay locked while the gate blocks. The server enforces this same gate atomically with the e-signature, so it cannot be bypassed from here. | Run dispatch QC
+
+  ## Click 6a — Submission Center: start sequence 0001 (amendment)
+   start: Sequence 0001 created for Vorelinib · KIT-mutant GIST (IND) — server-confirmed.
+
+  ## Click 6b — withdraw the 0000 leaf at 3.2.S.4 from 0001
+   sequences offered: Choose a sequence… | 0000 · original · Draft | 0001 · amendment · Draft
+   verdict: Files as 3.2.S.4 at m3/3-2-s-4/. | Placed as leaf 3.2.S.4 in sequence 0001 · amendment — server-confirmed (leaf #56, from Authored document #60).
+
+  ## Click 6c — Vault: upload the revised file under the same name, as version 2.0, and place it in 0001 as Replace
+   check-in offered: 1
+   versions: Added BX-512-analytical-procedures.pdf to "BX-512-analytical-procedures" as v2.0. It keeps the document's filing (Module 3 · Quality), and the earlier versions stay in the Vault. | Required list from the IND rule pack for fda, version ich-m4-v2.2. | Re-reads every stored version and checks it against the SHA-256 recorded when it was received. Each result is recorded. | Include earlier versions | Module 3 · quality · v2.0, 2 versions · Not sent for review | v2.0 · 2 versions | Kept from version 1.0 when this version was added. | No description is recorded for this version. AnA records one after reading the whole document; ask AnA to catalog it.
+   sequences offered: Choose a sequence… | 0000 · original · Draft | 0001 · amendment · Draft
+   observed: the enabled submit button never settles (1-px layout oscillation; .de-body scrollHeight/clientHeight/clientWidth over 720 ms: 706/706/519 706/706/519 706/706/519 706/706/519 706/706/519 706/706/519); clicked with force, as a person can
+   verdict: This version would not be transmitted: not reviewed. It can be placed now, but the sequence will not be frozen, dispatched or transmitted until this leaf names an approved, current version. | Files as 3.2.S.4.2 at m3/3-2-s-4-2/. | Filed as leaf 3.2.S.4.2 in sequence 0001. The vault copy is what will be assembled — nothing was duplicated. It will not be transmitted until this leaf names an approved, current version (not reviewed).
+
+  ## Click 6d — rehearsal compile and export of 0001
+   compile surface: /concept2cure/ectd-compile?program=547ccb6c-b31d-4d8a-83d7-0d9594943265
+   "Submission" selector reads: initial
+   leaf hierarchy: Leaf hierarchy | index.xml — ICH backbone | ectd | m1-administrative-information-and-prescribing-information | Module 1 regional backbone (us-regional.xml) NEW m1/us/us-regional.xml | m3-quality | m3-2-body-of-data | m3-2-s-drug-substance | Control of Drug Substance (CTD 3.2.S.4) DELETE · withdraws ../0000/index.xml#leaf-3-2-S-4-3-2-s-4-coauthor-documents-60 | m1/us/us-regional.xml — regional Module 1 | It carries no leaves — this sequence files nothing in it.
+   lifecycle: Lifecycle | Rehearsal. Acts are bound to the latest recorded compile of each earlier sequence, through sequence 0000; 0000 was never filed. For an agency validator only: transmit binds only against filed sequences. | OPERATION	SECTION	FILE	MODIFIED-FILE | delete	3.2.S.4	3-2-s-4-coauthor-documents-60.pdf	../0000/index.xml#leaf-3-2-S-4-3-2-s-4-coauthor-documents-60 | Left out of the package: | 3.2.S.4.2: declared replace: no filed leaf named bx-512-vault-documents-a02e677f-4e89-4f14-a18d-34faf4b01824.pdf in this section to supersede (filing it as new would leave the filed version current) — bind it to the filed file, or declare it new
+   package facts: Region FDA · recorded on sequence 0001 | Rehearsal — bind against recorded, unfiled sequences | Validate | Rehearsal: bound against sequence 0000, which was never filed. This package is for an agency validator; transmit binds only against filed sequences and would not send these acts. | The package references eCTD DTDs that are not bundled under util/dtd/ — it is not self-contained. Vendor the ICH/regional DTDs before transmission. | Package DTD validation has not passed. Inspect the per-file XML/DTD execution and checksum evidence before treating this package as submission-ready. | Sequence 0001 · region FDA · package SHA-256 30a6f080b35d1a63… | Recorded — its leaf manifest is what the next sequence is diffed against. | Package DTD validation | DTD validation has not passed — unverified. | Package SHA-256 30a6f080b35d1a639753cbff498f900afba37569d37aa4d22b3659db24c885d2 | XML FILE	XML STRUCTURE	DOCTYPE	DTD EXECUTION	DIAGNOSTICS | Declared DTD ich-ectd-3-2.dtd is missing from the package. | Declared DTD us-regional-v3-3.dtd is missing from the package. | Rehearsal. Acts are bound to the latest recorded compile of each earlier sequence, through sequence 0000; 0000 was never filed. For an agency validator only: transmit binds only against filed sequences. | Validation findings | WARNING	—	Package DTD validation has not passed; absent, incomplete or failed evidence is unverified.	Inspect per-file validation and integrity evidence, resolve the reported gaps, and compile again. | WARNING	—	index.xml: DTD validation did not run cleanly and completely; unverified. Declared DTD ich-ectd-3-2.dtd is missing from the package.	Resolve the XML, referenced supportive files or validator capability and compile again. | WARNING	—	m1/us/us-regional.xml: DTD validation did not run cleanly and completely; unverified. Declared DTD us-regional-v3-3.dtd is missing from the package.	Resolve the XML, referenced supportive files or validator capability and compile again. | NAME	SEQUENCE	LEAF MANIFEST	TYPE	VERSION	STATUS	AGENCY VALIDATOR	COMPILED | IND Compilation — Program BX-512 (rehearsal — prior not filed)	0001	manifest recorded	rehearsal — prior not filed	1.0	COMPLETED	 | Import eValidator report	10/22/2026, 1:01:44 AM | IND Compilation — Program BX-512	0000	manifest recorded	initial	1.0	COMPLETED	 | Import eValidator report	10/22/2026, 1:00:19 AM | Package DTD validation
+   notices: No orchestrator run loaded
+Build a run from this program’s recorded filing and governed inputs, select a saved run, or load an existing run id. Missing inputs remain visible in the saved step outcomes. | eCTD backbone compiled — see what is still needed below.
+   download package control: 1
+   exported: 000512-0001-fda-rehearsal.zip 1896 bytes
+
+  console errors: [
+  "[Click 6c] Failed to load resource: the server responded with a status of 409 (Conflict)"
+]
+  failed/4xx+ requests: [
+  "[Click 6c] 409 POST http://localhost:5000/api/vault/ingest"
+]

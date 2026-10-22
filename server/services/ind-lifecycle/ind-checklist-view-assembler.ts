@@ -34,6 +34,7 @@ import { compareSectionCode, normalizeCtdCode } from '../../../shared/regulatory
 import { IND_FORM_REQUIREMENTS, indFormForDocumentType } from '../ectd/section-to-ctd';
 import { leafSourceKey } from '../ectd/leaf-source-resolver';
 import { canonicalIdFor } from '../c2c/document-alias-map';
+import { bindToFiledPredecessor, readVaultPredecessorKeys, type LineageBinding } from '../ectd/version-lineage-binding';
 
 const MAX_DOCS = 10;
 
@@ -485,9 +486,15 @@ interface ChecklistLeaf {
  * An untouched document carries forward. A named delete acts only on that
  * document; an unnamed delete binds only to a unique current leaf in its
  * section, matching package-from-core's refusal to guess. No history is written.
+ *
+ * A Vault version acts on the current entry in its section that carries a
+ * recorded earlier version of it, as package-from-core binds it (P-42,
+ * version-lineage-binding): a replace, or a version placed as new, supersedes
+ * that entry; an append keeps it; a withdrawal removes it. Two such entries
+ * bind nothing and say so.
  */
 function currentLeaves(
-  leaves: ChecklistLeaf[], seqToSub: Map<number, number>,
+  leaves: ChecklistLeaf[], seqToSub: Map<number, number>, predecessors: ReadonlyMap<string, string[]> = new Map(),
 ): { leaves: ChecklistLeaf[]; issues: Map<number, string[]> } {
   const bySub = new Map<number, Map<string, ChecklistLeaf>>();
   const issues = new Map<number, string[]>();
@@ -505,26 +512,67 @@ function currentLeaves(
       list.push(`${code}: ${message}`);
       issues.set(sub, list);
     };
+    const earlier = () => earlierVersionEntry(current, leaf, code, predecessors);
     if (op === 'delete') {
-      if (named) {
-        if (!current.delete(key)) issue('withdrawal names no current document');
-      } else {
-        const matches = [...current].filter(([, l]) => sectionKey(str(l.section_code)) === code);
-        if (matches.length === 1) current.delete(matches[0][0]);
-        else issue('withdrawal needs one unambiguous current document');
-      }
+      const problem = named ? withdrawNamed(current, key, earlier) : withdrawOnlyInSection(current, code);
+      if (problem) issue(problem);
       continue;
     }
     if (!['new', 'replace', 'append'].includes(op)) {
       issue('unrecognised lifecycle operation');
       continue;
     }
-    if ((op === 'replace' || op === 'append') && !current.has(key)) {
-      issue(`${op} names no current document`);
-    }
+    const problem = current.has(key) ? null : supersedeEarlier(current, op, earlier());
+    if (problem) issue(problem);
     current.set(key, leaf);
   }
   return { leaves: [...bySub.values()].flatMap((m) => [...m.values()]), issues };
+}
+
+/** The current entry carrying a recorded earlier version of a Vault leaf's document (P-42). */
+function earlierVersionEntry(
+  current: ReadonlyMap<string, ChecklistLeaf>, leaf: ChecklistLeaf, code: string, predecessors: ReadonlyMap<string, string[]>,
+): LineageBinding<string> {
+  if (leaf.document_table !== 'vault_documents' || !leaf.document_uuid) return { kind: 'none' };
+  return bindToFiledPredecessor([...current.keys()], predecessors.get(String(leaf.document_uuid)), (entry, source) => entry === `${code}/${source}`);
+}
+
+/** A named withdrawal removes the document it names, else the current earlier version of it. */
+function withdrawNamed(current: Map<string, ChecklistLeaf>, key: string, earlier: () => LineageBinding<string>): string | null {
+  if (current.delete(key)) return null;
+  const lineage = earlier();
+  if (lineage.kind === 'bound') {
+    current.delete(lineage.target);
+    return null;
+  }
+  return lineage.kind === 'ambiguous'
+    ? `withdrawal names a document ${lineage.count} of whose earlier versions are current`
+    : 'withdrawal names no current document';
+}
+
+/** An unnamed withdrawal binds only to a unique current leaf in its section. */
+function withdrawOnlyInSection(current: Map<string, ChecklistLeaf>, code: string): string | null {
+  const matches = [...current].filter(([, l]) => sectionKey(str(l.section_code)) === code);
+  if (matches.length !== 1) return 'withdrawal needs one unambiguous current document';
+  current.delete(matches[0][0]);
+  return null;
+}
+
+/** A document not yet current supersedes the current earlier version of it; an append keeps that version. */
+function supersedeEarlier(current: Map<string, ChecklistLeaf>, op: string, lineage: LineageBinding<string>): string | null {
+  if (lineage.kind === 'bound') {
+    if (op !== 'append') current.delete(lineage.target);
+    return null;
+  }
+  if (lineage.kind === 'ambiguous') return `${op} of a document ${lineage.count} of whose earlier versions are current`;
+  return op === 'replace' || op === 'append' ? `${op} names no current document` : null;
+}
+
+/** The recorded earlier versions of every Vault document the leaves name (P-42). */
+async function vaultPredecessorsOf(orgId: number, leaves: ChecklistLeaf[]): Promise<Map<string, string[]>> {
+  const uuids = leaves.flatMap((l) => (l.document_table === 'vault_documents' && l.document_uuid ? [String(l.document_uuid)] : []));
+  if (uuids.length === 0) return new Map();
+  return readVaultPredecessorKeys({ query: (sql, params) => pool.query(sql, params) }, orgId, uuids);
 }
 
 function applyLifecycleIssues(readiness: IndReadinessReport, messages: string[]): void {
@@ -585,7 +633,7 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
   const allLeaves = leavesRes.rows as ChecklistLeaf[];
 
   const seqToSub = new Map<number, number>(seqRows.map((r) => [Number(r.id), Number(r.submission_id)]));
-  const { leaves, issues } = currentLeaves(allLeaves, seqToSub);
+  const { leaves, issues } = currentLeaves(allLeaves, seqToSub, await vaultPredecessorsOf(orgId, allLeaves));
 
   /* Forms completed by the SPONSOR rather than by authoring.
      1571/1572/3674 are signed FDA forms: a sponsor completes and signs the
