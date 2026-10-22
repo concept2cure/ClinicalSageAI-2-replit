@@ -48,6 +48,7 @@ import { useLiveData } from '../dataConnect';
 import { shellProgramId, useShellProject } from '../shellProject';
 import { versionsPath, isVersionsShape, type VersionsShape } from './VaultVersions';
 import { stageLabel } from './VaultLifecycle';
+import { stashNavParamsForTarget } from '../navParams';
 import {
   type Occupancy,
   type SequenceLeafRow,
@@ -321,12 +322,15 @@ function confirmedPlacementVerdict(row: PlacedLeaf, sequence: string, refusal: s
   return { kind: auditWarning ? 'error' : 'ok', message: placedMessage(row.sectionCode, sequence, refusal) + auditWarning };
 }
 
-function FilingRecovery({ placed, uncertain, onNav, onClose }: {
-  placed: boolean; uncertain: boolean; onNav?: (id: string) => void; onClose: () => void;
+/** F10 (break 13): opens on the sequence it went into, or was being placed into, in the Builder, as AuthoringPlaceIntoFiling does.
+ *  The chosen sequence is the placed one: a receipt for another is not confirmed, and the fields lock once placed. */
+function FilingRecovery({ placed, uncertain, submissionId, seq, onNav, onClose }: {
+  placed: boolean; uncertain: boolean; submissionId: number | null; seq: { id: number } | null; onNav?: (id: string) => void; onClose: () => void;
 }) {
   if (!onNav || (!placed && !uncertain)) return null;
+  const open = () => { stashNavParamsForTarget('submission-center', { submissionId: String(submissionId ?? ''), sequenceId: String(seq?.id ?? ''), ws: 'builder' }); onClose(); onNav('submission-center'); };
   return <div className="de-field">
-    <button className="de-btn ghost" onClick={() => { onClose(); onNav('submission-center'); }}>
+    <button className="de-btn ghost" onClick={open}>
       {placed ? 'Open in Submission Center' : 'Check filing status'}
     </button>
   </div>;
@@ -615,7 +619,7 @@ function VaultPlaceIntoSubmissionForDocument({
           )}
 
           {verdict && <VerdictLine verdict={verdict} />}
-          <FilingRecovery placed={Boolean(placed)} uncertain={needsReconciliation} onNav={onNav} onClose={onClose} />
+          <FilingRecovery placed={Boolean(placed)} uncertain={needsReconciliation} submissionId={target.subId} seq={seq} onNav={onNav} onClose={onClose} />
         </div>
 
         <div className="de-f">

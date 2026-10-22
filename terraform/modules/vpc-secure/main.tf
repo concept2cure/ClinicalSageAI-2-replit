@@ -11,11 +11,15 @@ resource "aws_vpc" "this" {
 # ── Public subnets (ALB) ────────────────────────────────────────────────────
 
 resource "aws_subnet" "public" {
-  count                   = length(var.public_subnets)
-  vpc_id                  = aws_vpc.this.id
-  cidr_block              = var.public_subnets[count.index]
-  availability_zone       = element(var.azs, count.index)
-  map_public_ip_on_launch = true
+  count             = length(var.public_subnets)
+  vpc_id            = aws_vpc.this.id
+  cidr_block        = var.public_subnets[count.index]
+  availability_zone = element(var.azs, count.index)
+  # Nothing here needs an address from the subnet: the internet-facing ALB's
+  # nodes are addressed by AWS, the NAT gateway has its own EIP. Anything else
+  # launched here by mistake stays unreachable (MR-02 hand-on, Semgrep
+  # aws-subnet-has-public-ip-address; tests/public_subnets.tftest.hcl).
+  map_public_ip_on_launch = false
   tags                    = merge(var.tags, { Name = "ros-part11-public-${count.index}" })
 }
 

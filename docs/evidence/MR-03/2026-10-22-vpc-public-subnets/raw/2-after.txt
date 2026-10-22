@@ -1,0 +1,15 @@
+# After: validate on every root, terraform test on the stack and every module with tests
+terraform/bootstrap                  Success! The configuration is valid. 
+terraform/environments/production    Success! The configuration is valid. 
+terraform/environments/staging       Success! The configuration is valid. 
+terraform/stack                      Success! 74 passed, 0 failed. 
+terraform/modules/alb                Success! 4 passed, 0 failed. 
+terraform/modules/cloudfront         Success! 9 passed, 0 failed. 
+terraform/modules/compliance-evidence Success! 5 passed, 0 failed. 
+terraform/modules/github-deploy-roles Success! 6 passed, 0 failed. 
+terraform/modules/vpc-secure         Success! 3 passed, 0 failed. 
+
+# trivy config (v0.69.3), HIGH and CRITICAL, on the module after the change
+│ Target  │   Type    │ Misconfigurations │
+│ .       │ terraform │         0         │
+│ main.tf │ terraform │         0         │
