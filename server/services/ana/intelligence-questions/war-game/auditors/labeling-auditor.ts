@@ -30,6 +30,47 @@ function numericVal(val: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/* A yes_no answer is a boolean from the UI and 'yes'/'no' from the AnA tool
+   surface (shared/ana/question-predicate.ts coerces the same way). */
+function isYes(val: unknown): boolean {
+  return val === true || (typeof val === 'string' && /^(yes|true)$/i.test(val.trim()));
+}
+
+function isNo(val: unknown): boolean {
+  return val === false || (typeof val === 'string' && /^(no|false)$/i.test(val.trim()));
+}
+
+/* 2026-10-22: rules converged onto the fields flows/labeling.ts asks. A rule
+   still reading a key the interview never asks is reported NOT ASSESSED by
+   the war-game engine; it was left as is because the interview has no
+   question asking the same thing.
+
+   The interview branches on `product_type` at its first node: a device or
+   IVD goes to device_labeling_801, an OTC drug to otc_drug_facts, and every
+   other answer (blank included, via defaultNext) to the prescribing-
+   information nodes. A PI field is never asked of an OTC drug or a device,
+   so its blank is not an omission there. */
+function onPrescribingPath(answers: Record<string, unknown>): boolean {
+  return !['otc_drug', 'medical_device', 'ivd'].includes(String(answers.product_type ?? ''));
+}
+
+/** FPI section `n` (21 CFR 201.57(c)) is among those the labeling includes. */
+function includesFpiSection(answers: Record<string, unknown>, n: string): boolean {
+  const sections = answers.fpi_sections_included;
+  return Array.isArray(sections) && sections.map(String).includes(n);
+}
+
+/** The Drug Facts panel fields of otc_drug_facts (21 CFR 201.66(c)). */
+const DRUG_FACTS_FIELDS = [
+  'otc_active_ingredients', 'otc_purpose', 'otc_uses', 'otc_warnings',
+  'otc_directions', 'otc_inactive_ingredients', 'otc_questions_number',
+] as const;
+
+/** The 12.3 Pharmacokinetics fields of mechanism_and_pk. */
+const PK_FIELDS = [
+  'absorption_bioavailability', 'distribution_protein_binding', 'metabolism_enzymes', 'elimination_half_life',
+] as const;
+
 function finding(
   id: string,
   dimension: AuditDimension,
@@ -81,7 +122,7 @@ const rules: AuditRule[] = [
     question: 'The product has known serious risks that may warrant a boxed warning, yet none is included. Can the sponsor justify the absence of a boxed warning given the safety profile?',
     check(answers) {
       const hasSerious = answers.serious_risks === true || answers.serious_risks === 'yes' || answers.serious_risks === 'Yes';
-      if (hasSerious && isBlank(answers.boxed_warning)) {
+      if (hasSerious && isBlank(answers.boxed_warning_text)) {
         return finding(
           this.id,
           this.dimension,
@@ -93,7 +134,7 @@ const rules: AuditRule[] = [
           'Per FDA guidance (2011) on the Warnings and Precautions, Contraindications and Boxed Warning sections (cited by title), a boxed warning is warranted when there is an adverse reaction so serious relative to the drug\'s benefit that it is essential to consider in deciding whether to prescribe the drug.',
           '21 CFR 201.57(c)(1); 21 CFR 201.80(e); FDA guidance (2011), Warnings and Precautions, Contraindications, and Boxed Warning Sections of Labeling (title only)',
           'Evaluate whether the identified serious risks meet the threshold for a boxed warning. If so, draft the warning using the format prescribed by 21 CFR 201.57(c)(1) and include it in both Highlights and Full Prescribing Information.',
-          ['boxed_warning', 'serious_risks', 'warnings_precautions'],
+          ['boxed_warning_text', 'serious_risks', 'boxed_warning_required'],
         );
       }
       return null;
@@ -105,7 +146,7 @@ const rules: AuditRule[] = [
     title: 'Contraindications Section Missing',
     question: 'The labeling does not include a Contraindications section. Every prescription drug label must address situations where the drug should not be used. How does the sponsor intend to inform prescribers of absolute contraindications?',
     check(answers) {
-      if (isBlank(answers.contraindications)) {
+      if (onPrescribingPath(answers) && isBlank(answers.contraindications_list)) {
         return finding(
           this.id,
           this.dimension,
@@ -116,7 +157,7 @@ const rules: AuditRule[] = [
           'A Contraindications section is required per 21 CFR 201.57(c)(5) and must describe situations in which the drug should not be used because the risk clearly outweighs any possible therapeutic benefit.',
           '21 CFR 201.57(c)(5); FDA PLR Guidance (2013)',
           'Include a Contraindications section listing all conditions, patient populations, or concomitant therapies for which the drug is contraindicated, with supporting evidence from clinical or nonclinical data.',
-          ['contraindications', 'warnings_precautions'],
+          ['contraindications_list', 'contraindication_count'],
         );
       }
       return null;
@@ -128,7 +169,7 @@ const rules: AuditRule[] = [
     title: 'Adverse Reactions Section Missing',
     question: 'The labeling omits an Adverse Reactions section entirely. This is a fundamental regulatory deficiency. How will healthcare providers assess the benefit-risk profile without adverse event data?',
     check(answers) {
-      if (isBlank(answers.adverse_reactions)) {
+      if (onPrescribingPath(answers) && isBlank(answers.clinical_trial_experience_summary)) {
         return finding(
           this.id,
           this.dimension,
@@ -139,7 +180,7 @@ const rules: AuditRule[] = [
           'An Adverse Reactions section is mandatory per 21 CFR 201.57(c)(7). It must list adverse reactions identified in clinical trials and postmarketing experience.',
           '21 CFR 201.57(c)(7); ICH E2C(R2); FDA PLR Guidance (2013)',
           'Compile all adverse reactions from clinical trial data and postmarketing surveillance. Present them by frequency and severity, with tables for common reactions (>=1%) and narratives for serious but less common events.',
-          ['adverse_reactions', 'clinical_trial_data'],
+          ['clinical_trial_experience_summary', 'most_common_ars'],
         );
       }
       return null;
@@ -151,7 +192,7 @@ const rules: AuditRule[] = [
     title: 'Dosage and Administration Missing',
     question: 'The labeling does not specify dosage and administration instructions. Without this information, how can prescribers safely and effectively administer this product to patients?',
     check(answers) {
-      if (isBlank(answers.dosage_administration)) {
+      if (onPrescribingPath(answers) && isBlank(answers.recommended_dosage)) {
         return finding(
           this.id,
           this.dimension,
@@ -162,7 +203,7 @@ const rules: AuditRule[] = [
           'The Dosage and Administration section is required per 21 CFR 201.57(c)(3) and must include the recommended dosage, route, frequency, duration, and any dose modifications.',
           '21 CFR 201.57(c)(3); FDA PLR Guidance (2013)',
           'Provide complete dosage and administration instructions including recommended dose, route of administration, dosing schedule, dose adjustment criteria (renal/hepatic impairment, body weight), and preparation/reconstitution instructions if applicable.',
-          ['dosage_administration', 'route_of_administration', 'dosage_forms'],
+          ['recommended_dosage', 'route_of_administration', 'dosage_forms_summary'],
         );
       }
       return null;
@@ -177,7 +218,7 @@ const rules: AuditRule[] = [
     question: 'The sponsor has completed pivotal clinical trials, but the efficacy results and safety data from these trials are not adequately reflected in the labeling. Can the sponsor explain this discrepancy between trial outcomes and label content?',
     check(answers) {
       const hasTrialData = !isBlank(answers.clinical_trial_data);
-      const hasEfficacyInLabel = !isBlank(answers.clinical_studies_section);
+      const hasEfficacyInLabel = includesFpiSection(answers, '14');
       if (hasTrialData && !hasEfficacyInLabel) {
         return finding(
           this.id,
@@ -189,7 +230,7 @@ const rules: AuditRule[] = [
           'The Clinical Studies section per 21 CFR 201.57(c)(15) must describe each clinical study that is pertinent to the drug\'s claimed effectiveness, including study design, population, endpoints, and results.',
           '21 CFR 201.57(c)(15); FDA PLR Guidance (2013)',
           'Incorporate all pivotal trial data into the Clinical Studies section, including study design summaries, patient demographics, primary and secondary endpoint results with statistical significance, and subgroup analyses.',
-          ['clinical_trial_data', 'clinical_studies_section', 'indications_usage'],
+          ['clinical_trial_data', 'fpi_sections_included', 'indications_list'],
         );
       }
       return null;
@@ -213,7 +254,7 @@ const rules: AuditRule[] = [
           'Labeling must be consistent with the approved indication per 21 CFR 201.56(a)(1). Off-label promotion violates FDCA Sections 502(a) and 201(n). OPDP enforcement actions frequently cite misbranding for unsupported claims.',
           '21 CFR 201.56(a)(1); FDCA Sections 201(n), 502(a); OPDP Enforcement Letters',
           'Remove all efficacy claims not supported by substantial evidence from adequate and well-controlled trials. Ensure each claim in the Indications and Clinical Studies sections maps directly to approved trial data.',
-          ['off_label_claims', 'indications_usage', 'clinical_studies_section'],
+          ['off_label_claims', 'indications_list', 'fpi_sections_included'],
         );
       }
       return null;
@@ -225,7 +266,7 @@ const rules: AuditRule[] = [
     title: 'Dosing in Label vs. Clinical Protocol Mismatch',
     question: 'The recommended dosing in the labeling does not match the dosing regimen used in the pivotal clinical trials. This inconsistency undermines the evidentiary basis for the approved dose. Can the sponsor reconcile this discrepancy?',
     check(answers) {
-      const labelDose = String(answers.labeled_dose ?? '').toLowerCase();
+      const labelDose = String(answers.recommended_dosage ?? '').toLowerCase();
       const trialDose = String(answers.clinical_trial_dose ?? '').toLowerCase();
       if (!isBlank(labelDose) && !isBlank(trialDose) && labelDose !== trialDose) {
         return finding(
@@ -234,11 +275,11 @@ const rules: AuditRule[] = [
           'warning',
           this.title,
           this.question,
-          `The labeled dose "${answers.labeled_dose}" differs from the clinical trial dose "${answers.clinical_trial_dose}". The labeling dose must be supported by the pivotal trial evidence.`,
+          `The labeled dose "${answers.recommended_dosage}" differs from the clinical trial dose "${answers.clinical_trial_dose}". The labeling dose must be supported by the pivotal trial evidence.`,
           'The recommended dosage must reflect the dosing used in clinical trials that demonstrated efficacy per 21 CFR 201.57(c)(3) and 21 CFR 314.126.',
           '21 CFR 201.57(c)(3); 21 CFR 314.126; FDA Guidance: Dosage and Administration Section (2018)',
           'Reconcile the label dose with clinical trial evidence. If the recommended dose differs from trial doses, provide pharmacokinetic or dose-response data justifying the selected dose.',
-          ['labeled_dose', 'clinical_trial_dose', 'dosage_administration'],
+          ['recommended_dosage', 'clinical_trial_dose'],
         );
       }
       return null;
@@ -262,7 +303,7 @@ const rules: AuditRule[] = [
           'Indications must be supported by substantial evidence from adequate and well-controlled studies per 21 CFR 314.126 and must not overstate the evidence per FDCA Section 502(a).',
           '21 CFR 314.126; FDCA Section 502(a); OPDP Enforcement Letters',
           'Narrow the indication statement to match the studied population, or provide additional data (e.g., PK bridging, subgroup analyses) supporting the broader population claim.',
-          ['indication_broader_than_studied', 'indications_usage', 'clinical_trial_data'],
+          ['indication_broader_than_studied', 'indications_list', 'clinical_trial_data'],
         );
       }
       return null;
@@ -276,8 +317,7 @@ const rules: AuditRule[] = [
     title: 'PLR Format Not Followed',
     question: 'The labeling does not follow the Physician Labeling Rule (PLR) format as required by 21 CFR 201.56-57. The submission appears to use a legacy format. When does the sponsor plan to convert to the required PLR format?',
     check(answers) {
-      const plrCompliant = answers.plr_format_compliant;
-      if (plrCompliant === false || plrCompliant === 'no' || plrCompliant === 'No') {
+      if (isNo(answers.plr_format_confirmed)) {
         return finding(
           this.id,
           this.dimension,
@@ -288,7 +328,7 @@ const rules: AuditRule[] = [
           'All new drug labeling must follow the PLR format per 21 CFR 201.56(d) and 21 CFR 201.57. Previously approved drugs must convert per the implementation timeline in 71 FR 3922.',
           '21 CFR 201.56(d); 21 CFR 201.57; 71 FR 3922 (PLR Final Rule, 2006)',
           'Restructure the labeling into the three required sections: Highlights of Prescribing Information, Full Prescribing Information Table of Contents, and Full Prescribing Information with all required subsections in the prescribed order.',
-          ['plr_format_compliant', 'highlights_section'],
+          ['plr_format_confirmed', 'fpi_sections_included'],
         );
       }
       return null;
@@ -312,7 +352,7 @@ const rules: AuditRule[] = [
           'The PLLR (effective June 30, 2015) requires removal of pregnancy categories and replacement with narrative subsections: Pregnancy, Lactation, and Females and Males of Reproductive Potential per 21 CFR 201.57(c)(9).',
           '21 CFR 201.57(c)(9); PLLR Final Rule (79 FR 72064, 2014); FDA Guidance: Labeling for Human Prescription Drug and Biological Products -- Content and Format of the Pregnancy and Lactation Subsections',
           'Replace legacy pregnancy categories with the three PLLR-mandated subsections containing narrative summaries of risk, clinical considerations, and data from human and animal studies.',
-          ['pregnancy_category_legacy', 'pregnancy_lactation_section'],
+          ['pregnancy_category_legacy', 'pregnancy_risk_summary', 'lactation_risk_summary'],
         );
       }
       return null;
@@ -348,8 +388,7 @@ const rules: AuditRule[] = [
     title: 'OTC Drug Facts Panel Missing',
     question: 'This over-the-counter product does not include the required Drug Facts labeling format. The absence of a Drug Facts panel renders the product misbranded under FDCA Section 502. When will the sponsor provide compliant OTC labeling?',
     check(answers) {
-      const isOtc = answers.product_type === 'otc' || answers.product_type === 'OTC' || answers.is_otc === true || answers.is_otc === 'yes';
-      if (isOtc && isBlank(answers.drug_facts_panel)) {
+      if (answers.product_type === 'otc_drug' && DRUG_FACTS_FIELDS.every((f) => isBlank(answers[f]))) {
         return finding(
           this.id,
           this.dimension,
@@ -360,7 +399,7 @@ const rules: AuditRule[] = [
           'OTC drug labeling must include a Drug Facts panel per 21 CFR 201.66, presented in a standardized format with specific sections: Active Ingredient, Purpose, Uses, Warnings, Directions, Other Information, and Inactive Ingredients.',
           '21 CFR 201.66; 64 FR 13254 (OTC Drug Facts Rule, 1999); FDCA Section 502',
           'Create a Drug Facts panel following the exact format specified in 21 CFR 201.66(c) and (d), including font size requirements (minimum 6-point type), layout specifications, and all required sections.',
-          ['drug_facts_panel', 'product_type', 'is_otc'],
+          ['product_type', ...DRUG_FACTS_FIELDS],
         );
       }
       return null;
@@ -372,8 +411,9 @@ const rules: AuditRule[] = [
     title: 'Device Labeling Does Not Comply with 21 CFR 801',
     question: 'The device labeling fails to meet the general labeling requirements of 21 CFR 801. Critical elements such as intended use, adequate directions for use, and manufacturer identification are missing or incomplete. How does the sponsor plan to remedy these deficiencies?',
     check(answers) {
-      const isDevice = answers.product_type === 'device' || answers.product_type === 'Device' || answers.is_device === true || answers.is_device === 'yes';
-      if (isDevice && (isBlank(answers.device_intended_use) || isBlank(answers.device_directions_for_use))) {
+      /* 'medical_device' only: an IVD takes the same interview branch, but its
+         labeling is governed by 21 CFR 809.10, which this rule does not cite. */
+      if (answers.product_type === 'medical_device' && (isBlank(answers.device_intended_use) || isBlank(answers.ifu_operating_instructions))) {
         return finding(
           this.id,
           this.dimension,
@@ -384,7 +424,7 @@ const rules: AuditRule[] = [
           'Device labeling must include the name and place of business of the manufacturer (21 CFR 801.1), intended use (21 CFR 801.4), and adequate directions for use (21 CFR 801.5) to avoid misbranding under FDCA Section 502(f).',
           '21 CFR 801.1; 21 CFR 801.4; 21 CFR 801.5; FDCA Section 502(f)',
           'Ensure device labeling includes: (1) manufacturer name and address, (2) intended use statement, (3) adequate directions for use including indications, dosage/method, frequency, duration, and relevant warnings.',
-          ['device_intended_use', 'device_directions_for_use', 'product_type', 'manufacturer_info'],
+          ['device_intended_use', 'ifu_operating_instructions', 'product_type'],
         );
       }
       return null;
@@ -398,7 +438,7 @@ const rules: AuditRule[] = [
     title: 'Clinical Pharmacology Data Insufficient',
     question: 'The Clinical Pharmacology section is incomplete. Key pharmacokinetic and pharmacodynamic parameters are not adequately described. How does the sponsor expect prescribers to make informed dose adjustment decisions without this fundamental data?',
     check(answers) {
-      if (isBlank(answers.clinical_pharmacology_section)) {
+      if (onPrescribingPath(answers) && !includesFpiSection(answers, '12')) {
         return finding(
           this.id,
           this.dimension,
@@ -409,7 +449,7 @@ const rules: AuditRule[] = [
           'Per 21 CFR 201.57(c)(13), the Clinical Pharmacology section must describe the mechanism of action, pharmacodynamics, and pharmacokinetics (absorption, distribution, metabolism, excretion) of the drug.',
           '21 CFR 201.57(c)(13); FDA PLR Guidance (2013); ICH E14',
           'Provide a comprehensive Clinical Pharmacology section including mechanism of action, pharmacodynamic effects (including exposure-response), and full pharmacokinetic characterization (absorption, distribution, protein binding, metabolism pathways, elimination half-life, excretion routes).',
-          ['clinical_pharmacology_section', 'pk_data', 'mechanism_of_action'],
+          ['fpi_sections_included', 'mechanism_of_action', ...PK_FIELDS],
         );
       }
       return null;
@@ -421,7 +461,7 @@ const rules: AuditRule[] = [
     title: 'Drug-Drug Interaction Studies Not Cited',
     question: 'The labeling does not reference any drug-drug interaction studies. Given that polypharmacy is common in clinical practice, how does the sponsor expect prescribers to manage co-administration risks?',
     check(answers) {
-      if (isBlank(answers.drug_interaction_studies)) {
+      if (onPrescribingPath(answers) && !isYes(answers.ddi_studies_conducted)) {
         return finding(
           this.id,
           this.dimension,
@@ -432,7 +472,7 @@ const rules: AuditRule[] = [
           'The Drug Interactions section per 21 CFR 201.57(c)(8) must include clinically significant interactions based on in vitro and in vivo studies, including effects on CYP enzymes, transporters, and any required dose adjustments.',
           '21 CFR 201.57(c)(8); FDA Guidance: In Vitro Drug Interaction Studies (2020); FDA Guidance: Clinical Drug Interaction Studies (2020)',
           'Include results from in vitro CYP inhibition/induction studies and transporter studies, along with any clinical DDI trials. Provide specific dose adjustment recommendations for significant interactions.',
-          ['drug_interaction_studies', 'drug_interactions_section', 'cyp_metabolism'],
+          ['ddi_studies_conducted', 'cyp_inhibition_profile', 'transporter_interactions', 'clinically_significant_ddis'],
         );
       }
       return null;
@@ -444,7 +484,7 @@ const rules: AuditRule[] = [
     title: 'Pharmacokinetic Data Gaps',
     question: 'The labeling does not include essential pharmacokinetic parameters such as bioavailability, half-life, or volume of distribution. Without these data, the scientific basis for the dosing regimen is unclear. Can the sponsor provide a complete PK characterization?',
     check(answers) {
-      if (isBlank(answers.pk_data) && !isBlank(answers.dosage_administration)) {
+      if (onPrescribingPath(answers) && PK_FIELDS.every((f) => isBlank(answers[f])) && !isBlank(answers.recommended_dosage)) {
         return finding(
           this.id,
           this.dimension,
@@ -455,7 +495,7 @@ const rules: AuditRule[] = [
           'Pharmacokinetic data including absorption, bioavailability, half-life, volume of distribution, and clearance are expected per 21 CFR 201.57(c)(13)(i) (Clinical Pharmacology, 12.3 Pharmacokinetics) to support dosing recommendations.',
           '21 CFR 201.57(c)(13)(i); FDA Guidance: Population Pharmacokinetics (2022); ICH M12',
           'Provide complete PK parameters: Cmax, Tmax, AUC, bioavailability, half-life (t1/2), volume of distribution (Vd), clearance (CL), protein binding, and the effect of food on absorption.',
-          ['pk_data', 'dosage_administration', 'clinical_pharmacology_section'],
+          [...PK_FIELDS, 'recommended_dosage'],
         );
       }
       return null;
@@ -467,7 +507,7 @@ const rules: AuditRule[] = [
     title: 'No Hepatic or Renal Impairment Data',
     question: 'The labeling does not address dosing in patients with hepatic or renal impairment. These are among the most common clinical scenarios requiring dose adjustment. How does the sponsor expect prescribers to safely dose this product in impaired populations?',
     check(answers) {
-      if (isBlank(answers.hepatic_impairment_data) && isBlank(answers.renal_impairment_data)) {
+      if (onPrescribingPath(answers) && isBlank(answers.hepatic_impairment) && isBlank(answers.renal_impairment)) {
         return finding(
           this.id,
           this.dimension,
@@ -478,7 +518,7 @@ const rules: AuditRule[] = [
           'Per 21 CFR 201.57(c)(9), the Use in Specific Populations section must address dosing in hepatic and renal impairment per FDA Guidance on Pharmacokinetics in Patients with Impaired Hepatic/Renal Function.',
           '21 CFR 201.57(c)(9); FDA Guidance: Pharmacokinetics in Patients with Impaired Renal Function (2020); FDA Guidance: Pharmacokinetics in Patients with Impaired Hepatic Function (2003)',
           'Conduct hepatic impairment (Child-Pugh A/B/C) and renal impairment (mild/moderate/severe/ESRD) studies or provide population PK analyses. Include dose adjustment recommendations or state that no adjustment is needed with supporting data.',
-          ['hepatic_impairment_data', 'renal_impairment_data', 'dosage_administration', 'pk_data'],
+          ['hepatic_impairment', 'renal_impairment', 'special_pk_populations', 'dose_modifications'],
         );
       }
       return null;
@@ -490,7 +530,7 @@ const rules: AuditRule[] = [
     title: 'Exposure-Response Analysis Missing',
     question: 'The labeling does not present any exposure-response analysis to support the recommended dose. In the absence of such data, the scientific rationale for dose selection is inadequately supported. Can the sponsor provide exposure-efficacy and exposure-safety analyses?',
     check(answers) {
-      if (isBlank(answers.exposure_response_data) && !isBlank(answers.dosage_administration)) {
+      if (isBlank(answers.exposure_response_data) && !isBlank(answers.recommended_dosage)) {
         return finding(
           this.id,
           this.dimension,
@@ -501,7 +541,7 @@ const rules: AuditRule[] = [
           'FDA increasingly expects exposure-response analyses per 21 CFR 201.57(c)(13)(i) to support dose selection and inform dose adjustments in special populations.',
           '21 CFR 201.57(c)(13)(i); FDA Guidance: Exposure-Response Relationships (2003); FDA Guidance: Population Pharmacokinetics (2022)',
           'Include exposure-response analyses linking drug exposure (AUC, Cmin, Cmax) to efficacy endpoints and key safety events. This supports dose optimization and informs labeling for special populations.',
-          ['exposure_response_data', 'dosage_administration', 'pk_data'],
+          ['exposure_response_data', 'recommended_dosage', 'pharmacodynamics_summary'],
         );
       }
       return null;
@@ -515,7 +555,7 @@ const rules: AuditRule[] = [
     title: 'Patient Counseling Information Not Actionable',
     question: 'The Patient Counseling Information section is vague and does not provide healthcare providers with specific, actionable guidance for patient discussions. How does the sponsor expect this section to be useful in clinical practice?',
     check(answers) {
-      if (isBlank(answers.patient_counseling_info)) {
+      if (onPrescribingPath(answers) && isBlank(answers.counseling_topics)) {
         return finding(
           this.id,
           this.dimension,
@@ -526,7 +566,7 @@ const rules: AuditRule[] = [
           'Per 21 CFR 201.57(c)(18), the Patient Counseling Information section must advise healthcare providers about specific topics to discuss with patients, including dosing instructions, adverse reactions to watch for, and situations requiring medical attention.',
           '21 CFR 201.57(c)(18); FDA PLR Guidance (2013)',
           'Draft a Patient Counseling Information section that includes: specific symptoms patients should report, how to take the medication correctly, foods/activities to avoid, storage instructions, and when to seek emergency care.',
-          ['patient_counseling_info', 'adverse_reactions', 'dosage_administration'],
+          ['counseling_topics', 'patient_labeling_type'],
         );
       }
       return null;
@@ -550,7 +590,7 @@ const rules: AuditRule[] = [
           'Products for self-administration require detailed Instructions for Use (IFU) per 21 CFR 201.57(c)(18) and FDA Guidance on patient labeling. These provisions do not require comprehension testing of the instructions, but it is often advisable and may be expected in some cases (for example, human factors validation for combination products under FDA\'s human factors guidance).',
           '21 CFR 201.57(c)(18); FDA Guidance: Instructions for Use -- Patient Labeling for Human Prescription Drug and Biological Products (2022)',
           'Develop step-by-step Instructions for Use (IFU) with illustrations, plain language at appropriate reading level, injection/administration site information, storage and disposal instructions, and troubleshooting for common errors.',
-          ['self_administration_instructions', 'self_administered', 'dosage_administration'],
+          ['self_administration_instructions', 'self_administered', 'recommended_dosage'],
         );
       }
       return null;
@@ -573,7 +613,7 @@ const rules: AuditRule[] = [
           'Storage conditions must be included per 21 CFR 201.57(c)(17) based on stability study data. Proper storage instructions are essential for maintaining product quality through expiration.',
           '21 CFR 201.57(c)(17); ICH Q1A(R2); USP <659>',
           'Include specific storage conditions (temperature range, light protection, humidity), in-use stability after opening, reconstitution stability if applicable, and disposal instructions.',
-          ['storage_conditions', 'dosage_forms'],
+          ['storage_conditions', 'dosage_forms_summary'],
         );
       }
       return null;
@@ -585,7 +625,7 @@ const rules: AuditRule[] = [
     title: 'How Supplied / Storage Section Incomplete',
     question: 'The How Supplied section does not describe available dosage forms, strengths, or packaging configurations. Pharmacists and procurement teams cannot order the correct product without this information. Can the sponsor provide complete product descriptions?',
     check(answers) {
-      if (isBlank(answers.how_supplied)) {
+      if (onPrescribingPath(answers) && !includesFpiSection(answers, '16')) {
         return finding(
           this.id,
           this.dimension,
@@ -596,7 +636,7 @@ const rules: AuditRule[] = [
           'Per 21 CFR 201.57(c)(17), the labeling must describe all available dosage forms, strengths, NDC numbers, and packaging configurations to enable accurate dispensing.',
           '21 CFR 201.57(c)(17); FDA PLR Guidance (2013)',
           'List all available dosage forms and strengths with descriptions (color, shape, markings), package sizes, NDC numbers for each presentation, and storage conditions.',
-          ['how_supplied', 'dosage_forms', 'ndc_number', 'storage_conditions'],
+          ['fpi_sections_included', 'dosage_forms_summary'],
         );
       }
       return null;
@@ -610,19 +650,18 @@ const rules: AuditRule[] = [
     title: 'SPL/XML Format Not Submitted',
     question: 'The labeling has not been submitted in Structured Product Labeling (SPL) XML format. SPL is the required format for all labeling submissions to FDA. When will the sponsor submit labeling in the mandated electronic format?',
     check(answers) {
-      const splSubmitted = answers.spl_xml_submitted;
-      if (splSubmitted === false || splSubmitted === 'no' || splSubmitted === 'No') {
+      if (isNo(answers.spl_submission_planned)) {
         return finding(
           this.id,
           this.dimension,
           'critical',
           this.title,
           this.question,
-          'Labeling has not been submitted in SPL/XML format.',
+          'Submission of the labeling in SPL/XML format is not planned.',
           'All drug labeling must be submitted in Structured Product Labeling (SPL) format per FDA Guidance on SPL and eCTD requirements. SPL is required for DailyMed listing and is the official electronic labeling format.',
           'FDA Guidance: Providing Regulatory Submissions in Electronic Format -- Content of Labeling (2005); eCTD Specification; 21 CFR 314.50(l)',
           'Prepare and submit labeling in SPL XML format using the current FDA SPL implementation guide, HL7 SPL schema, and LOINC document type codes. Validate the SPL file using the FDA SPL validation tool before submission.',
-          ['spl_xml_submitted', 'product_name'],
+          ['spl_submission_planned', 'spl_tool'],
         );
       }
       return null;
@@ -645,7 +684,7 @@ const rules: AuditRule[] = [
           'An NDC is required per FDCA Section 510 and 21 CFR 207 for drug listing. The NDC is essential for the FDA Drug Listing system, pharmacy claims processing, and supply chain tracking.',
           '21 CFR 207; FDCA Section 510; FDA Drug Establishment and Product Listing System',
           'Obtain an NDC from the FDA Labeler Code assignment process and include it in the How Supplied section of the labeling. Format: labeler code-product code-package code (e.g., 12345-678-90).',
-          ['ndc_number', 'how_supplied'],
+          ['ndc_number', 'fpi_sections_included'],
         );
       }
       return null;
@@ -729,7 +768,7 @@ const rules: AuditRule[] = [
     title: 'Pregnancy/Lactation Subsection Uses Pre-PLLR Format',
     question: 'The pregnancy and lactation information uses an outdated format that does not meet current regulatory requirements. The old category system (A/B/C/D/X) oversimplifies complex risk assessments. How does the sponsor plan to update this critical safety information?',
     check(answers) {
-      const hasPregSection = !isBlank(answers.pregnancy_lactation_section);
+      const hasPregSection = !isBlank(answers.pregnancy_risk_summary) || !isBlank(answers.lactation_risk_summary);
       const usesLegacy = answers.pregnancy_category_legacy === true || answers.pregnancy_category_legacy === 'yes' || answers.pregnancy_category_legacy === 'Yes';
       if (hasPregSection && usesLegacy) {
         return finding(
@@ -742,7 +781,7 @@ const rules: AuditRule[] = [
           'The PLLR requires narrative subsections (Pregnancy, Lactation, Females and Males of Reproductive Potential) that present risk summaries, clinical considerations, and supporting data rather than oversimplified letter categories.',
           '21 CFR 201.57(c)(9); PLLR Final Rule (79 FR 72064); FDA PLLR Guidance (2014)',
           'Convert the pregnancy/lactation content to the PLLR narrative format. Include pregnancy exposure registry information (if available), risk summary based on human and animal data, clinical considerations (dosing adjustments, labor/delivery effects), and data summaries.',
-          ['pregnancy_lactation_section', 'pregnancy_category_legacy'],
+          ['pregnancy_risk_summary', 'lactation_risk_summary', 'pregnancy_category_legacy'],
         );
       }
       return null;
@@ -766,7 +805,7 @@ const rules: AuditRule[] = [
           'Per 21 CFR 201.57(c)(10), the Drug Abuse and Dependence section must include the controlled substance schedule (if applicable), abuse potential data from clinical and nonclinical studies, and dependence/withdrawal information.',
           '21 CFR 201.57(c)(10); FDA Guidance: Assessment of Abuse Potential of Drugs (2017); Controlled Substances Act',
           'Include a complete Drug Abuse and Dependence section with: (1) Controlled Substance subsection citing DEA schedule, (2) Abuse subsection with human abuse potential study data, and (3) Dependence subsection with physical and psychological dependence characterization.',
-          ['abuse_dependence_section', 'cns_active', 'controlled_substance_schedule'],
+          ['abuse_dependence_section', 'cns_active', 'fpi_sections_included'],
         );
       }
       return null;
@@ -778,7 +817,7 @@ const rules: AuditRule[] = [
     title: 'Overdosage Section Missing',
     question: 'The labeling does not include an Overdosage section. In the event of accidental or intentional overdose, healthcare providers need guidance on signs, symptoms, and management. How does the sponsor plan to address this gap?',
     check(answers) {
-      if (isBlank(answers.overdosage_section)) {
+      if (onPrescribingPath(answers) && !includesFpiSection(answers, '10')) {
         return finding(
           this.id,
           this.dimension,
@@ -789,7 +828,7 @@ const rules: AuditRule[] = [
           'The Overdosage section is required per 21 CFR 201.57(c)(11) and must include signs and symptoms of overdosage, treatment recommendations (including antidotes if available), and dialyzability of the drug.',
           '21 CFR 201.57(c)(11); FDA PLR Guidance (2013)',
           'Include an Overdosage section describing: expected signs/symptoms based on pharmacology and clinical experience, recommended treatment (supportive care, specific antidotes), hemodialysis effectiveness, and contact information for Poison Control (1-800-222-1222).',
-          ['overdosage_section', 'clinical_pharmacology_section'],
+          ['fpi_sections_included'],
         );
       }
       return null;
@@ -801,7 +840,7 @@ const rules: AuditRule[] = [
     title: 'Pediatric Use Information Absent',
     question: 'The labeling does not address pediatric use, either to describe approved pediatric populations or to state that safety and effectiveness have not been established. This information is critical for preventing inappropriate off-label use in children. Can the sponsor clarify the pediatric development status?',
     check(answers) {
-      if (isBlank(answers.pediatric_use_section)) {
+      if (onPrescribingPath(answers) && isBlank(answers.pediatric_use)) {
         return finding(
           this.id,
           this.dimension,
@@ -812,7 +851,7 @@ const rules: AuditRule[] = [
           'Per 21 CFR 201.57(c)(9)(iv), the Pediatric Use subsection must either describe adequate pediatric studies or state that safety and effectiveness have not been established, along with any available pediatric pharmacokinetic data.',
           '21 CFR 201.57(c)(9)(iv); Pediatric Research Equity Act (PREA); FDA Guidance: General Clinical Pharmacology Considerations for Pediatric Studies (2014)',
           'Include a Pediatric Use subsection that either summarizes pediatric clinical data supporting use in specific age groups, or states that safety and effectiveness have not been established. Reference any pediatric study plans or waivers/deferrals under PREA.',
-          ['pediatric_use_section', 'target_population'],
+          ['pediatric_use', 'pediatric_studies_conducted'],
         );
       }
       return null;
