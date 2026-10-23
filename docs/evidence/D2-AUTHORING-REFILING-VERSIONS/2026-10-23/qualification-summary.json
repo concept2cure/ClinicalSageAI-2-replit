@@ -78,5 +78,7 @@
     "warningReport": "publication-warning-ratchet.json",
     "failedHookRetained": "canonical-push-retry.json",
     "fileSha256": "649a64a775384ca15439ea27867e0b0cdc4d07fb70705a4852bad608db543e18"
-  }
+  },
+  "publishedCommit": "8ba496f6989dfee0c92d5bb994fb2ac817faac97",
+  "publicationReceipt": "canonical-publication-attempt-1.json"
 }

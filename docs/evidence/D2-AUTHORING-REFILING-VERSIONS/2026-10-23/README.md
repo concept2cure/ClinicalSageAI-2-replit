@@ -156,6 +156,21 @@ now have their own describe group; assertions and product code are unchanged.
 `publication-warning-ratchet*` confirms no changed file gained warnings against
 the canonical publication target. No baseline or hook was bypassed.
 
+## Publication
+
+The implementation and integrated qualification were published directly to
+`concept2cure-v2` at **`8ba496f6989dfee0c92d5bb994fb2ac817faac97`**.
+`canonical-publication-attempt-1.json` and its compressed raw output record exit
+zero, matching origin tracking and all normal pre-push gates, including fresh
+zero-error compilation and no warning growth. Earlier rejected attempts are
+retained separately; `canonical-push-final*` passed hooks but raced with the
+documentation-only `0fff4da02` update. Normal merge preserved it before success.
+
+`publication-source-pins.json` verifies the qualified source against the
+published Git objects. A subsequent evidence-only commit retains the actual
+publication receipt and refreshed artifact manifest. No PR, alternate branch,
+force push, hook bypass, deployment or agency transmission was performed.
+
 ## Human handoff and limits
 
 The existing [human testing guide](../../../testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md)
