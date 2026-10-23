@@ -109,3 +109,12 @@ exercised; no content was created to claim one. Actual converter artifacts and
 mounted HTTP/SQL/component checks are separate proof. The inherited historical
 hash-version re-filing TODO remains outside this completion. No production
 deployment, remote CI, live agency transmission or agency acceptance is claimed.
+
+## Concurrent update qualification
+
+Before publication, the incoming native AnA model-provenance update at
+`4718e17cb1224022684829a0e45f92f5048b5850` merged cleanly. The combined source at
+`70d112b8d8fb03857423011ccbe1e99f8d7d9c16` passed 43 supplemental cases in three
+files, the production build and the full zero-error TypeScript gate. All 50
+Authoring PDF source pins remain unchanged. These 43 cases are separate from the
+522 PDF cases above; see `concurrent-ana.json` for exact scope and report hashes.

@@ -57,5 +57,17 @@
   ],
   "qualificationNotes": [
     "The full compiler was independently repeated with explicit process exit 0 on unchanged source; an earlier combined shell returned 1 despite its zero-error compiler report. No code correction was needed."
-  ]
+  ],
+  "postQualificationMerge": {
+    "evidence": "concurrent-ana.json",
+    "qualifiedCombinedSourceCommit": "70d112b8d8fb03857423011ccbe1e99f8d7d9c16",
+    "incomingUpstreamCommit": "4718e17cb1224022684829a0e45f92f5048b5850",
+    "all50AuthoringPdfSourcePinsUnchanged": true,
+    "supplementalAnaTestsPassed": 43,
+    "supplementalAnaTestFiles": 3,
+    "productionBuildPassed": true,
+    "fullTypecheckErrors": 0,
+    "typecheckProcessExit": 0,
+    "authoringPdfTestCountUnchanged": 522
+  }
 }
