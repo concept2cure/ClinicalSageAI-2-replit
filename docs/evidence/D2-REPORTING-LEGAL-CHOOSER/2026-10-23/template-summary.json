@@ -1,0 +1,11 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/authoringTemplatePickerAssembly.test.tsx client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx client/src/concept2cure/v2/editor/__tests__/assemblyTemplateSearch.test.tsx client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx --reporter=json --outputFile=/workspace/.cloud-setup/reporting-legal-chooser/template-results.json",
+  "finishedAt": "2026-10-23T20:50:18.082234+00:00",
+  "exitCode": 0,
+  "files": 7,
+  "passed": 157,
+  "failed": 0,
+  "pending": 0,
+  "unchangedInputs": true,
+  "failures": []
+}

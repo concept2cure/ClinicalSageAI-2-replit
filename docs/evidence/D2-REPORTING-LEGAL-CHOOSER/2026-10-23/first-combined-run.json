@@ -1,0 +1,22 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx --reporter=json --outputFile=/workspace/.cloud-setup/reporting-legal-chooser/first-combined-results.json",
+  "startedAt": "2026-10-23T20:35:33.302297+00:00",
+  "finishedAt": "2026-10-23T20:35:46.214326+00:00",
+  "exitCode": 1,
+  "passed": 38,
+  "failed": 2,
+  "files": 3,
+  "changedInputs": [
+    "client/src/concept2cure/v2/surfaces/company-documents/PagedCompanyLegalPicker.tsx"
+  ],
+  "failures": [
+    {
+      "name": "explicit legal companions for a report archive refreshes current metadata and clears old selections",
+      "message": "Error: Found multiple elements with the role \"checkbox\"\n\nHere are the matching elements:\n\nIgnored nodes: comments, script, style\n\u001b[36m<input\u001b[39m\n  \u001b[33mtype\u001b[39m=\u001b[32m\"checkbox\"\u001b[39m\n\u001b[36m/>\u001b[39m\n\nIgnored nodes: comments, script, style\n\u001b[36m<input\u001b[39m\n  \u001b[33mtype\u001b[39m=\u001b[32m\"checkbox\"\u001b[39m\n\u001b[36m/>\u001b[39m\n\n(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"rl-form\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<button\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"rl-card-run\"\u001b[39m\n        \u001b[33mtype\u001b[39m=\u001b[32m\"button\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[0mRefresh legal companions\u001b[0m\n      \u001b[36m</button>\u001b[39m\n      \u001b[36m<fieldset>\u001b[39m\n        \u001b[36m<legend>\u001b[39m\n          \u001b[0mExplicit legal companions\u001b[0m\n        \u001b[36m</legend>\u001b[39m\n        \u001b[36m<p\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"rl-sub\"\u001b[39m\n        \u001b[36m>\u001b[39m\n"
+    },
+    {
+      "name": "Reporting legal chooser reaches paged exact-version selection clears the selection and withdraws cached rows while an explicit refresh reads a fresh visit",
+      "message": "TestingLibraryElementError: Found multiple elements with the role \"checkbox\"\n\nHere are the matching elements:\n\nIgnored nodes: comments, script, style\n\u001b[36m<input\u001b[39m\n  \u001b[33mtype\u001b[39m=\u001b[32m\"checkbox\"\u001b[39m\n\u001b[36m/>\u001b[39m\n\nIgnored nodes: comments, script, style\n\u001b[36m<input\u001b[39m\n  \u001b[33mtype\u001b[39m=\u001b[32m\"checkbox\"\u001b[39m\n\u001b[36m/>\u001b[39m\n\nIgnored nodes: comments, script, style\n\u001b[36m<input\u001b[39m\n  \u001b[33mtype\u001b[39m=\u001b[32m\"checkbox\"\u001b[39m\n\u001b[36m/>\u001b[39m\n\nIgnored nodes: comments, script, style\n\u001b[36m<input\u001b[39m\n  \u001b[33mtype\u001b[39m=\u001b[32m\"checkbox\"\u001b[39m\n\u001b[36m/>\u001b[39m\n\nIgnored nodes: comments, script, style\n\u001b[36m<input\u001b[39m\n  \u001b[33mtype\u001b[39m=\u001b[32m\"checkbox\"\u001b[39m\n\u001b[36m/>\u001b[39m\n\nIgnored nodes: comments, script, style\n\u001b[36m<input\u001b[39m\n  \u001b[33mtype\u001b[39m=\u001b[32m\"checkbox\"\u001b[39m\n\u001b[36m/>\u001b[39m\n\nIgnored nodes: comments, script, style\n\u001b[36m<input\u001b[39m\n  \u001b[33mtype\u001b[39m=\u001b[32m\"checkbox\"\u001b[39m\n\u001b[36m/>\u001b[39m\n\nIgnored nodes: comments, script, style\n\u001b[36m<input\u001b[39m\n  \u001b[33mtype\u001b[39m=\u001b[32m\"checkbox\"\u001b[39m\n\u001b[36m/>\u001b[39m\n\nIgnored nodes: comments, "
+    }
+  ]
+}

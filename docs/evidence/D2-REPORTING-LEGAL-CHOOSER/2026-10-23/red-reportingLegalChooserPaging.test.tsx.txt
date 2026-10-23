@@ -1,0 +1,64 @@
+// @vitest-environment jsdom
+/** Reporting reaches the canonical paged inventory without losing explicit choices. */
+import React from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import type { CompanyLegalDocument } from '@shared/company-documents';
+import { endCompanySession, seedCompanySession } from './_company-session-fixture';
+
+const apiRequest = vi.hoisted(() => vi.fn());
+const downloadBlob = vi.hoisted(() => vi.fn(() => true));
+vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
+vi.mock('../download', () => ({ downloadBlob }));
+import { InsightsLegalPackage } from '../surfaces/InsightsLegalPackage';
+
+const PATH = '/api/client-branding/company-documents';
+const BUNDLE = '33333333-3333-4333-8333-333333333333';
+const ZIP = new Blob(['retained-server-report-archive'], { type: 'application/zip' });
+const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } });
+function original(index: number): CompanyLegalDocument {
+  return { id: `legal-${index}`, title: `Authorization ${String(index).padStart(2, '0')}`, kind: 'authorization',
+    programId: '11111111-1111-4111-8111-111111111111', vaultDocumentId: '22222222-2222-4222-8222-222222222222',
+    contentHash: 'a'.repeat(64), version: '3', agencies: ['FDA'], countries: ['US'], submissionTypes: ['ind'], language: 'en',
+    effectiveOn: null, expiresOn: null, active: true, registeredAt: '2026-10-01T00:00:00Z', registeredBy: '42', transmitRefusal: null };
+}
+let documents: CompanyLegalDocument[];
+function wire() {
+  apiRequest.mockImplementation(async (method: string, url: string) => {
+    if (method === 'POST') return new Response(ZIP, { headers: { 'Content-Type': 'application/zip' } });
+    if (url.includes('/designs?')) return json({ data: [], nextBefore: null });
+    // Keep the old transport valid: RED must expose missing paging, not a fixture refusal.
+    if (url === PATH) return json({ data: { legalDocuments: documents } });
+    if (url.startsWith(`${PATH}/legal-documents?`)) {
+      const params = new URL(url, 'http://fixture').searchParams;
+      const offset = Number(params.get('offset') ?? 0), limit = Number(params.get('limit') ?? 25);
+      const matching = documents.filter(document => (!params.get('q') || document.title.toLowerCase().includes(params.get('q')!.toLowerCase()))
+        && (!params.get('kind') || document.kind === params.get('kind')));
+      return json({ data: matching.slice(offset, offset + limit), page: { total: matching.length, availableTotal: documents.length,
+        offset, limit, hasMore: offset + limit < matching.length, nextOffset: offset + limit < matching.length ? offset + limit : null },
+      facets: { agencies: ['FDA'], languages: ['en'] } });
+    }
+    throw new Error(`Unexpected fixture request: ${method} ${url}`);
+  });
+}
+const posts = () => apiRequest.mock.calls.filter(([method]) => method === 'POST');
+beforeEach(() => {
+  localStorage.clear(); sessionStorage.clear(); seedCompanySession();
+  documents = Array.from({ length: 26 }, (_, index) => original(index + 1));
+  apiRequest.mockReset(); downloadBlob.mockReset().mockReturnValue(true); wire();
+});
+afterEach(() => { cleanup(); endCompanySession(); vi.unstubAllGlobals(); });
+
+describe('Reporting legal chooser reaches paged exact-version selection', () => {
+  it('keeps the first page choice while adding an original from the next page, then posts only those IDs', async () => {
+    render(<InsightsLegalPackage bundleId={BUNDLE} disabled={false} />);
+    fireEvent.click(screen.getByRole('button', { name: /Choose legal companions/ }));
+    fireEvent.click(await screen.findByRole('checkbox', { name: /Authorization 01/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next legal versions' }));
+    fireEvent.click(await screen.findByRole('checkbox', { name: /Authorization 26/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Download reports and 2/ }));
+    await waitFor(() => expect(downloadBlob).toHaveBeenCalledOnce());
+    expect(posts()).toEqual([['POST', `/api/report-os/bundles/${BUNDLE}/export.zip`, { legalDocumentIds: ['legal-1', 'legal-26'] }]]);
+    expect(apiRequest.mock.calls.some(([, url]) => url === PATH)).toBe(false);
+  });
+});

@@ -1,0 +1,685 @@
+{
+  "base": "9f8cae7f06df2d1b4c9200bb33b949e7aa30aa50",
+  "sourceCommit": "3dbf29ff0b99442e4db553fda27694e66cca79dc",
+  "method": "ESLint lintText using existing original file paths; historical text in memory, no temporary TypeScript source",
+  "beforeWarnings": 37,
+  "afterWarnings": 36,
+  "warningDelta": -1,
+  "afterErrors": 0,
+  "files": [
+    {
+      "path": "client/src/concept2cure/v2/Shell.tsx",
+      "sha256": "8b51a162f7f4538959e2d1b8171ce427b4ad86777f93727d1efa59234efb1da3",
+      "beforeErrors": 0,
+      "beforeWarnings": 5,
+      "afterErrors": 0,
+      "afterWarnings": 5,
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'Rail' has too many lines (167). Maximum allowed is 100.",
+          "line": 98,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 98,
+          "endColumn": 21
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'Rail' has a complexity of 27. Maximum allowed is 15.",
+          "line": 98,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 98,
+          "endColumn": 21
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'AccountMenu' has too many lines (128). Maximum allowed is 100.",
+          "line": 327,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 327,
+          "endColumn": 21
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'CmdK' has too many lines (227). Maximum allowed is 100.",
+          "line": 644,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 644,
+          "endColumn": 21
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (704). Maximum allowed is 500.",
+          "line": 674,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 943,
+          "endColumn": 1
+        }
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/accessRequestsHonestEmpty.test.tsx",
+      "sha256": "8a6011bdab8cd12f8af3b02461c7b957d4e96dbcfdc79b74abef3014ef417aa8",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx",
+      "sha256": "79329ecfd4c5854e84af98116cd60d823214c576258c0bd45b1aeb3221ed64a8",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/appsLicenceLimitNotRecorded.test.tsx",
+      "sha256": "458b97c33174d3a0e0aa25b70821f8a1c39a723a8b8b1a5ab5e93d2a8d648817",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/appsLive.test.tsx",
+      "sha256": "279793f747e7f85f65870fcd7520e9a7a8c62d31e6ae603deae252d2165d6332",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringTemplatePickerAssembly.test.tsx",
+      "sha256": "160a96b242cf964fcb630a28ee53a0e778b311d9925bde594043189064cb845e",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx",
+      "sha256": "a2745680af16b9bb8aa76389d167dabb1a4bf2012c646b49cef7d932ecadb16f",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx",
+      "sha256": "60f0e470ba99d4b255eecd6d7a8e0894877b386be2488d1ef3e94144d79fb3ea",
+      "beforeErrors": 0,
+      "beforeWarnings": 1,
+      "afterErrors": 0,
+      "afterWarnings": 1,
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Arrow function has too many lines (144). Maximum allowed is 100.",
+          "line": 142,
+          "column": 34,
+          "messageId": "exceed",
+          "endLine": 142,
+          "endColumn": 36
+        }
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx",
+      "sha256": "062f4c8e3734150463c0bb0c8d7d2a34469c712bfb9bd5ba555b398692b2ad5c",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx",
+      "sha256": "c88638092720d978055b2caa290e0a3fc6aa9842f2c10ec3dde3680a0610df92",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx",
+      "sha256": "5b465782448616331a782f8765007f4e247f250b420e0a518111ec874f2313e0",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx",
+      "sha256": "9d43c868c6ea6c0b6f9e8863fb1a1e65c86199976a75a78162cf2692ddbfe681",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx",
+      "sha256": "8de75b944a569aac0a6d91c479ab26c4183acccb852eb458dfe3eab1b9ce1b31",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/shellNav.test.tsx",
+      "sha256": "50b09c99367d0ed46f51731f3865602cd4293c29f99b1c41f872820868bddb32",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/unlockJourney.test.tsx",
+      "sha256": "441a1231ebc9658d2d5ff80150d6cdbb542b3082c8fbd8514970155c602cac6e",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx",
+      "sha256": "3c806c431581d575472dfabeafe8fa556ca36afeaf572443970c1860fd250b35",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 1,
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Arrow function has too many lines (142). Maximum allowed is 100.",
+          "line": 126,
+          "column": 60,
+          "messageId": "exceed",
+          "endLine": 126,
+          "endColumn": 62
+        }
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/appMentions.tsx",
+      "sha256": "95dc38000ae5e43d7dfc9de2f066f0ef1d35fabf56d5230e45a02a16bcc6e31a",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/catalogWorkflows.ts",
+      "sha256": "e4ed0f3c463d57ebe6ebe273664440a095af97c35b059f9688829e0d6af46a9d",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx",
+      "sha256": "acc4d0c25880bdb88bc321634ec83bcc81b09dc30b331a4631663151dd5277c4",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/assemblyTemplateSearch.test.tsx",
+      "sha256": "1001df1fa05fd59eff1e2d5e120b1ec15e8ae194b36613fa59f2d2b1922cd215",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx",
+      "sha256": "eeb88f565923d24e1dad4abf29065c1088a3d3bbf2989c3ea49adb37f77af434",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/assemblyBuildState.ts",
+      "sha256": "55b9c0be33f54b216766056c09777cefbc2d84b3a2ff766f481f4796e818a49e",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts",
+      "sha256": "c517b0d50a2b2128ef3ca91d03390c9c8ec9b632b93673f499afc997dc82b249",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/navEntitlements.tsx",
+      "sha256": "fb27293457be5e8e0c60c70160f63530f4c17c8f2593d3710a24b78e78ba7349",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/registryModel.ts",
+      "sha256": "3903b0172f5b4b8328406c32b3065697ad08cdc4f299e94aa3301bad429bcf45",
+      "beforeErrors": 0,
+      "beforeWarnings": 1,
+      "afterErrors": 0,
+      "afterWarnings": 1,
+      "messages": [
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (786). Maximum allowed is 500.",
+          "line": 711,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 1126,
+          "endColumn": 1
+        }
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AccessRequests.tsx",
+      "sha256": "57c35dd58d9a0f2ddb0849c913e9ce7fdf4061ec16310f84f84df6f4dbc73600",
+      "beforeErrors": 0,
+      "beforeWarnings": 3,
+      "afterErrors": 0,
+      "afterWarnings": 3,
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'AccessRequestQueue' has too many lines (332). Maximum allowed is 100.",
+          "line": 186,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 186,
+          "endColumn": 35
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'AccessRequestQueue' has a complexity of 41. Maximum allowed is 15.",
+          "line": 186,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 186,
+          "endColumn": 35
+        },
+        {
+          "ruleId": "react-hooks/exhaustive-deps",
+          "severity": 1,
+          "message": "The 'rows' conditional could make the dependencies of useMemo Hook (at line 261) change on every render. To fix this, wrap the initialization of 'rows' in its own useMemo() Hook.",
+          "line": 201,
+          "column": 9,
+          "endLine": 201,
+          "endColumn": 77
+        }
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+      "sha256": "b6ef55d17f8b86de6ab74d49ebfab2330ce83f2495acd2f98a14a2b1fdb9422c",
+      "beforeErrors": 0,
+      "beforeWarnings": 17,
+      "afterErrors": 0,
+      "afterWarnings": 11,
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'Setup' has too many lines (339). Maximum allowed is 100.",
+          "line": 163,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 163,
+          "endColumn": 22
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'Setup' has a complexity of 39. Maximum allowed is 15.",
+          "line": 163,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 163,
+          "endColumn": 22
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (2217). Maximum allowed is 500.",
+          "line": 690,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 2710,
+          "endColumn": 1
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'AuditTrail' has too many lines (603). Maximum allowed is 100.",
+          "line": 695,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 695,
+          "endColumn": 27
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'AuditTrail' has a complexity of 26. Maximum allowed is 15.",
+          "line": 695,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 695,
+          "endColumn": 27
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "message": "'onAsk' is defined but never used. Allowed unused args must match /^_/u.",
+          "line": 695,
+          "column": 30,
+          "messageId": "unusedVar",
+          "endLine": 695,
+          "endColumn": 35
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'ArtifactsCenter' has too many lines (272). Maximum allowed is 100.",
+          "line": 1416,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 1416,
+          "endColumn": 32
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "message": "'onAsk' is defined but never used. Allowed unused args must match /^_/u.",
+          "line": 1416,
+          "column": 35,
+          "messageId": "unusedVar",
+          "endLine": 1416,
+          "endColumn": 40
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'AdminConsole' has too many lines (733). Maximum allowed is 100.",
+          "line": 1869,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 1869,
+          "endColumn": 29
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'AdminConsole' has a complexity of 45. Maximum allowed is 15.",
+          "line": 1869,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 1869,
+          "endColumn": 29
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "message": "'onAsk' is defined but never used. Allowed unused args must match /^_/u.",
+          "line": 1869,
+          "column": 32,
+          "messageId": "unusedVar",
+          "endLine": 1869,
+          "endColumn": 37
+        }
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AuthoringTemplatePicker.tsx",
+      "sha256": "0d560fa2604202e79e6e066c181c1b6a6f83ca62a7d5f3c2a8741eb5ed4373d5",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/InsightsLegalPackage.tsx",
+      "sha256": "f6943e48292ce2d4539856a7e846bef82b14740e794fbe0c41a453981d742032",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/InsightsPackageStationery.tsx",
+      "sha256": "c80ca3360335144014e13c1e7bfa2531b7db829547859acd2cc0dad00eb38d12",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Onboarding.tsx",
+      "sha256": "e3e0e6983d896ebaf6f7521c7480dc7f625f706b648e659bf6074dfa1130eeec",
+      "beforeErrors": 0,
+      "beforeWarnings": 6,
+      "afterErrors": 0,
+      "afterWarnings": 6,
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'OnboardingWizard' has too many lines (944). Maximum allowed is 100.",
+          "line": 293,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 293,
+          "endColumn": 26
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'OnboardingWizard' has a complexity of 103. Maximum allowed is 15.",
+          "line": 293,
+          "column": 1,
+          "messageId": "complex",
+          "endLine": 293,
+          "endColumn": 26
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async arrow function has too many lines (181). Maximum allowed is 100.",
+          "line": 431,
+          "column": 29,
+          "messageId": "exceed",
+          "endLine": 431,
+          "endColumn": 31
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 37. Maximum allowed is 15.",
+          "line": 431,
+          "column": 29,
+          "messageId": "complex",
+          "endLine": 431,
+          "endColumn": 31
+        },
+        {
+          "ruleId": "no-useless-assignment",
+          "severity": 1,
+          "message": "The value assigned to 'profileSaved' is not used in subsequent statements.",
+          "line": 483,
+          "column": 9,
+          "messageId": "unnecessaryAssignment",
+          "endLine": 483,
+          "endColumn": 21
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1130). Maximum allowed is 500.",
+          "line": 708,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 1355,
+          "endColumn": 1
+        }
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Surfaces.tsx",
+      "sha256": "b3b421dae3c0915ede583951131fa95e54dc9d8fdcf0ffe7194a26707dd84ef5",
+      "beforeErrors": 0,
+      "beforeWarnings": 4,
+      "afterErrors": 0,
+      "afterWarnings": 4,
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'Home' has too many lines (275). Maximum allowed is 100.",
+          "line": 114,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 114,
+          "endColumn": 21
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'Home' has a complexity of 23. Maximum allowed is 15.",
+          "line": 114,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 114,
+          "endColumn": 21
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "message": "'onAsk' is defined but never used. Allowed unused args must match /^_/u.",
+          "line": 116,
+          "column": 3,
+          "messageId": "unusedVar",
+          "endLine": 116,
+          "endColumn": 8
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'KitSurfaceScaffold' has too many lines (137). Maximum allowed is 100.",
+          "line": 463,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 463,
+          "endColumn": 35
+        }
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx",
+      "sha256": "f1afed53b86559e22009b3383cf08d936193c0e4b6503adafc06c2f40883fbf1",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 4,
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'Apps' has too many lines (412). Maximum allowed is 100.",
+          "line": 327,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 327,
+          "endColumn": 21
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'Apps' has a complexity of 36. Maximum allowed is 15.",
+          "line": 327,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 327,
+          "endColumn": 21
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Arrow function has a complexity of 21. Maximum allowed is 15.",
+          "line": 569,
+          "column": 52,
+          "messageId": "complex",
+          "endLine": 569,
+          "endColumn": 54
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (574). Maximum allowed is 500.",
+          "line": 776,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 852,
+          "endColumn": 1
+        }
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/PagedCompanyLegalPicker.tsx",
+      "sha256": "5b2a083217e2c277ec20204191da5be2562ef1dca51ac8be76a5a39f6e59b3b7",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    }
+  ]
+}

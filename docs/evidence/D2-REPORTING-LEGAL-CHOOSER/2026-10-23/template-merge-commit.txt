@@ -1,0 +1,12 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e 
+  client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx (522 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+✅ Pre-commit checks complete
+[concept2cure-v2 3dbf29ff0] Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
