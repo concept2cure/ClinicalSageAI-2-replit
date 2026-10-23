@@ -14,7 +14,7 @@ Four independently authored new test files execute **45 cases: 25 semantic failu
 
 The four frozen new test files have zero lint errors/warnings. An initial authoring-only max-params warning was corrected before the baseline run, without relaxing any rule. Original preparatory lint remains under `root/lint-authoring*`. Source/access and host receipt-store seams are synthetic where the worker scope files say so; the guarded-writer suite additionally executes actual legacy receipt INSERT/transaction SQL in owner-mode PGlite, without native RLS or live-provider claims.
 
-## Qualified correction
+## Initial qualified correction (historical at c116cae)
 
 Only the existing `document-catalog-tools.ts` handler and `document-catalog-tool-defs.ts` guidance change production. A split requested start moves back one UTF-16 unit. Each fitted candidate ends before a split pair, or takes one whole pair when a one-unit request would otherwise be empty. The selected actual span is recomputed from final fit.size and used for both receipt spans; source slices and prospective coverage use the same bounds. Generic fitting, actor/version revalidation, receipt writing, host guards and flags remain unchanged.
 
@@ -28,7 +28,7 @@ The correction preserves valid surrogate pairs, not full grapheme clusters, and 
 
 Source admission and executor/stream receipt storage in the relevant fixtures are synthetic. The writer suite additionally reaches actual guarded legacy receipt SQL and PGlite transactions; it does not qualify native RLS, concurrent locks, V2 durable admission or a live provider. This is not deployment, full launch qualification or agency acceptance. Stale retrieval after re-extraction, trimmed backfill source basis and the already-filed capture cache race remain separate needs.
 
-## Publication status
+## Initial publication attempt
 
 Contract commits aa3e35951 and 332bbbbce were pushed directly with normal hooks. The implementation is qualified locally; whole-project TypeScript and code publication await the normal implementation push.
 
@@ -40,4 +40,4 @@ The correction adds exactly one erased non-null assertion to that wrapper. The o
 
 Original `frozen-tests.json`, `qualification-source-manifest.json`, `root/final*` and `root/qualification.json` remain historical at the first code head. Current `frozen-tests-current.json` and `qualification-source-manifest-current.json` transparently record the single test-source hash change. The full current rerun (`root/verified*`) again passes **517 tests in 26 files**, including all 180 corpus windows; `root/lint-verified*` has zero errors and warnings. `root/current-qualification.json` is the current verdict. The original fail-first result is unchanged in meaning, with runtime-equivalence proof rather than rewritten history.
 
-One incoming commit adds documentation receipts only, with no overlap with the 92 selected inputs; it will be preserved by normal merge before retry. Actual retry publication and compiler results will be recorded after completion.
+The documentation-only incoming commit `56a076306` was preserved by normal merge `43cde0d111`, without conflicts or changes to the 92 selected inputs. The normal retry push succeeded at `43cde0d111`: every mandatory gate passed and whole-project TypeScript returned zero errors / exit 0. Fresh remote checks matched all current selected inputs, test/freeze/production files, historical manifests and retained ancestors. See [PUBLICATION.md](PUBLICATION.md) and `root/code-verification.json`.

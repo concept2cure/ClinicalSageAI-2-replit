@@ -1,0 +1,32 @@
+[concept2cure-v2 aeac06998] Correct admitted-service fixture typing with identical runtime behavior
+ 25 files changed, 2673 insertions(+), 7 deletions(-)
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/frozen-tests-current.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/qualification-source-manifest-current.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/current-qualification.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/implementation-commit.txt
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/implementation-push-command.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/implementation-push-result.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/implementation-push.txt
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/incoming-merge-verification.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/incoming-merge.txt
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/lint-verified.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/lint-verified.raw.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/lint-verified.stderr.txt
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/retry-incoming-history.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/runtime-continuity.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/test-typing-correction.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/test-typing-correction.patch.txt
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/test-typing-original.ts.txt
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/test-typing-review.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/test-typing-runtime-equivalence.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/verified-command.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/verified-exit.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/verified.results.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/verified.txt
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3402 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
