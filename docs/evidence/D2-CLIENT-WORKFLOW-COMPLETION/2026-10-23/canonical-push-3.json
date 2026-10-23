@@ -1,0 +1,18 @@
+{
+  "argv": [
+    "git",
+    "push",
+    "origin",
+    "concept2cure-v2"
+  ],
+  "startedAt": "2026-10-23T19:21:48.543698+00:00",
+  "elapsedSeconds": 208.376,
+  "exitCode": 1,
+  "sourceHead": "093aa23d593a46da6b000a833fd40f10ec28b4bd",
+  "output": "canonical-push-3.log.gz",
+  "outputSha256": "dcc9463a73821867122ef4116ed44208acf16deeab9a356cf2844808c9819fd0",
+  "observedRemote": "66ad10eaf6fdef9b995452f63d21a89cb7c36849\trefs/heads/concept2cure-v2",
+  "remoteReadExitCode": 0,
+  "normalHooks": true,
+  "forcePush": false
+}

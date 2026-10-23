@@ -31,7 +31,7 @@
   "qualification": "qualification-summary.json",
   "humanAcceptance": "Not run",
   "publication": "pending normal push; evidence-only commits preserve the source fingerprints",
-  "integratedHeadBeforePublication": "5b9b4511c76275a3a0d000cf13406e0ce0a39b80",
+  "integratedHeadBeforePublication": "e646830ca0efb65311b5e1171c2199c943babde4",
   "reportingCatchUp": "reporting-integration-summary.json",
   "safetyGateSource": {
     "scripts/ci/lib/approved-sql-predicates.mjs": "3f977756c9629333aed868b236c743cde78608e9039a64d6f32c75cab1e64d5e",
@@ -41,10 +41,11 @@
   "safetyGateQualification": "sql-predicate-qualification.json",
   "freshnessCatchUp": "freshness-integration-summary.json",
   "normalPushGatesBeforeRemoteAdvance": {
-    "sourceHead": "bcbf5877cfc7d16217614e291223408683d1793e",
+    "sourceHead": "093aa23d593a46da6b000a833fd40f10ec28b4bd",
     "allGatesPassed": true,
     "typescriptErrors": 0,
-    "receipt": "canonical-push-2.json",
+    "receipt": "canonical-push-3.json",
     "published": false
-  }
+  },
+  "intakeCatchUp": "intake-integration-summary.json"
 }

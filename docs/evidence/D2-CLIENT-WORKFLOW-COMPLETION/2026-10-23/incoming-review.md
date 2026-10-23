@@ -96,3 +96,31 @@ Suggested bounded provider-free, non-native catch-up (not executed here):
 - `server/services/__tests__/rag-vault-freshness-mapping.test.ts` — dense/lexical mapping and SQL snapshot shape without native pgvector.
 
 Incoming historical qualification reports 595 passes in 32 files for the saved-section work and 269 in 27 for freshness, with later separate source-bound compatibility runs. These overlapping counts are not added or claimed as our merged rerun. Owner-mode PGlite and synthetic provider/acknowledgment seams do not qualify native concurrency or agency delivery. Freshness cannot recall content already sent to a provider; historical citation rows may remain after a late refusal. Saved-section pending state is not a persistent cross-reload idempotency/reconciliation protocol, and missing legacy provenance is not reconstructed.
+
+## Later intake merge review
+
+The backend reviewer independently read the exact incoming range
+`7184fb1fdb25a549bbf623d54f2d51783ae0d498` to
+`66ad10eaf6fdef9b995452f63d21a89cb7c36849`. None of its 26 source, fixture or
+test paths intersects the 23 qualified attachment paths. One shared dependency
+module, `server/services/c2c/program-project-anchor.ts`, changes creation and
+its returned receipt. Its tail beginning at `export interface ProgramAnchorRow`
+is byte-identical on both sides (SHA256
+`9b09320f089988d0a030c4b4548deb2a932f0f0239a1f4205a33f8a727e214c5`),
+including the resolver and current-access readers used by eSTAR. Canonical
+current-program access, actor/source access, Vault lifecycle, disposition and
+verified binary reading are unchanged.
+
+Strict intake locks an explicitly selected active organization-owned workspace;
+multiple choices require a choice even when a default marker exists. Existing
+anchors are never moved or used to grant access by a contradictory repeat.
+Current creator authority remains checked, and confirmed creation receipts bind
+the actor, organization, workspace and anchor before context handoff. The
+existing eSTAR access reader still resolves the recorded anchor and current
+sharing authority. No bounded compatibility blocker was found.
+
+This review performed no tests, edits or merge. Root executed the changed-test
+cohort and build separately (`intake-integration-summary.json`), plus the
+recommended strict-anchor and real eSTAR route/PGlite control
+(`intake-attachment-control.json`). These local checks do not replace native
+database, live deployment or human acceptance work.

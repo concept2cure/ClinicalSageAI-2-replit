@@ -1,0 +1,33 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardPredicatePair.test.tsx",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx",
+    "server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts",
+    "server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts",
+    "server/routes/c2c/__tests__/projects-create-market-offer.test.ts",
+    "server/routes/c2c/__tests__/projects-create-regional-devices.test.ts",
+    "server/routes/c2c/__tests__/projects-create-stated-facts.test.ts",
+    "server/routes/c2c/__tests__/projects-create.test.ts",
+    "shared/__tests__/project-intake-workspace.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=/workspace/ClinicalSageAI-2-replit/docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/intake-integration-test-results.json"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 31.381,
+  "sourceHead": "e646830ca0efb65311b5e1171c2199c943babde4",
+  "implementationPinsUnchanged": true,
+  "output": "intake-integration-tests.log.gz",
+  "outputSha256": "a6be825a3cc4c1f46b2b0cf1eb9b11dccbf013ab07671993c412bdfe8981eb9b"
+}

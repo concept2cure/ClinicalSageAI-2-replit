@@ -138,6 +138,14 @@ on that same integrated source, using the real router and canonical migrations
 through the existing PGlite harness. This is a separate epoch, retained in
 `freshness-filing-contract.json`, and is not added to the preceding run's count.
 
+The next normal push also passed every gate, including zero TypeScript errors,
+but Git refused another concurrent remote advance (`canonical-push-3.json`).
+The subsequent normal merge incorporates project intake's explicit client
+workspace selection and handoff. Its separate local integration epoch passes
+**268 cases across 17 files**, zero failures/skips; the production build passes.
+All 23 attachment and three safety-gate fingerprints remain unchanged.
+See `intake-integration-summary.json` for commands, integrated source and scope.
+
 ## Publication gate correction
 
 The first normal push refused an unregistered canonical SQL predicate call.
@@ -149,3 +157,9 @@ and neighboring raw-value refusals; the real repository SQL gate passes.
 All 23 qualified application files remain unchanged. See
 `sql-predicate-qualification.json` and the appended independent review.
 Pre-existing checker gaps remain documented in its self-tests.
+
+The direct strict-anchor and real eSTAR route/PGlite integration control passes
+**8 cases across two files** on the intake-integrated source. This separate
+epoch is retained in `intake-attachment-control.json`, without adding it to
+the main qualification count. The independent compatibility review found no
+bounded blocker.
