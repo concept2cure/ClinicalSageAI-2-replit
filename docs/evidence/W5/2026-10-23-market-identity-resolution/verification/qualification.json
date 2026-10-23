@@ -34,7 +34,7 @@
     "findings": 0,
     "initialContentHashFormattingCorrection": "hash-format-correction.json"
   },
-  "fullCompilerAndPush": "Four completed normal full compiler runs0errors; final current-candidate normal gates/push pending.",
+  "fullCompilerAndPush": "Five completed normal full compiler runs0errors; final direct push pending after docs-only sync.",
   "humanWitness": "unexecuted",
   "agencyQualification": "unexecuted",
   "firstFullCompilerAndPush": {
@@ -133,5 +133,22 @@
     "productionBuildExit": 0,
     "pinnedInputs": 89,
     "changedInputs": []
+  },
+  "fifthFullCompilerAndPush": {
+    "candidate": "ca1012dfb00df62b41a003801703628329f9f957",
+    "errors": 0,
+    "tscExit": 0,
+    "baseline": 0,
+    "allNormalGatesPassed": true,
+    "pushAccepted": false,
+    "reason": "Remote advanced by documentation-only41ce35bac; all89source pins match after ordinary merge.",
+    "receipt": "push-fifth-ref-race.txt.gz"
+  },
+  "docsOnlySync": {
+    "head": "ced573beb70f586d6fcb5835475d2e24090e25b7",
+    "incoming": "41ce35bac",
+    "inputs": 89,
+    "changed": [],
+    "testsAndBuildRepeated": false
   }
 }

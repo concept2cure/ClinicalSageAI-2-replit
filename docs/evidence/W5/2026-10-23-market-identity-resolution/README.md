@@ -143,3 +143,13 @@ pins match. The changed backfill service's three-file cohort passes **27 checks*
 and a fresh production build passes with all eighty-nine latest pins unchanged.
 The market-identity implementation remains unchanged. These separate receipts
 do not claim a summed full-suite pass; final normal gates/publication are pending.
+
+
+## Documentation-only sync
+
+The fifth normal push passed all gates and full TypeScript with zero errors
+(`verification/push-fifth-ref-race.txt.gz`). The remote then advanced by the
+backfill qualification documents at `41ce35bac`; ordinary merge `ced573beb`
+preserves them with all eighty-nine source pins unchanged. Completed build and
+scoped tests were not repeated for this documentation-only change. Final direct
+publication remains pending.
