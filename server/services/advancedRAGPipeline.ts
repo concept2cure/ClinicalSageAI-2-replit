@@ -546,8 +546,9 @@ function buildLocator(row: VaultChunkRow): string | undefined {
 
 /** Canonical dense Vault statement: hash only the materialized, limited candidates. */
 // tenant-isolation-safe: scoped binds the organization UUID at $4 before ranking.
-function vaultDensePassageSql(denseFilter: string, embeddingCol: string): string {
-  return `
+function queryVaultDensePassages(client: TenantKeyQueryable, denseFilter: string,
+  embeddingCol: string, denseParams: unknown[]) {
+  return client.query(`
         WITH scoped AS MATERIALIZED (
           SELECT
             c.id, c.document_id, c.chunk_text, c.page_number, c.section_title,
@@ -593,7 +594,7 @@ function vaultDensePassageSql(denseFilter: string, embeddingCol: string): string
                encode(sha256(convert_to(d.extracted_text, 'UTF8')), 'hex') AS extracted_text_sha256
           FROM ranked JOIN vault.documents d ON d.id = ranked.document_id
          ORDER BY ranked.similarity DESC
-      `;
+      `, denseParams);
 }
 
 /** One vault chunk row as a retrieved passage. */
@@ -1623,9 +1624,7 @@ export class AdvancedRAGPipeline {
       let denseRows: VaultChunkRow[];
       const savepoint = await optionalVaultSavepoint(client);
       try {
-        const { rows } = await client.query(
-          vaultDensePassageSql(denseFilter, embeddingCol), denseParams,
-        );
+        const { rows } = await queryVaultDensePassages(client, denseFilter, embeddingCol, denseParams);
         denseRows = rows.map(readVaultChunkRow);
         if (savepoint) await client.query('RELEASE SAVEPOINT vault_dense_search');
       } catch (error) {

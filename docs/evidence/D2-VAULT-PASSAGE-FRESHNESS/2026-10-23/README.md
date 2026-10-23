@@ -27,3 +27,9 @@ Literal membership cannot identify an exact span or distinguish repeated identic
 ## Publication status
 
 Contract head f50ed6d10 and incoming canonical history were preserved by normal merge 526e86cba and pushed directly with normal hooks. The 29 selected baseline inputs were unchanged by that merge. Fail-first freeze is dd4ae4dea. Current code and evidence are qualified locally; normal code-push TypeScript and remote publication proof are pending.
+
+## SQL inspection rejection and retry qualification
+
+The first normal code push at 557c4a31d was refused by the SQL inspection gate before TypeScript: extracting the SQL string outside `.query` reduced the scanner's visible count from 44 to 39. This was a visibility change, not an actual removal of interpolation. The failed push remains in `root/implementation-push*`; no baseline was lowered or relaxed.
+
+The private helper now directly executes `client.query` with the same literal SQL and arguments. All five interpolations are visible to the unchanged scanner, which passes with the original 44 allowance. A further independent review is CLEAR (`root/query-helper-review.json`). The current exact-source run (`root/retry*`) again passes **269 tests in 27 files**, all four frozen files unchanged. `root/lint-retry.json` has zero errors, nine existing production warnings, no growth and zero test warnings. `qualification-source-manifest-retry.json` and `root/retry-qualification.json` are the current qualification; earlier manifests remain historical. Normal retry push and TypeScript are pending.
