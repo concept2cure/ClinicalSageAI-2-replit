@@ -38,5 +38,10 @@
     "decodedBytes": 14178,
     "decodedSha256": "8b938c4c7b9a38ae1a4845ef76a49fec78e8962dabc98cf6d050f5ff26e720e1",
     "archiveSha256": "dc7301e36f7e97bb31e4fb2697f00fa4ca3c74a1c2bf6680bc892dab5e36f771"
+  },
+  "push-attempt-3.txt.gz": {
+    "decodedBytes": 14178,
+    "decodedSha256": "9ea63da1aa65e4cee7ab632f97b22ee0cf713ef92a17292228efa4dcb6f70892",
+    "archiveSha256": "4841f308fea0c8c1300e7d3f1c2824fee7a8ba120e4a1f14a30bf43efce5659b"
   }
 }

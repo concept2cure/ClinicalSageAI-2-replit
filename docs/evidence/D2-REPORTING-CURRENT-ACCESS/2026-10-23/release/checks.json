@@ -502,5 +502,37 @@
     "expectedRemote": "8ba496f6989dfee0c92d5bb994fb2ac817faac97",
     "remoteObservedAfterFailure": "70e5ea3bb1576b446ae02a6df80415850fab042b",
     "archive": "push-attempt-2.txt.gz"
+  },
+  "pushAttempt3": {
+    "head": "47c812f26d598fb317276e04092081789cfd9f61",
+    "command": {
+      "environment": {
+        "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+        "TYPECHECK_HEAP_MB": "12288"
+      },
+      "argv": [
+        "git",
+        "push",
+        "origin",
+        "concept2cure-v2"
+      ]
+    },
+    "allPrePushGates": "passed",
+    "typecheckErrors": 0,
+    "tscExitCode": 0,
+    "pushExitCode": 1,
+    "publication": "not published; fetch-first rejection following documentation-only canonical advance",
+    "expectedRemote": "70e5ea3bb1576b446ae02a6df80415850fab042b",
+    "remoteObservedAfterFailure": "26d85015640a87dc06fda9209f4eef678970c279",
+    "archive": "push-attempt-3.txt.gz"
+  },
+  "documentationOnlyReconciliation": {
+    "mergedHead": "3f9a1f62003ac1c4b6dbab00443b57d0b4003d9f",
+    "incomingCanonical": "26d85015640a87dc06fda9209f4eef678970c279",
+    "incomingPaths": 14,
+    "applicationSourceChanges": 0,
+    "selectedInputsVerified": 98,
+    "sourceDrift": [],
+    "qualification": "Previously verified merged-source build/tests and complete zero-error compiler retained; only incoming publication documentation changed."
   }
 }

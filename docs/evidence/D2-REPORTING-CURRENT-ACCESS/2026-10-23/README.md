@@ -55,6 +55,10 @@ The second normal push of `7e0a8332c` again passed every gate and the full compi
 
 The latest combined production build passed in **20.27 seconds**, including server and audit verifier. All 98 selected build input hashes remain unchanged. `release/checks.json` and lossless archives preserve this build and the second checked-but-rejected publication attempt. The fix does not claim migration of historical chunks, complete grapheme segmentation or resolution of separate retrieval defects.
 
+## Final documentation reconciliation
+
+The third normal push of `47c812f26` passed every gate and full compilation with zero errors, then canonical advanced with publication documentation at `26d850156`. Its 14 changed paths are documentation only. Normal merge preserves those records; all 98 selected application/test/helper hashes remain unchanged. The latest build and tests above retain their original pins and are not relabelled as rerun. `release/checks.json` and `release/push-attempt-3.txt.gz` retain the exact checked-but-rejected attempt separately from publication.
+
 ## Remaining acceptance
 
 Current actor rows are retained through commit; source-project policy is re-evaluated on the supplied executor. This does not establish serialization against every independent sharing writer. The SQL-backed tests do not establish native hosted acceptance.
