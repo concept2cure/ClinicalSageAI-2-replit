@@ -1545,21 +1545,9 @@ export class AdvancedRAGPipeline {
   ): Promise<RetrievedDocument[]> {
     // Metadata pre-filters on the joined documents table. Each arm has its own
     // param array, so each gets its own clause with arm-local placeholders.
-    /* REFUSE WITHOUT A TENANT, rather than searching every tenant's vault.
-       `organizationUuid` is optional on this path and `withTenantContext` simply
-       does not set `app.current_org_id` when it is absent — so the two comments
-       below that called these queries "RLS-scoped" were describing a boundary
-       that, with no org, was never established. Both queries also carried no org
-       predicate of their own, delegating entirely to RLS on vault.documents and
-       vault.document_chunks, which are ENABLE ROW LEVEL SECURITY without FORCE
-       (db/migrations/044c_gcc_vault_schema.sql:112,
-       migrations/20260905b_vault_document_chunks.sql:76). Postgres does not
-       apply ENABLE-only policies to the table OWNER, and
-       server/db/getDatabaseUrl.ts:77-83 falls back to the owner URL when
-       APP_DATABASE_URL is unset — the default single-role deployment. So on that
-       shape there was no tenant boundary on vault retrieval at all.
-       Returning nothing is the honest answer to "search this tenant's vault"
-       asked with no tenant. */
+    // Refuse an absent/malformed tenant before SQL or embedding. Owner connections
+    // bypass ENABLE-only RLS, so the explicit organization predicates are required.
+    // See docs/evidence/D3/2026-09-24-rag-pipeline-tenant/ for the original proof.
     if (!organizationUuid || !UUID_RE.test(organizationUuid)) {
       if (sourceReadScope) throw new Error('The source organization identity could not be verified. Nothing was searched.');
       /* A malformed value is refused rather than passed to `$N::uuid`, which
