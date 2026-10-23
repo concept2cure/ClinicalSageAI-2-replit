@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:class-vocabulary"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.596,
+  "output": "merged-gate-ci-class-vocabulary.log.gz",
+  "outputSha256": "6336174b102b7f10747a99e2ef2acb2a2678cfc914dba9d80bbfe091b88cfb30",
+  "sourceFreeze": "source-freeze-merged.json",
+  "sourceDrift": []
+}

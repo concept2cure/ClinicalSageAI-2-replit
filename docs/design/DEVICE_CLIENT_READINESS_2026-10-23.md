@@ -133,3 +133,14 @@ test response defaulting moved out of its async callback. The final canonical
 source manifest and 35-file combined run include all affected device tests,
 existing presentation tests and the six incoming context-recovery suites.
 Earlier RED/GREEN counts remain tied to their original manifests, not pooled.
+
+The normal pre-push gate passed but the remote advanced again during its run.
+Merged the completed authoring/Vault traceability work from `8e050baf6`, with no
+production source overlap. Its ten source files are included in the final merged
+freeze and its four actual-PGlite regression suites join the combined run. The
+sole content conflict was in the human handoff: retained both contract links,
+kept incoming traceability cases 59–61, and renumbered these six device cases to
+62–67. The guide now has unique contiguous cases 1–67, all prior outcomes retained.
+An early qualification attempt was stopped while resolving that documentation
+conflict; none of its results are counted. `source-freeze-merged.json` and the
+merged receipts supersede it.

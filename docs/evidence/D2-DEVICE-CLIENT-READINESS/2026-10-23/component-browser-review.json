@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-23T15:28:45Z",
+  "at": "2026-10-23T15:36:06Z",
   "scope": "Serialized actual ProjectMarkets component DOM with all built CSS, using the existing visual-QA all-chunks superset convention. Layout and screenshots only; events, live application shell, authenticated backend and human UAT not exercised.",
   "cssFiles": [
     "index-CQkeOtwt.css",

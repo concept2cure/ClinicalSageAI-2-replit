@@ -1,0 +1,9 @@
+{
+  "at": "2026-10-23T15:34:29Z",
+  "status": "qualification attempt stopped before completion",
+  "reason": "Resolve documentation-only concurrent merge conflict before pinning the merged source; no result from this attempt is counted as passing.",
+  "resolution": "Preserved both handoff links and incoming traceability cases 59-61; renumbered device cases 62-67; checked contiguous unique cases 1-67.",
+  "resolvedMergeCommit": "6bb302bed",
+  "supersededSnapshot": "source-freeze-merge-attempt.json",
+  "replacementSnapshot": "source-freeze-merged.json"
+}

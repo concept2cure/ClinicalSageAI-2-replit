@@ -127,13 +127,33 @@ live authenticated application, interaction test or human acceptance. Earlier
 receipts remain tied to their own source manifests; overlapping totals are not
 added together.
 
+## Final merged result
+
+The remote advanced during the successful normal push checks. The subsequent
+merge at `6bb302bed` preserves the authoring/Vault provenance work from
+`8e050baf6`. `source-freeze-merged.json`, `qualification-merged.json` and
+`independent-review-merged.json` pin/review the combined sources. Final results:
+**917 passed, 0 failed across 39 test files**, **1 existing TODO**, all **16 gates
+passed**, TypeScript **0 errors**, successful build, ESLint **0 errors**, and
+zero source drift. The normal push checks are rerun on this combined branch.
+Eight component layout renders retain their stated limited scope.
+
+The existing TODO remains explicit:
+`placement-vault-leaf-parity.pglite.test.ts` step 4—automatically superseding a
+live-leaf-pinned Vault version when an edited authoring document is refiled.
+Historical hash-labelled versions require an explicit migration/replacement
+policy; no predecessor is guessed and no retained version is silently renamed.
+This feature is not counted as complete or passed by this increment.
+
 ## Human acceptance and remaining qualification
 
-Cases 59–64 in
+Cases 62–67 in
 [`CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md`](../../../testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md)
 cover the subtype, stale-selection, preparation-only, existing-device and
 medicinal-control workflows, including narrow/light/dark keyboard review. They
-remain **Not run**. Existing cases 1–58 retain their recorded status.
+remain **Not run**. Existing cases 1–61 retain their recorded status. Device cases were originally
+59–64 and were renumbered during the documented concurrent traceability merge,
+which added cases 59–61; no case or recorded outcome was discarded.
 
 This work does not establish a fresh full installation, production deployment,
 qualified live-provider drafting, adequacy of current official agency forms or

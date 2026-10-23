@@ -1,0 +1,12 @@
+{
+  "argv": [
+    "python",
+    "/workspace/scratch/render-device-readiness.py"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 3.256,
+  "output": "merged-component-browser-review.log.gz",
+  "outputSha256": "4ac8000e8f75a7a5c41cc46f6373877e373a1af8a29618bfe7ec952dba7e32dd",
+  "sourceFreeze": "source-freeze-merged.json",
+  "sourceDrift": []
+}
