@@ -1,0 +1,13 @@
+{
+  "sourceCommit": "6589285f100ee1a321d937c38418944b66a98e8b",
+  "scope": "Functional RED before production edits; real auth refresh and same-frame retained account handler; canonical HTTP payload unchanged.",
+  "files": {
+    "client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx": "426a9d96a96f57b02c1e2fe6301149ce58436ace3fbe2cd8d70757287413d4b6",
+    "client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx": "49069cb2db82a74cb93d343508bfb975e631884b24154cca1e7cfa8a71abbfee",
+    "client/src/concept2cure/v2/surfaces/CompanyCorrespondenceDraft.tsx": "b9739f5588c9c3b3c6b86871c2c47d0ea471246437bfd7f5d7a174a05747646f",
+    "client/src/concept2cure/v2/surfaces/CompanyCorrespondenceVariants.tsx": "b8851f3b5d01d4b9535a3efa35dc1bc4e557380383200325f7348ef68f4f1ac3",
+    "client/src/concept2cure/v2/surfaces/CompanyFilingIdentityReview.tsx": "f7ce7f2fd72c199e4d739a8d50eba166fd6c68f64be31a8bd9403edcf01a1123",
+    "client/src/concept2cure/v2/surfaces/CompanySubmissionDocuments.tsx": "a31e647abbd25beaf0c75cc19adcc2bdb61a4bbdf16e4cf9055ec15cbfe576c1",
+    "client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx": "3dc210ed9dd273f61e8136f8e094015713a54a4c2ed9a2128000ac19a230b347"
+  }
+}

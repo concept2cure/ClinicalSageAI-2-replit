@@ -1,0 +1,37 @@
+// @vitest-environment jsdom
+/** Retained correspondence handlers keep the account and filing that admitted them. */
+import React from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { endCompanySession, seedCompanySession } from './_company-session-fixture';
+
+const apiRequest = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
+import { CompanyCorrespondenceDraft } from '../surfaces/CompanyCorrespondenceDraft';
+
+const PROGRAM = '11111111-1111-4111-8111-111111111111';
+const DOC = '22222222-2222-4222-8222-222222222222';
+const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+const onNav = vi.fn();
+beforeEach(() => {
+  localStorage.clear(); sessionStorage.clear(); seedCompanySession({ organizationId: '7' });
+  apiRequest.mockReset().mockResolvedValue(json({ authoringDocId: DOC, programId: PROGRAM, sequenceId: 9, documentStatus: 'draft', filedInVault: false }, 201));
+  onNav.mockReset(); delete window.C2C_EDITOR_TARGET;
+});
+afterEach(() => { cleanup(); endCompanySession(); vi.unstubAllGlobals(); });
+
+describe('canonical correspondence captured account', () => {
+  it('does not dispatch a retained create click in the same frame as account replacement', () => {
+    render(<CompanyCorrespondenceDraft sequenceId={9} programId={PROGRAM} submissionTitle="Recorded filing" onNav={onNav} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Prepare correspondence in Authoring' }));
+    fireEvent.change(screen.getByLabelText('Draft correspondence text'), { target: { value: 'Private reviewed response.' } });
+    fireEvent.change(screen.getByLabelText('Reason for creating correspondence'), { target: { value: 'Prepare the response for review' } });
+    const create = screen.getByRole('button', { name: 'Save correspondence draft' });
+    act(() => {
+      seedCompanySession({ id: '43', organizationId: '7', email: 'replacement@example.test' }, 'replacement');
+      fireEvent.click(create);
+    });
+    expect(apiRequest.mock.calls.filter(([method]) => method === 'POST')).toHaveLength(0);
+    expect(onNav).not.toHaveBeenCalled();
+  });
+});
