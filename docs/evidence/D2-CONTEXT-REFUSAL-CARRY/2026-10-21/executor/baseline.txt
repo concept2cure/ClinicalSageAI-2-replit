@@ -1,0 +1,153 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/ana/__tests__/context-window-executor-carry.test.ts
+{
+  "timestamp": "2026-10-21T02:14:29.790Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T02:14:29.791Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/context-window-executor-carry.test.ts
+{
+  "timestamp": "2026-10-21T02:14:29.791Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/context-window-executor-carry.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/context-window-executor-carry.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/context-window-executor-carry.test.ts
+{
+  "timestamp": "2026-10-21T02:14:30.143Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/context-window-executor-carry.test.ts > existing context refusal propagates through the native classic loop > preserves an initial canonical refusal without running a tool, staging results or writing receipts 11ms
+ ✓ server/services/ana/__tests__/context-window-executor-carry.test.ts > existing context refusal propagates through the native classic loop > preserves a follow-up refusal after exact framed staging, raw callbacks and an admitted source receipt 9ms
+ ✓ server/services/ana/__tests__/context-window-executor-carry.test.ts > existing context refusal propagates through the native classic loop > CONTROL: a fitting follow-up still completes normally with its exact source receipt 1ms
+stdout | server/services/ai-gateway/__tests__/context-window-admission.test.ts
+{
+  "timestamp": "2026-10-21T02:14:38.394Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T02:14:38.396Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/context-window-admission.test.ts
+{
+  "timestamp": "2026-10-21T02:14:38.396Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/context-window-admission.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/context-window-admission.test.ts > context-window admission > refuses a request that fits no enabled model BEFORE any provider is called, as TOKEN_LIMIT_EXCEEDED
+{
+  "timestamp": "2026-10-21T02:14:38.496Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] anthropic/claude-opus-5-5 skipped: request is ~1200000 tokens, its context window is 1000000",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T02:14:38.497Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] anthropic/claude-opus-5 skipped: request is ~1200000 tokens, its context window is 1000000",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T02:14:38.497Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] anthropic/claude-opus-4-8 skipped: request is ~1200000 tokens, its context window is 1000000",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T02:14:38.497Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] anthropic/claude-sonnet-5 skipped: request is ~1200000 tokens, its context window is 1000000",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T02:14:38.497Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] anthropic/claude-sonnet-4-6 skipped: request is ~1200000 tokens, its context window is 1000000",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T02:14:38.497Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] anthropic/claude-haiku-4-5 skipped: request is ~1200000 tokens, its context window is 200000",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T02:14:38.497Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o skipped: request is ~1200000 tokens, its context window is 128000",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T02:14:38.497Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o-mini skipped: request is ~1200000 tokens, its context window is 128000",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/context-window-admission.test.ts > context-window admission > dispatches to a model whose window fits instead of the pinned one that cannot
+{
+  "timestamp": "2026-10-21T02:14:38.517Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o skipped: request is ~140000 tokens, its context window is 128000",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T02:14:38.517Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o-mini skipped: request is ~140000 tokens, its context window is 128000",
+  "context": {}
+}
+
+ ✓ server/services/ai-gateway/__tests__/context-window-admission.test.ts > context-window admission > refuses a request that fits no enabled model BEFORE any provider is called, as TOKEN_LIMIT_EXCEEDED 25ms
+ ✓ server/services/ai-gateway/__tests__/context-window-admission.test.ts > context-window admission > dispatches to a model whose window fits instead of the pinned one that cannot 3ms
+ ✓ server/services/ai-gateway/__tests__/context-window-admission.test.ts > context-window admission > leaves an ordinary request on the model the router selected 1ms
+ ✓ server/services/ai-gateway/__tests__/context-window-round-cost.test.ts > existing full-request admission includes costs beyond raw tool bodies > counts 'tool framing, headers and closing-tag…' at the existing admission boundary 2ms
+ ✓ server/services/ai-gateway/__tests__/context-window-round-cost.test.ts > existing full-request admission includes costs beyond raw tool bodies > counts 'prior conversation history' at the existing admission boundary 1ms
+ ✓ server/services/ai-gateway/__tests__/context-window-round-cost.test.ts > existing full-request admission includes costs beyond raw tool bodies > counts 'assistant narration' at the existing admission boundary 1ms
+ ✓ server/services/ai-gateway/__tests__/context-window-round-cost.test.ts > existing full-request admission includes costs beyond raw tool bodies > counts 'operator control turns' at the existing admission boundary 1ms
+ ✓ server/services/ai-gateway/__tests__/context-window-round-cost.test.ts > existing full-request admission includes costs beyond raw tool bodies > counts 'tool definitions and input schema' at the existing admission boundary 1ms
+ ✓ server/services/ai-gateway/__tests__/context-window-round-cost.test.ts > existing full-request admission includes costs beyond raw tool bodies > counts 'structured output schema' at the existing admission boundary 0ms
+ ✓ server/services/ai-gateway/__tests__/context-window-round-cost.test.ts > existing full-request admission includes costs beyond raw tool bodies > counts 'text content blocks' at the existing admission boundary 0ms
+ ✓ server/services/ai-gateway/__tests__/context-window-round-cost.test.ts > existing full-request admission includes costs beyond raw tool bodies > counts 'reserved answer output' at the existing admission boundary 0ms
+ ✓ server/services/ai-gateway/__tests__/context-window-round-cost.test.ts > existing full-request admission includes costs beyond raw tool bodies > CONTROL: the same complete request fits when the configured model has enough room 1ms
+
+ Test Files  3 passed (3)
+      Tests  15 passed (15)
+   Start at  02:14:27
+   Duration  10.97s (transform 6.86s, setup 98ms, import 10.29s, tests 67ms, environment 0ms)
+

@@ -1,0 +1,22 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts",
+    "server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-stop-before-results.json"
+  ],
+  "startedAt": "2026-10-23T14:58:41.910157+00:00",
+  "purpose": "Expose historical cancellation-carrier expectation superseded by incoming DT3 stop behavior; no production change for this check.",
+  "testHashes": {
+    "server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts": "e5dccf948320ab3cbba9aa0deda6dccbbb05f150d9e0f9c88b8745d7dde279ac",
+    "server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts": "ae5c8cda43b31c7c4b02af0ed02bb7097110ba332017d8b44b891cd4f4132b52"
+  }
+}

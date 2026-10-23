@@ -1,0 +1,15 @@
+diff --git a/.husky/pre-push b/.husky/pre-push
+index 4398f2f73..756be5d3a 100755
+--- a/.husky/pre-push
++++ b/.husky/pre-push
+@@ -363,8 +363,8 @@ if ! npm run --silent ci:session-scoped-rls-bypass 2>&1; then
+   echo ""
+   echo "🚫 ERROR: Session-scoped RLS bypass check FAILED."
+   echo "   Use 'SET LOCAL app.bypass_rls' inside an explicit transaction so"
+-  echo "   Postgres discards it at COMMIT/ROLLBACK, as guardQuery() does in"
+-  echo "   server/routes/innovation-routes.ts."
++  echo "   Postgres discards it at COMMIT/ROLLBACK, or release the connection with"
++  echo "   releaseWithoutBypass() (server/services/innovation/rlsBypassSession.ts)."
+   echo ""
+   exit 1
+ fi

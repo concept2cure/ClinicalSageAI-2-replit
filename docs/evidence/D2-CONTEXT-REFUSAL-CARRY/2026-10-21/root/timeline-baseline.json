@@ -1,0 +1,5 @@
+{
+  "scope": "Supplemental root pin after qualification exposed pre-header socket-write behavior; captured before production, not part of worker24pin claim.",
+  "file": "server/services/ana/turn-timeline-emitter.ts",
+  "sha256": "823e387f49794d4efb59bd7c952d390521bd7754b7c4cfc12104d09beb4540db"
+}

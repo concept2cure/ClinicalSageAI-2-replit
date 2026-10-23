@@ -1,0 +1,17 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3316 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 720960030] Normalize qualified chat fixture EOF before implementation
+ 10 files changed, 613 insertions(+), 3 deletions(-)
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/frozen-tests-commit.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/whitespace-review/eof.diff.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/whitespace-review/initial-frozen-tests.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/whitespace-review/lint.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/whitespace-review/original-test.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/whitespace-review/red-results.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/whitespace-review/red.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/whitespace-review/refrozen.json
