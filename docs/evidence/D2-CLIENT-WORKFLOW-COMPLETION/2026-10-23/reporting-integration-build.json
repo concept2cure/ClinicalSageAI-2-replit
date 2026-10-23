@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "build"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 13.314,
+  "sourceHead": "9acb44bbac3a442981fdafe5d9f6728f9ed0c231",
+  "implementationPinsUnchanged": true,
+  "output": "reporting-integration-build.log.gz",
+  "outputSha256": "e0716258549d6efbc68f70ccb45a082e54c6e58321aea7c021d3cfdc68786232"
+}

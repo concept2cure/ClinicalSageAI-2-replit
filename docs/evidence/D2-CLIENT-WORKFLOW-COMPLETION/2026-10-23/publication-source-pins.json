@@ -30,5 +30,7 @@
   },
   "qualification": "qualification-summary.json",
   "humanAcceptance": "Not run",
-  "publication": "pending normal push; evidence-only commits preserve the source fingerprints"
+  "publication": "pending normal push; evidence-only commits preserve the source fingerprints",
+  "integratedHeadBeforePublication": "9acb44bbac3a442981fdafe5d9f6728f9ed0c231",
+  "reportingCatchUp": "reporting-integration-summary.json"
 }

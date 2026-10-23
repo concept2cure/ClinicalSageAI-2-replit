@@ -112,3 +112,9 @@ faithfully serializes current select/input state; `ui/mounted-dom/*.html.gz`
 contains the final fragments. Browser geometry uses the qualified build's
 CSS in the existing MDX/V2 scope; external requests are blocked. These are
 component checks, not a live authenticated application or PDF-editor session.
+
+A later canonical reporting merge adds a separate **173 passed across 13 files**,
+zero failures/skips, and a successful rebuilt product. All 23 qualified eSTAR
+implementation fingerprints remain unchanged. This separate epoch is retained
+in `reporting-integration-summary.json`; the normal pre-push compiler gate must
+pass on the integrated publication head.

@@ -1,0 +1,29 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+    "client/src/concept2cure/v2/__tests__/insightsBundleRegisterCap.test.tsx",
+    "client/src/concept2cure/v2/__tests__/insightsLabelCurrencyMatrix.test.tsx",
+    "client/src/concept2cure/v2/__tests__/insightsLifecycleCalendar.test.tsx",
+    "client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx",
+    "server/routes/__tests__/report-os-audit-recording.test.ts",
+    "server/routes/__tests__/report-os-current-run-access.test.ts",
+    "server/routes/__tests__/report-os-regional-context.test.ts",
+    "server/routes/__tests__/report-os-run-engine.test.ts",
+    "server/services/report-os/__tests__/project-access-integration.test.ts",
+    "server/services/report-os/scheduling/__tests__/generate-deliver.pglite.test.ts",
+    "server/services/report-os/scheduling/__tests__/generate-deliver.test.ts",
+    "server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=/workspace/ClinicalSageAI-2-replit/docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/reporting-integration-test-results.json"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 28.109,
+  "sourceHead": "9acb44bbac3a442981fdafe5d9f6728f9ed0c231",
+  "implementationPinsUnchanged": true,
+  "output": "reporting-integration-tests.log.gz",
+  "outputSha256": "2b2f110b7e75d1edd04d5b848f5835361638c5828ec58e81a9f8f67ad31b60a8"
+}

@@ -1,6 +1,6 @@
 # Incoming canonical integration review
 
-Read-only backend audit of merge-base f5f685a87 through origin526e86cba.
+Read-only backend audit of merge-base f5f685a87 through origin `526e86cba`.
 Incoming production changes do not modify eSTAR, current-program access, Vault
 lifecycle/disposition, verified-byte reading, retention or consequence services.
 The only shared implementation path is SubmissionSeqWorkspaces.tsx: one comment
@@ -10,6 +10,65 @@ read-window/receipt corrections remain separate existing workstreams.
 
 Historical incoming evidence is not added to our counts. Twelve targeted
 non-native test files were selected for the combined merged rerun, alongside
-our existing52-file eSTAR/source/UI cohort. No schema or dependency changes
+our existing 52-file eSTAR/source/UI cohort. No schema or dependency changes
 are involved. Native PostgreSQL concurrency and human/PDF-editor acceptance
 remain outside this local execution proof.
+
+# Incoming canonical changes — read-only review
+
+Reviewed 2026-10-23 for W1 / D2 attachment completion. This review ran no tests, merges, builds or compiler and changed no runtime source. Root owns merged-source qualification and publication.
+
+## Recorded regional release identity and Unicode windows
+
+- Local comparison base: `05b72a72f14f1a5a0ce70ffb612b6881d7906775`.
+- Exact common ancestor: `f5f685a87faea1fd5197bfac362249aefec3481f`.
+- Incoming origin: `526e86cba58dcca26e4b42b536e8315d45bdd9d1`.
+- The incoming side changes 17 runtime files and 24 source test files. The only runtime overlap with this attachment lane is a comment in `SubmissionSeqWorkspaces.tsx`: “unsent FDA release” becomes “unsent release.” Preserve that comment and this lane's `mutationUnconfirmed` import/reexport/extraction together. Tree-to-tree differences showing this lane's design/evidence absent remotely are not incoming deletion commits; use the common-ancestor comparison.
+
+No conflict was found with the attachment implementation. Incoming changes leave its eSTAR catalog/producer/resolver/retention/consequence, current-program access, Vault eligibility/disposition/verified-byte helpers and shared attachment manifest unchanged. Regional release changes reuse the existing version-1 identity proof: recognized non-US releases now bind their recorded number/name/sponsor, omit FDA-only facts, and require intact current proof before signing/claiming/sending. Historical digests remain reproducible; older unfinished proof-free packages require reassembly. Unknown regions refuse. The changed pre-ceremony preparation reads/verifies the frozen record, while current signer re-verification still precedes signature write/continuation.
+
+Unicode changes touch only the existing AnA handler and tool guidance in production. Intact UTF-16 window bounds now also describe the deferred source/receipt spans. Existing current actor/version admission, host budgets and guarded receipt writer remain authoritative. They do not change eSTAR binary reads.
+
+Suggested bounded local catch-up (root selects; not executed by this reviewer):
+
+- `client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx`
+- `client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx`
+- `server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts`
+- `server/services/ectd/__tests__/export-application-identity.pglite.test.ts`
+- `server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts`
+- `server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts`
+- `server/services/submission-service/__tests__/transmit-recorded-identity.test.ts`
+- `server/services/__tests__/submission-orchestrator-continuation.test.ts`
+- `tests/routes/ectd-compile-spine.test.ts`
+
+Unicode seam controls:
+
+- `server/services/ana/__tests__/document-read-unicode-windows.test.ts`
+- `server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts`
+- `server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts`
+
+Incoming historical evidence reports Unicode 517 passes across 26 files, with 45 new cases and 25 meaningful original failures; it records zero lint growth. Release evidence retains separate overlapping identity/caller/compile/UI cohorts, accepted zero-error TypeScript and build results. Those are source-bound incoming results, not this lane's merged rerun. Native PostgreSQL and browser evidence there are historical executions and are not included in the proposed local cohort.
+
+## Reporting current-access catch-up
+
+Second review: common ancestor and previous incoming origin `526e86cba58dcca26e4b42b536e8315d45bdd9d1`; incoming origin `b3e5746f63946e2819e1467d7d49a86b1b3ac6cb`. Local HEAD at review was `fede6e0c1c37ea1e84afd6ee6655cc039c48b490`.
+
+This incoming side changes 16 source/test paths, including exactly three runtime files: `client/src/concept2cure/v2/surfaces/Insights.tsx`, `server/routes/report-os.ts` and `server/services/report-os/scheduling/generate-deliver.ts`. It changes no eSTAR source, attachment dependency, canonical access primitive implementation or shared attachment primitive. Insights imports the existing canonical account/session owner; it does not edit that owner. No runtime overlap with this attachment lane was found.
+
+Manual and scheduled reports now always recheck current actors, writing authority, recipient source access and exact active scope/workspace on the existing persistence executor. Optional/empty provenance no longer disables those checks. The UI withdraws old-account data/actions and rejects late report/PDF/signature callbacks, preserves normal bearer refresh, prevents duplicate export reads and directs uncertain writes to Run history. Existing report engines and shared signature ceremony remain in use.
+
+Suggested provider-free, non-native catch-up:
+
+- `server/routes/__tests__/report-os-current-run-access.test.ts` — mounted manual route, observed authority changes and full persistence rollback.
+- `server/routes/__tests__/report-os-run-engine.test.ts` — existing manual dispatcher compatibility.
+- `server/services/report-os/__tests__/project-access-integration.test.ts` — actual current actor/source/scope SQL.
+- `server/services/report-os/scheduling/__tests__/generate-deliver.pglite.test.ts` — actual enlisted SQL rollback of run/notifications/cursor when authority or scope changes.
+- `server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts` — registered worker dispatcher compatibility with explicit admission seam.
+- `client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx` — ownership replacement, stale actions/signature callbacks, PDF reads, ordinary refresh and uncertain writes.
+- `client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx` — existing bundle export compatibility.
+
+Incoming reporting evidence retains 277 client passes in 31 suites and 164 backend passes in 12 suites, plus source-pinned build/lint results. These are historical incoming qualifications, not merged-source results from this review.
+
+## Limits
+
+No blocker was found in the bounded incoming diffs. Read-only inspection is not executed merged-source qualification. PGlite and explicit producer/provider/persistence seams do not prove native multi-connection PostgreSQL serialization, real delivery providers, Acrobat/applicant review, agency acceptance, deployment or witnessed human use. Current-access checkpoints do not serialize every independent sharing writer. Attachment late-failure behavior can leave retained historical output while withholding PDF delivery and requiring human review. Existing strict verified-template attachment policy and zero-attachment policy remain unchanged by these incoming increments.

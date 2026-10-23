@@ -20,5 +20,15 @@
   "manualGuideCases": 83,
   "manualAcceptance": "Not run",
   "publication": "pending normal push",
-  "scope": "existing official eSTAR attachment workflow; local automated qualification, not global launch readiness"
+  "scope": "existing official eSTAR attachment workflow; local automated qualification, not global launch readiness",
+  "reportingCatchUp": {
+    "passed": 173,
+    "files": 13,
+    "failed": 0,
+    "skipped": 0,
+    "sourceHead": "9acb44bbac3a442981fdafe5d9f6728f9ed0c231",
+    "build": "passed",
+    "all23ImplementationFilesUnchanged": true,
+    "typescript": "normal pre-push gate required"
+  }
 }
