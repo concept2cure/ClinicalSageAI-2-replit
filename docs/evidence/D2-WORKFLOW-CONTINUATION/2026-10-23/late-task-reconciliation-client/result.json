@@ -1,0 +1,18 @@
+{
+  "canonical": "ee3089b5afa5ecb10fa6192fd56e023875573fd6",
+  "exitCode": 0,
+  "suitesPassed": 5,
+  "testsPassed": 75,
+  "testsFailed": 0,
+  "testsSkipped": 0,
+  "durationSeconds": 10.32,
+  "sourceEditsByReviewer": false,
+  "targetPinsUnchanged": true,
+  "targetPinsCount": 11,
+  "log": {
+    "archive": "green.txt.gz",
+    "decodedBytes": 13359,
+    "decodedSha256": "cc8ef428c13e56bda5bab509aa4891972395f2001cfe1a5474a66f5f05716748",
+    "archiveSha256": "dc168bfe05d130aaefd2f642c53d3a2e8573d5da9b8c1c2bd9f6aeb01cfa6c60"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx": "260c8c83b81a03551818f264d40031df56a3b2b03ada5b29fa51967625d2bcd0",
+  "client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts": "7f3c15f3df261dee4793bf16b36f92957ed28adc1ee128a6005d85d5b5168250",
+  "client/src/concept2cure/v2/__tests__/taskBoardNamedAssignment.test.tsx": "c96042bc9c8d11ac1185d71cb6af0c0e81691859fa6a60d2885dadba56368d4e",
+  "client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx": "dd5d4f8afc90335de3e2e7c46ff16df06b2747c7c13f4aca78377bdff4d3030c",
+  "client/src/concept2cure/v2/__tests__/shellNav.test.tsx": "570caf6e8757e719a461eba023de363a4bf9ed32c7b63099b32d5e477b177ba8",
+  "client/src/concept2cure/v2/surfaces/TaskAssignmentControls.tsx": "c8ef46d703012acb733d31941273c41ce570274878f784d2374960899ac84b56",
+  "client/src/concept2cure/v2/surfaces/taskAssignmentRequest.ts": "6c3f3779eb701eeefbde88ffc8eb63327ecacb4b0aa0f30a1f6bfc241228170f",
+  "client/src/concept2cure/v2/surfaces/TaskBoard.tsx": "d6bdec6b59eac2673d1c0d67bec4e9863757ecb0884c4cf32fa862969dda6603",
+  "client/src/concept2cure/v2/Shell.tsx": "a81229c9722c911c1758d772b689d866d84e8fe1c1ccd91585d84bacf5b5997e",
+  "client/src/concept2cure/v2/styles/app-v2.css": "09dfd589cdba60287bab520c50bac643b23fb48ec5e35f9631e483fc2b168e75",
+  "shared/task-assignment.ts": "f21f8113f3d34e81250f8889b88e35d64e4616f476816dd83a9a3016dfe3b3f7"
+}

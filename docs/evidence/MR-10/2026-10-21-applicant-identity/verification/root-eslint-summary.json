@@ -1,0 +1,6 @@
+{
+  "files": 12,
+  "errors": 0,
+  "warnings": 2,
+  "warningGrowth": "Normal pre-push warning comparison is authoritative; these two warning sites predate this slice."
+}

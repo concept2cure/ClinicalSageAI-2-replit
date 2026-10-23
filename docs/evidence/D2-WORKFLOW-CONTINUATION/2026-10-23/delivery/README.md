@@ -6,7 +6,7 @@ The current authoring reader, one editor/canvas, source assembly, Vault filing a
 
 ## Integration and verification
 
-The interrupted local delivery `70a3db998` is retained through preservation merge `b513b53e4` and current-access/Vault integration `944735c72`. Canonical advances through `55f75b72f`, context recovery and Vault filing derivation are preserved by normal merges. The final incoming snapshot is `b66c6108d`. All delivery remains on `concept2cure-v2`, without a PR, force push, hook bypass or baseline increase.
+The interrupted local delivery `70a3db998` is retained through preservation merge `b513b53e4` and current-access/Vault integration `944735c72`. Canonical advances through `55f75b72f`, context recovery and Vault filing derivation are preserved by normal merges. That incoming phase is `b66c6108d`; the later task merge below advances the retained canonical snapshot to `ee3089b5a`. All delivery remains on `concept2cure-v2`, without a PR, force push, hook bypass or baseline increase.
 
 The 23-suite backend snapshot passes **362/362** tests with no skips or failures. The initial 43-suite client run remains **466 passes and three failures**; it is retained as RED. The bounded client remedy then passes **104/104** cases in six affected suites, including all three earlier failures. These phase results are not added together or relabeled as a single all-green 43-suite run. Exact commands, targeted pins and lossless logs are in the adjacent packets.
 
@@ -19,3 +19,9 @@ WO-01 and WO-04 stay open. The specified Codespace is absent from this session's
 Reporting currently maps 23 report IDs; its regional filing-readiness computation explicitly covers US, EU and Japan. That is not global/client-use-case signoff. The reporting assessment records the engine/catalog and protocol/sealed-report metadata gaps.
 
 Prior hosted CI is separate from these local checks. The previous browser job lacked a configured `SMOKE_USER_EMAIL` or `DEMO_USER_EMAIL`; prior Semgrep reported 15 findings in 14 paths unchanged by this delivery against `55f75b72f`. Safe run/job references, first failure and owners are in `../backend-current-integration/CI-prior-state.md`. Those issues are not relabeled as green. One existing re-filing `supersedes_id` TODO remains in the Vault/leaf parity suite despite the new verified derivation receipt.
+
+## Concurrent task integration after the first complete gate run
+
+The first normal push of `d4acaf1e4` passed every local pre-push gate and the complete TypeScript program with **zero errors** and the unchanged zero baseline. Git then rejected the ref update because canonical advanced from `b66c6108d` to `ee3089b5a` while checking. `prepush-green-concurrent-rejection.txt.gz` retains both facts; this is not recorded as successful publication.
+
+The subsequent normal merge preserves documentation and the existing task-delegation completion. TaskBoard's retained `facts.mine` remains in loading, failed and ready context. The task backend/shared successor passes **75 tests in four suites**, without skips, TODOs or failures, in 10.46 seconds; its admission, version check, reason and audit remain on the pinned transaction. The client successor passes **75 tests in five suites**, without failures or skips, in 10.32 seconds. No application edits were needed for this merge. The refreshed client/server/audit-verifier build passes (`build-task-reconciled-final.txt.gz`; client 19.68 seconds). Both task packets retain their exact target pins and raw output. Earlier phase results retain their source snapshots.

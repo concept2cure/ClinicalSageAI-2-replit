@@ -1,0 +1,1318 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-21T01:42:05.572Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > accepting a critical > clears it from the count and from the dispatch verdict, with all else clear, and records who, when, how and why
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > accepting a critical > clears it from the count and from the dispatch verdict, with all else clear, and records who, when, how and why
+{
+  "timestamp": "2026-10-21T01:42:25.605Z",
+  "level": "info",
+  "message": "[submission-service] Shadow Review finding closed by signature",
+  "context": {
+    "sequenceId": 1,
+    "findingId": 1,
+    "runId": 1,
+    "disposition": "accepted",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > the migration > replays as a no-op (RULE 1: every deploy re-runs it) 83ms
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > the count this suite reads is the assessor's > the assessor counts through criticalsStandingOpen, and keeps no count of its own beside it 2ms
+stdout | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > accepting a critical > the findings read names who closed it, how, when and why, and offers nothing more on it
+{
+  "timestamp": "2026-10-21T01:42:25.830Z",
+  "level": "info",
+  "message": "[submission-service] Shadow Review finding closed by signature",
+  "context": {
+    "sequenceId": 2,
+    "findingId": 3,
+    "runId": 2,
+    "disposition": "accepted",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > accepting a critical > clears it from the count and from the dispatch verdict, with all else clear, and records who, when, how and why 306ms
+stdout | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > 'fixed' needs a completed review after the finding's run > is refused without one — a failed, running or earlier run does not count — and allowed with one
+{
+  "timestamp": "2026-10-21T01:42:26.018Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] GOVERNED_SIGNATURE_VOIDED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 7,
+    "resourceId": "4"
+  }
+}
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > 'fixed' needs a completed review after the finding's run > is refused without one — a failed, running or earlier run does not count — and allowed with one
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > 'fixed' needs a completed review after the finding's run > is refused without one — a failed, running or earlier run does not count — and allowed with one
+{
+  "timestamp": "2026-10-21T01:42:26.056Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stdout | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > 'fixed' needs a completed review after the finding's run > is refused without one — a failed, running or earlier run does not count — and allowed with one
+{
+  "timestamp": "2026-10-21T01:42:26.212Z",
+  "level": "info",
+  "message": "[submission-service] Shadow Review finding closed by signature",
+  "context": {
+    "sequenceId": 4,
+    "findingId": 7,
+    "runId": 7,
+    "disposition": "fixed",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > accepting a critical > the findings read names who closed it, how, when and why, and offers nothing more on it 223ms
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a later review never closes an earlier critical by itself > a later clean, completed run leaves the earlier critical open and the dispatch blocked 27ms
+stdout | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > voids the signature it was given, and the void signature does not serve a later attempt
+{
+  "timestamp": "2026-10-21T01:42:26.310Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] GOVERNED_SIGNATURE_VOIDED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 7,
+    "resourceId": "5"
+  }
+}
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > voids the signature it was given, and the void signature does not serve a later attempt
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > voids the signature it was given, and the void signature does not serve a later attempt
+{
+  "timestamp": "2026-10-21T01:42:26.365Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stdout | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > voids the signature it was given, and the void signature does not serve a later attempt
+{
+  "timestamp": "2026-10-21T01:42:26.499Z",
+  "level": "info",
+  "message": "[submission-service] Shadow Review finding closed by signature",
+  "context": {
+    "sequenceId": 5,
+    "findingId": 9,
+    "runId": 11,
+    "disposition": "fixed",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > 'fixed' needs a completed review after the finding's run > is refused without one — a failed, running or earlier run does not count — and allowed with one 305ms
+stdout | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > the sequence's author is refused (separation of duties)
+{
+  "timestamp": "2026-10-21T01:42:26.567Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] GOVERNED_SIGNATURE_VOIDED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 7,
+    "resourceId": "6"
+  }
+}
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > the sequence's author is refused (separation of duties)
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > the sequence's author is refused (separation of duties)
+{
+  "timestamp": "2026-10-21T01:42:26.580Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stdout | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a signature for finding A cannot disposition finding B, nor give A another disposition
+{
+  "timestamp": "2026-10-21T01:42:26.614Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] GOVERNED_SIGNATURE_VOIDED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 7,
+    "resourceId": "7"
+  }
+}
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a signature for finding A cannot disposition finding B, nor give A another disposition
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a signature for finding A cannot disposition finding B, nor give A another disposition
+{
+  "timestamp": "2026-10-21T01:42:26.626Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stdout | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a signature for finding A cannot disposition finding B, nor give A another disposition
+{
+  "timestamp": "2026-10-21T01:42:26.663Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] GOVERNED_SIGNATURE_VOIDED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 7,
+    "resourceId": "7"
+  }
+}
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a signature for finding A cannot disposition finding B, nor give A another disposition
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a signature for finding A cannot disposition finding B, nor give A another disposition
+{
+  "timestamp": "2026-10-21T01:42:26.677Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stdout | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a signature for finding A cannot disposition finding B, nor give A another disposition
+{
+  "timestamp": "2026-10-21T01:42:26.722Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] GOVERNED_SIGNATURE_VOIDED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 7,
+    "resourceId": "7"
+  }
+}
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a signature for finding A cannot disposition finding B, nor give A another disposition
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a signature for finding A cannot disposition finding B, nor give A another disposition
+{
+  "timestamp": "2026-10-21T01:42:26.779Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > voids the signature it was given, and the void signature does not serve a later attempt 287ms
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > the sequence's author is refused (separation of duties) 72ms
+stdout | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a non-critical, an already closed, or another sequence's finding is not disposable
+{
+  "timestamp": "2026-10-21T01:42:26.898Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] GOVERNED_SIGNATURE_VOIDED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 7,
+    "resourceId": "8"
+  }
+}
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a non-critical, an already closed, or another sequence's finding is not disposable
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a non-critical, an already closed, or another sequence's finding is not disposable
+{
+  "timestamp": "2026-10-21T01:42:26.928Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stdout | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a non-critical, an already closed, or another sequence's finding is not disposable
+{
+  "timestamp": "2026-10-21T01:42:27.059Z",
+  "level": "info",
+  "message": "[submission-service] Shadow Review finding closed by signature",
+  "context": {
+    "sequenceId": 8,
+    "findingId": 14,
+    "runId": 16,
+    "disposition": "accepted",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a non-critical, an already closed, or another sequence's finding is not disposable
+{
+  "timestamp": "2026-10-21T01:42:27.130Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] GOVERNED_SIGNATURE_VOIDED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 7,
+    "resourceId": "8"
+  }
+}
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a non-critical, an already closed, or another sequence's finding is not disposable
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a non-critical, an already closed, or another sequence's finding is not disposable
+{
+  "timestamp": "2026-10-21T01:42:27.167Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stdout | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a non-critical, an already closed, or another sequence's finding is not disposable
+{
+  "timestamp": "2026-10-21T01:42:27.204Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] GOVERNED_SIGNATURE_VOIDED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 7,
+    "resourceId": "8"
+  }
+}
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a non-critical, an already closed, or another sequence's finding is not disposable
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a non-critical, an already closed, or another sequence's finding is not disposable
+{
+  "timestamp": "2026-10-21T01:42:27.226Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a signature for finding A cannot disposition finding B, nor give A another disposition 203ms
+stdout | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a disposition signed as review, not approval or responsibility, is refused
+{
+  "timestamp": "2026-10-21T01:42:27.279Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] GOVERNED_SIGNATURE_VOIDED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 7,
+    "resourceId": "10"
+  }
+}
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a disposition signed as review, not approval or responsibility, is refused
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a disposition signed as review, not approval or responsibility, is refused
+{
+  "timestamp": "2026-10-21T01:42:27.294Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stdout | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a disposition signature is used once, and is its own act > the same signature cannot disposition again, and the attempt does not void it
+{
+  "timestamp": "2026-10-21T01:42:27.379Z",
+  "level": "info",
+  "message": "[submission-service] Shadow Review finding closed by signature",
+  "context": {
+    "sequenceId": 11,
+    "findingId": 17,
+    "runId": 19,
+    "disposition": "accepted",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a non-critical, an already closed, or another sequence's finding is not disposable 443ms
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a disposition signed as review, not approval or responsibility, is refused 37ms
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a disposition signature is used once, and is its own act > the same signature cannot disposition again, and the attempt does not void it 98ms
+stdout | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a closure stands only while its signature is in force > a revoked closing signature reopens the critical for the gate, the offer and the read; a new signature closes it again
+{
+  "timestamp": "2026-10-21T01:42:27.685Z",
+  "level": "info",
+  "message": "[submission-service] Shadow Review finding closed by signature",
+  "context": {
+    "sequenceId": 13,
+    "findingId": 19,
+    "runId": 21,
+    "disposition": "accepted",
+    "organizationId": 7
+  }
+}
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a closure stands only while its signature is in force > a revoked closing signature reopens the critical for the gate, the offer and the read; a new signature closes it again
+{
+  "timestamp": "2026-10-21T01:42:27.785Z",
+  "level": "warn",
+  "message": "[release-signature-status] release-signature lookup failed; reporting undetermined",
+  "context": {
+    "err": "Failed query: \n      SELECT run_id\n        FROM submission_orchestrator_runs\n       WHERE submission_id_fk = $1\n         AND organization_id = $2\n       ORDER BY started_at DESC\n       LIMIT 25\n    \nparams: 312,7",
+    "submissionId": 312,
+    "organizationId": 7
+  }
+}
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a closure stands only while its signature is in force > a revoked closing signature reopens the critical for the gate, the offer and the read; a new signature closes it again
+{
+  "timestamp": "2026-10-21T01:42:27.881Z",
+  "level": "warn",
+  "message": "[release-signature-status] release-signature lookup failed; reporting undetermined",
+  "context": {
+    "err": "Failed query: \n      SELECT run_id\n        FROM submission_orchestrator_runs\n       WHERE submission_id_fk = $1\n         AND organization_id = $2\n       ORDER BY started_at DESC\n       LIMIT 25\n    \nparams: 312,7",
+    "submissionId": 312,
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a closure stands only while its signature is in force > a revoked closing signature reopens the critical for the gate, the offer and the read; a new signature closes it again
+{
+  "timestamp": "2026-10-21T01:42:28.034Z",
+  "level": "info",
+  "message": "[submission-service] Shadow Review finding closed by signature",
+  "context": {
+    "sequenceId": 13,
+    "findingId": 19,
+    "runId": 21,
+    "disposition": "accepted",
+    "organizationId": 7
+  }
+}
+
+stderr | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a closure stands only while its signature is in force > a revoked closing signature reopens the critical for the gate, the offer and the read; a new signature closes it again
+{
+  "timestamp": "2026-10-21T01:42:28.094Z",
+  "level": "warn",
+  "message": "[release-signature-status] release-signature lookup failed; reporting undetermined",
+  "context": {
+    "err": "Failed query: \n      SELECT run_id\n        FROM submission_orchestrator_runs\n       WHERE submission_id_fk = $1\n         AND organization_id = $2\n       ORDER BY started_at DESC\n       LIMIT 25\n    \nparams: 312,7",
+    "submissionId": 312,
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a disposition signature is used once, and is its own act > cannot freeze or waive, and a freeze or waiver signature cannot disposition 163ms
+stdout | server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a closure stands only while its signature is in force > the act changes only the row it judged: a finding re-closed since is zero rows
+{
+  "timestamp": "2026-10-21T01:42:28.223Z",
+  "level": "info",
+  "message": "[submission-service] Shadow Review finding closed by signature",
+  "context": {
+    "sequenceId": 15,
+    "findingId": 22,
+    "runId": 23,
+    "disposition": "accepted",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a closure stands only while its signature is in force > a revoked closing signature reopens the critical for the gate, the offer and the read; a new signature closes it again 543ms
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a closure stands only while its signature is in force > a closure with no signature on record, or a status nothing signed, does not hold a critical closed 28ms
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a closure stands only while its signature is in force > the act changes only the row it judged: a finding re-closed since is zero rows 103ms
+stderr | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-21T01:42:31.804Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > only after the newest run failed for a provider outage, within 24 hours 22ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as invalid_ai_response 13ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as policy_blocked 14ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as placement_refused 9ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as rate_limited 10ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as no_provider_configured 8ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as model_not_qualified 13ms
+stderr | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the waiver act > records a waived row and a chained SHADOW_REVIEW_WAIVED row, and clears the presence gate as not assessed
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the waiver act > records a waived row and a chained SHADOW_REVIEW_WAIVED row, and clears the presence gate as not assessed
+{
+  "timestamp": "2026-10-21T01:42:44.972Z",
+  "level": "info",
+  "message": "[submission-service] Shadow Review waived",
+  "context": {
+    "sequenceId": 14,
+    "failedRunId": 17,
+    "failureCode": "provider_unavailable",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as null 10ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > not when the outage is more than 24 hours old, a newer run exists, or a review completed 19ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > not once the sequence is frozen 4ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > the precheck answers from the same rule, before anyone signs 21ms
+stdout | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the waiver act > is used once: the same signature cannot waive again
+{
+  "timestamp": "2026-10-21T01:42:45.072Z",
+  "level": "info",
+  "message": "[submission-service] Shadow Review waived",
+  "context": {
+    "sequenceId": 15,
+    "failedRunId": 19,
+    "failureCode": "provider_overloaded",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the waiver act > lapses when the leaves change, and blocks with its own sentence
+{
+  "timestamp": "2026-10-21T01:42:45.167Z",
+  "level": "info",
+  "message": "[submission-service] Shadow Review waived",
+  "context": {
+    "sequenceId": 16,
+    "failedRunId": 22,
+    "failureCode": "provider_unavailable",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the waiver act > records a waived row and a chained SHADOW_REVIEW_WAIVED row, and clears the presence gate as not assessed 119ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the waiver act > is used once: the same signature cannot waive again 88ms
+stdout | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the waiver act > a revoked waiver blocks with its own sentence
+{
+  "timestamp": "2026-10-21T01:42:45.226Z",
+  "level": "info",
+  "message": "[submission-service] Shadow Review waived",
+  "context": {
+    "sequenceId": 17,
+    "failedRunId": 24,
+    "failureCode": "provider_unavailable",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver citing a run that was not an outage is refused 409, and its signature is void
+{
+  "timestamp": "2026-10-21T01:42:45.269Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] GOVERNED_SIGNATURE_VOIDED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 7,
+    "resourceId": "18"
+  }
+}
+
+stderr | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver citing a run that was not an outage is refused 409, and its signature is void
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver citing a run that was not an outage is refused 409, and its signature is void
+{
+  "timestamp": "2026-10-21T01:42:45.287Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stdout | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver citing a run that was not an outage is refused 409, and its signature is void
+{
+  "timestamp": "2026-10-21T01:42:45.368Z",
+  "level": "info",
+  "message": "[submission-service] Shadow Review waived",
+  "context": {
+    "sequenceId": 18,
+    "failedRunId": 27,
+    "failureCode": "provider_unavailable",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the waiver act > lapses when the leaves change, and blocks with its own sentence 76ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the waiver act > a revoked waiver blocks with its own sentence 56ms
+stdout | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver naming a failed run other than the newest is refused
+{
+  "timestamp": "2026-10-21T01:42:45.401Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] GOVERNED_SIGNATURE_VOIDED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 7,
+    "resourceId": "19"
+  }
+}
+
+stderr | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver naming a failed run other than the newest is refused
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver naming a failed run other than the newest is refused
+{
+  "timestamp": "2026-10-21T01:42:45.411Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stdout | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > the sequence's creator cannot waive its review (separation of duties)
+{
+  "timestamp": "2026-10-21T01:42:45.436Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] GOVERNED_SIGNATURE_VOIDED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 7,
+    "resourceId": "20"
+  }
+}
+
+stderr | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > the sequence's creator cannot waive its review (separation of duties)
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > the sequence's creator cannot waive its review (separation of duties)
+{
+  "timestamp": "2026-10-21T01:42:45.488Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver citing a run that was not an outage is refused 409, and its signature is void 138ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver naming a failed run other than the newest is refused 35ms
+stdout | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver signed as review, not responsibility or approval, is refused
+{
+  "timestamp": "2026-10-21T01:42:45.515Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] GOVERNED_SIGNATURE_VOIDED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 7,
+    "resourceId": "21"
+  }
+}
+
+stderr | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver signed as review, not responsibility or approval, is refused
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver signed as review, not responsibility or approval, is refused
+{
+  "timestamp": "2026-10-21T01:42:45.523Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stdout | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a waiver signature is its own act > is not a release signature, and cannot freeze or dispatch
+{
+  "timestamp": "2026-10-21T01:42:45.582Z",
+  "level": "info",
+  "message": "[submission-service] Shadow Review waived",
+  "context": {
+    "sequenceId": 22,
+    "failedRunId": 33,
+    "failureCode": "provider_unavailable",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > the sequence's creator cannot waive its review (separation of duties) 79ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver signed as review, not responsibility or approval, is refused 35ms
+stderr | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the dispatch verdict reads the waiver (assessSequenceDispatchReadiness) > offers the waiver, then clears the presence gate as not assessed once it is signed — in every verdict
+{
+  "timestamp": "2026-10-21T01:42:45.707Z",
+  "level": "warn",
+  "message": "[release-signature-status] release-signature lookup failed; reporting undetermined",
+  "context": {
+    "err": "Failed query: \n      SELECT run_id\n        FROM submission_orchestrator_runs\n       WHERE submission_id_fk = $1\n         AND organization_id = $2\n       ORDER BY started_at DESC\n       LIMIT 25\n    \nparams: 124,7",
+    "submissionId": 124,
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the dispatch verdict reads the waiver (assessSequenceDispatchReadiness) > offers the waiver, then clears the presence gate as not assessed once it is signed — in every verdict
+{
+  "timestamp": "2026-10-21T01:42:45.769Z",
+  "level": "info",
+  "message": "[submission-service] Shadow Review waived",
+  "context": {
+    "sequenceId": 25,
+    "failedRunId": 36,
+    "failureCode": "provider_unavailable",
+    "organizationId": 7
+  }
+}
+
+stderr | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the dispatch verdict reads the waiver (assessSequenceDispatchReadiness) > offers the waiver, then clears the presence gate as not assessed once it is signed — in every verdict
+{
+  "timestamp": "2026-10-21T01:42:45.810Z",
+  "level": "warn",
+  "message": "[release-signature-status] release-signature lookup failed; reporting undetermined",
+  "context": {
+    "err": "Failed query: \n      SELECT run_id\n        FROM submission_orchestrator_runs\n       WHERE submission_id_fk = $1\n         AND organization_id = $2\n       ORDER BY started_at DESC\n       LIMIT 25\n    \nparams: 124,7",
+    "submissionId": 124,
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a waiver signature is its own act > is not a release signature, and cannot freeze or dispatch 102ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a waiver signature is its own act > a freeze or dispatch signature cannot waive 42ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the presence gate with a waiver (evaluateShadowPresenceWithWaiver) > a completed review clears it whatever the waiver; no waiver blocks with the existing sentence 1ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the presence gate with a waiver (evaluateShadowPresenceWithWaiver) > an undetermined waiver is never active 0ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the presence gate with a waiver (evaluateShadowPresenceWithWaiver) > never waives an unacknowledged critical finding: it answers only "no review has run" 1ms
+stdout | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the dispatch verdict reads the waiver (assessSequenceDispatchReadiness) > a lapsed waiver blocks the verdict with its own sentence, and no note says it was waived
+{
+  "timestamp": "2026-10-21T01:42:45.871Z",
+  "level": "info",
+  "message": "[submission-service] Shadow Review waived",
+  "context": {
+    "sequenceId": 26,
+    "failedRunId": 38,
+    "failureCode": "provider_overloaded",
+    "organizationId": 7
+  }
+}
+
+stderr | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the dispatch verdict reads the waiver (assessSequenceDispatchReadiness) > a lapsed waiver blocks the verdict with its own sentence, and no note says it was waived
+{
+  "timestamp": "2026-10-21T01:42:45.915Z",
+  "level": "warn",
+  "message": "[release-signature-status] release-signature lookup failed; reporting undetermined",
+  "context": {
+    "err": "Failed query: \n      SELECT run_id\n        FROM submission_orchestrator_runs\n       WHERE submission_id_fk = $1\n         AND organization_id = $2\n       ORDER BY started_at DESC\n       LIMIT 25\n    \nparams: 125,7",
+    "submissionId": 125,
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the dispatch verdict reads the waiver (assessSequenceDispatchReadiness) > offers the waiver, then clears the presence gate as not assessed once it is signed — in every verdict 140ms
+stderr | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the dispatch verdict reads the waiver (assessSequenceDispatchReadiness) > a completed review needs no waiver: none is offered, and the gate clears without a note
+{
+  "timestamp": "2026-10-21T01:42:45.935Z",
+  "level": "warn",
+  "message": "[release-signature-status] release-signature lookup failed; reporting undetermined",
+  "context": {
+    "err": "Failed query: \n      SELECT run_id\n        FROM submission_orchestrator_runs\n       WHERE submission_id_fk = $1\n         AND organization_id = $2\n       ORDER BY started_at DESC\n       LIMIT 25\n    \nparams: 126,7",
+    "submissionId": 126,
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the dispatch verdict reads the waiver (assessSequenceDispatchReadiness) > a lapsed waiver blocks the verdict with its own sentence, and no note says it was waived 105ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the dispatch verdict reads the waiver (assessSequenceDispatchReadiness) > a completed review needs no waiver: none is offered, and the gate clears without a note 19ms
+
+ Test Files  2 passed (2)
+      Tests  43 passed (43)
+   Start at  01:42:00
+   Duration  45.21s (transform 10.58s, setup 349ms, import 22.95s, tests 20.66s, environment 1ms)
+

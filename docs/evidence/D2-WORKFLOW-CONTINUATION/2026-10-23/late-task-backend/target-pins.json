@@ -1,0 +1,12 @@
+{
+  "server/routes/__tests__/task-assignment.pglite.test.ts": "f0544dd2a2da2e567fde3b9751ff08e994be20c9471c1209ce0e7335a96edea1",
+  "server/routes/__tests__/task-management-governed-writes-review.test.ts": "3a39e8d35817994fc6280f014ab4f939ac7083209e0c9014501407cddd7fcdf7",
+  "server/routes/__tests__/taskBoard-assignees-labels.test.ts": "60f6181ab29846ed3eb94db71f75fa6639f78b9428efe1fe85c1c7addfb860bb",
+  "shared/__tests__/task-assignment.test.ts": "467f157b36b3bfa8897419bff7a5395742c7652a59bee0360f9d3098fc22b61d",
+  "server/routes/taskBoard.routes.ts": "6d8d96c8a22d4eeca60936b4532aea400d6568c7c3fe0c7f98c36d041825e005",
+  "server/routes/taskManagement.routes.ts": "3c801e2595186a2aafed7ae69cefef86c04e3a9739ff02e8db7ddb21306c1bd7",
+  "server/services/tasking/task-assignment.ts": "8c6e7c6ffb671c2704e647c91fe7fc70b30a74ce0ec5fc6880daf23501af64aa",
+  "server/services/tasking/task-audit.ts": "d7189a01ddd38e8a5da4b28167d8319202dc9fffe5b5d78651dddb4fbcc58543",
+  "server/services/tasking/task-planning.ts": "c338dfb937e6296607b608b03f795857538efcc2a494ecb02b53eb592eba116c",
+  "shared/task-assignment.ts": "f21f8113f3d34e81250f8889b88e35d64e4616f476816dd83a9a3016dfe3b3f7"
+}

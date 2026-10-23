@@ -1,0 +1,97 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > requires a reason and binds the explicit sponsor with the exact program revision 501ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > an HTTP 204 answer without a matching receipt holds further saves 134ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > an HTTP 200 answer without a matching receipt holds further saves 114ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > says when a confirmed program save has no retrievable audit entry 78ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > shows a failed registry read instead of an empty sponsor selector 35ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > creates an existing-registry record without silently binding it to the program 172ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > sends a versioned shared registry edit and reports its audit uncertainty 154ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > does not publish an old program write receipt after an A to B to A visit 73ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > distinguishes an empty registry from malformed records 55ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > refuses malformed registry records without offering them 71ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > holds an otherwise successful program receipt with unchanged revision 115ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > holds an otherwise successful program receipt with inconsistent sponsor name 137ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > requires explicit successful read reconciliation after a lost program write answer 110ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > keeps an uncertain sponsor write held after closing its editor until the registry is explicitly read 262ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > does not publish an old program listing after opening another program 23ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > does not publish a late write receipt after session retirement 89ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > clears previous field checks when recorded form inputs change 116ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > applicant editor interaction lifecycle > continues to save after StrictMode effect replay 104ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > applicant editor interaction lifecycle > preserves spaces while a person types a multiword sponsor address 94ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > field checks follow recorded input ownership > does not repaint an old field check after a concurrent identity save 134ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > field checks follow recorded input ownership > clears an old check when an explicit reload reads changed program facts 115ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > field checks follow recorded input ownership > clears an old check when the per-form serial number changes 73ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {} 66ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: undefined 64ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {"formId":"FDA_1571","fields":{}} 54ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {"formId":"FDA_1572","fields":{},"missingRequired":[]} 64ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {"formId":"FDA_1571","fields":{},"missingRequired":[null]} 68ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > refuses a 1572 array when any investigator result is malformed 57ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > requires an updated revision on a shared sponsor PATCH receipt 158ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > lists the supported forms from the engine 110ms
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > builds with only the entered metadata and renders the server missingRequired verdict 346ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > downloads the streamed FDA PDF and reports the honest render kind + coverage 95ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > surfaces the regulatory-author role gate honestly 9ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > saves a governed artifact to the open project’s dossier 79ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > does not call a data-complete artifact "ready" when boxes are left on the form 43ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > says "ready" only when the data is complete AND the form leaves nothing 42ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > an absent sponsorMustComplete is "not reported", never "nothing left" 42ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > a program with no project record: the 409 is reported as nothing saved, never as a save or an audit-logged build 80ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > a 200 with no artifact id is not reported as any kind of save 66ms
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > does NOT save (or guess a project) when no project is open 69ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > names the official template and the boxes still left blank on it 52ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > counts a required box the project has no value for, which `unmapped` never names 41ms
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > says the server did not report, rather than implying a clean form 32ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > an EMPTY X-Form-Required-Blank is "assessed, none" and claims nothing 34ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > does not claim the PDF arrived when the browser blocked the download 67ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > asks the engine for the open program and shows the recorded facts, not input boxes 49ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > states what each form will produce BEFORE anything is rendered, and who reviewed the asset 54ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > a reconstruction is never described as the official form 32ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > names the program on every build so the server fills from the record, and never echoes the record back 94ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > the phase and the IND type start on "Not stated — choose", offer the registry's options, and send nothing until chosen 95ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > with no program open it still works standalone and claims no record 36ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > files the completed form into the ORIGINAL 0000 the person chose, although a newer 0001 exists 102ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > sends nothing until a sequence is chosen, and sends the one chosen 126ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > is reachable and operable from the keyboard, and names the form it files 288ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > reports a refusal in the server’s own words and claims nothing was filed 105ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > shows a form already filed in each sequence, with the digest of the bytes the sponsor signed 100ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the form is named once > reads "FDA 1571", not "FDA FDA_1571" — the engine ids are canonical and were pasted after another "FDA" 81ms
+ ✓ client/src/concept2cure/v2/__tests__/indChecklistFormAttestation.test.tsx > the IND checklist says what an attached form amounts to > an attached file nobody attested is "Attached — not attested", never Complete; the others say what they are 187ms
+ ✓ client/src/concept2cure/v2/__tests__/indChecklistFormAttestation.test.tsx > the IND checklist says what an attached form amounts to > a form with no file says Open, and an older server that reports no attachment state is not read as "none" 88ms
+ ✓ client/src/concept2cure/v2/__tests__/indChecklistFormAttestation.test.tsx > the forms panel lets the uploader state the attestation, and says when nobody has > the attestation is sent only when the person ticks it, and the tick is cleared after the filing 397ms
+ ✓ client/src/concept2cure/v2/__tests__/indChecklistFormAttestation.test.tsx > the forms panel lets the uploader state the attestation, and says when nobody has > a filing checked complete but not attested is reported as not counted, never as a completed form 78ms
+ ✓ client/src/concept2cure/v2/__tests__/indChecklistFormAttestation.test.tsx > the forms panel lets the uploader state the attestation, and says when nobody has > a placement nobody attested is "attached · not attested"; an attested one is the completed form; an unreported one claims neither 51ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > with a program open, the recorded sponsor address and IND type are shown, and a build sends neither — the record is the source 488ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > "Save to program" records the sponsor address and IND type with reason, revision and an exact resulting receipt 179ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > a refused save says why, in the server's words, as an error 108ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > a program that is not an IND has no IND type to record 85ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterIndForms.test.tsx > Submission Center — the IND forms screen, from the US IND > a US IND opens the IND forms screen scoped to that submission 341ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterIndForms.test.tsx > Submission Center — the IND forms screen, from the US IND > an NDA and a non-US IND are not offered it 117ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelAttachmentVerdict.test.tsx > IndFormsPanel — an attachment is not a completion > sends what the person stated with the attachment, and nothing the record holds 247ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelAttachmentVerdict.test.tsx > IndFormsPanel — an attachment is not a completion > a filed attachment the engine finds incomplete is reported as filed and NOT complete, naming what is missing 107ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelAttachmentVerdict.test.tsx > IndFormsPanel — an attachment is not a completion > each placement says whether it completes the form: complete, not complete (what is missing), or not checked 54ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts > preserves confirmed refusal at 400 6ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts > preserves confirmed refusal at 401 1ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts > preserves confirmed refusal at 403 1ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts > preserves confirmed refusal at 404 3ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts > preserves confirmed refusal at 409 0ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts > preserves confirmed refusal at 422 1ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts > marks a missing or uncertain reply at 408 as unknown 1ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts > marks a missing or uncertain reply at 500 as unknown 1ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts > marks a missing or uncertain reply at 502 as unknown 1ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts > marks a missing or uncertain reply at undefined as unknown 1ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts > a success whose JSON was lost is unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts > an explicit unknown code overrides a status commonly used for refusal 1ms
+
+ Test Files  7 passed (7)
+      Tests  83 passed (83)
+   Start at  01:35:52
+   Duration  19.37s (transform 1.91s, setup 780ms, import 4.21s, tests 8.24s, environment 4.79s)
+

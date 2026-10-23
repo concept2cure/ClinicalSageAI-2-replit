@@ -1,0 +1,47 @@
+Full execution output is retained in red-renewal-spent-lock.txt.gz.
+
+stdout | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses a dispatch signature another renewal spent while this request was assembling
+{
+  "timestamp": "2026-10-21T01:41:29.074Z",
+  "level": "info",
+  "message": "[submission-service] Governed sequence transition applied",
+  "context": {
+    "id": 9209,
+    "toStatus": "dispatched",
+    "organizationId": 7
+  }
+}
+
+ × server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses a dispatch signature another renewal spent while this request was assembling 300ms
+   → expected null to match object { code: 'GOVERNED_REQUIRED', …(1) }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses a dispatch signature another renewal spent while this request was assembling
+AssertionError: expected null to match object { code: 'GOVERNED_REQUIRED', …(1) }
+
+- Expected:
+{
+  "code": "GOVERNED_REQUIRED",
+  "message": StringMatching /already.*used|already.*spent/i,
+}
+
++ Received:
+null
+
+ ❯ server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts:118:19
+    116|     };
+    117|     const error = await outcome(dispatchSequence(id, ctx, signature));
+    118|     expect(error).toMatchObject({ code: 'GOVERNED_REQUIRED', message: …
+       |                   ^
+    119|     const rows = (await q(`SELECT new_values::jsonb AS value FROM audi…
+    120|     expect(rows).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  01:41:12
+   Duration  16.70s (transform 4.70s, setup 158ms, import 7.89s, tests 8.12s, environment 0ms)
+

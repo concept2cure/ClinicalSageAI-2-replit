@@ -1,0 +1,47 @@
+Full execution output is retained in green-dispatch-renewal.txt.gz.
+
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for null 5ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for pending 4ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for rejected 6ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for transmitting 6ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for sent 4ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for acknowledged 5ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for undefined 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > asks the sign step's check, for this sequence, organization and user
+AssertionError: expected "vi.fn()" to be called with arguments: [ Array(2) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    11,
+    {
++     "ipAddress": "::ffff:127.0.0.1",
+      "organizationId": 7,
+      "userId": 3,
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts:72:20
+     70|     expect(res.status).toBe(200);
+     71|     expect(h.calls, 'the route answered without asking the enforcing c…
+     72|     expect(h.read).toHaveBeenCalledWith(11, { organizationId: 7, userI…
+       |                    ^
+     73|   });
+     74|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 20 passed (21)
+   Start at  01:36:14
+   Duration  21.97s (transform 7.96s, setup 186ms, import 15.43s, tests 5.53s, environment 1ms)
+

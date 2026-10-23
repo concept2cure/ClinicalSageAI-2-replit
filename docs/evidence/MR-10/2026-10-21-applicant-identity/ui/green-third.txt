@@ -1,0 +1,17 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > requires a reason and binds the explicit sponsor with the exact program revision 653ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > an HTTP 204 answer without a matching receipt holds further saves 245ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > an HTTP 200 answer without a matching receipt holds further saves 207ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > says when a confirmed program save has no retrievable audit entry 99ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > shows a failed registry read instead of an empty sponsor selector 37ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > creates an existing-registry record without silently binding it to the program 253ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > sends a versioned shared registry edit and reports its audit uncertainty 252ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > does not publish an old program write receipt after an A to B to A visit 173ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  01:25:46
+   Duration  7.08s (transform 2.54s, setup 414ms, import 3.24s, tests 1.93s, environment 1.08s)
+

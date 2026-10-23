@@ -1,0 +1,47 @@
+Full execution output is retained in green-renewal-spent-lock-normalized.txt.gz.
+
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts
+{
+  "timestamp": "2026-10-21T01:43:54.634Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > asks the sign step's check, for this sequence, organization and user 44ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > passes "author" through unchanged 14ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > passes "independent" through unchanged 7ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > passes "unresolved" through unchanged 9ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > passes "unverified" through unchanged 17ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > still returns the assessment it was always answering with 12ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for null 5ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for pending 5ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for rejected 24ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for transmitting 5ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for sent 3ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for acknowledged 3ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for undefined 3ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > assembles only the claim-captured DUNS and contact, ignoring a caller override 11ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses identity changed while waiting for the transmit claim, before assembly 3ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses identity changed during assembly and releases the pre-wire claim 1ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses wrong assembly identity proof before gateway entry 2ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses missing assembly identity proof before gateway entry 2ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > keeps the non-FDA regional id contract (undefined), never borrowing the FDA DUNS 2ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > keeps the non-FDA regional id contract (PMDA-42), never borrowing the FDA DUNS 3ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses a supplied non-FDA id that cannot be carried safely, and releases its claim 1ms
+
+ Test Files  3 passed (3)
+      Tests  31 passed (31)
+   Start at  01:43:26
+   Duration  36.40s (transform 11.11s, setup 548ms, import 21.60s, tests 11.87s, environment 1ms)
+

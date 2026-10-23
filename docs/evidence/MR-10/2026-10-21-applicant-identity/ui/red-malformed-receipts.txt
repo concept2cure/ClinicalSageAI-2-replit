@@ -1,0 +1,868 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > requires a reason and binds the explicit sponsor with the exact program revision
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > an HTTP 204 answer without a matching receipt holds further saves
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > an HTTP 200 answer without a matching receipt holds further saves
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > says when a confirmed program save has no retrievable audit entry
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > shows a failed registry read instead of an empty sponsor selector
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > creates an existing-registry record without silently binding it to the program
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > sends a versioned shared registry edit and reports its audit uncertainty
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > does not publish an old program write receipt after an A to B to A visit
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > distinguishes an empty registry from malformed records
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > refuses malformed registry records without offering them
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > holds an otherwise successful program receipt with unchanged revision
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > holds an otherwise successful program receipt with inconsistent sponsor name
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > requires explicit successful read reconciliation after a lost program write answer
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > keeps an uncertain sponsor write held after closing its editor until the registry is explicitly read
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > does not publish an old program listing after opening another program
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > does not publish a late write receipt after session retirement
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > clears previous field checks when recorded form inputs change
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > applicant editor interaction lifecycle > continues to save after StrictMode effect replay
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > applicant editor interaction lifecycle > preserves spaces while a person types a multiword sponsor address
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > field checks follow recorded input ownership > does not repaint an old field check after a concurrent identity save
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > field checks follow recorded input ownership > clears an old check when an explicit reload reads changed program facts
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > field checks follow recorded input ownership > clears an old check when the per-form serial number changes
+ × client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {} 875ms
+   → expected <span style …(1)></span> to be null
+ × client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: undefined 166ms
+   → expected <span style …(1)></span> to be null
+ × client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {"formId":"FDA_1571","fields":{}} 84ms
+   → expected <span style …(1)></span> to be null
+ × client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {"formId":"FDA_1572","fields":{},"missingRequired":[]} 85ms
+   → expected <span style …(1)></span> to be null
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {"formId":"FDA_1571","fields":{},"missingRequired":[null]} 85ms
+ × client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > refuses a 1572 array when any investigator result is malformed 65ms
+   → expected <span style …(1)></span> to be null
+ × client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > requires an updated revision on a shared sponsor PATCH receipt 5180ms
+   → Unable to find an element with the text: /could not confirm whether the sponsor record was saved/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Values read from the program record"[39m
+        [33mclass[39m=[32m"indf-record"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"indf-record-lead"[39m
+        [36m>[39m
+          [0mRead from the program record — every form below is filled with these values.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"indf-record-grid"[39m
+        [36m>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mSponsor[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mRecorded organization[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mDrug[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mRecorded test product[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mIndication[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mTest indication[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mIND number[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"indf-missing"[39m
+              [36m>[39m
+                [0mnot assigned[0m
+              [36m</span>[39m
+            [36m</dd>[39m
+          [36m</dl>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Recorded applicant identity"[39m
+        [33mstyle[39m=[32m"border: 1px solid var(--border); padding: 12px; margin-bottom: 12px;"[39m
+      [36m>[39m
+        [36m<h4[39m
+          [33mstyle[39m=[32m"margin: 0px 0px 8px;"[39m
+        [36m>[39m
+          [0mRecorded applicant identity[0m
+        [36m</h4>[39m
+        [36m<p[39m
+          [33mstyle[39m=[32m"font-size: 12px;"[39m
+        [36m>[39m
+          [0mThe program selects an existing sponsor record. Forms and sequence packaging read that recorded selection; edits below apply only after saving.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 8px;"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mAgency application number[0m
+            [36m<input[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mApplicant sponsor record[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Applicant sponsor record"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNo sponsor bound[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"819edd20-9af6-41e7-a206-c00ecb4671b9"[39m
+              [36m>[39m
+                [0mRecorded test sponsor[0m
+                [0m · DUNS 123456789[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mSponsor address[0m
+            [36m<input[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mIND type[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"IND type"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"Commercial IND"[39m
+              [36m>[39m
+                [0mCommercial IND[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"Research IND"[39m
+              [36m>[39m
+                [0mResearch IND[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mstyle[39m=[32m"font-size: 12px; color: var(--text-400);"[39m
+        [36m>[39m
+          [0mFor FDA, record the six-digit number assigned by the agency. Leave it blank until assigned. The sponsor address remains a program fact.[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mstyle[39m=[32m"display: block; font-size: 12px; margin: 8px 0px;"[39m
+        [36m>[39m
+          [0mReason for program facts change[0m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"Reason for program facts change"[39m
+            [33mclass[39m=[32m"c2c-input"[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mrows[39m=[32m"2"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mstyle[39m=[32m"display: block; color: var(--text-400);"[39m
+          [36m>[39m
+            [0mRequired, [0m
+            [0m8[0m
+            [0m–[0m
+            [0m2000[0m
+            [0m characters. Recorded with this change.[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mrole[39m=[32m"status"[39m
+          [33mstyle[39m=[32m"font-size: 12px;"[39m
+        [36m>[39m
+          [0mNot saved. Forms and packages continue to read the recorded program facts until you save.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+            [33mdisabled[39m=[32m""[39m
+          [36m>[39m
+            [0mSave to program[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+          [36m>[39m
+  ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Values read from the program record"[39m
+        [33mclass[39m=[32m"indf-record"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"indf-record-lead"[39m
+        [36m>[39m
+          [0mRead from the program record — every form below is filled with these values.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"indf-record-grid"[39m
+        [36m>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mSponsor[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mRecorded organization[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mDrug[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mRecorded test product[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mIndication[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mTest indication[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mIND number[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"indf-missing"[39m
+              [36m>[39m
+                [0mnot assigned[0m
+              [36m</span>[39m
+            [36m</dd>[39m
+          [36m</dl>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Recorded applicant identity"[39m
+        [33mstyle[39m=[32m"border: 1px solid var(--border); padding: 12px; margin-bottom: 12px;"[39m
+      [36m>[39m
+        [36m<h4[39m
+          [33mstyle[39m=[32m"margin: 0px 0px 8px;"[39m
+        [36m>[39m
+          [0mRecorded applicant identity[0m
+        [36m</h4>[39m
+        [36m<p[39m
+          [33mstyle[39m=[32m"font-size: 12px;"[39m
+        [36m>[39m
+          [0mThe program selects an existing sponsor record. Forms and sequence packaging read that recorded selection; edits below apply only after saving.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 8px;"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mAgency application number[0m
+            [36m<input[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mApplicant sponsor record[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Applicant sponsor record"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNo sponsor bound[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"819edd20-9af6-41e7-a206-c00ecb4671b9"[39m
+              [36m>[39m
+                [0mRecorded test sponsor[0m
+                [0m · DUNS 123456789[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mSponsor address[0m
+            [36m<input[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mIND type[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"IND type"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"Commercial IND"[39m
+              [36m>[39m
+                [0mCommercial IND[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"Research IND"[39m
+              [36m>[39m
+                [0mResearch IND[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mstyle[39m=[32m"font-size: 12px; color: var(--text-400);"[39m
+        [36m>[39m
+          [0mFor FDA, record the six-digit number assigned by the agency. Leave it blank until assigned. The sponsor address remains a program fact.[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mstyle[39m=[32m"display: block; font-size: 12px; margin: 8px 0px;"[39m
+        [36m>[39m
+          [0mReason for program facts change[0m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"Reason for program facts change"[39m
+            [33mclass[39m=[32m"c2c-input"[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mrows[39m=[32m"2"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mstyle[39m=[32m"display: block; color: var(--text-400);"[39m
+          [36m>[39m
+            [0mRequired, [0m
+            [0m8[0m
+            [0m–[0m
+            [0m2000[0m
+            [0m characters. Recorded with this change.[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mrole[39m=[32m"status"[39m
+          [33mstyle[39m=[32m"font-size: 12px;"[39m
+        [36m>[39m
+          [0mNot saved. Forms and packages continue to read the recorded program facts until you save.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+            [33mdisabled[39m=[32m""[39m
+          [36m>[39m
+            [0mSave to program[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+          [36m>[39m
+  ...
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {}
+ FAIL  client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: undefined
+ FAIL  client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {"formId":"FDA_1571","fields":{}}
+ FAIL  client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {"formId":"FDA_1572","fields":{},"missingRequired":[]}
+AssertionError: expected <span style …(1)></span> to be null
+
+- Expected:
+null
+
++ Received:
+<span
+  class="rd-chip tone-ok"
+  style=""
+>
+  required fields present
+</span>
+
+ ❯ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx:313:59
+    311|     const note = await open(); fireEvent.click(screen.getByRole('butto…
+    312|     await waitFor(() => expect(note).toHaveBeenCalled());
+    313|     expect(screen.queryByText('required fields present')).toBeNull();
+       |                                                           ^
+    314|     expect(note).not.toHaveBeenCalledWith(expect.stringMatching(/no re…
+    315|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > refuses a 1572 array when any investigator result is malformed
+AssertionError: expected <span style …(1)></span> to be null
+
+- Expected:
+null
+
++ Received:
+<span
+  class="rd-chip tone-ok"
+  style=""
+>
+  required fields present
+</span>
+
+ ❯ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx:320:59
+    318|     const note = await open(); fireEvent.click(screen.getByRole('butto…
+    319|     await waitFor(() => expect(note).toHaveBeenCalled());
+    320|     expect(screen.queryByText('required fields present')).toBeNull();
+       |                                                           ^
+    321|   });
+    322|   it('requires an updated revision on a shared sponsor PATCH receipt',…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > requires an updated revision on a shared sponsor PATCH receipt
+TestingLibraryElementError: Unable to find an element with the text: /could not confirm whether the sponsor record was saved/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Values read from the program record"[39m
+        [33mclass[39m=[32m"indf-record"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"indf-record-lead"[39m
+        [36m>[39m
+          [0mRead from the program record — every form below is filled with these values.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"indf-record-grid"[39m
+        [36m>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mSponsor[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mRecorded organization[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mDrug[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mRecorded test product[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mIndication[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mTest indication[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mIND number[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"indf-missing"[39m
+              [36m>[39m
+                [0mnot assigned[0m
+              [36m</span>[39m
+            [36m</dd>[39m
+          [36m</dl>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Recorded applicant identity"[39m
+        [33mstyle[39m=[32m"border: 1px solid var(--border); padding: 12px; margin-bottom: 12px;"[39m
+      [36m>[39m
+        [36m<h4[39m
+          [33mstyle[39m=[32m"margin: 0px 0px 8px;"[39m
+        [36m>[39m
+          [0mRecorded applicant identity[0m
+        [36m</h4>[39m
+        [36m<p[39m
+          [33mstyle[39m=[32m"font-size: 12px;"[39m
+        [36m>[39m
+          [0mThe program selects an existing sponsor record. Forms and sequence packaging read that recorded selection; edits below apply only after saving.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 8px;"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mAgency application number[0m
+            [36m<input[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mApplicant sponsor record[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Applicant sponsor record"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNo sponsor bound[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"819edd20-9af6-41e7-a206-c00ecb4671b9"[39m
+              [36m>[39m
+                [0mRecorded test sponsor[0m
+                [0m · DUNS 123456789[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mSponsor address[0m
+            [36m<input[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mIND type[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"IND type"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"Commercial IND"[39m
+              [36m>[39m
+                [0mCommercial IND[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"Research IND"[39m
+              [36m>[39m
+                [0mResearch IND[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mstyle[39m=[32m"font-size: 12px; color: var(--text-400);"[39m
+        [36m>[39m
+          [0mFor FDA, record the six-digit number assigned by the agency. Leave it blank until assigned. The sponsor address remains a program fact.[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mstyle[39m=[32m"display: block; font-size: 12px; margin: 8px 0px;"[39m
+        [36m>[39m
+          [0mReason for program facts change[0m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"Reason for program facts change"[39m
+            [33mclass[39m=[32m"c2c-input"[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mrows[39m=[32m"2"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mstyle[39m=[32m"display: block; color: var(--text-400);"[39m
+          [36m>[39m
+            [0mRequired, [0m
+            [0m8[0m
+            [0m–[0m
+            [0m2000[0m
+            [0m characters. Recorded with this change.[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mrole[39m=[32m"status"[39m
+          [33mstyle[39m=[32m"font-size: 12px;"[39m
+        [36m>[39m
+          [0mNot saved. Forms and packages continue to read the recorded program facts until you save.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+            [33mdisabled[39m=[32m""[39m
+          [36m>[39m
+            [0mSave to program[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+          [36m>[39m
+  ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Values read from the program record"[39m
+        [33mclass[39m=[32m"indf-record"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"indf-record-lead"[39m
+        [36m>[39m
+          [0mRead from the program record — every form below is filled with these values.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"indf-record-grid"[39m
+        [36m>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mSponsor[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mRecorded organization[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mDrug[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mRecorded test product[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mIndication[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mTest indication[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mIND number[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"indf-missing"[39m
+              [36m>[39m
+                [0mnot assigned[0m
+              [36m</span>[39m
+            [36m</dd>[39m
+          [36m</dl>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Recorded applicant identity"[39m
+        [33mstyle[39m=[32m"border: 1px solid var(--border); padding: 12px; margin-bottom: 12px;"[39m
+      [36m>[39m
+        [36m<h4[39m
+          [33mstyle[39m=[32m"margin: 0px 0px 8px;"[39m
+        [36m>[39m
+          [0mRecorded applicant identity[0m
+        [36m</h4>[39m
+        [36m<p[39m
+          [33mstyle[39m=[32m"font-size: 12px;"[39m
+        [36m>[39m
+          [0mThe program selects an existing sponsor record. Forms and sequence packaging read that recorded selection; edits below apply only after saving.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 8px;"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mAgency application number[0m
+            [36m<input[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mApplicant sponsor record[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Applicant sponsor record"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNo sponsor bound[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"819edd20-9af6-41e7-a206-c00ecb4671b9"[39m
+              [36m>[39m
+                [0mRecorded test sponsor[0m
+                [0m · DUNS 123456789[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mSponsor address[0m
+            [36m<input[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mIND type[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"IND type"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"Commercial IND"[39m
+              [36m>[39m
+                [0mCommercial IND[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"Research IND"[39m
+              [36m>[39m
+                [0mResearch IND[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mstyle[39m=[32m"font-size: 12px; color: var(--text-400);"[39m
+        [36m>[39m
+          [0mFor FDA, record the six-digit number assigned by the agency. Leave it blank until assigned. The sponsor address remains a program fact.[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mstyle[39m=[32m"display: block; font-size: 12px; margin: 8px 0px;"[39m
+        [36m>[39m
+          [0mReason for program facts change[0m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"Reason for program facts change"[39m
+            [33mclass[39m=[32m"c2c-input"[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mrows[39m=[32m"2"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mstyle[39m=[32m"display: block; color: var(--text-400);"[39m
+          [36m>[39m
+            [0mRequired, [0m
+            [0m8[0m
+            [0m–[0m
+            [0m2000[0m
+            [0m characters. Recorded with this change.[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mrole[39m=[32m"status"[39m
+          [33mstyle[39m=[32m"font-size: 12px;"[39m
+        [36m>[39m
+          [0mNot saved. Forms and packages continue to read the recorded program facts until you save.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+            [33mdisabled[39m=[32m""[39m
+          [36m>[39m
+            [0mSave to program[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+          [36m>[39m
+  ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx:331:18
+    329|     fireEvent.change(screen.getByLabelText('Reason for sponsor record …
+    330|     fireEvent.click(screen.getByRole('button', { name: 'Save sponsor r…
+    331|     await screen.findByText(/could not confirm whether the sponsor rec…
+       |                  ^
+    332|   });
+    333| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 1 passed | 22 skipped (29)
+   Start at  01:34:20
+   Duration  11.13s (transform 2.48s, setup 350ms, import 2.94s, tests 6.55s, environment 958ms)
+

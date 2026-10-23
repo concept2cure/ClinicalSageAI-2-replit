@@ -1,0 +1,59 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > exposes an exact microsecond revision and an honest unbound state
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > binds the existing sponsor and number with one audited program receipt; forms read that record
+ × server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > pins form applicant identity to the program record despite caller overrides 249ms
+   → expected { …(16) } to match object { …(6) }
+(10 matching properties omitted from actual)
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > holds the same precise program revision across session time zones
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > enforces the same-tenant binding against direct SQL too
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > refuses a stale read rather than overwrite a newer binding
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > requires a stated reason and read revision
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > refuses a foreign sponsor without changing the program
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > refuses invalid FDA application numbers and malformed sponsor IDs
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > rechecks current persisted authority despite an admitted regulatory-author session
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > rolls the facts and revision back when its chained audit cannot be written
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > reports a lost commit acknowledgement as unconfirmed while the persisted change stands
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > clears only stated facts and retains other recorded facts
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > pins form applicant identity to the program record despite caller overrides
+AssertionError: expected { …(16) } to match object { …(6) }
+(10 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "ind_number": "001234",
+-   "sponsor_address": "Program address",
+-   "sponsor_contact_email": "ra@example.org",
+-   "sponsor_contact_name": "Regulatory contact",
+-   "sponsor_contact_phone": "+1 617 555 0100",
+-   "sponsor_name": "Recorded applicant",
++   "ind_number": "999999",
++   "sponsor_address": "Other address",
++   "sponsor_contact_email": "other@example.org",
++   "sponsor_contact_name": "Other person",
++   "sponsor_contact_phone": "+1 999 555 0199",
++   "sponsor_name": "Caller override",
+  }
+
+ ❯ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts:131:31
+    129|     });
+    130|     expect(built.status).toBe(200);
+    131|     expect(built.body.fields).toMatchObject({
+       |                               ^
+    132|       sponsor_name: 'Recorded applicant', ind_number: '001234', sponso…
+    133|       sponsor_contact_name: 'Regulatory contact', sponsor_contact_phon…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 skipped (13)
+   Start at  01:31:21
+   Duration  13.87s (transform 4.63s, setup 187ms, import 6.82s, tests 6.19s, environment 0ms)
+

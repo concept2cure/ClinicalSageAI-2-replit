@@ -1,0 +1,147 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures the exact canonical identity read on the signing client 17ms
+   → expected "vi.fn()" to be called with arguments: [ …(3) ]
+
+Number of calls: 0
+
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when applicationNumber changes 3ms
+   → expected '0d3b57eb5c90b88e6d70d8d9359823635dcd0…' not to be '0d3b57eb5c90b88e6d70d8d9359823635dcd0…' // Object.is equality
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when applicantName changes 2ms
+   → expected '0d3b57eb5c90b88e6d70d8d9359823635dcd0…' not to be '0d3b57eb5c90b88e6d70d8d9359823635dcd0…' // Object.is equality
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when applicantSponsorId changes 1ms
+   → expected '0d3b57eb5c90b88e6d70d8d9359823635dcd0…' not to be '0d3b57eb5c90b88e6d70d8d9359823635dcd0…' // Object.is equality
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when applicantId changes 1ms
+   → expected '0d3b57eb5c90b88e6d70d8d9359823635dcd0…' not to be '0d3b57eb5c90b88e6d70d8d9359823635dcd0…' // Object.is equality
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when contact.name changes 1ms
+   → expected '0d3b57eb5c90b88e6d70d8d9359823635dcd0…' not to be '0d3b57eb5c90b88e6d70d8d9359823635dcd0…' // Object.is equality
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when contact.phone changes 1ms
+   → expected '0d3b57eb5c90b88e6d70d8d9359823635dcd0…' not to be '0d3b57eb5c90b88e6d70d8d9359823635dcd0…' // Object.is equality
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when contact.email changes 0ms
+   → expected '0d3b57eb5c90b88e6d70d8d9359823635dcd0…' not to be '0d3b57eb5c90b88e6d70d8d9359823635dcd0…' // Object.is equality
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > retains the captured proof when the mutable record later changes 13ms
+   → expected { …(3) } to match object { recordedPackageIdentity: { …(1) } }
+(3 matching properties omitted from actual)
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > binds absent facts too, so recording them changes the approval 4ms
+   → expected '0d3b57eb5c90b88e6d70d8d9359823635dcd0…' not to be '0d3b57eb5c90b88e6d70d8d9359823635dcd0…' // Object.is equality
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > does not change the non-FDA binding recipe 3ms
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > propagates a failed identity read rather than signing a guessed record 4ms
+   → promise resolved "{ …(3) }" instead of rejecting
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures the exact canonical identity read on the signing client
+AssertionError: expected "vi.fn()" to be called with arguments: [ …(3) ]
+
+Number of calls: 0
+
+ ❯ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts:41:24
+     39|   it('captures the exact canonical identity read on the signing client…
+     40|     const result = await binding();
+     41|     expect(state.read).toHaveBeenCalledWith(client, 7, 9);
+       |                        ^
+     42|     expect(result).toMatchObject({ recordedPackageIdentity: { version:…
+     43|     expect(result.digest).toBe(sha256CanonicalJson({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when applicationNumber changes
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when applicantName changes
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when applicantSponsorId changes
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when applicantId changes
+AssertionError: expected '0d3b57eb5c90b88e6d70d8d9359823635dcd0…' not to be '0d3b57eb5c90b88e6d70d8d9359823635dcd0…' // Object.is equality
+ ❯ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts:51:42
+     49|     const before = await binding();
+     50|     state.identity[field] = `${String(state.identity[field])}-changed`;
+     51|     expect((await binding()).digest).not.toBe(before.digest);
+       |                                          ^
+     52|   });
+     53|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when contact.name changes
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when contact.phone changes
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when contact.email changes
+AssertionError: expected '0d3b57eb5c90b88e6d70d8d9359823635dcd0…' not to be '0d3b57eb5c90b88e6d70d8d9359823635dcd0…' // Object.is equality
+ ❯ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts:57:42
+     55|     const before = await binding();
+     56|     (state.identity.contact as Record<string, unknown>)[field] = 'chan…
+     57|     expect((await binding()).digest).not.toBe(before.digest);
+       |                                          ^
+     58|   });
+     59|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > retains the captured proof when the mutable record later changes
+AssertionError: expected { …(3) } to match object { recordedPackageIdentity: { …(1) } }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "recordedPackageIdentity": {
+-     "identity": {
+-       "applicantId": "123456789",
+-     },
+-   },
++   "basis": "ectd-sequence-leaf-manifest-sha256",
++   "digest": "0d3b57eb5c90b88e6d70d8d9359823635dcd04d1329e6f7a345928ef708012bc",
++   "note": "sha256 over the ectd_sequences identity (id, submission, region, sequence number, type — not its workflow status) and its 1 submission_leaves row(s) (ordered by section_code, id; each with its document pointer, uuid, content pin and non-null study metadata) at signing time.",
+  }
+
+ ❯ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts:63:20
+     61|     const before = await binding();
+     62|     state.identity.applicantId = '987654321';
+     63|     expect(before).toMatchObject({ recordedPackageIdentity: { identity…
+       |                    ^
+     64|     expect((await binding()).digest).not.toBe(before.digest);
+     65|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > binds absent facts too, so recording them changes the approval
+AssertionError: expected '0d3b57eb5c90b88e6d70d8d9359823635dcd0…' not to be '0d3b57eb5c90b88e6d70d8d9359823635dcd0…' // Object.is equality
+ ❯ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts:73:42
+     71|     state.identity.applicantSponsorId = '33333333-3333-4333-8333-33333…
+     72|     state.identity.applicantId = '123456789';
+     73|     expect((await binding()).digest).not.toBe(absent.digest);
+       |                                          ^
+     74|   });
+     75|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > propagates a failed identity read rather than signing a guessed record
+AssertionError: promise resolved "{ …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "basis": "ectd-sequence-leaf-manifest-sha256",
++   "digest": "0d3b57eb5c90b88e6d70d8d9359823635dcd04d1329e6f7a345928ef708012bc",
++   "note": "sha256 over the ectd_sequences identity (id, submission, region, sequence number, type — not its workflow status) and its 1 submission_leaves row(s) (ordered by section_code, id; each with its document pointer, uuid, content pin and non-null study metadata) at signing time.",
+  }
+
+ ❯ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts:86:27
+     84|   it('propagates a failed identity read rather than signing a guessed …
+     85|     state.read.mockRejectedValueOnce(new Error('identity store unavail…
+     86|     await expect(binding()).rejects.toThrow('identity store unavailabl…
+       |                           ^
+     87|   });
+     88| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  11 failed | 1 passed (12)
+   Start at  01:20:23
+   Duration  1.38s (transform 383ms, setup 161ms, import 538ms, tests 55ms, environment 0ms)
+

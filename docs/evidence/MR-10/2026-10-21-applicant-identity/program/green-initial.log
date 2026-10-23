@@ -1,0 +1,71 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > exposes an exact microsecond revision and an honest unbound state 136ms
+ × server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > binds the existing sponsor and number with one audited program receipt; forms read that record 60ms
+   → {"error":{"code":"NOT_FOUND","message":"Project not found for this organization."}}: expected 404 to be 200 // Object.is equality
+ × server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > refuses a stale read rather than overwrite a newer binding 15ms
+   → current transaction is aborted, commands ignored until end of transaction block
+ × server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > requires a stated reason and read revision 2ms
+   → current transaction is aborted, commands ignored until end of transaction block
+ × server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > refuses a foreign sponsor without changing the program 1ms
+   → current transaction is aborted, commands ignored until end of transaction block
+ × server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > refuses invalid FDA application numbers and malformed sponsor IDs 5ms
+   → current transaction is aborted, commands ignored until end of transaction block
+ × server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > rechecks current persisted authority despite an admitted regulatory-author session 3ms
+   → current transaction is aborted, commands ignored until end of transaction block
+ × server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > rolls the facts and revision back when its chained audit cannot be written 3ms
+   → current transaction is aborted, commands ignored until end of transaction block
+ × server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > clears only stated facts and retains other recorded facts 2ms
+   → current transaction is aborted, commands ignored until end of transaction block
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > binds the existing sponsor and number with one audited program receipt; forms read that record
+AssertionError: {"error":{"code":"NOT_FOUND","message":"Project not found for this organization."}}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts:101:50
+     99|   it('binds the existing sponsor and number with one audited program r…
+    100|     const res = await save({ applicantSponsorId: SPONSOR, applicationN…
+    101|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    102|     expect(res.body).toMatchObject({
+    103|       programId: PROGRAM, applicantSponsorId: SPONSOR, applicationNumb…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > refuses a stale read rather than overwrite a newer binding
+ FAIL  server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > requires a stated reason and read revision
+ FAIL  server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > refuses a foreign sponsor without changing the program
+ FAIL  server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > refuses invalid FDA application numbers and malformed sponsor IDs
+ FAIL  server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > rechecks current persisted authority despite an admitted regulatory-author session
+ FAIL  server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > rolls the facts and revision back when its chained audit cannot be written
+ FAIL  server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > clears only stated facts and retains other recorded facts
+error: current transaction is aborted, commands ignored until end of transaction block
+ ❯ pe.Le node_modules/@electric-sql/pg-protocol/src/parser.ts:423:39
+ ❯ pe.Xe node_modules/@electric-sql/pg-protocol/src/parser.ts:208:8
+ ❯ pe.parse node_modules/@electric-sql/pg-protocol/src/parser.ts:99:38
+ ❯ O.qe node_modules/@electric-sql/pglite/src/pglite.ts:753:25
+ ❯ node_modules/@electric-sql/pglite/src/pglite.ts:706:13
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 145, severity: 'ERROR', code: '25P02', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'postgres.c', routine: 'exec_parse_message', query: 'UPDATE organization_users SET role=\'manager\' WHERE organization_id=1 AND user_id=9', params: [], queryOptions: undefined }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 1 passed (9)
+   Start at  01:24:16
+   Duration  34.60s (transform 14.11s, setup 437ms, import 20.75s, tests 11.03s, environment 0ms)
+

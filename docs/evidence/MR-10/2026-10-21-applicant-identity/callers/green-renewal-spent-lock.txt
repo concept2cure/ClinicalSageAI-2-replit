@@ -1,0 +1,484 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stderr | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts
+{
+  "timestamp": "2026-10-21T01:42:04.437Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (null) with a fresh signature and audit, preserving frozen state
+{
+  "timestamp": "2026-10-21T01:42:11.958Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ECTD_PACKAGED_FROM_CORE ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 7,
+    "resourceId": "9200"
+  }
+}
+
+stderr | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (null) with a fresh signature and audit, preserving frozen state
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (null) with a fresh signature and audit, preserving frozen state
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (null) with a fresh signature and audit, preserving frozen state
+{
+  "timestamp": "2026-10-21T01:42:11.987Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stdout | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (null) with a fresh signature and audit, preserving frozen state
+{
+  "timestamp": "2026-10-21T01:42:11.988Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ECTD_ASSEMBLED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 7,
+    "resourceId": "9200"
+  }
+}
+
+stderr | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (null) with a fresh signature and audit, preserving frozen state
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (null) with a fresh signature and audit, preserving frozen state
+{
+  "timestamp": "2026-10-21T01:42:11.997Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stdout | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (null) with a fresh signature and audit, preserving frozen state
+{
+  "timestamp": "2026-10-21T01:42:11.997Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 9200,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (null) with a fresh signature and audit, preserving frozen state
+{
+  "timestamp": "2026-10-21T01:42:12.373Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ECTD_PACKAGED_FROM_CORE ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 7,
+    "resourceId": "9200"
+  }
+}
+
+stderr | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (null) with a fresh signature and audit, preserving frozen state
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (null) with a fresh signature and audit, preserving frozen state
+{
+  "timestamp": "2026-10-21T01:42:12.389Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stdout | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (null) with a fresh signature and audit, preserving frozen state
+{
+  "timestamp": "2026-10-21T01:42:12.398Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ECTD_ASSEMBLED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 7,
+    "resourceId": "9200"
+  }
+}
+
+stderr | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (null) with a fresh signature and audit, preserving frozen state
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (null) with a fresh signature and audit, preserving frozen state
+{
+  "timestamp": "2026-10-21T01:42:12.421Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stdout | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (null) with a fresh signature and audit, preserving frozen state
+{
+  "timestamp": "2026-10-21T01:42:12.422Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 9200,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (null) with a fresh signature and audit, preserving frozen state
+{
+  "timestamp": "2026-10-21T01:42:12.449Z",
+  "level": "error",
+  "message": "[submission-service] A refused governed step could not read the signature it was given, so it was not voided",
+  "context": {
+    "sequenceId": 9200,
+    "step": "dispatch",
+    "signatureActionId": "sig-2",
+    "organizationId": 7,
+    "err": "Failed query: \n      SELECT payload FROM c2c_ana_actions\n      WHERE id = $1\n        AND org_id = $2\n        AND command = 'sign'\n        AND target = $3\n        AND state = 'executed'\n        AND proposed_by = $4\n      LIMIT 1\n    \nparams: sig-2,7,ectd-sequence:9200,3"
+  }
+}
+
+ × server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (null) with a fresh signature and audit, preserving frozen state 1167ms
+   → Failed query: 
+    SELECT action FROM audit_logs
+    WHERE tenant_id = $1
+      AND table_name = 'ectd_sequence'
+      AND record_id = $2
+      AND action IN ('SEQUENCE_FROZEN', 'SEQUENCE_DISPATCHED', 'ECTD_TRANSMITTED', $3,
+                     $4, $5)
+      AND (new_values::jsonb ->> 'signatureActionId') = $6
+    LIMIT 1
+  
+params: 7,9200,SHADOW_REVIEW_WAIVED,SHADOW_FINDING_DISPOSITIONED,GOVERNED_SIGNATURE_VOIDED,sig-2 The signature given for this dispatch could not be marked void right now; do not reuse it, sign again for a new attempt.
+ × server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (pending) with a fresh signature and audit, preserving frozen state 2ms
+   → current transaction is aborted, commands ignored until end of transaction block
+ × server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (rejected) with a fresh signature and audit, preserving frozen state 1ms
+   → current transaction is aborted, commands ignored until end of transaction block
+ × server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses transmitting before signing or recording another dispatch 2ms
+   → current transaction is aborted, commands ignored until end of transaction block
+ × server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses sent before signing or recording another dispatch 2ms
+   → current transaction is aborted, commands ignored until end of transaction block
+ × server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses acknowledged before signing or recording another dispatch 1ms
+   → current transaction is aborted, commands ignored until end of transaction block
+ × server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses a send claimed during the renewal checks without resetting its in-flight status 1ms
+   → current transaction is aborted, commands ignored until end of transaction block
+ × server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > does not widen the non-FDA lifecycle 1ms
+   → current transaction is aborted, commands ignored until end of transaction block
+ × server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > rolls renewal back when its chained audit cannot be recorded 2ms
+   → current transaction is aborted, commands ignored until end of transaction block
+ × server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses a dispatch signature another renewal spent while this request was assembling 1ms
+   → current transaction is aborted, commands ignored until end of transaction block
+stdout | server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts
+{
+  "timestamp": "2026-10-21T01:42:15.259Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:42:15.262Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts
+{
+  "timestamp": "2026-10-21T01:42:15.262Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts
+{
+  "timestamp": "2026-10-21T01:42:16.005Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > asks the sign step's check, for this sequence, organization and user 141ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > passes "author" through unchanged 32ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > passes "independent" through unchanged 6ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > passes "unresolved" through unchanged 6ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > passes "unverified" through unchanged 6ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > still returns the assessment it was always answering with 8ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for null 7ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for pending 8ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for rejected 11ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for transmitting 7ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for sent 4ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for acknowledged 3ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for undefined 4ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > assembles only the claim-captured DUNS and contact, ignoring a caller override 30ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses identity changed while waiting for the transmit claim, before assembly 7ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses identity changed during assembly and releases the pre-wire claim 3ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses wrong assembly identity proof before gateway entry 6ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses missing assembly identity proof before gateway entry 2ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > keeps the non-FDA regional id contract (undefined), never borrowing the FDA DUNS 2ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > keeps the non-FDA regional id contract (PMDA-42), never borrowing the FDA DUNS 2ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses a supplied non-FDA id that cannot be carried safely, and releases its claim 7ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (null) with a fresh signature and audit, preserving frozen state
+Error: Failed query: 
+    SELECT action FROM audit_logs
+    WHERE tenant_id = $1
+      AND table_name = 'ectd_sequence'
+      AND record_id = $2
+      AND action IN ('SEQUENCE_FROZEN', 'SEQUENCE_DISPATCHED', 'ECTD_TRANSMITTED', $3,
+                     $4, $5)
+      AND (new_values::jsonb ->> 'signatureActionId') = $6
+    LIMIT 1
+  
+params: 7,9200,SHADOW_REVIEW_WAIVED,SHADOW_FINDING_DISPOSITIONED,GOVERNED_SIGNATURE_VOIDED,sig-2 The signature given for this dispatch could not be marked void right now; do not reuse it, sign again for a new attempt.
+ ❯ NodePgPreparedQuery.queryWithCache node_modules/src/pg-core/session.ts:73:10
+ ❯ signatureSpentBy server/services/submission-service/submission-service.ts:1091:26
+    1089|     LIMIT 1
+    1090|   `;
+    1091|   const spent = client ? await drizzle(client).execute(query) : await …
+       |                          ^
+    1092|   const row = ((spent as { rows?: Array<{ action?: unknown }> }).rows …
+    1093|   return row ? String(row.action ?? '') : null;
+ ❯ Object.underLock server/services/submission-service/submission-service.ts:1833:15
+ ❯ applySequenceChangeWithAudit server/services/submission-service/submission-service.ts:1255:27
+ ❯ applyGovernedSequenceTransition server/services/submission-service/submission-service.ts:1800:3
+ ❯ voidingSignatureOnRefusal server/services/submission-service/submission-service.ts:1208:12
+ ❯ server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts:61:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { query: '\n    SELECT action FROM audit_logs\n    WHERE tenant_id = $1\n      AND table_name = \'ectd_sequence\'\n      AND record_id = $2\n      AND action IN (\'SEQUENCE_FROZEN\', \'SEQUENCE_DISPATCHED\', \'ECTD_TRANSMITTED\', $3,\n                     $4, $5)\n      AND (new_values::jsonb ->> \'signatureActionId\') = $6\n    LIMIT 1\n  ', params: [ 7, '9200', 'SHADOW_REVIEW_WAIVED', 'SHADOW_FINDING_DISPOSITIONED', 'GOVERNED_SIGNATURE_VOIDED', 'sig-2' ] }
+Caused by: TypeError: The "src" argument must be of type string. Received an instance of Object
+ ❯ R.addString node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:8855
+ ❯ R.addCString node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:8695
+ ❯ Object.xn [as parse] node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:10549
+ ❯ node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:2283
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_INVALID_ARG_TYPE' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (pending) with a fresh signature and audit, preserving frozen state
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (rejected) with a fresh signature and audit, preserving frozen state
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses transmitting before signing or recording another dispatch
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses sent before signing or recording another dispatch
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses acknowledged before signing or recording another dispatch
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses a send claimed during the renewal checks without resetting its in-flight status
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > does not widen the non-FDA lifecycle
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > rolls renewal back when its chained audit cannot be recorded
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses a dispatch signature another renewal spent while this request was assembling
+error: current transaction is aborted, commands ignored until end of transaction block
+ ❯ pe.Le node_modules/@electric-sql/pg-protocol/src/parser.ts:423:39
+ ❯ pe.Xe node_modules/@electric-sql/pg-protocol/src/parser.ts:208:8
+ ❯ pe.parse node_modules/@electric-sql/pg-protocol/src/parser.ts:99:38
+ ❯ O.qe node_modules/@electric-sql/pglite/src/pglite.ts:753:25
+ ❯ node_modules/@electric-sql/pglite/src/pglite.ts:706:13
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 145, severity: 'ERROR', code: '25P02', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'postgres.c', routine: 'exec_parse_message', query: 'INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by, program_id)\n    VALUES ($1, \'Renew dispatch\', \'ind\', \'biotech\', $2, $3, 2, $4)', params: [ 9201, 'fda', 7, '77777777-7777-4777-8777-777777777777' ], queryOptions: undefined }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  10 failed | 21 passed (31)
+   Start at  01:41:52
+   Duration  43.22s (transform 15.41s, setup 251ms, import 33.57s, tests 7.68s, environment 0ms)
+

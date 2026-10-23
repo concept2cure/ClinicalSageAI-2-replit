@@ -45,6 +45,7 @@ import {
 } from '../services/tasking/task-planning';
 import { requestDb } from '../db/requestDb';
 import { projectForTaskSource, AUTHORING_DOCUMENT_SOURCE } from '../services/tasking/task-project';
+import { assignTask, assignmentExpectedSchema, assignmentFailure, namedAssignmentSchema, TaskAssignmentUnknown } from '../services/tasking/task-assignment';
 
 const router = Router();
 const storage = { db };
@@ -414,7 +415,20 @@ function transitionChanges(t: {
   };
 }
 
-router.patch('/tasks/:taskId', requireEditorAccess, async (req: Request, res: Response) => {
+router.patch('/tasks/:taskId', (req, res, next) => {
+  if (req.body?.action === 'assign') return next();
+  return requireEditorAccess(req, res, next);
+}, async (req: Request, res: Response) => {
+  if (req.body?.action === 'assign') {
+    try {
+      const input = namedAssignmentSchema.parse(req.body);
+      const data = await assignTask(req, { ...input, taskId: String(req.params.taskId), method: 'named' });
+      return res.json({ success: true, data });
+    } catch (error) { return assignmentFailure(res, error); }
+  }
+  if (req.body && ['assigneeId','expectedAssigneeId','expectedVersion','action'].some(key => key in req.body)) {
+    return res.status(400).json({ success: false, code: 'VALIDATION_ERROR', error: 'Assignment and status changes must be separate requests.' });
+  }
   // Set while the transaction's COMMIT is in flight: a failure then leaves the
   // change — a signed completion and its cascade included — neither confirmed
   // nor refuted, and the answer must say so rather than guess.
@@ -1175,129 +1189,38 @@ router.get('/tasks/critical-path/:projectId', async (req: Request, res: Response
 });
 
 // Auto-assign tasks based on workload
-const autoAssignSchema = z.object({ taskIds: z.array(z.string().min(1)).min(1).max(500) });
+const autoAssignSchema = z.object({ taskIds: z.array(z.string().min(1)).min(1).max(500).refine(ids => new Set(ids).size === ids.length),
+  reason: z.string().trim().max(1000).optional(),
+  expectedAssignments: z.array(assignmentExpectedSchema.extend({ taskId: z.string().min(1) }).strict()).max(500).optional(),
+}).strict().refine(body => !body.expectedAssignments || (new Set(body.expectedAssignments.map(row => row.taskId)).size === body.expectedAssignments.length && body.expectedAssignments.every(row => body.taskIds.includes(row.taskId))));
 type AutoAssignment = { taskId: string; assignedTo: string; assigneeId: number };
 
-/**
- * One task of POST /tasks/auto-assign. A task not found, archived, or with
- * nobody to take it is skipped. Otherwise the assignment commits with its
- * ledger row on its own transaction — `at.unconfirmed` names the task while
- * that COMMIT is in flight — and is appended to `assignmentResults` before the
- * assignee is notified.
- */
-async function autoAssignOne(
-  writer: { organizationId: number; actorUserId: number },
-  taskId: string,
-  assignmentResults: AutoAssignment[],
-  at: { unconfirmed: string | null }
-): Promise<void> {
-  const { organizationId, actorUserId } = writer;
-  // Get task details. An archived task is out of reach here as on every
-  // other write: it is not reassigned, and no ledger row claims it was.
-  const [task] = await storage.db
-    .select()
-    .from(unifiedTasks)
-    .where(
-      and(
-        eq(unifiedTasks.taskId, taskId),
-        eq(unifiedTasks.organizationId, organizationId),
-        isNull(unifiedTasks.deletedAt)
-      )
-    )
-    .limit(1);
-
-  if (!task) return;
-
-  // Find optimal assignee
-  const optimalAssignee = await getOptimalAssignee(organizationId, task);
-  if (!optimalAssignee) return;
-
-  // One transaction per assignment (row + ledger row): the next pick
-  // must see this one committed, or the balancing piles onto one person.
-  const assigned = await storage.db.transaction(async (tx) => {
-    const [row] = await tx
-      .update(unifiedTasks)
-      .set({
-        assigneeId: optimalAssignee.id,
-        assigneeName: optimalAssignee.name,
-        assignedBy: actorUserId,
-        assignedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(unifiedTasks.taskId, taskId),
-          eq(unifiedTasks.organizationId, organizationId),
-          isNull(unifiedTasks.deletedAt)
-        )
-      )
-      .returning({ taskId: unifiedTasks.taskId });
-    // Archived since the read: nothing was assigned, so nothing is recorded.
-    if (!row) return false;
-    await auditTaskActionInTx(tx, {
-      orgId: organizationId,
-      userId: actorUserId,
-      command: 'task.assign',
-      taskId,
-      payload: { assigneeId: optimalAssignee.id, method: 'workload-balanced' },
-      summary: 'Workload-balanced auto-assign',
-    });
-    at.unconfirmed = taskId;
-    return true;
-  });
-  at.unconfirmed = null;
-  if (!assigned) return;
-
-  assignmentResults.push({ taskId, assignedTo: optimalAssignee.name, assigneeId: optimalAssignee.id });
-  if (optimalAssignee.id !== actorUserId) {
-    notifyTaskEvent({
-      organizationId,
-      recipientUserId: optimalAssignee.id,
-      category: 'task_assigned',
-      title: `Task assigned: ${task.title}`,
-      taskId,
-    });
-  }
-}
-
-router.post('/tasks/auto-assign', requireEditorAccess, async (req: Request, res: Response) => {
+/** Existing batch receipt: each assignment and lineage commit together. */
+router.post('/tasks/auto-assign', async (req: Request, res: Response) => {
   const assignmentResults: AutoAssignment[] = [];
-  // Set while an assignment's COMMIT is in flight: a failure then leaves that
-  // one neither confirmed nor refuted.
-  const at: { unconfirmed: string | null } = { unconfirmed: null };
+  let activeTask: string | null = null;
   try {
-    const ctx = governedWriter(req, res);
-    if (!ctx) return;
-    const { taskIds } = autoAssignSchema.parse(req.body ?? {});
-
-    for (const taskId of taskIds) {
-      await autoAssignOne(ctx, taskId, assignmentResults, at);
+    const parsed = autoAssignSchema.parse(req.body ?? {});
+    for (const taskId of parsed.taskIds) {
+      activeTask = taskId;
+      const expected = parsed.expectedAssignments?.find(row => row.taskId === taskId);
+      const saved = await assignTask(req, { taskId, method: 'workload-balanced', ...expected, reason: parsed.reason || undefined });
+      if (saved) assignmentResults.push({ taskId, assignedTo: saved.assigneeName ?? `Account #${saved.assigneeId}`, assigneeId: saved.assigneeId });
+      activeTask = null;
     }
-
-    // `count` may be below taskIds.length: a task not found, archived, or with
-    // nobody to take it is left out, and the client reports the shortfall.
-    res.json({ success: true, data: assignmentResults, count: assignmentResults.length });
+    return res.json({ success: true, data: assignmentResults, count: assignmentResults.length });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, error: error.errors });
-    }
+    const unknown = error instanceof TaskAssignmentUnknown;
     const audit = error instanceof TaskAuditNotRecordedError;
-    if (!audit) console.error('Error auto-assigning tasks:', error);
-    // Assignments commit one at a time, so a failure after the first leaves
-    // real ones — whatever the failure was. Name them.
-    if (assignmentResults.length > 0 || at.unconfirmed) {
+    if (assignmentResults.length || unknown) {
       const n = assignmentResults.length;
-      return res.status(500).json({
-        success: false,
-        error: at.unconfirmed ? 'OUTCOME_UNKNOWN' : audit ? 'AUDIT_WRITE_FAILED' : 'PARTIALLY_APPLIED',
-        message: at.unconfirmed
-          ? `${n} task(s) were assigned and recorded. The request then failed: whether ${at.unconfirmed} was assigned is unknown, and the rest were not assigned. Reload the board before trying again.`
+      return res.status(500).json({ success: false, error: unknown ? 'OUTCOME_UNKNOWN' : audit ? 'AUDIT_WRITE_FAILED' : 'PARTIALLY_APPLIED',
+        message: unknown
+          ? `${n} task(s) were assigned and recorded. The request then failed: whether ${activeTask} was assigned is unknown, and the rest were not assigned. Reload the board before trying again.`
           : `${n} task(s) were assigned and recorded; the next assignment could not be ${audit ? 'recorded in the audit trail' : 'made'}, so it and the rest were not made.`,
-        data: assignmentResults,
-      });
+        data: assignmentResults });
     }
-    if (audit) return auditWriteFailed(res, 'The assignment');
-    res.status(500).json({ success: false, error: 'Failed to auto-assign tasks' });
+    return assignmentFailure(res, error);
   }
 });
 

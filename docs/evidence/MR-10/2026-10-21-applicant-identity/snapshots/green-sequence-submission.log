@@ -1,0 +1,77 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stderr | server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > reports unknown when the current identity cannot be read
+{
+  "timestamp": "2026-10-21T01:35:32.831Z",
+  "level": "warn",
+  "message": "[signed-manifest-covers-sequence] recorded applicant read failed; coverage cannot be determined",
+  "context": {
+    "err": "database unavailable",
+    "sequenceId": 3,
+    "organizationId": 42
+  }
+}
+
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > keeps a historical signature intact but refuses coverage without its applicant snapshot 6ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > covers identical leaves and the identical current recorded identity 5ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed applicationNumber 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed applicantName 2ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed applicantId 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed applicantSponsorId 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not borrow applicant facts from a different submission with identical leaves 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed contact details 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not establish coverage from an unsupported stored identity version 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > refuses coverage when current required FDA facts were cleared 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > reports unknown when the current identity cannot be read 5ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not require an FDA identity snapshot for an EU sequence 1ms
+stderr | server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > readSequenceLeavesForComparison — the rows the dispatch would transmit > returns null — not an empty sequence — when the read cannot run
+{
+  "timestamp": "2026-10-21T01:35:41.255Z",
+  "level": "warn",
+  "message": "[signed-manifest-covers-sequence] sequence leaf read failed; coverage cannot be determined",
+  "context": {
+    "err": "connection terminated",
+    "sequenceId": 5150,
+    "organizationId": 42
+  }
+}
+
+stderr | server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > reports undetermined — never signed — when this sequence’s leaves cannot be read
+{
+  "timestamp": "2026-10-21T01:35:41.263Z",
+  "level": "warn",
+  "message": "[signed-manifest-covers-sequence] sequence leaf read failed; coverage cannot be determined",
+  "context": {
+    "err": "connection terminated",
+    "sequenceId": 5150,
+    "organizationId": 42
+  }
+}
+
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > covers an identical manifest, and says how much the index-md5 corroborated 3ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > refuses a leaf the sequence now holds that nobody signed — the Module 3 placement case 2ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > refuses a signed leaf the sequence no longer holds 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > refuses the same leaves when the bytes under one of them changed 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > is case- and vocabulary-insensitive about the section code, on both sides 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > treats the lifecycle operation as part of the leaf — a delete is not a new 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > counts leaves, so dropping one of two identical leaves is caught 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > matches a leaf with no recorded checksum on its identity, and does NOT count it as corroborated 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > does not invent a mismatch when only one side recorded a checksum 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > covers an empty sequence only when nothing was signed either 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > readSequenceLeavesForComparison — the rows the dispatch would transmit > reads live rows for this sequence and organisation, ordered as the signing digest is 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > readSequenceLeavesForComparison — the rows the dispatch would transmit > returns null — not an empty sequence — when the read cannot run 2ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > treats a historical FDA snapshot without applicant proof as intact but not covering, retaining the sequence fallback 2ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > reports changed current contact as no covering signature rather than snapshot tampering 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > clears a signature whose manifest IS this sequence, and says what corroborated it 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > does NOT clear a verified signature over content this sequence no longer holds 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > refuses it as an intact signature, not as tampering — so the sequence spine still decides 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > reports undetermined — never signed — when this sequence’s leaves cannot be read 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — picking among runs, and saying what a clear answer rests on > prefers a run that DOES cover this sequence over one that does not 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — picking among runs, and saying what a clear answer rests on > says coverage was not checked when the caller names no sequence id 0ms
+
+ Test Files  2 passed (2)
+      Tests  32 passed (32)
+   Start at  01:35:31
+   Duration  9.39s (transform 5.22s, setup 203ms, import 8.21s, tests 57ms, environment 0ms)
+

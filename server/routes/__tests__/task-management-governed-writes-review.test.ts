@@ -234,9 +234,12 @@ describe('C5 — auto-assign never reassigns an archived task, and never ledgers
 
     await request(makeApp()).post(`${BASE}/tasks/auto-assign`).send({ taskIds: ['TASK-1'] });
 
-    const scoped = h.wheres.filter((w) => w.kind === 'select' || w.kind === 'update');
-    expect(scoped.map((w) => w.kind)).toEqual(['select', 'update']);
-    for (const w of scoped) expect(sqlOf(w.cond)).toMatch(/"deleted_at" is null/);
+    const scoped = h.rawQueries.filter(query => /task-assignment:(task|update)/.test(query));
+    expect(scoped).toHaveLength(3); // preflight, locked read, guarded UPDATE
+    for (const query of scoped) {
+      expect(query).toMatch(/deleted_at IS NULL/);
+      expect(query).toMatch(/organization_id=\$/);
+    }
   });
 
   it('an UPDATE that matched no row writes no ledger row and is not reported as assigned', async () => {
@@ -246,9 +249,8 @@ describe('C5 — auto-assign never reassigns an archived task, and never ledgers
 
     const res = await request(makeApp()).post(`${BASE}/tasks/auto-assign`).send({ taskIds: ['TASK-1'] });
 
-    expect(res.status).toBe(200);
-    expect(res.body.count).toBe(0);
-    expect(res.body.data).toEqual([]);
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('CONFLICT_STALE');
     expect(h.audits).toEqual([]);
     expect(spies.notifyTaskEvent).not.toHaveBeenCalled();
   });

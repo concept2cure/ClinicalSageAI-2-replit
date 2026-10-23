@@ -81,8 +81,8 @@ import {
   type UnifiedWorkStatus,
 } from '../services/unified-work/unified-work-view';
 import { getSecureOrgId } from '../utils/tenantContext';
-import { unifiedTasks, taskDependencies, users, organizationUsers } from '../../shared/schema';
-import { memberLabels } from '../../shared/utils/member-labels';
+import { unifiedTasks, taskDependencies } from '../../shared/schema';
+import { readTaskAssignmentOptions, readAssignableAccounts, assignmentFailure } from '../services/tasking/task-assignment';
 
 const logger = createScopedLogger('task-board-routes');
 
@@ -520,8 +520,9 @@ export default function createTaskBoardRoutes(): Router {
    * GET /api/task-management/assignees
    * The org's assignable members ({ id, name }) for the create form's assignee
    * picker. Scoped exactly like getOptimalAssignee (users ⨝ organization_users
-   * on organizationId), so no cross-org user can appear. Real rows only; fails
-   * closed to an empty roster when the store is unprovisioned.
+   * on organizationId), so no cross-org user can appear. Current active unique rows only; a verification failure is unavailable.
+   * A taskId additionally requires current task/project admission and supplies
+   * the exact assignment snapshot for the existing PATCH operation.
    * Response: { success: true, data: { id: string; name: string; label: string }[], total }
    *
    * `label` is what a picker shows: the name, with the address beside it only
@@ -530,40 +531,16 @@ export default function createTaskBoardRoutes(): Router {
    * which account either was (W1/D2, 2026-10-05). `name` is unchanged.
    */
   router.get('/assignees', async (req: Request, res: Response) => {
-    const orgRaw = getSecureOrgId(req);
-    const organizationId = orgRaw != null ? Number(orgRaw) : NaN;
-    if (!Number.isFinite(organizationId) || organizationId <= 0) {
-      return res.status(400).json({ success: false, error: 'Organization context required' });
-    }
-
     try {
-      const db = requestDb(req);
-      const rows = await db
-        .select({ id: users.id, name: users.name, email: users.email })
-        .from(users)
-        .innerJoin(organizationUsers, eq(organizationUsers.userId, users.id))
-        .where(eq(organizationUsers.organizationId, organizationId))
-        .orderBy(asc(users.name));
-
-      const labels = memberLabels(rows);
-      const data = rows.map(row => ({
-        id: String(row.id),
-        name: row.name || (row.email ? row.email.split('@')[0] : 'User'),
-        label: labels.get(String(row.id)) ?? String(row.id),
-      }));
-      return res.json({ success: true, data, total: data.length });
-    } catch (error) {
-      if (isMissingTable(error)) {
-        logger.error('task assignees: users/organization_users unprovisioned — empty roster', {
-          err: error instanceof Error ? error.message : String(error),
-        });
-        return res.json({ success: true, data: [], total: 0 });
+      if (req.query.taskId !== undefined) {
+        if (typeof req.query.taskId !== 'string' || !req.query.taskId.trim() || req.query.taskId.length > 200) {
+          return res.status(400).json({ success: false, code: 'VALIDATION_ERROR', error: 'A task identity is required.' });
+        }
+        return res.json(await readTaskAssignmentOptions(req, req.query.taskId));
       }
-      logger.error('task assignees error', {
-        err: error instanceof Error ? error.message : String(error),
-      });
-      return res.status(500).json({ success: false, error: 'Failed to load assignees' });
-    }
+      const data = await readAssignableAccounts(req);
+      return res.json({ success: true, data, total: data.length });
+    } catch (error) { return assignmentFailure(res, error); }
   });
 
   return router;

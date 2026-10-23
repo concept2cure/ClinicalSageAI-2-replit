@@ -1,0 +1,13 @@
+
+/workspace/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts
+   417:89   warning  Async arrow function has too many lines (162). Maximum allowed is 100  max-lines-per-function
+   417:89   warning  Async arrow function has a complexity of 34. Maximum allowed is 15     complexity
+   655:1    warning  File has too many lines (1389). Maximum allowed is 500                 max-lines
+   700:92   warning  Async arrow function has a complexity of 23. Maximum allowed is 15     complexity
+   726:11   warning  Blocks are nested too deeply (5). Maximum allowed is 4                 max-depth
+   791:106  warning  Async arrow function has too many lines (130). Maximum allowed is 100  max-lines-per-function
+   835:66   warning  Async arrow function has a complexity of 22. Maximum allowed is 15     complexity
+  1002:93   warning  Async arrow function has too many lines (125). Maximum allowed is 100  max-lines-per-function
+  1547:62   warning  Async arrow function has a complexity of 18. Maximum allowed is 15     complexity
+
+✖ 9 problems (0 errors, 9 warnings)

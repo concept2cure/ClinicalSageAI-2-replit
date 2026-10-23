@@ -1,0 +1,20 @@
+{
+  "node": "22.22.0",
+  "heapMb": 4096,
+  "command": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/routes/__tests__/task-assignment.pglite.test.ts",
+    "server/routes/__tests__/task-management-governed-writes-review.test.ts",
+    "server/routes/__tests__/taskBoard-assignees-labels.test.ts",
+    "shared/__tests__/task-assignment.test.ts"
+  ],
+  "suites": 4,
+  "phase": {
+    "localCheckpoint": "d4acaf1e46688cbb258ff0f8631b63f5bc8c4a9c",
+    "canonical": "ee3089b5afa5ecb10fa6192fd56e023875573fd6"
+  }
+}

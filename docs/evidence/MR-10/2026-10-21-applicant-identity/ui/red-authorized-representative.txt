@@ -1,0 +1,2438 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > requires a reason and binds the explicit sponsor with the exact program revision
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > an HTTP 204 answer without a matching receipt holds further saves
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > an HTTP 200 answer without a matching receipt holds further saves
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > says when a confirmed program save has no retrievable audit entry
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > shows a failed registry read instead of an empty sponsor selector
+ × client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > creates an existing-registry record without silently binding it to the program 572ms
+   → Unable to find a label with the text of: Authorized representative name
+
+Ignored nodes: comments, script, style
+[36m<fieldset[39m
+  [33maria-label[39m=[32m"Sponsor registry record"[39m
+  [33mstyle[39m=[32m"border: 1px solid var(--border); padding: 12px; margin: 10px 0px;"[39m
+[36m>[39m
+  [36m<legend>[39m
+    [0mRecord a sponsor[0m
+  [36m</legend>[39m
+  [36m<div[39m
+    [33mstyle[39m=[32m"display: grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 8px;"[39m
+  [36m>[39m
+    [36m<label[39m
+      [33mstyle[39m=[32m"font-size: 12px;"[39m
+    [36m>[39m
+      [0mSponsor legal name[0m
+      [36m<input[39m
+        [33mclass[39m=[32m"c2c-input"[39m
+        [33mmaxlength[39m=[32m"200"[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"Recorded test sponsor"[39m
+      [36m/>[39m
+    [36m</label>[39m
+    [36m<label[39m
+      [33mstyle[39m=[32m"font-size: 12px;"[39m
+    [36m>[39m
+      [0mDUNS number[0m
+      [36m<input[39m
+        [33mclass[39m=[32m"c2c-input"[39m
+        [33mmaxlength[39m=[32m"16"[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"123456789"[39m
+      [36m/>[39m
+    [36m</label>[39m
+    [36m<label[39m
+      [33mstyle[39m=[32m"font-size: 12px;"[39m
+    [36m>[39m
+      [0mRegulatory contact name[0m
+      [36m<input[39m
+        [33mclass[39m=[32m"c2c-input"[39m
+        [33mmaxlength[39m=[32m"200"[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"Test contact"[39m
+      [36m/>[39m
+    [36m</label>[39m
+    [36m<label[39m
+      [33mstyle[39m=[32m"font-size: 12px;"[39m
+    [36m>[39m
+      [0mRegulatory contact telephone[0m
+      [36m<input[39m
+        [33mclass[39m=[32m"c2c-input"[39m
+        [33mmaxlength[39m=[32m"40"[39m
+        [33mtype[39m=[32m"tel"[39m
+        [33mvalue[39m=[32m"+1 212 555 0100"[39m
+      [36m/>[39m
+    [36m</label>[39m
+    [36m<label[39m
+      [33mstyle[39m=[32m"font-size: 12px;"[39m
+    [36m>[39m
+      [0mRegulatory contact email[0m
+      [36m<input[39m
+        [33mclass[39m=[32m"c2c-input"[39m
+        [33mmaxlength[39m=[32m"254"[39m
+        [33mtype[39m=[32m"email"[39m
+        [33mvalue[39m=[32m"contact@example.test"[39m
+      [36m/>[39m
+    [36m</label>[39m
+  [36m</div>[39m
+  [36m<p[39m
+    [33mstyle[39m=[32m"font-size: 12px; color: var(--text-400);"[39m
+  [36m>[39m
+    [0mDUNS is nine digits. FDA packaging requires a recorded DUNS and complete regulatory contact; incomplete sponsor records can be saved for completion.[0m
+  [36m</p>[39m
+  [36m<label[39m
+    [33mstyle[39m=[32m"display: block; font-size: 12px; margin: 8px 0px;"[39m
+  [36m>[39m
+    [0mReason for sponsor record change[0m
+    [36m<textarea[39m
+      [33maria-label[39m=[32m"Reason for sponsor record change"[39m
+      [33mclass[39m=[32m"c2c-input"[39m
+      [33mmaxlength[39m=[32m"2000"[39m
+      [33mrows[39m=[32m"2"[39m
+    [36m/>[39m
+    [36m<span[39m
+      [33mstyle[39m=[32m"display: block; color: var(--text-400);"[39m
+    [36m>[39m
+      [0mRequired, [0m
+      [0m8[0m
+      [0m–[0m
+      [0m2000[0m
+      [0m characters. Recorded with this change.[0m
+    [36m</span>[39m
+  [36m</label>[39m
+  [36m<div[39m
+    [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nda-open"[39m
+      [33mdisabled[39m=[32m""[39m
+    [36m>[39m
+      [0mSave sponsor record[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nda-open"[39m
+    [36m>[39m
+      [0mClose sponsor editor[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</fieldset>[39m
+ × client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > sends a versioned shared registry edit and reports its audit uncertainty 178ms
+   → Unable to find a label with the text of: Authorized representative name
+
+Ignored nodes: comments, script, style
+[36m<fieldset[39m
+  [33maria-label[39m=[32m"Sponsor registry record"[39m
+  [33mstyle[39m=[32m"border: 1px solid var(--border); padding: 12px; margin: 10px 0px;"[39m
+[36m>[39m
+  [36m<legend>[39m
+    [0mEdit sponsor record[0m
+  [36m</legend>[39m
+  [36m<p[39m
+    [33mstyle[39m=[32m"font-size: 12px;"[39m
+  [36m>[39m
+    [0mEvery program bound to this sponsor uses changes to this shared record. Saving this record does not change which sponsor this program selects.[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33mstyle[39m=[32m"display: grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 8px;"[39m
+  [36m>[39m
+    [36m<label[39m
+      [33mstyle[39m=[32m"font-size: 12px;"[39m
+    [36m>[39m
+      [0mSponsor legal name[0m
+      [36m<input[39m
+        [33mclass[39m=[32m"c2c-input"[39m
+        [33mmaxlength[39m=[32m"200"[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"Recorded test sponsor"[39m
+      [36m/>[39m
+    [36m</label>[39m
+    [36m<label[39m
+      [33mstyle[39m=[32m"font-size: 12px;"[39m
+    [36m>[39m
+      [0mDUNS number[0m
+      [36m<input[39m
+        [33mclass[39m=[32m"c2c-input"[39m
+        [33mmaxlength[39m=[32m"16"[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"123456789"[39m
+      [36m/>[39m
+    [36m</label>[39m
+    [36m<label[39m
+      [33mstyle[39m=[32m"font-size: 12px;"[39m
+    [36m>[39m
+      [0mRegulatory contact name[0m
+      [36m<input[39m
+        [33mclass[39m=[32m"c2c-input"[39m
+        [33mmaxlength[39m=[32m"200"[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"Changed test contact"[39m
+      [36m/>[39m
+    [36m</label>[39m
+    [36m<label[39m
+      [33mstyle[39m=[32m"font-size: 12px;"[39m
+    [36m>[39m
+      [0mRegulatory contact telephone[0m
+      [36m<input[39m
+        [33mclass[39m=[32m"c2c-input"[39m
+        [33mmaxlength[39m=[32m"40"[39m
+        [33mtype[39m=[32m"tel"[39m
+        [33mvalue[39m=[32m"+1 212 555 0100"[39m
+      [36m/>[39m
+    [36m</label>[39m
+    [36m<label[39m
+      [33mstyle[39m=[32m"font-size: 12px;"[39m
+    [36m>[39m
+      [0mRegulatory contact email[0m
+      [36m<input[39m
+        [33mclass[39m=[32m"c2c-input"[39m
+        [33mmaxlength[39m=[32m"254"[39m
+        [33mtype[39m=[32m"email"[39m
+        [33mvalue[39m=[32m"contact@example.test"[39m
+      [36m/>[39m
+    [36m</label>[39m
+  [36m</div>[39m
+  [36m<p[39m
+    [33mstyle[39m=[32m"font-size: 12px; color: var(--text-400);"[39m
+  [36m>[39m
+    [0mDUNS is nine digits. FDA packaging requires a recorded DUNS and complete regulatory contact; incomplete sponsor records can be saved for completion.[0m
+  [36m</p>[39m
+  [36m<label[39m
+    [33mstyle[39m=[32m"display: block; font-size: 12px; margin: 8px 0px;"[39m
+  [36m>[39m
+    [0mReason for sponsor record change[0m
+    [36m<textarea[39m
+      [33maria-label[39m=[32m"Reason for sponsor record change"[39m
+      [33mclass[39m=[32m"c2c-input"[39m
+      [33mmaxlength[39m=[32m"2000"[39m
+      [33mrows[39m=[32m"2"[39m
+    [36m/>[39m
+    [36m<span[39m
+      [33mstyle[39m=[32m"display: block; color: var(--text-400);"[39m
+    [36m>[39m
+      [0mRequired, [0m
+      [0m8[0m
+      [0m–[0m
+      [0m2000[0m
+      [0m characters. Recorded with this change.[0m
+    [36m</span>[39m
+  [36m</label>[39m
+  [36m<div[39m
+    [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nda-open"[39m
+      [33mdisabled[39m=[32m""[39m
+    [36m>[39m
+      [0mSave sponsor record[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nda-open"[39m
+    [36m>[39m
+      [0mClose sponsor editor[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</fieldset>[39m
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > does not publish an old program write receipt after an A to B to A visit
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > distinguishes an empty registry from malformed records
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > refuses malformed registry records without offering them
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > holds an otherwise successful program receipt with unchanged revision
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > holds an otherwise successful program receipt with inconsistent sponsor name
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > requires explicit successful read reconciliation after a lost program write answer
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > keeps an uncertain sponsor write held after closing its editor until the registry is explicitly read
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > does not publish an old program listing after opening another program
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > does not publish a late write receipt after session retirement
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > clears previous field checks when recorded form inputs change
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > applicant editor interaction lifecycle > continues to save after StrictMode effect replay
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > applicant editor interaction lifecycle > preserves spaces while a person types a multiword sponsor address
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > field checks follow recorded input ownership > does not repaint an old field check after a concurrent identity save
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > field checks follow recorded input ownership > clears an old check when an explicit reload reads changed program facts
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > field checks follow recorded input ownership > clears an old check when the per-form serial number changes
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {"payload":{}}
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {"payload":[]}
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {"payload":{"formId":"FDA_1571","fields":{}}}
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {"payload":{"formId":"FDA_1572","fields":{},"missingRequired":[]}}
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {"payload":{"formId":"FDA_1571","fields":{},"missingRequired":[null]}}
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > refuses a 1572 array when any investigator result is malformed
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > requires an updated revision on a shared sponsor PATCH receipt
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > all recorded sponsor and investigator inputs reach field checks > retires a check when the bound sponsor changes without a program revision change
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > all recorded sponsor and investigator inputs reach field checks > shows missing fields from the second investigator instead of calling a 1572 array clean
+ × client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > existing sponsor authorized representative facts > holds a sponsor save when the receipt omits signatoryName 178ms
+   → Unable to find a label with the text of: Authorized representative name
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Values read from the program record"[39m
+        [33mclass[39m=[32m"indf-record"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"indf-record-lead"[39m
+        [36m>[39m
+          [0mRead from the program record — every form below is filled with these values.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"indf-record-grid"[39m
+        [36m>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mSponsor[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mRecorded organization[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mDrug[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mRecorded test product[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mIndication[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mTest indication[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mIND number[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"indf-missing"[39m
+              [36m>[39m
+                [0mnot assigned[0m
+              [36m</span>[39m
+            [36m</dd>[39m
+          [36m</dl>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Recorded applicant identity"[39m
+        [33mstyle[39m=[32m"border: 1px solid var(--border); padding: 12px; margin-bottom: 12px;"[39m
+      [36m>[39m
+        [36m<h4[39m
+          [33mstyle[39m=[32m"margin: 0px 0px 8px;"[39m
+        [36m>[39m
+          [0mRecorded applicant identity[0m
+        [36m</h4>[39m
+        [36m<p[39m
+          [33mstyle[39m=[32m"font-size: 12px;"[39m
+        [36m>[39m
+          [0mThe program selects an existing sponsor record. Forms and sequence packaging read that recorded selection; edits below apply only after saving.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 8px;"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mAgency application number[0m
+            [36m<input[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mApplicant sponsor record[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Applicant sponsor record"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNo sponsor bound[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"819edd20-9af6-41e7-a206-c00ecb4671b9"[39m
+              [36m>[39m
+                [0mRecorded test sponsor[0m
+                [0m · DUNS 123456789[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mSponsor address[0m
+            [36m<input[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mIND type[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"IND type"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"Commercial IND"[39m
+              [36m>[39m
+                [0mCommercial IND[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"Research IND"[39m
+              [36m>[39m
+                [0mResearch IND[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mstyle[39m=[32m"font-size: 12px; color: var(--text-400);"[39m
+        [36m>[39m
+          [0mFor FDA, record the six-digit number assigned by the agency. Leave it blank until assigned. The sponsor address remains a program fact.[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mstyle[39m=[32m"display: block; font-size: 12px; margin: 8px 0px;"[39m
+        [36m>[39m
+          [0mReason for program facts change[0m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"Reason for program facts change"[39m
+            [33mclass[39m=[32m"c2c-input"[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mrows[39m=[32m"2"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mstyle[39m=[32m"display: block; color: var(--text-400);"[39m
+          [36m>[39m
+            [0mRequired, [0m
+            [0m8[0m
+            [0m–[0m
+            [0m2000[0m
+            [0m characters. Recorded with this change.[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+            [33mdisabled[39m=[32m""[39m
+          [36m>[39m
+            [0mSave to program[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+          [36m>[39m
+            [0mReload recorded program facts[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+          [36m>[39m
+            [0mRecord a sponsor[0m
+          [36m</button>[39m
+          [36m<button[39m...
+ × client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > existing sponsor authorized representative facts > holds a sponsor save when the receipt omits signatoryTitle 142ms
+   → Unable to find a label with the text of: Authorized representative name
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Values read from the program record"[39m
+        [33mclass[39m=[32m"indf-record"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"indf-record-lead"[39m
+        [36m>[39m
+          [0mRead from the program record — every form below is filled with these values.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"indf-record-grid"[39m
+        [36m>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mSponsor[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mRecorded organization[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mDrug[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mRecorded test product[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mIndication[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mTest indication[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mIND number[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"indf-missing"[39m
+              [36m>[39m
+                [0mnot assigned[0m
+              [36m</span>[39m
+            [36m</dd>[39m
+          [36m</dl>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Recorded applicant identity"[39m
+        [33mstyle[39m=[32m"border: 1px solid var(--border); padding: 12px; margin-bottom: 12px;"[39m
+      [36m>[39m
+        [36m<h4[39m
+          [33mstyle[39m=[32m"margin: 0px 0px 8px;"[39m
+        [36m>[39m
+          [0mRecorded applicant identity[0m
+        [36m</h4>[39m
+        [36m<p[39m
+          [33mstyle[39m=[32m"font-size: 12px;"[39m
+        [36m>[39m
+          [0mThe program selects an existing sponsor record. Forms and sequence packaging read that recorded selection; edits below apply only after saving.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 8px;"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mAgency application number[0m
+            [36m<input[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mApplicant sponsor record[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Applicant sponsor record"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNo sponsor bound[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"819edd20-9af6-41e7-a206-c00ecb4671b9"[39m
+              [36m>[39m
+                [0mRecorded test sponsor[0m
+                [0m · DUNS 123456789[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mSponsor address[0m
+            [36m<input[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mIND type[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"IND type"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"Commercial IND"[39m
+              [36m>[39m
+                [0mCommercial IND[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"Research IND"[39m
+              [36m>[39m
+                [0mResearch IND[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mstyle[39m=[32m"font-size: 12px; color: var(--text-400);"[39m
+        [36m>[39m
+          [0mFor FDA, record the six-digit number assigned by the agency. Leave it blank until assigned. The sponsor address remains a program fact.[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mstyle[39m=[32m"display: block; font-size: 12px; margin: 8px 0px;"[39m
+        [36m>[39m
+          [0mReason for program facts change[0m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"Reason for program facts change"[39m
+            [33mclass[39m=[32m"c2c-input"[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mrows[39m=[32m"2"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mstyle[39m=[32m"display: block; color: var(--text-400);"[39m
+          [36m>[39m
+            [0mRequired, [0m
+            [0m8[0m
+            [0m–[0m
+            [0m2000[0m
+            [0m characters. Recorded with this change.[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+            [33mdisabled[39m=[32m""[39m
+          [36m>[39m
+            [0mSave to program[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+          [36m>[39m
+            [0mReload recorded program facts[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+          [36m>[39m
+            [0mRecord a sponsor[0m
+          [36m</button>[39m
+          [36m<button[39m...
+ × client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > existing sponsor authorized representative facts > holds a sponsor update when the returned representative differs from the submitted fact 194ms
+   → Unable to find a label with the text of: Authorized representative name
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Values read from the program record"[39m
+        [33mclass[39m=[32m"indf-record"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"indf-record-lead"[39m
+        [36m>[39m
+          [0mRead from the program record — every form below is filled with these values.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"indf-record-grid"[39m
+        [36m>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mSponsor[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mRecorded organization[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mDrug[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mRecorded test product[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mIndication[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mTest indication[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mIND number[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"indf-missing"[39m
+              [36m>[39m
+                [0mnot assigned[0m
+              [36m</span>[39m
+            [36m</dd>[39m
+          [36m</dl>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Recorded applicant identity"[39m
+        [33mstyle[39m=[32m"border: 1px solid var(--border); padding: 12px; margin-bottom: 12px;"[39m
+      [36m>[39m
+        [36m<h4[39m
+          [33mstyle[39m=[32m"margin: 0px 0px 8px;"[39m
+        [36m>[39m
+          [0mRecorded applicant identity[0m
+        [36m</h4>[39m
+        [36m<p[39m
+          [33mstyle[39m=[32m"font-size: 12px;"[39m
+        [36m>[39m
+          [0mThe program selects an existing sponsor record. Forms and sequence packaging read that recorded selection; edits below apply only after saving.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 8px;"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mAgency application number[0m
+            [36m<input[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mApplicant sponsor record[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Applicant sponsor record"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNo sponsor bound[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"819edd20-9af6-41e7-a206-c00ecb4671b9"[39m
+              [36m>[39m
+                [0mRecorded test sponsor[0m
+                [0m · DUNS 123456789[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mSponsor address[0m
+            [36m<input[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mIND type[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"IND type"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"Commercial IND"[39m
+              [36m>[39m
+                [0mCommercial IND[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"Research IND"[39m
+              [36m>[39m
+                [0mResearch IND[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mstyle[39m=[32m"font-size: 12px; color: var(--text-400);"[39m
+        [36m>[39m
+          [0mFor FDA, record the six-digit number assigned by the agency. Leave it blank until assigned. The sponsor address remains a program fact.[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mstyle[39m=[32m"display: block; font-size: 12px; margin: 8px 0px;"[39m
+        [36m>[39m
+          [0mReason for program facts change[0m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"Reason for program facts change"[39m
+            [33mclass[39m=[32m"c2c-input"[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mrows[39m=[32m"2"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mstyle[39m=[32m"display: block; color: var(--text-400);"[39m
+          [36m>[39m
+            [0mRequired, [0m
+            [0m8[0m
+            [0m–[0m
+            [0m2000[0m
+            [0m characters. Recorded with this change.[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mrole[39m=[32m"status"[39m
+          [33mstyle[39m=[32m"font-size: 12px;"[39m
+        [36m>[39m
+          [0mNot saved. Forms and packages continue to read the recorded program facts until you save.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+            [33mdisabled[39m=[32m""[39m
+          [36m>[39m
+            [0mSave to program[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+          [36m>[39m
+  ...
+ × client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > existing sponsor authorized representative facts > reads and clears an existing representative title while retaining other recorded facts 97ms
+   → Unable to find an element with the text: /Authorized representative: Recorded representative.*Authorized officer/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Values read from the program record"[39m
+        [33mclass[39m=[32m"indf-record"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"indf-record-lead"[39m
+        [36m>[39m
+          [0mRead from the program record — every form below is filled with these values.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"indf-record-grid"[39m
+        [36m>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mSponsor[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mRecorded test sponsor[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mDrug[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mRecorded test product[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mIndication[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mTest indication[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mIND number[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"indf-missing"[39m
+              [36m>[39m
+                [0mnot assigned[0m
+              [36m</span>[39m
+            [36m</dd>[39m
+          [36m</dl>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Recorded applicant identity"[39m
+        [33mstyle[39m=[32m"border: 1px solid var(--border); padding: 12px; margin-bottom: 12px;"[39m
+      [36m>[39m
+        [36m<h4[39m
+          [33mstyle[39m=[32m"margin: 0px 0px 8px;"[39m
+        [36m>[39m
+          [0mRecorded applicant identity[0m
+        [36m</h4>[39m
+        [36m<p[39m
+          [33mstyle[39m=[32m"font-size: 12px;"[39m
+        [36m>[39m
+          [0mThe program selects an existing sponsor record. Forms and sequence packaging read that recorded selection; edits below apply only after saving.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 8px;"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mAgency application number[0m
+            [36m<input[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mApplicant sponsor record[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Applicant sponsor record"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNo sponsor bound[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"819edd20-9af6-41e7-a206-c00ecb4671b9"[39m
+              [36m>[39m
+                [0mRecorded test sponsor[0m
+                [0m · DUNS 123456789[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mSponsor address[0m
+            [36m<input[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mIND type[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"IND type"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"Commercial IND"[39m
+              [36m>[39m
+                [0mCommercial IND[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"Research IND"[39m
+              [36m>[39m
+                [0mResearch IND[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mstyle[39m=[32m"font-size: 12px; color: var(--text-400);"[39m
+        [36m>[39m
+          [0mFor FDA, record the six-digit number assigned by the agency. Leave it blank until assigned. The sponsor address remains a program fact.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mstyle[39m=[32m"font-size: 12px;"[39m
+        [36m>[39m
+          [0mRecorded sponsor: [0m
+          [0mRecorded test sponsor[0m
+          [0m. DUNS: [0m
+          [0m123456789[0m
+          [0m. Regulatory contact: [0m
+          [0mTest contact[0m
+          [0m · [0m
+          [0m+1 212 555 0100[0m
+          [0m · [0m
+          [0mcontact@example.test[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mstyle[39m=[32m"display: block; font-size: 12px; margin: 8px 0px;"[39m
+        [36m>[39m
+          [0mReason for program facts change[0m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"Reason for program facts change"[39m
+            [33mclass[39m=[32m"c2c-input"[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mrows[39m=[32m"2"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mstyle[39m=[32m"display: block; color: var(--text-400);"[39m
+          [36m>[39m
+            [0mRequired, [0m
+            [0m8[0m
+            [0m–[0m
+            [0m2000[0m
+            [0m characters. Recorded with this change.[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+            [33mdisabled[39m=[32m""[39m
+          [36m>[39m
+            [0mSave to program[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+          [36m>[39m
+            [0mReload recorded program facts[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+          [36m>[39m
+            [0mRecord a sponsor[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+          [36m>[39m
+            [0mEdit selected sponsor[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+          [36m>[39m
+            [0mReload sponsor records[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 8px; margin-bottom: 12px;"[39m
+      [36m>[39m
+        [36m<label[39m
+          [33mstyle[39m=[32m"font-size: 12px;"[39m
+        [36m>[39m
+          [0mPhase[0m
+          [36m<select[39m
+            [33mclass[39m=[32m"c2c-input"[39m
+            [33mstyle[39m=[32m"height: 30px;"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0mNot stated — choose[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mstyle[39m=[32m"font-size: 12px;"[39m
+        [36m>[39m
+          [0mSerial number[0m
+          [36m<input[39m
+            [33mclass[39m=[32m"c2c-input"[39m
+            [33mplaceholder[39m=[32m"e.g. 0000"[39m
+            [33mstyle[39m=[32m"height: 30px;"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</label>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Where completed forms are filed"[39m
+        [33mclass[39m=[32m"indf-target"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"font-size: 12px; margin-bottom: 4px;"[39m
+        [36m>[39m
+          [0mFile completed, signed forms into — choose the submission and the sequence. Nothing is filed until you choose.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"de-field"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"de-label"[39m
+            [33mfor[39m=[32m"indf-target-sub"[39m
+          [36m>[39m
+            [0mTarget submission[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"de-desc"[39m
+          [36m>[39m
+            [0mNo submissions in this organization yet — create one in the Submission Center first.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<table[39m
+        [33mclass[39m=[32m"reg-tbl"[39m
+      [36m>[39m
+        [36m<thead>[39m
+          [36m<tr>[39m
+            [36m<th>[39m
+              [0mForm[0m
+            [36m</th>[39m
+            [36m<th>[39m
+              [0mField check[0m
+            [36m</th>[39m
+            [36m<th[39m
+              [33mstyle[39m=[32m"text-align: right;"[39m
+            [36m>[39m
+              [0mActions[0m
+            [36m</th>[39m
+          [36m</tr>[39m
+        [36m</thead>[39m
+        [36m<tbody>[39m
+          [36m<tr>[39m
+            [36m<td[39m
+              [33mstyle[39m=[32m"font-weight: 600; vertical-align: top;"[39m
+            [36m>[39m
+              [0mFDA 1571 — IND application[0m
+            [36m</td>[39m
+            [36m<td[39m
+              [33mstyle[39m=[32m"vertical-align: top;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mstyle[39m=[32m"color: var(--text-400); font-size: 13px;"[39m
+              [36m>[39m
+                [0mNot checked yet[0m
+              [36m</span>[39m
+            [36m</td>[39m
+            [36m<td[39m
+              [33mstyle[39m=[32m"text-align: right; white-space: nowrap; vertical-align: top;"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"nda-open"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-circle-check-big"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M21.801 10A10 10 0 1 1 17 3.335"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m9 11 3 3L22 4"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [0mBuild & check[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"nda-open"[39m
+                [33mstyle[39m=[32m"margin-left: 6px;"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-download"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+                  [36m/>[39m
+                  [36m<polyline[39m
+                    [33mpoints[39m=[32m"7 10 12 15 17 10"[39m
+                  [36m/>[39m
+                  [36m<line[39m
+                    [33mx1[39m=[32m"12"[39m
+                    [33mx2[39m=[32m"12"[39m
+                    [33my1[39m=[32m"15"[39m
+                    [33my2[39m=[32m"3"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [0mPDF[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"nda-open"[39m
+                [33mstyle[39m=[32m"margin-left: 6px;"[39m
+                [33mtitle[39m=[32m"Persist as a governed artifact in the project dossier"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-database"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<ellipse[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"5"[39m
+                    [33mrx[39m=[32m"9"[39m
+                    [33mry[39m=[32m"3"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M3 5V19A9 3 0 0 0 21 19V5"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M3 12A9 3 0 0 0 21 12"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [0mSave to dossier[0m
+              [36m</button>[39m
+              [36m<input[39m
+                [33maccept[39m=[32m"application/pdf,.pdf"[39m
+                [33maria-label[39m=[32m"Attach the completed FDA 1571 — IND application"[39m
+                [33mstyle[39m=[32m"display: none;"[39m
+                [33mtype[39m=[32m"file"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Attach completed form: FDA 1571 — IND application"[39m
+                [33mclass[39m=[32m"nda-open"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mstyle[39m=[32m"margin-left: 6px;"[39m
+                [33mtitle[39m=[32m"Choose the submission and sequence to file into first"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-paperclip"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [0mAttach completed form[0m
+              [36m</button>[39m
+              [36m<label[39m
+                [33mstyle[39m=[32m"display: flex; justify-content: flex-end; align-items: center; gap: 6px; font-size: 12px; margin-top: 6px; white-space: normal;"[39m
+                [33mtitle[39m=[32m"Recorded with the file, under your name and the time. Without it the form is filed but not counted as complete."[39m
+              [36m>[39m
+                [36m<input[39m
+                  [33maria-label[39m=[32m"I attest the file I attach is the completed, signed form: FDA 1571 — IND application"[39m
+                  [33mtype[39m=[32m"checkbox"[39m
+                [36m/>[39m
+                [0mI attest the file I attach is the completed, signed form[0m
+              [36m</label>[39m
+            [36m</td>[39m
+          [36m</tr>[39m
+        [36m</tbody>[39m
+      [36m</table>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > creates an existing-registry record without silently binding it to the program
+TestingLibraryElementError: Unable to find a label with the text of: Authorized representative name
+
+Ignored nodes: comments, script, style
+[36m<fieldset[39m
+  [33maria-label[39m=[32m"Sponsor registry record"[39m
+  [33mstyle[39m=[32m"border: 1px solid var(--border); padding: 12px; margin: 10px 0px;"[39m
+[36m>[39m
+  [36m<legend>[39m
+    [0mRecord a sponsor[0m
+  [36m</legend>[39m
+  [36m<div[39m
+    [33mstyle[39m=[32m"display: grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 8px;"[39m
+  [36m>[39m
+    [36m<label[39m
+      [33mstyle[39m=[32m"font-size: 12px;"[39m
+    [36m>[39m
+      [0mSponsor legal name[0m
+      [36m<input[39m
+        [33mclass[39m=[32m"c2c-input"[39m
+        [33mmaxlength[39m=[32m"200"[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"Recorded test sponsor"[39m
+      [36m/>[39m
+    [36m</label>[39m
+    [36m<label[39m
+      [33mstyle[39m=[32m"font-size: 12px;"[39m
+    [36m>[39m
+      [0mDUNS number[0m
+      [36m<input[39m
+        [33mclass[39m=[32m"c2c-input"[39m
+        [33mmaxlength[39m=[32m"16"[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"123456789"[39m
+      [36m/>[39m
+    [36m</label>[39m
+    [36m<label[39m
+      [33mstyle[39m=[32m"font-size: 12px;"[39m
+    [36m>[39m
+      [0mRegulatory contact name[0m
+      [36m<input[39m
+        [33mclass[39m=[32m"c2c-input"[39m
+        [33mmaxlength[39m=[32m"200"[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"Test contact"[39m
+      [36m/>[39m
+    [36m</label>[39m
+    [36m<label[39m
+      [33mstyle[39m=[32m"font-size: 12px;"[39m
+    [36m>[39m
+      [0mRegulatory contact telephone[0m
+      [36m<input[39m
+        [33mclass[39m=[32m"c2c-input"[39m
+        [33mmaxlength[39m=[32m"40"[39m
+        [33mtype[39m=[32m"tel"[39m
+        [33mvalue[39m=[32m"+1 212 555 0100"[39m
+      [36m/>[39m
+    [36m</label>[39m
+    [36m<label[39m
+      [33mstyle[39m=[32m"font-size: 12px;"[39m
+    [36m>[39m
+      [0mRegulatory contact email[0m
+      [36m<input[39m
+        [33mclass[39m=[32m"c2c-input"[39m
+        [33mmaxlength[39m=[32m"254"[39m
+        [33mtype[39m=[32m"email"[39m
+        [33mvalue[39m=[32m"contact@example.test"[39m
+      [36m/>[39m
+    [36m</label>[39m
+  [36m</div>[39m
+  [36m<p[39m
+    [33mstyle[39m=[32m"font-size: 12px; color: var(--text-400);"[39m
+  [36m>[39m
+    [0mDUNS is nine digits. FDA packaging requires a recorded DUNS and complete regulatory contact; incomplete sponsor records can be saved for completion.[0m
+  [36m</p>[39m
+  [36m<label[39m
+    [33mstyle[39m=[32m"display: block; font-size: 12px; margin: 8px 0px;"[39m
+  [36m>[39m
+    [0mReason for sponsor record change[0m
+    [36m<textarea[39m
+      [33maria-label[39m=[32m"Reason for sponsor record change"[39m
+      [33mclass[39m=[32m"c2c-input"[39m
+      [33mmaxlength[39m=[32m"2000"[39m
+      [33mrows[39m=[32m"2"[39m
+    [36m/>[39m
+    [36m<span[39m
+      [33mstyle[39m=[32m"display: block; color: var(--text-400);"[39m
+    [36m>[39m
+      [0mRequired, [0m
+      [0m8[0m
+      [0m–[0m
+      [0m2000[0m
+      [0m characters. Recorded with this change.[0m
+    [36m</span>[39m
+  [36m</label>[39m
+  [36m<div[39m
+    [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nda-open"[39m
+      [33mdisabled[39m=[32m""[39m
+    [36m>[39m
+      [0mSave sponsor record[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nda-open"[39m
+    [36m>[39m
+      [0mClose sponsor editor[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</fieldset>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx:118:37
+    116|     fireEvent.change(within(editor).getByLabelText('Regulatory contact…
+    117|     fireEvent.change(within(editor).getByLabelText('Regulatory contact…
+    118|     fireEvent.change(within(editor).getByLabelText('Authorized represe…
+       |                                     ^
+    119|     fireEvent.change(within(editor).getByLabelText('Authorized represe…
+    120|     fireEvent.change(within(editor).getByLabelText('Reason for sponsor…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > sends a versioned shared registry edit and reports its audit uncertainty
+TestingLibraryElementError: Unable to find a label with the text of: Authorized representative name
+
+Ignored nodes: comments, script, style
+[36m<fieldset[39m
+  [33maria-label[39m=[32m"Sponsor registry record"[39m
+  [33mstyle[39m=[32m"border: 1px solid var(--border); padding: 12px; margin: 10px 0px;"[39m
+[36m>[39m
+  [36m<legend>[39m
+    [0mEdit sponsor record[0m
+  [36m</legend>[39m
+  [36m<p[39m
+    [33mstyle[39m=[32m"font-size: 12px;"[39m
+  [36m>[39m
+    [0mEvery program bound to this sponsor uses changes to this shared record. Saving this record does not change which sponsor this program selects.[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33mstyle[39m=[32m"display: grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 8px;"[39m
+  [36m>[39m
+    [36m<label[39m
+      [33mstyle[39m=[32m"font-size: 12px;"[39m
+    [36m>[39m
+      [0mSponsor legal name[0m
+      [36m<input[39m
+        [33mclass[39m=[32m"c2c-input"[39m
+        [33mmaxlength[39m=[32m"200"[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"Recorded test sponsor"[39m
+      [36m/>[39m
+    [36m</label>[39m
+    [36m<label[39m
+      [33mstyle[39m=[32m"font-size: 12px;"[39m
+    [36m>[39m
+      [0mDUNS number[0m
+      [36m<input[39m
+        [33mclass[39m=[32m"c2c-input"[39m
+        [33mmaxlength[39m=[32m"16"[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"123456789"[39m
+      [36m/>[39m
+    [36m</label>[39m
+    [36m<label[39m
+      [33mstyle[39m=[32m"font-size: 12px;"[39m
+    [36m>[39m
+      [0mRegulatory contact name[0m
+      [36m<input[39m
+        [33mclass[39m=[32m"c2c-input"[39m
+        [33mmaxlength[39m=[32m"200"[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"Changed test contact"[39m
+      [36m/>[39m
+    [36m</label>[39m
+    [36m<label[39m
+      [33mstyle[39m=[32m"font-size: 12px;"[39m
+    [36m>[39m
+      [0mRegulatory contact telephone[0m
+      [36m<input[39m
+        [33mclass[39m=[32m"c2c-input"[39m
+        [33mmaxlength[39m=[32m"40"[39m
+        [33mtype[39m=[32m"tel"[39m
+        [33mvalue[39m=[32m"+1 212 555 0100"[39m
+      [36m/>[39m
+    [36m</label>[39m
+    [36m<label[39m
+      [33mstyle[39m=[32m"font-size: 12px;"[39m
+    [36m>[39m
+      [0mRegulatory contact email[0m
+      [36m<input[39m
+        [33mclass[39m=[32m"c2c-input"[39m
+        [33mmaxlength[39m=[32m"254"[39m
+        [33mtype[39m=[32m"email"[39m
+        [33mvalue[39m=[32m"contact@example.test"[39m
+      [36m/>[39m
+    [36m</label>[39m
+  [36m</div>[39m
+  [36m<p[39m
+    [33mstyle[39m=[32m"font-size: 12px; color: var(--text-400);"[39m
+  [36m>[39m
+    [0mDUNS is nine digits. FDA packaging requires a recorded DUNS and complete regulatory contact; incomplete sponsor records can be saved for completion.[0m
+  [36m</p>[39m
+  [36m<label[39m
+    [33mstyle[39m=[32m"display: block; font-size: 12px; margin: 8px 0px;"[39m
+  [36m>[39m
+    [0mReason for sponsor record change[0m
+    [36m<textarea[39m
+      [33maria-label[39m=[32m"Reason for sponsor record change"[39m
+      [33mclass[39m=[32m"c2c-input"[39m
+      [33mmaxlength[39m=[32m"2000"[39m
+      [33mrows[39m=[32m"2"[39m
+    [36m/>[39m
+    [36m<span[39m
+      [33mstyle[39m=[32m"display: block; color: var(--text-400);"[39m
+    [36m>[39m
+      [0mRequired, [0m
+      [0m8[0m
+      [0m–[0m
+      [0m2000[0m
+      [0m characters. Recorded with this change.[0m
+    [36m</span>[39m
+  [36m</label>[39m
+  [36m<div[39m
+    [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nda-open"[39m
+      [33mdisabled[39m=[32m""[39m
+    [36m>[39m
+      [0mSave sponsor record[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nda-open"[39m
+    [36m>[39m
+      [0mClose sponsor editor[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</fieldset>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx:138:37
+    136|     const editor = screen.getByRole('group', { name: 'Sponsor registry…
+    137|     fireEvent.change(within(editor).getByLabelText('Regulatory contact…
+    138|     fireEvent.change(within(editor).getByLabelText('Authorized represe…
+       |                                     ^
+    139|     fireEvent.change(within(editor).getByLabelText('Authorized represe…
+    140|     fireEvent.change(within(editor).getByLabelText('Reason for sponsor…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > existing sponsor authorized representative facts > holds a sponsor save when the receipt omits signatoryName
+ FAIL  client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > existing sponsor authorized representative facts > holds a sponsor save when the receipt omits signatoryTitle
+TestingLibraryElementError: Unable to find a label with the text of: Authorized representative name
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Values read from the program record"[39m
+        [33mclass[39m=[32m"indf-record"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"indf-record-lead"[39m
+        [36m>[39m
+          [0mRead from the program record — every form below is filled with these values.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"indf-record-grid"[39m
+        [36m>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mSponsor[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mRecorded organization[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mDrug[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mRecorded test product[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mIndication[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mTest indication[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mIND number[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"indf-missing"[39m
+              [36m>[39m
+                [0mnot assigned[0m
+              [36m</span>[39m
+            [36m</dd>[39m
+          [36m</dl>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Recorded applicant identity"[39m
+        [33mstyle[39m=[32m"border: 1px solid var(--border); padding: 12px; margin-bottom: 12px;"[39m
+      [36m>[39m
+        [36m<h4[39m
+          [33mstyle[39m=[32m"margin: 0px 0px 8px;"[39m
+        [36m>[39m
+          [0mRecorded applicant identity[0m
+        [36m</h4>[39m
+        [36m<p[39m
+          [33mstyle[39m=[32m"font-size: 12px;"[39m
+        [36m>[39m
+          [0mThe program selects an existing sponsor record. Forms and sequence packaging read that recorded selection; edits below apply only after saving.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 8px;"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mAgency application number[0m
+            [36m<input[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mApplicant sponsor record[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Applicant sponsor record"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNo sponsor bound[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"819edd20-9af6-41e7-a206-c00ecb4671b9"[39m
+              [36m>[39m
+                [0mRecorded test sponsor[0m
+                [0m · DUNS 123456789[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mSponsor address[0m
+            [36m<input[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mIND type[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"IND type"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"Commercial IND"[39m
+              [36m>[39m
+                [0mCommercial IND[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"Research IND"[39m
+              [36m>[39m
+                [0mResearch IND[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mstyle[39m=[32m"font-size: 12px; color: var(--text-400);"[39m
+        [36m>[39m
+          [0mFor FDA, record the six-digit number assigned by the agency. Leave it blank until assigned. The sponsor address remains a program fact.[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mstyle[39m=[32m"display: block; font-size: 12px; margin: 8px 0px;"[39m
+        [36m>[39m
+          [0mReason for program facts change[0m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"Reason for program facts change"[39m
+            [33mclass[39m=[32m"c2c-input"[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mrows[39m=[32m"2"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mstyle[39m=[32m"display: block; color: var(--text-400);"[39m
+          [36m>[39m
+            [0mRequired, [0m
+            [0m8[0m
+            [0m–[0m
+            [0m2000[0m
+            [0m characters. Recorded with this change.[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+            [33mdisabled[39m=[32m""[39m
+          [36m>[39m
+            [0mSave to program[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+          [36m>[39m
+            [0mReload recorded program facts[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+          [36m>[39m
+            [0mRecord a sponsor[0m
+          [36m</button>[39m
+          [36m<button[39m...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx:371:29
+    369|     fireEvent.click(screen.getByRole('button', { name: 'Record a spons…
+    370|     fireEvent.change(screen.getByLabelText('Sponsor legal name'), { ta…
+    371|     fireEvent.change(screen.getByLabelText('Authorized representative …
+       |                             ^
+    372|     fireEvent.change(screen.getByLabelText('Authorized representative …
+    373|     fireEvent.change(screen.getByLabelText('Reason for sponsor record …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > existing sponsor authorized representative facts > holds a sponsor update when the returned representative differs from the submitted fact
+TestingLibraryElementError: Unable to find a label with the text of: Authorized representative name
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Values read from the program record"[39m
+        [33mclass[39m=[32m"indf-record"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"indf-record-lead"[39m
+        [36m>[39m
+          [0mRead from the program record — every form below is filled with these values.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"indf-record-grid"[39m
+        [36m>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mSponsor[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mRecorded organization[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mDrug[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mRecorded test product[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mIndication[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mTest indication[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mIND number[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"indf-missing"[39m
+              [36m>[39m
+                [0mnot assigned[0m
+              [36m</span>[39m
+            [36m</dd>[39m
+          [36m</dl>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Recorded applicant identity"[39m
+        [33mstyle[39m=[32m"border: 1px solid var(--border); padding: 12px; margin-bottom: 12px;"[39m
+      [36m>[39m
+        [36m<h4[39m
+          [33mstyle[39m=[32m"margin: 0px 0px 8px;"[39m
+        [36m>[39m
+          [0mRecorded applicant identity[0m
+        [36m</h4>[39m
+        [36m<p[39m
+          [33mstyle[39m=[32m"font-size: 12px;"[39m
+        [36m>[39m
+          [0mThe program selects an existing sponsor record. Forms and sequence packaging read that recorded selection; edits below apply only after saving.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 8px;"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mAgency application number[0m
+            [36m<input[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mApplicant sponsor record[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Applicant sponsor record"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNo sponsor bound[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"819edd20-9af6-41e7-a206-c00ecb4671b9"[39m
+              [36m>[39m
+                [0mRecorded test sponsor[0m
+                [0m · DUNS 123456789[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mSponsor address[0m
+            [36m<input[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mIND type[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"IND type"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"Commercial IND"[39m
+              [36m>[39m
+                [0mCommercial IND[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"Research IND"[39m
+              [36m>[39m
+                [0mResearch IND[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mstyle[39m=[32m"font-size: 12px; color: var(--text-400);"[39m
+        [36m>[39m
+          [0mFor FDA, record the six-digit number assigned by the agency. Leave it blank until assigned. The sponsor address remains a program fact.[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mstyle[39m=[32m"display: block; font-size: 12px; margin: 8px 0px;"[39m
+        [36m>[39m
+          [0mReason for program facts change[0m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"Reason for program facts change"[39m
+            [33mclass[39m=[32m"c2c-input"[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mrows[39m=[32m"2"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mstyle[39m=[32m"display: block; color: var(--text-400);"[39m
+          [36m>[39m
+            [0mRequired, [0m
+            [0m8[0m
+            [0m–[0m
+            [0m2000[0m
+            [0m characters. Recorded with this change.[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mrole[39m=[32m"status"[39m
+          [33mstyle[39m=[32m"font-size: 12px;"[39m
+        [36m>[39m
+          [0mNot saved. Forms and packages continue to read the recorded program facts until you save.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+            [33mdisabled[39m=[32m""[39m
+          [36m>[39m
+            [0mSave to program[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+          [36m>[39m
+  ...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx:384:29
+    382|     fireEvent.change(screen.getByLabelText('Applicant sponsor record')…
+    383|     fireEvent.click(screen.getByRole('button', { name: 'Edit selected …
+    384|     fireEvent.change(screen.getByLabelText('Authorized representative …
+       |                             ^
+    385|     fireEvent.change(screen.getByLabelText('Authorized representative …
+    386|     fireEvent.change(screen.getByLabelText('Reason for sponsor record …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > existing sponsor authorized representative facts > reads and clears an existing representative title while retaining other recorded facts
+TestingLibraryElementError: Unable to find an element with the text: /Authorized representative: Recorded representative.*Authorized officer/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Values read from the program record"[39m
+        [33mclass[39m=[32m"indf-record"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"indf-record-lead"[39m
+        [36m>[39m
+          [0mRead from the program record — every form below is filled with these values.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"indf-record-grid"[39m
+        [36m>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mSponsor[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mRecorded test sponsor[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mDrug[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mRecorded test product[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mIndication[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [0mTest indication[0m
+            [36m</dd>[39m
+          [36m</dl>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"indf-fact"[39m
+          [36m>[39m
+            [36m<dt>[39m
+              [0mIND number[0m
+            [36m</dt>[39m
+            [36m<dd>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"indf-missing"[39m
+              [36m>[39m
+                [0mnot assigned[0m
+              [36m</span>[39m
+            [36m</dd>[39m
+          [36m</dl>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Recorded applicant identity"[39m
+        [33mstyle[39m=[32m"border: 1px solid var(--border); padding: 12px; margin-bottom: 12px;"[39m
+      [36m>[39m
+        [36m<h4[39m
+          [33mstyle[39m=[32m"margin: 0px 0px 8px;"[39m
+        [36m>[39m
+          [0mRecorded applicant identity[0m
+        [36m</h4>[39m
+        [36m<p[39m
+          [33mstyle[39m=[32m"font-size: 12px;"[39m
+        [36m>[39m
+          [0mThe program selects an existing sponsor record. Forms and sequence packaging read that recorded selection; edits below apply only after saving.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 8px;"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mAgency application number[0m
+            [36m<input[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mApplicant sponsor record[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Applicant sponsor record"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNo sponsor bound[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"819edd20-9af6-41e7-a206-c00ecb4671b9"[39m
+              [36m>[39m
+                [0mRecorded test sponsor[0m
+                [0m · DUNS 123456789[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mSponsor address[0m
+            [36m<input[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mstyle[39m=[32m"font-size: 12px;"[39m
+          [36m>[39m
+            [0mIND type[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"IND type"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mNot stated — choose[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"Commercial IND"[39m
+              [36m>[39m
+                [0mCommercial IND[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"Research IND"[39m
+              [36m>[39m
+                [0mResearch IND[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mstyle[39m=[32m"font-size: 12px; color: var(--text-400);"[39m
+        [36m>[39m
+          [0mFor FDA, record the six-digit number assigned by the agency. Leave it blank until assigned. The sponsor address remains a program fact.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mstyle[39m=[32m"font-size: 12px;"[39m
+        [36m>[39m
+          [0mRecorded sponsor: [0m
+          [0mRecorded test sponsor[0m
+          [0m. DUNS: [0m
+          [0m123456789[0m
+          [0m. Regulatory contact: [0m
+          [0mTest contact[0m
+          [0m · [0m
+          [0m+1 212 555 0100[0m
+          [0m · [0m
+          [0mcontact@example.test[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mstyle[39m=[32m"display: block; font-size: 12px; margin: 8px 0px;"[39m
+        [36m>[39m
+          [0mReason for program facts change[0m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"Reason for program facts change"[39m
+            [33mclass[39m=[32m"c2c-input"[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mrows[39m=[32m"2"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mstyle[39m=[32m"display: block; color: var(--text-400);"[39m
+          [36m>[39m
+            [0mRequired, [0m
+            [0m8[0m
+            [0m–[0m
+            [0m2000[0m
+            [0m characters. Recorded with this change.[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+            [33mdisabled[39m=[32m""[39m
+          [36m>[39m
+            [0mSave to program[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+          [36m>[39m
+            [0mReload recorded program facts[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+          [36m>[39m
+            [0mRecord a sponsor[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+          [36m>[39m
+            [0mEdit selected sponsor[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"nda-open"[39m
+          [36m>[39m
+            [0mReload sponsor records[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 8px; margin-bottom: 12px;"[39m
+      [36m>[39m
+        [36m<label[39m
+          [33mstyle[39m=[32m"font-size: 12px;"[39m
+        [36m>[39m
+          [0mPhase[0m
+          [36m<select[39m
+            [33mclass[39m=[32m"c2c-input"[39m
+            [33mstyle[39m=[32m"height: 30px;"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0mNot stated — choose[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mstyle[39m=[32m"font-size: 12px;"[39m
+        [36m>[39m
+          [0mSerial number[0m
+          [36m<input[39m
+            [33mclass[39m=[32m"c2c-input"[39m
+            [33mplaceholder[39m=[32m"e.g. 0000"[39m
+            [33mstyle[39m=[32m"height: 30px;"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</label>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Where completed forms are filed"[39m
+        [33mclass[39m=[32m"indf-target"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"font-size: 12px; margin-bottom: 4px;"[39m
+        [36m>[39m
+          [0mFile completed, signed forms into — choose the submission and the sequence. Nothing is filed until you choose.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"de-field"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"de-label"[39m
+            [33mfor[39m=[32m"indf-target-sub"[39m
+          [36m>[39m
+            [0mTarget submission[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"de-desc"[39m
+          [36m>[39m
+            [0mNo submissions in this organization yet — create one in the Submission Center first.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<table[39m
+        [33mclass[39m=[32m"reg-tbl"[39m
+      [36m>[39m
+        [36m<thead>[39m
+          [36m<tr>[39m
+            [36m<th>[39m
+              [0mForm[0m
+            [36m</th>[39m
+            [36m<th>[39m
+              [0mField check[0m
+            [36m</th>[39m
+            [36m<th[39m
+              [33mstyle[39m=[32m"text-align: right;"[39m
+            [36m>[39m
+              [0mActions[0m
+            [36m</th>[39m
+          [36m</tr>[39m
+        [36m</thead>[39m
+        [36m<tbody>[39m
+          [36m<tr>[39m
+            [36m<td[39m
+              [33mstyle[39m=[32m"font-weight: 600; vertical-align: top;"[39m
+            [36m>[39m
+              [0mFDA 1571 — IND application[0m
+            [36m</td>[39m
+            [36m<td[39m
+              [33mstyle[39m=[32m"vertical-align: top;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mstyle[39m=[32m"color: var(--text-400); font-size: 13px;"[39m
+              [36m>[39m
+                [0mNot checked yet[0m
+              [36m</span>[39m
+            [36m</td>[39m
+            [36m<td[39m
+              [33mstyle[39m=[32m"text-align: right; white-space: nowrap; vertical-align: top;"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"nda-open"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-circle-check-big"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M21.801 10A10 10 0 1 1 17 3.335"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m9 11 3 3L22 4"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [0mBuild & check[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"nda-open"[39m
+                [33mstyle[39m=[32m"margin-left: 6px;"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-download"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+                  [36m/>[39m
+                  [36m<polyline[39m
+                    [33mpoints[39m=[32m"7 10 12 15 17 10"[39m
+                  [36m/>[39m
+                  [36m<line[39m
+                    [33mx1[39m=[32m"12"[39m
+                    [33mx2[39m=[32m"12"[39m
+                    [33my1[39m=[32m"15"[39m
+                    [33my2[39m=[32m"3"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [0mPDF[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"nda-open"[39m
+                [33mstyle[39m=[32m"margin-left: 6px;"[39m
+                [33mtitle[39m=[32m"Persist as a governed artifact in the project dossier"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-database"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<ellipse[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"5"[39m
+                    [33mrx[39m=[32m"9"[39m
+                    [33mry[39m=[32m"3"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M3 5V19A9 3 0 0 0 21 19V5"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M3 12A9 3 0 0 0 21 12"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [0mSave to dossier[0m
+              [36m</button>[39m
+              [36m<input[39m
+                [33maccept[39m=[32m"application/pdf,.pdf"[39m
+                [33maria-label[39m=[32m"Attach the completed FDA 1571 — IND application"[39m
+                [33mstyle[39m=[32m"display: none;"[39m
+                [33mtype[39m=[32m"file"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Attach completed form: FDA 1571 — IND application"[39m
+                [33mclass[39m=[32m"nda-open"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mstyle[39m=[32m"margin-left: 6px;"[39m
+                [33mtitle[39m=[32m"Choose the submission and sequence to file into first"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-paperclip"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [0mAttach completed form[0m
+              [36m</button>[39m
+              [36m<label[39m
+                [33mstyle[39m=[32m"display: flex; justify-content: flex-end; align-items: center; gap: 6px; font-size: 12px; margin-top: 6px; white-space: normal;"[39m
+                [33mtitle[39m=[32m"Recorded with the file, under your name and the time. Without it the form is filed but not counted as complete."[39m
+              [36m>[39m
+                [36m<input[39m
+                  [33maria-label[39m=[32m"I attest the file I attach is the completed, signed form: FDA 1571 — IND application"[39m
+                  [33mtype[39m=[32m"checkbox"[39m
+                [36m/>[39m
+                [0mI attest the file I attach is the completed, signed form[0m
+              [36m</label>[39m
+            [36m</td>[39m
+          [36m</tr>[39m
+        [36m</tbody>[39m
+      [36m</table>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx:397:19
+    395|     api.request.mockImplementation((method, path, body) => method === …
+    396|     await open(); await screen.findByRole('option', { name: /Recorded …
+    397|     expect(screen.getByText(/Authorized representative: Recorded repre…
+       |                   ^
+    398|     fireEvent.click(screen.getByRole('button', { name: 'Edit selected …
+    399|     expect((screen.getByLabelText('Authorized representative name') as…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 29 skipped (35)
+   Start at  01:51:49
+   Duration  4.88s (transform 1.80s, setup 299ms, import 2.18s, tests 1.37s, environment 757ms)
+

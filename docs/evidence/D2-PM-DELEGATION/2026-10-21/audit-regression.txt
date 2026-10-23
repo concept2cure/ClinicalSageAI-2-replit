@@ -1,0 +1,115 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/tasking/__tests__/task-audit-transaction.test.ts > auditTaskAction — the chain write owns a transaction > ROLLs BACK rather than leaving half a pair when the chain write fails
+[tasking] audit lineage write failed (non-fatal): chain lock timeout
+
+ ✓ server/services/tasking/__tests__/task-audit-transaction.test.ts > auditTaskAction — the chain write owns a transaction > brackets recordGovernedAction in BEGIN … COMMIT on one client 3ms
+ ✓ server/services/tasking/__tests__/task-audit-transaction.test.ts > auditTaskAction — the chain write owns a transaction > hands recordGovernedAction the TRANSACTION client, never the pool 1ms
+ ✓ server/services/tasking/__tests__/task-audit-transaction.test.ts > auditTaskAction — the chain write owns a transaction > ROLLs BACK rather than leaving half a pair when the chain write fails 2ms
+ ✓ server/services/tasking/__tests__/task-audit-transaction.test.ts > auditTaskAction — the chain write owns a transaction > enlists in the CALLER’s transaction when one is supplied, and propagates 2ms
+stderr | server/services/tasking/__tests__/task-audit-outcome.test.ts > auditTaskAction reports which of its three outcomes happened > a silent skip is reported as NOT_ATTRIBUTABLE, not as a recorded row
+{
+  "timestamp": "2026-10-21T02:22:18.766Z",
+  "level": "warn",
+  "message": "[task-audit] Task lineage SKIPPED — no attributable tenant, actor or target",
+  "context": {
+    "orgId": 2,
+    "hasUserId": false,
+    "taskId": "TASK-1",
+    "command": "task.transition"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-audit-outcome.test.ts > auditTaskAction reports which of its three outcomes happened > a silent skip is reported as NOT_ATTRIBUTABLE, not as a recorded row
+{
+  "timestamp": "2026-10-21T02:22:18.769Z",
+  "level": "warn",
+  "message": "[task-audit] Task lineage SKIPPED — no attributable tenant, actor or target",
+  "context": {
+    "orgId": 0,
+    "hasUserId": true,
+    "taskId": "TASK-1",
+    "command": "task.transition"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-audit-outcome.test.ts > auditTaskAction reports which of its three outcomes happened > a silent skip is reported as NOT_ATTRIBUTABLE, not as a recorded row
+{
+  "timestamp": "2026-10-21T02:22:18.772Z",
+  "level": "warn",
+  "message": "[task-audit] Task lineage SKIPPED — no attributable tenant, actor or target",
+  "context": {
+    "orgId": 2,
+    "hasUserId": true,
+    "taskId": null,
+    "command": "task.transition"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-audit-outcome.test.ts > auditTaskAction reports which of its three outcomes happened > a failed owned write is reported as WRITE_FAILED, and still does not throw
+[tasking] audit lineage write failed (non-fatal): relation "audit_logs" does not exist
+
+ ✓ server/services/tasking/__tests__/task-audit-outcome.test.ts > auditTaskAction reports which of its three outcomes happened > a committed row is reported as recorded, and says it owned the transaction 3ms
+ ✓ server/services/tasking/__tests__/task-audit-outcome.test.ts > auditTaskAction reports which of its three outcomes happened > an enlisted row says so, because there a failure is the caller’s to roll back 1ms
+ ✓ server/services/tasking/__tests__/task-audit-outcome.test.ts > auditTaskAction reports which of its three outcomes happened > a silent skip is reported as NOT_ATTRIBUTABLE, not as a recorded row 8ms
+ ✓ server/services/tasking/__tests__/task-audit-outcome.test.ts > auditTaskAction reports which of its three outcomes happened > a failed owned write is reported as WRITE_FAILED, and still does not throw 2ms
+ ✓ server/services/tasking/__tests__/task-audit-outcome.test.ts > auditTaskAction reports which of its three outcomes happened > an enlisted failure still propagates — that is the one case a caller must fail on 2ms
+stderr | server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > skips silently without a tenant, actor, or target (no attributionless row)
+{
+  "timestamp": "2026-10-21T02:22:19.168Z",
+  "level": "warn",
+  "message": "[task-audit] Task lineage SKIPPED — no attributable tenant, actor or target",
+  "context": {
+    "orgId": 2,
+    "hasUserId": false,
+    "taskId": "T",
+    "command": "task.create"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > skips silently without a tenant, actor, or target (no attributionless row)
+{
+  "timestamp": "2026-10-21T02:22:19.170Z",
+  "level": "warn",
+  "message": "[task-audit] Task lineage SKIPPED — no attributable tenant, actor or target",
+  "context": {
+    "orgId": 0,
+    "hasUserId": true,
+    "taskId": "T",
+    "command": "task.create"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > skips silently without a tenant, actor, or target (no attributionless row)
+{
+  "timestamp": "2026-10-21T02:22:19.170Z",
+  "level": "warn",
+  "message": "[task-audit] Task lineage SKIPPED — no attributable tenant, actor or target",
+  "context": {
+    "orgId": 2,
+    "hasUserId": true,
+    "taskId": null,
+    "command": "task.create"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > never throws when the ledger write fails, and reports that it failed
+[tasking] audit lineage write failed (non-fatal): db down
+
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > records a governed lineage entry for a task mutation 3ms
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.create with no stated reason records a null reason, never one the code wrote 1ms
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.transition with no stated reason records a null reason, never one the code wrote 1ms
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.link with no stated reason records a null reason, never one the code wrote 1ms
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.assign with no stated reason records a null reason, never one the code wrote 0ms
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.notify with no stated reason records a null reason, never one the code wrote 0ms
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.delete with no stated reason records a null reason, never one the code wrote 0ms
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > records what happened as the payload summary, not as the reason 0ms
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > uses a provided reason (trimmed) when present 1ms
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > skips silently without a tenant, actor, or target (no attributionless row) 4ms
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > never throws when the ledger write fails, and reports that it failed 2ms
+
+ Test Files  3 passed (3)
+      Tests  20 passed (20)
+   Start at  02:22:17
+   Duration  1.50s (transform 158ms, setup 120ms, import 781ms, tests 46ms, environment 0ms)

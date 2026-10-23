@@ -21,7 +21,11 @@ vi.mock('../../db/requestDb', () => {
   const chain: Record<string, unknown> = {};
   for (const k of ['select', 'from', 'innerJoin', 'where']) chain[k] = () => chain;
   chain.orderBy = async () => state.rows;
-  return { requestDb: () => chain };
+  return { requestDb: () => chain, requestPgClient: () => ({ async query(statement: string) {
+    if (statement.includes('SELECT ou.role')) return { rows: [{ role: 'member' }] };
+    if (statement.includes('task-assignment:roster')) return { rows: state.rows.map(row => ({ ...row, role: 'member' })) };
+    throw new Error('Unexpected roster fixture SQL');
+  } }) };
 });
 vi.mock('../../utils/tenantContext', () => ({ getSecureOrgId: () => 7 }));
 vi.mock('../../services/unified-work/unified-work-view', () => ({ loadUnifiedWork: vi.fn() }));
@@ -30,6 +34,7 @@ import createTaskBoardRoutes from '../taskBoard.routes';
 
 function app() {
   const a = express();
+  a.use((req, _res, next) => { Object.assign(req, { userId: 7, user: { id: 7, organizationId: 7 }, tenantContext: { organizationId: 7 } }); next(); });
   a.use('/api/task-management', createTaskBoardRoutes());
   return a;
 }

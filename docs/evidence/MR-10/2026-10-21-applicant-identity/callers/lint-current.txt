@@ -1,0 +1,131 @@
+
+/workspace/concept2cure/server/routes/ectd-compile.ts
+   634:75  warning  Async arrow function has too many lines (176). Maximum allowed is 100                    max-lines-per-function
+   634:75  warning  Async arrow function has a complexity of 32. Maximum allowed is 15                       complexity
+   774:1   warning  File has too many lines (1477). Maximum allowed is 500                                   max-lines
+   864:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+   971:1   warning  Function 'leafPlacementFindings' has a complexity of 19. Maximum allowed is 15           complexity
+  1084:1   warning  Async function 'compileFromSpine' has too many lines (238). Maximum allowed is 100       max-lines-per-function
+  1084:1   warning  Async function 'compileFromSpine' has a complexity of 60. Maximum allowed is 15          complexity
+  1379:3   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+/workspace/concept2cure/server/services/ana/AnaToolExecutor.ts
+    498:1    warning  Function 'preHandlerRefusal' has a complexity of 22. Maximum allowed is 15       complexity
+    715:65   warning  Async arrow function has a complexity of 17. Maximum allowed is 15               complexity
+    773:1    warning  File has too many lines (18417). Maximum allowed is 500                          max-lines
+    784:71   warning  Async arrow function has a complexity of 23. Maximum allowed is 15               complexity
+   1300:68   warning  Async arrow function has a complexity of 18. Maximum allowed is 15               complexity
+   1396:75   warning  Async arrow function has too many lines (109). Maximum allowed is 100            max-lines-per-function
+   1396:75   warning  Async arrow function has a complexity of 25. Maximum allowed is 15               complexity
+   1489:11   warning  Blocks are nested too deeply (5). Maximum allowed is 4                           max-depth
+   1530:66   warning  Async arrow function has a complexity of 31. Maximum allowed is 15               complexity
+   1658:67   warning  Async arrow function has a complexity of 17. Maximum allowed is 15               complexity
+   1785:72   warning  Async arrow function has a complexity of 18. Maximum allowed is 15               complexity
+   2133:31   warning  Arrow function has a complexity of 19. Maximum allowed is 15                     complexity
+   3294:60   warning  Async arrow function has a complexity of 16. Maximum allowed is 15               complexity
+   4296:66   warning  Async arrow function has a complexity of 16. Maximum allowed is 15               complexity
+   4973:66   warning  Async arrow function has a complexity of 29. Maximum allowed is 15               complexity
+   5071:62   warning  Async arrow function has a complexity of 27. Maximum allowed is 15               complexity
+   5422:88   warning  Async arrow function has a complexity of 21. Maximum allowed is 15               complexity
+   5706:93   warning  Async arrow function has a complexity of 19. Maximum allowed is 15               complexity
+   6034:98   warning  Async arrow function has a complexity of 18. Maximum allowed is 15               complexity
+   6470:106  warning  Async arrow function has a complexity of 17. Maximum allowed is 15               complexity
+   6512:106  warning  Async arrow function has a complexity of 22. Maximum allowed is 15               complexity
+   7003:99   warning  Async arrow function has a complexity of 23. Maximum allowed is 15               complexity
+   7060:99   warning  Async arrow function has a complexity of 20. Maximum allowed is 15               complexity
+   7454:67   warning  Async arrow function has a complexity of 17. Maximum allowed is 15               complexity
+   7567:62   warning  Async arrow function has a complexity of 27. Maximum allowed is 15               complexity
+   7691:63   warning  Async arrow function has a complexity of 17. Maximum allowed is 15               complexity
+   7978:66   warning  Async arrow function has a complexity of 16. Maximum allowed is 15               complexity
+   8075:66   warning  Async arrow function has a complexity of 25. Maximum allowed is 15               complexity
+   8307:56   warning  Async arrow function has a complexity of 19. Maximum allowed is 15               complexity
+   8523:61   warning  Async arrow function has a complexity of 23. Maximum allowed is 15               complexity
+   8572:60   warning  Async arrow function has a complexity of 25. Maximum allowed is 15               complexity
+   8622:60   warning  Async arrow function has a complexity of 18. Maximum allowed is 15               complexity
+   8677:74   warning  Async arrow function has a complexity of 18. Maximum allowed is 15               complexity
+   8728:63   warning  Async arrow function has a complexity of 17. Maximum allowed is 15               complexity
+   8858:79   warning  Async arrow function has a complexity of 20. Maximum allowed is 15               complexity
+   8961:63   warning  Async arrow function has a complexity of 16. Maximum allowed is 15               complexity
+   9011:63   warning  Async arrow function has a complexity of 16. Maximum allowed is 15               complexity
+   9099:69   warning  Async arrow function has a complexity of 19. Maximum allowed is 15               complexity
+   9146:56   warning  Async arrow function has a complexity of 17. Maximum allowed is 15               complexity
+   9269:67   warning  Async arrow function has a complexity of 16. Maximum allowed is 15               complexity
+   9493:69   warning  Async arrow function has a complexity of 18. Maximum allowed is 15               complexity
+   9688:56   warning  Async arrow function has a complexity of 17. Maximum allowed is 15               complexity
+   9875:63   warning  Async arrow function has a complexity of 22. Maximum allowed is 15               complexity
+   9950:59   warning  Async arrow function has a complexity of 16. Maximum allowed is 15               complexity
+   9992:61   warning  Async arrow function has a complexity of 17. Maximum allowed is 15               complexity
+  10032:61   warning  Async arrow function has a complexity of 19. Maximum allowed is 15               complexity
+  10654:61   warning  Async arrow function has a complexity of 17. Maximum allowed is 15               complexity
+  10696:65   warning  Async arrow function has a complexity of 18. Maximum allowed is 15               complexity
+  11061:65   warning  Async arrow function has a complexity of 18. Maximum allowed is 15               complexity
+  11102:66   warning  Async arrow function has a complexity of 17. Maximum allowed is 15               complexity
+  11173:65   warning  Async arrow function has a complexity of 16. Maximum allowed is 15               complexity
+  11414:68   warning  Async arrow function has a complexity of 18. Maximum allowed is 15               complexity
+  11696:1    warning  Async function 'governedPdev' has too many parameters (6). Maximum allowed is 5  max-params
+  12218:117  warning  Async arrow function has a complexity of 16. Maximum allowed is 15               complexity
+  12258:61   warning  Async arrow function has a complexity of 16. Maximum allowed is 15               complexity
+  12308:68   warning  Async arrow function has a complexity of 18. Maximum allowed is 15               complexity
+  12617:67   warning  Async arrow function has a complexity of 17. Maximum allowed is 15               complexity
+  12675:69   warning  Async arrow function has a complexity of 16. Maximum allowed is 15               complexity
+  12830:61   warning  Async arrow function has a complexity of 16. Maximum allowed is 15               complexity
+  12964:62   warning  Async arrow function has a complexity of 16. Maximum allowed is 15               complexity
+  13121:59   warning  Async arrow function has a complexity of 19. Maximum allowed is 15               complexity
+  13160:59   warning  Async arrow function has a complexity of 16. Maximum allowed is 15               complexity
+  13382:68   warning  Async arrow function has a complexity of 19. Maximum allowed is 15               complexity
+  13652:67   warning  Async arrow function has a complexity of 19. Maximum allowed is 15               complexity
+  13839:62   warning  Async arrow function has a complexity of 16. Maximum allowed is 15               complexity
+  13897:71   warning  Async arrow function has a complexity of 22. Maximum allowed is 15               complexity
+  14196:59   warning  Async arrow function has a complexity of 16. Maximum allowed is 15               complexity
+  14232:65   warning  Async arrow function has a complexity of 17. Maximum allowed is 15               complexity
+  14342:63   warning  Async arrow function has a complexity of 18. Maximum allowed is 15               complexity
+  14395:56   warning  Async arrow function has a complexity of 21. Maximum allowed is 15               complexity
+  14447:66   warning  Async arrow function has a complexity of 21. Maximum allowed is 15               complexity
+  14682:61   warning  Async arrow function has a complexity of 20. Maximum allowed is 15               complexity
+  14765:59   warning  Async arrow function has a complexity of 17. Maximum allowed is 15               complexity
+  14800:79   warning  Async arrow function has a complexity of 16. Maximum allowed is 15               complexity
+  14827:80   warning  Async arrow function has a complexity of 17. Maximum allowed is 15               complexity
+  15173:63   warning  Async arrow function has a complexity of 17. Maximum allowed is 15               complexity
+  15270:67   warning  Async arrow function has a complexity of 16. Maximum allowed is 15               complexity
+  15366:61   warning  Async arrow function has too many lines (120). Maximum allowed is 100            max-lines-per-function
+  15366:61   warning  Async arrow function has a complexity of 27. Maximum allowed is 15               complexity
+  15978:63   warning  Unnecessary escape character: \.                                                 no-useless-escape
+  17170:73   warning  Async arrow function has a complexity of 17. Maximum allowed is 15               complexity
+  17276:86   warning  Async arrow function has a complexity of 16. Maximum allowed is 15               complexity
+  17349:62   warning  Async arrow function has too many lines (164). Maximum allowed is 100            max-lines-per-function
+  17349:62   warning  Async arrow function has a complexity of 20. Maximum allowed is 15               complexity
+  17542:72   warning  Async arrow function has a complexity of 20. Maximum allowed is 15               complexity
+  17745:78   warning  Async arrow function has a complexity of 17. Maximum allowed is 15               complexity
+  17926:73   warning  Async arrow function has a complexity of 19. Maximum allowed is 15               complexity
+  18097:89   warning  Async arrow function has a complexity of 22. Maximum allowed is 15               complexity
+  18280:94   warning  Async arrow function has a complexity of 38. Maximum allowed is 15               complexity
+  18412:96   warning  Async arrow function has a complexity of 45. Maximum allowed is 15               complexity
+  18569:101  warning  Async arrow function has a complexity of 16. Maximum allowed is 15               complexity
+  20407:67   warning  Async arrow function has a complexity of 21. Maximum allowed is 15               complexity
+  20498:72   warning  Async arrow function has a complexity of 32. Maximum allowed is 15               complexity
+  20633:68   warning  Async arrow function has a complexity of 24. Maximum allowed is 15               complexity
+  20716:58   warning  Async arrow function has a complexity of 20. Maximum allowed is 15               complexity
+  21609:66   warning  Async arrow function has a complexity of 17. Maximum allowed is 15               complexity
+
+/workspace/concept2cure/server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts
+  660:1  warning  File has too many lines (558). Maximum allowed is 500  max-lines
+
+/workspace/concept2cure/server/services/submission-service/submission-service.ts
+   755:1  warning  File has too many lines (2565). Maximum allowed is 500                                                 max-lines
+   920:1  warning  Async function 'governedSignatureVerdict' has a complexity of 33. Maximum allowed is 15                complexity
+  2155:8  warning  Function 'transmitRouteFor' has a complexity of 22. Maximum allowed is 15                              complexity
+  2588:1  warning  Async function 'transmitDispatchedSequence' has too many lines (209). Maximum allowed is 100           max-lines-per-function
+  2588:1  warning  Async function 'transmitDispatchedSequence' has a complexity of 38. Maximum allowed is 15              complexity
+  2642:3  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  3506:8  warning  Async function 'upsertLeaf' has too many lines (235). Maximum allowed is 100                           max-lines-per-function
+  3506:8  warning  Async function 'upsertLeaf' has a complexity of 57. Maximum allowed is 15                              complexity
+
+/workspace/concept2cure/tests/routes/ectd-compile-sequence.test.ts
+  49:76  warning  Async arrow function has a complexity of 16. Maximum allowed is 15  complexity
+
+/workspace/concept2cure/tests/routes/ectd-compile-spine.harness.ts
+  70:54  warning  Async arrow function has a complexity of 17. Maximum allowed is 15  complexity
+
+✖ 115 problems (0 errors, 115 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+

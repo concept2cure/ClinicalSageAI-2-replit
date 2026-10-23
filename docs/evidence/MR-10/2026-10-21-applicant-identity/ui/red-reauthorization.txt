@@ -1,0 +1,1897 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ × client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only an eligible unsent FDA release > reaches the existing governed dispatch chain for current recorded facts 5055ms
+   → Unable to find role="button" and name "Re-sign release for current recorded facts (Part 11 e-signature)"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"t"[39m
+        [36m>[39m
+          [0mDispatch · sequence [0m
+          [0m0000[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"s"[39m
+        [36m>[39m
+          [0mdispatch readiness · QC[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-b"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate below is computed server-side from the canonical leaves and open Shadow Review criticals — the same gate the freeze/dispatch endpoints enforce atomically with the e-signature.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-gate ok"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mDispatch gate clear except for the release signature — the dispatch e-signature applies it[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0mThis submission type requires a 21 CFR Part 11 release signature, and none is on record for this sequence yet. When the sequence is dispatched, the dispatch e-signature is recorded as that release signature, and the server checks the full gate again with it on record before anything moves.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m validation [0m
+          [0merrors[0m
+          [0m ·[0m
+          [0m [0m
+          [0m0[0m
+          [0m unacknowledged shadow[0m
+          [0m [0m
+          [0mcriticals[0m
+          [0m ·[0m
+          [0m [0m
+          [0m1[0m
+          [0m shadow [0m
+          [0mreview[0m
+          [0m [0m
+          [0mrun · [0m
+          [0m4[0m
+          [0m [0m
+          [0mleaves[0m
+          [0m · status[0m
+          [0m [0m
+          [0mDispatched[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-disp-actions"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-mt"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"tl-spec-k sc-mb"[39m
+          [36m>[39m
+            [0mTest package[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note sc-mb"[39m
+          [36m>[39m
+            [0mAssembles sequence [0m
+            [0m0000[0m
+            [0m's leaves into an eCTD package on the server, reports what in those leaves would stop it being transmitted, and discards it. Nothing is sent. The test package carries no agency identifiers: its application number and applicant are placeholders, not the ones on record.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mb"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sc-trans-b"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mAssemble a test package[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-mt"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"tl-spec-k sc-mb"[39m
+          [36m>[39m
+            [0mPackage and transmit[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mb"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sc-trans-b"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mDownload the eCTD package (zip)[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sc-verdict tone-err sc-mt"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [0mWhether this sequence can be transmitted could not be checked — [0m
+            [0mthe transmit check did not answer[0m
+            [0m. Nothing is offered until it can.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cm-pushbar sc-mt"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"sc-trans-b"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mRun dispatch QC[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"t"[39m
+        [36m>[39m
+          [0mDispatch · sequence [0m
+          [0m0000[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"s"[39m
+        [36m>[39m
+          [0mdispatch readiness · QC[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-b"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate below is computed server-side from the canonical leaves and open Shadow Review criticals — the same gate the freeze/dispatch endpoints enforce atomically with the e-signature.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-gate ok"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mDispatch gate clear except for the release signature — the dispatch e-signature applies it[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0mThis submission type requires a 21 CFR Part 11 release signature, and none is on record for this sequence yet. When the sequence is dispatched, the dispatch e-signature is recorded as that release signature, and the server checks the full gate again with it on record before anything moves.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m validation [0m
+          [0merrors[0m
+          [0m ·[0m
+          [0m [0m
+          [0m0[0m
+          [0m unacknowledged shadow[0m
+          [0m [0m
+          [0mcriticals[0m
+          [0m ·[0m
+          [0m [0m
+          [0m1[0m
+          [0m shadow [0m
+          [0mreview[0m
+          [0m [0m
+          [0mrun · [0m
+          [0m4[0m
+          [0m [0m
+          [0mleaves[0m
+          [0m · status[0m
+          [0m [0m
+          [0mDispatched[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-disp-actions"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-mt"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"tl-spec-k sc-mb"[39m
+          [36m>[39m
+            [0mTest package[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note sc-mb"[39m
+          [36m>[39m
+            [0mAssembles sequence [0m
+            [0m0000[0m
+            [0m's leaves into an eCTD package on the server, reports what in those leaves would stop it being transmitted, and discards it. Nothing is sent. The test package carries no agency identifiers: its application number and applicant are placeholders, not the ones on record.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mb"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sc-trans-b"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mAssemble a test package[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-mt"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"tl-spec-k sc-mb"[39m
+          [36m>[39m
+            [0mPackage and transmit[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mb"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sc-trans-b"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mDownload the eCTD package (zip)[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sc-verdict tone-err sc-mt"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [0mWhether this sequence can be transmitted could not be checked — [0m
+            [0mthe transmit check did not answer[0m
+            [0m. Nothing is offered until it can.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cm-pushbar sc-mt"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"sc-trans-b"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mRun dispatch QC[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only an eligible unsent FDA release > hides renewal without explicit server authorization: undefined 48ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only an eligible unsent FDA release > hides renewal without explicit server authorization: {"reauthorizing":true,"eligible":false,"refusal":"A transmission has already been attempted."} 37ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only an eligible unsent FDA release > hides renewal without explicit server authorization: {"reauthorizing":false,"eligible":true,"refusal":null} 38ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only an eligible unsent FDA release > does not offer renewal while another dispatch gate blocks 42ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only an eligible unsent FDA release > does not offer unnecessary renewal for a currently valid release 30ms
+ × client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only an eligible unsent FDA release > shows the independent signer requirement for a renewal 5006ms
+   → Unable to find an element with the text: /you cannot re-sign its release/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"t"[39m
+        [36m>[39m
+          [0mDispatch · sequence [0m
+          [0m0000[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"s"[39m
+        [36m>[39m
+          [0mdispatch readiness · QC[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-b"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate below is computed server-side from the canonical leaves and open Shadow Review criticals — the same gate the freeze/dispatch endpoints enforce atomically with the e-signature.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-gate ok"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mDispatch gate clear except for the release signature — the dispatch e-signature applies it[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0mThis submission type requires a 21 CFR Part 11 release signature, and none is on record for this sequence yet. When the sequence is dispatched, the dispatch e-signature is recorded as that release signature, and the server checks the full gate again with it on record before anything moves.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m validation [0m
+          [0merrors[0m
+          [0m ·[0m
+          [0m [0m
+          [0m0[0m
+          [0m unacknowledged shadow[0m
+          [0m [0m
+          [0mcriticals[0m
+          [0m ·[0m
+          [0m [0m
+          [0m1[0m
+          [0m shadow [0m
+          [0mreview[0m
+          [0m [0m
+          [0mrun · [0m
+          [0m4[0m
+          [0m [0m
+          [0mleaves[0m
+          [0m · status[0m
+          [0m [0m
+          [0mDispatched[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-disp-actions"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-mt"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"tl-spec-k sc-mb"[39m
+          [36m>[39m
+            [0mTest package[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note sc-mb"[39m
+          [36m>[39m
+            [0mAssembles sequence [0m
+            [0m0000[0m
+            [0m's leaves into an eCTD package on the server, reports what in those leaves would stop it being transmitted, and discards it. Nothing is sent. The test package carries no agency identifiers: its application number and applicant are placeholders, not the ones on record.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mb"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sc-trans-b"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mAssemble a test package[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-mt"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"tl-spec-k sc-mb"[39m
+          [36m>[39m
+            [0mPackage and transmit[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mb"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sc-trans-b"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mDownload the eCTD package (zip)[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sc-verdict tone-err sc-mt"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [0mWhether this sequence can be transmitted could not be checked — [0m
+            [0mthe transmit check did not answer[0m
+            [0m. Nothing is offered until it can.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cm-pushbar sc-mt"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"sc-trans-b"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mRun dispatch QC[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"t"[39m
+        [36m>[39m
+          [0mDispatch · sequence [0m
+          [0m0000[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"s"[39m
+        [36m>[39m
+          [0mdispatch readiness · QC[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-b"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate below is computed server-side from the canonical leaves and open Shadow Review criticals — the same gate the freeze/dispatch endpoints enforce atomically with the e-signature.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-gate ok"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mDispatch gate clear except for the release signature — the dispatch e-signature applies it[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0mThis submission type requires a 21 CFR Part 11 release signature, and none is on record for this sequence yet. When the sequence is dispatched, the dispatch e-signature is recorded as that release signature, and the server checks the full gate again with it on record before anything moves.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m validation [0m
+          [0merrors[0m
+          [0m ·[0m
+          [0m [0m
+          [0m0[0m
+          [0m unacknowledged shadow[0m
+          [0m [0m
+          [0mcriticals[0m
+          [0m ·[0m
+          [0m [0m
+          [0m1[0m
+          [0m shadow [0m
+          [0mreview[0m
+          [0m [0m
+          [0mrun · [0m
+          [0m4[0m
+          [0m [0m
+          [0mleaves[0m
+          [0m · status[0m
+          [0m [0m
+          [0mDispatched[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-disp-actions"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-mt"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"tl-spec-k sc-mb"[39m
+          [36m>[39m
+            [0mTest package[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note sc-mb"[39m
+          [36m>[39m
+            [0mAssembles sequence [0m
+            [0m0000[0m
+            [0m's leaves into an eCTD package on the server, reports what in those leaves would stop it being transmitted, and discards it. Nothing is sent. The test package carries no agency identifiers: its application number and applicant are placeholders, not the ones on record.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mb"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sc-trans-b"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mAssemble a test package[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-mt"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"tl-spec-k sc-mb"[39m
+          [36m>[39m
+            [0mPackage and transmit[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mb"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sc-trans-b"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mDownload the eCTD package (zip)[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sc-verdict tone-err sc-mt"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [0mWhether this sequence can be transmitted could not be checked — [0m
+            [0mthe transmit check did not answer[0m
+            [0m. Nothing is offered until it can.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cm-pushbar sc-mt"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"sc-trans-b"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mRun dispatch QC[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only an eligible unsent FDA release > reaches the existing governed dispatch chain for current recorded facts
+TestingLibraryElementError: Unable to find role="button" and name "Re-sign release for current recorded facts (Part 11 e-signature)"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"t"[39m
+        [36m>[39m
+          [0mDispatch · sequence [0m
+          [0m0000[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"s"[39m
+        [36m>[39m
+          [0mdispatch readiness · QC[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-b"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate below is computed server-side from the canonical leaves and open Shadow Review criticals — the same gate the freeze/dispatch endpoints enforce atomically with the e-signature.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-gate ok"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mDispatch gate clear except for the release signature — the dispatch e-signature applies it[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0mThis submission type requires a 21 CFR Part 11 release signature, and none is on record for this sequence yet. When the sequence is dispatched, the dispatch e-signature is recorded as that release signature, and the server checks the full gate again with it on record before anything moves.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m validation [0m
+          [0merrors[0m
+          [0m ·[0m
+          [0m [0m
+          [0m0[0m
+          [0m unacknowledged shadow[0m
+          [0m [0m
+          [0mcriticals[0m
+          [0m ·[0m
+          [0m [0m
+          [0m1[0m
+          [0m shadow [0m
+          [0mreview[0m
+          [0m [0m
+          [0mrun · [0m
+          [0m4[0m
+          [0m [0m
+          [0mleaves[0m
+          [0m · status[0m
+          [0m [0m
+          [0mDispatched[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-disp-actions"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-mt"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"tl-spec-k sc-mb"[39m
+          [36m>[39m
+            [0mTest package[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note sc-mb"[39m
+          [36m>[39m
+            [0mAssembles sequence [0m
+            [0m0000[0m
+            [0m's leaves into an eCTD package on the server, reports what in those leaves would stop it being transmitted, and discards it. Nothing is sent. The test package carries no agency identifiers: its application number and applicant are placeholders, not the ones on record.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mb"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sc-trans-b"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mAssemble a test package[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-mt"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"tl-spec-k sc-mb"[39m
+          [36m>[39m
+            [0mPackage and transmit[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mb"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sc-trans-b"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mDownload the eCTD package (zip)[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sc-verdict tone-err sc-mt"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [0mWhether this sequence can be transmitted could not be checked — [0m
+            [0mthe transmit check did not answer[0m
+            [0m. Nothing is offered until it can.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cm-pushbar sc-mt"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"sc-trans-b"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mRun dispatch QC[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"t"[39m
+        [36m>[39m
+          [0mDispatch · sequence [0m
+          [0m0000[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"s"[39m
+        [36m>[39m
+          [0mdispatch readiness · QC[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-b"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate below is computed server-side from the canonical leaves and open Shadow Review criticals — the same gate the freeze/dispatch endpoints enforce atomically with the e-signature.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-gate ok"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mDispatch gate clear except for the release signature — the dispatch e-signature applies it[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0mThis submission type requires a 21 CFR Part 11 release signature, and none is on record for this sequence yet. When the sequence is dispatched, the dispatch e-signature is recorded as that release signature, and the server checks the full gate again with it on record before anything moves.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m validation [0m
+          [0merrors[0m
+          [0m ·[0m
+          [0m [0m
+          [0m0[0m
+          [0m unacknowledged shadow[0m
+          [0m [0m
+          [0mcriticals[0m
+          [0m ·[0m
+          [0m [0m
+          [0m1[0m
+          [0m shadow [0m
+          [0mreview[0m
+          [0m [0m
+          [0mrun · [0m
+          [0m4[0m
+          [0m [0m
+          [0mleaves[0m
+          [0m · status[0m
+          [0m [0m
+          [0mDispatched[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-disp-actions"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-mt"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"tl-spec-k sc-mb"[39m
+          [36m>[39m
+            [0mTest package[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note sc-mb"[39m
+          [36m>[39m
+            [0mAssembles sequence [0m
+            [0m0000[0m
+            [0m's leaves into an eCTD package on the server, reports what in those leaves would stop it being transmitted, and discards it. Nothing is sent. The test package carries no agency identifiers: its application number and applicant are placeholders, not the ones on record.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mb"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sc-trans-b"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mAssemble a test package[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-mt"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"tl-spec-k sc-mb"[39m
+          [36m>[39m
+            [0mPackage and transmit[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mb"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sc-trans-b"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mDownload the eCTD package (zip)[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sc-verdict tone-err sc-mt"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [0mWhether this sequence can be transmitted could not be checked — [0m
+            [0mthe transmit check did not answer[0m
+            [0m. Nothing is offered until it can.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cm-pushbar sc-mt"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"sc-trans-b"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mRun dispatch QC[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx:29:33
+     27|   it('reaches the existing governed dispatch chain for current recorde…
+     28|     const onGoverned = mount();
+     29|     const button = await screen.findByRole('button', { name: 'Re-sign …
+       |                                 ^
+     30|     fireEvent.click(button);
+     31|     expect(onGoverned).toHaveBeenCalledWith(seq, 'dispatch');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only an eligible unsent FDA release > shows the independent signer requirement for a renewal
+TestingLibraryElementError: Unable to find an element with the text: /you cannot re-sign its release/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"t"[39m
+        [36m>[39m
+          [0mDispatch · sequence [0m
+          [0m0000[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"s"[39m
+        [36m>[39m
+          [0mdispatch readiness · QC[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-b"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate below is computed server-side from the canonical leaves and open Shadow Review criticals — the same gate the freeze/dispatch endpoints enforce atomically with the e-signature.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-gate ok"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mDispatch gate clear except for the release signature — the dispatch e-signature applies it[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0mThis submission type requires a 21 CFR Part 11 release signature, and none is on record for this sequence yet. When the sequence is dispatched, the dispatch e-signature is recorded as that release signature, and the server checks the full gate again with it on record before anything moves.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m validation [0m
+          [0merrors[0m
+          [0m ·[0m
+          [0m [0m
+          [0m0[0m
+          [0m unacknowledged shadow[0m
+          [0m [0m
+          [0mcriticals[0m
+          [0m ·[0m
+          [0m [0m
+          [0m1[0m
+          [0m shadow [0m
+          [0mreview[0m
+          [0m [0m
+          [0mrun · [0m
+          [0m4[0m
+          [0m [0m
+          [0mleaves[0m
+          [0m · status[0m
+          [0m [0m
+          [0mDispatched[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-disp-actions"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-mt"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"tl-spec-k sc-mb"[39m
+          [36m>[39m
+            [0mTest package[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note sc-mb"[39m
+          [36m>[39m
+            [0mAssembles sequence [0m
+            [0m0000[0m
+            [0m's leaves into an eCTD package on the server, reports what in those leaves would stop it being transmitted, and discards it. Nothing is sent. The test package carries no agency identifiers: its application number and applicant are placeholders, not the ones on record.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mb"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sc-trans-b"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mAssemble a test package[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-mt"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"tl-spec-k sc-mb"[39m
+          [36m>[39m
+            [0mPackage and transmit[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mb"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sc-trans-b"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mDownload the eCTD package (zip)[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sc-verdict tone-err sc-mt"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [0mWhether this sequence can be transmitted could not be checked — [0m
+            [0mthe transmit check did not answer[0m
+            [0m. Nothing is offered until it can.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cm-pushbar sc-mt"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"sc-trans-b"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mRun dispatch QC[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"t"[39m
+        [36m>[39m
+          [0mDispatch · sequence [0m
+          [0m0000[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"s"[39m
+        [36m>[39m
+          [0mdispatch readiness · QC[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-b"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate below is computed server-side from the canonical leaves and open Shadow Review criticals — the same gate the freeze/dispatch endpoints enforce atomically with the e-signature.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-gate ok"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mDispatch gate clear except for the release signature — the dispatch e-signature applies it[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0mThis submission type requires a 21 CFR Part 11 release signature, and none is on record for this sequence yet. When the sequence is dispatched, the dispatch e-signature is recorded as that release signature, and the server checks the full gate again with it on record before anything moves.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m validation [0m
+          [0merrors[0m
+          [0m ·[0m
+          [0m [0m
+          [0m0[0m
+          [0m unacknowledged shadow[0m
+          [0m [0m
+          [0mcriticals[0m
+          [0m ·[0m
+          [0m [0m
+          [0m1[0m
+          [0m shadow [0m
+          [0mreview[0m
+          [0m [0m
+          [0mrun · [0m
+          [0m4[0m
+          [0m [0m
+          [0mleaves[0m
+          [0m · status[0m
+          [0m [0m
+          [0mDispatched[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-disp-actions"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-mt"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"tl-spec-k sc-mb"[39m
+          [36m>[39m
+            [0mTest package[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note sc-mb"[39m
+          [36m>[39m
+            [0mAssembles sequence [0m
+            [0m0000[0m
+            [0m's leaves into an eCTD package on the server, reports what in those leaves would stop it being transmitted, and discards it. Nothing is sent. The test package carries no agency identifiers: its application number and applicant are placeholders, not the ones on record.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mb"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sc-trans-b"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mAssemble a test package[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-mt"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"tl-spec-k sc-mb"[39m
+          [36m>[39m
+            [0mPackage and transmit[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mb"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sc-trans-b"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mDownload the eCTD package (zip)[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sc-verdict tone-err sc-mt"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [0mWhether this sequence can be transmitted could not be checked — [0m
+            [0mthe transmit check did not answer[0m
+            [0m. Nothing is offered until it can.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cm-pushbar sc-mt"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"sc-trans-b"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mRun dispatch QC[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx:51:18
+     49|   it('shows the independent signer requirement for a renewal', async (…
+     50|     mount({ signer: { state: 'author' } });
+     51|     await screen.findByText(/you cannot re-sign its release/i);
+       |                  ^
+     52|     expect(screen.queryByRole('button', { name: /Re-sign release/ })).…
+     53|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  01:37:46
+   Duration  14.26s (transform 1.58s, setup 403ms, import 1.70s, tests 10.27s, environment 699ms)
+

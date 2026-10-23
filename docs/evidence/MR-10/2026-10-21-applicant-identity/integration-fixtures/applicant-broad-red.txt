@@ -1,0 +1,29 @@
+Existing broad-run failure excerpts, captured before fixture repair.
+Source: /workspace/scratch/applicant-identity-20261021/backend-broad-first.log
+Production implementation and assertions are not changed by this fixture repair.
+
+Original line 13970:
+ × server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts > P11-28b on the real schema: the Dispatch click supplies the release it is gated on > the dispatch signature the click records is the release: dispatch-now clears once it is on record 25ms
+   → column "program_id" does not exist
+ × server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts > P11-28b on the real schema: the Dispatch click supplies the release it is gated on > a FREEZE signature is not the release: dispatch-on-signing stays the only way through 28ms
+
+Original line 13972:
+ × server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts > P11-28b on the real schema: the Dispatch click supplies the release it is gated on > a FREEZE signature is not the release: dispatch-on-signing stays the only way through 28ms
+   → column "program_id" does not exist
+ × server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts > P11-28b on the real schema: the Dispatch click supplies the release it is gated on > content changed after the dispatch signature: invalid, and nothing is offered over it 27ms
+
+Original line 13974:
+ × server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts > P11-28b on the real schema: the Dispatch click supplies the release it is gated on > content changed after the dispatch signature: invalid, and nothing is offered over it 27ms
+   → column "program_id" does not exist
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > the rehearsal prior state > folds the latest recorded compile of each earlier sequence, filed or not, and names the unfiled 21ms
+
+Original line 14096:
+ × server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > names the package a rehearsal and reports the unfiled sequences it was bound against 13ms
+   → A package names its application and its applicant from the record, never a placeholder, and its project has no explicitly bound sponsor record (select the recorded applicant in Module 1 forms); and the bound sponsor records no usable D-U-N-S number (record its nine digits in the sponsor registry); and FDA’s us-regional backbone names a regulatory contact for the application: record the contact’s name, telephone and e-mail.. Nothing was built.
+ × server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > an export for filing keeps its name and binds only against filed sequences 7ms
+
+Original line 14098:
+ × server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > an export for filing keeps its name and binds only against filed sequences 7ms
+   → A package names its application and its applicant from the record, never a placeholder, and its project has no explicitly bound sponsor record (select the recorded applicant in Module 1 forms); and the bound sponsor records no usable D-U-N-S number (record its nine digits in the sponsor registry); and FDA’s us-regional backbone names a regulatory contact for the application: record the contact’s name, telephone and e-mail.. Nothing was built.
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 validator classification — actual resolver and subset > refuses a real clean subset despite configured=true, retaining its scoped diagnostics 79ms
+

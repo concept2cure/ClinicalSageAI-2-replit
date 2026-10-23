@@ -1,0 +1,60 @@
+{
+  "kind": "post-correction current input verification",
+  "headAtVerification": "3c93f44f9cba7f9caf5e3d2e6829de70c3b3e912",
+  "result": {
+    "files": 3,
+    "passed": 31,
+    "exitCode": 0,
+    "lintErrors": 0,
+    "lintWarnings": 7
+  },
+  "qualificationScope": {
+    "executionOutput": "green-type-boundaries.txt",
+    "tests": [
+      "server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts",
+      "server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts",
+      "server/services/submission-service/__tests__/transmit-recorded-identity.test.ts"
+    ],
+    "correction": "The normal full compiler refused two caller optional-value boundaries. The renewal helper accepts the actual optional dispatch status without changing strict fail-closed comparison; the transmit claim normalizes absent programId to null.",
+    "previousExecutionInputs": "input-verification-before-type-fix.json",
+    "previousExecutionResult": {
+      "files": 19,
+      "passed": 260,
+      "exitCode": 0
+    },
+    "limits": "The 260-case cohort consumed the earlier input hashes retained in the previous execution record. Only the three listed files were replayed after the two boundary corrections. Current files hashes below pin the integrated source tree; parent evidence owns full compiler and publication."
+  },
+  "files": {
+    "server/routes/ectd-compile.ts": "11f01bc9c4dd72c794769230d9de71e4d59989578cf9f0e1dd0e024dcedfb6c6",
+    "server/routes/submissions.ts": "b938dcf109a4981c3497c65b426b89ee2964bfd6cf5643103c0525f76ebec2e4",
+    "server/services/ana/AnaToolExecutor.ts": "fb499b2ede648c0b400d61d6aa3bd3ac3d0d4eadbd5163b9cdf9ddea91cd4af1",
+    "server/services/submission-service/submission-service.ts": "b5dd9d0b691d7941b70cf518179f27d0b976725b8d35bffb57d3c31bfd70403c",
+    "server/services/ectd/package-identity.ts": "65380bebf213afb1cfc1e3bd18ac9757aa0c6b133ffd5591da009bcfc412b658",
+    "server/services/ectd/assemble-from-core.ts": "64153d7eb84fdf4a370efe9f6d4192b373ad8d9684172e3540fb63999fb7b55e",
+    "server/services/ectd/package-from-core.ts": "b9e73bc046310f10cbdf871b9eb05fe689c4a44f7d86ba9de4ec412d3614c899",
+    "server/services/part11/signature-persistence.ts": "cbcdc17eb9217c7f344cab83a45ef117086ea01c45402d0af669609dba9dcbf9",
+    "server/services/ectd/sequence-release-signature.ts": "901489ab5ed1daeafb07e2e42796708ad46c6823e974885d56b62b8f35da99a2",
+    "server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts": "b43b71d22c873b191f9ccaa491aac5907183bc4224550e22d05d00e4c358079e",
+    "server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts": "7e222ffdda4b7642f6452def90be9cc3997f4f0a68e8bcef73213c523c12181a",
+    "server/services/submission-service/__tests__/transmit-recorded-identity.test.ts": "824a8a48a6e428f762936e63b2a4a2104d44beb8a5cd386cb5a26b4f331c8537",
+    "server/services/submission-service/__tests__/transmit-refusals.test.ts": "007268fd2eaaaf0c18956e828d8d3889edea56521446415e88dc946bf3b54e6a",
+    "server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts": "23839e6a82cc3ef39a2f7f7b2c41ad117094519c95d746e41a91cdf9beca780a",
+    "server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts": "32397826aad49070c68bd0a5b28be89edc1a082c1bdc467f30511fe0e3005afc",
+    "server/services/submission-service/__tests__/freeze-relies-on-waiver.pglite.test.ts": "f95150e703d17bc043ac98cb3768ae43155a05531ee0c46277eaf9d723cb6f32",
+    "server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts": "6d04bb6d50e9c3c44c85b755f59fe3c8fb29aef0669c66f080e86d321526ed87",
+    "server/services/submission-service/__tests__/gateway-selection.test.ts": "71ea80b36c61e48a267b708e51794f443fce9993471dbebc165ec8b631a44346",
+    "server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts": "9c8e510494cac88549ec3a8d2bb63b8fb7945d275f8f34ac41b83e5d550dbe2a",
+    "server/services/submission-service/__tests__/_freeze-gate-fixture.ts": "9c1545e56009cafc3535e7966526e10c12df7f8bdbd8bfa632fbb63829d5520f",
+    "tests/routes/ectd-compile-spine.test.ts": "1612ab3fc25701938a9ab22a57401772b9d051dcfe03c83fa41d8b2197a107f3",
+    "tests/routes/ectd-compile-sequence.test.ts": "b8b3cd0cd86fd34ad7eeed760992c12331ce4fe5221eb5094b568ab547bb4882",
+    "tests/routes/ectd-compile-dtd-evidence.test.ts": "205305feab39b5ea2527a800e78b51c688ec3444554f09783ae171bb5d92821f",
+    "tests/routes/ectd-compile-ident.test.ts": "447dd192158e557e06e220657a54b64bec4b8d69069a697a4fcf143bfaae8a19",
+    "tests/routes/ectd-compile-lifecycle.test.ts": "b5d31129d5307b2f5c4f07515b593a45e1af4e0371ee5133eab75f01efef4170",
+    "tests/routes/ectd-compile-vault-uuid.test.ts": "7ee46478144a2d7e46c7a3ed5894bab191ddd0fb04a39ad98428e269408d1a5b",
+    "tests/routes/ectd-compile-evalidator-import.test.ts": "ebe83783bda9493ed1700d0231e29d32426e7f9dea39958045335f8c9b0047a2",
+    "tests/routes/ectd-compile-5xx-containment.test.ts": "74abd084406828d3e46359fdc1edb4705f103fde56396449c038034b78203ecb",
+    "server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts": "068edab2ab5ad1a623915768f08587bb717852f85a1f93c9749b778dab0d1f4d",
+    "tests/routes/ectd-compile-spine.harness.ts": "d201d90d1b0d4b4bae67d0ae87f7e356f788a06e7406282a79fc38b565b1dc4b",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+  }
+}

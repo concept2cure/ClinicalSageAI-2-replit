@@ -1,6 +1,9 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useSearch } from 'wouter';
 import { capturedActorHeaders } from '@/utils/authToken';
+import type { TaskAssignmentMeta } from '@shared/task-assignment';
+import { TaskAssignmentControls } from './TaskAssignmentControls';
+import { autoAssignSavedTask, type AutomaticAssignmentAnswer } from './taskAssignmentRequest';
 import { readTaskNavigationTarget, taskActorScope, type TaskActorScope } from '../taskTarget';
 import { registerSurfaceLeaveGuard, surfaceLeaveRefusal } from '../navParams';
 import type { ListState } from '../dataConnect';
@@ -196,7 +199,7 @@ function refusalText(e: unknown, fallback: string): string {
  * The endpoint was already being read one component below, by TaskCreate's
  * picker, and is org-scoped exactly like getOptimalAssignee.
  *
- * Unresolvable ids read 'Unknown' rather than blank, because "assigned to
+ * Unresolvable ids retain their account reference rather than blank, because "assigned to
  * someone this client cannot name" and "not assigned to anyone" are different
  * facts. Neither ever falls back to a fixture name.
  */
@@ -204,7 +207,7 @@ function makeNameOf(rows: AssigneeOpt[]): (id: string | null | undefined) => str
   const byId = new Map(rows.map(r => [String(r.id), r.name]));
   return (id) => {
     if (id === null || id === undefined || id === '') return '';
-    return byId.get(String(id)) ?? 'Unknown';
+    return byId.get(String(id)) ?? `Account #${id}`;
   };
 }
 
@@ -1346,14 +1349,12 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
           onAsk={onAsk}
           onMove={move}
           nameOf={nameOf}
+          actorScope={taskActorScope(user)}
+          isCurrent={isCurrent}
+          onAssignmentSaved={() => setReloadKey(key => key + 1)}
           canWrite={canWrite}
           pendingNotification={targetMessage?.error ? targetMessage.text : null}
-          onAssign={async (task) => {
-            const warning = await autoAssignCreated([task.taskId], 1, () => taskActorHeaders(taskActorScope(user), isCurrent), true);
-            if (!currentTaskActor(taskActorScope(user), isCurrent)) return 'The account changed. Check the original account’s task board to confirm assignment.';
-            setReloadKey((k) => k + 1);
-            return warning;
-          }}
+          onAssign={(meta, headers) => autoAssignSavedTask(meta, headers, () => currentTaskActor(taskActorScope(user), isCurrent))}
           onArchived={() => { setSel(null); setReloadKey((k) => k + 1); }}
         />
       )}
@@ -1384,7 +1385,10 @@ interface TaskDetailProps {
   onClose: () => void;
   onAsk: (text: string) => void;
   onMove: (t: TaskItem, dir: number) => void;
-  onAssign: (t: TaskItem) => Promise<string | undefined>;
+  onAssign: (meta: TaskAssignmentMeta, headers: () => Record<string, string> | null) => Promise<AutomaticAssignmentAnswer>;
+  actorScope: TaskActorScope | null;
+  isCurrent: () => boolean;
+  onAssignmentSaved: () => void;
   pendingNotification?: string | null;
   /** Resolves a real assignee id to a name; see makeNameOf. */
   nameOf: (id: string | null | undefined) => string;
@@ -1443,7 +1447,8 @@ function OtherStoreTaskDetail({ t, projLabel, onClose, onOpenHome, opening, erro
   );
 }
 
-function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, onAssign, nameOf, onArchived, canWrite, pendingNotification }: TaskDetailProps) {
+function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, onAssign, nameOf, onArchived, canWrite, pendingNotification,
+  actorScope, isCurrent, onAssignmentSaved }: TaskDetailProps) {
   const src = TB_SRC[t.source] || TB_SRC.unified;
   const owner = nameOf(t.assignee) || 'Unassigned';
   const dep = (id: string) => { const d = byId(id); return d ? d.title : id; };
@@ -1473,16 +1478,7 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, onAssign, name
   // A refusal, shown IN this panel: the board's banner sits behind the
   // backdrop, where the user who just clicked Confirm cannot see it.
   const [archiveErr, setArchiveErr] = useState('');
-  const [assigning, setAssigning] = useState(false);
-  const [assignmentNote, setAssignmentNote] = useState<string | null>(null);
-  const assign = async () => {
-    if (assigning || !canWrite) return;
-    setAssigning(true); setAssignmentNote(null);
-    try {
-      const warning = await onAssign(t);
-      setAssignmentNote(warning ?? 'Assignment recorded. The board is being re-read to show the saved assignee.');
-    } finally { setAssigning(false); }
-  };
+  const [assignmentBlocked, setAssignmentBlocked] = useState(false);
   // There used to be a 4s timer that silently disarmed the confirm. With a
   // reason textarea in the flow that would wipe a half-written justification
   // mid-sentence, so disarming is now an explicit Cancel button instead.
@@ -1546,15 +1542,9 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, onAssign, name
           <div><label>Origin store</label><span>{src.l} — <em style={{ color: 'var(--text-400)' }}>{src.t}</em></span></div>
           <div><label>Progress</label><span>{t.progress}%</span></div>
         </div>
-        {canWrite && t.status !== 'completed' && (
-          <div className="tb-detail-sec">
-            <button className="btn ghost" disabled={assigning || confirmArchive} onClick={() => void assign()}>
-              {assigning ? 'Assigning…' : 'Auto-assign task'}
-            </button>
-            <div className="tb-detail-note">Assigns this saved task to an available member by workload. The change is recorded in the audit trail.</div>
-            {assignmentNote && <div className="tb-detail-note" role={assignmentNote.startsWith('Assignment recorded.') ? 'status' : 'alert'}>{assignmentNote}</div>}
-          </div>
-        )}
+        {canWrite && <TaskAssignmentControls key={t.taskId} taskId={t.taskId} status={t.status}
+          projectId={/^[1-9]\d*$/.test(t.project) ? Number(t.project) : null} actorScope={actorScope} isCurrent={isCurrent}
+          disabled={confirmArchive || archiving} onAutomatic={onAssign} onSaved={onAssignmentSaved} onBlockedChange={setAssignmentBlocked} />}
         {t.approvalRequired && (
           <div className="tb-detail-sec">
             <div className="tb-detail-sec-h">Approval checkpoint <span className="tb-appr" data-s={t.approvalStatus}>{t.approvalStatus.replace('_', ' ')}</span></div>
@@ -1658,7 +1648,7 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, onAssign, name
             <button
               className="btn ghost"
               style={confirmArchive ? { color: 'var(--error)', borderColor: 'var(--error)' } : undefined}
-              disabled={archiving || (confirmArchive && !archiveReasonOk)}
+              disabled={archiving || assignmentBlocked || (confirmArchive && !archiveReasonOk)}
               onClick={archive}
               title={confirmArchive && !archiveReasonOk ? (archiveReasonTooLong ? archiveReasonTooLongText : 'Give a reason to archive') : undefined}
               aria-label={confirmArchive ? `Confirm archiving "${t.title}"` : `Archive "${t.title}"`}
@@ -1667,8 +1657,8 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, onAssign, name
           <span className="sp" />
           {canWrite && (
             <>
-              <button className="btn ghost" disabled={t.status === 'pending'} onClick={() => { onMove(t, -1); onClose(); }}>Move back</button>
-              <button className="btn primary" disabled={t.status === 'completed'} onClick={() => { onMove(t, 1); onClose(); }}>{I.chevRight} Advance</button>
+              <button className="btn ghost" disabled={assignmentBlocked || t.status === 'pending'} onClick={() => { onMove(t, -1); onClose(); }}>Move back</button>
+              <button className="btn primary" disabled={assignmentBlocked || t.status === 'completed'} onClick={() => { onMove(t, 1); onClose(); }}>{I.chevRight} Advance</button>
             </>
           )}
         </div>
@@ -1863,12 +1853,10 @@ interface WorkflowStartProps {
  * to the sentence to show when the assignment did NOT happen, or happened for
  * only some of them, else undefined.
  */
-async function autoAssignCreated(ids: string[], created: number, actorHeaders: WorkflowStartProps['actorHeaders'], savedTask = false): Promise<string | undefined> {
+async function autoAssignCreated(ids: string[], created: number, actorHeaders: WorkflowStartProps['actorHeaders']): Promise<string | undefined> {
   const headers = actorHeaders();
-  if (!headers) return savedTask ? 'Your signed-in account or organization changed. No assignment request was sent.' : workflowActorChanged(created, false);
-  const notAssigned = savedTask
-    ? 'The saved task was not assigned. Retry auto-assign from this detail after an eligible member is available.'
-    : `${created} tasks were created but not assigned — assign them on the board.`;
+  if (!headers) return workflowActorChanged(created, false);
+  const notAssigned = `${created} tasks were created but not assigned — assign them on the board.`;
   try {
     const res = await apiRequest('POST', '/api/tasks/tasks/auto-assign', { taskIds: ids }, headers);
     if (res.status === 401) return sessionExpired(notAssigned);
@@ -1878,19 +1866,14 @@ async function autoAssignCreated(ids: string[], created: number, actorHeaders: W
     const body = (await res.json().catch(() => null)) as { count?: unknown; data?: unknown } | null;
     const assigned = assignedTaskCount(body);
     if (assigned === null) {
-      return savedTask
-        ? 'Whether the saved task was assigned could not be confirmed — check the board before retrying.'
-        : `${created} tasks were created, but whether auto-assign assigned them could not be confirmed — check the board.`;
+      return `${created} tasks were created, but whether auto-assign assigned them could not be confirmed — check the board.`;
     }
     if (assigned >= ids.length) return undefined;
-    if (savedTask) return notAssigned;
     const left = ids.length - assigned;
     return `${created} tasks were created; ${assigned} of ${ids.length} were assigned and ${left} ${left === 1 ? 'was' : 'were'} not assigned — assign ${left === 1 ? 'it' : 'them'} on the board.`;
   } catch (e) {
     const why = refusalText(e, 'the service could not be reached.');
-    return savedTask
-      ? `The saved task's assignment could not be confirmed: ${why}`
-      : `${created} tasks were created, but auto-assignment failed: ${why}`;
+    return `${created} tasks were created, but auto-assignment failed: ${why}`;
   }
 }
 
