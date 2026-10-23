@@ -1,6 +1,6 @@
 # W1 / D2 — official eSTAR Vault attachment completion
 
-Status: automated qualification passed; normal canonical publication pending.
+Status: automated qualification passed; published directly to the canonical product branch.
 Product branch: `concept2cure-v2`.
 Design: `docs/design/ESTAR_VAULT_ATTACHMENT_COMPLETION_2026-10-23.md`.
 
@@ -130,8 +130,8 @@ section refiling at `5b9b4511c`. Its separate integration epoch has **158 passed
 across 12 files**, zero failures/skips, and a successful production build.
 All 23 qualified eSTAR source fingerprints remain unchanged. The independent
 incoming review found no changed canonical attachment dependency or bounded
-compatibility blocker. See `freshness-integration-summary.json`; publication
-still requires the normal integrated pre-push compiler gate.
+compatibility blocker. See `freshness-integration-summary.json`. The integrated publication compiler
+gate subsequently passed with zero errors, as recorded below.
 
 The additional saved-text-to-filing contract passes **93 cases in one file**
 on that same integrated source, using the real router and canonical migrations
@@ -163,3 +163,15 @@ The direct strict-anchor and real eSTAR route/PGlite integration control passes
 epoch is retained in `intake-attachment-control.json`, without adding it to
 the main qualification count. The independent compatibility review found no
 bounded blocker.
+
+## Canonical publication
+
+All implementation, merged integration evidence and safety-gate work was pushed
+directly to `origin/concept2cure-v2` at `a873595f75c6ee6ca9e14c12203a40ca5938afa9`.
+`canonical-push-4.json` and its unmodified compressed log confirm successful
+publication, a matching remote head, and all normal pre-push gates, including
+zero TypeScript errors. No hook bypass or force push was used.
+`publication-source-pins.json` confirms that all 23 qualified application and
+three independently qualified safety-gate files retain their fingerprints.
+This evidence-only receipt commit preserves those source bytes. Human
+acceptance remains **Not run**.

@@ -19,7 +19,7 @@
   "browserFailures": 0,
   "manualGuideCases": 83,
   "manualAcceptance": "Not run",
-  "publication": "pending normal push",
+  "publication": "published directly to origin/concept2cure-v2 with all normal hooks",
   "scope": "existing official eSTAR attachment workflow; local automated qualification, not global launch readiness",
   "reportingCatchUp": {
     "passed": 173,
@@ -48,7 +48,7 @@
     "sourceHead": "5b9b4511c76275a3a0d000cf13406e0ce0a39b80",
     "build": "passed",
     "all23ImplementationFilesUnchanged": true,
-    "typescript": "passed with zero errors in normal pre-push at 093aa23d5; remote advancement refused publication",
+    "typescript": "passed with zero errors at a873595f75c6ee6ca9e14c12203a40ca5938afa9 in the normal pre-push gate",
     "details": "freshness-integration-summary.json"
   },
   "freshnessFilingContract": {
@@ -67,7 +67,7 @@
     "sourceHead": "e646830ca0efb65311b5e1171c2199c943babde4",
     "build": "passed",
     "all23ImplementationAnd3SafetyGateFilesUnchanged": true,
-    "typescript": "normal integrated pre-push gate required",
+    "typescript": "passed with zero errors at a873595f75c6ee6ca9e14c12203a40ca5938afa9 in the normal pre-push gate",
     "details": "intake-integration-summary.json"
   },
   "intakeAttachmentControl": {
@@ -77,5 +77,7 @@
     "skipped": 0,
     "sourceHead": "e646830ca0efb65311b5e1171c2199c943babde4",
     "details": "intake-attachment-control.json"
-  }
+  },
+  "publishedSourceHead": "a873595f75c6ee6ca9e14c12203a40ca5938afa9",
+  "publicationReceipt": "canonical-push-4.json"
 }

@@ -2,7 +2,7 @@
   "qualifiedSourceCommit": "4c5f2745fa95327721276b85bc8f1a63b8883152",
   "implementationCommit": "8c87144fd",
   "branch": "concept2cure-v2",
-  "recordedAt": "2026-10-23T19:21:17.803924+00:00",
+  "recordedAt": "2026-10-23T19:31:03.546563+00:00",
   "sourcePaths": {
     "client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts": "3ea4cfa7774bbbbbb443c7dfd18adcff70918b726f0fb086a0cfe4422baec9eb",
     "client/src/concept2cure/mdx/hooks/estarAttachmentReceipt.ts": "5dfa2a24a68f280a517620eda0fad529dd49c6b07bec64abc7c5e07946fd2299",
@@ -30,7 +30,7 @@
   },
   "qualification": "qualification-summary.json",
   "humanAcceptance": "Not run",
-  "publication": "pending normal push; evidence-only commits preserve the source fingerprints",
+  "publication": "published directly to origin/concept2cure-v2 with all normal hooks",
   "integratedHeadBeforePublication": "e646830ca0efb65311b5e1171c2199c943babde4",
   "reportingCatchUp": "reporting-integration-summary.json",
   "safetyGateSource": {
@@ -47,5 +47,13 @@
     "receipt": "canonical-push-3.json",
     "published": false
   },
-  "intakeCatchUp": "intake-integration-summary.json"
+  "intakeCatchUp": "intake-integration-summary.json",
+  "publishedSourceHead": "a873595f75c6ee6ca9e14c12203a40ca5938afa9",
+  "publicationReceipt": "canonical-push-4.json",
+  "integratedPublicationGate": {
+    "sourceHead": "a873595f75c6ee6ca9e14c12203a40ca5938afa9",
+    "typescriptErrors": 0,
+    "allNormalGatesPassed": true,
+    "applicationAndSafetySourcePinsUnchanged": true
+  }
 }

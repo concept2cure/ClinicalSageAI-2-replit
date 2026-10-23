@@ -102,5 +102,12 @@
       "outputSha256": "690145cd8c6f17578df4a3bd7a360641a2601502e5bb314a4c7ed9581100a4f2"
     }
   ],
-  "typescript": "normal pre-push gate still required"
+  "typescript": "normal pre-push gate still required",
+  "publicationTypecheck": {
+    "sourceHead": "a873595f75c6ee6ca9e14c12203a40ca5938afa9",
+    "errors": 0,
+    "normalGate": true,
+    "receipt": "canonical-push-4.json",
+    "all23ImplementationPinsUnchanged": true
+  }
 }
