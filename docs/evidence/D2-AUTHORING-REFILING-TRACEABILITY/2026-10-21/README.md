@@ -139,6 +139,18 @@ not silently relabelled as a repeated 849-test run after this merge. See
 `post-sync-qualification-summary.json`. No editor/Vault production change was
 required by this late catch-up.
 
+## Canonical publication
+
+Implementation `d25ef1a5b` and its normal canonical merges were pushed directly
+to `concept2cure-v2` at `0ac543068`. `git-push.json` records success and matching
+origin tracking after all normal pre-push hooks passed. A later evidence-only
+commit retains this receipt. `final-docs-sync.json` records the additional
+incoming evidence-only update, which changed none of the 100 qualified inputs.
+`publication-source-pins.json` verifies every input against both working files
+and the published Git objects. The artifact manifest covers the retained
+packet and the linked design/human guide, excluding only its self-reference.
+No PR, alternate branch, deployment or agency transmission was used.
+
 ## Limits and human handoff
 
 This is W1 / D2 progress, not all-product launch acceptance. The
