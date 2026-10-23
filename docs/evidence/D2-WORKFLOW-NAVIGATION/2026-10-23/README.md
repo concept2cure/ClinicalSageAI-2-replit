@@ -47,3 +47,9 @@ Founder clarification during implementation: durable work areas can be Risk-base
 - Added IND cross-functional orientation. Functional ownership expansion itself remains the next extension, inventoried in `docs/design/IND_CROSS_FUNCTIONAL_WORK_2026-10-23.md`; no arbitrary CTD placement or new approval authority is inferred.
 
 Root will retain the canonical catch-up, final push gates and remote verification in this directory. This is evidence for discovery improvement under D2, not a declaration that the whole platform or all jurisdictions are ready.
+
+## Canonical integration qualification
+
+Implementation `c50f8810ee53684bba749a1a38b025c4ac386586` merged the 14 incoming canonical commits through `5ff6d225274079e9a08444409471394d9963970c` using normal Git merge, producing `4f7ca0ef3afaaa9aee45f2527bd69c896a9be7c4`. No files overlapped, no unresolved index entries remained, and all 31 selected qualification inputs were byte-identical. The integrated record pins 45 inputs including incoming editor/session changes (`root/canonical-inputs.json`).
+
+On that integrated source, **352 tests passed in 31 files** (`root/canonical-tests.txt`, `root/canonical-test-result.json`), including the discovery cohort and incoming authoring/source-start/session contracts. The production/client/server build passed again (`root/canonical-build.txt`). The qualification runner checks selected input hashes both before and after execution. Final publication and the mandatory normal-push checks follow; no bypass or baseline relaxation is used.
