@@ -3,6 +3,7 @@ import type { AssemblyBuildController } from './assemblyBuildState';
 import { assemblySelectionKey } from './assemblySourceSelection';
 import { AssemblySourcesNotice } from './AssemblySourcesNotice';
 import { SavedAssemblySourcesNotice } from './SavedAssemblySourcesNotice';
+import { AuthoringTemplatePicker, type TemplateCatalogState } from '../surfaces/AuthoringTemplatePicker';
 export { useAuthoringAssemblyBuild } from './useAuthoringAssemblyBuild';
 export type { AssemblyBuildController, AssemblyBuildOptions } from './assemblyBuildState';
 const FIELD_STYLE: React.CSSProperties = { display: 'grid', minWidth: 0, gap: 'var(--space-1)' };
@@ -40,13 +41,22 @@ function AssemblyCandidates({ controller }: { controller: AssemblyBuildControlle
     {remaining && controller.phase !== 'drafting' && <button type="button" className="btn ghost authoring-oversight-action" disabled={controller.busy || !!controller.disabledReason || controller.phase === 'unknown'} onClick={() => void controller.retryDrafts()}>{controller.targetCode ? 'Retry selected candidate' : 'Retry remaining candidates'}</button>}
   </div>;
 }
+function assemblyCatalog(controller: AssemblyBuildController): TemplateCatalogState {
+  if (controller.rosterLoading) return 'loading';
+  if (controller.rosterError) return 'failed';
+  return controller.globalCatalogUnavailable ? 'unavailable' : 'ok';
+}
 function AssemblyOptions({ controller, noteId }: { controller: AssemblyBuildController; noteId: string }) {
+  const templateId = useId();
   const disabled = controller.busy || !!controller.disabledReason || controller.phase === 'unknown';
   return <div className="ed-source-detail" style={DETAIL_STYLE}>
-    <label style={FIELD_STYLE}>Template <select className="c2c-input" style={CONTROL_STYLE} aria-describedby={noteId} value={controller.templateId} disabled={disabled || controller.rosterLoading} onChange={event => void controller.chooseTemplate(event.target.value)}>
-      <option value="">Choose a template</option>
-      {controller.templates.map(template => <option key={template.id} value={template.id}>{template.name}</option>)}
-    </select></label>
+    <div style={FIELD_STYLE}>
+      <label htmlFor={templateId}>Template</label>
+      <AuthoringTemplatePicker purpose="assembly" templates={controller.templates}
+        catalog={assemblyCatalog(controller)}
+        query={controller.templateQuery} onQueryChange={controller.setTemplateQuery} disabled={disabled || controller.rosterLoading}
+        control={{ id: templateId, value: controller.templateId, onChange: id => void controller.chooseTemplate(id), describedBy: noteId }} />
+    </div>
     <label style={FIELD_STYLE}>Build target <select className="c2c-input" style={CONTROL_STYLE} value={controller.targetCode} disabled={disabled || !controller.outline} onChange={event => controller.chooseTarget(event.target.value)}>
       <option value="">Entire document</option>
       {controller.outline?.rows.map(row => <option key={row.code} value={row.code}>{row.code} {row.title}</option>)}

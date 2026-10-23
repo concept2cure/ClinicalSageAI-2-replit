@@ -1,0 +1,123 @@
+{
+  "at": "2026-10-23T20:43:39.139032+00:00",
+  "scope": "Final canonical integration. Earlier editor/picker/worker results retain their original scopes and overlapping cohorts are never summed.",
+  "implementationCommit": "1e3732a0a",
+  "mergedCodeCommit": "c10dc27b2477c925d4707fc10dd2005da6db0cb4",
+  "sourceFreeze": "canonical-source-freeze.json",
+  "sourceFreezeSha256": "18948ee721e7a7ae30b930ae79efeb9b13c9e863b8b497517f81d6be99f5e41c",
+  "declaredInputs": 117,
+  "absentInputs": [
+    "client/src/concept2cure/v2/surfaces/CapabilityBrowser.tsx"
+  ],
+  "ownEditorQualification": "pre-canonical-qualification.json",
+  "checks": [
+    {
+      "receipt": "canonical-ui.json",
+      "sha256": "6c6ebf8dad071ae28ca63e6f0cf5e68dc140d4cd02ca683d9af5e8622ada6ff5",
+      "exitCode": 0,
+      "sourceFreeze": "canonical-source-freeze.json",
+      "rawGzipSha256": "1a66b3a1e2b522d5554dbf2c5594234515c087accfba1f668dfd853437bf286f",
+      "testSummary": [
+        "Test Files  9 passed (9)",
+        "Tests  184 passed (184)",
+        "Duration  34.40s (transform 3.09s, setup 622ms, import 5.05s, tests 23.93s, environment 3.65s)"
+      ]
+    },
+    {
+      "receipt": "canonical-build.json",
+      "sha256": "b18d169af5ba30d8a8aa394f458812704362761fc0f576125e43cedca3e43d6d",
+      "exitCode": 0,
+      "sourceFreeze": "canonical-source-freeze.json",
+      "rawGzipSha256": "2e8c95726a2c50a1ef0a1d9f7e0fa0cef82bf679a6149073a31ebe9bbbf2b60f",
+      "testSummary": []
+    },
+    {
+      "receipt": "canonical-ci-single-native-canvas.json",
+      "sha256": "97c8b2afd44ec35fde21df6ea628922c465782dfc2e5dde4af003b9b9393b841",
+      "exitCode": 0,
+      "sourceFreeze": "canonical-source-freeze.json",
+      "rawGzipSha256": "aae64d7709da09579510d9d17e9ab6f5a4d9339cd621835dce04ec7c48238ba0",
+      "testSummary": []
+    },
+    {
+      "receipt": "canonical-ci-canvas-path.json",
+      "sha256": "f0486bc6c253c5e864b45f4a45cebaa300db1ecd4ebf38c8fa8567febdaa42c4",
+      "exitCode": 0,
+      "sourceFreeze": "canonical-source-freeze.json",
+      "rawGzipSha256": "3edd2ed34b8e75756ea02c663022c92c4c0e5f5d9a0b509d9bfbade764f3172b",
+      "testSummary": []
+    },
+    {
+      "receipt": "canonical-ci-check-editor-integrity.json",
+      "sha256": "dc7754243b9e917210c5a04e7ae2888437d79a5be05a11366b6679ce678ac309",
+      "exitCode": 0,
+      "sourceFreeze": "canonical-source-freeze.json",
+      "rawGzipSha256": "7b36c3a871006c0b53b696a49034703a55cb9488f9192797e45c22e73aa4c574",
+      "testSummary": []
+    },
+    {
+      "receipt": "canonical-ci-design-system.json",
+      "sha256": "b01e7bb75fbe2c400110566980ce41cfe6e1ec420f692d230d86006950b9ad53",
+      "exitCode": 0,
+      "sourceFreeze": "canonical-source-freeze.json",
+      "rawGzipSha256": "a02b864f92889d97828ce8b320bafafdd8ec5d94059f01582a5d4966b8bf5d16",
+      "testSummary": []
+    },
+    {
+      "receipt": "canonical-ci-check-shell-css-collisions.json",
+      "sha256": "9fc9304732e46951afcea68a7f18d60bb2fa76a49cf17ec29993a3df3fcd32af",
+      "exitCode": 0,
+      "sourceFreeze": "canonical-source-freeze.json",
+      "rawGzipSha256": "5a182dfd9272f8993c8abbe108c20bccdb406a12521065bcb54a15701b50ce0a",
+      "testSummary": []
+    },
+    {
+      "receipt": "canonical-ci-surface-text-ramp.json",
+      "sha256": "01865b23215eb8875238d2ae44fbdef2b91cd31c165b1f85330b9e7d5deaccaf",
+      "exitCode": 0,
+      "sourceFreeze": "canonical-source-freeze.json",
+      "rawGzipSha256": "59b0db8536a322cf5ce0b23bfcacda26d15612d90694e23ba630cb170b4e8465",
+      "testSummary": []
+    },
+    {
+      "receipt": "canonical-audit-repo-health-ceiling.json",
+      "sha256": "12f14fb09b6249d58cd0a9c4ffca230094601bf29d615c24ee52242bf36045e5",
+      "exitCode": 0,
+      "sourceFreeze": "canonical-source-freeze.json",
+      "rawGzipSha256": "01603fddcce575174c7eadda932c92f2c50859b4178fdb142e93caefc112735b",
+      "testSummary": []
+    }
+  ],
+  "cohorts": [
+    {
+      "receipt": "qualified-ui.json",
+      "tests": 211,
+      "suites": 10
+    },
+    {
+      "receipt": "canonical-ui.json",
+      "tests": 184,
+      "suites": 9
+    }
+  ],
+  "cohortsOverlap": true,
+  "strictChangedFileLintWarnings": 0,
+  "passedRepositoryGates": 7,
+  "dependencyChanges": false,
+  "baselineChanges": false,
+  "fullCompiler": {
+    "receipt": "implementation-push.json",
+    "typeScriptErrors": 0,
+    "tscExitCode": 0,
+    "allMandatoryHooksPassed": true,
+    "pushAccepted": true
+  },
+  "humanCases": 95,
+  "humanStatus": "All Not run",
+  "limits": [
+    "Synthetic HTTP/auth client tests; no human acceptance or live provider/agency delivery.",
+    "No server catalogue, source policy, template outline or agency coverage change.",
+    "Declared inputs are not exhaustive transitive dependency closure."
+  ],
+  "publication": "publication.json"
+}

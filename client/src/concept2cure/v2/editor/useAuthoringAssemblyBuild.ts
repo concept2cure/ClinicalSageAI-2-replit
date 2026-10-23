@@ -3,12 +3,13 @@ import { useCallback, useEffect, useReducer, useRef } from 'react';
 import { apiRequest } from '@/lib/queryClient';
 import { authService } from '@/services/portal/authService';
 import type { AssemblyCommitData, AssemblyPreviewInput } from '@shared/authoring/assembly';
+import { parseRecordedTemplateFilingContext } from '@shared/authoring/recorded-template-source';
 import { useShellProject } from '../shellProject';
 import { registerSurfaceLeaveGuard } from '../navParams';
 import { taskActorScope, type TaskActorScope } from '../taskTarget';
 import { captureEditorDraftGuard, createEmptyAiDraftReviewState, type AiDraftReviewSession } from './authoringDraftTransport';
 import { captureAssemblyHeaders, inspectAssemblyDocument, normalizedAssemblyCode, readAssemblyCommit, readAssemblyPlan, requestAssembly } from './assemblyBuildTransport';
-import { assemblyBusy, assemblyDisabledReason, initialAssemblyState, type AssemblyBucket, type AssemblyBuildController, type AssemblyBuildOptions, type AssemblyBuildState } from './assemblyBuildState';
+import { assemblyBusy, assemblyDisabledReason, initialAssemblyState, type AssemblyBucket, type AssemblyBuildController, type AssemblyBuildOptions, type AssemblyBuildState, type AssemblyTemplate } from './assemblyBuildState';
 import { assemblyDraftReference, runAssemblyDrafts } from './assemblyDraftQueue';
 import { readAssemblySourceSelectors, type AssemblySourceSelector } from '@shared/authoring/assembly-sources';
 import { assemblySelectionKey } from './assemblySourceSelection';
@@ -192,10 +193,39 @@ function sessions(owner: Owner): Record<string, AiDraftReviewSession> {
       } } satisfies AiDraftReviewSession];
   }));
 }
-function readTemplates(raw: unknown): Array<{ id: string; name: string }> | null {
+function templateIdentity(raw: unknown): string | null {
+  if (typeof raw === 'string' && raw.trim() && raw === raw.trim()) return raw;
+  return typeof raw === 'number' && Number.isSafeInteger(raw) && raw > 0 ? String(raw) : null;
+}
+function readTemplate(raw: unknown): AssemblyTemplate | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const row = raw as Record<string, unknown>;
+  const id = templateIdentity(row.id);
+  const name = [row.name, row.title, row.template_name].find((value): value is string => typeof value === 'string' && !!value.trim());
+  if (!id || !name) return null;
+  const template: AssemblyTemplate = { id, name };
+  const strings = ['title', 'template_name', 'description', 'template_type', 'category', 'entryId', 'kind', 'authoringMode', 'originalFormat'] as const;
+  for (const field of strings) if (typeof row[field] === 'string') template[field] = row[field];
+  if (row.module === null || typeof row.module === 'string') template.module = row.module;
+  for (const field of ['regions', 'families', 'limitations'] as const) {
+    const values = row[field];
+    if (Array.isArray(values) && values.every((value): value is string => typeof value === 'string')) template[field] = [...values];
+  }
+  try {
+    const filingContext = parseRecordedTemplateFilingContext(row.filingContext, template.entryId);
+    if (filingContext) template.filingContext = filingContext;
+  } catch { /* Unverified optional display context supplies no search facts. */ }
+  return template;
+}
+function readTemplates(raw: unknown): AssemblyTemplate[] | null {
   if (!Array.isArray(raw)) return null;
-  if (!raw.every(row => row && (typeof row.id === 'string' || typeof row.id === 'number') && typeof (row.name ?? row.title ?? row.template_name) === 'string')) return null;
-  return raw.map(row => ({ id: String(row.id), name: String(row.name ?? row.title ?? row.template_name) }));
+  const templates: AssemblyTemplate[] = []; const ids = new Set<string>();
+  for (const row of raw) {
+    const template = readTemplate(row);
+    if (!template || ids.has(template.id)) return null;
+    ids.add(template.id); templates.push(template);
+  }
+  return templates;
 }
 async function loadTemplates(owner: Owner): Promise<void> {
     if (!owner.options.docId || !owner.options.programId || !owner.authCurrent()) return;
@@ -214,11 +244,20 @@ async function loadTemplates(owner: Owner): Promise<void> {
       } catch { if (current()) update(owner, bucket, { rosterError: 'Templates could not be read. Reopen this document to retry the roster.' }); }
       finally { update(owner, bucket, { rosterLoading: false }); }
 }
+function templateQueryControl(owner: Owner): (query: string) => void {
+  const bucket = owner.bucket; const key = owner.key; const identity = owner.identity; const revision = owner.contextRevision;
+  const current = captureEditorDraftGuard({ programId: owner.options.programId, docId: owner.options.docId,
+    isCurrent: () => owner.alive && owner.bucket === bucket && owner.key === key && owner.identity === identity
+      && owner.contextRevision === revision && owner.authCurrent() && !assemblyDisabledReason(owner.options)
+      && !assemblyBusy(bucket.state.phase) && bucket.state.phase !== 'unknown' && !bucket.state.rosterLoading && !bucket.state.rosterError });
+  return templateQuery => { if (current()) update(owner, bucket, { templateQuery }); };
+}
 function controller(owner: Owner): AssemblyBuildController {
   const state = owner.bucket.state;
   return { ...state, ...savedAssemblySourcesControls(owner, sources => adoptSources(owner, sources)),
     busy: assemblyBusy(state.phase), disabledReason: owner.authCurrent() ? assemblyDisabledReason(owner.options) : accountChanged, reviewSessions: sessions(owner),
     leaveRefusal: owner.leaveRefusal,
+    setTemplateQuery: templateQueryControl(owner),
     chooseTemplate: async id => { if (!owner.authCurrent() || assemblyBusy(owner.bucket.state.phase) || owner.bucket.state.phase === 'unknown') return;
       change(owner, { templateId: id, targetCode: '', outline: null, plan: null, phase: 'idle', message: '' }); if (id) await preview(owner, true); },
     loadTemplates: () => loadTemplates(owner), adoptSources: sources => adoptSources(owner, sources), chooseTarget: code => chooseTarget(owner, code), setReason: reason => change(owner, { reason }), setWithAna: withAna => change(owner, { withAna }),

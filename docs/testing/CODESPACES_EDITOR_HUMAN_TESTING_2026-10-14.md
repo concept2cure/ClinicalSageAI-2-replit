@@ -27,6 +27,8 @@ The [cross-sector authoring contract](../design/CROSS_SECTOR_AUTHORING_2026-10-2
 connects shared planning outlines and source-focused AnA preparation to this editor.
 The [selected-source document-start contract](../design/SOURCE_ASSEMBLY_DOCUMENT_START_2026-10-23.md)
 continues Data Room/Vault selections through the existing New document form.
+The [assembly template discovery contract](../design/ASSEMBLY_TEMPLATE_SEARCH_2026-10-23.md)
+reuses that same searchable picker in the existing build controls.
 
 This is an executable checklist, not a report of a completed human session.
 Record the actual commit and observations below. The
@@ -280,6 +282,10 @@ differ. Use the existing buttons, dialogs and native editor throughout.
 | 89 | With the operator’s controlled delayed-response fixture, change project A→B→A, replace/sign out the account session or leave the editor. Late creation/read responses must not open or bind sources in the new context. A legitimate same-session token refresh must still allow the current attempt, using its original actor ownership. | Not run | |
 | 90 | With an identified uncertain-creation fixture, use Check working documents, then Open identified document. Verify its exact recovery UUID/project and original source hashes, no automatic open before that choice and no duplicate create. For a generic unknown response without an identified record, inventory/title/list order must never infer which document this request created. | Not run | |
 | 91 | Use a filtered or pinned editor host for a selected-source New document. After confirmation and form close, the existing exact-document handoff must reach the one editor with the original source selectors. If the returned record is absent or inaccessible in the refreshed project inventory, show the known-created/opening limitation and bind no sources to another record. Preview/build and any AnA generation or acceptance remain separate explicit choices. | Not run | |
+| 92 | Open Build document or section in the existing editor. Search loaded template metadata by module, recorded region/agency, type or description. Confirm counts reflect the loaded roster, clearing returns keyboard focus, the native Template select remains usable and there is no blank-document creation option in assembly. A failed or unavailable catalogue is explained distinctly from an empty result. | Not run | |
+| 93 | Choose a template, target and reason, then Preview build. Search for a different template so the current choice is filtered out, then clear. Confirm the selected template ID, preview, target, reason and selected source versions are retained, with no request caused by search/Clear. Build explicitly with and without AnA; preserve existing text and review each generated candidate separately. | Not run | |
+| 94 | In the build disclosure, verify search, Clear and Template are disabled while unsaved editor changes, a read-only/frozen document, pending build or unknown outcome holds the lane. Do not retry an unknown write. Use the existing explicit recovery check; search alone must never create, preview, build, generate or accept content. | Not run | |
+| 95 | Enter an assembly template search in project/document A, visit another document/project and return. Verify current-owner query separation and exact template choices; no stale result changes another document. Ordinary same-session refresh retains the query; account/session replacement starts a fresh owned build state. No source or candidate is borrowed between owners. | Not run | |
 
 Cases 68–72 extend the [Authoring refiling version contract](../design/AUTHORING_REFILING_VERSIONS_2026-10-23.md).
 They exercise editable working documents; frozen/sealed Authoring content remains
@@ -300,6 +306,8 @@ or shared component to inherit a fabricated US IND module or receiving market.
 For cases 28–33, use the [source-first contract](../design/CATALOGUE_SOURCE_ASSEMBLY_2026-10-17.md). Source-reference intent, actual model consumption, accepted citations and filing approval are separate outcomes; record each one as observed.
 
 For cases 84–91, use the [selected-source document-start contract](../design/SOURCE_ASSEMBLY_DOCUMENT_START_2026-10-23.md). Creation saves the working document; source version/excerpt verification belongs to the later explicit preview/build. A source selection is not a citation or an approved filing.
+
+For cases 92–95, use the [assembly template discovery contract](../design/ASSEMBLY_TEMPLATE_SEARCH_2026-10-23.md). Search filters loaded display metadata; the explicit current preview remains the authority for source and filing scope.
 
 For cases 34–37, use the [saved-reference contract](../design/SAVED_ASSEMBLY_SOURCES_2026-10-18.md). The last recorded source selection is historical build intent. Its successful read does not select it or establish current citation support; reuse requires a fresh check and another explicit preview.
 
