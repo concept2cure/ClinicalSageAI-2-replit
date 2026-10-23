@@ -1,0 +1,74 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useK510.sections.test.ts > useK510EstarSections — body shape > a 200 that is not { sections: [...] } is reported, not thrown, and never an empty list 64ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useK510.sections.test.ts > useK510EstarSections — body shape > the documented shape adapts to rows, blockers counted 54ms
+ × client/src/concept2cure/mdx/hooks/__tests__/useK510.sections.test.ts > useK510EstarSections — body shape > requests exact CER sections and preserves hierarchical section keys for editor handoff 57ms
+   → expected '/api/510k/projects/BX-204/document-pr…' to be '/api/510k/projects/BX-204/document-pr…' // Object.is equality
+ × client/src/concept2cure/mdx/hooks/__tests__/useDossier.scope.test.ts > dossier document identity > does not relabel the primary filing as an absent secondary CER or IVDR document 3ms
+   → pickDossierDocument is not a function
+ × client/src/concept2cure/mdx/hooks/__tests__/useDossier.scope.test.ts > dossier document identity > uses exact pathway classes rather than partial name matches 1ms
+   → pickDossierDocument is not a function
+ × client/src/concept2cure/mdx/hooks/__tests__/useDossier.scope.test.ts > dossier document identity > rejects an unrelated or missing project identity even when the document type matches 0ms
+   → pickDossierDocument is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/hooks/__tests__/useDossier.scope.test.ts > dossier document identity > does not relabel the primary filing as an absent secondary CER or IVDR document
+TypeError: pickDossierDocument is not a function
+ ❯ client/src/concept2cure/mdx/hooks/__tests__/useDossier.scope.test.ts:11:12
+      9|   it('does not relabel the primary filing as an absent secondary CER o…
+     10|     const docs = [row('primary', 'k510')];
+     11|     expect(pickDossierDocument(docs, 'cer', project)).toBeNull();
+       |            ^
+     12|     expect(pickDossierDocument(docs, 'ivd', project)).toBeNull();
+     13|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/concept2cure/mdx/hooks/__tests__/useDossier.scope.test.ts > dossier document identity > uses exact pathway classes rather than partial name matches
+TypeError: pickDossierDocument is not a function
+ ❯ client/src/concept2cure/mdx/hooks/__tests__/useDossier.scope.test.ts:17:12
+     15|   it('uses exact pathway classes rather than partial name matches', ()…
+     16|     const docs = [row('mdr-technical-file', 'mdr'), row('cer', 'cer'),…
+     17|     expect(pickDossierDocument(docs, 'cer', project)?.id).toBe('cer');
+       |            ^
+     18|     expect(pickDossierDocument(docs, 'ivd', project)?.id).toBe('ivdr');
+     19|     expect(pickDossierDocument(docs, 'k510', project)?.id).toBe('prima…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  client/src/concept2cure/mdx/hooks/__tests__/useDossier.scope.test.ts > dossier document identity > rejects an unrelated or missing project identity even when the document type matches
+TypeError: pickDossierDocument is not a function
+ ❯ client/src/concept2cure/mdx/hooks/__tests__/useDossier.scope.test.ts:23:12
+     21|
+     22|   it('rejects an unrelated or missing project identity even when the d…
+     23|     expect(pickDossierDocument([row('private', 'cer', other)], 'cer', …
+       |            ^
+     24|     expect(pickDossierDocument([{ id: 'unanchored', doc_type: 'cer' }]…
+     25|     expect(pickDossierDocument([row('other', 'k510_extra')], 'k510', p…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  client/src/concept2cure/mdx/hooks/__tests__/useK510.sections.test.ts > useK510EstarSections — body shape > requests exact CER sections and preserves hierarchical section keys for editor handoff
+AssertionError: expected '/api/510k/projects/BX-204/document-pr…' to be '/api/510k/projects/BX-204/document-pr…' // Object.is equality
+
+Expected: "/api/510k/projects/BX-204/document-preview?docType=cer"
+Received: "/api/510k/projects/BX-204/document-preview"
+
+ ❯ client/src/concept2cure/mdx/hooks/__tests__/useK510.sections.test.ts:72:40
+     70|     const { result } = renderHook(() => useK510EstarSections('BX-204',…
+     71|     await waitFor(() => expect(result.current.rows).not.toBeNull());
+     72|     expect(fetchMock.mock.calls[0][0]).toBe('/api/510k/projects/BX-204…
+       |                                        ^
+     73|     expect(result.current.rows!.map(row => row.id)).toEqual(['6.2', 'I…
+     74|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 2 passed (6)
+   Start at  20:37:43
+   Duration  1.09s (transform 154ms, setup 128ms, import 148ms, tests 185ms, environment 383ms)
+

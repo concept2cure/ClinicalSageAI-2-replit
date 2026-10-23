@@ -326,7 +326,7 @@ export async function loadGovernedDeviceDocument(
 }
 
 /** The sections of one governed document, in outline order. */
-async function loadGovernedSectionRows(
+export async function loadGovernedSectionRows(
   documentId: string,
   client: DeviceContentClient,
 ): Promise<GovernedDeviceSectionRow[]> {

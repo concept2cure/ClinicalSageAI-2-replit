@@ -61,4 +61,15 @@ describe('useK510EstarSections — body shape', () => {
     expect(result.current.blockerCount).toBe(1);
     expect(result.current.error).toBeNull();
   });
+
+  it('requests exact CER sections and preserves hierarchical section keys for editor handoff', async () => {
+    fetchMock.mockResolvedValue(ok({ sections: [
+      { id: 80, sectionNumber: 'II.6.2.c', sectionTitle: 'Performance evaluation', status: 'draft', contentLength: 100 },
+      { id: 81, sectionNumber: '6.2', sectionTitle: 'Clinical data', status: 'approved', contentLength: 200 },
+    ] }));
+    const { result } = renderHook(() => useK510EstarSections('BX-204', 'cer'));
+    await waitFor(() => expect(result.current.rows).not.toBeNull());
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/510k/projects/BX-204/document-preview?docType=cer');
+    expect(result.current.rows!.map(row => row.id)).toEqual(['6.2', 'II.6.2.c']);
+  });
 });

@@ -1,0 +1,15 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx (21 tests) 1557ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx (10 tests) 1753ms
+     ✓ keeps the first page choice while adding an original from the next page, then posts only those IDs  439ms
+     ✓ keeps an aggregate fifty-ID bound across three pages, search and kind filtering while allowing off-page removal  808ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx (10 tests) 736ms
+
+ Test Files  3 passed (3)
+      Tests  41 passed (41)
+   Start at  21:02:02
+   Duration  6.94s (transform 531ms, setup 337ms, import 691ms, tests 4.05s, environment 1.41s)
+
+JSON report written to /workspace/scratch/mdx-reporting-integration-results.json

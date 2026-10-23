@@ -1,0 +1,15 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/hooks/useK510.ts
+   77:1  warning  Function 'adaptSection' has a complexity of 16. Maximum allowed is 15    complexity
+  222:1  warning  Function 'adaptPredicate' has a complexity of 29. Maximum allowed is 15  complexity
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/surfaces/CerSurface.tsx
+  44:8  warning  Function 'CerSurface' has too many lines (110). Maximum allowed is 100  max-lines-per-function
+  44:8  warning  Function 'CerSurface' has a complexity of 16. Maximum allowed is 15     complexity
+
+/workspace/ClinicalSageAI-2-replit/shared/regulatory/work-packages.ts
+  120:1  warning  Function 'normalizePathway' has a complexity of 22. Maximum allowed is 15  complexity
+  586:1  warning  File has too many lines (706). Maximum allowed is 500                      max-lines
+
+✖ 6 problems (0 errors, 6 warnings)
+

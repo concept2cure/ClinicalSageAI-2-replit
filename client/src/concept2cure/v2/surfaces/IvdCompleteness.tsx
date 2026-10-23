@@ -221,7 +221,7 @@ export function IvdCompleteness({ onAsk, segment, onNav }: SurfaceViewProps) {
           <div className="ivd-lead">
             <div className="ivd-lead-ic">{I.sparkles}</div>
             <div>
-              <p className="ivd-lead-h">Your IVDR technical file is {overall}% complete. {blocker}</p>
+              <p className="ivd-lead-h">Organization-wide IVDR evidence coverage: {overall}%. {blocker}</p>
               <p className="ivd-lead-b">These are IVDR requirements — General Safety &amp; Performance (Annex I), the Performance Evaluation Report (Annex XIII), analytical and clinical performance, scientific validity and post-market follow-up — not the 510(k)/device checklist. {doneFamilies.length} of {families.length} evidenced — {inflightFamilies.length} in progress — {missingFamilies.length} not started{flags.length ? ' — ' + flags.length + ' open flag' + (flags.length === 1 ? '' : 's') : ''}.</p>
             </div>
           </div>

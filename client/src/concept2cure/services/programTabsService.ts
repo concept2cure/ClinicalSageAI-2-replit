@@ -189,7 +189,7 @@ export interface WorkflowDecisionResult {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class ProgramTabsService {
-  private async request<T>(method: ApiRequestMethod, url: string, body?: unknown): Promise<T> {
+  async request<T>(method: ApiRequestMethod, url: string, body?: unknown): Promise<T> {
     const response = await apiRequest(method, url, body);
     if (response.status === 204) return undefined as T;
     const payload = await response.json().catch(() => ({}));
@@ -282,17 +282,7 @@ class ProgramTabsService {
     return Array.isArray(payload?.approvals) ? payload!.approvals! : [];
   }
 
-  /**
-   * Reject a pending approval step. The server requires a non-empty comment as
-   * the rejection reason. POST /api/approval-workflows/:id/reject.
-   */
-  async rejectWorkflow(approvalId: number | string, comments: string): Promise<WorkflowDecisionResult> {
-    return this.request<WorkflowDecisionResult>(
-      'POST',
-      `/api/approval-workflows/${encodeURIComponent(String(approvalId))}/reject`,
-      { comments },
-    );
-  }
+
 }
 
 const programTabsService = new ProgramTabsService();

@@ -19,6 +19,7 @@ vi.mock('../../../utils/logger.js', () => ({ createScopedLogger: () => log }));
 
 import { readLaunchScopeMode, launchScopeEnforced } from '../launch-scope.js';
 import { applyLaunchScope, type NavSurfaceEntitlement } from '../navigation-entitlements.js';
+import { MDX_PROJECT_FEATURE_SURFACE_IDS } from '../../../../shared/constants/mdx-project-features';
 import {
   LAUNCH_APPS,
   LAUNCH_MODULE_IDS,
@@ -66,6 +67,18 @@ describe('readLaunchScopeMode', () => {
 });
 
 describe('the scope list itself', () => {
+  it('reaches MDX as project features without adding app or module grants', () => {
+    const projects = LAUNCH_APPS.find((app) => app.id === 'projects')!;
+    expect(projects.modules).toEqual(['projects', 'tasks']);
+    for (const id of MDX_PROJECT_FEATURE_SURFACE_IDS) {
+      expect(projects.surfaces).toContain(id);
+      expect(LAUNCH_MODULE_IDS).not.toContain(id);
+      expect(applyLaunchScope([v(id, { source: 'subscribed' })])[0].source).toBe('subscribed');
+      const locked = v(id, { entitled: false, source: 'disabled' });
+      expect(applyLaunchScope([locked])[0]).toEqual(locked);
+    }
+    expect(LAUNCH_APPS.map((app) => app.id)).not.toContain('mdx');
+  });
   it('has seven apps and every app surface is in the id set', () => {
     expect(LAUNCH_APPS).toHaveLength(7);
     for (const a of LAUNCH_APPS) for (const s of a.surfaces) expect(isLaunchSurface(s)).toBe(true);

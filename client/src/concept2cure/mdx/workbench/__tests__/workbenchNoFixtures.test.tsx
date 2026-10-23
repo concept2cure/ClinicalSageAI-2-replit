@@ -27,7 +27,8 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
 
-import { TasksSurface, TemplatesSurface } from '../Workbench';
+import { TasksSurface } from '../Workbench';
+import { TemplatesSurface } from '../TemplatesSurface';
 
 const noop = () => {};
 

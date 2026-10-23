@@ -1,0 +1,524 @@
+{
+  "branch": "concept2cure-v2",
+  "canonical_base": "0b3aaa10cbbe46aa19f5041e5c6f50bf0d8d6935",
+  "checked_local_source_revision": "d47c0c48fda3ae52edb0b870039a5a8b5b6fcd95",
+  "note": "The local revision identifies the checked source before evidence-only updates. Per-file fingerprints are authoritative if publication changes commit metadata. No live deployment or browser validation is claimed.",
+  "source_files": [
+    {
+      "path": "client/src/concept2cure/hooks/__tests__/useRejectWorkflow.test.tsx",
+      "git_blob": "f9992447612a1dcefd1202e0612ebc96bdeb9987",
+      "sha256": "8eec0905f5efff1ef8aa7bd294a0fc10d92665f3d18c9e8e0a98155bc381216f",
+      "bytes": 1531
+    },
+    {
+      "path": "client/src/concept2cure/hooks/useProgramTabs.ts",
+      "git_blob": "ed1117cb4f2b15f550fd1b9da9b54abc58b9d471",
+      "sha256": "751e1c3503956efda3bc0afb928233cc25df5d15a24a4911b78b39595a384c05",
+      "bytes": 6118
+    },
+    {
+      "path": "client/src/concept2cure/hooks/useRejectWorkflow.ts",
+      "git_blob": "597a86af0b4a49cad5c0907052f825f089f54a35",
+      "sha256": "4e6d8b2a4d9574929225e0411f1dc759009e6dc99d45ac702df9eba740bfc3df",
+      "bytes": 2076
+    },
+    {
+      "path": "client/src/concept2cure/mdx/MdxSurfaceHost.tsx",
+      "git_blob": "f35fce89e45719eec09349fd3f9e3a2fcc0c5a45",
+      "sha256": "5b33f949d0d364cbd3757ac96758a6e5b8d154b77debacd41f462a8441c8619d",
+      "bytes": 23679
+    },
+    {
+      "path": "client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx",
+      "git_blob": "712ea52c77b9093d3f07cb4aa557370ecd9be25c",
+      "sha256": "37fe23f431f840afc368d9e76d3167a48f755471f5dff30c2059f53ef6b7c592",
+      "bytes": 6195
+    },
+    {
+      "path": "client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx",
+      "git_blob": "34c8d300672768b00f6ab87b367cc1ea0d52daf4",
+      "sha256": "358af2aa5d79b69c6bf3929d89034235b0a4189d92ade3bf169ab1bed5773b8f",
+      "bytes": 5077
+    },
+    {
+      "path": "client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx",
+      "git_blob": "d1f173931da96d961b8210745835f15f30cc13c7",
+      "sha256": "5cde99d1864db462f6c42ae3d71cc58833e3d2ecb59619a1a1eb99ac430ddad3",
+      "bytes": 13619
+    },
+    {
+      "path": "client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx",
+      "git_blob": "3346830bbcff1f1854e86b21c53e17865691b399",
+      "sha256": "b547ae080bbfb5701c839f19111fc5963f6d71af293bcfaa4fd2184524da1b6c",
+      "bytes": 7727
+    },
+    {
+      "path": "client/src/concept2cure/mdx/data/k510.ts",
+      "git_blob": "04ed8651922b2e952bb33300f3e303076a75c2cc",
+      "sha256": "67a1d52f1fbdd7db64b2d017d7ec907f949f14ab18450dd9dd756bd0e080d3e6",
+      "bytes": 5986
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/__tests__/useDossier.hydration.test.tsx",
+      "git_blob": "84b1fc8309612749c99a4022f3505c8d6cc58abd",
+      "sha256": "40abadeb0f0b8382c65940cffb699e936e2391028efca09ac6fb609ea4eaaf19",
+      "bytes": 4693
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/__tests__/useDossier.scope.test.ts",
+      "git_blob": "3ca50cf7b9b1961dda45df4c0d43d68cf7d25d1f",
+      "sha256": "3ab1bd8528c784a3982b6765ffb637074ba9309036e21c4b20d146914977747e",
+      "bytes": 1456
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/__tests__/useK510.sections.test.ts",
+      "git_blob": "c15106021a1530f8171c980ec863b7d01d9f6607",
+      "sha256": "050c05bcaa66e477fa9cb791187fa3e52846df66dc71182ff1c7bb270431fef6",
+      "bytes": 3321
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/__tests__/useMdxPrograms.productType.test.ts",
+      "git_blob": "c4e1d785db2be075c01c3b068b612f3dfc33b587",
+      "sha256": "07b3c83b8f5debe283d15ab7e114f8da6c60ad425eab07b69384ddb776f74984",
+      "bytes": 3926
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/__tests__/useWorkbenchTemplates.test.ts",
+      "git_blob": "4c7e735ee3b738b51f19d329d662cb7605826b8d",
+      "sha256": "a1b9b5246555039ddb7f41433e18376f428f107c7a86c4a1a46ebac4a7b4edbc",
+      "bytes": 1453
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/useDossier.ts",
+      "git_blob": "d4a327b259a821be002e26b0982a88bcac84a724",
+      "sha256": "2d25a59d3a61391a63e20b3c934ae1152afa0146319c19cdd2a2841bf957b68c",
+      "bytes": 9084
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/useK510.ts",
+      "git_blob": "22af13fcb34fd9cddba5ff39cd91b4a7e13d5d47",
+      "sha256": "973cdc7b5f5b0e0c5aa29d14116a93f02fe3502e8bbe3c937f123719ef2dd0bd",
+      "bytes": 16718
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/useMdxPrograms.ts",
+      "git_blob": "6f87a252fb19f0f83a5015a8dfb895dd79e6548a",
+      "sha256": "87893120f80bed9096da090a090a8bb45131edab844a909377e0c403a2f0788e",
+      "bytes": 12039
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/useWorkbench.ts",
+      "git_blob": "1a14df1373edc5c071067ab87458d1e20d1bd949",
+      "sha256": "b2810426e9c310485fa4eae34a8813a041c432b975b29d075e9fe4fb40d99729",
+      "bytes": 14115
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/useWorkbenchTemplates.ts",
+      "git_blob": "7b3b727b46f648a7cb4c52c7cbac192832fce240",
+      "sha256": "0cd9b471017ffbcd57b810155000ce3cc9460422fcbd24071a8a511076f3420b",
+      "bytes": 2922
+    },
+    {
+      "path": "client/src/concept2cure/mdx/lib/__tests__/formatRelativeShort.test.ts",
+      "git_blob": "7ed60956fd0c03ded794793408476f7d6473478b",
+      "sha256": "ee5a187de04776855c290fa607842a5f4de416b5a947cd45d8664c46a7a5d88e",
+      "bytes": 564
+    },
+    {
+      "path": "client/src/concept2cure/mdx/lib/formatRelativeShort.ts",
+      "git_blob": "7715609ee00b2072b89770685aa88828ccf5237a",
+      "sha256": "48bf22729de09fefcd51c8417395e302a00b14aee03d66ab9e7b32db8a5b889f",
+      "bytes": 559
+    },
+    {
+      "path": "client/src/concept2cure/mdx/store/__tests__/dossierStore.dataIntegrity.test.ts",
+      "git_blob": "5350206793fa93718f61bb1eaa6ab7a668d25e9a",
+      "sha256": "8dc0c359571a53d5163f18e2a347d2b505d53bfb29654f73620c76cfcaf727bb",
+      "bytes": 7695
+    },
+    {
+      "path": "client/src/concept2cure/mdx/surfaces/CerSurface.tsx",
+      "git_blob": "f9489874b66b2b808c93588f65dfe9fa89af4c8a",
+      "sha256": "7f9572ccbdd6c8f36f84610fa84d799e37e179eb9156842c3a17ce19418e171c",
+      "bytes": 6463
+    },
+    {
+      "path": "client/src/concept2cure/mdx/surfaces/PostmarketSurface.tsx",
+      "git_blob": "418d9fcef1f6ddff706f6d21663f52ecf25a104e",
+      "sha256": "c6c9bb51b88b577f46957911cd81afcf144de24d7f07d8b5771eb9a1c97c0a40",
+      "bytes": 21957
+    },
+    {
+      "path": "client/src/concept2cure/mdx/workbench/TemplatesSurface.tsx",
+      "git_blob": "db57e955faaf44603dded117d6a83b6e748f51ed",
+      "sha256": "c5904464d17cc8bbd9eb8239c6caa8e9f7d9b82b68256125d891b36c02b3a9ac",
+      "bytes": 3545
+    },
+    {
+      "path": "client/src/concept2cure/mdx/workbench/Workbench.tsx",
+      "git_blob": "39c5cdb969334af198de2be7e7aa393f2f934aed",
+      "sha256": "6060d6c3b0d3c9b1e7a0d099f0aa6d4116253646494c52b0e38f7ed8f3edd02b",
+      "bytes": 32933
+    },
+    {
+      "path": "client/src/concept2cure/mdx/workbench/__tests__/TemplatesSurface.test.tsx",
+      "git_blob": "e1fcf5c4654772e46f06327a9b8d5bd7450aaa04",
+      "sha256": "3ae608188cf5d1117f0fb2f4c83fa63f8fbe8dacacb22020e814decb7620ea41",
+      "bytes": 913
+    },
+    {
+      "path": "client/src/concept2cure/mdx/workbench/__tests__/workbenchNoFixtures.test.tsx",
+      "git_blob": "04982c1b60a4e83cd6afd424ddf75e69085cb0c7",
+      "sha256": "d5bf071e5ac3cf437ff0fb9a13c7999bf913a32bd477e069a63e6d1506d38f7c",
+      "bytes": 5938
+    },
+    {
+      "path": "client/src/concept2cure/services/__tests__/workflowDecisionService.test.ts",
+      "git_blob": "7aae18861bbc5e3ddfa14a16ec4938d68a57582e",
+      "sha256": "c36fd84c6b7ea00f57ca10c04d1faccd93b2567ccaf695cb7bcb1ef9a898c5df",
+      "bytes": 1265
+    },
+    {
+      "path": "client/src/concept2cure/services/programTabsService.ts",
+      "git_blob": "0de6445387381146ef2b0db2ee70c73feacadc4a",
+      "sha256": "60562f77af50ad4a3ea0db5fe7111a9be8f1d2ccf117e3dd00dc8cac605f4c3c",
+      "bytes": 11531
+    },
+    {
+      "path": "client/src/concept2cure/services/workflowDecisionService.ts",
+      "git_blob": "ea1d7d878e2747018deeaa303e6affc97ef977a7",
+      "sha256": "1efc93481a02beae84e529cb47c9713263afa2d78da4e651e67e5aee5d06d80b",
+      "bytes": 539
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/MdxCatalogSolution.test.tsx",
+      "git_blob": "eebde592c5770abfaaf60387495d7116fa6a4fea",
+      "sha256": "60c939ee212ec416ed8daf40e8412103c5ca7c0d8f4fbbf58c73ecc3954a67f2",
+      "bytes": 1410
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/ProjectHome.mdxWorkflow.test.tsx",
+      "git_blob": "9b3486f106d552013aae7e686d3beb8ec9c6f9f5",
+      "sha256": "77ca5f454085e6bc02c05b0271aba2f9f187676b4d4b7f25e05ff3cceb1b6aba",
+      "bytes": 3551
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx",
+      "git_blob": "1d3d0520e585bd741b4d4e4178903e6a02701973",
+      "sha256": "e1d54ffe00742b0693b4035f98298c8b80025fd72d4ae422780296a1f05fc814",
+      "bytes": 5976
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx",
+      "git_blob": "898e8a23229eddf46105547b37442f95dd249ee9",
+      "sha256": "c8c72cf2d7f359e807a86fe104f36ef11de61376ceff9ac55beb66041aa01868",
+      "bytes": 15382
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/appsMdxSolution.test.tsx",
+      "git_blob": "61db70587511ed020db38eda727160fb64a89bde",
+      "sha256": "1209541e10b32087f9256d027229d9a86c84f9b70a617fe88487cc7d6f9fba07",
+      "bytes": 7217
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx",
+      "git_blob": "87327f19da2ae75e59b5d059b7420580ca072e2f",
+      "sha256": "bf2782ff9ec9f7db88b0255d7ed3760fb950100e4acc6f8260b0f8ef2efd50b8",
+      "bytes": 6478
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx",
+      "git_blob": "6e6d8cf97e99d2175db607dfab939c3aba012441",
+      "sha256": "72951fddb4d91e1db393606d49083c988dd8c255e563e82832e259ddd3cf7f7f",
+      "bytes": 8785
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/registryModel.test.ts",
+      "git_blob": "97e8416d179ae7fe0f96187aa8e82f8d2f51bac8",
+      "sha256": "bb198a9ee5d4de1d739d7bbcb9b72538a481dce16bbb8ed730820810806f69fb",
+      "bytes": 14568
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx",
+      "git_blob": "3bd10baec30ece95dfd1565d6bb7d89afe743f99",
+      "sha256": "e9a8fe228628eff8e6dc71355f0de3cd04b0855ace1068d056150a8789104bb3",
+      "bytes": 15488
+    },
+    {
+      "path": "client/src/concept2cure/v2/catalogWorkflows.ts",
+      "git_blob": "24562eb6986a1de013a157c0fd0fb4fa4847c3a6",
+      "sha256": "2610f896670528e7ce6f1afb8aaca3ce67d06a234e4f2f1e8dd4f9fe31a28808",
+      "bytes": 4690
+    },
+    {
+      "path": "client/src/concept2cure/v2/fixtures/project-home-data.tsx",
+      "git_blob": "f11a0fa742cad082c130360b8062d0538f67c99a",
+      "sha256": "d636882b423c1d4a39d548a5d47de95a086a4a5552baa1ca0c8719a6a14396a6",
+      "bytes": 9438
+    },
+    {
+      "path": "client/src/concept2cure/v2/registryModel.ts",
+      "git_blob": "5643678b63ec34fc5e5a14794adf9bea3cf7f2ee",
+      "sha256": "920f3698dac5fbe0c2c1d78a1558f5f10128cb948f6f759a3cdc993506a1480a",
+      "bytes": 48946
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/mdx-project-workflow.css",
+      "git_blob": "15b0020d98633e111f1d1b049e077a2426f99419",
+      "sha256": "209ef1eabdf2f831226e31383371207f8d6f3458ca5ce029c22ac41dfa7ea0ce",
+      "bytes": 1955
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/DesignControls.tsx",
+      "git_blob": "26173457e490cd143a9068dc7ab580e8352c067d",
+      "sha256": "e6fcfb52bde30af41f385f88a2ec535275cdc247def3e2b26f0eb53b5995725b",
+      "bytes": 30036
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/HumanFactors.tsx",
+      "git_blob": "e62a16cbf7c42b5f0bf4715148bfb76a7bf8b52d",
+      "sha256": "47c02b0e8b8bbdc07720322e893e9b2f87c9793455292d67f6aec3fa1e11f2d0",
+      "bytes": 29321
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/IvdCompleteness.tsx",
+      "git_blob": "4ace931b5fbe2ffefe36196009c09ff97847868b",
+      "sha256": "dfe1d080d710aa756bea882ca99162788e8d045b94c6a06a5acab68945325cb3",
+      "bytes": 15647
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Labeling.tsx",
+      "git_blob": "4d64a8366a8cae7455bbdf5eaa96565b3e601f46",
+      "sha256": "75fe956950a5d7c3511c5c9c082e01649c9dc19e502beb1b62eda88073ec66a7",
+      "bytes": 30545
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/MdxCatalogSolution.tsx",
+      "git_blob": "348fc97af7505da1c669ca65277ff347e715e160",
+      "sha256": "dff6b69e323b6265b8e78c86321c04d7192b801e9e67d2848bdf6788eb9761d5",
+      "bytes": 2264
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+      "git_blob": "2e8face4231f38802d997b17347f842010a172a6",
+      "sha256": "3c2d5e02c05f70940717c4cbedb16f1591f2c2b46db41a0c7bd66fb7ea2f8336",
+      "bytes": 99943
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx",
+      "git_blob": "35a651dad2ce35e29b7bf45268b294b2a522a9e4",
+      "sha256": "0975993d4367e3d9bb62cf61cc7aff2517a654b5ba065c7506d06cf380e113f7",
+      "bytes": 9460
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Risk.tsx",
+      "git_blob": "2f0eb910402a9b9653519248424f40fbb9407c56",
+      "sha256": "db8886a250d6898fdefb8a6b9d951d19fa78be04c512d9ed9fadd67ff68028a7",
+      "bytes": 47650
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx",
+      "git_blob": "c477fbef1eed46fc938147ccd6cd65053278496e",
+      "sha256": "017a1c39c142d27272b0ea4eaf27e22c1b683937eac3e9705ea7498656d3ccc4",
+      "bytes": 41379
+    },
+    {
+      "path": "scripts/ci/check-launch-scope-api.ts",
+      "git_blob": "ba5f6a7328cb04762bb673e13f07453984e9ffb8",
+      "sha256": "d64e5580a3ca33c0ea8ea2e21493a236e7ece999eb8201b29bafd24884d9189a",
+      "bytes": 18753
+    },
+    {
+      "path": "scripts/ci/launch-scope-fixture-allowlist.json",
+      "git_blob": "78f2ce0edfd7a16b7e77a9307bf043a2d6dde73c",
+      "sha256": "a583082ead0981cd7fba976a59d91199a84e0bf143b8e94c1a31bd2738310ec1",
+      "bytes": 11781
+    },
+    {
+      "path": "server/__tests__/routes/k510-document-preview.test.ts",
+      "git_blob": "ff2d284829bf20dd25f2ee0bf3dca48d775fbdf7",
+      "sha256": "2bf3ad598a106cb9192befc37593c47b4a4ccd9eec9bb3e8fee62ecb0677d37d",
+      "bytes": 7942
+    },
+    {
+      "path": "server/routes/k510-document-preview.ts",
+      "git_blob": "ba15ec610f1fc50825a645f8a894d50fbdb7248c",
+      "sha256": "fc7f093cddc58121e68ca26ec56b9f4dd0451d45ec4def7f7fce011452d77690",
+      "bytes": 7861
+    },
+    {
+      "path": "server/services/entitlements/__tests__/launch-scope.test.ts",
+      "git_blob": "36057b6448d66f16f3ed2c92fe0233f1c8688e20",
+      "sha256": "68d0b3c32e8932f4d12c87464629d1281bcd116a7645e1b49176caabc4e9cfe7",
+      "bytes": 15129
+    },
+    {
+      "path": "server/services/pathway-engines/estar/estar-content-leaves.ts",
+      "git_blob": "6af11cfb9247aed711bf97d9f28181da8efeb605",
+      "sha256": "25e1017f364947a9e035e065d43a18e49e805e518804dfcf4d6ff073697d1c50",
+      "bytes": 23057
+    },
+    {
+      "path": "shared/constants/__tests__/mdx-project-features.test.ts",
+      "git_blob": "3890f890de68122c07a632db3e1a89be8b5fecb6",
+      "sha256": "13713e2ff5ee2a6ac58c93ad43a3b61bb0212baa2568cbda5895e4a4b0129adc",
+      "bytes": 752
+    },
+    {
+      "path": "shared/constants/launch-scope.ts",
+      "git_blob": "9da69353ca6e4773b8912a4a4181809612f3962e",
+      "sha256": "1ce4daaea6d6c0d8c98c5d52ff4a316e88fda4864012a8079cfc2d4b122291c5",
+      "bytes": 13932
+    },
+    {
+      "path": "shared/constants/mdx-project-features.ts",
+      "git_blob": "38707be43283a60b45a4fd216b61ddd83471b2af",
+      "sha256": "743756372655d218ae03a82c4680f40b723e26117c3245f52a4a8a956e522d65",
+      "bytes": 900
+    },
+    {
+      "path": "shared/constants/mdx.ts",
+      "git_blob": "42d39ee7b42bdec685b2f1dc0bfd63a433d03489",
+      "sha256": "21929aedf8648a77f883f5b84ed173afc18c19c3226c1a9c2813b5ab0655ccd3",
+      "bytes": 11370
+    },
+    {
+      "path": "shared/constants/ui-surface-registry.ts",
+      "git_blob": "d5cbc7085426498287856e3f6197d5628572c3e8",
+      "sha256": "dee11a1e5b08e6a2a3a8a670bef8800e8ed46684a7922035f5dc35c16750a7a0",
+      "bytes": 56623
+    },
+    {
+      "path": "shared/regulatory/__tests__/work-packages.test.ts",
+      "git_blob": "900afb917f76999114ee20f4741c92ba26a3fc53",
+      "sha256": "eb76d96c9fb3b93a0d76c320f5256ffc775df9e0fb19e5c422f14268b9eb7a42",
+      "bytes": 15936
+    },
+    {
+      "path": "shared/regulatory/work-packages.ts",
+      "git_blob": "a8f5ddce7983ba3e657010e6b54ee08c4202bc71",
+      "sha256": "959830cf449e49446be6a667c8392f33512f78fc4341cccd05b712369da2c454",
+      "bytes": 44532
+    }
+  ],
+  "receipts": [
+    {
+      "path": "root-broad-tests.txt.gz",
+      "uncompressed_sha256": "27895f47b59acceef69d011f47a25e981056bd3f8a06037f17df35f8b5e3a1d8",
+      "uncompressed_bytes": 194176,
+      "stored_bytes": 29606
+    },
+    {
+      "path": "root-shared-register-tests.txt.gz",
+      "uncompressed_sha256": "26f7ed657d2edb88a309132d9f505ec82dee491eed513de7b59096a47a81ed17",
+      "uncompressed_bytes": 13734,
+      "stored_bytes": 2819
+    },
+    {
+      "path": "canonical-assembly-project-tests.txt.gz",
+      "uncompressed_sha256": "5624472a88429bcfd8e8fd9f2715625b16120b4dfb762c8cf0a44b98098732e6",
+      "uncompressed_bytes": 7075,
+      "stored_bytes": 1693
+    },
+    {
+      "path": "canonical-reporting-tests.txt",
+      "uncompressed_sha256": "154fe13619f46ba917bb5dfb7a1860caf9c7ce56ce83339cbf91e8438105c688",
+      "uncompressed_bytes": 834,
+      "stored_bytes": 834
+    },
+    {
+      "path": "canonical-production-build.txt",
+      "uncompressed_sha256": "15336ff349b7c468138c6e3ccbe5d2ac43f3a7a8c085269ba464445dc41b2967",
+      "uncompressed_bytes": 16493,
+      "stored_bytes": 16493
+    },
+    {
+      "path": "root-prepush-before-canonical-sync.txt",
+      "uncompressed_sha256": "de37f40c602798819249f6e5e46f9ef3a014eddb902f2606fea0313ca7939d47",
+      "uncompressed_bytes": 13870,
+      "stored_bytes": 13870
+    },
+    {
+      "path": "root-precommit-security.txt",
+      "uncompressed_sha256": "cdcea483d5d9eba7d6a4c290acbb28237543a50b3c36493293eb73f0212f582b",
+      "uncompressed_bytes": 1370,
+      "stored_bytes": 1370,
+      "original_untrimmed_sha256": "3068c51fc8ba3b955b608f90cb2f81b29638476a63ae3c8cce8bdfb9a992c7b7",
+      "normalized_trailing_whitespace": true
+    },
+    {
+      "path": "canonical-full-prepush.txt",
+      "uncompressed_sha256": "e790b77e7d00b7470f0af09db9b7a344088afa28f1a9cf96ea2e0bd2d136428c",
+      "uncompressed_bytes": 13870,
+      "stored_bytes": 13870
+    },
+    {
+      "path": "canonical-launch-scope.txt",
+      "uncompressed_sha256": "aa2a4ab014f960449335a2ee2d5d6bd93577205bf175b05e877a833fd713b5e5",
+      "uncompressed_bytes": 487,
+      "stored_bytes": 487
+    },
+    {
+      "path": "canonical-companion-tests.txt",
+      "uncompressed_sha256": "7f9449c3f9883301aab6155ba8ceceaded36a10965cc263395ba4034f3ad210c",
+      "uncompressed_bytes": 45,
+      "stored_bytes": 45
+    },
+    {
+      "path": "postmarket-scope-green.txt",
+      "uncompressed_sha256": "059e32ff61b203a6e2a931fc4e0a6e0e44cd34691245de89d84ed73ef71a14ce",
+      "uncompressed_bytes": 257,
+      "stored_bytes": 257
+    }
+  ],
+  "test_cohorts": [
+    {
+      "files": 93,
+      "tests": 936,
+      "receipt": "root-broad-tests.txt.gz"
+    },
+    {
+      "files": 11,
+      "tests": 69,
+      "receipt": "root-shared-register-tests.txt.gz"
+    },
+    {
+      "files": 5,
+      "tests": 81,
+      "receipt": "canonical-assembly-project-tests.txt.gz"
+    },
+    {
+      "files": 2,
+      "tests": 16,
+      "receipt": "postmarket-scope-green.txt"
+    },
+    {
+      "files": 3,
+      "tests": 41,
+      "receipt": "canonical-reporting-tests.txt"
+    }
+  ],
+  "cohorts_overlap": true,
+  "production_build_passed": true,
+  "final_pre_push_passed": true,
+  "full_typecheck": {
+    "errors": 0,
+    "tsc_exit": 0,
+    "baseline": 0,
+    "receipt": "canonical-full-prepush.txt"
+  },
+  "launch_scope": {
+    "apps": 7,
+    "surfaces": 54,
+    "module_grants": 13,
+    "api_paths": 530,
+    "refused_paths": 0,
+    "receipt": "canonical-launch-scope.txt"
+  },
+  "changed_file_lint": {
+    "errors": 0,
+    "warning_delta": -7
+  },
+  "live_deployment_verified": false,
+  "browser_verified": false
+}

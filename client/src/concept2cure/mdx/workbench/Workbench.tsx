@@ -3,7 +3,6 @@
  *   - TasksSurface         Tasks and reviews — Kanban + list + metrics
  *   - ValidationSurface    Validation center — programs matrix + rule list
  *   - SubmissionsSurface   Submission center — pipeline + list + detail drawer
- *   - TemplatesSurface     Templates — index of org-approved boilerplate
  *
  * Ported verbatim from ui_kits/mdx/Workbench.jsx.
  * The vault lives in surfaces/VaultSurface.tsx (data/vault.ts +
@@ -18,7 +17,6 @@ import {
   type Submission,
   type Task,
   type TaskMetric,
-  type Template,
   type ValidationProgram,
   type ValidationRule,
   type ValidationSummary,
@@ -26,7 +24,6 @@ import {
 import { useSubmissions, useSubmissionDetail } from '../hooks/useSubmissions';
 import {
   useWorkbenchTasks,
-  useWorkbenchTemplates,
   useWorkbenchValidation,
   useUnifiedWork,
   workNotOnTheBoard,
@@ -65,7 +62,6 @@ const NO_VALIDATION_RULES: ValidationRule[] = [];
 const NO_VALIDATION_PROGRAMS: ValidationProgram[] = [];
 const NO_VALIDATION_SUMMARY: ValidationSummary[] = [];
 const NO_SUBMISSIONS: Submission[] = [];
-const NO_TEMPLATES: Template[] = [];
 
 /**
  * The three readings a panel can be in when it is holding no rows: still
@@ -76,7 +72,7 @@ const NO_TEMPLATES: Template[] = [];
  * Returns null the moment there is anything to show, so it composes in front
  * of an existing list without wrapping it.
  */
-function PanelState({
+export function PanelState({
   rows,
   loading,
   error,
@@ -776,86 +772,6 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
           </div>
         </div>
       </section>
-    </>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Templates
-// ─────────────────────────────────────────────────────────────────────────────
-
-export function TemplatesSurface({ onAskAna }: WorkbenchProps) {
-  /* Live templates from /api/templates (already aggregates indTemplates +
-     documentTemplates + ectdTemplates server-side). Falls back to fixture
-     during load + on error. */
-  const live = useWorkbenchTemplates();
-  const sourceTemplates = live.templates ?? NO_TEMPLATES;
-
-  /* Shared by the header button and the empty state's CTA — see newTask. */
-  const newTemplate = React.useCallback(() => {
-    onAskAna(
-      'Create a new org-approved template. Walk me through name, owner, applicable pathways (510(k), PMA, CER), ' +
-                  'tags, and the section skeleton — then version-control it.',
-    );
-  }, [onAskAna]);
-  return (
-    <>
-      <div className="page-header">
-        <div>
-          <div className="page-eyebrow">Workbench</div>
-          <h1 className="page-title">Templates</h1>
-          <div className="page-sub">
-            Reusable section skeletons and boilerplate. Org-approved, version-controlled.
-          </div>
-        </div>
-        <div className="page-actions">
-          <button className="btn primary small" onClick={newTemplate}>
-            {I.plus} New template
-          </button>
-        </div>
-      </div>
-      <PanelState
-        rows={sourceTemplates}
-        loading={live.loading}
-        error={live.error}
-        refresh={live.refresh}
-        icon={I.template}
-        title="No templates yet"
-        errorTitle="Could not load the template library"
-        hint="Org-approved boilerplate appears here once it is published to the library."
-        action={{ label: 'New template', onAct: newTemplate }}
-        testId="workbench-no-templates"
-      />
-      <div className="tpl-grid">
-        {sourceTemplates.map(t => (
-          <button
-            key={t.id}
-            className="tpl-card"
-            onClick={() =>
-              onAskAna(
-                `Open template "${t.name}" — owned by ${t.owner}, ${t.uses} uses, updated ${t.updated}. ` +
-                  `Show me the section skeleton and how to apply it to a program.`,
-              )
-            }
-          >
-            <div className="tpl-head">
-              <span className="tpl-ico">{I.template}</span>
-              <span className="tpl-uses">{t.uses} uses</span>
-            </div>
-            <div className="tpl-name">{t.name}</div>
-            <div className="tpl-meta">
-              {t.owner} · updated {t.updated}
-            </div>
-            <div className="tpl-tags">
-              {t.tags.map(tag => (
-                <span key={tag} className="tpl-tag">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </button>
-        ))}
-      </div>
     </>
   );
 }

@@ -382,7 +382,7 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
           </div>
           <h1 className="ph-title">Labeling and IFU</h1>
           <div className="ph-sub">
-            Label, IFU and symbols authoring — ISO 15223-1 symbols, UDI placement (21 CFR 801.45 / GUDID), translations with back-translation QC, and warnings traced to the ISO 14971 risk file.
+            Organization-wide labeling register. Label, IFU and symbols authoring — ISO 15223-1 symbols, UDI placement (21 CFR 801.45 / GUDID), translations with back-translation QC, and warnings traced to the ISO 14971 risk file.
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>

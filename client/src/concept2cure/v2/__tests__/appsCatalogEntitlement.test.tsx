@@ -210,9 +210,10 @@ describe('Workflows — the five entitlement states are five different cards', (
 
     // Finding 44: the server calls this 'included' — entitled, no row needed —
     // and the rail opens it. The card said it was not switched on, drew a lock
-    // and offered no Open.
+    // and offered no Open. Labeling now belongs to the MDX project workflow,
+    // so its launch entry is the solution's Open projects button.
     expect(screen.queryByText(/Not switched on/)).toBeNull();
-    expect(screen.getByText('Open')).toBeTruthy();
+    expect(screen.getByText('Open projects')).toBeTruthy();
     /* The earlier defect this still pins: 'none' and 'disabled' both arrive as isEnabled
        false, and the card used to answer both with "an admin can re-enable
        it" — an administrator's decision invented for a module no administrator
@@ -224,6 +225,7 @@ describe('Workflows — the five entitlement states are five different cards', (
     expect(screen.getAllByText('Professional')).toHaveLength(2);
     // The switch shows what the organization has: open. Turning it off writes
     // the 'disabled' row that locks it.
+    screen.getByText(/Feature access/).closest('details')!.open = true;
     showAdminControls();
     const sw = screen.getByTitle('Disable module');
     expect(sw.getAttribute('aria-checked')).toBe('true');

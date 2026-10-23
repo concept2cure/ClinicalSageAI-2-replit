@@ -1,0 +1,26 @@
+client/src/concept2cure/services/workflowDecisionService.ts:5:export function rejectWorkflow(approvalId: number | string, comments: string): Promise<WorkflowDecisionResult> {
+client/src/concept2cure/services/__tests__/workflowDecisionService.test.ts:6:import { rejectWorkflow } from '../workflowDecisionService';
+client/src/concept2cure/services/__tests__/workflowDecisionService.test.ts:14:    expect(await rejectWorkflow('review/7', 'Missing source evidence')).toEqual(decision);
+client/src/concept2cure/services/__tests__/workflowDecisionService.test.ts:22:    await expect(rejectWorkflow(7, 'Missing source evidence')).rejects.toThrow('The decision could not be recorded.');
+client/src/concept2cure/hooks/useRejectWorkflow.ts:4:import { rejectWorkflow } from '../services/workflowDecisionService';
+client/src/concept2cure/hooks/useRejectWorkflow.ts:31:export function useRejectWorkflow() {
+client/src/concept2cure/hooks/useRejectWorkflow.ts:35:      rejectWorkflow(approvalId, comment),
+client/src/concept2cure/hooks/__tests__/useRejectWorkflow.test.tsx:7:const rejectWorkflow = vi.hoisted(() => vi.fn());
+client/src/concept2cure/hooks/__tests__/useRejectWorkflow.test.tsx:8:vi.mock('../../services/workflowDecisionService', () => ({ rejectWorkflow }));
+client/src/concept2cure/hooks/__tests__/useRejectWorkflow.test.tsx:9:import { useRejectWorkflow } from '../useRejectWorkflow';
+client/src/concept2cure/hooks/__tests__/useRejectWorkflow.test.tsx:12:afterEach(() => { cleanup(); rejectWorkflow.mockReset(); });
+client/src/concept2cure/hooks/__tests__/useRejectWorkflow.test.tsx:18:    rejectWorkflow.mockResolvedValue({ success: true, status: 'rejected' });
+client/src/concept2cure/hooks/__tests__/useRejectWorkflow.test.tsx:20:    const { result } = renderHook(() => useRejectWorkflow(), { wrapper });
+client/src/concept2cure/hooks/__tests__/useRejectWorkflow.test.tsx:21:    expect(rejectWorkflow).not.toHaveBeenCalled();
+client/src/concept2cure/hooks/__tests__/useRejectWorkflow.test.tsx:23:    expect(rejectWorkflow).toHaveBeenCalledWith(7, 'Missing source evidence');
+client/src/concept2cure/mdx/workbench/TemplatesSurface.tsx:7:import { useWorkbenchTemplates } from '../hooks/useWorkbenchTemplates';
+client/src/concept2cure/mdx/workbench/TemplatesSurface.tsx:16:export function TemplatesSurface({ onAskAna }: WorkbenchProps) {
+client/src/concept2cure/mdx/workbench/TemplatesSurface.tsx:18:  const live = useWorkbenchTemplates();
+client/src/concept2cure/mdx/workbench/__tests__/TemplatesSurface.test.tsx:5:import { TemplatesSurface } from '../TemplatesSurface';
+client/src/concept2cure/mdx/workbench/__tests__/TemplatesSurface.test.tsx:15:    render(<TemplatesSurface onAskAna={onAskAna} />);
+client/src/concept2cure/mdx/workbench/__tests__/workbenchNoFixtures.test.tsx:31:import { TemplatesSurface } from '../TemplatesSurface';
+client/src/concept2cure/mdx/workbench/__tests__/workbenchNoFixtures.test.tsx:83:    render(<TemplatesSurface onAskAna={noop} />);
+client/src/concept2cure/mdx/hooks/useWorkbenchTemplates.ts:58:export function useWorkbenchTemplates(): UseWorkbenchTemplatesResult {
+client/src/concept2cure/mdx/hooks/__tests__/useWorkbenchTemplates.test.ts:4:import { useWorkbenchTemplates } from '../useWorkbenchTemplates';
+client/src/concept2cure/mdx/hooks/__tests__/useWorkbenchTemplates.test.ts:14:    const { result } = renderHook(() => useWorkbenchTemplates());
+client/src/concept2cure/mdx/hooks/__tests__/useWorkbenchTemplates.test.ts:25:    const { result } = renderHook(() => useWorkbenchTemplates());

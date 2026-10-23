@@ -1,0 +1,10 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+··································
+
+ Test Files  6 passed (6)
+      Tests  34 passed (34)
+   Start at  20:42:28
+   Duration  11.31s (transform 861ms, setup 383ms, import 1.90s, tests 6.25s, environment 2.20s)
+
