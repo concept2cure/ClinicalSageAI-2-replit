@@ -25,8 +25,9 @@
  *   • nothing internal (SQL, relation, route, env var) can reach the banner.
  */
 import React from 'react';
+import { intakeFixtureRequest, waitForIntakeWorkspace } from './projectIntakeFixture';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 /* Only `apiRequest` is stubbed. `ApiRequestError` must stay the REAL class —
@@ -35,7 +36,7 @@ const apiRequest = vi.hoisted(() => vi.fn());
    branch untestable (and would pass while production failed). */
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
-  apiRequest,
+  apiRequest: (...args: unknown[]) => intakeFixtureRequest(apiRequest, args),
 }));
 
 /**
@@ -54,7 +55,7 @@ vi.mock('../surfaces/AnaVerbs', () => ({
 }));
 vi.mock('../surfaces/RegistryBridge', () => ({
   getSubmissionTypeContext: () => ({
-    id: '510k',
+    id: 'us_510k',
     displayName: 'Traditional 510(k)',
     pathwayKey: 'estar',
     agency: 'FDA',
@@ -75,6 +76,7 @@ function ok(body: unknown) {
 async function advanceToCreate() {
   fireEvent.click(screen.getByRole('button', { name: /pick 510/i }));
   fireEvent.click(await screen.findByRole('button', { name: /continue/i }));
+  await waitForIntakeWorkspace();
   // The project name is required since QA 2026-10-08 (newProjectWizardName.test.tsx).
   fireEvent.change(await screen.findByRole('textbox', { name: /project name/i }), {
     target: { value: 'Aurora CGM — 510(k)' },
@@ -188,13 +190,14 @@ describe('New Project wizard — failed create', () => {
     expect(politeRegion()?.textContent).toBe('');
   });
 
-  it('offers a retry that re-runs the create', async () => {
+  it('offers a retry for a confirmed refusal, after verifying workspaces again', async () => {
     apiRequest.mockRejectedValue(
-      new ApiRequestError('That service is temporarily unavailable. Try again shortly.', 503),
+      new ApiRequestError('The project name is already in use. Review it before retrying.', 409),
     );
 
     render(<NewProjectWizard onClose={() => {}} onNav={() => {}} />);
-    fireEvent.click(await advanceToCreate());
+    const create = await advanceToCreate();
+    await act(async () => { fireEvent.click(create); });
     await screen.findByTestId('new-project-outcome');
 
     const attemptsAfterFirst = apiRequest.mock.calls.length;
@@ -210,7 +213,8 @@ describe('New Project wizard — failed create', () => {
     );
 
     render(<NewProjectWizard onClose={() => {}} onNav={() => {}} />);
-    fireEvent.click(await advanceToCreate());
+    const create = await advanceToCreate();
+    await act(async () => { fireEvent.click(create); });
 
     const banner = await screen.findByTestId('new-project-outcome');
     expect(banner.textContent).toMatch(/9f2c1ba47d3e40518c6ad0b2e7f45391/);
@@ -227,7 +231,8 @@ describe('New Project wizard — failed create', () => {
     );
 
     render(<NewProjectWizard onClose={() => {}} onNav={() => {}} />);
-    fireEvent.click(await advanceToCreate());
+    const create = await advanceToCreate();
+    await act(async () => { fireEvent.click(create); });
 
     const banner = await screen.findByTestId('new-project-outcome');
     expect(banner.textContent).not.toMatch(/relation |software_lifecycle_items|\/api\/|select "/i);
@@ -243,12 +248,14 @@ describe('New Project wizard — failed create', () => {
     apiRequest.mockRejectedValue(new TypeError('Failed to fetch'));
 
     render(<NewProjectWizard onClose={() => {}} onNav={() => {}} />);
-    fireEvent.click(await advanceToCreate());
+    const create = await advanceToCreate();
+    await act(async () => { fireEvent.click(create); });
 
     const banner = await screen.findByTestId('new-project-outcome');
     expect(banner.textContent).not.toMatch(/failed to fetch/i);
-    expect(banner.textContent).toMatch(/could not be created/i);
-    expect(banner.textContent).toMatch(/check your connection/i);
+    expect(banner.textContent).toMatch(/could not be confirmed/i);
+    expect(banner.textContent).toMatch(/check projects/i);
+    expect(screen.queryByRole('button', { name: /try again/i })).toBeNull();
   });
 });
 
@@ -266,7 +273,8 @@ describe('New Project wizard — created but not scaffolded', () => {
     );
 
     render(<NewProjectWizard onClose={() => {}} onNav={() => {}} />);
-    fireEvent.click(await advanceToCreate());
+    const create = await advanceToCreate();
+    await act(async () => { fireEvent.click(create); });
 
     const banner = await screen.findByTestId('new-project-outcome');
     // The server's `detail` already states that the project was created and

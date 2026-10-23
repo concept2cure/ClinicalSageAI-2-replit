@@ -25,6 +25,7 @@
  */
 
 import type { PoolClient } from 'pg';
+import { projectIntakeId } from '../../../shared/project-intake-workspace';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import { projects } from '../../../shared/schema';
 import type { RequestDb } from '../../db/requestDb';
@@ -51,7 +52,9 @@ export type AnchorSkip =
   /** The org has no client workspace, and `projects.client_workspace_id` is NOT NULL. */
   | 'NO_CLIENT_WORKSPACE'
   /** The org has several client workspaces and the program names none of them. */
-  | 'AMBIGUOUS_CLIENT_WORKSPACE';
+  | 'AMBIGUOUS_CLIENT_WORKSPACE'
+  | 'INVALID_CLIENT_WORKSPACE'
+  | 'CLIENT_WORKSPACE_MISMATCH';
 
 export interface AnchorResult {
   /** The anchored `projects.id`, or null when the anchor was skipped. */
@@ -61,6 +64,8 @@ export interface AnchorResult {
   skipped?: AnchorSkip;
   /** Why, for the operator's log. Intake refuses on a skip (requireProgramProjectAnchor). */
   detail?: string;
+  clientWorkspaceId?: number;
+  clientWorkspaceName?: string;
 }
 
 export interface EnsureAnchorInput {
@@ -84,6 +89,12 @@ export interface EnsureAnchorInput {
    * own (its context comes from migrations/20261008c, Rule 1).
    */
   metadata?: Record<string, unknown> | null;
+  /** Explicit, organization-owned active workspace. Never a fallback hint. */
+  clientWorkspaceId?: number;
+  /** New-project intake requires a choice whenever active options are multiple. */
+  requireExplicitWorkspace?: boolean;
+  /** An optional request consistency claim; it never chooses the parent. */
+  workspaceClaim?: number;
 }
 
 interface PreflightRow {
@@ -108,48 +119,15 @@ interface PreflightRow {
  *                        documented domain is research | clinical |
  *                        regulatory | commercial.                       TRUTHFUL
  *   status/priority/depth defaults, or the program's own priority.      TRUTHFUL
- *   client_workspace_id  NOT NULL, FK → client_workspaces.id.           *** NOT DERIVABLE ***
+ *   client_workspace_id  active owned selection, or legacy default.    TRUTHFUL
  *
- * There is no client workspace in program data. `regulatory_programs` carries
- * no workspace column; the v2 New-Project wizard sends none; and the only
- * request-level source (`x-client-id` → tenantContext.clientWorkspaceId) is
- * optional, unvalidated against the org, and sent by no client in this
- * repository. The two other live `INSERT INTO projects` sites that populate it
- * (routes/project-hierarchy.ts, services/rules-engine/actions) both copy it
- * from a PARENT project — neither invents one either.
- *
- * Picking "the org's first workspace" would not be a defaulting choice, it
- * would be an access-control decision: `projects.client_workspace_id` is what
- * services/project-module-bridge.ts checks to decide whether a caller in a
- * given workspace may see a project at all. Assigning the wrong one grants or
- * denies visibility to the wrong people.
- *
- * So the anchor is created only where the workspace is UNAMBIGUOUS, which is
- * two cases, in this order:
- *
- *   1. The organisation has its OWN workspace — one marked
- *      `metadata.defaultForOrganization`, written by
- *      services/c2c/organization-default-workspace.ts. A regulatory program
- *      belongs to the sponsor organisation, not to one of its clients, so this
- *      is where its PM-spine project belongs however many client workspaces sit
- *      beside it. This branch is what lets a CRO add client workspaces through
- *      the live POST /api/clients without its own programs silently stopping
- *      anchoring the moment it has two.
- *   2. Failing that, the organisation has exactly one client workspace, in
- *      which case there is no choice to make and every project in that org is
- *      in it.
- *
- * With none, or with more than one and none of them the organisation's own, the
- * anchor is SKIPPED and the reason is returned. This is the same standard the
- * migrations' backfills hold themselves to (20260814 links, 20261008 inserts):
- * act on the unambiguous case, leave the rest, never guess.
- *
- * Intake does not accept a skip (P-19, 2026-10-08): it calls
- * requireProgramProjectAnchor below, which turns the skip into a refusal that
- * rolls the whole creation back. Until then a skip still created the program,
- * and the program answered "no record" on the schedule, unified work, AnA's
- * project context and the Vault for good. A fabricated workspace is still never
- * the way out; refusing the program is.
+ * New-project intake supplies an explicit active organization-owned workspace,
+ * or accepts the sole active workspace for legacy callers of POST /. Multiple
+ * active options require a choice even when one carries the organization default
+ * marker. The selected row is held FOR SHARE until the caller ends its transaction.
+ * Outside strict intake, the existing organization-default/unique-workspace
+ * behavior remains compatible. An explicit repeat must match the recorded anchor;
+ * no call moves an existing project or grants access to it.
  */
 export async function ensureProgramProjectAnchor(input: EnsureAnchorInput): Promise<AnchorResult> {
   const { client, orgId, userId, programId, name, code, priority, metadata } = input;
@@ -168,14 +146,8 @@ export async function ensureProgramProjectAnchor(input: EnsureAnchorInput): Prom
          WHERE organization_id = $1)                             AS workspace_count,
        (SELECT min(id) FROM client_workspaces
          WHERE organization_id = $1)                             AS workspace_id,
-       -- The organisation's OWN workspace, written by
-       -- services/c2c/organization-default-workspace.ts and marked as such.
-       -- Preferred over the count below: a regulatory program belongs to the
-       -- sponsor organisation, not to one of its client workspaces, so this is
-       -- the answer the count was only ever standing in for. Without it, a
-       -- tenant that adds a client workspace through the live POST /api/clients
-       -- goes from one workspace to two and stops anchoring every program it
-       -- creates afterwards.
+       -- Legacy ensure callers retain the existing organization default.
+       -- Strict intake ignores this marker and locks the actual chosen row.
        (SELECT min(id) FROM client_workspaces
          WHERE organization_id = $1
            AND (metadata ->> $2) = 'true')                       AS default_workspace_id`,
@@ -183,13 +155,6 @@ export async function ensureProgramProjectAnchor(input: EnsureAnchorInput): Prom
   );
   const row = preflight.rows[0];
   const hasColumn = Number(row?.has_column ?? 0) > 0;
-  const workspaceCount = Number(row?.workspace_count ?? 0);
-  const defaultWorkspaceId =
-    row?.default_workspace_id == null ? null : Number(row.default_workspace_id);
-  // The organisation's own workspace when it has one; otherwise the single
-  // workspace it has, which the count check below is what makes safe.
-  const workspaceId =
-    defaultWorkspaceId ?? (row?.workspace_id == null ? null : Number(row.workspace_id));
 
   if (!hasColumn) {
     return {
@@ -204,35 +169,21 @@ export async function ensureProgramProjectAnchor(input: EnsureAnchorInput): Prom
   // Idempotent: an org's program anchors exactly one project row. At intake the
   // program id was generated moments ago so this cannot match, but `ensure` is
   // the contract — a re-invocation must link, never fork.
-  const existing = await client.query<{ id: number | string }>(
-    `SELECT id FROM projects
+  const existing = await client.query<{ id: number | string; client_workspace_id: number | string }>(
+    `SELECT id, client_workspace_id FROM projects
       WHERE regulatory_program_id = $1 AND organization_id = $2
       ORDER BY id
       LIMIT 1`,
     [programId, orgId],
   );
-  if (existing.rows.length > 0) {
-    return { projectId: Number(existing.rows[0].id), created: false };
+  if (existing.rows.length > 0 && !input.requireExplicitWorkspace && input.clientWorkspaceId === undefined) {
+    return retainedAnchor(input, existing.rows[0], { id: Number(existing.rows[0].client_workspace_id) });
   }
-
-  if (workspaceCount === 0 || workspaceId === null) {
-    return {
-      projectId: null, created: false, skipped: 'NO_CLIENT_WORKSPACE',
-      detail:
-        'This organization has no client workspace, and projects.client_workspace_id is NOT NULL. ' +
-        'A program cannot be created without its PM-spine anchor until a workspace exists.',
-    };
-  }
-  if (workspaceCount > 1 && defaultWorkspaceId === null) {
-    return {
-      projectId: null, created: false, skipped: 'AMBIGUOUS_CLIENT_WORKSPACE',
-      detail:
-        `This organization has ${workspaceCount} client workspaces, none of them marked as the ` +
-        'organization\u2019s own, and the program names none of them. ' +
-        'projects.client_workspace_id decides who can see a project, so it is not defaulted. ' +
-        'A program cannot be created without its PM-spine anchor.',
-    };
-  }
+  const selected = input.requireExplicitWorkspace || input.clientWorkspaceId !== undefined
+    ? await lockIntakeWorkspace(input) : legacyWorkspace(row);
+  if ('skipped' in selected) return selected;
+  if (existing.rows.length > 0) return retainedAnchor(input, existing.rows[0], selected);
+  const { id: workspaceId, name: workspaceName } = selected;
 
   // `path` and `parent_project_id` are deliberately left NULL: this is a root
   // project with no hierarchy, and project-rollup-service treats an
@@ -251,7 +202,56 @@ export async function ensureProgramProjectAnchor(input: EnsureAnchorInput): Prom
      RETURNING id`,
     [orgId, workspaceId, name, code, priority, userId, programId, metadata ? JSON.stringify(metadata) : null],
   );
-  return { projectId: Number(inserted.rows[0].id), created: true };
+  return { projectId: Number(inserted.rows[0].id), created: true, clientWorkspaceId: workspaceId,
+    ...(workspaceName ? { clientWorkspaceName: workspaceName } : {}) };
+}
+
+interface SelectedWorkspace { id: number; name?: string }
+
+function legacyWorkspace(row: PreflightRow | undefined): SelectedWorkspace | (AnchorResult & { skipped: AnchorSkip }) {
+  const count = Number(row?.workspace_count ?? 0);
+  const marked = row?.default_workspace_id == null ? null : Number(row.default_workspace_id);
+  const id = marked ?? (row?.workspace_id == null ? null : Number(row.workspace_id));
+  if (count === 0 || id === null) return workspaceRefusal('NO_CLIENT_WORKSPACE', 'No organization workspace exists.');
+  if (count > 1 && marked === null) return workspaceRefusal('AMBIGUOUS_CLIENT_WORKSPACE', 'Several workspaces exist and no organization default is marked.');
+  return { id };
+}
+
+function retainedAnchor(input: EnsureAnchorInput, saved: { id: number | string; client_workspace_id: number | string }, selected: SelectedWorkspace): AnchorResult {
+  const clientWorkspaceId = Number(saved.client_workspace_id);
+  if (input.requireExplicitWorkspace && clientWorkspaceId !== selected.id
+    || input.clientWorkspaceId !== undefined && clientWorkspaceId !== input.clientWorkspaceId
+    || input.workspaceClaim !== undefined && clientWorkspaceId !== input.workspaceClaim) {
+    return workspaceRefusal('CLIENT_WORKSPACE_MISMATCH', 'The explicit workspace contradicts the recorded project anchor.');
+  }
+  return { projectId: Number(saved.id), created: false, clientWorkspaceId,
+    ...(selected.name ? { clientWorkspaceName: selected.name } : {}) };
+}
+
+function workspaceRefusal(skipped: AnchorSkip, detail: string): AnchorResult & { skipped: AnchorSkip } {
+  return { projectId: null, created: false, skipped, detail };
+}
+
+/** Part of the ONE anchor writer, on its caller-owned transaction. */
+async function lockIntakeWorkspace(input: EnsureAnchorInput): Promise<{ id: number; name: string } | (AnchorResult & { skipped: AnchorSkip })> {
+  const explicit = input.clientWorkspaceId;
+  if (explicit !== undefined && (typeof explicit !== 'number' || projectIntakeId(explicit) === null)) {
+    return workspaceRefusal('INVALID_CLIENT_WORKSPACE', 'The supplied workspace ID is invalid.');
+  }
+  const selected = await input.client.query<{ id: number; name: string }>(explicit === undefined
+    ? `SELECT id, name FROM client_workspaces WHERE organization_id=$1 AND status='active' ORDER BY id FOR SHARE`
+    : `SELECT id, name FROM client_workspaces WHERE organization_id=$1 AND status='active' AND id=$2 ORDER BY id FOR SHARE`,
+  explicit === undefined ? [input.orgId] : [input.orgId, explicit]);
+  if (selected.rows.length === 0) return workspaceRefusal(explicit === undefined ? 'NO_CLIENT_WORKSPACE' : 'INVALID_CLIENT_WORKSPACE', 'No active owned workspace matched the selection.');
+  if (selected.rows.length !== 1) return workspaceRefusal('AMBIGUOUS_CLIENT_WORKSPACE', 'An explicit workspace selection is required.');
+  const row = selected.rows[0];
+  if (!Number.isSafeInteger(row.id) || row.id <= 0 || typeof row.name !== 'string' || !row.name.trim()) {
+    throw new Error('The selected workspace identity could not be verified');
+  }
+  if (input.workspaceClaim !== undefined && input.workspaceClaim !== row.id) {
+    return workspaceRefusal('CLIENT_WORKSPACE_MISMATCH', 'The supplied request claim contradicts the selected workspace.');
+  }
+  return row;
 }
 
 /**
@@ -279,12 +279,12 @@ export class ProgramAnchorUnavailableError extends Error {
  */
 export async function requireProgramProjectAnchor(
   input: EnsureAnchorInput,
-): Promise<{ projectId: number; created: boolean }> {
+): Promise<{ projectId: number; created: boolean; clientWorkspaceId?: number; clientWorkspaceName?: string }> {
   const result = await ensureProgramProjectAnchor(input);
   if (result.projectId === null) {
     throw new ProgramAnchorUnavailableError(result.skipped ?? 'PENDING_ANCHOR_COLUMN', result.detail ?? '');
   }
-  return { projectId: result.projectId, created: result.created };
+  return { ...result, projectId: result.projectId };
 }
 
 export interface ProgramAnchorRow {

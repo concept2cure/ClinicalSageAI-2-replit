@@ -1,7 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState, ErrorState } from '../dataConnect';
-import { apiRequest, ApiRequestError } from '@/lib/queryClient';
+import { useAuthUser } from '@/services/portal/authService';
+import { useTenant } from '@/contexts/TenantContext';
+import { capturedActorHeaders } from '@/utils/authToken';
+import { projectIntakeId, type ProjectIntakeActor } from '@shared/project-intake-workspace';
+import { createProjectIntake, readProjectIntakeWorkspaces, type IntakeOptionsAnswer } from './projectIntakeRequest';
 import { useDialog } from '../useDialog';
 import {
   productTypeForFilingType,
@@ -193,7 +197,30 @@ const STEP_LABELS = ['Choose filing type', 'Configure project', 'Review & create
  *  acceptance criterion in its own right (a failed write must be visible and
  *  must offer a way out), and driving it through the whole Projects surface
  *  would test the registry loader rather than the banner. */
-export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => void; onNav: (id: string) => void; segment?: string }) {
+type NewProjectWizardProps = { onClose: () => void; onNav: (id: string) => void; segment?: string };
+export function NewProjectWizard(props: NewProjectWizardProps) {
+  const user = useAuthUser();
+  const { currentOrganization } = useTenant();
+  const actorUserId = projectIntakeId(user?.id);
+  const organizationId = projectIntakeId(user?.organizationId);
+  const tenantOrganizationId = projectIntakeId(currentOrganization?.id);
+  const key = actorUserId && organizationId && tenantOrganizationId === organizationId ? `${actorUserId}:${organizationId}` : 'unavailable';
+  const current = useRef(key);
+  current.current = key;
+  if (!actorUserId || !organizationId || tenantOrganizationId !== organizationId) return (
+    <section className="npw" aria-label="New project">
+      <div className="npw-inner"><h1>New project</h1><p>The signed-in account or organization changed. Reopen New project after selecting your organization.</p><button className="btn ghost" onClick={props.onClose}>Back to projects</button></div>
+    </section>
+  );
+  return <NewProjectWizardSession key={key} {...props} actor={{ actorUserId, organizationId }} isCurrent={() => current.current === key} />;
+}
+
+function NewProjectWizardSession({ onClose, onNav, segment, actor, isCurrent }: NewProjectWizardProps & { actor: ProjectIntakeActor; isCurrent: () => boolean }) {
+  const capturedActor = useMemo(() => ({ actorUserId: actor.actorUserId, organizationId: actor.organizationId }), [actor.actorUserId, actor.organizationId]);
+  // Retain the pending outcome in this view. A ref also protects an Escape or
+  // second click in the same turn, before the creating state has rendered.
+  const pendingCreate = useRef(false);
+  const closeIfSettled = useCallback(() => { if (!pendingCreate.current) onClose(); }, [onClose]);
   /* `useDialog` on something that is deliberately not a dialog, and on purpose.
      The hook sets no ARIA of its own — it is three keyboard behaviours: focus
      the container on mount, call onClose on Escape, hand focus back to the
@@ -203,7 +230,7 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
      differently would be the duplication, not the reuse. The dialog SEMANTICS
      — role, aria-modal — are what this view drops, and those live in the JSX
      below, not in here. */
-  const viewRef = useDialog(onClose);
+  const viewRef = useDialog(closeIfSettled);
   const [step, setStep] = useState(0);
   const [tpl, setTpl] = useState<string | null>(null);
   const [name, setName] = useState('');
@@ -241,6 +268,35 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
   const [team] = useState<string[]>([]);
   const [target, setTarget] = useState('');
   const [creating, setCreating] = useState(false);
+  const [writeStopped, setWriteStopped] = useState(false);
+  const [retired, setRetired] = useState(false);
+  const [workspaceOptions, setWorkspaceOptions] = useState<IntakeOptionsAnswer | null>(null);
+  const [workspaceId, setWorkspaceId] = useState('');
+  const [workspaceRead, setWorkspaceRead] = useState(0);
+  const alive = useRef(true);
+  const scopeCurrent = useRef(isCurrent);
+  scopeCurrent.current = isCurrent;
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
+  const mountedSession = useCallback(() => alive.current && scopeCurrent.current(), []);
+  const currentSession = useCallback(() => {
+    if (!mountedSession()) return false;
+    try { capturedActorHeaders({ userId: capturedActor.actorUserId, organizationId: capturedActor.organizationId }); return true; } catch { return false; }
+  }, [capturedActor, mountedSession]);
+  useEffect(() => {
+    if (step !== 1) return;
+    let active = true;
+    setWorkspaceOptions(null);
+    void readProjectIntakeWorkspaces(capturedActor, () => active && currentSession()).then(answer => {
+      if (!active || !mountedSession()) return;
+      if (!currentSession() || answer.kind === 'retired') { setRetired(true); return; }
+      setWorkspaceOptions(answer);
+      setWorkspaceId(previous => answer.kind === 'confirmed'
+        ? answer.clients.length === 1 ? answer.clients[0].id : answer.clients.some(row => row.id === previous) ? previous : ''
+        : '');
+    });
+    return () => { active = false; };
+  }, [step, workspaceRead, capturedActor, currentSession, mountedSession]);
+  const workspace = workspaceOptions?.kind === 'confirmed' ? workspaceOptions.clients.find(row => row.id === workspaceId) ?? null : null;
   /**
    * The wizard's outcome banner.
    *
@@ -252,7 +308,7 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
    * created a second copy of a program that was already there.
    */
   const [outcome, setOutcome] = useState<
-    { kind: 'error' | 'notice'; message: string; correlationId?: string; notOffered?: boolean } | null
+    { kind: 'error' | 'notice'; message: string; correlationId?: string; notOffered?: boolean; unknown?: boolean; confirmedCreated?: boolean } | null
   >(null);
   const fail = (message: string, correlationId?: string) =>
     setOutcome({ kind: 'error', message, correlationId });
@@ -313,128 +369,98 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
   const savedProduct = product.trim() || savedName;
   /* Configure is complete when the name is given and, where the filing type
      leaves it open, the class is chosen. */
-  const configured = savedName !== '' && recordedClass !== null;
+  const configured = savedName !== '' && recordedClass !== null && workspace !== null;
 
   // Persist a real regulatory program (POST /api/c2c/projects → regulatory_programs)
   // then navigate into it using the id the store assigns. On failure we surface
   // the error instead of pretending the project was created.
   const doCreate = async () => {
-    if (!configured || recordedClass === null) return;
+    if (!configured || recordedClass === null || !workspace || pendingCreate.current || creating || writeStopped || !mountedSession()) return;
+    if (!currentSession()) { setRetired(true); return; }
+    pendingCreate.current = true;
     setCreating(true);
     setOutcome(null);
-    const body = {
-      name: savedName,
-      productName: savedProduct,
-      programType,
-      productType: recordedClass,
-      primaryAgency: selTpl?.agency || 'FDA',
-      submissionTypeId: selTpl?.id,
-      // Only what was stated: a blank indication sends none (P-21).
-      indication: isDeviceFiling ? (intendedUse || undefined) : (savedIndication || undefined),
-      ...(euRegulation === 'mdr' ? { euMdrClass: euMdrClass || null } : {}),
-      ...(euRegulation === 'ivdr' ? { euIvdrClass: euIvdrClass || null } : {}),
-      ...(isDeviceFiling
-        ? {
-            deviceClassification: {
-              intendedUse,
-              ...(isFdaDeviceFiling ? {
-                productCode, regulationNumber, deviceClass,
-                reviewPanel, predicateK, predicateName, flags: deviceFlags,
-              } : {}),
-            },
-          }
-        : {}),
-      targetSubmissionDate: target || null,
-      teamMembers: team,
-    };
     try {
-      const res = await apiRequest('POST', '/api/c2c/projects', body);
-      // apiRequest throws on every non-2xx EXCEPT 401, which it returns so the
-      // caller can decide. So this branch is the session case, and only that.
-      if (!res.ok) {
-        fail('Your session has expired. Sign in again to create this project.');
+      const fresh = await readProjectIntakeWorkspaces(actor, currentSession);
+      if (!mountedSession()) return;
+      if (!currentSession() || fresh.kind === 'retired') { setRetired(true); return; }
+      setWorkspaceOptions(fresh);
+      if (fresh.kind !== 'confirmed') {
+        fail(fresh.message);
         setCreating(false);
+        setStep(1);
         return;
       }
-      const j = await res.json();
-
-      // The server tells us when it created the project but declined to scaffold
-      // a governed document — POST /api/c2c/projects puts scaffoldSkipped and
-      // scaffoldDetail in the 201's `meta`. Nothing read it. The project was
-      // created, the wizard closed, and the customer arrived at a permanently
-      // empty Vault with no indication that anything had been declined.
-      //
-      // That silence is what made the fail-closed design dishonest in practice.
-      // Declining to guess a pathway is right — filing an EU MDR Class IIb
-      // technical file as a US NDA is worse than filing nothing — but only if
-      // the customer is told which of the two happened. Surfacing it is the
-      // other half of routing those 33 registry rows to their true program type.
-      // (The server used to report a declined PM-spine anchor here too. Since
-      // P-19 it refuses the program instead — 409 PROJECT_RECORD_UNAVAILABLE,
-      // nothing saved — and that refusal reaches the catch below like any other.)
-      const skipped = j?.meta?.scaffoldSkipped as string | undefined;
-      if (skipped) {
-        const detail = typeof j?.meta?.scaffoldDetail === 'string' ? j.meta.scaffoldDetail : '';
-        // `detail` (from services/c2c/scaffold-project-documents.ts) already
-        // ends by restating that the project was created and nothing was
-        // scaffolded, so leading with our own sentence said the same thing
-        // twice — two systems' text concatenated without editing. Keep our
-        // sentence only for the skip that carries no detail.
+      const verifiedWorkspace = fresh.clients.find(row => row.id === workspace.id && row.name === workspace.name);
+      if (!verifiedWorkspace) {
+        setWorkspaceId('');
+        fail('The client workspace changed or is no longer available. Choose a current workspace and review the project again.');
+        setCreating(false);
+        setStep(1);
+        return;
+      }
+      const body = {
+        name: savedName,
+        productName: savedProduct,
+        programType,
+        productType: recordedClass,
+        primaryAgency: selTpl?.agency || 'FDA',
+        submissionTypeId: selTpl?.id,
+        // Only what was stated: a blank indication sends none (P-21).
+        indication: isDeviceFiling ? (intendedUse || undefined) : (savedIndication || undefined),
+        ...(euRegulation === 'mdr' ? { euMdrClass: euMdrClass || null } : {}),
+        ...(euRegulation === 'ivdr' ? { euIvdrClass: euIvdrClass || null } : {}),
+        ...(isDeviceFiling
+          ? {
+              deviceClassification: {
+                intendedUse,
+                ...(isFdaDeviceFiling ? {
+                  productCode, regulationNumber, deviceClass,
+                  reviewPanel, predicateK, predicateName, flags: deviceFlags,
+                } : {}),
+              },
+            }
+          : {}),
+        targetSubmissionDate: target || null,
+        teamMembers: team,
+      };
+      const answer = await createProjectIntake(actor, verifiedWorkspace, body, currentSession);
+      if (!mountedSession()) return;
+      if (!currentSession() || answer.kind === 'retired') { setRetired(true); return; }
+      setCreating(false);
+      if (answer.kind !== 'confirmed') {
+        if (answer.kind === 'unconfirmed') setWriteStopped(true);
+        setOutcome({ kind: 'error', message: answer.message, correlationId: answer.correlationId,
+          notOffered: answer.notOffered, unknown: answer.kind === 'unconfirmed', confirmedCreated: answer.confirmedCreated });
+        return;
+      }
+      // Only a verified saved program/anchor receipt can authorize navigation.
+      // A confirmed save also closes the duplicate-create path on scaffold notices.
+      setWriteStopped(true);
+      const { data: created, meta } = answer.receipt;
+      if (meta.scaffoldSkipped) {
         setOutcome({
           kind: 'notice',
-          message: (
-            detail
-              ? `${detail} You can add documents manually, or pick a filing type with a defined pathway.`
-              : 'Project created, but no submission dossier was started. You can add documents ' +
-                'manually, or pick a filing type with a defined pathway.'
-          ).replace(/\s+/g, ' '),
+          message: (meta.scaffoldDetail
+            ? `${meta.scaffoldDetail} You can add documents manually, or pick a filing type with a defined pathway.`
+            : 'Project created, but no submission dossier was started. You can add documents manually, or pick a filing type with a defined pathway.').replace(/\s+/g, ' '),
         });
-        setCreating(false);
-        // Deliberately NOT navigating away. The project exists and is listed;
-        // dropping the user into an empty Vault is how this went unnoticed.
         return;
       }
-
-      const created = (j?.data ?? {}) as Partial<ProjPortfolioEntry> & { id?: string };
-      try {
-        publishShellProject({
-          id: created.id || 'new',
-          title: created.title || body.name,
-          product: body.productName,
-          code: created.code || '',
-          ws: created.ws || SEG2WS[uiSeg] || 'Biotech',
-          status: created.status || 'active',
-        });
-      } catch { /* noop */ }
+      publishShellProject({
+        id: created.id,
+        title: created.title || body.name,
+        product: body.productName,
+        code: created.code || '',
+        ws: created.ws || SEG2WS[uiSeg] || 'Biotech',
+        status: created.status || 'active',
+      });
       onClose();
       onNav('project-home');
-    } catch (e) {
-      // ONLY an ApiRequestError's message is safe to render: apiRequest has
-      // reduced that one through `extractApiError`, so it is never the raw enum
-      // and never driver text. Any other throw here is a browser-native
-      // TypeError from fetch itself — "Failed to fetch", "Load failed",
-      // "NetworkError when attempting to fetch resource" — which carries a
-      // non-empty `.message` and would sail past a bare `e instanceof Error`
-      // check straight onto the screen. That is engineer text in a regulated
-      // UI, arriving by a path the server-envelope filter cannot see.
-      const known = e instanceof ApiRequestError;
-      // 422 FILING_NOT_OFFERED: the market verdict refuses this filing, with its
-      // reason (POST /api/c2c/projects, F19b). Sending it again gets the same
-      // answer, so the way out is another filing, not "Try again".
-      if (known && e.code === 'FILING_NOT_OFFERED' && e.message) {
-        setOutcome({ kind: 'error', message: e.message, correlationId: e.correlationId, notOffered: true });
-        setCreating(false);
-        return;
-      }
-      fail(
-        known && e.message
-          ? e.message
-          : 'The project could not be created. Check your connection and try again.',
-        known ? e.correlationId : undefined,
-      );
-      setCreating(false);
-    }
+    } finally { pendingCreate.current = false; }
   };
+
+  if (retired) return <section ref={viewRef} className="npw" aria-label="New project" tabIndex={-1}><div className="npw-inner"><h1>New project</h1><p>The signed-in account or organization changed. Reopen New project before continuing.</p><button className="btn ghost" onClick={closeIfSettled}>Back to projects</button></div></section>;
 
   return (
     /* ── Full canvas, not a modal ────────────────────────────────────────────
@@ -463,7 +489,7 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
        Escape backs out, focus returns to the control that opened it. */
     <section ref={viewRef} className="npw" aria-labelledby="new-project-title" tabIndex={-1}>
       <div className="pd-topbar">
-        <button type="button" className="pd-crumb-back" onClick={onClose}>
+        <button type="button" className="pd-crumb-back" disabled={creating} onClick={closeIfSettled}>
           {I.left} Projects
         </button>
         <span className="pd-crumb-sep" aria-hidden="true">/</span>
@@ -499,7 +525,7 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
               <button
                 type="button"
                 className="npw-step-btn"
-                disabled={i > step}
+                disabled={i > step || creating}
                 onClick={() => setStep(i)}
               >
                 <span className="npw-step-n" aria-hidden="true">{i < step ? I.check : i + 1}</span>
@@ -567,6 +593,23 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
               />
 
               <div className="npw-fields">
+                <div className="npw-field npw-field-wide">
+                  <label className="npw-field-l" htmlFor="npw-client-workspace">Client workspace</label>
+                  <select id="npw-client-workspace" className="c2c-input" value={workspaceId}
+                    disabled={workspaceOptions?.kind !== 'confirmed' || creating || writeStopped}
+                    onChange={event => setWorkspaceId(event.target.value)} aria-describedby="npw-workspace-help" required>
+                    <option value="">Choose a client workspace</option>
+                    {workspaceOptions?.kind === 'confirmed' && workspaceOptions.clients.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}
+                  </select>
+                  <span className="npw-field-help" id="npw-workspace-help">
+                    {workspaceOptions === null ? 'Checking current client workspaces…'
+                      : workspaceOptions.kind !== 'confirmed' ? workspaceOptions.message
+                      : workspaceOptions.clients.length === 0 ? 'No active client workspace is available. Contact your organization administrator.'
+                      : workspaceOptions.clients.length === 1 ? `${workspaceOptions.clients[0].name} is the only active client workspace and is recorded for this project.`
+                      : 'Choose the client that owns this project and its dossier. Review this choice before creating the project.'}
+                  </span>
+                  {workspaceOptions && workspaceOptions.kind !== 'confirmed' && <button type="button" className="btn ghost" onClick={() => setWorkspaceRead(value => value + 1)}>Refresh workspaces</button>}
+                </div>
                 <label className="npw-field">
                   <span className="npw-field-l">Project name</span>
                   <input
@@ -786,6 +829,10 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
               <h2 className="npw-h2">Review &amp; create</h2>
               <dl className="npw-review">
                 <div className="npw-review-row">
+                  <dt>Client workspace</dt>
+                  <dd className="npw-review-strong">{workspace?.name ?? 'Workspace must be verified'}</dd>
+                </div>
+                <div className="npw-review-row">
                   <dt>Filing type</dt>
                   <dd className="npw-review-strong">{selTpl.label}</dd>
                 </div>
@@ -924,11 +971,11 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
             <div className="npw-outcome">
               <ErrorState
                 variant="inline"
-                title={outcome.notOffered ? 'This filing is not offered here' : 'The project was not created'}
+                title={outcome.confirmedCreated ? 'Project created; details unavailable' : outcome.unknown ? 'Check whether the project was created' : outcome.notOffered ? 'This filing is not offered here' : 'The project was not created'}
                 message={outcome.message}
                 correlationId={outcome.correlationId}
-                retry={outcome.notOffered ? () => { setOutcome(null); setStep(0); } : doCreate}
-                retryLabel={outcome.notOffered ? 'Choose another filing' : undefined}
+                retry={outcome.unknown ? closeIfSettled : outcome.notOffered ? () => { setOutcome(null); setStep(0); } : doCreate}
+                retryLabel={outcome.unknown ? 'Check projects' : outcome.notOffered ? 'Choose another filing' : undefined}
                 busy={creating}
                 onDismiss={() => setOutcome(null)}
                 testId="new-project-outcome"
@@ -959,8 +1006,8 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
           should not have to be hunted for. */}
       <div className="npw-foot">
         <div className="npw-foot-inner">
-          <button type="button" className="btn ghost" onClick={onClose}>Cancel</button>
-          {step > 0 && <button type="button" className="btn ghost" onClick={() => setStep(s => s - 1)}>Back</button>}
+          <button type="button" className="btn ghost" disabled={creating} onClick={closeIfSettled}>Cancel</button>
+          {step > 0 && <button type="button" className="btn ghost" disabled={creating} onClick={() => setStep(s => s - 1)}>Back</button>}
           <span className="npw-foot-gap" />
           {step < 2 && (
             <button
@@ -973,7 +1020,7 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
             </button>
           )}
           {step === 2 && (
-            <button type="button" className="btn primary" disabled={creating || !configured} onClick={doCreate}>
+            <button type="button" className="btn primary" disabled={creating || writeStopped || !configured} onClick={doCreate}>
               {creating ? 'Creating project…' : <>{I.plus} Create project</>}
             </button>
           )}

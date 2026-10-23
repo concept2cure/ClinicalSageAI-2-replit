@@ -24,13 +24,14 @@
  *     nothing and records that class.
  */
 import React from 'react';
+import { intakeFixtureRequest, waitForIntakeWorkspace } from './projectIntakeFixture';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
-  apiRequest,
+  apiRequest: (...args: unknown[]) => intakeFixtureRequest(apiRequest, args),
 }));
 
 const reg = vi.hoisted(() => ({
@@ -66,11 +67,12 @@ const NDA = {
   submissionFormat: 'eCTD',
 };
 
-function toConfigure(ctx: Record<string, string> = IND) {
+async function toConfigure(ctx: Record<string, string> = IND) {
   reg.ctx = ctx;
   render(<NewProjectWizard onClose={() => {}} onNav={() => {}} />);
   fireEvent.click(screen.getByRole('button', { name: /pick filing/i }));
   fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
+  await waitForIntakeWorkspace();
   fireEvent.change(screen.getByRole('textbox', { name: /project name/i }), {
     target: { value: 'QA-W2 Tolvexa · idiopathic pulmonary fibrosis (IND)' },
   });
@@ -89,7 +91,7 @@ async function create(): Promise<Record<string, unknown>> {
     status: 201,
     json: async () => ({ data: { id: '8a11b987-ac2d-4748-9e9c-5dc40c082662', title: 'x', code: 'TOLV' }, meta: {} }),
   });
-  fireEvent.click(await screen.findByRole('button', { name: /create project/i }));
+  await act(async () => { fireEvent.click(await screen.findByRole('button', { name: /create project/i })); });
   /* The create call, found by method and path rather than by position: step 2
      asks the server which markets support the filing, so the wizard's first
      apiRequest is that GET and its body argument is undefined. Selecting the
@@ -105,8 +107,8 @@ afterEach(() => {
 });
 
 describe('New Project wizard — the indication is stated, never a therapeutic-area default', () => {
-  it('offers no therapeutic area and no pre-chosen indication: the indication is an empty text field', () => {
-    toConfigure();
+  it('offers no therapeutic area and no pre-chosen indication: the indication is an empty text field', async () => {
+    await toConfigure();
     expect(screen.queryByText(/therapeutic area/i), 'a therapeutic-area control is still offered').toBeNull();
     expect(screen.queryByText('Oncology (general)')).toBeNull();
     const input = indicationInput();
@@ -115,7 +117,7 @@ describe('New Project wizard — the indication is stated, never a therapeutic-a
   });
 
   it('sends no indication when none was typed, and the review says it is not stated', async () => {
-    toConfigure();
+    await toConfigure();
     fireEvent.change(productTypeSelect()!, { target: { value: 'drug' } });
     fireEvent.click(continueBtn());
     expect(reviewValue('Indication')).toMatch(/not stated/i);
@@ -124,7 +126,7 @@ describe('New Project wizard — the indication is stated, never a therapeutic-a
   });
 
   it('sends exactly the indication the person typed', async () => {
-    toConfigure();
+    await toConfigure();
     fireEvent.change(indicationInput()!, { target: { value: '  idiopathic pulmonary fibrosis ' } });
     fireEvent.change(productTypeSelect()!, { target: { value: 'drug' } });
     fireEvent.click(continueBtn());
@@ -135,8 +137,8 @@ describe('New Project wizard — the indication is stated, never a therapeutic-a
 });
 
 describe('New Project wizard — an IND’s product type is chosen, not taken from the tab', () => {
-  it('starts on "Not stated — choose" and offers only drug and biologic', () => {
-    toConfigure();
+  it('starts on "Not stated — choose" and offers only drug and biologic', async () => {
+    await toConfigure();
     const select = productTypeSelect();
     expect(select, 'no product-type question for an IND').not.toBeNull();
     expect(select!.value).toBe('');
@@ -145,15 +147,15 @@ describe('New Project wizard — an IND’s product type is chosen, not taken fr
     expect(Array.from(select!.options).slice(1).map((o) => o.value)).toEqual(['drug', 'biologic']);
   });
 
-  it('cannot continue until the product type is chosen', () => {
-    toConfigure();
+  it('cannot continue until the product type is chosen', async () => {
+    await toConfigure();
     expect(continueBtn().disabled, 'Continue was enabled with no product type').toBe(true);
     fireEvent.change(productTypeSelect()!, { target: { value: 'biologic' } });
     expect(continueBtn().disabled).toBe(false);
   });
 
   it('records the class that was chosen, and the review shows it', async () => {
-    toConfigure();
+    await toConfigure();
     fireEvent.change(productTypeSelect()!, { target: { value: 'drug' } });
     fireEvent.click(continueBtn());
     expect(reviewValue('Recorded as')).toBe('IND · drug');
@@ -164,7 +166,7 @@ describe('New Project wizard — an IND’s product type is chosen, not taken fr
 
 describe('New Project wizard — a filing type that fixes the class asks nothing', () => {
   it('an NDA is recorded as a drug with no product-type question', async () => {
-    toConfigure(NDA);
+    await toConfigure(NDA);
     expect(productTypeSelect()).toBeNull();
     expect(continueBtn().disabled).toBe(false);
     fireEvent.click(continueBtn());

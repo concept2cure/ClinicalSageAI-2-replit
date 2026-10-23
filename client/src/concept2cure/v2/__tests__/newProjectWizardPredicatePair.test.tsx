@@ -19,13 +19,14 @@
  * answer as recorded.
  */
 import React from 'react';
+import { intakeFixtureRequest, waitForIntakeWorkspace } from './projectIntakeFixture';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
-  apiRequest,
+  apiRequest: (...args: unknown[]) => intakeFixtureRequest(apiRequest, args),
 }));
 
 const reg = vi.hoisted(() => ({
@@ -51,10 +52,11 @@ vi.mock('../surfaces/RegistryBridge', () => ({
 
 import { NewProjectWizard } from '../surfaces/Projects';
 
-function toConfigure() {
+async function toConfigure() {
   render(<NewProjectWizard onClose={() => {}} onNav={() => {}} />);
   fireEvent.click(screen.getByRole('button', { name: /pick filing/i }));
   fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
+  await waitForIntakeWorkspace();
   fireEvent.change(screen.getByRole('textbox', { name: /project name/i }), {
     target: { value: 'AeroFlow PF · peak expiratory flow (510(k))' },
   });
@@ -76,7 +78,7 @@ async function create(): Promise<Record<string, unknown>> {
     status: 201,
     json: async () => ({ data: { id: '8a11b987-ac2d-4748-9e9c-5dc40c082662', title: 'x', code: 'AERO' }, meta: {} }),
   });
-  fireEvent.click(await screen.findByRole('button', { name: /create project/i }));
+  await act(async () => { fireEvent.click(await screen.findByRole('button', { name: /create project/i })); });
   const createCall = () =>
     apiRequest.mock.calls.find((c: unknown[]) => c[0] === 'POST' && c[1] === '/api/c2c/projects');
   await vi.waitFor(() => expect(createCall(), 'the wizard never posted the project').toBeDefined());
@@ -92,14 +94,14 @@ afterEach(() => {
 });
 
 describe('New Project wizard — the predicate of record is whole or absent', () => {
-  it('asks for the trade name as well as the number', () => {
-    toConfigure();
+  it('asks for the trade name as well as the number', async () => {
+    await toConfigure();
     expect(numberInput(), 'the 510(k) number field is gone').not.toBeNull();
     expect(nameInput(), 'the eSTAR prints a trade name and the wizard never asked for one').not.toBeNull();
   });
 
   it('sends both halves when both are given', async () => {
-    toConfigure();
+    await toConfigure();
     fireEvent.change(numberInput()!, { target: { value: 'k181234' } });
     fireEvent.change(nameInput()!, { target: { value: 'AeroCheck PF Meter' } });
     fireEvent.click(continueBtn());
@@ -110,7 +112,7 @@ describe('New Project wizard — the predicate of record is whole or absent', ()
   });
 
   it('does not read a number with no trade name as a recorded predicate', async () => {
-    toConfigure();
+    await toConfigure();
     fireEvent.change(numberInput()!, { target: { value: 'K181234' } });
     fireEvent.click(continueBtn());
     expect(reviewValue('Predicate'), 'a half answer read as recorded').toMatch(/not recorded/i);
@@ -122,7 +124,7 @@ describe('New Project wizard — the predicate of record is whole or absent', ()
   });
 
   it('says nothing about a predicate when neither half is given', async () => {
-    toConfigure();
+    await toConfigure();
     fireEvent.click(continueBtn());
     expect(reviewValue('Predicate')).toBe('Not recorded');
     const dc = classificationOf(await create());
